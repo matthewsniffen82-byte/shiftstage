@@ -2,4 +2,4 @@
 
 Premium nightlife schedule discovery prototype.
 
-This is a static HTML demo. Vercel serves `outputs/index.html` at the site root using `vercel.json`.
+This is a static HTML demo. The root `index.html` forwards to `outputs/index.html`.
