@@ -5025,8 +5025,8 @@
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 28px;
+      gap: 12px;
+      margin-top: 24px;
     }
 
     .hero-primary,
@@ -5034,14 +5034,14 @@
     .mini-view,
     .club-select,
     .filter-icon {
-      min-height: 44px;
+      min-height: 40px;
       border-radius: 9px;
       font-weight: 900;
       transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
 
     .hero-primary {
-      padding: 0 24px;
+      padding: 0 18px;
       color: #fff;
       border: 1px solid rgba(184,112,255,.72);
       background: linear-gradient(180deg, #9a4dff, #6f24e8);
@@ -5049,7 +5049,7 @@
     }
 
     .hero-secondary {
-      padding: 0 24px;
+      padding: 0 18px;
       color: #e8ddff;
       border: 1px solid rgba(184,112,255,.62);
       background: rgba(3,3,4,.45);
@@ -5558,7 +5558,7 @@
 
       .hero-primary,
       .hero-secondary {
-        flex: 1 1 190px;
+        flex: 1 1 160px;
       }
 
       .hero-stats {
@@ -7258,8 +7258,6 @@
       document.getElementById("statDancers").textContent = market.stats.dancers;
       document.getElementById("statShifts").textContent = market.stats.shifts;
       document.getElementById("statVenues").textContent = market.stats.venues;
-      document.querySelector('[data-hero-stat="dancers"]')?.replaceChildren(document.createTextNode(market.stats.dancers));
-      document.querySelector('[data-hero-stat="venues"]')?.replaceChildren(document.createTextNode(market.stats.venues));
       renderPopularClubs(city);
 
       const allItems = getItems(city, activeTab);
@@ -7558,12 +7556,6 @@
             <div class="hero-actions">
               <button class="hero-primary" type="button" data-jump-tonight>See Who's Working Tonight</button>
               <button class="hero-secondary" type="button" data-jump-clubs>Explore Clubs</button>
-            </div>
-            <div class="hero-stats">
-              <div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg><strong data-hero-stat="dancers">2,847</strong><span>Dancers</span></div>
-              <div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg><strong data-hero-stat="venues">156</strong><span>Clubs</span></div>
-              <div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-4.4 7-11a7 7 0 1 0-14 0c0 6.6 7 11 7 11Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><strong>32</strong><span>Cities</span></div>
-              <div><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg><strong>18.7K</strong><span>Followers Online</span></div>
             </div>
           </div>
         `;
