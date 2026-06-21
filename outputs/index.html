@@ -7656,25 +7656,6 @@
         `;
       }
 
-      const tabs = document.querySelector(".tabs");
-      if (tabs && !document.querySelector(".quick-filters")) {
-        tabs.insertAdjacentHTML("afterend", `
-          <div class="quick-filters" aria-label="Quick filters">
-            <div class="filter-pills">
-              <button class="filter-pill all" type="button">All</button>
-              <button class="filter-pill verified" type="button">Verified</button>
-              <button class="filter-pill tonight" type="button">Tonight</button>
-              <button class="filter-pill trending" type="button">Trending</button>
-              <button class="filter-pill featured" type="button">Featured</button>
-            </div>
-            <div class="club-tools">
-              <button class="club-select" type="button">All Clubs <span>v</span></button>
-              <button class="filter-icon" type="button" aria-label="Filter clubs">III</button>
-            </div>
-          </div>
-        `);
-      }
-
       const viewAll = document.getElementById("viewAllBtn");
       if (viewAll && !document.getElementById("popularClubs")) {
         viewAll.insertAdjacentHTML("afterend", `
