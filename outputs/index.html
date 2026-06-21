@@ -4924,10 +4924,482 @@
       border-left-color: #35d8ff;
       background: rgba(5,78,89,.18);
     }
+
+    /* Reference-inspired desktop nightlife dashboard */
+    @media (min-width: 1024px) {
+      body {
+        padding: 0;
+        background:
+          radial-gradient(circle at 54% 0%, rgba(110,37,255,.2), transparent 30rem),
+          radial-gradient(circle at 86% 18%, rgba(53,216,255,.08), transparent 22rem),
+          #030304;
+      }
+
+      .app {
+        width: min(100vw, 1440px);
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr) 292px;
+        grid-template-areas:
+          "rail head side"
+          "rail main side";
+        grid-template-rows: 58px 1fr;
+        border-radius: 0;
+        border-inline: 0;
+        background: #030304;
+        box-shadow: none;
+      }
+
+      header {
+        grid-area: head;
+        position: sticky;
+        top: 0;
+        height: 58px;
+        padding: 10px 18px;
+        display: flex;
+        align-items: center;
+        border-radius: 0;
+        background: rgba(3,3,4,.9);
+        border-bottom: 1px solid rgba(255,255,255,.07);
+      }
+
+      header .topbar {
+        width: 100%;
+      }
+
+      header .brand {
+        min-width: 360px;
+        height: 38px;
+        padding: 0 12px;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 8px;
+        background: rgba(255,255,255,.035);
+      }
+
+      header .brand:after {
+        content: "Search dancers, clubs, cities...";
+        margin-left: 10px;
+        color: #6f687b;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      header .mark,
+      header h1,
+      header .subhead {
+        display: none;
+      }
+
+      .menu {
+        margin-left: auto;
+      }
+
+      .admin-link,
+      .dashboard-menu {
+        display: none;
+      }
+
+      .desktop-rail {
+        grid-area: rail;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: grid;
+        align-content: start;
+        gap: 16px;
+        padding: 16px 12px;
+        background: #050506;
+        border-right: 1px solid rgba(255,255,255,.07);
+        z-index: 30;
+      }
+
+      .rail-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 36px;
+        padding: 0 8px;
+        color: #f7f2ff;
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .rail-monogram {
+        color: #8f4dff;
+        font-size: 24px;
+        line-height: 1;
+        text-shadow: 0 0 18px rgba(143,77,255,.55);
+      }
+
+      .rail-nav {
+        display: grid;
+        gap: 4px;
+      }
+
+      .rail-section {
+        margin: 8px 8px -6px;
+        color: #666070;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .09em;
+      }
+
+      .rail-link {
+        min-height: 34px;
+        padding: 0 11px;
+        border: 0;
+        border-radius: 7px;
+        color: #aaa2b5;
+        background: transparent;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .rail-link.active,
+      .rail-link:hover {
+        color: #fff;
+        background: rgba(109,40,217,.24);
+        box-shadow: inset 2px 0 0 #8b5cf6;
+      }
+
+      .rail-premium {
+        margin-top: 12px;
+        min-height: 46px;
+        padding: 0 14px;
+        border: 1px solid rgba(139,92,246,.36);
+        border-radius: 12px;
+        color: #fff;
+        background: linear-gradient(135deg, rgba(139,92,246,.34), rgba(53,216,255,.08));
+        box-shadow: 0 0 24px rgba(139,92,246,.18);
+        font-weight: 900;
+      }
+
+      main {
+        grid-area: main;
+        padding: 18px;
+        min-width: 0;
+      }
+
+      main.stack {
+        gap: 16px;
+      }
+
+      .desktop-right {
+        grid-area: side;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: grid;
+        align-content: start;
+        gap: 14px;
+        padding: 76px 14px 18px;
+        background: #050506;
+        border-left: 1px solid rgba(255,255,255,.07);
+      }
+
+      .hero {
+        min-height: 270px;
+        padding: 28px;
+        border-radius: 14px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(5,5,7,.96), rgba(5,5,7,.52) 42%, rgba(5,5,7,.08) 58%, rgba(5,5,7,.9)),
+          radial-gradient(circle at 42% 40%, rgba(139,92,246,.34), transparent 0 34%),
+          url("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=82"),
+          #09090d;
+        background-size: cover, cover, auto 112%, cover;
+        background-position: center, center, right top, center;
+        border-color: rgba(255,255,255,.08);
+        box-shadow: 0 22px 80px rgba(0,0,0,.64), 0 0 40px rgba(139,92,246,.16);
+      }
+
+      .hero h2 {
+        max-width: 430px;
+        font-size: 34px;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+      }
+
+      .hero h2::first-line {
+        color: #fff;
+      }
+
+      .hero .eyebrow {
+        color: #8f4dff;
+      }
+
+      .controls {
+        grid-template-columns: 1fr 160px auto;
+        align-items: end;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(8,8,10,.78);
+      }
+
+      .location-btn {
+        grid-column: auto;
+        min-width: 170px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .stats::after {
+        content: "18.7K\A Followers online";
+        white-space: pre;
+        min-height: 76px;
+        padding: 14px 12px;
+        border: 1px solid rgba(205,231,244,.11);
+        border-radius: 16px;
+        color: #a49caf;
+        background: rgba(13,13,18,.78);
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      .stats::after:first-line {
+        color: #8ff4ff;
+        font-size: 20px;
+        font-family: var(--font-display);
+      }
+
+      .tabs {
+        padding: 0;
+      }
+
+      .tab {
+        min-height: 28px;
+        padding-inline: 13px;
+        font-size: 11px;
+      }
+
+      .content-head h2 {
+        font-size: 18px;
+      }
+
+      .list.card-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .dancer-card {
+        min-height: 325px;
+        border-radius: 14px;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: 16px;
+      }
+
+      .pill,
+      .badge,
+      .locked,
+      .count {
+        min-height: 24px;
+        padding-inline: 9px;
+        font-size: 10px;
+      }
+
+      .venue {
+        grid-template-columns: 124px 1fr;
+        border-radius: 14px;
+      }
+
+      .legal-links {
+        justify-content: flex-end;
+      }
+
+      .side-card {
+        padding: 14px;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 14px;
+        background: rgba(10,10,12,.88);
+        box-shadow: 0 20px 60px rgba(0,0,0,.36);
+      }
+
+      .side-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+        color: #f4f2f8;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .side-head button,
+      .side-cta {
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid rgba(139,92,246,.28);
+        border-radius: 999px;
+        color: #b9a7ff;
+        background: rgba(139,92,246,.1);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .mini-profile-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .mini-profile {
+        display: grid;
+        grid-template-columns: 44px 1fr auto;
+        gap: 9px;
+        align-items: center;
+      }
+
+      .mini-avatar {
+        width: 44px;
+        aspect-ratio: 1;
+        border-radius: 9px;
+        background:
+          linear-gradient(180deg, rgba(5,5,7,0), rgba(5,5,7,.42)),
+          url("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80");
+        background-size: cover;
+        background-position: center top;
+      }
+
+      .mini-profile:nth-child(2) .mini-avatar {
+        background-image:
+          linear-gradient(180deg, rgba(5,5,7,0), rgba(5,5,7,.42)),
+          url("https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=200&q=80");
+      }
+
+      .mini-profile:nth-child(3) .mini-avatar,
+      .mini-profile:nth-child(5) .mini-avatar {
+        background-image:
+          linear-gradient(180deg, rgba(5,5,7,0), rgba(5,5,7,.42)),
+          url("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80");
+      }
+
+      .mini-profile strong {
+        display: block;
+        color: #f4f2f8;
+        font-size: 12px;
+        line-height: 1.1;
+      }
+
+      .mini-profile span {
+        display: block;
+        margin-top: 4px;
+        color: #8e879b;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .mini-profile .badge,
+      .mini-profile .pill {
+        min-height: 20px;
+        padding-inline: 7px;
+        font-size: 9px;
+      }
+
+      .side-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .side-stats div {
+        min-height: 64px;
+        padding: 10px;
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 10px;
+        background: rgba(255,255,255,.035);
+      }
+
+      .side-stats strong {
+        display: block;
+        color: #8ff4ff;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .side-stats span {
+        display: block;
+        margin-top: 6px;
+        color: #8e879b;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .side-cta {
+        width: 100%;
+        margin-top: 12px;
+        min-height: 34px;
+      }
+    }
+
+    @media (max-width: 1023px) {
+      .desktop-rail,
+      .desktop-right {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="app">
+    <aside class="desktop-rail" aria-label="Primary">
+      <a class="rail-brand" href="#">
+        <span class="rail-monogram">SS</span>
+        <span>ShiftStage</span>
+      </a>
+      <nav class="rail-nav">
+        <button class="rail-link active" type="button">Home</button>
+        <button class="rail-link" type="button">Who's Working</button>
+        <button class="rail-link" type="button">Dancers</button>
+        <button class="rail-link" type="button">Clubs</button>
+        <button class="rail-link" type="button">Cities</button>
+        <button class="rail-link" type="button">Favorites</button>
+        <button class="rail-link" type="button">Notifications</button>
+        <button class="rail-link" type="button">Dashboard</button>
+      </nav>
+      <div class="rail-section">For dancers</div>
+      <nav class="rail-nav">
+        <button class="rail-link" type="button">Post a Shift</button>
+        <button class="rail-link" type="button">My Schedule</button>
+        <button class="rail-link" type="button">My Profile</button>
+        <button class="rail-link" type="button">Earnings</button>
+        <button class="rail-link" type="button">Analytics</button>
+      </nav>
+      <button class="rail-premium" type="button">Go Premium</button>
+    </aside>
+    <section class="desktop-right" aria-label="Tonight near you">
+      <div class="side-card">
+        <div class="side-head">
+          <span>Tonight near you</span>
+          <button type="button">View all</button>
+        </div>
+        <div class="mini-profile-list" id="desktopTonightList"></div>
+      </div>
+      <div class="side-card">
+        <div class="side-head">
+          <span>Your stats</span>
+          <button type="button">This week</button>
+        </div>
+        <div class="side-stats">
+          <div><strong>8,392</strong><span>Profile views</span></div>
+          <div><strong>1,248</strong><span>Followers</span></div>
+          <div><strong>5,673</strong><span>Schedule views</span></div>
+          <div><strong>324</strong><span>Favorites</span></div>
+        </div>
+        <button class="side-cta" type="button">Go to Dashboard</button>
+      </div>
+    </section>
     <header>
       <div class="topbar">
         <div class="brand">
@@ -5563,6 +6035,7 @@
     const tabTitle = document.getElementById("tabTitle");
     const tabCount = document.getElementById("tabCount");
     const toast = document.getElementById("toast");
+    const desktopTonightList = document.getElementById("desktopTonightList");
     const profileBackdrop = document.getElementById("profileBackdrop");
     const modalImage = document.getElementById("modalImage");
     const modalName = document.getElementById("modalName");
@@ -6630,6 +7103,26 @@
           ? venueCard(item)
           : profileCard(item, index, { tonight: activeTab === "tonight" })
       )).join("");
+      renderDesktopSidebar(city);
+    }
+
+    function renderDesktopSidebar(city) {
+      if (!desktopTonightList) return;
+      const profiles = markets[city].dancers
+        .filter((profile) => profile.status === "Verified" && !profile.hidden && profile.tonight)
+        .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
+        .slice(0, 5)
+        .map((profile, index) => withTrendingRank(profile, city));
+      desktopTonightList.innerHTML = profiles.map((profile) => `
+        <button class="mini-profile" type="button" data-profile="${profile.name}">
+          <span class="mini-avatar" aria-hidden="true"></span>
+          <span>
+            <strong>${profile.name}</strong>
+            <span>${profile.venue} • ${profile.time}</span>
+          </span>
+          <span class="${profile.trendRank ? "badge trend" : "badge"}">${profile.trendRank ? "Trending" : "Verified"}</span>
+        </button>
+      `).join("");
     }
 
     results.addEventListener("click", (event) => {
@@ -6647,6 +7140,12 @@
       if (!card) return;
       event.preventDefault();
       openProfileModal(card.dataset.profile);
+    });
+
+    desktopTonightList?.addEventListener("click", (event) => {
+      const row = event.target.closest(".mini-profile");
+      if (!row) return;
+      openProfileModal(row.dataset.profile);
     });
 
     modalGallery.addEventListener("click", (event) => {
