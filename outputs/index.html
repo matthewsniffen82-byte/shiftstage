@@ -6600,6 +6600,27 @@
       text-shadow: 0 0 12px rgba(155,92,255,.35);
     }
 
+    .venue-dot {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: -2px;
+      color: #a855f7;
+      filter: drop-shadow(0 0 7px rgba(168,85,247,.55));
+    }
+
+    .venue-dot svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     @media (max-width: 560px) {
       .profile-modal .gallery {
         gap: 7px;
@@ -8049,6 +8070,10 @@
       return String(value).replace(/[<>"&]/g, "").trim();
     }
 
+    function venueIconMarkup() {
+      return '<span class="venue-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2.2"></circle></svg></span>';
+    }
+
     const socialPlatforms = [
       { key: "instagram", label: "Instagram", base: "https://instagram.com/", hosts: ["instagram.com", "www.instagram.com"] },
       { key: "tiktok", label: "TikTok", base: "https://tiktok.com/@", hosts: ["tiktok.com", "www.tiktok.com"] },
@@ -8209,7 +8234,7 @@
             ? `<div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta">${workingTonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
+        ? `<div class="meta">${venueIconMarkup()}${workingTonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
@@ -8360,7 +8385,7 @@
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
-            <div class="meta"><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${profile.time}</div>
+            <div class="meta">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${profile.time}</div>
           </div>
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
@@ -8376,7 +8401,7 @@
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
-            <div class="meta">Next: <button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+            <div class="meta">${venueIconMarkup()}Next: <button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
           </div>
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
