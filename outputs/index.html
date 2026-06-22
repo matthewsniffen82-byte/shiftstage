@@ -8959,31 +8959,30 @@
           </div>
         </div>
         <div class="auth-card">
-          <div class="value-message">We sent 1,284 people to your profile and 186 people requested directions to your club this month.</div>
-          <div class="metric-grid" aria-label="Dancer profile metrics">
-            <div class="metric-card"><strong>1,284</strong><span>Profile views</span></div>
-            <div class="metric-card"><strong>418</strong><span>Followers</span></div>
-            <div class="metric-card"><strong>732</strong><span>Schedule views</span></div>
-            <div class="metric-card"><strong>203</strong><span>Notification opens</span></div>
-            <div class="metric-card"><strong>311</strong><span>Club page clicks</span></div>
-            <div class="metric-card"><strong>94</strong><span>Social media clicks</span></div>
-            <div class="metric-card"><strong>86</strong><span>Favorites added</span></div>
-            <div class="metric-card"><strong>29</strong><span>Interested clicks</span></div>
-            <div class="metric-card"><strong>20</strong><span>Going Tonight clicks</span></div>
-            <div class="metric-card"><strong>186</strong><span>Club direction requests</span></div>
-          </div>
+          <div class="value-message" id="dancerValueMessage">Posting your schedule brings customers, followers, and direction requests.</div>
+          <h3>Last 30 days</h3>
+          <div class="metric-grid" id="dancerLast30Metrics" aria-label="Dancer profile metrics"></div>
         </div>
         <div class="auth-card momentum-card">
           <h3>Your market momentum</h3>
-          <div class="metric-grid" aria-label="Market momentum">
-            <div class="metric-card"><strong>#9</strong><span>Trending in Las Vegas</span></div>
-            <div class="metric-card"><strong>+5</strong><span>Up 5 spots this week</span></div>
-            <div class="metric-card"><strong>49</strong><span>Visit signals this week</span></div>
-            <div class="metric-card"><strong>20 • 29</strong><span>Going Tonight • Interested</span></div>
-            <div class="metric-card"><strong>Top 10</strong><span>Top 10 is within reach</span></div>
-            <div class="metric-card"><strong>#3</strong><span>Most followed this week</span></div>
-            <div class="metric-card"><strong>#5</strong><span>Most viewed this month</span></div>
-          </div>
+          <div class="metric-grid" id="dancerMomentumMetrics" aria-label="Market momentum"></div>
+        </div>
+        <div class="auth-card">
+          <h3>Social growth</h3>
+          <div class="metric-grid" id="dancerSocialMetrics" aria-label="Social growth"></div>
+        </div>
+        <div class="auth-card">
+          <h3>Consistency streaks</h3>
+          <div class="metric-grid" id="dancerStreakMetrics" aria-label="Consistency streaks"></div>
+        </div>
+        <div class="auth-card">
+          <h3>Club performance</h3>
+          <div class="metric-grid" id="dancerClubMetrics" aria-label="Club performance"></div>
+        </div>
+        <div class="auth-card">
+          <h3>Your week on Dancr</h3>
+          <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
+          <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly summary"></div>
         </div>
         <div id="setupChecklistWrap" class="auth-card">
           <h3>Profile setup and approval</h3>
@@ -9502,6 +9501,59 @@
 
     function notificationCount(profile, city = selectedCity()) {
       return `${notificationNumber(profile, city).toLocaleString()} notifications enabled`;
+    }
+
+    function compactNumber(value) {
+      return Number(value || 0).toLocaleString();
+    }
+
+    function metricCardMarkup(value, label) {
+      return `<div class="metric-card"><strong>${value}</strong><span>${label}</span></div>`;
+    }
+
+    function activeDancerProfile(city = activeDancerCity()) {
+      const dancerName = activeDancerName();
+      return markets[city]?.dancers.find((profile) => profile.name === dancerName) || markets[city]?.dancers[0] || null;
+    }
+
+    function dancerDashboardMetrics(profile, city = selectedCity()) {
+      if (!profile) return null;
+      const ranked = withTrendingRank(profile, city);
+      const signals = ranked.trendSignals || privateTrendingSignals(profile, city);
+      const followers = followerNumber(profile, city);
+      const newFollowers = Math.max(18, Math.round(followers * 0.035) + seededRange(`${profile.name}|new-followers|${city}`, 12, 94));
+      const profileViews30 = Math.round(signals.uniqueProfileViews * 3.15 + followers * 0.16);
+      const directionRequests30 = Math.round(signals.directionRequests * 1.35 + signals.clubPageClicks * 0.22);
+      const instagramClicks = seededRange(`${profile.name}|instagram-clicks|${city}`, 36, 180) + uniqueTrendEventCount("socialClicks", city, profile.name) * 4;
+      const snapchatClicks = seededRange(`${profile.name}|snapchat-clicks|${city}`, 22, 130);
+      const tiktokClicks = seededRange(`${profile.name}|tiktok-clicks|${city}`, 18, 118);
+      const xClicks = seededRange(`${profile.name}|x-clicks|${city}`, 4, 42);
+      const weeklyViews = Math.round(profileViews30 * 0.28);
+      const weeklyFollowers = Math.round(newFollowers * 0.28);
+      const weeklyInstagram = Math.round(instagramClicks * 0.3);
+      const weeklyGoing = Math.max(0, Math.round(signals.goingTonight * 0.35));
+      const venue = profile.venue || markets[city]?.venues[0]?.name || "Local venues";
+      const venueRank = seededRange(`${venue}|venue-rank|${city}`, 1, 4);
+      return {
+        ranked,
+        signals,
+        followers,
+        notifications: notificationNumber(profile, city),
+        newFollowers,
+        profileViews30,
+        directionRequests30,
+        instagramClicks,
+        snapchatClicks,
+        tiktokClicks,
+        xClicks,
+        weeklyViews,
+        weeklyFollowers,
+        weeklyInstagram,
+        weeklyGoing,
+        venue,
+        venueRank,
+        streak: Math.max(2, 9 - Number(profile.trend || 6))
+      };
     }
 
     function tonightInterestCount(profile) {
@@ -10619,13 +10671,63 @@
       document.getElementById("dancerApprovalStatus").textContent = dancerSetup.approval ? "Approved" : "Pending";
       const dancerName = activeDancerName();
       const city = activeDancerCity();
-      const activeProfile = markets[city]?.dancers.find((profile) => profile.name === dancerName) || markets[city]?.dancers[0];
+      const activeProfile = activeDancerProfile(city);
+      const dashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       document.getElementById("dancerFollowerStat").textContent = activeProfile
         ? followerNumber(activeProfile, city).toLocaleString()
         : "0";
       document.getElementById("dancerNotificationStat").textContent = activeProfile
         ? notificationNumber(activeProfile, city).toLocaleString()
         : "0";
+      if (dashboardMetrics) {
+        document.getElementById("dancerValueMessage").textContent =
+          `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile and ${compactNumber(dashboardMetrics.directionRequests30)} people requested directions to ${dashboardMetrics.venue} this month.`;
+        document.getElementById("dancerLast30Metrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Club direction requests"),
+          metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.signals.favorites), "Favorites added")
+        ].join("");
+        document.getElementById("dancerMomentumMetrics").innerHTML = [
+          metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
+          metricCardMarkup(`#${seededRange(`${activeProfile.name}|week-rank|${city}`, 1, 5)}`, "Trending this week"),
+          metricCardMarkup("Top 10", "Most viewed"),
+          metricCardMarkup("Top 10", "Most followed"),
+          metricCardMarkup(compactNumber(dashboardMetrics.signals.recentActivity), "Visit signals this week"),
+          metricCardMarkup(`${compactNumber(dashboardMetrics.signals.goingTonight)} • ${compactNumber(dashboardMetrics.signals.interested)}`, "Going Tonight • Interested")
+        ].join("");
+        document.getElementById("dancerSocialMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks")
+        ].join("");
+        document.getElementById("dancerStreakMetrics").innerHTML = [
+          metricCardMarkup(`${dashboardMetrics.streak} shifts`, "Posted in a row"),
+          metricCardMarkup("Active", "This month"),
+          metricCardMarkup(`${Math.max(2, Math.round(dashboardMetrics.streak / 2))} weeks`, "Weekly schedule streak"),
+          metricCardMarkup("Ready", "Followers waiting")
+        ].join("");
+        document.getElementById("dancerClubMetrics").innerHTML = [
+          metricCardMarkup(dashboardMetrics.venue, "Most viewed club tonight"),
+          metricCardMarkup(`#${dashboardMetrics.venueRank}`, "Venue visibility rank"),
+          metricCardMarkup(compactNumber(dashboardMetrics.signals.clubPageClicks), "Club page clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests")
+        ].join("");
+        document.getElementById("dancerWeeklySummary").textContent =
+          `Your Week on Dancr: ${compactNumber(dashboardMetrics.weeklyViews)} profile views, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyInstagram)} Instagram clicks, and ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals.`;
+        document.getElementById("dancerWeeklyMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyViews), "Profile views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyInstagram), "Instagram clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals")
+        ].join("");
+      }
       document.getElementById("setupChecklistWrap").hidden = approved;
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
