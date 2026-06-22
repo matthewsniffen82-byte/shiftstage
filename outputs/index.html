@@ -6779,6 +6779,51 @@
       return `${formatClock(startValue)} - ${formatClock(endValue)}`;
     }
 
+    function dateFromUpcomingLabel(label) {
+      if (!label) return null;
+      const clean = String(label).trim().toLowerCase();
+      const today = new Date();
+      const date = new Date(today);
+      if (clean === "tomorrow") {
+        date.setDate(today.getDate() + 1);
+        return date;
+      }
+      const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const target = weekdays.indexOf(clean);
+      if (target === -1) return null;
+      let diff = (target - today.getDay() + 7) % 7;
+      if (diff === 0) diff = 7;
+      date.setDate(today.getDate() + diff);
+      return date;
+    }
+
+    function daysFromToday(date) {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const target = new Date(date);
+      target.setHours(0, 0, 0, 0);
+      return Math.round((target - start) / 86400000);
+    }
+
+    function upcomingCardLabel(profile) {
+      const label = profile.shiftLabel || "Next shift";
+      const date = dateFromUpcomingLabel(label);
+      if (!date) return label;
+      const diff = daysFromToday(date);
+      if (diff === 1) return "Tomorrow";
+      if (diff > 1 && diff <= 3) return `In ${diff} days`;
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    }
+
+    function upcomingFullLabel(profile) {
+      const label = profile.shiftLabel || "Next shift";
+      const date = dateFromUpcomingLabel(label);
+      if (!date) return label;
+      const diff = daysFromToday(date);
+      if (diff === 1) return "Tomorrow";
+      return date.toLocaleDateString([], { weekday: "short", month: "numeric", day: "numeric" });
+    }
+
     function isTonightDate(dateValue) {
       return dateValue === todayValue();
     }
@@ -6939,7 +6984,7 @@
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
       const trendBadge = isTrending ? `<span class="badge trend">#${profile.trendRank} Trending</span>` : "";
-      const upcomingLabel = profile.shiftLabel || "Next shift";
+      const upcomingLabel = upcomingCardLabel(profile);
       const scheduleText = isPending
         ? "Schedule locked"
         : profile.tonight
@@ -7107,7 +7152,7 @@
         `;
       }
       if (profile.scheduled) {
-        const upcomingLabel = profile.shiftLabel || "Next shift";
+        const upcomingLabel = upcomingFullLabel(profile);
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
