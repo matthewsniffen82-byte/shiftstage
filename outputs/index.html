@@ -6610,21 +6610,29 @@
     .venue-inline-link {
       display: inline;
       padding: 0;
-      color: #d8bdff;
+      color: #e5d2ff;
       border: 0;
       background: transparent;
       font: inherit;
       font-weight: 900;
       text-decoration: underline;
-      text-decoration-color: rgba(192,132,255,.45);
-      text-underline-offset: 3px;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: rgba(168,85,247,.68);
+      text-underline-offset: 4px;
       cursor: pointer;
+      transition: color .18s ease, text-decoration-color .18s ease, text-shadow .18s ease;
     }
 
     .venue-inline-link:hover {
-      color: #f2e8ff;
-      text-decoration-color: rgba(192,132,255,.85);
-      text-shadow: 0 0 12px rgba(155,92,255,.35);
+      color: #f7efff;
+      text-decoration-color: rgba(216,180,254,.95);
+      text-shadow: 0 0 14px rgba(168,85,247,.44);
+    }
+
+    .venue-inline-link:focus-visible {
+      outline: 2px solid rgba(168,85,247,.72);
+      outline-offset: 3px;
+      border-radius: 6px;
     }
 
     .venue-dot {
