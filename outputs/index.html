@@ -4797,12 +4797,21 @@
     }
 
     .action-btn,
-    .location-btn,
-    .view-all {
+    .location-btn {
       color: #050507;
       border: 0;
       background: linear-gradient(135deg, #b74dff 0%, #2b9dff 74%);
       box-shadow: 0 14px 34px rgba(43,157,255,.2), 0 0 24px rgba(183,77,255,.14);
+    }
+
+    .view-all {
+      min-height: 42px;
+      color: #d8cbff;
+      border: 1px solid rgba(155,92,255,.4);
+      background: rgba(11,11,15,.88);
+      box-shadow: 0 0 18px rgba(155,92,255,.14), inset 0 0 16px rgba(155,92,255,.08);
+      font-size: 15px;
+      font-weight: 900;
     }
 
     .action-btn.secondary,
@@ -4817,6 +4826,13 @@
     .location-btn:hover,
     .view-all:hover {
       box-shadow: 0 16px 38px rgba(43,157,255,.26), 0 0 30px rgba(183,77,255,.18);
+    }
+
+    .view-all:hover {
+      color: #ffffff;
+      border-color: rgba(192,132,255,.68);
+      background: rgba(34,21,50,.9);
+      box-shadow: 0 0 24px rgba(155,92,255,.26), inset 0 0 18px rgba(192,132,255,.1);
     }
 
     .dancer-card {
