@@ -7241,6 +7241,73 @@
       line-height: 1.2;
     }
 
+    /* More tactile modal action buttons */
+    .profile-modal .modal-actions .action-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .profile-modal .modal-actions .action-btn:before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 48%);
+      opacity: .32;
+      pointer-events: none;
+    }
+
+    .profile-modal .modal-actions .action-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 28px rgba(155,92,255,.32),
+        0 14px 34px rgba(0,0,0,.38),
+        inset 0 0 18px rgba(255,255,255,.12);
+    }
+
+    .action-icon {
+      width: 17px;
+      height: 17px;
+      display: inline-flex;
+      flex: 0 0 auto;
+      position: relative;
+      z-index: 1;
+      color: currentColor;
+    }
+
+    .action-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .profile-modal .modal-actions .action-btn span:not(.action-icon) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .profile-modal .going-btn:disabled {
+      color: #bdb6cc;
+      border: 1px solid rgba(192,132,255,.2);
+      background: rgba(10,10,14,.68);
+      box-shadow: inset 0 0 16px rgba(155,92,255,.035);
+      opacity: 1;
+      cursor: default;
+    }
+
+    .profile-modal .going-btn:disabled:before {
+      opacity: .08;
+    }
+
     .profile-modal .gallery {
       position: relative;
       z-index: 3;
@@ -8364,6 +8431,20 @@
       return '<span class="badge-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 5 13h6l-1 9 9-13h-6l1-7Z"></path></svg></span>';
     }
 
+    function actionIconMarkup(type) {
+      const icons = {
+        heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>',
+        bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
+        clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
+        check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>'
+      };
+      return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
+    }
+
+    function actionButtonLabel(icon, label) {
+      return `${actionIconMarkup(icon)}<span>${label}</span>`;
+    }
+
     const socialPlatforms = [
       { key: "instagram", label: "Instagram", base: "https://instagram.com/", hosts: ["instagram.com", "www.instagram.com"] },
       { key: "tiktok", label: "TikTok", base: "https://tiktok.com/@", hosts: ["tiktok.com", "www.tiktok.com"] },
@@ -8750,8 +8831,8 @@
       } else {
         const status = shiftStatus(profile);
         const goingButton = status.state === "active"
-          ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">I'm Going Tonight</button>`
-          : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${status.state === "scheduled" ? "Going opens later" : "No active shift tonight"}</button>`;
+          ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">${actionButtonLabel("clock", "I'm Going Tonight")}</button>`
+          : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${actionButtonLabel("clock", status.state === "scheduled" ? "Going opens later" : "No active shift tonight")}</button>`;
         modalBody.innerHTML = `
           <div class="modal-grid">
             ${shiftsMarkup(profile, status)}
@@ -8762,8 +8843,8 @@
             ${socialLinksMarkup(profile)}
           </div>
           <div class="modal-actions">
-            <button class="action-btn follow-primary" id="followBtn">Follow</button>
-            <button class="action-btn secondary" id="notifyBtn">Notify Me</button>
+            <button class="action-btn follow-primary" id="followBtn">${actionButtonLabel("heart", "Follow")}</button>
+            <button class="action-btn secondary" id="notifyBtn">${actionButtonLabel("bell", "Notify Me")}</button>
             ${goingButton}
           </div>
         `;
@@ -9342,22 +9423,24 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
-      if (event.target.id === "followBtn") {
-        event.target.textContent = "Following";
-        event.target.classList.add("is-following");
+      const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn");
+      if (!actionButton) return;
+      if (actionButton.id === "followBtn") {
+        actionButton.innerHTML = actionButtonLabel("check", "Following");
+        actionButton.classList.add("is-following");
         const profileName = modalName.textContent;
         const city = citySelect.value;
         if (!followedByCity[city].includes(profileName)) followedByCity[city].push(profileName);
         showToast("Following profile");
       }
-      if (event.target.id === "notifyBtn") {
-        event.target.textContent = "Notifications On";
+      if (actionButton.id === "notifyBtn") {
+        actionButton.innerHTML = actionButtonLabel("bell", "Notifications On");
         showToast("Notifications enabled");
       }
-      if (event.target.id === "goingBtn") {
-        if (event.target.disabled) return;
-        if (event.target.classList.contains("is-going")) return;
-        const profileName = event.target.dataset.profile;
+      if (actionButton.id === "goingBtn") {
+        if (actionButton.disabled) return;
+        if (actionButton.classList.contains("is-going")) return;
+        const profileName = actionButton.dataset.profile;
         const countEl = document.getElementById("tonightInterestCount");
         const currentCount = Number(countEl?.textContent.match(/[\d,]+/)?.[0].replace(/,/g, "")) || 0;
         goingTonightByProfile[profileName] = currentCount + 1;
@@ -9365,8 +9448,8 @@
           countEl.classList.remove("muted");
           countEl.textContent = `${goingTonightByProfile[profileName].toLocaleString()} going`;
         }
-        event.target.classList.add("is-going");
-        event.target.textContent = "You're going tonight";
+        actionButton.classList.add("is-going");
+        actionButton.innerHTML = actionButtonLabel("check", "You're going tonight");
         showToast("Added to tonight");
       }
     });
