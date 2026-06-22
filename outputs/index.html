@@ -11076,14 +11076,9 @@
         .map((platform) => ({ ...platform, url: profile.socials?.[platform.key] }))
         .filter((platform) => platform.url);
       const shareButton = `
-        <button class="profile-share-trigger" type="button" data-toggle-share="${profile.name}" aria-label="Share profile" aria-expanded="false">
+        <button class="profile-share-trigger" type="button" data-native-share="${profile.name}" data-share-city="${selectedCity()}" aria-label="Share profile">
           ${actionIconMarkup("share")}
         </button>
-      `;
-      const sharePanel = `
-        <div class="profile-share-popover" data-share-popover="${profile.name}" hidden>
-          ${shareButtonsMarkup(profile.name, selectedCity(), "customer")}
-        </div>
       `;
       if (!links.length) {
         return `
@@ -11093,7 +11088,6 @@
               ${shareButton}
             </div>
             <div class="meta">No social links posted</div>
-            ${sharePanel}
           </div>
         `;
       }
@@ -11106,7 +11100,6 @@
           <div class="social-links">
             ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
           </div>
-          ${sharePanel}
         </div>
       `;
     }
@@ -12194,15 +12187,7 @@
     function handleShareClick(event) {
       const toggleButton = event.target.closest("[data-toggle-share]");
       if (toggleButton) {
-        const profileName = toggleButton.dataset.toggleShare;
-        const panel = modalBody.querySelector(`[data-share-popover="${CSS.escape(profileName)}"]`);
-        if (panel) {
-          const willOpen = panel.hidden;
-          closeSharePopovers(panel);
-          panel.hidden = !willOpen;
-          toggleButton.classList.toggle("is-open", willOpen);
-          toggleButton.setAttribute("aria-expanded", String(willOpen));
-        }
+        runShareAction(toggleButton.dataset.toggleShare, selectedCity());
         return true;
       }
       const copyButton = event.target.closest("[data-copy-share]");
