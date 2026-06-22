@@ -10292,6 +10292,31 @@
         0 0 26px rgba(155,92,255,.2),
         inset 0 0 14px rgba(255,226,122,.055);
     }
+    /* Tighten full trending badges in ranking-heavy views without changing compact cards. */
+    .dancer-card .badge.trend.full-trend {
+      min-height: 29px;
+      padding: 0 10px 0 9px;
+      gap: 4px;
+      font-size: clamp(10.5px, 2.8vw, 11.5px);
+      line-height: 1;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .dancer-card .badge.trend.full-trend .badge-icon {
+      width: 11px;
+      height: 11px;
+      flex-basis: 11px;
+      margin-right: 0;
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .badge.trend.full-trend {
+        padding-inline: 9px;
+        gap: 3px;
+        font-size: 10.5px;
+      }
+    }
   </style>
 </head>
 <body>
