@@ -6530,6 +6530,36 @@
       min-height: 44px;
     }
 
+    .profile-modal .follow-primary {
+      color: #fff;
+      border: 1px solid rgba(192,132,255,.72);
+      background:
+        linear-gradient(135deg, rgba(155,92,255,.98), rgba(111,66,190,.94)),
+        #6f42be;
+      box-shadow:
+        0 0 26px rgba(155,92,255,.34),
+        0 14px 34px rgba(0,0,0,.36),
+        inset 0 0 18px rgba(255,255,255,.12);
+    }
+
+    .profile-modal .follow-primary:hover {
+      border-color: rgba(213,184,255,.9);
+      box-shadow:
+        0 0 34px rgba(155,92,255,.46),
+        0 16px 38px rgba(0,0,0,.42),
+        inset 0 0 20px rgba(255,255,255,.16);
+    }
+
+    .profile-modal .follow-primary.is-following {
+      color: #d8fbff;
+      border-color: rgba(103,232,249,.7);
+      background: rgba(8,62,72,.82);
+      box-shadow:
+        0 0 24px rgba(34,211,238,.24),
+        0 14px 34px rgba(0,0,0,.34),
+        inset 0 0 18px rgba(34,211,238,.1);
+    }
+
     @media (min-width: 760px) {
       .profile-modal {
         width: min(100%, 820px);
@@ -7902,7 +7932,7 @@
             </div>
           </div>
           <div class="modal-actions">
-            <button class="action-btn" id="followBtn">Follow</button>
+            <button class="action-btn follow-primary" id="followBtn">Follow</button>
             <button class="action-btn secondary" id="notifyBtn">Notify Me</button>
             ${goingButton}
           </div>
@@ -8482,6 +8512,7 @@
       }
       if (event.target.id === "followBtn") {
         event.target.textContent = "Following";
+        event.target.classList.add("is-following");
         const profileName = modalName.textContent;
         const city = citySelect.value;
         if (!followedByCity[city].includes(profileName)) followedByCity[city].push(profileName);
