@@ -10779,7 +10779,7 @@
             </div>
             <button class="action-btn" type="submit">Post shift</button>
           </form>
-          <div class="rule-note" id="shiftPostResult" hidden>83 followers notified.</div>
+          <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only customers.</div>
         </div>
         <div class="auth-card">
           <h3>Payment authorization</h3>
@@ -11281,6 +11281,22 @@
 
     function notificationCount(profile, city = selectedCity()) {
       return `${notificationNumber(profile, city).toLocaleString()} notifications enabled`;
+    }
+
+    function shiftRecipientCounts(profile, city = selectedCity()) {
+      const followers = followerNumber(profile, city);
+      const notifyOnly = seededRange(`${profile.name}|notify-only-shift-recipients|${city}`, 42, 340);
+      return {
+        followers,
+        notifyOnly,
+        total: followers + notifyOnly
+      };
+    }
+
+    function shiftNotificationMessage(profile, city = selectedCity(), dateValue = "") {
+      const counts = shiftRecipientCounts(profile, city);
+      const shiftType = isTonightDate(dateValue, city) ? "Tonight shift" : "Upcoming shift";
+      return `${shiftType} sent to ${counts.total.toLocaleString()} customers: ${counts.followers.toLocaleString()} followers + ${counts.notifyOnly.toLocaleString()} notify-only customers.`;
     }
 
     function compactNumber(value) {
@@ -11966,7 +11982,7 @@
       const result = document.getElementById("shiftPostResult");
       if (result && lastPostedShift) {
         result.hidden = false;
-        result.textContent = "83 followers notified.";
+        result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only customers.";
       }
     }
 
@@ -12013,15 +12029,18 @@
       if (venue) venue.shifts += 1;
       market.stats.shifts += 1;
       dancerSetup.shift = true;
-      lastPostedShift = { city, name, venue: venueName, dateValue };
       citySelect.value = city;
       selectedVenueName = null;
       if (!followedByCity[city].includes(name)) followedByCity[city].push(name);
+      const postedProfile = market.dancers.find((profile) => profile.name === name);
+      const noticeText = shiftNotificationMessage(postedProfile || shiftData, city, dateValue);
+      const noticeCounts = shiftRecipientCounts(postedProfile || shiftData, city);
+      lastPostedShift = { city, name, venue: venueName, dateValue, noticeText, noticeCounts };
       document.getElementById("shiftPostResult").hidden = false;
-      document.getElementById("shiftPostResult").textContent = "83 followers notified.";
+      document.getElementById("shiftPostResult").textContent = noticeText;
       render();
       if (customerDashboard.classList.contains("show")) renderDashboard();
-      showToast("83 followers notified.");
+      showToast(noticeText);
     }
 
     function venueDetails(venue, city) {
@@ -12652,7 +12671,7 @@
           metricCardMarkup("Active", "This month"),
           metricCardMarkup(`${Math.max(2, Math.round(dashboardMetrics.streak / 2))} weeks`, "Weekly schedule streak"),
           metricCardMarkup("Ready", "Followers waiting"),
-          metricCardMarkup("183 notified", "Last posted shift"),
+          metricCardMarkup(compactNumber(lastPostedShift?.noticeCounts?.total || shiftRecipientCounts(activeProfile, city).total), "Last posted shift sent"),
           metricCardMarkup("Weekly summary", "Auto report ready")
         ].join("");
         document.getElementById("dancerClubMetrics").innerHTML = [
