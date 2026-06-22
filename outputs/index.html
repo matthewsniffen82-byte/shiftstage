@@ -7364,6 +7364,21 @@
       return date;
     }
 
+    function upcomingDateForProfile(profile) {
+      if (profile.shiftDate) return new Date(`${profile.shiftDate}T00:00:00`);
+      return dateFromUpcomingLabel(profile.shiftLabel);
+    }
+
+    function upcomingSortValue(profile) {
+      if (!profile.scheduled) return Number.MAX_SAFE_INTEGER;
+      if (isWorkingTonight(profile)) return shiftStartMinutes(profile.time);
+      const date = upcomingDateForProfile(profile);
+      if (!date) return Number.MAX_SAFE_INTEGER - 1;
+      const range = parseShiftRange(profile);
+      const startMinutes = range?.start ?? shiftStartMinutes(profile.time);
+      return date.getTime() + (startMinutes * 60000);
+    }
+
     function daysFromToday(date) {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
@@ -8277,7 +8292,7 @@
           .map((profile) => withTrendingRank(profile, city))
           .sort((a, b) => {
             const weight = (profile) => isWorkingTonight(profile) ? 0 : profile.scheduled ? 1 : 2;
-            return weight(a) - weight(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time);
+            return weight(a) - weight(b) || upcomingSortValue(a) - upcomingSortValue(b);
           });
       }
       if (tab === "venues") {
