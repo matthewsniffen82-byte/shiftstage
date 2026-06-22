@@ -1718,6 +1718,95 @@
       font-size: 22px;
     }
 
+    .approval-command {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px;
+      border: 1px solid rgba(168,85,247,.28);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(168,85,247,.16), transparent 18rem),
+        linear-gradient(180deg, rgba(255,255,255,.045), transparent 72%),
+        rgba(10,10,16,.82);
+      box-shadow: 0 22px 58px rgba(0,0,0,.46), inset 0 0 26px rgba(168,85,247,.06);
+    }
+
+    .approval-command h3 {
+      margin-top: 4px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .approval-command p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .approval-progress {
+      min-width: 150px;
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+      padding: 12px 14px;
+      border: 1px solid rgba(168,85,247,.24);
+      border-radius: 14px;
+      background: rgba(7,7,11,.66);
+      box-shadow: inset 0 0 18px rgba(168,85,247,.06);
+    }
+
+    .approval-progress strong {
+      color: #c084fc;
+      font-size: 26px;
+      line-height: 1;
+      text-shadow: 0 0 18px rgba(168,85,247,.36);
+    }
+
+    .approval-progress span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .dashboard-status-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-chip {
+      display: grid;
+      gap: 5px;
+      padding: 13px;
+      border: 1px solid rgba(206,195,235,.18);
+      border-radius: 14px;
+      background: rgba(12,12,18,.7);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.025);
+    }
+
+    .status-chip span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .status-chip strong {
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .preview-profile-btn {
+      min-height: 58px;
+      border-radius: 14px;
+    }
+
     .status-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1783,6 +1872,19 @@
 
     .setup-step.open .step-body {
       display: grid;
+    }
+
+    .setup-step.locked .step-head {
+      cursor: not-allowed;
+    }
+
+    .setup-step.complete {
+      border-color: rgba(34,197,94,.32);
+    }
+
+    .setup-step.complete .step-head {
+      color: #d9ffe5;
+      background: rgba(34,197,94,.08);
     }
 
     .photo-upload-grid {
@@ -9801,6 +9903,34 @@
         font-size: 10px;
       }
     }
+
+    @media (max-width: 560px) {
+      .approval-command,
+      .dashboard-status-row {
+        grid-template-columns: 1fr;
+      }
+
+      .approval-command {
+        padding: 14px;
+      }
+
+      .approval-command h3 {
+        font-size: 20px;
+      }
+
+      .approval-progress {
+        min-width: 0;
+        justify-items: start;
+      }
+
+      .approval-progress span {
+        text-align: left;
+      }
+
+      .preview-profile-btn {
+        min-height: 48px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -10156,28 +10286,50 @@
             <span>Monthly subscription</span>
           </div>
         </div>
+        <div class="approval-command" id="dancerApprovalCommand">
+          <div>
+            <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
+            <h3 id="dancerApprovalTitle">Finish approval to go live</h3>
+            <p id="dancerApprovalCopy">Complete each step in order. Your public profile and paid subscription activate only after approval.</p>
+          </div>
+          <div class="approval-progress">
+            <strong id="dancerApprovalProgress">0/4</strong>
+            <span id="dancerApprovalNext">Next: Create profile</span>
+          </div>
+        </div>
+        <div class="dashboard-status-row">
+          <div class="status-chip">
+            <span>Subscription</span>
+            <strong id="dancerSubscriptionStatus">Authorized after approval</strong>
+          </div>
+          <div class="status-chip">
+            <span>Public profile</span>
+            <strong id="dancerPublicStatus">Pending review</strong>
+          </div>
+          <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
+        </div>
         <div class="auth-card">
           <div class="value-message" id="dancerValueMessage">Posting your schedule brings customers, followers, and direction requests.</div>
           <h3>Last 30 days</h3>
           <div class="metric-grid" id="dancerLast30Metrics" aria-label="Dancer profile metrics"></div>
         </div>
-        <div class="auth-card momentum-card">
+        <div class="auth-card momentum-card approved-analytics">
           <h3>Your market momentum</h3>
           <div class="metric-grid" id="dancerMomentumMetrics" aria-label="Market momentum"></div>
         </div>
-        <div class="auth-card">
+        <div class="auth-card approved-analytics">
           <h3>Social growth</h3>
           <div class="metric-grid" id="dancerSocialMetrics" aria-label="Social growth"></div>
         </div>
-        <div class="auth-card">
+        <div class="auth-card approved-analytics">
           <h3>Consistency streaks</h3>
           <div class="metric-grid" id="dancerStreakMetrics" aria-label="Consistency streaks"></div>
         </div>
-        <div class="auth-card">
+        <div class="auth-card approved-analytics">
           <h3>Club performance</h3>
           <div class="metric-grid" id="dancerClubMetrics" aria-label="Club performance"></div>
         </div>
-        <div class="auth-card">
+        <div class="auth-card approved-analytics">
           <h3>Your week on Dancr</h3>
           <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
           <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly summary"></div>
@@ -11901,11 +12053,36 @@
 
     function renderDancerSetup() {
       const approved = dancerSetup.approval;
+      const steps = setupOrder();
+      const completedSteps = steps.filter((step) => dancerSetup[step]).length;
+      const nextStep = nextIncompleteStep();
+      const nextLabels = {
+        profile: "Create profile",
+        photos: "Upload photos",
+        verification: "Start ID + selfie",
+        approval: "Platform review"
+      };
       document.getElementById("dancerApprovalStatus").textContent = dancerSetup.approval ? "Approved" : "Pending";
       const dancerName = activeDancerName();
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
       const dashboardMetrics = dancerDashboardMetrics(activeProfile, city);
+      dancerDashboard.classList.toggle("is-approved", approved);
+      dancerDashboard.classList.toggle("is-pending-approval", !approved);
+      document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
+        section.hidden = !approved;
+      });
+      const approvalCommand = document.getElementById("dancerApprovalCommand");
+      if (approvalCommand) approvalCommand.classList.toggle("approved", approved);
+      document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
+      document.getElementById("dancerApprovalTitle").textContent = approved ? "Approved. Start posting shifts." : "Finish approval to go live";
+      document.getElementById("dancerApprovalCopy").textContent = approved
+        ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
+        : "Complete each step in order. Your public profile and paid subscription activate only after approval.";
+      document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
+      document.getElementById("dancerApprovalNext").textContent = approved ? "Ready to post shifts" : `Next: ${nextLabels[nextStep] || "Approval"}`;
+      document.getElementById("dancerSubscriptionStatus").textContent = approved ? "$9.99/mo active" : "Authorized after approval";
+      document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Pending review";
       document.getElementById("dancerFollowerStat").textContent = activeProfile
         ? followerNumber(activeProfile, city).toLocaleString()
         : "0";
@@ -11913,9 +12090,10 @@
         ? notificationNumber(activeProfile, city).toLocaleString()
         : "0";
       if (dashboardMetrics) {
-        document.getElementById("dancerValueMessage").textContent =
-          `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`;
-        document.getElementById("dancerLast30Metrics").innerHTML = [
+        document.getElementById("dancerValueMessage").textContent = approved
+          ? `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`
+          : "Complete approval to unlock live analytics. Once approved, Dancr shows profile views, schedule views, follower growth, social clicks, and club direction requests.";
+        document.getElementById("dancerLast30Metrics").innerHTML = (approved ? [
           metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
@@ -11926,7 +12104,12 @@
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.signals.favorites), "Favorites added")
-        ].join("");
+        ] : [
+          metricCardMarkup("Locked", "Profile views"),
+          metricCardMarkup("Locked", "Schedule views"),
+          metricCardMarkup("Locked", "Followers gained"),
+          metricCardMarkup("Locked", "Notifications sent")
+        ]).join("");
         document.getElementById("dancerMomentumMetrics").innerHTML = [
           metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
           metricCardMarkup(`#${seededRange(`${activeProfile.name}|week-rank|${city}`, 1, 5)}`, "Trending this week"),
@@ -11984,7 +12167,7 @@
           <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle"></div>
           <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="@stagehandle"></div>
           <div class="field"><label for="setupX">Optional X</label><input id="setupX" type="text" value="${dancerSignupSocials.x}" placeholder="@stagehandle"></div>
-          <div class="rule-note">Allowed: Instagram, TikTok, Snapchat, and X. No adult-content links. No solicitation links.</div>
+          <div class="rule-note">This is what customers see after approval. Allowed: Instagram, TikTok, Snapchat, and X. No adult-content links. No solicitation links.</div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
       `;
@@ -11994,15 +12177,15 @@
           <div class="upload-slot">Photo 2</div>
           <div class="upload-slot">Photo 3</div>
         </div>
-        <div class="rule-note">Photos upload for review and stay pending until admin approval.</div>
+        <div class="rule-note">Photos stay pending until admin approval. Approved photos appear in the public gallery; rejected photos stay hidden.</div>
         <button class="action-btn" data-complete-step="photos">Submit photos for review</button>
       `;
       const verificationBody = `
-        <div class="info-tile"><strong>Third-party check</strong><div class="meta">Start ID and selfie verification. Dancer remains Pending until approved.</div></div>
+        <div class="info-tile"><strong>Third-party check</strong><div class="meta">Start ID and selfie verification. Dancr only shows Pending until this passes.</div></div>
         <button class="action-btn" data-complete-step="verification">Start ID + selfie verification</button>
       `;
       const approvalBody = `
-        <div class="rule-note">Approval status is pending until platform admin review is complete.</div>
+        <div class="rule-note">Platform review checks profile info, photos, and verification. Approved profiles unlock public schedules; rejected content stays hidden.</div>
         <button class="action-btn" data-complete-step="approval">Simulate admin approval</button>
       `;
       document.getElementById("setupChecklist").innerHTML = [
@@ -12567,6 +12750,21 @@
     document.getElementById("stripeClose").addEventListener("click", closeStripeCheckoutPage);
     document.getElementById("dashboardClose").addEventListener("click", closeDashboard);
     document.getElementById("dancerDashboardClose").addEventListener("click", closeDancerDashboard);
+    document.getElementById("previewPublicProfile").addEventListener("click", () => {
+      const city = activeDancerCity();
+      const profile = activeDancerProfile(city);
+      if (!profile) {
+        showToast("Create a profile first");
+        return;
+      }
+      closeDancerDashboard();
+      citySelect.value = city;
+      activeTab = "dancers";
+      selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
+      render();
+      openProfileModal(profile.name);
+    });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
     document.getElementById("adminLoginBtn").addEventListener("click", (event) => {
       event.target.textContent = "Logged in as platform admin";
