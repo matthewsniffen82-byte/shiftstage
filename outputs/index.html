@@ -9111,8 +9111,46 @@
     }
 
     .profile-modal .social-tile .profile-share-popover {
-      margin-top: 9px;
-      padding-top: 9px;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 70;
+      width: min(calc(100vw - 28px), 430px);
+      margin: 0;
+      padding: 14px;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(192,132,255,.34);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.045), transparent 76%),
+        rgba(9,8,14,.97);
+      box-shadow:
+        0 24px 80px rgba(0,0,0,.78),
+        0 0 34px rgba(155,92,255,.2),
+        inset 0 0 18px rgba(192,132,255,.045);
+      backdrop-filter: blur(18px) saturate(120%);
+    }
+
+    .profile-modal .social-tile .profile-share-popover .share-panel {
+      gap: 10px;
+    }
+
+    .profile-modal .social-tile .profile-share-popover .share-link-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .profile-modal .social-tile .profile-share-popover .share-url {
+      padding-block: 10px;
+      font-size: 12px;
+    }
+
+    .profile-modal .social-tile .profile-share-popover .share-buttons {
+      gap: 7px;
+    }
+
+    .profile-modal .social-tile .profile-share-popover .share-note {
+      font-size: 11px;
+      color: #aaa1b8;
     }
 
     @media (max-width: 420px) {
@@ -9124,6 +9162,20 @@
         right: 12px;
         width: 34px;
         height: 34px;
+      }
+
+      .profile-modal .social-tile .profile-share-popover {
+        width: min(calc(100vw - 18px), 360px);
+        padding: 12px;
+        border-radius: 16px;
+      }
+
+      .profile-modal .social-tile .profile-share-popover .share-link-row {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-modal .social-tile .profile-share-popover .share-copy {
+        width: 100%;
       }
 
       .profile-modal .social-tile .social-link {
@@ -12069,6 +12121,19 @@
       await copyText(url, "Profile link copied");
     }
 
+    function closeSharePopovers(exceptPanel = null) {
+      document.querySelectorAll("[data-share-popover]").forEach((panel) => {
+        if (panel === exceptPanel) return;
+        panel.hidden = true;
+      });
+      document.querySelectorAll("[data-toggle-share]").forEach((button) => {
+        const panel = document.querySelector(`[data-share-popover="${CSS.escape(button.dataset.toggleShare)}"]`);
+        const isOpen = panel && !panel.hidden;
+        button.classList.toggle("is-open", isOpen);
+        button.setAttribute("aria-expanded", String(Boolean(isOpen)));
+      });
+    }
+
     function handleShareClick(event) {
       const toggleButton = event.target.closest("[data-toggle-share]");
       if (toggleButton) {
@@ -12076,6 +12141,7 @@
         const panel = modalBody.querySelector(`[data-share-popover="${CSS.escape(profileName)}"]`);
         if (panel) {
           const willOpen = panel.hidden;
+          closeSharePopovers(panel);
           panel.hidden = !willOpen;
           toggleButton.classList.toggle("is-open", willOpen);
           toggleButton.setAttribute("aria-expanded", String(willOpen));
@@ -12111,6 +12177,7 @@
 
     modalBody.addEventListener("click", (event) => {
       if (handleShareClick(event)) return;
+      if (!event.target.closest("[data-share-popover]")) closeSharePopovers();
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
         recordUniqueTrendEvent("socialClicks", citySelect.value, socialLink.dataset.profile);
@@ -12185,6 +12252,7 @@
 
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target === profileBackdrop) closeProfileModal();
+      if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
     });
 
     document.querySelectorAll("[data-legal-page]").forEach((button) => {
