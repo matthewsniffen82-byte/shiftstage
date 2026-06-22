@@ -9607,6 +9607,7 @@
       const followers = followerNumber(profile, city);
       const newFollowers = Math.max(18, Math.round(followers * 0.035) + seededRange(`${profile.name}|new-followers|${city}`, 12, 94));
       const profileViews30 = Math.round(signals.uniqueProfileViews * 3.15 + followers * 0.16);
+      const scheduleViews30 = Math.round(signals.scheduleViews * 2.4 + signals.uniqueProfileViews * 0.08);
       const directionRequests30 = Math.round(signals.directionRequests * 1.35 + signals.clubPageClicks * 0.22);
       const instagramClicks = seededRange(`${profile.name}|instagram-clicks|${city}`, 36, 180) + uniqueTrendEventCount("socialClicks", city, profile.name) * 4;
       const snapchatClicks = seededRange(`${profile.name}|snapchat-clicks|${city}`, 22, 130);
@@ -9625,6 +9626,7 @@
         notifications: notificationNumber(profile, city),
         newFollowers,
         profileViews30,
+        scheduleViews30,
         directionRequests30,
         instagramClicks,
         snapchatClicks,
@@ -10765,9 +10767,10 @@
         : "0";
       if (dashboardMetrics) {
         document.getElementById("dancerValueMessage").textContent =
-          `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile and ${compactNumber(dashboardMetrics.directionRequests30)} people requested directions to ${dashboardMetrics.venue} this month.`;
+          `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`;
         document.getElementById("dancerLast30Metrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
           metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Club direction requests"),
