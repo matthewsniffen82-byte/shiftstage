@@ -261,13 +261,6 @@
       box-shadow: 0 0 18px rgba(155,92,255,.16);
     }
 
-    .utility-menu-item.discreet-admin {
-      color: #9b93aa;
-      border-color: rgba(255,255,255,.09);
-      background: rgba(12,12,16,.62);
-      font-size: 12px;
-    }
-
     .icon-menu-btn.active {
       border-color: rgba(192,132,255,.58);
       background: rgba(35,23,52,.82);
@@ -514,6 +507,16 @@
       box-shadow: inset 0 0 12px rgba(255,255,255,.025);
       font-size: 12px;
       font-weight: 800;
+    }
+
+    .legal-link.admin-legal-link {
+      margin-left: auto;
+      color: rgba(168,161,186,.72);
+      border-color: rgba(255,255,255,.08);
+      background: rgba(7,7,10,.46);
+      font-size: 11px;
+      font-weight: 850;
+      opacity: .78;
     }
 
     .card {
@@ -9049,7 +9052,6 @@
               <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
             </button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
-              <button class="utility-menu-item discreet-admin" id="adminBtn" type="button">Admin</button>
               <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
             </div>
@@ -9110,6 +9112,7 @@
         <button class="legal-link" data-legal-page="privacyPage">Privacy</button>
         <button class="legal-link" data-legal-page="guidelinesPage">Guidelines</button>
         <button class="legal-link" data-legal-page="refundPage">Refunds</button>
+        <button class="legal-link admin-legal-link" id="adminBtn" type="button">Platform admin</button>
       </nav>
     </main>
 
