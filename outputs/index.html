@@ -7991,13 +7991,22 @@
       return shiftWindowForDate(profile, profile.shiftDate || (profile.tonight ? today : ""));
     }
 
+    function goingTonightIsOpen(profile, now = new Date()) {
+      if (!profile.scheduled || !profile.time) return false;
+      if (activeShiftWindow(profile, now)) return true;
+      const today = localDateValue(now);
+      if (profile.shiftDate) return profile.shiftDate === today;
+      return Boolean(profile.tonight);
+    }
+
     function shiftStatus(profile) {
       const activeWindow = activeShiftWindow(profile);
       if (activeWindow) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
+      if (goingTonightIsOpen(profile)) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
       if (profile.tonight && profile.scheduled) {
         const window = upcomingShiftWindow(profile);
         if (window && new Date() < window.start) {
-          return { state: "scheduled", label: `0 going · opens at ${profile.time.split(/\s+-\s+/)[0]}` };
+          return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
         }
         return { state: "ended", label: "0 going · shift ended" };
       }
