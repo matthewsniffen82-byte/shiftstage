@@ -5910,6 +5910,78 @@
         aspect-ratio: auto;
       }
     }
+
+    /* Final homepage compact polish */
+    .stack {
+      gap: 16px;
+    }
+
+    .reference-hero {
+      min-height: 194px;
+      padding: 26px;
+    }
+
+    .reference-hero h2 {
+      font-size: clamp(30px, 7vw, 46px);
+    }
+
+    .reference-hero p {
+      margin-top: 12px;
+    }
+
+    .location-btn {
+      min-height: 44px;
+    }
+
+    @media (max-width: 899px) {
+      .stack {
+        gap: 14px;
+      }
+
+      .reference-hero {
+        min-height: 224px;
+        padding: 20px;
+      }
+
+      .hero-copy {
+        min-height: 178px;
+      }
+
+      .reference-hero h2 {
+        font-size: clamp(30px, 8.2vw, 52px);
+      }
+
+      .reference-hero p {
+        font-size: 14px;
+      }
+
+      .controls {
+        padding: 16px;
+      }
+
+      .location-btn {
+        min-height: 44px;
+        font-size: 16px;
+      }
+
+      .stats {
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .reference-hero {
+        min-height: 210px;
+      }
+
+      .hero-copy {
+        min-height: 166px;
+      }
+
+      .reference-hero h2 {
+        font-size: clamp(28px, 10vw, 42px);
+      }
+    }
   </style>
 </head>
 <body>
