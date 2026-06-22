@@ -6249,6 +6249,11 @@
       line-height: 1.35;
     }
 
+    .profile-modal .interest-count {
+      color: #f5f5f5;
+      font-weight: 900;
+    }
+
     .profile-modal .modal-actions {
       gap: 12px;
     }
@@ -7159,6 +7164,7 @@
     };
     let dashboardTonightExpanded = false;
     let dashboardFollowedExpanded = false;
+    const goingTonightByProfile = {};
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -7228,6 +7234,11 @@
 
     function followerCount(profile) {
       return `${Math.max(1200, 12800 - (profile.trend * 740)).toLocaleString()} followers`;
+    }
+
+    function tonightInterestCount(profile) {
+      if (goingTonightByProfile[profile.name] !== undefined) return goingTonightByProfile[profile.name];
+      return privateTrendingSignals(profile).goingTonight;
     }
 
     function shiftStartMinutes(time) {
@@ -7705,11 +7716,17 @@
               <strong>Followers</strong>
               <div class="meta">${followerCount(profile)}</div>
             </div>
+            ${profile.tonight ? `
+              <div class="info-tile" id="tonightInterestTile">
+                <strong>Tonight interest</strong>
+                <div class="meta"><span class="interest-count" id="tonightInterestCount">${tonightInterestCount(profile).toLocaleString()}</span> going</div>
+              </div>
+            ` : ""}
           </div>
           <div class="modal-actions">
             <button class="action-btn" id="followBtn">Follow</button>
             <button class="action-btn secondary" id="notifyBtn">Notify Me</button>
-            ${profile.tonight ? '<button class="action-btn going-btn" id="goingBtn">I\'m Going Tonight</button>' : ""}
+            ${profile.tonight ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">I'm Going Tonight</button>` : ""}
           </div>
         `;
       }
@@ -8295,6 +8312,13 @@
         showToast("Notifications enabled");
       }
       if (event.target.id === "goingBtn") {
+        if (event.target.classList.contains("is-going")) return;
+        const profileName = event.target.dataset.profile;
+        const countEl = document.getElementById("tonightInterestCount");
+        const currentCount = Number(countEl?.textContent.replace(/,/g, "")) || 0;
+        goingTonightByProfile[profileName] = currentCount + 1;
+        if (countEl) countEl.textContent = goingTonightByProfile[profileName].toLocaleString();
+        event.target.classList.add("is-going");
         event.target.textContent = "You're going tonight";
         showToast("Added to tonight");
       }
