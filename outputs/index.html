@@ -6817,6 +6817,108 @@
         gap: 8px;
       }
     }
+
+    /* Final modal compact polish */
+    .modal-image {
+      height: clamp(300px, 44dvh, 410px);
+      background-size: cover, cover, cover !important;
+      background-position: center, center 28%, center;
+    }
+
+    .modal-image.two {
+      background-position: center, center 36%, center;
+    }
+
+    .modal-image.three {
+      background-position: center, center 32%, center;
+    }
+
+    .modal-image:after {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(155,92,255,.08), transparent 0 28%),
+        linear-gradient(180deg, rgba(5,5,8,0) 30%, rgba(5,5,8,.18) 55%, rgba(5,5,8,.9) 100%);
+    }
+
+    .modal-identity {
+      top: 14px;
+      left: 14px;
+      padding: 8px 10px;
+      gap: 6px;
+      border-radius: 13px;
+      max-width: calc(100% - 126px);
+      background: rgba(8,8,10,.34);
+    }
+
+    .modal-identity h2 {
+      font-size: 18px;
+    }
+
+    .modal-identity #modalCity {
+      min-height: 24px;
+      padding-inline: 9px;
+      font-size: 11px;
+    }
+
+    .modal-rank {
+      top: 18px;
+    }
+
+    .profile-modal .close-btn {
+      top: 12px;
+      right: 12px;
+    }
+
+    .profile-modal .gallery {
+      gap: 5px;
+      padding: 6px 14px 4px;
+    }
+
+    .profile-modal .thumb {
+      height: 46px;
+      border-radius: 9px;
+    }
+
+    .profile-modal .modal-body {
+      padding-top: 6px;
+    }
+
+    @media (min-width: 760px) {
+      .modal-image {
+        height: clamp(320px, 43dvh, 430px);
+      }
+
+      .profile-modal .gallery {
+        max-width: 620px;
+        width: 100%;
+        margin-inline: auto;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .modal-image {
+        height: clamp(290px, 43dvh, 390px);
+      }
+
+      .modal-identity {
+        top: 10px;
+        left: 10px;
+        max-width: calc(100% - 96px);
+      }
+
+      .modal-rank {
+        top: 58px;
+        right: 10px;
+      }
+
+      .profile-modal .gallery {
+        gap: 4px;
+        padding-inline: 10px;
+      }
+
+      .profile-modal .thumb {
+        height: 42px;
+      }
+    }
   </style>
 </head>
 <body>
