@@ -89,6 +89,22 @@
       min-width: 0;
     }
 
+    .brand-home {
+      padding: 0;
+      min-height: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .brand-home:focus-visible {
+      outline: 2px solid rgba(192,132,255,.72);
+      outline-offset: 6px;
+      border-radius: 12px;
+    }
+
     .mark {
       width: 38px;
       aspect-ratio: 1;
@@ -6561,13 +6577,13 @@
   <div class="app">
     <header>
       <div class="topbar">
-        <div class="brand">
+        <button class="brand brand-home" id="brandHome" type="button" aria-label="Go to ShiftStage home">
           <div class="mark" aria-hidden="true"></div>
           <div>
             <h1>ShiftStage</h1>
             <div class="subhead" data-city-label>Las Vegas</div>
           </div>
-        </div>
+        </button>
         <div class="menu" aria-label="Menu">
           <button class="menu-btn admin-link" id="adminBtn">Admin</button>
           <button class="menu-btn" aria-label="Search">
@@ -7197,6 +7213,7 @@
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
     const adminBtn = document.getElementById("adminBtn");
+    const brandHome = document.getElementById("brandHome");
     const dashTonightList = document.getElementById("dashTonightList");
     const dashFollowedList = document.getElementById("dashFollowedList");
     const dashTonightViewAll = document.getElementById("dashTonightViewAll");
@@ -8661,6 +8678,16 @@
         document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
         render();
       });
+    });
+
+    brandHome.addEventListener("click", () => {
+      activeTab = "tonight";
+      tonightExpanded = false;
+      dancersExpanded = false;
+      selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     citySelect.addEventListener("change", () => {
