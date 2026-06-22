@@ -7220,6 +7220,27 @@
       background-image: url("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=84") !important;
     }
 
+    .profile-modal .schedule-stack {
+      display: grid;
+      gap: 7px;
+      margin-top: 6px;
+    }
+
+    .profile-modal .schedule-stack .pill-row {
+      justify-content: flex-start;
+      gap: 6px;
+      margin: 0;
+    }
+
+    .profile-modal .schedule-stack .detail-line {
+      gap: 6px;
+    }
+
+    .profile-modal .schedule-stack .meta,
+    .profile-modal .schedule-stack .venue-inline-link {
+      line-height: 1.2;
+    }
+
     .profile-modal .gallery {
       position: relative;
       z-index: 3;
@@ -8653,8 +8674,10 @@
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="pill-row">${clockIconMarkup()}<span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
-            <div class="meta">${venueIconMarkup()}Next: <button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+            <div class="schedule-stack">
+              <div class="pill-row">${clockIconMarkup()}<span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
+              <div class="meta detail-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+            </div>
           </div>
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
