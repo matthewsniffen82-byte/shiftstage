@@ -7316,6 +7316,41 @@
       opacity: .08;
     }
 
+    /* Lighter glass identity plate on full profile photos */
+    .profile-modal .modal-identity {
+      padding: 7px 9px;
+      gap: 5px;
+      border-radius: 12px;
+      border-color: rgba(192,132,255,.14);
+      background: rgba(5,5,8,.24);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.28),
+        inset 0 0 10px rgba(155,92,255,.018);
+      backdrop-filter: blur(14px) saturate(120%);
+    }
+
+    .profile-modal .modal-identity h2 {
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .profile-modal .modal-identity .pill-row {
+      margin-top: 4px;
+    }
+
+    .profile-modal .modal-identity #modalCity {
+      min-height: 22px;
+      padding-inline: 8px;
+      font-size: 10.5px;
+      background: rgba(8,8,12,.36);
+    }
+
+    .profile-modal .modal-identity .verified-mark {
+      width: 18px;
+      height: 18px;
+      font-size: 11px;
+    }
+
     .profile-modal .gallery {
       position: relative;
       z-index: 3;
