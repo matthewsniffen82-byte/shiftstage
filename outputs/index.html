@@ -6253,6 +6253,160 @@
         font-size: 15px;
       }
     }
+
+    /* Full-screen compact profile view */
+    .modal-backdrop.show {
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    .profile-modal {
+      width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-inline: 0;
+      border-bottom: 0;
+    }
+
+    .modal-image {
+      flex: 0 0 auto;
+      height: clamp(320px, 46dvh, 430px);
+      min-height: 0;
+      border-radius: 0;
+      background-size: cover, cover, cover;
+      background-position: center, center 22%, center;
+    }
+
+    .modal-identity {
+      top: 16px;
+      left: 16px;
+      padding: 11px 13px;
+      border-radius: 16px;
+      background: rgba(8,8,10,.52);
+      backdrop-filter: blur(16px);
+    }
+
+    .modal-identity h2 {
+      display: flex;
+      align-items: center;
+      font-size: 22px;
+      gap: 0;
+    }
+
+    .modal-identity #modalStatus:not(.pending) {
+      display: none;
+    }
+
+    .modal-identity .pill-row {
+      margin-top: 8px;
+    }
+
+    .modal-rank {
+      top: 20px;
+      right: 76px;
+    }
+
+    .profile-modal .close-btn {
+      top: 14px;
+      right: 14px;
+    }
+
+    .profile-modal .gallery {
+      flex: 0 0 auto;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px 14px 8px;
+    }
+
+    .profile-modal .thumb {
+      position: relative;
+      height: 72px;
+      min-height: 0;
+      border-radius: 11px;
+    }
+
+    .profile-modal .modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px 14px 14px;
+    }
+
+    .profile-modal .modal-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .profile-modal .info-tile {
+      min-height: 72px;
+      padding: 11px 13px;
+      border-radius: 16px;
+    }
+
+    .profile-modal .modal-actions {
+      margin-top: 10px;
+      gap: 10px;
+    }
+
+    .profile-modal .action-btn,
+    .profile-modal .action-btn.secondary,
+    .profile-modal .going-btn {
+      min-height: 42px;
+      font-size: 15px;
+    }
+
+    .profile-modal .going-btn {
+      min-height: 44px;
+    }
+
+    @media (min-width: 760px) {
+      .profile-modal {
+        width: min(100%, 820px);
+        margin: 0 auto;
+        border-inline: 1px solid rgba(192,132,255,.24);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .modal-image {
+        height: clamp(300px, 43dvh, 390px);
+      }
+
+      .modal-identity {
+        top: 12px;
+        left: 10px;
+        max-width: calc(100% - 100px);
+      }
+
+      .modal-identity h2 {
+        font-size: 19px;
+      }
+
+      .modal-rank {
+        top: 62px;
+        right: 10px;
+      }
+
+      .profile-modal .gallery {
+        padding: 8px 10px 6px;
+      }
+
+      .profile-modal .thumb {
+        height: 58px;
+      }
+
+      .profile-modal .modal-body {
+        padding: 8px 10px 10px;
+      }
+
+      .profile-modal .modal-grid {
+        gap: 8px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -7459,7 +7613,7 @@
       const basePhoto = portraitClass(profileIndex);
       savedScrollY = window.scrollY;
 
-      modalName.textContent = profile.name;
+      modalName.innerHTML = `${profile.name}${isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>'}`;
       modalStatus.textContent = profile.status;
       modalStatus.className = isPending ? "badge pending" : "badge";
       modalCity.textContent = city;
@@ -7500,11 +7654,13 @@
 
       profileBackdrop.classList.add("show");
       profileBackdrop.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
     }
 
     function closeProfileModal() {
       profileBackdrop.classList.remove("show");
       profileBackdrop.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
       window.scrollTo(0, savedScrollY);
     }
 
