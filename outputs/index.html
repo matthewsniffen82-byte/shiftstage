@@ -6829,10 +6829,10 @@
         : profile.tonight
           ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
         : profile.scheduled
-            ? `<div class="pill-row"><span class="pill upcoming">Upcoming • ${profile.venue} • ${upcomingLabel} • ${profile.time}</span></div>`
+            ? `<div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="pill-row"><span class="pill muted">No shifts posted</span></div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta">${profile.venue} · ${profile.distance}</div>`
+        ? `<div class="meta">${profile.tonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
@@ -6991,8 +6991,8 @@
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="pill-row"><span class="pill upcoming">Upcoming • ${profile.venue} • ${upcomingLabel} • ${profile.time}</span></div>
-            <div class="meta">${profile.venue}</div>
+            <div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>
+            <div class="meta">Next: ${profile.venue}</div>
           </div>
           <div class="info-tile">
             <strong>Tonight</strong>
