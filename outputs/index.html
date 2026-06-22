@@ -10111,6 +10111,38 @@
         font-size: 10.2px;
       }
     }
+
+    /* Keep the hero text unchanged, but make the dancer silhouette read beside the beam. */
+    .reference-hero:before {
+      right: calc(6% + 6px);
+      bottom: -20px;
+      width: clamp(176px, 25vw, 230px);
+      height: clamp(238px, 36vw, 326px);
+      opacity: .48;
+      mix-blend-mode: normal;
+      filter:
+        drop-shadow(0 0 16px rgba(139,92,246,.24))
+        drop-shadow(0 0 34px rgba(91,33,255,.16));
+    }
+
+    @media (min-width: 760px) {
+      .reference-hero:before {
+        right: calc(6% + 10px);
+        width: clamp(188px, 18vw, 238px);
+        height: clamp(260px, 28vw, 332px);
+        opacity: .52;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .reference-hero:before {
+        right: calc(2% + 4px);
+        bottom: -24px;
+        width: 148px;
+        height: 224px;
+        opacity: .42;
+      }
+    }
   </style>
 </head>
 <body>
