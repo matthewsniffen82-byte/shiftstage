@@ -5153,10 +5153,10 @@
 
     .badge,
     .filter-pill.verified {
-      color: #8fffe0;
-      border-color: rgba(64,255,210,.46);
-      background: rgba(20,184,166,.16);
-      box-shadow: 0 0 17px rgba(64,255,210,.2), inset 0 0 12px rgba(64,255,210,.09);
+      color: #67E8F9;
+      border-color: #22D3EE;
+      background: rgba(34,211,238,.15);
+      box-shadow: 0 0 16px rgba(34,211,238,.25), inset 0 0 12px rgba(34,211,238,.08);
     }
 
     .badge.pending,
@@ -5170,26 +5170,26 @@
 
     .badge.trend,
     .filter-pill.trending {
-      color: #fff08a;
-      border-color: rgba(255,214,84,.78);
-      background: linear-gradient(180deg, rgba(255,214,84,.26), rgba(111,76,10,.34));
-      box-shadow: 0 0 24px rgba(255,214,84,.36), inset 0 0 14px rgba(255,214,84,.13);
-      text-shadow: 0 0 11px rgba(255,214,84,.34);
+      color: #FDE047;
+      border-color: #FACC15;
+      background: rgba(250,204,21,.15);
+      box-shadow: 0 0 16px rgba(250,204,21,.25), inset 0 0 12px rgba(250,204,21,.08);
+      text-shadow: 0 0 10px rgba(250,204,21,.25);
     }
 
     .pill.tonight,
     .filter-pill.tonight {
-      color: #7dd3ff;
-      border-color: rgba(56,189,248,.58);
-      background: rgba(14,116,221,.17);
-      box-shadow: 0 0 19px rgba(56,189,248,.26), inset 0 0 12px rgba(56,189,248,.11);
+      color: #C084FC;
+      border-color: #8B5CF6;
+      background: rgba(139,92,246,.15);
+      box-shadow: 0 0 18px rgba(139,92,246,.35), inset 0 0 12px rgba(139,92,246,.09);
     }
 
     .pill.upcoming {
-      color: #d8bdff;
-      border-color: rgba(192,132,255,.5);
-      background: rgba(155,92,255,.15);
-      box-shadow: 0 0 18px rgba(155,92,255,.22), inset 0 0 12px rgba(155,92,255,.09);
+      color: #93C5FD;
+      border-color: #3B82F6;
+      background: rgba(59,130,246,.15);
+      box-shadow: 0 0 16px rgba(59,130,246,.25), inset 0 0 12px rgba(59,130,246,.08);
     }
 
     .dancer-card .pill.featured,
@@ -5759,6 +5759,45 @@
     .dancer-card.pending {
       border-color: rgba(245,190,58,.4);
       box-shadow: 0 22px 54px rgba(0,0,0,.52), 0 0 18px rgba(245,190,58,.12), inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .dancer-card .badge,
+    .dancer-card .pill,
+    .profile-modal .badge,
+    .profile-modal .pill {
+      border-radius: 999px;
+      border-width: 1px;
+      min-height: 28px;
+      padding: 0 12px;
+      font-weight: 900;
+      transition: box-shadow .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .dancer-card .badge:hover,
+    .dancer-card .pill:hover,
+    .profile-modal .badge:hover,
+    .profile-modal .pill:hover {
+      transform: translateY(-1px);
+    }
+
+    .dancer-card .badge:not(.pending):not(.trend):hover,
+    .profile-modal .badge:not(.pending):not(.trend):hover {
+      box-shadow: 0 0 20px rgba(34,211,238,.32), inset 0 0 12px rgba(34,211,238,.1);
+    }
+
+    .dancer-card .badge.trend:hover,
+    .profile-modal .badge.trend:hover {
+      box-shadow: 0 0 22px rgba(250,204,21,.34), inset 0 0 12px rgba(250,204,21,.1);
+    }
+
+    .dancer-card .pill.tonight:hover,
+    .profile-modal .pill.tonight:hover {
+      box-shadow: 0 0 24px rgba(139,92,246,.45), inset 0 0 12px rgba(139,92,246,.1);
+    }
+
+    .dancer-card .pill.upcoming:hover,
+    .profile-modal .pill.upcoming:hover {
+      box-shadow: 0 0 22px rgba(59,130,246,.34), inset 0 0 12px rgba(59,130,246,.1);
     }
   </style>
 </head>
