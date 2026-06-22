@@ -8946,6 +8946,14 @@
             <span>Verification status</span>
           </div>
           <div class="stat">
+            <strong id="dancerFollowerStat">0</strong>
+            <span>Followers</span>
+          </div>
+          <div class="stat">
+            <strong id="dancerNotificationStat">0</strong>
+            <span>Notifications enabled</span>
+          </div>
+          <div class="stat">
             <strong>$9.99</strong>
             <span>Monthly subscription</span>
           </div>
@@ -9335,6 +9343,9 @@
       Atlanta: ["Zola Saint", "Nora Lux", "Kali West", "Sia Gray", "Vada Lane", "Lyra Knox"],
       "New York": ["Eden Vale", "Val Stone", "Opal Hart", "Tess Noir", "Cami Moon", "Nell Sable"]
     };
+    const notifiedByCity = Object.fromEntries(
+      Object.entries(followedByCity).map(([city, names]) => [city, [...names]])
+    );
 
     const notificationOptions = [
       "Followed dancers only",
@@ -9464,6 +9475,16 @@
       return (followedByCity[city] || []).includes(profileName);
     }
 
+    function isNotificationOn(city, profileName) {
+      return (notifiedByCity[city] || []).includes(profileName);
+    }
+
+    function enableProfileNotifications(city, profileName) {
+      const notificationList = notifiedByCity[city] || (notifiedByCity[city] = []);
+      if (!notificationList.includes(profileName)) notificationList.push(profileName);
+      recordUniqueTrendEvent("interested", city, profileName);
+    }
+
     function followerNumber(profile, city = selectedCity()) {
       const base = Math.max(1200, 12800 - (profile.trend * 740));
       return isFollowingProfile(city, profile.name) ? base + 1 : base;
@@ -9471,6 +9492,16 @@
 
     function followerCount(profile, city = selectedCity()) {
       return `${followerNumber(profile, city).toLocaleString()} followers`;
+    }
+
+    function notificationNumber(profile, city = selectedCity()) {
+      const followerBase = followerNumber(profile, city);
+      const seededSubscribers = Math.round(followerBase * 0.78) + seededRange(`${profile.name}|notification-subscribers|${city}`, 22, 180);
+      return isNotificationOn(city, profile.name) ? seededSubscribers + 1 : seededSubscribers;
+    }
+
+    function notificationCount(profile, city = selectedCity()) {
+      return `${notificationNumber(profile, city).toLocaleString()} notifications enabled`;
     }
 
     function tonightInterestCount(profile) {
@@ -10381,6 +10412,7 @@
       } else {
         const status = shiftStatus(profile);
         const isFollowed = isFollowingProfile(city, profile.name);
+        const isNotified = isNotificationOn(city, profile.name);
         const goingButton = status.state === "active"
           ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">${actionButtonLabel("clock", "I'm Going Tonight")}</button>`
           : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${actionButtonLabel("clock", status.state === "scheduled" ? "Going opens later" : "No active shift tonight")}</button>`;
@@ -10399,7 +10431,7 @@
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
-            <button class="action-btn secondary" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel("bell", "Notify Me")}</button>
+            <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
             ${goingButton}
           </div>
         `;
@@ -10585,13 +10617,20 @@
     function renderDancerSetup() {
       const approved = dancerSetup.approval;
       document.getElementById("dancerApprovalStatus").textContent = dancerSetup.approval ? "Approved" : "Pending";
+      const dancerName = activeDancerName();
+      const city = activeDancerCity();
+      const activeProfile = markets[city]?.dancers.find((profile) => profile.name === dancerName) || markets[city]?.dancers[0];
+      document.getElementById("dancerFollowerStat").textContent = activeProfile
+        ? followerNumber(activeProfile, city).toLocaleString()
+        : "0";
+      document.getElementById("dancerNotificationStat").textContent = activeProfile
+        ? notificationNumber(activeProfile, city).toLocaleString()
+        : "0";
       document.getElementById("setupChecklistWrap").hidden = approved;
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
       if (approved) {
         const sharePanel = document.getElementById("dancerSharePanel");
-        const dancerName = activeDancerName();
-        const city = activeDancerCity();
         if (sharePanel) {
           sharePanel.innerHTML = `
             <strong>Share your profile</strong>
@@ -11088,10 +11127,16 @@
           showToast("Unfollowed profile");
         } else {
           followedList.push(profileName);
+          enableProfileNotifications(city, profileName);
           recordUniqueTrendEvent("favorites", city, profileName);
           actionButton.innerHTML = actionButtonLabel("check", "Following");
           actionButton.classList.add("is-following");
-          showToast("Following profile");
+          const notifyButton = document.getElementById("notifyBtn");
+          if (notifyButton) {
+            notifyButton.innerHTML = actionButtonLabel("check", "Notifications On");
+            notifyButton.classList.add("is-following");
+          }
+          showToast("Following profile. Notifications on.");
         }
         if (profile) {
           const followerCountEl = document.getElementById("modalFollowerCount");
@@ -11100,8 +11145,9 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "notifyBtn") {
-        recordUniqueTrendEvent("interested", citySelect.value, actionButton.dataset.profile);
-        actionButton.innerHTML = actionButtonLabel("bell", "Notifications On");
+        enableProfileNotifications(citySelect.value, actionButton.dataset.profile);
+        actionButton.innerHTML = actionButtonLabel("check", "Notifications On");
+        actionButton.classList.add("is-following");
         showToast("Notifications enabled");
       }
       if (actionButton.id === "goingBtn") {
