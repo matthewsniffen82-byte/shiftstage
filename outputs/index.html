@@ -7059,6 +7059,94 @@
         gap: 22px;
       }
     }
+
+    /* Final portrait fit and thumbnail polish */
+    .list.card-grid .dancer-card {
+      aspect-ratio: 1 / 1.82;
+      min-height: 352px;
+    }
+
+    .dancer-card .portrait {
+      background-size: cover, auto 104%, cover;
+      background-position: center, center top, center;
+    }
+
+    .dancer-card .portrait.two {
+      background-size: cover, auto 102%, cover;
+      background-position: center, center top, center;
+    }
+
+    .dancer-card .portrait.three {
+      background-size: cover, auto 106%, cover;
+      background-position: center, center top, center;
+    }
+
+    .profile-modal .gallery {
+      grid-template-columns: repeat(4, 58px);
+      justify-content: center;
+      gap: 8px;
+      padding: 7px 10px 5px;
+    }
+
+    .profile-modal .thumb {
+      width: 58px;
+      height: 52px;
+      border-radius: 9px;
+      background: #07070a;
+    }
+
+    .profile-modal .thumb .portrait {
+      background-size: cover, auto 112%, cover;
+      background-position: center, center top, center;
+    }
+
+    .profile-modal .thumb.active {
+      border-color: rgba(192,132,255,.86);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.035),
+        0 0 16px rgba(155,92,255,.34);
+    }
+
+    @media (max-width: 420px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.9;
+        min-height: 338px;
+      }
+
+      .profile-modal .gallery {
+        grid-template-columns: repeat(4, 52px);
+        gap: 6px;
+      }
+
+      .profile-modal .thumb {
+        width: 52px;
+        height: 46px;
+      }
+    }
+
+    @media (min-width: 760px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.72;
+        min-height: 390px;
+      }
+
+      .profile-modal .gallery {
+        grid-template-columns: repeat(4, 72px);
+        gap: 10px;
+      }
+
+      .profile-modal .thumb {
+        width: 72px;
+        height: 60px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.58;
+        min-height: 382px;
+      }
+    }
   </style>
 </head>
 <body>
