@@ -8017,6 +8017,19 @@
       right: 92px;
     }
 
+    .profile-modal .modal-identity .modal-rank {
+      position: static;
+      z-index: 1;
+      width: fit-content;
+      min-height: 23px;
+      padding-inline: 8px;
+      margin-top: 1px;
+      gap: 5px;
+      font-size: 10.5px;
+      line-height: 1;
+      max-width: 100%;
+    }
+
     @media (max-width: 560px) {
       .profile-modal .modal-rank {
         top: 22px;
@@ -8659,12 +8672,12 @@
         <div class="modal-image" id="modalImage">
           <div class="modal-identity">
             <h2 id="modalName">Profile</h2>
+            <span class="badge trend modal-rank" id="modalRank">#1 Trending</span>
             <div class="pill-row">
               <span class="badge" id="modalStatus">Verified</span>
               <span class="pill" id="modalCity">Las Vegas</span>
             </div>
           </div>
-          <span class="badge trend modal-rank" id="modalRank">#1</span>
         </div>
         <div class="gallery" id="modalGallery"></div>
         <div class="modal-body" id="modalBody"></div>
