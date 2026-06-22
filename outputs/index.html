@@ -10143,6 +10143,61 @@
         opacity: .42;
       }
     }
+
+    /* Dancer setup lives in one expandable approval drawer. */
+    .setup-panel {
+      gap: 14px;
+    }
+
+    .setup-panel-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .setup-panel-head h3 {
+      margin: 0;
+    }
+
+    .setup-panel-head p {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .setup-toggle-btn {
+      min-height: 42px;
+      padding-inline: 16px;
+      white-space: nowrap;
+      border-color: rgba(168,85,247,.42);
+      color: #efe7ff;
+      box-shadow: inset 0 0 14px rgba(168,85,247,.06);
+    }
+
+    .setup-panel.expanded {
+      border-color: rgba(168,85,247,.34);
+      box-shadow:
+        0 24px 66px rgba(0,0,0,.46),
+        0 0 28px rgba(168,85,247,.1),
+        inset 0 0 24px rgba(168,85,247,.045);
+    }
+
+    .setup-panel .setup-list {
+      padding-top: 2px;
+    }
+
+    @media (max-width: 560px) {
+      .setup-panel-head {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .setup-toggle-btn {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -10546,10 +10601,16 @@
           <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
           <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly summary"></div>
         </div>
-        <div id="setupChecklistWrap" class="auth-card">
-          <h3>Profile setup and approval</h3>
-          <div class="setup-list" id="setupChecklist"></div>
-          <div class="lock-row">Post shift locked until profile approval.</div>
+        <div id="setupChecklistWrap" class="auth-card setup-panel">
+          <div class="setup-panel-head">
+            <div>
+              <h3>Profile setup and approval</h3>
+              <p id="setupChecklistSummary">Complete steps 1-4 inside this panel.</p>
+            </div>
+            <button class="ghost setup-toggle-btn" id="setupChecklistToggle" type="button" aria-expanded="false">Show steps</button>
+          </div>
+          <div class="setup-list" id="setupChecklist" hidden></div>
+          <div class="lock-row" id="setupChecklistLock" hidden>Post shift locked until profile approval.</div>
         </div>
         <div class="auth-card" id="approvedDancerPanel" hidden>
           <h3>Post shift</h3>
@@ -10889,6 +10950,7 @@
     let stripeConfirmed = false;
     let activeDashboardType = "customer";
     let activeSetupStep = "profile";
+    let setupChecklistExpanded = false;
     let lastPostedShift = null;
     const dancerSetup = {
       profile: false,
@@ -12287,6 +12349,7 @@
 
     function completeSetupStep(step) {
       if (!canOpenStep(step)) return;
+      setupChecklistExpanded = true;
       dancerSetup[step] = true;
       activeSetupStep = nextIncompleteStep() || step;
       renderDancerSetup();
@@ -12401,7 +12464,20 @@
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals")
         ].join("");
       }
-      document.getElementById("setupChecklistWrap").hidden = approved;
+      const setupWrap = document.getElementById("setupChecklistWrap");
+      const setupToggle = document.getElementById("setupChecklistToggle");
+      const setupList = document.getElementById("setupChecklist");
+      const setupLock = document.getElementById("setupChecklistLock");
+      const setupSummary = document.getElementById("setupChecklistSummary");
+      setupWrap.hidden = approved;
+      setupWrap.classList.toggle("expanded", setupChecklistExpanded);
+      setupToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
+      setupToggle.textContent = setupChecklistExpanded ? "Hide steps" : "Show steps";
+      setupList.hidden = !setupChecklistExpanded;
+      setupLock.hidden = !setupChecklistExpanded;
+      setupSummary.textContent = approved
+        ? "Your profile is approved."
+        : `${completedSteps}/${steps.length} complete${nextStep ? ` · Next: ${nextLabels[nextStep]}` : ""}`;
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
       if (approved) {
@@ -13158,10 +13234,20 @@
 
     dancerDashboard.addEventListener("click", (event) => {
       if (handleShareClick(event)) return;
+      const setupToggleButton = event.target.closest("#setupChecklistToggle");
+      if (setupToggleButton) {
+        setupChecklistExpanded = !setupChecklistExpanded;
+        if (setupChecklistExpanded && !activeSetupStep) {
+          activeSetupStep = nextIncompleteStep() || "profile";
+        }
+        renderDancerSetup();
+        return;
+      }
       const toggle = event.target.closest("[data-step-toggle]");
       if (toggle) {
         const step = toggle.dataset.stepToggle;
         if (canOpenStep(step) && !dancerSetup[step]) {
+          setupChecklistExpanded = true;
           activeSetupStep = activeSetupStep === step ? "" : step;
           renderDancerSetup();
         }
