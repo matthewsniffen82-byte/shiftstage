@@ -9242,6 +9242,8 @@
     let dashboardTonightExpanded = false;
     let dashboardFollowedExpanded = false;
     const goingTonightByProfile = {};
+    const trendEventStoreKey = "dancrTrendEventsV1";
+    const trendEventStore = loadTrendEventStore();
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -9325,6 +9327,67 @@
 
     function slugify(value) {
       return value.toLowerCase().replaceAll(" ", "-").replace(/[^a-z0-9-]/g, "");
+    }
+
+    function loadTrendEventStore() {
+      const fallback = {
+        viewerId: `viewer-${Math.random().toString(36).slice(2)}`,
+        profileViews: {},
+        scheduleViews: {},
+        favorites: {},
+        interested: {},
+        directionRequests: {},
+        socialClicks: {}
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem(trendEventStoreKey) || "null");
+        return saved?.viewerId ? { ...fallback, ...saved } : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveTrendEventStore() {
+      try {
+        localStorage.setItem(trendEventStoreKey, JSON.stringify(trendEventStore));
+      } catch {
+        /* Local files may block storage in some browsers. */
+      }
+    }
+
+    function trendKey(city, profileName) {
+      return `${city}::${profileName}`;
+    }
+
+    function stableHash(value) {
+      let hash = 2166136261;
+      for (let index = 0; index < value.length; index += 1) {
+        hash ^= value.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+      return Math.abs(hash >>> 0);
+    }
+
+    function seededRange(seed, min, max) {
+      return min + (stableHash(seed) % (max - min + 1));
+    }
+
+    function recordUniqueTrendEvent(type, city, profileName) {
+      if (!trendEventStore[type]) trendEventStore[type] = {};
+      const key = trendKey(city, profileName);
+      if (!trendEventStore[type][key]) trendEventStore[type][key] = {};
+      if (trendEventStore[type][key][trendEventStore.viewerId]) return;
+      trendEventStore[type][key][trendEventStore.viewerId] = Date.now();
+      saveTrendEventStore();
+    }
+
+    function uniqueTrendEventCount(type, city, profileName) {
+      const events = trendEventStore[type]?.[trendKey(city, profileName)] || {};
+      return Object.keys(events).length;
+    }
+
+    function cappedSignal(value, cap) {
+      return Math.min(Math.max(0, value), cap);
     }
 
     function isFollowingProfile(city, profileName) {
@@ -9605,45 +9668,106 @@
     }
 
     function privateTrendingSignals(profile, city = selectedCity()) {
-      const seed = Math.max(1, 16 - profile.trend);
+      const momentum = Math.max(1, 16 - Number(profile.trend || 12));
+      const uniqueViews = seededRange(`${city}|${profile.name}|views`, 420, 1900);
+      const followers = followerNumber(profile, city);
+      const followerCap = Math.max(40, Math.round(followers * 0.18));
+      const isActiveTonight = isWorkingTonight(profile, city);
+      const hasUpcoming = !isActiveTonight && profile.scheduled;
+      const profileViews = uniqueViews + uniqueTrendEventCount("profileViews", city, profile.name) * 8;
+      const scheduleViews = profile.scheduled
+        ? seededRange(`${profile.name}|schedule|${city}`, 90, 520) + uniqueTrendEventCount("scheduleViews", city, profile.name) * 5
+        : seededRange(`${profile.name}|schedule-empty|${city}`, 12, 80);
+      const goingBase = isActiveTonight
+        ? seededRange(`${profile.name}|going|${city}`, 18, 115)
+        : seededRange(`${profile.name}|past-going|${city}`, 0, 18);
+      const interestedBase = hasUpcoming
+        ? seededRange(`${profile.name}|interested|${city}`, 20, 140)
+        : seededRange(`${profile.name}|interested-low|${city}`, 2, 40);
+      const goingTonight = cappedSignal(goingTonightByProfile[profile.name] ?? goingBase, followerCap);
+      const favorites = cappedSignal(
+        seededRange(`${city}|${profile.name}|favorites`, 24, 220) + (isFollowingProfile(city, profile.name) ? 1 : 0),
+        Math.round(followers * 0.22)
+      );
+      const interested = cappedSignal(interestedBase + uniqueTrendEventCount("interested", city, profile.name) * 6, followerCap);
+      const notificationOpens = seededRange(`${profile.name}|notifications|${city}`, 18, 260);
+      const clubPageClicks = profile.venue ? seededRange(`${profile.name}|club-clicks|${city}`, 18, 230) : 0;
+      const socialClicks = profile.socials
+        ? seededRange(`${profile.name}|social|${city}`, 4, 90) + uniqueTrendEventCount("socialClicks", city, profile.name) * 3
+        : 0;
+      const directionRequests = profile.venue
+        ? seededRange(`${profile.name}|directions|${city}`, 10, 180) + uniqueTrendEventCount("directionRequests", city, profile.name) * 4
+        : 0;
+      const meaningfulActions = favorites + goingTonight + interested + clubPageClicks + directionRequests + socialClicks;
+      const lowIntentRefreshes = seededRange(`${profile.name}|refreshes|${city}`, 0, 90);
+      const repeatedClickRate = Math.max(0, seededRange(`${profile.name}|repeat-rate|${city}`, 0, 16) - Math.round(meaningfulActions / 95));
+
       return {
-        uniqueProfileViews: seed * 110,
-        followers: seed * 42,
-        favorites: seed * 21,
-        goingTonight: isWorkingTonight(profile, city) ? seed * 12 : seed * 4,
-        interested: profile.scheduled ? seed * 9 : seed * 3,
-        recentActivity: seed * 18,
-        lowIntentRefreshes: Math.max(1, profile.trend - 6) * 3,
-        repeatedClickRate: Math.max(0, profile.trend - 8)
+        uniqueProfileViews: profileViews,
+        followers,
+        favorites,
+        goingTonight,
+        interested,
+        scheduleViews,
+        notificationOpens,
+        clubPageClicks,
+        socialClicks,
+        directionRequests,
+        recentActivity: seededRange(`${profile.name}|recent|${city}`, 25, 100) + momentum * 4,
+        shiftBoost: isActiveTonight ? 85 : hasUpcoming ? 38 : 0,
+        lowIntentRefreshes,
+        repeatedClickRate
       };
     }
 
     function privateTrendingScore(profile, city = selectedCity()) {
       const signal = privateTrendingSignals(profile, city);
-      const antiSpamPenalty = signal.repeatedClickRate * 14;
-      return (
-        signal.uniqueProfileViews * 1.1 +
-        signal.followers * 1.9 +
-        signal.favorites * 2.7 +
-        signal.goingTonight * 4.2 +
-        signal.interested * 2.1 +
-        signal.recentActivity * 1.6 -
-        signal.lowIntentRefreshes * 0.4 -
+      const antiSpamPenalty = Math.min(180, signal.repeatedClickRate * 9 + signal.lowIntentRefreshes * 0.35);
+      return Math.round(
+        Math.log1p(signal.uniqueProfileViews) * 130 +
+        Math.log1p(signal.followers) * 82 +
+        Math.sqrt(signal.favorites) * 32 +
+        signal.goingTonight * 7.6 +
+        signal.interested * 4.2 +
+        signal.scheduleViews * 1.25 +
+        signal.notificationOpens * 1.55 +
+        signal.clubPageClicks * 2.05 +
+        signal.socialClicks * 1.85 +
+        signal.directionRequests * 2.75 +
+        signal.recentActivity * 5.4 +
+        signal.shiftBoost -
         antiSpamPenalty
       );
     }
 
-    function trendingProfiles(city) {
+    function rankedTrendingProfiles(city) {
       return [...markets[city].dancers]
         .filter((profile) => profile.status === "Verified" && !profile.hidden)
-        .sort((a, b) => privateTrendingScore(b, city) - privateTrendingScore(a, city))
-        .slice(0, 10)
+        .map((profile) => ({
+          ...profile,
+          trendScore: privateTrendingScore(profile, city),
+          trendSignals: privateTrendingSignals(profile, city)
+        }))
+        .sort((a, b) => (
+          b.trendScore - a.trendScore ||
+          Number(isWorkingTonight(b, city)) - Number(isWorkingTonight(a, city)) ||
+          Number(b.scheduled) - Number(a.scheduled) ||
+          shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
+          dailyRotationScore(a, city) - dailyRotationScore(b, city)
+        ))
         .map((profile, index) => ({ ...profile, trendRank: index + 1 }));
     }
 
+    function trendingProfiles(city) {
+      return rankedTrendingProfiles(city).slice(0, 10);
+    }
+
     function withTrendingRank(profile, city) {
-      const ranked = trendingProfiles(city).find((item) => item.name === profile.name);
-      return ranked ? { ...profile, trendRank: ranked.trendRank } : { ...profile, trendRank: null };
+      const ranked = rankedTrendingProfiles(city).find((item) => item.name === profile.name);
+      if (!ranked || ranked.trendRank > 10) {
+        return { ...profile, trendRank: null, trendScore: privateTrendingScore(profile, city), trendSignals: privateTrendingSignals(profile, city) };
+      }
+      return { ...profile, trendRank: ranked.trendRank, trendScore: ranked.trendScore, trendSignals: ranked.trendSignals };
     }
 
     function followedProfiles(city) {
@@ -9761,7 +9885,7 @@
         <div class="info-tile social-tile">
           <strong>Social links</strong>
           <div class="social-links">
-            ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
+            ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
           </div>
         </div>
       `;
@@ -9970,7 +10094,7 @@
                 <div class="info-tile"><strong>Hours</strong><div class="meta">${details.hours}</div></div>
               </div>
               <div class="map-preview" aria-label="Map preview placeholder"></div>
-              <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer">${venueIconMarkup()}Get Directions</a>
+              <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>
             </div>
           </article>
 
@@ -10084,10 +10208,15 @@
     }
 
     function openProfileModal(profileName) {
+      const city = citySelect.value;
+      const baseProfile = markets[city].dancers.find((item) => item.name === profileName && !item.hidden);
+      if (baseProfile?.status === "Verified") {
+        recordUniqueTrendEvent("profileViews", city, profileName);
+        if (baseProfile.scheduled) recordUniqueTrendEvent("scheduleViews", city, profileName);
+      }
       const profile = findProfile(profileName);
       if (!profile) return;
 
-      const city = citySelect.value;
       const profileIndex = markets[city].dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
       const basePhoto = portraitClass(profileIndex);
@@ -10706,6 +10835,15 @@
     }
 
     results.addEventListener("click", (event) => {
+      const directionsLink = event.target.closest(".venue-directions-btn");
+      if (directionsLink) {
+        const city = citySelect.value;
+        const venueName = directionsLink.dataset.venue;
+        markets[city].dancers
+          .filter((profile) => profile.status === "Verified" && !profile.hidden && profile.venue === venueName)
+          .forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
+        return;
+      }
       const venue = event.target.closest(".venue-card");
       if (venue) {
         event.preventDefault();
@@ -10729,6 +10867,11 @@
     });
 
     modalBody.addEventListener("click", (event) => {
+      const socialLink = event.target.closest(".social-link[data-profile]");
+      if (socialLink) {
+        recordUniqueTrendEvent("socialClicks", citySelect.value, socialLink.dataset.profile);
+        return;
+      }
       const venueLink = event.target.closest("[data-open-venue]");
       if (venueLink) {
         selectedVenueName = venueLink.dataset.openVenue;
@@ -10754,6 +10897,7 @@
           showToast("Unfollowed profile");
         } else {
           followedList.push(profileName);
+          recordUniqueTrendEvent("favorites", city, profileName);
           actionButton.innerHTML = actionButtonLabel("check", "Following");
           actionButton.classList.add("is-following");
           showToast("Following profile");
@@ -10765,6 +10909,7 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "notifyBtn") {
+        recordUniqueTrendEvent("interested", citySelect.value, actionButton.dataset.profile);
         actionButton.innerHTML = actionButtonLabel("bell", "Notifications On");
         showToast("Notifications enabled");
       }
