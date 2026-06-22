@@ -5701,12 +5701,13 @@
     .portrait .card-badges .badge.trend {
       position: static;
       inset: auto;
-      min-width: 118px;
+      width: fit-content;
+      min-width: 0;
       max-width: 148px;
-      justify-content: center;
-      min-height: 28px;
-      padding-inline: 12px;
-      font-size: 11.5px;
+      justify-content: flex-start;
+      min-height: 26px;
+      padding-inline: 11px;
+      font-size: 11px;
     }
 
     .portrait > .badge,
@@ -5724,10 +5725,10 @@
 
       .portrait .card-badges .badge {
         min-height: 27px;
-        min-width: 104px;
+        min-width: 0;
         max-width: 132px;
         padding-inline: 10px;
-        font-size: 10.8px;
+        font-size: 10.5px;
       }
     }
 
