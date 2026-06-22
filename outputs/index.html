@@ -8774,8 +8774,12 @@
     }
 
     .profile-modal .modal-identity-stack .modal-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       min-height: 25px;
-      padding: 0 10px;
+      padding: 0 13px 0 11px;
       margin-left: 0;
       border-color: rgba(250,204,21,.38);
       background:
@@ -8786,6 +8790,13 @@
         inset 0 0 9px rgba(253,224,71,.05);
       color: #ffe66b;
       text-shadow: 0 0 7px rgba(250,204,21,.16);
+    }
+
+    .profile-modal .modal-identity-stack .modal-rank .badge-icon {
+      width: 12px;
+      height: 12px;
+      flex-basis: 12px;
+      margin-right: 0;
     }
 
     @media (max-width: 560px) {
