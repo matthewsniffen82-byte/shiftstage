@@ -8612,7 +8612,11 @@
     }
 
     .profile-modal .modal-identity-stack .modal-identity {
-      padding: 7px 9px 8px;
+      width: fit-content;
+      min-width: 148px;
+      max-width: 100%;
+      overflow: visible;
+      padding: 7px 13px 8px 9px;
       border-radius: 11px;
       border-color: rgba(192,132,255,.16);
       background: rgba(8,8,12,.28);
@@ -8624,10 +8628,18 @@
     }
 
     .profile-modal .modal-identity-stack .modal-identity h2 {
+      display: flex;
+      align-items: center;
       font-size: clamp(17px, 2.6vw, 20px);
       line-height: 1;
-      gap: 4px;
+      gap: 6px;
       letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity .verified-mark {
+      flex: 0 0 auto;
+      margin-left: 0;
     }
 
     .profile-modal .modal-identity-stack .modal-identity .pill-row {
