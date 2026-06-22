@@ -11655,9 +11655,9 @@
         if (window && cityWallClock(now, city) < window.start) {
           return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
         }
-        return { state: "ended", label: "0 going · shift ended" };
+        return { state: "ended", label: "Shift ended" };
       }
-      return { state: "inactive", label: "0 going · not working tonight" };
+      return { state: "inactive", label: "Not working tonight" };
     }
 
     function tonightShiftWindow(profile, now = new Date(), city = selectedCity()) {
