@@ -8947,14 +8947,41 @@
       color: #93c5fd;
     }
 
+    /* Better spacing now that card shift times are text instead of pills */
+    .dancer-card .profile-body > div:first-child {
+      min-width: 0;
+    }
+
+    .dancer-card .card-venue-line {
+      margin-top: 2px;
+      margin-bottom: 5px;
+      line-height: 1.22;
+    }
+
+    .dancer-card .profile-body > .schedule-row {
+      margin-top: 4px;
+      align-items: center;
+    }
+
+    .dancer-card .profile-body > .schedule-row .venue-dot {
+      transform: translateY(1px);
+    }
+
+    .card-schedule-text {
+      line-height: 1.28;
+      padding-block: 1px;
+    }
+
     @media (max-width: 420px) {
       .dancer-card .profile-body > .schedule-row {
         grid-template-columns: 15px minmax(0, 1fr);
         column-gap: 6px;
+        margin-top: 4px;
       }
 
       .card-schedule-text {
         font-size: 11px;
+        line-height: 1.3;
       }
     }
 
