@@ -10198,6 +10198,47 @@
         width: 100%;
       }
     }
+
+    /* Match upcoming card info rhythm to tonight cards. */
+    .dancer-card .card-venue-line.is-upcoming {
+      gap: 6px;
+    }
+
+    .dancer-card .card-venue-prefix {
+      color: #c7a8ff;
+      font-size: .82em;
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .dancer-card .card-venue-line.is-upcoming .card-venue-name,
+    .dancer-card .card-venue-line.is-tonight .card-venue-name {
+      line-height: 1.15;
+    }
+
+    .dancer-card .profile-body > .schedule-row {
+      margin-top: 2px;
+    }
+
+    .card-schedule-text.upcoming,
+    .card-schedule-text.tonight {
+      line-height: 1.2;
+    }
+
+    @media (max-width: 560px) {
+      .dancer-card .card-venue-line.is-upcoming {
+        gap: 5px;
+      }
+
+      .dancer-card .card-venue-prefix {
+        font-size: .78em;
+      }
+
+      .dancer-card .profile-body > .schedule-row {
+        margin-top: 2px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -11896,7 +11937,7 @@
             ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming">${upcomingLabel} • ${compactCardShiftTime(profile.time)}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta card-venue-line">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next:</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
+        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
