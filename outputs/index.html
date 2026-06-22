@@ -142,6 +142,25 @@
       font-weight: 850;
     }
 
+    .account-status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 9px;
+      border: 1px solid rgba(155,92,255,.26);
+      border-radius: 999px;
+      color: #cbb7ff;
+      background: rgba(14,10,22,.68);
+      box-shadow: inset 0 0 12px rgba(155,92,255,.055);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .account-status[hidden] {
+      display: none;
+    }
+
     .admin-link {
       width: auto;
       min-height: 30px;
@@ -1140,6 +1159,46 @@
         rgba(12,12,18,.76);
       box-shadow: 0 24px 62px rgba(0,0,0,.42), inset 0 0 22px rgba(255,255,255,.025);
       backdrop-filter: blur(16px);
+    }
+
+    .role-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .role-option {
+      display: grid;
+      gap: 7px;
+      padding: 13px;
+      border: 1px solid rgba(192,132,255,.18);
+      border-radius: 14px;
+      background: rgba(8,8,12,.56);
+      box-shadow: inset 0 0 18px rgba(155,92,255,.035);
+    }
+
+    .role-option p {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .role-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .role-actions .ghost {
+      min-height: 34px;
+      padding-inline: 12px;
+      font-size: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .role-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     .auth-tabs {
@@ -8046,10 +8105,10 @@
           <button class="menu-btn" aria-label="Search">
             <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
           </button>
+          <span class="account-status" id="accountStatus" hidden></span>
           <button class="menu-btn dashboard-menu" id="dashboardBtn" hidden>Dashboard</button>
-          <button class="menu-btn" id="accountBtn" aria-label="Account">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          </button>
+          <button class="menu-btn dashboard-menu" id="logoutBtn" hidden>Logout</button>
+          <button class="menu-btn dashboard-menu" id="accountBtn">Login / Join</button>
         </div>
       </div>
     </header>
@@ -8234,7 +8293,7 @@
       <div class="page-inner">
         <div class="page-head">
           <div>
-            <span class="eyebrow">Customer access</span>
+            <span class="eyebrow">Login / Join</span>
             <h2>Enter Dancr</h2>
           </div>
           <button class="close-btn" id="authClose" aria-label="Close auth">
@@ -8242,6 +8301,22 @@
           </button>
         </div>
         <div class="auth-card">
+          <div class="role-options" aria-label="Choose account type">
+            <article class="role-option">
+              <span class="eyebrow">Customer</span>
+              <h3>Plan your night</h3>
+              <p>Follow dancers, get working-tonight alerts, save notification settings, and open directions to venues.</p>
+            </article>
+            <article class="role-option">
+              <span class="eyebrow">Dancer</span>
+              <h3>Post verified schedules</h3>
+              <p>Create a profile, submit photos for review, post shifts after approval, and track profile and venue direction interest.</p>
+              <div class="role-actions">
+                <button class="ghost" id="dancerLoginBtn" type="button">Dancer login</button>
+                <button class="ghost" id="openDancerSignup" type="button">Dancer signup</button>
+              </div>
+            </article>
+          </div>
           <div class="auth-tabs">
             <button class="auth-tab active" data-auth-mode="login">Login</button>
             <button class="auth-tab" data-auth-mode="signup">Sign up</button>
@@ -8261,7 +8336,6 @@
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Login</button>
           </form>
-          <button class="action-btn secondary" id="openDancerSignup" type="button">Dancer signup</button>
         </div>
       </div>
     </section>
@@ -8669,6 +8743,8 @@
     const adminDashboard = document.getElementById("adminDashboard");
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const accountStatus = document.getElementById("accountStatus");
     const adminBtn = document.getElementById("adminBtn");
     const brandHome = document.getElementById("brandHome");
     const dashTonightList = document.getElementById("dashTonightList");
@@ -8682,6 +8758,7 @@
     let dancersExpanded = false;
     let selectedVenueName = null;
     let isCustomerLoggedIn = false;
+    let isDancerLoggedIn = false;
     let authMode = "login";
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
@@ -9642,6 +9719,27 @@
       stripeCheckoutPage.setAttribute("aria-hidden", "true");
     }
 
+    function updateAccountHeader() {
+      const loggedIn = isCustomerLoggedIn || isDancerLoggedIn;
+      const role = activeDashboardType === "dancer" ? "Dancer" : "Customer";
+      dashboardBtn.hidden = !loggedIn;
+      logoutBtn.hidden = !loggedIn;
+      accountStatus.hidden = !loggedIn;
+      accountBtn.hidden = loggedIn;
+      accountBtn.textContent = "Login / Join";
+      if (loggedIn) accountStatus.textContent = `${role} logged in`;
+    }
+
+    function logoutAccount() {
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = false;
+      activeDashboardType = "customer";
+      closeDashboard();
+      closeDancerDashboard();
+      updateAccountHeader();
+      showToast("Logged out");
+    }
+
     function openDashboard() {
       if (activeDashboardType === "dancer") {
         openDancerDashboard();
@@ -10205,7 +10303,7 @@
     });
 
     accountBtn.addEventListener("click", () => {
-      if (isCustomerLoggedIn) {
+      if (isCustomerLoggedIn || isDancerLoggedIn) {
         openDashboard();
       } else {
         openAuthPage();
@@ -10214,6 +10312,7 @@
 
     adminBtn.addEventListener("click", openAdminDashboard);
     dashboardBtn.addEventListener("click", openDashboard);
+    logoutBtn.addEventListener("click", logoutAccount);
 
     document.getElementById("authClose").addEventListener("click", closeAuthPage);
     document.getElementById("dancerSignupClose").addEventListener("click", closeDancerSignupPage);
@@ -10244,14 +10343,30 @@
     document.getElementById("authForm").addEventListener("submit", (event) => {
       event.preventDefault();
       isCustomerLoggedIn = true;
+      isDancerLoggedIn = false;
       activeDashboardType = "customer";
-      dashboardBtn.hidden = false;
+      updateAccountHeader();
       closeAuthPage();
       showToast(authMode === "signup" ? "Customer account created" : "Logged in");
       openDashboard();
     });
 
-    document.getElementById("openDancerSignup").addEventListener("click", openDancerSignupPage);
+    document.getElementById("dancerLoginBtn").addEventListener("click", () => {
+      dancerSignupStarted = true;
+      stripeConfirmed = true;
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
+      activeDashboardType = "dancer";
+      closeAuthPage();
+      updateAccountHeader();
+      showToast("Dancer logged in");
+      openDancerDashboard();
+    });
+
+    document.getElementById("openDancerSignup").addEventListener("click", () => {
+      closeAuthPage();
+      openDancerSignupPage();
+    });
 
     document.getElementById("dancerSignupForm").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -10262,8 +10377,10 @@
 
     document.getElementById("stripeConfirmBtn").addEventListener("click", () => {
       stripeConfirmed = true;
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
       activeDashboardType = "dancer";
-      dashboardBtn.hidden = false;
+      updateAccountHeader();
       closeStripeCheckoutPage();
       showToast("Stripe authorization confirmed");
       openDancerDashboard();
@@ -10483,6 +10600,7 @@
     }
 
     installReferenceHomeShell();
+    updateAccountHeader();
     render();
   </script>
 </body>
