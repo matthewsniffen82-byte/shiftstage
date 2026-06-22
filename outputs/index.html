@@ -8897,11 +8897,11 @@
 
     .card-schedule-text {
       min-width: 0;
-      overflow: visible;
-      text-overflow: clip;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 12px;
-      font-weight: 900;
+      font-size: clamp(11.5px, 2.9vw, 13px);
+      font-weight: 950;
       line-height: 1.15;
       letter-spacing: 0;
       text-shadow: 0 0 14px currentColor, 0 2px 12px rgba(0,0,0,.72);
@@ -8922,7 +8922,7 @@
       }
 
       .card-schedule-text {
-        font-size: 10.5px;
+        font-size: 11px;
       }
     }
 
