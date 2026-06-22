@@ -7560,6 +7560,23 @@
         inset 0 0 12px rgba(255,232,106,.075);
     }
 
+    .dancer-card .badge.trend.compact-trend {
+      min-width: 54px;
+      min-height: 32px;
+      padding-inline: 11px;
+      gap: 5px;
+      justify-content: center;
+      font-size: 13px;
+      letter-spacing: .01em;
+    }
+
+    .dancer-card .badge.trend.compact-trend .badge-icon {
+      width: 12px;
+      height: 12px;
+      flex-basis: 12px;
+      margin-right: 0;
+    }
+
     .badge.featured,
     .pill.featured {
       color: rgba(255,232,106,.92);
@@ -9105,7 +9122,10 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
-      const trendBadge = isTrending ? `<span class="badge trend">${badgeIconMarkup("trend")}#${profile.trendRank} Trending</span>` : "";
+      const trendLabel = options.trendingContext ? `#${profile.trendRank} Trending` : String(profile.trendRank);
+      const trendBadge = isTrending
+        ? `<span class="badge trend ${options.trendingContext ? "" : "compact-trend"}" aria-label="#${profile.trendRank} Trending">${badgeIconMarkup("trend")}${trendLabel}</span>`
+        : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const scheduleText = isPending
@@ -9215,7 +9235,7 @@
           <div class="list card-grid">${upcoming.length ? upcoming.map((profile, index) => profileCard(profile, index + 2)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
           <h3 class="section-title">Trending at this venue</h3>
-          <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4)).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
+          <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
 
           <h3 class="section-title">Other local venues</h3>
           <div class="mini-list">${otherVenues.map((item) => venueCard(item)).join("")}</div>
@@ -9902,7 +9922,7 @@
       results.innerHTML = items.map((item, index) => (
         activeTab === "venues"
           ? venueCard(item)
-          : profileCard(item, index, { tonight: activeTab === "tonight" })
+          : profileCard(item, index, { tonight: activeTab === "tonight", trendingContext: activeTab === "trending" })
       )).join("");
     }
 
