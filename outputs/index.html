@@ -7831,23 +7831,76 @@
     }
 
     .profile-modal .info-tile {
+      position: relative;
+      overflow: hidden;
       min-height: 0;
       padding: 12px 14px;
       display: grid;
       align-content: start;
       gap: 7px;
+      border-color: rgba(192,132,255,.26);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.045), transparent 72%),
+        linear-gradient(135deg, rgba(22,18,32,.9), rgba(8,8,12,.96));
+      box-shadow:
+        0 14px 34px rgba(0,0,0,.34),
+        inset 0 0 18px rgba(155,92,255,.04);
+    }
+
+    .profile-modal .info-tile:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 2px;
+      border-radius: 999px;
+      background: rgba(168,85,247,.68);
+      box-shadow: 0 0 14px rgba(168,85,247,.44);
     }
 
     .profile-modal .info-tile strong {
       margin-bottom: 0;
-      font-size: 14px;
+      color: #b9a8d8;
+      font-size: 11px;
       line-height: 1.1;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
     .profile-modal .info-tile .meta {
       display: grid;
       gap: 5px;
+      color: #d8d1e6;
+      font-weight: 760;
       line-height: 1.2;
+    }
+
+    .profile-modal .detail-line {
+      color: #f1ecf7;
+      font-weight: 850;
+    }
+
+    .profile-modal .schedule-time {
+      color: #f5f5f5;
+      font-weight: 900;
+      text-shadow: 0 0 14px rgba(168,85,247,.2);
+    }
+
+    .profile-modal .metric-value,
+    .profile-modal .interest-count {
+      color: #f8f7fb;
+      font-size: 16px;
+      font-weight: 950;
+      text-shadow: 0 0 16px rgba(168,85,247,.22);
+    }
+
+    .profile-modal .interest-count.muted,
+    .profile-modal .muted-value {
+      color: #aaa1b8;
+      font-size: 14px;
+      font-weight: 750;
+      text-shadow: none;
     }
 
     .profile-modal .interest-tile {
@@ -9288,10 +9341,11 @@
     }
 
     function tonightInterestTileMarkup(status) {
+      const mutedClass = status.state === "active" ? "" : "muted muted-value";
       return `
         <div class="info-tile interest-tile" id="tonightInterestTile">
           <strong>Tonight interest</strong>
-          <div class="meta"><span class="interest-count ${status.state === "active" ? "" : "muted"}" id="tonightInterestCount">${status.label}</span></div>
+          <div class="meta"><span class="interest-count ${mutedClass}" id="tonightInterestCount">${status.label}</span></div>
         </div>
       `;
     }
@@ -9303,13 +9357,13 @@
             <strong>Working tonight</strong>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="detail-line">${clockIconMarkup()}${profile.time}</div>
+              <div class="detail-line schedule-time">${clockIconMarkup()}${profile.time}</div>
             </div>
           </div>
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="meta">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</div>
+            <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
           </div>
           ${shiftNotesMarkup(profile)}
         `;
@@ -9327,20 +9381,20 @@
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
             <strong>Tonight</strong>
-            <div class="meta">Not scheduled tonight</div>
+            <div class="meta"><span class="muted-value">Not scheduled tonight</span></div>
           </div>
           ${shiftNotesMarkup(profile)}
         `;
       }
       return `
-        <div class="info-tile">
-          <strong>Upcoming shifts</strong>
-          <div class="meta">No shifts posted</div>
-        </div>
+          <div class="info-tile">
+            <strong>Upcoming shifts</strong>
+            <div class="meta"><span class="muted-value">No shifts posted</span></div>
+          </div>
         ${tonightInterestTileMarkup(status)}
         <div class="info-tile">
           <strong>Tonight</strong>
-          <div class="meta">Not scheduled tonight</div>
+          <div class="meta"><span class="muted-value">Not scheduled tonight</span></div>
         </div>
       `;
     }
@@ -9384,7 +9438,7 @@
             ${shiftsMarkup(profile, status)}
             <div class="info-tile">
               <strong>Followers</strong>
-              <div class="meta" id="modalFollowerCount">${followerCount(profile, city)}</div>
+              <div class="meta"><span class="metric-value" id="modalFollowerCount">${followerCount(profile, city)}</span></div>
             </div>
             ${socialLinksMarkup(profile)}
           </div>
