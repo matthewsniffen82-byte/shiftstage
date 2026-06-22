@@ -5470,7 +5470,7 @@
       }
 
       .portrait:after {
-        background: linear-gradient(180deg, rgba(3,3,4,0) 26%, rgba(3,3,4,.08) 46%, rgba(3,3,4,.96) 100%);
+        background: linear-gradient(180deg, rgba(3,3,4,0) 30%, rgba(3,3,4,.08) 52%, rgba(3,3,4,.92) 100%);
       }
 
       .dancer-card .profile-body {
@@ -5685,9 +5685,9 @@
 
     .portrait .card-badges {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
+      top: 18px;
+      left: 18px;
+      right: 18px;
       z-index: 6;
       display: flex;
       flex-wrap: wrap;
@@ -5701,6 +5701,9 @@
       position: static;
       inset: auto;
       max-width: 100%;
+      min-height: 28px;
+      padding-inline: 12px;
+      font-size: 11.5px;
     }
 
     .portrait > .badge,
@@ -5710,16 +5713,16 @@
 
     @media (max-width: 560px) {
       .portrait .card-badges {
-        top: 12px;
-        left: 12px;
-        right: 12px;
+        top: 16px;
+        left: 16px;
+        right: 16px;
         gap: 6px;
       }
 
       .portrait .card-badges .badge {
-        min-height: 28px;
+        min-height: 27px;
         padding-inline: 10px;
-        font-size: 11px;
+        font-size: 10.8px;
       }
     }
   </style>
