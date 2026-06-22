@@ -5749,18 +5749,38 @@
 
     .dancer-card,
     .dancer-card:not(.pending) {
-      border-color: rgba(192,132,255,.34);
-      box-shadow: 0 22px 54px rgba(0,0,0,.52), 0 0 18px rgba(155,92,255,.12), inset 0 0 0 1px rgba(255,255,255,.025);
+      border-color: rgba(192,132,255,.28);
+      box-shadow: 0 22px 54px rgba(0,0,0,.52), 0 0 14px rgba(155,92,255,.1), inset 0 0 0 1px rgba(255,255,255,.022);
     }
 
-    .dancer-card:hover {
+    .dancer-card:hover,
+    .dancer-card:focus-visible,
+    .dancer-card:active {
       border-color: rgba(192,132,255,.58);
       box-shadow: 0 26px 68px rgba(0,0,0,.62), 0 0 26px rgba(155,92,255,.24), inset 0 0 0 1px rgba(255,255,255,.035);
+    }
+
+    .dancer-card.trending-card:hover,
+    .dancer-card.trending-card:focus-visible,
+    .dancer-card.trending-card:active {
+      border-color: rgba(192,132,255,.62);
+      box-shadow:
+        0 26px 68px rgba(0,0,0,.62),
+        0 0 24px rgba(155,92,255,.22),
+        0 0 16px rgba(248,211,106,.12),
+        inset 0 0 0 1px rgba(248,211,106,.08);
     }
 
     .dancer-card.pending {
       border-color: rgba(245,190,58,.4);
       box-shadow: 0 22px 54px rgba(0,0,0,.52), 0 0 18px rgba(245,190,58,.12), inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .dancer-card.pending:hover,
+    .dancer-card.pending:focus-visible,
+    .dancer-card.pending:active {
+      border-color: rgba(245,190,58,.58);
+      box-shadow: 0 26px 68px rgba(0,0,0,.62), 0 0 24px rgba(245,190,58,.18), inset 0 0 0 1px rgba(255,255,255,.03);
     }
 
     .dancer-card .badge,
@@ -6796,7 +6816,7 @@
         ? `<div class="meta">${profile.venue} · ${profile.distance}</div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
-        <a class="card dancer-card ${isPending ? "pending" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
+        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
           <div class="portrait ${portraitClass(index)}">
             <div class="card-badges">
               ${statusBadge}
