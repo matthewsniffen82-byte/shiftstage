@@ -11256,7 +11256,7 @@
 
     function activeDancerProfile(city = activeDancerCity()) {
       const dancerName = activeDancerName();
-      return markets[city]?.dancers.find((profile) => profile.name === dancerName) || markets[city]?.dancers[0] || null;
+      return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
     }
 
     function dancerDashboardMetrics(profile, city = selectedCity()) {
@@ -11278,15 +11278,29 @@
       const weeklyGoing = Math.max(0, Math.round(signals.goingTonight * 0.35));
       const venue = profile.venue || markets[city]?.venues[0]?.name || "Local venues";
       const venueRank = seededRange(`${venue}|venue-rank|${city}`, 1, 4);
+      const notificationOpens = Math.round(notificationNumber(profile, city) * (0.18 + seededRange(`${profile.name}|notification-open-rate|${city}`, 3, 9) / 100));
+      const favoritesAdded = signals.favorites + seededRange(`${profile.name}|favorites-added|${city}`, 8, 46);
+      const interestedClicks = signals.interested + seededRange(`${profile.name}|interested-clicks|${city}`, 12, 82);
+      const goingTonightClicks = signals.goingTonight + uniqueTrendEventCount("goingTonight", city, profile.name);
+      const clubPageClicks = signals.clubPageClicks + seededRange(`${profile.name}|club-page-clicks|${city}`, 18, 92);
+      const profileShares = seededRange(`${profile.name}|profile-shares|${city}`, 9, 64);
+      const searchAppearances = profileViews30 + seededRange(`${profile.name}|search-appearances|${city}`, 420, 1800);
       return {
         ranked,
         signals,
         followers,
         notifications: notificationNumber(profile, city),
+        notificationOpens,
         newFollowers,
         profileViews30,
         scheduleViews30,
         directionRequests30,
+        favoritesAdded,
+        interestedClicks,
+        goingTonightClicks,
+        clubPageClicks,
+        profileShares,
+        searchAppearances,
         instagramClicks,
         snapchatClicks,
         tiktokClicks,
@@ -12465,7 +12479,6 @@
     }
 
     function renderDancerSetup() {
-      const approved = dancerSetup.approval;
       const steps = setupOrder();
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
       const nextStep = nextIncompleteStep();
@@ -12479,6 +12492,7 @@
       const dancerName = activeDancerName();
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
+      const approved = dancerSetup.approval || activeProfile?.status === "Verified";
       const dashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
@@ -12511,12 +12525,18 @@
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
           metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Notification opens"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Club direction requests"),
+          metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.signals.favorites), "Favorites added")
+          metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added"),
+          metricCardMarkup(compactNumber(dashboardMetrics.interestedClicks), "Interested clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
+          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "Search appearances")
         ] : [
           metricCardMarkup("Locked", "Profile views"),
           metricCardMarkup("Locked", "Schedule views"),
@@ -12529,33 +12549,51 @@
           metricCardMarkup("Top 10", "Most viewed"),
           metricCardMarkup("Top 10", "Most followed"),
           metricCardMarkup(compactNumber(dashboardMetrics.signals.recentActivity), "Visit signals this week"),
-          metricCardMarkup(`${compactNumber(dashboardMetrics.signals.goingTonight)} • ${compactNumber(dashboardMetrics.signals.interested)}`, "Going Tonight • Interested")
+          metricCardMarkup(`${compactNumber(dashboardMetrics.goingTonightClicks)} • ${compactNumber(dashboardMetrics.interestedClicks)}`, "Going Tonight • Interested"),
+          metricCardMarkup("Top 10 is close", "Momentum target"),
+          metricCardMarkup("Most followed", "This week")
         ].join("");
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks")
+          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
+          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "Search appearances")
         ].join("");
         document.getElementById("dancerStreakMetrics").innerHTML = [
           metricCardMarkup(`${dashboardMetrics.streak} shifts`, "Posted in a row"),
           metricCardMarkup("Active", "This month"),
           metricCardMarkup(`${Math.max(2, Math.round(dashboardMetrics.streak / 2))} weeks`, "Weekly schedule streak"),
-          metricCardMarkup("Ready", "Followers waiting")
+          metricCardMarkup("Ready", "Followers waiting"),
+          metricCardMarkup("183 notified", "Last posted shift"),
+          metricCardMarkup("Weekly summary", "Auto report ready")
         ].join("");
         document.getElementById("dancerClubMetrics").innerHTML = [
           metricCardMarkup(dashboardMetrics.venue, "Most viewed club tonight"),
           metricCardMarkup(`#${dashboardMetrics.venueRank}`, "Venue visibility rank"),
-          metricCardMarkup(compactNumber(dashboardMetrics.signals.clubPageClicks), "Club page clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests")
+          metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests"),
+          metricCardMarkup("Trending venue", "Club momentum"),
+          metricCardMarkup("Top performers", "Compared locally")
         ].join("");
         document.getElementById("dancerWeeklySummary").textContent =
-          `Your Week on Dancr: ${compactNumber(dashboardMetrics.weeklyViews)} profile views, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyInstagram)} Instagram clicks, and ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals.`;
+          `Your Week on Dancr: ${compactNumber(dashboardMetrics.weeklyViews)} profile views, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyInstagram)} Instagram clicks, ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals, and ${compactNumber(Math.round(dashboardMetrics.directionRequests30 * .24))} direction requests.`;
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyViews), "Profile views"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyInstagram), "Instagram clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals")
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals"),
+          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.notificationOpens * .26)), "Notification opens"),
+          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.scheduleViews30 * .24)), "Schedule views")
+        ].join("");
+      } else {
+        document.getElementById("dancerValueMessage").textContent = "Complete setup and approval to unlock profile views, schedule views, follower growth, social clicks, and club direction requests.";
+        document.getElementById("dancerLast30Metrics").innerHTML = [
+          metricCardMarkup("Locked", "Profile views"),
+          metricCardMarkup("Locked", "Schedule views"),
+          metricCardMarkup("Locked", "Followers gained"),
+          metricCardMarkup("Locked", "Notifications sent")
         ].join("");
       }
       const setupWrap = document.getElementById("setupChecklistWrap");
@@ -13246,6 +13284,15 @@
     document.getElementById("dancerLoginBtn").addEventListener("click", () => {
       dancerSignupStarted = true;
       stripeConfirmed = true;
+      document.getElementById("dancerStageName").value = "Maya Lux";
+      document.getElementById("dancerCity").value = "Las Vegas";
+      Object.assign(dancerSetup, {
+        profile: true,
+        photos: true,
+        verification: true,
+        approval: true,
+        shift: false
+      });
       isCustomerLoggedIn = false;
       isDancerLoggedIn = true;
       activeDashboardType = "dancer";
