@@ -1642,6 +1642,18 @@
       color: var(--gold);
     }
 
+    .locked-analytics .metric-card {
+      border-color: rgba(168,85,247,.18);
+      background:
+        linear-gradient(180deg, rgba(168,85,247,.045), transparent 72%),
+        rgba(12,12,18,.66);
+    }
+
+    .locked-analytics .metric-card strong {
+      color: #b7a7d8;
+      text-shadow: none;
+    }
+
     .toggle-list {
       display: grid;
       gap: 9px;
@@ -11429,6 +11441,10 @@
       return `<div class="metric-card"><strong>${value}</strong><span>${label}</span></div>`;
     }
 
+    function lockedMetricCards(labels) {
+      return labels.map((label) => metricCardMarkup("Locked", label)).join("");
+    }
+
     function activeDancerProfile(city = activeDancerCity()) {
       const dancerName = activeDancerName();
       return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
@@ -12699,7 +12715,8 @@
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
-        section.hidden = !approved;
+        section.hidden = false;
+        section.classList.toggle("locked-analytics", !approved);
       });
       const approvalCommand = document.getElementById("dancerApprovalCommand");
       if (approvalCommand) {
@@ -12725,11 +12742,10 @@
       document.getElementById("dancerNotificationStat").textContent = activeProfile
         ? notificationNumber(activeProfile, city).toLocaleString()
         : "0";
-      if (dashboardMetrics) {
-        document.getElementById("dancerValueMessage").textContent = approved
-          ? `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`
-          : "Complete approval to unlock live analytics. Once approved, Dancr shows profile views, schedule views, follower growth, social clicks, and club direction requests.";
-        document.getElementById("dancerLast30Metrics").innerHTML = (approved ? [
+      if (dashboardMetrics && approved) {
+        document.getElementById("dancerValueMessage").textContent =
+          `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`;
+        document.getElementById("dancerLast30Metrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
@@ -12746,12 +12762,7 @@
           metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
           metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "Search appearances")
-        ] : [
-          metricCardMarkup("Locked", "Profile views"),
-          metricCardMarkup("Locked", "Schedule views"),
-          metricCardMarkup("Locked", "Followers gained"),
-          metricCardMarkup("Locked", "Notifications sent")
-        ]).join("");
+        ].join("");
         document.getElementById("dancerConversionMetrics").innerHTML = [
           metricCardMarkup(`${dashboardMetrics.profileToFollowRate}%`, "Profile to follow rate"),
           metricCardMarkup(`${dashboardMetrics.scheduleToGoingRate}%`, "Schedule to Going Tonight"),
@@ -12822,13 +12833,93 @@
           metricCardMarkup(compactNumber(Math.round(dashboardMetrics.scheduleViews30 * .24)), "Schedule views")
         ].join("");
       } else {
-        document.getElementById("dancerValueMessage").textContent = "Complete setup and approval to unlock profile views, schedule views, follower growth, social clicks, and club direction requests.";
-        document.getElementById("dancerLast30Metrics").innerHTML = [
-          metricCardMarkup("Locked", "Profile views"),
-          metricCardMarkup("Locked", "Schedule views"),
-          metricCardMarkup("Locked", "Followers gained"),
-          metricCardMarkup("Locked", "Notifications sent")
-        ].join("");
+        document.getElementById("dancerValueMessage").textContent = "Complete setup and approval to unlock the full value dashboard: profile views, schedule views, follower growth, social clicks, rankings, and club direction requests.";
+        document.getElementById("dancerLast30Metrics").innerHTML = lockedMetricCards([
+          "Profile views",
+          "Schedule views",
+          "Followers gained",
+          "Notifications sent",
+          "Notification opens",
+          "Club direction requests",
+          "Club page clicks",
+          "Instagram clicks",
+          "Snapchat clicks",
+          "TikTok clicks",
+          "X clicks",
+          "Favorites added",
+          "Interested clicks",
+          "Going Tonight clicks",
+          "Profile shares",
+          "Search appearances"
+        ]);
+        document.getElementById("dancerConversionMetrics").innerHTML = lockedMetricCards([
+          "Profile to follow rate",
+          "Schedule to Going Tonight",
+          "Schedule to directions",
+          "Profile to social clicks",
+          "Directions after profile views",
+          "Venue clicks from profile"
+        ]);
+        document.getElementById("dancerScheduleMetrics").innerHTML = lockedMetricCards([
+          "Schedule views",
+          "Shift reminders saved",
+          "Alert opens",
+          "Going Tonight clicks",
+          "Interested clicks",
+          "Profile completeness"
+        ]);
+        document.getElementById("dancerAudienceMetrics").innerHTML = lockedMetricCards([
+          "Nearby customer views",
+          "Returning viewers",
+          "Peak-hour views",
+          "City search appearances",
+          "Profile shares",
+          "Audience with alerts on"
+        ]);
+        document.getElementById("dancerMomentumMetrics").innerHTML = lockedMetricCards([
+          `Trending in ${city}`,
+          "Trending this week",
+          "Spots this week",
+          "Most viewed",
+          "Most followed",
+          "Visit signals this week",
+          "Going Tonight • Interested",
+          "Momentum target",
+          "This week"
+        ]);
+        document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
+          "Instagram clicks",
+          "Snapchat clicks",
+          "TikTok clicks",
+          "X clicks",
+          "Profile shares",
+          "Search appearances"
+        ]);
+        document.getElementById("dancerStreakMetrics").innerHTML = lockedMetricCards([
+          "Posted in a row",
+          "Active this month",
+          "Weekly schedule streak",
+          "Followers waiting",
+          "Last posted shift sent",
+          "Auto report ready"
+        ]);
+        document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
+          "Most viewed club tonight",
+          "Venue visibility rank",
+          "Club page clicks",
+          "Direction requests",
+          "Club momentum",
+          "Compared locally"
+        ]);
+        document.getElementById("dancerWeeklySummary").textContent = "Your weekly summary unlocks after approval and starts tracking profile views, followers, social clicks, Going Tonight signals, and direction requests.";
+        document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
+          "Profile views",
+          "New followers",
+          "Instagram clicks",
+          "Going Tonight signals",
+          "Notification opens",
+          "Schedule views"
+        ]);
       }
       const setupWrap = document.getElementById("setupChecklistWrap");
       const setupToggle = document.getElementById("setupChecklistToggle");
