@@ -1,4 +1,4 @@
-# ShiftStage
+# Dancr
 
 Premium nightlife schedule discovery prototype.
 
