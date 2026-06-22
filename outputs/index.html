@@ -6148,8 +6148,8 @@
       min-height: 52px;
       color: #fff;
       border-color: rgba(192,132,255,.46);
-      background: linear-gradient(135deg, #a855f7, #2f9bff);
-      box-shadow: 0 0 24px rgba(155,92,255,.28), inset 0 0 16px rgba(255,255,255,.12);
+      background: rgba(8,8,12,.82);
+      box-shadow: 0 0 18px rgba(155,92,255,.14), inset 0 0 14px rgba(155,92,255,.06);
     }
 
     .profile-modal .action-btn.secondary {
@@ -6160,6 +6160,7 @@
 
     .profile-modal .going-btn {
       min-height: 54px;
+      background: linear-gradient(135deg, #a855f7, #2f9bff);
       box-shadow: 0 0 28px rgba(155,92,255,.34), 0 0 18px rgba(47,155,255,.18), inset 0 0 16px rgba(255,255,255,.12);
     }
 
@@ -6227,7 +6228,7 @@
     }
 
     .profile-modal .going-btn {
-      min-height: 48px;
+      min-height: 46px;
     }
 
     @media (max-width: 560px) {
@@ -7575,15 +7576,19 @@
 
     function shiftsMarkup(profile) {
       if (profile.tonight) {
+        const nextShiftTile = profile.repeat && profile.repeat !== "No repeat"
+          ? `
+          <div class="info-tile">
+            <strong>Upcoming shifts</strong>
+            <div class="meta">${profile.repeat}</div>
+          </div>`
+          : "";
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
             <div class="meta">${profile.venue} · ${profile.time}</div>
           </div>
-          <div class="info-tile">
-            <strong>Upcoming shifts</strong>
-            <div class="meta">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</div>
-          </div>
+          ${nextShiftTile}
           ${shiftNotesMarkup(profile)}
         `;
       }
@@ -7649,10 +7654,6 @@
             <div class="info-tile">
               <strong>Followers</strong>
               <div class="meta">${followerCount(profile)}</div>
-            </div>
-            <div class="info-tile">
-              <strong>Status</strong>
-              <div class="meta">${profile.status}${profile.trendRank ? ` · #${profile.trendRank} Trending` : ""}</div>
             </div>
           </div>
           <div class="modal-actions">
