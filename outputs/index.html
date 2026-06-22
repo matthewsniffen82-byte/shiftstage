@@ -5872,6 +5872,11 @@
       align-items: center;
       gap: 0;
     }
+
+    .dancer-card .no-shifts {
+      color: #a9a1b5;
+      font-weight: 800;
+    }
   </style>
 </head>
 <body>
@@ -6840,7 +6845,7 @@
           ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
         : profile.scheduled
             ? `<div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
-            : '<div class="pill-row"><span class="pill muted">No shifts posted</span></div>';
+            : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta">${profile.tonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
         : `<div class="meta">${scheduleText}</div>`;
