@@ -945,6 +945,18 @@
       gap: 7px;
     }
 
+    .detail-line {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+      line-height: 1.35;
+    }
+
+    .detail-line + .detail-line {
+      margin-top: 5px;
+    }
+
     .social-link {
       min-height: 30px;
       display: inline-flex;
@@ -967,6 +979,10 @@
       background: rgba(41,25,61,.86);
       box-shadow: 0 0 20px rgba(155,92,255,.22), inset 0 0 14px rgba(192,132,255,.08);
       transform: translateY(-1px);
+    }
+
+    .profile-modal .social-tile {
+      grid-column: 1 / -1;
     }
 
     .modal-actions {
@@ -8477,7 +8493,10 @@
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
-            <div class="meta">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${clockIconMarkup()}${profile.time}</div>
+            <div class="meta">
+              <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+              <div class="detail-line">${clockIconMarkup()}${profile.time}</div>
+            </div>
           </div>
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
