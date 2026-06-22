@@ -5772,6 +5772,37 @@
       background: rgba(155,92,255,.22);
     }
 
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-count {
+      min-width: 22px;
+      min-height: 22px;
+      padding: 0 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: #d9c8ff;
+      border: 1px solid rgba(192,132,255,.22);
+      background: rgba(8,8,12,.56);
+      box-shadow: inset 0 0 10px rgba(155,92,255,.04);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .tab.active .tab-count {
+      color: #fff;
+      border-color: rgba(192,132,255,.5);
+      background: rgba(255,255,255,.1);
+      box-shadow: 0 0 12px rgba(155,92,255,.18), inset 0 0 10px rgba(255,255,255,.05);
+    }
+
     .dancer-card,
     .dancer-card:not(.pending) {
       border-color: rgba(192,132,255,.28);
@@ -6518,10 +6549,10 @@
       </section>
 
       <nav class="tabs" aria-label="Discovery tabs">
-        <button class="tab active" data-tab="tonight">Tonight</button>
-        <button class="tab" data-tab="dancers">Dancers</button>
-        <button class="tab" data-tab="venues">Venues</button>
-        <button class="tab" data-tab="trending">Trending</button>
+        <button class="tab active" data-tab="tonight" data-tab-label="Tonight">Tonight</button>
+        <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
+        <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
+        <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
       </nav>
 
       <section class="stack" aria-live="polite">
@@ -8160,6 +8191,20 @@
       return trendingProfiles(city);
     }
 
+    function updateTabCounts(city) {
+      const counts = {
+        tonight: getItems(city, "tonight").length,
+        dancers: getItems(city, "dancers").length,
+        venues: getItems(city, "venues").length,
+        trending: getItems(city, "trending").length
+      };
+      document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
+        const label = tab.dataset.tabLabel || tab.textContent.trim();
+        const count = counts[tab.dataset.tab] ?? 0;
+        tab.innerHTML = `<span>${label}</span><span class="tab-count">${count}</span>`;
+      });
+    }
+
     function render() {
       const city = citySelect.value;
       const market = markets[city];
@@ -8168,6 +8213,7 @@
       document.getElementById("statShifts").textContent = market.stats.shifts;
       document.getElementById("statVenues").textContent = market.stats.venues;
       renderPopularClubs(city);
+      updateTabCounts(city);
 
       const allItems = getItems(city, activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
