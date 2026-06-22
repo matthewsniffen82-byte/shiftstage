@@ -8235,7 +8235,12 @@
       const allItems = getItems(city, activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
-      const titles = { tonight: "Tonight", dancers: "Dancers", venues: "Venues", trending: "Trending" };
+      const titles = {
+        tonight: `Tonight in ${city}`,
+        dancers: `Dancers in ${city}`,
+        venues: `${city} venues`,
+        trending: `Trending in ${city}`
+      };
       const selectedVenue = activeTab === "venues" && selectedVenueName
         ? market.venues.find((venue) => venue.name === selectedVenueName)
         : null;
@@ -8244,7 +8249,7 @@
         render();
         return;
       }
-      tabTitle.textContent = selectedVenue ? "Venue" : titles[activeTab];
+      tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
       tabCount.textContent = selectedVenue
         ? city
         : (activeTab === "tonight" || activeTab === "dancers") && allItems.length > items.length
