@@ -8922,6 +8922,114 @@
         font-size: 11px;
       }
     }
+
+    /* Reference-style hero: clean violet beam with subtle silhouette */
+    .reference-hero {
+      min-height: clamp(250px, 35vw, 360px);
+      padding: clamp(22px, 3.4vw, 42px);
+      border-radius: 14px;
+      border-color: rgba(139,92,246,.28);
+      background:
+        linear-gradient(90deg, rgba(3,3,5,.99) 0%, rgba(4,3,8,.98) 38%, rgba(18,9,46,.93) 68%, rgba(47,17,142,.72) 88%, rgba(82,28,255,.58) 100%),
+        radial-gradient(ellipse at 92% 52%, rgba(111,45,255,.38), transparent 0 46%),
+        #030304;
+      box-shadow:
+        0 24px 84px rgba(0,0,0,.72),
+        0 0 54px rgba(139,92,246,.16),
+        inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+
+    .reference-hero:before {
+      content: "";
+      position: absolute;
+      right: calc(12.5% - 92px);
+      bottom: 0;
+      z-index: 1;
+      width: clamp(170px, 20vw, 250px);
+      height: clamp(230px, 29vw, 340px);
+      display: block;
+      background-image: url("data:image/svg+xml,%3Csvg width='220' height='310' viewBox='0 0 220 310' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23020107' opacity='.98'%3E%3Ccircle cx='123' cy='34' r='17'/%3E%3Cpath d='M114 55c17-7 31 2 38 20 8 20 5 47-5 78-5 17-6 31-2 47l16 71c2 9-4 18-13 18-6 0-11-4-13-10l-27-78-31 75c-3 8-12 12-20 8-7-3-11-11-8-19l29-90c5-15 7-31 7-47 0-34 9-62 29-73Z'/%3E%3Cpath d='M143 75c14 19 24 39 31 60 3 8-1 17-9 20-8 3-16-1-19-9l-18-51 15-20Z'/%3E%3Cpath d='M112 75c-15 17-33 33-52 48-7 5-17 4-22-3-5-7-4-16 3-22l47-39 24 16Z'/%3E%3Cpath d='M160 138c14-15 28-31 40-49 4-6 13-8 19-4 6 4 8 13 4 19-13 21-30 41-49 58l-14-24Z'/%3E%3Cpath d='M83 129c-19 24-33 52-42 82-2 8-10 12-18 10-8-2-12-11-10-18 10-36 27-69 50-98l20 24Z'/%3E%3C/g%3E%3Cg fill='%237c3fff' opacity='.14'%3E%3Ccircle cx='123' cy='34' r='17'/%3E%3Cpath d='M114 55c17-7 31 2 38 20 8 20 5 47-5 78-5 17-6 31-2 47l16 71c2 9-4 18-13 18-6 0-11-4-13-10l-27-78-31 75c-3 8-12 12-20 8-7-3-11-11-8-19l29-90c5-15 7-31 7-47 0-34 9-62 29-73Z'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right bottom;
+      background-size: contain;
+      filter: drop-shadow(0 0 22px rgba(139,92,246,.22));
+      opacity: .62;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .reference-hero:after {
+      content: "";
+      position: absolute;
+      top: -16%;
+      right: 12.5%;
+      bottom: -16%;
+      z-index: 2;
+      width: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent 0%, rgba(183,109,255,.24) 10%, rgba(232,202,255,.95) 48%, rgba(148,70,255,.72) 82%, transparent 100%);
+      box-shadow:
+        0 0 7px rgba(226,191,255,.86),
+        0 0 18px rgba(139,92,246,.7),
+        0 0 46px rgba(91,33,255,.46),
+        22px 0 76px rgba(91,33,255,.34),
+        -30px 0 72px rgba(91,33,255,.16);
+      opacity: .92;
+      pointer-events: none;
+    }
+
+    .reference-hero .hero-copy {
+      z-index: 3;
+      max-width: 620px;
+    }
+
+    .reference-hero h2 {
+      max-width: 560px;
+      font-family: "Arial Narrow", "Roboto Condensed", Impact, var(--font-display), sans-serif;
+      font-size: clamp(48px, 7.6vw, 86px);
+      line-height: .9;
+      letter-spacing: .01em;
+      text-shadow: 0 14px 34px rgba(0,0,0,.88);
+    }
+
+    .reference-hero h2 strong {
+      color: #8b3dff;
+      text-shadow: 0 0 24px rgba(139,92,246,.62), 0 0 48px rgba(91,33,255,.22);
+    }
+
+    .reference-hero p {
+      margin-top: 20px;
+      font-size: clamp(14px, 2.1vw, 18px);
+      color: rgba(222,217,231,.82);
+    }
+
+    @media (max-width: 560px) {
+      .reference-hero {
+        min-height: 250px;
+        padding: 22px 18px;
+      }
+
+      .reference-hero:before {
+        right: calc(9% - 88px);
+        width: 178px;
+        height: 246px;
+        opacity: .48;
+      }
+
+      .reference-hero:after {
+        right: 9%;
+        width: 2px;
+      }
+
+      .reference-hero h2 {
+        font-size: clamp(39px, 12vw, 56px);
+      }
+
+      .reference-hero p {
+        max-width: 92%;
+        margin-top: 18px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -11926,7 +12034,7 @@
         hero.classList.add("reference-hero");
         hero.innerHTML = `
           <div class="hero-copy">
-            <h2><span>Know who's working.</span><strong>Plan your night.</strong></h2>
+            <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
             <p>Choose your city. See verified schedules tonight.</p>
           </div>
         `;
