@@ -6254,6 +6254,10 @@
       font-weight: 900;
     }
 
+    .profile-modal .interest-count.muted {
+      color: var(--muted);
+    }
+
     .profile-modal .modal-actions {
       gap: 12px;
     }
@@ -7253,8 +7257,82 @@
       return total < 360 ? total + 1440 : total;
     }
 
+    function parseClockMinutes(value) {
+      const match = String(value || "").match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+      if (!match) return null;
+      let hours = Number(match[1]);
+      const minutes = Number(match[2] || 0);
+      const period = match[3].toUpperCase();
+      if (period === "AM" && hours === 12) hours = 0;
+      if (period === "PM" && hours !== 12) hours += 12;
+      return (hours * 60) + minutes;
+    }
+
+    function parseShiftRange(profile) {
+      const parts = String(profile.time || "").split(/\s+-\s+/);
+      if (parts.length !== 2) return null;
+      const start = parseClockMinutes(parts[0]);
+      let end = parseClockMinutes(parts[1]);
+      if (start === null || end === null) return null;
+      if (end <= start) end += 1440;
+      return { start, end };
+    }
+
+    function shiftWindowForDate(profile, dateValue) {
+      const range = parseShiftRange(profile);
+      if (!range || !dateValue) return null;
+      const startDate = new Date(`${dateValue}T00:00:00`);
+      const start = new Date(startDate.getTime() + (range.start * 60000));
+      const end = new Date(startDate.getTime() + (range.end * 60000));
+      return { start, end };
+    }
+
+    function activeShiftWindow(profile, now = new Date()) {
+      if (!profile.scheduled || !profile.time) return null;
+      const dates = profile.shiftDate
+        ? [profile.shiftDate]
+        : profile.tonight
+          ? [
+              localDateValue(now),
+              localDateValue(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
+            ]
+          : [];
+      for (const dateValue of dates) {
+        const window = shiftWindowForDate(profile, dateValue);
+        if (window && now >= window.start && now <= window.end) return window;
+      }
+      return null;
+    }
+
+    function upcomingShiftWindow(profile, now = new Date()) {
+      if (!profile.scheduled || !profile.time) return null;
+      const today = localDateValue(now);
+      return shiftWindowForDate(profile, profile.shiftDate || (profile.tonight ? today : ""));
+    }
+
+    function shiftStatus(profile) {
+      const activeWindow = activeShiftWindow(profile);
+      if (activeWindow) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
+      if (profile.tonight && profile.scheduled) {
+        const window = upcomingShiftWindow(profile);
+        if (window && new Date() < window.start) {
+          return { state: "scheduled", label: `0 going · opens at ${profile.time.split(/\s+-\s+/)[0]}` };
+        }
+        return { state: "ended", label: "0 going · shift ended" };
+      }
+      return { state: "inactive", label: "0 going · not working tonight" };
+    }
+
+    function isWorkingTonight(profile) {
+      return Boolean(profile.tonight || activeShiftWindow(profile));
+    }
+
     function todayValue() {
-      return new Date().toISOString().slice(0, 10);
+      return localDateValue(new Date());
+    }
+
+    function localDateValue(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     }
 
     function formatDateLabel(dateValue) {
@@ -7336,7 +7414,7 @@
         uniqueProfileViews: seed * 110,
         followers: seed * 42,
         favorites: seed * 21,
-        goingTonight: profile.tonight ? seed * 12 : seed * 4,
+        goingTonight: isWorkingTonight(profile) ? seed * 12 : seed * 4,
         interested: profile.scheduled ? seed * 9 : seed * 3,
         recentActivity: seed * 18,
         lowIntentRefreshes: Math.max(1, profile.trend - 6) * 3,
@@ -7441,6 +7519,8 @@
         trend: existing?.trend || 9,
         distance: venue?.distance || "2.4 mi",
         shiftDate: dateValue,
+        shiftStart: startValue,
+        shiftEnd: endValue,
         shiftLabel: formatDateLabel(dateValue),
         repeat,
         notes
@@ -7487,22 +7567,23 @@
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
       const trendBadge = isTrending ? `<span class="badge trend">#${profile.trendRank} Trending</span>` : "";
       const upcomingLabel = upcomingCardLabel(profile);
+      const workingTonight = isWorkingTonight(profile);
       const scheduleText = isPending
         ? "Schedule locked"
-        : profile.tonight
+        : workingTonight
           ? `${profile.venue} · ${profile.time}`
         : profile.scheduled
             ? `${profile.venue} · ${upcomingLabel} · ${profile.time}`
             : "No shifts posted";
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
-        : profile.tonight
+        : workingTonight
           ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
         : profile.scheduled
             ? `<div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta">${profile.tonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
+        ? `<div class="meta">${workingTonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
@@ -7557,9 +7638,9 @@
       const details = venueDetails(venue, city);
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
-        .filter((profile) => profile.tonight)
+        .filter((profile) => isWorkingTonight(profile))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
-      const upcoming = localProfiles.filter((profile) => !profile.tonight && profile.scheduled);
+      const upcoming = localProfiles.filter((profile) => !isWorkingTonight(profile) && profile.scheduled);
       const trending = localProfiles
         .filter((profile) => profile.trendRank)
         .sort((a, b) => a.trendRank - b.trendRank);
@@ -7640,7 +7721,7 @@
     }
 
     function shiftsMarkup(profile) {
-      if (profile.tonight) {
+      if (isWorkingTonight(profile) && profile.scheduled) {
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
@@ -7709,6 +7790,10 @@
           </div>
         `;
       } else {
+        const status = shiftStatus(profile);
+        const goingButton = status.state === "active"
+          ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">I'm Going Tonight</button>`
+          : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${status.state === "scheduled" ? "Going opens later" : "No active shift tonight"}</button>`;
         modalBody.innerHTML = `
           <div class="modal-grid">
             ${shiftsMarkup(profile)}
@@ -7716,17 +7801,15 @@
               <strong>Followers</strong>
               <div class="meta">${followerCount(profile)}</div>
             </div>
-            ${profile.tonight ? `
-              <div class="info-tile" id="tonightInterestTile">
-                <strong>Tonight interest</strong>
-                <div class="meta"><span class="interest-count" id="tonightInterestCount">${tonightInterestCount(profile).toLocaleString()}</span> going</div>
-              </div>
-            ` : ""}
+            <div class="info-tile" id="tonightInterestTile">
+              <strong>Tonight interest</strong>
+              <div class="meta"><span class="interest-count ${status.state === "active" ? "" : "muted"}" id="tonightInterestCount">${status.label}</span></div>
+            </div>
           </div>
           <div class="modal-actions">
             <button class="action-btn" id="followBtn">Follow</button>
             <button class="action-btn secondary" id="notifyBtn">Notify Me</button>
-            ${profile.tonight ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">I'm Going Tonight</button>` : ""}
+            ${goingButton}
           </div>
         `;
       }
@@ -8057,7 +8140,7 @@
       const city = citySelect.value;
       const followed = followedProfiles(city);
       const workingTonight = followed
-        .filter((profile) => profile.tonight)
+        .filter((profile) => isWorkingTonight(profile))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       document.getElementById("dashboardCity").textContent = city;
       document.getElementById("dashTonightCount").textContent = workingTonight.length;
@@ -8189,7 +8272,7 @@
       const market = markets[city];
       if (tab === "tonight") {
         return market.dancers
-          .filter((profile) => profile.status === "Verified" && !profile.hidden && profile.tonight)
+          .filter((profile) => profile.status === "Verified" && !profile.hidden && isWorkingTonight(profile))
           .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
           .map((profile) => withTrendingRank(profile, city));
       }
@@ -8198,7 +8281,7 @@
           .filter((profile) => !profile.hidden)
           .map((profile) => withTrendingRank(profile, city))
           .sort((a, b) => {
-            const weight = (profile) => profile.status === "Pending" ? 3 : profile.tonight ? 0 : profile.scheduled ? 1 : 2;
+            const weight = (profile) => profile.status === "Pending" ? 3 : isWorkingTonight(profile) ? 0 : profile.scheduled ? 1 : 2;
             return weight(a) - weight(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time);
           });
       }
@@ -8317,12 +8400,16 @@
         showToast("Notifications enabled");
       }
       if (event.target.id === "goingBtn") {
+        if (event.target.disabled) return;
         if (event.target.classList.contains("is-going")) return;
         const profileName = event.target.dataset.profile;
         const countEl = document.getElementById("tonightInterestCount");
-        const currentCount = Number(countEl?.textContent.replace(/,/g, "")) || 0;
+        const currentCount = Number(countEl?.textContent.match(/[\d,]+/)?.[0].replace(/,/g, "")) || 0;
         goingTonightByProfile[profileName] = currentCount + 1;
-        if (countEl) countEl.textContent = goingTonightByProfile[profileName].toLocaleString();
+        if (countEl) {
+          countEl.classList.remove("muted");
+          countEl.textContent = `${goingTonightByProfile[profileName].toLocaleString()} going`;
+        }
         event.target.classList.add("is-going");
         event.target.textContent = "You're going tonight";
         showToast("Added to tonight");
