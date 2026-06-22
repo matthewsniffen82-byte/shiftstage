@@ -8648,8 +8648,17 @@
       return value.toLowerCase().replaceAll(" ", "-").replace(/[^a-z0-9-]/g, "");
     }
 
-    function followerCount(profile) {
-      return `${Math.max(1200, 12800 - (profile.trend * 740)).toLocaleString()} followers`;
+    function isFollowingProfile(city, profileName) {
+      return (followedByCity[city] || []).includes(profileName);
+    }
+
+    function followerNumber(profile, city = selectedCity()) {
+      const base = Math.max(1200, 12800 - (profile.trend * 740));
+      return isFollowingProfile(city, profile.name) ? base + 1 : base;
+    }
+
+    function followerCount(profile, city = selectedCity()) {
+      return `${followerNumber(profile, city).toLocaleString()} followers`;
     }
 
     function tonightInterestCount(profile) {
@@ -9366,6 +9375,7 @@
         `;
       } else {
         const status = shiftStatus(profile);
+        const isFollowed = isFollowingProfile(city, profile.name);
         const goingButton = status.state === "active"
           ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">${actionButtonLabel("clock", "I'm Going Tonight")}</button>`
           : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${actionButtonLabel("clock", status.state === "scheduled" ? "Going opens later" : "No active shift tonight")}</button>`;
@@ -9374,12 +9384,12 @@
             ${shiftsMarkup(profile, status)}
             <div class="info-tile">
               <strong>Followers</strong>
-              <div class="meta">${followerCount(profile)}</div>
+              <div class="meta" id="modalFollowerCount">${followerCount(profile, city)}</div>
             </div>
             ${socialLinksMarkup(profile)}
           </div>
           <div class="modal-actions">
-            <button class="action-btn follow-primary" id="followBtn">${actionButtonLabel("heart", "Follow")}</button>
+            <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
             <button class="action-btn secondary" id="notifyBtn">${actionButtonLabel("bell", "Notify Me")}</button>
             ${goingButton}
           </div>
@@ -9963,12 +9973,27 @@
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn");
       if (!actionButton) return;
       if (actionButton.id === "followBtn") {
-        actionButton.innerHTML = actionButtonLabel("check", "Following");
-        actionButton.classList.add("is-following");
-        const profileName = modalName.textContent;
+        const profileName = actionButton.dataset.profile;
         const city = citySelect.value;
-        if (!followedByCity[city].includes(profileName)) followedByCity[city].push(profileName);
-        showToast("Following profile");
+        const followedList = followedByCity[city] || (followedByCity[city] = []);
+        const followIndex = followedList.indexOf(profileName);
+        const profile = findProfile(profileName);
+        if (followIndex >= 0) {
+          followedList.splice(followIndex, 1);
+          actionButton.innerHTML = actionButtonLabel("heart", "Follow");
+          actionButton.classList.remove("is-following");
+          showToast("Unfollowed profile");
+        } else {
+          followedList.push(profileName);
+          actionButton.innerHTML = actionButtonLabel("check", "Following");
+          actionButton.classList.add("is-following");
+          showToast("Following profile");
+        }
+        if (profile) {
+          const followerCountEl = document.getElementById("modalFollowerCount");
+          if (followerCountEl) followerCountEl.textContent = followerCount(profile, city);
+        }
+        if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "notifyBtn") {
         actionButton.innerHTML = actionButtonLabel("bell", "Notifications On");
