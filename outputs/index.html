@@ -10326,6 +10326,11 @@
     }
 
     .reference-hero:before {
+      display: none !important;
+    }
+
+    .hero-silhouette {
+      position: absolute;
       right: calc(6% + 34px);
       bottom: -2px;
       z-index: 2;
@@ -10341,10 +10346,11 @@
         drop-shadow(0 0 12px rgba(0,0,0,.86))
         drop-shadow(0 0 22px rgba(139,92,246,.42))
         drop-shadow(0 0 44px rgba(91,33,255,.22));
+      pointer-events: none;
     }
 
     @media (min-width: 760px) {
-      .reference-hero:before {
+      .hero-silhouette {
         right: calc(6% + 44px);
         width: clamp(158px, 14vw, 218px);
         height: clamp(218px, 21vw, 294px);
@@ -10353,7 +10359,7 @@
     }
 
     @media (max-width: 460px) {
-      .reference-hero:before {
+      .hero-silhouette {
         right: calc(2% + 30px);
         width: 128px;
         height: 182px;
@@ -13674,6 +13680,7 @@
       if (hero && !hero.classList.contains("reference-hero")) {
         hero.classList.add("reference-hero");
         hero.innerHTML = `
+          <div class="hero-silhouette" aria-hidden="true"></div>
           <div class="hero-copy">
             <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
             <p>Choose your city. See verified schedules tonight.</p>
