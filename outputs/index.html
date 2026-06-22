@@ -267,6 +267,12 @@
       box-shadow: 0 0 20px rgba(155,92,255,.2), inset 0 0 14px rgba(192,132,255,.08);
     }
 
+    #accountBtn.active {
+      border-color: rgba(192,132,255,.58);
+      background: rgba(35,23,52,.82);
+      box-shadow: 0 0 20px rgba(155,92,255,.2), inset 0 0 14px rgba(192,132,255,.08);
+    }
+
     .icon {
       width: 20px;
       height: 20px;
@@ -9233,12 +9239,8 @@
           </span>
         </button>
         <div class="menu" aria-label="Menu">
-          <span class="account-status" id="accountStatus" hidden></span>
-          <button class="menu-btn dashboard-menu" id="accountBtn">Login / Join</button>
           <div class="utility-menu">
-            <button class="menu-btn icon-menu-btn" id="moreMenuBtn" type="button" aria-label="Open menu" aria-expanded="false">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
-            </button>
+            <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
               <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
@@ -9904,9 +9906,7 @@
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
     const logoutBtn = document.getElementById("logoutBtn");
-    const accountStatus = document.getElementById("accountStatus");
     const adminBtn = document.getElementById("adminBtn");
-    const moreMenuBtn = document.getElementById("moreMenuBtn");
     const moreMenuPanel = document.getElementById("moreMenuPanel");
     const brandHome = document.getElementById("brandHome");
     const dashTonightList = document.getElementById("dashTonightList");
@@ -11216,28 +11216,28 @@
       const role = activeDashboardType === "dancer" ? "Dancer" : "Customer";
       dashboardBtn.hidden = !loggedIn;
       logoutBtn.hidden = !loggedIn;
-      accountStatus.hidden = !loggedIn;
-      accountBtn.hidden = loggedIn;
-      accountBtn.textContent = "Login / Join";
+      accountBtn.hidden = false;
+      accountBtn.textContent = loggedIn ? role : "Login / Join";
+      accountBtn.setAttribute("aria-label", loggedIn ? `${role} account menu` : "Login or join");
       if (loggedIn) {
-        accountStatus.textContent = role;
-        accountStatus.title = `${role} logged in`;
+        accountBtn.title = `${role} logged in`;
       } else {
-        accountStatus.removeAttribute("title");
+        accountBtn.removeAttribute("title");
+        closeUtilityMenu();
       }
     }
 
     function closeUtilityMenu() {
       moreMenuPanel.hidden = true;
-      moreMenuBtn.classList.remove("active");
-      moreMenuBtn.setAttribute("aria-expanded", "false");
+      accountBtn.classList.remove("active");
+      accountBtn.setAttribute("aria-expanded", "false");
     }
 
     function toggleUtilityMenu() {
       const willOpen = moreMenuPanel.hidden;
       moreMenuPanel.hidden = !willOpen;
-      moreMenuBtn.classList.toggle("active", willOpen);
-      moreMenuBtn.setAttribute("aria-expanded", String(willOpen));
+      accountBtn.classList.toggle("active", willOpen);
+      accountBtn.setAttribute("aria-expanded", String(willOpen));
     }
 
     function logoutAccount() {
@@ -11964,15 +11964,10 @@
 
     accountBtn.addEventListener("click", () => {
       if (isCustomerLoggedIn || isDancerLoggedIn) {
-        openDashboard();
+        toggleUtilityMenu();
       } else {
         openAuthPage();
       }
-    });
-
-    moreMenuBtn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      toggleUtilityMenu();
     });
 
     document.addEventListener("click", (event) => {
