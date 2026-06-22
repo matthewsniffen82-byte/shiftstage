@@ -6410,12 +6410,12 @@
           { name: "Nova Rae", status: "Verified", venue: "Neon Hall", time: "10:30 PM - 3:00 AM", tonight: true, scheduled: true, trend: 2, distance: "4.1 mi" },
           { name: "Aria Vale", status: "Verified", venue: "Afterglow", time: "11:00 PM - 1:00 AM", tonight: true, scheduled: true, trend: 4, distance: "6.6 mi" },
           { name: "Lena Noir", status: "Pending", venue: "Velvet Room", time: "Pending review", tonight: false, scheduled: false, trend: 5, distance: "3.8 mi" },
-          { name: "Sage Monroe", status: "Verified", venue: "Prism Lounge", time: "Tomorrow 10 PM", tonight: false, scheduled: true, trend: 3, distance: "8.2 mi" },
-          { name: "Kira Sol", status: "Verified", venue: "Monarch", time: "Friday 9 PM", tonight: false, scheduled: true, trend: 6, distance: "9.9 mi" },
+          { name: "Sage Monroe", status: "Verified", venue: "Prism Lounge", time: "10:00 PM - 3:00 AM", shiftLabel: "Tomorrow", tonight: false, scheduled: true, trend: 3, distance: "8.2 mi" },
+          { name: "Kira Sol", status: "Verified", venue: "Monarch", time: "9:00 PM - 2:00 AM", shiftLabel: "Friday", tonight: false, scheduled: true, trend: 6, distance: "9.9 mi" },
           { name: "Vera Sky", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 7, distance: "6.6 mi" },
           { name: "Ivy Mars", status: "Pending", venue: "Neon Hall", time: "Pending review", tonight: false, scheduled: false, trend: 8, distance: "4.1 mi" },
           { name: "Gia Night", status: "Verified", venue: "Prism Lounge", time: "8:15 PM - 12:30 AM", tonight: true, scheduled: true, trend: 9, distance: "8.2 mi" },
-          { name: "Rumi West", status: "Verified", venue: "Monarch", time: "Monday 10 PM", tonight: false, scheduled: true, trend: 10, distance: "9.9 mi" },
+          { name: "Rumi West", status: "Verified", venue: "Monarch", time: "10:00 PM - 2:30 AM", shiftLabel: "Monday", tonight: false, scheduled: true, trend: 10, distance: "9.9 mi" },
           { name: "Tess Flame", status: "Verified", venue: "Velvet Room", time: "7:30 PM - 11:30 PM", tonight: true, scheduled: true, trend: 11, distance: "2.4 mi" },
           { name: "Mina Voss", status: "Verified", venue: "Neon Hall", time: "9:30 PM - 2:00 AM", tonight: true, scheduled: true, trend: 12, distance: "4.1 mi" },
           { name: "Lux Sable", status: "Verified", venue: "Afterglow", time: "12:15 AM - 4:00 AM", tonight: true, scheduled: true, trend: 13, distance: "6.6 mi" },
@@ -6490,7 +6490,7 @@
           { name: "Livia West", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 7, distance: "7.8 mi" },
           { name: "Rox Quinn", status: "Pending", venue: "Eastline", time: "Pending review", tonight: false, scheduled: false, trend: 8, distance: "7.8 mi" },
           { name: "Cami Moon", status: "Verified", venue: "Mercer Night", time: "7:15 PM - 11:45 PM", tonight: true, scheduled: true, trend: 9, distance: "1.4 mi" },
-          { name: "Nell Sable", status: "Verified", venue: "Chrome Room", time: "Monday 10 PM", tonight: false, scheduled: true, trend: 10, distance: "3.3 mi" },
+          { name: "Nell Sable", status: "Verified", venue: "Chrome Room", time: "10:00 PM - 2:30 AM", shiftLabel: "Monday", tonight: false, scheduled: true, trend: 10, distance: "3.3 mi" },
           { name: "Ava Frost", status: "Verified", venue: "Eastline", time: "9:15 PM - 1:15 AM", tonight: true, scheduled: true, trend: 11, distance: "7.8 mi" },
           { name: "Rae Mercer", status: "Verified", venue: "Hudson Glow", time: "10:45 PM - 2:45 AM", tonight: true, scheduled: true, trend: 12, distance: "5.2 mi" },
           { name: "Nico Belle", status: "Verified", venue: "Mercer Night", time: "12:05 AM - 3:30 AM", tonight: true, scheduled: true, trend: 13, distance: "1.4 mi" },
@@ -6643,7 +6643,7 @@
     }
 
     function formatDateLabel(dateValue) {
-      if (!dateValue) return "Upcoming";
+      if (!dateValue) return "Next shift";
       const date = new Date(`${dateValue}T12:00:00`);
       const today = new Date();
       const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -6826,7 +6826,7 @@
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
       const trendBadge = isTrending ? `<span class="badge trend">#${profile.trendRank} Trending</span>` : "";
-      const upcomingLabel = profile.shiftLabel || "Upcoming";
+      const upcomingLabel = profile.shiftLabel || "Next shift";
       const scheduleText = isPending
         ? "Schedule locked"
         : profile.tonight
@@ -6994,7 +6994,7 @@
         `;
       }
       if (profile.scheduled) {
-        const upcomingLabel = profile.shiftLabel || "Upcoming";
+        const upcomingLabel = profile.shiftLabel || "Next shift";
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
