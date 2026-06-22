@@ -5799,6 +5799,28 @@
     .profile-modal .pill.upcoming:hover {
       box-shadow: 0 0 22px rgba(59,130,246,.34), inset 0 0 12px rgba(59,130,246,.1);
     }
+
+    .verified-mark {
+      width: 19px;
+      height: 19px;
+      margin-left: 7px;
+      display: inline-grid;
+      place-items: center;
+      vertical-align: 2px;
+      border-radius: 999px;
+      color: #061014;
+      background: #67E8F9;
+      box-shadow: 0 0 14px rgba(34,211,238,.42);
+      font-size: 12px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .dancer-card .profile-body h3 {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
   </style>
 </head>
 <body>
@@ -6750,7 +6772,8 @@
     function profileCard(profile, index, options = {}) {
       const isPending = profile.status === "Pending";
       const isTrending = !isPending && profile.trendRank;
-      const statusBadge = `<span class="${isPending ? "badge pending" : "badge"}">${profile.status}</span>`;
+      const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
+      const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
       const trendBadge = isTrending ? `<span class="badge trend">#${profile.trendRank} Trending</span>` : "";
       const upcomingLabel = profile.shiftLabel || "Upcoming";
       const scheduleText = isPending
@@ -6780,7 +6803,7 @@
           </div>
           <div class="profile-body">
             <div>
-              <h3>${profile.name}</h3>
+              <h3>${profile.name}${verifiedMark}</h3>
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
