@@ -6099,6 +6099,140 @@
       }
     }
 
+    /* Desktop parity with the latest discovery flow */
+    @media (min-width: 900px) {
+      .app {
+        width: min(100%, 1440px);
+      }
+
+      header {
+        padding: 16px 32px;
+      }
+
+      .topbar {
+        gap: 18px;
+      }
+
+      .brand {
+        display: flex;
+        order: 1;
+        flex: 0 0 auto;
+      }
+
+      .desktop-search {
+        order: 2;
+        width: min(520px, 34vw);
+      }
+
+      .menu {
+        order: 3;
+        margin-left: auto;
+      }
+
+      main {
+        padding: 28px 34px 48px;
+      }
+
+      .stack {
+        gap: 18px;
+      }
+
+      .reference-hero {
+        min-height: 250px;
+        padding: 34px;
+      }
+
+      .reference-hero h2 {
+        max-width: 560px;
+        font-size: clamp(44px, 4.8vw, 68px);
+      }
+
+      .reference-hero p {
+        font-size: 17px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) 180px 240px;
+        align-items: end;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid rgba(155,92,255,.24);
+        border-radius: 22px;
+        background: rgba(6,7,11,.76);
+        box-shadow: 0 18px 44px rgba(0,0,0,.34), 0 0 22px rgba(155,92,255,.08), inset 0 0 24px rgba(155,92,255,.035);
+      }
+
+      .controls .field {
+        gap: 8px;
+      }
+
+      .controls select {
+        min-height: 54px;
+        border-radius: 17px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .location-btn {
+        grid-column: auto;
+        min-height: 54px;
+      }
+
+      .tabs {
+        display: flex;
+        padding-top: 2px;
+      }
+
+      .content-head {
+        margin-top: 0;
+        align-items: center;
+      }
+
+      #tabTitle {
+        font-size: 30px;
+      }
+
+      .count {
+        display: inline-flex;
+      }
+
+      .view-all {
+        position: static;
+        justify-self: end;
+        width: auto;
+        min-height: 42px;
+        padding: 0 20px;
+      }
+
+      .list.card-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .list.card-grid .dancer-card {
+        min-height: 360px;
+        aspect-ratio: 1 / 1.45;
+      }
+
+      .dancer-card .profile-body {
+        padding: 74px 18px 18px;
+      }
+
+      .dancer-card::after {
+        content: none;
+        display: none;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: 22px;
+      }
+
+      .legal-links {
+        display: flex;
+      }
+    }
+
     /* Final profile modal cleanup */
     .profile-modal {
       width: min(100%, 720px);
