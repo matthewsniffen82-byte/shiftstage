@@ -6819,8 +6819,8 @@
         : profile.tonight
           ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
         : profile.scheduled
-            ? `<div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>`
-            : '<div class="pill-row"><span class="pill muted">No shift tonight</span></div>';
+            ? `<div class="pill-row"><span class="pill upcoming">Upcoming • ${profile.venue} • ${upcomingLabel} • ${profile.time}</span></div>`
+            : '<div class="pill-row"><span class="pill muted">No shifts posted</span></div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta">${profile.venue} · ${profile.distance}</div>`
         : `<div class="meta">${scheduleText}</div>`;
@@ -6981,7 +6981,7 @@
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>
+            <div class="pill-row"><span class="pill upcoming">Upcoming • ${profile.venue} • ${upcomingLabel} • ${profile.time}</span></div>
             <div class="meta">${profile.venue}</div>
           </div>
           <div class="info-tile">
@@ -6994,7 +6994,7 @@
       return `
         <div class="info-tile">
           <strong>Upcoming shifts</strong>
-          <div class="meta">No upcoming shifts</div>
+          <div class="meta">No shifts posted</div>
         </div>
         <div class="info-tile">
           <strong>Tonight</strong>
@@ -7517,7 +7517,7 @@
           .filter((profile) => !profile.hidden)
           .map((profile) => withTrendingRank(profile, city))
           .sort((a, b) => {
-            const weight = (profile) => profile.status === "Pending" ? 3 : profile.tonight ? 0 : profile.scheduled ? 1 : 2;
+            const weight = (profile) => profile.status === "Pending" ? 3 : profile.scheduled && !profile.tonight ? 0 : !profile.scheduled ? 1 : 2;
             return weight(a) - weight(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time);
           });
       }
