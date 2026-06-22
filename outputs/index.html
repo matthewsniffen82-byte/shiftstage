@@ -6258,6 +6258,11 @@
       color: var(--muted);
     }
 
+    .profile-modal .interest-tile {
+      border-color: rgba(155,92,255,.36);
+      box-shadow: inset 0 0 16px rgba(155,92,255,.04), 0 0 22px rgba(155,92,255,.1);
+    }
+
     .profile-modal .modal-actions {
       gap: 12px;
     }
@@ -7720,13 +7725,23 @@
         : "";
     }
 
-    function shiftsMarkup(profile) {
+    function tonightInterestTileMarkup(status) {
+      return `
+        <div class="info-tile interest-tile" id="tonightInterestTile">
+          <strong>Tonight interest</strong>
+          <div class="meta"><span class="interest-count ${status.state === "active" ? "" : "muted"}" id="tonightInterestCount">${status.label}</span></div>
+        </div>
+      `;
+    }
+
+    function shiftsMarkup(profile, status = shiftStatus(profile)) {
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
             <div class="meta"><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${profile.time}</div>
           </div>
+          ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="meta">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</div>
@@ -7742,6 +7757,7 @@
             <div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
             <div class="meta">Next: <button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
           </div>
+          ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
             <strong>Tonight</strong>
             <div class="meta">Not scheduled tonight</div>
@@ -7754,6 +7770,7 @@
           <strong>Upcoming shifts</strong>
           <div class="meta">No shifts posted</div>
         </div>
+        ${tonightInterestTileMarkup(status)}
         <div class="info-tile">
           <strong>Tonight</strong>
           <div class="meta">Not scheduled tonight</div>
@@ -7796,14 +7813,10 @@
           : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${status.state === "scheduled" ? "Going opens later" : "No active shift tonight"}</button>`;
         modalBody.innerHTML = `
           <div class="modal-grid">
-            ${shiftsMarkup(profile)}
+            ${shiftsMarkup(profile, status)}
             <div class="info-tile">
               <strong>Followers</strong>
               <div class="meta">${followerCount(profile)}</div>
-            </div>
-            <div class="info-tile" id="tonightInterestTile">
-              <strong>Tonight interest</strong>
-              <div class="meta"><span class="interest-count ${status.state === "active" ? "" : "muted"}" id="tonightInterestCount">${status.label}</span></div>
             </div>
           </div>
           <div class="modal-actions">
