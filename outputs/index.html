@@ -10010,6 +10010,107 @@
         white-space: normal;
       }
     }
+
+    /* Final profile-card text spacing: keep name, venue, and shift time readable. */
+    .dancer-card .profile-body {
+      gap: 8px;
+      padding-bottom: 18px;
+    }
+
+    .dancer-card .card-info-stack {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .dancer-card .profile-body h3 {
+      align-items: center;
+      line-height: 1.08;
+      margin: 0;
+      min-width: 0;
+    }
+
+    .dancer-card .card-venue-line {
+      gap: 5px;
+      line-height: 1.25;
+      margin: 0;
+      min-width: 0;
+    }
+
+    .dancer-card .profile-body > .schedule-row {
+      grid-template-columns: 16px minmax(0, 1fr);
+      column-gap: 8px;
+      margin-top: 1px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .dancer-card .profile-body > .schedule-row .venue-dot {
+      width: 15px;
+      height: 15px;
+    }
+
+    .card-schedule-text {
+      display: block;
+      max-width: 100%;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.22;
+      padding-right: 2px;
+      word-break: normal;
+    }
+
+    @media (max-width: 560px) {
+      .list.card-grid .dancer-card {
+        min-height: 330px;
+      }
+
+      .dancer-card .profile-body {
+        gap: 7px;
+        padding: 62px 11px 17px;
+      }
+
+      .dancer-card .card-info-stack {
+        gap: 3px;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: clamp(17px, 4.9vw, 19px);
+        line-height: 1.08;
+      }
+
+      .dancer-card .card-venue-line {
+        font-size: 11.4px;
+        line-height: 1.25;
+      }
+
+      .dancer-card .profile-body > .schedule-row {
+        grid-template-columns: 15px minmax(0, 1fr);
+        column-gap: 7px;
+        margin-top: 1px;
+      }
+
+      .card-schedule-text {
+        font-size: clamp(10.5px, 2.9vw, 11.6px);
+        line-height: 1.22;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .list.card-grid .dancer-card {
+        min-height: 318px;
+      }
+
+      .dancer-card .profile-body {
+        padding-inline: 10px;
+        padding-bottom: 16px;
+      }
+
+      .card-schedule-text {
+        font-size: 10.2px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -11712,7 +11813,7 @@
             </div>
           </div>
           <div class="profile-body">
-            <div>
+            <div class="card-info-stack">
               <h3>${profile.name}${verifiedMark}</h3>
               ${clubMarkup}
             </div>
