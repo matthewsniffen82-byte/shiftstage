@@ -5170,13 +5170,23 @@
 
     .badge.trend,
     .filter-pill.trending {
-      color: #F8D36A;
-      border-color: rgba(255,214,84,.72);
-      background: rgba(12,10,7,.72);
-      box-shadow: 0 0 16px rgba(255,214,84,.22), inset 0 0 12px rgba(255,214,84,.08);
-      text-shadow: 0 0 8px rgba(255,214,84,.22);
+      color: #F2C968;
+      border-color: rgba(177,125,24,.72);
+      background: linear-gradient(180deg, rgba(34,25,9,.9), rgba(9,8,6,.9));
+      box-shadow: 0 0 14px rgba(177,125,24,.22), inset 0 0 14px rgba(242,201,104,.08);
+      text-shadow: 0 0 8px rgba(242,201,104,.24);
       font-family: var(--font-ui);
       font-weight: 900;
+    }
+
+    .badge.trend::before,
+    .filter-pill.trending::before {
+      content: "↯";
+      margin-right: 6px;
+      color: #D6A12B;
+      font-size: .95em;
+      line-height: 1;
+      text-shadow: 0 0 8px rgba(214,161,43,.38);
     }
 
     .pill.tonight,
@@ -5818,7 +5828,7 @@
 
     .dancer-card .badge.trend:hover,
     .profile-modal .badge.trend:hover {
-      box-shadow: 0 0 22px rgba(255,214,84,.32), inset 0 0 13px rgba(255,214,84,.1);
+      box-shadow: 0 0 20px rgba(177,125,24,.3), inset 0 0 14px rgba(242,201,104,.1);
     }
 
     .dancer-card .pill.tonight:hover,
