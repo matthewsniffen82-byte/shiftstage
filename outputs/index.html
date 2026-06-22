@@ -7593,6 +7593,71 @@
         margin-right: 4px;
       }
     }
+    /* Dancr hero light wall */
+    .reference-hero {
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    .reference-hero .hero-copy {
+      position: relative;
+      max-width: 650px;
+      padding: 22px 24px 24px;
+      border-radius: 22px;
+      background:
+        linear-gradient(90deg, rgba(2,2,4,.88) 0%, rgba(10,5,25,.72) 56%, rgba(79,28,190,.2) 100%),
+        radial-gradient(circle at 74% 42%, rgba(139,92,246,.42), transparent 0 18rem);
+      box-shadow:
+        0 24px 70px rgba(0,0,0,.56),
+        inset 0 0 34px rgba(139,92,246,.07);
+    }
+
+    .reference-hero .hero-copy:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.94) 0%, rgba(7,4,18,.82) 44%, rgba(61,22,158,.42) 78%, rgba(20,5,62,.24) 100%),
+        radial-gradient(ellipse at 86% 40%, rgba(121,57,255,.56), transparent 0 42%),
+        radial-gradient(ellipse at 68% 48%, rgba(68,45,180,.34), transparent 0 54%);
+      filter: blur(.2px);
+    }
+
+    .reference-hero .hero-copy:after {
+      content: "";
+      position: absolute;
+      top: -28%;
+      right: -18px;
+      bottom: -28%;
+      width: 18px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent 0%, rgba(173,95,255,.35) 14%, rgba(178,70,255,.95) 48%, rgba(94,57,255,.7) 78%, transparent 100%);
+      box-shadow:
+        0 0 18px rgba(178,70,255,.78),
+        0 0 54px rgba(139,92,246,.68),
+        0 0 112px rgba(92,55,255,.42);
+      opacity: .88;
+      pointer-events: none;
+    }
+
+    .reference-hero h2,
+    .reference-hero p {
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (max-width: 560px) {
+      .reference-hero .hero-copy {
+        padding: 18px 18px 20px;
+      }
+
+      .reference-hero .hero-copy:after {
+        right: -10px;
+        width: 12px;
+      }
+    }
   </style>
 </head>
 <body>
