@@ -8034,6 +8034,41 @@
       text-shadow: 0 0 14px rgba(168,85,247,.2);
     }
 
+    .dancer-card .profile-body > .pill-row {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 7px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .dancer-card .profile-body > .pill-row .venue-dot {
+      justify-self: center;
+      margin-right: 0;
+    }
+
+    .dancer-card .profile-body > .pill-row .pill {
+      width: 100%;
+      max-width: 100%;
+      justify-content: center;
+      padding-inline: 10px;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .profile-body > .pill-row {
+        grid-template-columns: 15px minmax(0, 1fr);
+        column-gap: 6px;
+      }
+
+      .dancer-card .profile-body > .pill-row .pill {
+        padding-inline: 8px;
+        font-size: 11px;
+      }
+    }
+
     .profile-modal .metric-value,
     .profile-modal .interest-count {
       color: #f8f7fb;
