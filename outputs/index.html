@@ -10361,6 +10361,14 @@
       return `${formatClock(startValue)} - ${formatClock(endValue)}`;
     }
 
+    function compactCardShiftTime(timeValue) {
+      return String(timeValue || "")
+        .replace(/:00\s*/g, " ")
+        .replace(/\s*-\s*/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function dateFromUpcomingLabel(label, city = selectedCity()) {
       if (!label) return null;
       const clean = String(label).trim().toLowerCase();
@@ -10865,9 +10873,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text tonight">Tonight • ${profile.time}</span></div>`
+          ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text tonight">Tonight • ${compactCardShiftTime(profile.time)}</span></div>`
           : profile.scheduled
-            ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>`
+            ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming">${upcomingLabel} • ${compactCardShiftTime(profile.time)}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next:</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
