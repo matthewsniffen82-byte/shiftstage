@@ -8920,8 +8920,21 @@
       return { state: "inactive", label: "0 going · not working tonight" };
     }
 
+    function tonightShiftWindow(profile, now = new Date(), city = selectedCity()) {
+      if (!profile.scheduled || !profile.time) return null;
+      const activeWindow = activeShiftWindow(profile, now, city);
+      if (activeWindow) return activeWindow;
+      const cityNow = cityWallClock(now, city);
+      const today = wallDateValue(cityNow);
+      const dateValue = profile.shiftDate || (profile.tonight ? today : "");
+      const window = shiftWindowForDate(profile, dateValue);
+      if (!window) return null;
+      const shiftDayStart = dateValueToWallDate(dateValue);
+      return cityNow >= shiftDayStart && cityNow <= window.end ? window : null;
+    }
+
     function isWorkingTonight(profile, city = selectedCity()) {
-      return Boolean(profile.tonight || activeShiftWindow(profile, new Date(), city));
+      return Boolean(tonightShiftWindow(profile, new Date(), city));
     }
 
     function todayValue(city = selectedCity()) {
