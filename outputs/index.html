@@ -8120,9 +8120,25 @@
       width: 100%;
       max-width: 100%;
       justify-content: center;
+      align-items: center;
+      gap: 5px;
       padding-inline: 10px;
       font-size: 12px;
       line-height: 1;
+      white-space: nowrap;
+    }
+
+    .dancer-card .schedule-label,
+    .dancer-card .schedule-dot,
+    .dancer-card .schedule-time-text {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+    }
+
+    .dancer-card .schedule-dot {
+      opacity: .78;
+      transform: translateY(-.5px);
     }
 
     @media (max-width: 420px) {
@@ -9513,9 +9529,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="pill-row">${clockIconMarkup()}<span class="pill tonight">Tonight • ${profile.time}</span></div>`
+          ? `<div class="pill-row">${clockIconMarkup()}<span class="pill tonight"><span class="schedule-label">Tonight</span><span class="schedule-dot">•</span><span class="schedule-time-text">${profile.time}</span></span></div>`
         : profile.scheduled
-            ? `<div class="pill-row">${clockIconMarkup()}<span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
+            ? `<div class="pill-row">${clockIconMarkup()}<span class="pill upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-dot">•</span><span class="schedule-time-text">${profile.time}</span></span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next:</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
