@@ -9227,6 +9227,94 @@
         font-size: clamp(42px, 11.3vw, 56px);
       }
     }
+
+    /* Hero proportion polish: less poster, closer to reference */
+    .reference-hero {
+      min-height: clamp(232px, 41vw, 318px);
+      padding: clamp(24px, 4.2vw, 34px);
+      background:
+        radial-gradient(circle at 14% 12%, rgba(41,20,91,.24) 0 16px, transparent 17px),
+        radial-gradient(ellipse at 88% 50%, rgba(139,70,255,.15), transparent 0 21%),
+        radial-gradient(ellipse at 97% 52%, rgba(118,46,255,.28), transparent 0 34%),
+        linear-gradient(90deg, #020204 0%, #030306 47%, #0d0723 73%, #1d0e56 91%, #2a108a 100%);
+    }
+
+    .reference-hero:before {
+      right: calc(10% - 88px);
+      bottom: -3px;
+      width: clamp(154px, 21vw, 232px);
+      height: clamp(220px, 34vw, 322px);
+      opacity: .42;
+      filter: drop-shadow(0 0 18px rgba(139,92,246,.13));
+    }
+
+    .reference-hero:after {
+      right: 10%;
+      width: 2px;
+      box-shadow:
+        0 0 6px rgba(240,218,255,.78),
+        0 0 16px rgba(168,85,247,.56),
+        0 0 40px rgba(139,92,246,.34),
+        15px 0 58px rgba(139,92,246,.24),
+        -18px 0 44px rgba(91,33,255,.1);
+    }
+
+    .reference-hero .hero-copy {
+      max-width: min(64%, 520px);
+    }
+
+    .reference-hero h2 {
+      max-width: 520px;
+      font-size: clamp(39px, 6.9vw, 54px);
+      line-height: .92;
+      text-shadow:
+        0 0 7px rgba(255,255,255,.12),
+        0 10px 26px rgba(0,0,0,.86);
+    }
+
+    .reference-hero h2 strong {
+      white-space: nowrap;
+      font-size: .96em;
+      text-shadow:
+        0 0 12px rgba(139,92,246,.42),
+        0 0 28px rgba(91,33,255,.16);
+    }
+
+    .reference-hero p {
+      margin-top: 18px;
+      font-size: clamp(13px, 1.8vw, 16px);
+    }
+
+    @media (max-width: 560px) {
+      .reference-hero {
+        min-height: 220px;
+        padding: 22px 18px;
+      }
+
+      .reference-hero:before {
+        right: calc(4% - 96px);
+        width: 176px;
+        height: 252px;
+        opacity: .32;
+      }
+
+      .reference-hero:after {
+        right: 4%;
+      }
+
+      .reference-hero .hero-copy {
+        max-width: 76%;
+      }
+
+      .reference-hero h2 {
+        font-size: clamp(32px, 9.6vw, 43px);
+      }
+
+      .reference-hero p {
+        margin-top: 14px;
+        font-size: 12.5px;
+      }
+    }
   </style>
 </head>
 <body>
