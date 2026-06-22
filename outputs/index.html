@@ -1125,6 +1125,56 @@
       grid-column: 1 / -1;
     }
 
+    .social-tile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .social-tile-head strong {
+      margin-bottom: 0;
+    }
+
+    .profile-share-trigger {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 36px;
+      border: 1px solid rgba(192,132,255,.36);
+      border-radius: 999px;
+      color: #f5f0ff;
+      background: rgba(18,14,28,.74);
+      box-shadow: 0 0 14px rgba(155,92,255,.12), inset 0 0 12px rgba(192,132,255,.055);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .profile-share-trigger:hover,
+    .profile-share-trigger.is-open {
+      transform: translateY(-1px);
+      border-color: rgba(192,132,255,.72);
+      background: rgba(41,25,61,.86);
+      box-shadow: 0 0 22px rgba(155,92,255,.25), inset 0 0 14px rgba(192,132,255,.08);
+    }
+
+    .profile-share-trigger .action-icon {
+      width: 17px;
+      height: 17px;
+    }
+
+    .profile-share-popover {
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid rgba(192,132,255,.16);
+    }
+
+    .profile-share-popover[hidden] {
+      display: none;
+    }
+
     .share-tile {
       grid-column: 1 / -1;
     }
@@ -10197,15 +10247,38 @@
       const links = socialPlatforms
         .map((platform) => ({ ...platform, url: profile.socials?.[platform.key] }))
         .filter((platform) => platform.url);
+      const shareButton = `
+        <button class="profile-share-trigger" type="button" data-toggle-share="${profile.name}" aria-label="Share profile" aria-expanded="false">
+          ${actionIconMarkup("share")}
+        </button>
+      `;
+      const sharePanel = `
+        <div class="profile-share-popover" data-share-popover="${profile.name}" hidden>
+          ${shareButtonsMarkup(profile.name, selectedCity(), "customer")}
+        </div>
+      `;
       if (!links.length) {
-        return '<div class="info-tile social-tile"><strong>Social links</strong><div class="meta">No social links posted</div></div>';
+        return `
+          <div class="info-tile social-tile">
+            <div class="social-tile-head">
+              <strong>Social links</strong>
+              ${shareButton}
+            </div>
+            <div class="meta">No social links posted</div>
+            ${sharePanel}
+          </div>
+        `;
       }
       return `
         <div class="info-tile social-tile">
-          <strong>Social links</strong>
+          <div class="social-tile-head">
+            <strong>Social links</strong>
+            ${shareButton}
+          </div>
           <div class="social-links">
             ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
           </div>
+          ${sharePanel}
         </div>
       `;
     }
@@ -10574,10 +10647,6 @@
               <div class="meta"><span class="metric-value" id="modalFollowerCount">${followerCount(profile, city)}</span></div>
             </div>
             ${socialLinksMarkup(profile)}
-            <div class="info-tile share-tile">
-              <strong>Share profile</strong>
-              ${shareButtonsMarkup(profile.name, city, "customer")}
-            </div>
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
@@ -11269,6 +11338,18 @@
     }
 
     function handleShareClick(event) {
+      const toggleButton = event.target.closest("[data-toggle-share]");
+      if (toggleButton) {
+        const profileName = toggleButton.dataset.toggleShare;
+        const panel = modalBody.querySelector(`[data-share-popover="${CSS.escape(profileName)}"]`);
+        if (panel) {
+          const willOpen = panel.hidden;
+          panel.hidden = !willOpen;
+          toggleButton.classList.toggle("is-open", willOpen);
+          toggleButton.setAttribute("aria-expanded", String(willOpen));
+        }
+        return true;
+      }
       const copyButton = event.target.closest("[data-copy-share]");
       if (copyButton) {
         const city = copyButton.dataset.shareCity || selectedCity();
