@@ -10239,6 +10239,59 @@
         margin-top: 2px;
       }
     }
+
+    /* Final trending badge: gold rank with a subtle Dancr violet aura. */
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend {
+      color: #ffe27a;
+      border-color: rgba(245,190,45,.58);
+      background:
+        radial-gradient(circle at 88% 18%, rgba(155,92,255,.16), transparent 0 58%),
+        linear-gradient(180deg, rgba(64,43,10,.38), rgba(9,7,4,.42));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.025),
+        0 0 12px rgba(245,190,45,.13),
+        0 0 22px rgba(155,92,255,.16),
+        inset 0 0 12px rgba(255,226,122,.045);
+      text-shadow: 0 0 7px rgba(255,226,122,.24);
+      backdrop-filter: blur(14px) saturate(125%);
+    }
+
+    .badge.trend .badge-icon {
+      color: #ffd84a;
+      filter:
+        drop-shadow(0 0 5px rgba(255,216,74,.5))
+        drop-shadow(0 0 9px rgba(155,92,255,.28));
+    }
+
+    .dancer-card .badge.trend.compact-trend {
+      min-width: 46px;
+      min-height: 30px;
+      padding-inline: 10px;
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .dancer-card .badge.trend.full-trend {
+      min-height: 30px;
+      padding-inline: 12px;
+      gap: 5px;
+    }
+
+    .badge.trend:hover,
+    .dancer-card .badge.trend:hover,
+    .profile-modal .badge.trend:hover {
+      border-color: rgba(255,216,74,.68);
+      background:
+        radial-gradient(circle at 88% 18%, rgba(155,92,255,.2), transparent 0 60%),
+        linear-gradient(180deg, rgba(74,50,12,.44), rgba(9,7,4,.46));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.03),
+        0 0 14px rgba(245,190,45,.18),
+        0 0 26px rgba(155,92,255,.2),
+        inset 0 0 14px rgba(255,226,122,.055);
+    }
   </style>
 </head>
 <body>
@@ -11916,9 +11969,9 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
-      const trendLabel = String(profile.trendRank);
+      const trendLabel = options.trendingContext ? `#${profile.trendRank} Trending` : String(profile.trendRank);
       const trendBadge = isTrending
-        ? `<span class="badge trend compact-trend" aria-label="#${profile.trendRank} Trending">${badgeIconMarkup("trend")}${trendLabel}</span>`
+        ? `<span class="badge trend ${options.trendingContext ? "full-trend" : "compact-trend"}" aria-label="#${profile.trendRank} Trending">${badgeIconMarkup("trend")}${trendLabel}</span>`
         : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
