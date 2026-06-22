@@ -8801,20 +8801,28 @@
     }
 
     /* Give schedule pills a touch more breathing room without changing alignment */
-    .dancer-card .profile-body > .pill-row .pill {
-      gap: 5px;
+    .dancer-card .profile-body > .pill-row .pill.tonight,
+    .dancer-card .profile-body > .pill-row .pill.upcoming {
+      width: fit-content;
+      max-width: calc(100% - 2px);
+      justify-content: flex-start;
+      gap: 4px;
       min-height: 34px;
-      padding-inline: 12px;
+      padding-inline: 14px;
+      font-size: clamp(10.5px, 2.8vw, 12px);
+      box-sizing: border-box;
     }
 
     .dancer-card .schedule-dot {
-      margin-inline: 1px;
+      margin-inline: 2px;
     }
 
     @media (max-width: 420px) {
-      .dancer-card .profile-body > .pill-row .pill {
+      .dancer-card .profile-body > .pill-row .pill.tonight,
+      .dancer-card .profile-body > .pill-row .pill.upcoming {
         min-height: 33px;
-        padding-inline: 10px;
+        padding-inline: 12px;
+        font-size: 10.5px;
       }
     }
   </style>
