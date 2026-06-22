@@ -8450,9 +8450,35 @@
     }
 
     .profile-modal .schedule-time {
-      color: #f5f5f5;
+      color: #86efac;
       font-weight: 900;
-      text-shadow: 0 0 14px rgba(168,85,247,.2);
+      text-shadow: 0 0 14px rgba(34,197,94,.2);
+    }
+
+    .profile-modal .modal-schedule-text {
+      min-width: 0;
+      color: #d8d1e6;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 0;
+      text-shadow: 0 0 13px currentColor, 0 2px 10px rgba(0,0,0,.58);
+    }
+
+    .profile-modal .modal-schedule-text.tonight {
+      color: #86efac;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #93c5fd;
+    }
+
+    .profile-modal .schedule-stack .schedule-text-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      margin-top: 3px;
     }
 
     .dancer-card .profile-body > .pill-row {
@@ -11250,7 +11276,7 @@
             <strong>Working tonight</strong>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="detail-line schedule-time">${clockIconMarkup()}${profile.time}</div>
+              <div class="detail-line schedule-time">${clockIconMarkup()}<span class="modal-schedule-text tonight">${profile.time}</span></div>
             </div>
           </div>
           ${tonightInterestTileMarkup(status)}
@@ -11267,7 +11293,7 @@
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
-              <div class="pill-row">${clockIconMarkup()}<span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
+              <div class="schedule-text-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
               <div class="meta detail-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
             </div>
           </div>
