@@ -8669,6 +8669,24 @@
         font-size: 17px;
       }
     }
+
+    /* Give schedule pills a touch more breathing room without changing alignment */
+    .dancer-card .profile-body > .pill-row .pill {
+      gap: 5px;
+      min-height: 34px;
+      padding-inline: 12px;
+    }
+
+    .dancer-card .schedule-dot {
+      margin-inline: 1px;
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .profile-body > .pill-row .pill {
+        min-height: 33px;
+        padding-inline: 10px;
+      }
+    }
   </style>
 </head>
 <body>
