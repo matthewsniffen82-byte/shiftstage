@@ -7801,6 +7801,77 @@
         border-radius: 22px;
       }
     }
+
+    /* Profile modal spacing polish */
+    .profile-modal .modal-body {
+      gap: 10px;
+      padding: 10px 10px 14px;
+    }
+
+    .profile-modal .modal-grid {
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .profile-modal .info-tile {
+      min-height: 0;
+      padding: 12px 14px;
+      display: grid;
+      align-content: start;
+      gap: 7px;
+    }
+
+    .profile-modal .info-tile strong {
+      margin-bottom: 0;
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .profile-modal .info-tile .meta {
+      display: grid;
+      gap: 5px;
+      line-height: 1.2;
+    }
+
+    .profile-modal .interest-tile {
+      min-height: 0;
+    }
+
+    .profile-modal .social-tile {
+      padding-block: 13px;
+    }
+
+    .profile-modal .social-links {
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .profile-modal .modal-actions {
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .profile-modal .modal-actions .action-btn {
+      min-height: 46px;
+    }
+
+    .profile-modal .modal-actions .going-btn {
+      min-height: 48px;
+    }
+
+    @media (max-width: 420px) {
+      .profile-modal .modal-body {
+        padding-inline: 8px;
+      }
+
+      .profile-modal .info-tile {
+        padding: 11px 12px;
+      }
+
+      .profile-modal .modal-actions {
+        gap: 8px;
+      }
+    }
   </style>
 </head>
 <body>
