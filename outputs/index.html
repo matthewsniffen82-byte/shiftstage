@@ -8876,6 +8876,52 @@
         padding-bottom: calc(34px + env(safe-area-inset-bottom));
       }
     }
+
+    /* Cleaner card schedule rows: text status instead of another pill */
+    .dancer-card .profile-body > .schedule-row {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 7px;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .dancer-card .profile-body > .schedule-row .venue-dot {
+      justify-self: center;
+      margin-right: 0;
+    }
+
+    .card-schedule-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: clamp(11.5px, 2.9vw, 13px);
+      font-weight: 950;
+      line-height: 1.15;
+      letter-spacing: 0;
+      text-shadow: 0 0 14px currentColor, 0 2px 12px rgba(0,0,0,.72);
+    }
+
+    .card-schedule-text.tonight {
+      color: #86efac;
+    }
+
+    .card-schedule-text.upcoming {
+      color: #93c5fd;
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .profile-body > .schedule-row {
+        grid-template-columns: 15px minmax(0, 1fr);
+        column-gap: 6px;
+      }
+
+      .card-schedule-text {
+        font-size: 11px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -10520,9 +10566,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="pill-row">${clockIconMarkup()}<span class="pill tonight"><span class="schedule-label">Tonight</span><span class="schedule-dot">•</span><span class="schedule-time-text">${profile.time}</span></span></div>`
-        : profile.scheduled
-            ? `<div class="pill-row">${clockIconMarkup()}<span class="pill upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-dot">•</span><span class="schedule-time-text">${profile.time}</span></span></div>`
+          ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text tonight">Tonight • ${profile.time}</span></div>`
+          : profile.scheduled
+            ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next:</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
