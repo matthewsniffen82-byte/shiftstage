@@ -5185,16 +5185,16 @@
       box-shadow: 0 0 19px rgba(56,189,248,.26), inset 0 0 12px rgba(56,189,248,.11);
     }
 
+    .pill.upcoming {
+      color: #d8bdff;
+      border-color: rgba(192,132,255,.5);
+      background: rgba(155,92,255,.15);
+      box-shadow: 0 0 18px rgba(155,92,255,.22), inset 0 0 12px rgba(155,92,255,.09);
+    }
+
     .dancer-card .pill.featured,
     .profile-modal .pill.featured {
       display: none;
-    }
-
-    .pill.upcoming {
-      color: #d1c7dd;
-      border-color: rgba(155,147,168,.25);
-      background: rgba(155,147,168,.11);
-      box-shadow: inset 0 0 12px rgba(255,255,255,.035);
     }
 
     .club-select,
@@ -6713,19 +6713,20 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = `<span class="${isPending ? "badge pending" : "badge"}">${profile.status}</span>`;
       const trendBadge = isTrending ? `<span class="badge trend">#${profile.trendRank} Trending</span>` : "";
+      const upcomingLabel = profile.shiftLabel || "Upcoming";
       const scheduleText = isPending
         ? "Schedule locked"
         : profile.tonight
           ? `${profile.venue} · ${profile.time}`
         : profile.scheduled
-            ? `${profile.venue} · ${profile.shiftLabel || "Upcoming"} · ${profile.time}`
+            ? `${profile.venue} · ${upcomingLabel} · ${profile.time}`
             : "No upcoming shifts";
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : profile.tonight
           ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
-          : profile.scheduled
-            ? `<div class="pill-row"><span class="pill upcoming">${profile.shiftLabel || "Upcoming shift"}</span><span class="pill">${profile.time}</span></div>`
+        : profile.scheduled
+            ? `<div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="pill-row"><span class="pill muted">No shift tonight</span></div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta">${profile.venue} · ${profile.distance}</div>`
@@ -6883,10 +6884,12 @@
         `;
       }
       if (profile.scheduled) {
+        const upcomingLabel = profile.shiftLabel || "Upcoming";
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="meta">${profile.venue} · ${profile.shiftLabel || "Upcoming"} · ${profile.time}</div>
+            <div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>
+            <div class="meta">${profile.venue}</div>
           </div>
           <div class="info-tile">
             <strong>Tonight</strong>
@@ -7417,7 +7420,13 @@
           .map((profile) => withTrendingRank(profile, city));
       }
       if (tab === "dancers") {
-        return market.dancers.filter((profile) => !profile.hidden).map((profile) => withTrendingRank(profile, city));
+        return market.dancers
+          .filter((profile) => !profile.hidden)
+          .map((profile) => withTrendingRank(profile, city))
+          .sort((a, b) => {
+            const weight = (profile) => profile.status === "Pending" ? 3 : profile.tonight ? 0 : profile.scheduled ? 1 : 2;
+            return weight(a) - weight(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time);
+          });
       }
       if (tab === "venues") {
         return market.venues.filter((venue) => !venue.hidden);
