@@ -10597,9 +10597,10 @@
                 <li>Analytics dashboard</li>
               </ul>
               <div class="role-actions">
-                <button class="ghost" id="dancerLoginBtn" type="button">Dancer login</button>
+                <button class="ghost" id="dancerLoginBtn" type="button">Demo dancer login</button>
                 <button class="ghost" id="openDancerSignup" type="button">Dancer sign up</button>
               </div>
+              <div class="rule-note">Demo login: newdancer@dancr.app / dancr</div>
             </article>
           </div>
           <form class="auth-form" id="authForm">
@@ -13432,21 +13433,31 @@
     document.getElementById("dancerLoginBtn").addEventListener("click", () => {
       dancerSignupStarted = true;
       stripeConfirmed = true;
-      document.getElementById("dancerStageName").value = "Maya Lux";
+      document.getElementById("dancerStageName").value = "Lena Vale";
+      document.getElementById("dancerEmail").value = "newdancer@dancr.app";
       document.getElementById("dancerCity").value = "Las Vegas";
       Object.assign(dancerSetup, {
-        profile: true,
-        photos: true,
-        verification: true,
-        approval: true,
+        profile: false,
+        photos: false,
+        verification: false,
+        approval: false,
         shift: false
       });
+      Object.assign(dancerSignupSocials, {
+        instagram: "",
+        tiktok: "",
+        snapchat: "",
+        x: ""
+      });
+      setupChecklistExpanded = true;
+      activeSetupStep = "profile";
+      lastPostedShift = null;
       isCustomerLoggedIn = false;
       isDancerLoggedIn = true;
       activeDashboardType = "dancer";
       closeAuthPage();
       updateAccountHeader();
-      showToast("Dancer logged in");
+      showToast("Demo dancer logged in. Start with profile setup.");
       openDancerDashboard();
     });
 
