@@ -6275,11 +6275,12 @@
 
     .modal-image {
       flex: 0 0 auto;
-      height: clamp(320px, 46dvh, 430px);
+      height: clamp(340px, 50dvh, 470px);
       min-height: 0;
       border-radius: 0;
-      background-size: cover, cover, cover;
-      background-position: center, center 22%, center;
+      background-size: cover, contain, cover;
+      background-position: center, center top, center;
+      background-repeat: no-repeat;
     }
 
     .modal-identity {
@@ -6385,7 +6386,7 @@
 
     @media (max-width: 560px) {
       .modal-image {
-        height: clamp(300px, 43dvh, 390px);
+        height: clamp(330px, 48dvh, 430px);
       }
 
       .modal-identity {
