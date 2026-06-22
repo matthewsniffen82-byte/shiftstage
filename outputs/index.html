@@ -8836,6 +8836,46 @@
         font-size: 10.5px;
       }
     }
+
+    /* Keep full profile actions reachable on every viewport */
+    .profile-modal {
+      max-height: 100svh;
+    }
+
+    .profile-modal .modal-image {
+      height: clamp(270px, 39svh, 380px);
+      flex-shrink: 0;
+    }
+
+    .profile-modal .gallery {
+      flex-shrink: 0;
+    }
+
+    .profile-modal .modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-bottom: calc(30px + env(safe-area-inset-bottom));
+    }
+
+    .profile-modal .modal-actions {
+      padding-bottom: 2px;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-image {
+        height: clamp(250px, 35svh, 330px);
+      }
+
+      .profile-modal .gallery {
+        padding-block: 9px 6px;
+      }
+
+      .profile-modal .modal-body {
+        padding-bottom: calc(34px + env(safe-area-inset-bottom));
+      }
+    }
   </style>
 </head>
 <body>
