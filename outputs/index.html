@@ -10317,6 +10317,48 @@
         font-size: 10.5px;
       }
     }
+
+    /* Final hero silhouette pass: keep the title sizing, make the dancer visible beside the pole. */
+    .reference-hero {
+      background:
+        radial-gradient(ellipse at 97% 52%, rgba(126,54,255,.34), transparent 0 32%),
+        linear-gradient(90deg, #020204 0%, #030306 50%, #0b061d 76%, #1e0e5c 92%, #2d1090 100%);
+    }
+
+    .reference-hero:before {
+      right: calc(6% + 18px);
+      bottom: 0;
+      z-index: 1;
+      width: clamp(128px, 18vw, 190px);
+      height: clamp(170px, 24vw, 252px);
+      opacity: .42;
+      mix-blend-mode: normal;
+      background-image: url("data:image/svg+xml,%3Csvg width='150' height='230' viewBox='0 0 150 230' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23020107' opacity='.94'%3E%3Ccircle cx='76' cy='24' r='14'/%3E%3Cpath d='M69 42c12-5 24 1 31 14 8 17 7 39-2 62-4 12-4 25 0 38l18 55c3 9-4 17-13 16-5-1-9-4-11-9l-20-59-27 54c-3 7-11 10-18 6-6-3-8-10-5-16l30-66c6-14 8-29 6-44-3-25 1-43 11-51Z'/%3E%3Cpath d='M96 62c11 14 18 28 23 45 2 7-2 14-9 16-6 2-13-2-15-8l-12-38 13-15Z'/%3E%3Cpath d='M69 59c-12 11-25 22-39 32-6 4-14 3-18-3-4-6-2-14 4-18l37-27 16 16Z'/%3E%3Cpath d='M107 116c10-10 20-22 29-34 4-5 11-6 16-2s6 11 2 16c-10 15-23 29-37 42l-10-22Z'/%3E%3Cpath d='M50 105c-16 18-28 39-36 62-3 7-10 10-17 8-7-3-10-10-8-17 9-28 24-54 44-75l17 22Z'/%3E%3C/g%3E%3Cg fill='%238b5cf6' opacity='.2'%3E%3Ccircle cx='76' cy='24' r='14'/%3E%3Cpath d='M69 42c12-5 24 1 31 14 8 17 7 39-2 62-4 12-4 25 0 38l18 55c3 9-4 17-13 16-5-1-9-4-11-9l-20-59-27 54c-3 7-11 10-18 6-6-3-8-10-5-16l30-66c6-14 8-29 6-44-3-25 1-43 11-51Z'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center bottom;
+      background-size: contain;
+      filter:
+        drop-shadow(0 0 10px rgba(0,0,0,.58))
+        drop-shadow(0 0 18px rgba(139,92,246,.26));
+    }
+
+    @media (min-width: 760px) {
+      .reference-hero:before {
+        right: calc(6% + 26px);
+        width: clamp(150px, 13vw, 205px);
+        height: clamp(210px, 20vw, 282px);
+        opacity: .44;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .reference-hero:before {
+        right: calc(2% + 16px);
+        width: 120px;
+        height: 170px;
+        opacity: .34;
+      }
+    }
   </style>
 </head>
 <body>
