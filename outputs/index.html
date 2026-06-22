@@ -5682,6 +5682,46 @@
         font-size: 11.5px;
       }
     }
+
+    .portrait .card-badges {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 6;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 7px;
+      pointer-events: none;
+    }
+
+    .portrait .card-badges .badge,
+    .portrait .card-badges .badge.trend {
+      position: static;
+      inset: auto;
+      max-width: 100%;
+    }
+
+    .portrait > .badge,
+    .portrait > .badge.trend {
+      display: none;
+    }
+
+    @media (max-width: 560px) {
+      .portrait .card-badges {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        gap: 6px;
+      }
+
+      .portrait .card-badges .badge {
+        min-height: 28px;
+        padding-inline: 10px;
+        font-size: 11px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -6655,8 +6695,10 @@
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
           <div class="portrait ${portraitClass(index)}">
-            ${statusBadge}
-            ${trendBadge}
+            <div class="card-badges">
+              ${statusBadge}
+              ${trendBadge}
+            </div>
           </div>
           <div class="profile-body">
             <div>
