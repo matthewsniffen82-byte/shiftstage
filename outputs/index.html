@@ -6660,7 +6660,7 @@
 
       <nav class="tabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Tonight">Tonight</button>
-        <button class="tab" data-tab="dancers" data-tab-label="Verified Dancers">Verified Dancers</button>
+        <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
         <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
       </nav>
@@ -8442,7 +8442,7 @@
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
       const titles = {
         tonight: `Tonight in ${city}`,
-        dancers: `Verified dancers in ${city}`,
+        dancers: `Dancers in ${city}`,
         venues: `Venues in ${city}`,
         trending: `Trending in ${city}`
       };
@@ -8461,7 +8461,7 @@
           ? `${items.length} of ${allItems.length}`
           : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
       viewAllBtn.hidden = !["tonight", "dancers"].includes(activeTab) || allItems.length <= 6 || !shouldLimit;
-      viewAllBtn.textContent = activeTab === "dancers" ? "View All Verified Dancers" : "View All";
+      viewAllBtn.textContent = activeTab === "dancers" ? "View All Dancers" : "View All";
       results.classList.toggle("card-grid", activeTab !== "venues");
       if (selectedVenue) {
         viewAllBtn.hidden = true;
