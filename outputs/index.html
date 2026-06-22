@@ -7575,7 +7575,7 @@
           .filter((profile) => !profile.hidden)
           .map((profile) => withTrendingRank(profile, city))
           .sort((a, b) => {
-            const weight = (profile) => profile.status === "Pending" ? 3 : profile.scheduled && !profile.tonight ? 0 : !profile.scheduled ? 1 : 2;
+            const weight = (profile) => profile.status === "Pending" ? 3 : profile.tonight ? 0 : profile.scheduled ? 1 : 2;
             return weight(a) - weight(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time);
           });
       }
