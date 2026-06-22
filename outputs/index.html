@@ -9569,6 +9569,238 @@
         right: 2%;
       }
     }
+
+    /* Mobile usability pass: keep key actions visible and text from clipping */
+    @media (max-width: 560px) {
+      header {
+        padding: 10px 12px 9px;
+      }
+
+      main {
+        padding: 14px 10px 28px;
+      }
+
+      .topbar {
+        gap: 8px;
+      }
+
+      .dancr-home-logo {
+        min-width: 118px;
+        max-width: 152px;
+      }
+
+      .dashboard-menu {
+        min-height: 38px;
+        padding-inline: 13px;
+        font-size: 12px;
+      }
+
+      .reference-hero {
+        margin-inline: 0;
+      }
+
+      .controls {
+        gap: 10px;
+        padding: 13px;
+      }
+
+      .controls .field {
+        min-width: 0;
+      }
+
+      .controls select,
+      .location-btn {
+        min-height: 44px;
+        font-size: 15px;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+        overflow: visible;
+        padding: 0;
+      }
+
+      .tab {
+        min-width: 0;
+        min-height: 42px;
+        padding-inline: 7px;
+        justify-content: center;
+        gap: 5px;
+        font-size: 12px;
+      }
+
+      .tab-count {
+        min-width: 22px;
+        height: 22px;
+        padding-inline: 5px;
+        font-size: 11px;
+      }
+
+      .content-head {
+        align-items: center;
+        margin-top: 2px;
+      }
+
+      .content-head h2 {
+        min-width: 0;
+        font-size: 24px;
+        line-height: 1.05;
+      }
+
+      .count {
+        min-height: 28px;
+        padding-inline: 9px;
+        font-size: 11.5px;
+      }
+
+      .list.card-grid {
+        gap: 12px 10px;
+      }
+
+      .list.card-grid .dancer-card {
+        min-height: 322px;
+        aspect-ratio: 1 / 1.62;
+      }
+
+      .dancer-card .profile-body {
+        padding: 64px 10px 15px;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: clamp(17px, 5.1vw, 20px);
+        line-height: 1;
+      }
+
+      .verified-mark {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+      }
+
+      .dancer-card .card-venue-line {
+        gap: 3px;
+        font-size: 11.5px;
+      }
+
+      .dancer-card .profile-body > .schedule-row {
+        grid-template-columns: 15px minmax(0, 1fr);
+        column-gap: 6px;
+        margin-top: 5px;
+      }
+
+      .card-schedule-text {
+        font-size: clamp(10.5px, 3vw, 12px);
+        line-height: 1.16;
+        white-space: normal;
+      }
+
+      .profile-modal {
+        width: 100%;
+        max-height: 100svh;
+        border-radius: 18px 18px 0 0;
+      }
+
+      .profile-modal .modal-body {
+        padding-inline: 10px;
+        padding-bottom: calc(18px + env(safe-area-inset-bottom));
+      }
+
+      .profile-modal .info-grid,
+      .profile-modal .modal-grid {
+        gap: 9px;
+      }
+
+      .profile-modal .info-tile {
+        min-height: 0;
+        padding: 12px 13px 12px 15px;
+        border-radius: 16px;
+      }
+
+      .profile-modal .modal-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 9;
+        margin-inline: -10px;
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+        background:
+          linear-gradient(180deg, rgba(5,5,8,0), rgba(5,5,8,.94) 18%, rgba(5,5,8,.99));
+      }
+
+      .profile-modal .modal-actions .action-btn {
+        min-height: 44px;
+        font-size: 14px;
+      }
+
+      .profile-modal .modal-actions .going-btn {
+        min-height: 46px;
+      }
+
+      .venue-detail {
+        gap: 12px;
+      }
+
+      .venue-hero {
+        border-radius: 16px;
+      }
+
+      .venue-detail .venue-main-photo {
+        min-height: 176px;
+      }
+
+      .venue-hero-body {
+        padding: 15px;
+      }
+
+      .venue-quick-stats,
+      .venue-info {
+        gap: 9px;
+      }
+
+      .venue-directions-btn {
+        min-height: 48px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .tabs {
+        gap: 5px;
+      }
+
+      .tab {
+        min-height: 40px;
+        padding-inline: 5px;
+        font-size: 11px;
+      }
+
+      .tab-count {
+        min-width: 20px;
+        height: 20px;
+        font-size: 10px;
+      }
+
+      .list.card-grid {
+        gap: 10px 8px;
+      }
+
+      .list.card-grid .dancer-card {
+        min-height: 306px;
+      }
+
+      .dancer-card .profile-body {
+        padding-inline: 9px;
+        padding-bottom: 13px;
+      }
+
+      .dancer-card .card-venue-line {
+        font-size: 10.8px;
+      }
+
+      .card-schedule-text {
+        font-size: 10px;
+      }
+    }
   </style>
 </head>
 <body>
