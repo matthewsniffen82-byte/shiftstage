@@ -208,6 +208,72 @@
       padding-inline: 12px;
     }
 
+    .utility-menu {
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .icon-menu-btn .icon {
+      width: 19px;
+      height: 19px;
+    }
+
+    .utility-menu-panel {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      z-index: 40;
+      width: 168px;
+      display: grid;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid rgba(192,132,255,.2);
+      border-radius: 14px;
+      background: rgba(6,6,9,.94);
+      box-shadow: 0 24px 60px rgba(0,0,0,.58), 0 0 24px rgba(155,92,255,.14), inset 0 0 16px rgba(255,255,255,.025);
+      backdrop-filter: blur(18px) saturate(125%);
+    }
+
+    .utility-menu-panel[hidden] {
+      display: none;
+    }
+
+    .utility-menu-item {
+      min-height: 38px;
+      width: 100%;
+      padding: 0 12px;
+      border: 1px solid rgba(192,132,255,.18);
+      border-radius: 10px;
+      color: #f4f0ff;
+      background: rgba(18,14,28,.7);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 850;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .utility-menu-item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(192,132,255,.48);
+      background: rgba(35,23,52,.86);
+      box-shadow: 0 0 18px rgba(155,92,255,.16);
+    }
+
+    .utility-menu-item.discreet-admin {
+      color: #9b93aa;
+      border-color: rgba(255,255,255,.09);
+      background: rgba(12,12,16,.62);
+      font-size: 12px;
+    }
+
+    .icon-menu-btn.active {
+      border-color: rgba(192,132,255,.58);
+      background: rgba(35,23,52,.82);
+      box-shadow: 0 0 20px rgba(155,92,255,.2), inset 0 0 14px rgba(192,132,255,.08);
+    }
+
     .icon {
       width: 20px;
       height: 20px;
@@ -8763,14 +8829,18 @@
           </span>
         </button>
         <div class="menu" aria-label="Menu">
-          <button class="menu-btn admin-link" id="adminBtn">Admin</button>
-          <button class="menu-btn" aria-label="Search">
-            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          </button>
           <span class="account-status" id="accountStatus" hidden></span>
-          <button class="menu-btn dashboard-menu" id="dashboardBtn" hidden>Dashboard</button>
-          <button class="menu-btn dashboard-menu" id="logoutBtn" hidden>Logout</button>
           <button class="menu-btn dashboard-menu" id="accountBtn">Login / Join</button>
+          <div class="utility-menu">
+            <button class="menu-btn icon-menu-btn" id="moreMenuBtn" type="button" aria-label="Open menu" aria-expanded="false">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
+            </button>
+            <div class="utility-menu-panel" id="moreMenuPanel" hidden>
+              <button class="utility-menu-item discreet-admin" id="adminBtn" type="button">Admin</button>
+              <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
+              <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -9432,6 +9502,8 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const accountStatus = document.getElementById("accountStatus");
     const adminBtn = document.getElementById("adminBtn");
+    const moreMenuBtn = document.getElementById("moreMenuBtn");
+    const moreMenuPanel = document.getElementById("moreMenuPanel");
     const brandHome = document.getElementById("brandHome");
     const dashTonightList = document.getElementById("dashTonightList");
     const dashFollowedList = document.getElementById("dashFollowedList");
@@ -10743,6 +10815,19 @@
       }
     }
 
+    function closeUtilityMenu() {
+      moreMenuPanel.hidden = true;
+      moreMenuBtn.classList.remove("active");
+      moreMenuBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleUtilityMenu() {
+      const willOpen = moreMenuPanel.hidden;
+      moreMenuPanel.hidden = !willOpen;
+      moreMenuBtn.classList.toggle("active", willOpen);
+      moreMenuBtn.setAttribute("aria-expanded", String(willOpen));
+    }
+
     function logoutAccount() {
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
@@ -11473,9 +11558,27 @@
       }
     });
 
-    adminBtn.addEventListener("click", openAdminDashboard);
-    dashboardBtn.addEventListener("click", openDashboard);
-    logoutBtn.addEventListener("click", logoutAccount);
+    moreMenuBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleUtilityMenu();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".utility-menu")) closeUtilityMenu();
+    });
+
+    adminBtn.addEventListener("click", () => {
+      closeUtilityMenu();
+      openAdminDashboard();
+    });
+    dashboardBtn.addEventListener("click", () => {
+      closeUtilityMenu();
+      openDashboard();
+    });
+    logoutBtn.addEventListener("click", () => {
+      closeUtilityMenu();
+      logoutAccount();
+    });
 
     document.getElementById("authClose").addEventListener("click", closeAuthPage);
     document.getElementById("dancerSignupClose").addEventListener("click", closeDancerSignupPage);
@@ -11646,6 +11749,7 @@
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && profileBackdrop.classList.contains("show")) closeProfileModal();
+      if (event.key === "Escape") closeUtilityMenu();
     });
 
     document.querySelectorAll(".tab").forEach((tab) => {
