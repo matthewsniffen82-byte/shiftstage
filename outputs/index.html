@@ -939,6 +939,36 @@
       font-size: 13px;
     }
 
+    .social-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .social-link {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 11px;
+      border: 1px solid rgba(192,132,255,.34);
+      border-radius: 999px;
+      color: #e7dcff;
+      background: rgba(18,14,28,.72);
+      box-shadow: inset 0 0 12px rgba(192,132,255,.055), 0 0 12px rgba(155,92,255,.1);
+      font-size: 12px;
+      font-weight: 900;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .social-link:hover {
+      color: #ffffff;
+      border-color: rgba(192,132,255,.72);
+      background: rgba(41,25,61,.86);
+      box-shadow: 0 0 20px rgba(155,92,255,.22), inset 0 0 14px rgba(192,132,255,.08);
+      transform: translateY(-1px);
+    }
+
     .modal-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -7454,6 +7484,12 @@
       approval: false,
       shift: false
     };
+    const dancerSignupSocials = {
+      instagram: "",
+      tiktok: "",
+      snapchat: "",
+      x: ""
+    };
     let dashboardTonightExpanded = false;
     let dashboardFollowedExpanded = false;
     const goingTonightByProfile = {};
@@ -7501,6 +7537,17 @@
         profile.featured ??= index === 0 && profile.status === "Verified";
         profile.hidden ??= false;
         profile.contentFlagged ??= profile.status === "Pending" && index % 2 === 1;
+        if (profile.status === "Verified") {
+          const handle = slugify(profile.name).replaceAll("-", "");
+          profile.socials ??= {
+            instagram: `https://instagram.com/${handle}`,
+            tiktok: `https://tiktok.com/@${handle}`,
+            snapchat: `https://snapchat.com/add/${handle}`,
+            x: `https://x.com/${handle}`
+          };
+        } else {
+          profile.socials ??= {};
+        }
       });
       market.venues.forEach((venue, index) => {
         venue.verified ??= index !== market.venues.length - 1;
@@ -7781,6 +7828,60 @@
       return String(value).replace(/[<>"&]/g, "").trim();
     }
 
+    const socialPlatforms = [
+      { key: "instagram", label: "Instagram", base: "https://instagram.com/", hosts: ["instagram.com", "www.instagram.com"] },
+      { key: "tiktok", label: "TikTok", base: "https://tiktok.com/@", hosts: ["tiktok.com", "www.tiktok.com"] },
+      { key: "snapchat", label: "Snapchat", base: "https://snapchat.com/add/", hosts: ["snapchat.com", "www.snapchat.com"] },
+      { key: "x", label: "X", base: "https://x.com/", hosts: ["x.com", "www.x.com", "twitter.com", "www.twitter.com"] }
+    ];
+
+    function cleanSocialHandle(value) {
+      return cleanDisplayValue(value)
+        .replace(/^@+/, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "")
+        .slice(0, 32);
+    }
+
+    function normalizeSocialInput(platformKey, value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      const platform = socialPlatforms.find((item) => item.key === platformKey);
+      if (!platform) return "";
+      if (/^https?:\/\//i.test(raw)) {
+        try {
+          const url = new URL(raw);
+          if (!platform.hosts.includes(url.hostname.toLowerCase())) return "";
+          return url.href;
+        } catch {
+          return "";
+        }
+      }
+      const handle = cleanSocialHandle(raw);
+      return handle ? `${platform.base}${handle}` : "";
+    }
+
+    function hasBlockedSocialLink(values) {
+      const blocked = ["onlyfans", "fansly", "escort", "booking", "adult", "cashapp", "venmo"];
+      return values.some((value) => blocked.some((term) => String(value).toLowerCase().includes(term)));
+    }
+
+    function socialLinksMarkup(profile) {
+      const links = socialPlatforms
+        .map((platform) => ({ ...platform, url: profile.socials?.[platform.key] }))
+        .filter((platform) => platform.url);
+      if (!links.length) {
+        return '<div class="info-tile social-tile"><strong>Social links</strong><div class="meta">No social links posted</div></div>';
+      }
+      return `
+        <div class="info-tile social-tile">
+          <strong>Social links</strong>
+          <div class="social-links">
+            ${links.map((platform) => `<a class="social-link" href="${platform.url}" target="_blank" rel="noreferrer">${platform.label}</a>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     function renderShiftPostForm() {
       const clubSelect = document.getElementById("shiftClub");
       const dateInput = document.getElementById("shiftDate");
@@ -7826,7 +7927,8 @@
         shiftEnd: endValue,
         shiftLabel: formatDateLabel(dateValue),
         repeat,
-        notes
+        notes,
+        socials: existing?.socials || { ...dancerSignupSocials }
       };
       if (existing) {
         Object.assign(existing, shiftData);
@@ -8116,6 +8218,7 @@
               <strong>Followers</strong>
               <div class="meta">${followerCount(profile)}</div>
             </div>
+            ${socialLinksMarkup(profile)}
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary" id="followBtn">Follow</button>
@@ -8280,9 +8383,11 @@
         <form class="auth-form" data-setup-form="profile">
           <div class="field"><label for="setupStageName">Stage name</label><input id="setupStageName" type="text" value="${document.getElementById("dancerStageName").value || ""}"></div>
           <div class="field"><label for="setupCity">City</label><input id="setupCity" type="text" value="${document.getElementById("dancerCity").value || citySelect.value}"></div>
-          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" placeholder="@stagehandle"></div>
-          <div class="field"><label for="setupWebsite">Optional website</label><input id="setupWebsite" type="text" placeholder="https://example.com"></div>
-          <div class="rule-note">No adult-content links. No solicitation links.</div>
+          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle"></div>
+          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle"></div>
+          <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="@stagehandle"></div>
+          <div class="field"><label for="setupX">Optional X</label><input id="setupX" type="text" value="${dancerSignupSocials.x}" placeholder="@stagehandle"></div>
+          <div class="rule-note">Allowed: Instagram, TikTok, Snapchat, and X. No adult-content links. No solicitation links.</div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
       `;
@@ -8861,20 +8966,32 @@
       event.preventDefault();
       const stageName = document.getElementById("setupStageName").value.trim();
       const city = document.getElementById("setupCity").value.trim();
-      const instagram = document.getElementById("setupInstagram").value.trim().toLowerCase();
-      const website = document.getElementById("setupWebsite").value.trim().toLowerCase();
-      const blocked = ["onlyfans", "fansly", "escort", "booking", "adult"];
+      const rawSocials = {
+        instagram: document.getElementById("setupInstagram").value.trim(),
+        tiktok: document.getElementById("setupTiktok").value.trim(),
+        snapchat: document.getElementById("setupSnapchat").value.trim(),
+        x: document.getElementById("setupX").value.trim()
+      };
       if (!stageName || !city) {
         showToast("Stage name and city required");
         return;
       }
-      if (blocked.some((term) => instagram.includes(term) || website.includes(term))) {
+      if (hasBlockedSocialLink(Object.values(rawSocials))) {
         showToast("Adult-content or solicitation links are not allowed");
+        return;
+      }
+      const normalizedSocials = Object.fromEntries(
+        Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
+      );
+      const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
+      if (invalidSocial) {
+        showToast("Use Instagram, TikTok, Snapchat, or X links only");
         return;
       }
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
       document.getElementById("dancerDashName").textContent = stageName;
+      Object.assign(dancerSignupSocials, normalizedSocials);
       completeSetupStep("profile");
     });
 
