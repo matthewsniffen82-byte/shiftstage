@@ -9497,9 +9497,9 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
-      const trendLabel = options.trendingContext ? `#${profile.trendRank} Trending` : String(profile.trendRank);
+      const trendLabel = String(profile.trendRank);
       const trendBadge = isTrending
-        ? `<span class="badge trend ${options.trendingContext ? "" : "compact-trend"}" aria-label="#${profile.trendRank} Trending">${badgeIconMarkup("trend")}${trendLabel}</span>`
+        ? `<span class="badge trend compact-trend" aria-label="#${profile.trendRank} Trending">${badgeIconMarkup("trend")}${trendLabel}</span>`
         : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
