@@ -8123,6 +8123,13 @@
       "New York": "NY"
     };
 
+    const timeZoneByCity = {
+      "Las Vegas": "America/Los_Angeles",
+      Miami: "America/New_York",
+      Atlanta: "America/New_York",
+      "New York": "America/New_York"
+    };
+
     const followedByCity = {
       "Las Vegas": ["Maya Lux", "Nova Rae", "Sage Monroe", "Rumi West", "Tess Flame", "Mina Voss", "Vera Sky"],
       Miami: ["Sol Vega", "Mila Cruz", "Nia Vale", "Luna Bay", "Amara Blue", "Jade Rio"],
@@ -8235,53 +8242,91 @@
       return { start, end };
     }
 
+    function selectedCity() {
+      return citySelect?.value && markets[citySelect.value] ? citySelect.value : "Las Vegas";
+    }
+
+    function cityTimeZone(city = selectedCity()) {
+      return timeZoneByCity[city] || Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles";
+    }
+
+    function cityWallClock(date = new Date(), city = selectedCity()) {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: cityTimeZone(city),
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).formatToParts(date).reduce((acc, part) => {
+        if (part.type !== "literal") acc[part.type] = part.value;
+        return acc;
+      }, {});
+      const hour = Number(parts.hour) === 24 ? 0 : Number(parts.hour);
+      return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), hour, Number(parts.minute), Number(parts.second)));
+    }
+
+    function wallDateValue(date) {
+      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+    }
+
+    function dateValueToWallDate(dateValue) {
+      return new Date(`${dateValue}T00:00:00Z`);
+    }
+
     function shiftWindowForDate(profile, dateValue) {
       const range = parseShiftRange(profile);
       if (!range || !dateValue) return null;
-      const startDate = new Date(`${dateValue}T00:00:00`);
+      const startDate = dateValueToWallDate(dateValue);
       const start = new Date(startDate.getTime() + (range.start * 60000));
       const end = new Date(startDate.getTime() + (range.end * 60000));
       return { start, end };
     }
 
-    function activeShiftWindow(profile, now = new Date()) {
+    function activeShiftWindow(profile, now = new Date(), city = selectedCity()) {
       if (!profile.scheduled || !profile.time) return null;
+      const cityNow = cityWallClock(now, city);
+      const yesterday = new Date(cityNow);
+      yesterday.setUTCDate(cityNow.getUTCDate() - 1);
       const dates = profile.shiftDate
         ? [profile.shiftDate]
         : profile.tonight
           ? [
-              localDateValue(now),
-              localDateValue(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
+              wallDateValue(cityNow),
+              wallDateValue(yesterday)
             ]
           : [];
       for (const dateValue of dates) {
         const window = shiftWindowForDate(profile, dateValue);
-        if (window && now >= window.start && now <= window.end) return window;
+        if (window && cityNow >= window.start && cityNow <= window.end) return window;
       }
       return null;
     }
 
-    function upcomingShiftWindow(profile, now = new Date()) {
+    function upcomingShiftWindow(profile, now = new Date(), city = selectedCity()) {
       if (!profile.scheduled || !profile.time) return null;
-      const today = localDateValue(now);
+      const today = localDateValue(now, city);
       return shiftWindowForDate(profile, profile.shiftDate || (profile.tonight ? today : ""));
     }
 
-    function goingTonightIsOpen(profile, now = new Date()) {
+    function goingTonightIsOpen(profile, now = new Date(), city = selectedCity()) {
       if (!profile.scheduled || !profile.time) return false;
-      if (activeShiftWindow(profile, now)) return true;
-      const today = localDateValue(now);
+      if (activeShiftWindow(profile, now, city)) return true;
+      const today = localDateValue(now, city);
       if (profile.shiftDate) return profile.shiftDate === today;
       return Boolean(profile.tonight);
     }
 
-    function shiftStatus(profile) {
-      const activeWindow = activeShiftWindow(profile);
+    function shiftStatus(profile, city = selectedCity()) {
+      const now = new Date();
+      const activeWindow = activeShiftWindow(profile, now, city);
       if (activeWindow) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
-      if (goingTonightIsOpen(profile)) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
+      if (goingTonightIsOpen(profile, now, city)) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
       if (profile.tonight && profile.scheduled) {
-        const window = upcomingShiftWindow(profile);
-        if (window && new Date() < window.start) {
+        const window = upcomingShiftWindow(profile, now, city);
+        if (window && cityWallClock(now, city) < window.start) {
           return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
         }
         return { state: "ended", label: "0 going · shift ended" };
@@ -8289,28 +8334,28 @@
       return { state: "inactive", label: "0 going · not working tonight" };
     }
 
-    function isWorkingTonight(profile) {
-      return Boolean(profile.tonight || activeShiftWindow(profile));
+    function isWorkingTonight(profile, city = selectedCity()) {
+      return Boolean(profile.tonight || activeShiftWindow(profile, new Date(), city));
     }
 
-    function todayValue() {
-      return localDateValue(new Date());
+    function todayValue(city = selectedCity()) {
+      return localDateValue(new Date(), city);
     }
 
-    function localDateValue(date) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    function localDateValue(date = new Date(), city = selectedCity()) {
+      return wallDateValue(cityWallClock(date, city));
     }
 
-    function formatDateLabel(dateValue) {
+    function formatDateLabel(dateValue, city = selectedCity()) {
       if (!dateValue) return "Next shift";
-      const date = new Date(`${dateValue}T12:00:00`);
-      const today = new Date();
-      const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const shiftDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const date = new Date(`${dateValue}T12:00:00Z`);
+      const today = cityWallClock(new Date(), city);
+      const todayDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+      const shiftDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
       const diffDays = Math.round((shiftDate - todayDate) / 86400000);
       if (diffDays === 0) return "Tonight";
       if (diffDays === 1) return "Tomorrow";
-      return date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+      return date.toLocaleDateString([], { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" });
     }
 
     function formatClock(timeValue) {
@@ -8325,77 +8370,76 @@
       return `${formatClock(startValue)} - ${formatClock(endValue)}`;
     }
 
-    function dateFromUpcomingLabel(label) {
+    function dateFromUpcomingLabel(label, city = selectedCity()) {
       if (!label) return null;
       const clean = String(label).trim().toLowerCase();
-      const today = new Date();
+      const today = cityWallClock(new Date(), city);
       const date = new Date(today);
       if (clean === "tomorrow") {
-        date.setDate(today.getDate() + 1);
+        date.setUTCDate(today.getUTCDate() + 1);
         return date;
       }
       const weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
       const target = weekdays.indexOf(clean);
       if (target === -1) return null;
-      let diff = (target - today.getDay() + 7) % 7;
+      let diff = (target - today.getUTCDay() + 7) % 7;
       if (diff === 0) diff = 7;
-      date.setDate(today.getDate() + diff);
+      date.setUTCDate(today.getUTCDate() + diff);
       return date;
     }
 
-    function upcomingDateForProfile(profile) {
-      if (profile.shiftDate) return new Date(`${profile.shiftDate}T00:00:00`);
-      return dateFromUpcomingLabel(profile.shiftLabel);
+    function upcomingDateForProfile(profile, city = selectedCity()) {
+      if (profile.shiftDate) return dateValueToWallDate(profile.shiftDate);
+      return dateFromUpcomingLabel(profile.shiftLabel, city);
     }
 
-    function upcomingSortValue(profile) {
+    function upcomingSortValue(profile, city = selectedCity()) {
       if (!profile.scheduled) return Number.MAX_SAFE_INTEGER;
-      if (isWorkingTonight(profile)) return shiftStartMinutes(profile.time);
-      const date = upcomingDateForProfile(profile);
+      if (isWorkingTonight(profile, city)) return shiftStartMinutes(profile.time);
+      const date = upcomingDateForProfile(profile, city);
       if (!date) return Number.MAX_SAFE_INTEGER - 1;
       const range = parseShiftRange(profile);
       const startMinutes = range?.start ?? shiftStartMinutes(profile.time);
       return date.getTime() + (startMinutes * 60000);
     }
 
-    function daysFromToday(date) {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      const target = new Date(date);
-      target.setHours(0, 0, 0, 0);
+    function daysFromToday(date, city = selectedCity()) {
+      const today = cityWallClock(new Date(), city);
+      const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+      const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
       return Math.round((target - start) / 86400000);
     }
 
-    function upcomingCardLabel(profile) {
+    function upcomingCardLabel(profile, city = selectedCity()) {
       const label = profile.shiftLabel || "Next shift";
-      const date = dateFromUpcomingLabel(label);
+      const date = dateFromUpcomingLabel(label, city);
       if (!date) return label;
-      const diff = daysFromToday(date);
+      const diff = daysFromToday(date, city);
       if (diff === 1) return "Tomorrow";
       if (diff > 1 && diff <= 3) return `In ${diff} days`;
-      return `${date.getMonth() + 1}/${date.getDate()}`;
+      return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
     }
 
-    function upcomingFullLabel(profile) {
+    function upcomingFullLabel(profile, city = selectedCity()) {
       const label = profile.shiftLabel || "Next shift";
-      const date = dateFromUpcomingLabel(label);
+      const date = dateFromUpcomingLabel(label, city);
       if (!date) return label;
-      const diff = daysFromToday(date);
+      const diff = daysFromToday(date, city);
       if (diff === 1) return "Tomorrow";
-      return date.toLocaleDateString([], { weekday: "short", month: "numeric", day: "numeric" });
+      return date.toLocaleDateString([], { timeZone: "UTC", weekday: "short", month: "numeric", day: "numeric" });
     }
 
-    function isTonightDate(dateValue) {
-      return dateValue === todayValue();
+    function isTonightDate(dateValue, city = selectedCity()) {
+      return dateValue === todayValue(city);
     }
 
-    function privateTrendingSignals(profile) {
+    function privateTrendingSignals(profile, city = selectedCity()) {
       const seed = Math.max(1, 16 - profile.trend);
       return {
         uniqueProfileViews: seed * 110,
         followers: seed * 42,
         favorites: seed * 21,
-        goingTonight: isWorkingTonight(profile) ? seed * 12 : seed * 4,
+        goingTonight: isWorkingTonight(profile, city) ? seed * 12 : seed * 4,
         interested: profile.scheduled ? seed * 9 : seed * 3,
         recentActivity: seed * 18,
         lowIntentRefreshes: Math.max(1, profile.trend - 6) * 3,
@@ -8403,8 +8447,8 @@
       };
     }
 
-    function privateTrendingScore(profile) {
-      const signal = privateTrendingSignals(profile);
+    function privateTrendingScore(profile, city = selectedCity()) {
+      const signal = privateTrendingSignals(profile, city);
       const antiSpamPenalty = signal.repeatedClickRate * 14;
       return (
         signal.uniqueProfileViews * 1.1 +
@@ -8421,7 +8465,7 @@
     function trendingProfiles(city) {
       return [...markets[city].dancers]
         .filter((profile) => profile.status === "Verified" && !profile.hidden)
-        .sort((a, b) => privateTrendingScore(b) - privateTrendingScore(a))
+        .sort((a, b) => privateTrendingScore(b, city) - privateTrendingScore(a, city))
         .slice(0, 10)
         .map((profile, index) => ({ ...profile, trendRank: index + 1 }));
     }
@@ -8548,7 +8592,7 @@
       if (!clubSelect || !dateInput) return;
       const city = activeDancerCity();
       clubSelect.innerHTML = markets[city].venues.map((venue) => `<option>${venue.name}</option>`).join("");
-      if (!dateInput.value) dateInput.value = todayValue();
+      if (!dateInput.value) dateInput.value = todayValue(city);
       const result = document.getElementById("shiftPostResult");
       if (result && lastPostedShift) {
         result.hidden = false;
@@ -8578,14 +8622,14 @@
         status: "Verified",
         venue: venueName,
         time,
-        tonight: isTonightDate(dateValue),
+        tonight: isTonightDate(dateValue, city),
         scheduled: true,
         trend: existing?.trend || 9,
         distance: venue?.distance || "2.4 mi",
         shiftDate: dateValue,
         shiftStart: startValue,
         shiftEnd: endValue,
-        shiftLabel: formatDateLabel(dateValue),
+        shiftLabel: formatDateLabel(dateValue, city),
         repeat,
         notes,
         socials: existing?.socials || { ...dancerSignupSocials }
@@ -9221,7 +9265,7 @@
       const city = citySelect.value;
       const followed = followedProfiles(city);
       const workingTonight = followed
-        .filter((profile) => isWorkingTonight(profile))
+        .filter((profile) => isWorkingTonight(profile, city))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       document.getElementById("dashboardCity").textContent = city;
       document.getElementById("dashTonightCount").textContent = workingTonight.length;
@@ -9353,7 +9397,7 @@
       const market = markets[city];
       if (tab === "tonight") {
         return market.dancers
-          .filter((profile) => profile.status === "Verified" && !profile.hidden && isWorkingTonight(profile))
+          .filter((profile) => profile.status === "Verified" && !profile.hidden && isWorkingTonight(profile, city))
           .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
           .map((profile) => withTrendingRank(profile, city));
       }
@@ -9362,8 +9406,8 @@
           .filter((profile) => !profile.hidden && profile.status === "Verified")
           .map((profile) => withTrendingRank(profile, city))
           .sort((a, b) => {
-            const weight = (profile) => isWorkingTonight(profile) ? 0 : profile.scheduled ? 1 : 2;
-            return weight(a) - weight(b) || upcomingSortValue(a) - upcomingSortValue(b);
+            const weight = (profile) => isWorkingTonight(profile, city) ? 0 : profile.scheduled ? 1 : 2;
+            return weight(a) - weight(b) || upcomingSortValue(a, city) - upcomingSortValue(b, city);
           });
       }
       if (tab === "venues") {
