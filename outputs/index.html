@@ -8834,7 +8834,6 @@
 
     function venueCard(venue) {
       const details = venueDetails(venue, citySelect.value);
-      const verifyBadge = venue.verified ? '<span class="badge">Verified</span>' : '<span class="badge pending">Pending</span>';
       const initials = venue.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       return `
         <button class="card venue venue-card" data-venue="${venue.name}" aria-label="${venue.name} venue details">
@@ -8845,7 +8844,6 @@
                 <h3>${venue.name}</h3>
                 <div class="meta">${details.city}, ${details.state}</div>
               </div>
-              <div class="pill-row">${verifyBadge}</div>
             </div>
             <div class="pill-row">
               <span class="pill">Today ${details.hours}</span>
@@ -8885,7 +8883,6 @@
                   <h2>${details.name}</h2>
                   <div class="meta">${details.city}, ${details.state}</div>
                 </div>
-                <span class="badge">Verified venue</span>
               </div>
               <p>${details.description}</p>
               <div class="venue-info">
