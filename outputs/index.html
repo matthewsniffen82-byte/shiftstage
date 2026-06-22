@@ -8989,6 +8989,28 @@
       return date.getTime() + (startMinutes * 60000);
     }
 
+    function dailyRotationScore(profile, city = selectedCity()) {
+      const seed = `${city}|${localDateValue(new Date(), city)}|${profile.name}`;
+      let hash = 0;
+      for (let index = 0; index < seed.length; index += 1) {
+        hash = ((hash << 5) - hash + seed.charCodeAt(index)) | 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function dancerDiscoverySort(a, b, city = selectedCity()) {
+      const groupWeight = (profile) => isWorkingTonight(profile, city) ? 0 : profile.scheduled ? 1 : 2;
+      const groupDifference = groupWeight(a) - groupWeight(b);
+      if (groupDifference) return groupDifference;
+      if (groupWeight(a) === 0) {
+        return shiftStartMinutes(a.time) - shiftStartMinutes(b.time) || dailyRotationScore(a, city) - dailyRotationScore(b, city);
+      }
+      if (groupWeight(a) === 1) {
+        return upcomingSortValue(a, city) - upcomingSortValue(b, city) || dailyRotationScore(a, city) - dailyRotationScore(b, city);
+      }
+      return dailyRotationScore(a, city) - dailyRotationScore(b, city);
+    }
+
     function daysFromToday(date, city = selectedCity()) {
       const today = cityWallClock(new Date(), city);
       const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -9994,10 +10016,7 @@
         return market.dancers
           .filter((profile) => !profile.hidden && profile.status === "Verified")
           .map((profile) => withTrendingRank(profile, city))
-          .sort((a, b) => {
-            const weight = (profile) => isWorkingTonight(profile, city) ? 0 : profile.scheduled ? 1 : 2;
-            return weight(a) - weight(b) || upcomingSortValue(a, city) - upcomingSortValue(b, city);
-          });
+          .sort((a, b) => dancerDiscoverySort(a, b, city));
       }
       if (tab === "venues") {
         return market.venues.filter((venue) => !venue.hidden);
