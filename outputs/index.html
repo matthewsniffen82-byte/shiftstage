@@ -6833,7 +6833,7 @@
           ? `${profile.venue} · ${profile.time}`
         : profile.scheduled
             ? `${profile.venue} · ${upcomingLabel} · ${profile.time}`
-            : "No upcoming shifts";
+            : "No shifts posted";
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : profile.tonight
@@ -6858,9 +6858,6 @@
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
-            <div class="pill-row">
-              ${!isPending && !profile.scheduled ? '<span class="pill">Verified</span>' : ''}
-            </div>
           </div>
         </a>
       `;
