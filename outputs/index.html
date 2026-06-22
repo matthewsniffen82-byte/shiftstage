@@ -6231,6 +6231,26 @@
       min-height: 46px;
     }
 
+    .venue-inline-link {
+      display: inline;
+      padding: 0;
+      color: #d8bdff;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-weight: 900;
+      text-decoration: underline;
+      text-decoration-color: rgba(192,132,255,.45);
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .venue-inline-link:hover {
+      color: #f2e8ff;
+      text-decoration-color: rgba(192,132,255,.85);
+      text-shadow: 0 0 12px rgba(155,92,255,.35);
+    }
+
     @media (max-width: 560px) {
       .profile-modal .gallery {
         gap: 7px;
@@ -7581,7 +7601,7 @@
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
-            <div class="meta">${profile.venue} · ${profile.time}</div>
+            <div class="meta"><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${profile.time}</div>
           </div>
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
@@ -7596,7 +7616,7 @@
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
-            <div class="meta">Next: ${profile.venue}</div>
+            <div class="meta">Next: <button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
           </div>
           <div class="info-tile">
             <strong>Tonight</strong>
@@ -8206,6 +8226,16 @@
     });
 
     modalBody.addEventListener("click", (event) => {
+      const venueLink = event.target.closest("[data-open-venue]");
+      if (venueLink) {
+        selectedVenueName = venueLink.dataset.openVenue;
+        activeTab = "venues";
+        document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+        closeProfileModal();
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       if (event.target.id === "followBtn") {
         event.target.textContent = "Following";
         const profileName = modalName.textContent;
