@@ -5882,21 +5882,57 @@
       box-shadow: 0 0 14px rgba(192,132,255,.22), inset 0 0 12px rgba(255,255,255,.05);
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 899px) {
       .tabs {
-        gap: 9px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 7px;
+        overflow: visible;
+        padding: 4px 0 6px;
       }
 
       .tabs .tab {
+        width: 100%;
+        min-width: 0;
         min-height: 44px;
-        padding: 0 15px;
-        font-size: 14px;
+        padding: 0 8px;
+        gap: 6px;
+        justify-content: center;
+        font-size: 13px;
+      }
+
+      .tabs .tab > span:first-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .tabs .tab-count {
-        min-width: 24px;
-        min-height: 24px;
-        font-size: 11px;
+        flex: 0 0 auto;
+        min-width: 22px;
+        min-height: 22px;
+        padding: 0 6px;
+        font-size: 10.5px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .tabs {
+        gap: 6px;
+      }
+
+      .tabs .tab {
+        min-height: 42px;
+        padding: 0 6px;
+        gap: 5px;
+        font-size: 12px;
+      }
+
+      .tabs .tab-count {
+        min-width: 20px;
+        min-height: 20px;
+        padding: 0 5px;
+        font-size: 10px;
       }
     }
 
