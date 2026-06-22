@@ -5814,6 +5814,16 @@
       transition: box-shadow .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
     }
 
+    .dancer-card .pill-row {
+      min-width: 0;
+    }
+
+    .dancer-card .pill {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .dancer-card .badge:hover,
     .dancer-card .pill:hover,
     .profile-modal .badge:hover,
@@ -6829,7 +6839,7 @@
         : profile.tonight
           ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
         : profile.scheduled
-            ? `<div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>`
+            ? `<div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="pill-row"><span class="pill muted">No shifts posted</span></div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta">${profile.tonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
@@ -6991,7 +7001,7 @@
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="pill-row"><span class="pill upcoming">Upcoming • ${upcomingLabel} • ${profile.time}</span></div>
+            <div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
             <div class="meta">Next: ${profile.venue}</div>
           </div>
           <div class="info-tile">
