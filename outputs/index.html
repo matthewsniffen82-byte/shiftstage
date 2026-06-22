@@ -1125,6 +1125,10 @@
       grid-column: 1 / -1;
     }
 
+    .share-tile {
+      grid-column: 1 / -1;
+    }
+
     .modal-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -7563,6 +7567,71 @@
       z-index: 1;
     }
 
+    .share-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .share-link-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .share-url {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 12px 13px;
+      border: 1px solid rgba(155,92,255,.24);
+      border-radius: 999px;
+      color: #d8ccf5;
+      background: rgba(7,7,10,.72);
+      box-shadow: inset 0 0 16px rgba(155,92,255,.04);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .share-copy,
+    .share-open {
+      min-height: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(155,92,255,.44);
+      color: #fff;
+      background: rgba(25,18,36,.86);
+      font-weight: 900;
+      padding: 0 15px;
+      box-shadow: 0 0 18px rgba(155,92,255,.12), inset 0 0 12px rgba(155,92,255,.06);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .share-copy:hover,
+    .share-open:hover {
+      transform: translateY(-1px);
+      border-color: rgba(192,132,255,.76);
+      box-shadow: 0 0 24px rgba(155,92,255,.25), inset 0 0 14px rgba(155,92,255,.08);
+    }
+
+    .share-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .share-buttons .social-link,
+    .share-buttons .share-open {
+      min-height: 36px;
+    }
+
+    .share-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     .profile-modal .going-btn:disabled {
       color: #bdb6cc;
       border: 1px solid rgba(192,132,255,.2);
@@ -8916,6 +8985,7 @@
         <div class="auth-card" id="approvedDancerPanel" hidden>
           <h3>Post shift</h3>
           <div class="rule-note">Approved profile. Public schedule access is live and followers receive shift alerts.</div>
+          <div class="info-tile share-tile" id="dancerSharePanel"></div>
           <form class="auth-form" id="shiftPostForm">
             <div class="field">
               <label for="shiftClub">Club</label>
@@ -9818,7 +9888,8 @@
         heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>',
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
-        check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>'
+        check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
+        share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>'
       };
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
     }
@@ -9867,6 +9938,73 @@
       }
       const handle = cleanSocialHandle(raw);
       return handle ? `${platform.base}${handle}` : "";
+    }
+
+    function profileShareUrl(profileName, city = selectedCity()) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("city", city);
+      url.searchParams.set("profile", slugify(profileName));
+      url.hash = "";
+      return url.toString();
+    }
+
+    function profileShareText(profileName, city = selectedCity()) {
+      return `See ${profileName}'s verified Dancr schedule in ${city}.`;
+    }
+
+    function socialShareUrl(platformKey, profileName, city = selectedCity()) {
+      const url = profileShareUrl(profileName, city);
+      const text = profileShareText(profileName, city);
+      const encodedUrl = encodeURIComponent(url);
+      const encodedText = encodeURIComponent(text);
+      if (platformKey === "x") return `https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+      if (platformKey === "instagram") return "https://www.instagram.com/";
+      if (platformKey === "tiktok") return "https://www.tiktok.com/upload";
+      if (platformKey === "snapchat") return `https://www.snapchat.com/scan?attachmentUrl=${encodedUrl}`;
+      return url;
+    }
+
+    async function copyText(value, successMessage = "Link copied") {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(value);
+        } else {
+          const textarea = document.createElement("textarea");
+          textarea.value = value;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
+        }
+        showToast(successMessage);
+      } catch {
+        showToast("Copy link unavailable");
+      }
+    }
+
+    function shareButtonsMarkup(profileName, city = selectedCity(), mode = "customer") {
+      const copyLabel = mode === "dancer" ? "Copy profile link" : "Copy link";
+      const nativeLabel = mode === "dancer" ? "Share profile" : "Share";
+      return `
+        <div class="share-panel">
+          <div class="share-link-row">
+            <div class="share-url">${profileShareUrl(profileName, city)}</div>
+            <button class="share-copy" type="button" data-copy-share="${profileName}" data-share-city="${city}">${copyLabel}</button>
+          </div>
+          <div class="share-buttons">
+            <button class="share-open" type="button" data-native-share="${profileName}" data-share-city="${city}">${actionButtonLabel("share", nativeLabel)}</button>
+            ${socialPlatforms.map((platform) => `
+              <a class="social-link social-${platform.key}" href="${socialShareUrl(platform.key, profileName, city)}" target="_blank" rel="noreferrer" data-social-share="${platform.key}" data-share-city="${city}" data-profile="${profileName}" aria-label="Share to ${platform.label}">
+                ${socialIconMarkup(platform.key)}<span>${platform.label}</span>
+              </a>
+            `).join("")}
+          </div>
+          <div class="share-note">${mode === "dancer" ? "Promote your verified schedule on connected social channels. No adult-sales or solicitation links." : "Share this verified schedule. Customer profiles stay private."}</div>
+        </div>
+      `;
     }
 
     function hasBlockedSocialLink(values) {
@@ -10254,10 +10392,14 @@
               <div class="meta"><span class="metric-value" id="modalFollowerCount">${followerCount(profile, city)}</span></div>
             </div>
             ${socialLinksMarkup(profile)}
+            <div class="info-tile share-tile">
+              <strong>Share profile</strong>
+              ${shareButtonsMarkup(profile.name, city, "customer")}
+            </div>
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
-            <button class="action-btn secondary" id="notifyBtn">${actionButtonLabel("bell", "Notify Me")}</button>
+            <button class="action-btn secondary" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel("bell", "Notify Me")}</button>
             ${goingButton}
           </div>
         `;
@@ -10446,7 +10588,18 @@
       document.getElementById("setupChecklistWrap").hidden = approved;
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
-      if (approved) return;
+      if (approved) {
+        const sharePanel = document.getElementById("dancerSharePanel");
+        const dancerName = activeDancerName();
+        const city = activeDancerCity();
+        if (sharePanel) {
+          sharePanel.innerHTML = `
+            <strong>Share your profile</strong>
+            ${shareButtonsMarkup(dancerName, city, "dancer")}
+          `;
+        }
+        return;
+      }
 
       const profileBody = `
         <form class="auth-form" data-setup-form="profile">
@@ -10860,6 +11013,43 @@
       openProfileModal(card.dataset.profile);
     });
 
+    async function runShareAction(profileName, city) {
+      const url = profileShareUrl(profileName, city);
+      const text = profileShareText(profileName, city);
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "Dancr profile", text, url });
+          recordUniqueTrendEvent("socialClicks", city, profileName);
+          return;
+        } catch {
+          return;
+        }
+      }
+      await copyText(url, "Profile link copied");
+    }
+
+    function handleShareClick(event) {
+      const copyButton = event.target.closest("[data-copy-share]");
+      if (copyButton) {
+        const city = copyButton.dataset.shareCity || selectedCity();
+        const profileName = copyButton.dataset.copyShare;
+        copyText(profileShareUrl(profileName, city), "Profile link copied");
+        return true;
+      }
+      const nativeButton = event.target.closest("[data-native-share]");
+      if (nativeButton) {
+        runShareAction(nativeButton.dataset.nativeShare, nativeButton.dataset.shareCity || selectedCity());
+        return true;
+      }
+      const socialShare = event.target.closest("[data-social-share]");
+      if (socialShare) {
+        recordUniqueTrendEvent("socialClicks", socialShare.dataset.shareCity || selectedCity(), socialShare.dataset.profile);
+        showToast(`${socialShare.dataset.socialShare} share opened`);
+        return false;
+      }
+      return false;
+    }
+
     modalGallery.addEventListener("click", (event) => {
       const thumb = event.target.closest(".thumb");
       if (!thumb) return;
@@ -10867,6 +11057,7 @@
     });
 
     modalBody.addEventListener("click", (event) => {
+      if (handleShareClick(event)) return;
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
         recordUniqueTrendEvent("socialClicks", citySelect.value, socialLink.dataset.profile);
@@ -11065,6 +11256,7 @@
     });
 
     dancerDashboard.addEventListener("click", (event) => {
+      if (handleShareClick(event)) return;
       const toggle = event.target.closest("[data-step-toggle]");
       if (toggle) {
         const step = toggle.dataset.stepToggle;
@@ -11249,9 +11441,25 @@
       });
     }
 
+    function openSharedProfileFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const city = params.get("city");
+      const profileSlug = params.get("profile");
+      if (!city || !profileSlug || !markets[city]) return;
+      citySelect.value = city;
+      activeTab = "dancers";
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
+      render();
+      const profile = markets[city].dancers.find((item) => slugify(item.name) === profileSlug && !item.hidden);
+      if (profile) {
+        setTimeout(() => openProfileModal(profile.name), 120);
+      }
+    }
+
     installReferenceHomeShell();
     updateAccountHeader();
     render();
+    openSharedProfileFromUrl();
   </script>
 </body>
 </html>
