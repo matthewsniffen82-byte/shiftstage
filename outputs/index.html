@@ -550,6 +550,35 @@
       text-shadow: 0 2px 10px rgba(0,0,0,.7);
     }
 
+    .dancer-card .card-venue-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      color: #bdb4cc;
+    }
+
+    .dancer-card .card-venue-name {
+      min-width: 0;
+      color: #e7d8ff;
+      font-weight: 860;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 0 12px rgba(168,85,247,.2), 0 2px 10px rgba(0,0,0,.72);
+    }
+
+    .dancer-card .card-venue-prefix,
+    .dancer-card .card-distance {
+      color: #a99fb7;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .dancer-card .card-distance {
+      flex: 0 0 auto;
+    }
+
     .locked {
       align-self: start;
       width: fit-content;
@@ -9250,7 +9279,7 @@
             ? `<div class="pill-row">${clockIconMarkup()}<span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta">${venueIconMarkup()}${workingTonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
+        ? `<div class="meta card-venue-line">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next:</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
