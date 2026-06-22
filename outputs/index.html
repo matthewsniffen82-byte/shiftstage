@@ -8074,6 +8074,10 @@
       return '<span class="venue-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-11a6 6 0 0 0-12 0c0 5.7 6 11 6 11Z"></path><circle cx="12" cy="10" r="2.2"></circle></svg></span>';
     }
 
+    function clockIconMarkup() {
+      return '<span class="venue-dot" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg></span>';
+    }
+
     const socialPlatforms = [
       { key: "instagram", label: "Instagram", base: "https://instagram.com/", hosts: ["instagram.com", "www.instagram.com"] },
       { key: "tiktok", label: "TikTok", base: "https://tiktok.com/@", hosts: ["tiktok.com", "www.tiktok.com"] },
@@ -8229,9 +8233,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="pill-row"><span class="pill tonight">Tonight • ${profile.time}</span></div>`
+          ? `<div class="pill-row"><span class="pill tonight">Tonight • ${clockIconMarkup()}${profile.time}</span></div>`
         : profile.scheduled
-            ? `<div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>`
+            ? `<div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${clockIconMarkup()}${profile.time}</span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta">${venueIconMarkup()}${workingTonight ? profile.venue : `Next: ${profile.venue}`} · ${profile.distance}</div>`
@@ -8385,7 +8389,7 @@
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
-            <div class="meta">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${profile.time}</div>
+            <div class="meta">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button> · ${clockIconMarkup()}${profile.time}</div>
           </div>
           ${tonightInterestTileMarkup(status)}
           <div class="info-tile">
@@ -8400,7 +8404,7 @@
         return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${profile.time}</span></div>
+            <div class="pill-row"><span class="pill upcoming">${upcomingLabel} • ${clockIconMarkup()}${profile.time}</span></div>
             <div class="meta">${venueIconMarkup()}Next: <button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
           </div>
           ${tonightInterestTileMarkup(status)}
