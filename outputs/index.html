@@ -8141,6 +8141,175 @@
       transform: translateY(-.5px);
     }
 
+    /* Premium venue profile polish */
+    .venue-detail .venue-hero {
+      overflow: hidden;
+      border-color: rgba(155,92,255,.24);
+      background:
+        radial-gradient(circle at 88% 0%, rgba(155,92,255,.16), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.035), transparent 70%),
+        rgba(10,10,14,.9);
+      box-shadow:
+        0 26px 72px rgba(0,0,0,.56),
+        0 0 34px rgba(155,92,255,.08),
+        inset 0 0 28px rgba(255,255,255,.026);
+    }
+
+    .venue-detail .venue-main-photo {
+      min-height: 254px;
+      border-radius: 14px 14px 0 0;
+      background:
+        radial-gradient(circle at 75% 30%, rgba(155,92,255,.22), transparent 0 34%),
+        linear-gradient(90deg, rgba(4,4,8,.96), rgba(11,7,21,.88) 54%, rgba(56,24,119,.46));
+      overflow: hidden;
+    }
+
+    .venue-detail .venue-main-photo:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 0 70%, rgba(154,92,255,.5) 82%, rgba(154,92,255,.18) 100%),
+        repeating-linear-gradient(90deg, transparent 0 42px, rgba(255,255,255,.035) 43px, transparent 44px);
+      opacity: .64;
+    }
+
+    .venue-detail .venue-main-photo:after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 44%;
+      background: linear-gradient(180deg, transparent, rgba(4,4,6,.92));
+      pointer-events: none;
+    }
+
+    .venue-detail .venue-art {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background:
+        radial-gradient(circle at 50% 52%, rgba(53,216,255,.16), transparent 0 24%),
+        linear-gradient(180deg, rgba(5,5,8,.04), rgba(5,5,8,.26));
+    }
+
+    .venue-detail .venue-art:after {
+      display: none;
+    }
+
+    .venue-sign {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      width: min(78%, 430px);
+      padding: 22px 18px;
+      border: 1px solid rgba(155,92,255,.35);
+      border-radius: 18px;
+      background: rgba(3,3,6,.48);
+      box-shadow:
+        0 0 34px rgba(155,92,255,.18),
+        inset 0 0 24px rgba(255,255,255,.035);
+      backdrop-filter: blur(10px);
+    }
+
+    .venue-sign-name {
+      color: #f7f3ff;
+      font-size: clamp(28px, 8vw, 54px);
+      font-weight: 950;
+      line-height: .92;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+      text-shadow:
+        0 0 18px rgba(155,92,255,.42),
+        0 12px 28px rgba(0,0,0,.72);
+    }
+
+    .venue-sign-meta {
+      color: #cdbdff;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .venue-quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .venue-quick-stat {
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid rgba(192,132,255,.16);
+      border-radius: 14px;
+      background: rgba(8,8,12,.68);
+      box-shadow: inset 0 0 14px rgba(255,255,255,.022);
+    }
+
+    .venue-quick-stat strong {
+      display: block;
+      color: #f5f2ff;
+      font-size: 16px;
+      line-height: 1.05;
+    }
+
+    .venue-quick-stat span {
+      display: block;
+      margin-top: 4px;
+      color: #bdb2cf;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .venue-detail .venue-info .info-tile {
+      border-color: rgba(192,132,255,.16);
+      background: rgba(10,10,14,.68);
+    }
+
+    .venue-detail .map-preview {
+      min-height: 132px;
+      border-color: rgba(155,92,255,.22);
+      background:
+        radial-gradient(circle at 50% 48%, rgba(155,92,255,.2), transparent 0 22%),
+        linear-gradient(90deg, transparent 0 26%, rgba(155,92,255,.12) 26% 27%, transparent 27% 62%, rgba(53,216,255,.1) 62% 63%, transparent 63%),
+        linear-gradient(0deg, transparent 0 32%, rgba(255,255,255,.06) 32% 33%, transparent 33% 68%, rgba(255,255,255,.055) 68% 69%, transparent 69%),
+        rgba(7,7,11,.92);
+    }
+
+    .venue-detail .map-preview:after {
+      width: 20px;
+      background: #9b5cff;
+      box-shadow: 0 0 24px rgba(155,92,255,.36);
+    }
+
+    .venue-directions-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 52px;
+      color: #fff;
+      font-weight: 950;
+      text-decoration: none;
+    }
+
+    @media (max-width: 560px) {
+      .venue-quick-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .venue-detail .venue-main-photo {
+        min-height: 224px;
+      }
+    }
+
     @media (max-width: 420px) {
       .dancer-card .profile-body > .pill-row {
         grid-template-columns: 15px minmax(0, 1fr);
@@ -9595,11 +9764,19 @@
         .filter((profile) => profile.trendRank)
         .sort((a, b) => a.trendRank - b.trendRank);
       const otherVenues = markets[city].venues.filter((item) => item.name !== venue.name && !item.hidden);
+      const shiftCount = localProfiles.filter((profile) => profile.scheduled).length;
 
       return `
         <div class="venue-detail">
           <article class="venue-hero">
-            <div class="venue-main-photo"><div class="venue-art"></div></div>
+            <div class="venue-main-photo">
+              <div class="venue-art">
+                <div class="venue-sign">
+                  <div class="venue-sign-name">${details.name}</div>
+                  <div class="venue-sign-meta">${details.city} nightlife</div>
+                </div>
+              </div>
+            </div>
             <div class="venue-hero-body">
               <div class="row">
                 <div>
@@ -9608,6 +9785,11 @@
                 </div>
               </div>
               <p>${details.description}</p>
+              <div class="venue-quick-stats">
+                <div class="venue-quick-stat"><strong>${tonight.length}</strong><span>working tonight</span></div>
+                <div class="venue-quick-stat"><strong>${shiftCount}</strong><span>posted shifts</span></div>
+                <div class="venue-quick-stat"><strong>${trending.length}</strong><span>trending here</span></div>
+              </div>
               <div class="venue-info">
                 <div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>
                 <div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>
@@ -9615,7 +9797,7 @@
                 <div class="info-tile"><strong>Hours</strong><div class="meta">${details.hours}</div></div>
               </div>
               <div class="map-preview" aria-label="Map preview placeholder"></div>
-              <a class="action-btn" style="display:grid;place-items:center" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer">Get Directions</a>
+              <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer">${venueIconMarkup()}Get Directions</a>
             </div>
           </article>
 
