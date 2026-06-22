@@ -10674,6 +10674,18 @@
           <h3>Last 30 days</h3>
           <div class="metric-grid" id="dancerLast30Metrics" aria-label="Dancer profile metrics"></div>
         </div>
+        <div class="auth-card approved-analytics">
+          <h3>Customer conversion</h3>
+          <div class="metric-grid" id="dancerConversionMetrics" aria-label="Customer conversion"></div>
+        </div>
+        <div class="auth-card approved-analytics">
+          <h3>Schedule performance</h3>
+          <div class="metric-grid" id="dancerScheduleMetrics" aria-label="Schedule performance"></div>
+        </div>
+        <div class="auth-card approved-analytics">
+          <h3>Audience demand</h3>
+          <div class="metric-grid" id="dancerAudienceMetrics" aria-label="Audience demand"></div>
+        </div>
         <div class="auth-card momentum-card approved-analytics">
           <h3>Your market momentum</h3>
           <div class="metric-grid" id="dancerMomentumMetrics" aria-label="Market momentum"></div>
@@ -11285,6 +11297,18 @@
       const clubPageClicks = signals.clubPageClicks + seededRange(`${profile.name}|club-page-clicks|${city}`, 18, 92);
       const profileShares = seededRange(`${profile.name}|profile-shares|${city}`, 9, 64);
       const searchAppearances = profileViews30 + seededRange(`${profile.name}|search-appearances|${city}`, 420, 1800);
+      const profileToFollowRate = Math.max(4, Math.round((newFollowers / Math.max(1, profileViews30)) * 1000) / 10);
+      const scheduleToGoingRate = Math.max(3, Math.round((goingTonightClicks / Math.max(1, scheduleViews30)) * 1000) / 10);
+      const directionRate = Math.max(2, Math.round((directionRequests30 / Math.max(1, scheduleViews30)) * 1000) / 10);
+      const returningViewers = Math.round(signals.uniqueProfileViews * (0.22 + seededRange(`${profile.name}|returning-viewers|${city}`, 4, 14) / 100));
+      const nearbyViews = Math.round(profileViews30 * (0.52 + seededRange(`${profile.name}|nearby-views|${city}`, 1, 12) / 100));
+      const peakHourViews = seededRange(`${profile.name}|peak-hour-views|${city}`, 180, 740);
+      const shiftReminderSaves = seededRange(`${profile.name}|shift-reminders|${city}`, 34, 190);
+      const venueClicksFromProfile = Math.round(clubPageClicks * 0.68);
+      const directionsAfterProfile = Math.round(directionRequests30 * 0.72);
+      const socialClickRate = Math.max(2, Math.round(((instagramClicks + snapchatClicks + tiktokClicks + xClicks) / Math.max(1, profileViews30)) * 1000) / 10);
+      const rankGain = seededRange(`${profile.name}|rank-gain|${city}`, 2, 8);
+      const profileCompleteness = profile.scheduled ? 96 : 84;
       return {
         ranked,
         signals,
@@ -11301,6 +11325,18 @@
         clubPageClicks,
         profileShares,
         searchAppearances,
+        profileToFollowRate,
+        scheduleToGoingRate,
+        directionRate,
+        returningViewers,
+        nearbyViews,
+        peakHourViews,
+        shiftReminderSaves,
+        venueClicksFromProfile,
+        directionsAfterProfile,
+        socialClickRate,
+        rankGain,
+        profileCompleteness,
         instagramClicks,
         snapchatClicks,
         tiktokClicks,
@@ -12543,9 +12579,34 @@
           metricCardMarkup("Locked", "Followers gained"),
           metricCardMarkup("Locked", "Notifications sent")
         ]).join("");
+        document.getElementById("dancerConversionMetrics").innerHTML = [
+          metricCardMarkup(`${dashboardMetrics.profileToFollowRate}%`, "Profile to follow rate"),
+          metricCardMarkup(`${dashboardMetrics.scheduleToGoingRate}%`, "Schedule to Going Tonight"),
+          metricCardMarkup(`${dashboardMetrics.directionRate}%`, "Schedule to directions"),
+          metricCardMarkup(`${dashboardMetrics.socialClickRate}%`, "Profile to social clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.directionsAfterProfile), "Directions after profile views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.venueClicksFromProfile), "Venue clicks from profile")
+        ].join("");
+        document.getElementById("dancerScheduleMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.shiftReminderSaves), "Shift reminders saved"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Alert opens"),
+          metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.interestedClicks), "Interested clicks"),
+          metricCardMarkup(`${dashboardMetrics.profileCompleteness}%`, "Profile completeness")
+        ].join("");
+        document.getElementById("dancerAudienceMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.nearbyViews), "Nearby customer views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.returningViewers), "Returning viewers"),
+          metricCardMarkup(compactNumber(dashboardMetrics.peakHourViews), "Peak-hour views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances"),
+          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Audience with alerts on")
+        ].join("");
         document.getElementById("dancerMomentumMetrics").innerHTML = [
           metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
           metricCardMarkup(`#${seededRange(`${activeProfile.name}|week-rank|${city}`, 1, 5)}`, "Trending this week"),
+          metricCardMarkup(`Up ${dashboardMetrics.rankGain}`, "Spots this week"),
           metricCardMarkup("Top 10", "Most viewed"),
           metricCardMarkup("Top 10", "Most followed"),
           metricCardMarkup(compactNumber(dashboardMetrics.signals.recentActivity), "Visit signals this week"),
