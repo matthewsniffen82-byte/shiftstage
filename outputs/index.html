@@ -5184,12 +5184,9 @@
       box-shadow: 0 0 17px rgba(59,160,255,.22), inset 0 0 12px rgba(59,160,255,.1);
     }
 
-    .filter-pill.featured,
-    .pill.featured {
-      color: #f0c648;
-      border-color: rgba(215,163,29,.5);
-      background: rgba(215,163,29,.14);
-      box-shadow: 0 0 14px rgba(215,163,29,.16), inset 0 0 12px rgba(215,163,29,.08);
+    .dancer-card .pill.featured,
+    .profile-modal .pill.featured {
+      display: none;
     }
 
     .pill.upcoming {
@@ -6637,7 +6634,6 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = `<span class="${isPending ? "badge pending" : "badge"}">${profile.status}</span>`;
       const trendBadge = isTrending ? `<span class="badge trend">#${profile.trendRank} Trending</span>` : "";
-      const featureBadge = profile.featured && !isPending ? '<span class="badge featured">Featured</span>' : "";
       const scheduleText = isPending
         ? "Schedule locked"
         : profile.tonight
@@ -6669,7 +6665,6 @@
             ${scheduleMarkup}
             <div class="pill-row">
               ${!isPending && !profile.scheduled ? '<span class="pill">Verified</span>' : ''}
-              ${featureBadge}
             </div>
           </div>
         </a>
@@ -6679,7 +6674,6 @@
     function venueCard(venue) {
       const details = venueDetails(venue, citySelect.value);
       const verifyBadge = venue.verified ? '<span class="badge">Verified</span>' : '<span class="badge pending">Pending</span>';
-      const featureBadge = venue.featured ? '<span class="badge featured">Featured</span>' : "";
       return `
         <button class="card venue venue-card" data-venue="${venue.name}" aria-label="${venue.name} venue details">
           <div class="venue-art"></div>
@@ -6689,7 +6683,7 @@
                 <h3>${venue.name}</h3>
                 <div class="meta">${details.city}, ${details.state}</div>
               </div>
-              <div class="pill-row">${verifyBadge}${featureBadge}</div>
+              <div class="pill-row">${verifyBadge}</div>
             </div>
             <div class="pill-row">
               <span class="pill">Today ${details.hours}</span>
