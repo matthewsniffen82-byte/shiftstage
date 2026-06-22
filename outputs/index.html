@@ -1773,6 +1773,21 @@
         linear-gradient(180deg, rgba(255,255,255,.045), transparent 72%),
         rgba(10,10,16,.82);
       box-shadow: 0 22px 58px rgba(0,0,0,.46), inset 0 0 26px rgba(168,85,247,.06);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .approval-command:hover,
+    .approval-command:focus-visible {
+      border-color: rgba(168,85,247,.5);
+      box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 0 24px rgba(168,85,247,.14), inset 0 0 26px rgba(168,85,247,.08);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .approval-command.approved {
+      cursor: default;
+      transform: none;
     }
 
     .approval-command h3 {
@@ -1812,6 +1827,20 @@
       font-size: 12px;
       font-weight: 800;
       text-align: right;
+    }
+
+    .approval-expand {
+      color: #c084fc !important;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .setup-panel-inline {
+      margin-top: -2px;
+    }
+
+    .setup-panel-inline .setup-panel-head {
+      display: none;
     }
 
     .dashboard-status-row {
@@ -10764,7 +10793,7 @@
             <span>Monthly subscription</span>
           </div>
         </div>
-        <div class="approval-command" id="dancerApprovalCommand">
+        <div class="approval-command" id="dancerApprovalCommand" role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
           <div>
             <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
             <h3 id="dancerApprovalTitle">Finish approval to go live</h3>
@@ -10773,7 +10802,19 @@
           <div class="approval-progress">
             <strong id="dancerApprovalProgress">0/4</strong>
             <span id="dancerApprovalNext">Next: Create profile</span>
+            <span class="approval-expand" id="dancerApprovalExpand">Show steps</span>
           </div>
+        </div>
+        <div id="setupChecklistWrap" class="auth-card setup-panel setup-panel-inline">
+          <div class="setup-panel-head">
+            <div>
+              <h3>Profile setup and approval</h3>
+              <p id="setupChecklistSummary">Complete steps 1-4 inside this panel.</p>
+            </div>
+            <button class="ghost setup-toggle-btn" id="setupChecklistToggle" type="button" aria-expanded="false">Show steps</button>
+          </div>
+          <div class="setup-list" id="setupChecklist" hidden></div>
+          <div class="lock-row" id="setupChecklistLock" hidden>Post shift locked until profile approval.</div>
         </div>
         <div class="dashboard-status-row">
           <div class="status-chip">
@@ -10823,17 +10864,6 @@
           <h3>Your week on Dancr</h3>
           <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
           <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly summary"></div>
-        </div>
-        <div id="setupChecklistWrap" class="auth-card setup-panel">
-          <div class="setup-panel-head">
-            <div>
-              <h3>Profile setup and approval</h3>
-              <p id="setupChecklistSummary">Complete steps 1-4 inside this panel.</p>
-            </div>
-            <button class="ghost setup-toggle-btn" id="setupChecklistToggle" type="button" aria-expanded="false">Show steps</button>
-          </div>
-          <div class="setup-list" id="setupChecklist" hidden></div>
-          <div class="lock-row" id="setupChecklistLock" hidden>Post shift locked until profile approval.</div>
         </div>
         <div class="auth-card" id="approvedDancerPanel" hidden>
           <h3>Post shift</h3>
@@ -12672,7 +12702,10 @@
         section.hidden = !approved;
       });
       const approvalCommand = document.getElementById("dancerApprovalCommand");
-      if (approvalCommand) approvalCommand.classList.toggle("approved", approved);
+      if (approvalCommand) {
+        approvalCommand.classList.toggle("approved", approved);
+        approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
+      }
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
       document.getElementById("dancerApprovalTitle").textContent = approved ? "Approved. Start posting shifts." : "Finish approval to go live";
       document.getElementById("dancerApprovalCopy").textContent = approved
@@ -12680,6 +12713,10 @@
         : "Complete each step in order. Your public profile and paid subscription activate only after approval.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = approved ? "Ready to post shifts" : `Next: ${nextLabels[nextStep] || "Approval"}`;
+      const approvalExpand = document.getElementById("dancerApprovalExpand");
+      if (approvalExpand) {
+        approvalExpand.textContent = approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
+      }
       document.getElementById("dancerSubscriptionStatus").textContent = approved ? "$9.99/mo active" : "Authorized after approval";
       document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Pending review";
       document.getElementById("dancerFollowerStat").textContent = activeProfile
@@ -13585,6 +13622,15 @@
 
     dancerDashboard.addEventListener("click", (event) => {
       if (handleShareClick(event)) return;
+      const approvalToggle = event.target.closest("#dancerApprovalCommand");
+      if (approvalToggle && !approvalToggle.classList.contains("approved")) {
+        setupChecklistExpanded = !setupChecklistExpanded;
+        if (setupChecklistExpanded && !activeSetupStep) {
+          activeSetupStep = nextIncompleteStep() || "profile";
+        }
+        renderDancerSetup();
+        return;
+      }
       const setupToggleButton = event.target.closest("#setupChecklistToggle");
       if (setupToggleButton) {
         setupChecklistExpanded = !setupChecklistExpanded;
@@ -13608,6 +13654,18 @@
       if (completeButton) {
         completeSetupStep(completeButton.dataset.completeStep);
       }
+    });
+
+    dancerDashboard.addEventListener("keydown", (event) => {
+      const approvalToggle = event.target.closest("#dancerApprovalCommand");
+      if (!approvalToggle || approvalToggle.classList.contains("approved")) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      setupChecklistExpanded = !setupChecklistExpanded;
+      if (setupChecklistExpanded && !activeSetupStep) {
+        activeSetupStep = nextIncompleteStep() || "profile";
+      }
+      renderDancerSetup();
     });
 
     dancerDashboard.addEventListener("submit", (event) => {
