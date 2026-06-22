@@ -5816,6 +5816,74 @@
       box-shadow: 0 26px 68px rgba(0,0,0,.62), 0 0 26px rgba(155,92,255,.24), inset 0 0 0 1px rgba(255,255,255,.035);
     }
 
+    /* Final discovery tab treatment */
+    .tabs {
+      gap: 12px;
+      padding: 4px 0 6px;
+    }
+
+    .tabs .tab {
+      min-height: 48px;
+      padding: 0 18px;
+      gap: 10px;
+      border: 1px solid rgba(192,132,255,.16);
+      border-radius: 999px;
+      color: #b9b0c8;
+      background: rgba(18,18,22,.92);
+      box-shadow: inset 0 0 16px rgba(255,255,255,.025), 0 12px 28px rgba(0,0,0,.22);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .tabs .tab:hover {
+      color: #f5f2ff;
+      border-color: rgba(192,132,255,.42);
+      background: rgba(27,20,38,.95);
+      box-shadow: 0 0 18px rgba(155,92,255,.16), inset 0 0 16px rgba(155,92,255,.05);
+    }
+
+    .tabs .tab.active {
+      color: #fff;
+      border-color: rgba(192,132,255,.72);
+      background: rgba(75,39,118,.78);
+      box-shadow: 0 0 24px rgba(155,92,255,.32), inset 0 0 18px rgba(192,132,255,.12);
+    }
+
+    .tabs .tab-count {
+      min-width: 27px;
+      min-height: 27px;
+      padding: 0 8px;
+      color: #e7dcff;
+      border-color: rgba(192,132,255,.32);
+      background: rgba(8,8,12,.68);
+      font-size: 12px;
+    }
+
+    .tabs .tab.active .tab-count {
+      color: #fff;
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.12);
+      box-shadow: 0 0 14px rgba(192,132,255,.22), inset 0 0 12px rgba(255,255,255,.05);
+    }
+
+    @media (max-width: 420px) {
+      .tabs {
+        gap: 9px;
+      }
+
+      .tabs .tab {
+        min-height: 44px;
+        padding: 0 15px;
+        font-size: 14px;
+      }
+
+      .tabs .tab-count {
+        min-width: 24px;
+        min-height: 24px;
+        font-size: 11px;
+      }
+    }
+
     .dancer-card.trending-card {
       border-color: rgba(248,211,106,.28);
       box-shadow:
