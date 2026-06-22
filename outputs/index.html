@@ -7577,19 +7577,15 @@
 
     function shiftsMarkup(profile) {
       if (profile.tonight) {
-        const nextShiftTile = profile.repeat && profile.repeat !== "No repeat"
-          ? `
-          <div class="info-tile">
-            <strong>Upcoming shifts</strong>
-            <div class="meta">${profile.repeat}</div>
-          </div>`
-          : "";
         return `
           <div class="info-tile">
             <strong>Working tonight</strong>
             <div class="meta">${profile.venue} · ${profile.time}</div>
           </div>
-          ${nextShiftTile}
+          <div class="info-tile">
+            <strong>Upcoming shifts</strong>
+            <div class="meta">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</div>
+          </div>
           ${shiftNotesMarkup(profile)}
         `;
       }
