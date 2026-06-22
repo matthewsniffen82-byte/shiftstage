@@ -6139,9 +6139,9 @@
     .thumb.active {
       border-color: rgba(192,132,255,.7);
       box-shadow:
-        0 14px 34px rgba(0,0,0,.44),
-        0 0 22px rgba(155,92,255,.3),
-        inset 0 0 0 1px rgba(255,255,255,.035);
+        0 10px 24px rgba(0,0,0,.36),
+        0 0 16px rgba(155,92,255,.28),
+        inset 0 0 0 1px rgba(255,255,255,.04);
     }
 
     .profile-modal .action-btn {
@@ -6192,7 +6192,11 @@
     }
 
     .profile-modal .thumb.active {
-      border-color: rgba(192,132,255,.78);
+      border-color: rgba(192,132,255,.82);
+      box-shadow:
+        0 8px 20px rgba(0,0,0,.34),
+        0 0 16px rgba(155,92,255,.3),
+        inset 0 0 0 1px rgba(255,255,255,.04);
     }
 
     .profile-modal .modal-grid {
@@ -6351,15 +6355,15 @@
     .profile-modal .gallery {
       flex: 0 0 auto;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      padding: 10px 14px 8px;
+      gap: 6px;
+      padding: 8px 14px 6px;
     }
 
     .profile-modal .thumb {
       position: relative;
-      height: 72px;
+      height: 56px;
       min-height: 0;
-      border-radius: 11px;
+      border-radius: 10px;
     }
 
     .profile-modal .modal-body {
@@ -6426,15 +6430,12 @@
       }
 
       .profile-modal .gallery {
-        padding: 8px 10px 6px;
+        gap: 5px;
+        padding: 7px 10px 5px;
       }
 
       .profile-modal .thumb {
-        height: 58px;
-      }
-
-      .profile-modal .modal-body {
-        padding: 7px 10px 9px;
+        height: 48px;
       }
 
       .profile-modal .modal-grid {
