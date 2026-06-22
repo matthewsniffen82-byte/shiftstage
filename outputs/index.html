@@ -1785,6 +1785,63 @@
       gap: 10px;
     }
 
+    .customer-summary {
+      display: grid;
+      gap: 12px;
+      padding: 15px;
+      border: 1px solid rgba(168,85,247,.22);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(168,85,247,.12), transparent 17rem),
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 74%),
+        rgba(10,10,16,.78);
+      box-shadow: 0 20px 54px rgba(0,0,0,.42), inset 0 0 22px rgba(168,85,247,.045);
+    }
+
+    .customer-summary h3 {
+      font-size: 21px;
+    }
+
+    .customer-summary p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.38;
+    }
+
+    .customer-summary-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .customer-summary-actions .ghost {
+      min-height: 42px;
+      font-weight: 900;
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .section-title-row .section-title {
+      margin: 0;
+    }
+
+    .section-context {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    #customerDashboard .dashboard-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .status-chip {
       display: grid;
       gap: 5px;
@@ -9937,6 +9994,21 @@
       .preview-profile-btn {
         min-height: 48px;
       }
+
+      #customerDashboard .dashboard-stats,
+      .customer-summary-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .section-title-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .section-context {
+        white-space: normal;
+      }
     }
   </style>
 </head>
@@ -10463,6 +10535,17 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
+        <div class="customer-summary">
+          <div>
+            <span class="eyebrow">Your night</span>
+            <h3 id="customerSummaryTitle">Tonight in Las Vegas</h3>
+            <p id="customerSummaryCopy">Follow dancers to see who is working tonight and get schedule alerts without public customer profiles.</p>
+          </div>
+          <div class="customer-summary-actions">
+            <button class="ghost" id="customerBrowseTonight" type="button">Browse tonight</button>
+            <button class="ghost" id="customerBrowseDancers" type="button">Find dancers</button>
+          </div>
+        </div>
         <div class="dashboard-stats">
           <div class="stat">
             <strong id="dashTonightCount">0</strong>
@@ -10472,15 +10555,27 @@
             <strong id="dashFollowedCount">0</strong>
             <span>Followed dancers</span>
           </div>
+          <div class="stat">
+            <strong id="dashNotificationsCount">0</strong>
+            <span>Notifications on</span>
+          </div>
         </div>
-        <h3 class="section-title">Working tonight</h3>
+        <div class="section-title-row">
+          <h3 class="section-title" id="dashTonightTitle">Working tonight</h3>
+          <span class="section-context" id="dashTonightContext">Las Vegas</span>
+        </div>
         <div class="list card-grid" id="dashTonightList"></div>
         <button class="view-all" id="dashTonightViewAll" hidden>View All</button>
-        <h3 class="section-title">Followed dancers</h3>
+        <div class="section-title-row">
+          <h3 class="section-title" id="dashFollowedTitle">Followed dancers</h3>
+          <span class="section-context" id="dashFollowedContext">Las Vegas</span>
+        </div>
         <div class="list card-grid" id="dashFollowedList"></div>
         <button class="view-all" id="dashFollowedViewAll" hidden>View All Followed</button>
-        <h3 class="section-title">Notification settings</h3>
-        <div class="toggle-list" id="notificationSettings"></div>
+        <div class="auth-card customer-notification-card">
+          <h3 class="section-title">Notification settings</h3>
+          <div class="toggle-list" id="notificationSettings"></div>
+        </div>
       </div>
     </section>
 
@@ -10647,6 +10742,8 @@
     const dashTonightViewAll = document.getElementById("dashTonightViewAll");
     const dashFollowedViewAll = document.getElementById("dashFollowedViewAll");
     const notificationSettings = document.getElementById("notificationSettings");
+    const customerBrowseTonight = document.getElementById("customerBrowseTonight");
+    const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     let activeTab = "tonight";
     let savedScrollY = 0;
     let tonightExpanded = false;
@@ -12364,18 +12461,30 @@
       const workingTonight = followed
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
+      const notificationsOn = followed.filter((profile) => isNotificationOn(city, profile.name)).length;
       document.getElementById("dashboardCity").textContent = city;
+      document.getElementById("customerSummaryTitle").textContent = `Tonight in ${city}`;
+      document.getElementById("customerSummaryCopy").textContent = workingTonight.length
+        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight in ${city}. Notifications stay private to your account.`
+        : followed.length
+          ? `No followed dancers are working tonight in ${city}. Browse tonight or find more dancers to follow.`
+          : `Follow dancers in ${city} to build your private dashboard and get schedule alerts.`;
       document.getElementById("dashTonightCount").textContent = workingTonight.length;
       document.getElementById("dashFollowedCount").textContent = followed.length;
+      document.getElementById("dashNotificationsCount").textContent = notificationsOn;
+      document.getElementById("dashTonightTitle").textContent = `Working tonight in ${city}`;
+      document.getElementById("dashFollowedTitle").textContent = `Followed dancers in ${city}`;
+      document.getElementById("dashTonightContext").textContent = `${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
+      document.getElementById("dashFollowedContext").textContent = `${followed.length} saved`;
 
       const visibleTonight = limitedList(workingTonight, dashboardTonightExpanded);
       const visibleFollowed = limitedList(followed, dashboardFollowedExpanded);
       dashTonightList.innerHTML = visibleTonight.length
         ? visibleTonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("")
-        : '<div class="locked">No followed dancers working tonight in this city.</div>';
+        : `<div class="locked">No followed dancers working tonight in ${city}.</div>`;
       dashFollowedList.innerHTML = visibleFollowed.length
         ? visibleFollowed.map((profile, index) => profileCard(profile, index + 2)).join("")
-        : '<div class="locked">No followed dancers in this city.</div>';
+        : `<div class="locked">No followed dancers in ${city} yet.</div>`;
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       renderNotificationSettings();
@@ -12879,6 +12988,26 @@
     dashFollowedViewAll.addEventListener("click", () => {
       dashboardFollowedExpanded = true;
       renderDashboard();
+    });
+
+    customerBrowseTonight.addEventListener("click", () => {
+      closeDashboard();
+      activeTab = "tonight";
+      tonightExpanded = false;
+      selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    customerBrowseDancers.addEventListener("click", () => {
+      closeDashboard();
+      activeTab = "dancers";
+      dancersExpanded = false;
+      selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     notificationSettings.addEventListener("click", (event) => {
