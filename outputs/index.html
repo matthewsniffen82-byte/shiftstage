@@ -8909,6 +8909,90 @@
       box-shadow: 0 0 24px rgba(155,92,255,.36);
     }
 
+    .venue-shift-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .venue-shift-row {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px;
+      color: #f7f3ff;
+      text-align: left;
+      border: 1px solid rgba(192,132,255,.18);
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 72%),
+        rgba(10,10,14,.72);
+      box-shadow: 0 18px 46px rgba(0,0,0,.34), inset 0 0 18px rgba(168,85,247,.035);
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .venue-shift-row:hover,
+    .venue-shift-row:focus-visible {
+      border-color: rgba(168,85,247,.52);
+      box-shadow: 0 22px 58px rgba(0,0,0,.44), 0 0 22px rgba(168,85,247,.14);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .venue-shift-avatar {
+      width: 58px;
+      height: 68px;
+      border-radius: 14px;
+      background-size: cover;
+      background-position: center top;
+      border: 1px solid rgba(168,85,247,.35);
+      box-shadow: 0 0 18px rgba(168,85,247,.12);
+    }
+
+    .venue-shift-copy {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .venue-shift-copy strong {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      font-size: 17px;
+      line-height: 1.05;
+    }
+
+    .venue-shift-copy span {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      color: #9fd0ff;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-shadow: 0 0 14px rgba(59,130,246,.18);
+    }
+
+    .venue-shift-rank {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      padding: 0 10px;
+      color: #ffe17a;
+      font-size: 12px;
+      font-weight: 950;
+      border: 1px solid rgba(255,216,74,.42);
+      border-radius: 999px;
+      background: rgba(47,36,11,.42);
+      box-shadow: 0 0 16px rgba(255,216,74,.1), 0 0 22px rgba(139,92,246,.08);
+    }
+
     .venue-directions-btn {
       display: inline-flex;
       align-items: center;
@@ -8928,6 +9012,21 @@
 
       .venue-detail .venue-main-photo {
         min-height: 224px;
+      }
+
+      .venue-shift-row {
+        grid-template-columns: 50px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .venue-shift-avatar {
+        width: 50px;
+        height: 60px;
+      }
+
+      .venue-shift-rank {
+        grid-column: 2;
+        justify-self: start;
       }
     }
 
@@ -12271,6 +12370,20 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
+    function venueUpcomingShiftRow(profile, city) {
+      const label = upcomingFullLabel(profile, city);
+      return `
+        <button class="venue-shift-row" data-profile="${profile.name}" aria-label="${profile.name} upcoming shift">
+          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}"></div>
+          <div class="venue-shift-copy">
+            <strong>${profile.name}${profile.status === "Verified" ? verifiedCheckMarkup() : ""}</strong>
+            <span>${clockIconMarkup()}${label} • ${profile.time}</span>
+          </div>
+          ${profile.trendRank ? `<span class="venue-shift-rank">${badgeIconMarkup("trend")}${profile.trendRank}</span>` : ""}
+        </button>
+      `;
+    }
+
     function venueDetailPage(venue) {
       const city = citySelect.value;
       const details = venueDetails(venue, city);
@@ -12278,7 +12391,9 @@
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
-      const upcoming = localProfiles.filter((profile) => !isWorkingTonight(profile) && profile.scheduled);
+      const upcoming = localProfiles
+        .filter((profile) => !isWorkingTonight(profile, city) && profile.scheduled)
+        .sort((a, b) => upcomingSortValue(a, city) - upcomingSortValue(b, city));
       const trending = localProfiles
         .filter((profile) => profile.trendRank)
         .sort((a, b) => a.trendRank - b.trendRank);
@@ -12324,7 +12439,7 @@
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts tonight.</div>'}</div>
 
           <h3 class="section-title">Upcoming dancer shifts</h3>
-          <div class="list card-grid">${upcoming.length ? upcoming.map((profile, index) => profileCard(profile, index + 2)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
+          <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
           <h3 class="section-title">Trending at this venue</h3>
           <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
@@ -13364,6 +13479,12 @@
         document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
         render();
         window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      const venueShift = event.target.closest(".venue-shift-row");
+      if (venueShift) {
+        event.preventDefault();
+        openProfileModal(venueShift.dataset.profile);
         return;
       }
       const card = event.target.closest(".dancer-card");
