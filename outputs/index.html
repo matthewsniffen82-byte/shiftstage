@@ -11590,7 +11590,7 @@
           <div>
             <span class="eyebrow">Your night</span>
             <h3 id="customerSummaryTitle">Tonight in Las Vegas</h3>
-            <p id="customerSummaryCopy">Follow dancers to see who is working tonight and get schedule alerts without public customer profiles.</p>
+            <p id="customerSummaryCopy">Follow dancers to see your private working-tonight list, saved schedules, venue alerts, and directions.</p>
           </div>
           <div class="customer-summary-actions">
             <button class="ghost" id="customerBrowseTonight" type="button">Browse tonight</button>
@@ -11600,7 +11600,7 @@
         <div class="dashboard-stats">
           <button class="stat" type="button" data-dashboard-jump="tonight">
             <strong id="dashTonightCount">0</strong>
-            <span>Working tonight</span>
+            <span>Followed working tonight</span>
           </button>
           <button class="stat" type="button" data-dashboard-jump="followed">
             <strong id="dashFollowedCount">0</strong>
@@ -11622,7 +11622,7 @@
         <div class="list card-grid" id="dashTonightList"></div>
         <button class="view-all" id="dashTonightViewAll" hidden>View All</button>
         <div class="section-title-row" data-dashboard-section="followed">
-          <h3 class="section-title" id="dashFollowedTitle">Followed dancers</h3>
+          <h3 class="section-title" id="dashFollowedTitle">All followed dancers</h3>
           <span class="section-context" id="dashFollowedContext">Las Vegas</span>
         </div>
         <div class="list card-grid" id="dashFollowedList"></div>
@@ -13904,11 +13904,11 @@
       document.getElementById("dashFollowedCount").textContent = followed.length;
       document.getElementById("dashVenueCount").textContent = venues.length;
       document.getElementById("dashNotificationsCount").textContent = notificationsOn + venues.length;
-      document.getElementById("dashTonightTitle").textContent = `Working tonight in ${city}`;
-      document.getElementById("dashFollowedTitle").textContent = `Followed dancers in ${city}`;
+      document.getElementById("dashTonightTitle").textContent = `Working tonight from dancers you follow`;
+      document.getElementById("dashFollowedTitle").textContent = `All followed dancers`;
       document.getElementById("dashVenuesTitle").textContent = `Followed venues in ${city}`;
-      document.getElementById("dashTonightContext").textContent = `${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
-      document.getElementById("dashFollowedContext").textContent = `${followed.length} saved`;
+      document.getElementById("dashTonightContext").textContent = `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
+      document.getElementById("dashFollowedContext").textContent = `${city} · ${followed.length} saved`;
       document.getElementById("dashVenuesContext").textContent = `${venues.length} saved`;
 
       const visibleTonight = limitedList(workingTonight, dashboardTonightExpanded);
