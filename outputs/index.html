@@ -2058,7 +2058,7 @@
     }
 
     .setup-step.locked .step-head {
-      cursor: not-allowed;
+      cursor: pointer;
     }
 
     .setup-step.complete {
@@ -12852,15 +12852,16 @@
     function setupStepMarkup(step, title, body) {
       const complete = dancerSetup[step];
       const locked = !canOpenStep(step);
-      const open = activeSetupStep === step && !locked && !complete;
+      const open = activeSetupStep === step && !complete;
       const stepNumber = setupOrder().indexOf(step) + 1;
+      const lockedNote = locked ? `<div class="lock-row">Complete the previous step first. This step is shown here so you can see what comes next.</div>` : "";
       return `
         <article class="setup-step ${complete ? "complete" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
-          <button class="step-head" data-step-toggle="${step}" ${locked ? "disabled" : ""}>
+          <button class="step-head" data-step-toggle="${step}">
             <span><span class="step-number">Step ${stepNumber}</span>${title}</span>
             <span class="step-check">${complete ? "✓" : ""}</span>
           </button>
-          <div class="step-body">${body}</div>
+          <div class="step-body">${lockedNote}${body}</div>
         </article>
       `;
     }
@@ -13924,7 +13925,7 @@
       const toggle = event.target.closest("[data-step-toggle]");
       if (toggle) {
         const step = toggle.dataset.stepToggle;
-        if (canOpenStep(step) && !dancerSetup[step]) {
+        if (!dancerSetup[step]) {
           setupChecklistExpanded = true;
           activeSetupStep = activeSetupStep === step ? "" : step;
           renderDancerSetup();
