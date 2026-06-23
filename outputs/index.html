@@ -1852,7 +1852,7 @@
     }
 
     .setup-panel-inline .setup-panel-head {
-      display: none;
+      display: grid;
     }
 
     .dashboard-status-row {
@@ -1983,6 +1983,20 @@
       background: rgba(255,255,255,.025);
       text-align: left;
       font-weight: 900;
+    }
+
+    .step-head > span:first-child {
+      display: grid;
+      gap: 3px;
+    }
+
+    .step-number {
+      color: #c084fc;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .1em;
+      line-height: 1;
+      text-transform: uppercase;
     }
 
     .step-check {
@@ -12763,6 +12777,10 @@
         return;
       }
       document.getElementById("dancerDashName").textContent = document.getElementById("dancerStageName").value || "Dancer dashboard";
+      if (!dancerSetup.approval) {
+        setupChecklistExpanded = true;
+        activeSetupStep = nextIncompleteStep() || "profile";
+      }
       renderDancerSetup();
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
@@ -12800,10 +12818,11 @@
       const complete = dancerSetup[step];
       const locked = !canOpenStep(step);
       const open = activeSetupStep === step && !locked && !complete;
+      const stepNumber = setupOrder().indexOf(step) + 1;
       return `
         <article class="setup-step ${complete ? "complete" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
           <button class="step-head" data-step-toggle="${step}" ${locked ? "disabled" : ""}>
-            <span>${title}</span>
+            <span><span class="step-number">Step ${stepNumber}</span>${title}</span>
             <span class="step-check">${complete ? "✓" : ""}</span>
           </button>
           <div class="step-body">${body}</div>
@@ -13769,6 +13788,15 @@
     document.getElementById("dancerSignupForm").addEventListener("submit", (event) => {
       event.preventDefault();
       dancerSignupStarted = true;
+      Object.assign(dancerSetup, {
+        profile: false,
+        photos: false,
+        verification: false,
+        approval: false,
+        shift: false
+      });
+      setupChecklistExpanded = true;
+      activeSetupStep = "profile";
       activeDashboardType = "dancer";
       openStripeCheckoutPage();
     });
