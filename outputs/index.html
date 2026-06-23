@@ -11927,6 +11927,62 @@
         0 0 18px rgba(124, 58, 237, .55),
         0 0 16px rgba(255, 47, 174, .28);
     }
+
+    .popular-clubs {
+      padding-top: 4px;
+    }
+
+    .popular-head h2 {
+      letter-spacing: -.015em;
+      text-shadow: 0 0 18px rgba(124, 58, 237, .18);
+    }
+
+    .club-mini {
+      min-height: 134px;
+      border-color: rgba(124, 58, 237, .34);
+      background:
+        radial-gradient(circle at 62% 24%, rgba(255, 47, 174, .20), transparent 0 38%),
+        radial-gradient(circle at 34% 0%, rgba(124, 58, 237, .22), transparent 0 44%),
+        linear-gradient(145deg, rgba(17, 17, 24, .97), rgba(5, 5, 7, .98));
+      box-shadow:
+        0 18px 46px rgba(0, 0, 0, .58),
+        0 0 22px rgba(124, 58, 237, .14),
+        inset 0 1px 0 rgba(255, 255, 255, .04);
+    }
+
+    .club-mini:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .035), transparent 38%),
+        radial-gradient(circle at 50% 32%, rgba(255, 47, 174, .12), transparent 0 28%);
+      opacity: .92;
+    }
+
+    .club-mini:hover,
+    .club-mini:focus-visible {
+      border-color: rgba(255, 47, 174, .54);
+      box-shadow:
+        0 20px 52px rgba(0, 0, 0, .64),
+        0 0 30px rgba(124, 58, 237, .24),
+        0 0 22px rgba(255, 47, 174, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    .club-neon {
+      color: #F8F5FF;
+      text-shadow:
+        0 0 5px rgba(255, 255, 255, .34),
+        0 0 14px rgba(139, 92, 246, .78),
+        0 0 22px rgba(236, 72, 153, .46);
+      filter: drop-shadow(0 0 10px rgba(124, 58, 237, .22));
+    }
+
+    .club-mini small {
+      color: #B8B8C5;
+    }
   </style>
 </head>
 <body>
