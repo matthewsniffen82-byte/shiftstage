@@ -2185,6 +2185,22 @@
       overflow: hidden;
     }
 
+    #setupChecklist,
+    #setupChecklist * {
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    #setupChecklist .lock-row {
+      display: block;
+      width: 100%;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      line-height: 1.28;
+    }
+
     .toast {
       position: fixed;
       left: 50%;
@@ -12994,7 +13010,7 @@
       const locked = !canOpenStep(step);
       const open = activeSetupStep === step && !complete;
       const stepNumber = setupOrder().indexOf(step) + 1;
-      const lockedNote = locked ? `<div class="lock-row">Complete the previous step first. This step is shown here so you can see what comes next.</div>` : "";
+      const lockedNote = locked ? `<div class="lock-row">Complete the previous step first.</div>` : "";
       return `
         <article class="setup-step ${complete ? "complete" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
           <button class="step-head" data-step-toggle="${step}">
