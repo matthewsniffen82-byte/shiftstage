@@ -12989,6 +12989,131 @@
         inset 0 0 0 1px rgba(255, 255, 255, 0.055) !important;
     }
 
+    /* Card hierarchy polish: label, stage name, venue, schedule. */
+    .dancer-card .ask-for-inline {
+      align-items: baseline !important;
+      color: rgba(255, 255, 255, 0.62) !important;
+      display: inline-flex !important;
+      gap: 6px !important;
+      max-width: 100%;
+    }
+
+    .dancer-card .ask-for-card-label {
+      color: rgba(255, 255, 255, 0.58);
+      font-family: var(--font-ui);
+      font-size: 0.62em;
+      font-weight: 850;
+      letter-spacing: 0.09em;
+      line-height: 1;
+      text-transform: uppercase;
+      transform: translateY(-1px);
+    }
+
+    .dancer-card .card-stage-name {
+      color: #FFFFFF !important;
+      font-size: 1.12em !important;
+      font-weight: 820 !important;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .dancer-card .card-info-stack {
+      gap: 4px !important;
+    }
+
+    .dancer-card .card-venue-line {
+      color: rgba(184, 184, 197, 0.76);
+      font-size: clamp(11px, 2.75vw, 12.6px) !important;
+      line-height: 1.18 !important;
+    }
+
+    .dancer-card .card-venue-name {
+      color: rgba(255, 255, 255, 0.84) !important;
+      font-weight: 780 !important;
+    }
+
+    .dancer-card .card-distance,
+    .dancer-card .card-venue-prefix {
+      color: rgba(184, 184, 197, 0.68) !important;
+      font-weight: 680 !important;
+    }
+
+    .dancer-card .profile-body > .schedule-row {
+      column-gap: 7px !important;
+      margin-top: 3px !important;
+    }
+
+    .card-schedule-text {
+      font-size: clamp(10.8px, 2.75vw, 12.4px) !important;
+      font-weight: 780 !important;
+      gap: 3px !important;
+      line-height: 1.16 !important;
+      text-shadow: 0 0 10px currentColor !important;
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 950 !important;
+    }
+
+    .card-schedule-text .schedule-time,
+    .card-schedule-text .schedule-separator {
+      font-weight: 700 !important;
+      opacity: 0.76 !important;
+    }
+
+    @media (max-width: 560px) {
+      .dancer-card .profile-body h3 {
+        font-size: clamp(16px, 4.25vw, 17.6px) !important;
+      }
+
+      .dancer-card .ask-for-inline {
+        gap: 5px !important;
+      }
+
+      .dancer-card .ask-for-card-label {
+        font-size: 0.58em;
+        letter-spacing: 0.08em;
+      }
+
+      .dancer-card .card-venue-line {
+        font-size: clamp(10.6px, 2.8vw, 11.4px) !important;
+      }
+
+      .card-schedule-text {
+        font-size: clamp(10.4px, 2.85vw, 11.3px) !important;
+      }
+    }
+
+    /* #1 badge: keep the VIP pop, but make it a little cleaner and less solid. */
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.04) 44%),
+        radial-gradient(circle at 24% 22%, rgba(255, 244, 184, 0.42), transparent 0 40%),
+        linear-gradient(135deg, rgba(216, 169, 53, 0.58) 0%, rgba(255, 47, 174, 0.62) 100%) !important;
+      box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.28),
+        0 0 18px rgba(255, 47, 174, 0.24),
+        0 0 18px rgba(255, 218, 112, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        inset 0 -10px 16px rgba(5, 5, 7, 0.18) !important;
+    }
+
+    .dancer-card .badge.trend.rank-one.compact-trend {
+      min-width: 54px;
+      padding-inline: 11px;
+    }
+
+    .badge.trend.rank-one .badge-icon {
+      background: rgba(5, 5, 7, 0.2);
+      color: #FFF7C7 !important;
+      filter:
+        drop-shadow(0 0 6px rgba(255, 247, 199, 0.72))
+        drop-shadow(0 0 10px rgba(255, 47, 174, 0.42));
+    }
+
     /* Final full-profile photo sizing: larger, cleaner, and safer for full-body portraits. */
     .profile-modal .modal-image,
     .profile-modal .modal-image.one,
@@ -14960,7 +15085,7 @@
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3><span class="ask-for-inline">Ask for <span class="card-stage-name">${profile.name}${verifiedMark}</span></span></h3>
+              <h3><span class="ask-for-inline"><span class="ask-for-card-label">Ask for</span><span class="card-stage-name">${profile.name}${verifiedMark}</span></span></h3>
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
