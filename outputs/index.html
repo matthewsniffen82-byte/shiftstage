@@ -11104,14 +11104,7 @@
             <span class="approval-expand" id="dancerApprovalExpand">Show steps</span>
           </div>
         </div>
-        <div id="setupChecklistWrap" class="auth-card setup-panel setup-panel-inline">
-          <div class="setup-panel-head">
-            <div>
-              <h3>Profile setup and approval</h3>
-              <p id="setupChecklistSummary">Complete steps 1-4 inside this panel.</p>
-            </div>
-            <button class="ghost setup-toggle-btn" id="setupChecklistToggle" type="button" aria-expanded="false">Show steps</button>
-          </div>
+        <div id="setupChecklistWrap" class="auth-card setup-panel setup-panel-inline" hidden>
           <div class="setup-list" id="setupChecklist" hidden></div>
           <div class="lock-row" id="setupChecklistLock" hidden>Post shift locked until profile approval.</div>
         </div>
@@ -13248,15 +13241,19 @@
       const setupList = document.getElementById("setupChecklist");
       const setupLock = document.getElementById("setupChecklistLock");
       const setupSummary = document.getElementById("setupChecklistSummary");
-      setupWrap.hidden = approved;
+      setupWrap.hidden = approved || !setupChecklistExpanded;
       setupWrap.classList.toggle("expanded", setupChecklistExpanded);
-      setupToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
-      setupToggle.textContent = setupChecklistExpanded ? "Hide steps" : "Show steps";
+      if (setupToggle) {
+        setupToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
+        setupToggle.textContent = setupChecklistExpanded ? "Hide steps" : "Show steps";
+      }
       setupList.hidden = !setupChecklistExpanded;
       setupLock.hidden = !setupChecklistExpanded;
-      setupSummary.textContent = approved
-        ? "Your profile is approved."
-        : `${completedSteps}/${steps.length} complete${nextStep ? ` · Next: ${nextLabels[nextStep]}` : ""}`;
+      if (setupSummary) {
+        setupSummary.textContent = approved
+          ? "Your profile is approved."
+          : `${completedSteps}/${steps.length} complete${nextStep ? ` · Next: ${nextLabels[nextStep]}` : ""}`;
+      }
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
       if (approved) {
