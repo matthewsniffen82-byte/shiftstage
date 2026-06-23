@@ -14137,6 +14137,64 @@
       color: #22C7FF !important;
       filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.42)) !important;
     }
+
+    /* Trending badges should read like illuminated glass, not solid stickers. */
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: #FFFFFF !important;
+      border-color: rgba(236, 72, 153, 0.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.035) 44%, rgba(5, 5, 7, 0.18)),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(236, 72, 153, 0.20)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 14px rgba(236, 72, 153, 0.24),
+        0 0 18px rgba(139, 92, 246, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.30) !important;
+      backdrop-filter: blur(12px) saturate(1.18) !important;
+    }
+
+    .dancer-card .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.028) 44%, rgba(5, 5, 7, 0.16)),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.30), rgba(236, 72, 153, 0.16)) !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.70))
+        drop-shadow(0 0 9px rgba(236, 72, 153, 0.56)) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 226, 126, 0.56) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04) 44%, rgba(5, 5, 7, 0.16)),
+        linear-gradient(135deg, rgba(255, 184, 76, 0.40), rgba(236, 72, 153, 0.30) 58%, rgba(139, 92, 246, 0.22)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 16px rgba(255, 213, 96, 0.24),
+        0 0 22px rgba(236, 72, 153, 0.22),
+        0 12px 26px rgba(0, 0, 0, 0.32) !important;
+      backdrop-filter: blur(12px) saturate(1.18) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #FFF3B0 !important;
+      filter:
+        drop-shadow(0 0 6px rgba(255, 243, 176, 0.78))
+        drop-shadow(0 0 10px rgba(236, 72, 153, 0.54)) !important;
+    }
   </style>
 </head>
 <body>
