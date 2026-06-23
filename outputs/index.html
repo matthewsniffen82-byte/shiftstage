@@ -13480,6 +13480,88 @@
         min-height: clamp(260px, 35svh, 370px) !important;
       }
     }
+
+    /* Final electric-jewel trending badge treatment. */
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 47, 174, 0.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02) 42%),
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.16), transparent 0 34%),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.58), rgba(236, 72, 153, 0.42)) !important;
+      box-shadow:
+        0 0 10px rgba(139, 92, 246, 0.42),
+        0 0 14px rgba(236, 72, 153, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        inset 0 -10px 16px rgba(5, 5, 7, 0.24) !important;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.28) !important;
+      backdrop-filter: blur(14px) saturate(1.28) !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter:
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.84))
+        drop-shadow(0 0 8px rgba(255, 47, 174, 0.82))
+        drop-shadow(0 0 12px rgba(139, 92, 246, 0.45)) !important;
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card .badge.trend:not(.rank-one):hover,
+    .profile-modal .badge.trend:not(.rank-one):hover,
+    .venue-shift-rank:not(.rank-one):hover {
+      border-color: rgba(255, 104, 204, 0.72) !important;
+      box-shadow:
+        0 0 12px rgba(139, 92, 246, 0.56),
+        0 0 20px rgba(236, 72, 153, 0.36),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -10px 16px rgba(5, 5, 7, 0.2) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 226, 139, 0.72) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 43%),
+        radial-gradient(circle at 24% 18%, rgba(255, 248, 199, 0.4), transparent 0 40%),
+        linear-gradient(135deg, rgba(220, 161, 54, 0.7) 0%, rgba(255, 47, 174, 0.62) 100%) !important;
+      box-shadow:
+        0 0 14px rgba(255, 206, 86, 0.34),
+        0 0 22px rgba(255, 47, 174, 0.32),
+        0 0 20px rgba(139, 92, 246, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        inset 0 -12px 18px rgba(5, 5, 7, 0.18) !important;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.34) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #FFF7C7 !important;
+      background: rgba(42, 9, 48, 0.28) !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 247, 199, 0.82))
+        drop-shadow(0 0 9px rgba(255, 47, 174, 0.62))
+        drop-shadow(0 0 12px rgba(139, 92, 246, 0.34)) !important;
+    }
+
+    .dancer-card .badge.trend.compact-trend,
+    .badge.trend.compact-trend {
+      min-width: 54px !important;
+      min-height: 30px !important;
+      padding-inline: 11px !important;
+      gap: 5px !important;
+    }
   </style>
 </head>
 <body>
