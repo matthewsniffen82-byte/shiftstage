@@ -14115,6 +14115,28 @@
       color: #FFFFFF !important;
       text-shadow: 0 0 22px rgba(124, 58, 237, 0.16) !important;
     }
+
+    /* Schedule icon color language: place stays blue, timing follows shift state. */
+    .dancer-card .card-venue-line .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) .venue-dot {
+      color: #22C7FF !important;
+      filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.42)) !important;
+    }
+
+    .dancer-card .schedule-row.is-tonight .venue-dot,
+    .profile-modal .schedule-time .venue-dot {
+      color: #FF2FAE !important;
+      filter:
+        drop-shadow(0 0 7px rgba(255, 47, 174, 0.56))
+        drop-shadow(0 0 11px rgba(124, 58, 237, 0.22)) !important;
+    }
+
+    .dancer-card .schedule-row.is-upcoming .venue-dot,
+    .profile-modal .schedule-text-row .venue-dot,
+    .venue-shift-copy .venue-dot {
+      color: #22C7FF !important;
+      filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.42)) !important;
+    }
   </style>
 </head>
 <body>
@@ -16005,9 +16027,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Tonight</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
+          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Tonight</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
           : profile.scheduled
-            ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
+            ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
