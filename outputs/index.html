@@ -10548,6 +10548,34 @@
       display: none !important;
     }
 
+    #setupChecklist .setup-step {
+      width: 100%;
+      display: block;
+      border-radius: 18px;
+    }
+
+    #setupChecklist .setup-step.locked {
+      opacity: .82;
+    }
+
+    #setupChecklist .setup-step.open {
+      border-color: rgba(245,158,11,.4);
+      box-shadow:
+        0 18px 44px rgba(0,0,0,.34),
+        inset 0 0 18px rgba(245,158,11,.035);
+    }
+
+    #setupChecklist .setup-step .step-head {
+      border-radius: 0;
+    }
+
+    #setupChecklist .setup-step.open .step-body {
+      display: grid;
+      grid-template-columns: 1fr;
+      width: 100%;
+      padding: 14px;
+    }
+
   </style>
 </head>
 <body>
