@@ -13178,6 +13178,181 @@
         min-height: clamp(500px, 64vh, 700px) !important;
       }
     }
+
+    /* Full-profile fit pass: keep the photo prominent without forcing inner scrolling. */
+    .modal-backdrop.show {
+      align-items: flex-start !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      padding: 6px 0 !important;
+    }
+
+    .profile-modal {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    .profile-modal .modal-image,
+    .profile-modal .modal-image.one,
+    .profile-modal .modal-image.two,
+    .profile-modal .modal-image.three {
+      height: clamp(330px, 45svh, 560px) !important;
+      min-height: clamp(330px, 45svh, 560px) !important;
+      background-size: contain !important;
+      background-position: center center !important;
+    }
+
+    .profile-modal .gallery {
+      gap: 7px !important;
+      padding: 7px 12px 8px !important;
+    }
+
+    .profile-modal .thumb {
+      width: clamp(48px, 9vw, 72px) !important;
+      height: clamp(52px, 10vw, 76px) !important;
+      border-radius: 10px !important;
+    }
+
+    .profile-modal .modal-body {
+      gap: 9px !important;
+      overflow: visible !important;
+      padding: 9px 12px calc(12px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .profile-modal .modal-grid {
+      gap: 8px !important;
+    }
+
+    .profile-modal .info-tile {
+      min-height: 0 !important;
+      padding: 12px 14px !important;
+      border-radius: 16px !important;
+    }
+
+    .profile-modal .info-tile strong {
+      font-size: clamp(12px, 3.1vw, 15px) !important;
+      line-height: 1.15 !important;
+    }
+
+    .profile-modal .info-tile .meta,
+    .profile-modal .detail-line,
+    .profile-modal .schedule-stack,
+    .profile-modal .schedule-stack .detail-line,
+    .profile-modal .schedule-text-row {
+      font-size: clamp(12px, 3.05vw, 14px) !important;
+      line-height: 1.2 !important;
+    }
+
+    .profile-modal .metric-value,
+    .profile-modal .interest-count {
+      font-size: clamp(16px, 4vw, 20px) !important;
+      line-height: 1.1 !important;
+    }
+
+    .profile-modal .social-tile {
+      padding: 11px 14px !important;
+    }
+
+    .profile-modal .social-tile .social-tile-head {
+      margin-bottom: 7px !important;
+    }
+
+    .profile-modal .social-tile .social-links {
+      gap: 6px !important;
+      row-gap: 7px !important;
+    }
+
+    .profile-modal .social-tile .social-link {
+      min-height: 31px !important;
+      padding: 7px 10px !important;
+      font-size: 11.5px !important;
+    }
+
+    .profile-modal .social-tile .profile-share-trigger {
+      width: 34px !important;
+      height: 34px !important;
+      flex-basis: 34px !important;
+    }
+
+    .profile-modal .modal-actions {
+      position: static !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      gap: 8px !important;
+      background: transparent !important;
+    }
+
+    .profile-modal .modal-actions .action-btn,
+    .profile-modal .modal-actions .action-btn.secondary,
+    .profile-modal .modal-actions .going-btn {
+      min-height: 42px !important;
+      padding: 10px 14px !important;
+      font-size: 13.5px !important;
+    }
+
+    @media (max-width: 560px) {
+      .modal-backdrop.show {
+        padding: 0 !important;
+      }
+
+      .profile-modal {
+        width: 100% !important;
+        border-radius: 0 !important;
+      }
+
+      .profile-modal .modal-image,
+      .profile-modal .modal-image.one,
+      .profile-modal .modal-image.two,
+      .profile-modal .modal-image.three {
+        height: clamp(270px, 35svh, 390px) !important;
+        min-height: clamp(270px, 35svh, 390px) !important;
+      }
+
+      .profile-modal .gallery {
+        padding: 6px 10px 7px !important;
+        gap: 6px !important;
+      }
+
+      .profile-modal .thumb {
+        width: 44px !important;
+        height: 50px !important;
+      }
+
+      .profile-modal .modal-body {
+        gap: 8px !important;
+        padding: 8px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+      }
+
+      .profile-modal .modal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+
+      .profile-modal .info-tile {
+        padding: 10px 11px !important;
+      }
+
+      .profile-modal .social-tile,
+      .profile-modal .modal-actions {
+        grid-column: 1 / -1 !important;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .profile-modal .modal-image,
+      .profile-modal .modal-image.one,
+      .profile-modal .modal-image.two,
+      .profile-modal .modal-image.three {
+        height: clamp(245px, 32svh, 350px) !important;
+        min-height: clamp(245px, 32svh, 350px) !important;
+      }
+
+      .profile-modal .modal-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
   </style>
 </head>
 <body>
