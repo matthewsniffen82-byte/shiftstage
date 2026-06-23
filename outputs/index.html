@@ -11678,6 +11678,7 @@
         <button type="button" data-demo-jump="pending-dancer">Pending dancer</button>
         <button type="button" data-demo-jump="new-dancer">New dancer setup</button>
         <button type="button" data-demo-jump="customer">Approved customer</button>
+        <button type="button" data-demo-jump="customer-signup">Customer sign up</button>
       </div>
     </aside>
   </div>
@@ -13443,6 +13444,19 @@
       openDashboard();
     }
 
+    function openCustomerSignupDemo() {
+      closeDemoSurfaces();
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = false;
+      activeDashboardType = "customer";
+      setCustomerAuthMode("signup");
+      document.getElementById("customerName").value = "";
+      document.getElementById("customerEmail").value = "";
+      updateAccountHeader();
+      openAuthPage();
+      showToast("Customer sign up demo");
+    }
+
     function setupOrder() {
       return ["profile", "photos", "verification", "approval"];
     }
@@ -14446,6 +14460,7 @@
         startDemoDancerSetup();
       }
       if (button.dataset.demoJump === "customer") openApprovedCustomerDemo();
+      if (button.dataset.demoJump === "customer-signup") openCustomerSignupDemo();
     });
 
     document.getElementById("openDancerSignup").addEventListener("click", () => {
