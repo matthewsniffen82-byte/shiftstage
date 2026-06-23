@@ -11738,6 +11738,10 @@
       });
     });
 
+    function isApprovedPublicProfile(profile) {
+      return Boolean(profile && profile.status === "Verified" && !profile.hidden);
+    }
+
     function showToast(message) {
       toast.textContent = message;
       toast.classList.add("show");
@@ -12348,7 +12352,7 @@
 
     function rankedTrendingProfiles(city) {
       return [...markets[city].dancers]
-        .filter((profile) => profile.status === "Verified" && !profile.hidden)
+        .filter(isApprovedPublicProfile)
         .map((profile) => ({
           ...profile,
           trendScore: privateTrendingScore(profile, city),
@@ -12379,7 +12383,7 @@
     function followedProfiles(city) {
       const names = followedByCity[city] || [];
       return markets[city].dancers
-        .filter((profile) => names.includes(profile.name) && profile.status === "Verified" && !profile.hidden)
+        .filter((profile) => names.includes(profile.name) && isApprovedPublicProfile(profile))
         .map((profile) => withTrendingRank(profile, city));
     }
 
@@ -12747,7 +12751,7 @@
 
     function venueDancers(city, venueName) {
       return markets[city].dancers
-        .filter((profile) => profile.status === "Verified" && !profile.hidden && profile.venue === venueName)
+        .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
         .map((profile) => withTrendingRank(profile, city));
     }
 
@@ -12836,7 +12840,7 @@
     }
 
     function findProfile(name) {
-      const profile = markets[citySelect.value].dancers.find((item) => item.name === name && !item.hidden);
+      const profile = markets[citySelect.value].dancers.find((item) => item.name === name && isApprovedPublicProfile(item));
       return profile ? withTrendingRank(profile, citySelect.value) : null;
     }
 
@@ -13763,13 +13767,13 @@
       const market = markets[city];
       if (tab === "tonight") {
         return market.dancers
-          .filter((profile) => profile.status === "Verified" && !profile.hidden && isWorkingTonight(profile, city))
+          .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city))
           .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
           .map((profile) => withTrendingRank(profile, city));
       }
       if (tab === "dancers") {
         return market.dancers
-          .filter((profile) => !profile.hidden && profile.status === "Verified")
+          .filter(isApprovedPublicProfile)
           .map((profile) => withTrendingRank(profile, city))
           .sort((a, b) => dancerDiscoverySort(a, b, city));
       }
@@ -13846,7 +13850,7 @@
         const city = citySelect.value;
         const venueName = directionsLink.dataset.venue;
         markets[city].dancers
-          .filter((profile) => profile.status === "Verified" && !profile.hidden && profile.venue === venueName)
+          .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
           .forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
         return;
       }
@@ -14481,7 +14485,7 @@
       activeTab = "dancers";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
       render();
-      const profile = markets[city].dancers.find((item) => slugify(item.name) === profileSlug && !item.hidden);
+      const profile = markets[city].dancers.find((item) => slugify(item.name) === profileSlug && isApprovedPublicProfile(item));
       if (profile) {
         setTimeout(() => openProfileModal(profile.name), 120);
       }
