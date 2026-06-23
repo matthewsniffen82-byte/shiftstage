@@ -1928,6 +1928,27 @@
       box-shadow: inset 0 0 18px rgba(255,255,255,.025);
     }
 
+    details.status-chip {
+      cursor: pointer;
+      transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+
+    details.status-chip:hover,
+    details.status-chip[open] {
+      border-color: rgba(168,85,247,.42);
+      box-shadow: 0 0 24px rgba(168,85,247,.14), inset 0 0 18px rgba(255,255,255,.025);
+    }
+
+    .status-chip summary {
+      display: grid;
+      gap: 5px;
+      list-style: none;
+    }
+
+    .status-chip summary::-webkit-details-marker {
+      display: none;
+    }
+
     .status-chip span {
       color: var(--muted);
       font-size: 11px;
@@ -1940,6 +1961,14 @@
       color: var(--text);
       font-size: 14px;
       line-height: 1.25;
+    }
+
+    .status-chip p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
     }
 
     .preview-profile-btn {
@@ -10942,14 +10971,20 @@
           <div class="lock-row" id="setupChecklistLock" hidden>Post shift locked until profile approval.</div>
         </div>
         <div class="dashboard-status-row">
-          <div class="status-chip">
-            <span>Subscription</span>
-            <strong id="dancerSubscriptionStatus">Authorized after approval</strong>
-          </div>
-          <div class="status-chip">
-            <span>Public profile</span>
-            <strong id="dancerPublicStatus">Pending review</strong>
-          </div>
+          <details class="status-chip">
+            <summary>
+              <span>Subscription</span>
+              <strong id="dancerSubscriptionStatus">Authorized after approval</strong>
+            </summary>
+            <p id="dancerSubscriptionDetail">Card is authorized now, but the $9.99/month profile subscription only activates after dancer approval.</p>
+          </details>
+          <details class="status-chip">
+            <summary>
+              <span>Public profile</span>
+              <strong id="dancerPublicStatus">Pending review</strong>
+            </summary>
+            <p id="dancerPublicDetail">Profile, gallery, schedule posting, and public discovery stay locked until photos and verification are approved.</p>
+          </details>
           <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
         </div>
         <div class="auth-card">
@@ -12870,6 +12905,12 @@
       }
       document.getElementById("dancerSubscriptionStatus").textContent = approved ? "$9.99/mo active" : "Authorized after approval";
       document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Pending review";
+      document.getElementById("dancerSubscriptionDetail").textContent = approved
+        ? "Subscription is active and recurring. Manage subscription opens Stripe billing when connected."
+        : "Payment method is authorized, but the $9.99/month subscription only activates after dancer approval.";
+      document.getElementById("dancerPublicDetail").textContent = approved
+        ? "Customers can discover this profile, follow it, view schedules, and request venue directions."
+        : "Profile, gallery, schedule posting, and public discovery stay locked until photos and verification are approved.";
       document.getElementById("dancerFollowerStat").textContent = activeProfile
         ? followerNumber(activeProfile, city).toLocaleString()
         : "0";
