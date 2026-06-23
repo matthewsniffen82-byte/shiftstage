@@ -1173,6 +1173,11 @@
       filter: drop-shadow(0 0 8px rgba(255,252,0,.28));
     }
 
+    .social-onlyfans .social-icon {
+      color: #00aff0;
+      filter: drop-shadow(0 0 8px rgba(0,175,240,.34));
+    }
+
     .social-x .social-icon {
       color: #ffffff;
       filter: drop-shadow(0 0 7px rgba(255,255,255,.22));
@@ -1195,6 +1200,11 @@
     .social-snapchat:hover .social-icon {
       color: #fffc00;
       filter: drop-shadow(0 0 12px rgba(255,252,0,.38));
+    }
+
+    .social-onlyfans:hover .social-icon {
+      color: #00aff0;
+      filter: drop-shadow(0 0 12px rgba(0,175,240,.46));
     }
 
     .social-x:hover .social-icon {
@@ -12554,12 +12564,11 @@
         </div>
         <div class="auth-card">
           <h3>Schedule discovery only</h3>
-          <p>Dancr is for verified schedules, follows, notifications, and directions. It is not dating, messaging, escorting, or adult-content sales.</p>
+          <p>Dancr is for verified schedules, follows, notifications, social profile links, and directions. It is not dating, messaging, escorting, or direct solicitation.</p>
           <ul class="rule-list">
             <li>18+ only.</li>
             <li>No escorting or illegal services.</li>
             <li>No direct sexual solicitation.</li>
-            <li>No adult-content sales or adult-sales links.</li>
             <li>No fake profiles or impersonation.</li>
             <li>No harassment, threats, or abuse.</li>
             <li>No private messaging.</li>
@@ -12599,7 +12608,7 @@
         </div>
         <div class="auth-card">
           <h3>Private by default</h3>
-          <p>Customer profiles are not public. Dancr has no private messaging and no adult-content sales.</p>
+          <p>Customer profiles are not public. Dancr has no private messaging, no public follows, and no public going list.</p>
         </div>
       </div>
     </section>
@@ -12622,7 +12631,6 @@
             <li>No escorting.</li>
             <li>No illegal services.</li>
             <li>No direct sexual solicitation.</li>
-            <li>No adult-content sales.</li>
             <li>No fake profiles.</li>
             <li>No harassment.</li>
             <li>No private messaging.</li>
@@ -13293,6 +13301,7 @@
       instagram: "",
       tiktok: "",
       snapchat: "",
+      onlyfans: "",
       x: ""
     };
     let dashboardTonightExpanded = false;
@@ -13369,6 +13378,7 @@
             instagram: `https://instagram.com/${handle}`,
             tiktok: `https://tiktok.com/@${handle}`,
             snapchat: `https://snapchat.com/add/${handle}`,
+            onlyfans: `https://onlyfans.com/${handle}`,
             x: `https://x.com/${handle}`
           };
         } else {
@@ -13581,6 +13591,7 @@
       const instagramClicks = seededRange(`${profile.name}|instagram-clicks|${city}`, 36, 180) + uniqueTrendEventCount("socialClicks", city, profile.name) * 4;
       const snapchatClicks = seededRange(`${profile.name}|snapchat-clicks|${city}`, 22, 130);
       const tiktokClicks = seededRange(`${profile.name}|tiktok-clicks|${city}`, 18, 118);
+      const onlyfansClicks = seededRange(`${profile.name}|onlyfans-clicks|${city}`, 14, 96);
       const xClicks = seededRange(`${profile.name}|x-clicks|${city}`, 4, 42);
       const weeklyViews = Math.round(profileViews30 * 0.28);
       const weeklyFollowers = Math.round(newFollowers * 0.28);
@@ -13604,7 +13615,7 @@
       const shiftReminderSaves = seededRange(`${profile.name}|shift-reminders|${city}`, 34, 190);
       const venueClicksFromProfile = Math.round(clubPageClicks * 0.68);
       const directionsAfterProfile = Math.round(directionRequests30 * 0.72);
-      const socialClickRate = Math.max(2, Math.round(((instagramClicks + snapchatClicks + tiktokClicks + xClicks) / Math.max(1, profileViews30)) * 1000) / 10);
+      const socialClickRate = Math.max(2, Math.round(((instagramClicks + snapchatClicks + tiktokClicks + onlyfansClicks + xClicks) / Math.max(1, profileViews30)) * 1000) / 10);
       const rankGain = seededRange(`${profile.name}|rank-gain|${city}`, 2, 8);
       const profileCompleteness = profile.scheduled ? 96 : 84;
       return {
@@ -13638,6 +13649,7 @@
         instagramClicks,
         snapchatClicks,
         tiktokClicks,
+        onlyfansClicks,
         xClicks,
         weeklyViews,
         weeklyFollowers,
@@ -14096,6 +14108,7 @@
         instagram: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.4"></circle><path d="M17.2 6.8h.01"></path></svg></span>',
         tiktok: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15.8 3c.3 2.5 1.8 4.1 4.2 4.4v3.2c-1.6 0-3-.5-4.2-1.4v6.1c0 3.3-2.3 5.7-5.5 5.7A5.2 5.2 0 0 1 5 15.8c0-3.1 2.4-5.4 5.5-5.4.4 0 .8 0 1.1.1v3.4a2.6 2.6 0 0 0-1.2-.3 2.1 2.1 0 0 0-2.1 2.2c0 1.3.9 2.2 2.1 2.2s2.1-.9 2.1-2.4V3h3.3Z"></path></svg></span>',
         snapchat: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.2c2.7 0 4.6 2 4.6 4.8v2.5c0 .6.5.9 1.1 1.1.6.2 1.2.4 1.2.9 0 .6-.7.9-1.5 1.1-.4.1-.5.4-.3.8.6 1.1 1.5 1.8 2.7 2.1.3.1.4.5.2.8-.8.7-1.8.8-2.5.8-.5 0-.8.2-1.1.6-.6.7-1.3 1.1-2.2 1.1-.7 0-1.2-.2-1.7-.5a1.1 1.1 0 0 0-1.1 0c-.5.3-1 .5-1.7.5-.9 0-1.6-.4-2.2-1.1-.3-.4-.6-.6-1.1-.6-.7 0-1.7-.1-2.5-.8-.2-.3-.1-.7.2-.8 1.2-.3 2.1-1 2.7-2.1.2-.4.1-.7-.3-.8-.8-.2-1.5-.5-1.5-1.1 0-.5.6-.7 1.2-.9.6-.2 1.1-.5 1.1-1.1V8c0-2.8 1.9-4.8 4.6-4.8Z"></path></svg></span>',
+        onlyfans: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9.2" cy="12" r="5.4"></circle><circle cx="9.2" cy="12" r="2.15" fill="#050507"></circle><path d="M13.9 8.2h6.2c.5 0 .8.5.6 1l-1 2.2c-.1.3-.4.5-.7.5h-3.2l-1.1 3.9c-.1.4-.5.7-.9.7h-3.1l2.3-7.5c.1-.5.5-.8.9-.8Z"></path></svg></span>',
         x: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4l14 16"></path><path d="M19 4 5 20"></path></svg></span>'
       };
       return icons[type] || "";
@@ -14105,8 +14118,11 @@
       { key: "instagram", label: "Instagram", base: "https://instagram.com/", hosts: ["instagram.com", "www.instagram.com"] },
       { key: "tiktok", label: "TikTok", base: "https://tiktok.com/@", hosts: ["tiktok.com", "www.tiktok.com"] },
       { key: "snapchat", label: "Snapchat", base: "https://snapchat.com/add/", hosts: ["snapchat.com", "www.snapchat.com"] },
+      { key: "onlyfans", label: "OnlyFans", base: "https://onlyfans.com/", hosts: ["onlyfans.com", "www.onlyfans.com"] },
       { key: "x", label: "X", base: "https://x.com/", hosts: ["x.com", "www.x.com", "twitter.com", "www.twitter.com"] }
     ];
+
+    const sharePlatforms = socialPlatforms.filter((platform) => platform.key !== "onlyfans");
 
     function cleanSocialHandle(value) {
       return cleanDisplayValue(value)
@@ -14189,19 +14205,19 @@
           </div>
           <div class="share-buttons">
             <button class="share-open" type="button" data-native-share="${profileName}" data-share-city="${city}">${actionButtonLabel("share", nativeLabel)}</button>
-            ${socialPlatforms.map((platform) => `
+            ${sharePlatforms.map((platform) => `
               <a class="social-link social-${platform.key}" href="${socialShareUrl(platform.key, profileName, city)}" target="_blank" rel="noreferrer" data-social-share="${platform.key}" data-share-city="${city}" data-profile="${profileName}" aria-label="Share to ${platform.label}">
                 ${socialIconMarkup(platform.key)}<span>${platform.label}</span>
               </a>
             `).join("")}
           </div>
-          <div class="share-note">${mode === "dancer" ? "Promote your verified schedule on connected social channels. No adult-sales or solicitation links." : "Share this verified schedule. Customer profiles stay private."}</div>
+          <div class="share-note">${mode === "dancer" ? "Promote your verified schedule on connected social channels." : "Share this verified schedule. Customer profiles stay private."}</div>
         </div>
       `;
     }
 
     function hasBlockedSocialLink(values) {
-      const blocked = ["onlyfans", "fansly", "escort", "booking", "adult", "cashapp", "venmo"];
+      const blocked = ["escort", "booking", "cashapp", "venmo"];
       return values.some((value) => blocked.some((term) => String(value).toLowerCase().includes(term)));
     }
 
@@ -15043,6 +15059,7 @@
           metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.onlyfansClicks), "OnlyFans clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares")
         ].join("");
@@ -15111,6 +15128,7 @@
           "Instagram clicks",
           "Snapchat clicks",
           "TikTok clicks",
+          "OnlyFans clicks",
           "X clicks",
           "Profile shares"
         ]);
@@ -15182,8 +15200,9 @@
           <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
           <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
           <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="username or snapchat.com/add/username"></div>
+          <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" type="text" value="${dancerSignupSocials.onlyfans}" placeholder="@stagehandle or onlyfans.com/stagehandle"></div>
           <div class="field"><label for="setupX">Optional X</label><input id="setupX" type="text" value="${dancerSignupSocials.x}" placeholder="@stagehandle or x.com/stagehandle"></div>
-          <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, and X. No adult-content links. No solicitation links.</div>
+          <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
       `;
@@ -15892,6 +15911,7 @@
         instagram: "",
         tiktok: "",
         snapchat: "",
+        onlyfans: "",
         x: ""
       });
       setupChecklistExpanded = true;
@@ -16115,6 +16135,7 @@
         instagram: document.getElementById("setupInstagram").value.trim(),
         tiktok: document.getElementById("setupTiktok").value.trim(),
         snapchat: document.getElementById("setupSnapchat").value.trim(),
+        onlyfans: document.getElementById("setupOnlyfans").value.trim(),
         x: document.getElementById("setupX").value.trim()
       };
       if (!legalName || !stageName || !city) {
@@ -16122,7 +16143,7 @@
         return;
       }
       if (hasBlockedSocialLink(Object.values(rawSocials))) {
-        showToast("Adult-content or solicitation links are not allowed");
+        showToast("Escorting, payment, or solicitation links are not allowed");
         return;
       }
       const normalizedSocials = Object.fromEntries(
@@ -16130,7 +16151,7 @@
       );
       const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
       if (invalidSocial) {
-        showToast("Use Instagram, TikTok, Snapchat, or X links only");
+        showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
         return;
       }
       document.getElementById("dancerLegalName").value = legalName;
