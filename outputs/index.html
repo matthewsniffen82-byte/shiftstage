@@ -1479,6 +1479,18 @@
         0 0 28px rgba(168,85,247,.18);
     }
 
+    #dancerDashboard.is-approved #approvedDancerPanel {
+      order: 1;
+    }
+
+    #dancerDashboard.is-approved .approved-analytics {
+      order: 2;
+    }
+
+    #dancerDashboard.is-approved .dashboard-status-row {
+      order: 3;
+    }
+
     @media (max-width: 560px) {
       #approvedDancerPanel.post-shift-panel {
         padding: 15px;
@@ -9176,6 +9188,39 @@
       background: rgba(10,10,14,.68);
     }
 
+    .venue-detail .venue-hero-body > .row {
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .venue-status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(53,216,255,.28);
+      border-radius: 999px;
+      color: #8ef4ff;
+      background: rgba(53,216,255,.08);
+      font-size: 11px;
+      font-weight: 950;
+      white-space: nowrap;
+      box-shadow: 0 0 18px rgba(53,216,255,.1);
+    }
+
+    .venue-detail .venue-hero-body p {
+      color: #d2cadf;
+      line-height: 1.45;
+    }
+
+    .venue-detail .section-title {
+      margin-top: 8px;
+      padding-left: 10px;
+      border-left: 3px solid rgba(168,85,247,.68);
+      text-shadow: 0 0 18px rgba(168,85,247,.18);
+    }
+
     .venue-detail .map-preview {
       min-height: 132px;
       border-color: rgba(155,92,255,.22);
@@ -9300,6 +9345,18 @@
       .venue-shift-row {
         grid-template-columns: 50px minmax(0, 1fr);
         gap: 10px;
+      }
+
+      .venue-detail .venue-hero-body > .row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .venue-status-pill {
+        width: fit-content;
+        max-width: 100%;
+        white-space: normal;
+        text-align: left;
       }
 
       .venue-shift-avatar {
@@ -10951,6 +11008,18 @@
       border-radius: 999px;
       background: linear-gradient(180deg, #35d8ff, #a855f7);
       box-shadow: 0 0 16px rgba(53,216,255,.24), 0 0 18px rgba(168,85,247,.18);
+    }
+
+    .auth-card,
+    .info-tile,
+    .metric-card,
+    .stat,
+    .venue,
+    .venue-hero,
+    .customer-summary,
+    .value-message,
+    .rule-note {
+      overflow-wrap: anywhere;
     }
 
     #customerDashboard .section-title {
@@ -13122,12 +13191,13 @@
                   <h2>${details.name}</h2>
                   <div class="meta">${details.city}, ${details.state}</div>
                 </div>
+                <span class="venue-status-pill">Open today · ${details.hours}</span>
               </div>
               <p>${details.description}</p>
               <div class="venue-quick-stats">
                 <div class="venue-quick-stat"><strong>${tonight.length}</strong><span>working tonight</span></div>
-                <div class="venue-quick-stat"><strong>${shiftCount}</strong><span>posted shifts</span></div>
-                <div class="venue-quick-stat"><strong>${trending.length}</strong><span>trending here</span></div>
+                <div class="venue-quick-stat"><strong>${shiftCount}</strong><span>verified shifts</span></div>
+                <div class="venue-quick-stat"><strong>${trending.length}</strong><span>trending dancers</span></div>
               </div>
               <div class="venue-info">
                 <div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>
@@ -13143,16 +13213,16 @@
             </div>
           </article>
 
-          <h3 class="section-title">Working tonight</h3>
+          <h3 class="section-title">Working tonight at ${details.name}</h3>
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts tonight.</div>'}</div>
 
-          <h3 class="section-title">Upcoming dancer shifts</h3>
+          <h3 class="section-title">Upcoming shifts at ${details.name}</h3>
           <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
-          <h3 class="section-title">Trending at this venue</h3>
+          <h3 class="section-title">Trending at ${details.name}</h3>
           <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
 
-          <h3 class="section-title">Other local venues</h3>
+          <h3 class="section-title">Other ${city} venues</h3>
           <div class="mini-list">${otherVenues.map((item) => venueCard(item)).join("")}</div>
         </div>
       `;
@@ -14028,9 +14098,9 @@
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       const notificationsOn = followed.filter((profile) => isNotificationOn(city, profile.name)).length;
       document.getElementById("dashboardCity").textContent = city;
-      document.getElementById("customerSummaryTitle").textContent = `Your ${city} night`;
+      document.getElementById("customerSummaryTitle").textContent = `Your private ${city} dashboard`;
       document.getElementById("customerSummaryCopy").textContent = workingTonight.length
-        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight. Your alerts, saved venues, and directions stay private.`
+        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight. Your follows, alerts, and directions stay private.`
         : followed.length || venues.length
           ? `No followed dancers are working tonight. Your saved dancers and venues are ready for the next schedule update.`
           : `Follow dancers and venues in ${city} to build your private dashboard, schedule alerts, and directions list.`;
@@ -14038,8 +14108,8 @@
       document.getElementById("dashFollowedCount").textContent = followed.length;
       document.getElementById("dashVenueCount").textContent = venues.length;
       document.getElementById("dashNotificationsCount").textContent = notificationsOn + venues.length;
-      document.getElementById("dashTonightTitle").textContent = `Working tonight from dancers you follow`;
-      document.getElementById("dashFollowedTitle").textContent = `All followed dancers`;
+      document.getElementById("dashTonightTitle").textContent = `Followed dancers working tonight`;
+      document.getElementById("dashFollowedTitle").textContent = `All followed dancers in ${city}`;
       document.getElementById("dashVenuesTitle").textContent = `Followed venues in ${city}`;
       document.getElementById("dashTonightContext").textContent = `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
       document.getElementById("dashFollowedContext").textContent = `${city} · ${followed.length} saved`;
