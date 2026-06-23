@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dancr</title>
+</head>
+<body>
+  <script>
+    fetch("https://raw.githubusercontent.com/matthewsniffen82-byte/shiftstage/main/outputs/index.html", { cache: "no-store" })
+      .then((response) => response.text())
+      .then((html) => {
+        document.open();
+        document.write(html);
+        document.close();
+      })
+      .catch(() => {
+        document.body.innerHTML = '<a href="https://github.com/matthewsniffen82-byte/shiftstage/blob/main/outputs/index.html">Open Dancr source</a>';
+      });
+  </script>
+</body>
+</html>
