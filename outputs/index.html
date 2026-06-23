@@ -12800,6 +12800,24 @@
       filter: drop-shadow(0 0 8px rgba(255, 47, 174, 0.72));
     }
 
+    /* Keep #1 VIP, but make it feel more glass-lit than solid. */
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      border-color: rgba(255, 231, 150, 0.66) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02) 42%),
+        radial-gradient(circle at 24% 20%, rgba(255, 238, 173, 0.38), transparent 0 38%),
+        linear-gradient(135deg, rgba(216, 169, 53, 0.66) 0%, rgba(255, 47, 174, 0.58) 100%) !important;
+      box-shadow:
+        0 0 24px rgba(255, 191, 64, 0.24),
+        0 0 30px rgba(255, 47, 174, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        inset 0 -12px 20px rgba(5, 5, 7, 0.2) !important;
+      backdrop-filter: blur(16px) saturate(1.25);
+    }
+
     .dancer-card .profile-body h3 {
       display: block !important;
       font-size: clamp(17px, 4.35vw, 22px) !important;
@@ -13169,12 +13187,12 @@
             <article class="role-option account-option">
               <span class="eyebrow">Dancer</span>
               <h3>Grow your nights</h3>
-              <p>Create a reviewed profile, post verified shifts after approval, and see how Dancr sends customers to your schedule and club.</p>
+              <p>Create a reviewed profile, post verified shifts after approval, add your social links including OnlyFans, and see how Dancr sends customers to your schedule and club.</p>
               <ul class="benefit-list">
                 <li>Verified shift posting</li>
                 <li>Follower alerts sent automatically</li>
-                <li>Profile, social, and direction analytics</li>
-                <li>Shareable profile link</li>
+                <li>Instagram, TikTok, Snapchat, OnlyFans, and X links</li>
+                <li>Profile, social, share, and direction analytics</li>
                 <li>$9.99/month after approval</li>
               </ul>
               <div class="role-actions">
