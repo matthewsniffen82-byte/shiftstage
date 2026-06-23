@@ -1916,7 +1916,16 @@
     }
 
     #customerDashboard .dashboard-stats {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .customer-venue-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .customer-venue-list .venue-card {
+      width: 100%;
     }
 
     .status-chip {
@@ -11301,6 +11310,10 @@
             <span>Followed dancers</span>
           </div>
           <div class="stat">
+            <strong id="dashVenueCount">0</strong>
+            <span>Followed venues</span>
+          </div>
+          <div class="stat">
             <strong id="dashNotificationsCount">0</strong>
             <span>Notifications on</span>
           </div>
@@ -11317,6 +11330,12 @@
         </div>
         <div class="list card-grid" id="dashFollowedList"></div>
         <button class="view-all" id="dashFollowedViewAll" hidden>View All Followed</button>
+        <div class="section-title-row">
+          <h3 class="section-title" id="dashVenuesTitle">Followed venues</h3>
+          <span class="section-context" id="dashVenuesContext">Las Vegas</span>
+        </div>
+        <div class="customer-venue-list" id="dashVenueList"></div>
+        <button class="view-all" id="dashVenueViewAll" hidden>View All Venues</button>
         <div class="auth-card customer-notification-card">
           <h3 class="section-title">Notification settings</h3>
           <div class="toggle-list" id="notificationSettings"></div>
@@ -11484,8 +11503,10 @@
     const brandHome = document.getElementById("brandHome");
     const dashTonightList = document.getElementById("dashTonightList");
     const dashFollowedList = document.getElementById("dashFollowedList");
+    const dashVenueList = document.getElementById("dashVenueList");
     const dashTonightViewAll = document.getElementById("dashTonightViewAll");
     const dashFollowedViewAll = document.getElementById("dashFollowedViewAll");
+    const dashVenueViewAll = document.getElementById("dashVenueViewAll");
     const notificationSettings = document.getElementById("notificationSettings");
     const customerBrowseTonight = document.getElementById("customerBrowseTonight");
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
@@ -11518,6 +11539,7 @@
     };
     let dashboardTonightExpanded = false;
     let dashboardFollowedExpanded = false;
+    let dashboardVenuesExpanded = false;
     const goingTonightByProfile = {};
     const trendEventStoreKey = "dancrTrendEventsV1";
     const trendEventStore = loadTrendEventStore();
@@ -11545,12 +11567,20 @@
     const notifiedByCity = Object.fromEntries(
       Object.entries(followedByCity).map(([city, names]) => [city, [...names]])
     );
+    const followedVenuesByCity = {
+      "Las Vegas": ["Velvet Room", "Neon Hall"],
+      Miami: ["Scarlet Door", "Blue Room"],
+      Atlanta: ["Peach Room", "Halo Lounge"],
+      "New York": ["Monarch", "Afterglow"]
+    };
 
     const notificationOptions = [
       "Followed dancers only",
+      "Followed venues only",
       "Any dancer in city",
       "Working tonight alerts",
       "New shift alerts",
+      "Venue schedule alerts",
       "Club change alerts",
       "Canceled shift alerts"
     ];
@@ -12239,6 +12269,15 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
+    function followedVenues(city) {
+      const names = followedVenuesByCity[city] || [];
+      return markets[city].venues.filter((venue) => names.includes(venue.name) && !venue.hidden);
+    }
+
+    function isFollowingVenue(city, venueName) {
+      return (followedVenuesByCity[city] || []).includes(venueName);
+    }
+
     function activeDancerCity() {
       const city = document.getElementById("dancerCity").value.trim();
       return markets[city] ? city : citySelect.value;
@@ -12627,6 +12666,7 @@
         .sort((a, b) => a.trendRank - b.trendRank);
       const otherVenues = markets[city].venues.filter((item) => item.name !== venue.name && !item.hidden);
       const shiftCount = localProfiles.filter((profile) => profile.scheduled).length;
+      const followsVenue = isFollowingVenue(city, venue.name);
 
       return `
         <div class="venue-detail">
@@ -12659,6 +12699,9 @@
                 <div class="info-tile"><strong>Hours</strong><div class="meta">${details.hours}</div></div>
               </div>
               <div class="map-preview" aria-label="Map preview placeholder"></div>
+              <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}">
+                ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
+              </button>
               <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>
             </div>
           </article>
@@ -13321,7 +13364,7 @@
       notificationSettings.innerHTML = notificationOptions.map((label, index) => `
         <div class="toggle-row">
           <strong>${label}</strong>
-          <button class="switch ${index !== 1 ? "on" : ""}" aria-label="${label}"></button>
+          <button class="switch ${label !== "Any dancer in city" ? "on" : ""}" aria-label="${label}"></button>
         </div>
       `).join("");
     }
@@ -13452,6 +13495,7 @@
     function renderDashboard() {
       const city = citySelect.value;
       const followed = followedProfiles(city);
+      const venues = followedVenues(city);
       const workingTonight = followed
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
@@ -13459,28 +13503,36 @@
       document.getElementById("dashboardCity").textContent = city;
       document.getElementById("customerSummaryTitle").textContent = `Tonight in ${city}`;
       document.getElementById("customerSummaryCopy").textContent = workingTonight.length
-        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight in ${city}. Notifications stay private to your account.`
+        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight in ${city}. Follow venues too for club schedule alerts and faster directions.`
         : followed.length
-          ? `No followed dancers are working tonight in ${city}. Browse tonight or find more dancers to follow.`
-          : `Follow dancers in ${city} to build your private dashboard and get schedule alerts.`;
+          ? `No followed dancers are working tonight in ${city}. Follow venues to track club schedules and find more dancers there.`
+          : `Follow dancers and venues in ${city} to build your private dashboard, schedule alerts, and directions list.`;
       document.getElementById("dashTonightCount").textContent = workingTonight.length;
       document.getElementById("dashFollowedCount").textContent = followed.length;
-      document.getElementById("dashNotificationsCount").textContent = notificationsOn;
+      document.getElementById("dashVenueCount").textContent = venues.length;
+      document.getElementById("dashNotificationsCount").textContent = notificationsOn + venues.length;
       document.getElementById("dashTonightTitle").textContent = `Working tonight in ${city}`;
       document.getElementById("dashFollowedTitle").textContent = `Followed dancers in ${city}`;
+      document.getElementById("dashVenuesTitle").textContent = `Followed venues in ${city}`;
       document.getElementById("dashTonightContext").textContent = `${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
       document.getElementById("dashFollowedContext").textContent = `${followed.length} saved`;
+      document.getElementById("dashVenuesContext").textContent = `${venues.length} saved`;
 
       const visibleTonight = limitedList(workingTonight, dashboardTonightExpanded);
       const visibleFollowed = limitedList(followed, dashboardFollowedExpanded);
+      const visibleVenues = limitedList(venues, dashboardVenuesExpanded);
       dashTonightList.innerHTML = visibleTonight.length
         ? visibleTonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("")
         : `<div class="locked">No followed dancers working tonight in ${city}.</div>`;
       dashFollowedList.innerHTML = visibleFollowed.length
         ? visibleFollowed.map((profile, index) => profileCard(profile, index + 2)).join("")
         : `<div class="locked">No followed dancers in ${city} yet.</div>`;
+      dashVenueList.innerHTML = visibleVenues.length
+        ? visibleVenues.map((venue) => venueCard(venue)).join("")
+        : `<div class="locked">No followed venues in ${city} yet.</div>`;
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
+      dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
       renderNotificationSettings();
     }
 
@@ -13682,6 +13734,23 @@
         markets[city].dancers
           .filter((profile) => profile.status === "Verified" && !profile.hidden && profile.venue === venueName)
           .forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
+        return;
+      }
+      const followVenueButton = event.target.closest("[data-venue-follow]");
+      if (followVenueButton) {
+        const city = citySelect.value;
+        const venueName = followVenueButton.dataset.venueFollow;
+        const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
+        const index = savedVenues.indexOf(venueName);
+        if (index >= 0) {
+          savedVenues.splice(index, 1);
+          showToast("Unfollowed venue");
+        } else {
+          savedVenues.push(venueName);
+          showToast(`${venueName} saved. Venue alerts on.`);
+        }
+        render();
+        if (customerDashboard.classList.contains("show")) renderDashboard();
         return;
       }
       const venue = event.target.closest(".venue-card");
@@ -14021,6 +14090,11 @@
       renderDashboard();
     });
 
+    dashVenueViewAll.addEventListener("click", () => {
+      dashboardVenuesExpanded = true;
+      renderDashboard();
+    });
+
     customerBrowseTonight.addEventListener("click", () => {
       closeDashboard();
       activeTab = "tonight";
@@ -14048,6 +14122,17 @@
     });
 
     customerDashboard.addEventListener("click", (event) => {
+      const venue = event.target.closest(".venue-card");
+      if (venue) {
+        event.preventDefault();
+        closeDashboard();
+        selectedVenueName = venue.dataset.venue;
+        activeTab = "venues";
+        document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+        render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       const card = event.target.closest(".dancer-card");
       if (!card) return;
       event.preventDefault();
@@ -14179,6 +14264,7 @@
       dancersExpanded = false;
       dashboardTonightExpanded = false;
       dashboardFollowedExpanded = false;
+      dashboardVenuesExpanded = false;
       selectedVenueName = null;
       render();
       if (customerDashboard.classList.contains("show")) renderDashboard();
