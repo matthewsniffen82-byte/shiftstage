@@ -13732,6 +13732,81 @@
         0 0 22px rgba(124, 58, 237, 0.26),
         0 0 18px rgba(255, 47, 174, 0.12) !important;
     }
+
+    /* Final Dancr trending rank chips: electric jewel, not sticker. */
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 47, 174, 0.46) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 42%, rgba(5, 5, 7, 0.16)),
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.16), transparent 0 32%),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.48), rgba(255, 47, 174, 0.3)),
+        rgba(10, 8, 18, 0.76) !important;
+      box-shadow:
+        0 0 8px rgba(139, 92, 246, 0.42),
+        0 0 12px rgba(255, 47, 174, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 -9px 16px rgba(5, 5, 7, 0.28) !important;
+      text-shadow: 0 0 7px rgba(255, 255, 255, 0.24) !important;
+      backdrop-filter: blur(15px) saturate(1.2) !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter:
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.78))
+        drop-shadow(0 0 7px rgba(255, 47, 174, 0.72))
+        drop-shadow(0 0 9px rgba(139, 92, 246, 0.5)) !important;
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card:hover .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one):hover,
+    .venue-shift-rank:not(.rank-one):hover {
+      border-color: rgba(255, 92, 198, 0.62) !important;
+      box-shadow:
+        0 0 11px rgba(139, 92, 246, 0.58),
+        0 0 18px rgba(255, 47, 174, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        inset 0 -9px 16px rgba(5, 5, 7, 0.24) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 220, 139, 0.64) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.045) 42%, rgba(5, 5, 7, 0.12)),
+        radial-gradient(circle at 20% 18%, rgba(255, 242, 189, 0.34), transparent 0 38%),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.68) 0%, rgba(236, 72, 153, 0.68) 50%, rgba(224, 168, 70, 0.56) 100%) !important;
+      box-shadow:
+        0 0 12px rgba(255, 210, 114, 0.3),
+        0 0 20px rgba(255, 47, 174, 0.32),
+        0 0 22px rgba(139, 92, 246, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        inset 0 -11px 18px rgba(5, 5, 7, 0.18) !important;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.32) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #FFF4BE !important;
+      background: rgba(44, 11, 47, 0.34) !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 244, 190, 0.82))
+        drop-shadow(0 0 8px rgba(255, 47, 174, 0.66))
+        drop-shadow(0 0 11px rgba(139, 92, 246, 0.38)) !important;
+    }
   </style>
 </head>
 <body>
