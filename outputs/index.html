@@ -10697,6 +10697,38 @@
       padding: 14px;
     }
 
+    #setupChecklist .lock-row,
+    #setupChecklist .rule-note,
+    #setupChecklist .info-tile,
+    #setupChecklist .action-btn {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow: visible;
+      white-space: normal;
+      text-overflow: clip;
+      line-height: 1.28;
+    }
+
+    @media (max-width: 560px) {
+      #setupChecklist .setup-step.open .step-body {
+        padding: 12px;
+        gap: 10px;
+      }
+
+      #setupChecklist .lock-row,
+      #setupChecklist .rule-note,
+      #setupChecklist .info-tile {
+        padding: 12px 13px;
+        font-size: 12.5px;
+      }
+
+      #setupChecklist .action-btn {
+        min-height: 58px;
+        padding-inline: 14px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -13010,7 +13042,7 @@
       const locked = !canOpenStep(step);
       const open = activeSetupStep === step && !complete;
       const stepNumber = setupOrder().indexOf(step) + 1;
-      const lockedNote = locked ? `<div class="lock-row">Complete the previous step first.</div>` : "";
+      const lockedNote = locked ? `<div class="lock-row">Finish the previous step first.</div>` : "";
       return `
         <article class="setup-step ${complete ? "complete" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
           <button class="step-head" data-step-toggle="${step}">
@@ -13315,7 +13347,7 @@
         <button class="action-btn" data-complete-step="verification">Start verification</button>
       `;
       const approvalBody = `
-        <div class="rule-note">Dancr reviews your profile, photos, ID, and selfie. Approval unlocks public schedules.</div>
+        <div class="rule-note">Dancr reviews profile, photos, ID, and selfie. Approval unlocks schedules.</div>
         <button class="action-btn" data-complete-step="approval">Approve demo profile</button>
       `;
       document.getElementById("setupChecklist").innerHTML = [
