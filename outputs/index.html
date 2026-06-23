@@ -12625,6 +12625,29 @@
       stroke-width: 3;
     }
 
+    .dancer-card.rank-one-card,
+    .dancer-card.rank-one-card.trending-card {
+      border-color: rgba(255, 204, 92, 0.46);
+      box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.58),
+        0 0 22px rgba(124, 58, 237, 0.2),
+        0 0 16px rgba(255, 47, 174, 0.12),
+        0 0 14px rgba(255, 204, 92, 0.14),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+
+    .dancer-card.rank-one-card:hover,
+    .dancer-card.rank-one-card:focus-visible,
+    .dancer-card.rank-one-card:active {
+      border-color: rgba(255, 220, 128, 0.78);
+      box-shadow:
+        0 30px 78px rgba(0, 0, 0, 0.7),
+        0 0 42px rgba(255, 47, 174, 0.3),
+        0 0 38px rgba(124, 58, 237, 0.28),
+        0 0 34px rgba(255, 204, 92, 0.32),
+        inset 0 0 0 1px rgba(255, 235, 164, 0.16);
+    }
+
     /* Signature Dancr beam: premium violet/magenta spotlight with a hidden pole reference. */
     .reference-hero {
       position: relative;
@@ -14616,7 +14639,7 @@
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
-        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
+        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
           <div class="portrait ${portraitClass(index)}">
             <div class="card-badges">
               ${statusBadge}
