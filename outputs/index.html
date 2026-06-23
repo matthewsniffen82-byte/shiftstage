@@ -11213,6 +11213,279 @@
       }
     }
 
+    /* Dancr premium purple/magenta nightlife theme override */
+    :root {
+      --bg: #050507;
+      --bg2: #0E0E14;
+      --panel: #111118;
+      --panel2: #15151d;
+      --text: #FFFFFF;
+      --muted: #B8B8C5;
+      --muted2: #7C7C8C;
+      --violet: #7C3AED;
+      --magenta: #FF2FAE;
+      --cyan: #22C7FF;
+      --cyan-blue: #22C7FF;
+      --gold: #C084FC;
+      --green: #FF2FAE;
+      --accent: #7C3AED;
+      --accent-glow: rgba(124, 58, 237, .38);
+      --line: rgba(184, 184, 197, .13);
+      --shadow: 0 26px 78px rgba(0, 0, 0, .64);
+    }
+
+    html,
+    body {
+      background: #050507;
+      color: #FFFFFF;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 74% -10%, rgba(255, 47, 174, .14), transparent 30rem),
+        radial-gradient(circle at 20% 0%, rgba(124, 58, 237, .20), transparent 31rem),
+        #050507;
+    }
+
+    body:before {
+      background:
+        radial-gradient(circle at 86% 10%, rgba(255, 47, 174, .08), transparent 25rem),
+        radial-gradient(circle at 16% 4%, rgba(124, 58, 237, .10), transparent 25rem);
+    }
+
+    .app {
+      background:
+        radial-gradient(circle at 78% 0%, rgba(124, 58, 237, .13), transparent 30rem),
+        linear-gradient(180deg, #050507, #08080d 52%, #050507);
+      border-color: rgba(124, 58, 237, .18);
+      box-shadow: 0 42px 130px rgba(0, 0, 0, .80), 0 0 70px rgba(124, 58, 237, .14);
+    }
+
+    header,
+    .topbar,
+    .controls,
+    .auth-card,
+    .customer-summary,
+    .venue,
+    .venue-hero,
+    .info-tile,
+    .metric-card,
+    .stat,
+    .profile-modal,
+    .demo-jump-box,
+    .modal-body {
+      background-color: rgba(17, 17, 24, .82);
+      border-color: rgba(124, 58, 237, .22);
+    }
+
+    .reference-hero {
+      background:
+        radial-gradient(circle at 76% 46%, rgba(255, 47, 174, .16), transparent 0 34%),
+        linear-gradient(90deg, rgba(5, 5, 7, 1) 0%, rgba(9, 7, 20, .98) 45%, rgba(31, 9, 72, .95) 100%);
+      border-color: rgba(124, 58, 237, .35);
+      box-shadow: 0 0 34px rgba(124, 58, 237, .18), inset 0 0 48px rgba(255, 47, 174, .05);
+    }
+
+    .reference-hero:before {
+      display: none !important;
+    }
+
+    .reference-hero:after {
+      background:
+        linear-gradient(90deg, transparent, rgba(255, 47, 174, .24), #d98bff 48%, rgba(34, 199, 255, .24), transparent);
+      box-shadow: 0 0 34px rgba(255, 47, 174, .38), 0 0 70px rgba(124, 58, 237, .24);
+    }
+
+    .reference-hero h2 strong,
+    .hero-title-accent {
+      color: #9b5cff;
+      text-shadow: 0 0 22px rgba(124, 58, 237, .72), 0 0 44px rgba(255, 47, 174, .22);
+    }
+
+    .reference-hero p,
+    .subtle,
+    .muted,
+    .card-venue-line,
+    .modal-card p,
+    .info-tile p,
+    .metric-card p {
+      color: #B8B8C5;
+    }
+
+    .tab.active,
+    .tabs .tab.active,
+    .action-btn,
+    .profile-modal .follow-primary {
+      color: #FFFFFF;
+      border-color: transparent;
+      background: linear-gradient(135deg, #7C3AED, #FF2FAE);
+      box-shadow: 0 16px 40px rgba(124, 58, 237, .28), 0 0 28px rgba(255, 47, 174, .22);
+    }
+
+    .action-btn.secondary,
+    .ghost,
+    .menu-btn,
+    .location-btn,
+    .profile-modal .action-btn.secondary,
+    .profile-modal .going-btn:disabled {
+      color: #FFFFFF;
+      border-color: rgba(124, 58, 237, .42);
+      background: rgba(14, 14, 20, .86);
+      box-shadow: inset 0 0 18px rgba(124, 58, 237, .06);
+    }
+
+    .tab {
+      color: #B8B8C5;
+      border-color: rgba(184, 184, 197, .12);
+      background: rgba(14, 14, 20, .86);
+    }
+
+    .tab:hover,
+    .ghost:hover,
+    .menu-btn:hover,
+    .location-btn:hover,
+    .action-btn.secondary:hover {
+      border-color: rgba(255, 47, 174, .42);
+      box-shadow: 0 0 18px rgba(124, 58, 237, .18);
+    }
+
+    .dancer-card,
+    .dancer-card:not(.pending),
+    .dancer-card.trending-card {
+      border-color: rgba(124, 58, 237, .36);
+      background: rgba(17, 17, 24, .84);
+      box-shadow: 0 22px 64px rgba(0, 0, 0, .58), 0 0 22px rgba(124, 58, 237, .14);
+    }
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible,
+    .dancer-card:active,
+    .dancer-card.trending-card:hover,
+    .dancer-card.trending-card:focus-visible,
+    .dancer-card.trending-card:active {
+      border-color: rgba(255, 47, 174, .58);
+      box-shadow: 0 26px 72px rgba(0, 0, 0, .62), 0 0 30px rgba(124, 58, 237, .24), 0 0 24px rgba(255, 47, 174, .14);
+    }
+
+    .dancer-card .portrait:after {
+      background:
+        linear-gradient(180deg, rgba(5, 5, 7, 0) 38%, rgba(124, 58, 237, .10) 66%, rgba(5, 5, 7, .96) 100%);
+    }
+
+    .badge,
+    .badge:not(.pending):not(.trend):not(.featured) {
+      color: #9DEBFF;
+      border-color: rgba(34, 199, 255, .48);
+      background: rgba(34, 199, 255, .14);
+      box-shadow: 0 0 16px rgba(34, 199, 255, .18);
+    }
+
+    .verified-mark,
+    .profile-modal .modal-identity .verified-mark,
+    .profile-modal .modal-identity-stack .modal-identity .verified-mark {
+      color: #050507;
+      background: #22C7FF;
+      box-shadow: 0 0 18px rgba(34, 199, 255, .58);
+    }
+
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend,
+    .venue-shift-rank {
+      color: #FFFFFF;
+      border-color: rgba(124, 58, 237, .55);
+      background: rgba(124, 58, 237, .28);
+      text-shadow: 0 0 9px rgba(255, 255, 255, .22);
+      box-shadow: 0 0 18px rgba(124, 58, 237, .32), 0 0 20px rgba(255, 47, 174, .12), inset 0 0 14px rgba(255, 255, 255, .04);
+    }
+
+    .badge.trend .badge-icon,
+    .venue-shift-rank .badge-icon {
+      color: #FF2FAE;
+      filter: drop-shadow(0 0 8px rgba(255, 47, 174, .60));
+    }
+
+    .card-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.tonight {
+      color: #ff77cb;
+      text-shadow: 0 0 13px rgba(255, 47, 174, .42);
+      background: linear-gradient(90deg, rgba(255, 47, 174, .20), transparent);
+    }
+
+    .card-schedule-text.upcoming,
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #87ddff;
+      text-shadow: 0 0 12px rgba(34, 199, 255, .38);
+      background: linear-gradient(90deg, rgba(34, 199, 255, .15), transparent);
+    }
+
+    .pill.tonight {
+      color: #ff77cb;
+      border-color: rgba(255, 47, 174, .55);
+      background: rgba(255, 47, 174, .11);
+      box-shadow: 0 0 18px rgba(255, 47, 174, .22);
+    }
+
+    .pill.upcoming {
+      color: #87ddff;
+      border-color: rgba(34, 199, 255, .48);
+      background: rgba(34, 199, 255, .10);
+      box-shadow: 0 0 16px rgba(34, 199, 255, .16);
+    }
+
+    .card-venue-line .venue-dot,
+    .dancer-card .card-venue-name,
+    .profile-modal .venue-inline-link {
+      color: #d8c7ff;
+    }
+
+    .search-wrap input,
+    input,
+    select,
+    textarea {
+      background: rgba(14, 14, 20, .90);
+      border-color: rgba(124, 58, 237, .22);
+      color: #FFFFFF;
+    }
+
+    .search-wrap:focus-within,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(255, 47, 174, .48);
+      box-shadow: 0 0 22px rgba(124, 58, 237, .22);
+    }
+
+    .venue-card:hover,
+    .venue:hover {
+      border-color: rgba(124, 58, 237, .56);
+      box-shadow: 0 0 24px rgba(124, 58, 237, .18);
+    }
+
+    .modal-identity,
+    .profile-modal .modal-identity-stack .modal-identity {
+      border-color: rgba(124, 58, 237, .25);
+      background: rgba(17, 17, 24, .58);
+      box-shadow: 0 0 26px rgba(124, 58, 237, .18);
+      backdrop-filter: blur(16px);
+    }
+
+    .profile-modal {
+      box-shadow: 0 26px 90px rgba(0, 0, 0, .82), 0 0 48px rgba(124, 58, 237, .18);
+    }
+
+    .profile-modal .social-link svg,
+    .icon,
+    .venue-dot,
+    .action-icon {
+      color: rgba(255, 255, 255, .70);
+    }
+
+    .profile-modal .social-link:hover svg,
+    .tab.active .icon,
+    .action-btn:not(.secondary) .action-icon {
+      color: #FFFFFF;
+    }
   </style>
 </head>
 <body>
