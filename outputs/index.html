@@ -7,7 +7,7 @@
   <title>Dancr</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
@@ -12472,6 +12472,60 @@
         font-size: clamp(18px, 5.2vw, 22px);
       }
     }
+    /* Final font system: premium display, readable UI, and memorable dancer names. */
+    :root {
+      --font-ui: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", Outfit, Inter, ui-sans-serif, system-ui, sans-serif;
+      --font-name: Outfit, "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea,
+    .tab,
+    .pill,
+    .badge,
+    .meta,
+    .locked,
+    .action-btn,
+    .demo-jump,
+    .section-context {
+      font-family: var(--font-ui);
+    }
+
+    h1,
+    h2,
+    .section-title,
+    .dashboard-title,
+    .auth-title,
+    .venue-detail h2,
+    .profile-setup-card h2,
+    .customer-summary h2,
+    .reference-hero h2 {
+      font-family: var(--font-display);
+      font-weight: 800;
+    }
+
+    .reference-hero h2,
+    .reference-hero h2 span,
+    .reference-hero h2 strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.015em;
+    }
+
+    .dancer-card .profile-body h3,
+    .dancer-card .card-stage-name,
+    #modalName,
+    #dancerDashName,
+    .venue-shift-copy strong,
+    .admin-item h3 {
+      font-family: var(--font-name);
+      font-weight: 600;
+    }
+
     /* Slightly larger profile-photo presence without over-cropping full-body images. */
     .list.card-grid .dancer-card {
       aspect-ratio: 1 / 1.72;
