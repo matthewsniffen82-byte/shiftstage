@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "mkdir -p public && cp index.html public/index.html && cp -R outputs public/outputs && echo Static Dancr demo ready"
+    "build": "echo Static Dancr demo ready"
   }
 }

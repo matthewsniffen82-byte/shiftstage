@@ -1,3 +1,4 @@
 {
-  "cleanUrls": false
+  "cleanUrls": false,
+  "outputDirectory": "."
 }
