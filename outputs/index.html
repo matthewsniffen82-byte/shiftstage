@@ -7,7 +7,7 @@
   <title>Dancr</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
@@ -12238,6 +12238,205 @@
       .profile-modal .badge.trend.rank-one,
       .venue-shift-rank.rank-one {
         animation: none;
+      }
+    }
+
+    /* Final premium typography system */
+    :root {
+      --font-ui: Inter, Manrope, Satoshi, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", Outfit, Sora, Manrope, ui-sans-serif, system-ui, sans-serif;
+      --font-name: Outfit, Sora, "Space Grotesk", Manrope, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea {
+      font-family: var(--font-ui);
+      font-weight: 650;
+      letter-spacing: 0;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    .section-title,
+    .modal-title,
+    .dashboard-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .reference-hero h2 {
+      max-width: 660px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(39px, 6.8vw, 58px);
+      line-height: 0.9;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+      text-wrap: balance;
+      text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.18),
+        0 0 28px rgba(124, 58, 237, 0.18),
+        0 14px 34px rgba(0, 0, 0, 0.92);
+    }
+
+    .reference-hero h2 span,
+    .reference-hero h2 strong {
+      display: block;
+    }
+
+    .reference-hero h2 strong {
+      width: max-content;
+      max-width: 100%;
+      white-space: nowrap;
+      color: #a66bff;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      text-shadow:
+        0 0 14px rgba(166, 107, 255, 0.66),
+        0 0 34px rgba(255, 47, 174, 0.26),
+        0 16px 36px rgba(0, 0, 0, 0.82);
+    }
+
+    .reference-hero p {
+      max-width: 560px;
+      font-family: var(--font-ui);
+      font-size: clamp(14px, 1.8vw, 16px);
+      font-weight: 750;
+      line-height: 1.32;
+      letter-spacing: -0.006em;
+      color: rgba(232, 229, 240, 0.82);
+    }
+
+    .brand,
+    .dancr-logo-text,
+    .dancr-home-logo,
+    .tabs .tab,
+    .tab,
+    .auth-tab,
+    .menu-btn,
+    .action-btn,
+    .ghost,
+    .location-btn,
+    .badge,
+    .pill {
+      font-family: var(--font-name);
+      font-weight: 800;
+      letter-spacing: -0.006em;
+    }
+
+    .tabs .tab,
+    .tab,
+    .auth-tab {
+      font-weight: 800;
+    }
+
+    .tabs .tab-count {
+      font-family: var(--font-ui);
+      font-weight: 850;
+      letter-spacing: -0.01em;
+    }
+
+    .dancer-card .profile-body h3,
+    .modal-name,
+    .venue-shift-copy strong,
+    .admin-item h3 {
+      font-family: var(--font-name);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+
+    .dancer-card .profile-body h3 {
+      font-size: clamp(19px, 4.8vw, 25px);
+      line-height: 1.02;
+      text-shadow: 0 12px 28px rgba(0, 0, 0, 0.82);
+    }
+
+    .dancer-card .card-venue-line {
+      font-family: var(--font-ui);
+      font-size: clamp(12px, 3.1vw, 14px);
+      font-weight: 780;
+      line-height: 1.22;
+      color: rgba(232, 229, 240, 0.82);
+      letter-spacing: -0.01em;
+    }
+
+    .dancer-card .card-venue-name {
+      font-weight: 850;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .dancer-card .card-distance,
+    .dancer-card .card-venue-prefix {
+      color: rgba(184, 184, 197, 0.78);
+      font-weight: 700;
+    }
+
+    .card-schedule-text {
+      font-family: var(--font-name);
+      font-size: clamp(11px, 3vw, 13px);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 900;
+      letter-spacing: -0.015em;
+    }
+
+    .card-schedule-text .schedule-time {
+      font-family: var(--font-ui);
+      font-weight: 780;
+      letter-spacing: -0.01em;
+    }
+
+    .meta,
+    .subtle,
+    .muted,
+    .info-tile p,
+    .metric-card p,
+    .modal-card p,
+    .legal-card p,
+    .dashboard-summary p {
+      font-family: var(--font-ui);
+      line-height: 1.42;
+      letter-spacing: -0.004em;
+    }
+
+    .stat strong,
+    .metric-card strong,
+    .info-tile strong,
+    .count,
+    .venue-quick-stat strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+    }
+
+    @media (min-width: 760px) {
+      .reference-hero h2 {
+        font-size: clamp(50px, 4.7vw, 68px);
+      }
+    }
+
+    @media (max-width: 460px) {
+      .reference-hero h2 {
+        font-size: clamp(33px, 9.3vw, 43px);
+        line-height: 0.92;
+      }
+
+      .reference-hero h2 strong {
+        font-size: 0.92em;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: clamp(18px, 5.2vw, 22px);
       }
     }
   </style>
