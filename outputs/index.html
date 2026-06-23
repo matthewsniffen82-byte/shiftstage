@@ -11658,6 +11658,47 @@
       return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
     }
 
+    function savedDancerSocials() {
+      return Object.fromEntries(
+        Object.entries(dancerSignupSocials).filter(([, url]) => Boolean(url))
+      );
+    }
+
+    function ensureActiveDancerProfile(status = dancerSetup.approval ? "Verified" : "Pending") {
+      const city = activeDancerCity();
+      const market = markets[city];
+      if (!market) return null;
+      const name = cleanDisplayValue(activeDancerName());
+      const socials = savedDancerSocials();
+      let profile = market.dancers.find((item) => item.name === name);
+      const wasVerified = profile?.status === "Verified";
+      const profileData = {
+        name,
+        status,
+        city,
+        venue: profile?.venue || "",
+        time: profile?.time || "No shifts posted",
+        tonight: profile?.tonight || false,
+        scheduled: profile?.scheduled || false,
+        trend: profile?.trend || 10,
+        distance: profile?.distance || "0.0 mi",
+        photoStatus: dancerSetup.photos || status === "Verified" ? "Approved" : "Pending",
+        idStatus: dancerSetup.verification || status === "Verified" ? "Passed" : "Needs review",
+        selfieStatus: dancerSetup.verification || status === "Verified" ? "Matched" : "Needs review",
+        socials: { ...(profile?.socials || {}), ...socials }
+      };
+      if (profile) {
+        Object.assign(profile, profileData);
+      } else {
+        profile = profileData;
+        market.dancers.push(profile);
+      }
+      if (status === "Verified" && !wasVerified) {
+        market.stats.dancers += 1;
+      }
+      return profile;
+    }
+
     function dancerDashboardMetrics(profile, city = selectedCity()) {
       if (!profile) return null;
       const ranked = withTrendingRank(profile, city);
@@ -12905,6 +12946,8 @@
       if (!canOpenStep(step)) return;
       setupChecklistExpanded = true;
       dancerSetup[step] = true;
+      if (step === "profile") ensureActiveDancerProfile("Pending");
+      if (step === "approval") ensureActiveDancerProfile("Verified");
       activeSetupStep = nextIncompleteStep() || step;
       renderDancerSetup();
     }
@@ -13188,11 +13231,11 @@
         <form class="auth-form" data-setup-form="profile">
           <div class="field"><label for="setupStageName">Stage name</label><input id="setupStageName" type="text" value="${document.getElementById("dancerStageName").value || ""}"></div>
           <div class="field"><label for="setupCity">City</label><input id="setupCity" type="text" value="${document.getElementById("dancerCity").value || citySelect.value}"></div>
-          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle"></div>
-          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle"></div>
-          <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="@stagehandle"></div>
-          <div class="field"><label for="setupX">Optional X</label><input id="setupX" type="text" value="${dancerSignupSocials.x}" placeholder="@stagehandle"></div>
-          <div class="rule-note">This is what customers see after approval. Allowed: Instagram, TikTok, Snapchat, and X. No adult-content links. No solicitation links.</div>
+          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
+          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
+          <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="username or snapchat.com/add/username"></div>
+          <div class="field"><label for="setupX">Optional X</label><input id="setupX" type="text" value="${dancerSignupSocials.x}" placeholder="@stagehandle or x.com/stagehandle"></div>
+          <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, and X. No adult-content links. No solicitation links.</div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
       `;
