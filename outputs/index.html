@@ -13422,6 +13422,64 @@
     .profile-modal .modal-schedule-text.upcoming {
       background: transparent !important;
     }
+
+    /* Full-profile image polish: preserve full-body fit while removing dead side space. */
+    .profile-modal .modal-image,
+    .profile-modal .modal-image.one,
+    .profile-modal .modal-image.two,
+    .profile-modal .modal-image.three {
+      height: clamp(350px, 48svh, 590px) !important;
+      min-height: clamp(350px, 48svh, 590px) !important;
+      background-position: center center, center center !important;
+      background-repeat: no-repeat, no-repeat !important;
+      background-size: contain, cover !important;
+      background-blend-mode: normal, soft-light !important;
+      background-color: #050507 !important;
+    }
+
+    .profile-modal .modal-image.one {
+      background-image:
+        url("https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=1000&q=84"),
+        linear-gradient(180deg, rgba(5,5,7,.14), rgba(5,5,7,.14)),
+        url("https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=1000&q=84") !important;
+      background-size: contain, cover, cover !important;
+    }
+
+    .profile-modal .modal-image.two {
+      background-image:
+        url("https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=84"),
+        linear-gradient(180deg, rgba(5,5,7,.14), rgba(5,5,7,.14)),
+        url("https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=84") !important;
+      background-size: contain, cover, cover !important;
+    }
+
+    .profile-modal .modal-image.three {
+      background-image:
+        url("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=84"),
+        linear-gradient(180deg, rgba(5,5,7,.14), rgba(5,5,7,.14)),
+        url("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=84") !important;
+      background-size: contain, cover, cover !important;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-image,
+      .profile-modal .modal-image.one,
+      .profile-modal .modal-image.two,
+      .profile-modal .modal-image.three {
+        height: clamp(290px, 38svh, 420px) !important;
+        min-height: clamp(290px, 38svh, 420px) !important;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .profile-modal .modal-image,
+      .profile-modal .modal-image.one,
+      .profile-modal .modal-image.two,
+      .profile-modal .modal-image.three {
+        height: clamp(260px, 35svh, 370px) !important;
+        min-height: clamp(260px, 35svh, 370px) !important;
+      }
+    }
   </style>
 </head>
 <body>
