@@ -2098,6 +2098,7 @@
       display: grid;
       gap: 3px;
       min-width: 0;
+      max-width: 100%;
       overflow-wrap: anywhere;
     }
 
@@ -2113,9 +2114,11 @@
     }
 
     .upload-slot small {
+      display: block;
       color: var(--muted);
       font-size: 11px;
       font-weight: 800;
+      line-height: 1.25;
     }
 
     @media (max-width: 560px) {
@@ -2126,8 +2129,25 @@
       .upload-slot {
         min-height: 72px;
         grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: 10px;
         justify-items: start;
         text-align: left;
+        width: 100%;
+        overflow: hidden;
+        padding: 14px 12px;
+      }
+
+      .upload-slot > span:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px 6px;
+        line-height: 1.2;
+      }
+
+      .upload-slot small {
+        flex-basis: 100%;
       }
     }
 
@@ -2156,6 +2176,13 @@
       min-width: 0;
       box-sizing: border-box;
       overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    #setupChecklist .step-body {
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .toast {
