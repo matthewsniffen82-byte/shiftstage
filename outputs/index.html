@@ -12509,6 +12509,35 @@
       }
     }
 
+    /* Make the #1 trending lightning mark readable on the brighter VIP badge. */
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      align-items: center;
+      background: rgba(36, 8, 48, 0.34);
+      border-radius: 999px;
+      color: #FFF4B8;
+      display: inline-flex;
+      flex-basis: 16px;
+      height: 16px;
+      justify-content: center;
+      margin-right: 1px;
+      width: 16px;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 244, 184, 0.58))
+        drop-shadow(0 0 10px rgba(124, 58, 237, 0.36));
+    }
+
+    .badge.trend.rank-one .badge-icon svg,
+    .dancer-card .badge.trend.rank-one .badge-icon svg,
+    .profile-modal .badge.trend.rank-one .badge-icon svg,
+    .venue-shift-rank.rank-one .badge-icon svg {
+      height: 11px;
+      width: 11px;
+      stroke-width: 3;
+    }
+
     /* Signature Dancr beam: premium violet/magenta spotlight with a hidden pole reference. */
     .reference-hero {
       position: relative;
