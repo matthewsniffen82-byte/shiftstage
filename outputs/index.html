@@ -12472,6 +12472,43 @@
         font-size: clamp(18px, 5.2vw, 22px);
       }
     }
+    /* Profile card stage-name hierarchy: clear ask-for language without oversized names. */
+    .dancer-card .profile-body h3 {
+      display: grid;
+      gap: 1px;
+      font-size: clamp(20px, 2.9vw, 27px);
+      line-height: 1.02;
+    }
+
+    .dancer-card .ask-for-label {
+      color: rgba(255, 255, 255, 0.68);
+      font-family: Inter, Manrope, sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .dancer-card .card-stage-name {
+      align-items: center;
+      display: inline-flex;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    @media (max-width: 560px) {
+      .dancer-card .profile-body h3 {
+        font-size: clamp(16px, 4.45vw, 18px);
+        gap: 2px;
+      }
+
+      .dancer-card .ask-for-label {
+        font-size: 8.5px;
+        letter-spacing: 0.1em;
+      }
+    }
+
     /* Signature Dancr beam: premium violet/magenta spotlight with a hidden pole reference. */
     .reference-hero {
       position: relative;
@@ -14469,7 +14506,7 @@
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3>${profile.name}${verifiedMark}</h3>
+              <h3><span class="ask-for-label">Ask for</span><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
