@@ -10913,6 +10913,88 @@
       }
     }
 
+    .demo-jump-box {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 36;
+      width: min(320px, calc(100vw - 28px));
+      padding: 12px;
+      border: 1px solid rgba(168,85,247,.32);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.055), transparent 72%),
+        rgba(8,8,12,.92);
+      box-shadow: 0 24px 70px rgba(0,0,0,.56), 0 0 26px rgba(168,85,247,.14);
+      backdrop-filter: blur(18px);
+    }
+
+    .demo-jump-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .demo-jump-head strong {
+      color: #f7f3ff;
+      font-size: 13px;
+      line-height: 1.15;
+    }
+
+    .demo-jump-head span {
+      color: #b9b0c7;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .demo-jump-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .demo-jump-actions button {
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid rgba(168,85,247,.24);
+      border-radius: 999px;
+      color: #eee8fb;
+      background: rgba(14,14,20,.82);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.1;
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .demo-jump-actions button:hover,
+    .demo-jump-actions button:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(168,85,247,.52);
+      box-shadow: 0 0 18px rgba(168,85,247,.18);
+    }
+
+    @media (max-width: 560px) {
+      .demo-jump-box {
+        right: 10px;
+        bottom: 10px;
+        padding: 10px;
+      }
+
+      .demo-jump-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .demo-jump-actions button {
+        min-height: 38px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -11544,6 +11626,20 @@
     </div>
 
     <div class="toast" id="toast" role="status"></div>
+    <aside class="demo-jump-box" aria-label="Temporary demo quick jump">
+      <div class="demo-jump-head">
+        <div>
+          <span>Temporary</span>
+          <strong>Demo quick jump</strong>
+        </div>
+      </div>
+      <div class="demo-jump-actions">
+        <button type="button" data-demo-jump="approved-dancer">Approved dancer</button>
+        <button type="button" data-demo-jump="pending-dancer">Pending dancer</button>
+        <button type="button" data-demo-jump="new-dancer">New dancer setup</button>
+        <button type="button" data-demo-jump="customer">Approved customer</button>
+      </div>
+    </aside>
   </div>
 
   <script>
@@ -13230,6 +13326,83 @@
       syncOverlayScrollLock();
     }
 
+    function closeDemoSurfaces() {
+      closeAuthPage();
+      closeDancerSignupPage();
+      closeStripeCheckoutPage();
+      closeDashboard();
+      closeDancerDashboard();
+      closeAdminDashboard();
+      closeProfileModal();
+      closeUtilityMenu();
+    }
+
+    function openApprovedDancerDemo() {
+      closeDemoSurfaces();
+      citySelect.value = "Las Vegas";
+      document.getElementById("dancerStageName").value = "Maya Lux";
+      document.getElementById("dancerEmail").value = "maya@dancr.app";
+      document.getElementById("dancerCity").value = "Las Vegas";
+      Object.assign(dancerSetup, {
+        profile: true,
+        photos: true,
+        verification: true,
+        approval: true,
+        shift: true
+      });
+      dancerSignupStarted = true;
+      stripeConfirmed = true;
+      setupChecklistExpanded = false;
+      activeSetupStep = "";
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
+      activeDashboardType = "dancer";
+      updateAccountHeader();
+      ensureActiveDancerProfile("Verified");
+      showToast("Approved dancer demo");
+      openDancerDashboard();
+    }
+
+    function openPendingDancerDemo() {
+      closeDemoSurfaces();
+      citySelect.value = "Las Vegas";
+      document.getElementById("dancerStageName").value = "Lena Vale";
+      document.getElementById("dancerEmail").value = "pending@dancr.app";
+      document.getElementById("dancerCity").value = "Las Vegas";
+      Object.assign(dancerSetup, {
+        profile: true,
+        photos: true,
+        verification: true,
+        approval: false,
+        shift: false
+      });
+      dancerSignupStarted = true;
+      stripeConfirmed = true;
+      setupChecklistExpanded = true;
+      activeSetupStep = "approval";
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
+      activeDashboardType = "dancer";
+      updateAccountHeader();
+      ensureActiveDancerProfile("Pending");
+      showToast("Pending dancer demo");
+      openDancerDashboard();
+    }
+
+    function openApprovedCustomerDemo() {
+      closeDemoSurfaces();
+      citySelect.value = "Las Vegas";
+      isCustomerLoggedIn = true;
+      isDancerLoggedIn = false;
+      activeDashboardType = "customer";
+      dashboardTonightExpanded = false;
+      dashboardFollowedExpanded = false;
+      dashboardVenuesExpanded = false;
+      updateAccountHeader();
+      showToast("Customer demo");
+      openDashboard();
+    }
+
     function setupOrder() {
       return ["profile", "photos", "verification", "approval"];
     }
@@ -14222,6 +14395,18 @@
 
     document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
     document.getElementById("demoDancerSetupBtn").addEventListener("click", startDemoDancerSetup);
+
+    document.querySelector(".demo-jump-box").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-demo-jump]");
+      if (!button) return;
+      if (button.dataset.demoJump === "approved-dancer") openApprovedDancerDemo();
+      if (button.dataset.demoJump === "pending-dancer") openPendingDancerDemo();
+      if (button.dataset.demoJump === "new-dancer") {
+        closeDemoSurfaces();
+        startDemoDancerSetup();
+      }
+      if (button.dataset.demoJump === "customer") openApprovedCustomerDemo();
+    });
 
     document.getElementById("openDancerSignup").addEventListener("click", () => {
       closeAuthPage();
