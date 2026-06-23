@@ -1,0 +1,8 @@
+{
+  "name": "dancr-static-demo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo Static Dancr demo ready"
+  }
+}
