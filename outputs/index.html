@@ -14279,6 +14279,14 @@
       stroke: #22C7FF !important;
       filter: drop-shadow(0 0 8px rgba(34, 199, 255, 0.34)) !important;
     }
+
+    /* Location pins stay blue, but quieter than verified checks and schedule status. */
+    .dancer-card .card-venue-line .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) .venue-dot,
+    .venue-shift-copy .venue-dot:first-child {
+      color: rgba(34, 199, 255, 0.82) !important;
+      filter: drop-shadow(0 0 5px rgba(34, 199, 255, 0.28)) !important;
+    }
   </style>
 </head>
 <body>
