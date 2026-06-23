@@ -12077,6 +12077,169 @@
       border-color: rgba(255, 255, 255, 0.2);
       background: rgba(255, 255, 255, 0.16);
     }
+
+    /* Premium Vegas nightlife polish */
+    .reference-hero {
+      background:
+        radial-gradient(circle at 72% 36%, rgba(255, 47, 174, 0.18), transparent 0 18rem),
+        radial-gradient(circle at 92% 52%, rgba(124, 58, 237, 0.36), transparent 0 22rem),
+        radial-gradient(ellipse at 50% 120%, rgba(255, 47, 174, 0.08), transparent 0 36rem),
+        linear-gradient(90deg, #050507 0%, #080711 46%, #180a3a 74%, #2d1077 100%);
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.76),
+        0 0 44px rgba(124, 58, 237, 0.22),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+        inset 0 0 68px rgba(255, 47, 174, 0.07);
+    }
+
+    .reference-hero:after {
+      width: 3px;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.35) 10%, #ff2fae 34%, #f4d5ff 50%, #8b5cf6 68%, rgba(34, 199, 255, 0.24) 88%, transparent 100%);
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.52),
+        0 0 24px rgba(255, 47, 174, 0.62),
+        0 0 56px rgba(139, 92, 246, 0.68),
+        34px 0 90px rgba(124, 58, 237, 0.42),
+        -46px 0 92px rgba(255, 47, 174, 0.18);
+      opacity: 0.98;
+    }
+
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend,
+    .venue-shift-rank {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.22);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 42%),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.92) 0%, rgba(236, 72, 153, 0.9) 100%);
+      box-shadow:
+        0 0 22px rgba(139, 92, 246, 0.32),
+        0 0 24px rgba(236, 72, 153, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        inset 0 -12px 20px rgba(5, 5, 7, 0.16);
+      transform: translateZ(0);
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      border-color: rgba(255, 231, 150, 0.6);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 43%),
+        linear-gradient(135deg, #d8a935 0%, #ff2fae 100%);
+      box-shadow:
+        0 0 28px rgba(255, 191, 64, 0.36),
+        0 0 30px rgba(255, 47, 174, 0.28),
+        0 0 42px rgba(124, 58, 237, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.38),
+        inset 0 -14px 24px rgba(5, 5, 7, 0.16);
+      animation: rankOnePulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes rankOnePulse {
+      0%, 100% {
+        filter: brightness(1);
+        box-shadow:
+          0 0 22px rgba(255, 191, 64, 0.3),
+          0 0 24px rgba(255, 47, 174, 0.24),
+          0 0 34px rgba(124, 58, 237, 0.16),
+          inset 0 1px 0 rgba(255, 255, 255, 0.36),
+          inset 0 -14px 24px rgba(5, 5, 7, 0.16);
+      }
+      50% {
+        filter: brightness(1.08);
+        box-shadow:
+          0 0 34px rgba(255, 191, 64, 0.46),
+          0 0 34px rgba(255, 47, 174, 0.32),
+          0 0 50px rgba(124, 58, 237, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.42),
+          inset 0 -14px 24px rgba(5, 5, 7, 0.12);
+      }
+    }
+
+    .badge.trend .badge-icon,
+    .venue-shift-rank .badge-icon {
+      color: #ffffff;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.72))
+        drop-shadow(0 0 9px rgba(236, 72, 153, 0.72));
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 1000;
+      letter-spacing: 0.01em;
+    }
+
+    .card-schedule-text .schedule-time {
+      opacity: 0.82;
+      font-weight: 850;
+    }
+
+    .card-schedule-text.tonight .schedule-label {
+      color: #ff9bd7;
+      text-shadow: 0 0 16px rgba(255, 47, 174, 0.62);
+    }
+
+    .card-schedule-text.upcoming .schedule-label {
+      color: #8ee4ff;
+      text-shadow: 0 0 14px rgba(34, 199, 255, 0.42);
+    }
+
+    .tabs .tab.active,
+    .tabs .tab.active[data-tab="tonight"],
+    .tab.active,
+    .tab.active[data-tab="tonight"] {
+      box-shadow:
+        0 18px 42px rgba(124, 58, 237, 0.36),
+        0 0 34px rgba(255, 47, 174, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .action-btn,
+    .badge,
+    .tab,
+    .venue,
+    .dancer-card,
+    .modal-card,
+    .info-tile {
+      transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background 180ms ease,
+        opacity 180ms ease;
+    }
+
+    .action-btn:hover,
+    .action-btn:focus-visible,
+    .tab:hover,
+    .tab:focus-visible {
+      transform: translateY(-1px);
+    }
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible,
+    .venue:hover,
+    .venue:focus-visible,
+    .modal-card:hover,
+    .info-tile:hover {
+      box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.52),
+        0 0 30px rgba(124, 58, 237, 0.2),
+        0 0 22px rgba(255, 47, 174, 0.12);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .badge.trend.rank-one,
+      .dancer-card .badge.trend.rank-one,
+      .profile-modal .badge.trend.rank-one,
+      .venue-shift-rank.rank-one {
+        animation: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -13954,9 +14117,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text tonight">Tonight • ${compactCardShiftTime(profile.time)}</span></div>`
+          ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Tonight</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
           : profile.scheduled
-            ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming">${upcomingLabel} • ${compactCardShiftTime(profile.time)}</span></div>`
+            ? `<div class="schedule-row">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
