@@ -11132,7 +11132,7 @@
           </details>
           <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
         </div>
-        <div class="auth-card">
+        <div class="auth-card approved-analytics">
           <div class="value-message" id="dancerValueMessage">Posting your schedule brings customers, followers, and direction requests.</div>
           <h3>Last 30 days</h3>
           <div class="metric-grid" id="dancerLast30Metrics" aria-label="Dancer profile metrics"></div>
@@ -13116,24 +13116,14 @@
           metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
           metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Notification opens"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Club direction requests"),
-          metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added"),
-          metricCardMarkup(compactNumber(dashboardMetrics.interestedClicks), "Interested clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
-          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "Search appearances")
+          metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added")
         ].join("");
         document.getElementById("dancerConversionMetrics").innerHTML = [
           metricCardMarkup(`${dashboardMetrics.profileToFollowRate}%`, "Profile to follow rate"),
           metricCardMarkup(`${dashboardMetrics.scheduleToGoingRate}%`, "Schedule to Going Tonight"),
           metricCardMarkup(`${dashboardMetrics.directionRate}%`, "Schedule to directions"),
-          metricCardMarkup(`${dashboardMetrics.socialClickRate}%`, "Profile to social clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.directionsAfterProfile), "Directions after profile views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.venueClicksFromProfile), "Venue clicks from profile")
+          metricCardMarkup(`${dashboardMetrics.socialClickRate}%`, "Profile to social clicks")
         ].join("");
         document.getElementById("dancerScheduleMetrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
@@ -13141,15 +13131,13 @@
           metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Alert opens"),
           metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.interestedClicks), "Interested clicks"),
-          metricCardMarkup(`${dashboardMetrics.profileCompleteness}%`, "Profile completeness")
+          metricCardMarkup(compactNumber(lastPostedShift?.noticeCounts?.total || shiftRecipientCounts(activeProfile, city).total), "Last shift sent to")
         ].join("");
         document.getElementById("dancerAudienceMetrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.nearbyViews), "Nearby customer views"),
           metricCardMarkup(compactNumber(dashboardMetrics.returningViewers), "Returning viewers"),
           metricCardMarkup(compactNumber(dashboardMetrics.peakHourViews), "Peak-hour views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances"),
-          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
-          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Audience with alerts on")
+          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances")
         ].join("");
         document.getElementById("dancerMomentumMetrics").innerHTML = [
           metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
@@ -13157,34 +13145,26 @@
           metricCardMarkup(`Up ${dashboardMetrics.rankGain}`, "Spots this week"),
           metricCardMarkup("Top 10", "Most viewed"),
           metricCardMarkup("Top 10", "Most followed"),
-          metricCardMarkup(compactNumber(dashboardMetrics.signals.recentActivity), "Visit signals this week"),
-          metricCardMarkup(`${compactNumber(dashboardMetrics.goingTonightClicks)} • ${compactNumber(dashboardMetrics.interestedClicks)}`, "Going Tonight • Interested"),
-          metricCardMarkup("Top 10 is close", "Momentum target"),
-          metricCardMarkup("Most followed", "This week")
+          metricCardMarkup(`${compactNumber(dashboardMetrics.goingTonightClicks)} • ${compactNumber(dashboardMetrics.interestedClicks)}`, "Going Tonight • Interested")
         ].join("");
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares"),
-          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "Search appearances")
+          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares")
         ].join("");
         document.getElementById("dancerStreakMetrics").innerHTML = [
           metricCardMarkup(`${dashboardMetrics.streak} shifts`, "Posted in a row"),
           metricCardMarkup("Active", "This month"),
           metricCardMarkup(`${Math.max(2, Math.round(dashboardMetrics.streak / 2))} weeks`, "Weekly schedule streak"),
-          metricCardMarkup("Ready", "Followers waiting"),
-          metricCardMarkup(compactNumber(lastPostedShift?.noticeCounts?.total || shiftRecipientCounts(activeProfile, city).total), "Last posted shift sent"),
           metricCardMarkup("Weekly summary", "Auto report ready")
         ].join("");
         document.getElementById("dancerClubMetrics").innerHTML = [
           metricCardMarkup(dashboardMetrics.venue, "Most viewed club tonight"),
           metricCardMarkup(`#${dashboardMetrics.venueRank}`, "Venue visibility rank"),
           metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests"),
-          metricCardMarkup("Trending venue", "Club momentum"),
-          metricCardMarkup("Top performers", "Compared locally")
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests")
         ].join("");
         document.getElementById("dancerWeeklySummary").textContent =
           `Your Week on Dancr: ${compactNumber(dashboardMetrics.weeklyViews)} profile views, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyInstagram)} Instagram clicks, ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals, and ${compactNumber(Math.round(dashboardMetrics.directionRequests30 * .24))} direction requests.`;
@@ -13193,8 +13173,7 @@
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyInstagram), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals"),
-          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.notificationOpens * .26)), "Notification opens"),
-          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.scheduleViews30 * .24)), "Schedule views")
+          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.notificationOpens * .26)), "Notification opens")
         ].join("");
       } else {
         document.getElementById("dancerValueMessage").textContent = "Complete setup and approval to unlock the full value dashboard: profile views, schedule views, follower growth, social clicks, rankings, and club direction requests.";
@@ -13205,24 +13184,14 @@
           "Notifications sent",
           "Notification opens",
           "Club direction requests",
-          "Club page clicks",
-          "Instagram clicks",
-          "Snapchat clicks",
-          "TikTok clicks",
-          "X clicks",
-          "Favorites added",
-          "Interested clicks",
           "Going Tonight clicks",
-          "Profile shares",
-          "Search appearances"
+          "Favorites added"
         ]);
         document.getElementById("dancerConversionMetrics").innerHTML = lockedMetricCards([
           "Profile to follow rate",
           "Schedule to Going Tonight",
           "Schedule to directions",
-          "Profile to social clicks",
-          "Directions after profile views",
-          "Venue clicks from profile"
+          "Profile to social clicks"
         ]);
         document.getElementById("dancerScheduleMetrics").innerHTML = lockedMetricCards([
           "Schedule views",
@@ -13230,15 +13199,13 @@
           "Alert opens",
           "Going Tonight clicks",
           "Interested clicks",
-          "Profile completeness"
+          "Last shift sent to"
         ]);
         document.getElementById("dancerAudienceMetrics").innerHTML = lockedMetricCards([
           "Nearby customer views",
           "Returning viewers",
           "Peak-hour views",
-          "City search appearances",
-          "Profile shares",
-          "Audience with alerts on"
+          "City search appearances"
         ]);
         document.getElementById("dancerMomentumMetrics").innerHTML = lockedMetricCards([
           `Trending in ${city}`,
@@ -13246,34 +13213,26 @@
           "Spots this week",
           "Most viewed",
           "Most followed",
-          "Visit signals this week",
-          "Going Tonight • Interested",
-          "Momentum target",
-          "This week"
+          "Going Tonight • Interested"
         ]);
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Instagram clicks",
           "Snapchat clicks",
           "TikTok clicks",
           "X clicks",
-          "Profile shares",
-          "Search appearances"
+          "Profile shares"
         ]);
         document.getElementById("dancerStreakMetrics").innerHTML = lockedMetricCards([
           "Posted in a row",
           "Active this month",
           "Weekly schedule streak",
-          "Followers waiting",
-          "Last posted shift sent",
           "Auto report ready"
         ]);
         document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
           "Most viewed club tonight",
           "Venue visibility rank",
           "Club page clicks",
-          "Direction requests",
-          "Club momentum",
-          "Compared locally"
+          "Direction requests"
         ]);
         document.getElementById("dancerWeeklySummary").textContent = "Your weekly summary unlocks after approval and starts tracking profile views, followers, social clicks, Going Tonight signals, and direction requests.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
@@ -13281,8 +13240,7 @@
           "New followers",
           "Instagram clicks",
           "Going Tonight signals",
-          "Notification opens",
-          "Schedule views"
+          "Notification opens"
         ]);
       }
       const setupWrap = document.getElementById("setupChecklistWrap");
