@@ -9841,10 +9841,14 @@
     .profile-modal .social-tile {
       position: relative;
       min-height: 0;
-      padding: 12px 66px 12px 16px;
+      padding: 12px 16px;
     }
 
     .profile-modal .social-tile .social-tile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 8px;
     }
 
@@ -9855,9 +9859,6 @@
     }
 
     .profile-modal .social-tile .profile-share-trigger {
-      position: absolute;
-      top: 12px;
-      right: 14px;
       width: 38px;
       height: 38px;
       flex-basis: 38px;
@@ -9866,6 +9867,7 @@
     .profile-modal .social-tile .social-links {
       gap: 6px;
       margin-top: 0;
+      max-width: 100%;
     }
 
     .profile-modal .social-tile .social-link {
@@ -9926,11 +9928,10 @@
 
     @media (max-width: 420px) {
       .profile-modal .social-tile {
-        padding: 11px 58px 11px 12px;
+        padding: 11px 12px;
       }
 
       .profile-modal .social-tile .profile-share-trigger {
-        right: 12px;
         width: 34px;
         height: 34px;
       }
