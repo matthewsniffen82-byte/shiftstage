@@ -1694,6 +1694,29 @@
       gap: 10px;
     }
 
+    .field-note,
+    .stage-name-note {
+      margin-top: 2px;
+      color: #B8B8C5;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.36;
+    }
+
+    .stage-name-note {
+      padding: 10px 12px;
+      border: 1px solid rgba(255,47,174,.24);
+      border-radius: 14px;
+      color: rgba(255,255,255,.92);
+      background: linear-gradient(135deg, rgba(124,58,237,.14), rgba(255,47,174,.10));
+      box-shadow: inset 0 0 16px rgba(255,47,174,.05), 0 0 20px rgba(124,58,237,.08);
+    }
+
+    .field-note strong,
+    .stage-name-note strong {
+      color: #22C7FF;
+    }
+
     input[type="email"],
     input[type="password"],
     input[type="text"] {
@@ -12729,8 +12752,14 @@
         <div class="auth-card">
           <form class="auth-form" id="dancerSignupForm">
             <div class="field">
+              <label for="dancerLegalName">Real legal name</label>
+              <input id="dancerLegalName" type="text" value="Mira Santos" autocomplete="name">
+              <div class="field-note"><strong>Private verification only.</strong> This is used for ID/selfie review and billing records. It is never shown on your public profile.</div>
+            </div>
+            <div class="field">
               <label for="dancerStageName">Stage name</label>
               <input id="dancerStageName" type="text" value="Mira Nova">
+              <div class="stage-name-note"><strong>Shown publicly:</strong> Customers see this name on profile cards, schedules, search, and your full profile.</div>
             </div>
             <div class="field">
               <label for="dancerEmail">Email</label>
@@ -14799,6 +14828,7 @@
     function openApprovedDancerDemo() {
       closeDemoSurfaces();
       citySelect.value = "Las Vegas";
+      document.getElementById("dancerLegalName").value = "Maya Lawson";
       document.getElementById("dancerStageName").value = "Maya Lux";
       document.getElementById("dancerEmail").value = "maya@dancr.app";
       document.getElementById("dancerCity").value = "Las Vegas";
@@ -14825,6 +14855,7 @@
     function openPendingDancerDemo() {
       closeDemoSurfaces();
       citySelect.value = "Las Vegas";
+      document.getElementById("dancerLegalName").value = "Lena Carter";
       document.getElementById("dancerStageName").value = "Lena Vale";
       document.getElementById("dancerEmail").value = "pending@dancr.app";
       document.getElementById("dancerCity").value = "Las Vegas";
@@ -15137,7 +15168,16 @@
 
       const profileBody = `
         <form class="auth-form" data-setup-form="profile">
-          <div class="field"><label for="setupStageName">Stage name</label><input id="setupStageName" type="text" value="${document.getElementById("dancerStageName").value || ""}"></div>
+          <div class="field">
+            <label for="setupLegalName">Real legal name</label>
+            <input id="setupLegalName" type="text" value="${document.getElementById("dancerLegalName")?.value || ""}">
+            <div class="field-note"><strong>Private verification only.</strong> Dancr uses this for ID/selfie review and billing records. Customers never see it.</div>
+          </div>
+          <div class="field">
+            <label for="setupStageName">Stage name</label>
+            <input id="setupStageName" type="text" value="${document.getElementById("dancerStageName").value || ""}">
+            <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
+          </div>
           <div class="field"><label for="setupCity">City</label><input id="setupCity" type="text" value="${document.getElementById("dancerCity").value || citySelect.value}"></div>
           <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
           <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
@@ -15837,6 +15877,7 @@
     function startDemoDancerSetup() {
       dancerSignupStarted = true;
       stripeConfirmed = true;
+      document.getElementById("dancerLegalName").value = "";
       document.getElementById("dancerStageName").value = "Lena Vale";
       document.getElementById("dancerEmail").value = "newdancer@dancr.app";
       document.getElementById("dancerCity").value = "Las Vegas";
@@ -16067,6 +16108,7 @@
       const form = event.target.closest("[data-setup-form='profile']");
       if (!form) return;
       event.preventDefault();
+      const legalName = document.getElementById("setupLegalName").value.trim();
       const stageName = document.getElementById("setupStageName").value.trim();
       const city = document.getElementById("setupCity").value.trim();
       const rawSocials = {
@@ -16075,8 +16117,8 @@
         snapchat: document.getElementById("setupSnapchat").value.trim(),
         x: document.getElementById("setupX").value.trim()
       };
-      if (!stageName || !city) {
-        showToast("Stage name and city required");
+      if (!legalName || !stageName || !city) {
+        showToast("Real name, stage name, and city required");
         return;
       }
       if (hasBlockedSocialLink(Object.values(rawSocials))) {
@@ -16091,6 +16133,7 @@
         showToast("Use Instagram, TikTok, Snapchat, or X links only");
         return;
       }
+      document.getElementById("dancerLegalName").value = legalName;
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
       document.getElementById("dancerDashName").textContent = stageName;
