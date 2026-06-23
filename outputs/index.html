@@ -10819,21 +10819,37 @@
     }
 
     #customerDashboard .section-title-row {
+      position: relative;
       margin-top: 8px;
-      padding-top: 2px;
+      padding: 8px 0 2px 12px;
+    }
+
+    #customerDashboard .section-title-row:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 9px;
+      bottom: 3px;
+      width: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #35d8ff, #a855f7);
+      box-shadow: 0 0 16px rgba(53,216,255,.24), 0 0 18px rgba(168,85,247,.18);
     }
 
     #customerDashboard .section-title {
+      color: #f7f3ff;
       font-size: 22px;
       line-height: 1.12;
+      text-shadow: 0 0 18px rgba(168,85,247,.2);
     }
 
     #customerDashboard .section-context {
-      color: #b985ff;
-      border: 1px solid rgba(168,85,247,.22);
+      color: #8eeeff;
+      border: 1px solid rgba(53,216,255,.26);
       border-radius: 999px;
-      padding: 5px 10px;
-      background: rgba(168,85,247,.08);
+      padding: 5px 11px;
+      background: rgba(53,216,255,.075);
+      box-shadow: inset 0 0 14px rgba(53,216,255,.045);
     }
 
     #customerDashboard .customer-notification-card {
