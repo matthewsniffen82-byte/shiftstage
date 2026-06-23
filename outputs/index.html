@@ -11983,6 +11983,50 @@
     .club-mini small {
       color: #B8B8C5;
     }
+
+    .dancr-wordmark {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0;
+      font-family: var(--font-display);
+      font-size: clamp(36px, 5.4vw, 46px);
+      font-weight: 950;
+      line-height: .88;
+      letter-spacing: -.075em;
+      transform: translateY(-1px);
+      font-kerning: normal;
+    }
+
+    .dancr-wordmark .wordmark-light {
+      color: #FFFFFF;
+      text-shadow:
+        0 0 8px rgba(255, 255, 255, .26),
+        0 0 18px rgba(124, 58, 237, .10);
+    }
+
+    .dancr-wordmark .wordmark-violet {
+      margin-left: .015em;
+      color: transparent;
+      background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 45%, #FF2FAE 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      text-shadow: none;
+      filter:
+        drop-shadow(0 0 7px rgba(124, 58, 237, .58))
+        drop-shadow(0 0 10px rgba(255, 47, 174, .22));
+    }
+
+    .dancr-home-logo:hover .wordmark-violet {
+      filter:
+        drop-shadow(0 0 9px rgba(124, 58, 237, .72))
+        drop-shadow(0 0 14px rgba(255, 47, 174, .30));
+    }
+
+    @media (max-width: 520px) {
+      .dancr-wordmark {
+        font-size: 34px;
+      }
+    }
   </style>
 </head>
 <body>
