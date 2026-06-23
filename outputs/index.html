@@ -10738,6 +10738,119 @@
       }
     }
 
+    /* Customer dashboard polish */
+    #customerDashboard .customer-summary {
+      gap: 14px;
+      padding: 16px;
+      border-color: rgba(168,85,247,.26);
+      background:
+        radial-gradient(circle at 94% 0%, rgba(168,85,247,.16), transparent 0 15rem),
+        linear-gradient(180deg, rgba(255,255,255,.045), transparent 74%),
+        rgba(10,10,16,.86);
+      box-shadow: 0 22px 58px rgba(0,0,0,.48), inset 0 0 22px rgba(168,85,247,.045);
+    }
+
+    #customerDashboard .customer-summary h3 {
+      font-size: 22px;
+      line-height: 1.08;
+    }
+
+    #customerDashboard .customer-summary p {
+      max-width: 58ch;
+      color: #c5bdd3;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    #customerDashboard .dashboard-stats {
+      gap: 10px;
+    }
+
+    #customerDashboard .stat {
+      min-height: 76px;
+      padding: 13px 12px;
+      border-color: rgba(168,85,247,.18);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), transparent 76%),
+        rgba(14,14,19,.82);
+      box-shadow: 0 16px 42px rgba(0,0,0,.36), inset 0 0 18px rgba(255,255,255,.025);
+    }
+
+    #customerDashboard .stat strong {
+      color: #b985ff;
+      font-size: 24px;
+      text-shadow: 0 0 16px rgba(168,85,247,.28);
+    }
+
+    #customerDashboard .stat span {
+      color: #b9b0c7;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    #customerDashboard .section-title-row {
+      margin-top: 8px;
+      padding-top: 2px;
+    }
+
+    #customerDashboard .section-title {
+      font-size: 22px;
+      line-height: 1.12;
+    }
+
+    #customerDashboard .section-context {
+      color: #b985ff;
+      border: 1px solid rgba(168,85,247,.22);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: rgba(168,85,247,.08);
+    }
+
+    #customerDashboard .customer-notification-card {
+      border-color: rgba(168,85,247,.22);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), transparent 76%),
+        rgba(12,12,17,.82);
+    }
+
+    #customerDashboard .customer-card-copy {
+      margin-top: -6px;
+      color: #b9b0c7;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    #customerDashboard .toggle-row {
+      min-height: 52px;
+      border-color: rgba(168,85,247,.14);
+      background: rgba(9,9,13,.68);
+    }
+
+    #customerDashboard .toggle-row strong {
+      color: #ded8e8;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 560px) {
+      #customerDashboard .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #customerDashboard .stat {
+        min-height: 70px;
+        padding: 12px 10px;
+      }
+
+      #customerDashboard .stat strong {
+        font-size: 22px;
+      }
+
+      #customerDashboard .customer-summary-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -11338,6 +11451,7 @@
         <button class="view-all" id="dashVenueViewAll" hidden>View All Venues</button>
         <div class="auth-card customer-notification-card">
           <h3 class="section-title">Notification settings</h3>
+          <p class="customer-card-copy">Choose which dancer and venue alerts Dancr sends you. Your customer activity stays private.</p>
           <div class="toggle-list" id="notificationSettings"></div>
         </div>
       </div>
@@ -13501,11 +13615,11 @@
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       const notificationsOn = followed.filter((profile) => isNotificationOn(city, profile.name)).length;
       document.getElementById("dashboardCity").textContent = city;
-      document.getElementById("customerSummaryTitle").textContent = `Tonight in ${city}`;
+      document.getElementById("customerSummaryTitle").textContent = `Your ${city} night`;
       document.getElementById("customerSummaryCopy").textContent = workingTonight.length
-        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight in ${city}. Follow venues too for club schedule alerts and faster directions.`
-        : followed.length
-          ? `No followed dancers are working tonight in ${city}. Follow venues to track club schedules and find more dancers there.`
+        ? `${workingTonight.length} followed ${workingTonight.length === 1 ? "dancer is" : "dancers are"} working tonight. Your alerts, saved venues, and directions stay private.`
+        : followed.length || venues.length
+          ? `No followed dancers are working tonight. Your saved dancers and venues are ready for the next schedule update.`
           : `Follow dancers and venues in ${city} to build your private dashboard, schedule alerts, and directions list.`;
       document.getElementById("dashTonightCount").textContent = workingTonight.length;
       document.getElementById("dashFollowedCount").textContent = followed.length;
