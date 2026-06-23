@@ -2094,6 +2094,13 @@
       line-height: 1.15;
     }
 
+    .upload-slot > span:last-child {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
     .upload-slot-icon {
       width: 30px;
       height: 30px;
@@ -2140,6 +2147,15 @@
       white-space: normal;
       text-align: center;
       line-height: 1.2;
+    }
+
+    #setupChecklist .step-body > *,
+    #setupChecklist .rule-note,
+    #setupChecklist .info-tile {
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow-wrap: anywhere;
     }
 
     .toast {
@@ -13195,8 +13211,8 @@
             <span>Add another photo<small>Optional</small></span>
           </button>
         </div>
-        <div class="rule-note">Photos stay pending until admin approval. Approved photos appear in the public gallery; rejected photos stay hidden.</div>
-        <button class="action-btn" data-complete-step="photos">Submit photos for review</button>
+        <div class="rule-note">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
+        <button class="action-btn" data-complete-step="photos">Submit photos</button>
       `;
       const verificationBody = `
         <div class="info-tile setup-verification-card"><strong>Third-party check</strong><div class="meta">Verify ID and selfie. Your profile stays Pending until this is approved.</div></div>
