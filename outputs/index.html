@@ -11605,6 +11605,38 @@
       background: rgba(255, 255, 255, .16);
       border-color: rgba(255, 255, 255, .20);
     }
+
+    .profile-modal .follow-primary,
+    .profile-modal .follow-primary.is-following,
+    .profile-modal .going-btn:not(:disabled),
+    .action-btn.follow-venue-btn.is-following {
+      color: #FFFFFF;
+      border-color: transparent;
+      background: linear-gradient(135deg, #7C3AED 0%, #FF2FAE 100%);
+      box-shadow: 0 16px 36px rgba(124, 58, 237, .30), 0 0 24px rgba(255, 47, 174, .28);
+    }
+
+    .profile-modal .action-btn.secondary.is-following,
+    .profile-modal #notifyBtn.is-following {
+      color: #FFFFFF;
+      border-color: rgba(255, 47, 174, .48);
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, .18), rgba(255, 47, 174, .12)),
+        rgba(14, 14, 20, .92);
+      box-shadow: inset 0 0 18px rgba(255, 47, 174, .08), 0 0 20px rgba(124, 58, 237, .18);
+    }
+
+    .profile-modal .going-btn:not(:disabled) {
+      background: linear-gradient(135deg, #7C3AED 0%, #FF2FAE 58%, #7C3AED 100%);
+      box-shadow: 0 18px 42px rgba(124, 58, 237, .32), 0 0 30px rgba(255, 47, 174, .24);
+    }
+
+    .profile-modal .going-btn:disabled {
+      color: #B8B8C5;
+      border-color: rgba(124, 58, 237, .28);
+      background: rgba(14, 14, 20, .82);
+      box-shadow: inset 0 0 18px rgba(124, 58, 237, .06);
+    }
   </style>
 </head>
 <body>
