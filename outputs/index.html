@@ -13353,6 +13353,75 @@
         grid-template-columns: 1fr !important;
       }
     }
+
+    /* Final schedule hierarchy: status leads, time supports, spacing stays relaxed. */
+    .dancer-card .profile-body > .schedule-row {
+      margin-top: 5px !important;
+      column-gap: 8px !important;
+      align-items: center !important;
+    }
+
+    .dancer-card .profile-body > .schedule-row .venue-dot {
+      transform: none !important;
+      opacity: .92 !important;
+    }
+
+    .card-schedule-text {
+      display: inline-flex !important;
+      align-items: baseline !important;
+      flex-wrap: wrap !important;
+      gap: 3px !important;
+      line-height: 1.22 !important;
+      max-width: 100% !important;
+      white-space: normal !important;
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 950 !important;
+      letter-spacing: -0.01em !important;
+    }
+
+    .card-schedule-text .schedule-separator {
+      opacity: .68 !important;
+      font-weight: 680 !important;
+    }
+
+    .card-schedule-text .schedule-time {
+      font-weight: 720 !important;
+      opacity: .86 !important;
+      letter-spacing: -0.015em !important;
+    }
+
+    .card-schedule-text.tonight .schedule-label {
+      color: #ff8bd6 !important;
+      text-shadow: 0 0 15px rgba(255, 47, 174, .56) !important;
+    }
+
+    .card-schedule-text.upcoming .schedule-label {
+      color: #90e5ff !important;
+      text-shadow: 0 0 13px rgba(34, 199, 255, .46) !important;
+    }
+
+    .profile-modal .schedule-stack {
+      gap: 8px !important;
+    }
+
+    .profile-modal .schedule-stack .schedule-text-row,
+    .profile-modal .schedule-stack .detail-line {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    .profile-modal .modal-schedule-text {
+      font-weight: 820 !important;
+      line-height: 1.22 !important;
+    }
+
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      background: transparent !important;
+    }
   </style>
 </head>
 <body>
@@ -15451,8 +15520,8 @@
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
-              <div class="meta detail-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="schedule-text-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
+              <div class="meta detail-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
             </div>
           </div>
           ${tonightInterestTileMarkup(status)}
