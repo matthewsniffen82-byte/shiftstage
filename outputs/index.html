@@ -12741,6 +12741,203 @@
         width: 3px;
       }
     }
+    /* Dancr cleanup pass: unify current VIP purple/magenta palette across older layers. */
+    .reference-hero {
+      background:
+        radial-gradient(ellipse at 93% 50%, rgba(255, 47, 174, 0.26), transparent 0 16rem),
+        radial-gradient(ellipse at 88% 50%, rgba(124, 58, 237, 0.54), transparent 0 25rem),
+        radial-gradient(ellipse at 78% 42%, rgba(139, 92, 246, 0.24), transparent 0 23rem),
+        radial-gradient(ellipse at 34% 44%, rgba(255, 47, 174, 0.08), transparent 0 18rem),
+        linear-gradient(90deg, #050507 0%, #07060d 42%, #130821 70%, #2a0861 100%) !important;
+      box-shadow:
+        0 0 42px rgba(124, 58, 237, 0.24),
+        0 0 28px rgba(255, 47, 174, 0.1),
+        inset 0 0 0 1px rgba(124, 58, 237, 0.36),
+        inset -118px 0 172px rgba(124, 58, 237, 0.38) !important;
+    }
+
+    .reference-hero::after {
+      right: clamp(28px, 6vw, 50px) !important;
+      width: 4px !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.72) 16%, rgba(236, 72, 153, 0.94) 43%, rgba(139, 92, 246, 0.96) 58%, rgba(255, 255, 255, 0.58) 84%, rgba(255, 255, 255, 0)) !important;
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.58),
+        0 0 24px rgba(236, 72, 153, 0.64),
+        0 0 52px rgba(139, 92, 246, 0.7),
+        0 0 94px rgba(124, 58, 237, 0.44) !important;
+      opacity: 0.98 !important;
+    }
+
+    .reference-hero::before {
+      background:
+        radial-gradient(ellipse at 90% 50%, rgba(255, 47, 174, 0.16), transparent 0 13rem),
+        radial-gradient(ellipse at 86% 50%, rgba(124, 58, 237, 0.25), transparent 0 20rem) !important;
+      opacity: 0.86 !important;
+    }
+
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 47, 174, 0.44) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 45%),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(255, 47, 174, 0.38)) !important;
+      box-shadow:
+        0 0 18px rgba(124, 58, 237, 0.26),
+        0 0 16px rgba(255, 47, 174, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 -10px 18px rgba(5, 5, 7, 0.22) !important;
+      backdrop-filter: blur(14px) saturate(1.18);
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter: drop-shadow(0 0 8px rgba(255, 47, 174, 0.72));
+    }
+
+    .dancer-card .profile-body h3 {
+      display: block !important;
+      font-size: clamp(17px, 4.35vw, 22px) !important;
+      line-height: 1.06 !important;
+    }
+
+    .dancer-card .ask-for-label {
+      display: none !important;
+    }
+
+    .dancer-card .ask-for-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      max-width: 100%;
+      color: rgba(255, 255, 255, 0.72);
+      font-family: var(--font-name);
+      font-size: 0.82em;
+      font-weight: 650;
+      letter-spacing: 0;
+      white-space: nowrap;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+    }
+
+    .dancer-card .card-stage-name {
+      color: #FFFFFF;
+      font-size: 1.1em;
+      font-weight: 700;
+    }
+
+    .dancer-card .card-info-stack {
+      gap: 5px !important;
+    }
+
+    .card-schedule-text {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      min-width: 0;
+      letter-spacing: -0.01em;
+      text-shadow: 0 0 12px currentColor;
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 900;
+    }
+
+    .card-schedule-text .schedule-time,
+    .card-schedule-text .schedule-separator {
+      font-weight: 760;
+      opacity: 0.84;
+    }
+
+    .card-schedule-text.tonight {
+      color: #FF5FC1 !important;
+    }
+
+    .card-schedule-text.upcoming {
+      color: #74D8FF !important;
+    }
+
+    .venue.venue-card {
+      border-color: rgba(124, 58, 237, 0.36) !important;
+      background:
+        radial-gradient(circle at 14% 50%, rgba(255, 47, 174, 0.1), transparent 0 28%),
+        radial-gradient(circle at 96% 18%, rgba(34, 199, 255, 0.07), transparent 0 28%),
+        linear-gradient(135deg, rgba(17, 17, 24, 0.98), rgba(5, 5, 7, 0.98)) !important;
+      box-shadow:
+        0 20px 54px rgba(0, 0, 0, 0.58),
+        0 0 22px rgba(124, 58, 237, 0.13),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    }
+
+    .venue.venue-card:hover,
+    .venue.venue-card:focus-visible {
+      border-color: rgba(255, 47, 174, 0.54) !important;
+      box-shadow:
+        0 26px 64px rgba(0, 0, 0, 0.66),
+        0 0 34px rgba(124, 58, 237, 0.28),
+        0 0 26px rgba(255, 47, 174, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .venue.venue-card .venue-art {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 47, 174, 0.22), transparent 0 24%),
+        radial-gradient(circle at 58% 48%, rgba(124, 58, 237, 0.38), transparent 0 44%),
+        linear-gradient(135deg, rgba(14, 14, 20, 0.98), rgba(5, 5, 7, 0.98)) !important;
+    }
+
+    .ghost,
+    .action-btn.secondary,
+    .menu-btn,
+    .legal-link,
+    .auth-tab:not(.active),
+    .tab:not(.active) {
+      border-color: rgba(124, 58, 237, 0.3) !important;
+      background: rgba(14, 14, 20, 0.72) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+    }
+
+    .ghost:hover,
+    .action-btn.secondary:hover,
+    .menu-btn:hover,
+    .legal-link:hover,
+    .auth-tab:not(.active):hover,
+    .tab:not(.active):hover {
+      border-color: rgba(255, 47, 174, 0.42) !important;
+      box-shadow:
+        0 0 18px rgba(124, 58, 237, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    }
+
+    .tab.active,
+    .auth-tab.active {
+      box-shadow:
+        0 0 28px rgba(124, 58, 237, 0.42),
+        0 0 22px rgba(255, 47, 174, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    }
+
+    #dancerDashboard .metric-card strong,
+    #dancerDashboard .stat strong {
+      color: #FF5FC1 !important;
+      text-shadow: 0 0 18px rgba(255, 47, 174, 0.26);
+    }
+
+    #customerDashboard .metric-card strong,
+    #customerDashboard .stat strong,
+    #customerDashboard [data-dashboard-jump] strong {
+      color: #C084FC !important;
+      text-shadow: 0 0 16px rgba(124, 58, 237, 0.2);
+    }
+
+    #customerDashboard .rule-note,
+    #customerDashboard .value-message {
+      border-left-color: #22C7FF !important;
+      box-shadow: inset 0 0 18px rgba(34, 199, 255, 0.05);
+    }
   </style>
 </head>
 <body>
@@ -14648,7 +14845,7 @@
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3><span class="ask-for-label">Ask for</span><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
+              <h3><span class="ask-for-inline">Ask for <span class="card-stage-name">${profile.name}${verifiedMark}</span></span></h3>
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
