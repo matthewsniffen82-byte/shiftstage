@@ -2073,14 +2073,16 @@
 
     .photo-upload-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
     }
 
     .upload-slot {
-      min-height: 86px;
+      min-height: 92px;
       display: grid;
       place-items: center;
+      gap: 6px;
+      padding: 12px 8px;
       border: 1px dashed rgba(53,216,255,.24);
       border-radius: 14px;
       color: var(--muted);
@@ -2088,6 +2090,38 @@
       box-shadow: inset 0 0 18px rgba(53,216,255,.04);
       font-size: 12px;
       text-align: center;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .upload-slot-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #0b0b10;
+      background: linear-gradient(135deg, #a855f7, #38bdf8);
+      box-shadow: 0 0 18px rgba(168,85,247,.22);
+    }
+
+    .upload-slot small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 560px) {
+      .photo-upload-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .upload-slot {
+        min-height: 72px;
+        grid-template-columns: auto minmax(0, 1fr);
+        justify-items: start;
+        text-align: left;
+      }
     }
 
     .toast {
@@ -13130,9 +13164,18 @@
       `;
       const photosBody = `
         <div class="photo-upload-grid">
-          <div class="upload-slot">Photo 1</div>
-          <div class="upload-slot">Photo 2</div>
-          <div class="upload-slot">Photo 3</div>
+          <button class="upload-slot" type="button" aria-label="Upload main profile photo">
+            <span class="upload-slot-icon">+</span>
+            <span>Upload main photo<small>Full body or portrait</small></span>
+          </button>
+          <button class="upload-slot" type="button" aria-label="Upload gallery photo">
+            <span class="upload-slot-icon">+</span>
+            <span>Upload gallery photo<small>For review</small></span>
+          </button>
+          <button class="upload-slot" type="button" aria-label="Upload another gallery photo">
+            <span class="upload-slot-icon">+</span>
+            <span>Add another photo<small>Optional</small></span>
+          </button>
         </div>
         <div class="rule-note">Photos stay pending until admin approval. Approved photos appear in the public gallery; rejected photos stay hidden.</div>
         <button class="action-btn" data-complete-step="photos">Submit photos for review</button>
