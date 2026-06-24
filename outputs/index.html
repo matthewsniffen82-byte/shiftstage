@@ -15635,6 +15635,7 @@
     let dashboardFollowedExpanded = false;
     let dashboardVenuesExpanded = false;
     const goingTonightByProfile = {};
+    const goingTonightSavedByProfile = {};
     const trendEventStoreKey = "dancrTrendEventsV1";
     const trendEventStore = loadTrendEventStore();
 
@@ -15811,6 +15812,12 @@
       const notificationList = notifiedByCity[city] || (notifiedByCity[city] = []);
       if (!notificationList.includes(profileName)) notificationList.push(profileName);
       recordUniqueTrendEvent("interested", city, profileName);
+    }
+
+    function disableProfileNotifications(city, profileName) {
+      const notificationList = notifiedByCity[city] || (notifiedByCity[city] = []);
+      const index = notificationList.indexOf(profileName);
+      if (index >= 0) notificationList.splice(index, 1);
     }
 
     function followerNumber(profile, city = selectedCity()) {
@@ -16959,8 +16966,9 @@
         const status = shiftStatus(profile);
         const isFollowed = isFollowingProfile(city, profile.name);
         const isNotified = isNotificationOn(city, profile.name);
+        const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
         const goingButton = status.state === "active"
-          ? `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}">${actionButtonLabel("clock", "I'm Going Tonight")}</button>`
+          ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""}" id="goingBtn" data-profile="${profile.name}">${actionButtonLabel(isGoingTonight ? "check" : "clock", isGoingTonight ? "You're going tonight" : "I'm Going Tonight")}</button>`
           : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${actionButtonLabel("clock", status.state === "scheduled" ? "Going opens later" : "No active shift tonight")}</button>`;
         modalBody.innerHTML = `
           <div class="modal-grid">
@@ -18098,25 +18106,36 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "notifyBtn") {
-        enableProfileNotifications(citySelect.value, actionButton.dataset.profile);
-        actionButton.innerHTML = actionButtonLabel("check", "Notifications On");
-        actionButton.classList.add("is-following");
-        showToast("Notifications enabled");
+        const city = citySelect.value;
+        const profileName = actionButton.dataset.profile;
+        if (actionButton.classList.contains("is-following")) {
+          disableProfileNotifications(city, profileName);
+          actionButton.innerHTML = actionButtonLabel("bell", "Notify Me");
+          actionButton.classList.remove("is-following");
+          showToast("Notifications off");
+        } else {
+          enableProfileNotifications(city, profileName);
+          actionButton.innerHTML = actionButtonLabel("check", "Notifications On");
+          actionButton.classList.add("is-following");
+          showToast("Notifications on");
+        }
+        if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "goingBtn") {
         if (actionButton.disabled) return;
-        if (actionButton.classList.contains("is-going")) return;
         const profileName = actionButton.dataset.profile;
         const countEl = document.getElementById("tonightInterestCount");
         const currentCount = Number(countEl?.textContent.match(/[\d,]+/)?.[0].replace(/,/g, "")) || 0;
-        goingTonightByProfile[profileName] = currentCount + 1;
+        const wasGoing = actionButton.classList.contains("is-going");
+        goingTonightByProfile[profileName] = Math.max(0, currentCount + (wasGoing ? -1 : 1));
+        goingTonightSavedByProfile[profileName] = !wasGoing;
         if (countEl) {
           countEl.classList.remove("muted");
           countEl.textContent = `${goingTonightByProfile[profileName].toLocaleString()} going`;
         }
-        actionButton.classList.add("is-going");
-        actionButton.innerHTML = actionButtonLabel("check", "You're going tonight");
-        showToast("Added to tonight");
+        actionButton.classList.toggle("is-going", !wasGoing);
+        actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? "I'm Going Tonight" : "You're going tonight");
+        showToast(wasGoing ? "Removed from tonight" : "Added to tonight");
       }
     });
 
