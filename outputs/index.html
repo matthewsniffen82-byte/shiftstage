@@ -15855,6 +15855,95 @@
         0 12px 30px rgba(124, 58, 237, 0.30),
         0 0 20px rgba(139, 92, 246, 0.20) !important;
     }
+    /* Full profile tile normalization: same rhythm for tonight, upcoming, and no-shift states. */
+    .profile-modal .modal-grid {
+      align-items: stretch !important;
+    }
+
+    .profile-modal .modal-grid .info-tile {
+      min-height: 118px !important;
+      padding: 20px 22px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+    }
+
+    .profile-modal .modal-grid .info-tile > strong {
+      margin: 0 0 4px !important;
+      font-size: clamp(0.86rem, 2.45vw, 1rem) !important;
+      line-height: 1.1 !important;
+      letter-spacing: 0.14em !important;
+    }
+
+    .profile-modal .schedule-stack,
+    .profile-modal .detail-line,
+    .profile-modal .schedule-text-row {
+      gap: 10px !important;
+      margin: 0 !important;
+      align-items: center !important;
+      line-height: 1.22 !important;
+    }
+
+    .profile-modal .schedule-stack {
+      gap: 9px !important;
+    }
+
+    .profile-modal .upcoming-venue-line,
+    .profile-modal .tonight-time-row,
+    .profile-modal .upcoming-time-row {
+      min-height: 24px !important;
+    }
+
+    .profile-modal .modal-schedule-text,
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      display: inline !important;
+      max-width: 100% !important;
+      font-size: clamp(1.05rem, 3.2vw, 1.22rem) !important;
+      line-height: 1.2 !important;
+      letter-spacing: 0 !important;
+      white-space: normal !important;
+      word-break: normal !important;
+      overflow-wrap: anywhere !important;
+      text-shadow:
+        0 0 10px currentColor,
+        0 0 18px rgba(139, 92, 246, 0.16) !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #7ddfff !important;
+    }
+
+    .profile-modal .modal-schedule-text.tonight {
+      color: #ff5fc8 !important;
+    }
+
+    .profile-modal .interest-count,
+    .profile-modal .metric-value,
+    .profile-modal .metric-number {
+      font-size: clamp(1.3rem, 4vw, 1.82rem) !important;
+      line-height: 1.08 !important;
+    }
+
+    .profile-modal .interest-tile .meta,
+    .profile-modal .info-tile .meta {
+      line-height: 1.28 !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .modal-grid .info-tile {
+        min-height: 104px !important;
+        padding: 17px 18px !important;
+        gap: 8px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .modal-schedule-text.tonight,
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: 1.02rem !important;
+      }
+    }
   </style>
 </head>
 <body>
