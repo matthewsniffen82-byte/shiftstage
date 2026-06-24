@@ -14831,6 +14831,22 @@
       min-height: 96px;
       justify-content: center;
     }
+
+    .dancer-card .card-venue-name,
+    .profile-modal .venue-inline-link {
+      transition: color 180ms ease, text-shadow 180ms ease, text-decoration-color 180ms ease;
+    }
+
+    .dancer-card:hover .card-venue-name,
+    .dancer-card:focus-within .card-venue-name,
+    .profile-modal .venue-inline-link:hover,
+    .profile-modal .venue-inline-link:focus-visible {
+      color: #FFFFFF !important;
+      text-shadow:
+        0 0 10px rgba(34, 199, 255, 0.22),
+        0 0 8px rgba(139, 92, 246, 0.16);
+      text-decoration-color: rgba(34, 199, 255, 0.72) !important;
+    }
   </style>
 </head>
 <body>
