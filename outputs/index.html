@@ -17434,32 +17434,6 @@
           <h3>Audience demand</h3>
           <div class="metric-grid" id="dancerAudienceMetrics" aria-label="Audience demand"></div>
         </div>
-        <div class="auth-card rankings-card approved-analytics">
-          <div class="ranking-card-head">
-            <div>
-              <span class="eyebrow">Trending rankings</span>
-              <h3>Rank momentum</h3>
-            </div>
-            <span class="rank-trend-pill" id="dancerRankTrend">Rising</span>
-          </div>
-          <div class="ranking-hero" id="dancerRankingHero">
-            <span>Current rank</span>
-            <strong id="dancerCurrentRank">#4</strong>
-            <p id="dancerRankSummary">Up 3 positions this week</p>
-          </div>
-          <div class="ranking-grid" aria-label="Ranking details">
-            <div><span>Highest rank achieved</span><strong id="dancerHighestRank">#1</strong></div>
-            <div><span>Best rank this week</span><strong id="dancerBestWeekRank">#3</strong></div>
-            <div><span>Since yesterday</span><strong id="dancerYesterdayChange">Up 4</strong></div>
-            <div><span>Strongest signal</span><strong id="dancerRankSignal">Schedule views</strong></div>
-          </div>
-          <div class="rank-delivery-pills" aria-label="Ranking notification delivery">
-            <span>In-app notification</span>
-            <span>Push ready</span>
-            <span>History saved</span>
-          </div>
-          <div class="rank-notification-list" id="dancerRankingNotifications" aria-label="Ranking notification history"></div>
-        </div>
         <div class="auth-card momentum-card approved-analytics">
           <h3>Your market momentum</h3>
           <div class="metric-grid" id="dancerMomentumMetrics" aria-label="Market momentum"></div>
@@ -19820,21 +19794,6 @@
           metricCardMarkup(compactNumber(dashboardMetrics.peakHourViews), "Peak-hour views"),
           metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances")
         ].join("");
-        const rankTrend = document.getElementById("dancerRankTrend");
-        rankTrend.textContent = dashboardMetrics.rankTrend;
-        rankTrend.className = `rank-trend-pill ${dashboardMetrics.rankTrend.toLowerCase()}`;
-        const rankHero = document.getElementById("dancerRankingHero");
-        rankHero.classList.toggle("rank-one", dashboardMetrics.currentRank === 1);
-        document.getElementById("dancerCurrentRank").textContent = rankLabel(dashboardMetrics.currentRank);
-        document.getElementById("dancerRankSummary").textContent = dashboardMetrics.rankChangeYesterday >= 3
-          ? `${rankMovementText(dashboardMetrics.rankChangeYesterday)} since yesterday · Up ${dashboardMetrics.rankGain} this week`
-          : `${dashboardMetrics.rankTrend} this week · Keep posting and sharing`;
-        document.getElementById("dancerHighestRank").textContent = rankLabel(dashboardMetrics.highestRankAchieved);
-        document.getElementById("dancerBestWeekRank").textContent = rankLabel(dashboardMetrics.bestRankThisWeek);
-        document.getElementById("dancerYesterdayChange").textContent = rankMovementText(dashboardMetrics.rankChangeYesterday);
-        document.getElementById("dancerRankSignal").textContent = dashboardMetrics.rankingSignal;
-        document.getElementById("dancerRankingNotifications").innerHTML =
-          dashboardMetrics.rankingNotifications.map(rankingNotificationMarkup).join("");
         document.getElementById("dancerMomentumMetrics").innerHTML = [
           metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
           metricCardMarkup(`#${seededRange(`${activeProfile.name}|week-rank|${city}`, 1, 5)}`, "Trending this week"),
@@ -19907,22 +19866,6 @@
           "Peak-hour views",
           "City search appearances"
         ]);
-        const rankTrend = document.getElementById("dancerRankTrend");
-        rankTrend.textContent = "Locked";
-        rankTrend.className = "rank-trend-pill stable";
-        document.getElementById("dancerRankingHero").classList.remove("rank-one");
-        document.getElementById("dancerCurrentRank").textContent = "Locked";
-        document.getElementById("dancerRankSummary").textContent = "Trending milestones unlock after approval.";
-        document.getElementById("dancerHighestRank").textContent = "Locked";
-        document.getElementById("dancerBestWeekRank").textContent = "Locked";
-        document.getElementById("dancerYesterdayChange").textContent = "Locked";
-        document.getElementById("dancerRankSignal").textContent = "Real activity";
-        document.getElementById("dancerRankingNotifications").innerHTML = `
-          <article class="rank-event stable">
-            <span class="rank-event-icon">⚡</span>
-            <span><strong>Ranking notifications locked</strong><p>Complete approval to receive Top 10, #1, biggest mover, and rank jump notifications.</p></span>
-          </article>
-        `;
         document.getElementById("dancerMomentumMetrics").innerHTML = lockedMetricCards([
           `Trending in ${city}`,
           "Trending this week",
