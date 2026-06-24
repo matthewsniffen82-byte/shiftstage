@@ -16921,6 +16921,98 @@
         left: 12px !important;
       }
     }
+
+    /* Compact profile QR: scannable public profile link without bloating the modal. */
+    .profile-modal .profile-qr-strip {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 8px !important;
+      padding: 8px 9px !important;
+      border: 1px solid rgba(139, 92, 246, 0.34);
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(139, 92, 246, 0.10), rgba(34, 199, 255, 0.055)),
+        rgba(5, 5, 7, 0.78);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 18px rgba(139, 92, 246, 0.10);
+    }
+
+    .profile-modal .profile-qr-image {
+      width: 58px;
+      height: 58px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.16),
+        0 0 18px rgba(34, 199, 255, 0.12);
+    }
+
+    .profile-modal .profile-qr-copy {
+      min-width: 0;
+    }
+
+    .profile-modal .profile-qr-copy strong {
+      display: block;
+      margin: 0 0 3px !important;
+      color: #ffffff !important;
+      font-size: 0.78rem !important;
+      line-height: 1.05 !important;
+      letter-spacing: 0.09em !important;
+      text-transform: uppercase;
+    }
+
+    .profile-modal .profile-qr-copy span {
+      display: block;
+      color: #B8B8C5;
+      font-size: 0.76rem;
+      font-weight: 750;
+      line-height: 1.22;
+    }
+
+    .profile-modal .profile-qr-open {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 11px;
+      border: 1px solid rgba(34, 199, 255, 0.34);
+      border-radius: 999px;
+      color: #ffffff;
+      background: rgba(8, 8, 14, 0.82);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 0 14px rgba(34, 199, 255, 0.10);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .profile-modal .profile-qr-open:hover {
+      border-color: rgba(34, 199, 255, 0.66);
+      box-shadow: 0 0 18px rgba(34, 199, 255, 0.20);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 430px) {
+      .profile-modal .profile-qr-strip {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px;
+        padding: 7px 8px !important;
+      }
+
+      .profile-modal .profile-qr-image {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+      }
+
+      .profile-modal .profile-qr-open {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -18793,12 +18885,23 @@
       return handle ? `${platform.base}${handle}` : "";
     }
 
+    function publicProfileBaseUrl() {
+      if (window.location.protocol === "file:") {
+        return "https://shiftstage.vercel.app/outputs/index.html";
+      }
+      return `${window.location.origin}${window.location.pathname}`;
+    }
+
     function profileShareUrl(profileName, city = selectedCity()) {
-      const url = new URL(window.location.href);
+      const url = new URL(publicProfileBaseUrl());
       url.searchParams.set("city", city);
       url.searchParams.set("profile", slugify(profileName));
       url.hash = "";
       return url.toString();
+    }
+
+    function qrCodeUrl(value) {
+      return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&color=050507&bgcolor=FFFFFF&data=${encodeURIComponent(value)}`;
     }
 
     function profileShareText(profileName, city = selectedCity()) {
@@ -18869,8 +18972,20 @@
       const links = socialPlatforms
         .map((platform) => ({ ...platform, url: profile.socials?.[platform.key] }))
         .filter((platform) => platform.url);
+      const city = selectedCity();
+      const profileUrl = profileShareUrl(profile.name, city);
+      const qrBlock = `
+        <div class="profile-qr-strip">
+          <img class="profile-qr-image" src="${qrCodeUrl(profileUrl)}" alt="QR code for ${profile.name} profile" loading="lazy" decoding="async">
+          <div class="profile-qr-copy">
+            <strong>Scan profile</strong>
+            <span>Opens ${profile.name}'s Dancr profile. No account needed.</span>
+          </div>
+          <a class="profile-qr-open" href="${profileUrl}" target="_blank" rel="noreferrer" aria-label="Open ${profile.name} profile link">Open</a>
+        </div>
+      `;
       const shareButton = `
-        <button class="profile-share-trigger" type="button" data-native-share="${profile.name}" data-share-city="${selectedCity()}" aria-label="Share profile">
+        <button class="profile-share-trigger" type="button" data-native-share="${profile.name}" data-share-city="${city}" aria-label="Share profile">
           ${actionIconMarkup("share")}
         </button>
       `;
@@ -18881,6 +18996,7 @@
               <strong>Social links</strong>
               ${shareButton}
             </div>
+            ${qrBlock}
             <div class="meta">No social links posted</div>
           </div>
         `;
@@ -18891,6 +19007,7 @@
             <strong>Social links</strong>
             ${shareButton}
           </div>
+          ${qrBlock}
           <div class="social-links">
             ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
           </div>
