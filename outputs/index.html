@@ -14527,6 +14527,134 @@
         0 0 20px rgba(139, 92, 246, 0.36),
         0 0 10px rgba(236, 72, 153, 0.08) !important;
     }
+
+    /* Full profile palette cleanup: darker surfaces, violet structure, pink only for tonight/action energy. */
+    .profile-modal {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.08), transparent 28rem),
+        linear-gradient(180deg, rgba(5, 5, 7, 0.99), rgba(8, 8, 13, 0.99)) !important;
+    }
+
+    .profile-modal .modal-body {
+      background:
+        linear-gradient(180deg, rgba(5, 5, 7, 0.98), rgba(9, 9, 15, 0.98)) !important;
+    }
+
+    .profile-modal .modal-identity,
+    .profile-modal .modal-identity-stack .modal-identity {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.60), rgba(8, 8, 13, 0.72)) !important;
+      border-color: rgba(139, 92, 246, 0.28) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 14px 32px rgba(0, 0, 0, 0.34),
+        0 0 18px rgba(139, 92, 246, 0.10) !important;
+      backdrop-filter: blur(13px) saturate(1.05) !important;
+    }
+
+    .profile-modal .badge.trend:not(.rank-one),
+    .profile-modal .modal-rank:not(.rank-one) {
+      color: rgba(255, 255, 255, 0.96) !important;
+      border-color: rgba(168, 85, 247, 0.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 44%, rgba(5, 5, 7, 0.24)),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.42), rgba(236, 72, 153, 0.12)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 18px rgba(139, 92, 246, 0.28),
+        0 0 10px rgba(236, 72, 153, 0.10),
+        0 10px 24px rgba(0, 0, 0, 0.32) !important;
+    }
+
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .modal-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter: drop-shadow(0 0 7px rgba(236, 72, 153, 0.34)) !important;
+    }
+
+    .profile-modal .info-tile,
+    .profile-modal .social-tile {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(9, 9, 14, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.38) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 18px 36px rgba(0, 0, 0, 0.34),
+        0 0 18px rgba(139, 92, 246, 0.08) !important;
+    }
+
+    .profile-modal .info-tile:before,
+    .profile-modal .social-tile:before {
+      background: linear-gradient(180deg, rgba(139, 92, 246, 0.78), rgba(124, 58, 237, 0.26)) !important;
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.22) !important;
+    }
+
+    .profile-modal .info-tile strong,
+    .profile-modal .social-tile-head strong {
+      color: #D8C8FF !important;
+      letter-spacing: 0.08em !important;
+    }
+
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .schedule-time.is-tonight,
+    .profile-modal .time-tonight {
+      color: #FF64C8 !important;
+      text-shadow: 0 0 12px rgba(255, 47, 174, 0.26) !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #8FDCFF !important;
+      text-shadow: 0 0 12px rgba(34, 199, 255, 0.22) !important;
+    }
+
+    .profile-modal .follow-primary {
+      background: linear-gradient(135deg, #8B5CF6 0%, #9D4EDD 58%, #D946EF 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 24px rgba(139, 92, 246, 0.28),
+        0 0 12px rgba(236, 72, 153, 0.11) !important;
+    }
+
+    .profile-modal .going-btn:not(:disabled) {
+      background: linear-gradient(135deg, #7C3AED 0%, #A855F7 62%, #D946EF 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 26px rgba(139, 92, 246, 0.28),
+        0 0 14px rgba(236, 72, 153, 0.12) !important;
+    }
+
+    .profile-modal .action-btn.secondary,
+    .profile-modal #notifyBtn {
+      background: rgba(8, 8, 14, 0.84) !important;
+      border-color: rgba(139, 92, 246, 0.48) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 18px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .profile-modal .follow-primary.is-following,
+    .profile-modal #notifyBtn.is-following {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.86), rgba(8, 8, 14, 0.92)) !important;
+      border-color: rgba(139, 92, 246, 0.58) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.16),
+        0 0 10px rgba(34, 199, 255, 0.08) !important;
+    }
+
+    .profile-modal .social-link {
+      background: rgba(8, 8, 14, 0.76) !important;
+      border-color: rgba(139, 92, 246, 0.42) !important;
+    }
+
+    .profile-modal .profile-share-trigger {
+      background: rgba(8, 8, 14, 0.82) !important;
+      border-color: rgba(34, 199, 255, 0.36) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 14px rgba(34, 199, 255, 0.12) !important;
+    }
   </style>
 </head>
 <body>
