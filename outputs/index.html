@@ -17013,6 +17013,98 @@
         display: none;
       }
     }
+
+    .account-control-card {
+      gap: 14px !important;
+    }
+
+    .account-control-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .account-control-head h3 {
+      margin: 4px 0 0;
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .account-control-status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 11px;
+      border: 1px solid rgba(34, 199, 255, 0.38);
+      border-radius: 999px;
+      background: rgba(34, 199, 255, 0.09);
+      box-shadow: 0 0 16px rgba(34, 199, 255, 0.14);
+      color: #8ee7ff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .account-control-card.is-disabled .account-control-status {
+      border-color: rgba(255, 194, 71, 0.42);
+      background: rgba(255, 194, 71, 0.1);
+      box-shadow: 0 0 16px rgba(255, 194, 71, 0.14);
+      color: #ffd37a;
+    }
+
+    .account-control-card.is-deleted .account-control-status {
+      border-color: rgba(255, 104, 124, 0.42);
+      background: rgba(255, 104, 124, 0.1);
+      box-shadow: 0 0 16px rgba(255, 104, 124, 0.12);
+      color: #ff8f9f;
+    }
+
+    .account-control-copy {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.94rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .account-control-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .account-control-actions .action-btn {
+      min-height: 42px;
+      padding-inline: 16px;
+    }
+
+    .account-control-actions .action-btn.danger {
+      border: 1px solid rgba(255, 104, 124, 0.44) !important;
+      background: rgba(90, 24, 36, 0.72) !important;
+      box-shadow: 0 0 18px rgba(255, 104, 124, 0.1) !important;
+      color: #fff !important;
+    }
+
+    .account-control-actions .action-btn.danger:hover {
+      border-color: rgba(255, 104, 124, 0.7) !important;
+      box-shadow: 0 0 24px rgba(255, 104, 124, 0.18) !important;
+    }
+
+    @media (max-width: 620px) {
+      .account-control-head {
+        display: grid;
+      }
+
+      .account-control-status {
+        width: fit-content;
+      }
+
+      .account-control-actions {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -17515,6 +17607,20 @@
           <div class="lock-row">Do not fully activate paid profile until approved.</div>
           <div class="lock-row">Rejected profiles stay private and are not charged/captured.</div>
         </div>
+        <div class="auth-card account-control-card" data-account-panel="dancer">
+          <div class="account-control-head">
+            <div>
+              <span class="eyebrow">Account controls</span>
+              <h3>Dancer account</h3>
+            </div>
+            <span class="account-control-status" data-account-status>Active</span>
+          </div>
+          <p class="account-control-copy" data-account-note>Your public profile, schedule posting, analytics, and follower alerts stay active.</p>
+          <div class="account-control-actions">
+            <button class="action-btn secondary" type="button" data-account-action="disable" data-account-role="dancer">Disable temporarily</button>
+            <button class="action-btn danger" type="button" data-account-action="delete" data-account-role="dancer">Delete account</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -17631,6 +17737,20 @@
           <h3 class="section-title">Notification settings</h3>
           <p class="customer-card-copy">Choose which dancer and venue alerts Dancr sends you. Your customer activity stays private.</p>
           <div class="toggle-list" id="notificationSettings"></div>
+        </div>
+        <div class="auth-card account-control-card" data-account-panel="customer" data-dashboard-section="account">
+          <div class="account-control-head">
+            <div>
+              <span class="eyebrow">Account controls</span>
+              <h3>Customer account</h3>
+            </div>
+            <span class="account-control-status" data-account-status>Active</span>
+          </div>
+          <p class="account-control-copy" data-account-note>Your private follows, venue alerts, and going signals stay active.</p>
+          <div class="account-control-actions">
+            <button class="action-btn secondary" type="button" data-account-action="disable" data-account-role="customer">Disable temporarily</button>
+            <button class="action-btn danger" type="button" data-account-action="delete" data-account-role="customer">Delete account</button>
+          </div>
         </div>
       </div>
     </section>
@@ -17839,6 +17959,28 @@
       approval: false,
       shift: false
     };
+    const accountControlState = {
+      customer: {
+        disabled: false,
+        deleted: false
+      },
+      dancer: {
+        disabled: false,
+        deleted: false
+      }
+    };
+    const accountControlCopy = {
+      customer: {
+        active: "Your private follows, venue alerts, and going signals stay active.",
+        disabled: "Your customer account is paused. Alerts are off, but follows and notification settings are saved.",
+        deleted: "This demo customer account was deleted. Sign up again to create a new customer account."
+      },
+      dancer: {
+        active: "Your public profile, schedule posting, analytics, and follower alerts stay active.",
+        disabled: "Your dancer account is temporarily disabled. Your public profile is hidden and shift posting is paused, but setup is saved.",
+        deleted: "This demo dancer account was deleted. In the real app, profile access and dashboard data would be removed."
+      }
+    };
     const dancerSignupSocials = {
       instagram: "",
       tiktok: "",
@@ -17944,6 +18086,87 @@
       toast.classList.add("show");
       window.clearTimeout(showToast.timer);
       showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1900);
+    }
+
+    function resetAccountControl(role) {
+      if (!accountControlState[role]) return;
+      accountControlState[role].disabled = false;
+      accountControlState[role].deleted = false;
+    }
+
+    function renderAccountControlPanel(role) {
+      const panel = document.querySelector(`[data-account-panel="${role}"]`);
+      const state = accountControlState[role];
+      if (!panel || !state) return;
+      const status = panel.querySelector("[data-account-status]");
+      const note = panel.querySelector("[data-account-note]");
+      const disableButton = panel.querySelector('[data-account-action="disable"]');
+      const deleteButton = panel.querySelector('[data-account-action="delete"]');
+      const mode = state.deleted ? "deleted" : state.disabled ? "disabled" : "active";
+      panel.classList.toggle("is-disabled", state.disabled && !state.deleted);
+      panel.classList.toggle("is-deleted", state.deleted);
+      if (status) {
+        status.textContent = mode === "deleted" ? "Deleted" : mode === "disabled" ? "Paused" : "Active";
+      }
+      if (note) note.textContent = accountControlCopy[role][mode];
+      if (disableButton) {
+        disableButton.textContent = state.disabled ? "Reactivate account" : "Disable temporarily";
+        disableButton.disabled = state.deleted;
+      }
+      if (deleteButton) deleteButton.disabled = state.deleted;
+    }
+
+    function renderAccountControls() {
+      renderAccountControlPanel("customer");
+      renderAccountControlPanel("dancer");
+    }
+
+    function closeDeletedAccount(role) {
+      if (role === "customer") {
+        isCustomerLoggedIn = false;
+        closeDashboard();
+      }
+      if (role === "dancer") {
+        isDancerLoggedIn = false;
+        closeDancerDashboard();
+      }
+      activeDashboardType = "customer";
+      updateAccountHeader();
+      syncOverlayScrollLock();
+    }
+
+    function handleAccountControlClick(event) {
+      const button = event.target.closest("[data-account-action]");
+      if (!button) return false;
+      const role = button.dataset.accountRole;
+      const action = button.dataset.accountAction;
+      const state = accountControlState[role];
+      if (!state) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      const roleLabel = role === "dancer" ? "Dancer account" : "Customer account";
+
+      if (action === "disable") {
+        state.disabled = !state.disabled;
+        state.deleted = false;
+        renderAccountControlPanel(role);
+        showToast(state.disabled ? `${roleLabel} paused` : `${roleLabel} reactivated`);
+        return true;
+      }
+
+      if (action === "delete") {
+        const confirmed = window.confirm(`Delete this ${roleLabel.toLowerCase()}? This demo will sign out of the account.`);
+        if (!confirmed) return true;
+        state.deleted = true;
+        state.disabled = false;
+        renderAccountControlPanel(role);
+        closeDeletedAccount(role);
+        showToast(`${roleLabel} deleted`);
+        return true;
+      }
+
+      return false;
     }
 
     function portraitClass(index) {
@@ -19538,6 +19761,7 @@
         return;
       }
       renderDashboard();
+      renderAccountControls();
       customerDashboard.classList.add("show");
       customerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
@@ -19564,6 +19788,7 @@
         activeSetupStep = nextIncompleteStep() || "profile";
       }
       renderDancerSetup();
+      renderAccountControls();
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
@@ -19588,6 +19813,7 @@
 
     function openApprovedDancerDemo() {
       closeDemoSurfaces();
+      resetAccountControl("dancer");
       citySelect.value = "Las Vegas";
       document.getElementById("dancerLegalName").value = "Maya Lawson";
       document.getElementById("dancerStageName").value = "Maya Lux";
@@ -19615,6 +19841,7 @@
 
     function openPendingDancerDemo() {
       closeDemoSurfaces();
+      resetAccountControl("dancer");
       citySelect.value = "Las Vegas";
       document.getElementById("dancerLegalName").value = "Lena Carter";
       document.getElementById("dancerStageName").value = "Lena Vale";
@@ -19642,6 +19869,7 @@
 
     function openApprovedCustomerDemo() {
       closeDemoSurfaces();
+      resetAccountControl("customer");
       citySelect.value = "Las Vegas";
       isCustomerLoggedIn = true;
       isDancerLoggedIn = false;
@@ -20677,6 +20905,7 @@
 
     document.getElementById("authForm").addEventListener("submit", (event) => {
       event.preventDefault();
+      resetAccountControl("customer");
       isCustomerLoggedIn = true;
       isDancerLoggedIn = false;
       activeDashboardType = "customer";
@@ -20687,6 +20916,7 @@
     });
 
     function startDemoDancerSetup() {
+      resetAccountControl("dancer");
       dancerSignupStarted = true;
       stripeConfirmed = true;
       document.getElementById("dancerLegalName").value = "";
@@ -20811,6 +21041,7 @@
     });
 
     customerDashboard.addEventListener("click", (event) => {
+      if (handleAccountControlClick(event)) return;
       const statButton = event.target.closest("[data-dashboard-jump]");
       if (!statButton) return;
       const section = customerDashboard.querySelector(`[data-dashboard-section="${statButton.dataset.dashboardJump}"]`);
@@ -20867,6 +21098,7 @@
     });
 
     dancerDashboard.addEventListener("click", (event) => {
+      if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
       const approvalToggle = event.target.closest("#dancerApprovalCommand");
       if (approvalToggle && !approvalToggle.classList.contains("approved")) {
