@@ -20113,6 +20113,20 @@
       }
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn");
       if (!actionButton) return;
+      if (!isCustomerLoggedIn) {
+        const prompts = {
+          followBtn: "Log in or join to follow dancers.",
+          notifyBtn: "Log in or join to turn on notifications.",
+          goingBtn: actionButton.dataset.shiftState === "upcoming"
+            ? "Log in or join to say you're going."
+            : "Log in or join to say you're going tonight."
+        };
+        setCustomerAuthMode("login");
+        closeProfileModal();
+        openAuthPage();
+        showToast(prompts[actionButton.id] || "Log in or join to continue.");
+        return;
+      }
       if (actionButton.id === "followBtn") {
         const profileName = actionButton.dataset.profile;
         const city = citySelect.value;
