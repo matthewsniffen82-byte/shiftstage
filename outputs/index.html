@@ -14847,6 +14847,25 @@
         0 0 8px rgba(139, 92, 246, 0.16);
       text-decoration-color: rgba(34, 199, 255, 0.72) !important;
     }
+
+    /* Keep destination blue distinct from upcoming-time cyan. */
+    .dancer-card .card-venue-line .venue-dot,
+    .dancer-card .card-venue-line .venue-dot svg,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot svg {
+      color: #28AFFF !important;
+      stroke: #28AFFF !important;
+      filter: drop-shadow(0 0 6px rgba(40, 175, 255, 0.22)) !important;
+    }
+
+    .dancer-card .schedule-row.is-upcoming .venue-dot,
+    .dancer-card .schedule-row.is-upcoming .venue-dot svg,
+    .profile-modal .schedule-text-row > .venue-dot,
+    .profile-modal .schedule-text-row > .venue-dot svg {
+      color: #8FDCFF !important;
+      stroke: #8FDCFF !important;
+      filter: drop-shadow(0 0 7px rgba(143, 220, 255, 0.26)) !important;
+    }
   </style>
 </head>
 <body>
