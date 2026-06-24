@@ -15513,6 +15513,57 @@
       position: relative !important;
       z-index: 2 !important;
     }
+
+    /* Main discovery tabs: premium hover glow and deeper electric-violet selected state. */
+    .tabs .tab,
+    .tab {
+      transition:
+        transform 180ms ease,
+        color 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease,
+        box-shadow 180ms ease !important;
+    }
+
+    .tabs .tab:not(.active):hover,
+    .tab:not(.active):hover,
+    .tabs .tab:not(.active):focus-visible,
+    .tab:not(.active):focus-visible {
+      color: #FFFFFF !important;
+      border-color: rgba(139, 92, 246, 0.62) !important;
+      background:
+        linear-gradient(180deg, rgba(139, 92, 246, 0.10), rgba(139, 92, 246, 0.035)),
+        rgba(17, 17, 24, 0.92) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.22),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+      transform: translateY(-1px);
+    }
+
+    .tabs .tab.active,
+    .tab.active,
+    .tabs .tab[aria-selected="true"],
+    .tab[aria-selected="true"] {
+      color: #FFFFFF !important;
+      border-color: rgba(167, 139, 250, 0.72) !important;
+      background:
+        linear-gradient(135deg, #4C1D95 0%, #6D28D9 48%, #7C3AED 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+        0 0 24px rgba(139, 92, 246, 0.42),
+        0 12px 30px rgba(0, 0, 0, 0.38) !important;
+    }
+
+    .tabs .tab.active:hover,
+    .tab.active:hover {
+      background:
+        linear-gradient(135deg, #5B21B6 0%, #7C3AED 54%, #8B5CF6 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+        0 0 30px rgba(139, 92, 246, 0.52),
+        0 14px 34px rgba(0, 0, 0, 0.42) !important;
+    }
   </style>
 </head>
 <body>
