@@ -17740,6 +17740,40 @@
       }
     }
 
+    /* Keep the uploaded hero art fully visible instead of cropping the headline or dancer. */
+    .hero.reference-hero,
+    .hero.reference-hero.uploaded-hero-ready,
+    .hero.reference-hero:not(.uploaded-hero-ready) {
+      aspect-ratio: 1900 / 850 !important;
+      width: 100% !important;
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background-image:
+        url("file:///C:/Users/aix23/Downloads/ChatGPT%20Image%20Jun%2023,%202026,%2010_11_45%20PM.png"),
+        url("./dancr-hero-banner.png") !important;
+      background-size: contain !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-color: #050507 !important;
+      border: 1px solid rgba(124, 58, 237, 0.42) !important;
+      border-radius: 16px !important;
+      background-clip: padding-box !important;
+      box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.46),
+        0 0 0 1px rgba(255, 255, 255, 0.018) inset,
+        0 0 28px rgba(139, 92, 246, 0.14) !important;
+    }
+
+    @media (max-width: 560px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        border-radius: 15px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
