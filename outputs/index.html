@@ -16703,6 +16703,36 @@
       margin-top: 0 !important;
     }
 
+    /* Deepen primary controls so active states feel more premium than candy-bright. */
+    .location-btn {
+      background:
+        linear-gradient(110deg, rgba(124, 58, 237, 0.96) 0%, rgba(91, 33, 182, 0.95) 58%, rgba(34, 199, 255, 0.78) 100%) !important;
+      border-color: rgba(167, 139, 250, 0.34) !important;
+      box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.34),
+        0 0 28px rgba(124, 58, 237, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .tabs .tab.active,
+    .tab.active,
+    .tabs .tab[aria-selected="true"],
+    .tab[aria-selected="true"] {
+      background:
+        linear-gradient(135deg, rgba(91, 33, 182, 0.98) 0%, rgba(124, 58, 237, 0.94) 62%, rgba(168, 85, 247, 0.78) 100%) !important;
+      border-color: rgba(196, 181, 253, 0.46) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 12px 30px rgba(91, 33, 182, 0.34),
+        0 0 34px rgba(124, 58, 237, 0.30) !important;
+    }
+
+    .tabs .tab.active .tab-count,
+    .tab.active .tab-count {
+      background: rgba(255, 255, 255, 0.14) !important;
+      border-color: rgba(255, 255, 255, 0.20) !important;
+    }
+
     .profile-modal .modal-grid .info-tile > strong,
     .profile-modal .social-tile-head strong {
       margin: 0 0 2px !important;
