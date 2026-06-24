@@ -16131,6 +16131,242 @@
         0 0 34px rgba(236,72,153,.34),
         0 12px 30px rgba(0,0,0,.48);
     }
+    .rankings-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rankings-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(139,92,246,.2), transparent 34%),
+        radial-gradient(circle at 100% 18%, rgba(236,72,153,.12), transparent 28%);
+      opacity: .8;
+    }
+
+    .rankings-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ranking-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .ranking-card-head h3 {
+      margin: 3px 0 0;
+    }
+
+    .rank-trend-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 13px;
+      border: 1px solid rgba(139,92,246,.38);
+      border-radius: 999px;
+      background: rgba(139,92,246,.12);
+      color: #c4b5fd;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      box-shadow: 0 0 18px rgba(139,92,246,.14);
+    }
+
+    .rank-trend-pill.rising {
+      border-color: rgba(74,222,128,.42);
+      background: rgba(34,197,94,.12);
+      color: #4ade80;
+      box-shadow: 0 0 18px rgba(34,197,94,.16);
+    }
+
+    .rank-trend-pill.falling {
+      border-color: rgba(251,113,133,.42);
+      background: rgba(251,113,133,.1);
+      color: #fb7185;
+      box-shadow: 0 0 18px rgba(251,113,133,.14);
+    }
+
+    .ranking-hero {
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px solid rgba(139,92,246,.28);
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(124,58,237,.16), rgba(5,5,7,.84)),
+        rgba(17,17,24,.72);
+      box-shadow:
+        0 18px 42px rgba(0,0,0,.32),
+        inset 0 1px 0 rgba(255,255,255,.045),
+        0 0 28px rgba(139,92,246,.12);
+    }
+
+    .ranking-hero.rank-one {
+      border-color: rgba(250,204,21,.45);
+      background:
+        linear-gradient(135deg, rgba(250,204,21,.18), rgba(236,72,153,.12), rgba(5,5,7,.86)),
+        rgba(17,17,24,.78);
+      box-shadow:
+        0 18px 42px rgba(0,0,0,.34),
+        0 0 28px rgba(250,204,21,.2),
+        0 0 22px rgba(236,72,153,.12);
+    }
+
+    .ranking-hero span,
+    .ranking-grid span {
+      display: block;
+      color: #b8b8c5;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .ranking-hero strong {
+      display: block;
+      margin-top: 8px;
+      color: #fff;
+      font-size: clamp(42px, 10vw, 72px);
+      line-height: .9;
+      text-shadow: 0 0 18px rgba(255,255,255,.12);
+    }
+
+    .ranking-hero.rank-one strong {
+      color: #fde68a;
+      text-shadow:
+        0 0 18px rgba(250,204,21,.25),
+        0 0 24px rgba(236,72,153,.16);
+    }
+
+    .ranking-hero p {
+      margin: 10px 0 0;
+      color: #d8ccff;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .ranking-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .ranking-grid div {
+      min-width: 0;
+      padding: 13px;
+      border: 1px solid rgba(139,92,246,.22);
+      border-radius: 15px;
+      background: rgba(5,5,7,.54);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.018);
+    }
+
+    .ranking-grid strong {
+      display: block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    .rank-delivery-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .rank-delivery-pills span {
+      padding: 7px 10px;
+      border: 1px solid rgba(34,199,255,.25);
+      border-radius: 999px;
+      background: rgba(34,199,255,.08);
+      color: #8feaff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .rank-notification-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .rank-event {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(139,92,246,.2);
+      border-radius: 15px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .rank-event-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(139,92,246,.14);
+      box-shadow: 0 0 16px rgba(139,92,246,.16);
+    }
+
+    .rank-event strong {
+      display: block;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .rank-event p {
+      margin: 3px 0 0;
+      color: #b8b8c5;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .rank-event.rank-one .rank-event-icon {
+      background: rgba(250,204,21,.18);
+      box-shadow: 0 0 18px rgba(250,204,21,.22);
+    }
+
+    .rank-event.up .rank-event-icon {
+      background: rgba(34,197,94,.16);
+      box-shadow: 0 0 18px rgba(34,197,94,.18);
+    }
+
+    .rank-event.top-ten .rank-event-icon,
+    .rank-event.first .rank-event-icon,
+    .rank-event.mover .rank-event-icon {
+      background: rgba(236,72,153,.14);
+      box-shadow: 0 0 18px rgba(236,72,153,.14);
+    }
+
+    .locked-analytics .ranking-hero,
+    .locked-analytics .ranking-grid div,
+    .locked-analytics .rank-event {
+      opacity: .72;
+      filter: saturate(.65);
+    }
+
+    @media (max-width: 760px) {
+      .ranking-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .ranking-card-head {
+        align-items: flex-start;
+      }
+    }
+
     /* Uploaded Dancr hero banner: use the provided image as the only hero visual. */
     .hero.reference-hero {
       aspect-ratio: 1900 / 900 !important;
@@ -16582,6 +16818,32 @@
         <div class="auth-card approved-analytics">
           <h3>Audience demand</h3>
           <div class="metric-grid" id="dancerAudienceMetrics" aria-label="Audience demand"></div>
+        </div>
+        <div class="auth-card rankings-card approved-analytics">
+          <div class="ranking-card-head">
+            <div>
+              <span class="eyebrow">Trending rankings</span>
+              <h3>Rank momentum</h3>
+            </div>
+            <span class="rank-trend-pill" id="dancerRankTrend">Rising</span>
+          </div>
+          <div class="ranking-hero" id="dancerRankingHero">
+            <span>Current rank</span>
+            <strong id="dancerCurrentRank">#4</strong>
+            <p id="dancerRankSummary">Up 3 positions this week</p>
+          </div>
+          <div class="ranking-grid" aria-label="Ranking details">
+            <div><span>Highest rank achieved</span><strong id="dancerHighestRank">#1</strong></div>
+            <div><span>Best rank this week</span><strong id="dancerBestWeekRank">#3</strong></div>
+            <div><span>Since yesterday</span><strong id="dancerYesterdayChange">Up 4</strong></div>
+            <div><span>Strongest signal</span><strong id="dancerRankSignal">Schedule views</strong></div>
+          </div>
+          <div class="rank-delivery-pills" aria-label="Ranking notification delivery">
+            <span>In-app notification</span>
+            <span>Push ready</span>
+            <span>History saved</span>
+          </div>
+          <div class="rank-notification-list" id="dancerRankingNotifications" aria-label="Ranking notification history"></div>
         </div>
         <div class="auth-card momentum-card approved-analytics">
           <h3>Your market momentum</h3>
@@ -17238,6 +17500,98 @@
       return labels.map((label) => metricCardMarkup("Locked", label)).join("");
     }
 
+    function rankLabel(rank) {
+      return rank ? `#${rank}` : "Outside Top 10";
+    }
+
+    function rankMovementText(change) {
+      if (change > 0) return `Up ${change}`;
+      if (change < 0) return `Down ${Math.abs(change)}`;
+      return "No change";
+    }
+
+    function rankTrendFromChange(change) {
+      if (change >= 3) return "Rising";
+      if (change <= -2) return "Falling";
+      return "Stable";
+    }
+
+    function rankingSignalLabel(metrics) {
+      const signals = [
+        [metrics.profileViews30, "Profile views"],
+        [metrics.scheduleViews30, "Schedule views"],
+        [metrics.newFollowers, "Followers gained"],
+        [metrics.notificationOpens, "Notification engagement"],
+        [metrics.favoritesAdded, "Favorites"],
+        [metrics.goingTonightClicks, "Going Tonight signals"]
+      ];
+      signals.sort((a, b) => b[0] - a[0]);
+      return signals[0]?.[1] || "Profile activity";
+    }
+
+    function rankingNotificationMarkup(event) {
+      return `
+        <article class="rank-event ${event.type}">
+          <span class="rank-event-icon">${event.icon}</span>
+          <span><strong>${event.title}</strong><p>${event.message}</p></span>
+        </article>
+      `;
+    }
+
+    function buildRankingNotifications(profile, city, metrics) {
+      const events = [];
+      const rank = metrics.currentRank;
+      if (rank === 1) {
+        events.push({
+          type: "rank-one",
+          icon: "👑",
+          title: "Reached #1 Trending",
+          message: `You are now the #1 Trending dancer in ${city}.`
+        });
+      }
+      if (rank && metrics.previousRank > 10 && rank <= 10) {
+        events.push({
+          type: "top-ten",
+          icon: "🔥",
+          title: "Entered Top 10",
+          message: `You entered the Top 10 Trending dancers in ${city}.`
+        });
+      }
+      if (rank && metrics.rankChangeYesterday >= 3) {
+        events.push({
+          type: "up",
+          icon: "📈",
+          title: "Significant rank increase",
+          message: `You moved up ${metrics.rankChangeYesterday} positions and are now #${rank} Trending.`
+        });
+      }
+      if (rank && metrics.firstTimeTrending) {
+        events.push({
+          type: "first",
+          icon: "⭐",
+          title: "First time trending",
+          message: "You are now trending in your city."
+        });
+      }
+      if (rank && metrics.biggestMover) {
+        events.push({
+          type: "mover",
+          icon: "🚀",
+          title: "Biggest mover",
+          message: "You were one of today's fastest-rising dancers."
+        });
+      }
+      if (!events.length) {
+        events.push({
+          type: "stable",
+          icon: "⚡",
+          title: "Rank watch active",
+          message: `Keep posting shifts and sharing your profile to climb in ${city}.`
+        });
+      }
+      return events.slice(0, 4);
+    }
+
     function activeDancerProfile(city = activeDancerCity()) {
       const dancerName = activeDancerName();
       return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
@@ -17322,6 +17676,40 @@
       const directionsAfterProfile = Math.round(directionRequests30 * 0.72);
       const socialClickRate = Math.max(2, Math.round(((instagramClicks + snapchatClicks + tiktokClicks + onlyfansClicks + xClicks) / Math.max(1, profileViews30)) * 1000) / 10);
       const rankGain = seededRange(`${profile.name}|rank-gain|${city}`, 2, 8);
+      const currentRank = ranked.trendRank || null;
+      const rankDirectionSeed = seededRange(`${profile.name}|rank-direction|${city}`, 1, 10);
+      const previousRank = currentRank
+        ? rankDirectionSeed <= 2
+          ? Math.max(1, currentRank - seededRange(`${profile.name}|previous-rank-down|${city}`, 1, 2))
+          : currentRank + seededRange(`${profile.name}|previous-rank-up|${city}`, 1, 8)
+        : seededRange(`${profile.name}|previous-rank-outside|${city}`, 11, 22);
+      const rankChangeYesterday = currentRank ? previousRank - currentRank : 0;
+      const bestRankOffsetMax = currentRank ? Math.min(3, Math.max(0, currentRank - 1)) : 0;
+      const bestRankThisWeek = currentRank
+        ? Math.max(1, currentRank - (bestRankOffsetMax ? seededRange(`${profile.name}|best-rank-week-offset|${city}`, 0, bestRankOffsetMax) : 0))
+        : null;
+      const highestRankOffsetMax = bestRankThisWeek ? Math.min(2, Math.max(0, bestRankThisWeek - 1)) : 0;
+      const highestRankAchieved = bestRankThisWeek
+        ? Math.max(1, bestRankThisWeek - (highestRankOffsetMax ? seededRange(`${profile.name}|highest-rank-offset|${city}`, 0, highestRankOffsetMax) : 0))
+        : null;
+      const firstTimeTrending = Boolean(currentRank && (previousRank > 10 || seededRange(`${profile.name}|first-trending|${city}`, 1, 10) <= 2));
+      const biggestMover = Boolean(currentRank && rankChangeYesterday >= 5);
+      const rankTrend = rankTrendFromChange(rankChangeYesterday);
+      const rankingSignal = rankingSignalLabel({
+        profileViews30,
+        scheduleViews30,
+        newFollowers,
+        notificationOpens,
+        favoritesAdded,
+        goingTonightClicks
+      });
+      const rankingNotifications = buildRankingNotifications(profile, city, {
+        currentRank,
+        previousRank,
+        rankChangeYesterday,
+        firstTimeTrending,
+        biggestMover
+      });
       const profileCompleteness = profile.scheduled ? 96 : 84;
       return {
         ranked,
@@ -17350,6 +17738,16 @@
         directionsAfterProfile,
         socialClickRate,
         rankGain,
+        currentRank,
+        previousRank,
+        rankChangeYesterday,
+        bestRankThisWeek,
+        highestRankAchieved,
+        firstTimeTrending,
+        biggestMover,
+        rankTrend,
+        rankingSignal,
+        rankingNotifications,
         profileCompleteness,
         instagramClicks,
         snapchatClicks,
@@ -18762,6 +19160,21 @@
           metricCardMarkup(compactNumber(dashboardMetrics.peakHourViews), "Peak-hour views"),
           metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances")
         ].join("");
+        const rankTrend = document.getElementById("dancerRankTrend");
+        rankTrend.textContent = dashboardMetrics.rankTrend;
+        rankTrend.className = `rank-trend-pill ${dashboardMetrics.rankTrend.toLowerCase()}`;
+        const rankHero = document.getElementById("dancerRankingHero");
+        rankHero.classList.toggle("rank-one", dashboardMetrics.currentRank === 1);
+        document.getElementById("dancerCurrentRank").textContent = rankLabel(dashboardMetrics.currentRank);
+        document.getElementById("dancerRankSummary").textContent = dashboardMetrics.rankChangeYesterday >= 3
+          ? `${rankMovementText(dashboardMetrics.rankChangeYesterday)} since yesterday · Up ${dashboardMetrics.rankGain} this week`
+          : `${dashboardMetrics.rankTrend} this week · Keep posting and sharing`;
+        document.getElementById("dancerHighestRank").textContent = rankLabel(dashboardMetrics.highestRankAchieved);
+        document.getElementById("dancerBestWeekRank").textContent = rankLabel(dashboardMetrics.bestRankThisWeek);
+        document.getElementById("dancerYesterdayChange").textContent = rankMovementText(dashboardMetrics.rankChangeYesterday);
+        document.getElementById("dancerRankSignal").textContent = dashboardMetrics.rankingSignal;
+        document.getElementById("dancerRankingNotifications").innerHTML =
+          dashboardMetrics.rankingNotifications.map(rankingNotificationMarkup).join("");
         document.getElementById("dancerMomentumMetrics").innerHTML = [
           metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
           metricCardMarkup(`#${seededRange(`${activeProfile.name}|week-rank|${city}`, 1, 5)}`, "Trending this week"),
@@ -18831,6 +19244,22 @@
           "Peak-hour views",
           "City search appearances"
         ]);
+        const rankTrend = document.getElementById("dancerRankTrend");
+        rankTrend.textContent = "Locked";
+        rankTrend.className = "rank-trend-pill stable";
+        document.getElementById("dancerRankingHero").classList.remove("rank-one");
+        document.getElementById("dancerCurrentRank").textContent = "Locked";
+        document.getElementById("dancerRankSummary").textContent = "Trending milestones unlock after approval.";
+        document.getElementById("dancerHighestRank").textContent = "Locked";
+        document.getElementById("dancerBestWeekRank").textContent = "Locked";
+        document.getElementById("dancerYesterdayChange").textContent = "Locked";
+        document.getElementById("dancerRankSignal").textContent = "Real activity";
+        document.getElementById("dancerRankingNotifications").innerHTML = `
+          <article class="rank-event stable">
+            <span class="rank-event-icon">⚡</span>
+            <span><strong>Ranking notifications locked</strong><p>Complete approval to receive Top 10, #1, biggest mover, and rank jump notifications.</p></span>
+          </article>
+        `;
         document.getElementById("dancerMomentumMetrics").innerHTML = lockedMetricCards([
           `Trending in ${city}`,
           "Trending this week",
