@@ -14711,6 +14711,61 @@
       color: #22C7FF !important;
       stroke: #22C7FF !important;
     }
+
+    /* Profile action states: clear before/after feedback without overusing pink. */
+    .profile-modal .follow-primary:not(.is-following) {
+      background: linear-gradient(135deg, #8B5CF6 0%, #B43BDA 62%, #EC4899 100%) !important;
+      border-color: rgba(236, 72, 153, 0.42) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 24px rgba(139, 92, 246, 0.28),
+        0 0 18px rgba(236, 72, 153, 0.16) !important;
+    }
+
+    .profile-modal .follow-primary.is-following {
+      color: #F5F2FF !important;
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(8, 8, 14, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 20px rgba(139, 92, 246, 0.18) !important;
+    }
+
+    .profile-modal #notifyBtn:not(.is-following) {
+      color: #F5F2FF !important;
+      background: rgba(8, 8, 14, 0.86) !important;
+      border-color: rgba(139, 92, 246, 0.44) !important;
+    }
+
+    .profile-modal #notifyBtn.is-following {
+      color: #F5F2FF !important;
+      border-color: rgba(139, 92, 246, 0.62) !important;
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.94), rgba(8, 8, 14, 0.98)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.16) !important;
+    }
+
+    .profile-modal .going-btn:not(:disabled) {
+      background: linear-gradient(135deg, #7C3AED 0%, #A855F7 58%, #C026D3 100%) !important;
+      border-color: rgba(168, 85, 247, 0.44) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 26px rgba(139, 92, 246, 0.28),
+        0 0 12px rgba(236, 72, 153, 0.10) !important;
+    }
+
+    .profile-modal .going-btn.is-going {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.96), rgba(139, 92, 246, 0.92) 58%, rgba(34, 199, 255, 0.56)) !important;
+      border-color: rgba(34, 199, 255, 0.34) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+        0 0 24px rgba(139, 92, 246, 0.24),
+        0 0 12px rgba(34, 199, 255, 0.12) !important;
+    }
   </style>
 </head>
 <body>
