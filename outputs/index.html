@@ -16483,7 +16483,9 @@
       padding: 0 !important;
       overflow: hidden !important;
       background-color: #050507 !important;
-      background-image: url("./dancr-hero-banner.png") !important;
+      background-image:
+        url("file:///C:/Users/aix23/Downloads/ChatGPT%20Image%20Jun%2023,%202026,%2010_11_45%20PM.png"),
+        url("./dancr-hero-banner.png") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: contain !important;
@@ -16508,49 +16510,32 @@
     }
 
     .hero.reference-hero:not(.uploaded-hero-ready) {
-      min-height: clamp(260px, 42vw, 365px) !important;
-      aspect-ratio: auto !important;
-      display: flex !important;
-      align-items: center !important;
-      padding: clamp(24px, 4.5vw, 58px) clamp(20px, 5vw, 60px) !important;
+      aspect-ratio: 1900 / 900 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      display: block !important;
+      padding: 0 !important;
       background-image:
-        radial-gradient(circle at 83% 50%, rgba(124, 58, 237, 0.34), transparent 26%),
-        linear-gradient(90deg, #050507 0%, #090710 50%, #221044 78%, #35106a 100%) !important;
-      background-size: cover !important;
-      background-position: center !important;
+        url("file:///C:/Users/aix23/Downloads/ChatGPT%20Image%20Jun%2023,%202026,%2010_11_45%20PM.png"),
+        url("./dancr-hero-banner.png") !important;
+      background-repeat: no-repeat !important;
+      background-position: center center !important;
+      background-size: contain !important;
+      background-color: #050507 !important;
     }
 
     .hero.reference-hero:not(.uploaded-hero-ready)::before {
-      content: "" !important;
-      display: block !important;
-      position: absolute !important;
-      inset: 0 !important;
-      pointer-events: none !important;
-      background:
-        linear-gradient(90deg, transparent 0 91%, rgba(255, 255, 255, 0.68) 92%, rgba(236, 72, 153, 0.5) 92.4%, rgba(124, 58, 237, 0.34) 93%, transparent 94%),
-        radial-gradient(ellipse at 92% 50%, rgba(139, 92, 246, 0.38), transparent 30%) !important;
-      filter: drop-shadow(0 0 18px rgba(139, 92, 246, 0.55));
+      content: none !important;
+      display: none !important;
     }
 
     .hero.reference-hero:not(.uploaded-hero-ready)::after {
-      content: "" !important;
-      display: block !important;
-      position: absolute !important;
-      inset: 0 !important;
-      pointer-events: none !important;
-      background: linear-gradient(90deg, rgba(5, 5, 7, 0.72), transparent 34%, rgba(5, 5, 7, 0.08) 100%) !important;
+      content: none !important;
+      display: none !important;
     }
 
     .hero.reference-hero:not(.uploaded-hero-ready) .hero-copy {
-      position: relative !important;
-      z-index: 2 !important;
-      width: min(72%, 720px) !important;
-      max-width: 720px !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      transform: none !important;
-      left: auto !important;
-      top: auto !important;
+      display: none !important;
     }
 
     .hero.reference-hero:not(.uploaded-hero-ready) h2 {
