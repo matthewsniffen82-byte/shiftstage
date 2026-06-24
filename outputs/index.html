@@ -17683,6 +17683,14 @@
         0 0 18px rgba(255, 213, 96, 0.10) !important;
     }
 
+    /* Trending ranking badges are hidden visually while rank data stays available. */
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .modal-rank,
+    .venue-shift-rank {
+      display: none !important;
+    }
+
   </style>
 </head>
 <body>
@@ -18355,7 +18363,7 @@
                 <span class="pill" id="modalCity">Las Vegas</span>
               </div>
             </div>
-            <span class="badge trend modal-rank" id="modalRank">#1 Trending</span>
+            <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
         </div>
         <div class="gallery" id="modalGallery"></div>
@@ -19889,10 +19897,7 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
-      const trendLabel = String(profile.trendRank);
-      const trendBadge = isTrending
-        ? `<span class="badge trend ${options.trendingContext ? "full-trend" : "compact-trend"} ${profile.trendRank === 1 ? "rank-one" : ""}" aria-label="#${profile.trendRank} Trending">${trendFlameMarkup(profile.trendRank, options.trendingContext)}</span>`
-        : "";
+      const trendBadge = "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const scheduleMarkup = isPending
@@ -19961,7 +19966,6 @@
             <strong>${profile.name}${profile.status === "Verified" ? verifiedCheckMarkup() : ""}</strong>
             <span>${clockIconMarkup()}${label} • ${profile.time}</span>
           </div>
-          ${profile.trendRank ? `<span class="venue-shift-rank ${profile.trendRank === 1 ? "rank-one" : ""}" aria-label="#${profile.trendRank} Trending">${trendFlameMarkup(profile.trendRank)}</span>` : ""}
         </button>
       `;
     }
@@ -20155,9 +20159,9 @@
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
-      modalRank.classList.toggle("rank-one", profile.trendRank === 1);
-      modalRank.innerHTML = trendFlameMarkup(profile.trendRank, true);
-      modalRank.hidden = isPending || !profile.trendRank;
+      modalRank.classList.remove("rank-one");
+      modalRank.innerHTML = "";
+      modalRank.hidden = true;
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
       setModalPhoto(basePhoto);
 
