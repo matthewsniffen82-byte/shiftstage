@@ -17691,6 +17691,55 @@
       display: none !important;
     }
 
+    /* Tighten the full-profile identity plate so it supports the photo instead of competing with it. */
+    .profile-modal .modal-identity {
+      max-width: min(250px, calc(100vw - 108px)) !important;
+      padding: clamp(10px, 2.2vw, 14px) clamp(12px, 2.8vw, 16px) !important;
+      border-radius: 16px !important;
+      gap: 8px !important;
+    }
+
+    .profile-modal .modal-identity h2 {
+      font-size: clamp(1.08rem, 3.5vw, 1.35rem) !important;
+      line-height: 1.04 !important;
+      gap: 6px !important;
+    }
+
+    .profile-modal .modal-identity .verified-mark {
+      width: 22px !important;
+      height: 22px !important;
+      min-width: 22px !important;
+      font-size: 0.82rem !important;
+    }
+
+    .profile-modal .modal-identity .pill-row {
+      gap: 6px !important;
+    }
+
+    .profile-modal #modalCity {
+      min-height: 28px !important;
+      padding: 0 11px !important;
+      font-size: 0.78rem !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .modal-identity {
+        max-width: calc(100vw - 118px) !important;
+        padding: 9px 11px !important;
+        border-radius: 14px !important;
+      }
+
+      .profile-modal .modal-identity h2 {
+        font-size: 1.06rem !important;
+      }
+
+      .profile-modal #modalCity {
+        min-height: 26px !important;
+        padding-inline: 10px !important;
+        font-size: 0.74rem !important;
+      }
+    }
+
   </style>
 </head>
 <body>
