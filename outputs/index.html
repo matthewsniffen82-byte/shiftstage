@@ -14919,6 +14919,31 @@
       margin-left: auto;
       border-color: rgba(34, 199, 255, 0.24) !important;
     }
+
+    .dancer-card .card-venue-link {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      text-decoration-color: rgba(34, 199, 255, 0.42);
+      border-radius: 6px;
+      transition:
+        color 180ms ease,
+        background 180ms ease,
+        text-shadow 180ms ease,
+        text-decoration-color 180ms ease;
+    }
+
+    .dancer-card .card-venue-link:hover,
+    .dancer-card .card-venue-link:focus-visible {
+      color: #FFFFFF !important;
+      background: rgba(34, 199, 255, 0.08);
+      outline: none;
+      text-decoration-color: rgba(34, 199, 255, 0.92);
+      text-shadow:
+        0 0 11px rgba(34, 199, 255, 0.46),
+        0 0 16px rgba(139, 92, 246, 0.28);
+    }
   </style>
 </head>
 <body>
@@ -16828,7 +16853,7 @@
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
             : '<div class="meta no-shifts">No shifts posted</div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
+        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : `<div class="meta">${scheduleText}</div>`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
@@ -18074,7 +18099,23 @@
       )).join("");
     }
 
+    function openVenueFromName(venueName) {
+      if (!venueName) return;
+      selectedVenueName = venueName;
+      activeTab = "venues";
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     results.addEventListener("click", (event) => {
+      const cardVenueLink = event.target.closest("[data-card-venue]");
+      if (cardVenueLink) {
+        event.preventDefault();
+        event.stopPropagation();
+        openVenueFromName(cardVenueLink.dataset.cardVenue);
+        return;
+      }
       const directionsLink = event.target.closest(".venue-directions-btn");
       if (directionsLink) {
         const city = citySelect.value;
@@ -18104,11 +18145,7 @@
       const venue = event.target.closest(".venue-card");
       if (venue) {
         event.preventDefault();
-        selectedVenueName = venue.dataset.venue;
-        activeTab = "venues";
-        document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
-        render();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        openVenueFromName(venue.dataset.venue);
         return;
       }
       const venueShift = event.target.closest(".venue-shift-row");
@@ -18527,15 +18564,19 @@
     });
 
     customerDashboard.addEventListener("click", (event) => {
+      const cardVenueLink = event.target.closest("[data-card-venue]");
+      if (cardVenueLink) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeDashboard();
+        openVenueFromName(cardVenueLink.dataset.cardVenue);
+        return;
+      }
       const venue = event.target.closest(".venue-card");
       if (venue) {
         event.preventDefault();
         closeDashboard();
-        selectedVenueName = venue.dataset.venue;
-        activeTab = "venues";
-        document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
-        render();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        openVenueFromName(venue.dataset.venue);
         return;
       }
       const card = event.target.closest(".dancer-card");
@@ -18638,6 +18679,14 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      const cardVenueLink = event.target.closest?.("[data-card-venue]");
+      if (cardVenueLink && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (customerDashboard.classList.contains("show")) closeDashboard();
+        openVenueFromName(cardVenueLink.dataset.cardVenue);
+        return;
+      }
       if (event.key === "Escape" && profileBackdrop.classList.contains("show")) closeProfileModal();
       if (event.key === "Escape") closeUtilityMenu();
     });
