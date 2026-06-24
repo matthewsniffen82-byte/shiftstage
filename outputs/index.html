@@ -15605,6 +15605,81 @@
       color: #AEEBFF !important;
       filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.65));
     }
+
+    .venue-detail .venue-status-pill {
+      color: #F4ECFF !important;
+      border: 1px solid rgba(139, 92, 246, 0.52) !important;
+      background:
+        linear-gradient(180deg, rgba(139, 92, 246, 0.16), rgba(34, 199, 255, 0.045)),
+        rgba(8, 8, 12, 0.88) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    .venue-detail .venue-quick-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 6px !important;
+    }
+
+    .venue-detail .venue-quick-stat {
+      min-height: 78px !important;
+      padding: 13px 14px !important;
+      border-color: rgba(139, 92, 246, 0.32) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 68%),
+        rgba(8, 8, 12, 0.86) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 18px rgba(139, 92, 246, 0.12),
+        0 12px 30px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .venue-detail .venue-quick-stat strong {
+      color: #B58BFF !important;
+      text-shadow: 0 0 14px rgba(139, 92, 246, 0.35) !important;
+    }
+
+    .venue-detail .venue-quick-stat span {
+      color: #C7C1D4 !important;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .venue-detail .venue-info .info-tile {
+      border-color: rgba(139, 92, 246, 0.24) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 70%),
+        rgba(8, 8, 12, 0.84) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+        0 12px 30px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .venue-detail .map-preview {
+      border-color: rgba(34, 199, 255, 0.26) !important;
+      box-shadow:
+        0 0 0 1px rgba(139, 92, 246, 0.08) inset,
+        0 0 22px rgba(34, 199, 255, 0.1),
+        0 14px 34px rgba(0, 0, 0, 0.38) !important;
+    }
+
+    @media (max-width: 460px) {
+      .venue-detail .venue-quick-stats {
+        gap: 7px !important;
+      }
+
+      .venue-detail .venue-quick-stat {
+        min-height: 68px !important;
+        padding: 10px 9px !important;
+      }
+
+      .venue-detail .venue-quick-stat span {
+        font-size: 10px !important;
+        line-height: 1.1 !important;
+      }
+    }
   </style>
 </head>
 <body>
