@@ -17393,6 +17393,31 @@
       }
     }
 
+    /* Final schedule color separation: verified stays cyan, upcoming shifts move to cooler periwinkle. */
+    .card-schedule-text.upcoming,
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #A8B7FF !important;
+      text-shadow:
+        0 0 9px rgba(168, 183, 255, 0.38),
+        0 0 18px rgba(124, 58, 237, 0.16) !important;
+    }
+
+    .card-schedule-text.upcoming .schedule-label {
+      color: #A8B7FF !important;
+      text-shadow:
+        0 0 10px rgba(168, 183, 255, 0.40),
+        0 0 18px rgba(124, 58, 237, 0.16) !important;
+    }
+
+    .dancer-card .schedule-row.is-upcoming .venue-dot,
+    .dancer-card .schedule-row.is-upcoming .venue-dot svg,
+    .profile-modal .upcoming-time-row > .venue-dot,
+    .profile-modal .upcoming-time-row > .venue-dot svg {
+      color: #A8B7FF !important;
+      stroke: #A8B7FF !important;
+      filter: drop-shadow(0 0 7px rgba(168, 183, 255, 0.32)) !important;
+    }
+
   </style>
 </head>
 <body>
