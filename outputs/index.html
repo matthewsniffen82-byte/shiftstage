@@ -14287,6 +14287,142 @@
       color: rgba(34, 199, 255, 0.82) !important;
       filter: drop-shadow(0 0 5px rgba(34, 199, 255, 0.28)) !important;
     }
+
+    /* Palette balance pass: less hot pink, more expensive black/violet. */
+    body {
+      background:
+        radial-gradient(circle at 70% 0%, rgba(124, 58, 237, 0.11), transparent 32rem),
+        radial-gradient(circle at 12% 18%, rgba(34, 199, 255, 0.045), transparent 24rem),
+        linear-gradient(180deg, #050507 0%, #07070B 48%, #050507 100%) !important;
+    }
+
+    .app,
+    .page-panel,
+    .modal,
+    .dashboard-wide,
+    .auth-card,
+    .customer-summary,
+    .customer-notification-card,
+    .info-tile,
+    .metric-card,
+    .venue-detail-card,
+    .venue-card,
+    .stat {
+      background-color: rgba(14, 14, 20, 0.88) !important;
+      box-shadow:
+        0 22px 54px rgba(0, 0, 0, 0.42),
+        0 0 0 1px rgba(139, 92, 246, 0.10) inset !important;
+    }
+
+    .reference-hero,
+    .hero,
+    .city-panel {
+      background:
+        radial-gradient(circle at 86% 48%, rgba(124, 58, 237, 0.26), transparent 30rem),
+        radial-gradient(circle at 94% 44%, rgba(236, 72, 153, 0.08), transparent 18rem),
+        linear-gradient(100deg, rgba(5, 5, 7, 0.98) 0%, rgba(8, 8, 14, 0.98) 44%, rgba(24, 12, 54, 0.86) 100%) !important;
+      border-color: rgba(139, 92, 246, 0.38) !important;
+      box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.38),
+        0 0 34px rgba(139, 92, 246, 0.14) !important;
+    }
+
+    .reference-hero:after,
+    .hero:after {
+      opacity: 0.72 !important;
+      filter: saturate(0.9) !important;
+    }
+
+    .tab.active,
+    .tab[aria-selected="true"],
+    .filter-pill.active {
+      background: linear-gradient(135deg, #7C3AED 0%, #9D4EDD 72%, #C026D3 100%) !important;
+      border-color: rgba(168, 85, 247, 0.74) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 22px rgba(139, 92, 246, 0.38),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .location-btn {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(34, 199, 255, 0.82)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 22px rgba(124, 58, 237, 0.20),
+        0 0 18px rgba(34, 199, 255, 0.08) !important;
+    }
+
+    .action-btn:not(.secondary):not(.danger),
+    .follow-primary,
+    .going-btn {
+      background:
+        linear-gradient(135deg, #8B5CF6 0%, #B832D8 58%, #EC4899 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 24px rgba(139, 92, 246, 0.26),
+        0 0 16px rgba(236, 72, 153, 0.13) !important;
+    }
+
+    .action-btn.secondary,
+    .ghost,
+    .menu-btn,
+    .profile-share-trigger,
+    .social-link,
+    .share-copy {
+      background: rgba(8, 8, 14, 0.78) !important;
+      border-color: rgba(139, 92, 246, 0.44) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 16px rgba(139, 92, 246, 0.10) !important;
+    }
+
+    .dancer-card,
+    .trending-card,
+    .rank-one-card {
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow:
+        0 20px 42px rgba(0, 0, 0, 0.48),
+        0 0 0 1px rgba(139, 92, 246, 0.08) inset,
+        0 0 22px rgba(139, 92, 246, 0.11) !important;
+    }
+
+    .dancer-card:hover,
+    .trending-card:hover {
+      box-shadow:
+        0 24px 54px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(139, 92, 246, 0.18) inset,
+        0 0 30px rgba(139, 92, 246, 0.22),
+        0 0 16px rgba(236, 72, 153, 0.10) !important;
+    }
+
+    .rank-one-card:hover {
+      box-shadow:
+        0 26px 58px rgba(0, 0, 0, 0.54),
+        0 0 0 1px rgba(255, 213, 96, 0.16) inset,
+        0 0 32px rgba(139, 92, 246, 0.22),
+        0 0 16px rgba(236, 72, 153, 0.10) !important;
+    }
+
+    .card-schedule-text.tonight,
+    .profile-modal .schedule-time.is-tonight,
+    .dancer-card .schedule-row.is-tonight .venue-dot,
+    .profile-modal .schedule-time .venue-dot {
+      color: #FF64C8 !important;
+      text-shadow: 0 0 12px rgba(255, 47, 174, 0.34) !important;
+    }
+
+    .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 44%, rgba(5, 5, 7, 0.18)),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(236, 72, 153, 0.14)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 16px rgba(139, 92, 246, 0.23),
+        0 0 10px rgba(236, 72, 153, 0.12),
+        0 10px 24px rgba(0, 0, 0, 0.30) !important;
+    }
   </style>
 </head>
 <body>
