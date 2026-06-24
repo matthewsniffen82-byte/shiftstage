@@ -15447,6 +15447,72 @@
     .profile-modal .upcoming-venue-line {
       margin-bottom: 0 !important;
     }
+
+    /* Restore the Dancr hero: one intentional right-side light beam, no flat lavender wash. */
+    .hero.reference-hero {
+      position: relative !important;
+      isolation: isolate !important;
+      overflow: hidden !important;
+      background:
+        radial-gradient(ellipse at 92% 50%, rgba(124, 58, 237, 0.28), transparent 0 29%),
+        radial-gradient(ellipse at 82% 48%, rgba(236, 72, 153, 0.09), transparent 0 35%),
+        linear-gradient(100deg, #050507 0%, #07060d 50%, #120821 74%, #1f0b48 100%) !important;
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow:
+        0 22px 64px rgba(0, 0, 0, 0.54),
+        0 0 34px rgba(124, 58, 237, 0.18),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+        inset -84px 0 130px rgba(124, 58, 237, 0.24) !important;
+    }
+
+    .hero.reference-hero::before {
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      top: -18% !important;
+      right: clamp(28px, 6vw, 52px) !important;
+      bottom: -18% !important;
+      left: auto !important;
+      z-index: 0 !important;
+      width: 4px !important;
+      height: auto !important;
+      border-radius: 999px !important;
+      pointer-events: none !important;
+      opacity: 0.98 !important;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.42) 13%, rgba(255, 255, 255, 0.76) 50%, rgba(236, 72, 153, 0.38) 58%, rgba(139, 92, 246, 0.46) 88%, transparent 100%) !important;
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.34),
+        0 0 24px rgba(139, 92, 246, 0.58),
+        0 0 54px rgba(124, 58, 237, 0.38),
+        -38px 0 80px rgba(236, 72, 153, 0.10) !important;
+      filter: saturate(1.05) !important;
+      mix-blend-mode: screen !important;
+    }
+
+    .hero.reference-hero::after {
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      border-radius: inherit !important;
+      pointer-events: none !important;
+      opacity: 0.54 !important;
+      background:
+        radial-gradient(ellipse at 92% 50%, rgba(139, 92, 246, 0.22), transparent 0 23%),
+        linear-gradient(90deg, transparent 0 72%, rgba(124, 58, 237, 0.12) 88%, rgba(124, 58, 237, 0.22) 100%) !important;
+      box-shadow: none !important;
+      filter: none !important;
+      mix-blend-mode: normal !important;
+    }
+
+    .hero.reference-hero .hero-copy {
+      position: relative !important;
+      z-index: 2 !important;
+    }
   </style>
 </head>
 <body>
