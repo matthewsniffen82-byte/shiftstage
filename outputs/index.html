@@ -17891,6 +17891,7 @@
         <button type="button" data-demo-jump="pending-dancer">Pending dancer</button>
         <button type="button" data-demo-jump="new-dancer">New dancer setup</button>
         <button type="button" data-demo-jump="customer">Approved customer</button>
+        <button type="button" data-demo-jump="browsing-customer">Browsing customer</button>
         <button type="button" data-demo-jump="customer-signup">Customer sign up</button>
       </div>
     </aside>
@@ -19980,6 +19981,25 @@
       openDashboard();
     }
 
+    function openBrowsingCustomerDemo() {
+      closeDemoSurfaces();
+      citySelect.value = "Las Vegas";
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = false;
+      activeDashboardType = "customer";
+      activeTab = "tonight";
+      selectedVenueName = null;
+      tonightExpanded = false;
+      dancersExpanded = false;
+      dashboardTonightExpanded = false;
+      dashboardFollowedExpanded = false;
+      dashboardVenuesExpanded = false;
+      updateAccountHeader();
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
+      render();
+      showToast("Browsing as a customer");
+    }
+
     function openCustomerSignupDemo() {
       closeDemoSurfaces();
       isCustomerLoggedIn = false;
@@ -21086,6 +21106,7 @@
         startDemoDancerSetup();
       }
       if (button.dataset.demoJump === "customer") openApprovedCustomerDemo();
+      if (button.dataset.demoJump === "browsing-customer") openBrowsingCustomerDemo();
       if (button.dataset.demoJump === "customer-signup") openCustomerSignupDemo();
     });
 
