@@ -17855,6 +17855,136 @@
       pointer-events: none !important;
     }
 
+    /* Final ranking marker: compact flame + rank on cards and full profile views. */
+    .badge.trend:not([hidden]),
+    .dancer-card .badge.trend:not([hidden]),
+    .profile-modal .modal-rank:not([hidden]),
+    .venue-shift-rank:not([hidden]) {
+      align-items: center !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.02) 46%, rgba(5, 5, 7, 0.2)),
+        rgba(10, 8, 10, 0.68) !important;
+      border: 1px solid rgba(255, 122, 0, 0.58) !important;
+      border-radius: 999px !important;
+      box-shadow:
+        0 0 13px rgba(255, 122, 0, 0.34),
+        0 0 20px rgba(255, 107, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+      clip-path: none !important;
+      -webkit-clip-path: none !important;
+      color: #fff !important;
+      display: inline-flex !important;
+      filter: none !important;
+      gap: 5px !important;
+      height: 30px !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+      min-height: 30px !important;
+      min-width: 44px !important;
+      opacity: 1 !important;
+      overflow: hidden !important;
+      padding: 0 10px !important;
+      pointer-events: auto !important;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.68) !important;
+      transform: none !important;
+      visibility: visible !important;
+      width: auto !important;
+      backdrop-filter: blur(12px) saturate(1.16) !important;
+    }
+
+    .badge.trend.rank-one:not([hidden]),
+    .dancer-card .badge.trend.rank-one:not([hidden]),
+    .profile-modal .modal-rank.rank-one:not([hidden]),
+    .venue-shift-rank.rank-one:not([hidden]) {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.035) 45%, rgba(36, 22, 4, 0.25)),
+        rgba(20, 13, 6, 0.74) !important;
+      border-color: rgba(255, 215, 106, 0.82) !important;
+      box-shadow:
+        0 0 20px rgba(255, 215, 106, 0.58),
+        0 0 32px rgba(255, 122, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+    }
+
+    .badge.trend::before,
+    .badge.trend::after,
+    .venue-shift-rank::before,
+    .venue-shift-rank::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .trend-flame-emoji {
+      display: inline-block !important;
+      font-size: 0.92rem !important;
+      line-height: 1 !important;
+      transform: translateY(-0.5px) !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 122, 0, 0.92))
+        drop-shadow(0 0 10px rgba(255, 107, 0, 0.42)) !important;
+    }
+
+    .rank-one .trend-flame-emoji {
+      filter:
+        drop-shadow(0 0 7px rgba(255, 225, 128, 0.94))
+        drop-shadow(0 0 14px rgba(255, 196, 64, 0.52)) !important;
+    }
+
+    .trend-rank-text {
+      color: #fff !important;
+      display: inline-block !important;
+      font-family: var(--font-ui) !important;
+      font-size: 0.86rem !important;
+      font-weight: 950 !important;
+      letter-spacing: -0.015em !important;
+      line-height: 1 !important;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .dancer-card .badge.trend.compact-trend {
+      left: 18px !important;
+      top: 18px !important;
+    }
+
+    .profile-modal .modal-rank:not([hidden]) {
+      left: 18px !important;
+      right: auto !important;
+      top: 118px !important;
+      z-index: 7 !important;
+    }
+
+    .profile-modal .modal-rank.full-trend:not([hidden]) {
+      gap: 7px !important;
+      height: 31px !important;
+      min-height: 31px !important;
+      padding: 0 12px !important;
+    }
+
+    @media (max-width: 520px) {
+      .badge.trend:not([hidden]),
+      .dancer-card .badge.trend:not([hidden]),
+      .profile-modal .modal-rank:not([hidden]),
+      .venue-shift-rank:not([hidden]) {
+        height: 28px !important;
+        min-height: 28px !important;
+        min-width: 40px !important;
+        padding: 0 9px !important;
+      }
+
+      .trend-flame-emoji {
+        font-size: 0.86rem !important;
+      }
+
+      .trend-rank-text {
+        font-size: 0.8rem !important;
+      }
+
+      .profile-modal .modal-rank:not([hidden]) {
+        left: 16px !important;
+        top: 104px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -19781,7 +19911,7 @@
     function trendFlameMarkup(rank, full = false) {
       const safeRank = String(rank || "");
       const label = full ? `#${safeRank} Trending` : safeRank;
-      return `<span class="badge-icon trend-bolt" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.8 13.2h6.1L9.8 22 19.2 9.5h-6.3L13 2Z"></path></svg></span><span class="trend-rank-text">${label}</span>`;
+      return `<span class="trend-flame-emoji" aria-hidden="true">🔥</span><span class="trend-rank-text">${label}</span>`;
     }
 
     function actionIconMarkup(type) {
@@ -20061,7 +20191,9 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
-      const trendBadge = "";
+      const trendBadge = isTrending && profile.trendRank <= 10
+        ? `<span class="badge trend compact-trend ${profile.trendRank === 1 ? "rank-one" : ""}" aria-label="#${profile.trendRank} Trending">${trendFlameMarkup(profile.trendRank)}</span>`
+        : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const scheduleMarkup = isPending
@@ -20326,6 +20458,12 @@
       modalRank.classList.remove("rank-one");
       modalRank.innerHTML = "";
       modalRank.hidden = true;
+      if (!isPending && profile.trendRank && profile.trendRank <= 10) {
+        modalRank.className = `badge trend modal-rank full-trend ${profile.trendRank === 1 ? "rank-one" : ""}`;
+        modalRank.innerHTML = trendFlameMarkup(profile.trendRank, true);
+        modalRank.hidden = false;
+        modalRank.setAttribute("aria-label", `#${profile.trendRank} Trending`);
+      }
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
       setModalPhoto(basePhoto);
 
