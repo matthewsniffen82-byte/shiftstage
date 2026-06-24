@@ -14798,6 +14798,39 @@
       filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.25)) !important;
       opacity: 0.96 !important;
     }
+
+    .profile-modal .interest-count,
+    .profile-modal .metric-value {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 7px;
+      color: #FFFFFF !important;
+      line-height: 1.04;
+      white-space: nowrap;
+    }
+
+    .profile-modal .metric-number {
+      font-family: var(--font-display);
+      font-size: clamp(25px, 5vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #FFFFFF;
+      text-shadow: 0 0 14px rgba(124, 58, 237, 0.16);
+    }
+
+    .profile-modal .metric-label {
+      font-family: var(--font-body);
+      font-size: clamp(15px, 3.2vw, 18px);
+      font-weight: 800;
+      color: #D8D2E9;
+      letter-spacing: -0.01em;
+    }
+
+    .profile-modal .interest-tile,
+    .profile-modal .info-tile:has(#modalFollowerCount) {
+      min-height: 96px;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -15859,6 +15892,13 @@
       return Number(value || 0).toLocaleString();
     }
 
+    function metricPhraseMarkup(value) {
+      const text = String(value || "");
+      const match = text.match(/^([\d,]+)\s+(.+)$/);
+      if (!match) return text;
+      return `<span class="metric-number">${match[1]}</span><span class="metric-label">${match[2]}</span>`;
+    }
+
     function metricCardMarkup(value, label) {
       return `<div class="metric-card"><strong>${value}</strong><span>${label}</span></div>`;
     }
@@ -16871,10 +16911,11 @@
 
     function tonightInterestTileMarkup(status) {
       const mutedClass = status.state === "active" ? "" : "muted muted-value";
+      const statusText = status.state === "active" ? metricPhraseMarkup(status.label) : status.label;
       return `
         <div class="info-tile interest-tile" id="tonightInterestTile">
           <strong>Tonight interest</strong>
-          <div class="meta"><span class="interest-count ${mutedClass}" id="tonightInterestCount">${status.label}</span></div>
+          <div class="meta"><span class="interest-count ${mutedClass}" id="tonightInterestCount">${statusText}</span></div>
         </div>
       `;
     }
@@ -16975,7 +17016,7 @@
             ${shiftsMarkup(profile, status)}
             <div class="info-tile">
               <strong>Followers</strong>
-              <div class="meta"><span class="metric-value" id="modalFollowerCount">${followerCount(profile, city)}</span></div>
+              <div class="meta"><span class="metric-value" id="modalFollowerCount">${metricPhraseMarkup(followerCount(profile, city))}</span></div>
             </div>
             ${socialLinksMarkup(profile)}
           </div>
@@ -18101,7 +18142,7 @@
         }
         if (profile) {
           const followerCountEl = document.getElementById("modalFollowerCount");
-          if (followerCountEl) followerCountEl.textContent = followerCount(profile, city);
+          if (followerCountEl) followerCountEl.innerHTML = metricPhraseMarkup(followerCount(profile, city));
         }
         if (customerDashboard.classList.contains("show")) renderDashboard();
       }
@@ -18131,7 +18172,7 @@
         goingTonightSavedByProfile[profileName] = !wasGoing;
         if (countEl) {
           countEl.classList.remove("muted");
-          countEl.textContent = `${goingTonightByProfile[profileName].toLocaleString()} going`;
+          countEl.innerHTML = metricPhraseMarkup(`${goingTonightByProfile[profileName].toLocaleString()} going`);
         }
         actionButton.classList.toggle("is-going", !wasGoing);
         actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? "I'm Going Tonight" : "You're going tonight");
