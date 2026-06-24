@@ -1228,7 +1228,15 @@
       margin-bottom: 0;
     }
 
-    .profile-share-trigger {
+    .profile-utility-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .profile-share-trigger,
+    .profile-qr-trigger {
       width: 36px;
       height: 36px;
       display: inline-grid;
@@ -1244,14 +1252,17 @@
     }
 
     .profile-share-trigger:hover,
-    .profile-share-trigger.is-open {
+    .profile-share-trigger.is-open,
+    .profile-qr-trigger:hover,
+    .profile-qr-trigger.is-open {
       transform: translateY(-1px);
       border-color: rgba(192,132,255,.72);
       background: rgba(41,25,61,.86);
       box-shadow: 0 0 22px rgba(155,92,255,.25), inset 0 0 14px rgba(192,132,255,.08);
     }
 
-    .profile-share-trigger .action-icon {
+    .profile-share-trigger .action-icon,
+    .profile-qr-trigger .action-icon {
       width: 17px;
       height: 17px;
     }
@@ -9877,7 +9888,8 @@
       color: #bfaee0;
     }
 
-    .profile-modal .social-tile .profile-share-trigger {
+    .profile-modal .social-tile .profile-share-trigger,
+    .profile-modal .social-tile .profile-qr-trigger {
       width: 38px;
       height: 38px;
       flex-basis: 38px;
@@ -9950,7 +9962,8 @@
         padding: 11px 12px;
       }
 
-      .profile-modal .social-tile .profile-share-trigger {
+      .profile-modal .social-tile .profile-share-trigger,
+      .profile-modal .social-tile .profile-qr-trigger {
         width: 34px;
         height: 34px;
       }
@@ -16929,13 +16942,23 @@
       }
     }
 
-    /* Compact profile QR: scannable public profile link without bloating the modal. */
+    /* Profile QR: available from the Social Links utility icon, hidden until requested. */
+    .profile-modal .profile-qr-popover {
+      margin: 0 0 8px !important;
+      padding-top: 8px;
+      border-top: 1px solid rgba(192,132,255,.14);
+    }
+
+    .profile-modal .profile-qr-popover[hidden] {
+      display: none;
+    }
+
     .profile-modal .profile-qr-strip {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
       gap: 9px;
-      margin: 0 0 8px !important;
+      margin: 0 !important;
       padding: 8px 9px !important;
       border: 1px solid rgba(139, 92, 246, 0.34);
       border-radius: 16px;
@@ -19304,7 +19327,8 @@
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
-        share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>'
+        share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
+        qr: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"></rect><rect x="14" y="4" width="6" height="6" rx="1.2"></rect><rect x="4" y="14" width="6" height="6" rx="1.2"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v6h-6v-2h4z"></path><path d="M14 18h2v2h-2z"></path></svg>'
       };
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
     }
@@ -19448,27 +19472,36 @@
         .filter((platform) => platform.url);
       const city = selectedCity();
       const profileUrl = profileShareUrl(profile.name, city);
+      const qrId = `profile-qr-${profile.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${city.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
       const qrBlock = `
-        <div class="profile-qr-strip">
-          <img class="profile-qr-image" src="${qrCodeUrl(profileUrl)}" alt="QR code for ${profile.name} profile" loading="lazy" decoding="async">
-          <div class="profile-qr-copy">
-            <strong>Scan profile</strong>
-            <span>Opens ${profile.name}'s Dancr profile. No account needed.</span>
+        <div class="profile-qr-popover" id="${qrId}" data-qr-popover="${qrId}" hidden>
+          <div class="profile-qr-strip">
+            <img class="profile-qr-image" src="${qrCodeUrl(profileUrl)}" alt="QR code for ${profile.name} profile" loading="lazy" decoding="async">
+            <div class="profile-qr-copy">
+              <strong>Scan profile</strong>
+              <span>Opens ${profile.name}'s Dancr profile. No account needed.</span>
+            </div>
+            <a class="profile-qr-open" href="${profileUrl}" target="_blank" rel="noreferrer" aria-label="Open ${profile.name} profile link">Open</a>
           </div>
-          <a class="profile-qr-open" href="${profileUrl}" target="_blank" rel="noreferrer" aria-label="Open ${profile.name} profile link">Open</a>
         </div>
+      `;
+      const qrButton = `
+        <button class="profile-qr-trigger" type="button" data-toggle-qr="${qrId}" aria-controls="${qrId}" aria-expanded="false" aria-label="Show profile QR code">
+          ${actionIconMarkup("qr")}
+        </button>
       `;
       const shareButton = `
         <button class="profile-share-trigger" type="button" data-native-share="${profile.name}" data-share-city="${city}" aria-label="Share profile">
           ${actionIconMarkup("share")}
         </button>
       `;
+      const utilityButtons = `<div class="profile-utility-actions">${qrButton}${shareButton}</div>`;
       if (!links.length) {
         return `
           <div class="info-tile social-tile">
             <div class="social-tile-head">
               <strong>Social links</strong>
-              ${shareButton}
+              ${utilityButtons}
             </div>
             ${qrBlock}
             <div class="meta">No social links posted</div>
@@ -19479,7 +19512,7 @@
         <div class="info-tile social-tile">
           <div class="social-tile-head">
             <strong>Social links</strong>
-            ${shareButton}
+            ${utilityButtons}
           </div>
           ${qrBlock}
           <div class="social-links">
@@ -19896,6 +19929,7 @@
     }
 
     function closeProfileModal() {
+      closeQrPopovers();
       profileBackdrop.classList.remove("show");
       profileBackdrop.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
@@ -20971,6 +21005,32 @@
       });
     }
 
+    function closeQrPopovers(exceptPanel = null) {
+      document.querySelectorAll("[data-qr-popover]").forEach((panel) => {
+        if (panel === exceptPanel) return;
+        panel.hidden = true;
+      });
+      document.querySelectorAll("[data-toggle-qr]").forEach((button) => {
+        const panel = document.getElementById(button.dataset.toggleQr);
+        const isOpen = panel && !panel.hidden;
+        button.classList.toggle("is-open", isOpen);
+        button.setAttribute("aria-expanded", String(Boolean(isOpen)));
+      });
+    }
+
+    function handleQrClick(event) {
+      const qrButton = event.target.closest("[data-toggle-qr]");
+      if (!qrButton) return false;
+      const panel = document.getElementById(qrButton.dataset.toggleQr);
+      if (!panel) return true;
+      const willOpen = panel.hidden;
+      closeQrPopovers(panel);
+      panel.hidden = !willOpen;
+      qrButton.classList.toggle("is-open", willOpen);
+      qrButton.setAttribute("aria-expanded", String(willOpen));
+      return true;
+    }
+
     function handleShareClick(event) {
       const toggleButton = event.target.closest("[data-toggle-share]");
       if (toggleButton) {
@@ -21005,7 +21065,9 @@
     });
 
     modalBody.addEventListener("click", (event) => {
+      if (handleQrClick(event)) return;
       if (handleShareClick(event)) return;
+      if (!event.target.closest("[data-qr-popover]")) closeQrPopovers();
       if (!event.target.closest("[data-share-popover]")) closeSharePopovers();
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
@@ -21493,7 +21555,10 @@
         openVenueFromName(cardVenueLink.dataset.cardVenue);
         return;
       }
-      if (event.key === "Escape" && profileBackdrop.classList.contains("show")) closeProfileModal();
+      if (event.key === "Escape" && profileBackdrop.classList.contains("show")) {
+        closeQrPopovers();
+        closeProfileModal();
+      }
       if (event.key === "Escape") closeUtilityMenu();
     });
 
