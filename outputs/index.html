@@ -15804,6 +15804,57 @@
         0 0 28px rgba(139, 92, 246, 0.48),
         0 0 14px rgba(236, 72, 153, 0.18) !important;
     }
+    /* Violet balance pass: keep Dancr nightlife, restore more matte black. */
+    .hero.reference-hero {
+      background:
+        radial-gradient(circle at 86% 48%, rgba(139, 92, 246, 0.28), transparent 30%),
+        linear-gradient(100deg, rgba(5, 5, 7, 0.98) 0%, rgba(8, 7, 13, 0.96) 48%, rgba(28, 14, 58, 0.72) 100%) !important;
+      border-color: rgba(139, 92, 246, 0.34) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 18px 52px rgba(0, 0, 0, 0.36),
+        0 0 30px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .hero.reference-hero::before {
+      left: auto !important;
+      right: 5.8% !important;
+      width: 14px !important;
+      opacity: 0.92 !important;
+      background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.50), rgba(139, 92, 246, 0.92), rgba(236, 72, 153, 0.42), transparent) !important;
+      box-shadow:
+        0 0 18px rgba(139, 92, 246, 0.50),
+        0 0 34px rgba(124, 58, 237, 0.34),
+        0 0 46px rgba(236, 72, 153, 0.14) !important;
+      filter: blur(0.2px);
+    }
+
+    .hero.reference-hero::after {
+      opacity: 0.52 !important;
+      background:
+        radial-gradient(circle at 88% 46%, rgba(139, 92, 246, 0.22), transparent 32%),
+        linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.12) 66%, rgba(124, 58, 237, 0.28) 100%) !important;
+    }
+
+    .location-btn {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.84) 72%, rgba(34, 199, 255, 0.58)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 14px 34px rgba(124, 58, 237, 0.22),
+        0 0 18px rgba(34, 199, 255, 0.12) !important;
+    }
+
+    .tabs .tab.active,
+    .tab.active {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.84)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 12px 30px rgba(124, 58, 237, 0.30),
+        0 0 20px rgba(139, 92, 246, 0.20) !important;
+    }
   </style>
 </head>
 <body>
