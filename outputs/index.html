@@ -16512,7 +16512,7 @@
 
     /* Uploaded Dancr hero banner: use the provided image as the only hero visual. */
     .hero.reference-hero {
-      aspect-ratio: 1900 / 900 !important;
+      aspect-ratio: 1900 / 850 !important;
       min-height: 0 !important;
       height: auto !important;
       padding: 0 !important;
@@ -16523,10 +16523,11 @@
         url("./dancr-hero-banner.png") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
-      background-size: contain !important;
-      border-radius: 18px !important;
-      border: 1px solid rgba(124, 58, 237, 0.55) !important;
-      box-shadow: 0 22px 70px rgba(124, 58, 237, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+      background-size: cover !important;
+      background-clip: padding-box !important;
+      border-radius: 16px !important;
+      border: 1px solid rgba(124, 58, 237, 0.34) !important;
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.5), 0 0 26px rgba(124, 58, 237, 0.1) !important;
     }
 
     .hero.reference-hero.uploaded-hero-ready::before,
@@ -16545,7 +16546,7 @@
     }
 
     .hero.reference-hero:not(.uploaded-hero-ready) {
-      aspect-ratio: 1900 / 900 !important;
+      aspect-ratio: 1900 / 850 !important;
       min-height: 0 !important;
       height: auto !important;
       display: block !important;
@@ -16555,7 +16556,7 @@
         url("./dancr-hero-banner.png") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
-      background-size: contain !important;
+      background-size: cover !important;
       background-color: #050507 !important;
     }
 
