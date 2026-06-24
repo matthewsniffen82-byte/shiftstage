@@ -15231,6 +15231,65 @@
         drop-shadow(0 0 5px rgba(255, 243, 176, 0.74))
         drop-shadow(0 0 9px rgba(139, 92, 246, 0.48)) !important;
     }
+    /* Final full-profile schedule glow polish */
+    .profile-modal .schedule-stack,
+    .profile-modal .info-tile .meta {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .profile-modal .detail-line,
+    .profile-modal .schedule-text-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 9px !important;
+      min-width: 0;
+      line-height: 1.18;
+    }
+
+    .profile-modal .modal-schedule-text {
+      display: inline-flex;
+      align-items: baseline;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      line-height: 1.16 !important;
+      font-weight: 900 !important;
+      letter-spacing: 0;
+    }
+
+    .profile-modal .modal-schedule-text.tonight {
+      color: #FF64C8 !important;
+      text-shadow:
+        0 0 12px rgba(255, 47, 174, 0.56),
+        0 0 24px rgba(236, 72, 153, 0.22) !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #8FDCFF !important;
+      text-shadow:
+        0 0 12px rgba(34, 199, 255, 0.48),
+        0 0 22px rgba(34, 199, 255, 0.18) !important;
+    }
+
+    .profile-modal .tonight-time-row > .venue-dot,
+    .profile-modal .tonight-time-row > .venue-dot svg {
+      color: #FF64C8 !important;
+      stroke: #FF64C8 !important;
+      filter: drop-shadow(0 0 7px rgba(255, 47, 174, 0.42)) !important;
+    }
+
+    .profile-modal .upcoming-time-row > .venue-dot,
+    .profile-modal .upcoming-time-row > .venue-dot svg {
+      color: #8FDCFF !important;
+      stroke: #8FDCFF !important;
+      filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.38)) !important;
+    }
+
+    .profile-modal .upcoming-venue-line {
+      margin-bottom: 0 !important;
+    }
   </style>
 </head>
 <body>
@@ -17327,7 +17386,7 @@
             <strong>Working tonight</strong>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="detail-line schedule-time">${clockIconMarkup()}<span class="modal-schedule-text tonight">${profile.time}</span></div>
+              <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${profile.time}</span></div>
             </div>
           </div>
           ${tonightInterestTileMarkup(status)}
@@ -17344,8 +17403,8 @@
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
-              <div class="schedule-text-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
-              <div class="meta detail-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+              <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+              <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
             </div>
           </div>
           ${tonightInterestTileMarkup(status)}
