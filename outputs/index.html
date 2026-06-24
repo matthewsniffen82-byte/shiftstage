@@ -17045,6 +17045,145 @@
       }
     }
 
+    .profile-qr-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.18), transparent 34%),
+        rgba(5, 5, 7, 0.74);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .profile-qr-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .profile-qr-sheet {
+      position: relative;
+      width: min(370px, calc(100vw - 28px));
+      padding: 22px;
+      border: 1px solid rgba(139, 92, 246, 0.42);
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, rgba(17, 17, 24, 0.96), rgba(7, 7, 10, 0.98)),
+        rgba(5, 5, 7, 0.96);
+      box-shadow:
+        0 26px 70px rgba(0, 0, 0, 0.58),
+        0 0 42px rgba(139, 92, 246, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      text-align: center;
+    }
+
+    .profile-qr-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid rgba(167, 139, 250, 0.36);
+      background: rgba(5, 5, 7, 0.78);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .profile-qr-close:hover {
+      border-color: rgba(34, 199, 255, 0.62);
+      box-shadow: 0 0 18px rgba(34, 199, 255, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .profile-qr-kicker {
+      margin: 0 0 8px;
+      color: #22C7FF;
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .profile-qr-title {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(1.32rem, 5vw, 1.75rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .profile-qr-subtitle {
+      margin: 8px auto 18px;
+      max-width: 280px;
+      color: rgba(245, 245, 255, 0.72);
+      font-size: 0.96rem;
+      line-height: 1.35;
+    }
+
+    .profile-qr-frame {
+      width: min(258px, 74vw);
+      aspect-ratio: 1;
+      margin: 0 auto 18px;
+      padding: 12px;
+      border-radius: 22px;
+      background: #fff;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.22),
+        0 0 34px rgba(34, 199, 255, 0.22),
+        0 0 48px rgba(139, 92, 246, 0.20);
+    }
+
+    .profile-qr-overlay-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+    }
+
+    .profile-qr-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .profile-qr-action {
+      min-height: 46px;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 92, 246, 0.38);
+      background: rgba(5, 5, 7, 0.72);
+      color: #fff;
+      font: inherit;
+      font-weight: 900;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .profile-qr-action.primary {
+      border: none;
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.24);
+    }
+
+    .profile-qr-action:hover {
+      border-color: rgba(34, 199, 255, 0.55);
+      box-shadow: 0 0 18px rgba(139, 92, 246, 0.18);
+      transform: translateY(-1px);
+    }
+
     .account-control-card {
       gap: 14px !important;
     }
@@ -19369,6 +19508,7 @@
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
+        close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
         qr: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"></rect><rect x="14" y="4" width="6" height="6" rx="1.2"></rect><rect x="4" y="14" width="6" height="6" rx="1.2"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v6h-6v-2h4z"></path><path d="M14 18h2v2h-2z"></path></svg>'
       };
@@ -19513,22 +19653,8 @@
         .map((platform) => ({ ...platform, url: profile.socials?.[platform.key] }))
         .filter((platform) => platform.url);
       const city = selectedCity();
-      const profileUrl = profileShareUrl(profile.name, city);
-      const qrId = `profile-qr-${profile.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${city.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-      const qrBlock = `
-        <div class="profile-qr-popover" id="${qrId}" data-qr-popover="${qrId}" hidden>
-          <div class="profile-qr-strip">
-            <img class="profile-qr-image" src="${qrCodeUrl(profileUrl)}" alt="QR code for ${profile.name} profile" loading="lazy" decoding="async">
-            <div class="profile-qr-copy">
-              <strong>Scan profile</strong>
-              <span>Opens ${profile.name}'s Dancr profile. No account needed.</span>
-            </div>
-            <a class="profile-qr-open" href="${profileUrl}" target="_blank" rel="noreferrer" aria-label="Open ${profile.name} profile link">Open</a>
-          </div>
-        </div>
-      `;
       const qrButton = `
-        <button class="profile-qr-trigger" type="button" data-toggle-qr="${qrId}" aria-controls="${qrId}" aria-expanded="false" aria-label="Show profile QR code">
+        <button class="profile-qr-trigger" type="button" data-profile-qr="${profile.name}" data-share-city="${city}" aria-expanded="false" aria-label="Show profile QR code">
           ${actionIconMarkup("qr")}
         </button>
       `;
@@ -19545,7 +19671,6 @@
               <strong>Social links</strong>
               ${utilityButtons}
             </div>
-            ${qrBlock}
             <div class="meta">No social links posted</div>
           </div>
         `;
@@ -19556,7 +19681,6 @@
             <strong>Social links</strong>
             ${utilityButtons}
           </div>
-          ${qrBlock}
           <div class="social-links">
             ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
           </div>
@@ -21047,29 +21171,79 @@
       });
     }
 
-    function closeQrPopovers(exceptPanel = null) {
-      document.querySelectorAll("[data-qr-popover]").forEach((panel) => {
-        if (panel === exceptPanel) return;
-        panel.hidden = true;
+    function profileQrOverlay() {
+      let overlay = document.getElementById("profileQrOverlay");
+      if (overlay) return overlay;
+      document.body.insertAdjacentHTML("beforeend", `
+        <div class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true">
+          <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileQrTitle">
+            <button class="profile-qr-close" type="button" data-close-qr-overlay aria-label="Close QR code">${actionIconMarkup("close")}</button>
+            <p class="profile-qr-kicker">Profile QR</p>
+            <h3 class="profile-qr-title" id="profileQrTitle">Open dancer account profile</h3>
+            <p class="profile-qr-subtitle" id="profileQrSubtitle">No account needed. Scan to view this Dancr profile.</p>
+            <div class="profile-qr-frame">
+              <img class="profile-qr-overlay-image" id="profileQrImage" alt="QR code for dancer profile" loading="lazy" decoding="async">
+            </div>
+            <div class="profile-qr-actions">
+              <button class="profile-qr-action" type="button" data-copy-qr-profile>Copy link</button>
+              <a class="profile-qr-action primary" id="profileQrOpen" href="#" target="_blank" rel="noreferrer">Open profile</a>
+            </div>
+          </div>
+        </div>
+      `);
+      overlay = document.getElementById("profileQrOverlay");
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay || event.target.closest("[data-close-qr-overlay]")) {
+          closeQrPopovers();
+          return;
+        }
+        if (event.target.closest("[data-copy-qr-profile]")) {
+          const url = overlay.dataset.profileUrl;
+          if (url) copyText(url, "Profile link copied");
+        }
       });
-      document.querySelectorAll("[data-toggle-qr]").forEach((button) => {
-        const panel = document.getElementById(button.dataset.toggleQr);
-        const isOpen = panel && !panel.hidden;
-        button.classList.toggle("is-open", isOpen);
-        button.setAttribute("aria-expanded", String(Boolean(isOpen)));
+      return overlay;
+    }
+
+    function closeQrPopovers() {
+      const overlay = document.getElementById("profileQrOverlay");
+      if (overlay) {
+        overlay.classList.remove("show");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+      document.querySelectorAll("[data-profile-qr], [data-toggle-qr]").forEach((button) => {
+        button.classList.remove("is-open");
+        button.setAttribute("aria-expanded", "false");
       });
     }
 
+    function openQrOverlay(profileName, city, triggerButton) {
+      const overlay = profileQrOverlay();
+      const url = profileShareUrl(profileName, city);
+      const image = document.getElementById("profileQrImage");
+      const subtitle = document.getElementById("profileQrSubtitle");
+      const openLink = document.getElementById("profileQrOpen");
+      overlay.dataset.profileUrl = url;
+      image.src = qrCodeUrl(url);
+      image.alt = `QR code for ${profileName} profile`;
+      subtitle.textContent = `No account needed. Scan to view ${profileName}'s Dancr profile.`;
+      openLink.href = url;
+      document.querySelectorAll("[data-profile-qr], [data-toggle-qr]").forEach((button) => {
+        const isActive = button === triggerButton;
+        button.classList.toggle("is-open", isActive);
+        button.setAttribute("aria-expanded", String(isActive));
+      });
+      overlay.classList.add("show");
+      overlay.setAttribute("aria-hidden", "false");
+      overlay.querySelector("[data-close-qr-overlay]")?.focus({ preventScroll: true });
+    }
+
     function handleQrClick(event) {
-      const qrButton = event.target.closest("[data-toggle-qr]");
+      const qrButton = event.target.closest("[data-profile-qr], [data-toggle-qr]");
       if (!qrButton) return false;
-      const panel = document.getElementById(qrButton.dataset.toggleQr);
-      if (!panel) return true;
-      const willOpen = panel.hidden;
-      closeQrPopovers(panel);
-      panel.hidden = !willOpen;
-      qrButton.classList.toggle("is-open", willOpen);
-      qrButton.setAttribute("aria-expanded", String(willOpen));
+      const profileName = qrButton.dataset.profileQr;
+      if (!profileName) return true;
+      openQrOverlay(profileName, qrButton.dataset.shareCity || selectedCity(), qrButton);
       return true;
     }
 
@@ -21597,9 +21771,16 @@
         openVenueFromName(cardVenueLink.dataset.cardVenue);
         return;
       }
+      if (event.key === "Escape") {
+        const qrOverlay = document.getElementById("profileQrOverlay");
+        if (qrOverlay?.classList.contains("show")) {
+          closeQrPopovers();
+          return;
+        }
+      }
       if (event.key === "Escape" && profileBackdrop.classList.contains("show")) {
-        closeQrPopovers();
         closeProfileModal();
+        return;
       }
       if (event.key === "Escape") closeUtilityMenu();
     });
