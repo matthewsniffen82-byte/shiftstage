@@ -15434,6 +15434,16 @@
       filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.38)) !important;
     }
 
+    .profile-modal .modal-schedule-text {
+      font-size: clamp(18px, 3.25vw, 25px) !important;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-schedule-text {
+        font-size: clamp(17px, 4.7vw, 22px) !important;
+      }
+    }
+
     .profile-modal .upcoming-venue-line {
       margin-bottom: 0 !important;
     }
@@ -17515,12 +17525,16 @@
         : "";
     }
 
-    function tonightInterestTileMarkup(status) {
-      const mutedClass = status.state === "active" ? "" : "muted muted-value";
-      const statusText = status.state === "active" ? metricPhraseMarkup(status.label) : status.label;
+    function shiftInterestTileMarkup(profile, status) {
+      const hasUpcomingShift = profile.scheduled && status.state !== "active" && status.state !== "ended";
+      const tileTitle = status.state === "active" ? "Tonight interest" : hasUpcomingShift ? "Upcoming interest" : "Interest";
+      const mutedClass = status.state === "active" || hasUpcomingShift ? "" : "muted muted-value";
+      const statusText = status.state === "active" || hasUpcomingShift
+        ? metricPhraseMarkup(`${tonightInterestCount(profile).toLocaleString()} going`)
+        : status.label;
       return `
         <div class="info-tile interest-tile" id="tonightInterestTile">
-          <strong>Tonight interest</strong>
+          <strong>${tileTitle}</strong>
           <div class="meta"><span class="interest-count ${mutedClass}" id="tonightInterestCount">${statusText}</span></div>
         </div>
       `;
@@ -17536,7 +17550,7 @@
               <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${profile.time}</span></div>
             </div>
           </div>
-          ${tonightInterestTileMarkup(status)}
+          ${shiftInterestTileMarkup(profile, status)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
@@ -17554,7 +17568,7 @@
               <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
             </div>
           </div>
-          ${tonightInterestTileMarkup(status)}
+          ${shiftInterestTileMarkup(profile, status)}
           <div class="info-tile">
             <strong>Tonight</strong>
             <div class="meta"><span class="muted-value">Not scheduled tonight</span></div>
@@ -17567,7 +17581,7 @@
             <strong>Upcoming shifts</strong>
             <div class="meta"><span class="muted-value">No shifts posted</span></div>
           </div>
-        ${tonightInterestTileMarkup(status)}
+        ${shiftInterestTileMarkup(profile, status)}
         <div class="info-tile">
           <strong>Tonight</strong>
           <div class="meta"><span class="muted-value">Not scheduled tonight</span></div>
@@ -17614,9 +17628,13 @@
         const isFollowed = isFollowingProfile(city, profile.name);
         const isNotified = isNotificationOn(city, profile.name);
         const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-        const goingButton = status.state === "active"
-          ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""}" id="goingBtn" data-profile="${profile.name}">${actionButtonLabel(isGoingTonight ? "check" : "clock", isGoingTonight ? "You're going tonight" : "I'm Going Tonight")}</button>`
-          : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" disabled>${actionButtonLabel("clock", status.state === "scheduled" ? "Going opens later" : "No active shift tonight")}</button>`;
+        const canMarkGoing = status.state === "active" || (profile.scheduled && status.state !== "ended");
+        const goingCopy = status.state === "active"
+          ? { idle: "I'm Going Tonight", active: "You're going tonight" }
+          : { idle: "I'm Going", active: "You're going" };
+        const goingButton = canMarkGoing
+          ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="${status.state === "active" ? "tonight" : "upcoming"}">${actionButtonLabel(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
+          : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" data-shift-state="none" disabled>${actionButtonLabel("clock", status.state === "ended" ? "Shift ended" : "No shift posted")}</button>`;
         modalBody.innerHTML = `
           <div class="modal-grid">
             ${shiftsMarkup(profile, status)}
@@ -18783,6 +18801,8 @@
       if (actionButton.id === "goingBtn") {
         if (actionButton.disabled) return;
         const profileName = actionButton.dataset.profile;
+        const shiftState = actionButton.dataset.shiftState || "tonight";
+        const isTonightShift = shiftState === "tonight";
         const countEl = document.getElementById("tonightInterestCount");
         const currentCount = Number(countEl?.textContent.match(/[\d,]+/)?.[0].replace(/,/g, "")) || 0;
         const wasGoing = actionButton.classList.contains("is-going");
@@ -18793,8 +18813,10 @@
           countEl.innerHTML = metricPhraseMarkup(`${goingTonightByProfile[profileName].toLocaleString()} going`);
         }
         actionButton.classList.toggle("is-going", !wasGoing);
-        actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? "I'm Going Tonight" : "You're going tonight");
-        showToast(wasGoing ? "Removed from tonight" : "Added to tonight");
+        const idleLabel = isTonightShift ? "I'm Going Tonight" : "I'm Going";
+        const activeLabel = isTonightShift ? "You're going tonight" : "You're going";
+        actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? idleLabel : activeLabel);
+        showToast(wasGoing ? "Removed" : isTonightShift ? "Added to tonight" : "Added to upcoming shift");
       }
     });
 
