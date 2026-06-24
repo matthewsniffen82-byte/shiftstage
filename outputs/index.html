@@ -17105,6 +17105,98 @@
         grid-template-columns: 1fr;
       }
     }
+    .dancer-impact-card {
+      position: relative;
+      overflow: hidden;
+      border-color: rgba(139, 92, 246, .32) !important;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(236, 72, 153, .1), transparent 36%),
+        linear-gradient(180deg, rgba(17, 17, 24, .96), rgba(5, 5, 7, .98)) !important;
+    }
+
+    .dancer-impact-card::before {
+      content: "";
+      position: absolute;
+      inset: -42% auto -32% -18%;
+      width: 46%;
+      background: radial-gradient(circle, rgba(139, 92, 246, .22), transparent 62%);
+      pointer-events: none;
+    }
+
+    .dancer-impact-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .dancer-impact-number {
+      margin: 8px 0 2px;
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: clamp(32px, 7vw, 48px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.035em;
+    }
+
+    .dancer-impact-number span {
+      color: #b8b8c5;
+      font-size: .52em;
+      letter-spacing: 0;
+    }
+
+    .dancer-impact-subcopy {
+      margin: 0;
+      color: #b8b8c5;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .compact-metrics .metric-card {
+      min-height: 64px;
+    }
+
+    #dancerDashboard .dancer-impact-card .value-message {
+      border-color: rgba(139, 92, 246, .22) !important;
+      background: rgba(255, 255, 255, .035) !important;
+      box-shadow: inset 0 0 18px rgba(139, 92, 246, .08) !important;
+    }
+
+    .advanced-analytics-card summary {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #fff;
+      font-weight: 900;
+      list-style: none;
+    }
+
+    .advanced-analytics-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .advanced-analytics-card summary small {
+      color: #b8b8c5;
+      font-size: 12px;
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .advanced-analytics-card[open] summary {
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 520px) {
+      .advanced-analytics-card summary {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .advanced-analytics-card summary small {
+        text-align: left;
+      }
+    }
   </style>
 </head>
 <body>
@@ -17509,43 +17601,49 @@
           </details>
           <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
         </div>
-        <div class="auth-card approved-analytics">
+        <div class="auth-card approved-analytics dancer-impact-card">
+          <span class="eyebrow">Monthly impact</span>
           <div class="value-message" id="dancerValueMessage">Posting your schedule brings customers, followers, and direction requests.</div>
-          <h3>Last 30 days</h3>
-          <div class="metric-grid" id="dancerLast30Metrics" aria-label="Dancer profile metrics"></div>
         </div>
         <div class="auth-card approved-analytics">
-          <h3>Customer conversion</h3>
-          <div class="metric-grid" id="dancerConversionMetrics" aria-label="Customer conversion"></div>
+          <h3>Current rank</h3>
+          <div class="metric-grid compact-metrics" id="dancerRankMetrics" aria-label="Dancer ranking metrics"></div>
         </div>
         <div class="auth-card approved-analytics">
-          <h3>Schedule performance</h3>
-          <div class="metric-grid" id="dancerScheduleMetrics" aria-label="Schedule performance"></div>
+          <h3>Discovery and customer intent</h3>
+          <div class="metric-grid" id="dancerValueMetrics" aria-label="Discovery and customer intent"></div>
+        </div>
+        <div class="auth-card approved-analytics dancer-impact-card">
+          <h3>Estimated customer impact</h3>
+          <p class="dancer-impact-number" id="dancerCustomerImpact">Locked</p>
+          <p class="dancer-impact-subcopy" id="dancerCustomerImpactDetail">Direction requests and Going Tonight signals unlock after approval.</p>
         </div>
         <div class="auth-card approved-analytics">
-          <h3>Audience demand</h3>
-          <div class="metric-grid" id="dancerAudienceMetrics" aria-label="Audience demand"></div>
+          <h3>Weekly rank report</h3>
+          <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
+          <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly rank report"></div>
         </div>
-        <div class="auth-card momentum-card approved-analytics">
-          <h3>Your market momentum</h3>
-          <div class="metric-grid" id="dancerMomentumMetrics" aria-label="Market momentum"></div>
+        <div class="auth-card approved-analytics">
+          <h3>Club traffic</h3>
+          <p class="value-message" id="dancerClubSummary">Your strongest venue appears after approval.</p>
+          <div class="metric-grid" id="dancerClubMetrics" aria-label="Club traffic"></div>
         </div>
         <div class="auth-card approved-analytics">
           <h3>Social growth</h3>
+          <p class="value-message" id="dancerSocialSummary">Social clicks unlock after approval.</p>
           <div class="metric-grid" id="dancerSocialMetrics" aria-label="Social growth"></div>
         </div>
         <div class="auth-card approved-analytics">
-          <h3>Consistency streaks</h3>
-          <div class="metric-grid" id="dancerStreakMetrics" aria-label="Consistency streaks"></div>
+          <h3>Notification performance</h3>
+          <div class="metric-grid" id="dancerNotificationMetrics" aria-label="Notification performance"></div>
         </div>
+        <details class="auth-card approved-analytics advanced-analytics-card">
+          <summary><span>Advanced Analytics</span><small>Search, returning viewers, and conversion detail</small></summary>
+          <div class="metric-grid" id="dancerAdvancedMetrics" aria-label="Advanced analytics"></div>
+        </details>
         <div class="auth-card approved-analytics">
-          <h3>Club performance</h3>
-          <div class="metric-grid" id="dancerClubMetrics" aria-label="Club performance"></div>
-        </div>
-        <div class="auth-card approved-analytics">
-          <h3>Your week on Dancr</h3>
-          <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
-          <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly summary"></div>
+          <h3>Ranking alerts</h3>
+          <div class="rank-notification-list" id="dancerRankingNotifications">Milestone notifications will appear here.</div>
         </div>
         <div class="auth-card post-shift-panel" id="approvedDancerPanel" hidden>
           <div class="post-shift-head">
@@ -19988,150 +20086,153 @@
         ? notificationNumber(activeProfile, city).toLocaleString()
         : "0";
       if (dashboardMetrics && approved) {
-        document.getElementById("dancerValueMessage").textContent =
-          `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`;
-        document.getElementById("dancerLast30Metrics").innerHTML = [
-          metricCardMarkup(dashboardMetrics.dancrScore, "Dancr Score"),
-          metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
+        const totalSocialClicks = dashboardMetrics.instagramClicks + dashboardMetrics.snapchatClicks + dashboardMetrics.tiktokClicks + dashboardMetrics.onlyfansClicks + dashboardMetrics.xClicks;
+        const socialPlatforms = [
+          { name: "Instagram", clicks: dashboardMetrics.instagramClicks },
+          { name: "Snapchat", clicks: dashboardMetrics.snapchatClicks },
+          { name: "TikTok", clicks: dashboardMetrics.tiktokClicks },
+          { name: "OnlyFans", clicks: dashboardMetrics.onlyfansClicks },
+          { name: "X", clicks: dashboardMetrics.xClicks }
+        ].sort((a, b) => b.clicks - a.clicks);
+        const bestSocial = socialPlatforms[0] || { name: "Social links", clicks: 0 };
+        const highIntentActions = dashboardMetrics.directionRequests30 + dashboardMetrics.goingTonightClicks;
+        const weekOverWeekViews = seededRange(`${activeProfile.name}|views-wow|${city}`, 8, 37);
+        const previousFollowers = Math.max(1, dashboardMetrics.followers - dashboardMetrics.newFollowers);
+        const followerGrowthPercent = Math.max(3, Math.round((dashboardMetrics.newFollowers / previousFollowers) * 1000) / 10);
+        const notificationOpenRate = Math.round((dashboardMetrics.notificationOpens / Math.max(1, dashboardMetrics.notifications)) * 100);
+        const scheduleConversionRate = Math.round((dashboardMetrics.goingTonightClicks / Math.max(1, dashboardMetrics.scheduleViews30)) * 1000) / 10;
+        const searchImpressions = dashboardMetrics.searchAppearances + dashboardMetrics.nearbyViews;
+        const strongestClub = dashboardMetrics.clubPerformance.find((club) => club.name === dashboardMetrics.venue) || dashboardMetrics.clubPerformance[0] || { name: dashboardMetrics.venue, avgViews: 0 };
+        const weeklySocialClicks = Math.round(totalSocialClicks * .28);
+
+        document.getElementById("dancerValueMessage").innerHTML =
+          `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`;
+        document.getElementById("dancerRankMetrics").innerHTML = [
+          metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
+          metricCardMarkup(rankMovementText(dashboardMetrics.rankChangeYesterday), "Rank change this week"),
+          metricCardMarkup(rankLabel(dashboardMetrics.highestRankAchieved), "Highest rank achieved"),
+          metricCardMarkup(rankLabel(dashboardMetrics.bestRankThisWeek), "Best rank this week")
+        ].join("");
+        document.getElementById("dancerValueMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), `Profile views · +${weekOverWeekViews}% WoW`),
+          metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), `Followers gained · +${followerGrowthPercent}%`),
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
-          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
-          metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Notification opens"),
-          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Club direction requests"),
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests · strongest value metric"),
           metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added")
         ].join("");
-        document.getElementById("dancerConversionMetrics").innerHTML = [
-          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Directions to your club"),
-          metricCardMarkup(`${dashboardMetrics.profileToFollowRate}%`, "Profile to follow rate"),
-          metricCardMarkup(`${dashboardMetrics.scheduleToGoingRate}%`, "Schedule to Going Tonight"),
-          metricCardMarkup(`${dashboardMetrics.directionRate}%`, "Schedule to directions"),
-          metricCardMarkup(`${dashboardMetrics.socialClickRate}%`, "Profile to social clicks")
+        document.getElementById("dancerCustomerImpact").innerHTML = `${compactNumber(highIntentActions)} <span>actions</span>`;
+        document.getElementById("dancerCustomerImpactDetail").textContent =
+          `Dancr generated ${compactNumber(highIntentActions)} high-intent customer actions for you this month.`;
+        document.getElementById("dancerWeeklySummary").textContent =
+          `Monday report: #${dashboardMetrics.weeklyStartRank} to #${dashboardMetrics.weeklyEndRank}, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyViews)} profile views, and ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals.`;
+        document.getElementById("dancerWeeklyMetrics").innerHTML = [
+          metricCardMarkup(`#${dashboardMetrics.weeklyStartRank} → #${dashboardMetrics.weeklyEndRank}`, "Previous rank → current rank"),
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyViews), "Profile views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals"),
+          metricCardMarkup(compactNumber(weeklySocialClicks), "Social clicks"),
+          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.notificationOpens * .26)), "Notification opens")
         ].join("");
-        document.getElementById("dancerScheduleMetrics").innerHTML = [
-          metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.shiftReminderSaves), "Shift reminders saved"),
-          metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Alert opens"),
-          metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Tonight clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.interestedClicks), "Interested clicks"),
-          metricCardMarkup(compactNumber(lastPostedShift?.noticeCounts?.total || shiftRecipientCounts(activeProfile, city).total), "Last shift sent to")
+        document.getElementById("dancerClubSummary").textContent =
+          `${dashboardMetrics.venue} is your strongest venue with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`;
+        document.getElementById("dancerClubMetrics").innerHTML = [
+          metricCardMarkup(dashboardMetrics.venue, "Strongest venue"),
+          metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests"),
+          metricCardMarkup(compactNumber(strongestClub.avgViews), `${strongestClub.name} avg views`),
+          ...dashboardMetrics.clubPerformance
+            .filter((club) => club.name !== strongestClub.name)
+            .slice(0, 2)
+            .map((club) => metricCardMarkup(compactNumber(club.avgViews), `${club.name} avg views`))
         ].join("");
-        document.getElementById("dancerAudienceMetrics").innerHTML = [
-          metricCardMarkup(compactNumber(dashboardMetrics.nearbyViews), "Nearby customer views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.returningViewers), "Returning viewers"),
-          metricCardMarkup(compactNumber(dashboardMetrics.peakHourViews), "Peak-hour views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances")
-        ].join("");
-        document.getElementById("dancerMomentumMetrics").innerHTML = [
-          metricCardMarkup(`#${dashboardMetrics.ranked.trendRank || "11+"}`, `Trending in ${city}`),
-          metricCardMarkup(`#${seededRange(`${activeProfile.name}|week-rank|${city}`, 1, 5)}`, "Trending this week"),
-          metricCardMarkup(`Up ${dashboardMetrics.rankGain}`, "Spots this week"),
-          metricCardMarkup("Top 10", "Most viewed"),
-          metricCardMarkup("Top 10", "Most followed"),
-          metricCardMarkup(`${compactNumber(dashboardMetrics.goingTonightClicks)} • ${compactNumber(dashboardMetrics.interestedClicks)}`, "Going Tonight • Interested")
-        ].join("");
+        document.getElementById("dancerSocialSummary").textContent = `${bestSocial.name} is your top-performing link this month.`;
         document.getElementById("dancerSocialMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(totalSocialClicks), "Total social clicks"),
+          metricCardMarkup(bestSocial.name, "Best performing platform"),
           metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.onlyfansClicks), "OnlyFans clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.profileShares), "Profile shares")
+          metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks")
         ].join("");
-        document.getElementById("dancerStreakMetrics").innerHTML = [
-          metricCardMarkup(`${dashboardMetrics.streak} shifts`, "Posted in a row"),
-          metricCardMarkup("Active", "This month"),
-          metricCardMarkup(`${Math.max(2, Math.round(dashboardMetrics.streak / 2))} weeks`, "Weekly schedule streak"),
-          metricCardMarkup("Weekly summary", "Auto report ready")
+        document.getElementById("dancerNotificationMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Notification opens"),
+          metricCardMarkup(`${notificationOpenRate}%`, "Open rate")
         ].join("");
-        document.getElementById("dancerClubMetrics").innerHTML = [
-          ...dashboardMetrics.clubPerformance.slice(0, 2).map((club) => metricCardMarkup(club.name, `Avg views: ${compactNumber(club.avgViews)}`)),
-          metricCardMarkup(dashboardMetrics.venue, "Your strongest venue"),
-          metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests")
+        document.getElementById("dancerAdvancedMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.searchAppearances), "City search appearances"),
+          metricCardMarkup(compactNumber(dashboardMetrics.returningViewers), "Returning viewers"),
+          metricCardMarkup(compactNumber(dashboardMetrics.peakHourViews), "Peak-hour views"),
+          metricCardMarkup(`${notificationOpenRate}%`, "Notification open rate"),
+          metricCardMarkup(`${scheduleConversionRate}%`, "Schedule conversion rate"),
+          metricCardMarkup(compactNumber(searchImpressions), "Search impressions")
         ].join("");
-        document.getElementById("dancerWeeklySummary").textContent =
-          `Monday rank report: you moved from #${dashboardMetrics.weeklyStartRank} to #${dashboardMetrics.weeklyEndRank}, gained ${compactNumber(dashboardMetrics.weeklyFollowers)} followers, and earned ${compactNumber(dashboardMetrics.weeklyViews)} profile views.`;
-        document.getElementById("dancerWeeklyMetrics").innerHTML = [
-          metricCardMarkup(`#${dashboardMetrics.weeklyStartRank} → #${dashboardMetrics.weeklyEndRank}`, "Weekly rank report"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyViews), "Profile views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyInstagram), "Instagram clicks"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals"),
-          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.notificationOpens * .26)), "Notification opens")
-        ].join("");
+        document.getElementById("dancerRankingNotifications").innerHTML = dashboardMetrics.rankingNotifications.length
+          ? dashboardMetrics.rankingNotifications.map(rankingNotificationMarkup).join("")
+          : `<article class="rank-event stable"><span class="rank-event-icon">⚡</span><span><strong>Ranking milestones ready</strong><p>We will notify you when you enter Top 10, move up 3+ spots, or hit #1.</p></span></article>`;
       } else {
-        document.getElementById("dancerValueMessage").textContent = "Complete setup and approval to unlock the full value dashboard: profile views, schedule views, follower growth, social clicks, rankings, and club direction requests.";
-        document.getElementById("dancerLast30Metrics").innerHTML = lockedMetricCards([
-          "Dancr Score",
+        document.getElementById("dancerValueMessage").textContent =
+          "Complete setup and approval to unlock the full value dashboard: profile views, schedule views, follower growth, social clicks, rankings, and club direction requests.";
+        document.getElementById("dancerRankMetrics").innerHTML = lockedMetricCards([
+          "Current city rank",
+          "Rank change this week",
+          "Highest rank achieved",
+          "Best rank this week"
+        ]);
+        document.getElementById("dancerValueMetrics").innerHTML = lockedMetricCards([
           "Profile views",
-          "Schedule views",
           "Followers gained",
-          "Notifications sent",
-          "Notification opens",
-          "Club direction requests",
+          "Schedule views",
+          "Direction requests",
           "Going Tonight clicks",
           "Favorites added"
         ]);
-        document.getElementById("dancerConversionMetrics").innerHTML = lockedMetricCards([
-          "Direction requests to your club",
-          "Profile to follow rate",
-          "Schedule to Going Tonight",
-          "Schedule to directions",
-          "Profile to social clicks"
+        document.getElementById("dancerCustomerImpact").textContent = "Locked";
+        document.getElementById("dancerCustomerImpactDetail").textContent = "High-intent customer actions unlock after approval.";
+        document.getElementById("dancerWeeklySummary").textContent =
+          "Your weekly report unlocks after approval and tracks rank movement, followers, profile views, Going Tonight signals, social clicks, and notification opens.";
+        document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
+          "Previous rank → current rank",
+          "New followers",
+          "Profile views",
+          "Going Tonight signals",
+          "Social clicks",
+          "Notification opens"
         ]);
-        document.getElementById("dancerScheduleMetrics").innerHTML = lockedMetricCards([
-          "Schedule views",
-          "Shift reminders saved",
-          "Alert opens",
-          "Going Tonight clicks",
-          "Interested clicks",
-          "Last shift sent to"
+        document.getElementById("dancerClubSummary").textContent = "Club traffic unlocks after approval so you can see where Dancr sends customers.";
+        document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
+          "Strongest venue",
+          "Club page clicks",
+          "Direction requests",
+          "Average views by club"
         ]);
-        document.getElementById("dancerAudienceMetrics").innerHTML = lockedMetricCards([
-          "Nearby customer views",
-          "Returning viewers",
-          "Peak-hour views",
-          "City search appearances"
-        ]);
-        document.getElementById("dancerMomentumMetrics").innerHTML = lockedMetricCards([
-          `Trending in ${city}`,
-          "Trending this week",
-          "Spots this week",
-          "Most viewed",
-          "Most followed",
-          "Going Tonight • Interested"
-        ]);
+        document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
+          "Total social clicks",
+          "Best performing platform",
           "Instagram clicks",
           "Snapchat clicks",
           "TikTok clicks",
           "OnlyFans clicks",
-          "X clicks",
-          "Profile shares"
+          "X clicks"
         ]);
-        document.getElementById("dancerStreakMetrics").innerHTML = lockedMetricCards([
-          "Posted in a row",
-          "Active this month",
-          "Weekly schedule streak",
-          "Auto report ready"
+        document.getElementById("dancerNotificationMetrics").innerHTML = lockedMetricCards([
+          "Notifications sent",
+          "Notification opens",
+          "Open rate"
         ]);
-        document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
-          "Neon Hall avg views",
-          "Velvet Lounge avg views",
-          "Your strongest venue",
-          "Club page clicks",
-          "Direction requests"
+        document.getElementById("dancerAdvancedMetrics").innerHTML = lockedMetricCards([
+          "City search appearances",
+          "Returning viewers",
+          "Peak-hour views",
+          "Notification open rate",
+          "Schedule conversion rate",
+          "Search impressions"
         ]);
-        document.getElementById("dancerWeeklySummary").textContent = "Your weekly summary unlocks after approval and starts tracking profile views, followers, social clicks, Going Tonight signals, and direction requests.";
-        document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
-          "Weekly rank report",
-          "Profile views",
-          "New followers",
-          "Instagram clicks",
-          "Going Tonight signals",
-          "Notification opens"
-        ]);
+        document.getElementById("dancerRankingNotifications").innerHTML =
+          `<article class="rank-event stable"><span class="rank-event-icon">🔒</span><span><strong>Ranking alerts locked</strong><p>Milestone notifications unlock after approval.</p></span></article>`;
       }
       const setupWrap = document.getElementById("setupChecklistWrap");
       const setupToggle = document.getElementById("setupChecklistToggle");
