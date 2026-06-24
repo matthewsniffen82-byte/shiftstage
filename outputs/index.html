@@ -17840,6 +17840,21 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     }
 
+    /* Full profile view stays photo-first: no trending badge or leftover badge shell. */
+    .profile-modal .modal-rank,
+    .profile-modal .badge.trend,
+    .profile-modal .compact-trend,
+    .profile-modal .full-trend,
+    .profile-modal .trend-badge,
+    .profile-modal .rank-badge,
+    .profile-modal [data-rank-badge],
+    .profile-modal [data-modal-rank] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
   </style>
 </head>
 <body>
