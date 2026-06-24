@@ -7066,6 +7066,25 @@
       font-weight: 800;
     }
 
+    .dancer-card .no-shifts-state {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: rgba(184, 184, 197, 0.82);
+      font-weight: 780;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.72);
+    }
+
+    .dancer-card .no-shifts-state svg {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 15px;
+      color: rgba(167, 139, 250, 0.86);
+      stroke: currentColor;
+      filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.22));
+    }
+
     .list.card-grid .dancer-card {
       min-height: 332px;
       aspect-ratio: 1 / 1.68;
@@ -18515,7 +18534,7 @@
         status,
         city,
         venue: profile?.venue || "",
-        time: profile?.time || "No shifts posted",
+        time: profile?.time || "No upcoming shifts",
         tonight: profile?.tonight || false,
         scheduled: profile?.scheduled || false,
         trend: profile?.trend || 10,
@@ -19396,23 +19415,16 @@
         : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
-      const scheduleText = isPending
-        ? "Schedule locked"
-        : workingTonight
-          ? `${profile.venue} · ${profile.time}`
-        : profile.scheduled
-            ? `${profile.venue} · ${upcomingLabel} · ${profile.time}`
-            : "No shifts posted";
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
           ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Tonight</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
           : profile.scheduled
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
-            : '<div class="meta no-shifts">No shifts posted</div>';
+            : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No upcoming shifts</span></div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
-        : `<div class="meta">${scheduleText}</div>`;
+        : "";
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
           <div class="portrait ${portraitClass(index)}">
@@ -19634,7 +19646,7 @@
       return `
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
-            <div class="meta"><span class="muted-value">No shifts posted</span></div>
+            <div class="meta"><span class="muted-value">No upcoming shifts</span></div>
           </div>
         ${shiftInterestTileMarkup(profile, status)}
         <div class="info-tile">
