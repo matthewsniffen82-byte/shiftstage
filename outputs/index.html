@@ -15449,7 +15449,7 @@
     }
 
     /* Restore the Dancr hero: one intentional right-side light beam, no flat lavender wash. */
-    .hero.reference-hero {
+    .hero.reference-hero.uploaded-hero-ready {
       position: relative !important;
       isolation: isolate !important;
       overflow: hidden !important;
@@ -15805,7 +15805,7 @@
         0 0 14px rgba(236, 72, 153, 0.18) !important;
     }
     /* Violet balance pass: keep Dancr nightlife, restore more matte black. */
-    .hero.reference-hero {
+    .hero.reference-hero.uploaded-hero-ready {
       background:
         radial-gradient(circle at 86% 48%, rgba(139, 92, 246, 0.28), transparent 30%),
         linear-gradient(100deg, rgba(5, 5, 7, 0.98) 0%, rgba(8, 7, 13, 0.96) 48%, rgba(28, 14, 58, 0.72) 100%) !important;
@@ -16130,6 +16130,37 @@
         0 0 28px rgba(255,199,71,.48),
         0 0 34px rgba(236,72,153,.34),
         0 12px 30px rgba(0,0,0,.48);
+    }
+    /* Uploaded Dancr hero banner: use the provided image as the only hero visual. */
+    .hero.reference-hero {
+      aspect-ratio: 1900 / 900 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background-color: #050507 !important;
+      background-image: url("./dancr-hero-banner.png") !important;
+      background-repeat: no-repeat !important;
+      background-position: center center !important;
+      background-size: contain !important;
+      border-radius: 18px !important;
+      border: 1px solid rgba(124, 58, 237, 0.55) !important;
+      box-shadow: 0 22px 70px rgba(124, 58, 237, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+    }
+
+    .hero.reference-hero.uploaded-hero-ready::before,
+    .hero.reference-hero.uploaded-hero-ready::after,
+    .hero.reference-hero.uploaded-hero-ready .hero-copy,
+    .hero.reference-hero.uploaded-hero-ready .hero-copy::before,
+    .hero.reference-hero.uploaded-hero-ready .hero-copy::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    @media (max-width: 560px) {
+      .hero.reference-hero.uploaded-hero-ready {
+        border-radius: 15px !important;
+      }
     }
   </style>
 </head>
@@ -17491,7 +17522,7 @@
     }
 
     function formatDateLabel(dateValue, city = selectedCity()) {
-      if (!dateValue) return "Next shift";
+      if (!dateValue) return "Upcoming";
       const date = new Date(`${dateValue}T12:00:00Z`);
       const today = cityWallClock(new Date(), city);
       const todayDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -17585,7 +17616,7 @@
     }
 
     function upcomingCardLabel(profile, city = selectedCity()) {
-      const label = profile.shiftLabel || "Next shift";
+      const label = profile.shiftLabel || "Upcoming";
       const date = dateFromUpcomingLabel(label, city);
       if (!date) return label;
       const diff = daysFromToday(date, city);
@@ -17595,7 +17626,7 @@
     }
 
     function upcomingFullLabel(profile, city = selectedCity()) {
-      const label = profile.shiftLabel || "Next shift";
+      const label = profile.shiftLabel || "Upcoming";
       const date = dateFromUpcomingLabel(label, city);
       if (!date) return label;
       const diff = daysFromToday(date, city);
@@ -19964,6 +19995,9 @@
             <p>Choose your city. See verified schedules tonight.</p>
           </div>
         `;
+        const uploadedHero = new Image();
+        uploadedHero.onload = () => hero.classList.add("uploaded-hero-ready");
+        uploadedHero.src = "./dancr-hero-banner.png";
       }
 
       const viewAll = document.getElementById("viewAllBtn");
