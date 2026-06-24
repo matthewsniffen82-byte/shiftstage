@@ -16733,6 +16733,30 @@
       border-color: rgba(255, 255, 255, 0.20) !important;
     }
 
+    /* Profile social links work better as premium icon buttons in the compact modal row. */
+    .profile-modal .social-tile .social-links {
+      gap: 10px !important;
+      align-items: center !important;
+    }
+
+    .profile-modal .social-tile .social-link {
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      padding: 0 !important;
+      justify-content: center !important;
+      border-radius: 999px !important;
+    }
+
+    .profile-modal .social-tile .social-link span {
+      display: none !important;
+    }
+
+    .profile-modal .social-tile .social-link svg {
+      width: 19px !important;
+      height: 19px !important;
+    }
+
     .profile-modal .modal-grid .info-tile > strong,
     .profile-modal .social-tile-head strong {
       margin: 0 0 2px !important;
@@ -19768,7 +19792,7 @@
             ${utilityButtons}
           </div>
           <div class="social-links">
-            ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
+            ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noreferrer" aria-label="${platform.label}" title="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}<span>${platform.label}</span></a>`).join("")}
           </div>
         </div>
       `;
