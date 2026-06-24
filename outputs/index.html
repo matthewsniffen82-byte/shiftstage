@@ -17818,6 +17818,20 @@
         firstTimeTrending,
         biggestMover
       });
+      const dancrScore = Math.min(99, Math.max(54, Math.round(
+        48 +
+        Math.min(18, followers / 520) +
+        Math.min(14, profileViews30 / 520) +
+        Math.min(11, scheduleViews30 / 390) +
+        Math.min(8, goingTonightClicks / 30)
+      )));
+      const weeklyStartRank = currentRank ? Math.min(24, currentRank + Math.max(3, rankGain)) : previousRank;
+      const weeklyEndRank = currentRank || Math.max(1, weeklyStartRank - Math.max(3, rankGain));
+      const clubPerformance = [
+        { name: "Neon Hall", avgViews: 1400 },
+        { name: "Velvet Lounge", avgViews: 650 },
+        { name: venue, avgViews: Math.max(520, Math.round(profileViews30 * 0.42)) }
+      ].filter((club, index, list) => list.findIndex((item) => item.name === club.name) === index);
       const profileCompleteness = profile.scheduled ? 96 : 84;
       return {
         ranked,
@@ -17856,6 +17870,10 @@
         rankTrend,
         rankingSignal,
         rankingNotifications,
+        dancrScore,
+        weeklyStartRank,
+        weeklyEndRank,
+        clubPerformance,
         profileCompleteness,
         instagramClicks,
         snapchatClicks,
@@ -19239,6 +19257,7 @@
         document.getElementById("dancerValueMessage").textContent =
           `We sent ${compactNumber(dashboardMetrics.profileViews30)} people to your profile, ${compactNumber(dashboardMetrics.scheduleViews30)} viewed your schedule, and ${compactNumber(dashboardMetrics.directionRequests30)} requested directions to ${dashboardMetrics.venue} this month.`;
         document.getElementById("dancerLast30Metrics").innerHTML = [
+          metricCardMarkup(dashboardMetrics.dancrScore, "Dancr Score"),
           metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
@@ -19249,6 +19268,7 @@
           metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added")
         ].join("");
         document.getElementById("dancerConversionMetrics").innerHTML = [
+          metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Directions to your club"),
           metricCardMarkup(`${dashboardMetrics.profileToFollowRate}%`, "Profile to follow rate"),
           metricCardMarkup(`${dashboardMetrics.scheduleToGoingRate}%`, "Schedule to Going Tonight"),
           metricCardMarkup(`${dashboardMetrics.directionRate}%`, "Schedule to directions"),
@@ -19306,14 +19326,15 @@
           metricCardMarkup("Weekly summary", "Auto report ready")
         ].join("");
         document.getElementById("dancerClubMetrics").innerHTML = [
-          metricCardMarkup(dashboardMetrics.venue, "Most viewed club tonight"),
-          metricCardMarkup(`#${dashboardMetrics.venueRank}`, "Venue visibility rank"),
+          ...dashboardMetrics.clubPerformance.slice(0, 2).map((club) => metricCardMarkup(club.name, `Avg views: ${compactNumber(club.avgViews)}`)),
+          metricCardMarkup(dashboardMetrics.venue, "Your strongest venue"),
           metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests")
         ].join("");
         document.getElementById("dancerWeeklySummary").textContent =
-          `Your Week on Dancr: ${compactNumber(dashboardMetrics.weeklyViews)} profile views, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyInstagram)} Instagram clicks, ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals, and ${compactNumber(Math.round(dashboardMetrics.directionRequests30 * .24))} direction requests.`;
+          `Monday rank report: you moved from #${dashboardMetrics.weeklyStartRank} to #${dashboardMetrics.weeklyEndRank}, gained ${compactNumber(dashboardMetrics.weeklyFollowers)} followers, and earned ${compactNumber(dashboardMetrics.weeklyViews)} profile views.`;
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
+          metricCardMarkup(`#${dashboardMetrics.weeklyStartRank} → #${dashboardMetrics.weeklyEndRank}`, "Weekly rank report"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyViews), "Profile views"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
           metricCardMarkup(compactNumber(dashboardMetrics.weeklyInstagram), "Instagram clicks"),
@@ -19323,6 +19344,7 @@
       } else {
         document.getElementById("dancerValueMessage").textContent = "Complete setup and approval to unlock the full value dashboard: profile views, schedule views, follower growth, social clicks, rankings, and club direction requests.";
         document.getElementById("dancerLast30Metrics").innerHTML = lockedMetricCards([
+          "Dancr Score",
           "Profile views",
           "Schedule views",
           "Followers gained",
@@ -19333,6 +19355,7 @@
           "Favorites added"
         ]);
         document.getElementById("dancerConversionMetrics").innerHTML = lockedMetricCards([
+          "Direction requests to your club",
           "Profile to follow rate",
           "Schedule to Going Tonight",
           "Schedule to directions",
@@ -19391,13 +19414,15 @@
           "Auto report ready"
         ]);
         document.getElementById("dancerClubMetrics").innerHTML = lockedMetricCards([
-          "Most viewed club tonight",
-          "Venue visibility rank",
+          "Neon Hall avg views",
+          "Velvet Lounge avg views",
+          "Your strongest venue",
           "Club page clicks",
           "Direction requests"
         ]);
         document.getElementById("dancerWeeklySummary").textContent = "Your weekly summary unlocks after approval and starts tracking profile views, followers, social clicks, Going Tonight signals, and direction requests.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
+          "Weekly rank report",
           "Profile views",
           "New followers",
           "Instagram clicks",
