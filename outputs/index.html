@@ -16033,6 +16033,104 @@
       transform: translateY(-1px) !important;
       filter: brightness(1.04) saturate(1.05);
     }
+    /* Final override: deep electric-violet glass trending badges, with #1 as the VIP rank. */
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: rgba(255,255,255,.94);
+      border: 1px solid rgba(139,92,246,.72);
+      background:
+        linear-gradient(135deg, rgba(22,14,38,.56), rgba(85,38,150,.46) 48%, rgba(124,58,237,.42)),
+        rgba(11,8,18,.58);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.045) inset,
+        inset 0 1px 0 rgba(255,255,255,.24),
+        inset 0 -10px 20px rgba(5,5,7,.22),
+        0 0 17px rgba(139,92,246,.34),
+        0 10px 24px rgba(0,0,0,.42);
+      text-shadow: 0 1px 10px rgba(255,255,255,.24);
+      backdrop-filter: blur(16px) saturate(150%);
+    }
+
+    .badge.trend:not(.rank-one)::before,
+    .dancer-card .badge.trend:not(.rank-one)::before,
+    .profile-modal .badge.trend:not(.rank-one)::before {
+      content: "";
+      position: absolute;
+      inset: 1px 2px auto;
+      height: 42%;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.22), transparent);
+      opacity: .72;
+      pointer-events: none;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #f4eaff;
+      filter:
+        drop-shadow(0 0 5px rgba(236,72,153,.5))
+        drop-shadow(0 0 9px rgba(139,92,246,.44));
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card:hover .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one):hover {
+      border-color: rgba(190,148,255,.9);
+      background:
+        linear-gradient(135deg, rgba(31,18,54,.66), rgba(103,45,182,.54) 48%, rgba(139,92,246,.5)),
+        rgba(11,8,18,.64);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.055) inset,
+        inset 0 1px 0 rgba(255,255,255,.28),
+        0 0 24px rgba(139,92,246,.48),
+        0 0 18px rgba(236,72,153,.18),
+        0 12px 28px rgba(0,0,0,.46);
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #fffaf0;
+      border: 1px solid rgba(255,216,109,.82);
+      background:
+        linear-gradient(135deg, rgba(58,36,10,.72), rgba(124,58,237,.55) 44%, rgba(236,72,153,.58) 72%, rgba(255,184,65,.68)),
+        rgba(14,9,18,.72);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.07) inset,
+        inset 0 1px 0 rgba(255,255,255,.32),
+        inset 0 -10px 22px rgba(5,5,7,.2),
+        0 0 22px rgba(255,199,71,.38),
+        0 0 28px rgba(236,72,153,.28),
+        0 12px 30px rgba(0,0,0,.46);
+      text-shadow: 0 1px 10px rgba(0,0,0,.36);
+      backdrop-filter: blur(16px) saturate(160%);
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #fff7c4;
+      filter:
+        drop-shadow(0 0 5px rgba(255,231,126,.74))
+        drop-shadow(0 0 12px rgba(236,72,153,.44));
+    }
+
+    .badge.trend.rank-one:hover,
+    .dancer-card:hover .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one:hover {
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08) inset,
+        inset 0 1px 0 rgba(255,255,255,.34),
+        0 0 28px rgba(255,199,71,.48),
+        0 0 34px rgba(236,72,153,.34),
+        0 12px 30px rgba(0,0,0,.48);
+    }
   </style>
 </head>
 <body>
