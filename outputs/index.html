@@ -19168,6 +19168,132 @@
         min-width: 48px !important;
       }
     }
+
+    #approvedDancerPanel .dancer-control-summary {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #approvedDancerPanel .dancer-control-summary::after {
+      content: "Open";
+      flex: 0 0 auto;
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.28);
+      color: #d7c8ff;
+      background: rgba(17,17,24,.78);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    #approvedDancerPanel .dancer-control-center[open] .dancer-control-summary::after {
+      content: "Close";
+      border-color: rgba(139,92,246,.42);
+      box-shadow: 0 0 18px rgba(139,92,246,.12);
+    }
+
+    #approvedDancerPanel .dancer-control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    #approvedDancerPanel .dancer-control-card {
+      min-width: 0;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(139,92,246,.16);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)),
+        rgba(10,10,14,.82);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.02), 0 14px 34px rgba(0,0,0,.26);
+    }
+
+    #approvedDancerPanel .dancer-control-card-wide {
+      grid-column: 1 / -1;
+    }
+
+    #approvedDancerPanel .control-card-head {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    #approvedDancerPanel .control-card-head strong {
+      color: #fff;
+      font-size: 17px;
+      line-height: 1.1;
+    }
+
+    #approvedDancerPanel .control-card-head p,
+    #approvedDancerPanel .control-result {
+      color: rgba(184,184,197,.9);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    #approvedDancerPanel .control-field-grid,
+    #approvedDancerPanel .social-control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    #approvedDancerPanel .social-control-grid input:last-child {
+      grid-column: 1 / -1;
+    }
+
+    #approvedDancerPanel .control-action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    #approvedDancerPanel .control-action-row button {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.28);
+      color: #f5f0ff;
+      background: rgba(8,8,12,.78);
+      font-weight: 900;
+      box-shadow: inset 0 0 14px rgba(139,92,246,.06);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    #approvedDancerPanel .control-action-row button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(139,92,246,.52);
+      background: rgba(20,16,30,.9);
+      box-shadow: 0 0 20px rgba(139,92,246,.14), inset 0 0 16px rgba(139,92,246,.08);
+    }
+
+    #approvedDancerPanel .control-result {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 720px) {
+      #approvedDancerPanel .dancer-control-grid,
+      #approvedDancerPanel .control-field-grid,
+      #approvedDancerPanel .social-control-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #approvedDancerPanel .social-control-grid input:last-child {
+        grid-column: auto;
+      }
+
+      #approvedDancerPanel .dancer-control-summary::after {
+        min-height: 31px;
+        padding-inline: 11px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -19617,7 +19743,7 @@
           <div class="rank-notification-list" id="dancerRankingNotifications">Milestone notifications will appear here.</div>
         </div>
         <div class="auth-card post-shift-panel" id="approvedDancerPanel" hidden>
-          <details class="dancer-control-center" open>
+          <details class="dancer-control-center">
             <summary class="dancer-control-summary">
               <span>
                 <span class="eyebrow">Dancer controls</span>
@@ -19627,6 +19753,84 @@
               <span class="control-summary-chip">Approved</span>
             </summary>
             <div class="dancer-control-body">
+              <div class="dancer-control-grid">
+                <section class="dancer-control-card dancer-control-card-wide">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Public profile</span>
+                    <strong>Edit profile details</strong>
+                    <p>Stage name is what customers see on profile cards. Real name stays private for verification.</p>
+                  </div>
+                  <div class="control-field-grid">
+                    <label>
+                      Stage name
+                      <input id="approvedControlStageName" type="text" value="Maya Lux" aria-label="Stage name shown publicly">
+                    </label>
+                    <label>
+                      Verification name
+                      <input id="approvedControlRealName" type="text" value="Maya Hernandez" readonly aria-label="Private verification name">
+                    </label>
+                    <label>
+                      City
+                      <select id="approvedControlCity" aria-label="Profile city">
+                        <option>Las Vegas</option>
+                        <option>Miami</option>
+                        <option>New York</option>
+                      </select>
+                    </label>
+                    <label>
+                      Primary venue
+                      <select id="approvedControlVenue" aria-label="Primary venue">
+                        <option>Velvet Room</option>
+                        <option>Neon Hall</option>
+                        <option>Afterglow</option>
+                        <option>Prism Lounge</option>
+                        <option>Monarch</option>
+                      </select>
+                    </label>
+                  </div>
+                </section>
+
+                <section class="dancer-control-card">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Photos</span>
+                    <strong>Manage profile pictures</strong>
+                    <p>Update the main card photo and gallery photos customers see in full profile view.</p>
+                  </div>
+                  <div class="control-action-row">
+                    <button type="button" data-dancer-control-action="main-photo">Main photo</button>
+                    <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
+                  </div>
+                </section>
+
+                <section class="dancer-control-card">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Social links</span>
+                    <strong>Connect socials</strong>
+                    <p>Add Instagram, TikTok, Snapchat, OnlyFans, and X links to the public profile.</p>
+                  </div>
+                  <div class="social-control-grid">
+                    <input id="approvedControlInstagram" type="text" placeholder="Instagram handle" aria-label="Instagram handle">
+                    <input id="approvedControlTiktok" type="text" placeholder="TikTok handle" aria-label="TikTok handle">
+                    <input id="approvedControlSnapchat" type="text" placeholder="Snapchat handle" aria-label="Snapchat handle">
+                    <input id="approvedControlOnlyfans" type="text" placeholder="OnlyFans link" aria-label="OnlyFans link">
+                    <input id="approvedControlX" type="text" placeholder="X handle" aria-label="X handle">
+                  </div>
+                </section>
+
+                <section class="dancer-control-card dancer-control-card-wide">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Share profile</span>
+                    <strong>Send customers to your profile</strong>
+                    <p>Share the public profile link or show a QR code customers can scan. No account needed to view.</p>
+                  </div>
+                  <div class="control-action-row">
+                    <button type="button" data-dancer-control-action="share-profile">Share profile</button>
+                    <button type="button" data-dancer-control-action="show-qr">Show QR code</button>
+                    <button type="button" data-dancer-control-action="save-profile">Save profile changes</button>
+                  </div>
+                  <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
+                </section>
+              </div>
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
             <h3>Post or update a verified shift</h3>
@@ -23554,9 +23758,60 @@
       openProfileModal(card.dataset.profile);
     });
 
+    function handleDancerControlAction(action) {
+      const city = activeDancerCity();
+      const profileName = activeDancerName();
+      const result = document.getElementById("dancerControlResult");
+      const setResult = (message) => {
+        if (result) result.textContent = message;
+        showToast(message);
+      };
+
+      if (action === "share-profile") {
+        runShareAction(profileName, city);
+        setResult("Share options opened for your public profile.");
+        return;
+      }
+
+      if (action === "show-qr") {
+        openQrOverlay(profileName, city, null);
+        setResult("QR code opened. Customers can scan it without an account.");
+        return;
+      }
+
+      if (action === "save-profile") {
+        const stageName = document.getElementById("approvedControlStageName")?.value.trim();
+        const cityValue = document.getElementById("approvedControlCity")?.value.trim();
+        if (stageName) {
+          document.getElementById("dancerStageName").value = stageName;
+          const dashName = document.getElementById("dancerDashName");
+          if (dashName) dashName.textContent = stageName;
+        }
+        if (cityValue && markets[cityValue]) document.getElementById("dancerCity").value = cityValue;
+        setResult("Profile changes saved in this demo.");
+        updateAccountHeader();
+        render();
+        return;
+      }
+
+      if (action === "main-photo") {
+        setResult("Main photo upload ready. Backend storage will make this persistent.");
+        return;
+      }
+
+      if (action === "gallery-photo") {
+        setResult("Gallery photo manager ready. Backend storage will make this persistent.");
+      }
+    }
+
     dancerDashboard.addEventListener("click", (event) => {
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      const dancerControlAction = event.target.closest("[data-dancer-control-action]");
+      if (dancerControlAction) {
+        handleDancerControlAction(dancerControlAction.dataset.dancerControlAction);
+        return;
+      }
       const shiftAction = event.target.closest("[data-shift-action]");
       if (shiftAction) {
         handleShiftManagerAction(shiftAction.dataset.shiftAction);
