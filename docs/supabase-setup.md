@@ -14,9 +14,13 @@ Add them to `.env.local` locally and Vercel environment variables.
 
 ## 2. Run the database schema
 
-Open Supabase SQL Editor and run:
+Open Supabase SQL Editor and run the migrations in order:
 
 `supabase/migrations/202606250001_initial_schema.sql`
+
+Then:
+
+`supabase/migrations/202606250002_auth_bootstrap.sql`
 
 That creates the core Dancr tables for customers, dancers, venues, shifts, follows, going signals, notifications, analytics, approvals, and rankings.
 
@@ -77,3 +81,5 @@ Dancer signup creates:
 - `dancer_profiles` with `real_name` for verification
 - `stage_name` for the public profile cards
 - `draft` profile status until setup and approval are complete
+
+The database trigger in `202606250002_auth_bootstrap.sql` also creates these records automatically from Supabase Auth metadata, so account creation still works when email confirmation is enabled.

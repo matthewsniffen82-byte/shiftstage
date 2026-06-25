@@ -64,6 +64,7 @@ export async function signUpDancer(client: DancrClient, input: DancerSignupInput
         display_name: input.stageName,
         real_name: input.realName,
         stage_name: input.stageName,
+        city: input.city || "Las Vegas",
       },
     },
   });
