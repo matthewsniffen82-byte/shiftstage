@@ -1608,7 +1608,7 @@
     }
 
     #dancerDashboard.is-approved #approvedDancerPanel {
-      order: 1;
+      order: -2;
     }
 
     #dancerDashboard.is-approved .approved-analytics {
@@ -1617,6 +1617,10 @@
 
     #dancerDashboard.is-approved .dashboard-status-row {
       order: 3;
+    }
+
+    #dancerDashboard.is-approved [data-account-panel="dancer"] {
+      order: 4;
     }
 
     @media (max-width: 560px) {
@@ -19766,7 +19770,7 @@
           <div class="rank-notification-list" id="dancerRankingNotifications">Milestone notifications will appear here.</div>
         </div>
         <div class="auth-card post-shift-panel" id="approvedDancerPanel" hidden>
-          <details class="dancer-control-center">
+          <details class="dancer-control-center" open>
             <summary class="dancer-control-summary">
               <span>
                 <span class="eyebrow">Dancer controls</span>
