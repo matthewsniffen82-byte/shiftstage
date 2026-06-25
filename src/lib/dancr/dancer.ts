@@ -18,6 +18,22 @@ export type ShiftInput = {
   endsAt: string;
 };
 
+export type UploadDancerPhotoInput = {
+  dancerId: string;
+  file: Blob;
+  fileName: string;
+  contentType?: string;
+  isPrimary?: boolean;
+  sortOrder?: number;
+  altText?: string;
+};
+
+export type UploadVerificationDocumentInput = {
+  file: Blob;
+  fileName: string;
+  contentType?: string;
+};
+
 export async function updateDancerProfile(client: DancrClient, input: DancerProfileInput) {
   const { error } = await client
     .from("dancer_profiles")
@@ -47,6 +63,51 @@ export async function updateSocialLink(
   });
 
   if (error) throw error;
+}
+
+export async function uploadDancerPhoto(client: DancrClient, input: UploadDancerPhotoInput) {
+  const userId = await getCurrentUserId(client);
+  const storagePath = `${userId}/${input.dancerId}/${makeStorageFileName(input.fileName)}`;
+
+  const { error: uploadError } = await client.storage.from("dancer-photos").upload(storagePath, input.file, {
+    contentType: input.contentType,
+    upsert: false,
+  });
+
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await client
+    .from("dancer_photos")
+    .insert({
+      dancer_id: input.dancerId,
+      storage_path: storagePath,
+      is_primary: input.isPrimary || false,
+      sort_order: input.sortOrder || 0,
+      alt_text: input.altText,
+      review_status: "pending",
+    })
+    .select("id, storage_path")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function uploadVerificationDocument(client: DancrClient, input: UploadVerificationDocumentInput) {
+  const userId = await getCurrentUserId(client);
+  const storagePath = `${userId}/verification/${makeStorageFileName(input.fileName)}`;
+
+  const { error } = await client.storage.from("verification-documents").upload(storagePath, input.file, {
+    contentType: input.contentType,
+    upsert: false,
+  });
+
+  if (error) throw error;
+  return storagePath;
+}
+
+export function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
+  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
 
 export async function postShift(client: DancrClient, input: ShiftInput) {
@@ -101,13 +162,18 @@ export async function getDancerDashboardAnalytics(
     notifications,
     trending,
   ] = await Promise.all([
-    countRows(client, "profile_views", dancerId, since),
-    countRows(client, "schedule_views", dancerId, since),
-    countRows(client, "direction_requests", dancerId, since),
-    countRows(client, "going_signals", dancerId, since),
+    countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", since),
+    countRows(client, "schedule_views", "dancer_id", dancerId, "viewed_at", since),
+    countRows(client, "direction_requests", "dancer_id", dancerId, "requested_at", since),
+    countGoingSignals(client, dancerId, since),
     getSocialClickCounts(client, dancerId, since),
     getNotificationCounts(client, dancerId, since),
     getTrendingSnapshot(client, dancerId),
+  ]);
+
+  const [followersGained, favoritesAdded] = await Promise.all([
+    countRows(client, "follows", "dancer_id", dancerId, "created_at", since),
+    countRows(client, "favorites", "dancer_id", dancerId, "created_at", since),
   ]);
 
   return {
@@ -116,22 +182,40 @@ export async function getDancerDashboardAnalytics(
     bestRankThisWeek: trending.bestRankThisWeek,
     rankChangeSinceYesterday: trending.rankChangeSinceYesterday,
     profileViews30Days: profileViews,
-    followersGained30Days: 0,
+    followersGained30Days: followersGained,
     scheduleViews30Days: scheduleViews,
     directionRequests30Days: directionRequests,
     goingSignals30Days: goingSignals,
-    favoritesAdded30Days: 0,
+    favoritesAdded30Days: favoritesAdded,
     socialClicks30Days: socialClicks,
     notificationsSent30Days: notifications.sent,
     notificationsOpened30Days: notifications.opened,
   };
 }
 
-async function countRows(client: DancrClient, table: string, dancerId: string, since: Date) {
+async function countRows(
+  client: DancrClient,
+  table: string,
+  idColumn: string,
+  idValue: string,
+  dateColumn: string,
+  since: Date,
+) {
   const { count, error } = await client
     .from(table)
     .select("id", { count: "exact", head: true })
-    .eq("dancer_id", dancerId)
+    .eq(idColumn, idValue)
+    .gte(dateColumn, since.toISOString());
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countGoingSignals(client: DancrClient, dancerId: string, since: Date) {
+  const { count, error } = await client
+    .from("going_signals")
+    .select("shift_id, shifts!inner(dancer_id)", { count: "exact", head: true })
+    .eq("shifts.dancer_id", dancerId)
     .gte("created_at", since.toISOString());
 
   if (error) throw error;
@@ -143,7 +227,7 @@ async function getSocialClickCounts(client: DancrClient, dancerId: string, since
     .from("social_clicks")
     .select("platform")
     .eq("dancer_id", dancerId)
-    .gte("created_at", since.toISOString());
+    .gte("clicked_at", since.toISOString());
 
   if (error) throw error;
 
@@ -185,4 +269,25 @@ async function getTrendingSnapshot(client: DancrClient, dancerId: string) {
     bestRankThisWeek: data?.best_rank_this_week || null,
     rankChangeSinceYesterday: data?.previous_rank && data?.rank ? data.previous_rank - data.rank : null,
   };
+}
+
+async function getCurrentUserId(client: DancrClient) {
+  const { data, error } = await client.auth.getUser();
+  if (error) throw error;
+  if (!data.user) throw new Error("You must be signed in to upload files.");
+  return data.user.id;
+}
+
+function makeStorageFileName(fileName: string) {
+  const safeName = fileName
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  const id = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  return `${id}-${safeName || "upload"}`;
 }

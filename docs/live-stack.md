@@ -18,12 +18,11 @@ This repo currently contains the visual prototype in `outputs/index.html`. The p
 
 1. Create Supabase project.
 2. Run `supabase/migrations/202606250001_initial_schema.sql`.
-3. Create storage buckets:
-   - `dancer-photos`
-   - `verification-documents`
-4. Add environment variables from `.env.example`.
-5. Convert the static prototype into a Next.js app while preserving the current Dancr UI.
-6. Connect public pages to Supabase:
+3. Run `supabase/migrations/202606250002_auth_bootstrap.sql`.
+4. Run `supabase/migrations/202606250003_storage_policies.sql`.
+5. Add environment variables from `.env.example`.
+6. Convert the static prototype into a Next.js app while preserving the current Dancr UI.
+7. Connect public pages to Supabase:
    - home
    - dancer profile
    - venue profile
@@ -31,7 +30,7 @@ This repo currently contains the visual prototype in `outputs/index.html`. The p
    - dancers
    - venues
    - trending
-7. Connect dashboards:
+8. Connect dashboards:
    - customer dashboard
    - dancer setup dashboard
    - approved dancer dashboard
@@ -94,4 +93,3 @@ This repo currently contains the visual prototype in `outputs/index.html`. The p
 8. Notification delivery.
 9. Admin dashboard.
 10. Custom domain and production monitoring.
-

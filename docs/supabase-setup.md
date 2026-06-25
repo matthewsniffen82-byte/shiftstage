@@ -24,14 +24,20 @@ Then:
 
 That creates the core Dancr tables for customers, dancers, venues, shifts, follows, going signals, notifications, analytics, approvals, and rankings.
 
-## 3. Create storage buckets
+## 3. Run the storage setup
 
-Create these private buckets:
+Run:
+
+`supabase/migrations/202606250003_storage_policies.sql`
+
+That creates:
 
 - `dancer-photos`
 - `verification-documents`
 
-Approved public profile photos should be served through signed URLs or promoted to a public CDN path after approval.
+`dancer-photos` stores profile and gallery photos. Uploaded files stay in review in the database until an admin approves them.
+
+`verification-documents` stores private ID and selfie verification files. Only the dancer owner and admins can read or manage those files.
 
 ## 4. Configure auth
 
