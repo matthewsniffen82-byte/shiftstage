@@ -18878,10 +18878,17 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 2px 2px 14px;
+      min-height: 76px;
+      padding: 16px 18px;
       cursor: pointer;
       list-style: none;
-      border-bottom: 1px solid rgba(255,255,255,.055);
+      border: 1px solid rgba(139,92,246,.24);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+        rgba(7,7,10,.86);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.018), 0 14px 34px rgba(0,0,0,.28);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
     }
 
     #approvedDancerPanel .dancer-control-summary::-webkit-details-marker {
@@ -18895,12 +18902,14 @@
     }
 
     #approvedDancerPanel .dancer-control-summary strong {
+      display: block;
       color: #fff;
-      font-size: clamp(1.15rem, 3vw, 1.55rem);
+      font-size: clamp(1.05rem, 2.8vw, 1.35rem);
       line-height: 1.05;
     }
 
     #approvedDancerPanel .dancer-control-summary small {
+      display: block;
       max-width: 56rem;
       color: rgba(232,228,244,.74);
       font-size: .9rem;
@@ -18921,6 +18930,15 @@
       font-size: .78rem;
       font-weight: 900;
       white-space: nowrap;
+    }
+
+    #approvedDancerPanel .dancer-control-summary:hover,
+    #approvedDancerPanel .dancer-control-center[open] .dancer-control-summary {
+      border-color: rgba(139,92,246,.44);
+      background:
+        linear-gradient(180deg, rgba(139,92,246,.07), rgba(255,255,255,.014)),
+        rgba(8,8,12,.92);
+      box-shadow: 0 0 24px rgba(139,92,246,.14), inset 0 0 18px rgba(255,255,255,.024);
     }
 
     #approvedDancerPanel .dancer-control-body {
@@ -19066,9 +19084,10 @@
 
     @media (max-width: 560px) {
       #approvedDancerPanel .dancer-control-summary {
-        align-items: flex-start;
-        flex-direction: column;
+        align-items: center;
         gap: 10px;
+        min-height: 70px;
+        padding: 14px;
       }
 
       #approvedDancerPanel .control-summary-chip {
@@ -19175,24 +19194,26 @@
     }
 
     #approvedDancerPanel .dancer-control-summary::after {
-      content: "Open";
+      content: "+";
       flex: 0 0 auto;
-      min-height: 34px;
+      width: 38px;
+      height: 38px;
+      min-height: 38px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0 13px;
       border-radius: 999px;
       border: 1px solid rgba(139,92,246,.28);
       color: #d7c8ff;
       background: rgba(17,17,24,.78);
-      font-size: 12px;
+      font-size: 22px;
       font-weight: 900;
       letter-spacing: .02em;
+      line-height: 1;
     }
 
     #approvedDancerPanel .dancer-control-center[open] .dancer-control-summary::after {
-      content: "Close";
+      content: "x";
       border-color: rgba(139,92,246,.42);
       box-shadow: 0 0 18px rgba(139,92,246,.12);
     }
@@ -19290,8 +19311,10 @@
       }
 
       #approvedDancerPanel .dancer-control-summary::after {
-        min-height: 31px;
-        padding-inline: 11px;
+        width: 34px;
+        height: 34px;
+        min-height: 34px;
+        font-size: 20px;
       }
     }
   </style>
@@ -19750,7 +19773,7 @@
                 <strong>Manage profile and shifts</strong>
                 <small>Post shifts, edit photos, update socials, share your profile, and manage your public stage name.</small>
               </span>
-              <span class="control-summary-chip">Approved</span>
+              <span class="control-summary-chip">Open tools</span>
             </summary>
             <div class="dancer-control-body">
               <div class="dancer-control-grid">
