@@ -12,8 +12,8 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         slug,
         stage_name,
         city,
-        primary_photo_url,
         trending_scores(rank),
+        dancer_photos(storage_path, is_primary, review_status, sort_order),
         shifts!inner(starts_at, ends_at, venues(name, slug))
       `,
     )
@@ -42,8 +42,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         slug,
         stage_name,
         city,
-        primary_photo_url,
         trending_scores(rank),
+        dancer_photos(storage_path, is_primary, review_status, sort_order),
         shifts!inner(starts_at, ends_at, venues(name, slug))
       `,
     )
@@ -69,11 +69,8 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         stage_name,
         city,
         bio,
-        primary_photo_url,
-        follower_count,
-        going_count,
         trending_scores(rank),
-        dancer_photos(id, image_url, is_primary, sort_order),
+        dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url),
         shifts(id, starts_at, ends_at, status, venues(id, name, slug))
       `,
@@ -91,12 +88,13 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
   return {
     ...card,
     bio: row.bio || null,
-    followerCount: row.follower_count || 0,
-    goingCount: row.going_count || 0,
+    followerCount: 0,
+    goingCount: 0,
     photos: (row.dancer_photos || [])
+      .filter((photo: any) => photo.review_status === "approved")
       .map((photo: any) => ({
         id: photo.id,
-        imageUrl: photo.image_url,
+        imageUrl: photo.storage_path,
         isPrimary: photo.is_primary,
         sortOrder: photo.sort_order,
       }))
@@ -156,7 +154,7 @@ function toDancerCard(row: any): DancerCard {
     stageName: row.stage_name,
     city: row.city,
     verified: true,
-    primaryPhotoUrl: row.primary_photo_url || null,
+    primaryPhotoUrl: getPrimaryPhotoUrl(row),
     currentRank: score?.rank || null,
     venueName: venue?.name || null,
     venueSlug: venue?.slug || null,
@@ -164,6 +162,13 @@ function toDancerCard(row: any): DancerCard {
     shiftStartsAt: shift?.starts_at || null,
     shiftEndsAt: shift?.ends_at || null,
   };
+}
+
+function getPrimaryPhotoUrl(row: any): string | null {
+  const photos = (row.dancer_photos || []).filter((photo: any) => photo.review_status === "approved");
+  const primary = photos.find((photo: any) => photo.is_primary) || photos.sort((a: any, b: any) => a.sort_order - b.sort_order)[0];
+
+  return primary?.storage_path || null;
 }
 
 function toShiftSummary(row: any): ShiftSummary {

@@ -7,6 +7,7 @@ export type Json =
   | Json[];
 
 export type UserRole = "customer" | "dancer" | "admin";
+export type AccountState = "active" | "disabled" | "deleted";
 export type DancerStatus = "draft" | "pending_review" | "approved" | "rejected" | "disabled";
 export type ShiftStatus = "draft" | "posted" | "cancelled";
 export type SocialPlatform = "instagram" | "tiktok" | "snapchat" | "x" | "onlyfans";
@@ -30,8 +31,36 @@ export type Database = {
       social_platform: SocialPlatform;
       notification_channel: NotificationChannel;
       notification_type: NotificationType;
+      account_state: AccountState;
     };
   };
+};
+
+export type DancrAccount = {
+  id: string;
+  role: UserRole;
+  displayName: string | null;
+  email: string | null;
+  accountState: AccountState;
+};
+
+export type CustomerProfile = {
+  userId: string;
+  city: string;
+  notificationSettings: Record<string, Json>;
+};
+
+export type DancerAccountProfile = {
+  id: string;
+  userId: string;
+  realName: string;
+  stageName: string;
+  slug: string;
+  city: string;
+  bio: string | null;
+  status: DancerStatus;
+  verificationStatus: string;
+  photoReviewStatus: string;
 };
 
 export type VenueSummary = {

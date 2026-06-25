@@ -63,3 +63,17 @@ Build in this order:
 5. Admin approval queue.
 6. Analytics dashboard.
 7. Stripe dancer subscriptions after approval.
+
+## Auth behavior
+
+Customer signup creates:
+
+- `app_users` with role `customer`
+- `customer_profiles` with private notification settings
+
+Dancer signup creates:
+
+- `app_users` with role `dancer`
+- `dancer_profiles` with `real_name` for verification
+- `stage_name` for the public profile cards
+- `draft` profile status until setup and approval are complete
