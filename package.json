@@ -2,6 +2,11 @@
   "name": "dancr-static-demo",
   "version": "1.0.0",
   "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "qrcode": "^1.5.4",
+    "stripe": "^16.12.0"
+  },
   "scripts": {
     "build": "echo Static Dancr demo ready"
   }
