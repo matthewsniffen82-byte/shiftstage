@@ -1500,6 +1500,113 @@
         0 0 28px rgba(168,85,247,.18);
     }
 
+    .dancer-management-stack {
+      display: grid;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .dancer-manager-card {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      border-color: rgba(168,85,247,.26);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(53,216,255,.08), transparent 0 160px),
+        linear-gradient(135deg, rgba(168,85,247,.08), rgba(5,5,7,.45)),
+        rgba(8,8,12,.7);
+    }
+
+    .manager-head {
+      display: grid;
+      gap: 5px;
+    }
+
+    .manager-head h4 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .manager-head p {
+      margin: 0;
+      color: #bdb4ca;
+      font-size: 12px;
+      font-weight: 780;
+      line-height: 1.4;
+    }
+
+    .shift-manager-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .shift-manager-row {
+      display: grid;
+      gap: 10px;
+      padding: 13px;
+      border: 1px solid rgba(167,139,250,.18);
+      border-radius: 14px;
+      background: rgba(5,5,7,.42);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.018);
+    }
+
+    .shift-manager-meta {
+      color: #cfc7dc;
+      font-size: 12px;
+      font-weight: 830;
+      line-height: 1.35;
+    }
+
+    .shift-manager-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .mini-action {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 1px solid rgba(168,85,247,.3);
+      border-radius: 999px;
+      background: rgba(12,12,18,.78);
+      color: #f5f1ff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .mini-action:hover {
+      transform: translateY(-1px);
+      border-color: rgba(168,85,247,.62);
+      box-shadow: 0 0 18px rgba(168,85,247,.18);
+    }
+
+    .mini-action.danger {
+      border-color: rgba(255,47,174,.34);
+      color: #ff9bdd;
+    }
+
+    .profile-edit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-note {
+      margin-top: 7px;
+      color: #a9a0b8;
+      font-size: 11px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .field-note strong {
+      color: #f5f1ff;
+    }
+
     #dancerDashboard.is-approved #approvedDancerPanel {
       order: 1;
     }
@@ -1529,6 +1636,14 @@
         min-height: 56px;
         padding-inline: 16px;
         line-height: 1.15;
+      }
+
+      .dancer-manager-card {
+        padding: 14px;
+      }
+
+      .profile-edit-grid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -16518,9 +16633,7 @@
       padding: 0 !important;
       overflow: hidden !important;
       background-color: #050507 !important;
-      background-image:
-        url("file:///C:/Users/aix23/Downloads/ChatGPT%20Image%20Jun%2023,%202026,%2010_11_45%20PM.png"),
-        url("./dancr-hero-banner.png") !important;
+      background-image: url("./dancr-hero-banner.png") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: cover !important;
@@ -17801,18 +17914,24 @@
       display: none !important;
     }
 
-    .profile-modal .social-tile .social-icon {
+    .profile-modal .social-tile .social-link .social-icon {
       width: 19px !important;
       height: 19px !important;
       flex: 0 0 19px !important;
       display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
       color: currentColor !important;
+      opacity: 1 !important;
+      visibility: visible !important;
     }
 
-    .profile-modal .social-tile .social-icon svg {
+    .profile-modal .social-tile .social-link .social-icon svg {
       width: 19px !important;
       height: 19px !important;
       display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
       fill: none !important;
       stroke: currentColor !important;
       stroke-width: 2.15 !important;
@@ -17820,7 +17939,7 @@
       stroke-linejoin: round !important;
     }
 
-    .profile-modal .social-tile .social-icon.fill svg {
+    .profile-modal .social-tile .social-link .social-icon.fill svg {
       fill: currentColor !important;
       stroke: none !important;
     }
@@ -17985,6 +18104,1001 @@
       }
     }
 
+    /* Custom dancer profile photos from the approved dancer editor. */
+    .portrait.has-custom-photo {
+      background-image:
+        linear-gradient(180deg, rgba(5,5,7,.02) 0%, rgba(5,5,7,.1) 44%, rgba(5,5,7,.46) 68%, rgba(5,5,7,.96) 100%),
+        var(--custom-photo),
+        linear-gradient(135deg, #17101f, #07090e) !important;
+      background-size: cover, cover, cover !important;
+      background-repeat: no-repeat !important;
+      background-position: center, center top, center !important;
+    }
+
+    .profile-modal .modal-image.has-custom-photo {
+      background-image:
+        var(--custom-photo),
+        linear-gradient(135deg, #07070a, #141020) !important;
+      background-size: contain, cover !important;
+      background-repeat: no-repeat !important;
+      background-position: center center, center !important;
+    }
+
+    .profile-modal .thumb .portrait.has-custom-photo {
+      background-image:
+        var(--custom-photo),
+        linear-gradient(135deg, #07070a, #141020) !important;
+      background-size: cover, cover !important;
+      background-repeat: no-repeat !important;
+      background-position: center center, center !important;
+    }
+
+    /* Compact flame-only trending ranks. Final override for card and full-profile badges. */
+    .badge.trend.compact-trend,
+    .dancer-card .badge.trend.compact-trend,
+    .profile-modal .modal-rank.compact-trend:not([hidden]),
+    .venue-shift-rank.compact-trend {
+      width: 38px !important;
+      min-width: 38px !important;
+      height: 46px !important;
+      min-height: 46px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      overflow: visible !important;
+      line-height: 1 !important;
+    }
+
+    .badge.trend.compact-trend::before,
+    .badge.trend.compact-trend::after,
+    .dancer-card .badge.trend.compact-trend::before,
+    .dancer-card .badge.trend.compact-trend::after,
+    .profile-modal .modal-rank.compact-trend::before,
+    .profile-modal .modal-rank.compact-trend::after,
+    .venue-shift-rank.compact-trend::before,
+    .venue-shift-rank.compact-trend::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .dancer-card .card-badges {
+      top: 8px !important;
+      left: 8px !important;
+      right: auto !important;
+      gap: 6px !important;
+      align-items: flex-start !important;
+    }
+
+    .trend-flame-icon {
+      width: 38px;
+      height: 46px;
+      display: inline-grid;
+      place-items: center;
+      opacity: .94;
+      transform-origin: center;
+      transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+    }
+
+    .trend-flame-icon svg {
+      width: 38px;
+      height: 46px;
+      display: block;
+      overflow: visible;
+      filter:
+        drop-shadow(0 0 7px rgba(255,122,0,.42))
+        drop-shadow(0 0 16px rgba(236,72,153,.14));
+    }
+
+    .trend-flame-outer {
+      fill: rgba(255,122,0,.82);
+    }
+
+    .trend-flame-core {
+      fill: rgba(255,186,92,.48);
+    }
+
+    .trend-flame-icon text {
+      font-family: "Space Grotesk", "Outfit", var(--font-ui);
+      font-size: 23px;
+      font-weight: 900;
+      fill: #fff;
+      paint-order: stroke;
+      stroke: rgba(5,5,7,.52);
+      stroke-width: 2.2px;
+      letter-spacing: 0;
+    }
+
+    .trend-flame-icon.is-double text {
+      font-size: 18px;
+    }
+
+    .rank-one .trend-flame-icon,
+    .rank-one-card .trend-flame-icon {
+      opacity: .98;
+    }
+
+    .rank-one .trend-flame-icon svg,
+    .rank-one-card .trend-flame-icon svg {
+      filter:
+        drop-shadow(0 0 9px rgba(255,209,102,.62))
+        drop-shadow(0 0 20px rgba(255,47,174,.18));
+    }
+
+    .rank-one .trend-flame-outer,
+    .rank-one-card .trend-flame-outer {
+      fill: rgba(255,196,57,.94);
+    }
+
+    .rank-one .trend-flame-core,
+    .rank-one-card .trend-flame-core {
+      fill: rgba(255,244,176,.62);
+    }
+
+    .dancer-card:hover .trend-flame-icon {
+      transform: translateY(-1px) scale(1.035);
+      opacity: 1;
+    }
+
+    .profile-modal .modal-rank.compact-trend:not([hidden]) {
+      left: 14px !important;
+      top: 118px !important;
+      right: auto !important;
+    }
+
+    /* Final full-profile tile consistency pass:
+       keep every profile state on the same card rhythm. */
+    .profile-modal .modal-grid {
+      align-items: stretch !important;
+      grid-auto-rows: minmax(88px, auto) !important;
+    }
+
+    .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+      min-height: 88px !important;
+      padding: 14px 16px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      gap: 8px !important;
+      overflow: hidden !important;
+    }
+
+    .profile-modal .modal-grid > .info-tile:not(.social-tile) > strong {
+      margin: 0 !important;
+      font-size: clamp(0.74rem, 1.9vw, 0.86rem) !important;
+      line-height: 1.08 !important;
+      letter-spacing: 0.13em !important;
+    }
+
+    .profile-modal .modal-grid > .interest-tile,
+    .profile-modal .modal-grid > .info-tile:has(#modalFollowerCount) {
+      justify-content: flex-start !important;
+    }
+
+    .profile-modal .schedule-stack,
+    .profile-modal .info-tile .meta {
+      display: grid !important;
+      gap: 6px !important;
+      min-width: 0 !important;
+      line-height: 1.12 !important;
+    }
+
+    .profile-modal .detail-line,
+    .profile-modal .schedule-text-row {
+      display: grid !important;
+      grid-template-columns: 18px minmax(0, 1fr) !important;
+      align-items: center !important;
+      gap: 8px !important;
+      min-height: 20px !important;
+      margin: 0 !important;
+      min-width: 0 !important;
+      line-height: 1.12 !important;
+    }
+
+    .profile-modal .upcoming-venue-line,
+    .profile-modal .tonight-time-row,
+    .profile-modal .upcoming-time-row {
+      min-height: 20px !important;
+    }
+
+    .profile-modal .modal-schedule-text,
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      display: inline !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      font-size: clamp(0.9rem, 2.25vw, 1rem) !important;
+      line-height: 1.14 !important;
+      letter-spacing: 0 !important;
+      white-space: normal !important;
+      word-break: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      font-size: clamp(0.86rem, 2.05vw, 0.96rem) !important;
+      text-shadow:
+        0 0 8px rgba(168, 183, 255, 0.30),
+        0 0 14px rgba(124, 58, 237, 0.12) !important;
+    }
+
+    .profile-modal .metric-value,
+    .profile-modal .interest-count,
+    .profile-modal .metric-number {
+      font-size: clamp(1.2rem, 3.15vw, 1.55rem) !important;
+      line-height: 1.04 !important;
+    }
+
+    .profile-modal .interest-count .metric-label,
+    .profile-modal .metric-value .metric-label {
+      font-size: 0.76em !important;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-grid {
+        grid-auto-rows: minmax(78px, auto) !important;
+      }
+
+      .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+        min-height: 78px !important;
+        padding: 11px 12px !important;
+        gap: 6px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .modal-schedule-text.tonight,
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: 0.9rem !important;
+      }
+
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: 0.86rem !important;
+      }
+    }
+    /* Mobile consistency pass: keep profile cards readable and uniform on real phones. */
+    .dancer-card .ask-for-card-label,
+    .dancer-card .card-venue-prefix {
+      display: none !important;
+    }
+
+    .dancer-card .profile-body {
+      gap: 4px !important;
+      padding: 0 12px 13px !important;
+    }
+
+    .dancer-card .profile-body h3 {
+      min-width: 0 !important;
+      margin: 0 !important;
+      line-height: 1.05 !important;
+    }
+
+    .dancer-card .card-stage-name {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      font-size: clamp(1rem, 3.8vw, 1.16rem) !important;
+      line-height: 1.05 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .dancer-card .card-stage-name .verified-check {
+      flex: 0 0 auto !important;
+    }
+
+    .dancer-card .card-venue-line {
+      display: grid !important;
+      grid-template-columns: 15px minmax(0, auto) auto !important;
+      align-items: center !important;
+      column-gap: 5px !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      font-size: clamp(.78rem, 3.2vw, .9rem) !important;
+      line-height: 1.15 !important;
+    }
+
+    .dancer-card .card-venue-name {
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    .dancer-card .card-distance {
+      flex: 0 0 auto !important;
+      white-space: nowrap !important;
+    }
+
+    .dancer-card .profile-body > .schedule-row {
+      display: grid !important;
+      grid-template-columns: 15px minmax(0, 1fr) !important;
+      align-items: start !important;
+      column-gap: 5px !important;
+      margin-top: 4px !important;
+    }
+
+    .dancer-card .card-schedule-text {
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      white-space: normal !important;
+      font-size: clamp(.78rem, 3.15vw, .9rem) !important;
+      line-height: 1.14 !important;
+    }
+
+    .dancer-card .card-schedule-text .schedule-label,
+    .dancer-card .card-schedule-text .schedule-time {
+      white-space: nowrap !important;
+    }
+
+    .dancer-card .no-shifts-state {
+      display: grid !important;
+      grid-template-columns: 15px minmax(0, 1fr) !important;
+      align-items: center !important;
+      column-gap: 6px !important;
+      margin-top: 5px !important;
+      font-size: clamp(.78rem, 3.15vw, .9rem) !important;
+      white-space: nowrap !important;
+    }
+
+    .profile-modal .upcoming-venue-line {
+      gap: 7px !important;
+    }
+
+    .profile-modal .modal-grid {
+      align-items: stretch !important;
+      grid-auto-rows: minmax(82px, auto) !important;
+    }
+
+    .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+      min-height: 82px !important;
+      padding: 12px 14px !important;
+    }
+
+    .profile-modal .modal-schedule-text,
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      font-size: clamp(.86rem, 2.1vw, .98rem) !important;
+      line-height: 1.2 !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    .profile-modal .social-tile .social-link .social-icon,
+    .profile-modal .social-tile .social-link .social-icon svg {
+      display: inline-flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      color: currentColor !important;
+    }
+
+    .profile-modal .social-tile .social-instagram { color: #E4405F !important; }
+    .profile-modal .social-tile .social-tiktok { color: #25F4EE !important; }
+    .profile-modal .social-tile .social-snapchat { color: #FFFC00 !important; }
+    .profile-modal .social-tile .social-onlyfans { color: #00AFF0 !important; }
+    .profile-modal .social-tile .social-x { color: #FFFFFF !important; }
+
+    @media (max-width: 560px) {
+      .dancer-card .profile-body {
+        padding: 0 10px 12px !important;
+      }
+
+      .dancer-card .card-stage-name {
+        font-size: clamp(.96rem, 4.05vw, 1.08rem) !important;
+      }
+
+      .dancer-card .card-venue-line {
+        grid-template-columns: 14px minmax(0, auto) auto !important;
+        font-size: clamp(.74rem, 3.1vw, .84rem) !important;
+      }
+
+      .dancer-card .profile-body > .schedule-row {
+        grid-template-columns: 14px minmax(0, 1fr) !important;
+      }
+
+      .dancer-card .card-schedule-text,
+      .dancer-card .no-shifts-state {
+        font-size: clamp(.74rem, 3.05vw, .82rem) !important;
+      }
+
+      .profile-modal .modal-grid {
+        gap: 8px !important;
+        grid-auto-rows: minmax(74px, auto) !important;
+      }
+
+      .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+        min-height: 74px !important;
+        padding: 10px 12px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .modal-schedule-text.tonight,
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: .84rem !important;
+      }
+    }
+    /* Premium black-card visual system pass
+       Keeps the current layout intact while making color, borders, and glow more restrained. */
+    :root {
+      --lux-bg: #050507;
+      --lux-surface: #0a0a0f;
+      --lux-panel: #0e0e14;
+      --lux-card: #111118;
+      --lux-border: rgba(255, 255, 255, 0.07);
+      --lux-violet-border: rgba(139, 92, 246, 0.18);
+      --lux-violet: #6d28d9;
+      --lux-violet-bright: #8b5cf6;
+      --lux-violet-glow: rgba(109, 40, 217, 0.2);
+      --lux-cyan: #22c7ff;
+      --lux-muted: rgba(184, 184, 197, 0.76);
+    }
+
+    html,
+    body {
+      background: var(--lux-bg) !important;
+      color: #fff;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 80% -10%, rgba(109, 40, 217, 0.09), transparent 34rem),
+        radial-gradient(circle at 0% 16%, rgba(124, 58, 237, 0.06), transparent 28rem),
+        var(--lux-bg) !important;
+    }
+
+    .shell,
+    .page,
+    .screen,
+    .dashboard-shell {
+      background: transparent !important;
+    }
+
+    .topbar,
+    .app-header,
+    header {
+      background:
+        linear-gradient(180deg, rgba(14, 14, 20, 0.95), rgba(5, 5, 7, 0.97)) !important;
+      border-color: rgba(255, 255, 255, 0.055) !important;
+      box-shadow: 0 1px 0 rgba(139, 92, 246, 0.08), 0 14px 36px rgba(0, 0, 0, 0.24) !important;
+    }
+
+    .brand,
+    .logo-home {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(8, 8, 12, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 12px 30px rgba(0, 0, 0, 0.36),
+        0 0 16px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .login-button,
+    .header-actions button,
+    .menu-button {
+      background: rgba(8, 8, 12, 0.9) !important;
+      border-color: rgba(139, 92, 246, 0.22) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025) !important;
+      color: rgba(255, 255, 255, 0.94) !important;
+    }
+
+    .login-button:hover,
+    .header-actions button:hover,
+    .menu-button:hover {
+      border-color: rgba(139, 92, 246, 0.4) !important;
+      box-shadow: 0 0 16px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .hero,
+    .hero.reference-hero {
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      background-color: #07070b !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.022),
+        0 18px 46px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .controls-panel,
+    .dashboard-panel,
+    .auth-panel,
+    .profile-setup-card,
+    .profile-modal .modal-grid > .info-tile,
+    .profile-modal .social-tile,
+    .info-tile,
+    .metric-card,
+    .stat-card,
+    .customer-card,
+    .dancer-dashboard-card {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.94), rgba(8, 8, 12, 0.98)) !important;
+      border-color: var(--lux-border) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025),
+        0 16px 38px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    .card,
+    .dancer-card,
+    .venue-card,
+    .venue,
+    .venue-row,
+    .club-card {
+      background: linear-gradient(180deg, rgba(14, 14, 20, 0.92), rgba(5, 5, 7, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.14) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.018),
+        0 14px 34px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .card:hover,
+    .dancer-card:hover,
+    .venue-card:hover,
+    .venue:hover,
+    .venue-row:hover,
+    .club-card:hover {
+      border-color: rgba(139, 92, 246, 0.34) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 18px 42px rgba(0, 0, 0, 0.42),
+        0 0 18px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .section-label,
+    .info-tile h3,
+    .profile-modal .info-tile h3,
+    .social-tile h3,
+    .eyebrow,
+    .dashboard-section-title {
+      color: rgba(224, 214, 255, 0.78) !important;
+      letter-spacing: 0.15em !important;
+      text-shadow: none !important;
+    }
+
+    .info-tile .value,
+    .info-tile strong,
+    .metric-card strong,
+    .stat-card strong,
+    .profile-modal .info-tile strong {
+      color: rgba(255, 255, 255, 0.96) !important;
+      text-shadow: none !important;
+    }
+
+    .muted,
+    .caption,
+    .empty-state,
+    .inactive-state,
+    .no-shifts-state,
+    .profile-modal .info-tile p,
+    .profile-modal .info-tile span {
+      color: var(--lux-muted) !important;
+      text-shadow: none !important;
+    }
+
+    .no-shifts-state,
+    .empty-state {
+      font-size: 0.95rem !important;
+      letter-spacing: 0.035em !important;
+    }
+
+    .verified-check,
+    .verified-mark {
+      background: var(--lux-cyan) !important;
+      color: #031116 !important;
+      box-shadow: 0 0 12px rgba(34, 199, 255, 0.34) !important;
+    }
+
+    .tab-pill {
+      background: linear-gradient(180deg, rgba(19, 19, 26, 0.9), rgba(9, 9, 13, 0.96)) !important;
+      border-color: rgba(255, 255, 255, 0.075) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+    }
+
+    .tab-pill:hover {
+      border-color: rgba(139, 92, 246, 0.28) !important;
+      box-shadow: 0 0 14px rgba(109, 40, 217, 0.12) !important;
+    }
+
+    .tab-pill.active {
+      background: linear-gradient(135deg, #4c1d95, #6d28d9) !important;
+      border-color: rgba(167, 139, 250, 0.38) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 18px rgba(109, 40, 217, 0.26) !important;
+    }
+
+    select,
+    input,
+    textarea,
+    .select-field,
+    .form-field {
+      background: #050507 !important;
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      box-shadow: none !important;
+      color: #fff !important;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus,
+    .select-field:focus-within,
+    .form-field:focus-within {
+      border-color: rgba(139, 92, 246, 0.48) !important;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .locate-btn {
+      background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 70%, rgba(34, 199, 255, 0.64) 100%) !important;
+      box-shadow: 0 0 18px rgba(109, 40, 217, 0.2) !important;
+    }
+
+    .action-btn,
+    .primary-action,
+    .follow-btn,
+    .going-btn,
+    .venue-page .primary-action {
+      background: linear-gradient(135deg, #4c1d95, #7c3aed) !important;
+      border-color: rgba(167, 139, 250, 0.28) !important;
+      box-shadow: 0 0 20px rgba(109, 40, 217, 0.24) !important;
+    }
+
+    .action-btn:hover,
+    .primary-action:hover,
+    .follow-btn:hover,
+    .going-btn:hover {
+      box-shadow: 0 0 24px rgba(109, 40, 217, 0.32) !important;
+    }
+
+    .notify-btn,
+    .secondary-action,
+    .outline-action,
+    .profile-modal .modal-actions button:not(.follow-btn):not(.going-btn) {
+      background: linear-gradient(180deg, rgba(10, 10, 15, 0.96), rgba(5, 5, 7, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.22) !important;
+      box-shadow: none !important;
+      color: rgba(255, 255, 255, 0.92) !important;
+    }
+
+    .action-btn.is-active,
+    .action-btn.following,
+    .follow-btn.following,
+    .notify-btn.active,
+    .going-btn.is-active {
+      background: linear-gradient(180deg, rgba(20, 20, 27, 0.96), rgba(10, 10, 15, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.26) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+      color: #fff !important;
+    }
+
+    .social-link,
+    .profile-modal .social-link,
+    .social-icon-button {
+      background: rgba(5, 5, 7, 0.9) !important;
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      box-shadow: none !important;
+    }
+
+    .social-link:hover,
+    .profile-modal .social-link:hover,
+    .social-icon-button:hover {
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow: 0 0 14px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .card-schedule-text.tonight,
+    .modal-schedule-text.tonight,
+    .schedule-time.tonight {
+      text-shadow: 0 0 10px rgba(255, 79, 195, 0.32) !important;
+    }
+
+    .card-schedule-text.upcoming,
+    .modal-schedule-text.upcoming,
+    .schedule-time.upcoming {
+      text-shadow: 0 0 10px rgba(34, 199, 255, 0.24) !important;
+    }
+
+    .profile-modal .thumb.active,
+    .gallery-thumb.active,
+    .thumbnail.active {
+      border-color: rgba(139, 92, 246, 0.55) !important;
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.28) !important;
+    }
+
+    .modal,
+    .profile-modal,
+    .drawer,
+    .overlay-panel {
+      background: rgba(5, 5, 7, 0.92) !important;
+    }
+
+    .modal-card,
+    .profile-modal .modal-content,
+    .auth-modal,
+    .share-modal {
+      background: linear-gradient(180deg, rgba(12, 12, 18, 0.96), rgba(5, 5, 7, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.18) !important;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.56) !important;
+    }
+
+    .badge:not(.trend),
+    .pill:not(.trend),
+    .status-pill {
+      background: rgba(12, 12, 18, 0.84) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      box-shadow: none !important;
+    }
+
+    .dashboard-panel .locked,
+    .locked-analytics,
+    .pending-analytics {
+      border-color: rgba(255, 255, 255, 0.06) !important;
+      background: rgba(10, 10, 15, 0.72) !important;
+      box-shadow: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      width: 9px;
+      height: 9px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: rgba(5, 5, 7, 0.96);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: rgba(109, 40, 217, 0.38);
+      border-radius: 999px;
+      box-shadow: 0 0 8px rgba(109, 40, 217, 0.12);
+      border: 2px solid rgba(5, 5, 7, 0.96);
+    }
+
+    *::-webkit-scrollbar-thumb:hover,
+    *::-webkit-scrollbar-thumb:active {
+      background: rgba(139, 92, 246, 0.72);
+      box-shadow: 0 0 14px rgba(139, 92, 246, 0.34);
+    }
+
+    /* Dancer dashboard control center: approved dancers manage everything in one place. */
+    #approvedDancerPanel .dancer-control-center {
+      display: grid;
+      gap: 0;
+    }
+
+    #approvedDancerPanel .dancer-control-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 2px 2px 14px;
+      cursor: pointer;
+      list-style: none;
+      border-bottom: 1px solid rgba(255,255,255,.055);
+    }
+
+    #approvedDancerPanel .dancer-control-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    #approvedDancerPanel .dancer-control-summary > span:first-child {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    #approvedDancerPanel .dancer-control-summary strong {
+      color: #fff;
+      font-size: clamp(1.15rem, 3vw, 1.55rem);
+      line-height: 1.05;
+    }
+
+    #approvedDancerPanel .dancer-control-summary small {
+      max-width: 56rem;
+      color: rgba(232,228,244,.74);
+      font-size: .9rem;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    #approvedDancerPanel .control-summary-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid rgba(34,199,255,.34);
+      border-radius: 999px;
+      background: rgba(34,199,255,.08);
+      color: #8ee7ff;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    #approvedDancerPanel .dancer-control-body {
+      display: grid;
+      gap: 14px;
+      padding-top: 16px;
+    }
+
+    #approvedDancerPanel .schedule-broadcast-note {
+      display: grid;
+      gap: 6px;
+      padding: 14px;
+      border: 1px solid rgba(139,92,246,.18);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(5,5,7,.46));
+    }
+
+    #approvedDancerPanel .schedule-broadcast-note strong {
+      color: #fff;
+      font-size: .98rem;
+    }
+
+    #approvedDancerPanel .schedule-broadcast-note p {
+      margin: 0;
+      color: rgba(232,228,244,.72);
+      font-size: .88rem;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    /* Clean compact rank flames: no backing tile, smaller, softer, tucked into the corner. */
+    .badge.trend.compact-trend,
+    .dancer-card .badge.trend.compact-trend,
+    .profile-modal .modal-rank.compact-trend:not([hidden]),
+    .venue-shift-rank.compact-trend {
+      width: 30px !important;
+      min-width: 30px !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      filter: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      overflow: visible !important;
+    }
+
+    .badge.trend.compact-trend *,
+    .dancer-card .badge.trend.compact-trend *,
+    .profile-modal .modal-rank.compact-trend *,
+    .venue-shift-rank.compact-trend * {
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .dancer-card .card-badges {
+      top: 10px !important;
+      left: 10px !important;
+      right: auto !important;
+    }
+
+    .trend-flame-icon {
+      width: 30px !important;
+      height: 36px !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      opacity: .88 !important;
+      background: transparent !important;
+      transform-origin: center !important;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+
+    .trend-flame-icon svg {
+      width: 30px !important;
+      height: 36px !important;
+      display: block !important;
+      overflow: visible !important;
+      background: transparent !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255,122,0,.34))
+        drop-shadow(0 0 10px rgba(255,107,0,.18)) !important;
+    }
+
+    .trend-flame-outer {
+      fill: rgba(255,122,0,.72) !important;
+    }
+
+    .trend-flame-core {
+      fill: rgba(255,183,86,.34) !important;
+    }
+
+    .trend-flame-icon text {
+      font-size: 21px !important;
+      font-weight: 950 !important;
+      fill: rgba(255,255,255,.96) !important;
+      stroke: rgba(5,5,7,.58) !important;
+      stroke-width: 2px !important;
+      paint-order: stroke !important;
+      text-shadow: none !important;
+    }
+
+    .trend-flame-icon.is-double text {
+      font-size: 16px !important;
+    }
+
+    .rank-one .trend-flame-icon,
+    .rank-one-card .trend-flame-icon {
+      opacity: .96 !important;
+    }
+
+    .rank-one .trend-flame-icon svg,
+    .rank-one-card .trend-flame-icon svg {
+      filter:
+        drop-shadow(0 0 6px rgba(255,209,102,.46))
+        drop-shadow(0 0 13px rgba(255,196,57,.22)) !important;
+    }
+
+    .rank-one .trend-flame-outer,
+    .rank-one-card .trend-flame-outer {
+      fill: rgba(255,196,57,.84) !important;
+    }
+
+    .rank-one .trend-flame-core,
+    .rank-one-card .trend-flame-core {
+      fill: rgba(255,244,176,.48) !important;
+    }
+
+    .dancer-card:hover .trend-flame-icon {
+      transform: translateY(-1px) scale(1.04) !important;
+      opacity: 1 !important;
+    }
+
+    .profile-modal .modal-rank.compact-trend:not([hidden]) {
+      left: 12px !important;
+      top: 116px !important;
+      right: auto !important;
+    }
+
+    @media (max-width: 560px) {
+      #approvedDancerPanel .dancer-control-summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #approvedDancerPanel .control-summary-chip {
+        min-height: 28px;
+      }
+
+      .badge.trend.compact-trend,
+      .dancer-card .badge.trend.compact-trend,
+      .profile-modal .modal-rank.compact-trend:not([hidden]),
+      .venue-shift-rank.compact-trend {
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+      }
+
+      .trend-flame-icon,
+      .trend-flame-icon svg {
+        width: 28px !important;
+        height: 34px !important;
+      }
+
+      .trend-flame-icon text {
+        font-size: 19px !important;
+      }
+
+      .trend-flame-icon.is-double text {
+        font-size: 15px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -18434,15 +19548,25 @@
           <div class="rank-notification-list" id="dancerRankingNotifications">Milestone notifications will appear here.</div>
         </div>
         <div class="auth-card post-shift-panel" id="approvedDancerPanel" hidden>
+          <details class="dancer-control-center" open>
+            <summary class="dancer-control-summary">
+              <span>
+                <span class="eyebrow">Dancer controls</span>
+                <strong>Manage profile and shifts</strong>
+                <small>Post shifts, edit photos, update socials, share your profile, and manage your public stage name.</small>
+              </span>
+              <span class="control-summary-chip">Approved</span>
+            </summary>
+            <div class="dancer-control-body">
           <div class="post-shift-head">
-            <span class="eyebrow">Schedule broadcast</span>
-            <h3>Post a verified shift</h3>
-            <p>Post tonight or upcoming shifts. Followers and notify-only customers get alerts, and the shift appears on your profile and the venue page.</p>
+            <span class="eyebrow">Shift posting</span>
+            <h3>Post or update a verified shift</h3>
+            <p>Choose the club, date, and time. Dancr broadcasts the shift to followers and notify-only customers after posting.</p>
           </div>
           <div class="post-shift-value-row" aria-label="Post shift benefits">
-            <div><strong>Followers</strong><span>notified instantly</span></div>
-            <div><strong>Tonight</strong><span>shown when active</span></div>
-            <div><strong>Venue page</strong><span>updates automatically</span></div>
+            <div><strong>Broadcast</strong><span>followers notified</span></div>
+            <div><strong>Profile</strong><span>schedule updates live</span></div>
+            <div><strong>Venue page</strong><span>shift appears there</span></div>
           </div>
           <div class="info-tile share-tile" id="dancerSharePanel"></div>
           <form class="auth-form" id="shiftPostForm">
@@ -18478,6 +19602,80 @@
             <button class="action-btn post-shift-submit" type="submit">Post shift + notify followers</button>
           </form>
           <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only customers.</div>
+          <div class="schedule-broadcast-note">
+            <span class="eyebrow">Schedule broadcast</span>
+            <strong>Broadcast confirmation appears here after posting.</strong>
+            <p>Dancr shows how many followers and notify-only customers received the shift alert, so dancers can see the value immediately.</p>
+          </div>
+          <div class="dancer-management-stack">
+            <section class="info-tile dancer-manager-card">
+              <div class="manager-head">
+                <span class="eyebrow">Manage shifts</span>
+                <h4>Posted shifts</h4>
+                <p>Edit the active schedule or remove it from your public profile and venue page.</p>
+              </div>
+              <div class="shift-manager-list" id="dancerShiftManager"></div>
+            </section>
+            <section class="info-tile dancer-manager-card">
+              <div class="manager-head">
+                <span class="eyebrow">Public profile</span>
+                <h4>Edit profile</h4>
+                <p>Your real name stays private. Stage name is what customers see.</p>
+              </div>
+              <form class="auth-form public-profile-form" id="publicProfileForm">
+                <div class="profile-edit-grid">
+                  <div class="field">
+                    <label for="profileStageName">Stage name</label>
+                    <input id="profileStageName" type="text">
+                    <div class="field-note"><strong>Shown publicly:</strong> Customers see this name on profile cards, schedules, search, and your full profile.</div>
+                  </div>
+                  <div class="field">
+                    <label for="profileCity">City</label>
+                    <select id="profileCity"></select>
+                  </div>
+                  <div class="field">
+                    <label for="profileVenue">Home club</label>
+                    <select id="profileVenue"></select>
+                  </div>
+                  <div class="field">
+                    <label for="profileMainPhoto">Main photo URL</label>
+                    <input id="profileMainPhoto" type="url" placeholder="https://...">
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="profileGalleryPhotos">Gallery photo URLs</label>
+                  <textarea id="profileGalleryPhotos" rows="3" placeholder="One photo URL per line"></textarea>
+                  <div class="field-note">Use full-body, portrait, or gallery photos. Approved photos appear on your public profile.</div>
+                </div>
+                <div class="profile-edit-grid">
+                  <div class="field">
+                    <label for="profileInstagram">Instagram</label>
+                    <input id="profileInstagram" type="text" placeholder="@username or profile URL">
+                  </div>
+                  <div class="field">
+                    <label for="profileTiktok">TikTok</label>
+                    <input id="profileTiktok" type="text" placeholder="@username or profile URL">
+                  </div>
+                  <div class="field">
+                    <label for="profileSnapchat">Snapchat</label>
+                    <input id="profileSnapchat" type="text" placeholder="@username or profile URL">
+                  </div>
+                  <div class="field">
+                    <label for="profileOnlyfans">OnlyFans</label>
+                    <input id="profileOnlyfans" type="text" placeholder="@username or profile URL">
+                  </div>
+                  <div class="field">
+                    <label for="profileX">X</label>
+                    <input id="profileX" type="text" placeholder="@username or profile URL">
+                  </div>
+                </div>
+                <button class="action-btn" type="submit">Save public profile</button>
+              </form>
+              <div class="rule-note" id="profileEditResult" hidden>Public profile saved.</div>
+            </section>
+          </div>
+            </div>
+          </details>
         </div>
         <div class="auth-card">
           <h3>Payment authorization</h3>
@@ -19058,6 +20256,26 @@
 
     function portraitClass(index) {
       return ["", "two", "three"][index % 3];
+    }
+
+    function safeCssUrl(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed || (!/^https?:\/\//i.test(trimmed) && !/^data:image\//i.test(trimmed))) return "";
+      return trimmed.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+
+    function customPhotoUrl(profile, offset = 0) {
+      const gallery = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
+      if (offset === 0) return profile?.mainPhotoUrl || gallery[0] || "";
+      return gallery[offset - 1] || profile?.mainPhotoUrl || "";
+    }
+
+    function customPhotoAttrs(url) {
+      const safeUrl = safeCssUrl(url);
+      return safeUrl ? {
+        className: " has-custom-photo",
+        style: ` style="--custom-photo: url('${safeUrl}')"`
+      } : { className: "", style: "" };
     }
 
     function slugify(value) {
@@ -19733,20 +20951,15 @@
     function upcomingCardLabel(profile, city = selectedCity()) {
       const label = profile.shiftLabel || "Upcoming";
       const date = dateFromUpcomingLabel(label, city);
-      if (!date) return label;
-      const diff = daysFromToday(date, city);
-      if (diff === 1) return "Tomorrow";
-      if (diff > 1 && diff <= 3) return `In ${diff} days`;
+      if (!date) return "Date pending";
       return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
     }
 
     function upcomingFullLabel(profile, city = selectedCity()) {
       const label = profile.shiftLabel || "Upcoming";
       const date = dateFromUpcomingLabel(label, city);
-      if (!date) return label;
-      const diff = daysFromToday(date, city);
-      if (diff === 1) return "Tomorrow";
-      return date.toLocaleDateString([], { timeZone: "UTC", weekday: "short", month: "numeric", day: "numeric" });
+      if (!date) return "Date pending";
+      return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
     }
 
     function isTonightDate(dateValue, city = selectedCity()) {
@@ -19908,10 +21121,18 @@
       return '<span class="badge-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.1.55-2 1.92-2 3.5 0 .83.34 1.5.5 2Z"></path><path d="M12 2c0 3-2 4-4 6s-3 4-3 6a7 7 0 0 0 14 0c0-2-1-4-3-6s-4-3-4-6Z"></path></svg></span>';
     }
 
-    function trendFlameMarkup(rank, full = false) {
+    function trendFlameMarkup(rank) {
       const safeRank = String(rank || "");
-      const label = full ? `#${safeRank} Trending` : safeRank;
-      return `<span class="trend-flame-emoji" aria-hidden="true">🔥</span><span class="trend-rank-text">${label}</span>`;
+      const doubleDigitClass = safeRank.length > 1 ? " is-double" : "";
+      return `
+        <span class="trend-flame-icon${doubleDigitClass}" aria-hidden="true">
+          <svg viewBox="0 0 64 78" focusable="false">
+            <path class="trend-flame-outer" d="M34 3c8 12 22 22 22 39 0 20-13 33-24 33S8 64 8 49c0-10 5-18 13-25 0 7 3 12 8 15-2-14 2-25 5-36Z"></path>
+            <path class="trend-flame-core" d="M32 31c7 8 12 14 12 24 0 9-5 15-12 15s-13-6-13-15c0-6 3-11 8-16 1 4 3 7 6 9-1-7 0-12-1-17Z"></path>
+            <text x="32" y="50" text-anchor="middle" dominant-baseline="middle">${safeRank}</text>
+          </svg>
+        </span>
+      `;
     }
 
     function actionIconMarkup(type) {
@@ -20114,6 +21335,181 @@
       }
     }
 
+    function setFieldValueIfIdle(id, value = "") {
+      const field = document.getElementById(id);
+      if (!field || document.activeElement === field) return;
+      field.value = value || "";
+    }
+
+    function renderDancerManagement() {
+      renderDancerShiftManager();
+      renderApprovedDancerProfileEditor();
+    }
+
+    function renderDancerShiftManager() {
+      const list = document.getElementById("dancerShiftManager");
+      if (!list) return;
+      const profile = activeDancerProfile();
+      if (!profile || !profile.scheduled) {
+        list.innerHTML = `
+          <div class="shift-manager-row">
+            <strong>No posted shift</strong>
+            <div class="shift-manager-meta">Post a verified shift above when you're ready.</div>
+          </div>
+        `;
+        return;
+      }
+      const label = profile.shiftLabel || (profile.tonight ? "Tonight" : "Upcoming");
+      list.innerHTML = `
+        <div class="shift-manager-row">
+          <strong>${displayText(profile.venue || "Posted shift")}</strong>
+          <div class="shift-manager-meta">${displayText(label)} · ${displayText(profile.time || "Time pending")}${profile.repeat && profile.repeat !== "No repeat" ? ` · ${displayText(profile.repeat)}` : ""}</div>
+          ${profile.notes ? `<div class="shift-manager-meta">${displayText(profile.notes)}</div>` : ""}
+          <div class="shift-manager-actions">
+            <button class="mini-action" type="button" data-shift-action="edit">Edit shift</button>
+            <button class="mini-action danger" type="button" data-shift-action="remove">Remove shift</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderApprovedDancerProfileEditor(preserveCitySelection = false) {
+      const stageField = document.getElementById("profileStageName");
+      const cityField = document.getElementById("profileCity");
+      const venueField = document.getElementById("profileVenue");
+      if (!stageField || !cityField || !venueField) return;
+      const currentCity = activeDancerCity();
+      const selectedCity = preserveCitySelection ? cityField.value : currentCity;
+      const city = markets[selectedCity] ? selectedCity : currentCity;
+      const profile = activeDancerProfile(currentCity) || ensureActiveDancerProfile("Verified");
+      cityField.innerHTML = Object.keys(markets).map((name) => `<option${name === city ? " selected" : ""}>${name}</option>`).join("");
+      const venues = markets[city]?.venues || [];
+      const venueName = profile?.venue || venues[0]?.name || "";
+      venueField.innerHTML = venues.map((venue) => `<option${venue.name === venueName ? " selected" : ""}>${venue.name}</option>`).join("");
+      cityField.onchange = () => renderApprovedDancerProfileEditor(true);
+
+      const socials = { ...dancerSignupSocials, ...(profile?.socials || {}) };
+      setFieldValueIfIdle("profileStageName", profile?.name || activeDancerName());
+      setFieldValueIfIdle("profileMainPhoto", profile?.mainPhotoUrl || "");
+      setFieldValueIfIdle("profileGalleryPhotos", Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.join("\n") : "");
+      setFieldValueIfIdle("profileInstagram", socials.instagram || "");
+      setFieldValueIfIdle("profileTiktok", socials.tiktok || "");
+      setFieldValueIfIdle("profileSnapchat", socials.snapchat || "");
+      setFieldValueIfIdle("profileOnlyfans", socials.onlyfans || "");
+      setFieldValueIfIdle("profileX", socials.x || "");
+    }
+
+    function saveApprovedDancerProfile() {
+      const oldCity = activeDancerCity();
+      const oldName = activeDancerName();
+      const oldMarket = markets[oldCity];
+      const oldProfile = activeDancerProfile(oldCity) || ensureActiveDancerProfile("Verified");
+      if (!oldProfile || !oldMarket) return;
+      const stageName = cleanDisplayValue(document.getElementById("profileStageName").value.trim()) || oldName;
+      const newCity = document.getElementById("profileCity").value || oldCity;
+      const targetMarket = markets[newCity] || oldMarket;
+      const venueName = document.getElementById("profileVenue").value || oldProfile.venue;
+      const venue = targetMarket.venues.find((item) => item.name === venueName);
+      const rawSocials = {
+        instagram: document.getElementById("profileInstagram").value.trim(),
+        tiktok: document.getElementById("profileTiktok").value.trim(),
+        snapchat: document.getElementById("profileSnapchat").value.trim(),
+        onlyfans: document.getElementById("profileOnlyfans").value.trim(),
+        x: document.getElementById("profileX").value.trim()
+      };
+      if (hasBlockedSocialLink(Object.values(rawSocials))) {
+        showToast("Escorting, payment, or solicitation links are not allowed");
+        return;
+      }
+      const normalizedSocials = Object.fromEntries(
+        Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
+      );
+      const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
+      if (invalidSocial) {
+        showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
+        return;
+      }
+      const galleryPhotoUrls = document.getElementById("profileGalleryPhotos").value
+        .split(/\n|,/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+      let profile = oldProfile;
+      if (targetMarket !== oldMarket) {
+        oldMarket.dancers = oldMarket.dancers.filter((item) => item !== oldProfile);
+        profile = { ...oldProfile };
+        targetMarket.dancers.push(profile);
+        document.getElementById("dancerCity").value = newCity;
+        citySelect.value = newCity;
+      }
+      Object.assign(profile, {
+        name: stageName,
+        city: newCity,
+        venue: venueName,
+        distance: venue?.distance || profile.distance,
+        socials: normalizedSocials,
+        mainPhotoUrl: document.getElementById("profileMainPhoto").value.trim(),
+        galleryPhotoUrls
+      });
+      Object.assign(dancerSignupSocials, normalizedSocials);
+      document.getElementById("dancerStageName").value = stageName;
+      document.getElementById("dancerDashName").textContent = stageName;
+      if (lastPostedShift?.name === oldName) {
+        lastPostedShift.name = stageName;
+        lastPostedShift.city = newCity;
+        lastPostedShift.venue = venueName;
+      }
+      const result = document.getElementById("profileEditResult");
+      if (result) {
+        result.hidden = false;
+        result.textContent = "Public profile saved. Customers now see your updated stage name, socials, photos, and venue.";
+      }
+      render();
+      renderDancerSetup();
+      if (customerDashboard.classList.contains("show")) renderDashboard();
+      showToast("Public profile saved");
+    }
+
+    function handleShiftManagerAction(action) {
+      const profile = activeDancerProfile();
+      if (!profile) return;
+      if (action === "edit") {
+        const clubField = document.getElementById("shiftClub");
+        if (clubField && profile.venue) clubField.value = profile.venue;
+        setFieldValueIfIdle("shiftDate", profile.shiftDate || todayValue(activeDancerCity()));
+        setFieldValueIfIdle("shiftStart", profile.shiftStart || "21:30");
+        setFieldValueIfIdle("shiftEnd", profile.shiftEnd || "02:00");
+        const repeatField = document.getElementById("shiftRepeat");
+        if (repeatField) repeatField.value = profile.repeat || "No repeat";
+        setFieldValueIfIdle("shiftNotes", profile.notes || "");
+        document.getElementById("shiftPostForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        showToast("Shift loaded for editing");
+        return;
+      }
+      if (action === "remove") {
+        Object.assign(profile, {
+          scheduled: false,
+          tonight: false,
+          time: "No upcoming shifts",
+          shiftDate: "",
+          shiftStart: "",
+          shiftEnd: "",
+          shiftLabel: "",
+          repeat: "No repeat",
+          notes: ""
+        });
+        lastPostedShift = null;
+        const result = document.getElementById("shiftPostResult");
+        if (result) {
+          result.hidden = false;
+          result.textContent = "Shift removed from your public profile and venue page.";
+        }
+        render();
+        renderDancerSetup();
+        if (customerDashboard.classList.contains("show")) renderDashboard();
+        showToast("Shift removed");
+      }
+    }
+
     function postVerifiedShift() {
       if (!dancerSetup.approval) {
         showToast("Post shift locked until approval");
@@ -20167,6 +21563,7 @@
       document.getElementById("shiftPostResult").hidden = false;
       document.getElementById("shiftPostResult").textContent = noticeText;
       render();
+      renderDancerManagement();
       if (customerDashboard.classList.contains("show")) renderDashboard();
       showToast(noticeText);
     }
@@ -20204,11 +21601,12 @@
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
             : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No upcoming shifts</span></div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}${workingTonight ? "" : '<span class="card-venue-prefix">Next</span>'}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
+        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : "";
+      const portraitPhotoAttrs = customPhotoAttrs(customPhotoUrl(profile, 0));
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
-          <div class="portrait ${portraitClass(index)}">
+          <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
             <div class="card-badges">
               ${statusBadge}
               ${trendBadge}
@@ -20216,7 +21614,7 @@
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3><span class="ask-for-inline"><span class="ask-for-card-label">Ask for</span><span class="card-stage-name">${profile.name}${verifiedMark}</span></span></h3>
+              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
@@ -20342,10 +21740,16 @@
       return profile ? withTrendingRank(profile, citySelect.value) : null;
     }
 
-    function setModalPhoto(photoClass) {
-      modalImage.className = `modal-image ${photoClass}`;
+    function setModalPhoto(photoClass, photoUrl = "") {
+      const safeUrl = safeCssUrl(photoUrl);
+      modalImage.className = `modal-image ${photoClass}${safeUrl ? " has-custom-photo" : ""}`;
+      if (safeUrl) {
+        modalImage.style.setProperty("--custom-photo", `url('${safeUrl}')`);
+      } else {
+        modalImage.style.removeProperty("--custom-photo");
+      }
       modalGallery.querySelectorAll(".thumb").forEach((thumb) => {
-        thumb.classList.toggle("active", thumb.dataset.photo === photoClass);
+        thumb.classList.toggle("active", thumb.dataset.photo === photoClass && (thumb.dataset.photoUrl || "") === (photoUrl || ""));
       });
     }
 
@@ -20358,9 +21762,11 @@
       }
       return [0, 1, 2, 3].map((offset) => {
         const photoClass = portraitClass(baseIndex + offset);
+        const photoUrl = customPhotoUrl(profile, offset);
+        const photoAttrs = customPhotoAttrs(photoUrl);
         return `
-          <button class="thumb ${offset === 0 ? "active" : ""}" data-photo="${photoClass}" aria-label="Show gallery photo ${offset + 1}">
-            <span class="portrait ${photoClass}"></span>
+          <button class="thumb ${offset === 0 ? "active" : ""}" data-photo="${photoClass}" data-photo-url="${displayText(photoUrl)}" aria-label="Show gallery photo ${offset + 1}">
+            <span class="portrait ${photoClass}${photoAttrs.className}"${photoAttrs.style}></span>
           </button>
         `;
       }).join("");
@@ -20411,7 +21817,7 @@
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
-              <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<span>Next:</span><button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+                <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
             </div>
           </div>
@@ -20449,6 +21855,7 @@
       const profileIndex = markets[city].dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
       const basePhoto = portraitClass(profileIndex);
+      const basePhotoUrl = customPhotoUrl(profile, 0);
       savedScrollY = window.scrollY;
 
       modalName.innerHTML = `${profile.name}${isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>'}`;
@@ -20459,13 +21866,13 @@
       modalRank.innerHTML = "";
       modalRank.hidden = true;
       if (!isPending && profile.trendRank && profile.trendRank <= 10) {
-        modalRank.className = `badge trend modal-rank full-trend ${profile.trendRank === 1 ? "rank-one" : ""}`;
-        modalRank.innerHTML = trendFlameMarkup(profile.trendRank, true);
+        modalRank.className = `badge trend modal-rank compact-trend ${profile.trendRank === 1 ? "rank-one" : ""}`;
+        modalRank.innerHTML = trendFlameMarkup(profile.trendRank);
         modalRank.hidden = false;
         modalRank.setAttribute("aria-label", `#${profile.trendRank} Trending`);
       }
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
-      setModalPhoto(basePhoto);
+      setModalPhoto(basePhoto, basePhotoUrl);
 
       if (isPending) {
         modalBody.innerHTML = `
@@ -21061,6 +22468,7 @@
       }
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
+      if (approved) renderDancerManagement();
       if (approved) {
         const sharePanel = document.getElementById("dancerSharePanel");
         if (sharePanel) {
@@ -21693,7 +23101,7 @@
     modalGallery.addEventListener("click", (event) => {
       const thumb = event.target.closest(".thumb");
       if (!thumb) return;
-      setModalPhoto(thumb.dataset.photo);
+      setModalPhoto(thumb.dataset.photo, thumb.dataset.photoUrl || "");
     });
 
     modalBody.addEventListener("click", (event) => {
@@ -22080,6 +23488,11 @@
     dancerDashboard.addEventListener("click", (event) => {
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      const shiftAction = event.target.closest("[data-shift-action]");
+      if (shiftAction) {
+        handleShiftManagerAction(shiftAction.dataset.shiftAction);
+        return;
+      }
       const approvalToggle = event.target.closest("#dancerApprovalCommand");
       if (approvalToggle && !approvalToggle.classList.contains("approved")) {
         setupChecklistExpanded = !setupChecklistExpanded;
@@ -22131,6 +23544,13 @@
       if (shiftForm) {
         event.preventDefault();
         postVerifiedShift();
+        return;
+      }
+
+      const profileEditForm = event.target.closest("#publicProfileForm");
+      if (profileEditForm) {
+        event.preventDefault();
+        saveApprovedDancerProfile();
         return;
       }
 
