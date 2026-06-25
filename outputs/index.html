@@ -21142,18 +21142,28 @@
     function formatClock(timeValue) {
       if (!timeValue) return "";
       const [rawHours, minutes] = timeValue.split(":").map(Number);
-      const period = rawHours >= 12 ? "PM" : "AM";
+      const period = rawHours >= 12 ? "p" : "a";
       const hours = rawHours % 12 || 12;
-      return `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
+      return `${hours}:${String(minutes).padStart(2, "0")}${period}`;
     }
 
     function formatShiftTime(startValue, endValue) {
       return `${formatClock(startValue)} - ${formatClock(endValue)}`;
     }
 
+    function shortMeridiemTime(timeValue, omitZeroMinutes = false) {
+      return String(timeValue || "").replace(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/gi, (_, hours, minutes = "", period) => {
+        const minuteText = minutes && !(omitZeroMinutes && minutes === "00") ? `:${minutes}` : "";
+        return `${hours}${minuteText}${period.toUpperCase() === "PM" ? "p" : "a"}`;
+      });
+    }
+
+    function displayShiftTime(timeValue) {
+      return shortMeridiemTime(timeValue).replace(/\s*-\s*/g, " - ").trim();
+    }
+
     function compactCardShiftTime(timeValue) {
-      return String(timeValue || "")
-        .replace(/:00\s*/g, " ")
+      return shortMeridiemTime(timeValue, true)
         .replace(/\s*-\s*/g, "-")
         .replace(/\s+/g, " ")
         .trim();
@@ -21636,7 +21646,7 @@
       list.innerHTML = `
         <div class="shift-manager-row">
           <strong>${displayText(profile.venue || "Posted shift")}</strong>
-          <div class="shift-manager-meta">${displayText(label)} · ${displayText(profile.time || "Time pending")}${profile.repeat && profile.repeat !== "No repeat" ? ` · ${displayText(profile.repeat)}` : ""}</div>
+          <div class="shift-manager-meta">${displayText(label)} · ${displayText(displayShiftTime(profile.time) || "Time pending")}${profile.repeat && profile.repeat !== "No repeat" ? ` · ${displayText(profile.repeat)}` : ""}</div>
           ${profile.notes ? `<div class="shift-manager-meta">${displayText(profile.notes)}</div>` : ""}
           <div class="shift-manager-actions">
             <button class="mini-action" type="button" data-shift-action="edit">Edit shift</button>
@@ -21910,7 +21920,7 @@
               </div>
             </div>
             <div class="pill-row">
-              <span class="pill">Today ${details.hours}</span>
+              <span class="pill">Today ${displayShiftTime(details.hours)}</span>
               <span class="pill venue-shift-pill">${venue.shifts} posted shifts</span>
             </div>
           </div>
@@ -21931,7 +21941,7 @@
           <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}"></div>
           <div class="venue-shift-copy">
             <strong>${profile.name}${profile.status === "Verified" ? verifiedCheckMarkup() : ""}</strong>
-            <span>${clockIconMarkup()}${label} • ${profile.time}</span>
+            <span>${clockIconMarkup()}${label} • ${displayShiftTime(profile.time)}</span>
           </div>
         </button>
       `;
@@ -21971,7 +21981,7 @@
                   <h2>${details.name}</h2>
                   <div class="meta">${details.city}, ${details.state}</div>
                 </div>
-                <span class="venue-status-pill">Open today · ${details.hours}</span>
+                <span class="venue-status-pill">Open today · ${displayShiftTime(details.hours)}</span>
               </div>
               <p>${details.description}</p>
               <div class="venue-quick-stats">
@@ -21983,7 +21993,7 @@
                 <div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>
                 <div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>
                 <div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace("https://", "")}</div></div>
-                <div class="info-tile"><strong>Hours</strong><div class="meta">${details.hours}</div></div>
+                <div class="info-tile"><strong>Hours</strong><div class="meta">${displayShiftTime(details.hours)}</div></div>
               </div>
               <div class="map-preview" aria-label="Map preview placeholder"></div>
               <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}">
@@ -22073,7 +22083,7 @@
             <strong>Working tonight</strong>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${profile.time}</span></div>
+              <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayShiftTime(profile.time)}</span></div>
             </div>
           </div>
           ${shiftInterestTileMarkup(profile, status)}
@@ -22091,7 +22101,7 @@
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
                 <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${profile.time}</span></div>
+              <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${displayShiftTime(profile.time)}</span></div>
             </div>
           </div>
           ${shiftInterestTileMarkup(profile, status)}
@@ -22830,7 +22840,7 @@
 
     function adminProfileRow(city, profile) {
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
-      const shiftText = profile.scheduled ? `${profile.venue} · ${profile.time}` : "No active shift";
+      const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : "No active shift";
       return `
         <article class="admin-item" data-admin-profile="${profile.name}" data-admin-city="${city}">
           <div class="row">
@@ -22908,7 +22918,7 @@
 
       document.getElementById("adminShifts").innerHTML = shiftProfiles.map(({ city, profile }) => `
         <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
-          <div class="row"><div><h3>${profile.name}</h3><div class="meta">${profile.venue} · ${profile.time}</div></div><span class="pill">${profile.tonight ? "Tonight" : "Upcoming"}</span></div>
+          <div class="row"><div><h3>${profile.name}</h3><div class="meta">${profile.venue} · ${displayShiftTime(profile.time)}</div></div><span class="pill">${profile.tonight ? "Tonight" : "Upcoming"}</span></div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="feature-dancer">Feature dancer</button>
             <button class="action-btn danger" data-admin-action="remove-shift">Remove shift</button>
