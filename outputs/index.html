@@ -19131,6 +19131,43 @@
         font-size: 11px !important;
       }
     }
+
+    /* Tighten full-profile social links without shrinking tap comfort. */
+    .profile-modal .social-links-card {
+      padding-block: 16px !important;
+    }
+
+    .profile-modal .social-links-card .social-row,
+    .profile-modal .social-links-card .social-links {
+      gap: 12px !important;
+      margin-top: 12px !important;
+    }
+
+    .profile-modal .social-links-card .social-icon,
+    .profile-modal .social-links-card .social-pill {
+      width: 52px !important;
+      height: 52px !important;
+      min-width: 52px !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .social-links-card {
+        padding: 14px 16px !important;
+      }
+
+      .profile-modal .social-links-card .social-row,
+      .profile-modal .social-links-card .social-links {
+        gap: 10px !important;
+        margin-top: 10px !important;
+      }
+
+      .profile-modal .social-links-card .social-icon,
+      .profile-modal .social-links-card .social-pill {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+      }
+    }
   </style>
 </head>
 <body>
