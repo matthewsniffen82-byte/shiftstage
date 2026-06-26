@@ -19765,6 +19765,13 @@
           <h3>Notification performance</h3>
           <div class="metric-grid" id="dancerNotificationMetrics" aria-label="Notification performance"></div>
         </div>
+        <div class="auth-card approved-analytics">
+          <div class="section-title-row">
+            <h3 class="section-title">Notification center</h3>
+            <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
+          </div>
+          <div class="rank-notification-list" id="dancerNotificationList">Notifications will appear here.</div>
+        </div>
         <details class="auth-card approved-analytics advanced-analytics-card">
           <summary><span>Advanced Analytics</span><small>Search, returning viewers, and conversion detail</small></summary>
           <div class="metric-grid" id="dancerAdvancedMetrics" aria-label="Advanced analytics"></div>
@@ -20159,6 +20166,11 @@
           <h3 class="section-title">Notification settings</h3>
           <p class="customer-card-copy">Choose which dancer and venue alerts Dancr sends you. Your customer activity stays private.</p>
           <div class="toggle-list" id="notificationSettings"></div>
+          <div class="section-title-row">
+            <h3 class="section-title">Notification center</h3>
+            <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
+          </div>
+          <div class="rank-notification-list" id="customerNotificationList">Notifications will appear here.</div>
         </div>
         <div class="auth-card account-control-card" data-account-panel="customer" data-dashboard-section="account">
           <div class="account-control-head">
@@ -20359,6 +20371,8 @@
     const dashFollowedViewAll = document.getElementById("dashFollowedViewAll");
     const dashVenueViewAll = document.getElementById("dashVenueViewAll");
     const notificationSettings = document.getElementById("notificationSettings");
+    const customerNotificationList = document.getElementById("customerNotificationList");
+    const dancerNotificationList = document.getElementById("dancerNotificationList");
     const customerBrowseTonight = document.getElementById("customerBrowseTonight");
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     let activeTab = "tonight";
@@ -20426,6 +20440,7 @@
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
     let liveCustomerProfile = null;
+    let liveNotifications = [];
     let editingShiftId = null;
 
     const stateByCity = {
@@ -20765,6 +20780,7 @@
         if (data?.account) applyLiveAccountState(data.account);
         closeDeletedAccount(role);
         liveCustomerProfile = null;
+        liveNotifications = [];
         liveDancerAnalytics = null;
         liveDancerBilling = null;
         liveDancerRankingEvents = [];
@@ -21103,6 +21119,86 @@
       patchAuthenticatedJson("/api/customer/profile", update).then((data) => {
         if (data?.profile) liveCustomerProfile = data.profile;
       }).catch((error) => showToast(error.message || "Could not save customer profile"));
+    }
+
+    function notificationCenterMarkup() {
+      if (!liveNotifications.length) {
+        return '<div class="locked">No notifications yet.</div>';
+      }
+      return liveNotifications.slice(0, 8).map((notification) => {
+        const unread = !notification.readAt;
+        const date = formatBillingDate(notification.sentAt || notification.createdAt);
+        return `
+          <article class="rank-event ${unread ? "top-ten" : "stable"}" data-notification-id="${notification.id}">
+            <span class="rank-event-icon">${unread ? "!" : "OK"}</span>
+            <span>
+              <strong>${displayText(notification.title || "Dancr notification")}</strong>
+              <p>${displayText(notification.body || "You have a new update.")}${date ? ` · ${date}` : ""}</p>
+              ${unread ? '<button class="ghost" type="button" data-notification-action="mark-read">Mark read</button>' : ""}
+            </span>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderNotificationCenters() {
+      const markup = notificationCenterMarkup();
+      if (customerNotificationList) customerNotificationList.innerHTML = markup;
+      if (dancerNotificationList) dancerNotificationList.innerHTML = markup;
+    }
+
+    async function loadLiveNotifications() {
+      if (!authSession?.accessToken) return;
+      try {
+        const data = await getAuthenticatedJson("/api/notifications");
+        liveNotifications = data.notifications || [];
+        renderNotificationCenters();
+      } catch (error) {
+        showToast(error.message || "Could not load notifications");
+      }
+    }
+
+    async function markLiveNotificationRead(notificationId) {
+      if (!notificationId) return;
+      try {
+        const data = await patchAuthenticatedJson("/api/notifications", { notificationId });
+        const match = liveNotifications.find((item) => item.id === notificationId);
+        if (match) match.readAt = data.notification?.readAt || new Date().toISOString();
+        renderNotificationCenters();
+      } catch (error) {
+        showToast(error.message || "Could not update notification");
+      }
+    }
+
+    async function markAllLiveNotificationsRead() {
+      try {
+        const data = await patchAuthenticatedJson("/api/notifications", { all: true });
+        const readAt = data?.readAt || new Date().toISOString();
+        liveNotifications = liveNotifications.map((notification) => ({ ...notification, readAt: notification.readAt || readAt }));
+        renderNotificationCenters();
+        showToast("Notifications marked read");
+      } catch (error) {
+        showToast(error.message || "Could not update notifications");
+      }
+    }
+
+    function handleNotificationCenterClick(event) {
+      const button = event.target.closest("[data-notification-action]");
+      if (!button) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      const action = button.dataset.notificationAction;
+      if (action === "mark-all") {
+        markAllLiveNotificationsRead();
+        return true;
+      }
+      if (action === "mark-read") {
+        const item = button.closest("[data-notification-id]");
+        markLiveNotificationRead(item?.dataset.notificationId);
+        return true;
+      }
+      return false;
     }
 
     async function loadLiveAdminApprovals() {
@@ -23198,6 +23294,7 @@
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
       liveCustomerProfile = null;
+      liveNotifications = [];
       saveAuthSession(null);
       closeDashboard();
       closeDancerDashboard();
@@ -23229,6 +23326,7 @@
       syncOverlayScrollLock();
       loadLiveAccountState();
       loadLiveCustomerDashboardData();
+      loadLiveNotifications();
     }
 
     function closeDashboard() {
@@ -23261,6 +23359,7 @@
       loadLiveDancerBilling();
       loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
+      loadLiveNotifications();
     }
 
     function closeDancerDashboard() {
@@ -23536,6 +23635,7 @@
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
+      renderNotificationCenters();
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
@@ -24031,6 +24131,7 @@
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
       renderNotificationSettings();
+      renderNotificationCenters();
     }
 
     function adminProfileFromNode(node) {
@@ -24929,6 +25030,7 @@
     });
 
     customerDashboard.addEventListener("click", (event) => {
+      if (handleNotificationCenterClick(event)) return;
       if (handleAccountControlClick(event)) return;
       const statButton = event.target.closest("[data-dashboard-jump]");
       if (!statButton) return;
@@ -24965,6 +25067,7 @@
     });
 
     customerDashboard.addEventListener("click", (event) => {
+      if (handleNotificationCenterClick(event)) return;
       const cardVenueLink = event.target.closest("[data-card-venue]");
       if (cardVenueLink) {
         event.preventDefault();
@@ -25033,6 +25136,7 @@
     }
 
     dancerDashboard.addEventListener("click", (event) => {
+      if (handleNotificationCenterClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
