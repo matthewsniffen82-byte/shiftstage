@@ -13,6 +13,20 @@ export type ReviewDancerInput = {
   notes?: string | null;
 };
 
+export type AdminVenueInput = {
+  name?: string;
+  slug?: string;
+  city?: string;
+  state?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  timezone?: string | null;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  isActive?: boolean;
+};
+
 export async function requireAdmin(client: DancrClient, userId: string) {
   const { data, error } = await client
     .from("app_users")
@@ -82,6 +96,74 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
       reviewedAt: review.reviewed_at,
     })),
   }));
+}
+
+export async function getAdminVenues(client: DancrClient, city?: string | null) {
+  let query = (client as any)
+    .from("venues")
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, created_at, updated_at")
+    .order("city", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (city) query = query.eq("city", city);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return data || [];
+}
+
+export async function createAdminVenue(client: DancrClient, adminId: string, input: AdminVenueInput) {
+  if (!input.name?.trim()) throw new Error("Venue name is required.");
+  if (!input.city?.trim()) throw new Error("Venue city is required.");
+
+  const row = venueInputToRow(input, true);
+  const { data, error } = await (client as any)
+    .from("venues")
+    .insert(row)
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active")
+    .single();
+
+  if (error) throw error;
+
+  await logAdminAction(client, {
+    adminId,
+    targetType: "venue",
+    targetId: data.id,
+    action: "create_venue",
+    notes: data.name,
+  });
+
+  return data;
+}
+
+export async function updateAdminVenue(
+  client: DancrClient,
+  adminId: string,
+  venueId: string,
+  input: AdminVenueInput,
+) {
+  const row = venueInputToRow(input, false);
+  if (!Object.keys(row).length) throw new Error("No venue updates provided.");
+
+  const { data, error } = await (client as any)
+    .from("venues")
+    .update(row)
+    .eq("id", venueId)
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active")
+    .single();
+
+  if (error) throw error;
+
+  await logAdminAction(client, {
+    adminId,
+    targetType: "venue",
+    targetId: data.id,
+    action: "update_venue",
+    notes: data.name,
+  });
+
+  return data;
 }
 
 export async function reviewDancerProfile(client: DancrClient, input: ReviewDancerInput) {
@@ -162,4 +244,66 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
     status: approved ? "approved" : "rejected",
     reviewedAt,
   };
+}
+
+function venueInputToRow(input: AdminVenueInput, creating: boolean) {
+  const row: Record<string, string | boolean | null> = {};
+
+  if (typeof input.name === "string") {
+    row.name = requiredText(input.name, "Venue name is required.");
+    if (!input.slug) row.slug = slugify(input.name);
+  }
+
+  if (typeof input.slug === "string") row.slug = requiredText(input.slug, "Venue slug is required.");
+  if (typeof input.city === "string") row.city = requiredText(input.city, "Venue city is required.");
+  if ("state" in input) row.state = optionalText(input.state);
+  if ("address" in input) row.address = optionalText(input.address);
+  if ("phone" in input) row.phone = optionalText(input.phone);
+  if ("website" in input) row.website = optionalText(input.website);
+  if ("timezone" in input) row.timezone = optionalText(input.timezone) || "America/Los_Angeles";
+  if ("opensAt" in input) row.opens_at = optionalText(input.opensAt);
+  if ("closesAt" in input) row.closes_at = optionalText(input.closesAt);
+  if (typeof input.isActive === "boolean") row.is_active = input.isActive;
+
+  if (creating) {
+    row.slug = row.slug || slugify(String(row.name));
+    row.timezone = row.timezone || "America/Los_Angeles";
+    row.is_active = input.isActive !== false;
+  }
+
+  return row;
+}
+
+async function logAdminAction(
+  client: DancrClient,
+  input: { adminId: string; targetType: string; targetId: string; action: string; notes?: string | null },
+) {
+  const { error } = await (client as any).from("admin_actions").insert({
+    admin_id: input.adminId,
+    target_type: input.targetType,
+    target_id: input.targetId,
+    action: input.action,
+    notes: input.notes || null,
+  });
+
+  if (error) throw error;
+}
+
+function requiredText(value: string, message: string) {
+  const text = value.trim();
+  if (!text) throw new Error(message);
+  return text;
+}
+
+function optionalText(value: string | null | undefined) {
+  if (typeof value !== "string") return null;
+  return value.trim() || null;
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
