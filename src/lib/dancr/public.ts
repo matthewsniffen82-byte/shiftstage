@@ -112,7 +112,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, hours_label")
+    .select("id, slug, name, city, state, opens_at, closes_at")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -125,7 +125,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     name: data.name,
     city: data.city,
     state: data.state,
-    hoursLabel: data.hours_label,
+    hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
   };
 }
 
@@ -195,4 +195,20 @@ function formatShiftLabel(startsAt: string, endsAt: string): string {
   });
 
   return `${formatter.format(start)} - ${formatter.format(end)}`.replaceAll(" AM", "a").replaceAll(" PM", "p");
+}
+
+export function formatVenueHours(opensAt: string | null, closesAt: string | null): string | null {
+  if (!opensAt || !closesAt) return null;
+
+  return `${formatTimeOnly(opensAt)} - ${formatTimeOnly(closesAt)}`;
+}
+
+function formatTimeOnly(value: string): string {
+  const [hourRaw, minuteRaw = "0"] = value.split(":");
+  const hour = Number(hourRaw);
+  const minute = Number(minuteRaw);
+  const suffix = hour >= 12 ? "p" : "a";
+  const hour12 = hour % 12 || 12;
+
+  return `${hour12}:${String(minute).padStart(2, "0")}${suffix}`;
 }
