@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVenueProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { DirectionsLink } from "./DirectionsLink";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,6 +61,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
             <Link href={`/outputs/index.html?city=${encodeURIComponent(venue.city)}&venue=${encodeURIComponent(venue.slug)}`}>
               Open in Dancr
             </Link>
+            {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
           </div>
         </div>
       </section>
@@ -91,12 +93,26 @@ export default async function VenuePublicPage({ params }: PageProps) {
               <dd>{venue.state || "Pending"}</dd>
             </div>
             <div>
+              <dt>Address</dt>
+              <dd>{venue.address || "Address pending"}</dd>
+            </div>
+            <div>
               <dt>Hours</dt>
               <dd>{venue.hoursLabel || "Hours pending"}</dd>
             </div>
           </dl>
         </article>
       </section>
+      {venue.address ? (
+        <section className="map-panel" aria-label={`${venue.name} map preview`}>
+          <iframe
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src={`/api/public/maps/embed?address=${encodeURIComponent(venue.address)}`}
+            title={`${venue.name} map preview`}
+          />
+        </section>
+      ) : null}
     </main>
   );
 }
@@ -136,6 +152,7 @@ function VenueProfileStyles() {
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .public-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
       .public-actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(139,92,246,.38), rgba(34,199,255,.16)); }
+      .directions-link { background: linear-gradient(135deg, rgba(34,199,255,.28), rgba(16,185,129,.14)) !important; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
       h2 { margin: 0 0 16px; font-size: 20px; }
@@ -145,6 +162,8 @@ function VenueProfileStyles() {
       .fact-list { display: grid; gap: 12px; margin: 0; }
       .fact-list div { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
+      .map-panel { max-width: 1120px; margin: 18px auto 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); min-height: 320px; }
+      .map-panel iframe { display: block; width: 100%; min-height: 320px; border: 0; }
       @media (max-width: 760px) { .venue-hero, .public-grid { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .shift-row, .fact-list div { flex-direction: column; } }
     `}</style>
   );

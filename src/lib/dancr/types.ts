@@ -71,6 +71,7 @@ export type VenueSummary = {
   name: string;
   city: string;
   state: string | null;
+  address: string | null;
   hoursLabel: string | null;
 };
 
