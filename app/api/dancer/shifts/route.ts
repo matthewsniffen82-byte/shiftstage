@@ -108,6 +108,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
     }
 
+    const cancellingShift = update.status === "cancelled" && existingShift.status !== "cancelled";
     const { error } = await (client as any)
       .from("shifts")
       .update(update)
@@ -116,7 +117,11 @@ export async function PATCH(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true });
+    const cancellationRecipients = cancellingShift
+      ? await broadcastShiftCancelled(dancer, existingShift)
+      : 0;
+
+    return NextResponse.json({ ok: true, cancellationRecipients });
   } catch (error) {
     return apiError(error, "Unable to update dancer shift.");
   }
@@ -125,7 +130,7 @@ export async function PATCH(request: Request) {
 async function getOwnShift(client: any, dancerId: string, shiftId: string) {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at")
+    .select("id, venue_id, starts_at, ends_at, status, venues(name)")
     .eq("id", shiftId)
     .eq("dancer_id", dancerId)
     .maybeSingle();
@@ -187,6 +192,68 @@ async function broadcastShiftPosted(
     title: `${dancer.stage_name} posted a shift`,
     body: `${dancer.stage_name} posted a new schedule. Tap to view details.`,
     payload: { dancerId: dancer.id, shiftId, venueId, startsAt },
+    sent_at: new Date().toISOString(),
+  }));
+
+  if (!rows.length) return 0;
+
+  const { error } = await admin.from("notifications").insert(rows);
+  if (error) throw error;
+
+  await deliverNotificationRows(admin, rows);
+
+  return rows.length;
+}
+
+async function broadcastShiftCancelled(
+  dancer: { id: string; stage_name: string },
+  shift: { id: string; venue_id: string; starts_at: string; status: string; venues?: { name?: string } | { name?: string }[] | null },
+) {
+  const admin = createAdminSupabaseClient() as any;
+  const [{ data: follows, error: followsError }, { data: goingSignals, error: goingError }] = await Promise.all([
+    admin
+      .from("follows")
+      .select("customer_id")
+      .eq("dancer_id", dancer.id)
+      .eq("notifications_enabled", true),
+    admin
+      .from("going_signals")
+      .select("customer_id")
+      .eq("shift_id", shift.id),
+  ]);
+
+  if (followsError) throw followsError;
+  if (goingError) throw goingError;
+
+  const recipientIds = Array.from(new Set([
+    ...(follows || []).map((follow: { customer_id: string }) => follow.customer_id),
+    ...(goingSignals || []).map((signal: { customer_id: string }) => signal.customer_id),
+  ]));
+
+  if (!recipientIds.length) return 0;
+
+  const { data: profiles, error: profileError } = await admin
+    .from("customer_profiles")
+    .select("user_id, notification_settings")
+    .in("user_id", recipientIds);
+
+  if (profileError) throw profileError;
+
+  const enabledRecipients = (profiles || [])
+    .filter((profile: { user_id: string; notification_settings?: Record<string, unknown> | null }) => {
+      return profile.notification_settings?.cancelledShifts !== false;
+    })
+    .map((profile: { user_id: string }) => profile.user_id);
+
+  const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
+  const venueName = venue?.name ? ` at ${venue.name}` : "";
+  const rows = enabledRecipients.map((recipientId: string) => ({
+    recipient_id: recipientId,
+    notification_type: "shift_cancelled",
+    channel: "in_app",
+    title: `${dancer.stage_name} cancelled a shift`,
+    body: `${dancer.stage_name}'s shift${venueName} was cancelled.`,
+    payload: { dancerId: dancer.id, shiftId: shift.id, venueId: shift.venue_id, startsAt: shift.starts_at },
     sent_at: new Date().toISOString(),
   }));
 
