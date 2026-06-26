@@ -22,7 +22,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
   return (
     <main className="public-profile-shell">
-      <ProfileViewTracker dancerId={profile.id} />
+      <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
       <nav className="public-nav">
         <Link href="/outputs/index.html">Dancr</Link>

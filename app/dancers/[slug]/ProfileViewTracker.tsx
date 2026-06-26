@@ -4,28 +4,33 @@ import { useEffect } from "react";
 
 type ProfileViewTrackerProps = {
   dancerId: string;
+  hasSchedule: boolean;
 };
 
-export function ProfileViewTracker({ dancerId }: ProfileViewTrackerProps) {
+export function ProfileViewTracker({ dancerId, hasSchedule }: ProfileViewTrackerProps) {
   useEffect(() => {
-    const body = JSON.stringify({
-      type: "profile_view",
-      dancerId,
-      source: "public_profile",
-    });
+    recordEvent({ type: "profile_view", dancerId, source: "public_profile" });
 
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon("/api/events", new Blob([body], { type: "application/json" }));
-      return;
+    if (hasSchedule) {
+      recordEvent({ type: "schedule_view", dancerId, source: "public_profile" });
     }
-
-    fetch("/api/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      keepalive: true,
-    }).catch(() => undefined);
-  }, [dancerId]);
+  }, [dancerId, hasSchedule]);
 
   return null;
+}
+
+function recordEvent(payload: Record<string, string | boolean>) {
+  const body = JSON.stringify(payload);
+
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon("/api/events", new Blob([body], { type: "application/json" }));
+    return;
+  }
+
+  fetch("/api/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => undefined);
 }
