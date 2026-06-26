@@ -166,6 +166,57 @@ export async function updateAdminVenue(
   return data;
 }
 
+export async function getAdminSubscriptions(client: DancrClient, status?: string | null) {
+  let query = (client as any)
+    .from("subscriptions")
+    .select(
+      `
+        id,
+        dancer_id,
+        stripe_customer_id,
+        stripe_subscription_id,
+        stripe_price_id,
+        status,
+        current_period_end,
+        created_at,
+        updated_at,
+        dancer_profiles(id, stage_name, slug, city, status, user_id)
+      `,
+    )
+    .order("updated_at", { ascending: false });
+
+  if (status) query = query.eq("status", status);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data || []).map((row: any) => {
+    const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
+
+    return {
+      id: row.id,
+      dancerId: row.dancer_id,
+      stripeCustomerId: row.stripe_customer_id,
+      stripeSubscriptionId: row.stripe_subscription_id,
+      stripePriceId: row.stripe_price_id,
+      status: row.status,
+      currentPeriodEnd: row.current_period_end,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      dancer: dancer
+        ? {
+            id: dancer.id,
+            userId: dancer.user_id,
+            stageName: dancer.stage_name,
+            slug: dancer.slug,
+            city: dancer.city,
+            status: dancer.status,
+          }
+        : null,
+    };
+  });
+}
+
 export async function reviewDancerProfile(client: DancrClient, input: ReviewDancerInput) {
   if (!REVIEW_STATUSES.has(input.status)) {
     throw new Error("Review status must be approved or rejected.");
