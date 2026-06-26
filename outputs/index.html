@@ -20613,6 +20613,21 @@
       return data;
     }
 
+    async function deleteAuthenticatedJson(url) {
+      const token = authSession?.accessToken;
+      if (!token) return null;
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
     async function postAuthenticatedFormData(url, formData) {
       const token = authSession?.accessToken;
       if (!token) throw new Error("Sign in required");
@@ -20703,6 +20718,64 @@
       renderAccountControlPanel("dancer");
     }
 
+    function applyLiveAccountState(account) {
+      const role = account?.role;
+      const state = accountControlState[role];
+      if (!state) return;
+      state.disabled = account.accountState === "disabled";
+      state.deleted = account.accountState === "deleted";
+      if (authSession?.account && authSession.account.role === role) {
+        saveAuthSession({ ...authSession, account: { ...authSession.account, accountState: account.accountState } });
+      }
+      renderAccountControlPanel(role);
+    }
+
+    async function loadLiveAccountState() {
+      if (!authSession?.accessToken) return;
+      try {
+        const data = await getAuthenticatedJson("/api/account");
+        if (data?.account) applyLiveAccountState(data.account);
+      } catch (error) {
+        showToast(error.message || "Could not load account state");
+      }
+    }
+
+    async function saveLiveAccountState(role, accountState, button, rollback) {
+      if (!authSession?.accessToken) return;
+      if (button) button.disabled = true;
+      try {
+        const data = await patchAuthenticatedJson("/api/account", { accountState });
+        if (data?.account) applyLiveAccountState(data.account);
+        showToast(accountState === "disabled" ? `${role === "dancer" ? "Dancer account" : "Customer account"} paused` : `${role === "dancer" ? "Dancer account" : "Customer account"} reactivated`);
+      } catch (error) {
+        rollback?.();
+        showToast(error.message || "Could not update account");
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function deleteLiveAccount(role, button) {
+      if (!authSession?.accessToken) return false;
+      if (button) button.disabled = true;
+      try {
+        const data = await deleteAuthenticatedJson("/api/account");
+        if (data?.account) applyLiveAccountState(data.account);
+        closeDeletedAccount(role);
+        liveCustomerProfile = null;
+        liveDancerAnalytics = null;
+        liveDancerBilling = null;
+        saveAuthSession(null);
+        showToast(`${role === "dancer" ? "Dancer account" : "Customer account"} deleted`);
+        return true;
+      } catch (error) {
+        showToast(error.message || "Could not delete account");
+        return false;
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
     function closeDeletedAccount(role) {
       if (role === "customer") {
         isCustomerLoggedIn = false;
@@ -20730,21 +20803,33 @@
       const roleLabel = role === "dancer" ? "Dancer account" : "Customer account";
 
       if (action === "disable") {
+        const previousDisabled = state.disabled;
         state.disabled = !state.disabled;
         state.deleted = false;
         renderAccountControlPanel(role);
-        showToast(state.disabled ? `${roleLabel} paused` : `${roleLabel} reactivated`);
+        if (authSession?.accessToken) {
+          saveLiveAccountState(role, state.disabled ? "disabled" : "active", button, () => {
+            state.disabled = previousDisabled;
+            renderAccountControlPanel(role);
+          });
+        } else {
+          showToast(state.disabled ? `${roleLabel} paused` : `${roleLabel} reactivated`);
+        }
         return true;
       }
 
       if (action === "delete") {
         const confirmed = window.confirm(`Delete this ${roleLabel.toLowerCase()}? This demo will sign out of the account.`);
         if (!confirmed) return true;
-        state.deleted = true;
-        state.disabled = false;
-        renderAccountControlPanel(role);
-        closeDeletedAccount(role);
-        showToast(`${roleLabel} deleted`);
+        if (authSession?.accessToken) {
+          deleteLiveAccount(role, button);
+        } else {
+          state.deleted = true;
+          state.disabled = false;
+          renderAccountControlPanel(role);
+          closeDeletedAccount(role);
+          showToast(`${roleLabel} deleted`);
+        }
         return true;
       }
 
@@ -23080,6 +23165,7 @@
       customerDashboard.classList.add("show");
       customerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveAccountState();
       loadLiveCustomerDashboardData();
     }
 
@@ -23108,6 +23194,7 @@
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerBilling();
     }
