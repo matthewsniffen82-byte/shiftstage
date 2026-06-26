@@ -19624,6 +19624,10 @@
               <input id="dancerEmail" type="email" value="mira@example.com">
             </div>
             <div class="field">
+              <label for="dancerPassword">Password</label>
+              <input id="dancerPassword" type="password" value="dancr">
+            </div>
+            <div class="field">
               <label for="dancerCity">City</label>
               <input id="dancerCity" type="text" value="Las Vegas">
             </div>
@@ -20331,6 +20335,7 @@
     let isCustomerLoggedIn = false;
     let isDancerLoggedIn = false;
     let authMode = "login";
+    let authSession = loadAuthSession();
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
     let activeDashboardType = "customer";
@@ -20504,6 +20509,35 @@
           keepalive: true,
         }).catch(() => {});
       } catch (error) {}
+    }
+
+    function loadAuthSession() {
+      try {
+        const raw = localStorage.getItem("dancrAuthSessionV1");
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveAuthSession(session) {
+      authSession = session;
+      try {
+        if (session) localStorage.setItem("dancrAuthSessionV1", JSON.stringify(session));
+        else localStorage.removeItem("dancrAuthSessionV1");
+      } catch (error) {}
+    }
+
+    async function requestAuth(payload) {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Authentication failed");
+      if (data.session) saveAuthSession(data.session);
+      return data;
     }
 
     function resetAccountControl(role) {
@@ -22470,6 +22504,7 @@
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
       activeDashboardType = "customer";
+      saveAuthSession(null);
       closeDashboard();
       closeDancerDashboard();
       updateAccountHeader();
@@ -23735,16 +23770,32 @@
       document.getElementById("authForm").requestSubmit();
     });
 
-    document.getElementById("authForm").addEventListener("submit", (event) => {
+    document.getElementById("authForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      resetAccountControl("customer");
-      isCustomerLoggedIn = true;
-      isDancerLoggedIn = false;
-      activeDashboardType = "customer";
-      updateAccountHeader();
-      closeAuthPage();
-      showToast(authMode === "signup" ? "Customer account created" : "Logged in");
-      openDashboard();
+      const submit = document.getElementById("authSubmit");
+      submit.disabled = true;
+      try {
+        const result = await requestAuth({
+          mode: authMode,
+          role: "customer",
+          name: document.getElementById("customerName").value,
+          email: document.getElementById("customerEmail").value,
+          password: document.getElementById("customerPassword").value,
+          city: citySelect.value
+        });
+        resetAccountControl("customer");
+        isCustomerLoggedIn = true;
+        isDancerLoggedIn = false;
+        activeDashboardType = "customer";
+        updateAccountHeader();
+        closeAuthPage();
+        showToast(result.requiresEmailConfirmation ? "Customer account created. Check your email to confirm." : authMode === "signup" ? "Customer account created" : "Logged in");
+        openDashboard();
+      } catch (error) {
+        showToast(error.message || "Authentication failed");
+      } finally {
+        submit.disabled = false;
+      }
     });
 
     function startDemoDancerSetup() {
@@ -23826,20 +23877,38 @@
       openDancerSignupPage();
     });
 
-    document.getElementById("dancerSignupForm").addEventListener("submit", (event) => {
+    document.getElementById("dancerSignupForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      dancerSignupStarted = true;
-      Object.assign(dancerSetup, {
-        profile: false,
-        photos: false,
-        verification: false,
-        approval: false,
-        shift: false
-      });
-      setupChecklistExpanded = true;
-      activeSetupStep = "profile";
-      activeDashboardType = "dancer";
-      openStripeCheckoutPage();
+      const submit = event.currentTarget.querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        const result = await requestAuth({
+          mode: "signup",
+          role: "dancer",
+          realName: document.getElementById("dancerLegalName").value,
+          stageName: document.getElementById("dancerStageName").value,
+          email: document.getElementById("dancerEmail").value,
+          password: document.getElementById("dancerPassword").value,
+          city: document.getElementById("dancerCity").value
+        });
+        dancerSignupStarted = true;
+        Object.assign(dancerSetup, {
+          profile: false,
+          photos: false,
+          verification: false,
+          approval: false,
+          shift: false
+        });
+        setupChecklistExpanded = true;
+        activeSetupStep = "profile";
+        activeDashboardType = "dancer";
+        showToast(result.requiresEmailConfirmation ? "Dancer account created. Check your email to confirm." : "Dancer account created");
+        openStripeCheckoutPage();
+      } catch (error) {
+        showToast(error.message || "Dancer signup failed");
+      } finally {
+        submit.disabled = false;
+      }
     });
 
     document.getElementById("stripeConfirmBtn").addEventListener("click", () => {
