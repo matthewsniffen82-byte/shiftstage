@@ -1,25 +1,18 @@
 import { NextResponse } from "next/server";
-import { getDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
-import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { apiError } from "@/src/lib/api";
+import { getOwnDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
+import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const url = new URL(request.url);
-    const dancerId = url.searchParams.get("dancerId");
+    const { client, user } = await createRequestSupabaseContext(request);
+    const analytics = await getOwnDancerDashboardAnalytics(client, user.id);
 
-    if (!dancerId) {
-      return NextResponse.json({ ok: false, error: "Missing dancerId." }, { status: 400 });
-    }
-
-    const analytics = await getDancerDashboardAnalytics(createAdminSupabaseClient(), dancerId);
     return NextResponse.json({ ok: true, analytics });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to load dancer analytics." },
-      { status: 500 },
-    );
+    return apiError(error, "Unable to load dancer dashboard.");
   }
 }
