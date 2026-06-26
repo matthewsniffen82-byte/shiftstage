@@ -30,14 +30,21 @@ Run:
 
 `supabase/migrations/202606250003_storage_policies.sql`
 
+Then run:
+
+`supabase/migrations/202606260001_content_reports.sql`
+
 That creates:
 
 - `dancer-photos`
 - `verification-documents`
+- `content_reports`
 
 `dancer-photos` stores profile and gallery photos. Uploaded files stay in review in the database until an admin approves them.
 
 `verification-documents` stores private ID and selfie verification files. Only the dancer owner and admins can read or manage those files.
+
+`content_reports` stores trust and safety reports for admin review.
 
 ## 4. Configure auth
 
@@ -61,6 +68,12 @@ The first required values are:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+
+The admin monitoring panel also checks:
+
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_DANCER_MONTHLY_PRICE_ID`
+- OneSignal: `NEXT_PUBLIC_ONESIGNAL_APP_ID`, `ONESIGNAL_REST_API_KEY`
+- Resend: `RESEND_API_KEY`, `EMAIL_FROM`
 
 ## 6. First live features to connect
 

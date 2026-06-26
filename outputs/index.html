@@ -20049,6 +20049,10 @@
           <div class="stat"><strong id="adminActiveSubscriptionCount">0</strong><span>Active billing</span></div>
         </div>
         <div class="auth-card">
+          <h3>Platform monitoring</h3>
+          <div class="admin-grid" id="adminMonitoring"></div>
+        </div>
+        <div class="auth-card">
           <h3>Users</h3>
           <div class="admin-grid" id="adminUsers"></div>
         </div>
@@ -20441,6 +20445,7 @@
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
     let liveAdminReports = [];
+    let liveAdminMonitoring = null;
     let liveCustomerProfile = null;
     let liveNotifications = [];
     let editingShiftId = null;
@@ -21219,11 +21224,13 @@
       }
       if (status) status.textContent = "Loading live admin data...";
       try {
-        const [approvalData, venueData, subscriptionData] = await Promise.all([
+        const [approvalData, venueData, subscriptionData, monitoringData] = await Promise.all([
           getAuthenticatedJson("/api/admin/approvals"),
           getAuthenticatedJson("/api/admin/venues"),
-          getAuthenticatedJson("/api/admin/subscriptions")
+          getAuthenticatedJson("/api/admin/subscriptions"),
+          getAuthenticatedJson("/api/admin/monitoring")
         ]);
+        liveAdminMonitoring = monitoringData.monitoring || null;
         try {
           const reportData = await getAuthenticatedJson("/api/admin/reports");
           liveAdminReports = reportData.reports || [];
@@ -24026,6 +24033,27 @@
       `;
     }
 
+    function monitoringItemMarkup(item, label = item.name) {
+      const ready = item.ok;
+      const detail = item.count !== undefined && item.count !== null
+        ? `${item.count.toLocaleString()} records`
+        : ready
+          ? "Configured"
+          : "Missing required config";
+      return `
+        <article class="admin-item">
+          <div class="row"><div><h3>${displayText(label)}</h3><div class="meta">${displayText(detail)}</div></div><span class="${ready ? "pill" : "badge pending"}">${ready ? "Ready" : "Needs config"}</span></div>
+        </article>
+      `;
+    }
+
+    function adminMonitoringMarkup() {
+      if (!liveAdminMonitoring) return '<div class="locked">Live platform checks load after admin login.</div>';
+      const databaseItems = (liveAdminMonitoring.database || []).map((item) => monitoringItemMarkup(item));
+      const integrationItems = (liveAdminMonitoring.integrations || []).map((item) => monitoringItemMarkup(item));
+      return [...databaseItems, ...integrationItems].join("") || '<div class="locked">No monitoring checks returned.</div>';
+    }
+
     function adminReportRow(report) {
       const reason = report.reason || report.name || "Content report";
       const target = report.targetLabel || report.target || "Reported target";
@@ -24051,6 +24079,7 @@
       document.getElementById("adminPendingCount").textContent = pendingProfiles.length;
       document.getElementById("adminSubscriptionCount").textContent = liveAdminSubscriptions.length;
       document.getElementById("adminActiveSubscriptionCount").textContent = activeSubscriptions.length;
+      document.getElementById("adminMonitoring").innerHTML = adminMonitoringMarkup();
 
       document.getElementById("adminUsers").innerHTML = [
         ...adminUsers.map((user) => `

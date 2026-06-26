@@ -30,6 +30,12 @@ export type AdminVenueInput = {
 
 export type AdminContentReportAction = "resolved" | "removed";
 
+export type AdminMonitoringStatus = {
+  checkedAt: string;
+  database: Array<{ name: string; ok: boolean; count: number | null; error?: string }>;
+  integrations: Array<{ name: string; ok: boolean; required: string[] }>;
+};
+
 type TrendingMetricCounts = {
   profileViews: number;
   scheduleViews: number;
@@ -318,6 +324,35 @@ export async function updateContentReport(
   };
 }
 
+export async function getAdminMonitoringStatus(client: DancrClient): Promise<AdminMonitoringStatus> {
+  const [users, venues, dancers, reports, notifications, subscriptions] = await Promise.all([
+    countTable(client, "app_users"),
+    countTable(client, "venues"),
+    countTable(client, "dancer_profiles"),
+    countTable(client, "content_reports"),
+    countTable(client, "notifications"),
+    countTable(client, "subscriptions"),
+  ]);
+
+  return {
+    checkedAt: new Date().toISOString(),
+    database: [
+      { name: "Users", ...users },
+      { name: "Venues", ...venues },
+      { name: "Dancer profiles", ...dancers },
+      { name: "Content reports", ...reports },
+      { name: "Notifications", ...notifications },
+      { name: "Subscriptions", ...subscriptions },
+    ],
+    integrations: [
+      integrationStatus("Supabase", ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]),
+      integrationStatus("Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_DANCER_MONTHLY_PRICE_ID"]),
+      integrationStatus("OneSignal", ["NEXT_PUBLIC_ONESIGNAL_APP_ID", "ONESIGNAL_REST_API_KEY"]),
+      integrationStatus("Resend", ["RESEND_API_KEY", "EMAIL_FROM"]),
+    ],
+  };
+}
+
 export async function recalculateCityRankings(client: DancrClient, adminId: string, city: string) {
   const since = new Date();
   since.setDate(since.getDate() - 30);
@@ -564,6 +599,23 @@ async function countRows(
 
   if (error) throw error;
   return count || 0;
+}
+
+async function countTable(client: DancrClient, table: string) {
+  const { count, error } = await (client as any)
+    .from(table)
+    .select("id", { count: "exact", head: true });
+
+  if (error) return { ok: false, count: null, error: error.message };
+  return { ok: true, count: count || 0 };
+}
+
+function integrationStatus(name: string, required: string[]) {
+  return {
+    name,
+    ok: required.every((key) => Boolean(process.env[key])),
+    required,
+  };
 }
 
 async function countGoingSignals(client: DancrClient, dancerId: string, since: Date) {
