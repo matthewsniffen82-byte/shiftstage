@@ -24414,10 +24414,19 @@
       if (directionsLink) {
         const city = citySelect.value;
         const venueName = directionsLink.dataset.venue;
-        markets[city].dancers
-          .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
-          .forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
-        recordLiveEvent("direction_request", { venueName, source: "venue_detail" });
+        const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
+        const venueProfiles = markets[city].dancers
+          .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName);
+        venueProfiles.forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
+        if (isCustomerSession() && venueRecord?.id) {
+          postAuthenticatedJson("/api/customer/directions", {
+            venueId: venueRecord.id,
+            dancerIds: venueProfiles.map((profile) => profile.id).filter(Boolean),
+            sessionId: dancrLiveSessionId()
+          }).catch(() => recordLiveEvent("direction_request", { venueName, source: "venue_detail" }));
+        } else {
+          recordLiveEvent("direction_request", { venueName, source: "venue_detail" });
+        }
         return;
       }
       const followVenueButton = event.target.closest("[data-venue-follow]");

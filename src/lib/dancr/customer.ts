@@ -107,6 +107,32 @@ export async function unfavoriteDancer(client: DancrClient, customerId: string, 
   if (error) throw error;
 }
 
+export async function recordDirectionRequest(
+  client: DancrClient,
+  customerId: string,
+  input: { venueId: string; dancerIds?: string[]; sessionId?: string | null },
+) {
+  const dancerIds = Array.from(new Set((input.dancerIds || []).filter(Boolean)));
+  const rows = dancerIds.length
+    ? dancerIds.map((dancerId) => ({
+        dancer_id: dancerId,
+        venue_id: input.venueId,
+        requester_id: customerId,
+        session_id: input.sessionId || null,
+      }))
+    : [{
+        venue_id: input.venueId,
+        requester_id: customerId,
+        session_id: input.sessionId || null,
+      }];
+
+  const { error } = await client.from("direction_requests").insert(rows);
+
+  if (error) throw error;
+
+  return rows.length;
+}
+
 async function getFollowedDancers(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("follows")
