@@ -20897,6 +20897,85 @@
       return authSession?.account?.role === "dancer";
     }
 
+    function isCustomerSession() {
+      return authSession?.account?.role === "customer";
+    }
+
+    function findProfileBySavedDancer(savedDancer) {
+      const dancer = savedDancer?.dancer || savedDancer;
+      const city = dancer?.city;
+      const market = city ? markets[city] : null;
+      if (!market) return null;
+      const profile = market.dancers.find((item) => (
+        item.id === dancer.id ||
+        item.slug === dancer.slug ||
+        item.name === dancer.stageName
+      ));
+      return profile ? { city, profile } : null;
+    }
+
+    function findProfileBySavedShift(savedGoing) {
+      const shift = savedGoing?.shift;
+      const city = shift?.dancer?.city || shift?.venue?.city;
+      const market = city ? markets[city] : null;
+      if (!market) return null;
+      const profile = market.dancers.find((item) => (
+        item.shiftId === savedGoing.shiftId ||
+        item.id === shift?.dancer?.id ||
+        item.slug === shift?.dancer?.slug ||
+        item.name === shift?.dancer?.stageName
+      ));
+      return profile ? { city, profile } : null;
+    }
+
+    function findVenueBySavedVenue(savedVenue) {
+      const venue = savedVenue?.venue || savedVenue;
+      const city = venue?.city;
+      const market = city ? markets[city] : null;
+      if (!market) return null;
+      const match = market.venues.find((item) => (
+        item.id === venue.id ||
+        item.slug === venue.slug ||
+        item.name === venue.name
+      ));
+      return match ? { city, venue: match } : null;
+    }
+
+    function applyLiveCustomerSaved(saved) {
+      (saved?.follows || []).forEach((item) => {
+        const match = findProfileBySavedDancer(item);
+        if (!match) return;
+        const followed = followedByCity[match.city] || (followedByCity[match.city] = []);
+        if (!followed.includes(match.profile.name)) followed.push(match.profile.name);
+        if (item.notificationsEnabled) enableProfileNotifications(match.city, match.profile.name);
+        else disableProfileNotifications(match.city, match.profile.name);
+      });
+      (saved?.venueFollows || []).forEach((item) => {
+        const match = findVenueBySavedVenue(item);
+        if (!match) return;
+        const followedVenues = followedVenuesByCity[match.city] || (followedVenuesByCity[match.city] = []);
+        if (!followedVenues.includes(match.venue.name)) followedVenues.push(match.venue.name);
+      });
+      (saved?.goingSignals || []).forEach((item) => {
+        const match = findProfileBySavedShift(item);
+        if (!match) return;
+        goingTonightSavedByProfile[match.profile.name] = true;
+        goingTonightByProfile[match.profile.name] = Math.max(tonightInterestCount(match.profile), goingTonightByProfile[match.profile.name] || 0);
+      });
+    }
+
+    async function loadLiveCustomerSaved() {
+      if (!isCustomerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/customer/saved");
+        applyLiveCustomerSaved(data.saved || {});
+        render();
+        if (customerDashboard.classList.contains("show")) renderDashboard();
+      } catch (error) {
+        showToast(error.message || "Could not load saved items");
+      }
+    }
+
     async function loadLiveAdminApprovals() {
       const status = document.getElementById("adminLiveStatus");
       if (!isAdminSession()) {
@@ -22960,6 +23039,7 @@
       customerDashboard.classList.add("show");
       customerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveCustomerSaved();
     }
 
     function closeDashboard() {
