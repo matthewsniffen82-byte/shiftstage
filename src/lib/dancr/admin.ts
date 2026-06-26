@@ -28,6 +28,8 @@ export type AdminVenueInput = {
   isActive?: boolean;
 };
 
+export type AdminContentReportAction = "resolved" | "removed";
+
 type TrendingMetricCounts = {
   profileViews: number;
   scheduleViews: number;
@@ -227,6 +229,93 @@ export async function getAdminSubscriptions(client: DancrClient, status?: string
         : null,
     };
   });
+}
+
+export async function getContentReports(client: DancrClient, status = "open") {
+  let query = (client as any)
+    .from("content_reports")
+    .select("id, reporter_id, target_type, target_id, target_label, reason, details, status, reviewed_by, reviewed_at, created_at")
+    .order("created_at", { ascending: false });
+
+  if (status) query = query.eq("status", status);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data || []).map((report: any) => ({
+    id: report.id,
+    reporterId: report.reporter_id,
+    targetType: report.target_type,
+    targetId: report.target_id,
+    targetLabel: report.target_label,
+    reason: report.reason,
+    details: report.details,
+    status: report.status,
+    reviewedBy: report.reviewed_by,
+    reviewedAt: report.reviewed_at,
+    createdAt: report.created_at,
+  }));
+}
+
+export async function updateContentReport(
+  client: DancrClient,
+  adminId: string,
+  reportId: string,
+  action: AdminContentReportAction,
+) {
+  const reviewedAt = new Date().toISOString();
+  const db = client as any;
+  const { data: report, error: reportError } = await db
+    .from("content_reports")
+    .select("id, target_type, target_id, target_label, reason")
+    .eq("id", reportId)
+    .maybeSingle();
+
+  if (reportError) throw reportError;
+  if (!report) throw new Error("Report not found.");
+
+  if (action === "removed" && report.target_type === "dancer_profile" && report.target_id) {
+    const { error: dancerError } = await db
+      .from("dancer_profiles")
+      .update({ status: "disabled" })
+      .eq("id", report.target_id);
+
+    if (dancerError) throw dancerError;
+  }
+
+  const { data, error } = await db
+    .from("content_reports")
+    .update({
+      status: action,
+      reviewed_by: adminId,
+      reviewed_at: reviewedAt,
+    })
+    .eq("id", reportId)
+    .select("id, target_type, target_id, target_label, reason, details, status, reviewed_by, reviewed_at, created_at")
+    .single();
+
+  if (error) throw error;
+
+  await logAdminAction(client, {
+    adminId,
+    targetType: "content_report",
+    targetId: reportId,
+    action: action === "removed" ? "remove_reported_target" : "resolve_report",
+    notes: `${report.reason}: ${report.target_label}`,
+  });
+
+  return {
+    id: data.id,
+    targetType: data.target_type,
+    targetId: data.target_id,
+    targetLabel: data.target_label,
+    reason: data.reason,
+    details: data.details,
+    status: data.status,
+    reviewedBy: data.reviewed_by,
+    reviewedAt: data.reviewed_at,
+    createdAt: data.created_at,
+  };
 }
 
 export async function recalculateCityRankings(client: DancrClient, adminId: string, city: string) {

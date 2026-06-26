@@ -219,6 +219,7 @@ export async function GET(request: Request) {
     const shiftsByDancer = await seedDancerAssets(admin, approvedDancers, venueMap);
     await seedCustomerActivity(admin, customer.id, approvedDancers, venueMap, shiftsByDancer);
     await seedAnalytics(admin, approvedDancers, venueMap, shiftsByDancer);
+    await seedReports(admin, customer.id, dancers);
 
     return NextResponse.json({
       ok: true,
@@ -318,6 +319,7 @@ async function clearDemoRows(admin: any, dancerIds: string[], userIds: string[])
     admin.from("trending_scores").delete().in("dancer_id", dancerIds),
     admin.from("dancer_photos").delete().in("dancer_id", dancerIds),
     admin.from("social_links").delete().in("dancer_id", dancerIds),
+    admin.from("content_reports").delete().in("target_id", dancerIds),
     admin.from("notifications").delete().in("recipient_id", userIds),
   ]);
 }
@@ -486,6 +488,36 @@ async function seedAnalytics(admin: any, dancers: any[], venueMap: Map<string, a
       },
     ]);
   }
+}
+
+async function seedReports(admin: any, customerId: string, dancers: any[]) {
+  const reportTargets = dancers.slice(0, 3);
+  await insert(admin, "content_reports", [
+    {
+      reporter_id: customerId,
+      target_type: "dancer_profile",
+      target_id: reportTargets[0]?.id,
+      target_label: reportTargets[0]?.stageName || "Demo profile",
+      reason: "Fake profile report",
+      details: "Demo customer flagged this profile for admin review.",
+    },
+    {
+      reporter_id: customerId,
+      target_type: "dancer_profile",
+      target_id: reportTargets[1]?.id,
+      target_label: reportTargets[1]?.stageName || "Demo profile",
+      reason: "Inappropriate content",
+      details: "Demo customer reported inappropriate public profile content.",
+    },
+    {
+      reporter_id: customerId,
+      target_type: "dancer_profile",
+      target_id: reportTargets[2]?.id,
+      target_label: reportTargets[2]?.stageName || "Demo profile",
+      reason: "Reported user",
+      details: "Demo report for trust and safety workflow testing.",
+    },
+  ]);
 }
 
 async function upsert(admin: any, table: string, row: Record<string, unknown>) {

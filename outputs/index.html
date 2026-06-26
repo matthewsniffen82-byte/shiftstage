@@ -20440,6 +20440,7 @@
     let liveDancerRankingEvents = [];
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
+    let liveAdminReports = [];
     let liveCustomerProfile = null;
     let liveNotifications = [];
     let editingShiftId = null;
@@ -21223,13 +21224,19 @@
           getAuthenticatedJson("/api/admin/venues"),
           getAuthenticatedJson("/api/admin/subscriptions")
         ]);
+        try {
+          const reportData = await getAuthenticatedJson("/api/admin/reports");
+          liveAdminReports = reportData.reports || [];
+        } catch {
+          liveAdminReports = [];
+        }
         const queue = approvalData.queue || [];
         const venues = venueData.venues || [];
         liveAdminSubscriptions = subscriptionData.subscriptions || [];
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, and ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");
@@ -24019,6 +24026,20 @@
       `;
     }
 
+    function adminReportRow(report) {
+      const reason = report.reason || report.name || "Content report";
+      const target = report.targetLabel || report.target || "Reported target";
+      return `
+        <article class="admin-item" data-report="${report.id}" data-live-report="${report.targetId ? "true" : "false"}" data-report-target="${target}">
+          <div class="row"><div><h3>${displayText(reason)}</h3><div class="meta">${displayText(target)}</div></div><span class="badge pending">Open</span></div>
+          <div class="admin-actions">
+            <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
+            <button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>
+          </div>
+        </article>
+      `;
+    }
+
     function renderAdminDashboard() {
       const profiles = allProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
@@ -24073,15 +24094,10 @@
         </article>
       `).join("") || '<div class="locked">No pending content.</div>';
 
-      document.getElementById("adminReports").innerHTML = reportQueue.filter((report) => report.status === "Open").map((report) => `
-        <article class="admin-item" data-report="${report.id}">
-          <div class="row"><div><h3>${report.name}</h3><div class="meta">${report.target}</div></div><span class="badge pending">Open</span></div>
-          <div class="admin-actions">
-            <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
-            <button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>
-          </div>
-        </article>
-      `).join("") || '<div class="locked">No reported users or content.</div>';
+      const visibleReports = liveAdminReports.length
+        ? liveAdminReports.filter((report) => report.status === "open")
+        : reportQueue.filter((report) => report.status === "Open");
+      document.getElementById("adminReports").innerHTML = visibleReports.map(adminReportRow).join("") || '<div class="locked">No reported users or content.</div>';
 
       document.getElementById("adminSubscriptions").innerHTML = liveAdminSubscriptions.length
         ? liveAdminSubscriptions.slice(0, 12).map(adminSubscriptionRow).join("")
@@ -24217,6 +24233,18 @@
       }).catch((error) => showToast(error.message || "Could not remove live venue"));
     }
 
+    function saveLiveAdminReportAction(reportId, action) {
+      if (!reportId || !isAdminSession()) return;
+      patchAuthenticatedJson("/api/admin/reports", {
+        reportId,
+        action
+      }).then(() => {
+        liveAdminReports = liveAdminReports.filter((report) => report.id !== reportId);
+        renderAdminDashboard();
+        showToast(action === "removed" ? "Reported target removed" : "Report resolved");
+      }).catch((error) => showToast(error.message || "Could not update report"));
+    }
+
     async function recalculateLiveRankings(button) {
       const status = document.getElementById("adminRankingStatus");
       const city = citySelect.value;
@@ -24321,17 +24349,29 @@
         return;
       }
       const reportId = host?.dataset.report;
-      const report = reportQueue.find((item) => item.id === reportId);
+      const isLiveReport = host?.dataset.liveReport === "true" || liveAdminReports.some((item) => item.id === reportId);
+      const report = isLiveReport
+        ? liveAdminReports.find((item) => item.id === reportId)
+        : reportQueue.find((item) => item.id === reportId);
       if (action === "resolve-report" && report) {
-        report.status = "Resolved";
-        refreshAfterAdminAction("Report resolved");
+        if (isLiveReport) {
+          saveLiveAdminReportAction(reportId, "resolved");
+        } else {
+          report.status = "Resolved";
+          refreshAfterAdminAction("Report resolved");
+        }
         return;
       }
       if (action === "remove-reported" && report) {
-        const target = allProfiles().find(({ profile }) => profile.name === report.target);
+        const targetName = report.targetLabel || report.target || host?.dataset.reportTarget;
+        const target = allProfiles().find(({ profile }) => profile.name === targetName);
         if (target) target.profile.hidden = true;
-        report.status = "Resolved";
-        refreshAfterAdminAction("Reported target removed");
+        if (isLiveReport) {
+          saveLiveAdminReportAction(reportId, "removed");
+        } else {
+          report.status = "Resolved";
+          refreshAfterAdminAction("Reported target removed");
+        }
       }
     }
 
