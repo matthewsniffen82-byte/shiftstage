@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { SocialLinks } from "./SocialLinks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +78,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
               <dd>{profile.currentRank ? `#${profile.currentRank}` : "Not ranked yet"}</dd>
             </div>
           </dl>
+          <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
         </article>
       </section>
       {gallery.length ? (
@@ -135,9 +137,13 @@ function PublicProfileStyles() {
       .fact-list { display: grid; gap: 12px; margin: 0; }
       .fact-list div { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
+      .social-list { display: grid; gap: 10px; margin-top: 18px; }
+      .social-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #f7f2ff; text-decoration: none; padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+      .social-list span { color: #b9accd; }
+      .social-list strong { overflow-wrap: anywhere; text-align: right; }
       .public-gallery { max-width: 1120px; margin: 18px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
       .gallery-photo { min-height: 220px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.1); }
-      @media (max-width: 760px) { .public-hero, .public-grid { grid-template-columns: 1fr; } .public-photo { min-height: 340px; } .shift-row, .fact-list div { flex-direction: column; } }
+      @media (max-width: 760px) { .public-hero, .public-grid { grid-template-columns: 1fr; } .public-photo { min-height: 340px; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } }
     `}</style>
   );
 }
