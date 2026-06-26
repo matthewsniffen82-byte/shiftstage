@@ -20422,6 +20422,7 @@
     const liveMarketState = {};
     let liveDancerAnalytics = null;
     let liveDancerBilling = null;
+    let liveDancerRankingEvents = [];
     let liveAdminSubscriptions = [];
     let liveCustomerProfile = null;
     let editingShiftId = null;
@@ -20765,6 +20766,7 @@
         liveCustomerProfile = null;
         liveDancerAnalytics = null;
         liveDancerBilling = null;
+        liveDancerRankingEvents = [];
         saveAuthSession(null);
         showToast(`${role === "dancer" ? "Dancer account" : "Customer account"} deleted`);
         return true;
@@ -21151,6 +21153,18 @@
       }
     }
 
+    async function loadLiveDancerRankingEvents() {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/ranking-events");
+        liveDancerRankingEvents = data.events || [];
+        renderDancerSetup();
+      } catch (error) {
+        liveDancerRankingEvents = [];
+        showToast(error.message || "Could not load ranking alerts");
+      }
+    }
+
     function isLiveSubscriptionActive(subscription) {
       return subscription?.status === "active" || subscription?.status === "trialing";
     }
@@ -21496,6 +21510,21 @@
           <span><strong>${event.title}</strong><p>${event.message}</p></span>
         </article>
       `;
+    }
+
+    function liveRankingEventMarkupData(event) {
+      const map = {
+        number_one: { type: "rank-one", icon: "👑", title: "Reached #1 Trending" },
+        entered_top_10: { type: "top-ten", icon: "🔥", title: "Entered Top 10" },
+        moved_up_3_plus: { type: "up", icon: "📈", title: "Significant rank increase" },
+        first_time_trending: { type: "first", icon: "⭐", title: "First time trending" }
+      };
+      const fallback = { type: "stable", icon: "⚡", title: "Ranking update" };
+      const mapped = map[event.eventType] || fallback;
+      return {
+        ...mapped,
+        message: event.message || `Your ${event.city || "city"} ranking changed.`
+      };
     }
 
     function buildRankingNotifications(profile, city, metrics) {
@@ -23135,6 +23164,7 @@
       activeDashboardType = "customer";
       liveDancerAnalytics = null;
       liveDancerBilling = null;
+      liveDancerRankingEvents = [];
       liveCustomerProfile = null;
       saveAuthSession(null);
       closeDashboard();
@@ -23197,6 +23227,7 @@
       loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerBilling();
+      loadLiveDancerRankingEvents();
     }
 
     function closeDancerDashboard() {
@@ -23592,8 +23623,11 @@
           metricCardMarkup(`${scheduleConversionRate}%`, "Schedule conversion rate"),
           metricCardMarkup(compactNumber(searchImpressions), "Search impressions")
         ].join("");
-        document.getElementById("dancerRankingNotifications").innerHTML = dashboardMetrics.rankingNotifications.length
-          ? dashboardMetrics.rankingNotifications.map(rankingNotificationMarkup).join("")
+        const rankingNotifications = liveDancerRankingEvents.length
+          ? liveDancerRankingEvents.slice(0, 4).map(liveRankingEventMarkupData)
+          : dashboardMetrics.rankingNotifications;
+        document.getElementById("dancerRankingNotifications").innerHTML = rankingNotifications.length
+          ? rankingNotifications.map(rankingNotificationMarkup).join("")
           : `<article class="rank-event stable"><span class="rank-event-icon">⚡</span><span><strong>Ranking milestones ready</strong><p>We will notify you when you enter Top 10, move up 3+ spots, or hit #1.</p></span></article>`;
       } else {
         document.getElementById("dancerValueMessage").textContent =
