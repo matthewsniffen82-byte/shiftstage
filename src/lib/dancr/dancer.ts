@@ -90,6 +90,14 @@ export async function uploadDancerPhoto(client: DancrClient, input: UploadDancer
     .single();
 
   if (error) throw error;
+
+  const { error: profileError } = await client
+    .from("dancer_profiles")
+    .update({ photo_review_status: "pending" })
+    .eq("id", input.dancerId);
+
+  if (profileError) throw profileError;
+
   return data;
 }
 

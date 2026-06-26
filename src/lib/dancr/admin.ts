@@ -80,7 +80,7 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
         approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
       `,
     )
-    .in("status", Array.from(REVIEWABLE_STATUSES))
+    .or(`status.in.(${Array.from(REVIEWABLE_STATUSES).join(",")}),photo_review_status.eq.pending`)
     .order("created_at", { ascending: true });
 
   if (error) throw error;

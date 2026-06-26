@@ -19850,6 +19850,7 @@
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
                     <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
+                    <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
                   </div>
                 </section>
 
@@ -20462,6 +20463,7 @@
     let liveCustomerProfile = null;
     let liveNotifications = [];
     let editingShiftId = null;
+    let pendingApprovedPhotoTarget = "gallery";
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -23596,6 +23598,15 @@
       return postAuthenticatedFormData("/api/dancer/photos", formData);
     }
 
+    async function uploadApprovedDancerPhoto(file, target) {
+      if (!isDancerSession()) throw new Error("Sign in as a dancer to upload live photos.");
+      const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
+      const sortOrder = target === "main" ? 0 : (profile?.galleryPhotoUrls || []).length + 1;
+      const data = await uploadSetupPhotoFile(file, target === "main", sortOrder);
+      if (profile) profile.photoStatus = "Pending";
+      return data;
+    }
+
     async function submitSetupPhotos(form) {
       if (!canOpenStep("photos")) return;
       if (!isDancerSession()) {
@@ -25323,14 +25334,40 @@
       }
 
       if (action === "main-photo") {
-        setResult("Main photo upload ready. Backend storage will make this persistent.");
+        pendingApprovedPhotoTarget = "main";
+        document.getElementById("approvedPhotoUploadInput")?.click();
+        setResult("Choose a main photo to upload for review.");
         return;
       }
 
       if (action === "gallery-photo") {
-        setResult("Gallery photo manager ready. Backend storage will make this persistent.");
+        pendingApprovedPhotoTarget = "gallery";
+        document.getElementById("approvedPhotoUploadInput")?.click();
+        setResult("Choose a gallery photo to upload for review.");
       }
     }
+
+    document.getElementById("approvedPhotoUploadInput")?.addEventListener("change", async (event) => {
+      const input = event.currentTarget;
+      const file = input.files?.[0];
+      const result = document.getElementById("dancerControlResult");
+      if (!file) return;
+      if (result) result.textContent = "Uploading photo for review...";
+      input.disabled = true;
+      try {
+        await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
+        renderAdminDashboard();
+        renderDancerManagement();
+        if (result) result.textContent = "Photo uploaded for admin review. Public photos stay unchanged until approved.";
+        showToast("Photo uploaded for review");
+      } catch (error) {
+        if (result) result.textContent = error.message || "Could not upload photo";
+        showToast(error.message || "Could not upload photo");
+      } finally {
+        input.value = "";
+        input.disabled = false;
+      }
+    });
 
     dancerDashboard.addEventListener("click", (event) => {
       if (handleNotificationCenterClick(event)) return;
