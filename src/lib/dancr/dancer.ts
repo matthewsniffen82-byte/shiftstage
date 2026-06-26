@@ -93,6 +93,23 @@ export async function uploadDancerPhoto(client: DancrClient, input: UploadDancer
   return data;
 }
 
+export async function uploadOwnDancerPhoto(
+  client: DancrClient,
+  userId: string,
+  input: Omit<UploadDancerPhotoInput, "dancerId">,
+) {
+  const profile = await getOwnDancerProfile(client, userId);
+  const photo = await uploadDancerPhoto(client, {
+    ...input,
+    dancerId: profile.id,
+  });
+
+  return {
+    ...photo,
+    imageUrl: getDancerPhotoUrl(client, photo.storage_path),
+  };
+}
+
 export async function uploadVerificationDocument(client: DancrClient, input: UploadVerificationDocumentInput) {
   const userId = await getCurrentUserId(client);
   const storagePath = `${userId}/verification/${makeStorageFileName(input.fileName)}`;
