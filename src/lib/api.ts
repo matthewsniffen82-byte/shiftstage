@@ -11,5 +11,13 @@ export function apiError(error: unknown, fallback: string, status = 500) {
     return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
 
+  if (message === "Profile approval required before starting a subscription.") {
+    return NextResponse.json({ ok: false, error: message }, { status: 403 });
+  }
+
+  if (message === "No Stripe customer found for this dancer.") {
+    return NextResponse.json({ ok: false, error: message }, { status: 404 });
+  }
+
   return NextResponse.json({ ok: false, error: message }, { status });
 }
