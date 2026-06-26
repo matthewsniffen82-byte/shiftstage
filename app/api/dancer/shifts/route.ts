@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { deliverNotificationRows } from "@/src/lib/dancr/notification-delivery";
 import { isValidShiftRange } from "@/src/lib/dancr/schedule";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -193,6 +194,8 @@ async function broadcastShiftPosted(
 
   const { error } = await admin.from("notifications").insert(rows);
   if (error) throw error;
+
+  await deliverNotificationRows(admin, rows);
 
   return rows.length;
 }

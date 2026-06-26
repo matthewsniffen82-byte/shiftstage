@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
+import { deliverNotificationRows } from "./notification-delivery";
 
 type DancrClient = SupabaseClient;
 
@@ -307,25 +308,26 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
     );
     if (eventError) throw eventError;
 
-    const { error: notificationError } = await (client as any).from("notifications").insert(
-      milestoneRows.map((event: any) => ({
-        recipient_id: event.userId,
-        notification_type: "ranking_milestone",
-        channel: "in_app",
-        title: "Trending ranking update",
-        body: event.message,
-        payload: {
-          dancerId: event.dancer_id,
-          city: event.city,
-          oldRank: event.old_rank,
-          newRank: event.new_rank,
-          eventType: event.event_type,
-        },
-        sent_at: calculatedAt,
-      })),
-    );
+    const notificationRows = milestoneRows.map((event: any) => ({
+      recipient_id: event.userId,
+      notification_type: "ranking_milestone" as const,
+      channel: "in_app",
+      title: "Trending ranking update",
+      body: event.message,
+      payload: {
+        dancerId: event.dancer_id,
+        city: event.city,
+        oldRank: event.old_rank,
+        newRank: event.new_rank,
+        eventType: event.event_type,
+      },
+      sent_at: calculatedAt,
+    }));
+
+    const { error: notificationError } = await (client as any).from("notifications").insert(notificationRows);
 
     if (notificationError) throw notificationError;
+    await deliverNotificationRows(client, notificationRows);
   }
 
   await logAdminAction(client, {
@@ -388,6 +390,18 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   const { error: reviewError } = await db.from("approval_reviews").insert(reviewRows);
   if (reviewError) throw reviewError;
 
+  const notificationRow = {
+    recipient_id: dancer.user_id,
+    notification_type: "approval_status" as const,
+    channel: "in_app",
+    title: approved ? "Your Dancr profile is approved" : "Your Dancr profile needs changes",
+    body: approved
+      ? `${dancer.stage_name} is now live on Dancr.`
+      : "Your profile review is complete. Check the notes and update your setup.",
+    payload: { dancerId: input.dancerId, status: input.status },
+    sent_at: reviewedAt,
+  };
+
   const [{ error: actionError }, { error: notificationError }] = await Promise.all([
     db.from("admin_actions").insert({
       admin_id: input.reviewerId,
@@ -396,21 +410,12 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
       action: approved ? "approve_dancer" : "reject_dancer",
       notes: input.notes || null,
     }),
-    db.from("notifications").insert({
-      recipient_id: dancer.user_id,
-      notification_type: "approval_status",
-      channel: "in_app",
-      title: approved ? "Your Dancr profile is approved" : "Your Dancr profile needs changes",
-      body: approved
-        ? `${dancer.stage_name} is now live on Dancr.`
-        : "Your profile review is complete. Check the notes and update your setup.",
-      payload: { dancerId: input.dancerId, status: input.status },
-      sent_at: reviewedAt,
-    }),
+    db.from("notifications").insert(notificationRow),
   ]);
 
   if (actionError) throw actionError;
   if (notificationError) throw notificationError;
+  await deliverNotificationRows(client, [notificationRow]);
 
   return {
     dancerId: input.dancerId,
