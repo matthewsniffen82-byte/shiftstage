@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CustomerProfile, DancrAccount, DancerAccountProfile, Database, UserRole } from "./types";
+import type { CustomerProfile, DancrAccount, DancerAccountProfile, UserRole } from "./types";
 
-type DancrClient = SupabaseClient<Database>;
+type DancrClient = SupabaseClient;
 
 export type CustomerSignupInput = {
   name: string;

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DancerCard, DancerProfile, Database, ShiftSummary, VenueSummary } from "./types";
+import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./types";
 
-type DancrClient = SupabaseClient<Database>;
+type DancrClient = SupabaseClient;
 
 export async function getApprovedDancersByCity(client: DancrClient, city: string): Promise<DancerCard[]> {
   const { data, error } = await client

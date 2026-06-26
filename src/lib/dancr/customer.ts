@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "./types";
 
-type DancrClient = SupabaseClient<Database>;
+type DancrClient = SupabaseClient;
 
 export async function followDancer(client: DancrClient, customerId: string, dancerId: string) {
   const { error } = await client.from("follows").upsert({

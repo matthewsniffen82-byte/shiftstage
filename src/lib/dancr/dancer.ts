@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DancerDashboardAnalytics, Database, SocialPlatform } from "./types";
+import type { DancerDashboardAnalytics, SocialPlatform } from "./types";
 
-type DancrClient = SupabaseClient<Database>;
+type DancrClient = SupabaseClient;
 
 export type DancerProfileInput = {
   dancerId: string;
