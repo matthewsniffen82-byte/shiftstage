@@ -91,7 +91,7 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
     photos: (row.dancer_photos || [])
       .map((photo: any) => ({
         id: photo.id,
-        imageUrl: photo.storage_path,
+        imageUrl: toDancerPhotoUrl(client, photo.storage_path),
         isPrimary: photo.is_primary,
         reviewStatus: photo.review_status,
         sortOrder: photo.sort_order,
@@ -606,4 +606,9 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
+  if (/^https?:\/\//i.test(storagePath)) return storagePath;
+  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
