@@ -20463,6 +20463,7 @@
       Atlanta: ["Zola Saint", "Nora Lux", "Kali West", "Sia Gray", "Vada Lane", "Lyra Knox"],
       "New York": ["Eden Vale", "Val Stone", "Opal Hart", "Tess Noir", "Cami Moon", "Nell Sable"]
     };
+    const favoritedByCity = {};
     const notifiedByCity = Object.fromEntries(
       Object.entries(followedByCity).map(([city, names]) => [city, [...names]])
     );
@@ -21056,6 +21057,12 @@
         if (item.notificationsEnabled) enableProfileNotifications(match.city, match.profile.name);
         else disableProfileNotifications(match.city, match.profile.name);
       });
+      (saved?.favorites || []).forEach((item) => {
+        const match = findProfileBySavedDancer(item);
+        if (!match) return;
+        const favorites = favoritedByCity[match.city] || (favoritedByCity[match.city] = []);
+        if (!favorites.includes(match.profile.name)) favorites.push(match.profile.name);
+      });
       (saved?.venueFollows || []).forEach((item) => {
         const match = findVenueBySavedVenue(item);
         if (!match) return;
@@ -21512,6 +21519,10 @@
 
     function isFollowingProfile(city, profileName) {
       return (followedByCity[city] || []).includes(profileName);
+    }
+
+    function isFavoritedProfile(city, profileName) {
+      return (favoritedByCity[city] || []).includes(profileName);
     }
 
     function isNotificationOn(city, profileName) {
@@ -22195,7 +22206,7 @@
         : seededRange(`${profile.name}|interested-low|${city}`, 2, 40);
       const goingTonight = cappedSignal(goingTonightByProfile[profile.name] ?? goingBase, followerCap);
       const favorites = cappedSignal(
-        seededRange(`${city}|${profile.name}|favorites`, 24, 220) + (isFollowingProfile(city, profile.name) ? 1 : 0),
+        seededRange(`${city}|${profile.name}|favorites`, 24, 220) + (isFavoritedProfile(city, profile.name) ? 1 : 0),
         Math.round(followers * 0.22)
       );
       const interested = cappedSignal(interestedBase + uniqueTrendEventCount("interested", city, profile.name) * 6, followerCap);
@@ -22348,6 +22359,7 @@
     function actionIconMarkup(type) {
       const icons = {
         heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>',
+        star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.4 4.2 1.1 6-5.5-3-5.5 3 1.1-6-4.4-4.2 6.1-.8L12 3Z"></path></svg>',
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
@@ -23144,6 +23156,7 @@
       } else {
         const status = shiftStatus(profile);
         const isFollowed = isFollowingProfile(city, profile.name);
+        const isFavorited = isFavoritedProfile(city, profile.name);
         const isNotified = isNotificationOn(city, profile.name);
         const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
         const canMarkGoing = status.state === "active" || (profile.scheduled && status.state !== "ended");
@@ -23164,6 +23177,7 @@
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+            <button class="action-btn secondary ${isFavorited ? "is-following" : ""}" id="favoriteBtn" data-profile="${profile.name}">${actionButtonLabel(isFavorited ? "check" : "star", isFavorited ? "Favorited" : "Favorite")}</button>
             <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
             ${goingButton}
           </div>
@@ -24613,7 +24627,7 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
-      const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn");
+      const actionButton = event.target.closest("#followBtn, #favoriteBtn, #notifyBtn, #goingBtn");
       if (!actionButton) return;
       if (actionButton.id === "followBtn") {
         const profileName = actionButton.dataset.profile;
@@ -24630,7 +24644,6 @@
         } else {
           followedList.push(profileName);
           enableProfileNotifications(city, profileName);
-          recordUniqueTrendEvent("favorites", city, profileName);
           recordLiveEvent("profile_action", { dancerName: profileName, source: "follow_added" });
           actionButton.innerHTML = actionButtonLabel("check", "Following");
           actionButton.classList.add("is-following");
@@ -24651,6 +24664,34 @@
           }).catch((error) => showToast(error.message || "Could not save follow"));
         }
         if (customerDashboard.classList.contains("show")) renderDashboard();
+      }
+      if (actionButton.id === "favoriteBtn") {
+        const profileName = actionButton.dataset.profile;
+        const city = citySelect.value;
+        const profile = findProfile(profileName);
+        const favoriteList = favoritedByCity[city] || (favoritedByCity[city] = []);
+        const favoriteIndex = favoriteList.indexOf(profileName);
+        const willFavorite = favoriteIndex < 0;
+        if (willFavorite) {
+          favoriteList.push(profileName);
+          recordUniqueTrendEvent("favorites", city, profileName);
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "favorite_added" });
+          actionButton.innerHTML = actionButtonLabel("check", "Favorited");
+          actionButton.classList.add("is-following");
+          showToast("Favorited profile");
+        } else {
+          favoriteList.splice(favoriteIndex, 1);
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "favorite_removed" });
+          actionButton.innerHTML = actionButtonLabel("star", "Favorite");
+          actionButton.classList.remove("is-following");
+          showToast("Removed favorite");
+        }
+        if (profile?.id) {
+          postAuthenticatedJson("/api/customer/favorites", {
+            dancerId: profile.id,
+            favorite: willFavorite
+          }).catch((error) => showToast(error.message || "Could not save favorite"));
+        }
       }
       if (actionButton.id === "notifyBtn") {
         const city = citySelect.value;
