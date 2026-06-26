@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { getServerEnv } from "@/src/lib/env";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const DEMO_PASSWORD = "DancrDemo123!";
 
 type SeedVenue = {
