@@ -4,6 +4,12 @@ import { getServerEnv } from "@/src/lib/env";
 
 const DEMO_PASSWORD = "DancrDemo123!";
 
+type SeedVenue = {
+  id: string;
+  slug: string;
+  name: string;
+};
+
 const venues = [
   {
     name: "Velvet Room",
@@ -273,7 +279,7 @@ async function findAuthUser(admin: any, email: string) {
   return data.users.find((user: any) => user.email?.toLowerCase() === email.toLowerCase()) || null;
 }
 
-async function seedVenues(admin: any) {
+async function seedVenues(admin: any): Promise<Map<string, SeedVenue>> {
   const venueRows = venues.map((venue) => ({
     ...venue,
     timezone: "America/Los_Angeles",
@@ -284,7 +290,7 @@ async function seedVenues(admin: any) {
 
   const { data, error } = await admin.from("venues").upsert(venueRows, { onConflict: "slug" }).select("id, slug, name");
   if (error) throw error;
-  return new Map(data.map((venue: any) => [venue.slug, venue]));
+  return new Map<string, SeedVenue>(data.map((venue: SeedVenue) => [venue.slug, venue]));
 }
 
 async function clearDemoRows(admin: any, dancerIds: string[], userIds: string[]) {
