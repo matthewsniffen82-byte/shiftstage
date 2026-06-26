@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CustomerProfile, DancrAccount, DancerAccountProfile, UserRole } from "./types";
+import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, UserRole } from "./types";
 
 type DancrClient = SupabaseClient;
 
@@ -124,6 +124,65 @@ export async function getCurrentAccount(client: DancrClient): Promise<DancrAccou
 
   if (error) throw error;
   if (!data) return null;
+
+  return {
+    id: data.id,
+    role: data.role,
+    displayName: data.display_name,
+    email: data.email,
+    accountState: data.account_state,
+  };
+}
+
+export async function getAccountByUserId(client: DancrClient, userId: string): Promise<DancrAccount | null> {
+  const { data, error } = await client
+    .from("app_users")
+    .select("id, role, display_name, email, account_state")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    role: data.role,
+    displayName: data.display_name,
+    email: data.email,
+    accountState: data.account_state,
+  };
+}
+
+export async function setAccountState(client: DancrClient, userId: string, accountState: AccountState) {
+  const update: Record<string, string | null> = {
+    account_state: accountState,
+  };
+
+  if (accountState === "deleted") {
+    update.display_name = null;
+    update.email = null;
+  }
+
+  const { data, error } = await client
+    .from("app_users")
+    .update(update)
+    .eq("id", userId)
+    .select("id, role, display_name, email, account_state")
+    .single();
+
+  if (error) throw error;
+
+  if (data.role === "dancer" && accountState !== "active") {
+    const { error: dancerError } = await client
+      .from("dancer_profiles")
+      .update({
+        status: "disabled",
+        disabled_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
+
+    if (dancerError) throw dancerError;
+  }
 
   return {
     id: data.id,
