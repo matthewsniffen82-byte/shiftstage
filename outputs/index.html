@@ -20570,6 +20570,22 @@
       return data;
     }
 
+    async function postAuthenticatedFormData(url, formData) {
+      const token = authSession?.accessToken;
+      if (!token) throw new Error("Sign in required");
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
     async function getAuthenticatedJson(url) {
       const token = authSession?.accessToken;
       if (!token) throw new Error("Sign in required");
@@ -23003,12 +23019,107 @@
 
     function completeSetupStep(step) {
       if (!canOpenStep(step)) return;
+      if (step === "approval" && isDancerSession()) {
+        showToast("Approval is handled by platform review.");
+        return;
+      }
       setupChecklistExpanded = true;
       dancerSetup[step] = true;
       if (step === "profile") ensureActiveDancerProfile("Pending");
       if (step === "approval") ensureActiveDancerProfile("Verified");
       activeSetupStep = nextIncompleteStep() || step;
       renderDancerSetup();
+    }
+
+    async function uploadSetupPhotoFile(file, isPrimary, sortOrder) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("isPrimary", isPrimary ? "true" : "false");
+      formData.append("sortOrder", String(sortOrder));
+      return postAuthenticatedFormData("/api/dancer/photos", formData);
+    }
+
+    async function submitSetupPhotos(form) {
+      if (!canOpenStep("photos")) return;
+      if (!isDancerSession()) {
+        completeSetupStep("photos");
+        showToast("Demo photos submitted");
+        return;
+      }
+      const submit = form.querySelector('button[type="submit"]');
+      const result = document.getElementById("photoUploadResult");
+      const mainFile = document.getElementById("setupMainPhoto")?.files?.[0];
+      const galleryFile = document.getElementById("setupGalleryPhoto")?.files?.[0];
+      if (!mainFile && !galleryFile) {
+        showToast("Choose at least one photo");
+        return;
+      }
+      submit.disabled = true;
+      if (result) result.textContent = "Uploading photos...";
+      try {
+        const uploads = [];
+        if (mainFile) uploads.push(uploadSetupPhotoFile(mainFile, true, 0));
+        if (galleryFile) uploads.push(uploadSetupPhotoFile(galleryFile, false, 1));
+        const uploaded = await Promise.all(uploads);
+        const profile = ensureActiveDancerProfile("Pending");
+        const urls = uploaded.map((item) => item.photo?.imageUrl).filter(Boolean);
+        if (profile && urls.length) {
+          profile.mainPhotoUrl = profile.mainPhotoUrl || urls[0];
+          profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls];
+          profile.photoStatus = "Pending";
+        }
+        dancerSetup.photos = true;
+        activeSetupStep = nextIncompleteStep() || "verification";
+        showToast("Photos uploaded for review");
+        renderDancerSetup();
+      } catch (error) {
+        if (result) result.textContent = error.message || "Could not upload photos";
+        showToast(error.message || "Could not upload photos");
+      } finally {
+        submit.disabled = false;
+      }
+    }
+
+    async function uploadVerificationFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      return postAuthenticatedFormData("/api/dancer/verification-documents", formData);
+    }
+
+    async function submitSetupVerification(form) {
+      if (!canOpenStep("verification")) return;
+      if (!isDancerSession()) {
+        completeSetupStep("verification");
+        showToast("Demo verification submitted");
+        return;
+      }
+      const submit = form.querySelector('button[type="submit"]');
+      const result = document.getElementById("verificationUploadResult");
+      const idFile = document.getElementById("setupIdDocument")?.files?.[0];
+      const selfieFile = document.getElementById("setupSelfieDocument")?.files?.[0];
+      if (!idFile || !selfieFile) {
+        showToast("Upload both ID and selfie files");
+        return;
+      }
+      submit.disabled = true;
+      if (result) result.textContent = "Uploading verification files...";
+      try {
+        await Promise.all([uploadVerificationFile(idFile), uploadVerificationFile(selfieFile)]);
+        const profile = ensureActiveDancerProfile("Pending");
+        if (profile) {
+          profile.idStatus = "Needs review";
+          profile.selfieStatus = "Needs review";
+        }
+        dancerSetup.verification = true;
+        activeSetupStep = nextIncompleteStep() || "approval";
+        showToast("Verification uploaded for review");
+        renderDancerSetup();
+      } catch (error) {
+        if (result) result.textContent = error.message || "Could not upload verification";
+        showToast(error.message || "Could not upload verification");
+      } finally {
+        submit.disabled = false;
+      }
     }
 
     function setupStepMarkup(step, title, body) {
@@ -23286,26 +23397,33 @@
         </form>
       `;
       const photosBody = `
-        <div class="photo-upload-grid">
-          <button class="upload-slot" type="button" aria-label="Upload main profile photo">
-            <span class="upload-slot-icon">+</span>
-            <span>Upload main photo<small>Full body or portrait</small></span>
-          </button>
-          <button class="upload-slot" type="button" aria-label="Upload gallery photo">
-            <span class="upload-slot-icon">+</span>
-            <span>Upload gallery photo<small>For review</small></span>
-          </button>
-          <button class="upload-slot" type="button" aria-label="Upload another gallery photo">
-            <span class="upload-slot-icon">+</span>
-            <span>Add another photo<small>Optional</small></span>
-          </button>
-        </div>
-        <div class="rule-note">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
-        <button class="action-btn" data-complete-step="photos">Submit photos</button>
+        <form class="auth-form" data-setup-form="photos">
+          <div class="field">
+            <label for="setupMainPhoto">Main profile photo</label>
+            <input id="setupMainPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+          </div>
+          <div class="field">
+            <label for="setupGalleryPhoto">Optional gallery photo</label>
+            <input id="setupGalleryPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+          </div>
+          <div class="rule-note" id="photoUploadResult">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
+          <button class="action-btn" type="submit">Submit photos</button>
+        </form>
       `;
       const verificationBody = `
-        <div class="info-tile setup-verification-card"><strong>Third-party check</strong><div class="meta">Verify ID and selfie. Your profile stays Pending until this is approved.</div></div>
-        <button class="action-btn" data-complete-step="verification">Start verification</button>
+        <form class="auth-form" data-setup-form="verification">
+          <div class="info-tile setup-verification-card"><strong>Secure review</strong><div class="meta">Upload ID and selfie files for private review. Your profile stays Pending until approved.</div></div>
+          <div class="field">
+            <label for="setupIdDocument">Government ID</label>
+            <input id="setupIdDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+          </div>
+          <div class="field">
+            <label for="setupSelfieDocument">Selfie verification</label>
+            <input id="setupSelfieDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+          </div>
+          <div class="rule-note" id="verificationUploadResult">Verification documents are private and visible only to you and platform admins.</div>
+          <button class="action-btn" type="submit">Submit verification</button>
+        </form>
       `;
       const approvalBody = `
         <div class="rule-note">Dancr reviews profile, photos, ID, and selfie. Approval unlocks schedules.</div>
@@ -24527,6 +24645,20 @@
       if (profileEditForm) {
         event.preventDefault();
         saveApprovedDancerProfile();
+        return;
+      }
+
+      const photosForm = event.target.closest("[data-setup-form='photos']");
+      if (photosForm) {
+        event.preventDefault();
+        submitSetupPhotos(photosForm);
+        return;
+      }
+
+      const verificationForm = event.target.closest("[data-setup-form='verification']");
+      if (verificationForm) {
+        event.preventDefault();
+        submitSetupVerification(verificationForm);
         return;
       }
 
