@@ -20397,6 +20397,7 @@
     const trendEventStoreKey = "dancrTrendEventsV1";
     const trendEventStore = loadTrendEventStore();
     const liveMarketState = {};
+    let liveDancerAnalytics = null;
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -20794,6 +20795,10 @@
       return authSession?.account?.role === "admin";
     }
 
+    function isDancerSession() {
+      return authSession?.account?.role === "dancer";
+    }
+
     async function loadLiveAdminApprovals() {
       const status = document.getElementById("adminLiveStatus");
       if (!isAdminSession()) {
@@ -20811,6 +20816,79 @@
         if (status) status.textContent = error.message || "Could not load live approvals";
         showToast(error.message || "Could not load live approvals");
       }
+    }
+
+    async function loadLiveDancerAnalytics() {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/analytics");
+        liveDancerAnalytics = data.analytics || null;
+        renderDancerSetup();
+      } catch (error) {
+        liveDancerAnalytics = null;
+        showToast(error.message || "Could not load live analytics");
+      }
+    }
+
+    function liveMetricNumber(value, fallback = 0) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : fallback;
+    }
+
+    function mergeLiveDancerDashboardMetrics(base, analytics, profile, city) {
+      if (!base || !analytics) return base;
+      const social = analytics.socialClicks30Days || {};
+      const merged = {
+        ...base,
+        currentRank: analytics.currentRank || base.currentRank,
+        highestRankAchieved: analytics.highestRank || base.highestRankAchieved,
+        bestRankThisWeek: analytics.bestRankThisWeek || base.bestRankThisWeek,
+        rankChangeYesterday: analytics.rankChangeSinceYesterday ?? base.rankChangeYesterday,
+        profileViews30: liveMetricNumber(analytics.profileViews30Days, base.profileViews30),
+        newFollowers: liveMetricNumber(analytics.followersGained30Days, base.newFollowers),
+        scheduleViews30: liveMetricNumber(analytics.scheduleViews30Days, base.scheduleViews30),
+        directionRequests30: liveMetricNumber(analytics.directionRequests30Days, base.directionRequests30),
+        goingTonightClicks: liveMetricNumber(analytics.goingSignals30Days, base.goingTonightClicks),
+        favoritesAdded: liveMetricNumber(analytics.favoritesAdded30Days, base.favoritesAdded),
+        notifications: liveMetricNumber(analytics.notificationsSent30Days, base.notifications),
+        notificationOpens: liveMetricNumber(analytics.notificationsOpened30Days, base.notificationOpens),
+        instagramClicks: liveMetricNumber(social.instagram, base.instagramClicks),
+        snapchatClicks: liveMetricNumber(social.snapchat, base.snapchatClicks),
+        tiktokClicks: liveMetricNumber(social.tiktok, base.tiktokClicks),
+        onlyfansClicks: liveMetricNumber(social.onlyfans, base.onlyfansClicks),
+        xClicks: liveMetricNumber(social.x, base.xClicks)
+      };
+      merged.weeklyViews = Math.round(merged.profileViews30 * 0.28);
+      merged.weeklyFollowers = Math.round(merged.newFollowers * 0.28);
+      merged.weeklyGoing = Math.round(merged.goingTonightClicks * 0.28);
+      merged.weeklyInstagram = Math.round(merged.instagramClicks * 0.28);
+      merged.profileToFollowRate = Math.max(0, Math.round((merged.newFollowers / Math.max(1, merged.profileViews30)) * 1000) / 10);
+      merged.scheduleToGoingRate = Math.max(0, Math.round((merged.goingTonightClicks / Math.max(1, merged.scheduleViews30)) * 1000) / 10);
+      merged.directionRate = Math.max(0, Math.round((merged.directionRequests30 / Math.max(1, merged.scheduleViews30)) * 1000) / 10);
+      merged.socialClickRate = Math.max(0, Math.round(((merged.instagramClicks + merged.snapchatClicks + merged.tiktokClicks + merged.onlyfansClicks + merged.xClicks) / Math.max(1, merged.profileViews30)) * 1000) / 10);
+      merged.rankingSignal = rankingSignalLabel({
+        profileViews30: merged.profileViews30,
+        scheduleViews30: merged.scheduleViews30,
+        newFollowers: merged.newFollowers,
+        notificationOpens: merged.notificationOpens,
+        favoritesAdded: merged.favoritesAdded,
+        goingTonightClicks: merged.goingTonightClicks
+      });
+      merged.rankingNotifications = buildRankingNotifications(profile, city, {
+        currentRank: merged.currentRank,
+        previousRank: merged.previousRank,
+        rankChangeYesterday: merged.rankChangeYesterday,
+        firstTimeTrending: merged.firstTimeTrending,
+        biggestMover: merged.biggestMover
+      });
+      merged.dancrScore = Math.min(99, Math.max(0, Math.round(
+        48 +
+        Math.min(18, merged.followers / 520) +
+        Math.min(14, merged.profileViews30 / 520) +
+        Math.min(11, merged.scheduleViews30 / 390) +
+        Math.min(8, merged.goingTonightClicks / 30)
+      )));
+      return merged;
     }
 
     function mapLiveVenue(item, city, venueShiftCounts) {
@@ -22668,6 +22746,7 @@
       isCustomerLoggedIn = false;
       isDancerLoggedIn = false;
       activeDashboardType = "customer";
+      liveDancerAnalytics = null;
       saveAuthSession(null);
       closeDashboard();
       closeDancerDashboard();
@@ -22724,6 +22803,7 @@
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveDancerAnalytics();
     }
 
     function closeDancerDashboard() {
@@ -22901,7 +22981,8 @@
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
       const approved = dancerSetup.approval || activeProfile?.status === "Verified";
-      const dashboardMetrics = dancerDashboardMetrics(activeProfile, city);
+      const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
+      const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
