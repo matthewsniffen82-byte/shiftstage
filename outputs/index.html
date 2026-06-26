@@ -20826,6 +20826,45 @@
       });
     }
 
+    function formatVenueHours(item) {
+      if (item.hoursLabel) return item.hoursLabel;
+      if (item.opens_at && item.closes_at) return `${item.opens_at} - ${item.closes_at}`;
+      return "Hours pending";
+    }
+
+    function mapLiveAdminVenue(item, city, existing) {
+      return {
+        id: item.id,
+        slug: item.slug,
+        name: item.name,
+        area: item.state || item.city || city,
+        state: item.state || stateByCity[city] || "",
+        address: item.address || "",
+        phone: item.phone || "",
+        website: item.website || "",
+        hours: formatVenueHours(item),
+        shifts: existing?.shifts || 0,
+        distance: existing?.distance || "Nearby",
+        verified: item.is_active !== false,
+        featured: Boolean(existing?.featured),
+        hidden: item.is_active === false,
+        isActive: item.is_active !== false
+      };
+    }
+
+    function applyLiveAdminVenues(venues) {
+      (venues || []).forEach((item) => {
+        const city = item.city || citySelect.value;
+        const market = markets[city];
+        if (!market) return;
+        const existing = market.venues.find((venue) => venue.id === item.id || venue.slug === item.slug || venue.name === item.name);
+        const venueData = mapLiveAdminVenue(item, city, existing);
+        if (existing) Object.assign(existing, venueData);
+        else market.venues.push(venueData);
+        market.stats.venues = market.venues.filter((venue) => !venue.hidden).length;
+      });
+    }
+
     function isAdminSession() {
       return authSession?.account?.role === "admin";
     }
@@ -20840,16 +20879,21 @@
         if (status) status.textContent = "Use an existing Supabase admin account.";
         return;
       }
-      if (status) status.textContent = "Loading live approvals...";
+      if (status) status.textContent = "Loading live admin data...";
       try {
-        const data = await getAuthenticatedJson("/api/admin/approvals");
-        const queue = data.queue || [];
+        const [approvalData, venueData] = await Promise.all([
+          getAuthenticatedJson("/api/admin/approvals"),
+          getAuthenticatedJson("/api/admin/venues")
+        ]);
+        const queue = approvalData.queue || [];
+        const venues = venueData.venues || [];
         applyLiveApprovalQueue(queue);
+        applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"} and ${venues.length} venue${venues.length === 1 ? "" : "s"}.`;
       } catch (error) {
-        if (status) status.textContent = error.message || "Could not load live approvals";
-        showToast(error.message || "Could not load live approvals");
+        if (status) status.textContent = error.message || "Could not load live admin data";
+        showToast(error.message || "Could not load live admin data");
       }
     }
 
@@ -23689,6 +23733,17 @@
       }).catch((error) => showToast(error.message || "Could not save live review"));
     }
 
+    function saveLiveAdminVenueRemoval(venue) {
+      if (!venue?.id || !isAdminSession()) return;
+      patchAuthenticatedJson("/api/admin/venues", {
+        venueId: venue.id,
+        isActive: false
+      }).then(() => {
+        showToast("Live venue removed");
+        loadLiveAdminApprovals();
+      }).catch((error) => showToast(error.message || "Could not remove live venue"));
+    }
+
     function runAdminAction(action, host) {
       const profileMatch = adminProfileFromNode(host);
       const venueMatch = adminVenueFromNode(host);
@@ -23758,8 +23813,10 @@
       }
       if (action === "remove-venue" && venueMatch) {
         venueMatch.venue.hidden = true;
+        venueMatch.venue.isActive = false;
         if (selectedVenueName === venueMatch.venue.name) selectedVenueName = null;
         refreshAfterAdminAction("Venue removed");
+        saveLiveAdminVenueRemoval(venueMatch.venue);
         return;
       }
       const reportId = host?.dataset.report;
