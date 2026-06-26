@@ -293,6 +293,8 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
   const milestoneRows = scored
     .map((entry, index) => getRankingMilestone(entry.dancer, city, entry.previousRank, index + 1))
     .filter(Boolean);
+  const biggestMover = getBiggestMoverMilestone(scored, city);
+  if (biggestMover) milestoneRows.push(biggestMover);
 
   if (milestoneRows.length) {
     const { error: eventError } = await (client as any).from("ranking_events").insert(
@@ -536,6 +538,37 @@ function getRankingMilestone(dancer: any, city: string, oldRank: number | null, 
   };
 }
 
+function getBiggestMoverMilestone(scored: Array<{ dancer: any; previousRank: number | null }>, city: string) {
+  const biggestMover = scored
+    .map((entry, index) => ({
+      dancer: entry.dancer,
+      oldRank: entry.previousRank,
+      newRank: index + 1,
+      movement: entry.previousRank ? entry.previousRank - (index + 1) : 0,
+    }))
+    .filter((entry) => entry.movement > 0)
+    .sort((a, b) => b.movement - a.movement || a.newRank - b.newRank)[0];
+
+  if (!biggestMover) return null;
+
+  return {
+    dancer_id: biggestMover.dancer.id,
+    userId: biggestMover.dancer.user_id,
+    city,
+    event_type: "biggest_mover",
+    old_rank: biggestMover.oldRank,
+    new_rank: biggestMover.newRank,
+    message: getMilestoneMessage(
+      biggestMover.dancer.stage_name,
+      city,
+      biggestMover.oldRank,
+      biggestMover.newRank,
+      "biggest_mover",
+    ),
+    notified_at: new Date().toISOString(),
+  };
+}
+
 function getMilestoneType(oldRank: number | null, newRank: number) {
   if (newRank === 1 && oldRank !== 1) return "number_one";
   if (newRank <= 10 && (!oldRank || oldRank > 10)) return "entered_top_10";
@@ -548,6 +581,7 @@ function getMilestoneMessage(stageName: string, city: string, oldRank: number | 
   if (milestone === "number_one") return `${stageName} reached #1 Trending in ${city}.`;
   if (milestone === "entered_top_10") return `${stageName} entered the Top 10 Trending in ${city}.`;
   if (milestone === "moved_up_3_plus") return `${stageName} moved from #${oldRank} to #${newRank} Trending in ${city}.`;
+  if (milestone === "biggest_mover") return `${stageName} is the biggest mover in ${city}, climbing from #${oldRank} to #${newRank}.`;
   return `${stageName} is now #${newRank} Trending in ${city}.`;
 }
 
