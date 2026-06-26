@@ -20066,6 +20066,23 @@
           <div class="admin-grid" id="adminSubscriptions"></div>
         </div>
         <div class="auth-card">
+          <h3>Rankings</h3>
+          <div class="admin-grid">
+            <article class="admin-item">
+              <div class="row">
+                <div>
+                  <h3>Trending recalculation</h3>
+                  <div class="meta" id="adminRankingStatus">Recalculate rankings for the selected city.</div>
+                </div>
+                <span class="pill">Manual</span>
+              </div>
+              <div class="admin-actions">
+                <button class="action-btn" data-admin-action="recalculate-rankings">Recalculate rankings</button>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="auth-card">
           <h3>Shift controls</h3>
           <div class="admin-grid" id="adminShifts"></div>
         </div>
@@ -23786,9 +23803,37 @@
       }).catch((error) => showToast(error.message || "Could not remove live venue"));
     }
 
-    function runAdminAction(action, host) {
+    async function recalculateLiveRankings(button) {
+      const status = document.getElementById("adminRankingStatus");
+      const city = citySelect.value;
+      if (!isAdminSession()) {
+        showToast("Admin login required");
+        return;
+      }
+      if (button) button.disabled = true;
+      if (status) status.textContent = `Recalculating ${city} rankings...`;
+      try {
+        const data = await postAuthenticatedJson("/api/admin/rankings/recalculate", { city });
+        liveMarketState[city] = null;
+        await loadLiveDiscovery(city);
+        const count = data.rankings?.length || 0;
+        if (status) status.textContent = `Updated ${count} ${city} ranking${count === 1 ? "" : "s"}.`;
+        showToast("Rankings recalculated");
+      } catch (error) {
+        if (status) status.textContent = error.message || "Could not recalculate rankings";
+        showToast(error.message || "Could not recalculate rankings");
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    function runAdminAction(action, host, button) {
       const profileMatch = adminProfileFromNode(host);
       const venueMatch = adminVenueFromNode(host);
+      if (action === "recalculate-rankings") {
+        recalculateLiveRankings(button);
+        return;
+      }
       if (action === "approve-dancer" && profileMatch) {
         Object.assign(profileMatch.profile, {
           status: "Verified",
@@ -24377,7 +24422,7 @@
       const button = event.target.closest("[data-admin-action]");
       if (!button) return;
       const host = button.closest("[data-admin-profile], [data-admin-venue], [data-report]");
-      runAdminAction(button.dataset.adminAction, host);
+      runAdminAction(button.dataset.adminAction, host, button);
     });
 
     document.querySelectorAll(".auth-tab").forEach((tab) => {
