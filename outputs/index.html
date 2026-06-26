@@ -22074,8 +22074,9 @@
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : "";
       const portraitPhotoAttrs = customPhotoAttrs(customPhotoUrl(profile, 0));
+      const profileHref = profile.slug ? `/dancers/${profile.slug}` : `#profile-${slugify(profile.name)}`;
       return `
-        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="#profile-${slugify(profile.name)}" data-profile="${profile.name}" aria-label="${profile.name} profile">
+        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${profileHref}" data-profile="${profile.name}" aria-label="${profile.name} profile">
           <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
             <div class="card-badges">
               ${statusBadge}
@@ -22096,8 +22097,9 @@
     function venueCard(venue) {
       const details = venueDetails(venue, citySelect.value);
       const initials = venue.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+      const venueHref = venue.slug ? `/venues/${venue.slug}` : `#venue-${slugify(venue.name)}`;
       return `
-        <button class="card venue venue-card" data-venue="${venue.name}" aria-label="${venue.name} venue details">
+        <a class="card venue venue-card" href="${venueHref}" data-venue="${venue.name}" aria-label="${venue.name} venue details">
           <div class="venue-art" data-initials="${initials}"></div>
           <div class="profile-body">
             <div class="row">
@@ -22111,7 +22113,7 @@
               <span class="pill venue-shift-pill">${venue.shifts} posted shifts</span>
             </div>
           </div>
-        </button>
+        </a>
       `;
     }
 
