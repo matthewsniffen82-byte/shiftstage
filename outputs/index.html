@@ -20423,6 +20423,7 @@
     let liveDancerAnalytics = null;
     let liveDancerBilling = null;
     let liveAdminSubscriptions = [];
+    let liveCustomerProfile = null;
     let editingShiftId = null;
 
     const stateByCity = {
@@ -20964,6 +20965,20 @@
       });
     }
 
+    async function loadLiveCustomerProfile() {
+      if (!isCustomerSession()) return null;
+      const data = await getAuthenticatedJson("/api/customer/profile");
+      liveCustomerProfile = data.profile || null;
+      const city = liveCustomerProfile?.city;
+      if (city && markets[city] && citySelect.value !== city) {
+        citySelect.value = city;
+        await loadLiveDiscovery(city);
+      }
+      render();
+      if (customerDashboard.classList.contains("show")) renderDashboard();
+      return liveCustomerProfile;
+    }
+
     async function loadLiveCustomerSaved() {
       if (!isCustomerSession()) return;
       try {
@@ -20974,6 +20989,31 @@
       } catch (error) {
         showToast(error.message || "Could not load saved items");
       }
+    }
+
+    async function loadLiveCustomerDashboardData() {
+      if (!isCustomerSession()) return;
+      try {
+        await loadLiveCustomerProfile();
+      } catch (error) {
+        showToast(error.message || "Could not load customer profile");
+      }
+      await loadLiveCustomerSaved();
+    }
+
+    function customerNotificationSettingsPayload() {
+      const settings = {};
+      notificationSettings.querySelectorAll(".switch").forEach((toggle) => {
+        if (toggle.dataset.notificationKey) settings[toggle.dataset.notificationKey] = toggle.classList.contains("on");
+      });
+      return settings;
+    }
+
+    function saveLiveCustomerProfile(update) {
+      if (!isCustomerSession()) return;
+      patchAuthenticatedJson("/api/customer/profile", update).then((data) => {
+        if (data?.profile) liveCustomerProfile = data.profile;
+      }).catch((error) => showToast(error.message || "Could not save customer profile"));
     }
 
     async function loadLiveAdminApprovals() {
@@ -23010,6 +23050,7 @@
       activeDashboardType = "customer";
       liveDancerAnalytics = null;
       liveDancerBilling = null;
+      liveCustomerProfile = null;
       saveAuthSession(null);
       closeDashboard();
       closeDancerDashboard();
@@ -23039,7 +23080,7 @@
       customerDashboard.classList.add("show");
       customerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
-      loadLiveCustomerSaved();
+      loadLiveCustomerDashboardData();
     }
 
     function closeDashboard() {
@@ -23632,7 +23673,7 @@
       notificationSettings.innerHTML = notificationOptions.map((label, index) => `
         <div class="toggle-row">
           <strong>${label}</strong>
-          <button class="switch ${label !== "Any dancer in city" ? "on" : ""}" aria-label="${label}"></button>
+          <button class="switch ${(liveCustomerProfile?.notificationSettings?.[label] ?? label !== "Any dancer in city") ? "on" : ""}" aria-label="${label}" data-notification-key="${label}"></button>
         </div>
       `).join("");
     }
@@ -24765,6 +24806,7 @@
       const toggle = event.target.closest(".switch");
       if (!toggle) return;
       toggle.classList.toggle("on");
+      saveLiveCustomerProfile({ notificationSettings: customerNotificationSettingsPayload() });
     });
 
     customerDashboard.addEventListener("click", (event) => {
@@ -25027,6 +25069,7 @@
       loadLiveDiscovery(citySelect.value);
       if (customerDashboard.classList.contains("show")) renderDashboard();
       if (adminDashboard.classList.contains("show")) renderAdminDashboard();
+      saveLiveCustomerProfile({ city: citySelect.value });
       showToast(`${citySelect.value} loaded`);
     });
 
