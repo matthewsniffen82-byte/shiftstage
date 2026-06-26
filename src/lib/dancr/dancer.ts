@@ -123,6 +123,15 @@ export async function uploadVerificationDocument(client: DancrClient, input: Upl
   return storagePath;
 }
 
+export async function uploadOwnVerificationDocument(
+  client: DancrClient,
+  userId: string,
+  input: UploadVerificationDocumentInput,
+) {
+  await getOwnDancerProfile(client, userId);
+  return uploadVerificationDocument(client, input);
+}
+
 export function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
