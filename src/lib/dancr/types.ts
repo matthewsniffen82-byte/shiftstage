@@ -9,15 +9,17 @@ export type Json =
 export type UserRole = "customer" | "dancer" | "admin";
 export type AccountState = "active" | "disabled" | "deleted";
 export type DancerStatus = "draft" | "pending_review" | "approved" | "rejected" | "disabled";
-export type ShiftStatus = "draft" | "posted" | "cancelled";
+export type ShiftStatus = "draft" | "posted" | "cancelled" | "completed";
+export type ReviewStatus = "pending" | "approved" | "rejected";
 export type SocialPlatform = "instagram" | "tiktok" | "snapchat" | "x" | "onlyfans";
 export type NotificationChannel = "in_app" | "push" | "email";
 export type NotificationType =
   | "shift_posted"
-  | "shift_tonight"
+  | "shift_updated"
   | "shift_cancelled"
   | "ranking_milestone"
-  | "approval_update";
+  | "approval_status"
+  | "weekly_summary";
 
 export type Database = {
   public: {
@@ -102,6 +104,33 @@ export type DancerPhoto = {
   imageUrl: string;
   isPrimary: boolean;
   sortOrder: number;
+  reviewStatus?: ReviewStatus;
+  createdAt?: string;
+};
+
+export type ApprovalReview = {
+  id: string;
+  reviewType: string;
+  status: ReviewStatus;
+  notes: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+};
+
+export type AdminApprovalDancer = {
+  id: string;
+  userId: string;
+  realName: string;
+  stageName: string;
+  slug: string;
+  city: string;
+  bio: string | null;
+  status: DancerStatus;
+  verificationStatus: ReviewStatus;
+  photoReviewStatus: ReviewStatus;
+  createdAt: string;
+  photos: DancerPhoto[];
+  reviews: ApprovalReview[];
 };
 
 export type SocialLink = {

@@ -7,5 +7,9 @@ export function apiError(error: unknown, fallback: string, status = 500) {
     return NextResponse.json({ ok: false, error: message }, { status: 401 });
   }
 
+  if (message === "Admin access required.") {
+    return NextResponse.json({ ok: false, error: message }, { status: 403 });
+  }
+
   return NextResponse.json({ ok: false, error: message }, { status });
 }
