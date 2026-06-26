@@ -168,3 +168,17 @@ export type DancerDashboardAnalytics = {
   notificationsSent30Days: number;
   notificationsOpened30Days: number;
 };
+
+export type DancerWeeklyReport = {
+  periodStart: string;
+  periodEnd: string;
+  startRank: number | null;
+  currentRank: number | null;
+  profileViews: number;
+  followersGained: number;
+  scheduleViews: number;
+  directionRequests: number;
+  goingSignals: number;
+  socialClicks: number;
+  notificationOpens: number;
+};

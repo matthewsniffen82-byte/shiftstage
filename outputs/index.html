@@ -20435,6 +20435,7 @@
     const trendEventStore = loadTrendEventStore();
     const liveMarketState = {};
     let liveDancerAnalytics = null;
+    let liveDancerWeeklyReport = null;
     let liveDancerBilling = null;
     let liveDancerRankingEvents = [];
     let liveDancerReviews = [];
@@ -20783,6 +20784,7 @@
         liveCustomerProfile = null;
         liveNotifications = [];
         liveDancerAnalytics = null;
+        liveDancerWeeklyReport = null;
         liveDancerBilling = null;
         liveDancerRankingEvents = [];
         liveDancerReviews = [];
@@ -21243,6 +21245,18 @@
       } catch (error) {
         liveDancerAnalytics = null;
         showToast(error.message || "Could not load live analytics");
+      }
+    }
+
+    async function loadLiveDancerWeeklyReport() {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/weekly-report");
+        liveDancerWeeklyReport = data.report || null;
+        renderDancerSetup();
+      } catch (error) {
+        liveDancerWeeklyReport = null;
+        showToast(error.message || "Could not load weekly report");
       }
     }
 
@@ -23304,6 +23318,7 @@
       isDancerLoggedIn = false;
       activeDashboardType = "customer";
       liveDancerAnalytics = null;
+      liveDancerWeeklyReport = null;
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
@@ -23370,6 +23385,7 @@
       syncOverlayScrollLock();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
+      loadLiveDancerWeeklyReport();
       loadLiveDancerBilling();
       loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
@@ -23704,7 +23720,13 @@
         const scheduleConversionRate = Math.round((dashboardMetrics.goingTonightClicks / Math.max(1, dashboardMetrics.scheduleViews30)) * 1000) / 10;
         const searchImpressions = dashboardMetrics.searchAppearances + dashboardMetrics.nearbyViews;
         const strongestClub = dashboardMetrics.clubPerformance.find((club) => club.name === dashboardMetrics.venue) || dashboardMetrics.clubPerformance[0] || { name: dashboardMetrics.venue, avgViews: 0 };
-        const weeklySocialClicks = Math.round(totalSocialClicks * .28);
+        const weeklyStartRank = liveDancerWeeklyReport?.startRank || dashboardMetrics.weeklyStartRank;
+        const weeklyEndRank = liveDancerWeeklyReport?.currentRank || dashboardMetrics.weeklyEndRank;
+        const weeklyFollowers = liveDancerWeeklyReport?.followersGained ?? dashboardMetrics.weeklyFollowers;
+        const weeklyViews = liveDancerWeeklyReport?.profileViews ?? dashboardMetrics.weeklyViews;
+        const weeklyGoing = liveDancerWeeklyReport?.goingSignals ?? dashboardMetrics.weeklyGoing;
+        const weeklySocialClicks = liveDancerWeeklyReport?.socialClicks ?? Math.round(totalSocialClicks * .28);
+        const weeklyNotificationOpens = liveDancerWeeklyReport?.notificationOpens ?? Math.round(dashboardMetrics.notificationOpens * .26);
 
         document.getElementById("dancerValueMessage").innerHTML =
           `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`;
@@ -23726,14 +23748,14 @@
         document.getElementById("dancerCustomerImpactDetail").textContent =
           `Dancr generated ${compactNumber(highIntentActions)} high-intent customer actions for you this month.`;
         document.getElementById("dancerWeeklySummary").textContent =
-          `Monday report: #${dashboardMetrics.weeklyStartRank} to #${dashboardMetrics.weeklyEndRank}, ${compactNumber(dashboardMetrics.weeklyFollowers)} new followers, ${compactNumber(dashboardMetrics.weeklyViews)} profile views, and ${compactNumber(dashboardMetrics.weeklyGoing)} Going Tonight signals.`;
+          `Monday report: #${weeklyStartRank} to #${weeklyEndRank}, ${compactNumber(weeklyFollowers)} new followers, ${compactNumber(weeklyViews)} profile views, and ${compactNumber(weeklyGoing)} Going Tonight signals.`;
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
-          metricCardMarkup(`#${dashboardMetrics.weeklyStartRank} → #${dashboardMetrics.weeklyEndRank}`, "Previous rank → current rank"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyFollowers), "New followers"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyViews), "Profile views"),
-          metricCardMarkup(compactNumber(dashboardMetrics.weeklyGoing), "Going Tonight signals"),
+          metricCardMarkup(`#${weeklyStartRank} → #${weeklyEndRank}`, "Previous rank → current rank"),
+          metricCardMarkup(compactNumber(weeklyFollowers), "New followers"),
+          metricCardMarkup(compactNumber(weeklyViews), "Profile views"),
+          metricCardMarkup(compactNumber(weeklyGoing), "Going Tonight signals"),
           metricCardMarkup(compactNumber(weeklySocialClicks), "Social clicks"),
-          metricCardMarkup(compactNumber(Math.round(dashboardMetrics.notificationOpens * .26)), "Notification opens")
+          metricCardMarkup(compactNumber(weeklyNotificationOpens), "Notification opens")
         ].join("");
         document.getElementById("dancerClubSummary").textContent =
           `${dashboardMetrics.venue} is your strongest venue with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`;

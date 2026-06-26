@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ApprovalReview, DancerDashboardAnalytics, SocialPlatform } from "./types";
+import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
 
@@ -224,6 +224,51 @@ export async function getOwnDancerDashboardAnalytics(client: DancrClient, userId
   return getDancerDashboardAnalytics(client, profile.id);
 }
 
+export async function getDancerWeeklyReport(client: DancrClient, dancerId: string): Promise<DancerWeeklyReport> {
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+  const periodEnd = new Date();
+
+  const [
+    profileViews,
+    scheduleViews,
+    directionRequests,
+    goingSignals,
+    socialClicks,
+    notifications,
+    trending,
+    followersGained,
+  ] = await Promise.all([
+    countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", since),
+    countRows(client, "schedule_views", "dancer_id", dancerId, "viewed_at", since),
+    countRows(client, "direction_requests", "dancer_id", dancerId, "requested_at", since),
+    countGoingSignals(client, dancerId, since),
+    getSocialClickCounts(client, dancerId, since),
+    getNotificationCounts(client, dancerId, since),
+    getTrendingSnapshot(client, dancerId),
+    countRows(client, "follows", "dancer_id", dancerId, "created_at", since),
+  ]);
+
+  return {
+    periodStart: since.toISOString(),
+    periodEnd: periodEnd.toISOString(),
+    startRank: trending.previousRank || trending.currentRank,
+    currentRank: trending.currentRank,
+    profileViews,
+    followersGained,
+    scheduleViews,
+    directionRequests,
+    goingSignals,
+    socialClicks: Object.values(socialClicks).reduce((sum, count) => sum + count, 0),
+    notificationOpens: notifications.opened,
+  };
+}
+
+export async function getOwnDancerWeeklyReport(client: DancrClient, userId: string) {
+  const profile = await getOwnDancerProfile(client, userId);
+  return getDancerWeeklyReport(client, profile.id);
+}
+
 export async function getDancerRankingEvents(client: DancrClient, userId: string) {
   const profile = await getOwnDancerProfile(client, userId);
   const { data, error } = await client
@@ -354,6 +399,7 @@ async function getTrendingSnapshot(client: DancrClient, dancerId: string) {
     currentRank: data?.rank || null,
     highestRank: data?.highest_rank || null,
     bestRankThisWeek: data?.best_rank_this_week || null,
+    previousRank: data?.previous_rank || null,
     rankChangeSinceYesterday: data?.previous_rank && data?.rank ? data.previous_rank - data.rank : null,
   };
 }
