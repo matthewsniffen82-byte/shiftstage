@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { ProfileViewTracker } from "./ProfileViewTracker";
 import { SocialLinks } from "./SocialLinks";
 
 export const runtime = "nodejs";
@@ -21,6 +22,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
   return (
     <main className="public-profile-shell">
+      <ProfileViewTracker dancerId={profile.id} />
       <PublicProfileStyles />
       <nav className="public-nav">
         <Link href="/outputs/index.html">Dancr</Link>
