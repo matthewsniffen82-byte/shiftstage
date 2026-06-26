@@ -193,6 +193,42 @@ export async function getDancerDashboardAnalytics(
   };
 }
 
+export async function getDancerRankingEvents(client: DancrClient, userId: string) {
+  const profile = await getOwnDancerProfile(client, userId);
+  const { data, error } = await client
+    .from("ranking_events")
+    .select("id, city, event_type, old_rank, new_rank, message, notified_at, created_at")
+    .eq("dancer_id", profile.id)
+    .order("created_at", { ascending: false })
+    .limit(25);
+
+  if (error) throw error;
+
+  return (data || []).map((event: any) => ({
+    id: event.id,
+    city: event.city,
+    eventType: event.event_type,
+    oldRank: event.old_rank,
+    newRank: event.new_rank,
+    message: event.message,
+    notifiedAt: event.notified_at,
+    createdAt: event.created_at,
+  }));
+}
+
+async function getOwnDancerProfile(client: DancrClient, userId: string) {
+  const { data, error } = await client
+    .from("dancer_profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("Dancer profile not found.");
+
+  return data;
+}
+
 async function countRows(
   client: DancrClient,
   table: string,
