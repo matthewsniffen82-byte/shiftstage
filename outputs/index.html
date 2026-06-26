@@ -20399,6 +20399,7 @@
     const liveMarketState = {};
     let liveDancerAnalytics = null;
     let liveDancerBilling = null;
+    let editingShiftId = null;
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -20558,6 +20559,23 @@
       if (!token) return null;
       const response = await fetch(url, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    async function patchAuthenticatedJson(url, payload) {
+      const token = authSession?.accessToken;
+      if (!token) return null;
+      const response = await fetch(url, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -22242,6 +22260,7 @@
       const profile = activeDancerProfile();
       if (!profile) return;
       if (action === "edit") {
+        editingShiftId = profile.shiftId || null;
         const clubField = document.getElementById("shiftClub");
         if (clubField && profile.venue) clubField.value = profile.venue;
         setFieldValueIfIdle("shiftDate", profile.shiftDate || todayValue(activeDancerCity()));
@@ -22276,6 +22295,15 @@
         renderDancerSetup();
         if (customerDashboard.classList.contains("show")) renderDashboard();
         showToast("Shift removed");
+        if (profile.shiftId && isDancerSession()) {
+          patchAuthenticatedJson("/api/dancer/shifts", {
+            shiftId: profile.shiftId,
+            status: "cancelled"
+          }).then((data) => {
+            if (data) showToast("Live shift cancelled");
+          }).catch((error) => showToast(error.message || "Could not cancel live shift"));
+        }
+        editingShiftId = null;
       }
     }
 
@@ -22296,6 +22324,7 @@
       const name = cleanDisplayValue(activeDancerName());
       const time = formatShiftTime(startValue, endValue);
       const existing = market.dancers.find((profile) => profile.name === name);
+      const wasScheduled = Boolean(existing?.scheduled);
       const shiftData = {
         name,
         status: "Verified",
@@ -22309,6 +22338,7 @@
         shiftStart: startValue,
         shiftEnd: endValue,
         shiftLabel: formatDateLabel(dateValue, city),
+        shiftId: existing?.shiftId || editingShiftId || "",
         repeat,
         notes,
         socials: existing?.socials || { ...dancerSignupSocials }
@@ -22319,8 +22349,10 @@
         market.dancers.push(shiftData);
         market.stats.dancers += 1;
       }
-      if (venue) venue.shifts += 1;
-      market.stats.shifts += 1;
+      if (!wasScheduled) {
+        if (venue) venue.shifts += 1;
+        market.stats.shifts += 1;
+      }
       dancerSetup.shift = true;
       citySelect.value = city;
       selectedVenueName = null;
@@ -22337,18 +22369,23 @@
       showToast(noticeText);
       if (venue?.id) {
         const range = shiftIsoRange(dateValue, startValue, endValue);
-        postAuthenticatedJson("/api/dancer/shifts", {
+        const payload = {
           venueId: venue.id,
           startsAt: range.startsAt,
           endsAt: range.endsAt,
           timezone: timeZoneByCity[city] || "America/Los_Angeles"
-        }).then((data) => {
-          if (!data?.shiftId) return;
+        };
+        const request = editingShiftId
+          ? patchAuthenticatedJson("/api/dancer/shifts", { ...payload, shiftId: editingShiftId, status: "posted" })
+          : postAuthenticatedJson("/api/dancer/shifts", payload);
+        request.then((data) => {
+          if (!data) return;
           const postedProfile = market.dancers.find((profile) => profile.name === name);
-          if (postedProfile) postedProfile.shiftId = data.shiftId;
+          if (postedProfile && data.shiftId) postedProfile.shiftId = data.shiftId;
           document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
         }).catch((error) => showToast(error.message || "Could not save live shift"));
       }
+      editingShiftId = null;
     }
 
     function venueDetails(venue, city) {
