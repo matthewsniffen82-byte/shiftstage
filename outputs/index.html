@@ -19657,12 +19657,12 @@
             </div>
             <span class="badge">Recurring</span>
           </div>
-          <div class="rule-note">Stripe handles card details. This authorizes the subscription. Charge/capture waits for approval.</div>
+          <div class="rule-note">Stripe handles card details. Subscription checkout is available after profile approval.</div>
           <div class="info-tile">
             <strong>Payment rule</strong>
-            <div class="meta">Rejected profiles stay private and are not charged/captured.</div>
+            <div class="meta">Rejected profiles stay private and cannot start paid profile billing.</div>
           </div>
-          <button class="action-btn" id="stripeConfirmBtn">Authorize with Stripe</button>
+          <button class="action-btn" id="stripeConfirmBtn">Continue to Stripe</button>
         </div>
       </div>
     </section>
@@ -19983,10 +19983,10 @@
         </div>
         <div class="auth-card">
           <h3>Payment authorization</h3>
-          <div class="rule-note">Stripe confirmed the payment method and prepared the recurring subscription. Public profile activation waits for platform approval.</div>
+          <div class="rule-note">Stripe checkout starts after platform approval. Public profile billing is managed from this dashboard.</div>
           <div class="info-tile">
             <strong>Subscription state</strong>
-            <div class="meta">Recurring until canceled. Not captured while approval is pending.</div>
+            <div class="meta">Recurring until canceled once the subscription is active.</div>
           </div>
           <button class="action-btn secondary" id="billingPortalBtn">Manage subscription</button>
         </div>
@@ -20398,6 +20398,7 @@
     const trendEventStore = loadTrendEventStore();
     const liveMarketState = {};
     let liveDancerAnalytics = null;
+    let liveDancerBilling = null;
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -20828,6 +20829,65 @@
         liveDancerAnalytics = null;
         showToast(error.message || "Could not load live analytics");
       }
+    }
+
+    async function loadLiveDancerBilling() {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/billing");
+        liveDancerBilling = data.billing || null;
+        renderDancerSetup();
+      } catch (error) {
+        liveDancerBilling = null;
+        showToast(error.message || "Could not load billing status");
+      }
+    }
+
+    function isLiveSubscriptionActive(subscription) {
+      return subscription?.status === "active" || subscription?.status === "trialing";
+    }
+
+    function formatBillingDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function dancerBillingSummary(approved) {
+      const subscription = liveDancerBilling?.subscription;
+      const status = subscription?.status || "not_started";
+      const periodEnd = formatBillingDate(subscription?.currentPeriodEnd);
+      if (!approved) {
+        return {
+          label: "Starts after approval",
+          detail: "Checkout stays locked until photos, verification, and platform review are approved.",
+          action: "Start subscription"
+        };
+      }
+      if (isLiveSubscriptionActive(subscription)) {
+        return {
+          label: "$9.99/mo active",
+          detail: periodEnd
+            ? `Subscription is active and renews on ${periodEnd}. Manage subscription opens Stripe billing.`
+            : "Subscription is active and recurring. Manage subscription opens Stripe billing.",
+          action: "Manage subscription"
+        };
+      }
+      if (subscription?.hasStripeSubscription) {
+        return {
+          label: status.replaceAll("_", " "),
+          detail: periodEnd
+            ? `Stripe subscription is ${status.replaceAll("_", " ")} through ${periodEnd}.`
+            : `Stripe subscription is ${status.replaceAll("_", " ")}.`,
+          action: "Manage subscription"
+        };
+      }
+      return {
+        label: "Ready for checkout",
+        detail: "Profile is approved. Start the $9.99/month Stripe subscription to keep the public profile active.",
+        action: "Start subscription"
+      };
     }
 
     function liveMetricNumber(value, fallback = 0) {
@@ -22747,6 +22807,7 @@
       isDancerLoggedIn = false;
       activeDashboardType = "customer";
       liveDancerAnalytics = null;
+      liveDancerBilling = null;
       saveAuthSession(null);
       closeDashboard();
       closeDancerDashboard();
@@ -22785,7 +22846,7 @@
     }
 
     function openDancerDashboard() {
-      if (!stripeConfirmed) {
+      if (!stripeConfirmed && !isDancerSession()) {
         if (dancerSignupStarted) {
           openStripeCheckoutPage();
         } else {
@@ -22804,6 +22865,7 @@
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
       loadLiveDancerAnalytics();
+      loadLiveDancerBilling();
     }
 
     function closeDancerDashboard() {
@@ -22980,7 +23042,8 @@
       const dancerName = activeDancerName();
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
-      const approved = dancerSetup.approval || activeProfile?.status === "Verified";
+      const approved = dancerSetup.approval || activeProfile?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved";
+      const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
       dancerDashboard.classList.toggle("is-approved", approved);
@@ -23005,11 +23068,11 @@
       if (approvalExpand) {
         approvalExpand.textContent = approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
       }
-      document.getElementById("dancerSubscriptionStatus").textContent = approved ? "$9.99/mo active" : "Authorized after approval";
+      document.getElementById("dancerSubscriptionStatus").textContent = billingSummary.label;
       document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Pending review";
-      document.getElementById("dancerSubscriptionDetail").textContent = approved
-        ? "Subscription is active and recurring. Manage subscription opens Stripe billing when connected."
-        : "Payment method is authorized, but the $9.99/month subscription only activates after dancer approval.";
+      document.getElementById("dancerSubscriptionDetail").textContent = billingSummary.detail;
+      const billingButton = document.getElementById("billingPortalBtn");
+      if (billingButton) billingButton.textContent = billingSummary.action;
       document.getElementById("dancerPublicDetail").textContent = approved
         ? "Customers can discover this profile, follow it, view schedules, and request venue directions."
         : "Profile, gallery, schedule posting, and public discovery stay locked until photos and verification are approved.";
@@ -24212,7 +24275,12 @@
         activeSetupStep = "profile";
         activeDashboardType = "dancer";
         showToast(result.requiresEmailConfirmation ? "Dancer account created. Check your email to confirm." : "Dancer account created");
-        openStripeCheckoutPage();
+        if (result.session) {
+          isCustomerLoggedIn = false;
+          isDancerLoggedIn = true;
+          updateAccountHeader();
+          openDancerDashboard();
+        }
       } catch (error) {
         showToast(error.message || "Dancer signup failed");
       } finally {
@@ -24220,20 +24288,54 @@
       }
     });
 
-    document.getElementById("stripeConfirmBtn").addEventListener("click", () => {
-      stripeConfirmed = true;
-      isCustomerLoggedIn = false;
-      isDancerLoggedIn = true;
-      activeDashboardType = "dancer";
-      updateAccountHeader();
-      closeStripeCheckoutPage();
-      showToast("Stripe authorization confirmed");
-      openDancerDashboard();
+    async function startLiveStripeCheckout(button) {
+      if (!isDancerSession()) {
+        stripeConfirmed = true;
+        isCustomerLoggedIn = false;
+        isDancerLoggedIn = true;
+        activeDashboardType = "dancer";
+        updateAccountHeader();
+        closeStripeCheckoutPage();
+        showToast("Stripe demo confirmed");
+        openDancerDashboard();
+        return;
+      }
+      button.disabled = true;
+      try {
+        const data = await postAuthenticatedJson("/api/dancer/billing/checkout", {});
+        if (!data?.checkoutUrl) throw new Error("Stripe checkout URL missing.");
+        window.location.href = data.checkoutUrl;
+      } catch (error) {
+        showToast(error.message || "Could not start Stripe checkout");
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById("stripeConfirmBtn").addEventListener("click", (event) => {
+      startLiveStripeCheckout(event.currentTarget);
     });
 
-    document.getElementById("billingPortalBtn").addEventListener("click", () => {
-      showToast("Opening Stripe billing portal");
-      window.open("https://billing.stripe.com/", "_blank", "noreferrer");
+    document.getElementById("billingPortalBtn").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      if (!isDancerSession()) {
+        showToast("Opening Stripe billing portal");
+        window.open("https://billing.stripe.com/", "_blank", "noreferrer");
+        return;
+      }
+      const subscription = liveDancerBilling?.subscription;
+      const endpoint = subscription?.hasStripeSubscription ? "/api/dancer/billing/portal" : "/api/dancer/billing/checkout";
+      button.disabled = true;
+      try {
+        const data = await postAuthenticatedJson(endpoint, {});
+        const url = data?.portalUrl || data?.checkoutUrl;
+        if (!url) throw new Error("Stripe URL missing.");
+        window.location.href = url;
+      } catch (error) {
+        showToast(error.message || "Could not open Stripe billing");
+      } finally {
+        button.disabled = false;
+      }
     });
 
     dashTonightViewAll.addEventListener("click", () => {
