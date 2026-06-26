@@ -27,6 +27,17 @@ export type AdminVenueInput = {
   isActive?: boolean;
 };
 
+type TrendingMetricCounts = {
+  profileViews: number;
+  scheduleViews: number;
+  followers: number;
+  favorites: number;
+  directionRequests: number;
+  goingSignals: number;
+  notificationOpens: number;
+  socialClicks: number;
+};
+
 export async function requireAdmin(client: DancrClient, userId: string) {
   const { data, error } = await client
     .from("app_users")
@@ -217,6 +228,117 @@ export async function getAdminSubscriptions(client: DancrClient, status?: string
   });
 }
 
+export async function recalculateCityRankings(client: DancrClient, adminId: string, city: string) {
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+
+  const { data: dancers, error } = await (client as any)
+    .from("dancer_profiles")
+    .select("id, user_id, stage_name, city, trending_scores(rank, highest_rank, best_rank_this_week)")
+    .eq("status", "approved")
+    .eq("city", city);
+
+  if (error) throw error;
+
+  const scored = await Promise.all(
+    (dancers || []).map(async (dancer: any) => {
+      const metrics = await getTrendingMetricCounts(client, dancer.id, since);
+      const previous = Array.isArray(dancer.trending_scores) ? dancer.trending_scores[0] : dancer.trending_scores;
+
+      return {
+        dancer,
+        metrics,
+        previousRank: previous?.rank || null,
+        previousHighestRank: previous?.highest_rank || null,
+        previousBestRankThisWeek: previous?.best_rank_this_week || null,
+        score: calculateTrendingScore(metrics),
+      };
+    }),
+  );
+
+  scored.sort((a, b) => b.score - a.score || a.dancer.stage_name.localeCompare(b.dancer.stage_name));
+
+  const calculatedAt = new Date().toISOString();
+  const rankingRows = scored.map((entry, index) => {
+    const rank = index + 1;
+    const highestRank = entry.previousHighestRank
+      ? Math.min(entry.previousHighestRank, rank)
+      : rank;
+    const bestRankThisWeek = entry.previousBestRankThisWeek
+      ? Math.min(entry.previousBestRankThisWeek, rank)
+      : rank;
+
+    return {
+      dancer_id: entry.dancer.id,
+      city,
+      score: entry.score,
+      rank,
+      previous_rank: entry.previousRank,
+      highest_rank: highestRank,
+      best_rank_this_week: bestRankThisWeek,
+      trend: getRankTrend(entry.previousRank, rank),
+      calculated_at: calculatedAt,
+    };
+  });
+
+  if (rankingRows.length) {
+    const { error: upsertError } = await (client as any)
+      .from("trending_scores")
+      .upsert(rankingRows, { onConflict: "dancer_id" });
+
+    if (upsertError) throw upsertError;
+  }
+
+  const milestoneRows = scored
+    .map((entry, index) => getRankingMilestone(entry.dancer, city, entry.previousRank, index + 1))
+    .filter(Boolean);
+
+  if (milestoneRows.length) {
+    const { error: eventError } = await (client as any).from("ranking_events").insert(
+      milestoneRows.map((event: any) => ({
+        dancer_id: event.dancer_id,
+        city: event.city,
+        event_type: event.event_type,
+        old_rank: event.old_rank,
+        new_rank: event.new_rank,
+        message: event.message,
+        notified_at: event.notified_at,
+      })),
+    );
+    if (eventError) throw eventError;
+
+    const { error: notificationError } = await (client as any).from("notifications").insert(
+      milestoneRows.map((event: any) => ({
+        recipient_id: event.userId,
+        notification_type: "ranking_milestone",
+        channel: "in_app",
+        title: "Trending ranking update",
+        body: event.message,
+        payload: {
+          dancerId: event.dancer_id,
+          city: event.city,
+          oldRank: event.old_rank,
+          newRank: event.new_rank,
+          eventType: event.event_type,
+        },
+        sent_at: calculatedAt,
+      })),
+    );
+
+    if (notificationError) throw notificationError;
+  }
+
+  await logAdminAction(client, {
+    adminId,
+    targetType: "city",
+    targetId: "00000000-0000-0000-0000-000000000000",
+    action: "recalculate_rankings",
+    notes: `${city}: ${rankingRows.length} dancers`,
+  });
+
+  return rankingRows;
+}
+
 export async function reviewDancerProfile(client: DancrClient, input: ReviewDancerInput) {
   if (!REVIEW_STATUSES.has(input.status)) {
     throw new Error("Review status must be approved or rejected.");
@@ -295,6 +417,133 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
     status: approved ? "approved" : "rejected",
     reviewedAt,
   };
+}
+
+async function getTrendingMetricCounts(client: DancrClient, dancerId: string, since: Date): Promise<TrendingMetricCounts> {
+  const [
+    profileViews,
+    scheduleViews,
+    followers,
+    favorites,
+    directionRequests,
+    goingSignals,
+    notificationOpens,
+    socialClicks,
+  ] = await Promise.all([
+    countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", since),
+    countRows(client, "schedule_views", "dancer_id", dancerId, "viewed_at", since),
+    countRows(client, "follows", "dancer_id", dancerId, "created_at", since),
+    countRows(client, "favorites", "dancer_id", dancerId, "created_at", since),
+    countRows(client, "direction_requests", "dancer_id", dancerId, "requested_at", since),
+    countGoingSignals(client, dancerId, since),
+    countNotificationOpens(client, dancerId, since),
+    countRows(client, "social_clicks", "dancer_id", dancerId, "clicked_at", since),
+  ]);
+
+  return {
+    profileViews,
+    scheduleViews,
+    followers,
+    favorites,
+    directionRequests,
+    goingSignals,
+    notificationOpens,
+    socialClicks,
+  };
+}
+
+async function countRows(
+  client: DancrClient,
+  table: string,
+  idColumn: string,
+  idValue: string,
+  dateColumn: string,
+  since: Date,
+) {
+  const { count, error } = await (client as any)
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq(idColumn, idValue)
+    .gte(dateColumn, since.toISOString());
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countGoingSignals(client: DancrClient, dancerId: string, since: Date) {
+  const { count, error } = await (client as any)
+    .from("going_signals")
+    .select("shift_id, shifts!inner(dancer_id)", { count: "exact", head: true })
+    .eq("shifts.dancer_id", dancerId)
+    .gte("created_at", since.toISOString());
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countNotificationOpens(client: DancrClient, dancerId: string, since: Date) {
+  const { count, error } = await (client as any)
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .contains("payload", { dancerId })
+    .not("read_at", "is", null)
+    .gte("created_at", since.toISOString());
+
+  if (error) throw error;
+  return count || 0;
+}
+
+function calculateTrendingScore(metrics: TrendingMetricCounts) {
+  return (
+    metrics.profileViews * 1 +
+    metrics.scheduleViews * 2 +
+    metrics.followers * 7 +
+    metrics.favorites * 6 +
+    metrics.directionRequests * 8 +
+    metrics.goingSignals * 9 +
+    metrics.notificationOpens * 5 +
+    metrics.socialClicks * 3
+  );
+}
+
+function getRankTrend(previousRank: number | null, rank: number) {
+  if (!previousRank) return "new";
+  if (previousRank > rank) return "rising";
+  if (previousRank < rank) return "falling";
+  return "stable";
+}
+
+function getRankingMilestone(dancer: any, city: string, oldRank: number | null, newRank: number) {
+  const milestone = getMilestoneType(oldRank, newRank);
+  if (!milestone) return null;
+
+  const message = getMilestoneMessage(dancer.stage_name, city, oldRank, newRank, milestone);
+
+  return {
+    dancer_id: dancer.id,
+    userId: dancer.user_id,
+    city,
+    event_type: milestone,
+    old_rank: oldRank,
+    new_rank: newRank,
+    message,
+    notified_at: new Date().toISOString(),
+  };
+}
+
+function getMilestoneType(oldRank: number | null, newRank: number) {
+  if (newRank === 1 && oldRank !== 1) return "number_one";
+  if (newRank <= 10 && (!oldRank || oldRank > 10)) return "entered_top_10";
+  if (!oldRank) return "first_time_trending";
+  if (oldRank - newRank >= 3) return "moved_up_3_plus";
+  return null;
+}
+
+function getMilestoneMessage(stageName: string, city: string, oldRank: number | null, newRank: number, milestone: string) {
+  if (milestone === "number_one") return `${stageName} reached #1 Trending in ${city}.`;
+  if (milestone === "entered_top_10") return `${stageName} entered the Top 10 Trending in ${city}.`;
+  if (milestone === "moved_up_3_plus") return `${stageName} moved from #${oldRank} to #${newRank} Trending in ${city}.`;
+  return `${stageName} is now #${newRank} Trending in ${city}.`;
 }
 
 function venueInputToRow(input: AdminVenueInput, creating: boolean) {
