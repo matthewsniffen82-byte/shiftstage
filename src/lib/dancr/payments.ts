@@ -82,6 +82,21 @@ export async function createDancerBillingPortalSession(client: DancrClient, user
   return { portalUrl: session.url };
 }
 
+export async function getDancerBillingStatus(client: DancrClient, userId: string) {
+  const dancer = await getBillingDancer(client, userId);
+  const subscription = await getSubscriptionRow(client, dancer.id);
+
+  return {
+    dancerStatus: dancer.status,
+    subscription: {
+      status: subscription?.status || "not_started",
+      currentPeriodEnd: subscription?.current_period_end || null,
+      hasStripeCustomer: Boolean(subscription?.stripe_customer_id),
+      hasStripeSubscription: Boolean(subscription?.stripe_subscription_id),
+    },
+  };
+}
+
 export async function syncStripeSubscription(client: DancrClient, subscription: Stripe.Subscription) {
   const dancerId = subscription.metadata?.dancerId;
   if (!dancerId) return;
@@ -166,7 +181,7 @@ async function getOrCreateStripeCustomer(
 async function getSubscriptionRow(client: DancrClient, dancerId: string) {
   const { data, error } = await (client as any)
     .from("subscriptions")
-    .select("stripe_customer_id, stripe_subscription_id, status")
+    .select("stripe_customer_id, stripe_subscription_id, status, current_period_end")
     .eq("dancer_id", dancerId)
     .maybeSingle();
 
