@@ -20473,6 +20473,38 @@
       showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1900);
     }
 
+    function dancrLiveSessionId() {
+      const key = "dancr_live_session_id";
+      let id = localStorage.getItem(key);
+      if (!id) {
+        id = `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem(key, id);
+      }
+      return id;
+    }
+
+    function recordLiveEvent(type, details = {}) {
+      if (window.location.protocol === "file:") return;
+      try {
+        const payload = JSON.stringify({
+          type,
+          city: selectedCity(),
+          sessionId: dancrLiveSessionId(),
+          ...details,
+        });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/api/events", new Blob([payload], { type: "application/json" }));
+          return;
+        }
+        fetch("/api/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      } catch (error) {}
+    }
+
     function resetAccountControl(role) {
       if (!accountControlState[role]) return;
       accountControlState[role].disabled = false;
@@ -22159,6 +22191,10 @@
         recordUniqueTrendEvent("profileViews", city, profileName);
         if (baseProfile.scheduled) recordUniqueTrendEvent("scheduleViews", city, profileName);
       }
+      recordLiveEvent("profile_view", { dancerName: profileName, source: "profile_modal" });
+      if (baseProfile?.scheduled) {
+        recordLiveEvent("schedule_view", { dancerName: profileName, source: "profile_modal" });
+      }
       const profile = findProfile(profileName);
       if (!profile) return;
 
@@ -23240,6 +23276,7 @@
         markets[city].dancers
           .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
           .forEach((profile) => recordUniqueTrendEvent("directionRequests", city, profile.name));
+        recordLiveEvent("direction_request", { venueName, source: "venue_detail" });
         return;
       }
       const followVenueButton = event.target.closest("[data-venue-follow]");
@@ -23378,6 +23415,7 @@
       const profileName = qrButton.dataset.profileQr;
       if (!profileName) return true;
       openQrOverlay(profileName, qrButton.dataset.shareCity || selectedCity(), qrButton);
+      recordLiveEvent("profile_action", { dancerName: profileName, source: "qr_opened" });
       return true;
     }
 
@@ -23396,12 +23434,14 @@
       }
       const nativeButton = event.target.closest("[data-native-share]");
       if (nativeButton) {
+        recordLiveEvent("profile_action", { dancerName: nativeButton.dataset.nativeShare, source: "share_opened" });
         runShareAction(nativeButton.dataset.nativeShare, nativeButton.dataset.shareCity || selectedCity());
         return true;
       }
       const socialShare = event.target.closest("[data-social-share]");
       if (socialShare) {
         recordUniqueTrendEvent("socialClicks", socialShare.dataset.shareCity || selectedCity(), socialShare.dataset.profile);
+        recordLiveEvent("profile_action", { dancerName: socialShare.dataset.profile, source: `share_${socialShare.dataset.socialShare}` });
         showToast(`${socialShare.dataset.socialShare} share opened`);
         return false;
       }
@@ -23422,6 +23462,9 @@
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
         recordUniqueTrendEvent("socialClicks", citySelect.value, socialLink.dataset.profile);
+        if (socialLink.dataset.social) {
+          recordLiveEvent("social_click", { dancerName: socialLink.dataset.profile, platform: socialLink.dataset.social, source: "profile_modal" });
+        }
         return;
       }
       const venueLink = event.target.closest("[data-open-venue]");
@@ -23436,13 +23479,6 @@
       }
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn");
       if (!actionButton) return;
-      if (actionButton.id === "followBtn" && !isCustomerLoggedIn) {
-        setCustomerAuthMode("login");
-        closeProfileModal();
-        openAuthPage();
-        showToast("Log in or join to follow dancers.");
-        return;
-      }
       if (actionButton.id === "followBtn") {
         const profileName = actionButton.dataset.profile;
         const city = citySelect.value;
@@ -23453,11 +23489,13 @@
           followedList.splice(followIndex, 1);
           actionButton.innerHTML = actionButtonLabel("heart", "Follow");
           actionButton.classList.remove("is-following");
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "follow_removed" });
           showToast("Unfollowed profile");
         } else {
           followedList.push(profileName);
           enableProfileNotifications(city, profileName);
           recordUniqueTrendEvent("favorites", city, profileName);
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "follow_added" });
           actionButton.innerHTML = actionButtonLabel("check", "Following");
           actionButton.classList.add("is-following");
           const notifyButton = document.getElementById("notifyBtn");
@@ -23480,11 +23518,13 @@
           disableProfileNotifications(city, profileName);
           actionButton.innerHTML = actionButtonLabel("bell", "Notify Me");
           actionButton.classList.remove("is-following");
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "notify_removed" });
           showToast("Notifications off");
         } else {
           enableProfileNotifications(city, profileName);
           actionButton.innerHTML = actionButtonLabel("check", "Notifications On");
           actionButton.classList.add("is-following");
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "notify_added" });
           showToast("Notifications on");
         }
         if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -23507,6 +23547,7 @@
         const idleLabel = isTonightShift ? "I'm Going Tonight" : "I'm Going";
         const activeLabel = isTonightShift ? "You're going tonight" : "You're going";
         actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? idleLabel : activeLabel);
+        recordLiveEvent("schedule_action", { dancerName: profileName, source: wasGoing ? "going_removed" : isTonightShift ? "going_tonight_added" : "going_upcoming_added" });
         showToast(wasGoing ? "Removed" : isTonightShift ? "Added to tonight" : "Added to upcoming shift");
       }
     });

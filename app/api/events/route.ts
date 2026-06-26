@@ -6,46 +6,59 @@ export const dynamic = "force-dynamic";
 
 const socialPlatforms = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
 
+type EventBody = Record<string, unknown>;
+type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as EventBody;
     const client = createAdminSupabaseClient();
-    const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
+    const type = text(body.type);
+    const sessionId = text(body.sessionId);
+    const viewerId = text(body.viewerId);
 
-    if (body.type === "profile_view") {
-      if (!body.dancerId) return missing("dancerId");
+    if (!type) return missing("type");
+
+    if (type === "profile_view" || type === "profile_action") {
+      const dancerId = await resolveDancerId(client, body);
+      if (!dancerId) return missing("dancerId or dancerName");
       const { error } = await client.from("profile_views").insert({
-        dancer_id: body.dancerId,
-        viewer_id: body.viewerId || null,
-        source: body.source || "web",
+        dancer_id: dancerId,
+        viewer_id: viewerId,
+        source: text(body.source) || (type === "profile_action" ? "profile_action" : "web"),
         session_id: sessionId,
       });
       if (error) throw error;
-    } else if (body.type === "schedule_view") {
-      if (!body.dancerId) return missing("dancerId");
+    } else if (type === "schedule_view" || type === "schedule_action") {
+      const dancerId = await resolveDancerId(client, body);
+      if (!dancerId) return missing("dancerId or dancerName");
       const { error } = await client.from("schedule_views").insert({
-        dancer_id: body.dancerId,
-        shift_id: body.shiftId || null,
-        viewer_id: body.viewerId || null,
+        dancer_id: dancerId,
+        shift_id: text(body.shiftId),
+        viewer_id: viewerId,
         session_id: sessionId,
       });
       if (error) throw error;
-    } else if (body.type === "direction_request") {
-      if (!body.venueId) return missing("venueId");
+    } else if (type === "direction_request") {
+      const venueId = await resolveVenueId(client, body);
+      if (!venueId) return missing("venueId or venueName");
+      const dancerId = await resolveDancerId(client, body);
       const { error } = await client.from("direction_requests").insert({
-        dancer_id: body.dancerId || null,
-        venue_id: body.venueId,
-        requester_id: body.viewerId || null,
+        dancer_id: dancerId,
+        venue_id: venueId,
+        requester_id: viewerId,
         session_id: sessionId,
       });
       if (error) throw error;
-    } else if (body.type === "social_click") {
-      if (!body.dancerId) return missing("dancerId");
-      if (!socialPlatforms.has(body.platform)) return missing("valid platform");
+    } else if (type === "social_click") {
+      const dancerId = await resolveDancerId(client, body);
+      const platform = text(body.platform);
+      if (!dancerId) return missing("dancerId or dancerName");
+      if (!platform || !socialPlatforms.has(platform)) return missing("valid platform");
       const { error } = await client.from("social_clicks").insert({
-        dancer_id: body.dancerId,
-        platform: body.platform,
-        clicker_id: body.viewerId || null,
+        dancer_id: dancerId,
+        platform,
+        clicker_id: viewerId,
         session_id: sessionId,
       });
       if (error) throw error;
@@ -60,6 +73,89 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+function text(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/['']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function resolveDancerId(client: AdminClient, body: EventBody) {
+  const explicitId = text(body.dancerId);
+  if (explicitId) return explicitId;
+
+  const city = text(body.city) || "Las Vegas";
+  const explicitSlug = text(body.dancerSlug);
+  const name = text(body.dancerName) || text(body.profileName);
+  const slug = explicitSlug || (name ? slugify(name) : null);
+
+  if (slug) {
+    const { data } = await client
+      .from("dancer_profiles")
+      .select("id")
+      .eq("city", city)
+      .eq("slug", slug)
+      .eq("status", "approved")
+      .maybeSingle();
+    const row = data as { id?: string } | null;
+    if (row?.id) return row.id;
+  }
+
+  if (name) {
+    const { data } = await client
+      .from("dancer_profiles")
+      .select("id")
+      .eq("city", city)
+      .ilike("stage_name", name)
+      .eq("status", "approved")
+      .maybeSingle();
+    const row = data as { id?: string } | null;
+    if (row?.id) return row.id;
+  }
+
+  return null;
+}
+
+async function resolveVenueId(client: AdminClient, body: EventBody) {
+  const explicitId = text(body.venueId);
+  if (explicitId) return explicitId;
+
+  const city = text(body.city) || "Las Vegas";
+  const explicitSlug = text(body.venueSlug);
+  const name = text(body.venueName);
+  const slug = explicitSlug || (name ? slugify(name) : null);
+
+  if (slug) {
+    const { data } = await client
+      .from("venues")
+      .select("id")
+      .eq("city", city)
+      .eq("slug", slug)
+      .maybeSingle();
+    const row = data as { id?: string } | null;
+    if (row?.id) return row.id;
+  }
+
+  if (name) {
+    const { data } = await client
+      .from("venues")
+      .select("id")
+      .eq("city", city)
+      .ilike("name", name)
+      .maybeSingle();
+    const row = data as { id?: string } | null;
+    if (row?.id) return row.id;
+  }
+
+  return null;
 }
 
 function missing(name: string) {
