@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, UserRole } from "./types";
+import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json, UserRole } from "./types";
 
 type DancrClient = SupabaseClient;
 
@@ -202,6 +202,31 @@ export async function getCustomerProfile(client: DancrClient, userId: string): P
 
   if (error) throw error;
   if (!data) return null;
+
+  return {
+    userId: data.user_id,
+    city: data.city,
+    notificationSettings: data.notification_settings,
+  };
+}
+
+export async function updateCustomerProfile(
+  client: DancrClient,
+  userId: string,
+  input: { city?: string; notificationSettings?: Record<string, Json> },
+): Promise<CustomerProfile> {
+  const update: Record<string, string | Record<string, Json>> = {};
+  if (typeof input.city === "string") update.city = input.city;
+  if (input.notificationSettings) update.notification_settings = input.notificationSettings;
+
+  const { data, error } = await client
+    .from("customer_profiles")
+    .update(update)
+    .eq("user_id", userId)
+    .select("user_id, city, notification_settings")
+    .single();
+
+  if (error) throw error;
 
   return {
     userId: data.user_id,
