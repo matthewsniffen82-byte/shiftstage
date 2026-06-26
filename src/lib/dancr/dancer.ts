@@ -193,6 +193,11 @@ export async function getDancerDashboardAnalytics(
   };
 }
 
+export async function getOwnDancerDashboardAnalytics(client: DancrClient, userId: string) {
+  const profile = await getOwnDancerProfile(client, userId);
+  return getDancerDashboardAnalytics(client, profile.id);
+}
+
 export async function getDancerRankingEvents(client: DancrClient, userId: string) {
   const profile = await getOwnDancerProfile(client, userId);
   const { data, error } = await client
