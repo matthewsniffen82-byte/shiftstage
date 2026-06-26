@@ -4,5 +4,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export function GET() {
-  return NextResponse.json({ ok: true, service: "dancr-api" });
+  return NextResponse.json({
+    ok: true,
+    service: "dancr-api",
+    version: "health-route-2026-06-26",
+  });
 }
