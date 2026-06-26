@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DancerDashboardAnalytics, SocialPlatform } from "./types";
+import type { ApprovalReview, DancerDashboardAnalytics, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
 
@@ -244,6 +244,26 @@ export async function getDancerRankingEvents(client: DancrClient, userId: string
     message: event.message,
     notifiedAt: event.notified_at,
     createdAt: event.created_at,
+  }));
+}
+
+export async function getOwnDancerApprovalReviews(client: DancrClient, userId: string): Promise<ApprovalReview[]> {
+  const profile = await getOwnDancerProfile(client, userId);
+  const { data, error } = await client
+    .from("approval_reviews")
+    .select("id, review_type, status, notes, created_at, reviewed_at")
+    .eq("dancer_id", profile.id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map((review: any) => ({
+    id: review.id,
+    reviewType: review.review_type,
+    status: review.status,
+    notes: review.notes,
+    createdAt: review.created_at,
+    reviewedAt: review.reviewed_at,
   }));
 }
 
