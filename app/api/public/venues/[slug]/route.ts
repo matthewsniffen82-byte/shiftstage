@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { data, error } = await client
       .from("shifts")
-      .select("id, dancer_id, starts_at, ends_at, status, dancer_profiles(id, slug, stage_name, status)")
+      .select("id, dancer_id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status)")
       .eq("venue_id", venue.id)
       .eq("status", "posted")
       .gte("starts_at", new Date().toISOString())
@@ -38,6 +38,7 @@ export async function GET(_request: Request, context: RouteContext) {
         dancerStageName: shift.dancer_profiles.stage_name,
         startsAt: shift.starts_at,
         endsAt: shift.ends_at,
+        timezone: shift.timezone,
         status: shift.status,
       }));
 

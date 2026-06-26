@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { isValidShiftRange } from "@/src/lib/dancr/schedule";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -39,6 +40,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Missing venueId, startsAt, or endsAt." }, { status: 400 });
     }
 
+    if (!isValidShiftRange(body.startsAt, body.endsAt)) {
+      return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
+    }
+
+    const venue = await getVenueForShift(client as any, body.venueId);
+    const timezone = typeof body.timezone === "string" ? body.timezone : venue.timezone;
+
     const { data, error } = await (client as any)
       .from("shifts")
       .insert({
@@ -46,7 +54,7 @@ export async function POST(request: Request) {
         venue_id: body.venueId,
         starts_at: body.startsAt,
         ends_at: body.endsAt,
-        timezone: body.timezone || "America/Los_Angeles",
+        timezone,
         status: "posted",
       })
       .select("id")
@@ -81,12 +89,23 @@ export async function PATCH(request: Request) {
     }
 
     const dancer = await getOwnDancerProfile(client as any, user.id);
+    const existingShift = await getOwnShift(client as any, dancer.id, body.shiftId);
     const update: Record<string, string> = {};
-    if (typeof body.venueId === "string") update.venue_id = body.venueId;
+    if (typeof body.venueId === "string") {
+      const venue = await getVenueForShift(client as any, body.venueId);
+      update.venue_id = body.venueId;
+      update.timezone = venue.timezone;
+    }
     if (typeof body.startsAt === "string") update.starts_at = body.startsAt;
     if (typeof body.endsAt === "string") update.ends_at = body.endsAt;
     if (typeof body.timezone === "string") update.timezone = body.timezone;
     if (["posted", "cancelled", "draft"].includes(body.status)) update.status = body.status;
+
+    const nextStartsAt = update.starts_at || existingShift.starts_at;
+    const nextEndsAt = update.ends_at || existingShift.ends_at;
+    if (!isValidShiftRange(nextStartsAt, nextEndsAt)) {
+      return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
+    }
 
     const { error } = await (client as any)
       .from("shifts")
@@ -100,6 +119,36 @@ export async function PATCH(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to update dancer shift.");
   }
+}
+
+async function getOwnShift(client: any, dancerId: string, shiftId: string) {
+  const { data, error } = await client
+    .from("shifts")
+    .select("id, starts_at, ends_at")
+    .eq("id", shiftId)
+    .eq("dancer_id", dancerId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("Shift not found.");
+
+  return data;
+}
+
+async function getVenueForShift(client: any, venueId: string) {
+  const { data, error } = await client
+    .from("venues")
+    .select("id, timezone, is_active")
+    .eq("id", venueId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data || !data.is_active) throw new Error("Active venue not found.");
+
+  return {
+    id: data.id,
+    timezone: data.timezone || "America/Los_Angeles",
+  };
 }
 
 async function getOwnDancerProfile(client: any, userId: string) {

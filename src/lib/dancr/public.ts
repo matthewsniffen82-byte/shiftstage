@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./types";
+import { getTonightWindow } from "./schedule";
 
 type DancrClient = SupabaseClient;
 
@@ -14,7 +15,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts!inner(starts_at, ends_at, venues(name, slug))
+        shifts!inner(starts_at, ends_at, timezone, status, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -27,12 +28,8 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
-  const dayStart = new Date(now);
-  dayStart.setHours(0, 1, 0, 0);
-
-  const dayEnd = new Date(now);
-  dayEnd.setDate(dayEnd.getDate() + 1);
-  dayEnd.setHours(3, 1, 0, 0);
+  const timeZone = await getCityTimeZone(client, city);
+  const window = getTonightWindow(timeZone, now);
 
   const { data, error } = await client
     .from("dancer_profiles")
@@ -44,14 +41,14 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts!inner(starts_at, ends_at, venues(name, slug))
+        shifts!inner(starts_at, ends_at, timezone, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
     .eq("city", city)
     .eq("shifts.status", "posted")
-    .gte("shifts.starts_at", dayStart.toISOString())
-    .lte("shifts.ends_at", dayEnd.toISOString())
+    .lt("shifts.starts_at", window.endsAt)
+    .gt("shifts.ends_at", window.activeAfter)
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
   if (error) throw error;
@@ -72,7 +69,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url),
-        shifts(id, starts_at, ends_at, status, venues(id, name, slug))
+        shifts(id, starts_at, ends_at, timezone, status, venues(id, name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -132,7 +129,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
 export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, status, venue_id, venues(id, name, slug)")
+    .select("id, starts_at, ends_at, timezone, status, venue_id, venues(id, name, slug, timezone)")
     .eq("dancer_id", dancerId)
     .eq("status", "posted")
     .gte("starts_at", new Date().toISOString())
@@ -161,6 +158,7 @@ function toDancerCard(row: any): DancerCard {
     shiftLabel: shift ? formatShiftLabel(shift.starts_at, shift.ends_at) : null,
     shiftStartsAt: shift?.starts_at || null,
     shiftEndsAt: shift?.ends_at || null,
+    shiftTimeZone: shift?.timezone || venue?.timezone || null,
   };
 }
 
@@ -181,8 +179,23 @@ function toShiftSummary(row: any): ShiftSummary {
     venueSlug: venue?.slug,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
+    timezone: row.timezone || venue?.timezone || null,
     status: row.status,
   };
+}
+
+async function getCityTimeZone(client: DancrClient, city: string) {
+  const { data, error } = await client
+    .from("venues")
+    .select("timezone")
+    .eq("city", city)
+    .eq("is_active", true)
+    .order("name", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.timezone || "America/Los_Angeles";
 }
 
 function formatShiftLabel(startsAt: string, endsAt: string): string {

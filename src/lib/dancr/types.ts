@@ -88,6 +88,7 @@ export type DancerCard = {
   shiftLabel: string | null;
   shiftStartsAt: string | null;
   shiftEndsAt: string | null;
+  shiftTimeZone?: string | null;
 };
 
 export type DancerProfile = DancerCard & {
@@ -147,6 +148,7 @@ export type ShiftSummary = {
   venueSlug: string;
   startsAt: string;
   endsAt: string;
+  timezone?: string | null;
   status: ShiftStatus;
 };
 
