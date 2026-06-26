@@ -20634,6 +20634,23 @@
       return data;
     }
 
+    async function postOptionalAuthJson(url, payload) {
+      const token = authSession?.accessToken;
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
     async function patchAuthenticatedJson(url, payload) {
       const token = authSession?.accessToken;
       if (!token) return null;
@@ -22407,6 +22424,7 @@
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
+        report: '<svg viewBox="0 0 24 24"><path d="M12 4.2 3.8 18.5a1.4 1.4 0 0 0 1.2 2.1h14a1.4 1.4 0 0 0 1.2-2.1L12 4.2Z"></path><path d="M12 9v4.4"></path><path d="M12 17h.01"></path></svg>',
         qr: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"></rect><rect x="14" y="4" width="6" height="6" rx="1.2"></rect><rect x="4" y="14" width="6" height="6" rx="1.2"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v6h-6v-2h4z"></path><path d="M14 18h2v2h-2z"></path></svg>'
       };
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
@@ -23224,6 +23242,7 @@
             <button class="action-btn secondary ${isFavorited ? "is-following" : ""}" id="favoriteBtn" data-profile="${profile.name}">${actionButtonLabel(isFavorited ? "check" : "star", isFavorited ? "Favorited" : "Favorite")}</button>
             <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
             ${goingButton}
+            <button class="action-btn secondary" id="reportBtn" data-profile="${profile.name}">${actionButtonLabel("report", "Report")}</button>
           </div>
         `;
       }
@@ -24743,7 +24762,7 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
-      const actionButton = event.target.closest("#followBtn, #favoriteBtn, #notifyBtn, #goingBtn");
+      const actionButton = event.target.closest("#followBtn, #favoriteBtn, #notifyBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
       if (actionButton.id === "followBtn") {
         const profileName = actionButton.dataset.profile;
@@ -24863,6 +24882,27 @@
             going: !wasGoing
           }).catch((error) => showToast(error.message || "Could not save going status"));
         }
+      }
+      if (actionButton.id === "reportBtn") {
+        if (actionButton.disabled) return;
+        const city = citySelect.value;
+        const profileName = actionButton.dataset.profile;
+        const profile = findProfile(profileName);
+        actionButton.disabled = true;
+        actionButton.innerHTML = actionButtonLabel("check", "Reported");
+        recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
+        showToast("Report submitted for review");
+        postOptionalAuthJson("/api/reports", {
+          targetType: "dancer_profile",
+          targetId: profile?.id || null,
+          targetLabel: profileName,
+          reason: "Profile report",
+          details: `Reported from ${city} profile modal.`
+        }).catch((error) => {
+          actionButton.disabled = false;
+          actionButton.innerHTML = actionButtonLabel("report", "Report");
+          showToast(error.message || "Could not submit report");
+        });
       }
     });
 
