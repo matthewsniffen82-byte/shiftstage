@@ -20557,6 +20557,33 @@
       return data;
     }
 
+    function socialPayloadFromMap(socials) {
+      return Object.entries(socials)
+        .filter(([, url]) => Boolean(url))
+        .map(([platform, url]) => ({
+          platform,
+          url,
+          handle: socialHandleFromUrl(url),
+          isActive: true
+        }));
+    }
+
+    function socialHandleFromUrl(url) {
+      try {
+        const parsed = new URL(url);
+        return parsed.pathname.split("/").filter(Boolean).pop()?.replace(/^@/, "") || parsed.hostname;
+      } catch {
+        return String(url || "").replace(/^@/, "");
+      }
+    }
+
+    function shiftIsoRange(dateValue, startValue, endValue) {
+      const start = new Date(`${dateValue}T${startValue || "00:00"}:00`);
+      const end = new Date(`${dateValue}T${endValue || "00:00"}:00`);
+      if (end <= start) end.setDate(end.getDate() + 1);
+      return { startsAt: start.toISOString(), endsAt: end.toISOString() };
+    }
+
     function resetAccountControl(role) {
       if (!accountControlState[role]) return;
       accountControlState[role].disabled = false;
@@ -21954,6 +21981,13 @@
       renderDancerSetup();
       if (customerDashboard.classList.contains("show")) renderDashboard();
       showToast("Public profile saved");
+      postAuthenticatedJson("/api/dancer/profile", {
+        stageName,
+        city: newCity,
+        socials: socialPayloadFromMap(normalizedSocials)
+      }).then((data) => {
+        if (data) showToast("Live profile saved");
+      }).catch((error) => showToast(error.message || "Could not save live profile"));
     }
 
     function handleShiftManagerAction(action) {
@@ -22053,6 +22087,20 @@
       renderDancerManagement();
       if (customerDashboard.classList.contains("show")) renderDashboard();
       showToast(noticeText);
+      if (venue?.id) {
+        const range = shiftIsoRange(dateValue, startValue, endValue);
+        postAuthenticatedJson("/api/dancer/shifts", {
+          venueId: venue.id,
+          startsAt: range.startsAt,
+          endsAt: range.endsAt,
+          timezone: timeZoneByCity[city] || "America/Los_Angeles"
+        }).then((data) => {
+          if (!data?.shiftId) return;
+          const postedProfile = market.dancers.find((profile) => profile.name === name);
+          if (postedProfile) postedProfile.shiftId = data.shiftId;
+          document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
+        }).catch((error) => showToast(error.message || "Could not save live shift"));
+      }
     }
 
     function venueDetails(venue, city) {
@@ -24205,6 +24253,14 @@
       document.getElementById("dancerDashName").textContent = stageName;
       Object.assign(dancerSignupSocials, normalizedSocials);
       completeSetupStep("profile");
+      postAuthenticatedJson("/api/dancer/profile", {
+        legalName,
+        stageName,
+        city,
+        socials: socialPayloadFromMap(normalizedSocials)
+      }).then((data) => {
+        if (data) showToast("Live profile saved");
+      }).catch((error) => showToast(error.message || "Could not save live profile"));
     });
 
     document.addEventListener("keydown", (event) => {
