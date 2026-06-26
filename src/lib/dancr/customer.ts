@@ -72,3 +72,21 @@ export async function cancelGoing(client: DancrClient, customerId: string, shift
 
   if (error) throw error;
 }
+
+export async function favoriteDancer(client: DancrClient, customerId: string, dancerId: string) {
+  const { error } = await client.from("favorites").upsert({
+    customer_id: customerId,
+    dancer_id: dancerId,
+  });
+
+  if (error) throw error;
+}
+
+export async function unfavoriteDancer(client: DancrClient, customerId: string, dancerId: string) {
+  const { error } = await client.from("favorites").delete().match({
+    customer_id: customerId,
+    dancer_id: dancerId,
+  });
+
+  if (error) throw error;
+}
