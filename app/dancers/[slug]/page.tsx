@@ -69,6 +69,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
               <dd>{profile.followerCount.toLocaleString()}</dd>
             </div>
             <div>
+              <dt>Going</dt>
+              <dd>{profile.goingCount.toLocaleString()}</dd>
+            </div>
+            <div>
               <dt>Rank</dt>
               <dd>{profile.currentRank ? `#${profile.currentRank}` : "Not ranked yet"}</dd>
             </div>

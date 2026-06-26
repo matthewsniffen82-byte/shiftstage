@@ -82,12 +82,16 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 
   const row: any = data;
   const card = toDancerCard(client, row);
+  const [followerCount, goingCount] = await Promise.all([
+    countDancerFollowers(client, row.id),
+    countDancerGoingSignals(client, row.id),
+  ]);
 
   return {
     ...card,
     bio: row.bio || null,
-    followerCount: 0,
-    goingCount: 0,
+    followerCount,
+    goingCount,
     photos: (row.dancer_photos || [])
       .filter((photo: any) => photo.review_status === "approved")
       .map((photo: any) => ({
@@ -139,6 +143,28 @@ export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: 
   if (error) throw error;
 
   return (data || []).map(toShiftSummary);
+}
+
+async function countDancerFollowers(client: DancrClient, dancerId: string): Promise<number> {
+  const { count, error } = await client
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("dancer_id", dancerId);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countDancerGoingSignals(client: DancrClient, dancerId: string): Promise<number> {
+  const { count, error } = await client
+    .from("going_signals")
+    .select("shift_id, shifts!inner(dancer_id, status, ends_at)", { count: "exact", head: true })
+    .eq("shifts.dancer_id", dancerId)
+    .eq("shifts.status", "posted")
+    .gt("shifts.ends_at", new Date().toISOString());
+
+  if (error) throw error;
+  return count || 0;
 }
 
 function toDancerCard(client: DancrClient, row: any): DancerCard {
