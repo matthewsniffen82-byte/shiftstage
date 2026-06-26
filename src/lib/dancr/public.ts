@@ -15,12 +15,13 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts!inner(id, starts_at, ends_at, timezone, status, venues(name, slug, timezone))
+        shifts(id, starts_at, ends_at, timezone, status, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
     .eq("city", city)
-    .order("stage_name", { ascending: true });
+    .order("stage_name", { ascending: true })
+    .order("starts_at", { referencedTable: "shifts", ascending: true });
 
   if (error) throw error;
 
@@ -141,7 +142,10 @@ export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: 
 }
 
 function toDancerCard(client: DancrClient, row: any): DancerCard {
-  const shift = Array.isArray(row.shifts) ? row.shifts[0] : row.shifts;
+  const shifts = Array.isArray(row.shifts) ? row.shifts : row.shifts ? [row.shifts] : [];
+  const now = Date.now();
+  const postedShifts = shifts.filter((item: any) => item.status === "posted");
+  const shift = postedShifts.find((item: any) => new Date(item.ends_at).getTime() >= now) || postedShifts[0] || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
 
