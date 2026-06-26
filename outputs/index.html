@@ -20038,6 +20038,8 @@
         <div class="status-grid">
           <div class="stat"><strong id="adminUserCount">0</strong><span>Users</span></div>
           <div class="stat"><strong id="adminPendingCount">0</strong><span>Pending dancers</span></div>
+          <div class="stat"><strong id="adminSubscriptionCount">0</strong><span>Subscriptions</span></div>
+          <div class="stat"><strong id="adminActiveSubscriptionCount">0</strong><span>Active billing</span></div>
         </div>
         <div class="auth-card">
           <h3>Users</h3>
@@ -20058,6 +20060,10 @@
         <div class="auth-card">
           <h3>Reports</h3>
           <div class="admin-grid" id="adminReports"></div>
+        </div>
+        <div class="auth-card">
+          <h3>Billing subscriptions</h3>
+          <div class="admin-grid" id="adminSubscriptions"></div>
         </div>
         <div class="auth-card">
           <h3>Shift controls</h3>
@@ -20399,6 +20405,7 @@
     const liveMarketState = {};
     let liveDancerAnalytics = null;
     let liveDancerBilling = null;
+    let liveAdminSubscriptions = [];
     let editingShiftId = null;
 
     const stateByCity = {
@@ -20881,16 +20888,18 @@
       }
       if (status) status.textContent = "Loading live admin data...";
       try {
-        const [approvalData, venueData] = await Promise.all([
+        const [approvalData, venueData, subscriptionData] = await Promise.all([
           getAuthenticatedJson("/api/admin/approvals"),
-          getAuthenticatedJson("/api/admin/venues")
+          getAuthenticatedJson("/api/admin/venues"),
+          getAuthenticatedJson("/api/admin/subscriptions")
         ]);
         const queue = approvalData.queue || [];
         const venues = venueData.venues || [];
+        liveAdminSubscriptions = subscriptionData.subscriptions || [];
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"} and ${venues.length} venue${venues.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, and ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");
@@ -23554,14 +23563,43 @@
       `;
     }
 
+    function subscriptionStatusLabel(status) {
+      return String(status || "unknown").replaceAll("_", " ");
+    }
+
+    function adminSubscriptionRow(subscription) {
+      const dancer = subscription.dancer || {};
+      const stageName = dancer.stageName || "Unassigned dancer";
+      const city = dancer.city || "No city";
+      const status = subscriptionStatusLabel(subscription.status);
+      const periodEnd = formatBillingDate(subscription.currentPeriodEnd);
+      const detail = periodEnd ? `Renews or ends ${periodEnd}` : "No current period date";
+      const badgeClass = isLiveSubscriptionActive(subscription) ? "badge" : "badge pending";
+      return `
+        <article class="admin-item">
+          <div class="row">
+            <div>
+              <h3>${stageName}</h3>
+              <div class="meta">${city} · ${detail}</div>
+            </div>
+            <span class="${badgeClass}">${status}</span>
+          </div>
+          <div class="meta">Stripe subscription: ${subscription.stripeSubscriptionId || "not created"}</div>
+        </article>
+      `;
+    }
+
     function renderAdminDashboard() {
       const profiles = allProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
       const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
       const reviewProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending" || profile.photoStatus === "Pending" || profile.contentFlagged);
       const shiftProfiles = visibleProfiles.filter(({ profile }) => profile.scheduled);
+      const activeSubscriptions = liveAdminSubscriptions.filter(isLiveSubscriptionActive);
       document.getElementById("adminUserCount").textContent = adminUsers.length + visibleProfiles.length;
       document.getElementById("adminPendingCount").textContent = pendingProfiles.length;
+      document.getElementById("adminSubscriptionCount").textContent = liveAdminSubscriptions.length;
+      document.getElementById("adminActiveSubscriptionCount").textContent = activeSubscriptions.length;
 
       document.getElementById("adminUsers").innerHTML = [
         ...adminUsers.map((user) => `
@@ -23614,6 +23652,10 @@
           </div>
         </article>
       `).join("") || '<div class="locked">No reported users or content.</div>';
+
+      document.getElementById("adminSubscriptions").innerHTML = liveAdminSubscriptions.length
+        ? liveAdminSubscriptions.slice(0, 12).map(adminSubscriptionRow).join("")
+        : '<div class="locked">No live subscriptions found.</div>';
 
       document.getElementById("adminShifts").innerHTML = shiftProfiles.map(({ city, profile }) => `
         <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
