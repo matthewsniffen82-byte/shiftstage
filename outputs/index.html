@@ -20023,7 +20023,18 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
-        <button class="admin-login" id="adminLoginBtn">Admin login</button>
+        <form class="auth-form admin-login-form" id="adminLoginForm">
+          <div class="field">
+            <label for="adminEmail">Admin email</label>
+            <input id="adminEmail" type="email" autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="adminPassword">Password</label>
+            <input id="adminPassword" type="password" autocomplete="current-password">
+          </div>
+          <button class="admin-login" id="adminLoginBtn" type="submit">Admin login</button>
+          <div class="rule-note" id="adminLiveStatus">Use an existing Supabase admin account.</div>
+        </form>
         <div class="status-grid">
           <div class="stat"><strong id="adminUserCount">0</strong><span>Users</span></div>
           <div class="stat"><strong id="adminPendingCount">0</strong><span>Pending dancers</span></div>
@@ -20536,7 +20547,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Authentication failed");
-      if (data.session) saveAuthSession(data.session);
+      if (data.session) saveAuthSession({ ...data.session, account: data.account || null });
       return data;
     }
 
@@ -20551,6 +20562,20 @@
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    async function getAuthenticatedJson(url) {
+      const token = authSession?.accessToken;
+      if (!token) throw new Error("Sign in required");
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`
+        }
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
@@ -20717,6 +20742,75 @@
         shiftEndsAt: item.shiftEndsAt || "",
         shiftTimeZone: item.shiftTimeZone || ""
       };
+    }
+
+    function approvalStatusLabel(status) {
+      if (status === "approved") return "Verified";
+      if (status === "rejected") return "Rejected";
+      return "Pending";
+    }
+
+    function reviewStatusLabel(status, approvedLabel, pendingLabel) {
+      if (status === "approved") return approvedLabel;
+      if (status === "rejected") return "Rejected";
+      return pendingLabel;
+    }
+
+    function applyLiveApprovalQueue(queue) {
+      (queue || []).forEach((item, index) => {
+        const city = item.city || citySelect.value;
+        const market = markets[city];
+        if (!market) return;
+        const photos = Array.isArray(item.photos) ? item.photos : [];
+        const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
+        const profileData = {
+          id: item.id,
+          slug: item.slug || slugify(item.stageName),
+          name: item.stageName,
+          city,
+          status: approvalStatusLabel(item.status),
+          venue: "",
+          time: "No upcoming shifts",
+          tonight: false,
+          scheduled: false,
+          trend: 10 + index,
+          distance: "Pending",
+          hidden: false,
+          contentFlagged: false,
+          idStatus: reviewStatusLabel(item.verificationStatus, "Passed", "Needs review"),
+          selfieStatus: reviewStatusLabel(item.verificationStatus, "Matched", "Needs review"),
+          photoStatus: reviewStatusLabel(item.photoReviewStatus, "Approved", "Pending"),
+          socials: {},
+          mainPhotoUrl: primaryPhoto,
+          galleryPhotoUrls: photos.map((photo) => photo.imageUrl).filter(Boolean)
+        };
+        const existing = market.dancers.find((profile) => profile.id === item.id || profile.slug === profileData.slug || profile.name === item.stageName);
+        if (existing) Object.assign(existing, profileData);
+        else market.dancers.push(profileData);
+      });
+    }
+
+    function isAdminSession() {
+      return authSession?.account?.role === "admin";
+    }
+
+    async function loadLiveAdminApprovals() {
+      const status = document.getElementById("adminLiveStatus");
+      if (!isAdminSession()) {
+        if (status) status.textContent = "Use an existing Supabase admin account.";
+        return;
+      }
+      if (status) status.textContent = "Loading live approvals...";
+      try {
+        const data = await getAuthenticatedJson("/api/admin/approvals");
+        const queue = data.queue || [];
+        applyLiveApprovalQueue(queue);
+        renderAdminDashboard();
+        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}.`;
+      } catch (error) {
+        if (status) status.textContent = error.message || "Could not load live approvals";
+        showToast(error.message || "Could not load live approvals");
+      }
     }
 
     function mapLiveVenue(item, city, venueShiftCounts) {
@@ -22490,6 +22584,7 @@
       adminDashboard.classList.add("show");
       adminDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveAdminApprovals();
     }
 
     function closeAdminDashboard() {
@@ -23283,6 +23378,18 @@
       showToast(message);
     }
 
+    function saveLiveAdminReview(profile, status) {
+      if (!profile?.id || !isAdminSession()) return;
+      postAuthenticatedJson("/api/admin/approvals", {
+        dancerId: profile.id,
+        status,
+        notes: status === "approved" ? "Approved in admin dashboard." : "Rejected in admin dashboard."
+      }).then(() => {
+        showToast(status === "approved" ? "Live approval saved" : "Live rejection saved");
+        loadLiveAdminApprovals();
+      }).catch((error) => showToast(error.message || "Could not save live review"));
+    }
+
     function runAdminAction(action, host) {
       const profileMatch = adminProfileFromNode(host);
       const venueMatch = adminVenueFromNode(host);
@@ -23294,12 +23401,14 @@
           hidden: false
         });
         refreshAfterAdminAction(`${profileMatch.profile.name} approved`);
+        saveLiveAdminReview(profileMatch.profile, "approved");
         return;
       }
       if (action === "reject-dancer" && profileMatch) {
         profileMatch.profile.status = "Rejected";
         profileMatch.profile.hidden = true;
         refreshAfterAdminAction(`${profileMatch.profile.name} rejected and hidden`);
+        saveLiveAdminReview(profileMatch.profile, "rejected");
         return;
       }
       if ((action === "remove-profile" || action === "remove-content") && profileMatch) {
@@ -23841,9 +23950,29 @@
       openProfileModal(profile.name);
     });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
-    document.getElementById("adminLoginBtn").addEventListener("click", (event) => {
-      event.target.textContent = "Logged in as platform admin";
-      showToast("Admin session active");
+    document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = document.getElementById("adminLoginBtn");
+      const status = document.getElementById("adminLiveStatus");
+      button.disabled = true;
+      try {
+        const result = await requestAuth({
+          mode: "login",
+          role: "admin",
+          email: document.getElementById("adminEmail").value,
+          password: document.getElementById("adminPassword").value
+        });
+        const name = result.account?.displayName || "platform admin";
+        if (status) status.textContent = `Logged in as ${name}.`;
+        button.textContent = "Admin session active";
+        showToast("Admin session active");
+        await loadLiveAdminApprovals();
+      } catch (error) {
+        if (status) status.textContent = error.message || "Admin login failed";
+        showToast(error.message || "Admin login failed");
+      } finally {
+        button.disabled = false;
+      }
     });
 
     adminDashboard.addEventListener("click", (event) => {

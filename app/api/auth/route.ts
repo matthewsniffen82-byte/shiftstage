@@ -7,7 +7,7 @@ import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type AuthRole = "customer" | "dancer";
+type AuthRole = "customer" | "dancer" | "admin";
 type AuthMode = "login" | "signup";
 
 export async function POST(request: Request) {
@@ -25,6 +25,10 @@ export async function POST(request: Request) {
       if (!data.user) throw new Error("Sign in required.");
 
       return NextResponse.json(await authResponse(data.user.id, role, data.session, false));
+    }
+
+    if (role === "admin") {
+      throw new Error("Admin signup is not available.");
     }
 
     const city = readOptional(body.city) || "Las Vegas";
@@ -130,8 +134,8 @@ function readMode(value: unknown): AuthMode {
 }
 
 function readRole(value: unknown): AuthRole {
-  if (value === "customer" || value === "dancer") return value;
-  throw new Error("Role must be customer or dancer.");
+  if (value === "customer" || value === "dancer" || value === "admin") return value;
+  throw new Error("Role must be customer, dancer, or admin.");
 }
 
 function readRequired(value: unknown, message: string) {
