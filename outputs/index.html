@@ -20423,6 +20423,7 @@
     let liveDancerAnalytics = null;
     let liveDancerBilling = null;
     let liveDancerRankingEvents = [];
+    let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
     let liveCustomerProfile = null;
     let editingShiftId = null;
@@ -20767,6 +20768,7 @@
         liveDancerAnalytics = null;
         liveDancerBilling = null;
         liveDancerRankingEvents = [];
+        liveDancerReviews = [];
         saveAuthSession(null);
         showToast(`${role === "dancer" ? "Dancer account" : "Customer account"} deleted`);
         return true;
@@ -21165,6 +21167,18 @@
       }
     }
 
+    async function loadLiveDancerReviews() {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/reviews");
+        liveDancerReviews = data.reviews || [];
+        renderDancerSetup();
+      } catch (error) {
+        liveDancerReviews = [];
+        showToast(error.message || "Could not load review notes");
+      }
+    }
+
     function isLiveSubscriptionActive(subscription) {
       return subscription?.status === "active" || subscription?.status === "trialing";
     }
@@ -21525,6 +21539,23 @@
         ...mapped,
         message: event.message || `Your ${event.city || "city"} ranking changed.`
       };
+    }
+
+    function dancerReviewFeedbackMarkup() {
+      if (!liveDancerReviews.length) {
+        return '<div class="rule-note">No platform review notes yet. Dancr will update this step after ID, selfie, and photo review.</div>';
+      }
+      return liveDancerReviews.slice(0, 3).map((review) => {
+        const status = String(review.status || "pending").replaceAll("_", " ");
+        const type = String(review.reviewType || "review").replaceAll("_", " ");
+        const date = formatBillingDate(review.reviewedAt || review.createdAt);
+        return `
+          <div class="info-tile">
+            <strong>${type} · ${status}</strong>
+            <div class="meta">${review.notes || "No notes added."}${date ? ` · ${date}` : ""}</div>
+          </div>
+        `;
+      }).join("");
     }
 
     function buildRankingNotifications(profile, city, metrics) {
@@ -23165,6 +23196,7 @@
       liveDancerAnalytics = null;
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
+      liveDancerReviews = [];
       liveCustomerProfile = null;
       saveAuthSession(null);
       closeDashboard();
@@ -23228,6 +23260,7 @@
       loadLiveDancerAnalytics();
       loadLiveDancerBilling();
       loadLiveDancerRankingEvents();
+      loadLiveDancerReviews();
     }
 
     function closeDancerDashboard() {
@@ -23776,6 +23809,7 @@
       `;
       const approvalBody = `
         <div class="rule-note">Dancr reviews profile, photos, ID, and selfie. Approval unlocks schedules.</div>
+        ${dancerReviewFeedbackMarkup()}
         <button class="action-btn" data-complete-step="approval">Approve demo profile</button>
       `;
       document.getElementById("setupChecklist").innerHTML = [
