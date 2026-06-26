@@ -20380,6 +20380,7 @@
     const goingTonightSavedByProfile = {};
     const trendEventStoreKey = "dancrTrendEventsV1";
     const trendEventStore = loadTrendEventStore();
+    const liveMarketState = {};
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -20608,6 +20609,96 @@
         className: " has-custom-photo",
         style: ` style="--custom-photo: url('${safeUrl}')"`
       } : { className: "", style: "" };
+    }
+
+    function formatLiveDistance(value) {
+      return typeof value === "number" ? `${value.toFixed(1)} mi` : "Nearby";
+    }
+
+    function mapLiveDancer(item, isTonight, index, venueShiftCounts) {
+      if (item.venueName) venueShiftCounts[item.venueName] = (venueShiftCounts[item.venueName] || 0) + 1;
+      return {
+        id: item.id,
+        slug: item.slug,
+        name: item.stageName,
+        status: item.verified ? "Verified" : "Pending",
+        venue: item.venueName || "Venue pending",
+        time: item.shiftLabel || "Schedule pending",
+        tonight: isTonight,
+        liveTonight: isTonight,
+        scheduled: Boolean(item.shiftLabel || item.shiftStartsAt || item.venueName),
+        trend: item.currentRank || index + 1,
+        trendRank: item.currentRank || index + 1,
+        distance: formatLiveDistance(item.distanceMiles),
+        mainPhotoUrl: item.primaryPhotoUrl || "",
+        galleryPhotoUrls: item.primaryPhotoUrl ? [item.primaryPhotoUrl] : [],
+        shiftLabel: item.shiftLabel || "",
+        shiftStartsAt: item.shiftStartsAt || "",
+        shiftEndsAt: item.shiftEndsAt || "",
+        shiftTimeZone: item.shiftTimeZone || ""
+      };
+    }
+
+    function mapLiveVenue(item, city, venueShiftCounts) {
+      return {
+        id: item.id,
+        slug: item.slug,
+        name: item.name,
+        area: item.state || item.city || city,
+        state: item.state || stateByCity[city] || "",
+        hours: item.hoursLabel || "Hours pending",
+        shifts: venueShiftCounts[item.name] || 0,
+        distance: "Nearby"
+      };
+    }
+
+    function applyLiveMarket(city, dancers, tonightDancers, venues) {
+      const market = markets[city];
+      if (!market) return false;
+      const tonightIds = new Set((tonightDancers || []).map((item) => item.id));
+      const venueShiftCounts = {};
+      const liveDancers = (dancers || []).map((item, index) => mapLiveDancer(item, tonightIds.has(item.id), index, venueShiftCounts));
+      const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
+
+      if (liveDancers.length) market.dancers = liveDancers;
+      if (liveVenues.length) market.venues = liveVenues;
+      market.stats = {
+        dancers: market.dancers.filter(isApprovedPublicProfile).length,
+        shifts: market.dancers.filter((profile) => profile.scheduled).length,
+        venues: market.venues.filter((venue) => !venue.hidden).length
+      };
+      followedByCity[city] = followedByCity[city] || [];
+      followedVenuesByCity[city] = followedVenuesByCity[city] || [];
+      return liveDancers.length || liveVenues.length;
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+      return response.json();
+    }
+
+    async function loadLiveDiscovery(city = selectedCity()) {
+      if (!markets[city] || liveMarketState[city] === "loading" || liveMarketState[city] === "ready") return;
+      liveMarketState[city] = "loading";
+      const query = new URLSearchParams({ city }).toString();
+      try {
+        const [allDancers, tonightDancers, venueList] = await Promise.all([
+          fetchJson(`/api/public/dancers?${query}`),
+          fetchJson(`/api/public/dancers?${query}&scope=tonight`),
+          fetchJson(`/api/public/venues?${query}`)
+        ]);
+        const applied = applyLiveMarket(city, allDancers.dancers || [], tonightDancers.dancers || [], venueList.venues || []);
+        liveMarketState[city] = applied ? "ready" : "fallback";
+        if (citySelect.value === city) {
+          render();
+          if (customerDashboard.classList.contains("show")) renderDashboard();
+          if (adminDashboard.classList.contains("show")) renderAdminDashboard();
+        }
+      } catch (error) {
+        liveMarketState[city] = "fallback";
+        console.warn("Live discovery fallback", error);
+      }
     }
 
     function slugify(value) {
@@ -21175,6 +21266,7 @@
     }
 
     function isWorkingTonight(profile, city = selectedCity()) {
+      if (profile.liveTonight) return true;
       return Boolean(tonightShiftWindow(profile, new Date(), city));
     }
 
@@ -21913,15 +22005,17 @@
     function venueDetails(venue, city) {
       const citySlug = slugify(`${venue.name}-${city}`);
       const streetNumber = 100 + (venue.name.length * 17);
+      const venueArea = venue.area || city;
+      const state = venue.state || stateByCity[city] || "";
       return {
         ...venue,
         city,
-        state: stateByCity[city],
-        address: `${streetNumber} ${venue.area} Ave, ${city}, ${stateByCity[city]}`,
+        state,
+        address: `${streetNumber} ${venueArea} Ave, ${city}, ${state}`,
         phone: `(555) ${String(streetNumber).padStart(3, "0")}-${String(venue.shifts * 137).slice(0, 4).padEnd(4, "0")}`,
         website: `https://${citySlug}.example.com`,
-        hours: "8:00 PM - 4:00 AM",
-        description: `${venue.name} is a verified nightlife venue in ${venue.area} with posted stage schedules, venue-confirmed shifts, and directions for customers.`
+        hours: venue.hours || "8:00 PM - 4:00 AM",
+        description: `${venue.name} is a verified nightlife venue in ${venueArea} with posted stage schedules, venue-confirmed shifts, and directions for customers.`
       };
     }
 
@@ -24049,6 +24143,7 @@
       dashboardVenuesExpanded = false;
       selectedVenueName = null;
       render();
+      loadLiveDiscovery(citySelect.value);
       if (customerDashboard.classList.contains("show")) renderDashboard();
       if (adminDashboard.classList.contains("show")) renderAdminDashboard();
       showToast(`${citySelect.value} loaded`);
@@ -24161,6 +24256,7 @@
     installReferenceHomeShell();
     updateAccountHeader();
     render();
+    loadLiveDiscovery(citySelect.value);
     openSharedProfileFromUrl();
   </script>
 </body>
