@@ -15,7 +15,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts!inner(starts_at, ends_at, timezone, status, venues(name, slug, timezone))
+        shifts!inner(id, starts_at, ends_at, timezone, status, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -41,7 +41,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts!inner(starts_at, ends_at, timezone, venues(name, slug, timezone))
+        shifts!inner(id, starts_at, ends_at, timezone, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -155,6 +155,7 @@ function toDancerCard(client: DancrClient, row: any): DancerCard {
     currentRank: score?.rank || null,
     venueName: venue?.name || null,
     venueSlug: venue?.slug || null,
+    shiftId: shift?.id || null,
     shiftLabel: shift ? formatShiftLabel(shift.starts_at, shift.ends_at) : null,
     shiftStartsAt: shift?.starts_at || null,
     shiftEndsAt: shift?.ends_at || null,

@@ -85,6 +85,7 @@ export type DancerCard = {
   currentRank: number | null;
   venueName: string | null;
   venueSlug: string | null;
+  shiftId: string | null;
   shiftLabel: string | null;
   shiftStartsAt: string | null;
   shiftEndsAt: string | null;

@@ -20540,6 +20540,23 @@
       return data;
     }
 
+    async function postAuthenticatedJson(url, payload) {
+      const token = authSession?.accessToken;
+      if (!token) return null;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
     function resetAccountControl(role) {
       if (!accountControlState[role]) return;
       accountControlState[role].disabled = false;
@@ -20655,6 +20672,8 @@
         id: item.id,
         slug: item.slug,
         name: item.stageName,
+        venueSlug: item.venueSlug || "",
+        shiftId: item.shiftId || "",
         status: item.verified ? "Verified" : "Pending",
         venue: item.venueName || "Venue pending",
         time: item.shiftLabel || "Schedule pending",
@@ -23414,8 +23433,10 @@
       if (followVenueButton) {
         const city = citySelect.value;
         const venueName = followVenueButton.dataset.venueFollow;
+        const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
         const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
         const index = savedVenues.indexOf(venueName);
+        const willFollow = index < 0;
         if (index >= 0) {
           savedVenues.splice(index, 1);
           showToast("Unfollowed venue");
@@ -23425,6 +23446,13 @@
         }
         render();
         if (customerDashboard.classList.contains("show")) renderDashboard();
+        if (venueRecord?.id) {
+          postAuthenticatedJson("/api/customer/venue-follows", {
+            venueId: venueRecord.id,
+            following: willFollow,
+            notificationsEnabled: willFollow
+          }).catch((error) => showToast(error.message || "Could not save venue follow"));
+        }
         return;
       }
       const venue = event.target.closest(".venue-card");
@@ -23639,12 +23667,19 @@
         if (profile) {
           const followerCountEl = document.getElementById("modalFollowerCount");
           if (followerCountEl) followerCountEl.innerHTML = metricPhraseMarkup(followerCount(profile, city));
+          postAuthenticatedJson("/api/customer/follows", {
+            dancerId: profile.id,
+            following: followIndex < 0,
+            notificationsEnabled: followIndex < 0
+          }).catch((error) => showToast(error.message || "Could not save follow"));
         }
         if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "notifyBtn") {
         const city = citySelect.value;
         const profileName = actionButton.dataset.profile;
+        const profile = findProfile(profileName);
+        const willEnable = !actionButton.classList.contains("is-following");
         if (actionButton.classList.contains("is-following")) {
           disableProfileNotifications(city, profileName);
           actionButton.innerHTML = actionButtonLabel("bell", "Notify Me");
@@ -23658,11 +23693,19 @@
           recordLiveEvent("profile_action", { dancerName: profileName, source: "notify_added" });
           showToast("Notifications on");
         }
+        if (profile?.id) {
+          postAuthenticatedJson("/api/customer/follows", {
+            dancerId: profile.id,
+            following: true,
+            notificationsEnabled: willEnable
+          }).catch((error) => showToast(error.message || "Could not save notifications"));
+        }
         if (customerDashboard.classList.contains("show")) renderDashboard();
       }
       if (actionButton.id === "goingBtn") {
         if (actionButton.disabled) return;
         const profileName = actionButton.dataset.profile;
+        const profile = findProfile(profileName);
         const shiftState = actionButton.dataset.shiftState || "tonight";
         const isTonightShift = shiftState === "tonight";
         const countEl = document.getElementById("tonightInterestCount");
@@ -23680,6 +23723,12 @@
         actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? idleLabel : activeLabel);
         recordLiveEvent("schedule_action", { dancerName: profileName, source: wasGoing ? "going_removed" : isTonightShift ? "going_tonight_added" : "going_upcoming_added" });
         showToast(wasGoing ? "Removed" : isTonightShift ? "Added to tonight" : "Added to upcoming shift");
+        if (profile?.shiftId) {
+          postAuthenticatedJson("/api/customer/going", {
+            shiftId: profile.shiftId,
+            going: !wasGoing
+          }).catch((error) => showToast(error.message || "Could not save going status"));
+        }
       }
     });
 
