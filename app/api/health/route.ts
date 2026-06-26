@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-export function GET() {
+export async function GET() {
   return NextResponse.json({
     ok: true,
-    service: "dancr-api",
-    version: "health-route-2026-06-26",
+    service: "dancr",
+    time: new Date().toISOString(),
   });
 }
