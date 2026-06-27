@@ -20072,6 +20072,15 @@
       -webkit-filter: brightness(1.16) contrast(1.08) saturate(1.08) !important;
     }
 
+    @media (max-width: 700px) {
+      .is-android .hero.reference-hero,
+      .is-android .hero.reference-hero.uploaded-hero-ready,
+      .is-android .hero.reference-hero:not(.uploaded-hero-ready) {
+        filter: brightness(1.3) contrast(1.14) saturate(1.12) !important;
+        -webkit-filter: brightness(1.3) contrast(1.14) saturate(1.12) !important;
+      }
+    }
+
     .hero.reference-hero::before,
     .hero.reference-hero::after,
     .hero.reference-hero.uploaded-hero-ready::before,
@@ -21172,6 +21181,10 @@
   </div>
 
   <script>
+    if (/Android/i.test(navigator.userAgent || "")) {
+      document.documentElement.classList.add("is-android");
+    }
+
     const markets = {
       "Las Vegas": {
         stats: { dancers: 128, shifts: 46, venues: 18 },
