@@ -15,9 +15,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const city = params.city || "Las Vegas";
   const client = createAdminSupabaseClient();
   const [tonight, dancers, venues] = await Promise.all([
-    getTonightShifts(client, city),
-    getApprovedDancersByCity(client, city),
-    getActiveVenues(client, city),
+    safeHomeQuery("tonight shifts", getTonightShifts(client, city)),
+    safeHomeQuery("approved dancers", getApprovedDancersByCity(client, city)),
+    safeHomeQuery("active venues", getActiveVenues(client, city)),
   ]);
   const featured = tonight[0] || dancers[0] || null;
 
@@ -106,6 +106,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </section>
     </main>
   );
+}
+
+async function safeHomeQuery<T>(label: string, query: Promise<T[]>): Promise<T[]> {
+  try {
+    return await query;
+  } catch (error) {
+    console.error(`Failed to load home ${label}.`, error);
+    return [];
+  }
 }
 
 async function getActiveVenues(client: ReturnType<typeof createAdminSupabaseClient>, city: string): Promise<VenueSummary[]> {
