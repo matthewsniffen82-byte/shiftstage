@@ -147,7 +147,7 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
     notificationsEnabled: row.notifications_enabled,
     createdAt: row.created_at,
     dancer: toDancerSummary(row.dancer_profiles),
-  }));
+  })).filter((item: any) => item.dancer);
 }
 
 async function getFavoriteDancers(client: DancrClient, customerId: string) {
@@ -163,13 +163,13 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
     dancerId: row.dancer_id,
     createdAt: row.created_at,
     dancer: toDancerSummary(row.dancer_profiles),
-  }));
+  })).filter((item: any) => item.dancer);
 }
 
 async function getFollowedVenues(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("venue_follows")
-    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state)")
+    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, is_active)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -180,7 +180,7 @@ async function getFollowedVenues(client: DancrClient, customerId: string) {
     notificationsEnabled: row.notifications_enabled,
     createdAt: row.created_at,
     venue: toVenueSummary(row.venues),
-  }));
+  })).filter((item: any) => item.venue);
 }
 
 async function getGoingShifts(client: DancrClient, customerId: string) {
@@ -212,12 +212,12 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
           }
         : null,
     };
-  });
+  }).filter((item: any) => item.shift?.dancer && item.shift?.venue);
 }
 
 function toDancerSummary(value: any) {
   const dancer = single(value);
-  if (!dancer) return null;
+  if (!dancer || dancer.status !== "approved") return null;
 
   return {
     id: dancer.id,
@@ -230,7 +230,7 @@ function toDancerSummary(value: any) {
 
 function toVenueSummary(value: any) {
   const venue = single(value);
-  if (!venue) return null;
+  if (!venue || venue.is_active === false) return null;
 
   return {
     id: venue.id,
