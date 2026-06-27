@@ -20191,6 +20191,28 @@
         min-height: 0 !important;
       }
     }
+    /* Profile cards: quiet "ASK FOR" prompt before the stage name. */
+    .dancer-card .ask-for-inline {
+      display: inline-flex !important;
+      align-items: baseline !important;
+      gap: 6px !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    .dancer-card .ask-for-card-label {
+      display: inline-block !important;
+      flex: 0 0 auto !important;
+      color: rgba(255, 255, 255, 0.46) !important;
+      font-family: var(--font-ui) !important;
+      font-size: clamp(0.56rem, 1.35vw, 0.64rem) !important;
+      font-weight: 850 !important;
+      letter-spacing: 0.16em !important;
+      line-height: 1 !important;
+      text-transform: uppercase !important;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.72) !important;
+      transform: translateY(-1px) !important;
+    }
   </style>
 </head>
 <body>
@@ -23763,7 +23785,7 @@
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
+              <h3><span class="ask-for-inline"><span class="ask-for-card-label">Ask for</span><span class="card-stage-name">${profile.name}${verifiedMark}</span></span></h3>
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
