@@ -20053,9 +20053,13 @@
       min-height: 0 !important;
       padding: 0 !important;
       overflow: hidden !important;
-      background: transparent !important;
+      background:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.72) 72%),
+        rgba(5, 4, 9, 0.82) !important;
       border-color: transparent !important;
-      box-shadow: none !important;
+      box-shadow:
+        inset 0 0 18px rgba(0, 0, 0, 0.54),
+        0 0 18px rgba(0, 0, 0, 0.30) !important;
     }
 
     .logo-image-button .brand-logo-image {
@@ -20067,6 +20071,7 @@
       object-position: center;
       transform: scale(1.045);
       transform-origin: center;
+      filter: brightness(0.96) contrast(1.04);
       pointer-events: none;
       user-select: none;
     }
