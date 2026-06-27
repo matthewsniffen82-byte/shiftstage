@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getVenueProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DirectionsLink } from "./DirectionsLink";
+import { VenueProfileActions } from "./VenueProfileActions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +64,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
             </Link>
             {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
           </div>
+          <VenueProfileActions venueId={venue.id} />
         </div>
       </section>
       <section className="public-grid">
@@ -153,6 +155,9 @@ function VenueProfileStyles() {
       .public-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
       .public-actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(139,92,246,.38), rgba(34,199,255,.16)); }
       .directions-link { background: linear-gradient(135deg, rgba(34,199,255,.28), rgba(16,185,129,.14)) !important; }
+      .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
+      .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
+      .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
       h2 { margin: 0 0 16px; font-size: 20px; }

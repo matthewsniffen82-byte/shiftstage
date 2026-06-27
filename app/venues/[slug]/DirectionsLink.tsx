@@ -7,6 +7,16 @@ type DirectionsLinkProps = {
 
 export function DirectionsLink({ venueId, address }: DirectionsLinkProps) {
   function recordDirectionRequest() {
+    const token = readToken();
+    if (token) {
+      fetch("/api/customer/directions", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId }),
+        keepalive: true,
+      }).catch(() => undefined);
+    }
+
     const body = JSON.stringify({
       type: "direction_request",
       venueId,
@@ -37,4 +47,13 @@ export function DirectionsLink({ venueId, address }: DirectionsLinkProps) {
       Get directions
     </a>
   );
+}
+
+function readToken() {
+  try {
+    const session = JSON.parse(window.localStorage.getItem("dancrAuthSessionV1") || "null");
+    return typeof session?.accessToken === "string" ? session.accessToken : "";
+  } catch {
+    return "";
+  }
 }
