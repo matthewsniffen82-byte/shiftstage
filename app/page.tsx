@@ -88,7 +88,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="section-head">
             <div>
               <span className="eyebrow">Verified clubs</span>
-              <h2>Venues</h2>
+              <h2><Link className="section-link" href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link></h2>
             </div>
             <span>{venues.length} active</span>
           </div>
