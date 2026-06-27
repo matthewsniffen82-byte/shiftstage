@@ -104,12 +104,98 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             <Metric label="Role" value={String(state.account?.role || role)} />
           </InfoPanel>
           <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+          <NotificationPanel />
 
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
           {role === "dancer" ? <DancerPanel analytics={state.analytics} profile={state.profile} reviews={state.reviews} /> : null}
         </section>
       ) : null}
     </main>
+  );
+}
+
+function NotificationPanel() {
+  const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
+  const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    const session = readSession();
+    if (!session?.accessToken) return;
+
+    fetch("/api/notifications", { headers: { authorization: `Bearer ${session.accessToken}` } })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.ok) setNotifications(data.notifications || []);
+        else setStatus(data.error || "Unable to load notifications.");
+      })
+      .catch(() => setStatus("Unable to load notifications."));
+  }, []);
+
+  async function markAllRead() {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    const response = await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatus(data.error || "Unable to update notifications.");
+      return;
+    }
+    setNotifications((current) => current.map((item) => ({ ...item, readAt: data.readAt })));
+    setStatus(`${data.count || 0} marked read.`);
+  }
+
+  async function markRead(notificationId: string) {
+    const session = readSession();
+    if (!session?.accessToken) return;
+
+    const response = await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ notificationId }),
+    });
+    const data = await response.json();
+    if (response.ok && data.ok) {
+      setNotifications((current) =>
+        current.map((item) => (String(item.id) === notificationId ? { ...item, readAt: data.notification.readAt } : item)),
+      );
+    }
+  }
+
+  const unreadCount = notifications.filter((item) => !item.readAt).length;
+
+  return (
+    <article className="info-panel notification-panel">
+      <h2>Notifications</h2>
+      <div className="notification-head">
+        <Metric label="Unread" value={String(unreadCount)} />
+        <button type="button" onClick={markAllRead}>
+          Mark all read
+        </button>
+      </div>
+      <div className="notification-list">
+        {notifications.slice(0, 6).map((notification) => (
+          <button
+            className={notification.readAt ? "notification-row read" : "notification-row"}
+            key={String(notification.id)}
+            type="button"
+            onClick={() => markRead(String(notification.id))}
+          >
+            <strong>{String(notification.title || "Notification")}</strong>
+            <span>{String(notification.body || "")}</span>
+          </button>
+        ))}
+        {!notifications.length ? <p>No notifications yet.</p> : null}
+      </div>
+      {status ? <p>{status}</p> : null}
+    </article>
   );
 }
 
@@ -844,7 +930,7 @@ function DashboardStyles() {
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled { opacity: .62; cursor: wait; }
       .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel { grid-column: span 3; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
@@ -867,13 +953,20 @@ function DashboardStyles() {
       .account-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .account-actions .danger-button { color: #fff; background: rgba(239,68,68,.34); border: 1px solid rgba(248,113,113,.28); }
       .account-actions p { color: #94e5ff; font-size: 14px; }
+      .notification-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+      .notification-head button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .notification-list { display: grid; gap: 10px; }
+      .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; }
+      .notification-row.read { opacity: .58; }
+      .notification-row span { color: #b9accd; }
+      .notification-panel p { color: #94e5ff; font-size: 14px; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
