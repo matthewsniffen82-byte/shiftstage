@@ -72,7 +72,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="section-head">
             <div>
               <span className="eyebrow">Approved profiles</span>
-              <h2>Dancers</h2>
+              <h2><Link className="section-link" href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link></h2>
             </div>
             <span>{dancers.length} live</span>
           </div>
@@ -203,6 +203,7 @@ function HomeStyles() {
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; max-width: 760px; font-size: clamp(44px, 8vw, 94px); line-height: .92; letter-spacing: 0; }
       h2 { margin: 0; font-size: 28px; letter-spacing: 0; }
+      .section-link { color: inherit; text-decoration: none; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 60ch; }
       .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
       .hero-actions a:first-child { background: linear-gradient(135deg, rgba(139,92,246,.42), rgba(34,199,255,.18)); }
