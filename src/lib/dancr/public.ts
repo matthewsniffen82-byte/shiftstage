@@ -69,7 +69,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         bio,
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
-        social_links(id, platform, handle, url),
+        social_links(id, platform, handle, url, is_active),
         shifts(id, starts_at, ends_at, timezone, status, venues(id, name, slug, timezone))
       `,
     )
@@ -101,12 +101,14 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         sortOrder: photo.sort_order,
       }))
       .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-    socialLinks: (row.social_links || []).map((link: any) => ({
-      id: link.id,
-      platform: link.platform,
-      handle: link.handle,
-      url: link.url,
-    })),
+    socialLinks: (row.social_links || [])
+      .filter((link: any) => link.is_active !== false)
+      .map((link: any) => ({
+        id: link.id,
+        platform: link.platform,
+        handle: link.handle,
+        url: link.url,
+      })),
     upcomingShifts: (row.shifts || []).filter((shift: any) => shift.status === "posted").map(toShiftSummary),
   };
 }

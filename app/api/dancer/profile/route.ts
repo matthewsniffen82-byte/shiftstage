@@ -72,6 +72,18 @@ export async function PATCH(request: Request) {
         const { error } = await db.from("social_links").upsert(rows, { onConflict: "dancer_id,platform" });
         if (error) throw error;
       }
+
+      const activePlatforms = rows.map((social: any) => social.platform);
+      const inactivePlatforms = Array.from(SOCIAL_PLATFORMS).filter((platform) => !activePlatforms.includes(platform));
+      if (inactivePlatforms.length) {
+        const { error } = await db
+          .from("social_links")
+          .update({ is_active: false })
+          .eq("dancer_id", profile.id)
+          .in("platform", inactivePlatforms);
+
+        if (error) throw error;
+      }
     }
 
     await saveProfilePhotoUrls(db, profile.id, body);
