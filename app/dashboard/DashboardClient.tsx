@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import QRCode from "qrcode";
 
 type DashboardRole = "customer" | "dancer";
 
@@ -420,6 +421,7 @@ function DancerPanel({
       </InfoPanel>
       <DancerSetupPanel profile={profile} />
       <DancerSocialPanel profile={profile} />
+      <DancerSharePanel profile={profile} />
       <DancerPhotoPanel />
       <DancerVerificationPanel reviews={reviews} />
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
@@ -794,6 +796,62 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
   );
 }
 
+function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
+  const [shareUrl, setShareUrl] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [status, setStatus] = useState("");
+  const slug = String(profile?.slug || "");
+
+  useEffect(() => {
+    if (!slug) return;
+    const nextShareUrl = `${window.location.origin}/dancers/${slug}`;
+    setShareUrl(nextShareUrl);
+    QRCode.toDataURL(nextShareUrl, {
+      width: 220,
+      margin: 1,
+      color: { dark: "#050507", light: "#f7f2ff" },
+    })
+      .then(setQrCodeUrl)
+      .catch(() => setStatus("Unable to generate QR code."));
+  }, [slug]);
+
+  async function copyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setStatus("Profile link copied.");
+    } catch {
+      setStatus("Copy failed. Select the link manually.");
+    }
+  }
+
+  return (
+    <article className="info-panel share-panel">
+      <h2>Share Profile</h2>
+      {slug ? (
+        <div className="share-grid">
+          {qrCodeUrl ? <img alt="Profile QR code" src={qrCodeUrl} /> : <div className="qr-placeholder">QR</div>}
+          <div>
+            <label>
+              Public link
+              <input readOnly value={shareUrl} />
+            </label>
+            <div className="share-actions">
+              <button type="button" onClick={copyLink}>
+                Copy link
+              </button>
+              <Link href={`/dancers/${slug}`}>Open profile</Link>
+            </div>
+            {status ? <p>{status}</p> : null}
+          </div>
+        </div>
+      ) : (
+        <p>Save your stage name first to create a public profile link.</p>
+      )}
+    </article>
+  );
+}
+
 function DancerSocialPanel({ profile }: { profile?: LoadState["profile"] }) {
   const [socials, setSocials] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
@@ -1029,15 +1087,21 @@ function DashboardStyles() {
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label, .customer-settings-panel label, .socials-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label, .customer-settings-panel label, .socials-panel label, .share-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
-      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input[type="text"], .customer-settings-panel input:not([type]), .socials-panel input { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input:not([type]), .socials-panel input { min-height: 42px; }
+      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input[type="text"], .customer-settings-panel input:not([type]), .socials-panel input, .share-panel input { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input:not([type]), .socials-panel input, .share-panel input { min-height: 42px; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
-      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button, .share-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled, .socials-panel button:disabled { opacity: .62; cursor: wait; }
-      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p, .socials-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel { grid-column: span 3; }
+      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p, .socials-panel p, .share-panel p { color: #94e5ff; font-size: 14px; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel { grid-column: span 3; }
+      .share-grid { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; align-items: center; }
+      .share-grid img, .qr-placeholder { width: 180px; height: 180px; border-radius: 8px; background: #f7f2ff; }
+      .qr-placeholder { display: grid; place-items: center; color: #050507; font-weight: 950; }
+      .share-grid > div { display: grid; gap: 12px; }
+      .share-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .share-actions a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 8px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); font-weight: 900; }
       .socials-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
@@ -1074,7 +1138,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
