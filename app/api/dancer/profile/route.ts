@@ -74,8 +74,105 @@ export async function PATCH(request: Request) {
       }
     }
 
+    await saveProfilePhotoUrls(db, profile.id, body);
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     return apiError(error, "Unable to update dancer profile.");
+  }
+}
+
+async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
+  const photoUrls = readProfilePhotoUrls(body);
+  if (!photoUrls.length) return;
+
+  const { data: existing, error: existingError } = await db
+    .from("dancer_photos")
+    .select("id, storage_path")
+    .eq("dancer_id", dancerId)
+    .in("storage_path", photoUrls.map((photo) => photo.url));
+
+  if (existingError) throw existingError;
+
+  const existingByPath = new Map<string, { id: string }>(
+    (existing || []).map((photo: any) => [photo.storage_path, { id: photo.id }]),
+  );
+  const newRows = photoUrls
+    .filter((photo) => !existingByPath.has(photo.url))
+    .map((photo) => ({
+      dancer_id: dancerId,
+      storage_path: photo.url,
+      is_primary: photo.isPrimary,
+      sort_order: photo.sortOrder,
+      review_status: "pending",
+    }));
+
+  if (photoUrls.some((photo) => photo.isPrimary)) {
+    const { error } = await db.from("dancer_photos").update({ is_primary: false }).eq("dancer_id", dancerId);
+    if (error) throw error;
+  }
+
+  const existingUpdates = photoUrls.flatMap((photo) => {
+    const existingPhoto = existingByPath.get(photo.url);
+    return existingPhoto ? [{ ...photo, id: existingPhoto.id }] : [];
+  });
+
+  await Promise.all(
+    existingUpdates.map((photo) =>
+      db
+        .from("dancer_photos")
+        .update({ is_primary: photo.isPrimary, sort_order: photo.sortOrder })
+        .eq("id", photo.id),
+    ),
+  ).then((results) => {
+    const failed = results.find((result: any) => result.error);
+    if (failed) throw failed.error;
+  });
+
+  if (newRows.length) {
+    const { error } = await db.from("dancer_photos").insert(newRows);
+    if (error) throw error;
+
+    const { error: profileError } = await db
+      .from("dancer_profiles")
+      .update({ photo_review_status: "pending" })
+      .eq("id", dancerId);
+
+    if (profileError) throw profileError;
+  }
+}
+
+function readProfilePhotoUrls(body: any) {
+  const urls: Array<{ url: string; isPrimary: boolean; sortOrder: number }> = [];
+  const seen = new Set<string>();
+  const mainPhotoUrl = readUrl(body?.mainPhotoUrl);
+
+  if (mainPhotoUrl) {
+    urls.push({ url: mainPhotoUrl, isPrimary: true, sortOrder: 0 });
+    seen.add(mainPhotoUrl);
+  }
+
+  const galleryUrls = Array.isArray(body?.galleryPhotoUrls) ? body.galleryPhotoUrls : [];
+  for (const value of galleryUrls) {
+    const url = readUrl(value);
+    if (!url || seen.has(url)) continue;
+
+    urls.push({ url, isPrimary: !mainPhotoUrl && urls.length === 0, sortOrder: urls.length + 1 });
+    seen.add(url);
+  }
+
+  return urls;
+}
+
+function readUrl(value: unknown) {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text) return "";
+
+  try {
+    const url = new URL(text);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : "";
+  } catch {
+    return "";
   }
 }
