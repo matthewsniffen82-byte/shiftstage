@@ -5,7 +5,7 @@ import Link from "next/link";
 
 type AdminState = {
   monitoring?: Record<string, unknown> | null;
-  queue?: unknown[];
+  queue?: Array<Record<string, unknown>>;
   venues?: unknown[];
   subscriptions?: unknown[];
   error?: string;
@@ -139,7 +139,15 @@ export default function AdminClient() {
           </Panel>
           <Panel title="Approvals">
             <Metric label="Pending profiles" value={String(state.queue?.length || 0)} />
-            <ListPreview items={state.queue} empty="No approval queue." />
+            <ApprovalQueue
+              items={state.queue || []}
+              onReviewed={(dancerId) =>
+                setState((current) => ({
+                  ...current,
+                  queue: (current.queue || []).filter((item) => String(item.id) !== dancerId),
+                }))
+              }
+            />
           </Panel>
           <Panel title="Venues">
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
@@ -152,6 +160,70 @@ export default function AdminClient() {
         </section>
       )}
     </main>
+  );
+}
+
+function ApprovalQueue({
+  items,
+  onReviewed,
+}: {
+  items: Array<Record<string, unknown>>;
+  onReviewed: (dancerId: string) => void;
+}) {
+  const [notesById, setNotesById] = useState<Record<string, string>>({});
+  const [statusById, setStatusById] = useState<Record<string, string>>({});
+
+  if (!items.length) return <p className="empty">No approval queue.</p>;
+
+  async function reviewProfile(dancerId: string, status: "approved" | "rejected") {
+    const token = readToken();
+    if (!token) {
+      setStatusById((current) => ({ ...current, [dancerId]: "Admin sign in required." }));
+      return;
+    }
+
+    setStatusById((current) => ({ ...current, [dancerId]: "Saving..." }));
+    const response = await fetch("/api/admin/approvals", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ dancerId, status, notes: notesById[dancerId] || null }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatusById((current) => ({ ...current, [dancerId]: data.error || "Unable to review profile." }));
+      return;
+    }
+
+    onReviewed(dancerId);
+  }
+
+  return (
+    <div className="approval-list">
+      {items.slice(0, 6).map((item) => {
+        const dancerId = String(item.id || "");
+        return (
+          <div className="approval-row" key={dancerId}>
+            <strong>{String(item.stageName || item.stage_name || "Dancer")}</strong>
+            <span>{String(item.city || "City pending")}</span>
+            <textarea
+              placeholder="Review notes"
+              rows={2}
+              value={notesById[dancerId] || ""}
+              onChange={(event) => setNotesById((current) => ({ ...current, [dancerId]: event.target.value }))}
+            />
+            <div>
+              <button type="button" onClick={() => reviewProfile(dancerId, "approved")}>
+                Approve
+              </button>
+              <button type="button" onClick={() => reviewProfile(dancerId, "rejected")}>
+                Reject
+              </button>
+            </div>
+            {statusById[dancerId] ? <p>{statusById[dancerId]}</p> : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -248,6 +320,13 @@ function AdminStyles() {
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
       ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
       li { color: #d8cfeb; overflow-wrap: anywhere; }
+      .approval-list { display: grid; gap: 12px; }
+      .approval-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .approval-row span { color: #b9accd; }
+      .approval-row textarea { min-height: 72px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .approval-row div { display: flex; gap: 8px; flex-wrap: wrap; }
+      .approval-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .approval-row p { color: #94e5ff; font-size: 14px; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) { .admin-grid { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
