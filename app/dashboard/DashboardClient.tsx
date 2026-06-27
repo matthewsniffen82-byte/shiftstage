@@ -142,7 +142,78 @@ function DancerPanel({ analytics, profile }: { analytics?: LoadState["analytics"
         <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
         <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
       </InfoPanel>
+      <DancerSetupPanel profile={profile} />
     </>
+  );
+}
+
+function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
+  const [stageName, setStageName] = useState("");
+  const [legalName, setLegalName] = useState("");
+  const [city, setCity] = useState("");
+  const [bio, setBio] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setStageName(String(profile?.stage_name || profile?.stageName || ""));
+    setLegalName(String(profile?.real_name || profile?.realName || ""));
+    setCity(String(profile?.city || "Las Vegas"));
+    setBio(String(profile?.bio || ""));
+  }, [profile]);
+
+  async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ stageName, legalName, city, bio }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
+      setStatus("Profile saved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <article className="info-panel setup-panel">
+      <h2>Setup</h2>
+      <form onSubmit={saveProfile}>
+        <label>
+          Stage name
+          <input value={stageName} onChange={(event) => setStageName(event.target.value)} required />
+        </label>
+        <label>
+          Legal name
+          <input value={legalName} onChange={(event) => setLegalName(event.target.value)} required />
+        </label>
+        <label>
+          City
+          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+        </label>
+        <label>
+          Bio
+          <textarea value={bio} onChange={(event) => setBio(event.target.value)} rows={4} />
+        </label>
+        <button type="submit" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save profile"}
+        </button>
+        {status ? <p>{status}</p> : null}
+      </form>
+    </article>
   );
 }
 
@@ -203,11 +274,21 @@ function DashboardStyles() {
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
       .info-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
       .info-panel > div { display: grid; gap: 10px; }
+      .setup-panel { grid-column: span 3; }
+      .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .setup-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label:nth-of-type(4) { grid-column: span 3; }
+      .setup-panel input, .setup-panel textarea { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input { min-height: 42px; }
+      .setup-panel textarea { resize: vertical; min-height: 108px; }
+      .setup-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button:disabled { opacity: .62; cursor: wait; }
+      .setup-panel p { color: #94e5ff; font-size: 14px; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid { grid-template-columns: 1fr; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form { grid-template-columns: 1fr; } .setup-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
