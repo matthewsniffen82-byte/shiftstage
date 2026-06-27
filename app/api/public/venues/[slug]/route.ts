@@ -30,12 +30,17 @@ export async function GET(_request: Request, context: RouteContext) {
     if (error) throw error;
 
     const upcomingShifts = (data || [])
-      .filter((shift: any) => shift.dancer_profiles?.status === "approved")
-      .map((shift: any) => ({
+      .map((shift: any) => {
+        const dancer = Array.isArray(shift.dancer_profiles) ? shift.dancer_profiles[0] : shift.dancer_profiles;
+
+        return { shift, dancer };
+      })
+      .filter(({ dancer }: any) => dancer?.status === "approved")
+      .map(({ shift, dancer }: any) => ({
         id: shift.id,
         dancerId: shift.dancer_id,
-        dancerSlug: shift.dancer_profiles.slug,
-        dancerStageName: shift.dancer_profiles.stage_name,
+        dancerSlug: dancer.slug,
+        dancerStageName: dancer.stage_name,
         startsAt: shift.starts_at,
         endsAt: shift.ends_at,
         timezone: shift.timezone,
