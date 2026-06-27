@@ -19958,7 +19958,7 @@
 
     .dancr-home-logo,
     .brand-home.dancr-home-logo {
-      min-width: 186px !important;
+      min-width: 238px !important;
       border-color: rgba(109, 40, 217, 0.58) !important;
       background:
         radial-gradient(circle at 74% 50%, rgba(76, 29, 149, 0.44), transparent 0 52%),
@@ -19981,46 +19981,51 @@
     }
 
     .dancr-wordmark {
-      font-size: clamp(31px, 4.6vw, 44px) !important;
-      letter-spacing: -0.072em !important;
+      font-family: var(--font-display) !important;
+      font-size: clamp(36px, 5.4vw, 46px) !important;
+      font-weight: 950 !important;
+      line-height: .88 !important;
+      letter-spacing: -0.075em !important;
+      text-transform: lowercase !important;
     }
 
     .dancr-wordmark .wordmark-violet {
       color: transparent !important;
-      background: linear-gradient(135deg, #4C1D95 0%, #6D28D9 46%, #8B5CF6 100%) !important;
+      background: linear-gradient(135deg, #6D28D9 0%, #A855F7 54%, #C084FC 100%) !important;
       -webkit-background-clip: text !important;
       background-clip: text !important;
       text-shadow: none !important;
       filter:
-        drop-shadow(0 0 8px rgba(76, 29, 149, 0.86))
-        drop-shadow(0 0 18px rgba(109, 40, 217, 0.48)) !important;
+        drop-shadow(0 0 8px rgba(168, 85, 247, 0.88))
+        drop-shadow(0 0 18px rgba(109, 40, 217, 0.72))
+        drop-shadow(0 0 28px rgba(76, 29, 149, 0.44)) !important;
     }
 
     @media (max-width: 520px) {
       .brand-home.dancr-home-logo,
       .dancr-home-logo {
-        width: min(56vw, 286px) !important;
-        max-width: min(56vw, 286px) !important;
-        min-width: 168px !important;
+        width: min(62vw, 304px) !important;
+        max-width: min(62vw, 304px) !important;
+        min-width: 188px !important;
         padding-inline: 16px !important;
       }
 
       .dancr-wordmark {
-        font-size: clamp(28px, 8vw, 38px) !important;
+        font-size: clamp(32px, 8.8vw, 42px) !important;
       }
     }
 
     @media (max-width: 390px) {
       .brand-home.dancr-home-logo,
       .dancr-home-logo {
-        width: 54vw !important;
-        max-width: 54vw !important;
-        min-width: 158px !important;
+        width: 59vw !important;
+        max-width: 59vw !important;
+        min-width: 178px !important;
         padding-inline: 14px !important;
       }
 
       .dancr-wordmark {
-        font-size: clamp(26px, 7.6vw, 34px) !important;
+        font-size: clamp(30px, 8.2vw, 38px) !important;
       }
     }
   </style>
@@ -20031,7 +20036,7 @@
       <div class="topbar">
         <button class="brand brand-home dancr-home-logo" id="brandHome" type="button" aria-label="Go to Mydancr home">
           <span class="dancr-wordmark" aria-label="Mydancr">
-            <span class="wordmark-light">Mydan</span><span class="wordmark-violet">cr</span>
+            <span class="wordmark-light">mydan</span><span class="wordmark-violet">cr</span>
           </span>
         </button>
         <div class="menu" aria-label="Menu">
