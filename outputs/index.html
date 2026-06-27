@@ -19012,6 +19012,125 @@
         font-size: 15px !important;
       }
     }
+
+    /* Exact flame image for trending ranks: compact, clean, and tight on cards. */
+    .trend-flame-icon,
+    .badge.trend .trend-flame-icon,
+    .dancer-card .badge.trend .trend-flame-icon,
+    .profile-modal .badge.trend .trend-flame-icon,
+    .venue-shift-rank .trend-flame-icon {
+      width: 33px !important;
+      height: 40px !important;
+      min-width: 33px !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      position: relative !important;
+      overflow: visible !important;
+      opacity: 1 !important;
+      background: transparent !important;
+      transform-origin: center !important;
+      filter: drop-shadow(0 0 7px rgba(124, 58, 237, 0.72)) !important;
+    }
+
+    .trend-flame-icon img,
+    .badge.trend .trend-flame-icon img,
+    .dancer-card .badge.trend .trend-flame-icon img,
+    .profile-modal .badge.trend .trend-flame-icon img,
+    .venue-shift-rank .trend-flame-icon img {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      object-fit: contain !important;
+      object-position: center !important;
+      background: transparent !important;
+      pointer-events: none !important;
+      user-select: none !important;
+    }
+
+    .trend-flame-icon::after,
+    .badge.trend .trend-flame-icon::after,
+    .dancer-card .badge.trend .trend-flame-icon::after,
+    .profile-modal .badge.trend .trend-flame-icon::after,
+    .venue-shift-rank .trend-flame-icon::after {
+      content: "" !important;
+      position: absolute !important;
+      left: 50% !important;
+      top: 56% !important;
+      width: 19px !important;
+      height: 16px !important;
+      transform: translate(-50%, -50%) !important;
+      border-radius: 999px !important;
+      background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 52%, rgba(232, 217, 255, 0.88) 62%, rgba(45, 13, 72, 0.18) 72%, transparent 78%) !important;
+      box-shadow:
+        0 0 8px rgba(255, 255, 255, 0.58),
+        0 0 13px rgba(124, 58, 237, 0.56) !important;
+      pointer-events: none !important;
+    }
+
+    .trend-flame-number,
+    .badge.trend .trend-flame-number,
+    .dancer-card .badge.trend .trend-flame-number,
+    .profile-modal .badge.trend .trend-flame-number,
+    .venue-shift-rank .trend-flame-number {
+      position: relative !important;
+      z-index: 2 !important;
+      transform: translateY(3px) !important;
+      color: #fff !important;
+      font-family: "Space Grotesk", "Outfit", var(--font-ui) !important;
+      font-size: 20px !important;
+      font-weight: 950 !important;
+      line-height: 1 !important;
+      letter-spacing: 0 !important;
+      text-shadow:
+        0 0 6px rgba(255, 255, 255, 0.82),
+        0 0 13px rgba(124, 58, 237, 0.78) !important;
+    }
+
+    .trend-flame-icon.is-double .trend-flame-number {
+      font-size: 16px !important;
+      transform: translateY(3px) scaleX(0.94) !important;
+    }
+
+    .compact-trend,
+    .dancer-card .compact-trend,
+    .profile-modal .compact-trend {
+      min-width: 40px !important;
+      min-height: 42px !important;
+      padding: 0 4px !important;
+      border-radius: 999px !important;
+    }
+
+    .profile-modal .modal-rank.compact-trend:not([hidden]) {
+      width: 42px !important;
+      min-width: 42px !important;
+      height: 48px !important;
+      padding: 0 !important;
+    }
+
+    @media (max-width: 560px) {
+      .trend-flame-icon,
+      .trend-flame-icon img {
+        width: 30px !important;
+        height: 36px !important;
+        min-width: 30px !important;
+      }
+
+      .trend-flame-number {
+        font-size: 18px !important;
+      }
+
+      .trend-flame-icon::after {
+        width: 17px !important;
+        height: 14px !important;
+      }
+
+      .trend-flame-icon.is-double .trend-flame-number {
+        font-size: 14px !important;
+      }
+    }
     /* Mobile tab fit: keep the full "Trending" label visible on narrow phones. */
     @media (max-width: 520px) {
       .tabs {
@@ -23143,11 +23262,8 @@
       const doubleDigitClass = safeRank.length > 1 ? " is-double" : "";
       return `
         <span class="trend-flame-icon${doubleDigitClass}" aria-hidden="true">
-          <svg viewBox="0 0 64 78" focusable="false">
-            <path class="trend-flame-outer" d="M34 3c8 12 22 22 22 39 0 20-13 33-24 33S8 64 8 49c0-10 5-18 13-25 0 7 3 12 8 15-2-14 2-25 5-36Z"></path>
-            <path class="trend-flame-core" d="M32 31c7 8 12 14 12 24 0 9-5 15-12 15s-13-6-13-15c0-6 3-11 8-16 1 4 3 7 6 9-1-7 0-12-1-17Z"></path>
-            <text x="32" y="50" text-anchor="middle" dominant-baseline="middle">${safeRank}</text>
-          </svg>
+          <img src="/trending-flame.png" alt="">
+          <span class="trend-flame-number">${safeRank}</span>
         </span>
       `;
     }
