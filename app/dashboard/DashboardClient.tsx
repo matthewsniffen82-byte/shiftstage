@@ -156,6 +156,7 @@ function DancerPanel({
       <DancerSetupPanel profile={profile} />
       <DancerPhotoPanel />
       <DancerVerificationPanel reviews={reviews} />
+      <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
     </>
   );
 }
@@ -228,6 +229,163 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
       </form>
     </article>
   );
+}
+
+function DancerShiftPanel({ city }: { city: string }) {
+  const [venues, setVenues] = useState<Array<{ id: string; name: string }>>([]);
+  const [shifts, setShifts] = useState<Array<Record<string, any>>>([]);
+  const [venueId, setVenueId] = useState("");
+  const [startsAt, setStartsAt] = useState("");
+  const [endsAt, setEndsAt] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const session = readSession();
+    if (!session?.accessToken) return;
+
+    fetch(`/api/public/venues?city=${encodeURIComponent(city)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data.ok) return;
+        setVenues(data.venues || []);
+        setVenueId((current) => current || data.venues?.[0]?.id || "");
+      })
+      .catch(() => undefined);
+
+    loadShifts(session.accessToken);
+  }, [city]);
+
+  async function loadShifts(accessToken: string) {
+    const response = await fetch("/api/dancer/shifts", { headers: { authorization: `Bearer ${accessToken}` } });
+    const data = await response.json();
+    if (response.ok && data.ok) setShifts(data.shifts || []);
+  }
+
+  async function postShift(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    if (!venueId || !startsAt || !endsAt) {
+      setStatus("Choose a venue, start time, and end time.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/shifts", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          venueId,
+          startsAt: new Date(startsAt).toISOString(),
+          endsAt: new Date(endsAt).toISOString(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to post shift.");
+      setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
+      setStartsAt("");
+      setEndsAt("");
+      await loadShifts(session.accessToken);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to post shift.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function cancelShift(shiftId: string) {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setStatus("");
+    const response = await fetch("/api/dancer/shifts", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ shiftId, status: "cancelled" }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatus(data.error || "Unable to cancel shift.");
+      return;
+    }
+    setStatus(`Shift cancelled. ${data.cancellationRecipients || 0} customers notified.`);
+    await loadShifts(session.accessToken);
+  }
+
+  return (
+    <article className="info-panel shift-panel">
+      <h2>Shifts</h2>
+      <form onSubmit={postShift}>
+        <label>
+          Venue
+          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} required>
+            <option value="">Choose venue</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Starts
+          <input type="datetime-local" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} required />
+        </label>
+        <label>
+          Ends
+          <input type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} required />
+        </label>
+        <button type="submit" disabled={isSaving}>
+          {isSaving ? "Posting..." : "Post shift"}
+        </button>
+        {status ? <p>{status}</p> : null}
+      </form>
+      <div className="shift-list">
+        {shifts.slice(0, 8).map((shift) => (
+          <div className="dashboard-shift" key={String(shift.id)}>
+            <span>
+              <strong>{venueName(shift)}</strong>
+              <small>{formatDashboardShift(shift.starts_at, shift.ends_at)}</small>
+            </span>
+            <em>{String(shift.status || "posted")}</em>
+            {shift.status !== "cancelled" ? (
+              <button type="button" onClick={() => cancelShift(String(shift.id))}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
+        ))}
+        {!shifts.length ? <p>No shifts posted yet.</p> : null}
+      </div>
+    </article>
+  );
+}
+
+function venueName(shift: Record<string, any>) {
+  const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
+  return String(venue?.name || "Venue");
+}
+
+function formatDashboardShift(startsAt: string, endsAt: string) {
+  if (!startsAt || !endsAt) return "Time pending";
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${formatter.format(new Date(startsAt))} - ${formatter.format(new Date(endsAt))}`;
 }
 
 function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }) {
@@ -430,27 +588,34 @@ function DashboardStyles() {
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-      .setup-panel label, .upload-panel label, .verification-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
-      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"] { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"] { min-height: 42px; }
+      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select { min-height: 42px; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
-      .setup-panel button, .upload-panel button, .verification-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
-      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled { opacity: .62; cursor: wait; }
-      .setup-panel p, .upload-panel p, .verification-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel { grid-column: span 3; }
+      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled { opacity: .62; cursor: wait; }
+      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p { color: #94e5ff; font-size: 14px; }
+      .upload-panel, .verification-panel, .shift-panel { grid-column: span 3; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
+      .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }
       .review-list { display: grid; gap: 10px; }
       .review-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .review-row span { color: #94e5ff; font-size: 13px; font-weight: 850; text-transform: capitalize; }
+      .shift-list { display: grid; gap: 10px; }
+      .dashboard-shift { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .dashboard-shift span { display: grid; gap: 4px; }
+      .dashboard-shift small { color: #b9accd; }
+      .dashboard-shift em { color: #94e5ff; font-style: normal; font-weight: 850; text-transform: capitalize; }
+      .dashboard-shift button { color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); padding: 0 12px; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
