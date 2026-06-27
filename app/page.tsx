@@ -44,8 +44,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             schedule data.
           </p>
           <div className="hero-actions">
-            <a href="#tonight">Tonight</a>
-            <a href="#venues">Venues</a>
+            <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Tonight</Link>
+            <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
           </div>
         </div>
         <FeaturedDancer dancer={featured} />
