@@ -419,6 +419,7 @@ function DancerPanel({
         <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
       </InfoPanel>
       <DancerSetupPanel profile={profile} />
+      <DancerSocialPanel profile={profile} />
       <DancerPhotoPanel />
       <DancerVerificationPanel reviews={reviews} />
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
@@ -793,6 +794,112 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
   );
 }
 
+function DancerSocialPanel({ profile }: { profile?: LoadState["profile"] }) {
+  const [socials, setSocials] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const existing = Array.isArray(profile?.social_links) ? profile.social_links : [];
+    const nextSocials: Record<string, string> = {};
+    for (const platform of SOCIAL_PLATFORMS) {
+      const row = existing.find((item: any) => item?.platform === platform.key);
+      nextSocials[platform.key] = String(row?.url || row?.handle || "");
+    }
+    setSocials(nextSocials);
+  }, [profile]);
+
+  async function saveSocials(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          socials: SOCIAL_PLATFORMS.map((platform) => {
+            const value = (socials[platform.key] || "").trim();
+            return {
+              platform: platform.key,
+              handle: toSocialHandle(value),
+              url: toSocialUrl(platform.key, value),
+              isActive: Boolean(value),
+            };
+          }),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save socials.");
+      setStatus("Social links saved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save socials.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <article className="info-panel socials-panel">
+      <h2>Social Links</h2>
+      <form onSubmit={saveSocials}>
+        {SOCIAL_PLATFORMS.map((platform) => (
+          <label key={platform.key}>
+            {platform.label}
+            <input
+              placeholder={platform.placeholder}
+              value={socials[platform.key] || ""}
+              onChange={(event) => setSocials((current) => ({ ...current, [platform.key]: event.target.value }))}
+            />
+          </label>
+        ))}
+        <button type="submit" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save socials"}
+        </button>
+        {status ? <p>{status}</p> : null}
+      </form>
+    </article>
+  );
+}
+
+const SOCIAL_PLATFORMS = [
+  { key: "instagram", label: "Instagram", placeholder: "@stage_name or profile URL" },
+  { key: "tiktok", label: "TikTok", placeholder: "@stage_name or profile URL" },
+  { key: "snapchat", label: "Snapchat", placeholder: "@stage_name" },
+  { key: "x", label: "X", placeholder: "@stage_name or profile URL" },
+  { key: "onlyfans", label: "OnlyFans", placeholder: "@stage_name or profile URL" },
+];
+
+function toSocialHandle(value: string) {
+  return value
+    .trim()
+    .replace(/^https?:\/\/(www\.)?/i, "")
+    .split("/")
+    .filter(Boolean)
+    .pop()
+    ?.replace(/^@/, "") || "";
+}
+
+function toSocialUrl(platform: string, value: string) {
+  const text = value.trim();
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text;
+
+  const handle = toSocialHandle(text);
+  if (platform === "instagram") return `https://instagram.com/${handle}`;
+  if (platform === "tiktok") return `https://tiktok.com/@${handle}`;
+  if (platform === "snapchat") return `https://snapchat.com/add/${handle}`;
+  if (platform === "x") return `https://x.com/${handle}`;
+  if (platform === "onlyfans") return `https://onlyfans.com/${handle}`;
+  return text;
+}
+
 function DancerPhotoPanel() {
   const [file, setFile] = useState<File | null>(null);
   const [isPrimary, setIsPrimary] = useState(true);
@@ -922,15 +1029,16 @@ function DashboardStyles() {
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label, .customer-settings-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label, .customer-settings-panel label, .socials-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
-      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input[type="text"], .customer-settings-panel input:not([type]) { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input:not([type]) { min-height: 42px; }
+      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input[type="text"], .customer-settings-panel input:not([type]), .socials-panel input { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input:not([type]), .socials-panel input { min-height: 42px; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
-      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
-      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled { opacity: .62; cursor: wait; }
-      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel { grid-column: span 3; }
+      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled, .socials-panel button:disabled { opacity: .62; cursor: wait; }
+      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p, .socials-panel p { color: #94e5ff; font-size: 14px; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel { grid-column: span 3; }
+      .socials-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
@@ -966,7 +1074,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
