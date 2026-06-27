@@ -20043,16 +20043,63 @@
         font-size: clamp(30px, 8.2vw, 38px) !important;
       }
     }
+
+    .dancr-home-logo.logo-image-button,
+    .brand-home.dancr-home-logo.logo-image-button {
+      width: min(34vw, 236px) !important;
+      aspect-ratio: 1468 / 376 !important;
+      min-width: 196px !important;
+      max-width: 236px !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background: #08070d !important;
+      border-color: rgba(124, 58, 237, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 24px rgba(124, 58, 237, 0.30),
+        0 0 42px rgba(76, 29, 149, 0.24),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .logo-image-button .brand-logo-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: inherit;
+      object-fit: contain;
+      object-position: center;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    @media (max-width: 720px) {
+      .dancr-home-logo.logo-image-button,
+      .brand-home.dancr-home-logo.logo-image-button {
+        width: min(57vw, 276px) !important;
+        max-width: min(57vw, 276px) !important;
+        min-width: 176px !important;
+        min-height: 0 !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .dancr-home-logo.logo-image-button,
+      .brand-home.dancr-home-logo.logo-image-button {
+        width: 54vw !important;
+        max-width: 54vw !important;
+        min-width: 164px !important;
+        min-height: 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <header>
       <div class="topbar">
-        <button class="brand brand-home dancr-home-logo" id="brandHome" type="button" aria-label="Go to Mydancr home">
-          <span class="dancr-wordmark" aria-label="Mydancr">
-            <span class="wordmark-light">m</span><span class="wordmark-y">y</span><span class="wordmark-light">dan</span><span class="wordmark-violet">cr</span>
-          </span>
+        <button class="brand brand-home dancr-home-logo logo-image-button" id="brandHome" type="button" aria-label="Go to Mydancr home">
+          <img class="brand-logo-image" src="mydancr-logo.png" alt="Mydancr" width="1468" height="376" decoding="async" />
         </button>
         <div class="menu" aria-label="Menu">
           <div class="utility-menu">
