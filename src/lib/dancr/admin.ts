@@ -349,6 +349,7 @@ export async function getAdminMonitoringStatus(client: DancrClient): Promise<Adm
       integrationStatus("Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_DANCER_MONTHLY_PRICE_ID"]),
       integrationStatus("OneSignal", ["NEXT_PUBLIC_ONESIGNAL_APP_ID", "ONESIGNAL_REST_API_KEY"]),
       integrationStatus("Resend", ["RESEND_API_KEY", "EMAIL_FROM"]),
+      integrationStatus("Google Maps", ["NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"]),
     ],
   };
 }
