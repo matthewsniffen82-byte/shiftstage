@@ -128,8 +128,102 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
         />
         <Metric label="Going" value={String(saved?.goingSignals?.length || 0)} />
       </InfoPanel>
+      <CustomerPreferencesPanel profile={profile} />
     </>
   );
+}
+
+function CustomerPreferencesPanel({ profile }: { profile?: LoadState["profile"] }) {
+  const [city, setCity] = useState("Las Vegas");
+  const [settings, setSettings] = useState<Record<string, boolean>>({});
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setCity(String(profile?.city || "Las Vegas"));
+    setSettings({
+      followedDancersOnly: readSetting(profile, "followedDancersOnly", true),
+      followedVenuesOnly: readSetting(profile, "followedVenuesOnly", true),
+      anyDancerInCity: readSetting(profile, "anyDancerInCity", false),
+      workingTonight: readSetting(profile, "workingTonight", true),
+      newShifts: readSetting(profile, "newShifts", true),
+      venueSchedules: readSetting(profile, "venueSchedules", true),
+      clubChanges: readSetting(profile, "clubChanges", true),
+      cancelledShifts: readSetting(profile, "cancelledShifts", true),
+    });
+  }, [profile]);
+
+  async function savePreferences(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/customer/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ city, notificationSettings: settings }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save preferences.");
+      setStatus("Preferences saved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save preferences.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <article className="info-panel customer-settings-panel">
+      <h2>Notification Settings</h2>
+      <form onSubmit={savePreferences}>
+        <label className="city-field">
+          City
+          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+        </label>
+        {CUSTOMER_NOTIFICATION_OPTIONS.map((option) => (
+          <label className="check-row" key={option.key}>
+            <input
+              checked={Boolean(settings[option.key])}
+              type="checkbox"
+              onChange={(event) => setSettings((current) => ({ ...current, [option.key]: event.target.checked }))}
+            />
+            {option.label}
+          </label>
+        ))}
+        <button type="submit" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save preferences"}
+        </button>
+        {status ? <p>{status}</p> : null}
+      </form>
+    </article>
+  );
+}
+
+const CUSTOMER_NOTIFICATION_OPTIONS = [
+  { key: "followedDancersOnly", label: "Followed dancers only" },
+  { key: "followedVenuesOnly", label: "Followed venues only" },
+  { key: "anyDancerInCity", label: "Any dancer in city" },
+  { key: "workingTonight", label: "Working tonight" },
+  { key: "newShifts", label: "New shifts" },
+  { key: "venueSchedules", label: "Venue schedules" },
+  { key: "clubChanges", label: "Club changes" },
+  { key: "cancelledShifts", label: "Cancelled shifts" },
+];
+
+function readSetting(profile: LoadState["profile"], key: string, fallback: boolean) {
+  const settings = profile?.notificationSettings;
+  if (settings && typeof settings === "object" && !Array.isArray(settings)) {
+    const value = (settings as Record<string, unknown>)[key];
+    if (typeof value === "boolean") return value;
+  }
+  return fallback;
 }
 
 function DancerPanel({
@@ -657,15 +751,15 @@ function DashboardStyles() {
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label, .upload-panel label, .verification-panel label, .shift-panel label, .customer-settings-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
-      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select { min-height: 42px; }
+      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input[type="text"], .customer-settings-panel input:not([type]) { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"], .shift-panel input, .shift-panel select, .customer-settings-panel input:not([type]) { min-height: 42px; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
-      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
-      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled { opacity: .62; cursor: wait; }
-      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel { grid-column: span 3; }
+      .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled { opacity: .62; cursor: wait; }
+      .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p { color: #94e5ff; font-size: 14px; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel { grid-column: span 3; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
@@ -684,11 +778,13 @@ function DashboardStyles() {
       .billing-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
       .billing-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .billing-actions p { color: #94e5ff; font-size: 14px; }
+      .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+      .customer-settings-panel .city-field { grid-column: span 2; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
