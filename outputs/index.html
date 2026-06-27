@@ -20158,6 +20158,9 @@
         0 0 18px rgba(132, 50, 255, 0.24),
         inset 0 0 16px rgba(132, 50, 255, 0.08) !important;
       border-radius: 15px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
     .logo-image-button .brand-logo-image {
@@ -20170,6 +20173,33 @@
       object-position: center;
       pointer-events: none;
       user-select: none;
+    }
+
+    .logo-image-button .mydancr-live-logo {
+      display: inline-flex !important;
+      align-items: baseline !important;
+      justify-content: center !important;
+      color: #fff !important;
+      font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif !important;
+      font-size: clamp(38px, 5.7vw, 50px) !important;
+      font-weight: 950 !important;
+      letter-spacing: -0.065em !important;
+      line-height: 0.9 !important;
+      text-transform: lowercase !important;
+      text-shadow:
+        0 0 12px rgba(255, 255, 255, 0.7),
+        0 0 22px rgba(255, 255, 255, 0.28) !important;
+      transform: translateY(-1px) !important;
+      pointer-events: none !important;
+      user-select: none !important;
+    }
+
+    .logo-image-button .mydancr-live-logo .violet-r {
+      color: #8f35ff !important;
+      text-shadow:
+        0 0 10px rgba(143, 53, 255, 0.95),
+        0 0 22px rgba(143, 53, 255, 0.72),
+        0 0 34px rgba(143, 53, 255, 0.42) !important;
     }
 
     @media (max-width: 720px) {
@@ -20225,7 +20255,7 @@
     <header>
       <div class="topbar">
         <button class="brand brand-home dancr-home-logo logo-image-button" id="brandHome" type="button" aria-label="Go to Mydancr home">
-          <img class="brand-logo-image" src="mydancr-logo-current.png" alt="Mydancr" width="331" height="103" decoding="async" />
+          <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
         </button>
         <div class="menu" aria-label="Menu">
           <div class="utility-menu">
