@@ -96,9 +96,8 @@ function TrendingStyles() {
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 68ch; }
       .ranking-list { max-width: 1180px; margin: 0 auto; display: grid; gap: 10px; }
       .ranking-row { min-height: 88px; display: grid; grid-template-columns: 60px 58px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px; color: #f7f2ff; text-decoration: none; border: 1px solid rgba(217,173,79,.2); background: rgba(12,12,18,.82); border-radius: 8px; }
-      .rank { width: 52px; height: 62px; position: relative; display: grid; place-items: center; background: transparent; color: #fff; font-size: 22px; font-weight: 950; line-height: 1; text-shadow: 0 0 8px rgba(255,255,255,.7), 0 0 14px rgba(124,58,237,.82); }
-      .rank img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 5px rgba(124,58,237,.75)); }
-      .rank::after { content: ""; position: absolute; left: 50%; top: 56%; width: 28px; height: 24px; transform: translate(-50%, -50%); border-radius: 999px; background: radial-gradient(circle, rgba(255,255,255,.96) 0 52%, rgba(231,214,255,.88) 62%, rgba(44,13,71,.12) 72%, transparent 78%); box-shadow: 0 0 10px rgba(255,255,255,.62), 0 0 16px rgba(124,58,237,.62); }
+      .rank { width: 52px; height: 62px; position: relative; display: grid; place-items: center; isolation: isolate; background: transparent; color: #030006; font-size: 24px; font-weight: 950; line-height: 1; text-shadow: 0 0 5px rgba(168,85,247,.76), 0 0 10px rgba(255,255,255,.32); }
+      .rank img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: screen; filter: saturate(1.25) contrast(1.18) drop-shadow(0 0 5px rgba(124,58,237,.75)); }
       .rank span { position: relative; z-index: 1; transform: translateY(4px); }
       .rank-one { color: #fff; }
       .avatar { width: 58px; height: 58px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(34,199,255,.2), rgba(139,92,246,.36)); background-size: cover; background-position: center; font-size: 14px; font-weight: 950; }
@@ -108,7 +107,7 @@ function TrendingStyles() {
       .ranking-row em { color: #94e5ff; font-style: normal; font-weight: 900; white-space: nowrap; }
       .empty-state { min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 24px; }
       .empty-state strong { font-size: 24px; }
-      @media (max-width: 680px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } .ranking-row { grid-template-columns: 50px 48px minmax(0, 1fr); } .ranking-row em { grid-column: 3; } .rank { width: 44px; height: 52px; font-size: 18px; } .rank::after { width: 24px; height: 20px; } .avatar { width: 48px; height: 48px; } h1 { font-size: 42px; } }
+      @media (max-width: 680px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } .ranking-row { grid-template-columns: 50px 48px minmax(0, 1fr); } .ranking-row em { grid-column: 3; } .rank { width: 44px; height: 52px; font-size: 20px; } .avatar { width: 48px; height: 48px; } h1 { font-size: 42px; } }
     `}</style>
   );
 }

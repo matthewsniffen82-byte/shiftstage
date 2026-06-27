@@ -19029,6 +19029,7 @@
       opacity: 1 !important;
       background: transparent !important;
       transform-origin: center !important;
+      isolation: isolate !important;
       filter: drop-shadow(0 0 7px rgba(124, 58, 237, 0.72)) !important;
     }
 
@@ -19045,6 +19046,8 @@
       object-fit: contain !important;
       object-position: center !important;
       background: transparent !important;
+      mix-blend-mode: screen !important;
+      filter: saturate(1.25) contrast(1.18) !important;
       pointer-events: none !important;
       user-select: none !important;
     }
@@ -19054,20 +19057,8 @@
     .dancer-card .badge.trend .trend-flame-icon::after,
     .profile-modal .badge.trend .trend-flame-icon::after,
     .venue-shift-rank .trend-flame-icon::after {
-      content: "" !important;
-      position: absolute !important;
-      left: 50% !important;
-      top: 56% !important;
-      width: 19px !important;
-      height: 16px !important;
-      transform: translate(-50%, -50%) !important;
-      border-radius: 999px !important;
-      background:
-        radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 52%, rgba(232, 217, 255, 0.88) 62%, rgba(45, 13, 72, 0.18) 72%, transparent 78%) !important;
-      box-shadow:
-        0 0 8px rgba(255, 255, 255, 0.58),
-        0 0 13px rgba(124, 58, 237, 0.56) !important;
-      pointer-events: none !important;
+      content: none !important;
+      display: none !important;
     }
 
     .trend-flame-number,
@@ -19078,19 +19069,19 @@
       position: relative !important;
       z-index: 2 !important;
       transform: translateY(3px) !important;
-      color: #fff !important;
+      color: #030006 !important;
       font-family: "Space Grotesk", "Outfit", var(--font-ui) !important;
-      font-size: 20px !important;
+      font-size: 22px !important;
       font-weight: 950 !important;
       line-height: 1 !important;
       letter-spacing: 0 !important;
       text-shadow:
-        0 0 6px rgba(255, 255, 255, 0.82),
-        0 0 13px rgba(124, 58, 237, 0.78) !important;
+        0 0 5px rgba(168, 85, 247, 0.76),
+        0 0 10px rgba(255, 255, 255, 0.32) !important;
     }
 
     .trend-flame-icon.is-double .trend-flame-number {
-      font-size: 16px !important;
+      font-size: 17px !important;
       transform: translateY(3px) scaleX(0.94) !important;
     }
 
@@ -19119,16 +19110,11 @@
       }
 
       .trend-flame-number {
-        font-size: 18px !important;
-      }
-
-      .trend-flame-icon::after {
-        width: 17px !important;
-        height: 14px !important;
+        font-size: 20px !important;
       }
 
       .trend-flame-icon.is-double .trend-flame-number {
-        font-size: 14px !important;
+        font-size: 15px !important;
       }
     }
     /* Mobile tab fit: keep the full "Trending" label visible on narrow phones. */
