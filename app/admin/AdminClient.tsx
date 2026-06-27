@@ -6,7 +6,7 @@ import Link from "next/link";
 type AdminState = {
   monitoring?: Record<string, unknown> | null;
   queue?: Array<Record<string, unknown>>;
-  venues?: unknown[];
+  venues?: Array<Record<string, unknown>>;
   subscriptions?: unknown[];
   error?: string;
 };
@@ -151,7 +151,10 @@ export default function AdminClient() {
           </Panel>
           <Panel title="Venues">
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
-            <ListPreview items={state.venues} empty="No venues returned." />
+            <VenueManager
+              venues={state.venues || []}
+              onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
+            />
           </Panel>
           <Panel title="Subscriptions">
             <Metric label="Tracked subscriptions" value={String(state.subscriptions?.length || 0)} />
@@ -160,6 +163,115 @@ export default function AdminClient() {
         </section>
       )}
     </main>
+  );
+}
+
+function VenueManager({
+  venues,
+  onVenuesChange,
+}: {
+  venues: Array<Record<string, unknown>>;
+  onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
+}) {
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("Las Vegas");
+  const [state, setState] = useState("NV");
+  const [address, setAddress] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function createVenue(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = readToken();
+    if (!token) {
+      setStatus("Admin sign in required.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    const response = await fetch("/api/admin/venues", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ name, city, state, address, timezone: "America/Los_Angeles", isActive: true }),
+    });
+    const data = await response.json();
+    setIsSaving(false);
+    if (!response.ok || !data.ok) {
+      setStatus(data.error || "Unable to create venue.");
+      return;
+    }
+
+    onVenuesChange([data.venue, ...venues]);
+    setName("");
+    setAddress("");
+    setStatus("Venue created.");
+  }
+
+  async function toggleVenue(venue: Record<string, unknown>) {
+    const token = readToken();
+    if (!token) {
+      setStatus("Admin sign in required.");
+      return;
+    }
+
+    const venueId = String(venue.id || "");
+    const nextActive = venue.is_active === false;
+    const response = await fetch("/api/admin/venues", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ venueId, isActive: nextActive }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatus(data.error || "Unable to update venue.");
+      return;
+    }
+
+    onVenuesChange(venues.map((item) => (String(item.id) === venueId ? { ...item, ...data.venue } : item)));
+    setStatus(nextActive ? "Venue activated." : "Venue hidden.");
+  }
+
+  return (
+    <div className="venue-manager">
+      <form onSubmit={createVenue}>
+        <label>
+          Name
+          <input value={name} onChange={(event) => setName(event.target.value)} required />
+        </label>
+        <label>
+          City
+          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+        </label>
+        <label>
+          State
+          <input value={state} onChange={(event) => setState(event.target.value)} />
+        </label>
+        <label>
+          Address
+          <input value={address} onChange={(event) => setAddress(event.target.value)} />
+        </label>
+        <button type="submit" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Create venue"}
+        </button>
+      </form>
+      <div className="venue-list">
+        {venues.slice(0, 6).map((venue) => (
+          <div className="venue-admin-row" key={String(venue.id)}>
+            <span>
+              <strong>{String(venue.name || "Venue")}</strong>
+              <small>{String(venue.city || "City")}</small>
+            </span>
+            <em>{venue.is_active === false ? "Inactive" : "Active"}</em>
+            <button type="button" onClick={() => toggleVenue(venue)}>
+              {venue.is_active === false ? "Activate" : "Hide"}
+            </button>
+          </div>
+        ))}
+        {!venues.length ? <p className="empty">No venues returned.</p> : null}
+      </div>
+      {status ? <p>{status}</p> : null}
+    </div>
   );
 }
 
@@ -327,8 +439,19 @@ function AdminStyles() {
       .approval-row div { display: flex; gap: 8px; flex-wrap: wrap; }
       .approval-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
       .approval-row p { color: #94e5ff; font-size: 14px; }
+      .venue-manager { display: grid; gap: 12px; }
+      .venue-manager form { display: grid; gap: 10px; }
+      .venue-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .venue-manager input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .venue-manager button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .venue-manager p { color: #94e5ff; font-size: 14px; }
+      .venue-list { display: grid; gap: 8px; }
+      .venue-admin-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .venue-admin-row span { display: grid; gap: 3px; }
+      .venue-admin-row small { color: #b9accd; }
+      .venue-admin-row em { color: #94e5ff; font-style: normal; font-weight: 850; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (max-width: 680px) { .admin-grid { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
+      @media (max-width: 680px) { .admin-grid, .venue-admin-row { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
 }
