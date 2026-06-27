@@ -23744,7 +23744,7 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Tonight</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
+          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Now</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
           : profile.scheduled
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
             : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No upcoming shifts</span></div>';
