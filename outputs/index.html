@@ -16558,9 +16558,7 @@
       height: auto !important;
       display: block !important;
       padding: 0 !important;
-      background-image:
-        url("file:///C:/Users/aix23/Downloads/ChatGPT%20Image%20Jun%2023,%202026,%2010_11_45%20PM.png"),
-        url("./dancr-hero.png") !important;
+      background-image: url("./dancr-hero.png") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: cover !important;
@@ -17757,9 +17755,7 @@
       height: auto !important;
       padding: 0 !important;
       overflow: hidden !important;
-      background-image:
-        url("file:///C:/Users/aix23/Downloads/ChatGPT%20Image%20Jun%2023,%202026,%2010_11_45%20PM.png"),
-        url("./dancr-hero.png") !important;
+      background-image: url("./dancr-hero.png") !important;
       background-size: contain !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
@@ -20220,79 +20216,6 @@
           0 0 0 1px rgba(4, 10, 14, 0.74),
           0 0 16px rgba(34, 199, 255, 0.9),
           inset 0 0 9px rgba(255, 255, 255, 0.4) !important;
-      }
-    }
-    /* Hero copy update: same photo, one clean sentence on the left. */
-    .hero.reference-hero,
-    .hero.reference-hero.uploaded-hero-ready {
-      isolation: isolate;
-    }
-
-    .hero.reference-hero.uploaded-hero-ready::before,
-    .hero.reference-hero::before {
-      content: "" !important;
-      display: block !important;
-      position: absolute !important;
-      z-index: 1 !important;
-      inset: 9% 36% 10% 1.8% !important;
-      border-radius: 22px !important;
-      background:
-        linear-gradient(90deg, rgba(7, 6, 16, 0.98) 0%, rgba(9, 8, 22, 0.96) 56%, rgba(13, 9, 30, 0.68) 82%, rgba(13, 9, 30, 0) 100%),
-        radial-gradient(circle at 16% 50%, rgba(142, 64, 255, 0.12), transparent 44%) !important;
-      pointer-events: none !important;
-    }
-
-    .hero.reference-hero.uploaded-hero-ready .hero-copy,
-    .hero.reference-hero .hero-copy {
-      display: flex !important;
-      position: absolute !important;
-      z-index: 2 !important;
-      left: clamp(18px, 3.2vw, 58px) !important;
-      top: 50% !important;
-      width: min(65%, 1180px) !important;
-      transform: translateY(-50%) !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      pointer-events: none !important;
-    }
-
-    .hero.reference-hero.uploaded-hero-ready .hero-copy h2,
-    .hero.reference-hero .hero-copy h2 {
-      display: none !important;
-    }
-
-    .hero.reference-hero.uploaded-hero-ready .hero-copy p,
-    .hero.reference-hero .hero-copy p {
-      display: block !important;
-      margin: 0 !important;
-      max-width: 20ch !important;
-      color: #f7f3ff !important;
-      font-family: var(--font-display) !important;
-      font-size: clamp(2.35rem, 5.5vw, 5.35rem) !important;
-      font-weight: 900 !important;
-      line-height: 0.98 !important;
-      letter-spacing: 0 !important;
-      text-shadow:
-        0 4px 18px rgba(0, 0, 0, 0.86),
-        0 0 28px rgba(155, 72, 255, 0.28) !important;
-    }
-
-    @media (max-width: 560px) {
-      .hero.reference-hero.uploaded-hero-ready::before,
-      .hero.reference-hero::before {
-        inset: 10% 18% 10% 2% !important;
-      }
-
-      .hero.reference-hero.uploaded-hero-ready .hero-copy,
-      .hero.reference-hero .hero-copy {
-        left: 18px !important;
-        width: 78% !important;
-      }
-
-      .hero.reference-hero.uploaded-hero-ready .hero-copy p,
-      .hero.reference-hero .hero-copy p {
-        max-width: 18ch !important;
-        font-size: clamp(1.65rem, 8vw, 2.55rem) !important;
       }
     }
   </style>
