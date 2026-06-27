@@ -30,7 +30,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </Link>
         <div className="nav-links">
           <Link href={`/trending?city=${encodeURIComponent(city)}`}>Trending</Link>
-          <Link href="/outputs/index.html">Full App</Link>
+          <Link href="/account">Account</Link>
           <Link href="/account?role=customer">Customer</Link>
           <Link href="/account?role=dancer">Dancer</Link>
         </div>

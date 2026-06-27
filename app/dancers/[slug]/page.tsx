@@ -26,7 +26,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
       <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
       <nav className="public-nav">
-        <Link href="/outputs/index.html">Dancr</Link>
+        <Link href="/">Dancr</Link>
         <span>{profile.city}</span>
       </nav>
       <section className="public-hero dancer-hero">
@@ -35,9 +35,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           <h1>{profile.stageName}</h1>
           <p>{profile.bio || "Approved public profile with venue-confirmed schedule details."}</p>
           <div className="public-actions">
-            <Link href={`/outputs/index.html?city=${encodeURIComponent(profile.city)}&profile=${encodeURIComponent(profile.slug)}`}>
-              Open in Dancr
-            </Link>
+            <Link href={`/tonight?city=${encodeURIComponent(profile.city)}`}>Tonight in {profile.city}</Link>
             {profile.venueSlug ? <Link href={`/venues/${profile.venueSlug}`}>{profile.venueName || "Venue"}</Link> : null}
           </div>
           <DancerProfileActions

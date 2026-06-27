@@ -26,7 +26,7 @@ export default async function DancersPage({ searchParams }: DancersPageProps) {
         <div className="nav-links">
           <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Tonight</Link>
           <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
-          <Link href="/outputs/index.html">Full App</Link>
+          <Link href="/account">Account</Link>
         </div>
       </nav>
 

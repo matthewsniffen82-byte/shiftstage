@@ -46,7 +46,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
     <main className="public-profile-shell">
       <VenueProfileStyles />
       <nav className="public-nav">
-        <Link href="/outputs/index.html">Dancr</Link>
+        <Link href="/">Dancr</Link>
         <span>{venue.city}</span>
       </nav>
       <section className="venue-hero">
@@ -59,9 +59,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
             {venue.state ? `, ${venue.state}` : ""} nightlife schedule with approved dancer shifts.
           </p>
           <div className="public-actions">
-            <Link href={`/outputs/index.html?city=${encodeURIComponent(venue.city)}&venue=${encodeURIComponent(venue.slug)}`}>
-              Open in Dancr
-            </Link>
+            <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>Tonight in {venue.city}</Link>
             {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
           </div>
           <VenueProfileActions venueId={venue.id} />

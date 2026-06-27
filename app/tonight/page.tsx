@@ -25,7 +25,7 @@ export default async function TonightPage({ searchParams }: TonightPageProps) {
         <div className="nav-links">
           <Link href="/dancers">Dancers</Link>
           <Link href="/venues">Venues</Link>
-          <Link href="/outputs/index.html">Full App</Link>
+          <Link href="/account">Account</Link>
         </div>
       </nav>
 
