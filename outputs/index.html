@@ -11329,127 +11329,6 @@
       }
     }
 
-    .demo-jump-box {
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
-      z-index: 36;
-      width: min(320px, calc(100vw - 28px));
-      padding: 12px;
-      border: 1px solid rgba(168,85,247,.32);
-      border-radius: 18px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.055), transparent 72%),
-        rgba(8,8,12,.92);
-      box-shadow: 0 24px 70px rgba(0,0,0,.56), 0 0 26px rgba(168,85,247,.14);
-      backdrop-filter: blur(18px);
-    }
-
-    .demo-jump-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .demo-jump-toggle {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      border: 1px solid rgba(168,85,247,.38);
-      background: rgba(14,14,20,.86);
-      color: #f7f3ff;
-      font-weight: 900;
-      line-height: 1;
-      cursor: pointer;
-      box-shadow: inset 0 0 12px rgba(168,85,247,.08), 0 0 14px rgba(168,85,247,.12);
-      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
-    }
-
-    .demo-jump-toggle:hover,
-    .demo-jump-toggle:focus-visible {
-      transform: translateY(-1px);
-      border-color: rgba(255,47,174,.58);
-      box-shadow: 0 0 18px rgba(255,47,174,.18), 0 0 18px rgba(124,58,237,.18);
-    }
-
-    .demo-jump-head strong {
-      color: #f7f3ff;
-      font-size: 13px;
-      line-height: 1.15;
-    }
-
-    .demo-jump-head span {
-      color: #b9b0c7;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-    }
-
-    .demo-jump-actions {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .demo-jump-actions button {
-      min-height: 42px;
-      padding: 8px 10px;
-      border: 1px solid rgba(168,85,247,.24);
-      border-radius: 999px;
-      color: #eee8fb;
-      background: rgba(14,14,20,.82);
-      font: inherit;
-      font-size: 12px;
-      font-weight: 900;
-      line-height: 1.1;
-      cursor: pointer;
-      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-    }
-
-    .demo-jump-actions button:hover,
-    .demo-jump-actions button:focus-visible {
-      transform: translateY(-1px);
-      border-color: rgba(168,85,247,.52);
-      box-shadow: 0 0 18px rgba(168,85,247,.18);
-    }
-
-    .demo-jump-box.is-collapsed {
-      width: auto;
-      min-width: 178px;
-      padding: 10px 12px;
-    }
-
-    .demo-jump-box.is-collapsed .demo-jump-head {
-      margin-bottom: 0;
-    }
-
-    .demo-jump-box.is-collapsed .demo-jump-actions {
-      display: none;
-    }
-
-    .demo-jump-box.is-collapsed .demo-jump-head span {
-      display: none;
-    }
-
-    @media (max-width: 560px) {
-      .demo-jump-box {
-        right: 10px;
-        bottom: 10px;
-        padding: 10px;
-      }
-
-      .demo-jump-actions {
-        grid-template-columns: 1fr;
-      }
-
-      .demo-jump-actions button {
-        min-height: 38px;
-      }
-    }
-
     /* Dancr premium purple/magenta nightlife theme override */
     :root {
       --bg: #050507;
@@ -11509,7 +11388,6 @@
     .metric-card,
     .stat,
     .profile-modal,
-    .demo-jump-box,
     .modal-body {
       background-color: rgba(17, 17, 24, .82);
       border-color: rgba(124, 58, 237, .22);
@@ -12663,7 +12541,6 @@
     .meta,
     .locked,
     .action-btn,
-    .demo-jump,
     .section-context {
       font-family: var(--font-ui);
     }
@@ -20854,23 +20731,6 @@
     </div>
 
     <div class="toast" id="toast" role="status"></div>
-    <aside class="demo-jump-box" aria-label="Temporary demo quick jump">
-      <div class="demo-jump-head">
-        <div>
-          <span>Temporary</span>
-          <strong>Demo quick jump</strong>
-        </div>
-        <button class="demo-jump-toggle" id="demoJumpToggle" type="button" aria-label="Collapse demo quick jump" aria-expanded="true">−</button>
-      </div>
-      <div class="demo-jump-actions">
-        <button type="button" data-demo-jump="approved-dancer">Approved dancer</button>
-        <button type="button" data-demo-jump="pending-dancer">Pending dancer</button>
-        <button type="button" data-demo-jump="new-dancer">New dancer setup</button>
-        <button type="button" data-demo-jump="customer">Approved customer</button>
-        <button type="button" data-demo-jump="browsing-customer">Browsing customer</button>
-        <button type="button" data-demo-jump="customer-signup">Customer sign up</button>
-      </div>
-    </aside>
   </div>
 
   <script>
@@ -25712,43 +25572,6 @@
 
     document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
     document.getElementById("demoDancerSetupBtn").addEventListener("click", startDemoDancerSetup);
-
-    const demoJumpBox = document.querySelector(".demo-jump-box");
-    const demoJumpToggle = document.getElementById("demoJumpToggle");
-
-    function setDemoJumpCollapsed(collapsed) {
-      if (!demoJumpBox || !demoJumpToggle) return;
-      demoJumpBox.classList.toggle("is-collapsed", collapsed);
-      demoJumpToggle.textContent = collapsed ? "+" : "−";
-      demoJumpToggle.setAttribute("aria-expanded", String(!collapsed));
-      demoJumpToggle.setAttribute("aria-label", collapsed ? "Expand demo quick jump" : "Collapse demo quick jump");
-      try {
-        localStorage.setItem("dancrDemoJumpCollapsed", collapsed ? "1" : "0");
-      } catch (error) {}
-    }
-
-    try {
-      setDemoJumpCollapsed(localStorage.getItem("dancrDemoJumpCollapsed") === "1");
-    } catch (error) {}
-
-    demoJumpToggle?.addEventListener("click", (event) => {
-      event.stopPropagation();
-      setDemoJumpCollapsed(!demoJumpBox.classList.contains("is-collapsed"));
-    });
-
-    demoJumpBox.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-demo-jump]");
-      if (!button) return;
-      if (button.dataset.demoJump === "approved-dancer") openApprovedDancerDemo();
-      if (button.dataset.demoJump === "pending-dancer") openPendingDancerDemo();
-      if (button.dataset.demoJump === "new-dancer") {
-        closeDemoSurfaces();
-        startDemoDancerSetup();
-      }
-      if (button.dataset.demoJump === "customer") openApprovedCustomerDemo();
-      if (button.dataset.demoJump === "browsing-customer") openBrowsingCustomerDemo();
-      if (button.dataset.demoJump === "customer-signup") openCustomerSignupDemo();
-    });
 
     document.getElementById("openDancerSignup").addEventListener("click", () => {
       closeAuthPage();
