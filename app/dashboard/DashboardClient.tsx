@@ -15,6 +15,7 @@ type LoadState = {
     goingSignals?: unknown[];
   } | null;
   analytics?: Record<string, unknown> | null;
+  reviews?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -40,6 +41,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
         const account = await readJson("/api/account", authHeaders);
         const profile = await readJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders);
         const secondary = await readJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders);
+        const reviews = role === "dancer" ? await readJson("/api/dancer/reviews", authHeaders) : null;
 
         if (!cancelled) {
           setState({
@@ -47,6 +49,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             profile: profile.profile,
             saved: secondary.saved || null,
             analytics: secondary.analytics || null,
+            reviews: reviews?.reviews || [],
           });
           setIsLoading(false);
         }
@@ -102,7 +105,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           </InfoPanel>
 
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
-          {role === "dancer" ? <DancerPanel analytics={state.analytics} profile={state.profile} /> : null}
+          {role === "dancer" ? <DancerPanel analytics={state.analytics} profile={state.profile} reviews={state.reviews} /> : null}
         </section>
       ) : null}
     </main>
@@ -129,7 +132,15 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
   );
 }
 
-function DancerPanel({ analytics, profile }: { analytics?: LoadState["analytics"]; profile?: LoadState["profile"] }) {
+function DancerPanel({
+  analytics,
+  profile,
+  reviews,
+}: {
+  analytics?: LoadState["analytics"];
+  profile?: LoadState["profile"];
+  reviews?: LoadState["reviews"];
+}) {
   return (
     <>
       <InfoPanel title="Profile">
@@ -144,6 +155,7 @@ function DancerPanel({ analytics, profile }: { analytics?: LoadState["analytics"
       </InfoPanel>
       <DancerSetupPanel profile={profile} />
       <DancerPhotoPanel />
+      <DancerVerificationPanel reviews={reviews} />
     </>
   );
 }
@@ -214,6 +226,77 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
         </button>
         {status ? <p>{status}</p> : null}
       </form>
+    </article>
+  );
+}
+
+function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+
+  async function uploadDocument(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    if (!file) {
+      setStatus("Choose a document first.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("file", file);
+
+    setIsUploading(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/verification-documents", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload verification document.");
+      setStatus("Verification document uploaded.");
+      setFile(null);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to upload verification document.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  return (
+    <article className="info-panel verification-panel">
+      <h2>Verification</h2>
+      <form onSubmit={uploadDocument}>
+        <label>
+          Identity document
+          <input
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            type="file"
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+          />
+        </label>
+        <button type="submit" disabled={isUploading}>
+          {isUploading ? "Uploading..." : "Upload document"}
+        </button>
+        {status ? <p>{status}</p> : null}
+      </form>
+      <div className="review-list">
+        {(reviews || []).slice(0, 4).map((review) => (
+          <div className="review-row" key={String(review.id || `${review.reviewType}-${review.createdAt}`)}>
+            <strong>{String(review.reviewType || "Review")}</strong>
+            <span>{String(review.status || "pending")}</span>
+            {review.notes ? <p>{String(review.notes)}</p> : null}
+          </div>
+        ))}
+        {!reviews?.length ? <p>No review notes yet.</p> : null}
+      </div>
     </article>
   );
 }
@@ -347,24 +430,27 @@ function DashboardStyles() {
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-      .setup-panel label, .upload-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label, .upload-panel label, .verification-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
-      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"] { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .setup-panel input, .upload-panel input[type="file"] { min-height: 42px; }
+      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"], .verification-panel input[type="file"] { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input, .upload-panel input[type="file"], .verification-panel input[type="file"] { min-height: 42px; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
-      .setup-panel button, .upload-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
-      .setup-panel button:disabled, .upload-panel button:disabled { opacity: .62; cursor: wait; }
-      .setup-panel p, .upload-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel { grid-column: span 3; }
-      .upload-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
+      .setup-panel button, .upload-panel button, .verification-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled { opacity: .62; cursor: wait; }
+      .setup-panel p, .upload-panel p, .verification-panel p { color: #94e5ff; font-size: 14px; }
+      .upload-panel, .verification-panel { grid-column: span 3; }
+      .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }
+      .review-list { display: grid; gap: 10px; }
+      .review-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .review-row span { color: #94e5ff; font-size: 13px; font-weight: 850; text-transform: capitalize; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
