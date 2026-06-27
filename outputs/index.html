@@ -19833,6 +19833,61 @@
         height: clamp(310px, 42dvh, 390px) !important;
       }
     }
+
+    /* Compact the social links card so the icons use the empty horizontal space. */
+    .profile-modal .social-tile {
+      display: grid !important;
+      grid-template-columns: auto minmax(0, 1fr) auto !important;
+      align-items: center !important;
+      column-gap: 18px !important;
+      row-gap: 8px !important;
+      min-height: auto !important;
+      padding: 18px 20px !important;
+    }
+
+    .profile-modal .social-tile .social-tile-head {
+      display: contents !important;
+      margin: 0 !important;
+    }
+
+    .profile-modal .social-tile .social-tile-head strong {
+      grid-column: 1 !important;
+      margin: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    .profile-modal .social-tile .social-links {
+      grid-column: 2 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      margin: 0 !important;
+      min-width: 0 !important;
+    }
+
+    .profile-modal .social-tile .profile-utility-actions {
+      grid-column: 3 !important;
+      justify-self: end !important;
+      margin: 0 !important;
+    }
+
+    @media (max-width: 620px) {
+      .profile-modal .social-tile {
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        padding: 14px 16px !important;
+      }
+
+      .profile-modal .social-tile .social-links {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+      }
+
+      .profile-modal .social-tile .profile-utility-actions {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+      }
+    }
   </style>
 </head>
 <body>
