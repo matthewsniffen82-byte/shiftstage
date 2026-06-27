@@ -103,12 +103,97 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             <Metric label="Email" value={String(state.account?.email || "Private")} />
             <Metric label="Role" value={String(state.account?.role || role)} />
           </InfoPanel>
+          <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
 
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
           {role === "dancer" ? <DancerPanel analytics={state.analytics} profile={state.profile} reviews={state.reviews} /> : null}
         </section>
       ) : null}
     </main>
+  );
+}
+
+function AccountControlsPanel({ accountState }: { accountState: string }) {
+  const [state, setState] = useState(accountState);
+  const [status, setStatus] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+
+  useEffect(() => {
+    setState(accountState);
+  }, [accountState]);
+
+  async function updateAccount(nextState: "active" | "disabled") {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setIsWorking(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ accountState: nextState }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update account.");
+      setState(data.account?.accountState || nextState);
+      setStatus(nextState === "disabled" ? "Account disabled." : "Account reactivated.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update account.");
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!window.confirm("Delete this Dancr account? This cannot be undone.")) return;
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setIsWorking(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete account.");
+      window.localStorage.removeItem(SESSION_KEY);
+      window.location.href = "/";
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to delete account.");
+      setIsWorking(false);
+    }
+  }
+
+  function signOut() {
+    window.localStorage.removeItem(SESSION_KEY);
+    window.location.href = "/";
+  }
+
+  return (
+    <article className="info-panel account-controls-panel">
+      <h2>Account Controls</h2>
+      <div className="account-actions">
+        <button type="button" onClick={() => updateAccount(state === "disabled" ? "active" : "disabled")} disabled={isWorking}>
+          {state === "disabled" ? "Reactivate" : "Disable account"}
+        </button>
+        <button type="button" onClick={signOut}>
+          Sign out
+        </button>
+        <button className="danger-button" type="button" onClick={deleteAccount} disabled={isWorking}>
+          Delete account
+        </button>
+        {status ? <p>{status}</p> : null}
+      </div>
+    </article>
   );
 }
 
@@ -759,7 +844,7 @@ function DashboardStyles() {
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled { opacity: .62; cursor: wait; }
       .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel { grid-column: span 3; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
@@ -778,13 +863,17 @@ function DashboardStyles() {
       .billing-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
       .billing-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .billing-actions p { color: #94e5ff; font-size: 14px; }
+      .account-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+      .account-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .account-actions .danger-button { color: #fff; background: rgba(239,68,68,.34); border: 1px solid rgba(248,113,113,.28); }
+      .account-actions p { color: #94e5ff; font-size: 14px; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
