@@ -17,6 +17,8 @@ type LoadState = {
   } | null;
   analytics?: Record<string, unknown> | null;
   reviews?: Array<Record<string, unknown>>;
+  weeklyReport?: Record<string, unknown> | null;
+  rankingEvents?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -42,7 +44,14 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
         const account = await readJson("/api/account", authHeaders);
         const profile = await readJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders);
         const secondary = await readJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders);
-        const reviews = role === "dancer" ? await readJson("/api/dancer/reviews", authHeaders) : null;
+        const [reviews, weeklyReport, rankingEvents] =
+          role === "dancer"
+            ? await Promise.all([
+                readJson("/api/dancer/reviews", authHeaders),
+                readJson("/api/dancer/weekly-report", authHeaders),
+                readJson("/api/dancer/ranking-events", authHeaders),
+              ])
+            : [null, null, null];
 
         if (!cancelled) {
           setState({
@@ -51,6 +60,8 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             saved: secondary.saved || null,
             analytics: secondary.analytics || null,
             reviews: reviews?.reviews || [],
+            weeklyReport: weeklyReport?.report || null,
+            rankingEvents: rankingEvents?.events || [],
           });
           setIsLoading(false);
         }
@@ -108,7 +119,15 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           <NotificationPanel />
 
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
-          {role === "dancer" ? <DancerPanel analytics={state.analytics} profile={state.profile} reviews={state.reviews} /> : null}
+          {role === "dancer" ? (
+            <DancerPanel
+              analytics={state.analytics}
+              profile={state.profile}
+              rankingEvents={state.rankingEvents}
+              reviews={state.reviews}
+              weeklyReport={state.weeklyReport}
+            />
+          ) : null}
         </section>
       ) : null}
     </main>
@@ -401,11 +420,15 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
 function DancerPanel({
   analytics,
   profile,
+  rankingEvents,
   reviews,
+  weeklyReport,
 }: {
   analytics?: LoadState["analytics"];
   profile?: LoadState["profile"];
+  rankingEvents?: LoadState["rankingEvents"];
   reviews?: LoadState["reviews"];
+  weeklyReport?: LoadState["weeklyReport"];
 }) {
   return (
     <>
@@ -419,6 +442,7 @@ function DancerPanel({
         <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
         <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
       </InfoPanel>
+      <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
       <DancerSetupPanel profile={profile} />
       <DancerSocialPanel profile={profile} />
       <DancerSharePanel profile={profile} />
@@ -796,6 +820,51 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
   );
 }
 
+function DancerImpactPanel({
+  events,
+  report,
+}: {
+  events?: LoadState["rankingEvents"];
+  report?: LoadState["weeklyReport"];
+}) {
+  return (
+    <article className="info-panel impact-panel">
+      <h2>Weekly Impact</h2>
+      <div className="impact-grid">
+        <Metric label="Rank" value={formatRankMove(report)} />
+        <Metric label="Weekly views" value={String(report?.profileViews || 0)} />
+        <Metric label="New followers" value={String(report?.followersGained || 0)} />
+        <Metric label="Going signals" value={String(report?.goingSignals || 0)} />
+      </div>
+      <div className="event-list">
+        {(events || []).slice(0, 5).map((event) => (
+          <div className="event-row" key={String(event.id)}>
+            <strong>{String(event.message || "Ranking update")}</strong>
+            <span>{formatEventDate(String(event.createdAt || ""))}</span>
+          </div>
+        ))}
+        {!events?.length ? <p>No ranking milestones yet.</p> : null}
+      </div>
+    </article>
+  );
+}
+
+function formatRankMove(report?: LoadState["weeklyReport"]) {
+  if (!report) return "Pending";
+  const start = report.startRank ? `#${report.startRank}` : "Unranked";
+  const current = report.currentRank ? `#${report.currentRank}` : "Unranked";
+  return `${start} to ${current}`;
+}
+
+function formatEventDate(value: string) {
+  if (!value) return "Recent";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+  }).format(new Date(value));
+}
+
 function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
   const [shareUrl, setShareUrl] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -1095,7 +1164,12 @@ function DashboardStyles() {
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button, .share-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled, .socials-panel button:disabled { opacity: .62; cursor: wait; }
       .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p, .socials-panel p, .share-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel { grid-column: span 3; }
+      .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+      .event-list { display: grid; gap: 10px; }
+      .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .event-row span { color: #b9accd; font-size: 13px; }
+      .impact-panel p { color: #94e5ff; font-size: 14px; }
       .share-grid { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; align-items: center; }
       .share-grid img, .qr-placeholder { width: 180px; height: 180px; border-radius: 8px; background: #f7f2ff; }
       .qr-placeholder { display: grid; place-items: center; color: #050507; font-weight: 950; }
@@ -1138,7 +1212,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
