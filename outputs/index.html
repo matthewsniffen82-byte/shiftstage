@@ -19029,7 +19029,6 @@
       opacity: 1 !important;
       background: transparent !important;
       transform-origin: center !important;
-      isolation: isolate !important;
       filter: drop-shadow(0 0 7px rgba(124, 58, 237, 0.72)) !important;
     }
 
@@ -19046,8 +19045,7 @@
       object-fit: contain !important;
       object-position: center !important;
       background: transparent !important;
-      mix-blend-mode: screen !important;
-      filter: saturate(1.25) contrast(1.18) !important;
+      filter: saturate(1.14) contrast(1.05) !important;
       pointer-events: none !important;
       user-select: none !important;
     }
@@ -19076,8 +19074,8 @@
       line-height: 1 !important;
       letter-spacing: 0 !important;
       text-shadow:
-        0 0 5px rgba(168, 85, 247, 0.76),
-        0 0 10px rgba(255, 255, 255, 0.32) !important;
+        0 0 4px rgba(168, 85, 247, 0.72),
+        0 0 8px rgba(255, 255, 255, 0.28) !important;
     }
 
     .trend-flame-icon.is-double .trend-flame-number {
@@ -23248,7 +23246,7 @@
       const doubleDigitClass = safeRank.length > 1 ? " is-double" : "";
       return `
         <span class="trend-flame-icon${doubleDigitClass}" aria-hidden="true">
-          <img src="/trending-flame.png" alt="">
+          <img src="/trending-flame-clean.png" alt="">
           <span class="trend-flame-number">${safeRank}</span>
         </span>
       `;

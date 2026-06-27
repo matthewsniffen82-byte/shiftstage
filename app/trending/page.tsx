@@ -57,7 +57,7 @@ function TrendingRow({ dancer }: { dancer: DancerCard }) {
   return (
     <Link className="ranking-row" href={`/dancers/${dancer.slug}`}>
       <span className={dancer.currentRank === 1 ? "rank rank-one" : "rank"} aria-label={`#${dancer.currentRank} Trending`}>
-        <img src="/trending-flame.png" alt="" />
+        <img src="/trending-flame-clean.png" alt="" />
         <span>{dancer.currentRank}</span>
       </span>
       <span className="avatar" style={dancer.primaryPhotoUrl ? { backgroundImage: `url(${dancer.primaryPhotoUrl})` } : undefined}>
@@ -96,8 +96,8 @@ function TrendingStyles() {
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 68ch; }
       .ranking-list { max-width: 1180px; margin: 0 auto; display: grid; gap: 10px; }
       .ranking-row { min-height: 88px; display: grid; grid-template-columns: 60px 58px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px; color: #f7f2ff; text-decoration: none; border: 1px solid rgba(217,173,79,.2); background: rgba(12,12,18,.82); border-radius: 8px; }
-      .rank { width: 52px; height: 62px; position: relative; display: grid; place-items: center; isolation: isolate; background: transparent; color: #030006; font-size: 24px; font-weight: 950; line-height: 1; text-shadow: 0 0 5px rgba(168,85,247,.76), 0 0 10px rgba(255,255,255,.32); }
-      .rank img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: screen; filter: saturate(1.25) contrast(1.18) drop-shadow(0 0 5px rgba(124,58,237,.75)); }
+      .rank { width: 52px; height: 62px; position: relative; display: grid; place-items: center; background: transparent; color: #030006; font-size: 24px; font-weight: 950; line-height: 1; text-shadow: 0 0 4px rgba(168,85,247,.72), 0 0 8px rgba(255,255,255,.28); }
+      .rank img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: saturate(1.14) contrast(1.05) drop-shadow(0 0 5px rgba(124,58,237,.75)); }
       .rank span { position: relative; z-index: 1; transform: translateY(4px); }
       .rank-one { color: #fff; }
       .avatar { width: 58px; height: 58px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(34,199,255,.2), rgba(139,92,246,.36)); background-size: cover; background-position: center; font-size: 14px; font-weight: 950; }
