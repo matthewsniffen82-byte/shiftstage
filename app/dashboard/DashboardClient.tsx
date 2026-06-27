@@ -143,6 +143,7 @@ function DancerPanel({ analytics, profile }: { analytics?: LoadState["analytics"
         <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
       </InfoPanel>
       <DancerSetupPanel profile={profile} />
+      <DancerPhotoPanel />
     </>
   );
 }
@@ -217,6 +218,76 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
   );
 }
 
+function DancerPhotoPanel() {
+  const [file, setFile] = useState<File | null>(null);
+  const [isPrimary, setIsPrimary] = useState(true);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [status, setStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+
+  async function uploadPhoto(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    if (!file) {
+      setStatus("Choose a photo first.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("isPrimary", String(isPrimary));
+
+    setIsUploading(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/photos", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload photo.");
+      setPhotoUrl(data.photo?.imageUrl || "");
+      setStatus("Photo uploaded for review.");
+      setFile(null);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to upload photo.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  return (
+    <article className="info-panel upload-panel">
+      <h2>Photos</h2>
+      <form onSubmit={uploadPhoto}>
+        <label>
+          Profile photo
+          <input
+            accept="image/jpeg,image/png,image/webp"
+            type="file"
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+          />
+        </label>
+        <label className="check-row">
+          <input checked={isPrimary} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
+          Primary photo
+        </label>
+        <button type="submit" disabled={isUploading}>
+          {isUploading ? "Uploading..." : "Upload photo"}
+        </button>
+        {status ? <p>{status}</p> : null}
+      </form>
+      {photoUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photoUrl})` }} /> : null}
+    </article>
+  );
+}
+
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <article className="info-panel">
@@ -276,19 +347,24 @@ function DashboardStyles() {
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-      .setup-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .setup-panel label, .upload-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .setup-panel label:nth-of-type(4) { grid-column: span 3; }
-      .setup-panel input, .setup-panel textarea { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .setup-panel input { min-height: 42px; }
+      .setup-panel input, .setup-panel textarea, .upload-panel input[type="file"] { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .setup-panel input, .upload-panel input[type="file"] { min-height: 42px; }
       .setup-panel textarea { resize: vertical; min-height: 108px; }
-      .setup-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
-      .setup-panel button:disabled { opacity: .62; cursor: wait; }
-      .setup-panel p { color: #94e5ff; font-size: 14px; }
+      .setup-panel button, .upload-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      .setup-panel button:disabled, .upload-panel button:disabled { opacity: .62; cursor: wait; }
+      .setup-panel p, .upload-panel p { color: #94e5ff; font-size: 14px; }
+      .upload-panel { grid-column: span 3; }
+      .upload-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
+      .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
+      .check-row input { width: 18px; height: 18px; }
+      .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form { grid-template-columns: 1fr; } .setup-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
