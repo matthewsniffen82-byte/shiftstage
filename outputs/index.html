@@ -23241,17 +23241,6 @@
       return '<span class="badge-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.1.55-2 1.92-2 3.5 0 .83.34 1.5.5 2Z"></path><path d="M12 2c0 3-2 4-4 6s-3 4-3 6a7 7 0 0 0 14 0c0-2-1-4-3-6s-4-3-4-6Z"></path></svg></span>';
     }
 
-    function trendFlameMarkup(rank) {
-      const safeRank = String(rank || "");
-      const doubleDigitClass = safeRank.length > 1 ? " is-double" : "";
-      return `
-        <span class="trend-flame-icon${doubleDigitClass}" aria-hidden="true">
-          <img src="/trending-flame-clean.png" alt="">
-          <span class="trend-flame-number">${safeRank}</span>
-        </span>
-      `;
-    }
-
     function actionIconMarkup(type) {
       const icons = {
         heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>',
@@ -23749,9 +23738,7 @@
       const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
-      const trendBadge = isTrending && profile.trendRank <= 10
-        ? `<span class="badge trend compact-trend ${profile.trendRank === 1 ? "rank-one" : ""}" aria-label="#${profile.trendRank} Trending">${trendFlameMarkup(profile.trendRank)}</span>`
-        : "";
+      const trendBadge = "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const scheduleMarkup = isPending
@@ -24034,12 +24021,6 @@
       modalRank.classList.remove("rank-one");
       modalRank.innerHTML = "";
       modalRank.hidden = true;
-      if (!isPending && profile.trendRank && profile.trendRank <= 10) {
-        modalRank.className = `badge trend modal-rank compact-trend ${profile.trendRank === 1 ? "rank-one" : ""}`;
-        modalRank.innerHTML = trendFlameMarkup(profile.trendRank);
-        modalRank.hidden = false;
-        modalRank.setAttribute("aria-label", `#${profile.trendRank} Trending`);
-      }
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
       setModalPhoto(basePhoto, basePhotoUrl);
 

@@ -56,10 +56,7 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
 function TrendingRow({ dancer }: { dancer: DancerCard }) {
   return (
     <Link className="ranking-row" href={`/dancers/${dancer.slug}`}>
-      <span className={dancer.currentRank === 1 ? "rank rank-one" : "rank"} aria-label={`#${dancer.currentRank} Trending`}>
-        <img src="/trending-flame-clean.png" alt="" />
-        <span>{dancer.currentRank}</span>
-      </span>
+      <span className={dancer.currentRank === 1 ? "rank rank-one" : "rank"}>#{dancer.currentRank}</span>
       <span className="avatar" style={dancer.primaryPhotoUrl ? { backgroundImage: `url(${dancer.primaryPhotoUrl})` } : undefined}>
         {!dancer.primaryPhotoUrl ? initials(dancer.stageName) : ""}
       </span>
@@ -96,10 +93,8 @@ function TrendingStyles() {
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 68ch; }
       .ranking-list { max-width: 1180px; margin: 0 auto; display: grid; gap: 10px; }
       .ranking-row { min-height: 88px; display: grid; grid-template-columns: 60px 58px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px; color: #f7f2ff; text-decoration: none; border: 1px solid rgba(217,173,79,.2); background: rgba(12,12,18,.82); border-radius: 8px; }
-      .rank { width: 52px; height: 62px; position: relative; display: grid; place-items: center; background: transparent; color: #030006; font-size: 24px; font-weight: 950; line-height: 1; text-shadow: 0 0 4px rgba(168,85,247,.72), 0 0 8px rgba(255,255,255,.28); }
-      .rank img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: saturate(1.14) contrast(1.05) drop-shadow(0 0 5px rgba(124,58,237,.75)); }
-      .rank span { position: relative; z-index: 1; transform: translateY(4px); }
-      .rank-one { color: #fff; }
+      .rank { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 8px; background: rgba(139,92,246,.16); color: #d9c8ff; font-size: 20px; font-weight: 950; }
+      .rank-one { color: #fff; background: linear-gradient(135deg, rgba(139,92,246,.42), rgba(34,199,255,.24)); }
       .avatar { width: 58px; height: 58px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(34,199,255,.2), rgba(139,92,246,.36)); background-size: cover; background-position: center; font-size: 14px; font-weight: 950; }
       .identity { display: grid; gap: 5px; min-width: 0; }
       .identity strong { font-size: 22px; overflow-wrap: anywhere; }
@@ -107,7 +102,7 @@ function TrendingStyles() {
       .ranking-row em { color: #94e5ff; font-style: normal; font-weight: 900; white-space: nowrap; }
       .empty-state { min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 24px; }
       .empty-state strong { font-size: 24px; }
-      @media (max-width: 680px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } .ranking-row { grid-template-columns: 50px 48px minmax(0, 1fr); } .ranking-row em { grid-column: 3; } .rank { width: 44px; height: 52px; font-size: 20px; } .avatar { width: 48px; height: 48px; } h1 { font-size: 42px; } }
+      @media (max-width: 680px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } .ranking-row { grid-template-columns: 58px 48px minmax(0, 1fr); } .ranking-row em { grid-column: 3; } .rank { width: 52px; height: 52px; font-size: 17px; } .avatar { width: 48px; height: 48px; } h1 { font-size: 42px; } }
     `}</style>
   );
 }
