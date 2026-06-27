@@ -20055,6 +20055,21 @@
       }
     }
 
+    /* Final hero fit: match the supplied artwork ratio exactly. */
+    .hero.reference-hero,
+    .hero.reference-hero.uploaded-hero-ready,
+    .hero.reference-hero:not(.uploaded-hero-ready) {
+      aspect-ratio: 1672 / 941 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      background-image: url("./dancr-hero.png") !important;
+      background-size: contain !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-color: #050507 !important;
+    }
+
     .dancr-home-logo,
     .brand-home.dancr-home-logo {
       min-width: 238px !important;
