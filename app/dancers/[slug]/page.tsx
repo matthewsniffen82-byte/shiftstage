@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { DancerProfileActions } from "./DancerProfileActions";
 import { ProfileViewTracker } from "./ProfileViewTracker";
 import { SocialLinks } from "./SocialLinks";
 
@@ -39,6 +40,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </Link>
             {profile.venueSlug ? <Link href={`/venues/${profile.venueSlug}`}>{profile.venueName || "Venue"}</Link> : null}
           </div>
+          <DancerProfileActions
+            dancerId={profile.id}
+            shifts={profile.upcomingShifts.map((shift) => ({ id: shift.id, label: shortShiftLabel(shift.startsAt) }))}
+          />
         </div>
         <div className="public-photo" style={heroPhoto ? { backgroundImage: `url(${heroPhoto})` } : undefined}>
           {!heroPhoto ? <span>{initials(profile.stageName)}</span> : null}
@@ -114,6 +119,13 @@ function formatShift(startsAt: string, endsAt: string) {
   return `${formatter.format(new Date(startsAt))} - ${formatter.format(new Date(endsAt))}`;
 }
 
+function shortShiftLabel(startsAt: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    hour: "numeric",
+  }).format(new Date(startsAt));
+}
+
 function PublicProfileStyles() {
   return (
     <style>{`
@@ -128,6 +140,9 @@ function PublicProfileStyles() {
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .public-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
       .public-actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(139,92,246,.38), rgba(236,72,153,.18)); }
+      .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
+      .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
+      .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
       .public-photo { border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); background-size: cover; background-position: center; min-height: 420px; display: grid; place-items: center; box-shadow: 0 30px 80px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.1); }
       .public-photo span { width: 118px; height: 118px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }

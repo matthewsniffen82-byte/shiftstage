@@ -9,11 +9,10 @@ type LoadState = {
   account?: { displayName?: string | null; email?: string | null; role?: string; accountState?: string } | null;
   profile?: Record<string, unknown> | null;
   saved?: {
-    dancers?: unknown[];
-    favoriteDancers?: unknown[];
-    venues?: unknown[];
-    notifiedDancers?: unknown[];
-    going?: unknown[];
+    follows?: Array<{ notificationsEnabled?: boolean }>;
+    favorites?: unknown[];
+    venueFollows?: unknown[];
+    goingSignals?: unknown[];
   } | null;
   analytics?: Record<string, unknown> | null;
   error?: string;
@@ -115,13 +114,16 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
     <>
       <InfoPanel title="Preferences">
         <Metric label="City" value={String(profile?.city || "Las Vegas")} />
-        <Metric label="Followed dancers" value={String(saved?.dancers?.length || 0)} />
-        <Metric label="Favorite dancers" value={String(saved?.favoriteDancers?.length || 0)} />
+        <Metric label="Followed dancers" value={String(saved?.follows?.length || 0)} />
+        <Metric label="Favorite dancers" value={String(saved?.favorites?.length || 0)} />
       </InfoPanel>
       <InfoPanel title="Tonight">
-        <Metric label="Followed venues" value={String(saved?.venues?.length || 0)} />
-        <Metric label="Notifications" value={String(saved?.notifiedDancers?.length || 0)} />
-        <Metric label="Going" value={String(saved?.going?.length || 0)} />
+        <Metric label="Followed venues" value={String(saved?.venueFollows?.length || 0)} />
+        <Metric
+          label="Notifications"
+          value={String(saved?.follows?.filter((item) => item.notificationsEnabled).length || 0)}
+        />
+        <Metric label="Going" value={String(saved?.goingSignals?.length || 0)} />
       </InfoPanel>
     </>
   );
