@@ -157,6 +157,7 @@ function DancerPanel({
       <DancerPhotoPanel />
       <DancerVerificationPanel reviews={reviews} />
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
+      <DancerBillingPanel />
     </>
   );
 }
@@ -227,6 +228,74 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
         </button>
         {status ? <p>{status}</p> : null}
       </form>
+    </article>
+  );
+}
+
+function DancerBillingPanel() {
+  const [billing, setBilling] = useState<Record<string, any> | null>(null);
+  const [status, setStatus] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+
+  useEffect(() => {
+    const session = readSession();
+    if (!session?.accessToken) return;
+
+    fetch("/api/dancer/billing", { headers: { authorization: `Bearer ${session.accessToken}` } })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.ok) setBilling(data.billing);
+        else setStatus(data.error || "Unable to load billing.");
+      })
+      .catch(() => setStatus("Unable to load billing."));
+  }, []);
+
+  async function openBilling(path: string, urlKey: "checkoutUrl" | "portalUrl") {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setIsWorking(true);
+    setStatus("");
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to open billing.");
+      if (data[urlKey]) window.location.href = data[urlKey];
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to open billing.");
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
+  const subscription = billing?.subscription || {};
+
+  return (
+    <article className="info-panel billing-panel">
+      <h2>Billing</h2>
+      <div className="billing-grid">
+        <Metric label="Profile" value={String(billing?.dancerStatus || "pending")} />
+        <Metric label="Subscription" value={String(subscription.status || "not_started")} />
+        <Metric
+          label="Renews"
+          value={subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "Not active"}
+        />
+      </div>
+      <div className="billing-actions">
+        <button type="button" disabled={isWorking} onClick={() => openBilling("/api/dancer/billing/checkout", "checkoutUrl")}>
+          Start subscription
+        </button>
+        <button type="button" disabled={isWorking} onClick={() => openBilling("/api/dancer/billing/portal", "portalUrl")}>
+          Manage billing
+        </button>
+        {status ? <p>{status}</p> : null}
+      </div>
     </article>
   );
 }
@@ -596,7 +665,7 @@ function DashboardStyles() {
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled { opacity: .62; cursor: wait; }
       .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel { grid-column: span 3; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
@@ -611,11 +680,15 @@ function DashboardStyles() {
       .dashboard-shift small { color: #b9accd; }
       .dashboard-shift em { color: #94e5ff; font-style: normal; font-weight: 850; text-transform: capitalize; }
       .dashboard-shift button { color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); padding: 0 12px; }
+      .billing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .billing-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+      .billing-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .billing-actions p { color: #94e5ff; font-size: 14px; }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

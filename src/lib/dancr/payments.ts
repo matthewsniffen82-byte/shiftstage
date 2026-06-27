@@ -45,8 +45,8 @@ export async function createDancerCheckoutSession(client: DancrClient, user: Use
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${siteUrl}/outputs/index.html?billing=success`,
-    cancel_url: `${siteUrl}/outputs/index.html?billing=cancelled`,
+    success_url: `${siteUrl}/dashboard/dancer?billing=success`,
+    cancel_url: `${siteUrl}/dashboard/dancer?billing=cancelled`,
     metadata: {
       dancerId: dancer.id,
       userId: user.id,
@@ -76,7 +76,7 @@ export async function createDancerBillingPortalSession(client: DancrClient, user
   const siteUrl = getPublicEnv().siteUrl.replace(/\/$/, "");
   const session = await getStripe().billingPortal.sessions.create({
     customer: subscription.stripe_customer_id,
-    return_url: `${siteUrl}/outputs/index.html?billing=portal-return`,
+    return_url: `${siteUrl}/dashboard/dancer?billing=portal-return`,
   });
 
   return { portalUrl: session.url };
