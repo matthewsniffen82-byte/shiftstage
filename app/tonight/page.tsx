@@ -59,7 +59,7 @@ function DancerCardLink({ dancer }: { dancer: DancerCard }) {
       </div>
       <div className="card-copy">
         <span>{dancer.currentRank ? `#${dancer.currentRank} Trending` : "Verified"}</span>
-        <strong><small>Ask for</small>{dancer.stageName}</strong>
+        <strong>{dancer.stageName}</strong>
         <small>{dancer.venueName ? `${dancer.venueName} · ${dancer.shiftLabel || "Tonight"}` : "Tonight"}</small>
       </div>
     </Link>
@@ -93,8 +93,7 @@ function TonightStyles() {
       .photo { aspect-ratio: 3 / 4; border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.2), rgba(139,92,246,.36)); background-size: cover; background-position: center; display: grid; place-items: center; font-size: 28px; font-weight: 950; }
       .card-copy { display: grid; gap: 5px; }
       .card-copy span { color: #94e5ff; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; }
-      .card-copy strong { display: inline-flex; align-items: baseline; gap: 6px; font-size: 20px; overflow-wrap: anywhere; }
-      .card-copy strong small { color: rgba(255,255,255,.48); font-size: 10px; font-weight: 900; letter-spacing: .16em; line-height: 1; text-transform: uppercase; }
+      .card-copy strong { font-size: 20px; overflow-wrap: anywhere; }
       .card-copy small, .empty-state span { color: #b9accd; line-height: 1.4; }
       .empty-state { grid-column: 1 / -1; min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 24px; }
       .empty-state strong { font-size: 24px; }
