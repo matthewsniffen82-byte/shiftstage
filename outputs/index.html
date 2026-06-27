@@ -19888,6 +19888,69 @@
         grid-row: 1 !important;
       }
     }
+
+    /* Homepage hierarchy: hero should lead, filters should support. */
+    .hero.reference-hero,
+    .hero.reference-hero.uploaded-hero-ready,
+    .hero.reference-hero:not(.uploaded-hero-ready) {
+      width: 100% !important;
+      aspect-ratio: 1900 / 850 !important;
+      min-height: clamp(300px, 34vw, 460px) !important;
+      border-radius: 18px !important;
+      box-shadow:
+        0 30px 82px rgba(0, 0, 0, .58),
+        0 0 42px rgba(139, 92, 246, .20),
+        inset 0 0 0 1px rgba(255, 255, 255, .035) !important;
+    }
+
+    .hero.reference-hero + .controls {
+      margin-top: -2px !important;
+    }
+
+    .controls {
+      padding: 12px !important;
+      border-radius: 16px !important;
+      box-shadow:
+        0 16px 38px rgba(0, 0, 0, .34),
+        0 0 18px rgba(124, 58, 237, .10),
+        inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+    }
+
+    .controls select,
+    .location-btn {
+      min-height: 50px !important;
+      font-size: clamp(15px, 2.2vw, 18px) !important;
+    }
+
+    @media (max-width: 720px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        aspect-ratio: 1.95 / 1 !important;
+        min-height: clamp(230px, 56vw, 330px) !important;
+        background-size: cover !important;
+        background-position: center center !important;
+      }
+
+      .controls {
+        padding: 12px !important;
+        gap: 8px !important;
+      }
+
+      .controls select,
+      .location-btn {
+        min-height: 50px !important;
+        font-size: clamp(16px, 4.2vw, 19px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        min-height: clamp(216px, 58vw, 286px) !important;
+      }
+    }
   </style>
 </head>
 <body>
