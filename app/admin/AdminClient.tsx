@@ -170,9 +170,68 @@ export default function AdminClient() {
               onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
             />
           </Panel>
+          <Panel title="Rankings">
+            <RankingManager />
+          </Panel>
         </section>
       )}
     </main>
+  );
+}
+
+function RankingManager() {
+  const [city, setCity] = useState("Las Vegas");
+  const [rankings, setRankings] = useState<Array<Record<string, unknown>>>([]);
+  const [status, setStatus] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+
+  async function recalculate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = readToken();
+    if (!token) {
+      setStatus("Admin sign in required.");
+      return;
+    }
+
+    setIsWorking(true);
+    setStatus("");
+    const response = await fetch("/api/admin/rankings/recalculate", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ city }),
+    });
+    const data = await response.json();
+    setIsWorking(false);
+    if (!response.ok || !data.ok) {
+      setStatus(data.error || "Unable to recalculate rankings.");
+      return;
+    }
+
+    setRankings(data.rankings || []);
+    setStatus(`${data.rankings?.length || 0} rankings recalculated.`);
+  }
+
+  return (
+    <div className="ranking-manager">
+      <form onSubmit={recalculate}>
+        <label>
+          City
+          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+        </label>
+        <button type="submit" disabled={isWorking}>
+          {isWorking ? "Working..." : "Recalculate"}
+        </button>
+      </form>
+      <div className="ranking-list">
+        {rankings.slice(0, 6).map((ranking) => (
+          <div className="ranking-row" key={String(ranking.dancerId || ranking.id || ranking.rank)}>
+            <strong>{String(ranking.stageName || ranking.dancerName || "Dancer")}</strong>
+            <span>{ranking.rank ? `#${ranking.rank}` : "Ranked"}</span>
+          </div>
+        ))}
+      </div>
+      {status ? <p>{status}</p> : null}
+    </div>
   );
 }
 
@@ -524,6 +583,15 @@ function AdminStyles() {
       .report-row p { color: #94e5ff; font-size: 14px; }
       .report-row div { display: flex; gap: 8px; flex-wrap: wrap; }
       .report-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .ranking-manager { display: grid; gap: 12px; }
+      .ranking-manager form { display: grid; gap: 10px; }
+      .ranking-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .ranking-manager input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .ranking-manager button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .ranking-manager p { color: #94e5ff; font-size: 14px; }
+      .ranking-list { display: grid; gap: 8px; }
+      .ranking-row { display: flex; justify-content: space-between; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .ranking-row span { color: #94e5ff; font-weight: 850; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) { .admin-grid, .venue-admin-row { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
