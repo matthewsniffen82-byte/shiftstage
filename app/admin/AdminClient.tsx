@@ -8,6 +8,7 @@ type AdminState = {
   queue?: Array<Record<string, unknown>>;
   venues?: Array<Record<string, unknown>>;
   subscriptions?: unknown[];
+  reports?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -73,12 +74,14 @@ export default function AdminClient() {
         readJson("/api/admin/venues", headers),
         readJson("/api/admin/subscriptions", headers),
       ]);
+      const reports = await readJson("/api/admin/reports", headers);
 
       setState({
         monitoring: monitoring.monitoring,
         queue: approvals.queue || [],
         venues: venues.venues || [],
         subscriptions: subscriptions.subscriptions || [],
+        reports: reports.reports || [],
       });
     } catch (error) {
       setState({ error: error instanceof Error ? error.message : "Unable to load admin dashboard." });
@@ -160,9 +163,74 @@ export default function AdminClient() {
             <Metric label="Tracked subscriptions" value={String(state.subscriptions?.length || 0)} />
             <ListPreview items={state.subscriptions} empty="No subscriptions returned." />
           </Panel>
+          <Panel title="Reports">
+            <Metric label="Open reports" value={String(state.reports?.length || 0)} />
+            <ReportManager
+              reports={state.reports || []}
+              onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
+            />
+          </Panel>
         </section>
       )}
     </main>
+  );
+}
+
+function ReportManager({
+  reports,
+  onReportsChange,
+}: {
+  reports: Array<Record<string, unknown>>;
+  onReportsChange: (reports: Array<Record<string, unknown>>) => void;
+}) {
+  const [statusById, setStatusById] = useState<Record<string, string>>({});
+
+  if (!reports.length) return <p className="empty">No open reports.</p>;
+
+  async function updateReport(reportId: string, action: "resolved" | "removed") {
+    const token = readToken();
+    if (!token) {
+      setStatusById((current) => ({ ...current, [reportId]: "Admin sign in required." }));
+      return;
+    }
+
+    setStatusById((current) => ({ ...current, [reportId]: "Saving..." }));
+    const response = await fetch("/api/admin/reports", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ reportId, action }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatusById((current) => ({ ...current, [reportId]: data.error || "Unable to update report." }));
+      return;
+    }
+
+    onReportsChange(reports.filter((report) => String(report.id) !== reportId));
+  }
+
+  return (
+    <div className="report-list">
+      {reports.slice(0, 6).map((report) => {
+        const reportId = String(report.id || "");
+        return (
+          <div className="report-row" key={reportId}>
+            <strong>{String(report.targetLabel || report.targetType || "Reported item")}</strong>
+            <span>{String(report.reason || "Reason pending")}</span>
+            {report.details ? <p>{String(report.details)}</p> : null}
+            <div>
+              <button type="button" onClick={() => updateReport(reportId, "resolved")}>
+                Resolve
+              </button>
+              <button type="button" onClick={() => updateReport(reportId, "removed")}>
+                Remove
+              </button>
+            </div>
+            {statusById[reportId] ? <p>{statusById[reportId]}</p> : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -450,6 +518,12 @@ function AdminStyles() {
       .venue-admin-row span { display: grid; gap: 3px; }
       .venue-admin-row small { color: #b9accd; }
       .venue-admin-row em { color: #94e5ff; font-style: normal; font-weight: 850; }
+      .report-list { display: grid; gap: 12px; }
+      .report-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .report-row span { color: #b9accd; }
+      .report-row p { color: #94e5ff; font-size: 14px; }
+      .report-row div { display: flex; gap: 8px; flex-wrap: wrap; }
+      .report-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) { .admin-grid, .venue-admin-row { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
