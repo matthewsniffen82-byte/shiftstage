@@ -8,6 +8,31 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (() => {
+      const ua = navigator.userAgent || "";
+      const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";
+      const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);
+      const isSamsung = /SamsungBrowser/i.test(ua);
+      const root = document.documentElement;
+
+      if (isAndroid) root.classList.add("is-android", "android-rendering");
+      if (isSamsung) root.classList.add("is-samsung-browser", "samsung-rendering");
+
+      window.__dancrApplyDeviceClasses = () => {
+        const body = document.body;
+        if (!body) return;
+        if (isAndroid) body.classList.add("is-android", "android-rendering");
+        if (isSamsung) body.classList.add("is-samsung-browser", "samsung-rendering");
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", window.__dancrApplyDeviceClasses, { once: true });
+      } else {
+        window.__dancrApplyDeviceClasses();
+      }
+    })();
+  </script>
   <style>
     :root {
       color-scheme: dark;
@@ -20597,6 +20622,187 @@
           inset 0 0 7px rgba(255, 255, 255, 0.4) !important;
       }
     }
+
+    /* Root/body Android parity pass. These selectors are intentionally direct so
+       Chrome/Samsung cannot miss them if the class lands on either element. */
+    html.is-android,
+    body.is-android,
+    html.android-rendering,
+    body.android-rendering {
+      background: #050507 !important;
+      color: #ffffff !important;
+      -webkit-font-smoothing: antialiased !important;
+      text-rendering: geometricPrecision !important;
+      color-scheme: dark !important;
+    }
+
+    html.is-android .app,
+    body.is-android .app,
+    html.android-rendering .app,
+    body.android-rendering .app {
+      background:
+        linear-gradient(180deg, #050507 0%, #080711 42%, #050507 100%) !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+    }
+
+    html.is-android .brand-home.logo-image-button,
+    body.is-android .brand-home.logo-image-button,
+    html.android-rendering .brand-home.logo-image-button,
+    body.android-rendering .brand-home.logo-image-button {
+      background:
+        radial-gradient(circle at 82% 48%, rgba(124, 58, 237, 0.2) 0 22%, transparent 48%),
+        linear-gradient(180deg, #101017 0%, #050507 100%) !important;
+      border: 1px solid rgba(124, 58, 237, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 18px rgba(124, 58, 237, 0.34),
+        0 12px 30px rgba(0, 0, 0, 0.42) !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    html.is-android .logo-image-button .mydancr-live-logo,
+    body.is-android .logo-image-button .mydancr-live-logo,
+    html.android-rendering .logo-image-button .mydancr-live-logo,
+    body.android-rendering .logo-image-button .mydancr-live-logo {
+      color: #ffffff !important;
+      opacity: 1 !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      text-shadow:
+        0 0 7px rgba(255, 255, 255, 0.4),
+        0 0 16px rgba(255, 255, 255, 0.13) !important;
+    }
+
+    html.is-android .logo-image-button .mydancr-live-logo .violet-r,
+    body.is-android .logo-image-button .mydancr-live-logo .violet-r,
+    html.android-rendering .logo-image-button .mydancr-live-logo .violet-r,
+    body.android-rendering .logo-image-button .mydancr-live-logo .violet-r {
+      color: #7c3aed !important;
+      -webkit-text-fill-color: #7c3aed !important;
+      background: none !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      text-shadow:
+        0 0 7px rgba(124, 58, 237, 0.9),
+        0 0 18px rgba(109, 40, 217, 0.64),
+        0 0 30px rgba(76, 29, 149, 0.38) !important;
+    }
+
+    html.is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r,
+    body.is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r,
+    html.samsung-rendering .logo-image-button .mydancr-live-logo .violet-r,
+    body.samsung-rendering .logo-image-button .mydancr-live-logo .violet-r {
+      color: #7c3aed !important;
+      -webkit-text-fill-color: #7c3aed !important;
+      text-shadow:
+        0 0 9px rgba(124, 58, 237, 0.98),
+        0 0 20px rgba(109, 40, 217, 0.74),
+        0 0 34px rgba(76, 29, 149, 0.46) !important;
+    }
+
+    @media (max-width: 760px) {
+      html.is-android .hero.reference-hero,
+      body.is-android .hero.reference-hero,
+      html.android-rendering .hero.reference-hero,
+      body.android-rendering .hero.reference-hero {
+        filter: brightness(1.42) contrast(1.2) saturate(1.12) !important;
+        -webkit-filter: brightness(1.42) contrast(1.2) saturate(1.12) !important;
+      }
+
+      html.is-samsung-browser .hero.reference-hero,
+      body.is-samsung-browser .hero.reference-hero,
+      html.samsung-rendering .hero.reference-hero,
+      body.samsung-rendering .hero.reference-hero {
+        filter: brightness(1.62) contrast(1.24) saturate(1.16) !important;
+        -webkit-filter: brightness(1.62) contrast(1.24) saturate(1.16) !important;
+      }
+
+      html.is-android .dancer-card .portrait,
+      body.is-android .dancer-card .portrait,
+      html.android-rendering .dancer-card .portrait,
+      body.android-rendering .dancer-card .portrait,
+      html.is-android .profile-modal .modal-image,
+      body.is-android .profile-modal .modal-image {
+        filter: brightness(1.44) contrast(1.14) saturate(1.1) !important;
+        -webkit-filter: brightness(1.44) contrast(1.14) saturate(1.1) !important;
+      }
+
+      html.is-samsung-browser .dancer-card .portrait,
+      body.is-samsung-browser .dancer-card .portrait,
+      html.samsung-rendering .dancer-card .portrait,
+      body.samsung-rendering .dancer-card .portrait,
+      html.is-samsung-browser .profile-modal .modal-image,
+      body.is-samsung-browser .profile-modal .modal-image {
+        filter: brightness(1.62) contrast(1.18) saturate(1.15) !important;
+        -webkit-filter: brightness(1.62) contrast(1.18) saturate(1.15) !important;
+      }
+
+      html.is-android .dancer-card .portrait:after,
+      body.is-android .dancer-card .portrait:after,
+      html.android-rendering .dancer-card .portrait:after,
+      body.android-rendering .dancer-card .portrait:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 38%, rgba(5, 5, 7, 0.08) 62%, rgba(5, 5, 7, 0.72) 100%) !important;
+        mix-blend-mode: normal !important;
+      }
+
+      html.is-samsung-browser .dancer-card .portrait:after,
+      body.is-samsung-browser .dancer-card .portrait:after,
+      html.samsung-rendering .dancer-card .portrait:after,
+      body.samsung-rendering .dancer-card .portrait:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 40%, rgba(5, 5, 7, 0.04) 64%, rgba(5, 5, 7, 0.62) 100%) !important;
+      }
+    }
+
+    html.is-android .verified-mark,
+    body.is-android .verified-mark,
+    html.android-rendering .verified-mark,
+    body.android-rendering .verified-mark,
+    html.is-android .verified-check,
+    body.is-android .verified-check,
+    html.android-rendering .verified-check,
+    body.android-rendering .verified-check {
+      width: 17px !important;
+      height: 17px !important;
+      min-width: 17px !important;
+      opacity: 1 !important;
+      color: #031116 !important;
+      -webkit-text-fill-color: #031116 !important;
+      background: #22c7ff !important;
+      background-color: #22c7ff !important;
+      background-image: none !important;
+      border: 1px solid rgba(155, 240, 255, 0.88) !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      mix-blend-mode: normal !important;
+      text-shadow: none !important;
+      box-shadow:
+        0 0 0 1px rgba(3, 9, 12, 0.66),
+        0 0 14px rgba(34, 199, 255, 0.86),
+        inset 0 0 7px rgba(255, 255, 255, 0.38) !important;
+    }
+
+    html.is-samsung-browser .verified-mark,
+    body.is-samsung-browser .verified-mark,
+    html.samsung-rendering .verified-mark,
+    body.samsung-rendering .verified-mark,
+    html.is-samsung-browser .verified-check,
+    body.is-samsung-browser .verified-check,
+    html.samsung-rendering .verified-check,
+    body.samsung-rendering .verified-check {
+      background: #22c7ff !important;
+      background-color: #22c7ff !important;
+      color: #031116 !important;
+      -webkit-text-fill-color: #031116 !important;
+      border-color: rgba(155, 240, 255, 0.92) !important;
+      box-shadow:
+        0 0 0 1px rgba(3, 9, 12, 0.66),
+        0 0 16px rgba(34, 199, 255, 0.9),
+        inset 0 0 7px rgba(255, 255, 255, 0.42) !important;
+    }
   </style>
 </head>
 <body>
@@ -21498,11 +21704,14 @@
   <script>
     const userAgent = navigator.userAgent || "";
     if (/Android/i.test(userAgent)) {
-      document.documentElement.classList.add("is-android");
+      document.documentElement.classList.add("is-android", "android-rendering");
+      document.body?.classList.add("is-android", "android-rendering");
     }
     if (/SamsungBrowser/i.test(userAgent)) {
-      document.documentElement.classList.add("is-samsung-browser");
+      document.documentElement.classList.add("is-samsung-browser", "samsung-rendering");
+      document.body?.classList.add("is-samsung-browser", "samsung-rendering");
     }
+    window.__dancrApplyDeviceClasses?.();
 
     const markets = {
       "Las Vegas": {
