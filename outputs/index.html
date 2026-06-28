@@ -26504,7 +26504,16 @@
       activeTab = "venues";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
       render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToVenueDetail();
+    }
+
+    function scrollToVenueDetail() {
+      requestAnimationFrame(() => {
+        const target = results.querySelector(".venue-detail .venue-hero") || results.querySelector(".venue-detail") || tabTitle;
+        if (!target) return;
+        const top = target.getBoundingClientRect().top + window.scrollY - 12;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      });
     }
 
     results.addEventListener("click", (event) => {
@@ -26738,7 +26747,7 @@
         document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
         closeProfileModal();
         render();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollToVenueDetail();
         return;
       }
       const actionButton = event.target.closest("#followBtn, #favoriteBtn, #notifyBtn, #goingBtn, #reportBtn");
@@ -27668,7 +27677,7 @@
           selectedVenueName = button.dataset.popularVenue;
           document.querySelector('[data-tab="venues"]')?.click();
           render();
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          scrollToVenueDetail();
         });
       });
     }
