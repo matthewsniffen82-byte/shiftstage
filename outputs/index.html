@@ -25752,8 +25752,9 @@
       const result = document.getElementById("verificationUploadResult");
       const idFile = document.getElementById("setupIdDocument")?.files?.[0];
       const selfieFile = document.getElementById("setupSelfieDocument")?.files?.[0];
-      if (!idFile || !selfieFile) {
-        showToast("Upload ID and selfie verification");
+      const proofFile = document.getElementById("setupDanceProofDocument")?.files?.[0];
+      if (!idFile || !selfieFile || !proofFile) {
+        showToast("Upload ID, selfie, and proof that you dance");
         return;
       }
       submit.disabled = true;
@@ -25761,12 +25762,14 @@
       try {
         await Promise.all([
           uploadVerificationFile(idFile),
-          uploadVerificationFile(selfieFile)
+          uploadVerificationFile(selfieFile),
+          uploadVerificationFile(proofFile)
         ]);
         const profile = ensureActiveDancerProfile("Pending");
         if (profile) {
           profile.idStatus = "Needs review";
           profile.selfieStatus = "Needs review";
+          profile.danceProofStatus = "Needs review";
         }
         dancerSetup.verification = true;
         activeSetupStep = nextIncompleteStep() || "approval";
@@ -26088,7 +26091,7 @@
       `;
       const verificationBody = `
         <form class="auth-form" data-setup-form="verification">
-          <div class="info-tile setup-verification-card"><strong>Secure review</strong><div class="meta">Upload ID and selfie verification for private review. Your profile stays Pending until approved.</div></div>
+          <div class="info-tile setup-verification-card"><strong>Secure review</strong><div class="meta">Upload ID, selfie, and proof that you dance for private review. Your profile stays Pending until approved.</div></div>
           <div class="field">
             <label for="setupIdDocument">Government ID</label>
             <input id="setupIdDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
@@ -26097,12 +26100,17 @@
             <label for="setupSelfieDocument">Selfie verification</label>
             <input id="setupSelfieDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
           </div>
-          <div class="rule-note" id="verificationUploadResult">Verification documents are private and visible only to you and platform admins.</div>
+          <div class="field">
+            <label for="setupDanceProofDocument">Proof that you dance</label>
+            <input id="setupDanceProofDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+            <div class="field-note"><strong>Accepted examples:</strong> current schedule screenshot, club badge, venue confirmation, flyer, or other proof that shows you dance.</div>
+          </div>
+          <div class="rule-note" id="verificationUploadResult">Verification documents and dance proof are private and visible only to you and platform admins.</div>
           <button class="action-btn" type="submit">Submit verification</button>
         </form>
       `;
       const approvalBody = `
-        <div class="rule-note">Dancr reviews profile, photos, ID, and selfie verification. Approval unlocks schedules.</div>
+        <div class="rule-note">Dancr reviews profile, photos, ID, selfie, and proof that you dance. Approval unlocks schedules.</div>
         ${dancerReviewFeedbackMarkup()}
         <button class="action-btn" data-complete-step="approval">Approve demo profile</button>
       `;
