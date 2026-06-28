@@ -26419,7 +26419,7 @@
       if (isCustomerLoggedIn || isDancerLoggedIn) {
         toggleUtilityMenu();
       } else {
-        openAuthPage();
+        window.location.href = "/login";
       }
     });
 
