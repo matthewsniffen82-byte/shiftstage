@@ -77,10 +77,17 @@ function DancerDirectoryCard({ dancer }: { dancer: DancerCard }) {
       <div className="copy">
         <span>{dancer.currentRank ? `#${dancer.currentRank} Trending` : "Verified"}</span>
         <strong>{dancer.stageName}</strong>
+        <em className="status-pill">{locationStatusLabel(dancer.locationStatus)}</em>
         <small>{dancer.venueName ? `${dancer.venueName} · ${dancer.shiftLabel || "Schedule posted"}` : "No upcoming shift"}</small>
       </div>
     </Link>
   );
+}
+
+function locationStatusLabel(status?: string | null) {
+  if (status === "club_confirmed") return "Club Confirmed";
+  if (status === "location_confirmed") return "Location Confirmed";
+  return "Self-Reported";
 }
 
 function initials(value: string) {
@@ -111,6 +118,7 @@ function DancersStyles() {
       .copy { display: grid; gap: 6px; padding: 13px; }
       .copy span { color: #94e5ff; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; }
       .copy strong { font-size: 20px; overflow-wrap: anywhere; }
+      .status-pill { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
       .copy small, .empty-state span { color: #b9accd; line-height: 1.4; }
       .empty-state { grid-column: 1 / -1; min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 24px; }
       .empty-state strong { font-size: 24px; }

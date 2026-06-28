@@ -11,7 +11,10 @@ export function apiError(error: unknown, fallback: string, status = 500) {
     return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
 
-  if (message === "Profile approval required before starting a subscription.") {
+  if (
+    message === "Profile approval required before starting a subscription." ||
+    message === "Profile approval required before posting shifts."
+  ) {
     return NextResponse.json({ ok: false, error: message }, { status: 403 });
   }
 

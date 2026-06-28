@@ -56,6 +56,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 <Link className="shift-row" href={`/venues/${shift.venueSlug}`} key={shift.id}>
                   <strong>{shift.venueName}</strong>
                   <span>{formatShift(shift.startsAt, shift.endsAt)}</span>
+                  <em>{locationStatusLabel(shift.locationStatus)}</em>
                 </Link>
               ))}
             </div>
@@ -95,6 +96,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
       ) : null}
     </main>
   );
+}
+
+function locationStatusLabel(status?: string | null) {
+  if (status === "club_confirmed") return "Club Confirmed";
+  if (status === "location_confirmed") return "Location Confirmed";
+  return "Self-Reported";
 }
 
 function initials(value: string) {
@@ -149,6 +156,7 @@ function PublicProfileStyles() {
       .shift-list { display: grid; gap: 10px; }
       .shift-row { display: flex; justify-content: space-between; gap: 14px; color: #f7f2ff; text-decoration: none; padding: 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
       .shift-row span, .muted { color: #b9accd; }
+      .shift-row em { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
       .fact-list { display: grid; gap: 12px; margin: 0; }
       .fact-list div { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }

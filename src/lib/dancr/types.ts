@@ -91,6 +91,10 @@ export type DancerCard = {
   shiftStartsAt: string | null;
   shiftEndsAt: string | null;
   shiftTimeZone?: string | null;
+  locationStatus?: "self_reported" | "location_confirmed" | "club_confirmed";
+  checkedInAt?: string | null;
+  checkedOutAt?: string | null;
+  checkinDistanceFeet?: number | null;
 };
 
 export type DancerProfile = DancerCard & {
@@ -152,6 +156,9 @@ export type ShiftSummary = {
   endsAt: string;
   timezone?: string | null;
   status: ShiftStatus;
+  locationStatus?: "self_reported" | "location_confirmed" | "club_confirmed";
+  checkedInAt?: string | null;
+  checkedOutAt?: string | null;
 };
 
 export type DancerDashboardAnalytics = {

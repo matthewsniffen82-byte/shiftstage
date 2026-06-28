@@ -15,7 +15,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts(id, starts_at, ends_at, timezone, status, venues(name, slug, timezone))
+        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -42,7 +42,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
-        shifts!inner(id, starts_at, ends_at, timezone, venues(name, slug, timezone))
+        shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -54,7 +54,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 
   if (error) throw error;
 
-  return (data || []).map((row: any) => toDancerCard(client, row));
+  return (data || []).map((row: any) => toDancerCard(client, row)).filter((card) => card.shiftId);
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
@@ -70,7 +70,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, starts_at, ends_at, timezone, status, venues(id, name, slug, timezone))
+        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(id, name, slug, timezone))
       `,
     )
     .eq("status", "approved")
@@ -109,7 +109,9 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         handle: link.handle,
         url: link.url,
       })),
-    upcomingShifts: (row.shifts || []).filter((shift: any) => shift.status === "posted").map(toShiftSummary),
+    upcomingShifts: (row.shifts || [])
+      .filter((shift: any) => shift.status === "posted" && isShiftPubliclyVisible(shift))
+      .map(toShiftSummary),
   };
 }
 
@@ -137,7 +139,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
 export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, timezone, status, venue_id, venues(id, name, slug, timezone)")
+    .select("id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, venue_id, venues(id, name, slug, timezone)")
     .eq("dancer_id", dancerId)
     .eq("status", "posted")
     .gte("starts_at", new Date().toISOString())
@@ -145,7 +147,7 @@ export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: 
 
   if (error) throw error;
 
-  return (data || []).map(toShiftSummary);
+  return (data || []).filter((shift: any) => isShiftPubliclyVisible(shift)).map(toShiftSummary);
 }
 
 async function countDancerFollowers(client: DancrClient, dancerId: string): Promise<number> {
@@ -174,7 +176,8 @@ function toDancerCard(client: DancrClient, row: any): DancerCard {
   const shifts = Array.isArray(row.shifts) ? row.shifts : row.shifts ? [row.shifts] : [];
   const now = Date.now();
   const postedShifts = shifts.filter((item: any) => item.status === "posted");
-  const shift = postedShifts.find((item: any) => new Date(item.ends_at).getTime() >= now) || postedShifts[0] || null;
+  const visibleShifts = postedShifts.filter((item: any) => isShiftPubliclyVisible(item, now));
+  const shift = visibleShifts.find((item: any) => new Date(item.ends_at).getTime() >= now) || visibleShifts[0] || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
 
@@ -193,6 +196,10 @@ function toDancerCard(client: DancrClient, row: any): DancerCard {
     shiftStartsAt: shift?.starts_at || null,
     shiftEndsAt: shift?.ends_at || null,
     shiftTimeZone: shift?.timezone || venue?.timezone || null,
+    locationStatus: publicLocationStatus(shift),
+    checkedInAt: shift?.checked_in_at || null,
+    checkedOutAt: shift?.checked_out_at || null,
+    checkinDistanceFeet: shift?.checkin_distance_feet ?? null,
   };
 }
 
@@ -220,7 +227,29 @@ function toShiftSummary(row: any): ShiftSummary {
     endsAt: row.ends_at,
     timezone: row.timezone || venue?.timezone || null,
     status: row.status,
+    locationStatus: publicLocationStatus(row),
+    checkedInAt: row.checked_in_at || null,
+    checkedOutAt: row.checked_out_at || null,
   };
+}
+
+function isShiftPubliclyVisible(shift: any, now = Date.now()) {
+  if (shift.checked_out_at) return false;
+  return new Date(shift.ends_at).getTime() >= now;
+}
+
+function publicLocationStatus(shift: any): "self_reported" | "location_confirmed" | "club_confirmed" {
+  if (!shift) return "self_reported";
+  if (shift.location_status === "club_confirmed") return "club_confirmed";
+  if (
+    shift.location_status === "location_confirmed" &&
+    shift.checked_in_at &&
+    !shift.checked_out_at &&
+    new Date(shift.ends_at).getTime() >= Date.now()
+  ) {
+    return "location_confirmed";
+  }
+  return "self_reported";
 }
 
 async function getCityTimeZone(client: DancrClient, city: string) {

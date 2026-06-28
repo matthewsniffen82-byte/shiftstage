@@ -600,6 +600,7 @@ function DancerShiftPanel({ city }: { city: string }) {
   const [endsAt, setEndsAt] = useState("");
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [activeCheckInId, setActiveCheckInId] = useState("");
 
   useEffect(() => {
     const session = readSession();
@@ -683,6 +684,72 @@ function DancerShiftPanel({ city }: { city: string }) {
     await loadShifts(session.accessToken);
   }
 
+  async function checkInShift(shiftId: string) {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setStatus("Location permission is required to check in.");
+      return;
+    }
+
+    setActiveCheckInId(shiftId);
+    setStatus("");
+    try {
+      const position = await readBrowserLocation();
+      const response = await fetch("/api/dancer/shifts/check-in", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          shiftId,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check in.");
+      setStatus("Location Confirmed.");
+      await loadShifts(session.accessToken);
+    } catch (error) {
+      if ((error as any)?.code === 1) {
+        setStatus("Location permission is required to check in.");
+      } else {
+        setStatus(error instanceof Error ? error.message : "Unable to check in.");
+      }
+    } finally {
+      setActiveCheckInId("");
+    }
+  }
+
+  async function checkOutShift(shiftId: string) {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setActiveCheckInId(shiftId);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/shifts/check-in", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ shiftId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check out.");
+      setStatus("Checked out. This shift is no longer location confirmed.");
+      await loadShifts(session.accessToken);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to check out.");
+    } finally {
+      setActiveCheckInId("");
+    }
+  }
+
   return (
     <article className="info-panel shift-panel">
       <h2>Shifts</h2>
@@ -718,18 +785,79 @@ function DancerShiftPanel({ city }: { city: string }) {
               <strong>{venueName(shift)}</strong>
               <small>{formatDashboardShift(shift.starts_at, shift.ends_at)}</small>
             </span>
-            <em>{String(shift.status || "posted")}</em>
-            {shift.status !== "cancelled" ? (
-              <button type="button" onClick={() => cancelShift(String(shift.id))}>
-                Cancel
-              </button>
-            ) : null}
+            <em>{dashboardShiftStatus(shift)}</em>
+            <div className="shift-actions">
+              {canCheckInToShift(shift) ? (
+                <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkInShift(String(shift.id))}>
+                  {activeCheckInId === String(shift.id) ? "Checking..." : "Check In"}
+                </button>
+              ) : null}
+              {canCheckOutOfShift(shift) ? (
+                <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkOutShift(String(shift.id))}>
+                  {activeCheckInId === String(shift.id) ? "Saving..." : "Check Out"}
+                </button>
+              ) : null}
+              {shift.status !== "cancelled" ? (
+                <button type="button" onClick={() => cancelShift(String(shift.id))}>
+                  Cancel
+                </button>
+              ) : null}
+            </div>
           </div>
         ))}
         {!shifts.length ? <p>No shifts posted yet.</p> : null}
       </div>
     </article>
   );
+}
+
+function readBrowserLocation() {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000,
+    });
+  });
+}
+
+function canCheckInToShift(shift: Record<string, any>) {
+  if (shift.status !== "posted" || shift.checked_in_at || shift.checked_out_at) return false;
+  return isShiftCheckInWindowOpen(shift);
+}
+
+function canCheckOutOfShift(shift: Record<string, any>) {
+  if (shift.status !== "posted" || !shift.checked_in_at || shift.checked_out_at) return false;
+  return new Date(shift.ends_at).getTime() >= Date.now();
+}
+
+function isShiftCheckInWindowOpen(shift: Record<string, any>) {
+  const startsAt = new Date(shift.starts_at);
+  const endsAt = new Date(shift.ends_at);
+  const now = new Date();
+  const opensAt = new Date(startsAt.getTime() - 2 * 60 * 60 * 1000);
+  return isSameCalendarDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= opensAt && now <= endsAt;
+}
+
+function isSameCalendarDay(left: Date, right: Date, timeZone: string) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return formatter.format(left) === formatter.format(right);
+}
+
+function dashboardShiftStatus(shift: Record<string, any>) {
+  if (shift.status === "cancelled") return "Cancelled";
+  if (shift.checked_out_at) return "Checked Out";
+  if (shift.location_status === "club_confirmed") return "Club Confirmed";
+  if (shift.location_status === "location_confirmed" && shift.checked_in_at && new Date(shift.ends_at).getTime() >= Date.now()) {
+    return "Location Confirmed";
+  }
+  return "Self-Reported";
 }
 
 function venueName(shift: Record<string, any>) {
@@ -1212,8 +1340,10 @@ function DashboardStyles() {
       .dashboard-shift { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .dashboard-shift span { display: grid; gap: 4px; }
       .dashboard-shift small { color: #b9accd; }
-      .dashboard-shift em { color: #94e5ff; font-style: normal; font-weight: 850; text-transform: capitalize; }
+      .dashboard-shift em { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
       .dashboard-shift button { color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); padding: 0 12px; }
+      .shift-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+      .shift-actions button:first-child { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.1); }
       .billing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
       .billing-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
       .billing-actions button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }

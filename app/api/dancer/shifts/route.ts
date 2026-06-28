@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const { data, error } = await (client as any)
       .from("shifts")
-      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, venues(name, slug, city)")
+      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(name, slug, city, latitude, longitude)")
       .eq("dancer_id", dancer.id)
       .order("starts_at", { ascending: false })
       .limit(25);
