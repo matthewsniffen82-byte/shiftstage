@@ -100,7 +100,7 @@ export default function AdminClient() {
           Dancr
         </Link>
         <div className="nav-links">
-          <Link href="/tonight">Tonight</Link>
+          <Link href="/tonight">Now</Link>
           <Link href="/dancers">Dancers</Link>
           <Link href="/venues">Venues</Link>
         </div>

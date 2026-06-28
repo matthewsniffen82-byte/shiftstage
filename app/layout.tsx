@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "mydancr",
-  description: "Choose your city. See who's working tonight.",
+  description: "Choose your city. See who's working now.",
   applicationName: "mydancr",
   metadataBase: new URL("https://www.mydancr.com"),
   openGraph: {
     title: "mydancr",
-    description: "Choose your city. See who's working tonight.",
+    description: "Choose your city. See who's working now.",
     siteName: "mydancr",
     url: "https://www.mydancr.com",
     type: "website",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "mydancr",
-    description: "Choose your city. See who's working tonight.",
+    description: "Choose your city. See who's working now.",
   },
   appleWebApp: {
     title: "mydancr",

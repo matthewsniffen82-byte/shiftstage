@@ -94,7 +94,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           Dancr
         </Link>
         <div className="nav-links">
-          <Link href="/tonight">Tonight</Link>
+          <Link href="/tonight">Now</Link>
           <Link href="/dancers">Dancers</Link>
           <Link href="/venues">Venues</Link>
           <Link href="/account">Account</Link>
@@ -311,7 +311,7 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
         <Metric label="Followed dancers" value={String(saved?.follows?.length || 0)} />
         <Metric label="Favorite dancers" value={String(saved?.favorites?.length || 0)} />
       </InfoPanel>
-      <InfoPanel title="Tonight">
+      <InfoPanel title="Now">
         <Metric label="Followed venues" value={String(saved?.venueFollows?.length || 0)} />
         <Metric
           label="Notifications"
@@ -401,7 +401,7 @@ const CUSTOMER_NOTIFICATION_OPTIONS = [
   { key: "followedDancersOnly", label: "Followed dancers only" },
   { key: "followedVenuesOnly", label: "Followed venues only" },
   { key: "anyDancerInCity", label: "Any dancer in city" },
-  { key: "workingTonight", label: "Working tonight" },
+  { key: "workingTonight", label: "Working now" },
   { key: "newShifts", label: "New shifts" },
   { key: "venueSchedules", label: "Venue schedules" },
   { key: "clubChanges", label: "Club changes" },

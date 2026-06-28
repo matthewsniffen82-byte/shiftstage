@@ -35,7 +35,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           <h1>{profile.stageName}</h1>
           <p>{profile.bio || "Approved public profile with venue-confirmed schedule details."}</p>
           <div className="public-actions">
-            <Link href={`/tonight?city=${encodeURIComponent(profile.city)}`}>Tonight in {profile.city}</Link>
+            <Link href={`/tonight?city=${encodeURIComponent(profile.city)}`}>Now in {profile.city}</Link>
             {profile.venueSlug ? <Link href={`/venues/${profile.venueSlug}`}>{profile.venueName || "Venue"}</Link> : null}
           </div>
           <DancerProfileActions

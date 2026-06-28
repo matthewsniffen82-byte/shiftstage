@@ -31,17 +31,17 @@ export default async function TonightPage({ searchParams }: TonightPageProps) {
 
       <header className="page-hero">
         <span className="eyebrow">{city}</span>
-        <h1>Working tonight</h1>
-        <p>Live approved schedules for dancers with venue-confirmed shifts active tonight.</p>
+        <h1>Working now</h1>
+        <p>Live approved schedules for dancers with venue-confirmed shifts active now.</p>
       </header>
 
-      <section className="result-grid" aria-label="Dancers working tonight">
+      <section className="result-grid" aria-label="Dancers working now">
         {dancers.map((dancer) => (
           <DancerCardLink dancer={dancer} key={dancer.id} />
         ))}
         {!dancers.length ? (
           <div className="empty-state">
-            <strong>No posted shifts tonight.</strong>
+            <strong>No posted shifts now.</strong>
             <span>Approved dancers still appear in the live dancers directory.</span>
             <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Browse dancers</Link>
           </div>
@@ -60,7 +60,7 @@ function DancerCardLink({ dancer }: { dancer: DancerCard }) {
       <div className="card-copy">
         <span>{dancer.currentRank ? `#${dancer.currentRank} Trending` : "Verified"}</span>
         <strong>{dancer.stageName}</strong>
-        <small>{dancer.venueName ? `${dancer.venueName} · ${dancer.shiftLabel || "Tonight"}` : "Tonight"}</small>
+        <small>{dancer.venueName ? `${dancer.venueName} · ${dancer.shiftLabel || "Now"}` : "Now"}</small>
       </div>
     </Link>
   );

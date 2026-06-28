@@ -26,7 +26,7 @@ export default async function TrendingPage({ searchParams }: TrendingPageProps) 
           Dancr
         </Link>
         <div className="nav-links">
-          <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Tonight</Link>
+          <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Now</Link>
           <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link>
           <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
         </div>

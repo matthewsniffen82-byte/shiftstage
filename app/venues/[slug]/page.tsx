@@ -59,7 +59,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
             {venue.state ? `, ${venue.state}` : ""} nightlife schedule with approved dancer shifts.
           </p>
           <div className="public-actions">
-            <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>Tonight in {venue.city}</Link>
+            <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>Now in {venue.city}</Link>
             {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
           </div>
           <VenueProfileActions venueId={venue.id} />
