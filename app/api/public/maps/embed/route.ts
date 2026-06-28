@@ -6,20 +6,15 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const address = url.searchParams.get("address")?.trim();
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!address) {
     return fallback("Missing address.");
   }
 
-  if (!key) {
-    return fallback("Map preview unavailable.");
-  }
-
-  const embedUrl = new URL("https://www.google.com/maps/embed/v1/place");
-  embedUrl.searchParams.set("key", key);
+  const embedUrl = new URL("https://www.google.com/maps");
   embedUrl.searchParams.set("q", address);
-  embedUrl.searchParams.set("zoom", "15");
+  embedUrl.searchParams.set("z", "15");
+  embedUrl.searchParams.set("output", "embed");
 
   return NextResponse.redirect(embedUrl);
 }
