@@ -751,8 +751,22 @@ function formatDashboardShift(startsAt: string, endsAt: string) {
 
 function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }) {
   const [file, setFile] = useState<File | null>(null);
+  const [danceProofFile, setDanceProofFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  async function uploadVerificationDocument(fileToUpload: File, accessToken: string) {
+    const formData = new FormData();
+    formData.set("file", fileToUpload);
+
+    const response = await fetch("/api/dancer/verification-documents", {
+      method: "POST",
+      headers: { authorization: `Bearer ${accessToken}` },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload verification document.");
+  }
 
   async function uploadDocument(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -763,25 +777,25 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
     }
 
     if (!file) {
-      setStatus("Choose a document first.");
+      setStatus("Choose an identity document first.");
       return;
     }
 
-    const formData = new FormData();
-    formData.set("file", file);
+    if (!danceProofFile) {
+      setStatus("Choose proof that you dance.");
+      return;
+    }
 
     setIsUploading(true);
     setStatus("");
     try {
-      const response = await fetch("/api/dancer/verification-documents", {
-        method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}` },
-        body: formData,
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload verification document.");
-      setStatus("Verification document uploaded.");
+      await Promise.all([
+        uploadVerificationDocument(file, session.accessToken),
+        uploadVerificationDocument(danceProofFile, session.accessToken),
+      ]);
+      setStatus("Verification document and dance proof uploaded.");
       setFile(null);
+      setDanceProofFile(null);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to upload verification document.");
     } finally {
@@ -801,8 +815,17 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
             onChange={(event) => setFile(event.target.files?.[0] || null)}
           />
         </label>
+        <label>
+          Proof that you dance
+          <input
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            type="file"
+            onChange={(event) => setDanceProofFile(event.target.files?.[0] || null)}
+          />
+          <small>Examples: current schedule screenshot, club badge, venue confirmation, flyer, or similar proof.</small>
+        </label>
         <button type="submit" disabled={isUploading}>
-          {isUploading ? "Uploading..." : "Upload document"}
+          {isUploading ? "Uploading..." : "Upload verification"}
         </button>
         {status ? <p>{status}</p> : null}
       </form>
