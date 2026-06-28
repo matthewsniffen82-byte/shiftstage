@@ -20945,6 +20945,29 @@
       margin: 0 0 14px;
     }
 
+    .venue-detail .venue-offer-card {
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .venue-detail .venue-offer-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+      align-items: center;
+    }
+
+    .venue-detail .venue-offer-card h3 {
+      font-size: 22px;
+    }
+
+    .venue-detail .venue-offer-qr {
+      min-height: 154px;
+      padding: 12px;
+    }
+
+    .venue-detail .venue-offer-qr img {
+      width: min(148px, 58vw);
+    }
+
     .venue-offer-meta {
       display: flex;
       flex-wrap: wrap;
@@ -24300,7 +24323,7 @@
         <article class="venue-offer-card">
           <div class="venue-offer-grid">
             <div>
-              <span class="eyebrow">Venue offer</span>
+              <span class="eyebrow">Tonight's venue offer</span>
               <h3>${offer.title}</h3>
               <p>${offer.details}</p>
               <div class="venue-offer-meta">
@@ -24864,10 +24887,10 @@
             </div>
           </article>
 
-          ${venueOfferMarkup(venue)}
-
           <h3 class="section-title">Working tonight at ${details.name}</h3>
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts tonight.</div>'}</div>
+
+          ${venueOfferMarkup(venue)}
 
           <h3 class="section-title">Upcoming shifts at ${details.name}</h3>
           <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
