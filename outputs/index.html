@@ -2325,6 +2325,7 @@
       background: rgba(14,14,20,.72);
       box-shadow: inset 0 0 16px rgba(255,255,255,.025);
       overflow: hidden;
+      scroll-margin-top: 18px;
     }
 
     .setup-step.locked {
@@ -25721,6 +25722,14 @@
       `;
     }
 
+    function scrollToSetupStep(step) {
+      window.requestAnimationFrame(() => {
+        const target = document.querySelector(`#setupChecklist [data-step="${step}"]`);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+      });
+    }
+
     function renderDancerSetup() {
       const steps = setupOrder();
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
@@ -27486,6 +27495,9 @@
           setupChecklistExpanded = true;
           activeSetupStep = activeSetupStep === step ? "" : step;
           renderDancerSetup();
+          scrollToSetupStep(step);
+        } else {
+          scrollToSetupStep(step);
         }
         return;
       }
