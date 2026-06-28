@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -50,7 +51,10 @@ export async function POST(request: Request) {
     const { data, error } = await client.auth.signUp({
       email,
       password,
-      options: { data: metadata },
+      options: {
+        data: metadata,
+        emailRedirectTo: safeEmailRedirectTo(body.emailRedirectTo),
+      },
     });
 
     if (error) throw error;
@@ -146,6 +150,22 @@ function readRequired(value: unknown, message: string) {
 
 function readOptional(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function safeEmailRedirectTo(value: unknown) {
+  const fallback = `${getPublicEnv().siteUrl.replace(/\/$/, "")}/auth/callback`;
+  const text = readOptional(value);
+  if (!text) return fallback;
+
+  try {
+    const requested = new URL(text);
+    const site = new URL(fallback);
+    if (requested.origin !== site.origin) return fallback;
+    if (!requested.pathname.startsWith("/auth/callback")) return fallback;
+    return requested.toString();
+  } catch {
+    return fallback;
+  }
 }
 
 function slugify(value: string) {

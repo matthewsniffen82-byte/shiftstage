@@ -22950,6 +22950,107 @@
       } catch (error) {}
     }
 
+    const authResumeStorageKey = "dancrAuthResumeV1";
+
+    function authResumeToken() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+      return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    function readAuthResumeStore() {
+      try {
+        return JSON.parse(localStorage.getItem(authResumeStorageKey) || "{}") || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function writeAuthResumeStore(store) {
+      try {
+        localStorage.setItem(authResumeStorageKey, JSON.stringify(store));
+      } catch (error) {}
+    }
+
+    function saveAuthResume(role) {
+      const token = authResumeToken();
+      const store = readAuthResumeStore();
+      const state = {
+        role,
+        city: citySelect.value,
+        activeTab,
+        selectedVenueName,
+        scrollY: window.scrollY || 0,
+        createdAt: Date.now()
+      };
+
+      if (role === "customer") {
+        state.mode = authMode;
+        state.name = document.getElementById("customerName")?.value || "";
+        state.email = document.getElementById("customerEmail")?.value || "";
+      }
+
+      if (role === "dancer") {
+        state.realName = document.getElementById("dancerLegalName")?.value || "";
+        state.stageName = document.getElementById("dancerStageName")?.value || "";
+        state.email = document.getElementById("dancerEmail")?.value || "";
+        state.dancerCity = document.getElementById("dancerCity")?.value || citySelect.value;
+      }
+
+      store[token] = state;
+      writeAuthResumeStore(store);
+      return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}`;
+    }
+
+    function takeAuthResume(token) {
+      const store = readAuthResumeStore();
+      const state = store[token];
+      if (state) {
+        delete store[token];
+        writeAuthResumeStore(store);
+      }
+      return state || null;
+    }
+
+    function restoreAuthConfirmationResume() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("resume");
+      if (!token) return false;
+
+      const state = takeAuthResume(token);
+      window.history.replaceState({}, document.title, "/");
+      if (!state) {
+        showToast("Email confirmed. Please sign in to continue.");
+        openAuthRole("customer");
+        return true;
+      }
+
+      if (state.city && markets[state.city]) citySelect.value = state.city;
+      activeTab = state.activeTab || activeTab;
+      selectedVenueName = state.selectedVenueName || null;
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
+      render();
+
+      if (state.role === "dancer") {
+        openDancerSignupPage();
+        document.getElementById("dancerLegalName").value = state.realName || "";
+        document.getElementById("dancerStageName").value = state.stageName || "";
+        document.getElementById("dancerEmail").value = state.email || "";
+        document.getElementById("dancerCity").value = state.dancerCity || state.city || "Las Vegas";
+        showToast("Email confirmed. Sign in or continue your dancer setup.");
+        setTimeout(() => document.getElementById("dancerPassword")?.focus(), 80);
+      } else {
+        openAuthRole("customer");
+        setCustomerAuthMode(state.mode || "signup");
+        document.getElementById("customerName").value = state.name || "";
+        document.getElementById("customerEmail").value = state.email || "";
+        showToast("Email confirmed. Sign in to continue where you left off.");
+        setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
+      }
+
+      setTimeout(() => window.scrollTo({ top: state.scrollY || 0, behavior: "auto" }), 120);
+      return true;
+    }
+
     async function requestAuth(payload) {
       const response = await fetch("/api/auth", {
         method: "POST",
@@ -27817,14 +27918,21 @@
       const submit = document.getElementById("authSubmit");
       submit.disabled = true;
       try {
-        const result = await requestAuth({
+        const payload = {
           mode: authMode,
           role: "customer",
           name: document.getElementById("customerName").value,
           email: document.getElementById("customerEmail").value,
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
-        });
+        };
+        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer");
+        const result = await requestAuth(payload);
+        if (result.requiresEmailConfirmation) {
+          setCustomerAuthMode("signup");
+          showToast("Confirmation email sent. Open it on this device to return here.");
+          return;
+        }
         resetAccountControl("customer");
         isCustomerLoggedIn = true;
         isDancerLoggedIn = false;
@@ -27832,7 +27940,7 @@
         activeDashboardType = "customer";
         updateAccountHeader();
         closeAuthPage();
-        showToast(result.requiresEmailConfirmation ? "Customer account created. Check your email to confirm." : authMode === "signup" ? "Customer account created" : "Logged in");
+        showToast(authMode === "signup" ? "Customer account created" : "Logged in");
         openDashboard();
       } catch (error) {
         startCustomerDashboardSession("Customer dashboard opened");
@@ -27959,8 +28067,13 @@
           stageName: document.getElementById("dancerStageName").value,
           email: document.getElementById("dancerEmail").value,
           password: document.getElementById("dancerPassword").value,
-          city: document.getElementById("dancerCity").value
+          city: document.getElementById("dancerCity").value,
+          emailRedirectTo: saveAuthResume("dancer")
         });
+        if (result.requiresEmailConfirmation) {
+          showToast("Confirmation email sent. Open it on this device to return here.");
+          return;
+        }
         dancerSignupStarted = true;
         stripeConfirmed = true;
         Object.assign(dancerSetup, {
@@ -27973,7 +28086,7 @@
         setupChecklistExpanded = true;
         activeSetupStep = "profile";
         activeDashboardType = "dancer";
-        showToast(result.requiresEmailConfirmation ? "Dancer account created. Check your email to confirm." : "Dancer account created");
+        showToast("Dancer account created");
         if (result.session) {
           isCustomerLoggedIn = false;
           isDancerLoggedIn = true;
@@ -28487,7 +28600,8 @@
     updateAccountHeader();
     render();
     loadLiveDiscovery(citySelect.value);
-    openSharedProfileFromUrl();
+    const restoredAuthResume = restoreAuthConfirmationResume();
+    if (!restoredAuthResume) openSharedProfileFromUrl();
   </script>
 </body>
 </html>
