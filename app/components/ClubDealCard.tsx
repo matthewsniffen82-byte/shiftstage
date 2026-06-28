@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 
 type ClubDealCardProps = {
@@ -9,13 +9,23 @@ type ClubDealCardProps = {
   sourceType: DealSourceType;
   dancerId?: string | null;
   dancerNote?: boolean;
+  autoGenerate?: boolean;
+  compact?: boolean;
 };
 
-export function ClubDealCard({ deal, venueId, sourceType, dancerId, dancerNote }: ClubDealCardProps) {
+export function ClubDealCard({ deal, venueId, sourceType, dancerId, dancerNote, autoGenerate, compact }: ClubDealCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const generatedRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoGenerate || generatedRef.current) return;
+    generatedRef.current = true;
+    generateDealQr();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoGenerate]);
 
   async function generateDealQr() {
     setStatus("");
@@ -46,12 +56,12 @@ export function ClubDealCard({ deal, venueId, sourceType, dancerId, dancerNote }
   }
 
   return (
-    <article className="club-deal-card">
+    <article className={`club-deal-card${compact ? " compact" : ""}`}>
       <div className="club-deal-copy">
         <span className="eyebrow">Official club deal</span>
         <h2>{deal.dealTitle}</h2>
-        <p>{deal.dealDescription}</p>
-        {deal.dealTerms ? <small>{deal.dealTerms}</small> : null}
+        {!compact ? <p>{deal.dealDescription}</p> : null}
+        {deal.dealTerms && !compact ? <small>{deal.dealTerms}</small> : null}
         {dancerNote ? (
           <small>This is the same club deal offered on the venue page. Using it from this profile may support this dancer.</small>
         ) : null}
@@ -63,9 +73,11 @@ export function ClubDealCard({ deal, venueId, sourceType, dancerId, dancerNote }
             <span>{expiresAt ? `Expires ${formatExpiry(expiresAt)}` : "Ready for club scan"}</span>
           </div>
         ) : null}
-        <button type="button" onClick={generateDealQr} disabled={isLoading}>
-          {isLoading ? "Creating..." : qrDataUrl ? "Refresh QR" : "Get Club Deal"}
-        </button>
+        {!autoGenerate ? (
+          <button type="button" onClick={generateDealQr} disabled={isLoading}>
+            {isLoading ? "Creating..." : qrDataUrl ? "Refresh QR" : "Get Club Deal"}
+          </button>
+        ) : null}
         {status ? <em>{status}</em> : null}
       </div>
     </article>

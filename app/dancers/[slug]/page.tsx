@@ -58,20 +58,30 @@ export default async function DancerPublicPage({ params }: PageProps) {
           {profile.upcomingShifts.length ? (
             <div className="shift-list">
               {profile.upcomingShifts.map((shift) => (
-                <Link className="shift-row" href={`/venues/${shift.venueSlug}`} key={shift.id}>
-                  <strong>{shift.venueName}</strong>
-                  <span>{formatShift(shift.startsAt, shift.endsAt)}</span>
-                  <em>{locationStatusLabel(shift.locationStatus)}</em>
-                </Link>
+                <div className="shift-row-shell" key={shift.id}>
+                  <Link className="shift-row" href={`/venues/${shift.venueSlug}`}>
+                    <strong>{shift.venueName}</strong>
+                    <span>{formatShift(shift.startsAt, shift.endsAt)}</span>
+                    <em>{locationStatusLabel(shift.locationStatus)}</em>
+                  </Link>
+                  {activeDeal && activeShift?.id === shift.id ? (
+                    <ClubDealCard
+                      deal={activeDeal}
+                      venueId={shift.venueId}
+                      sourceType="dancer_profile"
+                      dancerId={profile.id}
+                      dancerNote
+                      autoGenerate
+                      compact
+                    />
+                  ) : null}
+                </div>
               ))}
             </div>
           ) : (
             <p className="muted">No upcoming posted shifts.</p>
           )}
         </article>
-        {activeDeal && activeShift ? (
-          <ClubDealCard deal={activeDeal} venueId={activeShift.venueId} sourceType="dancer_profile" dancerId={profile.id} dancerNote />
-        ) : null}
         <article className="public-panel">
           <h2>Profile</h2>
           <dl className="fact-list">
@@ -176,9 +186,17 @@ function PublicProfileStyles() {
       .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
       h2 { margin: 0 0 16px; font-size: 20px; }
       .shift-list { display: grid; gap: 10px; }
+      .shift-row-shell { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); gap: 10px; align-items: stretch; }
       .shift-row { display: flex; justify-content: space-between; gap: 14px; color: #f7f2ff; text-decoration: none; padding: 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
       .shift-row span, .muted { color: #b9accd; }
       .shift-row em { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+      .club-deal-card.compact { padding: 12px; gap: 10px; align-content: start; }
+      .club-deal-card.compact .club-deal-copy { gap: 4px; }
+      .club-deal-card.compact .club-deal-copy h2 { font-size: 15px; line-height: 1.15; }
+      .club-deal-card.compact .club-deal-copy small { font-size: 11px; }
+      .club-deal-card.compact .deal-qr-frame { padding: 8px; }
+      .club-deal-card.compact .deal-qr-frame img { width: min(118px, 100%); }
+      .club-deal-card.compact .club-deal-action em, .club-deal-card.compact .deal-qr-frame span { font-size: 11px; text-align: center; }
       .fact-list { display: grid; gap: 12px; margin: 0; }
       .fact-list div { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
@@ -188,7 +206,7 @@ function PublicProfileStyles() {
       .social-list strong { overflow-wrap: anywhere; text-align: right; }
       .public-gallery { max-width: 1120px; margin: 18px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
       .gallery-photo { min-height: 220px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.1); }
-      @media (max-width: 760px) { .public-hero, .public-grid { grid-template-columns: 1fr; } .public-photo { min-height: 340px; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } }
+      @media (max-width: 760px) { .public-hero, .public-grid, .shift-row-shell { grid-template-columns: 1fr; } .public-photo { min-height: 340px; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } .club-deal-card.compact .deal-qr-frame img { width: min(170px, 100%); } }
     `}</style>
   );
 }
