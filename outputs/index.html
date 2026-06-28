@@ -21182,6 +21182,216 @@
       box-shadow: 0 0 28px rgba(53, 216, 255, .28);
     }
 
+    .deal-qr-trigger {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .deal-qr-trigger:hover,
+    .deal-qr-trigger:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(53, 216, 255, .38);
+      box-shadow: 0 0 24px rgba(53, 216, 255, .14), inset 0 0 16px rgba(125, 74, 255, .08);
+      outline: none;
+    }
+
+    .profile-deal-qr.deal-qr-trigger {
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .deal-pass-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 13000;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 50% 36%, rgba(125, 74, 255, .20), transparent 34%),
+        rgba(5, 5, 7, .78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .deal-pass-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .deal-pass-sheet {
+      position: relative;
+      width: min(430px, calc(100vw - 28px));
+      padding: 22px;
+      border: 1px solid rgba(125, 74, 255, .46);
+      border-radius: 26px;
+      background:
+        linear-gradient(145deg, rgba(17, 14, 28, .97), rgba(5, 5, 7, .98)),
+        #050507;
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, .62),
+        0 0 42px rgba(125, 74, 255, .20),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+      text-align: center;
+    }
+
+    .deal-pass-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(167, 139, 250, .36);
+      background: rgba(5, 5, 7, .78);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .deal-pass-kicker {
+      margin: 0 0 8px;
+      color: #35D8FF;
+      font-size: .74rem;
+      font-weight: 950;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .deal-pass-title {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(1.3rem, 5vw, 1.78rem);
+      line-height: 1.05;
+    }
+
+    .deal-pass-copy {
+      margin: 9px auto 18px;
+      max-width: 330px;
+      color: rgba(245, 245, 255, .72);
+      font-size: .94rem;
+      line-height: 1.36;
+    }
+
+    .deal-pass-frame {
+      width: min(262px, 72vw);
+      aspect-ratio: 1;
+      margin: 0 auto 16px;
+      padding: 12px;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, .24),
+        0 0 34px rgba(53, 216, 255, .24),
+        0 0 48px rgba(125, 74, 255, .20);
+    }
+
+    .deal-pass-frame img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+    }
+
+    .deal-pass-how {
+      margin: 0 0 16px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 16px;
+      color: rgba(245, 245, 255, .70);
+      background: rgba(0, 0, 0, .26);
+      font-size: .82rem;
+      font-weight: 800;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .deal-pass-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .deal-pass-action {
+      min-height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(125, 74, 255, .38);
+      background: rgba(5, 5, 7, .76);
+      color: #fff;
+      font: inherit;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .deal-pass-action.primary {
+      grid-column: 1 / -1;
+      border: none;
+      background: linear-gradient(135deg, #7C3AED, #0EA5E9);
+      box-shadow: 0 0 26px rgba(125, 74, 255, .28);
+    }
+
+    .saved-deal-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .saved-deal-pass {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 74px;
+      padding: 12px;
+      border: 1px solid rgba(125, 74, 255, .32);
+      border-radius: 18px;
+      background: rgba(5, 5, 7, .74);
+      color: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .saved-deal-pass strong {
+      display: block;
+      margin: 0 0 4px;
+      font-size: 1rem;
+    }
+
+    .saved-deal-pass span {
+      display: block;
+      color: rgba(245, 245, 255, .66);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .saved-deal-pass img {
+      width: 52px;
+      height: 52px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    @media (max-width: 430px) {
+      .deal-pass-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .deal-pass-action.primary {
+        grid-column: auto;
+      }
+    }
+
     .venue-admin-list {
       display: grid;
       gap: 10px;
@@ -22254,6 +22464,11 @@
         </div>
         <div class="customer-venue-list" id="dashVenueList"></div>
         <button class="view-all" id="dashVenueViewAll" hidden>View All Venues</button>
+        <div class="section-title-row" data-dashboard-section="deals">
+          <h3 class="section-title">Saved club deal QR codes</h3>
+          <span class="section-context" id="dashSavedDealsContext">0 saved</span>
+        </div>
+        <div class="saved-deal-list" id="dashSavedDealsList"></div>
         <div class="auth-card customer-notification-card" data-dashboard-section="notifications">
           <h3 class="section-title">Notification settings</h3>
           <p class="customer-card-copy">Choose which dancer and venue alerts Dancr sends you. Your customer activity stays private.</p>
@@ -22454,6 +22669,7 @@
     const dashTonightList = document.getElementById("dashTonightList");
     const dashFollowedList = document.getElementById("dashFollowedList");
     const dashVenueList = document.getElementById("dashVenueList");
+    const dashSavedDealsList = document.getElementById("dashSavedDealsList");
     const dashTonightViewAll = document.getElementById("dashTonightViewAll");
     const dashFollowedViewAll = document.getElementById("dashFollowedViewAll");
     const dashVenueViewAll = document.getElementById("dashVenueViewAll");
@@ -22518,6 +22734,7 @@
     let dashboardTonightExpanded = false;
     let dashboardFollowedExpanded = false;
     let dashboardVenuesExpanded = false;
+    let savedDealPasses = loadSavedDealPasses();
     const goingTonightByProfile = {};
     const goingTonightSavedByProfile = {};
     const trendEventStoreKey = "dancrTrendEventsV1";
@@ -24582,6 +24799,19 @@
       return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&color=050507&bgcolor=FFFFFF&data=${encodeURIComponent(value)}`;
     }
 
+    function loadSavedDealPasses() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("dancrSavedDealPassesV1") || "[]");
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveSavedDealPasses() {
+      localStorage.setItem("dancrSavedDealPassesV1", JSON.stringify(savedDealPasses));
+    }
+
     const venueOffers = {
       "Velvet Room": {
         title: "VIP entry perk",
@@ -24610,6 +24840,158 @@
       return url.toString();
     }
 
+    function dealPassPayload({ venueName, sourceType = "club_page", dancerName = "" }) {
+      const offer = venueOfferFor(venueName);
+      const url = sourceType === "dancer_profile"
+        ? venueOfferUrl(venueName, { source: sourceType, dancer: dancerName, profile: dancerName })
+        : venueOfferUrl(venueName, { source: sourceType });
+      return {
+        id: `${sourceType}-${slugify(venueName)}-${slugify(dancerName || "club")}-${offer.code}`,
+        venueName,
+        dancerName,
+        sourceType,
+        title: offer.title,
+        details: offer.details,
+        code: offer.code,
+        expires: offer.expires,
+        url,
+        qrImageUrl: qrCodeUrl(url)
+      };
+    }
+
+    function encodeDealPass(pass) {
+      return encodeURIComponent(JSON.stringify(pass));
+    }
+
+    function decodeDealPass(value) {
+      try {
+        return JSON.parse(decodeURIComponent(value));
+      } catch {
+        return null;
+      }
+    }
+
+    function dealPassButtonMarkup(pass, className) {
+      const sourceLabel = pass.sourceType === "dancer_profile" && pass.dancerName
+        ? `From ${pass.dancerName}'s profile`
+        : `Official ${pass.venueName} deal`;
+      return `
+        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Open ${pass.venueName} club deal QR">
+          <img src="${pass.qrImageUrl}" alt="${pass.venueName} offer QR code" loading="lazy" decoding="async">
+          <span class="meta">${sourceLabel}. Tap to enlarge or save.</span>
+        </button>
+      `;
+    }
+
+    function savedDealPassMarkup(pass) {
+      const sourceLabel = pass.sourceType === "dancer_profile" && pass.dancerName
+        ? `From ${pass.dancerName}'s profile`
+        : "Venue page deal";
+      return `
+        <button class="saved-deal-pass" type="button" data-deal-pass="${encodeDealPass(pass)}">
+          <span>
+            <strong>${pass.title}</strong>
+            <span>${pass.venueName} · ${sourceLabel} · saved QR</span>
+          </span>
+          <img src="${pass.qrImageUrl}" alt="${pass.venueName} saved QR code" loading="lazy" decoding="async">
+        </button>
+      `;
+    }
+
+    function saveCustomerDealPass(pass, message = "Deal QR saved to your dashboard") {
+      if (!pass?.id) return;
+      const savedPass = { ...pass, savedAt: new Date().toISOString() };
+      savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
+      saveSavedDealPasses();
+      if (customerDashboard.classList.contains("show")) renderDashboard();
+      showToast(message);
+    }
+
+    function dealPassOverlay() {
+      let overlay = document.getElementById("dealPassOverlay");
+      if (overlay) return overlay;
+      document.body.insertAdjacentHTML("beforeend", `
+        <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true">
+          <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle">
+            <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close deal QR">${actionIconMarkup("close")}</button>
+            <p class="deal-pass-kicker">Club deal QR</p>
+            <h3 class="deal-pass-title" id="dealPassTitle">Club deal</h3>
+            <p class="deal-pass-copy" id="dealPassCopy">Show this QR at the venue.</p>
+            <div class="deal-pass-frame">
+              <img id="dealPassImage" alt="Club deal QR code" loading="lazy" decoding="async">
+            </div>
+            <p class="deal-pass-how" id="dealPassHow">How it works: save this QR, show it at the venue, and the club scans it to redeem the deal. Dancer profile QR codes only count for commission after the club scans the code.</p>
+            <div class="deal-pass-actions">
+              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save to dashboard</button>
+              <button class="deal-pass-action" type="button" data-wallet-pass="apple">Apple Wallet</button>
+              <button class="deal-pass-action" type="button" data-wallet-pass="google">Google Wallet</button>
+              <button class="deal-pass-action" type="button" data-copy-deal-pass>Copy link</button>
+            </div>
+          </div>
+        </div>
+      `);
+      overlay = document.getElementById("dealPassOverlay");
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay || event.target.closest("[data-close-deal-pass]")) {
+          closeDealPassOverlay();
+          return;
+        }
+        const pass = decodeDealPass(overlay.dataset.dealPass || "");
+        if (!pass) return;
+        if (event.target.closest("[data-save-deal-pass]")) {
+          saveCustomerDealPass(pass);
+          return;
+        }
+        const walletButton = event.target.closest("[data-wallet-pass]");
+        if (walletButton) {
+          const walletName = walletButton.dataset.walletPass === "apple" ? "Apple Wallet" : "Google Wallet";
+          saveCustomerDealPass(pass, `${walletName} pass setup needs wallet credentials. Saved to dashboard for now.`);
+          return;
+        }
+        if (event.target.closest("[data-copy-deal-pass]")) {
+          copyText(pass.url, "Deal link copied");
+        }
+      });
+      return overlay;
+    }
+
+    function openDealPassOverlay(pass) {
+      const overlay = dealPassOverlay();
+      overlay.dataset.dealPass = encodeDealPass(pass);
+      document.getElementById("dealPassTitle").textContent = pass.title;
+      document.getElementById("dealPassCopy").textContent = `${pass.venueName} · ${pass.details}`;
+      document.getElementById("dealPassImage").src = pass.qrImageUrl;
+      document.getElementById("dealPassImage").alt = `${pass.venueName} deal QR code`;
+      const attribution = pass.sourceType === "dancer_profile" && pass.dancerName
+        ? ` This QR came from ${pass.dancerName}'s profile, so commission is only eligible if the club scans this exact code.`
+        : " This official venue QR does not create dancer commission.";
+      document.getElementById("dealPassHow").textContent = `How it works: save this QR, show it at ${pass.venueName}, and the club scans it to redeem the deal.${attribution}`;
+      overlay.classList.add("show");
+      overlay.setAttribute("aria-hidden", "false");
+      overlay.querySelector("[data-close-deal-pass]")?.focus({ preventScroll: true });
+    }
+
+    function closeDealPassOverlay() {
+      const overlay = document.getElementById("dealPassOverlay");
+      if (!overlay) return;
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
+    function handleDealPassClick(event) {
+      const trigger = event.target.closest("[data-deal-pass]");
+      if (!trigger) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      const pass = decodeDealPass(trigger.dataset.dealPass || "");
+      if (!pass) {
+        showToast("Deal QR unavailable");
+        return true;
+      }
+      openDealPassOverlay(pass);
+      return true;
+    }
+
     function dancerVenueOfferUrl(profile) {
       return venueOfferUrl(profile.venue, {
         source: "dancer_profile",
@@ -24620,6 +25002,7 @@
 
     function venueOfferMarkup(venue) {
       const offer = venueOfferFor(venue.name);
+      const pass = dealPassPayload({ venueName: venue.name, sourceType: "club_page" });
       return `
         <article class="venue-offer-card">
           <div class="venue-offer-grid">
@@ -24632,10 +25015,7 @@
                 <span class="pill">Good through ${offer.expires}</span>
               </div>
             </div>
-            <div class="venue-offer-qr">
-              <img src="${qrCodeUrl(venueOfferUrl(venue.name))}" alt="${venue.name} offer QR code">
-              <span class="meta">Show this QR at ${venue.name}.</span>
-            </div>
+            ${dealPassButtonMarkup(pass, "venue-offer-qr")}
           </div>
         </article>
       `;
@@ -24644,7 +25024,7 @@
     function profileDealTileMarkup(profile) {
       if (!profile?.venue || !isWorkingTonight(profile)) return "";
       const offer = venueOfferFor(profile.venue);
-      const url = dancerVenueOfferUrl(profile);
+      const pass = dealPassPayload({ venueName: profile.venue, sourceType: "dancer_profile", dancerName: profile.name });
       return `
         <div class="profile-deal-row">
           <div class="profile-deal-copy">
@@ -24654,10 +25034,7 @@
               <span class="profile-deal-note">Same ${profile.venue} offer. Profile attribution applies after club scan.</span>
             </div>
           </div>
-          <div class="profile-deal-qr">
-            <img src="${qrCodeUrl(url)}" alt="${profile.venue} deal QR for ${profile.name}" loading="lazy" decoding="async">
-            <span>Show at ${profile.venue}</span>
-          </div>
+          ${dealPassButtonMarkup(pass, "profile-deal-qr")}
         </div>
       `;
     }
@@ -26510,6 +26887,7 @@
       document.getElementById("dashTonightContext").textContent = `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
       document.getElementById("dashFollowedContext").textContent = `${city} · ${followed.length} saved`;
       document.getElementById("dashVenuesContext").textContent = `${venues.length} saved`;
+      document.getElementById("dashSavedDealsContext").textContent = `${savedDealPasses.length} saved`;
 
       const visibleTonight = limitedList(workingTonight, dashboardTonightExpanded);
       const visibleFollowed = limitedList(followed, dashboardFollowedExpanded);
@@ -26523,6 +26901,9 @@
       dashVenueList.innerHTML = visibleVenues.length
         ? visibleVenues.map((venue) => venueCard(venue)).join("")
         : `<div class="locked">No followed venues in ${city} yet.</div>`;
+      dashSavedDealsList.innerHTML = savedDealPasses.length
+        ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
+        : `<div class="locked">Saved club deal QR codes will appear here after you tap a venue or dancer profile QR and save it.</div>`;
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
@@ -27834,7 +28215,12 @@
       }).catch((error) => showToast(error.message || "Could not save live profile"));
     });
 
+    document.addEventListener("click", (event) => {
+      handleDealPassClick(event);
+    });
+
     document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeDealPassOverlay();
       const cardVenueLink = event.target.closest?.("[data-card-venue]");
       if (cardVenueLink && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
