@@ -29,7 +29,7 @@ export default function LoginChoicePage() {
             <small>Save dancers, follow venues, get notifications, and track who is working.</small>
           </Link>
 
-          <Link className="choice-card dancer-card-choice" href="/account?role=dancer">
+          <Link className="choice-card dancer-card-choice" href="/dashboard/dancer">
             <span>Dancer</span>
             <strong>Manage your profile</strong>
             <small>Set up your public profile, manage shifts, photos, analytics, and billing.</small>
