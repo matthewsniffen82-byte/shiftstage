@@ -20948,11 +20948,30 @@
     .venue-detail .venue-offer-card {
       padding: 16px;
       border-radius: 20px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .venue-detail .venue-offer-grid {
-      grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
-      align-items: center;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      gap: 14px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .venue-detail .venue-offer-grid > * {
+      min-width: 0;
+    }
+
+    .venue-detail .venue-offer-card .eyebrow,
+    .venue-detail .venue-offer-card h3,
+    .venue-detail .venue-offer-card p {
+      word-break: normal;
+      overflow-wrap: normal;
     }
 
     .venue-detail .venue-offer-card h3 {
@@ -20960,12 +20979,12 @@
     }
 
     .venue-detail .venue-offer-qr {
-      min-height: 154px;
+      min-height: 0;
       padding: 12px;
     }
 
     .venue-detail .venue-offer-qr img {
-      width: min(148px, 58vw);
+      width: min(156px, 58vw);
     }
 
     .venue-offer-meta {
@@ -21021,6 +21040,28 @@
       .venue-dashboard-grid,
       .venue-offer-grid {
         grid-template-columns: 1fr;
+      }
+
+      .venue-detail .venue-offer-card {
+        padding: 14px;
+      }
+
+      .venue-detail .venue-offer-card h3 {
+        font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+        line-height: 1.08;
+      }
+
+      .venue-detail .venue-offer-card p {
+        font-size: .95rem;
+        line-height: 1.35;
+      }
+
+      .venue-detail .venue-offer-qr {
+        padding: 12px;
+      }
+
+      .venue-detail .venue-offer-qr img {
+        width: min(152px, 56vw);
       }
     }
   </style>
