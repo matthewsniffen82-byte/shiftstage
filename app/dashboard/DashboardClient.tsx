@@ -16,6 +16,7 @@ type LoadState = {
     goingSignals?: unknown[];
   } | null;
   analytics?: Record<string, unknown> | null;
+  deals?: Record<string, unknown> | null;
   reviews?: Array<Record<string, unknown>>;
   weeklyReport?: Record<string, unknown> | null;
   rankingEvents?: Array<Record<string, unknown>>;
@@ -59,6 +60,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             profile: profile.profile,
             saved: secondary.saved || null,
             analytics: secondary.analytics || null,
+            deals: secondary.deals || null,
             reviews: reviews?.reviews || [],
             weeklyReport: weeklyReport?.report || null,
             rankingEvents: rankingEvents?.events || [],
@@ -122,6 +124,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           {role === "dancer" ? (
             <DancerPanel
               analytics={state.analytics}
+              deals={state.deals}
               profile={state.profile}
               rankingEvents={state.rankingEvents}
               reviews={state.reviews}
@@ -419,12 +422,14 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
 
 function DancerPanel({
   analytics,
+  deals,
   profile,
   rankingEvents,
   reviews,
   weeklyReport,
 }: {
   analytics?: LoadState["analytics"];
+  deals?: LoadState["deals"];
   profile?: LoadState["profile"];
   rankingEvents?: LoadState["rankingEvents"];
   reviews?: LoadState["reviews"];
@@ -442,6 +447,7 @@ function DancerPanel({
         <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
         <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
       </InfoPanel>
+      <DancerDealPanel deals={deals} />
       <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
       <DancerSetupPanel profile={profile} />
       <DancerSocialPanel profile={profile} />
@@ -451,6 +457,22 @@ function DancerPanel({
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       <DancerBillingPanel />
     </>
+  );
+}
+
+function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
+  return (
+    <article className="info-panel deal-panel">
+      <h2>Club Deals</h2>
+      <div className="deal-metrics">
+        <Metric label="QR opens" value={String(deals?.qrOpens || 0)} />
+        <Metric label="Tokens generated" value={String(deals?.tokensGenerated || 0)} />
+        <Metric label="Redeemed QR codes" value={String(deals?.redeemed || 0)} />
+        <Metric label="Pending commissions" value={String(deals?.pendingCommissions || 0)} />
+        <Metric label="Payable / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
+        <Metric label="Rejected / voided" value={String(deals?.rejectedCommissions || 0)} />
+      </div>
+    </article>
   );
 }
 
@@ -1361,11 +1383,13 @@ function DashboardStyles() {
       .notification-panel p { color: #94e5ff; font-size: 14px; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .customer-settings-panel .city-field { grid-column: span 2; }
+      .deal-panel { grid-column: span 2; }
+      .deal-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .deal-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

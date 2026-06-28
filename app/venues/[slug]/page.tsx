@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getVenueProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DirectionsLink } from "./DirectionsLink";
@@ -24,6 +26,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
   const client = createAdminSupabaseClient();
   const venue = await getVenueProfile(client, slug);
   if (!venue) notFound();
+  const activeDeal = await getActiveClubDealForVenue(client, venue.id);
 
   const { data, error } = await client
     .from("shifts")
@@ -65,6 +68,11 @@ export default async function VenuePublicPage({ params }: PageProps) {
           <VenueProfileActions venueId={venue.id} />
         </div>
       </section>
+      {activeDeal ? (
+        <section className="deal-section">
+          <ClubDealCard deal={activeDeal} venueId={venue.id} sourceType="club_page" />
+        </section>
+      ) : null}
       <section className="public-grid">
         <article className="public-panel">
           <h2>Upcoming shifts</h2>
@@ -156,6 +164,16 @@ function VenueProfileStyles() {
       .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
       .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
       .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
+      .deal-section { max-width: 1120px; margin: 22px auto 0; }
+      .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 18px; align-items: center; border: 1px solid rgba(139,92,246,.28); background: rgba(8,8,13,.9); border-radius: 8px; padding: 18px; box-shadow: 0 22px 70px rgba(0,0,0,.38); }
+      .club-deal-copy { display: grid; gap: 9px; }
+      .club-deal-copy h2 { margin: 0; font-size: 24px; }
+      .club-deal-copy small, .club-deal-action em, .deal-qr-frame span { color: #b9accd; font-size: 13px; line-height: 1.45; font-style: normal; font-weight: 800; }
+      .club-deal-action { display: grid; gap: 10px; justify-items: stretch; }
+      .club-deal-action button { min-height: 46px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
+      .club-deal-action button:disabled { opacity: .7; cursor: wait; }
+      .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
+      .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
       h2 { margin: 0 0 16px; font-size: 20px; }
@@ -167,7 +185,7 @@ function VenueProfileStyles() {
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
       .map-panel { max-width: 1120px; margin: 18px auto 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); min-height: 320px; }
       .map-panel iframe { display: block; width: 100%; min-height: 320px; border: 0; }
-      @media (max-width: 760px) { .venue-hero, .public-grid { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .shift-row, .fact-list div { flex-direction: column; } }
+      @media (max-width: 760px) { .venue-hero, .public-grid, .club-deal-card { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .shift-row, .fact-list div { flex-direction: column; } }
     `}</style>
   );
 }

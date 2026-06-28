@@ -9,6 +9,7 @@ type AdminState = {
   venues?: Array<Record<string, unknown>>;
   subscriptions?: unknown[];
   reports?: Array<Record<string, unknown>>;
+  deals?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -68,11 +69,12 @@ export default function AdminClient() {
 
     try {
       const headers = { authorization: `Bearer ${token}` };
-      const [monitoring, approvals, venues, subscriptions] = await Promise.all([
+      const [monitoring, approvals, venues, subscriptions, deals] = await Promise.all([
         readJson("/api/admin/monitoring", headers),
         readJson("/api/admin/approvals", headers),
         readJson("/api/admin/venues", headers),
         readJson("/api/admin/subscriptions", headers),
+        readJson("/api/admin/deals", headers),
       ]);
       const reports = await readJson("/api/admin/reports", headers);
 
@@ -81,6 +83,7 @@ export default function AdminClient() {
         queue: approvals.queue || [],
         venues: venues.venues || [],
         subscriptions: subscriptions.subscriptions || [],
+        deals: deals.activity || [],
         reports: reports.reports || [],
       });
     } catch (error) {
@@ -170,12 +173,167 @@ export default function AdminClient() {
               onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
             />
           </Panel>
+          <Panel title="Deal QR Attribution">
+            <Metric label="Tracked redemptions" value={String(state.deals?.length || 0)} />
+            <DealActivityManager
+              activity={state.deals || []}
+              onActivityChange={(deals) => setState((current) => ({ ...current, deals }))}
+            />
+          </Panel>
           <Panel title="Rankings">
             <RankingManager />
           </Panel>
         </section>
       )}
     </main>
+  );
+}
+
+function DealActivityManager({
+  activity,
+  onActivityChange,
+}: {
+  activity: Array<Record<string, unknown>>;
+  onActivityChange: (activity: Array<Record<string, unknown>>) => void;
+}) {
+  const [venueId, setVenueId] = useState("");
+  const [dancerId, setDancerId] = useState("");
+  const [dealId, setDealId] = useState("");
+  const [sourceType, setSourceType] = useState("");
+  const [status, setStatus] = useState("");
+  const [commissionStatus, setCommissionStatus] = useState("");
+  const [suspicious, setSuspicious] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function loadFiltered() {
+    const token = readToken();
+    if (!token) {
+      setMessage("Admin sign in required.");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage("");
+    const params = new URLSearchParams();
+    if (venueId) params.set("venueId", venueId);
+    if (dancerId) params.set("dancerId", dancerId);
+    if (dealId) params.set("dealId", dealId);
+    if (sourceType) params.set("sourceType", sourceType);
+    if (status) params.set("status", status);
+    if (commissionStatus) params.set("commissionStatus", commissionStatus);
+    if (suspicious) params.set("suspicious", suspicious);
+
+    const response = await fetch(`/api/admin/deals?${params.toString()}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    setIsLoading(false);
+
+    if (!response.ok || !data.ok) {
+      setMessage(data.error || "Unable to load deal activity.");
+      return;
+    }
+
+    onActivityChange(data.activity || []);
+    setMessage(`${data.activity?.length || 0} records loaded.`);
+  }
+
+  async function voidRedemption(redemptionId: string) {
+    const token = readToken();
+    if (!token) {
+      setMessage("Admin sign in required.");
+      return;
+    }
+
+    setMessage("Voiding redemption...");
+    const response = await fetch("/api/admin/deals", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ redemptionId }),
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      setMessage(data.error || "Unable to void redemption.");
+      return;
+    }
+
+    onActivityChange(activity.map((item) => (String(item.id) === redemptionId ? { ...item, status: "voided", suspicious: true } : item)));
+    setMessage("Redemption voided.");
+  }
+
+  return (
+    <div className="deal-activity-manager">
+      <div className="deal-filters">
+        <label>
+          Club ID
+          <input value={venueId} onChange={(event) => setVenueId(event.target.value)} placeholder="Optional" />
+        </label>
+        <label>
+          Dancer ID
+          <input value={dancerId} onChange={(event) => setDancerId(event.target.value)} placeholder="Optional" />
+        </label>
+        <label>
+          Deal ID
+          <input value={dealId} onChange={(event) => setDealId(event.target.value)} placeholder="Optional" />
+        </label>
+        <label>
+          Source
+          <select value={sourceType} onChange={(event) => setSourceType(event.target.value)}>
+            <option value="">All sources</option>
+            <option value="club_page">Club page</option>
+            <option value="dancer_profile">Dancer profile</option>
+          </select>
+        </label>
+        <label>
+          Status
+          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="">All statuses</option>
+            <option value="generated">Generated</option>
+            <option value="redeemed">Redeemed</option>
+            <option value="expired">Expired</option>
+            <option value="voided">Voided</option>
+          </select>
+        </label>
+        <label>
+          Commission
+          <select value={commissionStatus} onChange={(event) => setCommissionStatus(event.target.value)}>
+            <option value="">All commissions</option>
+            <option value="pending_club_payment">Pending club payment</option>
+            <option value="payable">Payable</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+            <option value="voided">Voided</option>
+          </select>
+        </label>
+        <label>
+          Suspicious
+          <select value={suspicious} onChange={(event) => setSuspicious(event.target.value)}>
+            <option value="">All activity</option>
+            <option value="true">Flagged only</option>
+          </select>
+        </label>
+        <button type="button" onClick={loadFiltered} disabled={isLoading}>
+          {isLoading ? "Loading..." : "Filter"}
+        </button>
+      </div>
+      {message ? <p>{message}</p> : null}
+      <div className="deal-activity-list">
+        {activity.slice(0, 8).map((item) => (
+          <div className="deal-activity-row" key={String(item.id)}>
+            <strong>{previewDealName(item)}</strong>
+            <span>{String(item.source_type || "source")} / {String(item.status || "status")}</span>
+            <em>{previewCommission(item)}</em>
+            {item.suspicious ? <span>Flagged suspicious</span> : null}
+            <button type="button" onClick={() => voidRedemption(String(item.id))} disabled={item.status === "voided"}>
+              {item.status === "voided" ? "Voided" : "Void"}
+            </button>
+          </div>
+        ))}
+        {!activity.length ? <p className="empty">No deal redemptions yet.</p> : null}
+      </div>
+    </div>
   );
 }
 
@@ -501,6 +659,28 @@ function previewName(item: unknown) {
   return String(record.stageName || record.stage_name || record.name || record.email || record.status || "Item");
 }
 
+function previewDealName(item: Record<string, unknown>) {
+  const deal = readFirst(item.club_deals);
+  const venue = readFirst(item.venues);
+  const dancer = readFirst(item.dancer_profiles);
+  const dealTitle = deal ? String(deal.deal_title || "Club deal") : "Club deal";
+  const venueName = venue ? String(venue.name || "Venue") : "Venue";
+  const dancerName = dancer ? ` / ${String(dancer.stage_name || "Dancer")}` : "";
+  return `${dealTitle} at ${venueName}${dancerName}`;
+}
+
+function previewCommission(item: Record<string, unknown>) {
+  const commission = readFirst(item.commission_events);
+  if (!commission) return "No dancer commission";
+  return `Commission: ${String(commission.status || "pending")}`;
+}
+
+function readFirst(value: unknown): Record<string, unknown> | null {
+  if (Array.isArray(value)) return (value[0] as Record<string, unknown>) || null;
+  if (value && typeof value === "object") return value as Record<string, unknown>;
+  return null;
+}
+
 function readToken() {
   try {
     const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
@@ -550,7 +730,7 @@ function AdminStyles() {
       .admin-panel > div { display: grid; gap: 10px; }
       .sign-in { max-width: 430px; }
       .sign-in label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
-      input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
+      input, select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
       button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       button:disabled { opacity: .62; cursor: wait; }
       .metric { min-height: 54px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
@@ -592,8 +772,15 @@ function AdminStyles() {
       .ranking-list { display: grid; gap: 8px; }
       .ranking-row { display: flex; justify-content: space-between; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .ranking-row span { color: #94e5ff; font-weight: 850; }
+      .deal-activity-manager, .deal-activity-list { display: grid; gap: 10px; }
+      .deal-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; }
+      .deal-filters label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .deal-activity-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .deal-activity-row span { color: #b9accd; font-size: 13px; }
+      .deal-activity-row em { color: #94e5ff; font-size: 13px; font-style: normal; font-weight: 850; }
+      .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (max-width: 680px) { .admin-grid, .venue-admin-row { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
+      @media (max-width: 680px) { .admin-grid, .venue-admin-row, .deal-filters { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
 }

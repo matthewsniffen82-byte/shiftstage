@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DancerProfileActions } from "./DancerProfileActions";
@@ -15,11 +17,14 @@ type PageProps = {
 
 export default async function DancerPublicPage({ params }: PageProps) {
   const { slug } = await params;
-  const profile = await getDancerProfile(createAdminSupabaseClient(), slug);
+  const client = createAdminSupabaseClient();
+  const profile = await getDancerProfile(client, slug);
   if (!profile) notFound();
 
   const heroPhoto = profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const gallery = profile.photos.length ? profile.photos : heroPhoto ? [{ id: "primary", imageUrl: heroPhoto, isPrimary: true, sortOrder: 0 }] : [];
+  const activeShift = profile.upcomingShifts.find((shift) => isActiveNow(shift.startsAt, shift.endsAt));
+  const activeDeal = activeShift?.venueId ? await getActiveClubDealForVenue(client, activeShift.venueId) : null;
 
   return (
     <main className="public-profile-shell">
@@ -64,6 +69,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
             <p className="muted">No upcoming posted shifts.</p>
           )}
         </article>
+        {activeDeal && activeShift ? (
+          <ClubDealCard deal={activeDeal} venueId={activeShift.venueId} sourceType="dancer_profile" dancerId={profile.id} dancerNote />
+        ) : null}
         <article className="public-panel">
           <h2>Profile</h2>
           <dl className="fact-list">
@@ -131,6 +139,11 @@ function shortShiftLabel(startsAt: string) {
   }).format(new Date(startsAt));
 }
 
+function isActiveNow(startsAt: string, endsAt: string) {
+  const now = Date.now();
+  return new Date(startsAt).getTime() <= now && new Date(endsAt).getTime() >= now;
+}
+
 function PublicProfileStyles() {
   return (
     <style>{`
@@ -152,6 +165,15 @@ function PublicProfileStyles() {
       .public-photo span { width: 118px; height: 118px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
+      .club-deal-card { border: 1px solid rgba(139,92,246,.28); background: rgba(8,8,13,.9); border-radius: 8px; padding: 18px; display: grid; gap: 16px; box-shadow: 0 22px 70px rgba(0,0,0,.38); }
+      .club-deal-copy { display: grid; gap: 9px; }
+      .club-deal-copy h2 { margin: 0; font-size: 24px; }
+      .club-deal-copy small, .club-deal-action em, .deal-qr-frame span { color: #b9accd; font-size: 13px; line-height: 1.45; font-style: normal; font-weight: 800; }
+      .club-deal-action { display: grid; gap: 10px; justify-items: stretch; }
+      .club-deal-action button { min-height: 46px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
+      .club-deal-action button:disabled { opacity: .7; cursor: wait; }
+      .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
+      .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
       h2 { margin: 0 0 16px; font-size: 20px; }
       .shift-list { display: grid; gap: 10px; }
       .shift-row { display: flex; justify-content: space-between; gap: 14px; color: #f7f2ff; text-decoration: none; padding: 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }

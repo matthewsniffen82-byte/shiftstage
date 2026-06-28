@@ -13,6 +13,10 @@ export type ShiftStatus = "draft" | "posted" | "cancelled" | "completed";
 export type ReviewStatus = "pending" | "approved" | "rejected";
 export type SocialPlatform = "instagram" | "tiktok" | "snapchat" | "x" | "onlyfans";
 export type NotificationChannel = "in_app" | "push" | "email";
+export type LocationStatus = "self_reported" | "location_confirmed" | "club_confirmed";
+export type DealSourceType = "club_page" | "dancer_profile";
+export type RedemptionStatus = "generated" | "redeemed" | "expired" | "voided";
+export type CommissionStatus = "pending_club_payment" | "payable" | "paid" | "rejected" | "voided";
 export type NotificationType =
   | "shift_posted"
   | "shift_updated"
@@ -86,12 +90,13 @@ export type DancerCard = {
   currentRank: number | null;
   venueName: string | null;
   venueSlug: string | null;
+  venueId?: string | null;
   shiftId: string | null;
   shiftLabel: string | null;
   shiftStartsAt: string | null;
   shiftEndsAt: string | null;
   shiftTimeZone?: string | null;
-  locationStatus?: "self_reported" | "location_confirmed" | "club_confirmed";
+  locationStatus?: LocationStatus;
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
   checkinDistanceFeet?: number | null;
@@ -156,9 +161,24 @@ export type ShiftSummary = {
   endsAt: string;
   timezone?: string | null;
   status: ShiftStatus;
-  locationStatus?: "self_reported" | "location_confirmed" | "club_confirmed";
+  locationStatus?: LocationStatus;
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
+};
+
+export type ClubDeal = {
+  id: string;
+  venueId: string;
+  dealTitle: string;
+  dealDescription: string;
+  dealTerms: string | null;
+  isActive: boolean;
+  validDays: string[] | null;
+  validStartTime: string | null;
+  validEndTime: string | null;
+  redemptionRules: Json;
+  payoutType: "none" | "flat" | "percent";
+  payoutAmountCents: number;
 };
 
 export type DancerDashboardAnalytics = {
