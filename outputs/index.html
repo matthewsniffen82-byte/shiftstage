@@ -20244,11 +20244,79 @@
     }
 
     .is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r {
-      color: #7c3aed !important;
+      color: #5b21d6 !important;
       text-shadow:
-        0 0 10px rgba(124, 58, 237, 0.98),
-        0 0 24px rgba(109, 40, 217, 0.78),
-        0 0 38px rgba(76, 29, 149, 0.56) !important;
+        0 0 10px rgba(91, 33, 214, 0.98),
+        0 0 24px rgba(76, 29, 149, 0.82),
+        0 0 38px rgba(49, 16, 102, 0.58) !important;
+    }
+
+    @media (max-width: 700px) {
+      .is-android .dancer-card .portrait,
+      .is-android .profile-modal .modal-image,
+      .is-android .profile-modal .thumb .portrait {
+        filter: brightness(1.28) contrast(1.1) saturate(1.1) !important;
+        -webkit-filter: brightness(1.28) contrast(1.1) saturate(1.1) !important;
+      }
+
+      .is-samsung-browser .dancer-card .portrait,
+      .is-samsung-browser .profile-modal .modal-image,
+      .is-samsung-browser .profile-modal .thumb .portrait {
+        filter: brightness(1.48) contrast(1.16) saturate(1.14) !important;
+        -webkit-filter: brightness(1.48) contrast(1.16) saturate(1.14) !important;
+      }
+
+      .is-android .dancer-card .portrait:after,
+      .is-android .profile-modal .modal-image:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 34%, rgba(5, 5, 7, 0.14) 59%, rgba(5, 5, 7, 0.82) 100%) !important;
+      }
+
+      .is-samsung-browser .dancer-card .portrait:after,
+      .is-samsung-browser .profile-modal .modal-image:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 36%, rgba(5, 5, 7, 0.08) 60%, rgba(5, 5, 7, 0.74) 100%) !important;
+      }
+
+      .is-android .portrait.has-custom-photo {
+        background-image:
+          linear-gradient(180deg, rgba(5,5,7,0) 0%, rgba(5,5,7,.04) 58%, rgba(5,5,7,.72) 100%),
+          var(--custom-photo),
+          linear-gradient(135deg, #17101f, #07090e) !important;
+      }
+
+      .is-samsung-browser .portrait.has-custom-photo {
+        background-image:
+          linear-gradient(180deg, rgba(5,5,7,0) 0%, rgba(5,5,7,.02) 62%, rgba(5,5,7,.64) 100%),
+          var(--custom-photo),
+          linear-gradient(135deg, #17101f, #07090e) !important;
+      }
+
+      .is-android .verified-mark,
+      .is-android .verified-check,
+      .is-android .dancer-card .verified-mark,
+      .is-android .profile-modal .verified-mark {
+        background: #35dfff !important;
+        color: #02070a !important;
+        border-color: rgba(181, 250, 255, 0.9) !important;
+        box-shadow:
+          0 0 0 1px rgba(4, 10, 14, 0.72),
+          0 0 16px rgba(53, 223, 255, 0.92),
+          inset 0 0 8px rgba(255, 255, 255, 0.42) !important;
+      }
+
+      .is-samsung-browser .verified-mark,
+      .is-samsung-browser .verified-check,
+      .is-samsung-browser .dancer-card .verified-mark,
+      .is-samsung-browser .profile-modal .verified-mark {
+        background: #55eeff !important;
+        color: #02070a !important;
+        border-color: rgba(205, 253, 255, 0.94) !important;
+        box-shadow:
+          0 0 0 1px rgba(4, 10, 14, 0.74),
+          0 0 18px rgba(85, 238, 255, 0.96),
+          inset 0 0 9px rgba(255, 255, 255, 0.46) !important;
+      }
     }
 
     @media (max-width: 720px) {
