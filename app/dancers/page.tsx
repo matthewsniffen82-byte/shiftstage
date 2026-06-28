@@ -14,7 +14,7 @@ export default async function DancersPage({ searchParams }: DancersPageProps) {
   const params = await searchParams;
   const city = params.city || "Las Vegas";
   const dancers = await getApprovedDancersByCity(createAdminSupabaseClient(), city);
-  const ranked = [...dancers].sort((a, b) => (a.currentRank || 9999) - (b.currentRank || 9999));
+  const randomized = randomizeDancerGroups(dancers);
 
   return (
     <main className="directory-shell">
@@ -37,10 +37,10 @@ export default async function DancersPage({ searchParams }: DancersPageProps) {
       </header>
 
       <section className="dancer-directory" aria-label="Approved dancers">
-        {ranked.map((dancer) => (
+        {randomized.map((dancer) => (
           <DancerDirectoryCard dancer={dancer} key={dancer.id} />
         ))}
-        {!ranked.length ? (
+        {!randomized.length ? (
           <div className="empty-state">
             <strong>No approved dancers yet.</strong>
             <span>As profiles pass review, they will appear here automatically.</span>
@@ -49,6 +49,23 @@ export default async function DancersPage({ searchParams }: DancersPageProps) {
       </section>
     </main>
   );
+}
+
+function randomizeDancerGroups(dancers: DancerCard[]) {
+  const now = Date.now();
+  const workingNow = dancers.filter((dancer) => isWorkingNow(dancer, now));
+  const upcoming = dancers.filter((dancer) => !isWorkingNow(dancer, now) && dancer.shiftStartsAt);
+  const noSchedule = dancers.filter((dancer) => !dancer.shiftStartsAt);
+  return [...shuffle(workingNow), ...shuffle(upcoming), ...shuffle(noSchedule)];
+}
+
+function isWorkingNow(dancer: DancerCard, now: number) {
+  if (!dancer.shiftStartsAt || !dancer.shiftEndsAt) return false;
+  return new Date(dancer.shiftStartsAt).getTime() <= now && new Date(dancer.shiftEndsAt).getTime() >= now;
+}
+
+function shuffle<T>(items: T[]) {
+  return [...items].sort(() => Math.random() - 0.5);
 }
 
 function DancerDirectoryCard({ dancer }: { dancer: DancerCard }) {

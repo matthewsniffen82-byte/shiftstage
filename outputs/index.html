@@ -24188,6 +24188,30 @@
       return dailyRotationScore(a, city) - dailyRotationScore(b, city);
     }
 
+    const refreshShuffleScores = new Map();
+
+    function refreshShuffleScore(profile, city = selectedCity(), group = "dancers") {
+      const key = `${city}|${group}|${profile.name}`;
+      if (!refreshShuffleScores.has(key)) {
+        refreshShuffleScores.set(key, Math.random());
+      }
+      return refreshShuffleScores.get(key);
+    }
+
+    function shuffledDancerDiscoveryProfiles(profiles, city = selectedCity()) {
+      const groupKey = (profile) => isWorkingTonight(profile, city) ? "working-now" : profile.scheduled ? "upcoming" : "no-schedule";
+      const shuffleWithinGroup = (group) =>
+        profiles
+          .filter((profile) => groupKey(profile) === group)
+          .sort((a, b) => refreshShuffleScore(a, city, group) - refreshShuffleScore(b, city, group));
+
+      return [
+        ...shuffleWithinGroup("working-now"),
+        ...shuffleWithinGroup("upcoming"),
+        ...shuffleWithinGroup("no-schedule")
+      ];
+    }
+
     function daysFromToday(date, city = selectedCity()) {
       const today = cityWallClock(new Date(), city);
       const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -26564,10 +26588,10 @@
           .map((profile) => withTrendingRank(profile, city));
       }
       if (tab === "dancers") {
-        return market.dancers
+        const profiles = market.dancers
           .filter(isApprovedPublicProfile)
-          .map((profile) => withTrendingRank(profile, city))
-          .sort((a, b) => dancerDiscoverySort(a, b, city));
+          .map((profile) => withTrendingRank(profile, city));
+        return shuffledDancerDiscoveryProfiles(profiles, city);
       }
       if (tab === "venues") {
         return market.venues.filter((venue) => !venue.hidden);
