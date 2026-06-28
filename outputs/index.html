@@ -21560,14 +21560,16 @@
     }
 
     /* Customer dashboard mobile fit: keep every panel and card inside the phone viewport. */
-    @media (max-width: 640px) {
+    @media (max-width: 900px) {
       #customerDashboard {
+        width: 100vw !important;
+        max-width: 100vw !important;
         overflow-x: hidden !important;
         padding-inline: 0 !important;
       }
 
       #customerDashboard .page-inner {
-        width: 100% !important;
+        width: 100vw !important;
         max-width: 100vw !important;
         padding-inline: clamp(12px, 4vw, 18px) !important;
         overflow-x: hidden !important;
@@ -21594,9 +21596,12 @@
         overflow: hidden !important;
       }
 
-      #customerDashboard .customer-summary-actions,
+      #customerDashboard .customer-summary-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
       #customerDashboard .dashboard-stats {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       }
 
       #customerDashboard #dashTonightList.card-grid,
@@ -21609,8 +21614,8 @@
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
-        min-height: clamp(430px, 116vw, 560px) !important;
-        aspect-ratio: 1 / 1.42 !important;
+        min-height: clamp(430px, 112vw, 560px) !important;
+        aspect-ratio: 1 / 1.34 !important;
       }
 
       #customerDashboard .section-title {
