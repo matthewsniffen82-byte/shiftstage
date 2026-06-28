@@ -21401,6 +21401,38 @@
       border-left-color: rgba(53, 216, 255, .72);
     }
 
+    .venue-admin-tool {
+      width: 100%;
+      display: block;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .venue-admin-tool:hover,
+    .venue-admin-tool:focus-visible {
+      transform: translateY(-1px);
+      color: #f7fbff;
+      border-color: rgba(53, 216, 255, .82);
+      background: rgba(21, 95, 117, .32);
+      box-shadow:
+        0 0 24px rgba(53, 216, 255, .16),
+        inset 0 0 16px rgba(53, 216, 255, .08);
+      outline: none;
+    }
+
+    .venue-admin-tool strong {
+      color: #ffffff;
+    }
+
+    .venue-tool-focus {
+      border-color: rgba(168, 85, 255, .86) !important;
+      box-shadow:
+        0 0 30px rgba(168, 85, 255, .28),
+        inset 0 0 18px rgba(168, 85, 255, .08) !important;
+    }
+
     @media (max-width: 760px) {
       .venue-dashboard-grid,
       .venue-offer-grid {
@@ -22328,13 +22360,13 @@
             </div>
           </div>
         </div>
-        <div class="auth-card">
+        <div class="auth-card" id="venueAdminToolsCard">
           <h3>Venue admin tools</h3>
           <div class="venue-admin-list">
-            <div class="lock-row"><strong>Venue page control.</strong> Update offer copy, public profile details, hours, and customer-facing highlights.</div>
-            <div class="lock-row"><strong>QR claim tracking.</strong> See how many customers view the offer QR and which campaign code is active.</div>
-            <div class="lock-row"><strong>Shift visibility.</strong> Track verified dancers connected to the venue and now-posted schedule count.</div>
-            <div class="lock-row"><strong>Customer demand.</strong> Watch follows, direction requests, and offer interest so the venue knows what is working.</div>
+            <button class="lock-row venue-admin-tool" type="button" data-venue-tool="page"><strong>Venue page control.</strong> Update offer copy, public profile details, hours, and customer-facing highlights.</button>
+            <button class="lock-row venue-admin-tool" type="button" data-venue-tool="qr"><strong>QR claim tracking.</strong> See how many customers view the offer QR and which campaign code is active.</button>
+            <button class="lock-row venue-admin-tool" type="button" data-venue-tool="shifts"><strong>Shift visibility.</strong> Track verified dancers connected to the venue and now-posted schedule count.</button>
+            <button class="lock-row venue-admin-tool" type="button" data-venue-tool="demand"><strong>Customer demand.</strong> Watch follows, direction requests, and offer interest so the venue knows what is working.</button>
           </div>
         </div>
       </div>
@@ -26078,6 +26110,42 @@
       syncOverlayScrollLock();
     }
 
+    function pulseVenueToolTarget(target) {
+      if (!target) return;
+      target.classList.add("venue-tool-focus");
+      target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      window.setTimeout(() => target.classList.remove("venue-tool-focus"), 1400);
+    }
+
+    function handleVenueAdminTool(tool) {
+      if (!tool) return;
+      if (tool === "page") {
+        const offerForm = document.getElementById("venueOfferForm");
+        pulseVenueToolTarget(offerForm);
+        document.getElementById("venueOfferTitleInput")?.focus({ preventScroll: true });
+        document.getElementById("venueOfferStatus").textContent = "Edit the offer here, then upload it to update the public venue page.";
+        showToast("Venue page editor opened");
+        return;
+      }
+      if (tool === "qr") {
+        const pass = dealPassPayload({ venueName: activeVenueName, sourceType: "club_page" });
+        openDealPassOverlay(pass);
+        showToast("Venue deal QR opened");
+        return;
+      }
+      if (tool === "shifts") {
+        closeVenueDashboard();
+        openVenueFromName(activeVenueName);
+        showToast("Venue shift visibility opened");
+        return;
+      }
+      if (tool === "demand") {
+        const stats = document.querySelector("#venueDashboard .dashboard-stats");
+        pulseVenueToolTarget(stats);
+        showToast("Customer demand metrics highlighted");
+      }
+    }
+
     function closeDemoSurfaces() {
       closeAuthPage();
       closeDancerSignupPage();
@@ -27669,6 +27737,11 @@
       if (selectedVenueName === activeVenueName) render();
       document.getElementById("venueOfferStatus").textContent = "Offer uploaded. The QR is now visible on your venue page.";
       showToast("Venue offer uploaded");
+    });
+    venueDashboard.addEventListener("click", (event) => {
+      const toolButton = event.target.closest("[data-venue-tool]");
+      if (!toolButton) return;
+      handleVenueAdminTool(toolButton.dataset.venueTool);
     });
     document.getElementById("previewPublicProfile").addEventListener("click", () => {
       const city = activeDancerCity();
