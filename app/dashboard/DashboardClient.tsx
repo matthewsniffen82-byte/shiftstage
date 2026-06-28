@@ -751,7 +751,6 @@ function formatDashboardShift(startsAt: string, endsAt: string) {
 
 function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }) {
   const [file, setFile] = useState<File | null>(null);
-  const [danceProofFile, setDanceProofFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -781,21 +780,12 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
       return;
     }
 
-    if (!danceProofFile) {
-      setStatus("Choose proof that you dance.");
-      return;
-    }
-
     setIsUploading(true);
     setStatus("");
     try {
-      await Promise.all([
-        uploadVerificationDocument(file, session.accessToken),
-        uploadVerificationDocument(danceProofFile, session.accessToken),
-      ]);
-      setStatus("Verification document and dance proof uploaded.");
+      await uploadVerificationDocument(file, session.accessToken);
+      setStatus("Verification document uploaded.");
       setFile(null);
-      setDanceProofFile(null);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to upload verification document.");
     } finally {
@@ -814,15 +804,6 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
             type="file"
             onChange={(event) => setFile(event.target.files?.[0] || null)}
           />
-        </label>
-        <label>
-          Proof that you dance
-          <input
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            type="file"
-            onChange={(event) => setDanceProofFile(event.target.files?.[0] || null)}
-          />
-          <small>Examples: current schedule screenshot, club badge, venue confirmation, flyer, or similar proof.</small>
         </label>
         <button type="submit" disabled={isUploading}>
           {isUploading ? "Uploading..." : "Upload verification"}
