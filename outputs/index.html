@@ -17373,6 +17373,82 @@
       transform: translateY(-1px);
     }
 
+    .profile-modal .profile-deal-tile {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto !important;
+      align-items: center !important;
+      gap: 12px !important;
+      min-height: 118px !important;
+    }
+
+    .profile-modal .profile-deal-copy {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .profile-modal .profile-deal-copy .meta {
+      gap: 5px !important;
+    }
+
+    .profile-modal .profile-deal-note {
+      display: block;
+      color: rgba(245, 245, 255, 0.62);
+      font-size: 0.74rem;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .profile-modal .profile-deal-qr {
+      display: grid;
+      justify-items: center;
+      gap: 5px;
+      min-width: 82px;
+    }
+
+    .profile-modal .profile-deal-qr img {
+      display: block;
+      width: 72px;
+      height: 72px;
+      padding: 6px;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.16),
+        0 0 18px rgba(34, 199, 255, 0.12),
+        0 0 26px rgba(139, 92, 246, 0.12);
+    }
+
+    .profile-modal .profile-deal-qr span {
+      max-width: 92px;
+      color: rgba(245, 245, 255, 0.70);
+      font-size: 0.67rem;
+      font-weight: 900;
+      line-height: 1.12;
+      text-align: center;
+    }
+
+    @media (max-width: 430px) {
+      .profile-modal .profile-deal-tile {
+        gap: 10px !important;
+        min-height: 104px !important;
+      }
+
+      .profile-modal .profile-deal-note {
+        font-size: 0.70rem;
+      }
+
+      .profile-modal .profile-deal-qr {
+        min-width: 74px;
+      }
+
+      .profile-modal .profile-deal-qr img {
+        width: 66px;
+        height: 66px;
+        border-radius: 12px;
+      }
+    }
+
     .account-control-card {
       gap: 14px !important;
     }
@@ -24494,11 +24570,22 @@
       };
     }
 
-    function venueOfferUrl(venueName) {
+    function venueOfferUrl(venueName, attribution = {}) {
       const url = new URL(publicProfileBaseUrl());
       url.searchParams.set("venue", slugify(venueName));
       url.searchParams.set("offer", venueOfferFor(venueName).code);
+      if (attribution.source) url.searchParams.set("source", attribution.source);
+      if (attribution.dancer) url.searchParams.set("dancer", slugify(attribution.dancer));
+      if (attribution.profile) url.searchParams.set("profile", slugify(attribution.profile));
       return url.toString();
+    }
+
+    function dancerVenueOfferUrl(profile) {
+      return venueOfferUrl(profile.venue, {
+        source: "dancer_profile",
+        dancer: profile.name,
+        profile: profile.name
+      });
     }
 
     function venueOfferMarkup(venue) {
@@ -24521,6 +24608,27 @@
             </div>
           </div>
         </article>
+      `;
+    }
+
+    function profileDealTileMarkup(profile) {
+      if (!profile?.venue || !isWorkingTonight(profile)) return "";
+      const offer = venueOfferFor(profile.venue);
+      const url = dancerVenueOfferUrl(profile);
+      return `
+        <div class="info-tile profile-deal-tile">
+          <div class="profile-deal-copy">
+            <strong>Club deal</strong>
+            <div class="meta">
+              <span class="muted-value">${offer.title}</span>
+              <span class="profile-deal-note">Same ${profile.venue} offer. Profile attribution applies after club scan.</span>
+            </div>
+          </div>
+          <div class="profile-deal-qr">
+            <img src="${qrCodeUrl(url)}" alt="${profile.venue} deal QR for ${profile.name}" loading="lazy" decoding="async">
+            <span>Show at ${profile.venue}</span>
+          </div>
+        </div>
       `;
     }
 
@@ -25155,6 +25263,7 @@
               <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayShiftTime(profile.time)}</span></div>
             </div>
           </div>
+          ${profileDealTileMarkup(profile)}
           ${shiftInterestTileMarkup(profile, status)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
