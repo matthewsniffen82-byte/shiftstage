@@ -21178,8 +21178,8 @@
               <label for="dancerCity">City</label>
               <input id="dancerCity" type="text" value="Las Vegas">
             </div>
-            <div class="rule-note">$9.99/month dancer profile subscription. Stripe handles payment details. Public profile access waits for approval.</div>
-            <button class="action-btn" type="submit">Continue to checkout</button>
+            <div class="rule-note">Dancer accounts are free while launch access is open. Public profile access still waits for verification and approval.</div>
+            <button class="action-btn" type="submit">Join free</button>
           </form>
         </div>
       </div>
@@ -24943,12 +24943,8 @@
     }
 
     function openDancerDashboard() {
-      if (!stripeConfirmed && !isDancerSession()) {
-        if (dancerSignupStarted) {
-          openStripeCheckoutPage();
-        } else {
-          openDancerSignupPage();
-        }
+      if (!dancerSignupStarted && !isDancerSession()) {
+        openDancerSignupPage();
         return;
       }
       document.getElementById("dancerDashName").textContent = document.getElementById("dancerStageName").value || "Dancer dashboard";
@@ -26679,6 +26675,7 @@
           city: document.getElementById("dancerCity").value
         });
         dancerSignupStarted = true;
+        stripeConfirmed = true;
         Object.assign(dancerSetup, {
           profile: false,
           photos: false,
@@ -26694,6 +26691,7 @@
           isCustomerLoggedIn = false;
           isDancerLoggedIn = true;
           updateAccountHeader();
+          closeDancerSignupPage();
           openDancerDashboard();
         }
       } catch (error) {
@@ -26704,27 +26702,14 @@
     });
 
     async function startLiveStripeCheckout(button) {
-      if (!isDancerSession()) {
-        stripeConfirmed = true;
-        isCustomerLoggedIn = false;
-        isDancerLoggedIn = true;
-        activeDashboardType = "dancer";
-        updateAccountHeader();
-        closeStripeCheckoutPage();
-        showToast("Stripe demo confirmed");
-        openDancerDashboard();
-        return;
-      }
-      button.disabled = true;
-      try {
-        const data = await postAuthenticatedJson("/api/dancer/billing/checkout", {});
-        if (!data?.checkoutUrl) throw new Error("Stripe checkout URL missing.");
-        window.location.href = data.checkoutUrl;
-      } catch (error) {
-        showToast(error.message || "Could not start Stripe checkout");
-      } finally {
-        button.disabled = false;
-      }
+      stripeConfirmed = true;
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
+      activeDashboardType = "dancer";
+      updateAccountHeader();
+      closeStripeCheckoutPage();
+      showToast("Free dancer access enabled");
+      openDancerDashboard();
     }
 
     document.getElementById("stripeConfirmBtn").addEventListener("click", (event) => {
