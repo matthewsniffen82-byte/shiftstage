@@ -23,7 +23,7 @@ export default function AccountClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams.get("role") === "dancer" ? "dancer" : "customer";
-  const [role, setRole] = useState<AuthRole>(initialRole);
+  const role: AuthRole = initialRole;
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -84,11 +84,6 @@ export default function AccountClient() {
         <Link className="brand" href="/">
           Dancr
         </Link>
-        <div className="nav-links">
-          <Link href="/tonight">Tonight</Link>
-          <Link href="/dancers">Dancers</Link>
-          <Link href="/venues">Venues</Link>
-        </div>
       </nav>
 
       <section className="account-grid">
@@ -101,13 +96,8 @@ export default function AccountClient() {
         </div>
 
         <form className="account-panel" onSubmit={submit}>
-          <div className="segmented" aria-label="Account type">
-            <button className={role === "customer" ? "active" : ""} type="button" onClick={() => setRole("customer")}>
-              Customer
-            </button>
-            <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => setRole("dancer")}>
-              Dancer
-            </button>
+          <div className="role-lock" aria-label="Selected account type">
+            {role === "dancer" ? "Dancer account" : "Customer account"}
           </div>
 
           <div className="segmented" aria-label="Auth mode">
@@ -175,16 +165,15 @@ function AccountStyles() {
     <style>{`
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       .account-shell { min-height: 100vh; padding: 22px clamp(16px, 4vw, 56px) 56px; background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.18), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.26), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
-      .top-nav { max-width: 1080px; margin: 0 auto 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #cfc5de; }
+      .top-nav { max-width: 1080px; margin: 0 auto 42px; display: flex; align-items: center; color: #cfc5de; }
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
-      .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
-      .nav-links a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); font-weight: 850; }
       .account-grid { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 430px); gap: clamp(22px, 5vw, 62px); align-items: center; }
       .account-copy { display: grid; gap: 18px; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; max-width: 720px; font-size: clamp(42px, 7vw, 82px); line-height: .94; letter-spacing: 0; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .account-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: 18px; display: grid; gap: 14px; box-shadow: 0 28px 80px rgba(0,0,0,.38); }
+      .role-lock { min-height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #94e5ff; border: 1px solid rgba(34,199,255,.22); background: rgba(34,199,255,.08); font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
       .segmented button, .submit { min-height: 42px; border: 0; border-radius: 8px; color: #fff; font-weight: 900; cursor: pointer; }
       .segmented button { background: transparent; }
@@ -195,7 +184,7 @@ function AccountStyles() {
       .submit:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
-      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
+      @media (max-width: 520px) { h1 { font-size: 40px; } }
     `}</style>
   );
 }
