@@ -17373,6 +17373,27 @@
       transform: translateY(-1px);
     }
 
+    .profile-modal .working-now-tile .meta {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 7px !important;
+      justify-items: stretch !important;
+      align-items: start !important;
+    }
+
+    .profile-modal .working-now-tile .detail-line {
+      width: 100% !important;
+      justify-content: start !important;
+      justify-items: start !important;
+      text-align: left !important;
+    }
+
+    .profile-modal .working-now-tile .venue-inline-link,
+    .profile-modal .working-now-tile .modal-schedule-text {
+      justify-self: start !important;
+      text-align: left !important;
+    }
+
     .profile-modal .profile-deal-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -25265,7 +25286,7 @@
     function shiftsMarkup(profile, status = shiftStatus(profile)) {
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
-          <div class="info-tile">
+          <div class="info-tile working-now-tile">
             <strong>Working now</strong>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
