@@ -20847,6 +20847,57 @@
       }
     }
 
+    .auth-join-now.customer-join-now,
+    .auth-join-now.dancer-join-now {
+      min-height: 52px;
+      width: 100%;
+      border-radius: 16px;
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 950;
+      letter-spacing: 0;
+      transform: translateZ(0);
+    }
+
+    .auth-join-now.customer-join-now {
+      border-color: rgba(53, 216, 255, .68);
+      background:
+        linear-gradient(135deg, rgba(37, 143, 255, .98), rgba(32, 211, 255, .9));
+      box-shadow:
+        0 0 26px rgba(53, 216, 255, .34),
+        0 16px 34px rgba(14, 109, 185, .24),
+        inset 0 0 18px rgba(255, 255, 255, .12);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, .42);
+    }
+
+    .auth-join-now.dancer-join-now {
+      border-color: rgba(183, 77, 255, .74);
+      background:
+        linear-gradient(135deg, rgba(92, 38, 214, .98), rgba(183, 77, 255, .92));
+      box-shadow:
+        0 0 28px rgba(183, 77, 255, .4),
+        0 16px 36px rgba(92, 38, 214, .28),
+        inset 0 0 18px rgba(255, 255, 255, .12);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, .46);
+    }
+
+    .auth-join-now.customer-join-now:hover,
+    .auth-join-now.customer-join-now:focus-visible {
+      border-color: rgba(143, 242, 255, .92);
+      box-shadow:
+        0 0 34px rgba(53, 216, 255, .46),
+        0 18px 38px rgba(14, 109, 185, .28),
+        inset 0 0 20px rgba(255, 255, 255, .16);
+    }
+
+    .auth-join-now.dancer-join-now:hover,
+    .auth-join-now.dancer-join-now:focus-visible {
+      border-color: rgba(214, 174, 255, .96);
+      box-shadow:
+        0 0 36px rgba(183, 77, 255, .54),
+        0 18px 40px rgba(92, 38, 214, .32),
+        inset 0 0 20px rgba(255, 255, 255, .16);
+    }
   </style>
 </head>
 <body>
@@ -21121,7 +21172,7 @@
               <input id="customerPassword" type="password" value="dancr">
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Customer login</button>
-            <button class="ghost auth-join-now" id="customerJoinNowBtn" type="button">Join now</button>
+            <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Join now</button>
           </form>
           <form class="auth-form" id="dancerLoginForm" data-auth-view="dancer" hidden>
             <div class="auth-form-head">
@@ -21137,7 +21188,7 @@
               <input id="dancerLoginPassword" type="password" value="dancr">
             </div>
             <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
-            <button class="ghost auth-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
+            <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
           </form>
         </div>
       </div>
