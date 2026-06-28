@@ -21124,6 +21124,57 @@
       display: none !important;
       content: none !important;
     }
+
+    /* Make account creation stand out without changing login flow or layout. */
+    .auth-card .auth-join-now,
+    .role-actions .ghost[id$="SignupBtn"] {
+      position: relative;
+      min-height: 48px;
+      border: 1px solid rgba(192, 132, 255, 0.68) !important;
+      color: #ffffff !important;
+      background:
+        linear-gradient(135deg, #7c3aed 0%, #9b5cff 48%, #22c7ff 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 14px 34px rgba(124, 58, 237, 0.28),
+        0 0 28px rgba(155, 92, 255, 0.34),
+        0 0 18px rgba(34, 199, 255, 0.16) !important;
+      font-weight: 950;
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.46);
+      transform: translateZ(0);
+    }
+
+    .auth-card .customer-join-now,
+    .role-actions #customerSignupBtn {
+      border-color: rgba(34, 199, 255, 0.74) !important;
+      background:
+        linear-gradient(135deg, #22c7ff 0%, #7c3aed 54%, #9b5cff 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 14px 34px rgba(34, 199, 255, 0.22),
+        0 0 28px rgba(34, 199, 255, 0.28),
+        0 0 22px rgba(124, 58, 237, 0.24) !important;
+    }
+
+    .auth-card .dancer-join-now,
+    .auth-card .venue-join-now,
+    .role-actions #dancerSignupBtn,
+    .role-actions #venueSignupBtn {
+      border-color: rgba(192, 132, 255, 0.72) !important;
+      background:
+        linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #c084fc 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        0 14px 34px rgba(91, 33, 182, 0.28),
+        0 0 30px rgba(124, 58, 237, 0.36),
+        0 0 18px rgba(192, 132, 255, 0.22) !important;
+    }
+
+    .auth-card .auth-join-now:hover,
+    .role-actions .ghost[id$="SignupBtn"]:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
   </style>
 </head>
 <body>
