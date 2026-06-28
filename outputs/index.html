@@ -20860,6 +20860,8 @@
           <div class="utility-menu">
             <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
+              <button class="utility-menu-item" id="loginCustomerOption" type="button">Customer</button>
+              <button class="utility-menu-item" id="loginDancerOption" type="button">Dancer</button>
               <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
             </div>
@@ -21055,7 +21057,11 @@
           </button>
         </div>
         <div class="auth-card auth-choice-card">
-          <div class="role-options auth-role-grid" aria-label="Choose account type">
+          <div class="auth-form-head auth-selected-role">
+            <strong id="authRoleTitle">Customer login</strong>
+            <span id="authRoleSubtitle">Free account. No public profile, follows, or going list.</span>
+          </div>
+          <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
             <article class="role-option account-option">
               <span class="eyebrow">Customer</span>
               <h3>Plan your night</h3>
@@ -21069,7 +21075,7 @@
               <div class="rule-note">Customer accounts are private. No public profile, no public follows, no public going list.</div>
               <div class="role-actions">
                 <button class="ghost" id="customerLoginBtn" type="button">Customer login</button>
-                <button class="ghost" id="customerSignupBtn" type="button">Customer sign up</button>
+                <button class="ghost" id="customerSignupBtn" type="button">Join now</button>
               </div>
             </article>
             <article class="role-option account-option">
@@ -21090,19 +21096,19 @@
               <div class="rule-note"><strong>Fresh setup demo:</strong> newdancer@dancr.app / dancr</div>
             </article>
           </div>
-          <div class="demo-login-callout">
+          <div class="demo-login-callout" id="dancerDemoCallout" hidden>
             <div>
               <strong>Fresh dancer setup demo</strong>
               <span>Starts at step 1: create profile, upload photos, verify, then approval.</span>
             </div>
             <button class="ghost" id="demoDancerSetupBtn" type="button">Start setup demo</button>
           </div>
-          <form class="auth-form" id="authForm">
-            <div class="auth-form-head">
+          <form class="auth-form" id="authForm" data-auth-view="customer">
+            <div class="auth-form-head customer-form-head">
               <strong id="customerAuthModeLabel">Customer login</strong>
               <span>Free account. No public profile, follows, or going list.</span>
             </div>
-            <div class="field">
+            <div class="field" id="customerNameField">
               <label for="customerName">Name</label>
               <input id="customerName" type="text" value="Alex">
             </div>
@@ -21115,6 +21121,23 @@
               <input id="customerPassword" type="password" value="dancr">
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Customer login</button>
+            <button class="ghost auth-join-now" id="customerJoinNowBtn" type="button">Join now</button>
+          </form>
+          <form class="auth-form" id="dancerLoginForm" data-auth-view="dancer" hidden>
+            <div class="auth-form-head">
+              <strong>Dancer login</strong>
+              <span>Sign in to manage profile setup, approval, shifts, photos, and billing.</span>
+            </div>
+            <div class="field">
+              <label for="dancerLoginEmail">Email</label>
+              <input id="dancerLoginEmail" type="email" value="newdancer@dancr.app">
+            </div>
+            <div class="field">
+              <label for="dancerLoginPassword">Password</label>
+              <input id="dancerLoginPassword" type="password" value="dancr">
+            </div>
+            <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
+            <button class="ghost auth-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
           </form>
         </div>
       </div>
@@ -24756,6 +24779,19 @@
       syncOverlayScrollLock();
     }
 
+    function openAuthRole(role) {
+      const isDancer = role === "dancer";
+      document.getElementById("authRoleTitle").textContent = isDancer ? "Dancer login" : "Customer login";
+      document.getElementById("authRoleSubtitle").textContent = isDancer
+        ? "Manage profile setup, approval, shifts, photos, and billing."
+        : "Free account. Save profiles, follow venues, and get alerts.";
+      document.getElementById("authForm").hidden = isDancer;
+      document.getElementById("dancerLoginForm").hidden = !isDancer;
+      document.getElementById("dancerDemoCallout").hidden = !isDancer;
+      if (!isDancer) setCustomerAuthMode("login");
+      openAuthPage();
+    }
+
     function closeAuthPage() {
       authPage.classList.remove("show");
       authPage.setAttribute("aria-hidden", "true");
@@ -24823,6 +24859,8 @@
       const role = activeDashboardType === "dancer" ? "Dancer" : "Customer";
       dashboardBtn.hidden = !loggedIn;
       logoutBtn.hidden = !loggedIn;
+      document.getElementById("loginCustomerOption").hidden = loggedIn;
+      document.getElementById("loginDancerOption").hidden = loggedIn;
       accountBtn.hidden = false;
       accountBtn.textContent = loggedIn ? role : "Login / Join";
       accountBtn.setAttribute("aria-label", loggedIn ? `${role} account menu` : "Login or join");
@@ -24870,6 +24908,12 @@
       document.getElementById("authSubmit").textContent = mode === "signup" ? "Create customer account" : "Customer login";
       const label = document.getElementById("customerAuthModeLabel");
       if (label) label.textContent = mode === "signup" ? "Customer sign up" : "Customer login";
+      const nameField = document.getElementById("customerNameField");
+      const nameInput = document.getElementById("customerName");
+      if (nameField) nameField.hidden = mode !== "signup";
+      if (nameInput) nameInput.required = mode === "signup";
+      const joinButton = document.getElementById("customerJoinNowBtn");
+      if (joinButton) joinButton.hidden = mode === "signup";
       document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
     }
 
@@ -24879,7 +24923,7 @@
         return;
       }
       if (!isCustomerLoggedIn) {
-        openAuthPage();
+        openAuthRole("customer");
         return;
       }
       renderDashboard();
@@ -26416,11 +26460,7 @@
     });
 
     accountBtn.addEventListener("click", () => {
-      if (isCustomerLoggedIn || isDancerLoggedIn) {
-        toggleUtilityMenu();
-      } else {
-        openAuthPage();
-      }
+      toggleUtilityMenu();
     });
 
     document.addEventListener("click", (event) => {
@@ -26438,6 +26478,14 @@
     logoutBtn.addEventListener("click", () => {
       closeUtilityMenu();
       logoutAccount();
+    });
+    document.getElementById("loginCustomerOption").addEventListener("click", () => {
+      closeUtilityMenu();
+      openAuthRole("customer");
+    });
+    document.getElementById("loginDancerOption").addEventListener("click", () => {
+      closeUtilityMenu();
+      openAuthRole("dancer");
     });
 
     document.getElementById("authClose").addEventListener("click", closeAuthPage);
@@ -26501,12 +26549,17 @@
 
     document.getElementById("customerLoginBtn").addEventListener("click", () => {
       setCustomerAuthMode("login");
-      document.getElementById("authForm").requestSubmit();
+      openAuthRole("customer");
     });
 
     document.getElementById("customerSignupBtn").addEventListener("click", () => {
       setCustomerAuthMode("signup");
-      document.getElementById("authForm").requestSubmit();
+      openAuthRole("customer");
+      setCustomerAuthMode("signup");
+    });
+
+    document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
+      setCustomerAuthMode("signup");
     });
 
     document.getElementById("authForm").addEventListener("submit", async (event) => {
@@ -26573,6 +26626,38 @@
 
     document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
     document.getElementById("demoDancerSetupBtn").addEventListener("click", startDemoDancerSetup);
+
+    document.getElementById("dancerJoinNowBtn").addEventListener("click", () => {
+      closeAuthPage();
+      openDancerSignupPage();
+    });
+
+    document.getElementById("dancerLoginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submit = document.getElementById("dancerLoginSubmit");
+      submit.disabled = true;
+      try {
+        const result = await requestAuth({
+          mode: "login",
+          role: "dancer",
+          email: document.getElementById("dancerLoginEmail").value,
+          password: document.getElementById("dancerLoginPassword").value,
+          city: citySelect.value
+        });
+        resetAccountControl("dancer");
+        isCustomerLoggedIn = false;
+        isDancerLoggedIn = true;
+        activeDashboardType = "dancer";
+        updateAccountHeader();
+        closeAuthPage();
+        showToast(result.requiresEmailConfirmation ? "Check your email to confirm." : "Dancer logged in");
+        openDancerDashboard();
+      } catch (error) {
+        showToast(error.message || "Dancer login failed");
+      } finally {
+        submit.disabled = false;
+      }
+    });
 
     document.getElementById("openDancerSignup").addEventListener("click", () => {
       closeAuthPage();
