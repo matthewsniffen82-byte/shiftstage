@@ -21105,6 +21105,25 @@
         width: min(152px, 56vw);
       }
     }
+    /* Matte-black card gutters: keep violet reserved for card borders and brand accents. */
+    .list.card-grid,
+    #results.card-grid,
+    #dashTonightList.card-grid,
+    #dashFollowedList.card-grid,
+    .venue-detail .list.card-grid {
+      background: #050505 !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      isolation: isolate;
+    }
+
+    .list.card-grid::before,
+    .list.card-grid::after,
+    #results.card-grid::before,
+    #results.card-grid::after {
+      display: none !important;
+      content: none !important;
+    }
   </style>
 </head>
 <body>
