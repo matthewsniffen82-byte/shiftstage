@@ -17373,12 +17373,14 @@
       transform: translateY(-1px);
     }
 
-    .profile-modal .profile-deal-tile {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) auto !important;
+    .profile-modal .profile-deal-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center !important;
-      gap: 12px !important;
-      min-height: 118px !important;
+      gap: 10px !important;
+      margin-top: 8px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(139, 92, 246, 0.16);
     }
 
     .profile-modal .profile-deal-copy {
@@ -17391,10 +17393,18 @@
       gap: 5px !important;
     }
 
+    .profile-modal .profile-deal-copy strong {
+      margin: 0 !important;
+      font-size: 0.72rem !important;
+      line-height: 1.1 !important;
+      letter-spacing: 0.13em !important;
+      text-transform: uppercase;
+    }
+
     .profile-modal .profile-deal-note {
       display: block;
       color: rgba(245, 245, 255, 0.62);
-      font-size: 0.74rem;
+      font-size: 0.70rem;
       font-weight: 800;
       line-height: 1.25;
     }
@@ -17403,13 +17413,13 @@
       display: grid;
       justify-items: center;
       gap: 5px;
-      min-width: 82px;
+      min-width: 76px;
     }
 
     .profile-modal .profile-deal-qr img {
       display: block;
-      width: 72px;
-      height: 72px;
+      width: 66px;
+      height: 66px;
       padding: 6px;
       border-radius: 14px;
       background: #ffffff;
@@ -17420,7 +17430,7 @@
     }
 
     .profile-modal .profile-deal-qr span {
-      max-width: 92px;
+      max-width: 82px;
       color: rgba(245, 245, 255, 0.70);
       font-size: 0.67rem;
       font-weight: 900;
@@ -17429,22 +17439,21 @@
     }
 
     @media (max-width: 430px) {
-      .profile-modal .profile-deal-tile {
-        gap: 10px !important;
-        min-height: 104px !important;
+      .profile-modal .profile-deal-row {
+        gap: 9px !important;
       }
 
       .profile-modal .profile-deal-note {
-        font-size: 0.70rem;
+        font-size: 0.66rem;
       }
 
       .profile-modal .profile-deal-qr {
-        min-width: 74px;
+        min-width: 68px;
       }
 
       .profile-modal .profile-deal-qr img {
-        width: 66px;
-        height: 66px;
+        width: 60px;
+        height: 60px;
         border-radius: 12px;
       }
     }
@@ -24616,7 +24625,7 @@
       const offer = venueOfferFor(profile.venue);
       const url = dancerVenueOfferUrl(profile);
       return `
-        <div class="info-tile profile-deal-tile">
+        <div class="profile-deal-row">
           <div class="profile-deal-copy">
             <strong>Club deal</strong>
             <div class="meta">
@@ -25261,9 +25270,9 @@
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayShiftTime(profile.time)}</span></div>
+              ${profileDealTileMarkup(profile)}
             </div>
           </div>
-          ${profileDealTileMarkup(profile)}
           ${shiftInterestTileMarkup(profile, status)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
