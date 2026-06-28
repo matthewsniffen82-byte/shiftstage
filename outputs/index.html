@@ -21241,6 +21241,7 @@
         0 28px 80px rgba(0, 0, 0, .62),
         0 0 42px rgba(125, 74, 255, .20),
         inset 0 1px 0 rgba(255, 255, 255, .06);
+      pointer-events: auto;
       text-align: center;
     }
 
@@ -21248,6 +21249,7 @@
       position: absolute;
       top: 12px;
       right: 12px;
+      z-index: 2;
       width: 40px;
       height: 40px;
       border-radius: 999px;
@@ -21257,6 +21259,8 @@
       display: grid;
       place-items: center;
       cursor: pointer;
+      pointer-events: auto;
+      touch-action: manipulation;
     }
 
     .deal-pass-kicker {
@@ -25087,6 +25091,15 @@
         </div>
       `);
       overlay = document.getElementById("dealPassOverlay");
+      const closeButton = overlay.querySelector("[data-close-deal-pass]");
+      const closeFromButton = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeDealPassOverlay();
+      };
+      closeButton?.addEventListener("click", closeFromButton);
+      closeButton?.addEventListener("pointerup", closeFromButton);
+      closeButton?.addEventListener("touchend", closeFromButton, { passive: false });
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay || event.target.closest("[data-close-deal-pass]")) {
           closeDealPassOverlay();
@@ -28437,6 +28450,13 @@
         if (customerDashboard.classList.contains("show")) closeDashboard();
         openVenueFromName(cardVenueLink.dataset.cardVenue);
         return;
+      }
+      if (event.key === "Escape") {
+        const dealOverlay = document.getElementById("dealPassOverlay");
+        if (dealOverlay?.classList.contains("show")) {
+          closeDealPassOverlay();
+          return;
+        }
       }
       if (event.key === "Escape") {
         const qrOverlay = document.getElementById("profileQrOverlay");
