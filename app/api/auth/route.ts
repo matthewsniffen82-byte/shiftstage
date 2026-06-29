@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const city = readOptional(body.city) || "Las Vegas";
     const displayName =
       role === "customer"
-        ? readRequired(body.name, "Name is required.")
+        ? customerDisplayName(email)
         : role === "venue"
           ? readRequired(body.name, "Venue name is required.")
           : readRequired(body.stageName, "Stage name is required.");
@@ -162,6 +162,10 @@ function readRequired(value: unknown, message: string) {
 
 function readOptional(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function customerDisplayName(email: string) {
+  return email.split("@")[0]?.trim() || "Customer";
 }
 
 function safeEmailRedirectTo(value: unknown) {

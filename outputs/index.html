@@ -21967,10 +21967,6 @@
               </ul>
               <div class="rule-note">After you create the account, Dancr sends a confirmation email. Tap the email link and you’ll return to your customer dashboard.</div>
             </div>
-            <div class="field" id="customerNameField">
-              <label for="customerName">Name</label>
-              <input id="customerName" type="text" autocomplete="name" placeholder="Your name">
-            </div>
             <div class="field">
               <label for="customerEmail">Email</label>
               <input id="customerEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
@@ -26344,10 +26340,6 @@
           ? "Create a free private customer account. Confirm your email, then your dashboard opens."
           : "Free account. No public profile, follows, or going list.";
       }
-      const nameField = document.getElementById("customerNameField");
-      const nameInput = document.getElementById("customerName");
-      if (nameField) nameField.hidden = mode !== "signup";
-      if (nameInput) nameInput.required = mode === "signup";
       const passwordInput = document.getElementById("customerPassword");
       if (passwordInput) passwordInput.autocomplete = mode === "signup" ? "new-password" : "current-password";
       const confirmField = document.getElementById("customerConfirmPasswordField");
@@ -26375,7 +26367,7 @@
       setCustomerAuthMode("signup");
       document.getElementById("customerPassword").value = "";
       document.getElementById("customerConfirmPassword").value = "";
-      setTimeout(() => document.getElementById("customerName")?.focus(), 80);
+      setTimeout(() => document.getElementById("customerEmail")?.focus(), 80);
     }
 
     function openDashboard() {
@@ -28210,7 +28202,6 @@
         const payload = {
           mode: authMode,
           role: "customer",
-          name: document.getElementById("customerName").value,
           email: document.getElementById("customerEmail").value,
           password: document.getElementById("customerPassword").value,
           city: citySelect.value

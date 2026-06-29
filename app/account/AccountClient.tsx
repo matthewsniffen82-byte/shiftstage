@@ -28,7 +28,6 @@ export default function AccountClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
   const [stageName, setStageName] = useState("");
   const [realName, setRealName] = useState("");
   const [city, setCity] = useState("Las Vegas");
@@ -51,7 +50,6 @@ export default function AccountClient() {
     setIsSubmitting(true);
 
     const payload: Record<string, string> = { mode, role, email, password, city };
-    if (role === "customer") payload.name = name;
     if (role === "dancer") {
       payload.stageName = stageName;
       payload.realName = realName;
@@ -154,10 +152,6 @@ export default function AccountClient() {
                 </ul>
                 <p>Confirm your email, then Dancr opens your customer dashboard.</p>
               </section>
-              <label>
-                Name
-                <input value={name} onChange={(event) => setName(event.target.value)} required />
-              </label>
             </>
           ) : null}
 
