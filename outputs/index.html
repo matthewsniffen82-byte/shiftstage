@@ -21057,6 +21057,28 @@
         inset 0 0 20px rgba(255, 255, 255, .16);
     }
 
+    .customer-signup-benefits {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(53, 216, 255, .28);
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(53, 216, 255, .08), rgba(124, 58, 237, .12)),
+        rgba(5, 5, 9, .72);
+      box-shadow:
+        0 0 22px rgba(53, 216, 255, .1),
+        inset 0 0 18px rgba(255, 255, 255, .03);
+    }
+
+    .customer-signup-benefits[hidden] {
+      display: none;
+    }
+
+    .customer-signup-benefits h3 {
+      font-size: 18px;
+    }
+
     .auth-join-now.dancer-join-now:hover,
     .auth-join-now.dancer-join-now:focus-visible,
     .auth-join-now.venue-join-now:hover,
@@ -21890,17 +21912,28 @@
               <strong id="customerAuthModeLabel">Customer login</strong>
               <span>Free account. No public profile, follows, or going list.</span>
             </div>
+            <div class="customer-signup-benefits" id="customerSignupBenefits" hidden>
+              <span class="eyebrow">Why join</span>
+              <h3>Your private nightlife dashboard</h3>
+              <ul class="benefit-list">
+                <li>Follow dancers and venues privately</li>
+                <li>Save club deal QR codes to your dashboard</li>
+                <li>See who you follow working now</li>
+                <li>Keep alerts, favorites, and directions in one place</li>
+              </ul>
+              <div class="rule-note">After you create the account, Dancr sends a confirmation email. Tap the email link and you’ll return to your customer dashboard.</div>
+            </div>
             <div class="field" id="customerNameField">
               <label for="customerName">Name</label>
-              <input id="customerName" type="text" value="Alex">
+              <input id="customerName" type="text" autocomplete="name" placeholder="Your name">
             </div>
             <div class="field">
               <label for="customerEmail">Email</label>
-              <input id="customerEmail" type="email" value="alex@example.com">
+              <input id="customerEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
             </div>
             <div class="field">
               <label for="customerPassword">Password</label>
-              <input id="customerPassword" type="password" value="dancr">
+              <input id="customerPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Customer login</button>
             <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Join now</button>
@@ -23024,6 +23057,39 @@
       } catch (error) {}
     }
 
+    function readConfirmationSessionFromUrl() {
+      const hash = window.location.hash ? window.location.hash.slice(1) : "";
+      const query = window.location.search ? window.location.search.slice(1) : "";
+      const hashParams = new URLSearchParams(hash);
+      const queryParams = new URLSearchParams(query);
+      const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
+      if (!accessToken) return null;
+      const expiresAt = hashParams.get("expires_at") || queryParams.get("expires_at");
+      return {
+        accessToken,
+        refreshToken: hashParams.get("refresh_token") || queryParams.get("refresh_token") || undefined,
+        expiresAt: expiresAt ? Number(expiresAt) : undefined
+      };
+    }
+
+    async function hydrateConfirmedSessionAccount(role, state) {
+      try {
+        const data = await getAuthenticatedJson("/api/account");
+        if (data?.account) {
+          saveAuthSession({ ...authSession, account: data.account });
+        }
+      } catch (error) {
+        saveAuthSession({
+          ...authSession,
+          account: {
+            role,
+            displayName: state?.name || state?.stageName || state?.email || null,
+            accountState: "active"
+          }
+        });
+      }
+    }
+
     const authResumeStorageKey = "dancrAuthResumeV1";
 
     function authResumeToken() {
@@ -23096,6 +23162,7 @@
       if (!token) return false;
 
       const state = takeAuthResume(token);
+      const confirmedSession = readConfirmationSessionFromUrl();
       window.history.replaceState({}, document.title, "/");
       if (!state) {
         showToast("Email confirmed. Please sign in to continue.");
@@ -23124,6 +23191,28 @@
         showToast("Email confirmed. Sign in to open your venue dashboard.");
         setTimeout(() => document.getElementById("venueLoginPassword")?.focus(), 80);
       } else {
+        if (confirmedSession?.accessToken) {
+          saveAuthSession({
+            ...confirmedSession,
+            account: {
+              role: "customer",
+              displayName: state.name || state.email || null,
+              accountState: "active"
+            }
+          });
+          hydrateConfirmedSessionAccount("customer", state).finally(() => {
+            resetAccountControl("customer");
+            isCustomerLoggedIn = true;
+            isDancerLoggedIn = false;
+            isVenueLoggedIn = false;
+            activeDashboardType = "customer";
+            updateAccountHeader();
+            showToast("Email confirmed. Welcome to your customer dashboard.");
+            loadLiveCustomerDashboardData();
+            openDashboard();
+          });
+          return true;
+        }
         openAuthRole("customer");
         setCustomerAuthMode(state.mode || "signup");
         document.getElementById("customerName").value = state.name || "";
@@ -26191,10 +26280,20 @@
       document.getElementById("authSubmit").textContent = mode === "signup" ? "Create customer account" : "Customer login";
       const label = document.getElementById("customerAuthModeLabel");
       if (label) label.textContent = mode === "signup" ? "Customer sign up" : "Customer login";
+      const formHead = document.querySelector(".customer-form-head span");
+      if (formHead) {
+        formHead.textContent = mode === "signup"
+          ? "Create a free private customer account. Confirm your email, then your dashboard opens."
+          : "Free account. No public profile, follows, or going list.";
+      }
       const nameField = document.getElementById("customerNameField");
       const nameInput = document.getElementById("customerName");
       if (nameField) nameField.hidden = mode !== "signup";
       if (nameInput) nameInput.required = mode === "signup";
+      const passwordInput = document.getElementById("customerPassword");
+      if (passwordInput) passwordInput.autocomplete = mode === "signup" ? "new-password" : "current-password";
+      const benefits = document.getElementById("customerSignupBenefits");
+      if (benefits) benefits.hidden = mode !== "signup";
       const joinButton = document.getElementById("customerJoinNowBtn");
       if (joinButton) joinButton.hidden = mode === "signup";
       document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
@@ -28023,9 +28122,12 @@
         };
         if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer");
         const result = await requestAuth(payload);
-        if (result.requiresEmailConfirmation) {
+        if (authMode === "signup") {
+          saveAuthSession(null);
+          isCustomerLoggedIn = false;
+          updateAccountHeader();
           setCustomerAuthMode("signup");
-          showToast("Confirmation email sent. Open it on this device to return here.");
+          showToast("Confirmation email sent. Tap it to open your customer dashboard.");
           return;
         }
         resetAccountControl("customer");

@@ -47,6 +47,9 @@ export default function AccountClient() {
       payload.stageName = stageName;
       payload.realName = realName;
     }
+    if (mode === "signup" && typeof window !== "undefined") {
+      payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1`;
+    }
 
     try {
       const response = await fetch("/api/auth", {
@@ -56,6 +59,16 @@ export default function AccountClient() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
+
+      if (mode === "signup") {
+        setStatus(
+          role === "customer"
+            ? "Check your email to confirm the account. After confirmation, Dancr will open your customer dashboard."
+            : "Check your email to confirm the account before continuing.",
+        );
+        window.localStorage.removeItem(SESSION_KEY);
+        return;
+      }
 
       if (data.requiresEmailConfirmation || !data.session?.accessToken) {
         setStatus("Check your email to confirm the account before signing in.");
@@ -120,10 +133,23 @@ export default function AccountClient() {
           </div>
 
           {mode === "signup" && role === "customer" ? (
-            <label>
-              Name
-              <input value={name} onChange={(event) => setName(event.target.value)} required />
-            </label>
+            <>
+              <section className="signup-benefits" aria-label="Customer signup benefits">
+                <span className="eyebrow">Why join</span>
+                <h2>Your private nightlife dashboard</h2>
+                <ul>
+                  <li>Follow dancers and venues privately.</li>
+                  <li>Save club deal QR codes to your dashboard.</li>
+                  <li>See who you follow working now.</li>
+                  <li>Keep alerts, favorites, and directions in one place.</li>
+                </ul>
+                <p>Confirm your email, then Dancr opens your customer dashboard.</p>
+              </section>
+              <label>
+                Name
+                <input value={name} onChange={(event) => setName(event.target.value)} required />
+              </label>
+            </>
           ) : null}
 
           {mode === "signup" && role === "dancer" ? (
@@ -194,6 +220,10 @@ function AccountStyles() {
       .submit { background: #f7f2ff; color: #090911; margin-top: 4px; }
       .submit:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
+      .signup-benefits { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
+      .signup-benefits h2 { margin: 0; font-size: 20px; }
+      .signup-benefits ul { display: grid; gap: 7px; margin: 0; padding-left: 18px; color: #d8cfeb; font-weight: 750; }
+      .signup-benefits p { font-size: 14px; line-height: 1.45; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
