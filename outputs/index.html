@@ -21290,6 +21290,12 @@
       pointer-events: auto;
     }
 
+    .deal-pass-overlay[hidden],
+    .profile-qr-overlay[hidden] {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
     .deal-pass-sheet {
       position: relative;
       width: min(430px, calc(100vw - 28px));
@@ -21367,6 +21373,44 @@
       width: 100%;
       height: 100%;
       border-radius: 14px;
+    }
+
+    @media (max-width: 560px) {
+      .deal-pass-overlay,
+      .profile-qr-overlay {
+        padding: 14px;
+      }
+
+      .deal-pass-sheet,
+      .profile-qr-sheet {
+        width: min(330px, calc(100vw - 42px));
+        max-height: min(82dvh, 640px);
+        overflow-y: auto;
+        padding: 18px 16px 16px;
+        border-radius: 22px;
+      }
+
+      .deal-pass-frame,
+      .profile-qr-frame {
+        width: min(190px, 54vw);
+        margin-bottom: 12px;
+        padding: 9px;
+        border-radius: 18px;
+      }
+
+      .deal-pass-close,
+      .profile-qr-close {
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+      }
+
+      .deal-pass-copy,
+      .deal-pass-how,
+      .profile-qr-subtitle {
+        font-size: .78rem;
+      }
     }
 
     .deal-pass-how {
@@ -25799,7 +25843,7 @@
       let overlay = document.getElementById("dealPassOverlay");
       if (overlay) return overlay;
       document.body.insertAdjacentHTML("beforeend", `
-        <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true">
+        <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true" hidden>
           <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle">
             <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close deal QR">${actionIconMarkup("close")}</button>
             <p class="deal-pass-kicker">Club deal QR</p>
@@ -25855,6 +25899,7 @@
 
     function openDealPassOverlay(pass) {
       const overlay = dealPassOverlay();
+      overlay.hidden = false;
       overlay.dataset.dealPass = encodeDealPass(pass);
       document.getElementById("dealPassTitle").textContent = pass.title;
       document.getElementById("dealPassCopy").textContent = `${pass.venueName} · ${pass.details}`;
@@ -25878,6 +25923,7 @@
       }
       overlay.classList.remove("show");
       overlay.setAttribute("aria-hidden", "true");
+      overlay.hidden = true;
       delete overlay.dataset.dealPass;
       syncOverlayScrollLock();
     }
@@ -28334,7 +28380,7 @@
       let overlay = document.getElementById("profileQrOverlay");
       if (overlay) return overlay;
       document.body.insertAdjacentHTML("beforeend", `
-        <div class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true">
+        <div class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true" hidden>
           <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileQrTitle">
             <button class="profile-qr-close" type="button" data-close-qr-overlay aria-label="Close QR code">${actionIconMarkup("close")}</button>
             <p class="profile-qr-kicker">Profile QR</p>
@@ -28369,6 +28415,7 @@
       if (overlay) {
         overlay.classList.remove("show");
         overlay.setAttribute("aria-hidden", "true");
+        overlay.hidden = true;
       }
       document.querySelectorAll("[data-profile-qr], [data-toggle-qr]").forEach((button) => {
         button.classList.remove("is-open");
@@ -28378,6 +28425,7 @@
 
     function openQrOverlay(profileName, city, triggerButton) {
       const overlay = profileQrOverlay();
+      overlay.hidden = false;
       const url = profileShareUrl(profileName, city);
       const image = document.getElementById("profileQrImage");
       const subtitle = document.getElementById("profileQrSubtitle");
