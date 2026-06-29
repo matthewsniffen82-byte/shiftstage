@@ -23285,9 +23285,19 @@
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error || "Authentication failed");
+      if (!response.ok || data.ok === false) {
+        throw new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
+      }
       if (data.session && payload.mode !== "signup") saveAuthSession({ ...data.session, account: data.account || null });
       return data;
+    }
+
+    function friendlyAuthErrorMessage(message, fallback = "Authentication failed") {
+      const text = message || fallback;
+      if (/rate limit/i.test(text)) {
+        return "Too many confirmation emails were sent. Please wait a few minutes, then try again, or use the newest confirmation email already in your inbox.";
+      }
+      return text;
     }
 
     async function postAuthenticatedJson(url, payload) {
@@ -28281,7 +28291,7 @@
         showToast(authMode === "signup" ? "Customer account created" : "Logged in");
         openDashboard();
       } catch (error) {
-        const message = error.message || "Customer login failed";
+        const message = friendlyAuthErrorMessage(error.message, "Customer login failed");
         setCustomerAuthStatus(message);
         showToast(message);
       } finally {

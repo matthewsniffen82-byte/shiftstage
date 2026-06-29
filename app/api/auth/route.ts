@@ -72,6 +72,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(await authResponse(data.user.id, role, data.session, !data.session));
   } catch (error) {
+    const rateLimitMessage = authRateLimitMessage(error);
+    if (rateLimitMessage) {
+      return NextResponse.json({ ok: false, error: rateLimitMessage }, { status: 429 });
+    }
+
     return apiError(error, "Unable to authenticate.", 400);
   }
 }
@@ -182,6 +187,13 @@ function safeEmailRedirectTo(value: unknown) {
   } catch {
     return fallback;
   }
+}
+
+function authRateLimitMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  if (!/rate limit/i.test(message)) return "";
+
+  return "Too many confirmation emails were sent. Please wait a few minutes, then try again, or use the newest confirmation email already in your inbox.";
 }
 
 function slugify(value: string) {

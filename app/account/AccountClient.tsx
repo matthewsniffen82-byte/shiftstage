@@ -87,7 +87,7 @@ export default function AccountClient() {
         body: JSON.stringify(payload),
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
+      if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to sign in."));
 
       if (mode === "signup") {
         setStatus(
@@ -113,7 +113,7 @@ export default function AccountClient() {
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       router.push(destination);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to sign in.");
+      setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to sign in."));
     } finally {
       setIsSubmitting(false);
     }
@@ -257,6 +257,15 @@ export default function AccountClient() {
       </section>
     </main>
   );
+}
+
+function friendlyAuthErrorMessage(message: string | undefined, fallback: string) {
+  const text = message || fallback;
+  if (/rate limit/i.test(text)) {
+    return "Too many confirmation emails were sent. Please wait a few minutes, then try again, or use the newest confirmation email already in your inbox.";
+  }
+
+  return text;
 }
 
 function AccountStyles() {
