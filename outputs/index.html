@@ -25713,6 +25713,7 @@
         event.stopPropagation();
         closeDealPassOverlay();
       };
+      closeButton?.addEventListener("pointerdown", closeFromButton, { passive: false });
       closeButton?.addEventListener("click", closeFromButton);
       closeButton?.addEventListener("pointerup", closeFromButton);
       closeButton?.addEventListener("touchend", closeFromButton, { passive: false });
@@ -25753,14 +25754,20 @@
       document.getElementById("dealPassHow").textContent = `How it works: save this QR, show it at ${pass.venueName}, and the club scans it to redeem the deal.${attribution}`;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
+      syncOverlayScrollLock();
       overlay.querySelector("[data-close-deal-pass]")?.focus({ preventScroll: true });
     }
 
     function closeDealPassOverlay() {
       const overlay = document.getElementById("dealPassOverlay");
       if (!overlay) return;
+      if (overlay.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
       overlay.classList.remove("show");
       overlay.setAttribute("aria-hidden", "true");
+      delete overlay.dataset.dealPass;
+      syncOverlayScrollLock();
     }
 
     function handleDealPassClick(event) {
@@ -26572,6 +26579,7 @@
     }
 
     function closeProfileModal() {
+      closeDealPassOverlay();
       closeQrPopovers();
       profileBackdrop.classList.remove("show");
       profileBackdrop.setAttribute("aria-hidden", "true");
@@ -26580,7 +26588,7 @@
     }
 
     function syncOverlayScrollLock() {
-      const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show");
+      const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .deal-pass-overlay.show");
       document.body.classList.toggle("overlay-open", overlayOpen);
     }
 
