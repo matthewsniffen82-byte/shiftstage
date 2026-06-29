@@ -21988,6 +21988,42 @@
         padding-inline: 9px !important;
       }
     }
+
+    .tabs,
+    .tab {
+      isolation: isolate !important;
+    }
+
+    .tab,
+    .tabs .tab,
+    button.tab {
+      position: relative !important;
+      overflow: hidden !important;
+      border-radius: 999px !important;
+      -webkit-tap-highlight-color: transparent !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      outline: 0 !important;
+      background-clip: padding-box !important;
+      touch-action: manipulation !important;
+    }
+
+    .tab:focus,
+    .tab:active,
+    .tabs .tab:focus,
+    .tabs .tab:active {
+      outline: 0 !important;
+      border-radius: 999px !important;
+    }
+
+    .tab:focus-visible,
+    .tabs .tab:focus-visible {
+      outline: 0 !important;
+      box-shadow:
+        0 0 0 1px rgba(139, 92, 246, 0.70),
+        0 0 18px rgba(139, 92, 246, 0.30),
+        inset 0 0 16px rgba(255, 255, 255, 0.04) !important;
+    }
   </style>
 </head>
 <body>
