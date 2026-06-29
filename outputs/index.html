@@ -22285,6 +22285,40 @@
           inset 0 0 14px rgba(255, 255, 255, 0.075) !important;
       }
     }
+
+    /* Mobile topbar taps: keep Android press feedback inside the rounded controls. */
+    @media (max-width: 899px) {
+      header .customer-quick-btn,
+      header #accountBtn {
+        position: relative !important;
+        overflow: hidden !important;
+        isolation: isolate !important;
+        border-radius: 999px !important;
+        background-clip: padding-box !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+        clip-path: inset(0 round 999px);
+      }
+
+      header .customer-quick-btn::before,
+      header .customer-quick-btn::after,
+      header #accountBtn::before,
+      header #accountBtn::after {
+        border-radius: inherit !important;
+      }
+
+      header .customer-quick-btn:focus,
+      header .customer-quick-btn:focus-visible,
+      header .customer-quick-btn:active,
+      header #accountBtn:focus,
+      header #accountBtn:focus-visible,
+      header #accountBtn:active {
+        outline: 0 !important;
+        -webkit-tap-highlight-color: transparent !important;
+      }
+    }
   </style>
 </head>
 <body>
