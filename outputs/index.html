@@ -23113,6 +23113,9 @@
     }
 
     function readConfirmationSessionFromUrl() {
+      if (window.__DANCR_CONFIRMED_SESSION__?.accessToken) {
+        return window.__DANCR_CONFIRMED_SESSION__;
+      }
       const hash = window.location.hash ? window.location.hash.slice(1) : "";
       const query = window.location.search ? window.location.search.slice(1) : "";
       const hashParams = new URLSearchParams(hash);
