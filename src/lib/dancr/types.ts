@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "customer" | "dancer" | "admin";
+export type UserRole = "customer" | "dancer" | "venue" | "admin";
 export type AccountState = "active" | "disabled" | "deleted";
 export type DancerStatus = "draft" | "pending_review" | "approved" | "rejected" | "disabled";
 export type ShiftStatus = "draft" | "posted" | "cancelled" | "completed";

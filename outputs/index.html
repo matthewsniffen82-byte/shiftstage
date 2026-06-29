@@ -23070,6 +23070,11 @@
         state.dancerCity = document.getElementById("dancerCity")?.value || citySelect.value;
       }
 
+      if (role === "venue") {
+        state.name = document.getElementById("venueLoginName")?.value || "";
+        state.email = document.getElementById("venueLoginEmail")?.value || "";
+      }
+
       store[token] = state;
       writeAuthResumeStore(store);
       return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}`;
@@ -23112,6 +23117,12 @@
         document.getElementById("dancerCity").value = state.dancerCity || state.city || "Las Vegas";
         showToast("Email confirmed. Sign in or continue your dancer setup.");
         setTimeout(() => document.getElementById("dancerPassword")?.focus(), 80);
+      } else if (state.role === "venue") {
+        openAuthRole("venue");
+        document.getElementById("venueLoginName").value = state.name || "";
+        document.getElementById("venueLoginEmail").value = state.email || "";
+        showToast("Email confirmed. Sign in to open your venue dashboard.");
+        setTimeout(() => document.getElementById("venueLoginPassword")?.focus(), 80);
       } else {
         openAuthRole("customer");
         setCustomerAuthMode(state.mode || "signup");
@@ -27993,7 +28004,8 @@
     });
 
     document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
-      startCustomerDashboardSession("Customer dashboard opened");
+      setCustomerAuthMode("signup");
+      document.getElementById("customerName")?.focus();
     });
 
     document.getElementById("authForm").addEventListener("submit", async (event) => {
@@ -28026,7 +28038,7 @@
         showToast(authMode === "signup" ? "Customer account created" : "Logged in");
         openDashboard();
       } catch (error) {
-        startCustomerDashboardSession("Customer dashboard opened");
+        showToast(error.message || "Customer login failed");
       } finally {
         submit.disabled = false;
       }
@@ -28067,12 +28079,31 @@
       openDancerDashboard();
     }
 
+    function startRealDancerSession(message = "Dancer dashboard opened. Start with profile setup.") {
+      resetAccountControl("dancer");
+      dancerSignupStarted = true;
+      stripeConfirmed = true;
+      const loginEmail = document.getElementById("dancerLoginEmail").value.trim();
+      if (loginEmail) document.getElementById("dancerEmail").value = loginEmail;
+      if (!document.getElementById("dancerCity").value.trim()) document.getElementById("dancerCity").value = citySelect.value || "Las Vegas";
+      setupChecklistExpanded = true;
+      activeSetupStep = "profile";
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
+      isVenueLoggedIn = false;
+      activeDashboardType = "dancer";
+      closeAuthPage();
+      updateAccountHeader();
+      showToast(message);
+      openDancerDashboard();
+    }
+
     document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
     document.getElementById("demoDancerSetupBtn").addEventListener("click", startDemoDancerSetup);
 
     document.getElementById("dancerJoinNowBtn").addEventListener("click", () => {
       closeAuthPage();
-      startDemoDancerSetup();
+      openDancerSignupPage();
     });
 
     document.getElementById("dancerLoginForm").addEventListener("submit", async (event) => {
@@ -28087,9 +28118,9 @@
           password: document.getElementById("dancerLoginPassword").value,
           city: citySelect.value
         });
-        startDemoDancerSetup(result.requiresEmailConfirmation ? "Check your email to confirm. Start with profile setup." : "Dancer dashboard opened. Start with profile setup.");
+        startRealDancerSession(result.requiresEmailConfirmation ? "Check your email to confirm. Start with profile setup." : "Dancer dashboard opened. Start with profile setup.");
       } catch (error) {
-        startDemoDancerSetup("Dancer dashboard opened. Start with profile setup.");
+        showToast(error.message || "Dancer login failed");
       } finally {
         submit.disabled = false;
       }
@@ -28108,8 +28139,29 @@
       openVenueDashboard();
     }
 
-    document.getElementById("venueJoinNowBtn").addEventListener("click", () => {
-      startVenueDashboardSession("Venue dashboard opened");
+    document.getElementById("venueJoinNowBtn").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        const result = await requestAuth({
+          mode: "signup",
+          role: "venue",
+          name: document.getElementById("venueLoginName").value,
+          email: document.getElementById("venueLoginEmail").value,
+          password: document.getElementById("venueLoginPassword").value,
+          city: citySelect.value,
+          emailRedirectTo: saveAuthResume("venue")
+        });
+        if (result.requiresEmailConfirmation) {
+          showToast("Confirmation email sent. Open it on this device to return here.");
+          return;
+        }
+        startVenueDashboardSession("Venue account created");
+      } catch (error) {
+        showToast(error.message || "Venue signup failed");
+      } finally {
+        button.disabled = false;
+      }
     });
 
     document.getElementById("venueLoginForm").addEventListener("submit", async (event) => {
@@ -28127,7 +28179,7 @@
         });
         startVenueDashboardSession("Venue dashboard opened");
       } catch (error) {
-        startVenueDashboardSession("Venue dashboard opened");
+        showToast(error.message || "Venue login failed");
       } finally {
         submit.disabled = false;
       }

@@ -3,7 +3,7 @@
 
 create extension if not exists pgcrypto;
 
-create type public.user_role as enum ('customer', 'dancer', 'admin');
+create type public.user_role as enum ('customer', 'dancer', 'venue', 'admin');
 create type public.dancer_status as enum ('draft', 'pending_review', 'approved', 'rejected', 'disabled');
 create type public.shift_status as enum ('draft', 'posted', 'cancelled', 'completed');
 create type public.review_status as enum ('pending', 'approved', 'rejected');
@@ -448,4 +448,3 @@ create policy "dancers read own ranking events" on public.ranking_events for sel
 );
 create policy "admins manage ranking events" on public.ranking_events for all using (public.is_admin()) with check (public.is_admin());
 create policy "admins manage admin actions" on public.admin_actions for all using (public.is_admin()) with check (public.is_admin());
-

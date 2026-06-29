@@ -8,7 +8,7 @@ import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type AuthRole = "customer" | "dancer" | "admin";
+type AuthRole = "customer" | "dancer" | "venue" | "admin";
 type AuthMode = "login" | "signup";
 
 export async function POST(request: Request) {
@@ -36,17 +36,21 @@ export async function POST(request: Request) {
     const displayName =
       role === "customer"
         ? readRequired(body.name, "Name is required.")
-        : readRequired(body.stageName, "Stage name is required.");
+        : role === "venue"
+          ? readRequired(body.name, "Venue name is required.")
+          : readRequired(body.stageName, "Stage name is required.");
     const metadata =
       role === "customer"
         ? { role, display_name: displayName }
-        : {
-            role,
-            display_name: displayName,
-            real_name: readRequired(body.realName, "Legal name is required."),
-            stage_name: displayName,
-            city,
-          };
+        : role === "venue"
+          ? { role, display_name: displayName, venue_name: displayName, city }
+          : {
+              role,
+              display_name: displayName,
+              real_name: readRequired(body.realName, "Legal name is required."),
+              stage_name: displayName,
+              city,
+            };
 
     const { data, error } = await client.auth.signUp({
       email,
@@ -121,6 +125,10 @@ async function upsertAccount(
     return;
   }
 
+  if (role === "venue") {
+    return;
+  }
+
   const { error } = await admin.from("dancer_profiles").upsert({
     user_id: userId,
     real_name: readRequired(body.realName, "Legal name is required."),
@@ -138,8 +146,8 @@ function readMode(value: unknown): AuthMode {
 }
 
 function readRole(value: unknown): AuthRole {
-  if (value === "customer" || value === "dancer" || value === "admin") return value;
-  throw new Error("Role must be customer, dancer, or admin.");
+  if (value === "customer" || value === "dancer" || value === "venue" || value === "admin") return value;
+  throw new Error("Role must be customer, dancer, venue, or admin.");
 }
 
 function readRequired(value: unknown, message: string) {

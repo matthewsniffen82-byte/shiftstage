@@ -242,7 +242,7 @@ async function seedUser(
   admin: any,
   input: {
     email: string;
-    role: "customer" | "dancer" | "admin";
+    role: "customer" | "dancer" | "venue" | "admin";
     displayName: string;
     metadata: Record<string, string>;
   },
