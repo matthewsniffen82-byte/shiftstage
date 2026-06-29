@@ -7451,7 +7451,7 @@
 
       .controls {
         display: grid;
-        grid-template-columns: minmax(280px, 1fr) 180px 240px;
+        grid-template-columns: minmax(240px, 1fr) 160px minmax(220px, .9fr) 240px;
         align-items: end;
         gap: 14px;
         padding: 18px;
@@ -22382,9 +22382,15 @@
           <label for="distanceSelect">Distance</label>
           <select id="distanceSelect">
             <option>5 mi</option>
-            <option selected>10 mi</option>
-            <option>25 mi</option>
+            <option>10 mi</option>
+            <option selected>25 mi</option>
             <option>50 mi</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="venueSelect">Venue</label>
+          <select id="venueSelect">
+            <option value="all">All venues</option>
           </select>
         </div>
         <button class="location-btn" id="locationBtn">
@@ -23501,6 +23507,7 @@
 
     const citySelect = document.getElementById("citySelect");
     const distanceSelect = document.getElementById("distanceSelect");
+    const venueSelect = document.getElementById("venueSelect");
     const results = document.getElementById("results");
     const tabTitle = document.getElementById("tabTitle");
     const tabCount = document.getElementById("tabCount");
@@ -25476,6 +25483,56 @@
 
     function selectedCity() {
       return citySelect?.value && markets[citySelect.value] ? citySelect.value : "Las Vegas";
+    }
+
+    function escapeOptionValue(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function selectedRadiusMiles() {
+      const miles = Number.parseFloat(String(distanceSelect?.value || "25 mi"));
+      return Number.isFinite(miles) ? miles : 25;
+    }
+
+    function parseMiles(value) {
+      const miles = Number.parseFloat(String(value || "").replace(/[^\d.]/g, ""));
+      return Number.isFinite(miles) ? miles : null;
+    }
+
+    function venueWithinSelectedRadius(venue) {
+      const miles = parseMiles(venue?.distance);
+      return miles === null || miles <= selectedRadiusMiles();
+    }
+
+    function selectedVenueFilter() {
+      return venueSelect?.value || "all";
+    }
+
+    function profileMatchesVenueFilter(profile) {
+      const venueName = selectedVenueFilter();
+      return venueName === "all" || profile?.venue === venueName;
+    }
+
+    function venueMatchesCurrentFilter(venue) {
+      const venueName = selectedVenueFilter();
+      return !venue?.hidden && venueWithinSelectedRadius(venue) && (venueName === "all" || venue.name === venueName);
+    }
+
+    function populateVenueSelect(city = selectedCity()) {
+      if (!venueSelect || !markets[city]) return;
+      const previous = venueSelect.value || "all";
+      const venues = markets[city].venues
+        .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      venueSelect.innerHTML = [
+        `<option value="all">All venues</option>`,
+        ...venues.map((venue) => `<option value="${escapeOptionValue(venue.name)}">${escapeOptionValue(venue.name)}</option>`)
+      ].join("");
+      venueSelect.value = venues.some((venue) => venue.name === previous) ? previous : "all";
     }
 
     function cityTimeZone(city = selectedCity()) {
@@ -28433,20 +28490,20 @@
       const market = markets[city];
       if (tab === "tonight") {
         return market.dancers
-          .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city))
+          .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city) && profileMatchesVenueFilter(profile))
           .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
           .map((profile) => withTrendingRank(profile, city));
       }
       if (tab === "dancers") {
         const profiles = market.dancers
-          .filter(isApprovedPublicProfile)
+          .filter((profile) => isApprovedPublicProfile(profile) && profileMatchesVenueFilter(profile))
           .map((profile) => withTrendingRank(profile, city));
         return shuffledDancerDiscoveryProfiles(profiles, city);
       }
       if (tab === "venues") {
-        return market.venues.filter((venue) => !venue.hidden);
+        return market.venues.filter(venueMatchesCurrentFilter);
       }
-      return trendingProfiles(city);
+      return trendingProfiles(city).filter(profileMatchesVenueFilter);
     }
 
     function updateTabCounts(city) {
@@ -28466,6 +28523,7 @@
     function render() {
       const city = citySelect.value;
       const market = markets[city];
+      populateVenueSelect(city);
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
       renderPopularClubs(city);
       document.getElementById("popularClubs")?.classList.toggle("is-hidden", !["tonight", "dancers"].includes(activeTab));
@@ -28474,11 +28532,12 @@
       const allItems = getItems(city, activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
+      const venueFilter = selectedVenueFilter();
       const titles = {
-        tonight: `Now in ${city}`,
-        dancers: `Dancers in ${city}`,
+        tonight: venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`,
+        dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
         venues: `Venues in ${city}`,
-        trending: `Trending in ${city}`
+        trending: venueFilter === "all" ? `Trending in ${city}` : `Trending at ${venueFilter}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
         ? market.venues.find((venue) => venue.name === selectedVenueName)
@@ -29726,6 +29785,7 @@
       dashboardFollowedExpanded = false;
       dashboardVenuesExpanded = false;
       selectedVenueName = null;
+      if (venueSelect) venueSelect.value = "all";
       render();
       loadLiveDiscovery(citySelect.value);
       if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -29741,12 +29801,28 @@
     });
 
     distanceSelect.addEventListener("change", () => {
+      tonightExpanded = false;
+      dancersExpanded = false;
+      selectedVenueName = null;
+      populateVenueSelect();
+      render();
       showToast(`Distance set to ${distanceSelect.value}`);
+    });
+
+    venueSelect?.addEventListener("change", () => {
+      tonightExpanded = false;
+      dancersExpanded = false;
+      selectedVenueName = null;
+      render();
+      const venueName = selectedVenueFilter();
+      showToast(venueName === "all" ? "Showing all venues" : `Showing ${venueName}`);
     });
 
     document.getElementById("locationBtn").addEventListener("click", () => {
       citySelect.value = "Las Vegas";
+      if (venueSelect) venueSelect.value = "all";
       render();
+      loadLiveDiscovery(citySelect.value);
       showToast("Location matched to Las Vegas");
     });
 
@@ -29805,7 +29881,7 @@
     function renderPopularClubs(city) {
       const strip = document.getElementById("popularClubStrip");
       if (!strip || !markets[city]) return;
-      const venues = markets[city].venues.filter((venue) => !venue.hidden).slice(0, 5);
+      const venues = markets[city].venues.filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue)).slice(0, 5);
       strip.innerHTML = venues.map((venue, index) => `
         <button class="club-mini club-mini-${index + 1}" type="button" data-popular-venue="${venue.name}">
           <span class="club-neon">${venue.name}</span>
