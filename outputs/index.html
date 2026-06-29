@@ -21731,6 +21731,187 @@
       pointer-events: auto !important;
       touch-action: manipulation !important;
     }
+
+    .customer-quick-actions {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .customer-quick-actions[hidden],
+    .customer-quick-count[hidden],
+    .customer-quick-panel[hidden] {
+      display: none !important;
+    }
+
+    .customer-quick-btn {
+      position: relative;
+      width: 42px;
+      min-width: 42px;
+      min-height: 42px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 92, 246, 0.42);
+      color: #22C7FF;
+      background: rgba(8, 8, 14, 0.84);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 16px rgba(139, 92, 246, 0.12);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
+    }
+
+    .customer-quick-btn:hover,
+    .customer-quick-btn:focus-visible,
+    .customer-quick-btn.active {
+      transform: translateY(-1px);
+      border-color: rgba(34, 199, 255, 0.54);
+      color: #57DFFF;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.06) inset,
+        0 0 20px rgba(34, 199, 255, 0.16),
+        0 0 18px rgba(139, 92, 246, 0.16);
+    }
+
+    .customer-quick-btn .action-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .customer-quick-count {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      border-radius: 999px;
+      color: #050507;
+      background: #22C7FF;
+      box-shadow: 0 0 14px rgba(34, 199, 255, 0.42);
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .customer-quick-panel {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      z-index: 42;
+      width: min(342px, calc(100vw - 24px));
+      max-height: min(70vh, 520px);
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(139, 92, 246, 0.38);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 74%),
+        rgba(5, 5, 7, 0.98);
+      box-shadow:
+        0 26px 70px rgba(0, 0, 0, 0.68),
+        0 0 24px rgba(139, 92, 246, 0.16),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+    }
+
+    .customer-quick-panel h3 {
+      margin: 0;
+      font-family: var(--font-name);
+      font-size: 15px;
+      letter-spacing: -0.006em;
+    }
+
+    .customer-quick-panel p {
+      margin: 0;
+      color: #B8B8C5;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .customer-quick-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .customer-quick-item {
+      width: 100%;
+      display: grid;
+      gap: 3px;
+      padding: 11px;
+      border: 1px solid rgba(139, 92, 246, 0.26);
+      border-radius: 14px;
+      color: #fff;
+      background: rgba(13, 13, 18, 0.88);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .customer-quick-item:hover,
+    .customer-quick-item:focus-visible {
+      border-color: rgba(34, 199, 255, 0.38);
+      box-shadow: 0 0 18px rgba(34, 199, 255, 0.10);
+    }
+
+    .customer-quick-item strong {
+      font-family: var(--font-name);
+      font-size: 13px;
+      letter-spacing: -0.006em;
+    }
+
+    .customer-quick-item span {
+      color: #B8B8C5;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .customer-quick-item.has-qr {
+      grid-template-columns: minmax(0, 1fr) 54px;
+      align-items: center;
+    }
+
+    .customer-quick-item.has-qr img {
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .customer-quick-empty {
+      padding: 12px;
+      border: 1px solid rgba(139, 92, 246, 0.20);
+      border-radius: 14px;
+      color: #B8B8C5;
+      background: rgba(13, 13, 18, 0.66);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 640px) {
+      .customer-quick-actions {
+        gap: 6px;
+      }
+
+      .customer-quick-btn {
+        width: 38px;
+        min-width: 38px;
+        min-height: 38px;
+      }
+
+      .customer-quick-panel {
+        right: -78px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -21741,6 +21922,25 @@
           <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
         </button>
         <div class="menu" aria-label="Menu">
+          <div class="customer-quick-actions" id="customerQuickActions" hidden>
+            <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
+              <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
+              <span data-quick-icon="bell"></span>
+            </button>
+            <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved club deal QR codes" aria-expanded="false" aria-controls="customerDealsQuickPanel">
+              <span data-quick-icon="qr"></span>
+            </button>
+            <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
+              <h3>Notifications</h3>
+              <p>Recent alerts from the settings you turned on.</p>
+              <div class="customer-quick-list" id="customerNotificationsQuickList"></div>
+            </div>
+            <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
+              <h3>Saved club deals</h3>
+              <p>Tap a QR to enlarge it and show it at the venue.</p>
+              <div class="customer-quick-list" id="customerDealsQuickList"></div>
+            </div>
+          </div>
           <div class="utility-menu">
             <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
@@ -22919,6 +23119,14 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const adminBtn = document.getElementById("adminBtn");
     const moreMenuPanel = document.getElementById("moreMenuPanel");
+    const customerQuickActions = document.getElementById("customerQuickActions");
+    const customerNotificationQuickBtn = document.getElementById("customerNotificationQuickBtn");
+    const customerDealQuickBtn = document.getElementById("customerDealQuickBtn");
+    const customerNotificationQuickCount = document.getElementById("customerNotificationQuickCount");
+    const customerNotificationsQuickPanel = document.getElementById("customerNotificationsQuickPanel");
+    const customerDealsQuickPanel = document.getElementById("customerDealsQuickPanel");
+    const customerNotificationsQuickList = document.getElementById("customerNotificationsQuickList");
+    const customerDealsQuickList = document.getElementById("customerDealsQuickList");
     const brandHome = document.getElementById("brandHome");
     const dashTonightList = document.getElementById("dashTonightList");
     const dashFollowedList = document.getElementById("dashFollowedList");
@@ -23945,6 +24153,104 @@
       const markup = notificationCenterMarkup();
       if (customerNotificationList) customerNotificationList.innerHTML = markup;
       if (dancerNotificationList) dancerNotificationList.innerHTML = markup;
+      renderCustomerQuickActions();
+    }
+
+    function closeCustomerQuickPanels() {
+      customerNotificationsQuickPanel.hidden = true;
+      customerDealsQuickPanel.hidden = true;
+      customerNotificationQuickBtn.classList.remove("active");
+      customerDealQuickBtn.classList.remove("active");
+      customerNotificationQuickBtn.setAttribute("aria-expanded", "false");
+      customerDealQuickBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function customerQuickNotificationItems() {
+      if (liveNotifications.length) {
+        return liveNotifications.slice(0, 5).map((notification) => ({
+          id: notification.id,
+          unread: !notification.readAt,
+          title: notification.title || "Dancr notification",
+          detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
+        }));
+      }
+
+      const city = selectedCity();
+      const followed = followedProfiles(city);
+      const venues = followedVenues(city);
+      const working = followed.filter((profile) => isWorkingTonight(profile, city) && isNotificationOn(city, profile.name));
+      return [
+        ...working.slice(0, 3).map((profile) => ({
+          title: `${profile.name} is working now`,
+          detail: `${profile.venue} · ${displayShiftTime(profile.time)}`
+        })),
+        ...venues.slice(0, 2).map((venue) => ({
+          title: `${venue.name} is saved`,
+          detail: "Venue alerts and saved deals will appear here."
+        }))
+      ];
+    }
+
+    function renderCustomerQuickNotifications() {
+      if (!customerNotificationsQuickList) return;
+      const items = customerQuickNotificationItems();
+      const unreadCount = liveNotifications.filter((notification) => !notification.readAt).length;
+      const count = unreadCount || items.length;
+      customerNotificationQuickCount.hidden = count <= 0;
+      customerNotificationQuickCount.textContent = String(Math.min(count, 9));
+      customerNotificationsQuickList.innerHTML = items.length
+        ? items.map((item) => `
+            <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""}>
+              <strong>${displayText(item.title)}</strong>
+              <span>${displayText(item.detail)}</span>
+            </button>
+          `).join("")
+        : `<div class="customer-quick-empty">No new alerts yet. Recent dancer, venue, and deal notifications will appear here.</div>`;
+    }
+
+    function renderCustomerQuickDeals() {
+      if (!customerDealsQuickList) return;
+      customerDealsQuickList.innerHTML = savedDealPasses.length
+        ? savedDealPasses.slice(0, 5).map((pass) => `
+            <button class="customer-quick-item has-qr" type="button" data-deal-pass="${encodeDealPass(pass)}">
+              <span>
+                <strong>${displayText(pass.title)}</strong>
+                <span>${displayText(pass.venueName)} · saved QR</span>
+              </span>
+              <img src="${pass.qrImageUrl}" alt="${displayText(pass.venueName)} saved QR code" loading="lazy" decoding="async">
+            </button>
+          `).join("")
+        : `<div class="customer-quick-empty">Saved club deals will appear here after you save a venue or dancer profile QR.</div>`;
+    }
+
+    function renderCustomerQuickActions() {
+      if (!customerQuickActions) return;
+      const show = isCustomerSession();
+      customerQuickActions.hidden = !show;
+      if (!show) {
+        closeCustomerQuickPanels();
+        return;
+      }
+      renderCustomerQuickNotifications();
+      renderCustomerQuickDeals();
+    }
+
+    function toggleCustomerQuickPanel(panelName) {
+      const openNotifications = panelName === "notifications" && customerNotificationsQuickPanel.hidden;
+      const openDeals = panelName === "deals" && customerDealsQuickPanel.hidden;
+      closeCustomerQuickPanels();
+      if (openNotifications) {
+        renderCustomerQuickNotifications();
+        customerNotificationsQuickPanel.hidden = false;
+        customerNotificationQuickBtn.classList.add("active");
+        customerNotificationQuickBtn.setAttribute("aria-expanded", "true");
+      }
+      if (openDeals) {
+        renderCustomerQuickDeals();
+        customerDealsQuickPanel.hidden = false;
+        customerDealQuickBtn.classList.add("active");
+        customerDealQuickBtn.setAttribute("aria-expanded", "true");
+      }
     }
 
     async function loadLiveNotifications() {
@@ -25195,6 +25501,10 @@
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
     }
 
+    document.querySelectorAll("[data-quick-icon]").forEach((target) => {
+      target.innerHTML = actionIconMarkup(target.dataset.quickIcon);
+    });
+
     function actionButtonLabel(icon, label) {
       return `${actionIconMarkup(icon)}<span>${label}</span>`;
     }
@@ -25369,6 +25679,7 @@
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
       saveSavedDealPasses();
       if (customerDashboard.classList.contains("show")) renderDashboard();
+      renderCustomerQuickActions();
       showToast(message);
     }
 
@@ -26421,6 +26732,7 @@
         accountBtn.removeAttribute("title");
         closeUtilityMenu();
       }
+      renderCustomerQuickActions();
     }
 
     function restoreLoggedInSessionState() {
@@ -28206,8 +28518,27 @@
       toggleUtilityMenu();
     });
 
+    customerNotificationQuickBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeUtilityMenu();
+      toggleCustomerQuickPanel("notifications");
+    });
+
+    customerDealQuickBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeUtilityMenu();
+      toggleCustomerQuickPanel("deals");
+    });
+
+    customerNotificationsQuickList.addEventListener("click", (event) => {
+      const item = event.target.closest("[data-quick-notification-id]");
+      if (!item) return;
+      markLiveNotificationRead(item.dataset.quickNotificationId);
+    });
+
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".utility-menu")) closeUtilityMenu();
+      if (!event.target.closest(".customer-quick-actions")) closeCustomerQuickPanels();
     });
 
     adminBtn.addEventListener("click", () => {
@@ -28674,6 +29005,7 @@
       if (!toggle) return;
       toggle.classList.toggle("on");
       saveLiveCustomerProfile({ notificationSettings: customerNotificationSettingsPayload() });
+      renderCustomerQuickActions();
     });
 
     customerDashboard.addEventListener("click", (event) => {
