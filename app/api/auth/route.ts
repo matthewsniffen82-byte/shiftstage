@@ -66,6 +66,10 @@ export async function POST(request: Request) {
 
     await upsertAccount(role, data.user.id, email, displayName, city, body);
 
+    if (role === "customer") {
+      return NextResponse.json(await authResponse(data.user.id, role, null, true));
+    }
+
     return NextResponse.json(await authResponse(data.user.id, role, data.session, !data.session));
   } catch (error) {
     return apiError(error, "Unable to authenticate.", 400);

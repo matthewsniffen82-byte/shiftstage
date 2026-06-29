@@ -23233,7 +23233,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Authentication failed");
-      if (data.session) saveAuthSession({ ...data.session, account: data.account || null });
+      if (data.session && payload.mode !== "signup") saveAuthSession({ ...data.session, account: data.account || null });
       return data;
     }
 
@@ -26299,6 +26299,22 @@
       document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
     }
 
+    function openFreshCustomerSignup() {
+      saveAuthSession(null);
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = false;
+      isVenueLoggedIn = false;
+      activeDashboardType = "customer";
+      closeDashboard();
+      closeDancerDashboard();
+      closeVenueDashboard();
+      updateAccountHeader();
+      openAuthRole("customer");
+      setCustomerAuthMode("signup");
+      document.getElementById("customerPassword").value = "";
+      setTimeout(() => document.getElementById("customerName")?.focus(), 80);
+    }
+
     function openDashboard() {
       if (activeDashboardType === "dancer") {
         openDancerDashboard();
@@ -28097,14 +28113,11 @@
     });
 
     document.getElementById("customerSignupBtn").addEventListener("click", () => {
-      setCustomerAuthMode("signup");
-      openAuthRole("customer");
-      setCustomerAuthMode("signup");
+      openFreshCustomerSignup();
     });
 
     document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
-      setCustomerAuthMode("signup");
-      document.getElementById("customerName")?.focus();
+      openFreshCustomerSignup();
     });
 
     document.getElementById("authForm").addEventListener("submit", async (event) => {
