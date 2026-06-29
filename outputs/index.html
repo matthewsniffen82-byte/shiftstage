@@ -23001,6 +23001,20 @@
       "New York": ["Monarch", "Afterglow"]
     };
 
+    function clearCustomerSavedCollections() {
+      Object.keys(markets).forEach((city) => {
+        followedByCity[city] = [];
+        favoritedByCity[city] = [];
+        notifiedByCity[city] = [];
+        followedVenuesByCity[city] = [];
+      });
+    }
+
+    function prepareRealCustomerDashboardState() {
+      if (!isCustomerSession()) return;
+      clearCustomerSavedCollections();
+    }
+
     const notificationOptions = [
       "Followed dancers only",
       "Followed venues only",
@@ -23259,6 +23273,7 @@
           });
           hydrateConfirmedSessionAccount("customer", state).finally(() => {
             resetAccountControl("customer");
+            prepareRealCustomerDashboardState();
             isCustomerLoggedIn = true;
             isDancerLoggedIn = false;
             isVenueLoggedIn = false;
@@ -23773,6 +23788,7 @@
     }
 
     function applyLiveCustomerSaved(saved) {
+      if (isCustomerSession()) clearCustomerSavedCollections();
       (saved?.follows || []).forEach((item) => {
         const match = findProfileBySavedDancer(item);
         if (!match) return;
@@ -26354,6 +26370,16 @@
       }
     }
 
+    function restoreLoggedInSessionState() {
+      const role = authSession?.account?.role;
+      if (!authSession?.accessToken || !role) return;
+      isCustomerLoggedIn = role === "customer";
+      isDancerLoggedIn = role === "dancer";
+      isVenueLoggedIn = role === "venue";
+      activeDashboardType = role === "dancer" ? "dancer" : role === "venue" ? "venue" : "customer";
+      if (role === "customer") prepareRealCustomerDashboardState();
+    }
+
     function closeUtilityMenu() {
       moreMenuPanel.hidden = true;
       accountBtn.classList.remove("active");
@@ -26449,6 +26475,7 @@
         openAuthRole("customer");
         return;
       }
+      prepareRealCustomerDashboardState();
       renderDashboard();
       renderAccountControls();
       customerDashboard.classList.add("show");
@@ -28285,6 +28312,7 @@
           return;
         }
         resetAccountControl("customer");
+        prepareRealCustomerDashboardState();
         isCustomerLoggedIn = true;
         isDancerLoggedIn = false;
         isVenueLoggedIn = false;
@@ -28997,9 +29025,11 @@
     }
 
     installReferenceHomeShell();
+    restoreLoggedInSessionState();
     updateAccountHeader();
     render();
     loadLiveDiscovery(citySelect.value);
+    if (isCustomerSession()) loadLiveCustomerDashboardData();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume) openSharedProfileFromUrl();
   </script>
