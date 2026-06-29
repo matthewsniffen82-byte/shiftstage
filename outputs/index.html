@@ -28576,7 +28576,7 @@
         trending: venueFilter === "all" ? `Trending in ${city}` : `Trending at ${venueFilter}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
-        ? market.venues.find((venue) => venue.name === selectedVenueName)
+        ? resolveVenueByName(selectedVenueName, city)
         : null;
       if (selectedVenue?.hidden) {
         selectedVenueName = null;
@@ -28605,9 +28605,26 @@
       )).join("");
     }
 
+    function resolveVenueByName(venueName, city = citySelect.value) {
+      if (!venueName || !markets[city]) return null;
+      const normalizedName = String(venueName).trim().toLowerCase();
+      const normalizedSlug = slugify(venueName);
+      return markets[city].venues.find((venue) => (
+        venue.name === venueName ||
+        venue.name.toLowerCase() === normalizedName ||
+        venue.slug === normalizedSlug ||
+        slugify(venue.name) === normalizedSlug
+      )) || null;
+    }
+
     function openVenueFromName(venueName) {
       if (!venueName) return;
-      selectedVenueName = venueName;
+      const venue = resolveVenueByName(venueName);
+      if (!venue) {
+        showToast("Venue profile not found");
+        return;
+      }
+      selectedVenueName = venue.name;
       activeTab = "venues";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
       render();
@@ -28851,12 +28868,8 @@
       }
       const venueLink = event.target.closest("[data-open-venue]");
       if (venueLink) {
-        selectedVenueName = venueLink.dataset.openVenue;
-        activeTab = "venues";
-        document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
         closeProfileModal();
-        render();
-        scrollToVenueDetail();
+        openVenueFromName(venueLink.dataset.openVenue);
         return;
       }
       const actionButton = event.target.closest("#followBtn, #favoriteBtn, #notifyBtn, #goingBtn, #reportBtn");
