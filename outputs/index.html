@@ -21991,6 +21991,7 @@
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Customer login</button>
             <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Join now</button>
+            <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
           </form>
           <form class="auth-form" id="dancerLoginForm" data-auth-view="dancer" hidden>
             <div class="auth-form-head">
@@ -26350,7 +26351,15 @@
       if (benefits) benefits.hidden = mode !== "signup";
       const joinButton = document.getElementById("customerJoinNowBtn");
       if (joinButton) joinButton.hidden = mode === "signup";
+      setCustomerAuthStatus("");
       document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
+    }
+
+    function setCustomerAuthStatus(message) {
+      const status = document.getElementById("customerAuthStatus");
+      if (!status) return;
+      status.textContent = message || "";
+      status.hidden = !message;
     }
 
     function openFreshCustomerSignup() {
@@ -28191,6 +28200,7 @@
       event.preventDefault();
       const submit = document.getElementById("authSubmit");
       submit.disabled = true;
+      setCustomerAuthStatus(authMode === "signup" ? "Creating your account..." : "Signing in...");
       try {
         if (authMode === "signup") {
           const password = document.getElementById("customerPassword").value;
@@ -28213,7 +28223,9 @@
           isCustomerLoggedIn = false;
           updateAccountHeader();
           setCustomerAuthMode("signup");
-          showToast("Confirmation email sent. Tap it to open your customer dashboard.");
+          const confirmationMessage = "Confirmation email sent. Open your email, tap the Dancr confirmation link, and you’ll come back to your customer dashboard.";
+          setCustomerAuthStatus(confirmationMessage);
+          showToast(confirmationMessage);
           return;
         }
         resetAccountControl("customer");
@@ -28226,7 +28238,9 @@
         showToast(authMode === "signup" ? "Customer account created" : "Logged in");
         openDashboard();
       } catch (error) {
-        showToast(error.message || "Customer login failed");
+        const message = error.message || "Customer login failed";
+        setCustomerAuthStatus(message);
+        showToast(message);
       } finally {
         submit.disabled = false;
       }
