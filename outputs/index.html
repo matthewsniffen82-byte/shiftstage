@@ -21912,6 +21912,82 @@
         right: -78px;
       }
     }
+
+    @media (max-width: 560px) {
+      header .topbar {
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+
+      header .menu {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+        min-width: 0 !important;
+        width: auto !important;
+      }
+
+      header .utility-menu {
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+      }
+
+      header .dancr-home-logo.logo-image-button,
+      header .brand-home.dancr-home-logo.logo-image-button {
+        width: clamp(150px, 48vw, 198px) !important;
+        max-width: clamp(150px, 48vw, 198px) !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+      }
+
+      header .logo-image-button .mydancr-live-logo {
+        font-size: clamp(31px, 9vw, 42px) !important;
+        letter-spacing: -0.068em !important;
+        white-space: nowrap !important;
+      }
+
+      header .customer-quick-actions {
+        gap: 4px !important;
+      }
+
+      header .customer-quick-btn {
+        width: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        height: 34px !important;
+      }
+
+      header .customer-quick-btn .action-icon {
+        width: 16px !important;
+        height: 16px !important;
+      }
+
+      header #accountBtn,
+      header .dashboard-menu {
+        min-width: 86px !important;
+        max-width: 108px !important;
+        min-height: 42px !important;
+        padding-inline: 11px !important;
+        font-size: clamp(12px, 3.3vw, 14px) !important;
+      }
+    }
+
+    @media (max-width: 374px) {
+      header .dancr-home-logo.logo-image-button,
+      header .brand-home.dancr-home-logo.logo-image-button {
+        width: clamp(136px, 44vw, 164px) !important;
+        max-width: clamp(136px, 44vw, 164px) !important;
+      }
+
+      header #accountBtn,
+      header .dashboard-menu {
+        min-width: 78px !important;
+        max-width: 94px !important;
+        padding-inline: 9px !important;
+      }
+    }
   </style>
 </head>
 <body>
