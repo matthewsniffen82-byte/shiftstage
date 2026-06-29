@@ -22068,6 +22068,86 @@
         0 0 18px rgba(139, 92, 246, 0.30),
         inset 0 0 16px rgba(255, 255, 255, 0.04) !important;
     }
+
+    /* Customer dashboard mobile hard clamp: remove every remaining horizontal overflow source. */
+    @media (max-width: 700px) {
+      #customerDashboard.page-panel {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100dvw !important;
+        max-width: 100dvw !important;
+        justify-content: flex-start !important;
+        overflow-x: clip !important;
+        contain: inline-size;
+      }
+
+      #customerDashboard .page-inner {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding-inline: 16px !important;
+        overflow-x: clip !important;
+        contain: inline-size;
+      }
+
+      #customerDashboard .page-head,
+      #customerDashboard .dashboard-wide,
+      #customerDashboard .dashboard-stats,
+      #customerDashboard .customer-summary,
+      #customerDashboard .customer-summary-actions,
+      #customerDashboard .section-title-row,
+      #customerDashboard .list,
+      #customerDashboard .card-grid,
+      #customerDashboard .customer-venue-list,
+      #customerDashboard .saved-deal-list,
+      #customerDashboard .customer-notification-card,
+      #customerDashboard .toggle-list,
+      #customerDashboard .view-all,
+      #customerDashboard .auth-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: clip !important;
+        box-sizing: border-box !important;
+      }
+
+      #customerDashboard .dashboard-stats,
+      #customerDashboard .customer-summary-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+
+      #customerDashboard .stat,
+      #customerDashboard .ghost,
+      #customerDashboard .locked,
+      #customerDashboard .customer-venue-list .venue-card,
+      #customerDashboard .saved-deal-pass {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      #customerDashboard .stat span,
+      #customerDashboard .locked,
+      #customerDashboard .section-title,
+      #customerDashboard .customer-summary h3,
+      #customerDashboard .customer-summary p {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+      }
+
+      #customerDashboard .locked {
+        justify-content: center !important;
+        text-align: center !important;
+      }
+
+      #customerDashboard #dashTonightList.card-grid,
+      #customerDashboard #dashFollowedList.card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+      }
+    }
   </style>
 </head>
 <body>
