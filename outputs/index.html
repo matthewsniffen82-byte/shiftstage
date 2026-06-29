@@ -22033,6 +22033,42 @@
       }
     }
 
+    header .brand-home.dancr-home-logo.logo-image-button,
+    header .dancr-home-logo.logo-image-button {
+      -webkit-tap-highlight-color: transparent !important;
+      border-radius: 15px !important;
+      clip-path: inset(0 round 15px);
+      overflow: hidden !important;
+      touch-action: manipulation;
+    }
+
+    header .brand-home.dancr-home-logo.logo-image-button::before,
+    header .brand-home.dancr-home-logo.logo-image-button::after,
+    header .dancr-home-logo.logo-image-button::before,
+    header .dancr-home-logo.logo-image-button::after {
+      border-radius: inherit !important;
+    }
+
+    header .brand-home.dancr-home-logo.logo-image-button:focus,
+    header .brand-home.dancr-home-logo.logo-image-button:active,
+    header .dancr-home-logo.logo-image-button:focus,
+    header .dancr-home-logo.logo-image-button:active {
+      outline: none !important;
+      border-radius: 15px !important;
+      clip-path: inset(0 round 15px);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 20px rgba(124, 58, 237, 0.36),
+        0 10px 28px rgba(0, 0, 0, 0.38) !important;
+    }
+
+    header .brand-home.dancr-home-logo.logo-image-button:focus-visible,
+    header .dancr-home-logo.logo-image-button:focus-visible {
+      outline: 2px solid rgba(168, 85, 247, 0.72) !important;
+      outline-offset: 2px !important;
+      border-radius: 15px !important;
+    }
+
     .tabs,
     .tab {
       isolation: isolate !important;
