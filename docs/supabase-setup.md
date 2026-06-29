@@ -50,13 +50,33 @@ That creates:
 
 Set the production site URL to:
 
-`https://dancr.com`
+`https://www.mydancr.com`
 
 Add redirect URLs for:
 
-- `https://dancr.com/auth/callback`
+- `https://www.mydancr.com/auth/callback`
+- `https://mydancr.com/auth/callback`
 - `https://shiftstage.vercel.app/auth/callback`
 - `http://localhost:3000/auth/callback`
+
+### Auth email sender
+
+Use Resend for production confirmation emails so Supabase does not use its limited built-in sender.
+
+1. In Resend, verify the sending domain `mydancr.com`.
+2. Add the DNS records Resend gives you at the domain registrar.
+3. Create a Resend API key.
+4. In Supabase, go to Authentication -> Settings -> SMTP Settings.
+5. Enable custom SMTP and use:
+   - Sender email: `no-reply@mydancr.com`
+   - Sender name: `Mydancr`
+   - Host: `smtp.resend.com`
+   - Port: `465`
+   - Username: `resend`
+   - Password: the Resend API key
+6. Send a test email from Supabase, then test a real customer signup.
+
+If signup says the email rate limit was exceeded, wait for the Supabase rate window to clear, then try again after custom SMTP is enabled.
 
 ## 5. Add Vercel environment variables
 
@@ -74,6 +94,10 @@ The admin monitoring panel also checks:
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_DANCER_MONTHLY_PRICE_ID`
 - OneSignal: `NEXT_PUBLIC_ONESIGNAL_APP_ID`, `ONESIGNAL_REST_API_KEY`
 - Resend: `RESEND_API_KEY`, `EMAIL_FROM`
+
+Use this production email value:
+
+`EMAIL_FROM=Mydancr <no-reply@mydancr.com>`
 
 ## 6. First live features to connect
 
