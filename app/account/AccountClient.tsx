@@ -38,6 +38,28 @@ export default function AccountClient() {
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
 
+  function clearFields() {
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setStageName("");
+    setRealName("");
+    setCity("Las Vegas");
+    setStatus("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }
+
+  function chooseRole(nextRole: AuthRole) {
+    setRole(nextRole);
+    clearFields();
+  }
+
+  function chooseMode(nextMode: AuthMode) {
+    setMode(nextMode);
+    clearFields();
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("");
@@ -122,19 +144,19 @@ export default function AccountClient() {
 
         <form className="account-panel" onSubmit={submit}>
           <div className="segmented" aria-label="Account type">
-            <button className={role === "customer" ? "active" : ""} type="button" onClick={() => setRole("customer")}>
+            <button className={role === "customer" ? "active" : ""} type="button" onClick={() => chooseRole("customer")}>
               Customer
             </button>
-            <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => setRole("dancer")}>
+            <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => chooseRole("dancer")}>
               Dancer
             </button>
           </div>
 
           <div className="segmented" aria-label="Auth mode">
-            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
+            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => chooseMode("login")}>
               Sign in
             </button>
-            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => setMode("signup")}>
+            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => chooseMode("signup")}>
               Create
             </button>
           </div>

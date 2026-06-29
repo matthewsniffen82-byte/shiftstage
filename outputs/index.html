@@ -23180,7 +23180,6 @@
 
       if (role === "customer") {
         state.mode = authMode;
-        state.name = document.getElementById("customerName")?.value || "";
         state.email = document.getElementById("customerEmail")?.value || "";
       }
 
@@ -23270,7 +23269,6 @@
         }
         openAuthRole("customer");
         setCustomerAuthMode(state.mode || "signup");
-        document.getElementById("customerName").value = state.name || "";
         document.getElementById("customerEmail").value = state.email || "";
         showToast("Email confirmed. Sign in to continue where you left off.");
         setTimeout(() => document.getElementById("customerPassword")?.focus(), 80);
@@ -26199,9 +26197,52 @@
       syncOverlayScrollLock();
     }
 
+    function clearAuthFields(scope = "all") {
+      const clearValue = (id, value = "") => {
+        const input = document.getElementById(id);
+        if (input) input.value = value;
+      };
+
+      if (scope === "all" || scope === "customer") {
+        clearValue("customerEmail");
+        clearValue("customerPassword");
+        clearValue("customerConfirmPassword");
+        setCustomerAuthStatus("");
+      }
+
+      if (scope === "all" || scope === "dancer") {
+        clearValue("dancerLoginEmail");
+        clearValue("dancerLoginPassword");
+      }
+
+      if (scope === "all" || scope === "venue") {
+        clearValue("venueLoginName");
+        clearValue("venueLoginEmail");
+        clearValue("venueLoginPassword");
+      }
+
+      document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+        const input = document.getElementById(button.dataset.passwordToggle);
+        if (input) input.type = "password";
+        button.classList.remove("is-visible");
+        button.setAttribute("aria-pressed", "false");
+        button.setAttribute("aria-label", "Show password");
+      });
+    }
+
+    function clearDancerSignupFields() {
+      ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword"].forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) input.value = "";
+      });
+      const dancerCity = document.getElementById("dancerCity");
+      if (dancerCity) dancerCity.value = citySelect.value || "Las Vegas";
+    }
+
     function openAuthRole(role) {
       const isDancer = role === "dancer";
       const isVenue = role === "venue";
+      clearAuthFields(role);
       document.getElementById("authRoleTitle").textContent = isVenue ? "Venue login" : isDancer ? "Dancer login" : "Customer login";
       document.getElementById("authRoleSubtitle").textContent = isVenue
         ? "Manage your venue page, offers, QR claims, shift visibility, and customer interest."
@@ -26217,6 +26258,7 @@
     }
 
     function closeAuthPage() {
+      clearAuthFields("all");
       authPage.classList.remove("show");
       authPage.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
@@ -26254,12 +26296,14 @@
 
     function openDancerSignupPage() {
       closeAuthPage();
+      clearDancerSignupFields();
       dancerSignupPage.classList.add("show");
       dancerSignupPage.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
     }
 
     function closeDancerSignupPage() {
+      clearDancerSignupFields();
       dancerSignupPage.classList.remove("show");
       dancerSignupPage.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
@@ -26633,7 +26677,6 @@
       isVenueLoggedIn = false;
       activeDashboardType = "customer";
       setCustomerAuthMode("signup");
-      document.getElementById("customerName").value = "";
       document.getElementById("customerEmail").value = "";
       updateAccountHeader();
       openAuthPage();
