@@ -1917,6 +1917,50 @@
       box-shadow: inset 0 0 16px rgba(0,0,0,.28);
     }
 
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .password-wrap input {
+      padding-right: 46px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #d8cfeb;
+      background: rgba(255,255,255,.055);
+      cursor: pointer;
+      box-shadow: inset 0 0 10px rgba(255,255,255,.035);
+    }
+
+    .password-toggle:hover,
+    .password-toggle.is-visible {
+      color: #fff;
+      background: rgba(155,92,255,.18);
+      box-shadow: 0 0 16px rgba(155,92,255,.18), inset 0 0 10px rgba(255,255,255,.045);
+    }
+
+    .password-toggle svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .dashboard-stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -21933,7 +21977,21 @@
             </div>
             <div class="field">
               <label for="customerPassword">Password</label>
-              <input id="customerPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+              <div class="password-wrap">
+                <input id="customerPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+                <button class="password-toggle" type="button" data-password-toggle="customerPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+            <div class="field" id="customerConfirmPasswordField" hidden>
+              <label for="customerConfirmPassword">Confirm password</label>
+              <div class="password-wrap">
+                <input id="customerConfirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter password">
+                <button class="password-toggle" type="button" data-password-toggle="customerConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Customer login</button>
             <button class="ghost auth-join-now customer-join-now" id="customerJoinNowBtn" type="button">Join now</button>
@@ -26292,6 +26350,10 @@
       if (nameInput) nameInput.required = mode === "signup";
       const passwordInput = document.getElementById("customerPassword");
       if (passwordInput) passwordInput.autocomplete = mode === "signup" ? "new-password" : "current-password";
+      const confirmField = document.getElementById("customerConfirmPasswordField");
+      const confirmInput = document.getElementById("customerConfirmPassword");
+      if (confirmField) confirmField.hidden = mode !== "signup";
+      if (confirmInput) confirmInput.required = mode === "signup";
       const benefits = document.getElementById("customerSignupBenefits");
       if (benefits) benefits.hidden = mode !== "signup";
       const joinButton = document.getElementById("customerJoinNowBtn");
@@ -26312,6 +26374,7 @@
       openAuthRole("customer");
       setCustomerAuthMode("signup");
       document.getElementById("customerPassword").value = "";
+      document.getElementById("customerConfirmPassword").value = "";
       setTimeout(() => document.getElementById("customerName")?.focus(), 80);
     }
 
@@ -28120,11 +28183,30 @@
       openFreshCustomerSignup();
     });
 
+    document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.passwordToggle);
+        if (!input) return;
+        const isVisible = input.type === "text";
+        input.type = isVisible ? "password" : "text";
+        button.classList.toggle("is-visible", !isVisible);
+        button.setAttribute("aria-pressed", String(!isVisible));
+        button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
+      });
+    });
+
     document.getElementById("authForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = document.getElementById("authSubmit");
       submit.disabled = true;
       try {
+        if (authMode === "signup") {
+          const password = document.getElementById("customerPassword").value;
+          const confirmPassword = document.getElementById("customerConfirmPassword").value;
+          if (password !== confirmPassword) {
+            throw new Error("Passwords do not match.");
+          }
+        }
         const payload = {
           mode: authMode,
           role: "customer",

@@ -27,18 +27,27 @@ export default function AccountClient() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [stageName, setStageName] = useState("");
   const [realName, setRealName] = useState("");
   const [city, setCity] = useState("Las Vegas");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("");
+
+    if (mode === "signup" && role === "customer" && password !== confirmPassword) {
+      setStatus("Passwords do not match.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const payload: Record<string, string> = { mode, role, email, password, city };
@@ -171,14 +180,52 @@ export default function AccountClient() {
           </label>
           <label>
             Password
-            <input
-              type="password"
-              minLength={6}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
+            <span className="password-control">
+              <input
+                type={showPassword ? "text" : "password"}
+                minLength={6}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              <button
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </span>
           </label>
+          {mode === "signup" && role === "customer" ? (
+            <label>
+              Confirm password
+              <span className="password-control">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  required
+                />
+                <button
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  aria-pressed={showConfirmPassword}
+                  type="button"
+                  onClick={() => setShowConfirmPassword((value) => !value)}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+              </span>
+            </label>
+          ) : null}
           {mode === "signup" ? (
             <label>
               City
@@ -217,6 +264,11 @@ function AccountStyles() {
       .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
       label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
+      .password-control { position: relative; display: flex; align-items: center; }
+      .password-control input { width: 100%; padding-right: 46px; }
+      .password-control button { position: absolute; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #d8cfeb; background: rgba(255,255,255,.055); cursor: pointer; }
+      .password-control button[aria-pressed="true"], .password-control button:hover { color: #fff; background: rgba(155,92,255,.18); box-shadow: 0 0 16px rgba(155,92,255,.18); }
+      .password-control svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .submit { background: #f7f2ff; color: #090911; margin-top: 4px; }
       .submit:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
