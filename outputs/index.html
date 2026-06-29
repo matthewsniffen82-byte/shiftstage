@@ -22232,6 +22232,59 @@
         grid-column: 1 / -1 !important;
       }
     }
+
+    /* Mobile discovery tabs: floating pills only, no visible rectangular tray. */
+    @media (max-width: 899px) {
+      .tabs {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        outline: 0 !important;
+        padding: 8px 0 10px !important;
+        gap: 8px !important;
+        overflow: visible !important;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .tabs .tab {
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        border-radius: 999px !important;
+        border: 1px solid rgba(139, 92, 246, 0.22) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+          #202024 !important;
+        box-shadow:
+          inset 0 0 14px rgba(255, 255, 255, 0.025),
+          0 10px 24px rgba(0, 0, 0, 0.28) !important;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+
+      .tabs .tab::before,
+      .tabs .tab::after {
+        border-radius: inherit;
+      }
+
+      .tabs .tab:focus,
+      .tabs .tab:focus-visible,
+      .tabs .tab:active {
+        outline: 0 !important;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .tabs .tab.active {
+        border-color: rgba(139, 92, 246, 0.72) !important;
+        background:
+          radial-gradient(circle at 18% 18%, rgba(168, 85, 247, 0.34), transparent 0 58%),
+          linear-gradient(135deg, #4b08c8 0%, #5415bf 48%, #32106f 100%) !important;
+        box-shadow:
+          0 0 18px rgba(139, 92, 246, 0.42),
+          0 14px 30px rgba(0, 0, 0, 0.38),
+          inset 0 0 14px rgba(255, 255, 255, 0.075) !important;
+      }
+    }
   </style>
 </head>
 <body>
