@@ -77,7 +77,8 @@ export default function AccountClient() {
       payload.realName = realName;
     }
     if (mode === "signup" && typeof window !== "undefined") {
-      payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1`;
+      const returnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
+      payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`;
     }
 
     try {

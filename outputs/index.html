@@ -23251,7 +23251,8 @@
 
       store[token] = state;
       writeAuthResumeStore(store);
-      return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}`;
+      const destination = role === "dancer" ? "/dashboard/dancer" : role === "venue" ? "/dashboard/venue" : "/dashboard/customer";
+      return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(destination)}`;
     }
 
     function takeAuthResume(token) {
@@ -23264,15 +23265,48 @@
       return state || null;
     }
 
+    function openConfirmedSessionDashboard(role, state = {}) {
+      const dashboardRole = role === "dancer" || role === "venue" ? role : "customer";
+      saveAuthSession({
+        ...authSession,
+        account: {
+          ...(authSession?.account || {}),
+          role: dashboardRole,
+          displayName: state.name || state.stageName || state.email || authSession?.account?.displayName || null,
+          accountState: "active"
+        }
+      });
+      return hydrateConfirmedSessionAccount(dashboardRole, state).finally(() => {
+        resetAccountControl(dashboardRole);
+        isCustomerLoggedIn = dashboardRole === "customer";
+        isDancerLoggedIn = dashboardRole === "dancer";
+        isVenueLoggedIn = dashboardRole === "venue";
+        activeDashboardType = dashboardRole;
+        if (dashboardRole === "customer") {
+          prepareRealCustomerDashboardState();
+          loadLiveCustomerDashboardData();
+        }
+        updateAccountHeader();
+        showToast("Email confirmed. Welcome back to Mydancr.");
+        openDashboard();
+      });
+    }
+
     function restoreAuthConfirmationResume() {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("resume");
-      if (!token) return false;
-
-      const state = takeAuthResume(token);
+      const roleHint = params.get("role");
       const confirmedSession = readConfirmationSessionFromUrl();
+      if (!token && !confirmedSession?.accessToken) return false;
+
+      const state = token ? takeAuthResume(token) : null;
       window.history.replaceState({}, document.title, "/");
       if (!state) {
+        if (confirmedSession?.accessToken) {
+          saveAuthSession(confirmedSession);
+          openConfirmedSessionDashboard(confirmedSession.account?.role || roleHint || "customer");
+          return true;
+        }
         showToast("Email confirmed. Please sign in to continue.");
         openAuthRole("customer");
         return true;
@@ -23300,26 +23334,8 @@
         setTimeout(() => document.getElementById("venueLoginPassword")?.focus(), 80);
       } else {
         if (confirmedSession?.accessToken) {
-          saveAuthSession({
-            ...confirmedSession,
-            account: {
-              role: "customer",
-              displayName: state.name || state.email || null,
-              accountState: "active"
-            }
-          });
-          hydrateConfirmedSessionAccount("customer", state).finally(() => {
-            resetAccountControl("customer");
-            prepareRealCustomerDashboardState();
-            isCustomerLoggedIn = true;
-            isDancerLoggedIn = false;
-            isVenueLoggedIn = false;
-            activeDashboardType = "customer";
-            updateAccountHeader();
-            showToast("Email confirmed. Welcome to your customer dashboard.");
-            loadLiveCustomerDashboardData();
-            openDashboard();
-          });
+          saveAuthSession(confirmedSession);
+          openConfirmedSessionDashboard("customer", state);
           return true;
         }
         openAuthRole("customer");
