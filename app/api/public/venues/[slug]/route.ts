@@ -57,7 +57,10 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 function formatPublicShiftStart(startsAt: string) {
-  return `Starts at ${new Intl.DateTimeFormat("en-US", {
+  return `Starts ${new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,

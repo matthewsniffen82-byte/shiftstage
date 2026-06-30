@@ -268,18 +268,32 @@ async function getCityTimeZone(client: DancrClient, city: string) {
 }
 
 function formatShiftLabel(shift: any): string {
-  const startsAt = formatPublicShiftStart(shift.starts_at);
+  const startTime = formatPublicShiftStartTime(shift.starts_at);
   const startMs = new Date(shift.starts_at).getTime();
   const isCheckedIn = publicLocationStatus(shift) !== "self_reported";
 
-  if (isCheckedIn) return `Working Now · Started at ${startsAt}`;
-  if (startMs > Date.now()) return `Starts at ${startsAt}`;
+  if (isCheckedIn) return `Working Now · Started at ${startTime}`;
+  if (startMs > Date.now()) return `Starts ${formatPublicShiftStartDate(shift.starts_at)}`;
   return "Working Now";
 }
 
-function formatPublicShiftStart(startsAt: string): string {
+function formatPublicShiftStartTime(startsAt: string): string {
   const start = new Date(startsAt);
   const formatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return formatter.format(start);
+}
+
+function formatPublicShiftStartDate(startsAt: string): string {
+  const start = new Date(startsAt);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,

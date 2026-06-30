@@ -26168,7 +26168,8 @@
       if (profile && isWorkingTonight(profile) && profile.scheduled) {
         return isCheckedInShift(profile) ? `Working Now · Started at ${start}` : "Working Now";
       }
-      return `Starts at ${start}`;
+      const dateLabel = profile?.shiftLabel || (profile?.tonight ? "Tonight" : "");
+      return dateLabel ? `Starts ${dateLabel} at ${start}` : `Starts at ${start}`;
     }
 
     function compactCardShiftTime(timeValue) {
