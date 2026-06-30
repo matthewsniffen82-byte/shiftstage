@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const { data, error } = await (client as any)
       .from("shifts")
-      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, working_status, commission_tracking_started_at, commission_tracking_stopped_at, still_working_prompted_at, still_working_confirmed_at, still_working_expires_at, extended_ends_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
+      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
       .eq("dancer_id", dancer.id)
       .order("starts_at", { ascending: false })
       .limit(25);
@@ -114,18 +114,6 @@ export async function PATCH(request: Request) {
     }
     if (typeof body.commissionTrackingStoppedAt === "string" || body.commissionTrackingStoppedAt === null) {
       update.commission_tracking_stopped_at = body.commissionTrackingStoppedAt;
-    }
-    if (typeof body.stillWorkingPromptedAt === "string" || body.stillWorkingPromptedAt === null) {
-      update.still_working_prompted_at = body.stillWorkingPromptedAt;
-    }
-    if (typeof body.stillWorkingConfirmedAt === "string" || body.stillWorkingConfirmedAt === null) {
-      update.still_working_confirmed_at = body.stillWorkingConfirmedAt;
-    }
-    if (typeof body.stillWorkingExpiresAt === "string" || body.stillWorkingExpiresAt === null) {
-      update.still_working_expires_at = body.stillWorkingExpiresAt;
-    }
-    if (typeof body.extendedEndsAt === "string" || body.extendedEndsAt === null) {
-      update.extended_ends_at = body.extendedEndsAt;
     }
     if (typeof body.endedAt === "string" || body.endedAt === null) update.ended_at = body.endedAt;
     if (typeof body.endedReason === "string" || body.endedReason === null) update.ended_reason = body.endedReason;

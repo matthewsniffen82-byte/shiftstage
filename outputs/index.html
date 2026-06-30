@@ -23895,9 +23895,6 @@
     let setupChecklistExpanded = false;
     let lastPostedShift = null;
     const SHIFT_EARLY_CHECKIN_MINUTES = 120;
-    const SHIFT_CONFIRMATION_GRACE_MINUTES = 30;
-    const SHIFT_EXTENSION_WARNING_MINUTES = 30;
-    const SHIFT_MAX_HOURS = 12;
     const dancerSetup = {
       profile: false,
       photos: false,
@@ -24754,10 +24751,6 @@
         workingStatus: item.workingStatus || item.working_status || "self_reported",
         commissionTrackingStartedAt: item.commissionTrackingStartedAt || item.commission_tracking_started_at || "",
         commissionTrackingStoppedAt: item.commissionTrackingStoppedAt || item.commission_tracking_stopped_at || "",
-        stillWorkingPromptedAt: item.stillWorkingPromptedAt || item.still_working_prompted_at || "",
-        stillWorkingConfirmedAt: item.stillWorkingConfirmedAt || item.still_working_confirmed_at || "",
-        stillWorkingExpiresAt: item.stillWorkingExpiresAt || item.still_working_expires_at || "",
-        extendedEndsAt: item.extendedEndsAt || item.extended_ends_at || "",
         endedAt: item.endedAt || item.ended_at || "",
         endedReason: item.endedReason || item.ended_reason || "",
         shiftSummary: item.shiftSummary || item.shift_summary || null
@@ -26902,19 +26895,13 @@
 
     function shiftWindowForProfile(profile, city = activeDancerCity()) {
       if (!profile) return null;
-      if (profile.shiftStartsAt && (profile.extendedEndsAt || profile.shiftEndsAt)) {
+      if (profile.shiftStartsAt && profile.shiftEndsAt) {
         const start = new Date(profile.shiftStartsAt);
-        const end = new Date(profile.extendedEndsAt || profile.shiftEndsAt);
+        const end = new Date(profile.shiftEndsAt);
         if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) return { start, end };
       }
       const dateValue = profile.shiftDate || todayValue(city);
       return shiftWindowForDate(profile, dateValue);
-    }
-
-    function shiftHours(profile, city = activeDancerCity()) {
-      const window = shiftWindowForProfile(profile, city);
-      if (!window) return 0;
-      return Math.max(0, (window.end.getTime() - window.start.getTime()) / 3600000);
     }
 
     function isCheckedInShift(profile) {
@@ -26938,35 +26925,6 @@
       if (!window) return false;
       const now = new Date();
       return now >= window.start && now <= window.end;
-    }
-
-    function shiftNeedsMidConfirmation(profile, city = activeDancerCity()) {
-      if (!isCheckedInShift(profile) || shiftHours(profile, city) <= 4) return false;
-      if (profile.stillWorkingConfirmedAt || profile.endedAt) return false;
-      const window = shiftWindowForProfile(profile, city);
-      if (!window) return false;
-      const now = new Date();
-      const halfway = new Date(window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2);
-      const expiresAt = new Date(halfway.getTime() + SHIFT_CONFIRMATION_GRACE_MINUTES * 60000);
-      return now >= halfway && now <= expiresAt;
-    }
-
-    function shiftMissedMidConfirmation(profile, city = activeDancerCity()) {
-      if (!isCheckedInShift(profile) || shiftHours(profile, city) <= 4) return false;
-      if (profile.stillWorkingConfirmedAt || profile.endedAt) return false;
-      const window = shiftWindowForProfile(profile, city);
-      if (!window) return false;
-      const halfway = new Date(window.start.getTime() + (window.end.getTime() - window.start.getTime()) / 2);
-      return new Date() > new Date(halfway.getTime() + SHIFT_CONFIRMATION_GRACE_MINUTES * 60000);
-    }
-
-    function shiftNeedsExtension(profile, city = activeDancerCity()) {
-      if (!isCheckedInShift(profile) || profile.endedAt) return false;
-      const window = shiftWindowForProfile(profile, city);
-      if (!window) return false;
-      const now = new Date();
-      const warningAt = new Date(window.end.getTime() - SHIFT_EXTENSION_WARNING_MINUTES * 60000);
-      return now >= warningAt && now <= window.end;
     }
 
     function shiftAutoEnded(profile, city = activeDancerCity()) {
@@ -27003,15 +26961,10 @@
         workingStatus: patch.working_status ?? patch.workingStatus ?? profile.workingStatus,
         commissionTrackingStartedAt: patch.commission_tracking_started_at ?? patch.commissionTrackingStartedAt ?? profile.commissionTrackingStartedAt,
         commissionTrackingStoppedAt: patch.commission_tracking_stopped_at ?? patch.commissionTrackingStoppedAt ?? profile.commissionTrackingStoppedAt,
-        stillWorkingPromptedAt: patch.still_working_prompted_at ?? patch.stillWorkingPromptedAt ?? profile.stillWorkingPromptedAt,
-        stillWorkingConfirmedAt: patch.still_working_confirmed_at ?? patch.stillWorkingConfirmedAt ?? profile.stillWorkingConfirmedAt,
-        stillWorkingExpiresAt: patch.still_working_expires_at ?? patch.stillWorkingExpiresAt ?? profile.stillWorkingExpiresAt,
-        extendedEndsAt: patch.extended_ends_at ?? patch.extendedEndsAt ?? profile.extendedEndsAt,
         endedAt: patch.ended_at ?? patch.endedAt ?? profile.endedAt,
         endedReason: patch.ended_reason ?? patch.endedReason ?? profile.endedReason,
         shiftSummary: patch.shift_summary ?? patch.shiftSummary ?? profile.shiftSummary
       });
-      if (profile.extendedEndsAt) profile.shiftEndsAt = profile.extendedEndsAt;
       profile.tonight = isWorkingTonight(profile, activeDancerCity());
     }
 
@@ -27038,22 +26991,6 @@
         panel.innerHTML = "";
         return;
       }
-      if (shiftMissedMidConfirmation(profile)) {
-        const summary = shiftSummaryForProfile(profile, "missed_confirmation");
-        applyShiftState(profile, {
-          workingStatus: "ended",
-          locationStatus: "self_reported",
-          checkedOutAt: new Date().toISOString(),
-          endedAt: new Date().toISOString(),
-          endedReason: "missed_confirmation",
-          commissionTrackingStoppedAt: new Date().toISOString(),
-          shiftSummary: summary
-        });
-        patchAuthenticatedJson("/api/dancer/shifts/check-in", {
-          shiftId: profile.shiftId,
-          action: "auto_end"
-        }).catch(() => {});
-      }
       if (shiftAutoEnded(profile)) {
         const summary = shiftSummaryForProfile(profile, "automatic");
         applyShiftState(profile, {
@@ -27075,11 +27012,9 @@
       const ended = profile.workingStatus === "ended" || profile.endedAt;
       const statusLabel = ended ? "Shift Ended" : checkedIn ? "Checked In" : "Self-Reported";
       const canCheckIn = !checkedIn && !ended && checkInWindowOpen(profile);
-      const midConfirm = shiftNeedsMidConfirmation(profile);
-      const extensionDue = shiftNeedsExtension(profile);
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
       const statusCopy = ended
-        ? "We didn't receive confirmation that you were still working, or the shift has ended. If you're still working, check in again from the venue."
+        ? "This shift has ended. QR commission tracking is stopped."
         : checkedIn
           ? "QR commission tracking is active while you remain checked in for this scheduled shift."
           : "Check in from the venue during your shift window to appear in Working Now and start QR commission tracking.";
@@ -27094,29 +27029,7 @@
         <div class="shift-action-grid">
           ${canCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check In</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
-          ${ended ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in-again">Check In Again</button><button class="mini-action" type="button" data-shift-verify-action="close-summary">Close</button>' : ""}
         </div>
-        ${midConfirm ? `
-          <div class="shift-bottom-sheet">
-            <strong>Still working?</strong>
-            <div class="shift-verification-copy">Confirm from the venue to keep Working Now and QR commission tracking active.</div>
-            <div class="shift-action-grid">
-              <button class="mini-action primary" type="button" data-shift-verify-action="still-working">Yes, Still Working</button>
-              <button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>
-            </div>
-          </div>
-        ` : ""}
-        ${extensionDue ? `
-          <div class="shift-bottom-sheet">
-            <strong>Your shift ends in 30 minutes.</strong>
-            <div class="shift-action-grid">
-              <button class="mini-action soft" type="button" data-shift-verify-action="extend" data-minutes="30">+30 Minutes</button>
-              <button class="mini-action soft" type="button" data-shift-verify-action="extend" data-minutes="60">+1 Hour</button>
-              <button class="mini-action soft" type="button" data-shift-verify-action="extend" data-minutes="120">+2 Hours</button>
-              <button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>
-            </div>
-          </div>
-        ` : ""}
         ${summary ? `
           <div class="shift-bottom-sheet">
             <strong>✓ Shift Completed</strong>
@@ -27136,11 +27049,6 @@
       const profile = activeDancerProfile();
       if (!profile?.shiftId) return;
       try {
-        if (action === "close-summary") {
-          profile.shiftSummary = null;
-          renderShiftVerificationPanel();
-          return;
-        }
         if (action === "end") {
           const endedAt = new Date().toISOString();
           applyShiftState(profile, {
@@ -27155,49 +27063,15 @@
           const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
           if (data?.shift) applyShiftState(profile, data.shift);
           showToast("Shift ended");
-        } else {
+        } else if (action === "check-in") {
           const coords = await requestShiftPosition();
-          if (action === "check-in") {
-            const data = await postAuthenticatedJson("/api/dancer/shifts/check-in", {
-              shiftId: profile.shiftId,
-              latitude: coords.latitude,
-              longitude: coords.longitude
-            });
-            if (data?.shift) applyShiftState(profile, data.shift);
-            showToast("Checked in");
-          }
-          if (action === "still-working") {
-            const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", {
-              shiftId: profile.shiftId,
-              action: "still_working",
-              latitude: coords.latitude,
-              longitude: coords.longitude
-            });
-            if (data?.shift) applyShiftState(profile, data.shift);
-            showToast("Still working confirmed");
-          }
-          if (action === "extend") {
-            const minutes = Number(trigger?.dataset?.minutes || 30);
-            const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", {
-              shiftId: profile.shiftId,
-              action: "extend",
-              minutes,
-              latitude: coords.latitude,
-              longitude: coords.longitude
-            });
-            if (data?.shift) applyShiftState(profile, data.shift);
-            showToast("Shift extended");
-          }
-          if (action === "check-in-again") {
-            const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", {
-              shiftId: profile.shiftId,
-              action: "check_in_again",
-              latitude: coords.latitude,
-              longitude: coords.longitude
-            });
-            if (data?.shift) applyShiftState(profile, data.shift);
-            showToast("Checked in again");
-          }
+          const data = await postAuthenticatedJson("/api/dancer/shifts/check-in", {
+            shiftId: profile.shiftId,
+            latitude: coords.latitude,
+            longitude: coords.longitude
+          });
+          if (data?.shift) applyShiftState(profile, data.shift);
+          showToast("Checked in");
         }
       } catch (error) {
         showToast(error.message || "Could not update shift");
@@ -27437,10 +27311,6 @@
         workingStatus: existing?.workingStatus || "self_reported",
         commissionTrackingStartedAt: existing?.commissionTrackingStartedAt || "",
         commissionTrackingStoppedAt: existing?.commissionTrackingStoppedAt || "",
-        stillWorkingPromptedAt: existing?.stillWorkingPromptedAt || "",
-        stillWorkingConfirmedAt: existing?.stillWorkingConfirmedAt || "",
-        stillWorkingExpiresAt: existing?.stillWorkingExpiresAt || "",
-        extendedEndsAt: existing?.extendedEndsAt || "",
         endedAt: existing?.endedAt || "",
         endedReason: existing?.endedReason || "",
         shiftSummary: existing?.shiftSummary || null,
