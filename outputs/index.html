@@ -25777,8 +25777,8 @@
 
     function profileLocationStatusLabel(profile) {
       if (profile?.locationStatus === "club_confirmed") return "Club Confirmed";
-      if (profile?.locationStatus === "location_confirmed") return "Location Confirmed";
-      if (profile?.checkedInAt && !profile?.checkedOutAt) return "Location Confirmed";
+      if (profile?.locationStatus === "location_confirmed") return "Checked in";
+      if (profile?.checkedInAt && !profile?.checkedOutAt) return "Checked in";
       return "";
     }
 

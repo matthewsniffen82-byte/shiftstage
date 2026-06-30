@@ -733,7 +733,7 @@ function DancerShiftPanel({ city }: { city: string }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check in.");
-      setStatus("Location Confirmed.");
+      setStatus("Checked in.");
       await loadShifts(session.accessToken);
     } catch (error) {
       if ((error as any)?.code === 1) {
@@ -877,7 +877,7 @@ function dashboardShiftStatus(shift: Record<string, any>) {
   if (shift.checked_out_at) return "Checked Out";
   if (shift.location_status === "club_confirmed") return "Club Confirmed";
   if (shift.location_status === "location_confirmed" && shift.checked_in_at && new Date(shift.ends_at).getTime() >= Date.now()) {
-    return "Location Confirmed";
+    return "Checked in";
   }
   return "Self-Reported";
 }
