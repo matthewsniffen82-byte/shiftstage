@@ -22705,7 +22705,7 @@
                 <li>See who you follow working now</li>
                 <li>Keep alerts, favorites, and directions in one place</li>
               </ul>
-              <div class="rule-note">After you create the account, Dancr sends a confirmation email. Tap the email link and you’ll return to your customer dashboard.</div>
+              <div class="rule-note">After you create the account, Dancr sends a confirmation email. Tap the email link and you’ll return to the homepage signed in.</div>
             </div>
             <div class="field">
               <label for="customerEmail">Email</label>
@@ -23936,7 +23936,7 @@
       } catch (error) {}
     }
 
-    function saveAuthResume(role) {
+    function saveAuthResume(role, returnTo = "") {
       const token = authResumeToken();
       const store = readAuthResumeStore();
       const state = {
@@ -23967,7 +23967,7 @@
 
       store[token] = state;
       writeAuthResumeStore(store);
-      const destination = role === "dancer" ? "/dashboard/dancer" : role === "venue" ? "/dashboard/venue" : "/dashboard/customer";
+      const destination = returnTo || (role === "dancer" ? "/dashboard/dancer" : role === "venue" ? "/dashboard/venue" : "/dashboard/customer");
       return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(destination)}`;
     }
 
@@ -24003,6 +24003,13 @@
           loadLiveCustomerDashboardData();
         }
         updateAccountHeader();
+        if (dashboardRole === "customer") {
+          closeDashboard();
+          closeAuthPage();
+          showToast("Email confirmed. You're signed in.");
+          window.scrollTo({ top: 0, behavior: "auto" });
+          return;
+        }
         showToast("Email confirmed. Welcome back to Mydancr.");
         openDashboard();
       });
@@ -27376,7 +27383,7 @@
 
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
-      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Customer";
+      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Dashboard";
       dashboardBtn.hidden = !loggedIn;
       logoutBtn.hidden = !loggedIn;
       document.getElementById("loginCustomerOption").hidden = loggedIn;
@@ -27445,7 +27452,7 @@
       const formHead = document.querySelector(".customer-form-head span");
       if (formHead) {
         formHead.textContent = mode === "signup"
-          ? "Create a free private customer account. Confirm your email, then your dashboard opens."
+          ? "Create a free private customer account. Confirm your email, then return to the homepage signed in."
           : "Free account. No public profile, follows, or going list.";
       }
       const passwordInput = document.getElementById("customerPassword");
@@ -29377,14 +29384,14 @@
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
         };
-        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer");
+        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/");
         const result = await requestAuth(payload);
         if (authMode === "signup") {
           saveAuthSession(null);
           isCustomerLoggedIn = false;
           updateAccountHeader();
           setCustomerAuthMode("signup");
-          const confirmationMessage = "Confirmation email sent. Open your email, tap the Dancr confirmation link, and you’ll come back to your customer dashboard.";
+          const confirmationMessage = "Confirmation email sent. Open your email, tap the Mydancr confirmation link, and you’ll come back to the homepage signed in.";
           setCustomerAuthStatus(confirmationMessage);
           showToast(confirmationMessage);
           return;

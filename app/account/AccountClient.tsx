@@ -78,7 +78,7 @@ export default function AccountClient() {
       payload.realName = realName;
     }
     if (mode === "signup" && typeof window !== "undefined") {
-      const returnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
+      const returnTo = role === "dancer" ? "/dashboard/dancer" : "/";
       payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`;
     }
 
@@ -94,7 +94,7 @@ export default function AccountClient() {
       if (mode === "signup") {
         setStatus(
           role === "customer"
-            ? "Check your email to confirm the account. After confirmation, Dancr will open your customer dashboard."
+            ? "Check your email to confirm the account. After confirmation, Dancr will open the homepage signed in."
             : "Check your email to confirm the account before continuing.",
         );
         window.localStorage.removeItem(SESSION_KEY);
@@ -209,7 +209,7 @@ export default function AccountClient() {
                   <li>See who you follow working now.</li>
                   <li>Keep alerts, favorites, and directions in one place.</li>
                 </ul>
-                <p>Confirm your email, then Dancr opens your customer dashboard.</p>
+                <p>Confirm your email, then Dancr opens the homepage signed in.</p>
               </section>
             </>
           ) : null}
