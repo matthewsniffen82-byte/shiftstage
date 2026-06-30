@@ -271,6 +271,7 @@
       background: rgba(6,6,9,.94);
       box-shadow: 0 24px 60px rgba(0,0,0,.58), 0 0 24px rgba(155,92,255,.14), inset 0 0 16px rgba(255,255,255,.025);
       backdrop-filter: blur(18px) saturate(125%);
+      animation: utilityMenuIn .16s ease both;
     }
 
     .utility-menu-panel[hidden] {
@@ -300,6 +301,22 @@
       box-shadow: 0 0 18px rgba(155,92,255,.16);
     }
 
+    .utility-menu-item:active {
+      transform: translateY(0);
+      background: rgba(52,34,78,.92);
+    }
+
+    @keyframes utilityMenuIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .icon-menu-btn.active {
       border-color: rgba(192,132,255,.58);
       background: rgba(35,23,52,.82);
@@ -310,6 +327,84 @@
       border-color: rgba(192,132,255,.58);
       background: rgba(35,23,52,.82);
       box-shadow: 0 0 20px rgba(155,92,255,.2), inset 0 0 14px rgba(192,132,255,.08);
+    }
+
+    #accountBtn.account-icon-btn {
+      width: 44px;
+      min-width: 44px;
+      max-width: 44px;
+      height: 44px;
+      min-height: 44px;
+      padding: 0;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(10,10,14,.88);
+      border-color: rgba(139,92,246,.52);
+      box-shadow: 0 0 20px rgba(124,58,237,.18), inset 0 0 16px rgba(255,255,255,.035);
+      -webkit-tap-highlight-color: transparent;
+      clip-path: inset(0 round 999px);
+      overflow: hidden;
+    }
+
+    #accountBtn.account-icon-btn .account-icon {
+      width: 20px;
+      height: 20px;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,.18));
+    }
+
+    #accountBtn.account-icon-btn:hover,
+    #accountBtn.account-icon-btn.active {
+      transform: translateY(-1px);
+      border-color: rgba(168,85,247,.78);
+      background: rgba(16,13,22,.94);
+      box-shadow: 0 0 22px rgba(124,58,237,.28), inset 0 0 16px rgba(168,85,247,.08);
+    }
+
+    .account-tooltip {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      z-index: 45;
+      width: max-content;
+      max-width: 210px;
+      padding: 10px 12px;
+      border: 1px solid rgba(168,85,247,.66);
+      border-radius: 14px;
+      color: #fff;
+      background: rgba(4,4,7,.97);
+      box-shadow: 0 18px 42px rgba(0,0,0,.62), 0 0 22px rgba(124,58,237,.22);
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.2;
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .account-tooltip::before {
+      content: "";
+      position: absolute;
+      top: -6px;
+      right: 16px;
+      width: 10px;
+      height: 10px;
+      border-left: 1px solid rgba(168,85,247,.66);
+      border-top: 1px solid rgba(168,85,247,.66);
+      background: rgba(4,4,7,.97);
+      transform: rotate(45deg);
+    }
+
+    .account-tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .icon {
@@ -22408,6 +22503,23 @@
         outline: 0 !important;
         -webkit-tap-highlight-color: transparent !important;
       }
+
+      header #accountBtn.account-icon-btn {
+        width: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0 !important;
+        font-size: 0 !important;
+        border-radius: 999px !important;
+        clip-path: inset(0 round 999px);
+      }
+
+      header #accountBtn.account-icon-btn .account-icon {
+        width: 18px;
+        height: 18px;
+      }
     }
   </style>
 </head>
@@ -22447,6 +22559,7 @@
               <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
             </div>
+            <button class="account-tooltip" id="accountTooltip" type="button" hidden>Manage your account here.</button>
           </div>
         </div>
       </div>
@@ -23624,6 +23737,7 @@
     const adminDashboard = document.getElementById("adminDashboard");
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
+    const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
     const adminBtn = document.getElementById("adminBtn");
     const moreMenuPanel = document.getElementById("moreMenuPanel");
@@ -23916,6 +24030,8 @@
     }
 
     const authResumeStorageKey = "dancrAuthResumeV1";
+    const accountTooltipStorageKey = "dancrAccountTooltipDismissedV1";
+    let accountTooltipTimer = 0;
 
     function authResumeToken() {
       if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
@@ -23934,6 +24050,40 @@
       try {
         localStorage.setItem(authResumeStorageKey, JSON.stringify(store));
       } catch (error) {}
+    }
+
+    function accountIconMarkup() {
+      return `<svg class="account-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>`;
+    }
+
+    function dismissAccountTooltip() {
+      if (!accountTooltip) return;
+      accountTooltip.classList.remove("show");
+      accountTooltip.hidden = true;
+      if (accountTooltipTimer) window.clearTimeout(accountTooltipTimer);
+      accountTooltipTimer = 0;
+      try {
+        localStorage.setItem(accountTooltipStorageKey, "1");
+      } catch (error) {}
+    }
+
+    function hideAccountTooltip() {
+      if (!accountTooltip) return;
+      accountTooltip.classList.remove("show");
+      accountTooltip.hidden = true;
+      if (accountTooltipTimer) window.clearTimeout(accountTooltipTimer);
+      accountTooltipTimer = 0;
+    }
+
+    function maybeShowAccountTooltip(role) {
+      if (!accountTooltip || (role !== "customer" && role !== "dancer")) return;
+      try {
+        if (localStorage.getItem(accountTooltipStorageKey) === "1") return;
+      } catch (error) {}
+      accountTooltip.hidden = false;
+      window.requestAnimationFrame(() => accountTooltip.classList.add("show"));
+      if (accountTooltipTimer) window.clearTimeout(accountTooltipTimer);
+      accountTooltipTimer = window.setTimeout(dismissAccountTooltip, 5000);
     }
 
     function saveAuthResume(role, returnTo = "") {
@@ -24003,6 +24153,7 @@
           loadLiveCustomerDashboardData();
         }
         updateAccountHeader();
+        maybeShowAccountTooltip(dashboardRole);
         if (dashboardRole === "customer") {
           closeDashboard();
           closeAuthPage();
@@ -27383,20 +27534,22 @@
 
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
-      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Dashboard";
+      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Customer";
       dashboardBtn.hidden = !loggedIn;
       logoutBtn.hidden = !loggedIn;
       document.getElementById("loginCustomerOption").hidden = loggedIn;
       document.getElementById("loginDancerOption").hidden = loggedIn;
       document.getElementById("loginVenueOption").hidden = loggedIn;
       accountBtn.hidden = false;
-      accountBtn.textContent = loggedIn ? role : "Login / Join";
-      accountBtn.setAttribute("aria-label", loggedIn ? `${role} account menu` : "Login or join");
+      accountBtn.classList.toggle("account-icon-btn", loggedIn);
+      accountBtn.innerHTML = loggedIn ? accountIconMarkup() : "Login / Join";
+      accountBtn.setAttribute("aria-label", loggedIn ? "Account menu" : "Login or join");
       if (loggedIn) {
-        accountBtn.title = `${role} logged in`;
+        accountBtn.title = `${role} account`;
       } else {
         accountBtn.removeAttribute("title");
         closeUtilityMenu();
+        hideAccountTooltip();
       }
       renderCustomerQuickActions();
     }
@@ -29172,7 +29325,13 @@
     });
 
     accountBtn.addEventListener("click", () => {
+      if (accountBtn.classList.contains("account-icon-btn")) dismissAccountTooltip();
       toggleUtilityMenu();
+    });
+
+    accountTooltip.addEventListener("click", (event) => {
+      event.stopPropagation();
+      dismissAccountTooltip();
     });
 
     customerNotificationQuickBtn.addEventListener("click", (event) => {
@@ -29403,6 +29562,7 @@
         isVenueLoggedIn = false;
         activeDashboardType = "customer";
         updateAccountHeader();
+        maybeShowAccountTooltip("customer");
         closeAuthPage();
         showToast(authMode === "signup" ? "Customer account created" : "Logged in");
         openDashboard();
@@ -29446,6 +29606,7 @@
       activeDashboardType = "dancer";
       closeAuthPage();
       updateAccountHeader();
+      maybeShowAccountTooltip("dancer");
       showToast(message);
       openDancerDashboard();
     }
@@ -29598,6 +29759,7 @@
           isDancerLoggedIn = true;
           isVenueLoggedIn = false;
           updateAccountHeader();
+          maybeShowAccountTooltip("dancer");
           closeDancerSignupPage();
           openDancerDashboard();
         }
