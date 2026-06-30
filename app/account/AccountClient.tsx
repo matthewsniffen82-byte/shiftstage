@@ -202,14 +202,26 @@ export default function AccountClient() {
             <>
               <section className="signup-benefits" aria-label="Customer signup benefits">
                 <span className="eyebrow">Why join</span>
-                <h2>Your private nightlife dashboard</h2>
-                <ul>
-                  <li>Follow dancers and venues privately.</li>
-                  <li>Save club deal QR codes to your dashboard.</li>
-                  <li>See who you follow working now.</li>
-                  <li>Keep alerts, favorites, and directions in one place.</li>
-                </ul>
-                <p>Confirm your email, then Mydancr opens the homepage signed in.</p>
+                <h2>Create your private Mydancr dashboard</h2>
+                <div className="customer-benefit-grid">
+                  <div className="customer-benefit-tile">
+                    <strong>Saved club deal QR codes</strong>
+                    <span>Keep the deals you want to use later in one place.</span>
+                  </div>
+                  <div className="customer-benefit-tile">
+                    <strong>Private follows</strong>
+                    <span>Follow dancers and venues without a public customer profile.</span>
+                  </div>
+                  <div className="customer-benefit-tile">
+                    <strong>Working now alerts</strong>
+                    <span>See when dancers you follow are checked in or posting shifts.</span>
+                  </div>
+                  <div className="customer-benefit-tile">
+                    <strong>Your night dashboard</strong>
+                    <span>Manage saved profiles, venues, QR codes, and alerts quickly.</span>
+                  </div>
+                </div>
+                <p>Your follows and saved QR codes are private. Confirm your email, then Mydancr opens the homepage signed in.</p>
               </section>
             </>
           ) : null}
@@ -343,10 +355,13 @@ function AccountStyles() {
       .status { color: #94e5ff; font-size: 14px; }
       .signup-benefits { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
       .signup-benefits h2 { margin: 0; font-size: 20px; }
-      .signup-benefits ul { display: grid; gap: 7px; margin: 0; padding-left: 18px; color: #d8cfeb; font-weight: 750; }
       .signup-benefits p { font-size: 14px; line-height: 1.45; }
+      .customer-benefit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .customer-benefit-tile { display: grid; gap: 5px; min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 16px rgba(255,255,255,.025); }
+      .customer-benefit-tile strong { color: #fff; font-size: 13px; line-height: 1.2; }
+      .customer-benefit-tile span { color: #d8cfeb; font-size: 12px; font-weight: 750; line-height: 1.35; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
-      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
+      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid { grid-template-columns: 1fr; } }
     `}</style>
   );
 }
