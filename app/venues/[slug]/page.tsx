@@ -135,14 +135,18 @@ function initials(value: string) {
 }
 
 function formatShift(startsAt: string) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
+  const start = new Date(startsAt);
+  const date = new Intl.DateTimeFormat("en-US", {
+    month: "numeric",
     day: "numeric",
+  }).format(start);
+  const time = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
-  });
-  return `Starts ${formatter.format(new Date(startsAt))}`;
+    hour12: true,
+  }).format(start);
+
+  return `Starts ${date} at ${time}`;
 }
 
 function VenueProfileStyles() {

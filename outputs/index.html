@@ -26159,16 +26159,17 @@
     function displayPublicShiftTime(timeValue, profile = null) {
       const raw = shortMeridiemTime(timeValue, true).trim();
       if (!raw) return "";
-      const start = raw
+      const explicitStart = raw.match(/(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:a|p|am|pm)\b)/i)?.[1] || "";
+      const start = (explicitStart || raw
         .replace(/^Now\s*[·•]\s*/i, "")
         .replace(/^Tonight\s*[·•]\s*/i, "")
         .split(/\s*(?:-|–|—|\bto\b|\buntil\b)\s*/i)[0]
-        .trim();
+        .trim()).replace(/\s+/g, "");
       if (!start) return "";
       if (profile && isWorkingTonight(profile) && profile.scheduled) {
         return isCheckedInShift(profile) ? `Working Now · Started at ${start}` : "Working Now";
       }
-      const dateLabel = profile?.shiftLabel || (profile?.tonight ? "Tonight" : "");
+      const dateLabel = compactUpcomingDateLabel(profile);
       return dateLabel ? `Starts ${dateLabel} at ${start}` : `Starts at ${start}`;
     }
 
@@ -26200,6 +26201,19 @@
     function upcomingDateForProfile(profile, city = selectedCity()) {
       if (profile.shiftDate) return dateValueToWallDate(profile.shiftDate);
       return dateFromUpcomingLabel(profile.shiftLabel, city);
+    }
+
+    function compactUpcomingDateLabel(profile, city = selectedCity()) {
+      if (profile?.shiftStartsAt) {
+        const start = new Date(profile.shiftStartsAt);
+        if (!Number.isNaN(start.getTime())) {
+          return `${start.getMonth() + 1}/${start.getDate()}`;
+        }
+      }
+      const date = upcomingDateForProfile(profile || {}, city);
+      if (date) return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+      const numeric = String(profile?.shiftLabel || "").match(/\b\d{1,2}\/\d{1,2}\b/);
+      return numeric ? numeric[0] : "";
     }
 
     function upcomingSortValue(profile, city = selectedCity()) {

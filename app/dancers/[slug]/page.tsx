@@ -132,19 +132,27 @@ function initials(value: string) {
 }
 
 function formatShift(shift: { startsAt: string; locationStatus?: string | null; checkedInAt?: string | null }) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const start = formatter.format(new Date(shift.startsAt));
+  const startTime = formatShiftStartTime(shift.startsAt);
   if (shift.locationStatus === "location_confirmed" || shift.locationStatus === "club_confirmed") {
-    return `Working Now · Started ${start}`;
+    return `Working Now · Started at ${startTime}`;
   }
   if (new Date(shift.startsAt).getTime() <= Date.now()) return "Working Now";
-  return `Starts ${start}`;
+  return `Starts ${formatShiftStartDate(shift.startsAt)} at ${startTime}`;
+}
+
+function formatShiftStartDate(startsAt: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "numeric",
+    day: "numeric",
+  }).format(new Date(startsAt));
+}
+
+function formatShiftStartTime(startsAt: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(startsAt));
 }
 
 function shortShiftLabel(startsAt: string) {

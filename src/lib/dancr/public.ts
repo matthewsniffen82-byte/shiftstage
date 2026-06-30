@@ -290,16 +290,17 @@ function formatPublicShiftStartTime(startsAt: string): string {
 
 function formatPublicShiftStartDate(startsAt: string): string {
   const start = new Date(startsAt);
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "numeric",
     day: "numeric",
+  });
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
 
-  return formatter.format(start);
+  return `${dateFormatter.format(start)} at ${timeFormatter.format(start)}`;
 }
 
 export function formatVenueHours(opensAt: string | null, closesAt: string | null): string | null {
