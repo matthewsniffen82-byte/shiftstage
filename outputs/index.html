@@ -27196,7 +27196,6 @@
       } else {
         const status = shiftStatus(profile);
         const isFollowed = isFollowingProfile(city, profile.name);
-        const isFavorited = isFavoritedProfile(city, profile.name);
         const isNotified = isNotificationOn(city, profile.name);
         const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
         const canMarkGoing = status.state === "active" || (profile.scheduled && status.state !== "ended");
@@ -27218,7 +27217,6 @@
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
-            <button class="action-btn secondary ${isFavorited ? "is-following" : ""}" id="favoriteBtn" data-profile="${profile.name}">${actionButtonLabel(isFavorited ? "check" : "star", isFavorited ? "Favorited" : "Favorite")}</button>
             <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
             ${goingButton}
             <button class="action-btn secondary" id="reportBtn" data-profile="${profile.name}">${actionButtonLabel("report", "Report")}</button>
@@ -29025,7 +29023,7 @@
         openVenueFromName(venueLink.dataset.openVenue);
         return;
       }
-      const actionButton = event.target.closest("#followBtn, #favoriteBtn, #notifyBtn, #goingBtn, #reportBtn");
+      const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
       if (actionButton.id === "followBtn") {
         const profileName = actionButton.dataset.profile;
@@ -29062,34 +29060,6 @@
           }).catch((error) => showToast(error.message || "Could not save follow"));
         }
         if (customerDashboard.classList.contains("show")) renderDashboard();
-      }
-      if (actionButton.id === "favoriteBtn") {
-        const profileName = actionButton.dataset.profile;
-        const city = citySelect.value;
-        const profile = findProfile(profileName);
-        const favoriteList = favoritedByCity[city] || (favoritedByCity[city] = []);
-        const favoriteIndex = favoriteList.indexOf(profileName);
-        const willFavorite = favoriteIndex < 0;
-        if (willFavorite) {
-          favoriteList.push(profileName);
-          recordUniqueTrendEvent("favorites", city, profileName);
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "favorite_added" });
-          actionButton.innerHTML = actionButtonLabel("check", "Favorited");
-          actionButton.classList.add("is-following");
-          showToast("Favorited profile");
-        } else {
-          favoriteList.splice(favoriteIndex, 1);
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "favorite_removed" });
-          actionButton.innerHTML = actionButtonLabel("star", "Favorite");
-          actionButton.classList.remove("is-following");
-          showToast("Removed favorite");
-        }
-        if (profile?.id) {
-          postAuthenticatedJson("/api/customer/favorites", {
-            dancerId: profile.id,
-            favorite: willFavorite
-          }).catch((error) => showToast(error.message || "Could not save favorite"));
-        }
       }
       if (actionButton.id === "notifyBtn") {
         const city = citySelect.value;

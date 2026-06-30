@@ -10,7 +10,6 @@ type ShiftAction = {
 
 type SavedState = {
   following: boolean;
-  favorite: boolean;
   notificationsEnabled: boolean;
   goingShiftIds: string[];
 };
@@ -21,7 +20,6 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState<SavedState>({
     following: false,
-    favorite: false,
     notificationsEnabled: false,
     goingShiftIds: [],
   });
@@ -38,13 +36,11 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
       .then((data) => {
         if (!data.ok) return;
         const follows = data.saved?.follows || [];
-        const favorites = data.saved?.favorites || [];
         const goingSignals = data.saved?.goingSignals || [];
         const follow = follows.find((item: any) => item.dancerId === dancerId);
 
         setSaved({
           following: Boolean(follow),
-          favorite: favorites.some((item: any) => item.dancerId === dancerId),
           notificationsEnabled: Boolean(follow?.notificationsEnabled),
           goingShiftIds: goingSignals.map((item: any) => item.shiftId).filter(Boolean),
         });
@@ -74,12 +70,6 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
     const notificationsEnabled = !saved.notificationsEnabled;
     await postAction("/api/customer/follows", { dancerId, following: true, notificationsEnabled });
     setSaved((current) => ({ ...current, following: true, notificationsEnabled }));
-  }
-
-  async function updateFavorite() {
-    const favorite = !saved.favorite;
-    await postAction("/api/customer/favorites", { dancerId, favorite });
-    setSaved((current) => ({ ...current, favorite }));
   }
 
   async function updateGoing(shiftId: string) {
@@ -113,9 +103,6 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
     <div className="live-actions" aria-label="Customer actions">
       <button type="button" onClick={() => updateFollow(false)}>
         {saved.following ? "Following" : "Follow"}
-      </button>
-      <button type="button" onClick={updateFavorite}>
-        {saved.favorite ? "Favorited" : "Favorite"}
       </button>
       <button type="button" onClick={updateNotifications}>
         {saved.notificationsEnabled ? "Notifications on" : "Notify me"}
