@@ -27636,13 +27636,14 @@
               <div class="map-preview has-live-map" aria-label="${details.name} map preview">
                 <iframe title="${details.name} map preview" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="/api/public/maps/embed?address=${encodeURIComponent(details.address)}"></iframe>
               </div>
-              ${venueOfferMarkup(venue)}
               <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
               <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>
             </div>
           </article>
+
+          ${venueOfferMarkup(venue)}
 
           <h3 class="section-title">Working now at ${details.name}</h3>
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts now.</div>'}</div>
