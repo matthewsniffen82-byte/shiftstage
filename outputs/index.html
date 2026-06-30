@@ -1147,6 +1147,41 @@
       margin-top: 5px;
     }
 
+    .location-confirmed-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      max-width: 100%;
+      min-height: 22px;
+      padding: 0 8px;
+      border: 1px solid rgba(53,216,255,.38);
+      border-radius: 999px;
+      color: #35d8ff;
+      background: rgba(53,216,255,.12);
+      box-shadow: 0 0 14px rgba(53,216,255,.14), inset 0 0 10px rgba(53,216,255,.055);
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(53,216,255,.28);
+      white-space: nowrap;
+    }
+
+    .card-info-stack .location-confirmed-badge {
+      margin-top: -2px;
+    }
+
+    .location-status-tile {
+      border-color: rgba(53,216,255,.28);
+      box-shadow: inset 0 0 18px rgba(53,216,255,.045), 0 12px 26px rgba(0,0,0,.22);
+    }
+
+    .location-status-tile strong {
+      color: #35d8ff;
+      text-shadow: 0 0 14px rgba(53,216,255,.24);
+    }
+
     .social-link {
       min-height: 30px;
       display: inline-flex;
@@ -24357,7 +24392,11 @@
         shiftLabel: item.shiftLabel || "",
         shiftStartsAt: item.shiftStartsAt || "",
         shiftEndsAt: item.shiftEndsAt || "",
-        shiftTimeZone: item.shiftTimeZone || ""
+        shiftTimeZone: item.shiftTimeZone || "",
+        locationStatus: item.locationStatus || item.location_status || "self_reported",
+        checkedInAt: item.checkedInAt || item.checked_in_at || "",
+        checkedOutAt: item.checkedOutAt || item.checked_out_at || "",
+        checkinDistanceFeet: item.checkinDistanceFeet ?? item.checkin_distance_feet ?? null
       };
     }
 
@@ -25659,6 +25698,38 @@
       return { state: "inactive", label: "Not working now" };
     }
 
+    function profileLocationStatusLabel(profile) {
+      if (profile?.locationStatus === "club_confirmed") return "Club Confirmed";
+      if (profile?.locationStatus === "location_confirmed") return "Location Confirmed";
+      if (profile?.checkedInAt && !profile?.checkedOutAt) return "Location Confirmed";
+      return "";
+    }
+
+    function profileLocationStatusBadge(profile) {
+      const label = profileLocationStatusLabel(profile);
+      if (!label) return "";
+      const distance = Number(profile.checkinDistanceFeet);
+      const title = Number.isFinite(distance)
+        ? `${label} within ${Math.round(distance)} ft of ${profile.venue || "the venue"}`
+        : `${label} near ${profile.venue || "the venue"}`;
+      return `<span class="location-confirmed-badge" title="${title}">${label}</span>`;
+    }
+
+    function profileLocationStatusTile(profile) {
+      const label = profileLocationStatusLabel(profile);
+      if (!label) return "";
+      const distance = Number(profile.checkinDistanceFeet);
+      const detail = Number.isFinite(distance)
+        ? `Checked in within ${Math.round(distance)} ft of ${profile.venue || "the venue"}.`
+        : `Checked in near ${profile.venue || "the venue"}.`;
+      return `
+        <div class="info-tile location-status-tile">
+          <strong>${label}</strong>
+          <div class="meta">${detail}</div>
+        </div>
+      `;
+    }
+
     function tonightShiftWindow(profile, now = new Date(), city = selectedCity()) {
       if (!profile.scheduled || !profile.time) return null;
       const activeWindow = activeShiftWindow(profile, now, city);
@@ -26749,6 +26820,7 @@
       const trendBadge = "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
+      const locationBadge = !isPending ? profileLocationStatusBadge(profile) : "";
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
@@ -26772,6 +26844,7 @@
           <div class="profile-body">
             <div class="card-info-stack">
               <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
+              ${locationBadge}
               ${clubMarkup}
             </div>
             ${scheduleMarkup}
@@ -27059,6 +27132,7 @@
         modalBody.innerHTML = `
           <div class="modal-grid">
             ${shiftsMarkup(profile, status)}
+            ${profileLocationStatusTile(profile)}
             <div class="info-tile">
               <strong>Followers</strong>
               <div class="meta"><span class="metric-value" id="modalFollowerCount">${metricPhraseMarkup(followerCount(profile, city))}</span></div>
