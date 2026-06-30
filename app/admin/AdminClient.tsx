@@ -21,6 +21,7 @@ export default function AdminClient() {
   const [state, setState] = useState<AdminState>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   useEffect(() => {
     loadAdmin();
@@ -55,6 +56,39 @@ export default function AdminClient() {
       setState({ error: error instanceof Error ? error.message : "Unable to sign in." });
     } finally {
       setIsSigningIn(false);
+    }
+  }
+
+  async function sendPasswordReset() {
+    if (!email.trim()) {
+      setState({ error: "Enter your admin email first, then tap Forgot password." });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    setState({});
+
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mode: "reset_password",
+          role: "admin",
+          email,
+          emailRedirectTo:
+            typeof window === "undefined"
+              ? undefined
+              : `${window.location.origin}/auth/callback?dancr_reset=1&role=admin&return_to=${encodeURIComponent("/admin")}`,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send reset email.");
+      setState({ error: "Password reset email sent. Open the newest Mydancr email to continue." });
+    } catch (error) {
+      setState({ error: error instanceof Error ? error.message : "Unable to send reset email." });
+    } finally {
+      setIsResettingPassword(false);
     }
   }
 
@@ -131,6 +165,9 @@ export default function AdminClient() {
               required
             />
           </label>
+          <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
+            {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
+          </button>
           <button type="submit" disabled={isSigningIn}>
             {isSigningIn ? "Working..." : "Sign in"}
           </button>
@@ -733,6 +770,7 @@ function AdminStyles() {
       input, select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
       button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       button:disabled { opacity: .62; cursor: wait; }
+      .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .metric { min-height: 54px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span, .empty { color: #b9accd; font-size: 13px; font-weight: 850; }

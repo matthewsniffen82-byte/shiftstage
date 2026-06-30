@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type AuthRole = "customer" | "dancer" | "venue" | "admin";
-type AuthMode = "login" | "signup";
+type AuthMode = "login" | "signup" | "reset_password";
 
 export async function POST(request: Request) {
   try {
@@ -17,8 +17,21 @@ export async function POST(request: Request) {
     const mode = readMode(body.mode);
     const role = readRole(body.role);
     const email = readRequired(body.email, "Email is required.").toLowerCase();
-    const password = readRequired(body.password, "Password is required.");
     const client = createServerSupabaseClient();
+
+    if (mode === "reset_password") {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: safeEmailRedirectTo(body.emailRedirectTo),
+      });
+      if (error) throw error;
+
+      return NextResponse.json({
+        ok: true,
+        message: "Password reset email sent.",
+      });
+    }
+
+    const password = readRequired(body.password, "Password is required.");
 
     if (mode === "login") {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
@@ -150,8 +163,8 @@ async function upsertAccount(
 }
 
 function readMode(value: unknown): AuthMode {
-  if (value === "login" || value === "signup") return value;
-  throw new Error("Auth mode must be login or signup.");
+  if (value === "login" || value === "signup" || value === "reset_password") return value;
+  throw new Error("Auth mode must be login, signup, or reset_password.");
 }
 
 function readRole(value: unknown): AuthRole {

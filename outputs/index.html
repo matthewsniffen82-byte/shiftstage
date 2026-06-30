@@ -1996,6 +1996,25 @@
       stroke-linejoin: round;
     }
 
+    .forgot-password-link {
+      justify-self: end;
+      min-height: auto;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #94e5ff;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+
+    .forgot-password-link:disabled {
+      opacity: 0.62;
+      cursor: wait;
+    }
+
     .dashboard-stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -22701,6 +22720,7 @@
                 </button>
               </div>
             </div>
+            <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button">Forgot password?</button>
             <div class="field" id="customerConfirmPasswordField" hidden>
               <label for="customerConfirmPassword">Confirm password</label>
               <div class="password-wrap">
@@ -22727,6 +22747,7 @@
               <label for="dancerLoginPassword">Password</label>
               <input id="dancerLoginPassword" type="password" value="dancr">
             </div>
+            <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button">Forgot password?</button>
             <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
             <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
           </form>
@@ -22747,6 +22768,7 @@
               <label for="venueLoginPassword">Password</label>
               <input id="venueLoginPassword" type="password" value="dancr">
             </div>
+            <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button">Forgot password?</button>
             <button class="action-btn" id="venueLoginSubmit" type="submit">Venue login</button>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="button">Join now</button>
           </form>
@@ -23275,6 +23297,7 @@
             <label for="adminPassword">Password</label>
             <input id="adminPassword" type="password" autocomplete="current-password">
           </div>
+          <button class="forgot-password-link" id="adminForgotPasswordBtn" type="button">Forgot password?</button>
           <button class="admin-login" id="adminLoginBtn" type="submit">Admin login</button>
           <div class="rule-note" id="adminLiveStatus">Use an existing Supabase admin account.</div>
         </form>
@@ -24054,6 +24077,60 @@
       }
       if (data.session && payload.mode !== "signup") saveAuthSession({ ...data.session, account: data.account || null });
       return data;
+    }
+
+    async function sendPasswordReset({ role, emailInputId, buttonId, statusId = "" }) {
+      const email = document.getElementById(emailInputId)?.value?.trim() || "";
+      const button = document.getElementById(buttonId);
+      const status = statusId ? document.getElementById(statusId) : null;
+      const previousText = button?.textContent || "Forgot password?";
+
+      if (!email) {
+        const message = "Enter your email first, then tap Forgot password.";
+        if (status) {
+          status.textContent = message;
+          status.hidden = false;
+        }
+        showToast(message);
+        return;
+      }
+
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Sending reset email...";
+      }
+
+      try {
+        const returnTo =
+          role === "admin" ? "/admin" :
+          role === "dancer" ? "/dashboard/dancer" :
+          role === "venue" ? "/dashboard/venue" :
+          "/dashboard/customer";
+        await requestAuth({
+          mode: "reset_password",
+          role,
+          email,
+          emailRedirectTo: `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`
+        });
+        const message = "Password reset email sent. Open the newest Mydancr email to continue.";
+        if (status) {
+          status.textContent = message;
+          status.hidden = false;
+        }
+        showToast(message);
+      } catch (error) {
+        const message = friendlyAuthErrorMessage(error.message, "Unable to send reset email.");
+        if (status) {
+          status.textContent = message;
+          status.hidden = false;
+        }
+        showToast(message);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = previousText;
+        }
+      }
     }
 
     function friendlyAuthErrorMessage(message, fallback = "Authentication failed") {
@@ -27383,6 +27460,8 @@
       if (benefits) benefits.hidden = mode !== "signup";
       const joinButton = document.getElementById("customerJoinNowBtn");
       if (joinButton) joinButton.hidden = mode === "signup";
+      const forgotButton = document.getElementById("customerForgotPasswordBtn");
+      if (forgotButton) forgotButton.hidden = mode !== "login";
       setCustomerAuthStatus("");
       document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
     }
@@ -29260,6 +29339,40 @@
 
     document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
       openFreshCustomerSignup();
+    });
+
+    document.getElementById("customerForgotPasswordBtn").addEventListener("click", () => {
+      sendPasswordReset({
+        role: "customer",
+        emailInputId: "customerEmail",
+        buttonId: "customerForgotPasswordBtn",
+        statusId: "customerAuthStatus"
+      });
+    });
+
+    document.getElementById("dancerForgotPasswordBtn").addEventListener("click", () => {
+      sendPasswordReset({
+        role: "dancer",
+        emailInputId: "dancerLoginEmail",
+        buttonId: "dancerForgotPasswordBtn"
+      });
+    });
+
+    document.getElementById("venueForgotPasswordBtn").addEventListener("click", () => {
+      sendPasswordReset({
+        role: "venue",
+        emailInputId: "venueLoginEmail",
+        buttonId: "venueForgotPasswordBtn"
+      });
+    });
+
+    document.getElementById("adminForgotPasswordBtn").addEventListener("click", () => {
+      sendPasswordReset({
+        role: "admin",
+        emailInputId: "adminEmail",
+        buttonId: "adminForgotPasswordBtn",
+        statusId: "adminLiveStatus"
+      });
     });
 
     document.querySelectorAll("[data-password-toggle]").forEach((button) => {

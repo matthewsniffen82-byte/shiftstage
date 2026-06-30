@@ -33,6 +33,7 @@ export default function AccountClient() {
   const [city, setCity] = useState("Las Vegas");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -117,6 +118,41 @@ export default function AccountClient() {
       setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to sign in."));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function sendPasswordReset() {
+    setStatus("");
+
+    if (!email.trim()) {
+      setStatus("Enter your email first, then tap Forgot password.");
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    try {
+      const resetReturnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mode: "reset_password",
+          role,
+          email,
+          emailRedirectTo:
+            typeof window === "undefined"
+              ? undefined
+              : `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(resetReturnTo)}`,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to send reset email."));
+      setStatus("Password reset email sent. Open the newest Mydancr email to continue.");
+    } catch (error) {
+      setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to send reset email."));
+    } finally {
+      setIsResettingPassword(false);
     }
   }
 
@@ -243,6 +279,11 @@ export default function AccountClient() {
               </span>
             </label>
           ) : null}
+          {mode === "login" ? (
+            <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
+              {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
+            </button>
+          ) : null}
           {mode === "signup" ? (
             <label>
               City
@@ -297,6 +338,8 @@ function AccountStyles() {
       .password-control svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .submit { background: #f7f2ff; color: #090911; margin-top: 4px; }
       .submit:disabled { opacity: .62; cursor: wait; }
+      .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
+      .forgot-password:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
       .signup-benefits { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
       .signup-benefits h2 { margin: 0; font-size: 20px; }
