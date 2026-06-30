@@ -23,8 +23,9 @@ export default function AccountClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams.get("role") === "dancer" ? "dancer" : "customer";
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const [role, setRole] = useState<AuthRole>(initialRole);
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,6 +39,7 @@ export default function AccountClient() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
+  const isCustomerSignup = role === "customer" && mode === "signup";
 
   function clearFields() {
     setEmail("");
@@ -180,23 +182,27 @@ export default function AccountClient() {
         </div>
 
         <form className="account-panel" onSubmit={submit}>
-          <div className="segmented" aria-label="Account type">
-            <button className={role === "customer" ? "active" : ""} type="button" onClick={() => chooseRole("customer")}>
-              Customer
-            </button>
-            <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => chooseRole("dancer")}>
-              Dancer
-            </button>
-          </div>
+          {!isCustomerSignup ? (
+            <>
+              <div className="segmented" aria-label="Account type">
+                <button className={role === "customer" ? "active" : ""} type="button" onClick={() => chooseRole("customer")}>
+                  Customer
+                </button>
+                <button className={role === "dancer" ? "active" : ""} type="button" onClick={() => chooseRole("dancer")}>
+                  Dancer
+                </button>
+              </div>
 
-          <div className="segmented" aria-label="Auth mode">
-            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => chooseMode("login")}>
-              Sign in
-            </button>
-            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => chooseMode("signup")}>
-              Create
-            </button>
-          </div>
+              <div className="segmented" aria-label="Auth mode">
+                <button className={mode === "login" ? "active" : ""} type="button" onClick={() => chooseMode("login")}>
+                  Sign in
+                </button>
+                <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => chooseMode("signup")}>
+                  Create
+                </button>
+              </div>
+            </>
+          ) : null}
 
           {mode === "signup" && role === "customer" ? (
             <>

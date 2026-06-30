@@ -28104,24 +28104,29 @@
     function setCustomerAuthMode(mode) {
       authMode = mode;
       document.getElementById("authSubmit").textContent = mode === "signup" ? "Create customer account" : "Customer login";
+      const isSignup = mode === "signup";
+      const selectedRoleHead = document.querySelector(".auth-selected-role");
+      if (selectedRoleHead) selectedRoleHead.hidden = isSignup;
+      const customerFormHead = document.querySelector(".customer-form-head");
+      if (customerFormHead) customerFormHead.hidden = isSignup;
       const label = document.getElementById("customerAuthModeLabel");
       if (label) label.textContent = mode === "signup" ? "Customer sign up" : "Customer login";
       const formHead = document.querySelector(".customer-form-head span");
       if (formHead) {
-        formHead.textContent = mode === "signup"
+        formHead.textContent = isSignup
           ? "Create a free private customer account. Confirm your email, then return to the homepage signed in."
           : "Free account. No public profile, follows, or going list.";
       }
       const passwordInput = document.getElementById("customerPassword");
-      if (passwordInput) passwordInput.autocomplete = mode === "signup" ? "new-password" : "current-password";
+      if (passwordInput) passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
       const confirmField = document.getElementById("customerConfirmPasswordField");
       const confirmInput = document.getElementById("customerConfirmPassword");
-      if (confirmField) confirmField.hidden = mode !== "signup";
-      if (confirmInput) confirmInput.required = mode === "signup";
+      if (confirmField) confirmField.hidden = !isSignup;
+      if (confirmInput) confirmInput.required = isSignup;
       const benefits = document.getElementById("customerSignupBenefits");
-      if (benefits) benefits.hidden = mode !== "signup";
+      if (benefits) benefits.hidden = !isSignup;
       const joinButton = document.getElementById("customerJoinNowBtn");
-      if (joinButton) joinButton.hidden = mode === "signup";
+      if (joinButton) joinButton.hidden = isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
       setCustomerAuthStatus("");
