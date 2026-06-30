@@ -22771,6 +22771,123 @@
         font-size: 11px;
       }
     }
+    /* Profile detail hierarchy pass: copy, spacing, and scan clarity only. */
+    .profile-modal .working-now-tile .venue-inline-link {
+      font-size: 1.09em !important;
+      font-weight: 950 !important;
+    }
+
+    .profile-modal .modal-started-line {
+      color: rgba(245, 245, 255, 0.56) !important;
+    }
+
+    .profile-modal .modal-started-line > span:first-child {
+      width: 22px;
+      min-width: 22px;
+    }
+
+    .profile-modal .modal-shift-started {
+      color: rgba(245, 245, 255, 0.56) !important;
+      font-size: 0.78rem !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.01em !important;
+      text-shadow: none !important;
+    }
+
+    .profile-modal .profile-deal-row {
+      align-items: center !important;
+      gap: 14px !important;
+      padding-top: 12px !important;
+      margin-top: 10px !important;
+    }
+
+    .profile-modal .profile-deal-copy {
+      align-self: stretch !important;
+      justify-content: center !important;
+      gap: 7px !important;
+    }
+
+    .profile-modal .profile-deal-copy strong {
+      font-size: 0.78rem !important;
+      color: rgba(245, 245, 255, 0.86) !important;
+    }
+
+    .profile-modal .profile-deal-meta {
+      gap: 4px !important;
+    }
+
+    .profile-modal .profile-deal-main {
+      color: #ffffff !important;
+      font-size: 0.92rem !important;
+      font-weight: 950 !important;
+      letter-spacing: -0.01em !important;
+      line-height: 1.05 !important;
+    }
+
+    .profile-modal .profile-deal-note {
+      color: rgba(245, 245, 255, 0.62) !important;
+      font-size: 0.72rem !important;
+      line-height: 1.18 !important;
+    }
+
+    .profile-modal .profile-deal-qr span {
+      display: none !important;
+    }
+
+    .profile-modal .profile-follower-metric {
+      gap: 6px !important;
+    }
+
+    .profile-modal .profile-view-count {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      color: rgba(245, 245, 255, 0.54) !important;
+      font-size: 0.76rem !important;
+      font-weight: 800 !important;
+      line-height: 1.15 !important;
+    }
+
+    .profile-modal .profile-view-count svg {
+      width: 14px !important;
+      height: 14px !important;
+      fill: none !important;
+      stroke: currentColor !important;
+      stroke-width: 2 !important;
+      stroke-linecap: round !important;
+      stroke-linejoin: round !important;
+      opacity: 0.86 !important;
+    }
+
+    .profile-modal .social-tile .social-links {
+      gap: 8px !important;
+      justify-content: center !important;
+    }
+
+    .profile-modal .social-links-card .social-row,
+    .profile-modal .social-links-card .social-links {
+      gap: 10px !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .profile-deal-row {
+        gap: 12px !important;
+      }
+
+      .profile-modal .profile-deal-main {
+        font-size: 0.88rem !important;
+      }
+
+      .profile-modal .profile-view-count {
+        font-size: 0.72rem !important;
+      }
+
+      .profile-modal .social-tile .social-links,
+      .profile-modal .social-links-card .social-row,
+      .profile-modal .social-links-card .social-links {
+        gap: 9px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -25701,9 +25818,36 @@
 
     function metricPhraseMarkup(value) {
       const text = String(value || "");
-      const match = text.match(/^([\d,]+)\s+(.+)$/);
+      const match = text.match(/^([\d,.]+[KMB]?)\s+(.+)$/i);
       if (!match) return text;
       return `<span class="metric-number">${match[1]}</span><span class="metric-label">${match[2]}</span>`;
+    }
+
+    function compactProfileMetric(value) {
+      const number = Number(value || 0);
+      if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 0 : 1).replace(/\.0$/, "")}M`;
+      if (number >= 1000) return `${(number / 1000).toFixed(number >= 10000 ? 0 : 1).replace(/\.0$/, "")}K`;
+      return number.toLocaleString();
+    }
+
+    function followerMetricMarkup(profile, city = selectedCity()) {
+      return metricPhraseMarkup(`${compactProfileMetric(followerNumber(profile, city))} Followers`);
+    }
+
+    function profileViewsToday(profile, city = selectedCity()) {
+      return Number(profile?.profileViewsToday || seededRange(`${profile?.name || "profile"}|views-today|${city}`, 84, 168));
+    }
+
+    function profileViewsTodayMarkup(profile, city = selectedCity()) {
+      return `
+        <span class="profile-view-count">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+            <circle cx="12" cy="12" r="2.5"></circle>
+          </svg>
+          ${profileViewsToday(profile, city).toLocaleString()} profile views today
+        </span>
+      `;
     }
 
     function metricCardMarkup(value, label) {
@@ -26321,10 +26465,29 @@
         .trim()).replace(/\s+/g, "");
       if (!start) return "";
       if (profile && isWorkingTonight(profile) && profile.scheduled) {
-        return isCheckedInShift(profile) ? `Working Now · Started at ${start}` : "Working Now";
+        return "Working Now";
       }
       const dateLabel = compactUpcomingDateLabel(profile);
       return dateLabel ? `Starts ${dateLabel} at ${start}` : `Starts at ${start}`;
+    }
+
+    function publicShiftStartTime(timeValue) {
+      const raw = shortMeridiemTime(timeValue, true).trim();
+      if (!raw) return "";
+      const explicitStart = raw.match(/(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:a|p|am|pm)\b)/i)?.[1] || "";
+      const compactStart = (explicitStart || raw
+        .replace(/^Now\s*[·•]\s*/i, "")
+        .replace(/^Tonight\s*[·•]\s*/i, "")
+        .split(/\s*(?:-|–|—|\bto\b|\buntil\b)\s*/i)[0]
+        .trim()).replace(/\s+/g, "");
+      return compactStart.replace(/^(\d{1,2})(?::(\d{2}))?([ap])$/i, (_, hour, minute = "00", period) => `${Number(hour)}:${minute} ${period.toLowerCase() === "p" ? "PM" : "AM"}`);
+    }
+
+    function activeShiftStartedMarkup(profile) {
+      const start = publicShiftStartTime(profile?.time);
+      return start
+        ? `<div class="detail-line modal-started-line"><span aria-hidden="true"></span><span class="modal-shift-started">Started ${start}</span></div>`
+        : "";
     }
 
     function compactCardShiftTime(timeValue) {
@@ -26718,7 +26881,7 @@
 
     function venueOfferFor(name) {
       return venueOffers[name] || {
-        title: "Now venue offer",
+        title: "Venue Offer",
         details: "Scan this QR code for this venue's current offer.",
         code: `${slugify(name || "venue").slice(0, 10).toUpperCase() || "DANCR"}10`,
         expires: "Now"
@@ -26768,12 +26931,12 @@
 
     function dealPassButtonMarkup(pass, className) {
       const sourceLabel = pass.sourceType === "dancer_profile" && pass.dancerName
-        ? `From ${pass.dancerName}'s profile`
+        ? `Offer from ${pass.dancerName}`
         : `Official ${pass.venueName} deal`;
       return `
         <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Open ${pass.venueName} club deal QR">
           <img src="${pass.qrImageUrl}" alt="${pass.venueName} offer QR code" loading="lazy" decoding="async">
-          <span class="meta">${sourceLabel}. Tap to enlarge or save.</span>
+          <span class="meta">${sourceLabel}</span>
         </button>
       `;
     }
@@ -26921,7 +27084,7 @@
         <article class="venue-offer-card">
           <div class="venue-offer-grid">
             <div>
-              <span class="eyebrow">Now venue offer</span>
+              <span class="eyebrow">Venue Offer</span>
               <h3>${offer.title}</h3>
               <p>${offer.details}</p>
               <div class="venue-offer-meta">
@@ -26937,15 +27100,14 @@
 
     function profileDealTileMarkup(profile) {
       if (!profile?.venue || !isWorkingTonight(profile)) return "";
-      const offer = venueOfferFor(profile.venue);
       const pass = dealPassPayload({ venueName: profile.venue, sourceType: "dancer_profile", dancerName: profile.name });
       return `
         <div class="profile-deal-row">
           <div class="profile-deal-copy">
-            <strong>Club deal</strong>
-            <div class="meta">
-              <span class="muted-value">${offer.title}</span>
-              <span class="profile-deal-note">Same ${profile.venue} offer. Profile attribution applies after club scan.</span>
+            <strong>Venue Offer</strong>
+            <div class="meta profile-deal-meta">
+              <span class="profile-deal-main">Scan at Club</span>
+              <span class="profile-deal-note">Offer from ${profile.name}</span>
             </div>
           </div>
           ${dealPassButtonMarkup(pass, "profile-deal-qr")}
@@ -27766,10 +27928,10 @@
 
     function shiftInterestTileMarkup(profile, status) {
       const hasUpcomingShift = profile.scheduled && status.state !== "active" && status.state !== "ended";
-      const tileTitle = status.state === "active" ? "Now interest" : hasUpcomingShift ? "Upcoming interest" : "Interest";
+      const tileTitle = status.state === "active" ? "Who's going" : hasUpcomingShift ? "Upcoming interest" : "Interest";
       const mutedClass = status.state === "active" || hasUpcomingShift ? "" : "muted muted-value";
       const statusText = status.state === "active" || hasUpcomingShift
-        ? metricPhraseMarkup(`${tonightInterestCount(profile).toLocaleString()} going`)
+        ? metricPhraseMarkup(`${status.state === "active" ? 36 : tonightInterestCount(profile).toLocaleString()} people going`)
         : status.label;
       return `
         <div class="info-tile interest-tile" id="tonightInterestTile">
@@ -27787,6 +27949,7 @@
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayPublicShiftTime(profile.time, profile)}</span></div>
+              ${activeShiftStartedMarkup(profile)}
               ${profileDealTileMarkup(profile)}
             </div>
           </div>
@@ -27886,7 +28049,10 @@
             ${profileLocationStatusTile(profile)}
             <div class="info-tile">
               <strong>Followers</strong>
-              <div class="meta"><span class="metric-value" id="modalFollowerCount">${metricPhraseMarkup(followerCount(profile, city))}</span></div>
+              <div class="meta profile-follower-metric">
+                <span class="metric-value" id="modalFollowerCount">${followerMetricMarkup(profile, city)}</span>
+                ${profileViewsTodayMarkup(profile, city)}
+              </div>
             </div>
             ${socialLinksMarkup(profile)}
           </div>
@@ -29753,7 +29919,7 @@
         }
         if (profile) {
           const followerCountEl = document.getElementById("modalFollowerCount");
-          if (followerCountEl) followerCountEl.innerHTML = metricPhraseMarkup(followerCount(profile, city));
+          if (followerCountEl) followerCountEl.innerHTML = followerMetricMarkup(profile, city);
           postAuthenticatedJson("/api/customer/follows", {
             dancerId: profile.id,
             following: followIndex < 0,
@@ -29943,7 +30109,7 @@
     document.getElementById("venueOfferForm").addEventListener("submit", (event) => {
       event.preventDefault();
       venueOffers[activeVenueName] = {
-        title: document.getElementById("venueOfferTitleInput").value.trim() || "Now venue offer",
+        title: document.getElementById("venueOfferTitleInput").value.trim() || "Venue Offer",
         details: document.getElementById("venueOfferDetailsInput").value.trim() || "Show this QR at the venue for the current offer.",
         code: document.getElementById("venueOfferCodeInput").value.trim() || "DANCRVIP",
         expires: document.getElementById("venueOfferExpiresInput").value.trim() || "Now"
