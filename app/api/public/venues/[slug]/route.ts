@@ -42,7 +42,7 @@ export async function GET(_request: Request, context: RouteContext) {
         dancerSlug: dancer.slug,
         dancerStageName: dancer.stage_name,
         startsAt: shift.starts_at,
-        endsAt: shift.ends_at,
+        shiftLabel: formatPublicShiftStart(shift.starts_at),
         timezone: shift.timezone,
         status: shift.status,
       }));
@@ -54,4 +54,12 @@ export async function GET(_request: Request, context: RouteContext) {
       { status: 500 },
     );
   }
+}
+
+function formatPublicShiftStart(startsAt: string) {
+  return `Starts at ${new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(startsAt))}`;
 }

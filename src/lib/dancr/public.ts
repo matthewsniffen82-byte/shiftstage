@@ -193,7 +193,7 @@ function toDancerCard(client: DancrClient, row: any): DancerCard {
     venueSlug: venue?.slug || null,
     venueId: shift?.venue_id || venue?.id || null,
     shiftId: shift?.id || null,
-    shiftLabel: shift ? formatShiftLabel(shift.starts_at, shift.ends_at) : null,
+    shiftLabel: shift ? formatShiftLabel(shift) : null,
     shiftStartsAt: shift?.starts_at || null,
     shiftEndsAt: shift?.ends_at || null,
     shiftTimeZone: shift?.timezone || venue?.timezone || null,
@@ -267,16 +267,25 @@ async function getCityTimeZone(client: DancrClient, city: string) {
   return data?.timezone || "America/Los_Angeles";
 }
 
-function formatShiftLabel(startsAt: string, endsAt: string): string {
+function formatShiftLabel(shift: any): string {
+  const startsAt = formatPublicShiftStart(shift.starts_at);
+  const startMs = new Date(shift.starts_at).getTime();
+  const isCheckedIn = publicLocationStatus(shift) !== "self_reported";
+
+  if (isCheckedIn) return `Working Now · Started at ${startsAt}`;
+  if (startMs > Date.now()) return `Starts at ${startsAt}`;
+  return "Working Now";
+}
+
+function formatPublicShiftStart(startsAt: string): string {
   const start = new Date(startsAt);
-  const end = new Date(endsAt);
   const formatter = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
 
-  return `${formatter.format(start)} - ${formatter.format(end)}`.replaceAll(" AM", "a").replaceAll(" PM", "p");
+  return formatter.format(start);
 }
 
 export function formatVenueHours(opensAt: string | null, closesAt: string | null): string | null {

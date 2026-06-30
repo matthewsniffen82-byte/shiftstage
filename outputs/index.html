@@ -25028,7 +25028,7 @@
       return [
         ...working.slice(0, 3).map((profile) => ({
           title: `${profile.name} is working now`,
-          detail: `${profile.venue} · ${displayShiftTime(profile.time)}`
+          detail: `${profile.venue} · ${displayPublicShiftTime(profile.time, profile)}`
         })),
         ...venues.slice(0, 2).map((venue) => ({
           title: `${venue.name} is saved`,
@@ -26154,6 +26154,21 @@
 
     function displayShiftTime(timeValue) {
       return shortMeridiemTime(timeValue).replace(/\s*-\s*/g, " - ").trim();
+    }
+
+    function displayPublicShiftTime(timeValue, profile = null) {
+      const raw = shortMeridiemTime(timeValue, true).trim();
+      if (!raw) return "";
+      const start = raw
+        .replace(/^Now\s*[·•]\s*/i, "")
+        .replace(/^Tonight\s*[·•]\s*/i, "")
+        .split(/\s*(?:-|–|—|\bto\b|\buntil\b)\s*/i)[0]
+        .trim();
+      if (!start) return "";
+      if (profile && isWorkingTonight(profile) && profile.scheduled) {
+        return isCheckedInShift(profile) ? `Working Now · Started at ${start}` : "Working Now";
+      }
+      return `Starts at ${start}`;
     }
 
     function compactCardShiftTime(timeValue) {
@@ -27391,9 +27406,9 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-label">Now</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
+          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
           : profile.scheduled
-            ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-label">${upcomingLabel}</span><span class="schedule-separator"> • </span><span class="schedule-time">${compactCardShiftTime(profile.time)}</span></span></div>`
+            ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
             : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No upcoming shifts</span></div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
@@ -27456,7 +27471,7 @@
           <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}"></div>
           <div class="venue-shift-copy">
             <strong>${profile.name}${profile.status === "Verified" ? verifiedCheckMarkup() : ""}</strong>
-            <span>${clockIconMarkup()}${label} • ${displayShiftTime(profile.time)}</span>
+            <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
           </div>
         </button>
       `;
@@ -27601,7 +27616,7 @@
             <strong>Working now</strong>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayShiftTime(profile.time)}</span></div>
+              <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayPublicShiftTime(profile.time, profile)}</span></div>
               ${profileDealTileMarkup(profile)}
             </div>
           </div>
@@ -27620,7 +27635,7 @@
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
                 <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${upcomingLabel} • ${displayShiftTime(profile.time)}</span></div>
+              <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${displayPublicShiftTime(profile.time, profile)}</span></div>
             </div>
           </div>
           ${shiftInterestTileMarkup(profile, status)}

@@ -61,7 +61,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 <div className="shift-row-shell" key={shift.id}>
                   <Link className="shift-row" href={`/venues/${shift.venueSlug}`}>
                     <strong>{shift.venueName}</strong>
-                    <span>{formatShift(shift.startsAt, shift.endsAt)}</span>
+                    <span>{formatShift(shift)}</span>
                     <em>{locationStatusLabel(shift.locationStatus)}</em>
                   </Link>
                   {activeDeal && activeShift?.id === shift.id ? (
@@ -131,7 +131,7 @@ function initials(value: string) {
     .toUpperCase();
 }
 
-function formatShift(startsAt: string, endsAt: string) {
+function formatShift(shift: { startsAt: string; locationStatus?: string | null; checkedInAt?: string | null }) {
   const formatter = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
@@ -139,7 +139,12 @@ function formatShift(startsAt: string, endsAt: string) {
     hour: "numeric",
     minute: "2-digit",
   });
-  return `${formatter.format(new Date(startsAt))} - ${formatter.format(new Date(endsAt))}`;
+  const start = formatter.format(new Date(shift.startsAt));
+  if (shift.locationStatus === "location_confirmed" || shift.locationStatus === "club_confirmed") {
+    return `Working Now · Started ${start}`;
+  }
+  if (new Date(shift.startsAt).getTime() <= Date.now()) return "Working Now";
+  return `Starts ${start}`;
 }
 
 function shortShiftLabel(startsAt: string) {

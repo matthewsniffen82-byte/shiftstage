@@ -81,7 +81,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
               {shifts.map((shift) => (
                 <Link className="shift-row" href={`/dancers/${shift.dancer?.slug}`} key={shift.id}>
                   <strong>{shift.dancer?.stage_name}</strong>
-                  <span>{formatShift(shift.starts_at, shift.ends_at)}</span>
+                  <span>{formatShift(shift.starts_at)}</span>
                 </Link>
               ))}
             </div>
@@ -134,7 +134,7 @@ function initials(value: string) {
     .toUpperCase();
 }
 
-function formatShift(startsAt: string, endsAt: string) {
+function formatShift(startsAt: string) {
   const formatter = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
@@ -142,7 +142,7 @@ function formatShift(startsAt: string, endsAt: string) {
     hour: "numeric",
     minute: "2-digit",
   });
-  return `${formatter.format(new Date(startsAt))} - ${formatter.format(new Date(endsAt))}`;
+  return `Starts ${formatter.format(new Date(startsAt))}`;
 }
 
 function VenueProfileStyles() {
