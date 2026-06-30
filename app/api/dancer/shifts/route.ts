@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const { data, error } = await (client as any)
       .from("shifts")
-      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(name, slug, city, latitude, longitude)")
+      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, working_status, commission_tracking_started_at, commission_tracking_stopped_at, still_working_prompted_at, still_working_confirmed_at, still_working_expires_at, extended_ends_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
       .eq("dancer_id", dancer.id)
       .order("starts_at", { ascending: false })
       .limit(25);
@@ -91,7 +91,7 @@ export async function PATCH(request: Request) {
 
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const existingShift = await getOwnShift(client as any, dancer.id, body.shiftId);
-    const update: Record<string, string> = {};
+    const update: Record<string, unknown> = {};
     if (typeof body.venueId === "string") {
       const venue = await getVenueForShift(client as any, body.venueId);
       update.venue_id = body.venueId;
@@ -101,9 +101,38 @@ export async function PATCH(request: Request) {
     if (typeof body.endsAt === "string") update.ends_at = body.endsAt;
     if (typeof body.timezone === "string") update.timezone = body.timezone;
     if (["posted", "cancelled", "draft"].includes(body.status)) update.status = body.status;
+    if (["self_reported", "checked_in", "ended", "club_confirmed"].includes(body.workingStatus)) {
+      update.working_status = body.workingStatus;
+    }
+    if (["self_reported", "location_confirmed", "club_confirmed"].includes(body.locationStatus)) {
+      update.location_status = body.locationStatus;
+    }
+    if (typeof body.checkedInAt === "string" || body.checkedInAt === null) update.checked_in_at = body.checkedInAt;
+    if (typeof body.checkedOutAt === "string" || body.checkedOutAt === null) update.checked_out_at = body.checkedOutAt;
+    if (typeof body.commissionTrackingStartedAt === "string" || body.commissionTrackingStartedAt === null) {
+      update.commission_tracking_started_at = body.commissionTrackingStartedAt;
+    }
+    if (typeof body.commissionTrackingStoppedAt === "string" || body.commissionTrackingStoppedAt === null) {
+      update.commission_tracking_stopped_at = body.commissionTrackingStoppedAt;
+    }
+    if (typeof body.stillWorkingPromptedAt === "string" || body.stillWorkingPromptedAt === null) {
+      update.still_working_prompted_at = body.stillWorkingPromptedAt;
+    }
+    if (typeof body.stillWorkingConfirmedAt === "string" || body.stillWorkingConfirmedAt === null) {
+      update.still_working_confirmed_at = body.stillWorkingConfirmedAt;
+    }
+    if (typeof body.stillWorkingExpiresAt === "string" || body.stillWorkingExpiresAt === null) {
+      update.still_working_expires_at = body.stillWorkingExpiresAt;
+    }
+    if (typeof body.extendedEndsAt === "string" || body.extendedEndsAt === null) {
+      update.extended_ends_at = body.extendedEndsAt;
+    }
+    if (typeof body.endedAt === "string" || body.endedAt === null) update.ended_at = body.endedAt;
+    if (typeof body.endedReason === "string" || body.endedReason === null) update.ended_reason = body.endedReason;
+    if (body.shiftSummary && typeof body.shiftSummary === "object") update.shift_summary = body.shiftSummary;
 
-    const nextStartsAt = update.starts_at || existingShift.starts_at;
-    const nextEndsAt = update.ends_at || existingShift.ends_at;
+    const nextStartsAt = typeof update.starts_at === "string" ? update.starts_at : existingShift.starts_at;
+    const nextEndsAt = typeof update.ends_at === "string" ? update.ends_at : existingShift.ends_at;
     if (!isValidShiftRange(nextStartsAt, nextEndsAt)) {
       return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
     }
@@ -128,7 +157,7 @@ export async function PATCH(request: Request) {
 }
 
 async function getOwnShift(client: any, dancerId: string, shiftId: string) {
-  const { data, error } = await client
+    const { data, error } = await client
     .from("shifts")
     .select("id, venue_id, starts_at, ends_at, status, venues(name)")
     .eq("id", shiftId)
