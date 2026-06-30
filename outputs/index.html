@@ -21592,7 +21592,20 @@
     .deal-pass-overlay[hidden],
     .profile-qr-overlay[hidden] {
       display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
       pointer-events: none !important;
+    }
+
+    .deal-pass-overlay:not(.show),
+    .profile-qr-overlay:not(.show) {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .deal-pass-overlay.show,
+    .profile-qr-overlay.show {
+      visibility: visible !important;
     }
 
     .deal-pass-sheet {
@@ -29610,14 +29623,19 @@
     function closeQrPopovers() {
       const overlay = document.getElementById("profileQrOverlay");
       if (overlay) {
+        if (overlay.contains(document.activeElement)) {
+          document.activeElement.blur();
+        }
         overlay.classList.remove("show");
         overlay.setAttribute("aria-hidden", "true");
         overlay.hidden = true;
+        delete overlay.dataset.profileUrl;
       }
       document.querySelectorAll("[data-profile-qr], [data-toggle-qr]").forEach((button) => {
         button.classList.remove("is-open");
         button.setAttribute("aria-expanded", "false");
       });
+      syncOverlayScrollLock();
     }
 
     function openQrOverlay(profileName, city, triggerButton) {
@@ -29833,6 +29851,13 @@
       event.stopPropagation();
       closeProfileModal();
     });
+    document.addEventListener("pointerdown", (event) => {
+      const closeButton = event.target.closest?.("#modalClose");
+      if (!closeButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeProfileModal();
+    }, { capture: true, passive: false });
 
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target === profileBackdrop) closeProfileModal();
