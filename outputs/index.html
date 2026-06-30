@@ -22635,6 +22635,93 @@
         height: 18px;
       }
     }
+
+    /* Current UX polish: clearer live context and rounded tap feedback. */
+    button,
+    a,
+    select {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .home-live-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 13px;
+      border: 1px solid rgba(124, 58, 237, 0.28);
+      border-radius: 999px;
+      background: #070708;
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.32),
+        inset 0 0 18px rgba(124, 58, 237, 0.06);
+      color: #B8B8C5;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .home-live-summary span,
+    .home-live-summary strong {
+      min-width: 0;
+      white-space: nowrap;
+    }
+
+    #homeLiveRadius {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    .home-live-summary strong {
+      color: #FFFFFF;
+      text-shadow: 0 0 12px rgba(124, 58, 237, 0.34);
+    }
+
+    @media (max-width: 899px) {
+      header .brand-home,
+      header .customer-quick-btn,
+      header #accountBtn,
+      .tabs .tab,
+      .location-btn {
+        position: relative !important;
+        overflow: hidden !important;
+        isolation: isolate !important;
+        border-radius: 999px !important;
+        background-clip: padding-box !important;
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+        clip-path: inset(0 round 999px);
+      }
+
+      header .brand-home:focus,
+      header .brand-home:active,
+      header .customer-quick-btn:focus,
+      header .customer-quick-btn:active,
+      header #accountBtn:focus,
+      header #accountBtn:active,
+      .tabs .tab:focus,
+      .tabs .tab:active,
+      .location-btn:focus,
+      .location-btn:active {
+        outline: 0 !important;
+      }
+
+      header .brand-home:focus-visible,
+      header .customer-quick-btn:focus-visible,
+      header #accountBtn:focus-visible,
+      .tabs .tab:focus-visible,
+      .location-btn:focus-visible {
+        outline: 1px solid rgba(168, 85, 247, 0.72) !important;
+        outline-offset: 3px !important;
+      }
+
+      .home-live-summary {
+        padding: 9px 10px;
+        gap: 7px;
+        font-size: 11px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -22646,11 +22733,11 @@
         </button>
         <div class="menu" aria-label="Menu">
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
-            <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
+            <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
               <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
               <span data-quick-icon="bell"></span>
             </button>
-            <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved club deal QR codes" aria-expanded="false" aria-controls="customerDealsQuickPanel">
+            <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved club deal QR codes" title="Saved club deal QR codes" aria-expanded="false" aria-controls="customerDealsQuickPanel">
               <span data-quick-icon="qr"></span>
             </button>
             <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
@@ -22715,6 +22802,12 @@
           Use my location
         </button>
       </section>
+
+      <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
+        <span id="homeLiveCity">Las Vegas</span>
+        <span id="homeLiveRadius">25 mi radius · All venues</span>
+        <strong id="homeLiveWorking">0 working now</strong>
+      </div>
 
       <nav class="tabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
@@ -22865,7 +22958,7 @@
         <div class="page-head">
           <div>
             <span class="eyebrow">Login / Join</span>
-            <h2>Enter Dancr</h2>
+            <h2>Sign in to Mydancr</h2>
           </div>
           <button class="close-btn" id="authClose" aria-label="Close auth">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -23608,7 +23701,7 @@
         </div>
         <div class="customer-summary">
           <div>
-            <span class="eyebrow">Your night</span>
+            <span class="eyebrow">Dashboard</span>
             <h3 id="customerSummaryTitle">Now in Las Vegas</h3>
             <p id="customerSummaryCopy">Follow dancers to see your private working-now list, saved schedules, venue alerts, and directions.</p>
           </div>
@@ -29229,6 +29322,19 @@
       });
     }
 
+    function updateHomeLiveSummary(city) {
+      const summary = document.getElementById("homeLiveSummary");
+      if (!summary || !markets[city]) return;
+
+      const venueName = selectedVenueFilter();
+      const workingCount = getItems(city, "tonight").length;
+      const radiusLabel = distanceSelect?.value || "25 mi";
+      const venueLabel = venueName === "all" ? "All venues" : venueName;
+      document.getElementById("homeLiveCity").textContent = city;
+      document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
+      document.getElementById("homeLiveWorking").textContent = `${workingCount} working now`;
+    }
+
     function render() {
       const city = citySelect.value;
       const market = markets[city];
@@ -29237,6 +29343,7 @@
       renderPopularClubs(city);
       document.getElementById("popularClubs")?.classList.toggle("is-hidden", !["tonight", "dancers"].includes(activeTab));
       updateTabCounts(city);
+      updateHomeLiveSummary(city);
 
       const allItems = getItems(city, activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);

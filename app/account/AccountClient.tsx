@@ -94,7 +94,7 @@ export default function AccountClient() {
       if (mode === "signup") {
         setStatus(
           role === "customer"
-            ? "Check your email to confirm the account. After confirmation, Dancr will open the homepage signed in."
+            ? "Check your email to confirm the account. After confirmation, Mydancr will open the homepage signed in."
             : "Check your email to confirm the account before continuing.",
         );
         window.localStorage.removeItem(SESSION_KEY);
@@ -161,7 +161,7 @@ export default function AccountClient() {
       <AccountStyles />
       <nav className="top-nav" aria-label="Primary">
         <Link className="brand" href="/">
-          Dancr
+          Mydancr
         </Link>
         <div className="nav-links">
           <Link href="/tonight">Now</Link>
@@ -175,7 +175,7 @@ export default function AccountClient() {
           <span className="eyebrow">Live account</span>
           <h1>{role === "dancer" ? "Manage your dancer profile." : "Save your night out."}</h1>
           <p>
-            Sign in with a live Dancr account to manage saved profiles, notifications, profile setup, and dashboard data.
+            Sign in with a secure Mydancr account to manage saved profiles, private alerts, club deal QR codes, and dashboard data.
           </p>
         </div>
 
@@ -209,7 +209,7 @@ export default function AccountClient() {
                   <li>See who you follow working now.</li>
                   <li>Keep alerts, favorites, and directions in one place.</li>
                 </ul>
-                <p>Confirm your email, then Dancr opens the homepage signed in.</p>
+                <p>Confirm your email, then Mydancr opens the homepage signed in.</p>
               </section>
             </>
           ) : null}

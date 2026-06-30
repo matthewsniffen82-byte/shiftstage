@@ -47,7 +47,7 @@ export function ClubDealCard({ deal, venueId, sourceType, dancerId, dancerNote, 
 
       setQrDataUrl(data.qrDataUrl);
       setExpiresAt(data.redemption?.expiresAt || "");
-      setStatus("Show this QR at the venue.");
+      setStatus("QR ready. Show it at the venue.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to create this QR code.");
     } finally {
@@ -58,10 +58,11 @@ export function ClubDealCard({ deal, venueId, sourceType, dancerId, dancerNote, 
   return (
     <article className={`club-deal-card${compact ? " compact" : ""}`}>
       <div className="club-deal-copy">
-        <span className="eyebrow">Official club deal</span>
+        <span className="eyebrow">Club deal</span>
         <h2>{deal.dealTitle}</h2>
         {!compact ? <p>{deal.dealDescription}</p> : null}
         {deal.dealTerms && !compact ? <small>{deal.dealTerms}</small> : null}
+        {!compact ? <small>Tap Get Club Deal to create a QR. Show it at the venue when you redeem.</small> : null}
         {dancerNote ? (
           <small>This is the same club deal offered on the venue page. Using it from this profile may support this dancer.</small>
         ) : null}
@@ -91,6 +92,6 @@ function formatExpiry(value: string) {
       minute: "2-digit",
     }).format(new Date(value));
   } catch {
-    return "tonight";
+    return "soon";
   }
 }
