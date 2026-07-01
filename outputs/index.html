@@ -21449,7 +21449,8 @@
       line-height: 1.35;
     }
 
-    .dancer-verification-flow {
+    .dancer-verification-flow,
+    .dancer-signup-note {
       display: grid;
       gap: 12px;
       padding: 14px;
@@ -21462,38 +21463,48 @@
         inset 0 0 18px rgba(255, 255, 255, .03);
     }
 
-    .dancer-verification-flow h3 {
+    .dancer-verification-flow h3,
+    .dancer-signup-note h3 {
       margin: 0;
       font-size: 18px;
       line-height: 1.1;
     }
 
-    .dancer-verification-flow p {
+    .dancer-verification-flow p,
+    .dancer-signup-note p {
       font-size: 13px;
       line-height: 1.4;
       color: #cfc5de;
     }
 
     .dancer-step-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
       display: grid;
       gap: 10px;
     }
 
-    .dancer-step-list li {
+    .dancer-step-list details {
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .045);
+      overflow: hidden;
+    }
+
+    .dancer-step-list summary {
       display: grid;
       grid-template-columns: 34px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
       padding: 11px;
-      border: 1px solid rgba(255, 255, 255, .1);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, .045);
+      cursor: pointer;
+      list-style: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .dancer-step-list li > span {
+    .dancer-step-list summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .dancer-step-list summary > span {
       width: 28px;
       height: 28px;
       border-radius: 999px;
@@ -21521,6 +21532,41 @@
       font-size: 11.5px;
       line-height: 1.35;
       font-weight: 760;
+    }
+
+    .dancer-step-body {
+      display: grid;
+      gap: 10px;
+      padding: 0 11px 12px 55px;
+    }
+
+    .dancer-step-body .field {
+      margin: 0;
+    }
+
+    .step-note {
+      color: #cfc5de;
+      font-size: 11.5px;
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .step-action {
+      min-height: 40px;
+      border: 1px solid rgba(214, 174, 255, .72);
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 950;
+      background: linear-gradient(135deg, #5b21b6, #b74dff);
+      box-shadow: 0 0 20px rgba(183, 77, 255, .24);
+      cursor: pointer;
+    }
+
+    .step-action:hover,
+    .step-action:focus-visible {
+      outline: none;
+      border-color: rgba(214, 174, 255, .96);
+      box-shadow: 0 0 28px rgba(183, 77, 255, .34);
     }
 
     @media (max-width: 560px) {
@@ -23517,65 +23563,24 @@
         </div>
         <div class="auth-card">
           <form class="auth-form" id="dancerSignupForm">
-            <div class="dancer-verification-flow" aria-label="Dancer verification steps">
+            <div class="dancer-signup-note" aria-label="Dancer verification next steps">
               <span class="eyebrow">Dancer verification</span>
-              <h3>Four steps to go live</h3>
-              <p>Complete these steps so Dancr can review your profile before it appears publicly.</p>
-              <ol class="dancer-step-list">
-                <li>
-                  <span>1</span>
-                  <div>
-                    <strong>Create profile</strong>
-                    <small>Add your stage name, private legal name, and city.</small>
-                  </div>
-                </li>
-                <li>
-                  <span>2</span>
-                  <div>
-                    <strong>Upload photos</strong>
-                    <small>Add profile photos for review before your public profile goes live.</small>
-                  </div>
-                </li>
-                <li>
-                  <span>3</span>
-                  <div>
-                    <strong>Verify dancer status</strong>
-                    <small>Submit private ID, selfie, and proof that you dance for secure review.</small>
-                  </div>
-                </li>
-                <li>
-                  <span>4</span>
-                  <div>
-                    <strong>Approval</strong>
-                    <small>Dancr reviews everything, then unlocks schedule posting and public discovery.</small>
-                  </div>
-                </li>
-              </ol>
+              <h3>Create your dancer login first</h3>
+              <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Schedule posting unlocks after approval.</p>
             </div>
-            <div class="field">
-              <label for="dancerLegalName">Real legal name</label>
-              <input id="dancerLegalName" type="text" value="Mira Santos" autocomplete="name">
-              <div class="field-note"><strong>Private verification only.</strong> This is used for ID/selfie review and billing records. It is never shown on your public profile.</div>
-            </div>
-            <div class="field">
-              <label for="dancerStageName">Stage name</label>
-              <input id="dancerStageName" type="text" value="Mira Nova">
-              <div class="stage-name-note"><strong>Shown publicly:</strong> Customers see this name on profile cards, schedules, search, and your full profile.</div>
-            </div>
+            <input id="dancerStageName" type="hidden" value="">
+            <input id="dancerLegalName" type="hidden" value="">
+            <input id="dancerCity" type="hidden" value="Las Vegas">
             <div class="field">
               <label for="dancerEmail">Email</label>
-              <input id="dancerEmail" type="email" value="mira@example.com">
+              <input id="dancerEmail" type="email" value="" required>
             </div>
             <div class="field">
               <label for="dancerPassword">Password</label>
-              <input id="dancerPassword" type="password" value="dancr">
-            </div>
-            <div class="field">
-              <label for="dancerCity">City</label>
-              <input id="dancerCity" type="text" value="Las Vegas">
+              <input id="dancerPassword" type="password" value="dancr" required>
             </div>
             <div class="rule-note">Dancer accounts are free while launch access is open. Public profile access still waits for verification and approval.</div>
-            <button class="action-btn" type="submit">Join free</button>
+            <button class="action-btn" type="submit">Create dancer account</button>
           </form>
         </div>
       </div>
@@ -24756,8 +24761,6 @@
       }
 
       if (role === "dancer") {
-        state.realName = document.getElementById("dancerLegalName")?.value || "";
-        state.stageName = document.getElementById("dancerStageName")?.value || "";
         state.email = document.getElementById("dancerEmail")?.value || "";
         state.dancerCity = document.getElementById("dancerCity")?.value || citySelect.value;
       }
@@ -24813,7 +24816,7 @@
           window.scrollTo({ top: 0, behavior: "auto" });
           return;
         }
-        showToast("Email confirmed. Welcome back to Mydancr.");
+        showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 4-step dancer verification." : "Email confirmed. Welcome back to Mydancr.");
         openDashboard();
       });
     }
@@ -24845,13 +24848,17 @@
       render();
 
       if (state.role === "dancer") {
-        openDancerSignupPage();
-        document.getElementById("dancerLegalName").value = state.realName || "";
-        document.getElementById("dancerStageName").value = state.stageName || "";
         document.getElementById("dancerEmail").value = state.email || "";
         document.getElementById("dancerCity").value = state.dancerCity || state.city || "Las Vegas";
-        showToast("Email confirmed. Sign in or continue your dancer setup.");
-        setTimeout(() => document.getElementById("dancerPassword")?.focus(), 80);
+        if (confirmedSession?.accessToken) {
+          saveAuthSession(confirmedSession);
+          openConfirmedSessionDashboard("dancer", state);
+          return true;
+        }
+        openAuthRole("dancer");
+        document.getElementById("dancerLoginEmail").value = state.email || "";
+        showToast("Email confirmed. Sign in to open your dancer verification setup.");
+        setTimeout(() => document.getElementById("dancerLoginPassword")?.focus(), 80);
       } else if (state.role === "venue") {
         openAuthRole("venue");
         document.getElementById("venueLoginName").value = state.name || "";
@@ -30791,21 +30798,19 @@
 
     document.getElementById("dancerSignupForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const submit = event.currentTarget.querySelector('button[type="submit"]');
+      const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
       submit.disabled = true;
       try {
         const result = await requestAuth({
           mode: "signup",
           role: "dancer",
-          realName: document.getElementById("dancerLegalName").value,
-          stageName: document.getElementById("dancerStageName").value,
           email: document.getElementById("dancerEmail").value,
           password: document.getElementById("dancerPassword").value,
-          city: document.getElementById("dancerCity").value,
+          city: document.getElementById("dancerCity").value || citySelect.value || "Las Vegas",
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          showToast("Confirmation email sent. Open it on this device to return here.");
+          showToast("Confirmation email sent. Confirm it to open your 4-step dancer setup.");
           return;
         }
         dancerSignupStarted = true;

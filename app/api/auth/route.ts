@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         ? customerDisplayName(email)
         : role === "venue"
           ? readRequired(body.name, "Venue name is required.")
-          : readRequired(body.stageName, "Stage name is required.");
+          : readOptional(body.stageName) || dancerDisplayName(email);
     const metadata =
       role === "customer"
         ? { role, display_name: displayName }
@@ -60,8 +60,7 @@ export async function POST(request: Request) {
           : {
               role,
               display_name: displayName,
-              real_name: readRequired(body.realName, "Legal name is required."),
-              stage_name: displayName,
+              stage_name: readOptional(body.stageName) || null,
               city,
             };
 
@@ -151,11 +150,14 @@ async function upsertAccount(
     return;
   }
 
+  const stageName = readOptional(body.stageName) || displayName;
+  const realName = readOptional(body.realName) || "";
+
   const { error } = await admin.from("dancer_profiles").upsert({
     user_id: userId,
-    real_name: readRequired(body.realName, "Legal name is required."),
-    stage_name: displayName,
-    slug: slugify(displayName),
+    real_name: realName,
+    stage_name: stageName,
+    slug: slugify(stageName),
     city,
     status: "draft",
   });
@@ -184,6 +186,10 @@ function readOptional(value: unknown) {
 
 function customerDisplayName(email: string) {
   return email.split("@")[0]?.trim() || "Customer";
+}
+
+function dancerDisplayName(email: string) {
+  return email.split("@")[0]?.trim() || "Dancer";
 }
 
 function safeEmailRedirectTo(value: unknown) {

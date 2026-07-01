@@ -29,8 +29,6 @@ export default function AccountClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [stageName, setStageName] = useState("");
-  const [realName, setRealName] = useState("");
   const [city, setCity] = useState("Las Vegas");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,8 +77,6 @@ export default function AccountClient() {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setStageName("");
-    setRealName("");
     setCity("Las Vegas");
     setStatus("");
     setShowPassword(false);
@@ -109,10 +105,6 @@ export default function AccountClient() {
     setIsSubmitting(true);
 
     const payload: Record<string, string> = { mode, role, email, password, city };
-    if (role === "dancer") {
-      payload.stageName = stageName;
-      payload.realName = realName;
-    }
     if (mode === "signup" && typeof window !== "undefined") {
       const returnTo = role === "dancer" ? "/dashboard/dancer" : "/";
       payload.emailRedirectTo = `${window.location.origin}/auth/callback?dancr_confirm=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`;
@@ -131,7 +123,7 @@ export default function AccountClient() {
         setStatus(
           role === "customer"
             ? "Check your email to confirm the account. After confirmation, Mydancr will open the homepage signed in."
-            : "Check your email to confirm the account before continuing.",
+            : "Check your email to confirm the account. After confirmation, Mydancr will open your four-step dancer verification setup.",
         );
         window.localStorage.removeItem(SESSION_KEY);
         return;
@@ -272,49 +264,11 @@ export default function AccountClient() {
 
           {isDancerSignup ? (
             <>
-              <section className="dancer-verification-flow" aria-label="Dancer verification steps">
+              <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer verification</span>
-                <h2>Four steps to go live</h2>
-                <p>Complete these steps so Dancr can review your profile before it appears publicly.</p>
-                <ol className="dancer-step-list">
-                  <li>
-                    <span>1</span>
-                    <div>
-                      <strong>Create profile</strong>
-                      <small>Add your stage name, private legal name, and city.</small>
-                    </div>
-                  </li>
-                  <li>
-                    <span>2</span>
-                    <div>
-                      <strong>Upload photos</strong>
-                      <small>Add profile photos for review before your public profile goes live.</small>
-                    </div>
-                  </li>
-                  <li>
-                    <span>3</span>
-                    <div>
-                      <strong>Verify dancer status</strong>
-                      <small>Submit private ID, selfie, and proof that you dance for secure review.</small>
-                    </div>
-                  </li>
-                  <li>
-                    <span>4</span>
-                    <div>
-                      <strong>Approval</strong>
-                      <small>Dancr reviews everything, then unlocks schedule posting and public discovery.</small>
-                    </div>
-                  </li>
-                </ol>
+                <h2>Create your dancer login first</h2>
+                <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Schedule posting unlocks after approval.</p>
               </section>
-              <label>
-                Stage name
-                <input value={stageName} onChange={(event) => setStageName(event.target.value)} required />
-              </label>
-              <label>
-                Legal name
-                <input value={realName} onChange={(event) => setRealName(event.target.value)} required />
-              </label>
             </>
           ) : null}
 
@@ -375,7 +329,7 @@ export default function AccountClient() {
               {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
             </button>
           ) : null}
-          {mode === "signup" ? (
+          {mode === "signup" && role === "customer" ? (
             <label>
               City
               <input value={city} onChange={(event) => setCity(event.target.value)} required />
@@ -422,6 +376,7 @@ function AccountStyles() {
       .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
       label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
+      input[type="file"] { min-height: auto; padding: 10px 12px; color: #cfc5de; }
       .password-control { position: relative; display: flex; align-items: center; }
       .password-control input { width: 100%; padding-right: 46px; }
       .password-control button { position: absolute; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #d8cfeb; background: rgba(255,255,255,.055); cursor: pointer; }
@@ -447,14 +402,9 @@ function AccountStyles() {
       .customer-benefit-tile { display: grid; gap: 5px; min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 16px rgba(255,255,255,.025); }
       .customer-benefit-tile strong { color: #fff; font-size: 13px; line-height: 1.2; }
       .customer-benefit-tile span { color: #d8cfeb; font-size: 12px; font-weight: 750; line-height: 1.35; }
-      .dancer-verification-flow { display: grid; gap: 12px; padding: 14px; border: 1px solid rgba(139,92,246,.34); border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(5,5,9,.72)); box-shadow: 0 0 24px rgba(139,92,246,.12); }
-      .dancer-verification-flow h2 { margin: 0; font-size: 20px; }
-      .dancer-verification-flow p { font-size: 14px; line-height: 1.45; }
-      .dancer-step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-      .dancer-step-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; padding: 11px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.045); }
-      .dancer-step-list li > span { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 950; background: linear-gradient(135deg,#5b21b6,#9b5cff); box-shadow: 0 0 18px rgba(155,92,255,.24); }
-      .dancer-step-list strong { display: block; color: #fff; font-size: 13px; line-height: 1.2; }
-      .dancer-step-list small { display: block; margin-top: 3px; color: #cfc5de; font-size: 12px; line-height: 1.35; font-weight: 750; }
+      .dancer-signup-note { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(139,92,246,.34); border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(5,5,9,.72)); box-shadow: 0 0 24px rgba(139,92,246,.12); }
+      .dancer-signup-note h2 { margin: 0; font-size: 20px; }
+      .dancer-signup-note p { font-size: 14px; line-height: 1.45; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid { grid-template-columns: 1fr; } }
     `}</style>
