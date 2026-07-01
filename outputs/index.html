@@ -23525,7 +23525,7 @@
             <div class="dancer-signup-note" aria-label="Dancer verification next steps">
               <span class="eyebrow">Dancer verification</span>
               <h3>Create your dancer login first</h3>
-              <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Schedule posting unlocks after approval.</p>
+              <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Check your email or spam folder if it does not arrive right away. Schedule posting unlocks after approval.</p>
             </div>
             <input id="dancerStageName" type="hidden" value="">
             <input id="dancerLegalName" type="hidden" value="">
@@ -30814,9 +30814,9 @@
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Tap Confirm email in that email to open your 4-step dancer verification setup.`);
-          submit.textContent = "Confirmation email sent";
-          showToast("Confirmation email sent. Check your email to continue.");
+          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Check your email or spam folder, then tap Confirm email in that email to open your 4-step dancer verification setup in this browser.`);
+          submit.textContent = "Check email or spam folder";
+          showToast("Confirmation email sent. Check your email or spam folder to continue.");
           return;
         }
         dancerSignupStarted = true;
@@ -30847,7 +30847,7 @@
         showToast(message);
       } finally {
         submit.disabled = false;
-        if (submit.textContent !== "Confirmation email sent") submit.textContent = originalText;
+        if (submit.textContent !== "Check email or spam folder") submit.textContent = originalText;
       }
     });
 

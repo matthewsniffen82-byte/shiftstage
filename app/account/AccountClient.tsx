@@ -123,7 +123,7 @@ export default function AccountClient() {
         setStatus(
           role === "customer"
             ? `Confirmation email sent to ${email}. After confirmation, Mydancr will open the homepage signed in.`
-            : `Confirmation email sent to ${email}. Tap Confirm email in that email to open your four-step dancer verification setup.`,
+            : `Confirmation email sent to ${email}. Check your email or spam folder, then tap Confirm email to open your four-step dancer verification setup.`,
         );
         window.localStorage.removeItem(SESSION_KEY);
         return;
@@ -267,7 +267,7 @@ export default function AccountClient() {
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer verification</span>
                 <h2>Create your dancer login first</h2>
-                <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Schedule posting unlocks after approval.</p>
+                <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Check your email or spam folder if it does not arrive right away. Schedule posting unlocks after approval.</p>
               </section>
             </>
           ) : null}
