@@ -24723,6 +24723,8 @@
       if (role === "dancer") {
         state.email = document.getElementById("dancerEmail")?.value || "";
         state.dancerCity = document.getElementById("dancerCity")?.value || citySelect.value;
+        state.resumeTarget = "dancer_verification";
+        state.setupStep = "profile";
       }
 
       if (role === "venue") {
@@ -24746,6 +24748,26 @@
       return state || null;
     }
 
+    function prepareConfirmedDancerVerification(state = {}) {
+      dancerSignupStarted = true;
+      stripeConfirmed = true;
+      setupChecklistExpanded = true;
+      activeSetupStep = state.setupStep || nextIncompleteStep() || "profile";
+      const dancerEmail = document.getElementById("dancerEmail");
+      const dancerLoginEmail = document.getElementById("dancerLoginEmail");
+      const dancerCity = document.getElementById("dancerCity");
+      if (dancerEmail && state.email) dancerEmail.value = state.email;
+      if (dancerLoginEmail && state.email) dancerLoginEmail.value = state.email;
+      if (dancerCity && !dancerCity.value.trim()) {
+        dancerCity.value = state.dancerCity || state.city || citySelect.value || "Las Vegas";
+      }
+    }
+
+    function scrollDancerVerificationIntoView() {
+      const target = document.getElementById("dancerApprovalCommand") || document.getElementById("setupChecklistWrap");
+      target?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+
     function openConfirmedSessionDashboard(role, state = {}) {
       const dashboardRole = role === "dancer" || role === "venue" ? role : "customer";
       saveAuthSession({
@@ -24767,6 +24789,9 @@
           prepareRealCustomerDashboardState();
           loadLiveCustomerDashboardData();
         }
+        if (dashboardRole === "dancer") {
+          prepareConfirmedDancerVerification(state);
+        }
         updateAccountHeader();
         maybeShowAccountTooltip(dashboardRole);
         if (dashboardRole === "customer") {
@@ -24774,6 +24799,15 @@
           closeAuthPage();
           showToast("Email confirmed. You're signed in.");
           window.scrollTo({ top: 0, behavior: "auto" });
+          return;
+        }
+        if (dashboardRole === "dancer") {
+          closeAuthPage();
+          closeDashboard();
+          closeVenueDashboard();
+          showToast("Email confirmed. Complete your 4-step dancer verification.");
+          openDancerDashboard();
+          setTimeout(scrollDancerVerificationIntoView, 180);
           return;
         }
         showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 4-step dancer verification." : "Email confirmed. Welcome back to Mydancr.");
