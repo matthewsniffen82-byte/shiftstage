@@ -42,6 +42,7 @@ export default function AccountClient() {
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
+  const isDancerSignup = role === "dancer" && mode === "signup";
 
   const scrollCustomerBenefitsToTop = useCallback((behavior: ScrollBehavior = "smooth") => {
     const benefits = customerBenefitsRef.current;
@@ -269,8 +270,43 @@ export default function AccountClient() {
             </>
           ) : null}
 
-          {mode === "signup" && role === "dancer" ? (
+          {isDancerSignup ? (
             <>
+              <section className="dancer-verification-flow" aria-label="Dancer verification steps">
+                <span className="eyebrow">Dancer verification</span>
+                <h2>Four steps to go live</h2>
+                <p>Complete these steps so Dancr can review your profile before it appears publicly.</p>
+                <ol className="dancer-step-list">
+                  <li>
+                    <span>1</span>
+                    <div>
+                      <strong>Create profile</strong>
+                      <small>Add your stage name, private legal name, and city.</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>2</span>
+                    <div>
+                      <strong>Upload photos</strong>
+                      <small>Add profile photos for review before your public profile goes live.</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>3</span>
+                    <div>
+                      <strong>Verify dancer status</strong>
+                      <small>Submit private ID, selfie, and proof that you dance for secure review.</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>4</span>
+                    <div>
+                      <strong>Approval</strong>
+                      <small>Dancr reviews everything, then unlocks schedule posting and public discovery.</small>
+                    </div>
+                  </li>
+                </ol>
+              </section>
               <label>
                 Stage name
                 <input value={stageName} onChange={(event) => setStageName(event.target.value)} required />
@@ -411,6 +447,14 @@ function AccountStyles() {
       .customer-benefit-tile { display: grid; gap: 5px; min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 16px rgba(255,255,255,.025); }
       .customer-benefit-tile strong { color: #fff; font-size: 13px; line-height: 1.2; }
       .customer-benefit-tile span { color: #d8cfeb; font-size: 12px; font-weight: 750; line-height: 1.35; }
+      .dancer-verification-flow { display: grid; gap: 12px; padding: 14px; border: 1px solid rgba(139,92,246,.34); border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(5,5,9,.72)); box-shadow: 0 0 24px rgba(139,92,246,.12); }
+      .dancer-verification-flow h2 { margin: 0; font-size: 20px; }
+      .dancer-verification-flow p { font-size: 14px; line-height: 1.45; }
+      .dancer-step-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+      .dancer-step-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; padding: 11px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.045); }
+      .dancer-step-list li > span { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 950; background: linear-gradient(135deg,#5b21b6,#9b5cff); box-shadow: 0 0 18px rgba(155,92,255,.24); }
+      .dancer-step-list strong { display: block; color: #fff; font-size: 13px; line-height: 1.2; }
+      .dancer-step-list small { display: block; margin-top: 3px; color: #cfc5de; font-size: 12px; line-height: 1.35; font-weight: 750; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid { grid-template-columns: 1fr; } }
     `}</style>
