@@ -23326,7 +23326,7 @@
             <div class="customer-signup-benefits" id="customerSignupBenefits" hidden>
               <span class="eyebrow">Why join</span>
               <h3>Create your private Mydancr dashboard</h3>
-              <button class="continue-signup" id="continueCustomerSignupBtn" type="button">Continue to create account <span aria-hidden="true">↓</span></button>
+              <a class="continue-signup" id="continueCustomerSignupBtn" href="#customerEmail" role="button">Continue to create account <span aria-hidden="true">↓</span></a>
               <div class="customer-benefit-grid">
                 <div class="customer-benefit-tile">
                   <strong>Saved club deal QR codes</strong>
@@ -28515,15 +28515,21 @@
     function scrollCustomerSignupBenefitsToTop(behavior = "smooth") {
       const benefits = document.getElementById("customerSignupBenefits");
       if (!benefits || benefits.hidden) return;
-      const top = benefits.getBoundingClientRect().top + window.scrollY - 12;
-      window.scrollTo({ top: Math.max(0, top), behavior });
+      const scroller = authPage?.classList.contains("show") ? authPage : window;
+      const top = scroller === window
+        ? benefits.getBoundingClientRect().top + window.scrollY - 12
+        : benefits.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 12;
+      scroller.scrollTo({ top: Math.max(0, top), behavior });
     }
 
     function scrollCustomerSignupFieldsToTop() {
       const emailInput = document.getElementById("customerEmail");
       if (!emailInput) return;
-      const top = emailInput.getBoundingClientRect().top + window.scrollY - 18;
-      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      const scroller = authPage?.classList.contains("show") ? authPage : window;
+      const top = scroller === window
+        ? emailInput.getBoundingClientRect().top + window.scrollY - 18
+        : emailInput.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 18;
+      scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
       setTimeout(() => {
         try {
           emailInput.focus({ preventScroll: true });
@@ -30410,7 +30416,8 @@
       openFreshCustomerSignup();
     });
 
-    document.getElementById("continueCustomerSignupBtn").addEventListener("click", () => {
+    document.getElementById("continueCustomerSignupBtn").addEventListener("click", (event) => {
+      event.preventDefault();
       scrollCustomerSignupFieldsToTop();
     });
 
