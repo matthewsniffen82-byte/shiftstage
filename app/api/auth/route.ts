@@ -152,22 +152,59 @@ async function upsertAccount(
 
   const stageName = readOptional(body.stageName) || displayName;
   const realName = readOptional(body.realName) || "Verification pending";
-  const slug = slugify(stageName) || `dancer-${userId.slice(0, 8)}`;
+  const { data: existingProfile, error: existingProfileError } = await admin
+    .from("dancer_profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (existingProfileError) throw existingProfileError;
+
+  if (existingProfile) {
+    const { error } = await admin
+      .from("dancer_profiles")
+      .update({
+        real_name: realName,
+        stage_name: stageName,
+        city,
+        status: "draft",
+      })
+      .eq("user_id", userId);
+    if (error) throw error;
+    return;
+  }
+
+  const slug = await uniqueDancerSlug(admin, stageName, userId);
 
   const { error } = await admin
     .from("dancer_profiles")
-    .upsert(
-      {
-        user_id: userId,
-        real_name: realName,
-        stage_name: stageName,
-        slug,
-        city,
-        status: "draft",
-      },
-      { onConflict: "user_id" },
-    );
+    .insert({
+      user_id: userId,
+      real_name: realName,
+      stage_name: stageName,
+      slug,
+      city,
+      status: "draft",
+    });
   if (error) throw error;
+}
+
+async function uniqueDancerSlug(admin: ReturnType<typeof createAdminSupabaseClient>, stageName: string, userId: string) {
+  const baseSlug = slugify(stageName) || `dancer-${userId.slice(0, 8)}`;
+  let candidate = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const { data, error } = await admin
+      .from("dancer_profiles")
+      .select("user_id")
+      .eq("slug", candidate)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || data.user_id === userId) return candidate;
+
+    suffix += 1;
+    candidate = `${baseSlug}-${suffix}`;
+  }
 }
 
 function readMode(value: unknown): AuthMode {
