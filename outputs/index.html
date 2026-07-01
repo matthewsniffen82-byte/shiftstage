@@ -28420,6 +28420,12 @@
       status.hidden = !message;
     }
 
+    function scrollCustomerSignupBenefitsToTop(behavior = "smooth") {
+      const benefits = document.getElementById("customerSignupBenefits");
+      if (!benefits || benefits.hidden) return;
+      benefits.scrollIntoView({ block: "start", inline: "nearest", behavior });
+    }
+
     function openFreshCustomerSignup() {
       saveAuthSession(null);
       isCustomerLoggedIn = false;
@@ -28434,7 +28440,15 @@
       setCustomerAuthMode("signup");
       document.getElementById("customerPassword").value = "";
       document.getElementById("customerConfirmPassword").value = "";
-      setTimeout(() => document.getElementById("customerEmail")?.focus(), 80);
+      setTimeout(() => {
+        const emailInput = document.getElementById("customerEmail");
+        try {
+          emailInput?.focus({ preventScroll: true });
+        } catch {
+          emailInput?.focus();
+        }
+        scrollCustomerSignupBenefitsToTop();
+      }, 80);
     }
 
     function openDashboard() {
@@ -28695,6 +28709,7 @@
       document.getElementById("customerEmail").value = "";
       updateAccountHeader();
       openAuthPage();
+      setTimeout(() => scrollCustomerSignupBenefitsToTop(), 80);
       showToast("Customer sign up demo");
     }
 

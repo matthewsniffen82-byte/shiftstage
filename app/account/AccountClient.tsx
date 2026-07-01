@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -37,9 +37,18 @@ export default function AccountClient() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const customerBenefitsRef = useRef<HTMLElement | null>(null);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
+
+  useEffect(() => {
+    if (!isCustomerSignup) return;
+    const frame = window.requestAnimationFrame(() => {
+      customerBenefitsRef.current?.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isCustomerSignup]);
 
   function clearFields() {
     setEmail("");
@@ -206,7 +215,7 @@ export default function AccountClient() {
 
           {mode === "signup" && role === "customer" ? (
             <>
-              <section className="signup-benefits" aria-label="Customer signup benefits">
+              <section ref={customerBenefitsRef} className="signup-benefits" aria-label="Customer signup benefits">
                 <span className="eyebrow">Why join</span>
                 <h2>Create your private Mydancr dashboard</h2>
                 <div className="customer-benefit-grid">
