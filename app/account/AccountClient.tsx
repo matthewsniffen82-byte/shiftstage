@@ -61,13 +61,16 @@ export default function AccountClient() {
   useEffect(() => {
     if (!isCustomerSignup) return;
     let settleTimer: number | undefined;
+    let finalTimer: number | undefined;
     const frame = window.requestAnimationFrame(() => {
       scrollCustomerBenefitsToTop("smooth");
       settleTimer = window.setTimeout(() => scrollCustomerBenefitsToTop("smooth"), 180);
+      finalTimer = window.setTimeout(() => scrollCustomerBenefitsToTop("smooth"), 360);
     });
     return () => {
       window.cancelAnimationFrame(frame);
       if (settleTimer) window.clearTimeout(settleTimer);
+      if (finalTimer) window.clearTimeout(finalTimer);
     };
   }, [isCustomerSignup, scrollCustomerBenefitsToTop]);
 

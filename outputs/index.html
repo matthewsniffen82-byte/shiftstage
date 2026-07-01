@@ -28548,14 +28548,9 @@
       document.getElementById("customerPassword").value = "";
       document.getElementById("customerConfirmPassword").value = "";
       setTimeout(() => {
-        const emailInput = document.getElementById("customerEmail");
-        try {
-          emailInput?.focus({ preventScroll: true });
-        } catch {
-          emailInput?.focus();
-        }
         scrollCustomerSignupBenefitsToTop();
         setTimeout(() => scrollCustomerSignupBenefitsToTop(), 180);
+        setTimeout(() => scrollCustomerSignupBenefitsToTop(), 360);
       }, 80);
     }
 
