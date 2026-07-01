@@ -24632,7 +24632,16 @@
       try {
         const data = await getAuthenticatedJson("/api/account");
         if (data?.account) {
-          saveAuthSession({ ...authSession, account: data.account });
+          const account =
+            role && data.account.role !== role
+              ? {
+                  ...data.account,
+                  role,
+                  displayName: state?.name || state?.stageName || state?.email || data.account.displayName || null,
+                  accountState: data.account.accountState || "active"
+                }
+              : data.account;
+          saveAuthSession({ ...authSession, account });
         }
       } catch (error) {
         saveAuthSession({
@@ -24826,8 +24835,24 @@
       window.history.replaceState({}, document.title, "/");
       if (!state) {
         if (confirmedSession?.accessToken) {
+          const hintedRole = roleHint === "dancer" || roleHint === "venue" || roleHint === "customer" ? roleHint : "";
+          const sessionRole =
+            confirmedSession.account?.role === "dancer" || confirmedSession.account?.role === "venue" || confirmedSession.account?.role === "customer"
+              ? confirmedSession.account.role
+              : "";
+          const confirmedRole = hintedRole || sessionRole || "customer";
+          const fallbackState =
+            confirmedRole === "dancer"
+              ? {
+                  role: "dancer",
+                  email: confirmedSession.account?.email || "",
+                  dancerCity: citySelect.value || "Las Vegas",
+                  resumeTarget: "dancer_verification",
+                  setupStep: "profile"
+                }
+              : {};
           saveAuthSession(confirmedSession);
-          openConfirmedSessionDashboard(confirmedSession.account?.role || roleHint || "customer");
+          openConfirmedSessionDashboard(confirmedRole, fallbackState);
           return true;
         }
         showToast("Email confirmed. Please sign in to continue.");

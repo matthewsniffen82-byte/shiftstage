@@ -27,6 +27,7 @@ export async function GET(request: Request) {
 async function readCallbackSession(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const roleHint = readCallbackRole(url.searchParams.get("role"));
   if (!code) return null;
 
   try {
@@ -34,7 +35,12 @@ async function readCallbackSession(request: Request) {
     const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (error || !data.session || !data.user) return null;
 
-    const account = await getAccountByUserId(createAdminSupabaseClient(), data.user.id);
+    const admin = createAdminSupabaseClient();
+    let account = await getAccountByUserId(admin, data.user.id);
+    if (roleHint && account && account.role !== roleHint) {
+      const { error: roleError } = await admin.from("app_users").update({ role: roleHint }).eq("id", data.user.id);
+      if (!roleError) account = { ...account, role: roleHint };
+    }
 
     return {
       accessToken: data.session.access_token,
@@ -45,4 +51,8 @@ async function readCallbackSession(request: Request) {
   } catch {
     return null;
   }
+}
+
+function readCallbackRole(value: string | null) {
+  return value === "customer" || value === "dancer" || value === "venue" ? value : null;
 }
