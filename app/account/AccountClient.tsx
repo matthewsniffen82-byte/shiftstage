@@ -214,7 +214,7 @@ export default function AccountClient() {
           </p>
         </div>
 
-        <form className="account-panel" onSubmit={submit}>
+        <form className={`account-panel account-panel-${role}`} onSubmit={submit}>
           {!isCustomerSignup ? (
             <>
               <div className="segmented" aria-label="Account type">
@@ -393,6 +393,11 @@ function AccountStyles() {
       .password-control svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .submit { background: #f7f2ff; color: #090911; margin-top: 4px; }
       .submit:disabled { opacity: .62; cursor: wait; }
+      .account-panel-customer .segmented button.active,
+      .account-panel-customer .submit,
+      .account-panel-customer .continue-signup { border: 1px solid rgba(53,216,255,.62); background: linear-gradient(135deg, #061b31 0%, #0a4f88 52%, #1ecfff 100%); color: #fff; box-shadow: 0 12px 28px rgba(14,109,185,.24), 0 0 22px rgba(53,216,255,.2); }
+      .account-panel-dancer .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
+      .account-panel-customer .continue-signup span { color: #8ff2ff; }
       .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .forgot-password:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
