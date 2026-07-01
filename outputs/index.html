@@ -21361,6 +21361,7 @@
     }
 
     .customer-signup-benefits {
+      scroll-margin-top: 12px;
       display: grid;
       gap: 10px;
       padding: 14px;
@@ -28479,7 +28480,8 @@
     function scrollCustomerSignupBenefitsToTop(behavior = "smooth") {
       const benefits = document.getElementById("customerSignupBenefits");
       if (!benefits || benefits.hidden) return;
-      benefits.scrollIntoView({ block: "start", inline: "nearest", behavior });
+      const top = benefits.getBoundingClientRect().top + window.scrollY - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior });
     }
 
     function openFreshCustomerSignup() {
@@ -28504,6 +28506,7 @@
           emailInput?.focus();
         }
         scrollCustomerSignupBenefitsToTop();
+        setTimeout(() => scrollCustomerSignupBenefitsToTop(), 180);
       }, 80);
     }
 

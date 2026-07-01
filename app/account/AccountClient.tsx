@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -42,13 +42,25 @@ export default function AccountClient() {
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
 
+  const scrollCustomerBenefitsToTop = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const benefits = customerBenefitsRef.current;
+    if (!benefits) return;
+    const top = benefits.getBoundingClientRect().top + window.scrollY - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior });
+  }, []);
+
   useEffect(() => {
     if (!isCustomerSignup) return;
+    let settleTimer: number | undefined;
     const frame = window.requestAnimationFrame(() => {
-      customerBenefitsRef.current?.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
+      scrollCustomerBenefitsToTop("smooth");
+      settleTimer = window.setTimeout(() => scrollCustomerBenefitsToTop("smooth"), 180);
     });
-    return () => window.cancelAnimationFrame(frame);
-  }, [isCustomerSignup]);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (settleTimer) window.clearTimeout(settleTimer);
+    };
+  }, [isCustomerSignup, scrollCustomerBenefitsToTop]);
 
   function clearFields() {
     setEmail("");
@@ -368,7 +380,7 @@ function AccountStyles() {
       .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .forgot-password:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
-      .signup-benefits { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
+      .signup-benefits { scroll-margin-top: 12px; display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
       .signup-benefits h2 { margin: 0; font-size: 20px; }
       .signup-benefits p { font-size: 14px; line-height: 1.45; }
       .customer-benefit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
