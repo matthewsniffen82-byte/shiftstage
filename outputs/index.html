@@ -22888,6 +22888,58 @@
         gap: 9px !important;
       }
     }
+
+    /* Keep the club deal inside the Working Now block to save profile space. */
+    .profile-modal .working-now-tile > .meta {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto !important;
+      align-items: center !important;
+      column-gap: 16px !important;
+      row-gap: 5px !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .detail-line,
+    .profile-modal .working-now-tile > .meta > .schedule-time,
+    .profile-modal .working-now-tile > .meta > .modal-started-line {
+      grid-column: 1 !important;
+      min-width: 0 !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .profile-deal-row {
+      grid-column: 2 !important;
+      grid-row: 1 / span 3 !important;
+      min-width: 190px !important;
+      margin: 0 !important;
+      padding: 0 0 0 14px !important;
+      border-top: 0 !important;
+      border-left: 1px solid rgba(139, 92, 246, 0.16) !important;
+      align-self: center !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .working-now-tile > .meta {
+        grid-template-columns: minmax(0, 1fr) minmax(112px, auto) !important;
+        column-gap: 10px !important;
+      }
+
+      .profile-modal .working-now-tile > .meta > .profile-deal-row {
+        min-width: 112px !important;
+        gap: 8px !important;
+        padding-left: 10px !important;
+      }
+
+      .profile-modal .working-now-tile .profile-deal-copy strong {
+        font-size: 0.66rem !important;
+      }
+
+      .profile-modal .working-now-tile .profile-deal-main {
+        font-size: 0.76rem !important;
+      }
+
+      .profile-modal .working-now-tile .profile-deal-note {
+        font-size: 0.6rem !important;
+      }
+    }
   </style>
 </head>
 <body>
