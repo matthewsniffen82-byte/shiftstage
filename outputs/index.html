@@ -2018,37 +2018,6 @@
       font-size: 12px;
     }
 
-    .demo-login-callout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 12px;
-      padding: 14px;
-      border: 1px solid rgba(139,92,246,.34);
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(139,92,246,.16), rgba(53,216,255,.06));
-      box-shadow: inset 0 0 18px rgba(139,92,246,.06), 0 0 22px rgba(139,92,246,.08);
-    }
-
-    .demo-login-callout strong {
-      display: block;
-      color: #f8f5ff;
-      font-size: 13px;
-    }
-
-    .demo-login-callout span {
-      display: block;
-      margin-top: 3px;
-      color: #bfb6cf;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .demo-login-callout .ghost {
-      min-height: 38px;
-      white-space: nowrap;
-    }
-
     .auth-form-head {
       display: flex;
       align-items: center;
@@ -2085,9 +2054,6 @@
         text-align: left;
       }
 
-      .demo-login-callout {
-        grid-template-columns: 1fr;
-      }
     }
 
     @media (min-width: 640px) {
@@ -23445,13 +23411,6 @@
               <div class="rule-note"><strong>Fresh setup demo:</strong> newdancer@dancr.app / dancr</div>
             </article>
           </div>
-          <div class="demo-login-callout" id="dancerDemoCallout" hidden>
-            <div>
-              <strong>Fresh dancer setup demo</strong>
-              <span>Starts at step 1: create profile, upload photos, verify, then approval.</span>
-            </div>
-            <button class="ghost" id="demoDancerSetupBtn" type="button">Start setup demo</button>
-          </div>
           <form class="auth-form" id="authForm" data-auth-view="customer">
             <div class="auth-form-head customer-form-head">
               <strong id="customerAuthModeLabel">Customer login</strong>
@@ -28470,7 +28429,6 @@
       document.getElementById("authForm").hidden = isDancer || isVenue;
       document.getElementById("dancerLoginForm").hidden = !isDancer;
       document.getElementById("venueLoginForm").hidden = !isVenue;
-      document.getElementById("dancerDemoCallout").hidden = !isDancer;
       if (!isDancer && !isVenue) setCustomerAuthMode("login");
       openAuthPage();
     }
@@ -30714,7 +30672,6 @@
     }
 
     document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
-    document.getElementById("demoDancerSetupBtn").addEventListener("click", startDemoDancerSetup);
 
     document.getElementById("dancerJoinNowBtn").addEventListener("click", () => {
       closeAuthPage();
