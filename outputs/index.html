@@ -22909,9 +22909,10 @@
       grid-column: 2 !important;
       grid-row: 1 / span 3 !important;
       display: grid !important;
-      grid-template-columns: minmax(76px, 1fr) auto !important;
-      min-width: 172px !important;
-      max-width: 220px !important;
+      grid-template-columns: minmax(156px, 1fr) auto !important;
+      min-width: 246px !important;
+      max-width: 340px !important;
+      gap: 16px !important;
       margin: 0 !important;
       padding: 0 0 0 14px !important;
       border-top: 0 !important;
@@ -22927,16 +22928,19 @@
 
     .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-copy strong {
       white-space: nowrap !important;
+      max-width: 100% !important;
     }
 
     .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-main,
     .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-note {
       display: block !important;
       overflow-wrap: normal !important;
+      white-space: nowrap !important;
     }
 
     .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr {
       min-width: 62px !important;
+      justify-self: end !important;
     }
 
     .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr img {
@@ -22951,24 +22955,25 @@
 
     @media (max-width: 520px) {
       .profile-modal .working-now-tile > .meta {
-        grid-template-columns: minmax(118px, 1fr) minmax(104px, auto) !important;
+        grid-template-columns: minmax(128px, 1fr) minmax(142px, auto) !important;
         column-gap: 10px !important;
       }
 
       .profile-modal .working-now-tile > .meta > .profile-deal-row {
-        grid-template-columns: minmax(0, 1fr) auto !important;
-        min-width: 104px !important;
-        max-width: 132px !important;
+        grid-template-columns: minmax(76px, 1fr) auto !important;
+        min-width: 142px !important;
+        max-width: 158px !important;
         gap: 8px !important;
         padding-left: 10px !important;
       }
 
       .profile-modal .working-now-tile .profile-deal-copy strong {
-        font-size: 0.66rem !important;
+        font-size: 0.6rem !important;
+        letter-spacing: 0.1em !important;
       }
 
       .profile-modal .working-now-tile .profile-deal-main {
-        font-size: 0.76rem !important;
+        font-size: 0.72rem !important;
       }
 
       .profile-modal .working-now-tile .profile-deal-note {
