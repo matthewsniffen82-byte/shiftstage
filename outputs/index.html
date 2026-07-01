@@ -28443,9 +28443,9 @@
       document.getElementById("authSubmit").textContent = mode === "signup" ? "Create customer account" : "Customer login";
       const isSignup = mode === "signup";
       const selectedRoleHead = document.querySelector(".auth-selected-role");
-      if (selectedRoleHead) selectedRoleHead.hidden = isSignup;
+      if (selectedRoleHead) selectedRoleHead.hidden = true;
       const customerFormHead = document.querySelector(".customer-form-head");
-      if (customerFormHead) customerFormHead.hidden = isSignup;
+      if (customerFormHead) customerFormHead.hidden = true;
       const label = document.getElementById("customerAuthModeLabel");
       if (label) label.textContent = mode === "signup" ? "Customer sign up" : "Customer login";
       const formHead = document.querySelector(".customer-form-head span");
