@@ -146,7 +146,7 @@ function formatShift(startsAt: string) {
     hour12: true,
   }).format(start);
 
-  return `Starts ${date} at ${time}`;
+  return `${date} at ${time}`;
 }
 
 function VenueProfileStyles() {

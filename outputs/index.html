@@ -26741,7 +26741,7 @@
         return "Working Now";
       }
       const dateLabel = compactUpcomingDateLabel(profile);
-      return dateLabel ? `Starts ${dateLabel} at ${start}` : `Starts at ${start}`;
+      return dateLabel ? `${dateLabel} at ${start}` : start;
     }
 
     function publicShiftStartTime(timeValue) {

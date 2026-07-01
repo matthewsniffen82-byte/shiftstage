@@ -137,7 +137,7 @@ function formatShift(shift: { startsAt: string; locationStatus?: string | null; 
     return `Working Now · Started at ${startTime}`;
   }
   if (new Date(shift.startsAt).getTime() <= Date.now()) return "Working Now";
-  return `Starts ${formatShiftStartDate(shift.startsAt)} at ${startTime}`;
+  return `${formatShiftStartDate(shift.startsAt)} at ${startTime}`;
 }
 
 function formatShiftStartDate(startsAt: string) {
