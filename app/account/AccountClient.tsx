@@ -242,6 +242,10 @@ export default function AccountClient() {
               <section ref={customerBenefitsRef} className="signup-benefits" aria-label="Customer signup benefits">
                 <span className="eyebrow">Why join</span>
                 <h2>Create your private Mydancr dashboard</h2>
+                <button className="continue-signup" type="button" onClick={scrollCustomerFieldsToTop}>
+                  Continue to create account
+                  <span aria-hidden="true">↓</span>
+                </button>
                 <div className="customer-benefit-grid">
                   <div className="customer-benefit-tile">
                     <strong>Saved club deal QR codes</strong>
@@ -261,10 +265,6 @@ export default function AccountClient() {
                   </div>
                 </div>
                 <p>Your follows and saved QR codes are private. Confirm your email, then Mydancr opens the homepage signed in.</p>
-                <button className="continue-signup" type="button" onClick={scrollCustomerFieldsToTop}>
-                  Continue to create account
-                  <span aria-hidden="true">↓</span>
-                </button>
               </section>
             </>
           ) : null}
