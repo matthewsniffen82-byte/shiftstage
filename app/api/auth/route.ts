@@ -151,16 +151,22 @@ async function upsertAccount(
   }
 
   const stageName = readOptional(body.stageName) || displayName;
-  const realName = readOptional(body.realName) || "";
+  const realName = readOptional(body.realName) || "Verification pending";
+  const slug = slugify(stageName) || `dancer-${userId.slice(0, 8)}`;
 
-  const { error } = await admin.from("dancer_profiles").upsert({
-    user_id: userId,
-    real_name: realName,
-    stage_name: stageName,
-    slug: slugify(stageName),
-    city,
-    status: "draft",
-  });
+  const { error } = await admin
+    .from("dancer_profiles")
+    .upsert(
+      {
+        user_id: userId,
+        real_name: realName,
+        stage_name: stageName,
+        slug,
+        city,
+        status: "draft",
+      },
+      { onConflict: "user_id" },
+    );
   if (error) throw error;
 }
 
