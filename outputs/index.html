@@ -22892,9 +22892,9 @@
     /* Keep the club deal inside the Working Now block to save profile space. */
     .profile-modal .working-now-tile > .meta {
       display: grid !important;
-      grid-template-columns: minmax(0, 1fr) auto !important;
+      grid-template-columns: minmax(150px, 1fr) auto !important;
       align-items: center !important;
-      column-gap: 16px !important;
+      column-gap: 18px !important;
       row-gap: 5px !important;
     }
 
@@ -22908,7 +22908,10 @@
     .profile-modal .working-now-tile > .meta > .profile-deal-row {
       grid-column: 2 !important;
       grid-row: 1 / span 3 !important;
-      min-width: 190px !important;
+      display: grid !important;
+      grid-template-columns: minmax(76px, 1fr) auto !important;
+      min-width: 172px !important;
+      max-width: 220px !important;
       margin: 0 !important;
       padding: 0 0 0 14px !important;
       border-top: 0 !important;
@@ -22916,14 +22919,46 @@
       align-self: center !important;
     }
 
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-copy {
+      min-width: 0 !important;
+      align-self: center !important;
+      gap: 5px !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-copy strong {
+      white-space: nowrap !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-main,
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-note {
+      display: block !important;
+      overflow-wrap: normal !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr {
+      min-width: 62px !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr img {
+      width: 62px !important;
+      height: 62px !important;
+      padding: 5px !important;
+    }
+
+    .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr span {
+      display: none !important;
+    }
+
     @media (max-width: 520px) {
       .profile-modal .working-now-tile > .meta {
-        grid-template-columns: minmax(0, 1fr) minmax(112px, auto) !important;
+        grid-template-columns: minmax(118px, 1fr) minmax(104px, auto) !important;
         column-gap: 10px !important;
       }
 
       .profile-modal .working-now-tile > .meta > .profile-deal-row {
-        min-width: 112px !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        min-width: 104px !important;
+        max-width: 132px !important;
         gap: 8px !important;
         padding-left: 10px !important;
       }
@@ -22938,6 +22973,20 @@
 
       .profile-modal .working-now-tile .profile-deal-note {
         font-size: 0.6rem !important;
+      }
+
+      .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-note {
+        display: none !important;
+      }
+
+      .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr {
+        min-width: 54px !important;
+      }
+
+      .profile-modal .working-now-tile > .meta > .profile-deal-row .profile-deal-qr img {
+        width: 54px !important;
+        height: 54px !important;
+        padding: 5px !important;
       }
     }
   </style>
