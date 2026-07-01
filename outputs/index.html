@@ -23577,10 +23577,11 @@
             </div>
             <div class="field">
               <label for="dancerPassword">Password</label>
-              <input id="dancerPassword" type="password" value="dancr" required>
+              <input id="dancerPassword" type="password" value="" required>
             </div>
             <div class="rule-note">Dancer accounts are free while launch access is open. Public profile access still waits for verification and approval.</div>
             <button class="action-btn" type="submit">Create dancer account</button>
+            <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
         </div>
       </div>
@@ -28453,6 +28454,7 @@
       });
       const dancerCity = document.getElementById("dancerCity");
       if (dancerCity) dancerCity.value = citySelect.value || "Las Vegas";
+      setDancerSignupStatus("");
     }
 
     function openAuthRole(role) {
@@ -28637,6 +28639,13 @@
 
     function setCustomerAuthStatus(message) {
       const status = document.getElementById("customerAuthStatus");
+      if (!status) return;
+      status.textContent = message || "";
+      status.hidden = !message;
+    }
+
+    function setDancerSignupStatus(message) {
+      const status = document.getElementById("dancerSignupStatus");
       if (!status) return;
       status.textContent = message || "";
       status.hidden = !message;
@@ -30799,18 +30808,24 @@
     document.getElementById("dancerSignupForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
+      const originalText = submit.textContent;
       submit.disabled = true;
+      submit.textContent = "Sending confirmation...";
+      setDancerSignupStatus("");
       try {
+        const email = document.getElementById("dancerEmail").value.trim();
         const result = await requestAuth({
           mode: "signup",
           role: "dancer",
-          email: document.getElementById("dancerEmail").value,
+          email,
           password: document.getElementById("dancerPassword").value,
           city: document.getElementById("dancerCity").value || citySelect.value || "Las Vegas",
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          showToast("Confirmation email sent. Confirm it to open your 4-step dancer setup.");
+          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Tap Confirm email in that email to open your 4-step dancer verification setup.`);
+          submit.textContent = "Confirmation email sent";
+          showToast("Confirmation email sent. Check your email to continue.");
           return;
         }
         dancerSignupStarted = true;
@@ -30836,9 +30851,12 @@
           openDancerDashboard();
         }
       } catch (error) {
-        showToast(error.message || "Dancer signup failed");
+        const message = error.message || "Dancer signup failed";
+        setDancerSignupStatus(message);
+        showToast(message);
       } finally {
         submit.disabled = false;
+        if (submit.textContent !== "Confirmation email sent") submit.textContent = originalText;
       }
     });
 

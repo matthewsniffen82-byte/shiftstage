@@ -122,8 +122,8 @@ export default function AccountClient() {
       if (mode === "signup") {
         setStatus(
           role === "customer"
-            ? "Check your email to confirm the account. After confirmation, Mydancr will open the homepage signed in."
-            : "Check your email to confirm the account. After confirmation, Mydancr will open your four-step dancer verification setup.",
+            ? `Confirmation email sent to ${email}. After confirmation, Mydancr will open the homepage signed in.`
+            : `Confirmation email sent to ${email}. Tap Confirm email in that email to open your four-step dancer verification setup.`,
         );
         window.localStorage.removeItem(SESSION_KEY);
         return;
