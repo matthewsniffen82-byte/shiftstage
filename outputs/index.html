@@ -21383,6 +21383,40 @@
       font-size: 18px;
     }
 
+    .continue-signup {
+      justify-self: start;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid rgba(124, 58, 237, .54);
+      border-radius: 999px;
+      background: rgba(5, 5, 9, .62);
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 0 18px rgba(124, 58, 237, .16);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .continue-signup span {
+      color: #8ff2ff;
+      font-size: 15px;
+      transform: translateY(-1px);
+    }
+
+    .continue-signup:hover,
+    .continue-signup:focus-visible {
+      outline: none;
+      border-color: rgba(53, 216, 255, .66);
+      box-shadow:
+        0 0 24px rgba(53, 216, 255, .16),
+        0 0 20px rgba(124, 58, 237, .18);
+    }
+
     .customer-benefit-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -23311,6 +23345,7 @@
                 </div>
               </div>
               <div class="rule-note">Your follows and saved QR codes are private. After you create the account, Mydancr sends a confirmation email. Tap the email link and you’ll return to the homepage signed in.</div>
+              <button class="continue-signup" id="continueCustomerSignupBtn" type="button">Continue to create account <span aria-hidden="true">↓</span></button>
             </div>
             <div class="field">
               <label for="customerEmail">Email</label>
@@ -28484,6 +28519,20 @@
       window.scrollTo({ top: Math.max(0, top), behavior });
     }
 
+    function scrollCustomerSignupFieldsToTop() {
+      const emailInput = document.getElementById("customerEmail");
+      if (!emailInput) return;
+      const top = emailInput.getBoundingClientRect().top + window.scrollY - 18;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      setTimeout(() => {
+        try {
+          emailInput.focus({ preventScroll: true });
+        } catch {
+          emailInput.focus();
+        }
+      }, 260);
+    }
+
     function openFreshCustomerSignup() {
       saveAuthSession(null);
       isCustomerLoggedIn = false;
@@ -30364,6 +30413,10 @@
 
     document.getElementById("customerJoinNowBtn").addEventListener("click", () => {
       openFreshCustomerSignup();
+    });
+
+    document.getElementById("continueCustomerSignupBtn").addEventListener("click", () => {
+      scrollCustomerSignupFieldsToTop();
     });
 
     document.getElementById("customerForgotPasswordBtn").addEventListener("click", () => {

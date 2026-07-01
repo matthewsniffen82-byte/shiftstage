@@ -38,6 +38,7 @@ export default function AccountClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const customerBenefitsRef = useRef<HTMLElement | null>(null);
+  const customerEmailRef = useRef<HTMLInputElement | null>(null);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
@@ -47,6 +48,14 @@ export default function AccountClient() {
     if (!benefits) return;
     const top = benefits.getBoundingClientRect().top + window.scrollY - 12;
     window.scrollTo({ top: Math.max(0, top), behavior });
+  }, []);
+
+  const scrollCustomerFieldsToTop = useCallback(() => {
+    const emailField = customerEmailRef.current;
+    if (!emailField) return;
+    const top = emailField.getBoundingClientRect().top + window.scrollY - 18;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    window.setTimeout(() => emailField.focus({ preventScroll: true }), 260);
   }, []);
 
   useEffect(() => {
@@ -249,6 +258,10 @@ export default function AccountClient() {
                   </div>
                 </div>
                 <p>Your follows and saved QR codes are private. Confirm your email, then Mydancr opens the homepage signed in.</p>
+                <button className="continue-signup" type="button" onClick={scrollCustomerFieldsToTop}>
+                  Continue to create account
+                  <span aria-hidden="true">↓</span>
+                </button>
               </section>
             </>
           ) : null}
@@ -268,7 +281,7 @@ export default function AccountClient() {
 
           <label>
             Email
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <input ref={customerEmailRef} type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
           </label>
           <label>
             Password
@@ -383,6 +396,9 @@ function AccountStyles() {
       .signup-benefits { scroll-margin-top: 12px; display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
       .signup-benefits h2 { margin: 0; font-size: 20px; }
       .signup-benefits p { font-size: 14px; line-height: 1.45; }
+      .continue-signup { justify-self: start; min-height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(139,92,246,.52); color: #fff; background: rgba(5,5,9,.62); font-weight: 900; box-shadow: 0 0 18px rgba(139,92,246,.16); cursor: pointer; }
+      .continue-signup span { color: #94e5ff; font-size: 15px; transform: translateY(-1px); }
+      .continue-signup:hover, .continue-signup:focus-visible { border-color: rgba(34,199,255,.64); box-shadow: 0 0 24px rgba(34,199,255,.16), 0 0 20px rgba(139,92,246,.18); outline: none; }
       .customer-benefit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .customer-benefit-tile { display: grid; gap: 5px; min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 16px rgba(255,255,255,.025); }
       .customer-benefit-tile strong { color: #fff; font-size: 13px; line-height: 1.2; }
