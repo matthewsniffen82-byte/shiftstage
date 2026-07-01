@@ -27080,17 +27080,25 @@
       showToast(message);
     }
 
-    function downloadDealQrImage(pass) {
+    async function downloadDealQrImage(pass) {
       if (!pass?.qrImageUrl) return;
-      const link = document.createElement("a");
-      link.href = pass.qrImageUrl;
-      link.download = dealPassFileName(pass);
-      link.target = "_blank";
-      link.rel = "noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      saveCustomerDealPass(pass, "QR saved on this device. Save the image to your photos or wallet from your phone.");
+      try {
+        const response = await fetch(pass.qrImageUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error("QR image unavailable");
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = dealPassFileName(pass);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        saveCustomerDealPass(pass, "QR image downloaded. You're still on this profile.");
+      } catch {
+        await copyText(pass.qrImageUrl, "QR image link copied");
+        saveCustomerDealPass(pass, "QR saved on this device");
+      }
     }
 
     async function shareDealPass(pass) {
@@ -27128,8 +27136,8 @@
             </div>
             <p class="deal-pass-how" id="dealPassHow">How it works: save this QR, show it at the venue, and the club scans it to redeem the deal. Dancer profile QR codes only count for commission after the club scans the code.</p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save QR</button>
-              <button class="deal-pass-action" type="button" data-download-deal-pass>Save QR Image</button>
+              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save on this device</button>
+              <button class="deal-pass-action" type="button" data-download-deal-pass>Download QR</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share QR</button>
               <button class="deal-pass-action" type="button" data-copy-deal-pass>Copy link</button>
             </div>
