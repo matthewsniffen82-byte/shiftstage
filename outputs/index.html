@@ -24693,6 +24693,36 @@
       } catch (error) {}
     }
 
+    function savePendingAuthConfirmation(state) {
+      try {
+        localStorage.setItem("dancrPendingAuthConfirmationV1", JSON.stringify({
+          ...state,
+          createdAt: Date.now()
+        }));
+      } catch (error) {}
+    }
+
+    function readPendingAuthConfirmation() {
+      try {
+        const raw = localStorage.getItem("dancrPendingAuthConfirmationV1");
+        if (!raw) return null;
+        const state = JSON.parse(raw);
+        if (!state?.role || Date.now() - Number(state.createdAt || 0) > 1000 * 60 * 60 * 24) {
+          localStorage.removeItem("dancrPendingAuthConfirmationV1");
+          return null;
+        }
+        return state;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function clearPendingAuthConfirmation() {
+      try {
+        localStorage.removeItem("dancrPendingAuthConfirmationV1");
+      } catch (error) {}
+    }
+
     function readConfirmationSessionFromUrl() {
       if (window.__DANCR_CONFIRMED_SESSION__?.accessToken) {
         return window.__DANCR_CONFIRMED_SESSION__;
@@ -24827,7 +24857,9 @@
       store[token] = state;
       writeAuthResumeStore(store);
       const destination = returnTo || (role === "dancer" ? "/dashboard/dancer" : role === "venue" ? "/dashboard/venue" : "/dashboard/customer");
-      return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(destination)}`;
+      state.destination = destination;
+      savePendingAuthConfirmation({ ...state, resumeToken: token });
+      return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}&role=${encodeURIComponent(role)}&dancr_role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(destination)}`;
     }
 
     function takeAuthResume(token) {
@@ -24910,8 +24942,10 @@
     function restoreAuthConfirmationResume() {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("resume");
-      const roleHint = params.get("role");
       const confirmedSession = readConfirmationSessionFromUrl();
+      const pendingConfirmation = readPendingAuthConfirmation();
+      const roleParam = params.get("role") || params.get("dancr_role") || "";
+      const roleHint = roleParam || pendingConfirmation?.role || "";
       if (!token && !confirmedSession?.accessToken) {
         if (params.get("dancr_confirm") === "1" && roleHint === "dancer") {
           saveAuthSession(null);
@@ -24924,7 +24958,7 @@
         return false;
       }
 
-      const state = token ? takeAuthResume(token) : null;
+      const state = (token ? takeAuthResume(token) : null) || pendingConfirmation;
       window.history.replaceState({}, document.title, "/");
       if (!state) {
         if (confirmedSession?.accessToken) {
@@ -24945,6 +24979,7 @@
                 }
               : {};
           saveAuthSession(confirmedSession);
+          clearPendingAuthConfirmation();
           openConfirmedSessionDashboard(confirmedRole, fallbackState);
           return true;
         }
@@ -24964,6 +24999,7 @@
         document.getElementById("dancerCity").value = state.dancerCity || state.city || "Las Vegas";
         if (confirmedSession?.accessToken) {
           saveAuthSession(confirmedSession);
+          clearPendingAuthConfirmation();
           openConfirmedSessionDashboard("dancer", state);
           return true;
         }
@@ -24980,6 +25016,7 @@
       } else {
         if (confirmedSession?.accessToken) {
           saveAuthSession(confirmedSession);
+          clearPendingAuthConfirmation();
           openConfirmedSessionDashboard("customer", state);
           return true;
         }

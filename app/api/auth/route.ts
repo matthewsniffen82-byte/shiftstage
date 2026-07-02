@@ -243,12 +243,23 @@ function safeEmailRedirectTo(value: unknown) {
   try {
     const requested = new URL(text);
     const site = new URL(fallback);
-    if (requested.origin !== site.origin) return fallback;
+    if (!allowedAuthRedirectOrigins(site.origin).has(requested.origin)) return fallback;
     if (!requested.pathname.startsWith("/auth/callback")) return fallback;
     return requested.toString();
   } catch {
     return fallback;
   }
+}
+
+function allowedAuthRedirectOrigins(configuredOrigin: string) {
+  return new Set([
+    configuredOrigin,
+    "https://mydancr.com",
+    "https://www.mydancr.com",
+    "https://stackeddbets.com",
+    "https://www.stackeddbets.com",
+    "https://shiftstage.vercel.app",
+  ]);
 }
 
 function authRateLimitMessage(error: unknown) {
