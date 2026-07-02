@@ -35,7 +35,6 @@ export async function GET(request: Request) {
 async function readCallbackSession(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const roleHint = readCallbackRole(url.searchParams.get("role"));
   if (!code) return null;
 
   try {
@@ -43,6 +42,11 @@ async function readCallbackSession(request: Request) {
     const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (error || !data.session || !data.user) return null;
 
+    const metadata = data.user.user_metadata || {};
+    const roleHint =
+      readCallbackRole(url.searchParams.get("role")) ||
+      readCallbackRole(readMetadataText(metadata.role)) ||
+      readCallbackRoleFromReturnTo(url.searchParams.get("return_to"));
     const admin = createAdminSupabaseClient();
     let account = await getAccountByUserId(admin, data.user.id);
     if (roleHint) {
@@ -157,6 +161,20 @@ async function uniqueDancerSlug(admin: AdminClient, stageName: string, userId: s
 
 function readCallbackRole(value: string | null): CallbackRole | null {
   return value === "customer" || value === "dancer" || value === "venue" ? value : null;
+}
+
+function readCallbackRoleFromReturnTo(value: string | null): CallbackRole | null {
+  if (!value) return null;
+
+  try {
+    const pathname = value.startsWith("http") ? new URL(value).pathname : value;
+    if (pathname.startsWith("/dashboard/dancer")) return "dancer";
+    if (pathname.startsWith("/dashboard/customer")) return "customer";
+    if (pathname.startsWith("/dashboard/venue")) return "venue";
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function readMetadataText(value: unknown) {
