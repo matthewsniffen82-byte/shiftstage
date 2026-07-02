@@ -14,6 +14,11 @@ type CallbackUser = {
   user_metadata?: Record<string, unknown> | null;
 };
 type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
+type CallbackSession = {
+  access_token?: string;
+  refresh_token?: string;
+  expires_at?: number;
+} | null;
 
 export async function GET(request: Request) {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
@@ -34,35 +39,54 @@ export async function GET(request: Request) {
 
 async function readCallbackSession(request: Request) {
   const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  if (!code) return null;
+  const authData = await confirmSupabaseCallback(url);
+  if (!authData?.user) return null;
 
   try {
-    const client = createServerSupabaseClient();
-    const { data, error } = await client.auth.exchangeCodeForSession(code);
-    if (error || !data.session || !data.user) return null;
-
-    const metadata = data.user.user_metadata || {};
+    const metadata = authData.user.user_metadata || {};
     const roleHint =
       readCallbackRole(url.searchParams.get("role")) ||
+      readCallbackRole(url.searchParams.get("dancr_role")) ||
       readCallbackRole(readMetadataText(metadata.role)) ||
-      readCallbackRoleFromReturnTo(url.searchParams.get("return_to"));
+      readCallbackRoleFromReturnTo(url.searchParams.get("return_to")) ||
+      readCallbackRoleFromReturnTo(url.searchParams.get("redirect_to"));
     const admin = createAdminSupabaseClient();
-    let account = await getAccountByUserId(admin, data.user.id);
+    let account = await getAccountByUserId(admin, authData.user.id);
     if (roleHint) {
-      await ensureCallbackAccount(admin, data.user, roleHint);
-      account = await getAccountByUserId(admin, data.user.id);
+      await ensureCallbackAccount(admin, authData.user, roleHint);
+      account = await getAccountByUserId(admin, authData.user.id);
     }
 
     return {
-      accessToken: data.session.access_token,
-      refreshToken: data.session.refresh_token,
-      expiresAt: data.session.expires_at,
+      accessToken: authData.session?.access_token,
+      refreshToken: authData.session?.refresh_token,
+      expiresAt: authData.session?.expires_at,
       account,
     };
   } catch {
     return null;
   }
+}
+
+async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSession; user: CallbackUser } | null> {
+  const client = createServerSupabaseClient();
+  const code = url.searchParams.get("code");
+  if (code) {
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
+    if (error || !data.session || !data.user) return null;
+    return { session: data.session, user: data.user };
+  }
+
+  const tokenHash = url.searchParams.get("token_hash");
+  if (!tokenHash) return null;
+
+  const { data, error } = await client.auth.verifyOtp({
+    token_hash: tokenHash,
+    type: readOtpType(url.searchParams.get("type")),
+  });
+  if (error || !data.user) return null;
+
+  return { session: data.session, user: data.user };
 }
 
 async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, role: CallbackRole) {
@@ -161,6 +185,20 @@ async function uniqueDancerSlug(admin: AdminClient, stageName: string, userId: s
 
 function readCallbackRole(value: string | null): CallbackRole | null {
   return value === "customer" || value === "dancer" || value === "venue" ? value : null;
+}
+
+function readOtpType(value: string | null) {
+  if (
+    value === "signup" ||
+    value === "invite" ||
+    value === "magiclink" ||
+    value === "recovery" ||
+    value === "email_change" ||
+    value === "email"
+  ) {
+    return value;
+  }
+  return "signup";
 }
 
 function readCallbackRoleFromReturnTo(value: string | null): CallbackRole | null {

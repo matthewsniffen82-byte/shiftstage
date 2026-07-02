@@ -24912,7 +24912,17 @@
       const token = params.get("resume");
       const roleHint = params.get("role");
       const confirmedSession = readConfirmationSessionFromUrl();
-      if (!token && !confirmedSession?.accessToken) return false;
+      if (!token && !confirmedSession?.accessToken) {
+        if (params.get("dancr_confirm") === "1" && roleHint === "dancer") {
+          saveAuthSession(null);
+          window.history.replaceState({}, document.title, "/");
+          openAuthRole("dancer");
+          showToast("Email confirmed. Sign in to open your dancer verification setup.");
+          setTimeout(() => document.getElementById("dancerLoginEmail")?.focus(), 80);
+          return true;
+        }
+        return false;
+      }
 
       const state = token ? takeAuthResume(token) : null;
       window.history.replaceState({}, document.title, "/");
