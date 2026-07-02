@@ -24876,7 +24876,8 @@
       dancerSignupStarted = true;
       stripeConfirmed = true;
       setupChecklistExpanded = true;
-      activeSetupStep = state.setupStep || nextIncompleteStep() || "profile";
+      const requestedStep = state.resumeTarget === "dancer_verification" ? "profile" : state.setupStep;
+      activeSetupStep = requestedStep || nextIncompleteStep() || "profile";
       const dancerEmail = document.getElementById("dancerEmail");
       const dancerLoginEmail = document.getElementById("dancerLoginEmail");
       const dancerCity = document.getElementById("dancerCity");
@@ -24888,7 +24889,8 @@
     }
 
     function scrollDancerVerificationIntoView() {
-      const target = document.getElementById("dancerApprovalCommand") || document.getElementById("setupChecklistWrap");
+      const profileStep = document.querySelector('#setupChecklist [data-step="profile"]');
+      const target = profileStep || document.getElementById("setupChecklistWrap") || document.getElementById("dancerApprovalCommand");
       target?.scrollIntoView({ block: "start", behavior: "smooth" });
     }
 
