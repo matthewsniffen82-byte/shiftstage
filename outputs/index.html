@@ -23190,6 +23190,12 @@
       text-shadow: 0 0 10px rgba(160, 88, 255, 0.32);
     }
 
+    .dancer-card .card-badges .card-trend-marker {
+      position: static !important;
+      width: fit-content;
+      pointer-events: none;
+    }
+
     .card-trend-symbol {
       color: #B86CFF;
       font-size: 0.82em;
@@ -28163,11 +28169,12 @@
             <div class="card-badges">
               ${statusBadge}
               ${trendBadge}
+              ${trendMarker}
             </div>
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span>${trendMarker}</h3>
+              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
               ${locationBadge}
               ${clubMarkup}
             </div>
