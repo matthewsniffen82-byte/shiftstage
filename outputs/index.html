@@ -25187,8 +25187,18 @@
         body: formData
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.error, "Request failed"));
       return data;
+    }
+
+    function normalizeRequestError(error, fallback = "Request failed") {
+      if (!error) return fallback;
+      if (typeof error === "string") return error;
+      if (error instanceof Error) return error.message || fallback;
+      if (typeof error === "object") {
+        return error.message || error.error || error.details || error.hint || fallback;
+      }
+      return String(error);
     }
 
     async function getAuthenticatedJson(url) {
@@ -29182,19 +29192,22 @@
       }
       const submit = form.querySelector('button[type="submit"]');
       const result = document.getElementById("photoUploadResult");
-      const mainFile = document.getElementById("setupMainPhoto")?.files?.[0];
-      const galleryFile = document.getElementById("setupGalleryPhoto")?.files?.[0];
-      if (!mainFile && !galleryFile) {
+      const photoFiles = Array.from(document.getElementById("setupProfilePhotos")?.files || []).slice(0, 5);
+      if (!photoFiles.length) {
         showToast("Choose at least one photo");
         return;
       }
+      if ((document.getElementById("setupProfilePhotos")?.files?.length || 0) > 5) {
+        showToast("Choose up to 5 photos");
+        if (result) result.textContent = "Choose up to 5 photos for review.";
+        return;
+      }
       submit.disabled = true;
-      if (result) result.textContent = "Uploading photos...";
+      if (result) result.textContent = `Uploading ${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"}...`;
       try {
-        const uploads = [];
-        if (mainFile) uploads.push(uploadSetupPhotoFile(mainFile, true, 0));
-        if (galleryFile) uploads.push(uploadSetupPhotoFile(galleryFile, false, 1));
-        const uploaded = await Promise.all(uploads);
+        const uploaded = await Promise.all(
+          photoFiles.map((file, index) => uploadSetupPhotoFile(file, index === 0, index))
+        );
         const profile = ensureActiveDancerProfile("Pending");
         const urls = uploaded.map((item) => item.photo?.imageUrl).filter(Boolean);
         if (profile && urls.length) {
@@ -29204,11 +29217,13 @@
         }
         dancerSetup.photos = true;
         activeSetupStep = nextIncompleteStep() || "verification";
+        if (result) result.textContent = `${urls.length || photoFiles.length} photo${(urls.length || photoFiles.length) === 1 ? "" : "s"} uploaded for review.`;
         showToast("Photos uploaded for review");
         renderDancerSetup();
       } catch (error) {
-        if (result) result.textContent = error.message || "Could not upload photos";
-        showToast(error.message || "Could not upload photos");
+        const message = normalizeRequestError(error, "Could not upload photos");
+        if (result) result.textContent = message;
+        showToast(message);
       } finally {
         submit.disabled = false;
       }
@@ -29557,12 +29572,9 @@
       const photosBody = `
         <form class="auth-form" data-setup-form="photos">
           <div class="field">
-            <label for="setupMainPhoto">Main profile photo</label>
-            <input id="setupMainPhoto" type="file" accept="image/jpeg,image/png,image/webp">
-          </div>
-          <div class="field">
-            <label for="setupGalleryPhoto">Optional gallery photo</label>
-            <input id="setupGalleryPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+            <label for="setupProfilePhotos">Profile photos</label>
+            <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+            <div class="field-note"><strong>Upload up to 5 photos.</strong> The first photo becomes your main profile photo. The rest are reviewed for your gallery.</div>
           </div>
           <div class="rule-note" id="photoUploadResult">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
           <button class="action-btn" type="submit">Submit photos</button>
