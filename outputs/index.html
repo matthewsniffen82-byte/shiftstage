@@ -23139,6 +23139,62 @@
         padding: 5px !important;
       }
     }
+
+    /* Final trending profile polish: subtle rank signal without photo badges. */
+    .dancer-card.trending-card:not(.pending) {
+      border-color: rgba(160, 88, 255, 0.62) !important;
+      box-shadow:
+        0 18px 44px rgba(0, 0, 0, 0.52),
+        inset 0 0 0 1px rgba(160, 88, 255, 0.15),
+        0 0 24px rgba(125, 55, 255, 0.18) !important;
+    }
+
+    .dancer-card.trending-card:not(.pending):hover,
+    .dancer-card.trending-card:not(.pending):focus-visible {
+      border-color: rgba(194, 126, 255, 0.82) !important;
+      box-shadow:
+        0 22px 48px rgba(0, 0, 0, 0.56),
+        inset 0 0 0 1px rgba(194, 126, 255, 0.2),
+        0 0 32px rgba(125, 55, 255, 0.24) !important;
+    }
+
+    .dancer-card .profile-body h3 {
+      align-items: center !important;
+      display: flex !important;
+      gap: 6px !important;
+      min-width: 0 !important;
+    }
+
+    .dancer-card .card-stage-name {
+      flex: 0 1 auto !important;
+      min-width: 0 !important;
+    }
+
+    .card-trend-marker {
+      align-items: center;
+      background: rgba(8, 6, 14, 0.78);
+      border: 1px solid rgba(160, 88, 255, 0.58);
+      border-radius: 999px;
+      box-shadow: 0 0 14px rgba(125, 55, 255, 0.2);
+      color: #F8F2FF;
+      display: inline-flex;
+      flex: 0 0 auto;
+      font-family: var(--font-ui);
+      font-size: clamp(0.62rem, 2.5vw, 0.72rem);
+      font-weight: 850;
+      gap: 3px;
+      height: 22px;
+      letter-spacing: 0.01em;
+      line-height: 1;
+      padding: 0 7px;
+      text-shadow: 0 0 10px rgba(160, 88, 255, 0.32);
+    }
+
+    .card-trend-symbol {
+      color: #B86CFF;
+      font-size: 0.82em;
+      transform: translateY(-0.5px);
+    }
   </style>
 </head>
 <body>
@@ -28083,6 +28139,9 @@
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const verifiedMark = isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>';
       const trendBadge = "";
+      const trendMarker = isTrending
+        ? `<span class="card-trend-marker" aria-label="Trending rank ${profile.trendRank}"><span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${profile.trendRank}</span></span>`
+        : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const locationBadge = !isPending ? profileLocationStatusBadge(profile) : "";
@@ -28108,7 +28167,7 @@
           </div>
           <div class="profile-body">
             <div class="card-info-stack">
-              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
+              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span>${trendMarker}</h3>
               ${locationBadge}
               ${clubMarkup}
             </div>
