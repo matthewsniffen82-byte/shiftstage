@@ -29954,8 +29954,6 @@
       const market = markets[city];
       populateVenueSelect(city);
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
-      renderPopularClubs(city);
-      document.getElementById("popularClubs")?.classList.toggle("is-hidden", !["tonight", "dancers"].includes(activeTab));
       updateTabCounts(city);
       updateHomeLiveSummary(city);
 
@@ -31335,19 +31333,6 @@
         const uploadedHero = new Image();
         uploadedHero.onload = () => hero.classList.add("uploaded-hero-ready");
         uploadedHero.src = "./dancr-hero.png";
-      }
-
-      const viewAll = document.getElementById("viewAllBtn");
-      if (viewAll && !document.getElementById("popularClubs")) {
-        viewAll.insertAdjacentHTML("afterend", `
-          <section class="popular-clubs" id="popularClubs" aria-label="Popular clubs">
-            <div class="popular-head">
-              <h2>Popular Clubs</h2>
-              <button class="mini-view" type="button" data-jump-clubs>View All Clubs</button>
-            </div>
-            <div class="club-strip" id="popularClubStrip"></div>
-          </section>
-        `);
       }
 
       document.querySelectorAll("[data-jump-tonight]").forEach((button) => {
