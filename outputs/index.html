@@ -28907,6 +28907,7 @@
       dancerDashboard.classList.add("show");
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      hydrateDancerVerificationProgress();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerWeeklyReport();
@@ -29181,6 +29182,84 @@
       const data = await uploadSetupPhotoFile(file, target === "main", sortOrder);
       if (profile) profile.photoStatus = "Pending";
       return data;
+    }
+
+    async function hydrateDancerVerificationProgress() {
+      if (!isDancerSession()) return null;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/profile");
+        if (!data?.profile) return null;
+        applyDancerVerificationProfile(data.profile);
+        renderDancerSetup();
+        return data.profile;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function applyDancerVerificationProfile(profile) {
+      const legalName = profile.real_name || profile.realName || "";
+      const stageName = profile.stage_name || profile.stageName || "";
+      const city = profile.city || citySelect.value || "Las Vegas";
+      const approved = profile.status === "approved";
+      const photos = dancerProfilePhotoUrls(profile);
+
+      setDancerSetupField("dancerLegalName", legalName);
+      setDancerSetupField("dancerStageName", stageName);
+      setDancerSetupField("dancerCity", city);
+      setDancerSetupField("dancerDashName", stageName || "Dancer dashboard", "textContent");
+
+      Object.assign(dancerSignupSocials, dancerSocialMapFromProfile(profile));
+      Object.assign(dancerSetup, {
+        profile: Boolean(legalName && stageName && city),
+        photos: photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
+        verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved",
+        approval: approved,
+        shift: dancerSetup.shift
+      });
+
+      setupChecklistExpanded = true;
+      activeSetupStep = nextIncompleteStep() || (approved ? "approval" : "profile");
+
+      const localProfile = ensureActiveDancerProfile(approved ? "Verified" : "Pending");
+      if (localProfile) {
+        Object.assign(localProfile, {
+          name: stageName || localProfile.name,
+          city,
+          mainPhotoUrl: photos[0] || localProfile.mainPhotoUrl,
+          galleryPhotoUrls: photos.length ? photos : (localProfile.galleryPhotoUrls || []),
+          photoStatus: dancerSetup.photos ? "Pending" : localProfile.photoStatus,
+          idStatus: dancerSetup.verification ? "Needs review" : localProfile.idStatus,
+          selfieStatus: dancerSetup.verification ? "Needs review" : localProfile.selfieStatus,
+          danceProofStatus: dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus,
+          socials: { ...(localProfile.socials || {}), ...dancerSignupSocials }
+        });
+      }
+    }
+
+    function setDancerSetupField(id, value, property = "value") {
+      const element = document.getElementById(id);
+      if (!element || value === undefined || value === null) return;
+      element[property] = value;
+    }
+
+    function dancerSocialMapFromProfile(profile) {
+      const socials = {};
+      const rows = Array.isArray(profile?.social_links) ? profile.social_links : [];
+      rows.forEach((row) => {
+        if (!row?.platform || row.is_active === false) return;
+        socials[row.platform] = row.url || row.handle || "";
+      });
+      return socials;
+    }
+
+    function dancerProfilePhotoUrls(profile) {
+      const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+      return rows
+        .slice()
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .map((photo) => photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "")
+        .filter(Boolean);
     }
 
     async function submitSetupPhotos(form) {
@@ -30857,7 +30936,7 @@
       openDancerDashboard();
     }
 
-    function startRealDancerSession(message = "Dancer dashboard opened. Start with profile setup.") {
+    async function startRealDancerSession(message = "Dancer dashboard opened. Start with profile setup.") {
       resetAccountControl("dancer");
       dancerSignupStarted = true;
       stripeConfirmed = true;
@@ -30873,6 +30952,7 @@
       closeAuthPage();
       updateAccountHeader();
       showToast(message);
+      await hydrateDancerVerificationProgress();
       openDancerDashboard();
     }
 
@@ -31276,7 +31356,7 @@
       renderDancerSetup();
     });
 
-    dancerDashboard.addEventListener("submit", (event) => {
+    dancerDashboard.addEventListener("submit", async (event) => {
       const shiftForm = event.target.closest("#shiftPostForm");
       if (shiftForm) {
         event.preventDefault();
@@ -31339,15 +31419,24 @@
       document.getElementById("dancerCity").value = city;
       document.getElementById("dancerDashName").textContent = stageName;
       Object.assign(dancerSignupSocials, normalizedSocials);
-      completeSetupStep("profile");
-      postAuthenticatedJson("/api/dancer/profile", {
-        legalName,
-        stageName,
-        city,
-        socials: socialPayloadFromMap(normalizedSocials)
-      }).then((data) => {
-        if (data) showToast("Live profile saved");
-      }).catch((error) => showToast(error.message || "Could not save live profile"));
+      const submit = form.querySelector('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      try {
+        if (isDancerSession()) {
+          await postAuthenticatedJson("/api/dancer/profile", {
+            legalName,
+            stageName,
+            city,
+            socials: socialPayloadFromMap(normalizedSocials)
+          });
+          showToast("Profile saved");
+        }
+        completeSetupStep("profile");
+      } catch (error) {
+        showToast(error.message || "Could not save live profile");
+      } finally {
+        if (submit) submit.disabled = false;
+      }
     });
 
     document.addEventListener("click", (event) => {

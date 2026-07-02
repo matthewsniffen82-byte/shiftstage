@@ -22,10 +22,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile: data });
+    return NextResponse.json({ ok: true, profile: withPhotoUrls(client, data) });
   } catch (error) {
     return apiError(error, "Unable to load dancer profile.");
   }
+}
+
+function withPhotoUrls(client: any, profile: any) {
+  const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+  return {
+    ...profile,
+    dancer_photos: photos.map((photo: any) => ({
+      ...photo,
+      imageUrl: getPhotoUrl(client, photo.storage_path),
+    })),
+  };
+}
+
+function getPhotoUrl(client: any, storagePath: unknown) {
+  if (typeof storagePath !== "string" || !storagePath.trim()) return "";
+  if (/^https?:\/\//i.test(storagePath)) return storagePath;
+  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
 
 export async function PATCH(request: Request) {
