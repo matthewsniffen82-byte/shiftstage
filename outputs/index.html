@@ -9663,7 +9663,7 @@
 
     .venue-quick-stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin-top: 4px;
     }
@@ -15993,7 +15993,7 @@
     }
 
     .venue-detail .venue-quick-stats {
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       gap: 10px !important;
       margin-top: 6px !important;
     }
@@ -28653,7 +28653,6 @@
               <div class="venue-quick-stats">
                 <button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>
                 <button class="venue-quick-stat" type="button" data-venue-jump="venue-verified-shifts"><strong>${shiftCount}</strong><span>verified shifts</span></button>
-                <button class="venue-quick-stat" type="button" data-venue-jump="venue-trending-dancers"><strong>${trending.length}</strong><span>trending dancers</span></button>
               </div>
               ${venueOfferMarkup(venue)}
               <div class="venue-info">
