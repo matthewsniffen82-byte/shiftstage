@@ -23212,6 +23212,47 @@
         0 0 16px rgba(125, 55, 255, 0.46);
       transform: translateY(-0.5px);
     }
+
+    .profile-modal .modal-rank.modal-card-trend:not([hidden]) {
+      align-items: center !important;
+      background: rgba(10, 6, 18, 0.84) !important;
+      border: 1px solid rgba(176, 96, 255, 0.72) !important;
+      border-radius: 999px !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03),
+        0 0 12px rgba(176, 96, 255, 0.28),
+        0 0 22px rgba(125, 55, 255, 0.2) !important;
+      color: #F8F2FF !important;
+      display: inline-flex !important;
+      flex: 0 0 auto !important;
+      font-family: var(--font-ui) !important;
+      font-size: clamp(0.62rem, 2.5vw, 0.72rem) !important;
+      font-weight: 850 !important;
+      gap: 3px !important;
+      height: 22px !important;
+      letter-spacing: 0.01em !important;
+      line-height: 1 !important;
+      min-height: 22px !important;
+      min-width: auto !important;
+      opacity: 1 !important;
+      padding: 0 7px !important;
+      pointer-events: none !important;
+      position: static !important;
+      text-shadow:
+        0 0 8px rgba(255, 255, 255, 0.18),
+        0 0 12px rgba(176, 96, 255, 0.46) !important;
+      visibility: visible !important;
+      width: fit-content !important;
+    }
+
+    .profile-modal .modal-rank.modal-card-trend .card-trend-symbol {
+      color: #C47AFF !important;
+      font-size: 0.82em !important;
+      text-shadow:
+        0 0 8px rgba(196, 122, 255, 0.68),
+        0 0 16px rgba(125, 55, 255, 0.46) !important;
+      transform: translateY(-0.5px) !important;
+    }
   </style>
 </head>
 <body>
@@ -28507,6 +28548,8 @@
 
       const profileIndex = markets[city].dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
+      const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
+      const modalTrendRank = profileWithTrend.trendRank;
       const basePhoto = portraitClass(profileIndex);
       const basePhotoUrl = customPhotoUrl(profile, 0);
       savedScrollY = window.scrollY;
@@ -28515,9 +28558,18 @@
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
-      modalRank.classList.remove("rank-one");
+      modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
       modalRank.hidden = true;
+      modalRank.setAttribute("aria-hidden", "true");
+      modalRank.removeAttribute("aria-label");
+      if (modalTrendRank) {
+        modalRank.className = "modal-rank card-trend-marker modal-card-trend";
+        modalRank.innerHTML = `<span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${modalTrendRank}</span>`;
+        modalRank.hidden = false;
+        modalRank.removeAttribute("aria-hidden");
+        modalRank.setAttribute("aria-label", `Trending rank ${modalTrendRank}`);
+      }
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
       setModalPhoto(basePhoto, basePhotoUrl);
 
