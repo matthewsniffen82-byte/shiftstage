@@ -23383,72 +23383,6 @@
       }
     }
 
-    .install-app-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      min-height: 42px;
-      padding: 0 14px;
-      border: 1px solid rgba(124, 58, 237, 0.56);
-      border-radius: 999px;
-      color: #fff;
-      background:
-        linear-gradient(135deg, rgba(124, 58, 237, 0.24), rgba(10, 10, 14, 0.92)),
-        #08080c;
-      box-shadow:
-        0 0 22px rgba(124, 58, 237, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.055);
-      font: 900 13px/1 "Manrope", "Inter", sans-serif;
-      white-space: nowrap;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      clip-path: inset(0 round 999px);
-      touch-action: manipulation;
-      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    }
-
-    .install-app-btn[hidden] {
-      display: none !important;
-    }
-
-    .install-app-btn svg {
-      width: 17px;
-      height: 17px;
-      flex: 0 0 auto;
-      stroke: currentColor;
-      filter: drop-shadow(0 0 7px rgba(124, 58, 237, 0.35));
-    }
-
-    .install-app-btn:hover,
-    .install-app-btn:focus-visible,
-    .install-app-btn:active {
-      transform: translateY(-1px);
-      border-color: rgba(168, 85, 247, 0.82);
-      background:
-        linear-gradient(135deg, rgba(124, 58, 237, 0.34), rgba(13, 13, 19, 0.96)),
-        #09090d;
-      box-shadow:
-        0 0 28px rgba(124, 58, 237, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.07);
-      outline: 0;
-    }
-
-    @media (max-width: 560px) {
-      header .install-app-btn {
-        width: 40px;
-        min-width: 40px;
-        max-width: 40px;
-        height: 40px;
-        min-height: 40px;
-        padding: 0;
-      }
-
-      header .install-app-btn span {
-        display: none;
-      }
-    }
-
     .profile-modal .modal-image {
       height: clamp(460px, 72vh, 620px);
       min-height: clamp(460px, 72vh, 620px);
@@ -23494,14 +23428,6 @@
           <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
         </button>
         <div class="menu" aria-label="Menu">
-          <button class="install-app-btn" id="installAppBtn" type="button" hidden aria-label="Add mydancr to your home screen">
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3v10"></path>
-              <path d="m8 9 4 4 4-4"></path>
-              <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"></path>
-            </svg>
-            <span>Add App</span>
-          </button>
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
             <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
               <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
@@ -24745,7 +24671,6 @@
     const customerNotificationsQuickList = document.getElementById("customerNotificationsQuickList");
     const customerDealsQuickList = document.getElementById("customerDealsQuickList");
     const brandHome = document.getElementById("brandHome");
-    const installAppBtn = document.getElementById("installAppBtn");
     const dashTonightList = document.getElementById("dashTonightList");
     const dashFollowedList = document.getElementById("dashFollowedList");
     const dashVenueList = document.getElementById("dashVenueList");
@@ -24763,7 +24688,6 @@
     let tonightExpanded = false;
     let dancersExpanded = false;
     let selectedVenueName = null;
-    let deferredInstallPrompt = null;
     let isCustomerLoggedIn = false;
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
@@ -24942,65 +24866,11 @@
       showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1900);
     }
 
-    function isStandaloneInstall() {
-      return Boolean(
-        window.matchMedia?.("(display-mode: standalone)")?.matches ||
-        window.navigator.standalone === true
-      );
-    }
-
-    function isIosInstallHelpDevice() {
-      return /iphone|ipad|ipod/i.test(navigator.userAgent || "");
-    }
-
-    function updateInstallAppButton() {
-      if (!installAppBtn) return;
-      const showNativeInstall = Boolean(deferredInstallPrompt);
-      const showIosHelp = isIosInstallHelpDevice() && !isStandaloneInstall();
-      installAppBtn.hidden = isStandaloneInstall() || (!showNativeInstall && !showIosHelp);
-      installAppBtn.title = showIosHelp && !showNativeInstall
-        ? "Tap Share, then Add to Home Screen"
-        : "Add mydancr to your home screen";
-    }
-
-    async function handleInstallAppClick() {
-      if (deferredInstallPrompt) {
-        const promptEvent = deferredInstallPrompt;
-        deferredInstallPrompt = null;
-        promptEvent.prompt();
-        const choice = await promptEvent.userChoice;
-        showToast(choice.outcome === "accepted"
-          ? "mydancr added to your home screen"
-          : "You can add mydancr from your browser menu anytime.");
-        updateInstallAppButton();
-        return;
-      }
-
-      if (isIosInstallHelpDevice()) {
-        showToast("Tap Share, then Add to Home Screen.");
-        return;
-      }
-
-      showToast("Use your browser menu to add mydancr to your home screen.");
-    }
-
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
       });
     }
-
-    window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
-      deferredInstallPrompt = event;
-      updateInstallAppButton();
-    });
-
-    window.addEventListener("appinstalled", () => {
-      deferredInstallPrompt = null;
-      updateInstallAppButton();
-      showToast("mydancr added to your home screen");
-    });
 
     function dancrLiveSessionId() {
       const key = "dancr_live_session_id";
@@ -31035,13 +30905,6 @@
       toggleUtilityMenu();
     });
 
-    installAppBtn?.addEventListener("click", (event) => {
-      event.stopPropagation();
-      closeUtilityMenu();
-      closeCustomerQuickPanels();
-      handleInstallAppClick();
-    });
-
     accountTooltip.addEventListener("click", (event) => {
       event.stopPropagation();
       dismissAccountTooltip();
@@ -31891,8 +31754,6 @@
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
-
-    updateInstallAppButton();
 
     citySelect.addEventListener("change", () => {
       tonightExpanded = false;
