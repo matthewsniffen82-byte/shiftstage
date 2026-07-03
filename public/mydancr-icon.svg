@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="mydancr">
+  <defs>
+    <radialGradient id="glow" cx="68%" cy="38%" r="68%">
+      <stop offset="0" stop-color="#8f35ff" stop-opacity="0.78"/>
+      <stop offset="0.4" stop-color="#5b16c8" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#050505" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b16cff"/>
+      <stop offset="1" stop-color="#6d20ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#050505"/>
+  <rect x="36" y="36" width="440" height="440" rx="94" fill="url(#glow)"/>
+  <rect x="40" y="40" width="432" height="432" rx="90" fill="none" stroke="#7b2cff" stroke-width="10"/>
+  <text x="76" y="294" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="116" font-weight="900" letter-spacing="-7">mydanc</text>
+  <text x="375" y="294" fill="url(#violet)" font-family="Arial, Helvetica, sans-serif" font-size="116" font-weight="900" letter-spacing="-7">r</text>
+</svg>

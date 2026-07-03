@@ -1,0 +1,20 @@
+{
+  "name": "mydancr",
+  "short_name": "mydancr",
+  "description": "Choose your city. See who's working now.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/mydancr-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

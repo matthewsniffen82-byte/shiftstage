@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "mydancr",
   description: "Choose your city. See who's working now.",
   applicationName: "mydancr",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/mydancr-icon.svg",
+    apple: "/mydancr-icon.svg",
+  },
   metadataBase: new URL("https://www.mydancr.com"),
   openGraph: {
     title: "mydancr",
@@ -20,7 +25,14 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     title: "mydancr",
+    capable: true,
+    statusBarStyle: "black-translucent",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#050505",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
