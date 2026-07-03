@@ -16080,6 +16080,95 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     }
 
+    .venue-detail .mini-list .venue.venue-card {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) 96px !important;
+      align-items: center !important;
+      gap: 14px !important;
+      padding: 16px 18px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .profile-body {
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      gap: 13px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .venue-art {
+      grid-column: 2 !important;
+      grid-row: 1 !important;
+      width: 86px !important;
+      min-width: 86px !important;
+      height: 86px !important;
+      min-height: 86px !important;
+      align-self: center !important;
+      border-radius: 22px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .row {
+      min-width: 0 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .row > div {
+      min-width: 0 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card h3 {
+      max-width: 100% !important;
+      margin: 0 0 3px !important;
+      color: #f8f5ff !important;
+      font-size: clamp(20px, 4.9vw, 24px) !important;
+      line-height: 1.04 !important;
+      opacity: 1 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .meta {
+      color: #bfb7cb !important;
+      font-size: 14px !important;
+      line-height: 1.15 !important;
+      opacity: 0.92 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .pill-row {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: flex-start !important;
+      gap: 8px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .venue-shift-pill {
+      margin-left: 0 !important;
+    }
+
+    @media (max-width: 520px) {
+      .venue-detail .mini-list .venue.venue-card {
+        grid-template-columns: minmax(0, 1fr) 78px !important;
+        min-height: 128px !important;
+        gap: 12px !important;
+        padding: 15px 16px !important;
+      }
+
+      .venue-detail .mini-list .venue.venue-card .venue-art {
+        width: 70px !important;
+        min-width: 70px !important;
+        height: 70px !important;
+        min-height: 70px !important;
+        border-radius: 19px !important;
+      }
+
+      .venue-detail .mini-list .venue.venue-card h3 {
+        font-size: clamp(18px, 5.2vw, 21px) !important;
+        line-height: 1.05 !important;
+      }
+
+      .venue-detail .mini-list .venue.venue-card .pill {
+        min-height: 31px !important;
+        padding-inline: 12px !important;
+      }
+    }
+
     @media (max-width: 460px) {
       .venue-detail .venue-quick-stats {
         gap: 7px !important;
