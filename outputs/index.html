@@ -23424,6 +23424,42 @@
         display: none;
       }
     }
+
+    .profile-modal .modal-image {
+      height: clamp(460px, 72vh, 620px);
+      min-height: clamp(460px, 72vh, 620px);
+      max-height: clamp(460px, 72vh, 620px);
+      flex: 0 0 auto;
+      background-color: #050505;
+      background-repeat: no-repeat;
+    }
+
+    .profile-modal .modal-image.has-custom-photo {
+      background-image:
+        linear-gradient(180deg, rgba(5, 5, 7, 0.02) 0%, rgba(5, 5, 7, 0.1) 45%, rgba(5, 5, 7, 0.82) 100%),
+        var(--custom-photo),
+        radial-gradient(circle at 50% 18%, rgba(143, 92, 255, 0.16), transparent 42%),
+        linear-gradient(180deg, #050505, #050505);
+      background-size: cover, contain, cover, cover;
+      background-position: center, center top, center, center;
+      background-repeat: no-repeat;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-image {
+        height: clamp(390px, 64vh, 500px);
+        min-height: clamp(390px, 64vh, 500px);
+        max-height: clamp(390px, 64vh, 500px);
+      }
+    }
+
+    @media (max-width: 380px) {
+      .profile-modal .modal-image {
+        height: clamp(360px, 62vh, 460px);
+        min-height: clamp(360px, 62vh, 460px);
+        max-height: clamp(360px, 62vh, 460px);
+      }
+    }
   </style>
 </head>
 <body>
