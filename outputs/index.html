@@ -23291,6 +23291,66 @@
       min-height: 20px !important;
       padding: 0 7px !important;
     }
+
+    .profile-modal .modal-scroll-cue {
+      -webkit-tap-highlight-color: transparent;
+      align-items: center !important;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.24), transparent 58%),
+        rgba(5, 5, 8, 0.78) !important;
+      border: 1px solid rgba(168, 85, 247, 0.56) !important;
+      border-radius: 999px !important;
+      bottom: 14px !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42), 0 0 18px rgba(139, 92, 246, 0.22) !important;
+      color: #35D8FF !important;
+      cursor: pointer;
+      display: inline-flex !important;
+      height: 42px !important;
+      justify-content: center !important;
+      left: 50% !important;
+      padding: 0 !important;
+      position: absolute !important;
+      transform: translateX(-50%) !important;
+      width: 42px !important;
+      z-index: 6 !important;
+    }
+
+    .profile-modal .modal-scroll-cue .icon {
+      animation: modalScrollCueBounce 1.35s ease-in-out infinite;
+      height: 19px !important;
+      stroke: currentColor !important;
+      stroke-width: 2.8 !important;
+      width: 19px !important;
+    }
+
+    .profile-modal .modal-scroll-cue:focus-visible {
+      outline: 2px solid rgba(53, 216, 255, 0.78);
+      outline-offset: 3px;
+    }
+
+    @keyframes modalScrollCueBounce {
+      0%, 100% { transform: translateY(-1px); }
+      50% { transform: translateY(3px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .profile-modal .modal-scroll-cue .icon {
+        animation: none !important;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-scroll-cue {
+        bottom: 10px !important;
+        height: 38px !important;
+        width: 38px !important;
+      }
+
+      .profile-modal .modal-scroll-cue .icon {
+        height: 17px !important;
+        width: 17px !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -24366,6 +24426,9 @@
             </div>
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
+          <button class="modal-scroll-cue" id="modalScrollCue" type="button" aria-label="Scroll down to profile details">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
         </div>
         <div class="gallery" id="modalGallery"></div>
         <div class="modal-body" id="modalBody"></div>
@@ -24509,7 +24572,9 @@
     const tabCount = document.getElementById("tabCount");
     const toast = document.getElementById("toast");
     const profileBackdrop = document.getElementById("profileBackdrop");
+    const profileModal = document.getElementById("profileModal");
     const modalImage = document.getElementById("modalImage");
+    const modalScrollCue = document.getElementById("modalScrollCue");
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
     const modalCity = document.getElementById("modalCity");
@@ -28656,6 +28721,7 @@
 
       profileBackdrop.classList.add("show");
       profileBackdrop.setAttribute("aria-hidden", "false");
+      profileModal?.scrollTo({ top: 0, behavior: "auto" });
       syncOverlayScrollLock();
     }
 
@@ -30723,6 +30789,14 @@
       event.preventDefault();
       event.stopPropagation();
       closeProfileModal();
+    });
+    modalScrollCue?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    }, { passive: true });
+    modalScrollCue?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      modalBody?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     document.addEventListener("pointerdown", (event) => {
       const closeButton = event.target.closest?.("#modalClose");
