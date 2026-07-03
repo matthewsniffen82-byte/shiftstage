@@ -30473,7 +30473,7 @@
       if (tab === "venues") {
         return market.venues.filter(venueMatchesCurrentFilter);
       }
-      return trendingProfiles(city).filter(profileMatchesVenueFilter);
+      return trendingProfiles(city);
     }
 
     function updateTabCounts(city) {
