@@ -28678,7 +28678,7 @@
           <h3 class="section-title" id="venue-verified-shifts">Upcoming shifts at ${details.name}</h3>
           <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
-          <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
+          <h3 class="section-title" id="venue-trending-dancers">Trending in ${details.city}</h3>
           <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
 
           <h3 class="section-title">Other ${city} venues</h3>
@@ -30520,7 +30520,7 @@
         tonight: venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`,
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
         venues: `Venues in ${city}`,
-        trending: venueFilter === "all" ? `Trending in ${city}` : `Trending at ${venueFilter}`
+        trending: `Trending in ${city}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
         ? resolveVenueByName(selectedVenueName, city)
