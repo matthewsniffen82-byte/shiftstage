@@ -9669,12 +9669,32 @@
     }
 
     .venue-quick-stat {
+      appearance: none;
+      display: block;
+      width: 100%;
       min-height: 58px;
       padding: 10px 12px;
       border: 1px solid rgba(192,132,255,.16);
       border-radius: 14px;
       background: rgba(8,8,12,.68);
       box-shadow: inset 0 0 14px rgba(255,255,255,.022);
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .venue-quick-stat:hover,
+    .venue-quick-stat:focus-visible {
+      border-color: rgba(139,92,246,.58);
+      box-shadow:
+        inset 0 0 14px rgba(255,255,255,.032),
+        0 0 22px rgba(139,92,246,.18);
+      outline: none;
+      transform: translateY(-1px);
     }
 
     .venue-quick-stat strong {
@@ -9690,6 +9710,10 @@
       color: #bdb2cf;
       font-size: 11px;
       font-weight: 800;
+    }
+
+    .venue-detail .section-title[id] {
+      scroll-margin-top: 88px;
     }
 
     .venue-detail .venue-info .info-tile {
@@ -28668,9 +28692,9 @@
               </div>
               <p>${details.description}</p>
               <div class="venue-quick-stats">
-                <div class="venue-quick-stat"><strong>${tonight.length}</strong><span>working now</span></div>
-                <div class="venue-quick-stat"><strong>${shiftCount}</strong><span>verified shifts</span></div>
-                <div class="venue-quick-stat"><strong>${trending.length}</strong><span>trending dancers</span></div>
+                <button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>
+                <button class="venue-quick-stat" type="button" data-venue-jump="venue-verified-shifts"><strong>${shiftCount}</strong><span>verified shifts</span></button>
+                <button class="venue-quick-stat" type="button" data-venue-jump="venue-trending-dancers"><strong>${trending.length}</strong><span>trending dancers</span></button>
               </div>
               ${venueOfferMarkup(venue)}
               <div class="venue-info">
@@ -28689,13 +28713,13 @@
             </div>
           </article>
 
-          <h3 class="section-title">Working now at ${details.name}</h3>
+          <h3 class="section-title" id="venue-working-now">Working now at ${details.name}</h3>
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts now.</div>'}</div>
 
-          <h3 class="section-title">Upcoming shifts at ${details.name}</h3>
+          <h3 class="section-title" id="venue-verified-shifts">Upcoming shifts at ${details.name}</h3>
           <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
-          <h3 class="section-title">Trending at ${details.name}</h3>
+          <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
           <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
 
           <h3 class="section-title">Other ${city} venues</h3>
@@ -30654,6 +30678,15 @@
             following: willFollow,
             notificationsEnabled: willFollow
           }).catch((error) => showToast(error.message || "Could not save venue follow"));
+        }
+        return;
+      }
+      const venueJump = event.target.closest("[data-venue-jump]");
+      if (venueJump) {
+        event.preventDefault();
+        const target = document.getElementById(venueJump.dataset.venueJump);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
         }
         return;
       }
