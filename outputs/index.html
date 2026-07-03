@@ -28636,6 +28636,7 @@
                 <div class="venue-quick-stat"><strong>${shiftCount}</strong><span>verified shifts</span></div>
                 <div class="venue-quick-stat"><strong>${trending.length}</strong><span>trending dancers</span></div>
               </div>
+              ${venueOfferMarkup(venue)}
               <div class="venue-info">
                 <div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>
                 <div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>
@@ -28651,8 +28652,6 @@
               <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>
             </div>
           </article>
-
-          ${venueOfferMarkup(venue)}
 
           <h3 class="section-title">Working now at ${details.name}</h3>
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts now.</div>'}</div>

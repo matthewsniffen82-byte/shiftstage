@@ -61,6 +61,11 @@ export default async function VenuePublicPage({ params }: PageProps) {
             {venue.city}
             {venue.state ? `, ${venue.state}` : ""} nightlife schedule with approved dancer shifts.
           </p>
+          {activeDeal ? (
+            <section className="deal-section">
+              <ClubDealCard deal={activeDeal} venueId={venue.id} sourceType="club_page" />
+            </section>
+          ) : null}
           <div className="public-actions">
             <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>Now in {venue.city}</Link>
             {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
@@ -68,11 +73,6 @@ export default async function VenuePublicPage({ params }: PageProps) {
           <VenueProfileActions venueId={venue.id} />
         </div>
       </section>
-      {activeDeal ? (
-        <section className="deal-section">
-          <ClubDealCard deal={activeDeal} venueId={venue.id} sourceType="club_page" />
-        </section>
-      ) : null}
       <section className="public-grid">
         <article className="public-panel">
           <h2>Upcoming shifts</h2>
@@ -168,7 +168,7 @@ function VenueProfileStyles() {
       .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
       .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
       .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
-      .deal-section { max-width: 1120px; margin: 22px auto 0; }
+      .deal-section { width: 100%; margin: 4px 0 0; }
       .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 18px; align-items: center; border: 1px solid rgba(139,92,246,.28); background: rgba(8,8,13,.9); border-radius: 8px; padding: 18px; box-shadow: 0 22px 70px rgba(0,0,0,.38); }
       .club-deal-copy { display: grid; gap: 9px; }
       .club-deal-copy h2 { margin: 0; font-size: 24px; }
