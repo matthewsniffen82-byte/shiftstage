@@ -31638,7 +31638,7 @@
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
       render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      tabTitle?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     customerBrowseDancers.addEventListener("click", () => {
@@ -31648,7 +31648,7 @@
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
       render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      tabTitle?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     notificationSettings.addEventListener("click", (event) => {
