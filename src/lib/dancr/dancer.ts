@@ -140,6 +140,30 @@ export async function uploadOwnVerificationDocument(
   return uploadVerificationDocument(client, input);
 }
 
+export async function listOwnVerificationDocuments(client: DancrClient, userId: string) {
+  await getOwnDancerProfile(client, userId);
+
+  const { data, error } = await client.storage
+    .from("verification-documents")
+    .list(`${userId}/verification`, {
+      limit: 50,
+      offset: 0,
+      sortBy: { column: "created_at", order: "desc" },
+    });
+
+  if (error) throw error;
+
+  return (data || [])
+    .filter((document: any) => Boolean(document.name))
+    .map((document: any) => ({
+      name: document.name,
+      storagePath: `${userId}/verification/${document.name}`,
+      createdAt: document.created_at || document.updated_at || null,
+      updatedAt: document.updated_at || null,
+      status: "pending_review",
+    }));
+}
+
 export function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }

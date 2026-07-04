@@ -2781,6 +2781,25 @@
       overflow-wrap: anywhere;
     }
 
+    .verification-submission-list {
+      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(8, 35, 24, 0.5);
+    }
+
+    .verification-submission-list ul {
+      display: grid;
+      gap: 6px;
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: #e8fff0;
+      font-size: 12px;
+    }
+
+    .verification-submission-list .meta {
+      color: #9aa0aa;
+      font-size: 12px;
+    }
+
     #setupChecklist .action-btn {
       width: 100%;
       min-width: 0;
@@ -24797,6 +24816,12 @@
       approval: false,
       shift: false
     };
+    let liveVerificationDocuments = [];
+    const verificationDocumentLabels = [
+      { documentType: "government_id", displayName: "Government ID" },
+      { documentType: "selfie", displayName: "Selfie verification" },
+      { documentType: "dance_proof", displayName: "Proof that you dance" }
+    ];
     const accountControlState = {
       customer: {
         disabled: false,
@@ -29207,6 +29232,7 @@
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
       hydrateDancerVerificationProgress();
+      loadLiveVerificationDocuments();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerWeeklyReport();
@@ -29466,6 +29492,114 @@
       renderDancerSetup();
     }
 
+    function verificationStorageKey() {
+      const userKey = authSession?.user?.id || authSession?.email || document.getElementById("dancerEmail")?.value || "dancer";
+      return `mydancr:verification-documents:${userKey}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function normalizeVerificationDocument(document = {}, index = 0) {
+      const fallback = verificationDocumentLabels[index] || {};
+      return {
+        storagePath: document.storagePath || document.storage_path || "",
+        name: document.name || document.fileName || fallback.displayName || `Document ${index + 1}`,
+        documentType: document.documentType || document.document_type || fallback.documentType || "verification",
+        displayName: document.displayName || document.display_name || fallback.displayName || `Document ${index + 1}`,
+        status: document.status || "pending_review",
+        createdAt: document.createdAt || document.created_at || null,
+        updatedAt: document.updatedAt || document.updated_at || null
+      };
+    }
+
+    function readStoredVerificationDocuments() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(verificationStorageKey()) || "[]");
+        return Array.isArray(parsed) ? parsed.map(normalizeVerificationDocument) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function writeStoredVerificationDocuments(documents) {
+      try {
+        localStorage.setItem(verificationStorageKey(), JSON.stringify(documents));
+      } catch (error) {
+        // Storage is a convenience cache only; Supabase storage remains the source of truth.
+      }
+    }
+
+    function submittedVerificationDocuments() {
+      return liveVerificationDocuments.length ? liveVerificationDocuments : readStoredVerificationDocuments();
+    }
+
+    function hasSubmittedVerificationDocuments() {
+      return submittedVerificationDocuments().length >= verificationDocumentLabels.length;
+    }
+
+    function syncVerificationStepFromDocuments() {
+      if (hasSubmittedVerificationDocuments()) {
+        dancerSetup.verification = true;
+      }
+    }
+
+    function mergeVerificationDocuments(storedDocuments, liveDocuments) {
+      if (!storedDocuments.length) return liveDocuments;
+      return liveDocuments.map((document, index) => ({
+        ...document,
+        documentType: storedDocuments[index]?.documentType || document.documentType,
+        displayName: storedDocuments[index]?.displayName || document.displayName,
+      }));
+    }
+
+    function setVerificationDocuments(documents, persist = true) {
+      liveVerificationDocuments = (documents || []).map(normalizeVerificationDocument);
+      if (persist) writeStoredVerificationDocuments(liveVerificationDocuments);
+      syncVerificationStepFromDocuments();
+    }
+
+    function verificationSubmissionMarkup() {
+      const documents = submittedVerificationDocuments();
+      if (!documents.length) return "";
+      const rows = verificationDocumentLabels.map((label, index) => {
+        const document = documents.find((item) => item.documentType === label.documentType) || documents[index];
+        const fileName = document?.name ? ` · ${escapeHtml(document.name)}` : "";
+        return `<li><strong>${escapeHtml(label.displayName)}</strong><span class="meta">Submitted for review${fileName}</span></li>`;
+      }).join("");
+      return `
+        <div class="info-tile verification-submission-list">
+          <strong>Already submitted</strong>
+          <div class="meta">Your verification files are saved and waiting for Dancr review. File pickers look blank for security, but these uploads are still attached to your account.</div>
+          <ul>${rows}</ul>
+        </div>
+      `;
+    }
+
+    async function loadLiveVerificationDocuments() {
+      if (!isDancerSession()) return;
+      const storedDocuments = readStoredVerificationDocuments();
+      if (storedDocuments.length) {
+        setVerificationDocuments(storedDocuments, false);
+      }
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/verification-documents");
+        const liveDocuments = (data?.documents || []).map(normalizeVerificationDocument);
+        if (liveDocuments.length) {
+          setVerificationDocuments(mergeVerificationDocuments(storedDocuments, liveDocuments), true);
+          renderDancerSetup();
+        }
+      } catch (error) {
+        if (storedDocuments.length) renderDancerSetup();
+      }
+    }
+
     async function uploadSetupPhotoFile(file, isPrimary, sortOrder) {
       const formData = new FormData();
       formData.append("file", file);
@@ -29489,6 +29623,7 @@
         const data = await getAuthenticatedJson("/api/dancer/profile");
         if (!data?.profile) return null;
         applyDancerVerificationProfile(data.profile);
+        syncVerificationStepFromDocuments();
         renderDancerSetup();
         return data.profile;
       } catch (error) {
@@ -29512,7 +29647,7 @@
       Object.assign(dancerSetup, {
         profile: Boolean(legalName && stageName && city),
         photos: photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
-        verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved",
+        verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved" || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
       });
@@ -29607,9 +29742,11 @@
       }
     }
 
-    async function uploadVerificationFile(file) {
+    async function uploadVerificationFile(file, documentType, displayName) {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("documentType", documentType);
+      formData.append("displayName", displayName);
       return postAuthenticatedFormData("/api/dancer/verification-documents", formData);
     }
 
@@ -29632,11 +29769,15 @@
       submit.disabled = true;
       if (result) result.textContent = "Uploading verification files...";
       try {
-        await Promise.all([
-          uploadVerificationFile(idFile),
-          uploadVerificationFile(selfieFile),
-          uploadVerificationFile(proofFile)
+        const uploads = await Promise.all([
+          uploadVerificationFile(idFile, "government_id", "Government ID"),
+          uploadVerificationFile(selfieFile, "selfie", "Selfie verification"),
+          uploadVerificationFile(proofFile, "dance_proof", "Proof that you dance")
         ]);
+        setVerificationDocuments(
+          uploads.map((upload, index) => normalizeVerificationDocument(upload.document || upload, index)),
+          true
+        );
         const profile = ensureActiveDancerProfile("Pending");
         if (profile) {
           profile.idStatus = "Needs review";
@@ -29645,6 +29786,7 @@
         }
         dancerSetup.verification = true;
         activeSetupStep = nextIncompleteStep() || "approval";
+        if (result) result.textContent = "3 verification files uploaded and waiting for Dancr review.";
         showToast("Verification uploaded for review");
         renderDancerSetup();
       } catch (error) {
@@ -29658,7 +29800,7 @@
     function setupStepMarkup(step, title, body) {
       const complete = dancerSetup[step];
       const locked = !canOpenStep(step);
-      const open = activeSetupStep === step && !complete;
+      const open = activeSetupStep === step && !locked;
       const stepNumber = setupOrder().indexOf(step) + 1;
       const lockedNote = locked ? `<div class="lock-row">Finish the previous step first.</div>` : "";
       return `
@@ -29681,6 +29823,7 @@
     }
 
     function renderDancerSetup() {
+      syncVerificationStepFromDocuments();
       const steps = setupOrder();
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
       const nextStep = nextIncompleteStep();
@@ -29964,6 +30107,7 @@
       const verificationBody = `
         <form class="auth-form" data-setup-form="verification">
           <div class="info-tile setup-verification-card"><strong>Secure review</strong><div class="meta">Upload ID, selfie, and proof that you dance for private review. Your profile stays Pending until approved.</div></div>
+          ${verificationSubmissionMarkup()}
           <div class="field">
             <label for="setupIdDocument">Government ID</label>
             <input id="setupIdDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
@@ -29977,7 +30121,7 @@
             <input id="setupDanceProofDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
             <div class="field-note"><strong>Accepted examples:</strong> current schedule screenshot, club badge, venue confirmation, flyer, or other proof that shows you dance.</div>
           </div>
-          <div class="rule-note" id="verificationUploadResult">Verification documents and dance proof are private and visible only to you and platform admins.</div>
+          <div class="rule-note" id="verificationUploadResult">${hasSubmittedVerificationDocuments() ? "Your verification files are already submitted for review. Upload again only if Dancr requests updated files." : "Verification documents and dance proof are private and visible only to you and platform admins."}</div>
           <button class="action-btn" type="submit">Submit verification</button>
         </form>
       `;
@@ -31647,7 +31791,7 @@
       const toggle = event.target.closest("[data-step-toggle]");
       if (toggle) {
         const step = toggle.dataset.stepToggle;
-        if (!dancerSetup[step]) {
+        if (canOpenStep(step)) {
           setupChecklistExpanded = true;
           activeSetupStep = activeSetupStep === step ? "" : step;
           renderDancerSetup();
