@@ -25509,6 +25509,15 @@
       return headers;
     }
 
+    function applyResponseSession(data) {
+      if (!data?.session?.accessToken) return;
+      saveAuthSession({
+        ...authSession,
+        ...data.session,
+        account: data.account || authSession?.account || null
+      });
+    }
+
     async function postAuthenticatedJson(url, payload) {
       const headers = authenticatedRequestHeaders("application/json");
       if (!headers) return null;
@@ -25519,6 +25528,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      applyResponseSession(data);
       return data;
     }
 
@@ -25536,6 +25546,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      applyResponseSession(data);
       return data;
     }
 
@@ -25549,6 +25560,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      applyResponseSession(data);
       return data;
     }
 
@@ -25574,6 +25586,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.error, "Request failed"));
+      applyResponseSession(data);
       return data;
     }
 
@@ -25595,6 +25608,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      applyResponseSession(data);
       return data;
     }
 

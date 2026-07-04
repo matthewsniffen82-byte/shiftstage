@@ -12,14 +12,14 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const account = await getAccountByUserId(client, user.id);
 
     if (!account) {
       return NextResponse.json({ ok: false, error: "Account not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, account });
+    return NextResponse.json({ ok: true, account, session });
   } catch (error) {
     return apiError(error, "Unable to load account.");
   }
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const body = await request.json();
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body?.password === "string" ? body.password : "";
@@ -49,6 +49,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({
         ok: true,
         account,
+        session,
         message: "Check your new email address to confirm the change.",
       });
     }
@@ -65,7 +66,7 @@ export async function PATCH(request: Request) {
       }
 
       const account = await getAccountByUserId(client, user.id);
-      return NextResponse.json({ ok: true, account, message: "Password updated." });
+      return NextResponse.json({ ok: true, account, session, message: "Password updated." });
     }
 
     const accountState = body?.accountState;
@@ -75,7 +76,7 @@ export async function PATCH(request: Request) {
     }
 
     const account = await setAccountState(client, user.id, accountState);
-    return NextResponse.json({ ok: true, account });
+    return NextResponse.json({ ok: true, account, session });
   } catch (error) {
     return apiError(error, "Unable to update account.");
   }
@@ -83,10 +84,10 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const account = await setAccountState(client, user.id, "deleted");
 
-    return NextResponse.json({ ok: true, account });
+    return NextResponse.json({ ok: true, account, session });
   } catch (error) {
     return apiError(error, "Unable to delete account.");
   }
