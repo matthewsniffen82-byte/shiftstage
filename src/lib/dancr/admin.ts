@@ -346,7 +346,7 @@ export async function getAdminMonitoringStatus(client: DancrClient): Promise<Adm
     ],
     integrations: [
       integrationStatus("Supabase", ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]),
-      integrationStatus("Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_DANCER_MONTHLY_PRICE_ID"]),
+      integrationStatus("Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]),
       integrationStatus("OneSignal", ["NEXT_PUBLIC_ONESIGNAL_APP_ID", "ONESIGNAL_REST_API_KEY"]),
       integrationStatus("Resend", ["RESEND_API_KEY", "EMAIL_FROM"]),
       integrationStatus("Google Maps", ["NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"]),

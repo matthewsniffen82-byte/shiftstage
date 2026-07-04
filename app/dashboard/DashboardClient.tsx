@@ -556,7 +556,6 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
 function DancerBillingPanel() {
   const [billing, setBilling] = useState<Record<string, any> | null>(null);
   const [status, setStatus] = useState("");
-  const [isWorking, setIsWorking] = useState(false);
 
   useEffect(() => {
     const session = readSession();
@@ -571,30 +570,6 @@ function DancerBillingPanel() {
       .catch(() => setStatus("Unable to load billing."));
   }, []);
 
-  async function openBilling(path: string, urlKey: "checkoutUrl" | "portalUrl") {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return;
-    }
-
-    setIsWorking(true);
-    setStatus("");
-    try {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}` },
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to open billing.");
-      if (data[urlKey]) window.location.href = data[urlKey];
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to open billing.");
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
   return (
     <article className="info-panel billing-panel">
       <h2>Billing</h2>
@@ -604,10 +579,7 @@ function DancerBillingPanel() {
         <Metric label="Monthly cost" value="$0" />
       </div>
       <div className="billing-actions">
-        <p>Dancer profiles are free right now. No payment is required.</p>
-        <button type="button" disabled={isWorking} onClick={() => openBilling("/api/dancer/billing/portal", "portalUrl")}>
-          Manage billing
-        </button>
+        <p>Dancer profiles are free. No payment authorization is required.</p>
         {status ? <p>{status}</p> : null}
       </div>
     </article>
