@@ -435,6 +435,9 @@ function DancerPanel({
   reviews?: LoadState["reviews"];
   weeklyReport?: LoadState["weeklyReport"];
 }) {
+  const dancerStatus = String(profile?.status || "").toLowerCase();
+  const isApproved = dancerStatus === "approved" || dancerStatus === "verified";
+
   return (
     <>
       <InfoPanel title="Profile">
@@ -442,13 +445,17 @@ function DancerPanel({
         <Metric label="Status" value={String(profile?.status || "draft")} />
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
-      <InfoPanel title="Last 30 days">
-        <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
-        <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
-        <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
-      </InfoPanel>
-      <DancerDealPanel deals={deals} />
-      <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
+      {isApproved ? (
+        <>
+          <InfoPanel title="Last 30 days">
+            <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
+            <Metric label="Profile views" value={String(analytics?.profileViews30Days || 0)} />
+            <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
+          </InfoPanel>
+          <DancerDealPanel deals={deals} />
+          <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
+        </>
+      ) : null}
       <DancerSetupPanel profile={profile} />
       <DancerSocialPanel profile={profile} />
       <DancerSharePanel profile={profile} />
@@ -588,23 +595,16 @@ function DancerBillingPanel() {
     }
   }
 
-  const subscription = billing?.subscription || {};
-
   return (
     <article className="info-panel billing-panel">
       <h2>Billing</h2>
       <div className="billing-grid">
         <Metric label="Profile" value={String(billing?.dancerStatus || "pending")} />
-        <Metric label="Subscription" value={String(subscription.status || "not_started")} />
-        <Metric
-          label="Renews"
-          value={subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "Not active"}
-        />
+        <Metric label="Subscription" value="FREE" />
+        <Metric label="Monthly cost" value="$0" />
       </div>
       <div className="billing-actions">
-        <button type="button" disabled={isWorking} onClick={() => openBilling("/api/dancer/billing/checkout", "checkoutUrl")}>
-          Start subscription
-        </button>
+        <p>Dancer profiles are free right now. No payment is required.</p>
         <button type="button" disabled={isWorking} onClick={() => openBilling("/api/dancer/billing/portal", "portalUrl")}>
           Manage billing
         </button>

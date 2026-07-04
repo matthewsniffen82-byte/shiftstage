@@ -23724,12 +23724,12 @@
           </button>
         </div>
         <div class="auth-card">
-          <h3>Dancer subscription</h3>
-          <p>The dancer profile subscription is $9.99/month and renews until canceled. Stripe handles card details.</p>
+          <h3>Dancer profile access</h3>
+          <p>Dancer profile access is free right now. No monthly subscription is due.</p>
         </div>
         <div class="auth-card">
           <h3>Approval before activation</h3>
-          <p>Payment may be authorized during signup. Paid public profiles unlock only after approval. Rejected profiles do not unlock or charge/capture in this demo flow.</p>
+          <p>Public profiles unlock only after platform approval. Rejected profiles stay private and are not published.</p>
         </div>
         <div class="auth-card">
           <h3>Billing control</h3>
@@ -23780,7 +23780,7 @@
                 <li>Follower alerts sent automatically</li>
                 <li>Instagram, TikTok, Snapchat, OnlyFans, and X links</li>
                 <li>Profile, social, share, and direction analytics</li>
-                <li>$9.99/month after approval</li>
+                <li>Free profile access after approval</li>
               </ul>
               <div class="role-actions">
                 <button class="ghost" id="dancerLoginBtn" type="button">Start demo setup</button>
@@ -23938,15 +23938,15 @@
         <div class="auth-card stripe-hosted">
           <div class="checkout-total">
             <div>
-              <strong>$9.99</strong>
-              <div class="meta">Monthly dancer profile subscription</div>
+              <strong>FREE</strong>
+              <div class="meta">Monthly dancer profile access</div>
             </div>
-            <span class="badge">Recurring</span>
+            <span class="badge">No charge</span>
           </div>
-          <div class="rule-note">Stripe handles card details. Subscription checkout is available after profile approval.</div>
+          <div class="rule-note">Dancer profiles are free right now. No monthly subscription is due after approval.</div>
           <div class="info-tile">
             <strong>Payment rule</strong>
-            <div class="meta">Rejected profiles stay private and cannot start paid profile billing.</div>
+            <div class="meta">Rejected profiles stay private and cannot publish a public dancer profile.</div>
           </div>
           <button class="action-btn" id="stripeConfirmBtn">Continue to Stripe</button>
         </div>
@@ -23969,16 +23969,16 @@
             <strong id="dancerApprovalStatus">Pending</strong>
             <span>Verification status</span>
           </div>
-          <div class="stat">
+          <div class="stat approved-dancer-stat">
             <strong id="dancerFollowerStat">0</strong>
             <span>Followers</span>
           </div>
-          <div class="stat">
+          <div class="stat approved-dancer-stat">
             <strong id="dancerNotificationStat">0</strong>
             <span>Notifications enabled</span>
           </div>
           <div class="stat">
-            <strong>$9.99</strong>
+            <strong>FREE</strong>
             <span>Monthly subscription</span>
           </div>
         </div>
@@ -24002,9 +24002,9 @@
           <details class="status-chip">
             <summary>
               <span>Subscription</span>
-              <strong id="dancerSubscriptionStatus">Authorized after approval</strong>
+              <strong id="dancerSubscriptionStatus">FREE</strong>
             </summary>
-            <p id="dancerSubscriptionDetail">Card is authorized now, but the $9.99/month profile subscription only activates after dancer approval.</p>
+            <p id="dancerSubscriptionDetail">Dancer profiles are free right now. No monthly subscription is due.</p>
           </details>
           <details class="status-chip">
             <summary>
@@ -26279,39 +26279,11 @@
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
     }
 
-    function dancerBillingSummary(approved) {
-      const subscription = liveDancerBilling?.subscription;
-      const status = subscription?.status || "not_started";
-      const periodEnd = formatBillingDate(subscription?.currentPeriodEnd);
-      if (!approved) {
-        return {
-          label: "Starts after approval",
-          detail: "Checkout stays locked until photos, verification, and platform review are approved.",
-          action: "Start subscription"
-        };
-      }
-      if (isLiveSubscriptionActive(subscription)) {
-        return {
-          label: "$9.99/mo active",
-          detail: periodEnd
-            ? `Subscription is active and renews on ${periodEnd}. Manage subscription opens Stripe billing.`
-            : "Subscription is active and recurring. Manage subscription opens Stripe billing.",
-          action: "Manage subscription"
-        };
-      }
-      if (subscription?.hasStripeSubscription) {
-        return {
-          label: status.replaceAll("_", " "),
-          detail: periodEnd
-            ? `Stripe subscription is ${status.replaceAll("_", " ")} through ${periodEnd}.`
-            : `Stripe subscription is ${status.replaceAll("_", " ")}.`,
-          action: "Manage subscription"
-        };
-      }
+    function dancerBillingSummary() {
       return {
-        label: "Ready for checkout",
-        detail: "Profile is approved. Start the $9.99/month Stripe subscription to keep the public profile active.",
-        action: "Start subscription"
+        label: "FREE",
+        detail: "Dancer profiles are free right now. No monthly subscription is due.",
+        action: "Free plan"
       };
     }
 
@@ -29730,8 +29702,11 @@
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
-        section.hidden = false;
-        section.classList.toggle("locked-analytics", !approved);
+        section.hidden = !approved;
+        section.classList.remove("locked-analytics");
+      });
+      document.querySelectorAll("#dancerDashboard .approved-dancer-stat").forEach((stat) => {
+        stat.hidden = !approved;
       });
       const approvalCommand = document.getElementById("dancerApprovalCommand");
       if (approvalCommand) {
