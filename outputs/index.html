@@ -17943,6 +17943,94 @@
       line-height: 1.45;
     }
 
+    .account-center {
+      display: grid;
+      gap: 14px;
+      padding: 15px;
+      border: 1px solid rgba(34, 199, 255, 0.16);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(34, 199, 255, 0.08), transparent 38%),
+        rgba(5, 5, 8, 0.62);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+    }
+
+    .account-center-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .account-center-head strong {
+      color: var(--text-main);
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
+    .account-center-head span {
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .account-center-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .account-center-section {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .account-center-section label {
+      color: var(--text-main);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .account-center-section input {
+      width: 100%;
+      min-height: 42px;
+      padding: 12px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--text-main);
+      font: inherit;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .account-center-section input:focus {
+      border-color: rgba(34, 199, 255, 0.42);
+      box-shadow: 0 0 0 3px rgba(34, 199, 255, 0.08);
+    }
+
+    .account-center-section .action-btn {
+      min-height: 42px;
+      margin-top: 2px;
+      padding-inline: 16px;
+    }
+
+    .account-center-status {
+      min-height: 18px;
+      margin: 0;
+      color: #8ee7ff;
+      font-size: 0.84rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .account-center-status.is-error {
+      color: #ff8f9f;
+    }
+
     .account-control-actions {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -17976,6 +18064,10 @@
       }
 
       .account-control-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .account-center-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -24578,6 +24670,27 @@
             <span class="account-control-status" data-account-status>Active</span>
           </div>
           <p class="account-control-copy" data-account-note>Your private follows, venue alerts, and going signals stay active.</p>
+          <div class="account-center">
+            <div class="account-center-head">
+              <strong>Account center</strong>
+              <span>Change the email or password you use to sign in.</span>
+            </div>
+            <div class="account-center-grid">
+              <div class="account-center-section">
+                <label for="customerAccountEmail">New email</label>
+                <input id="customerAccountEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+                <button class="action-btn secondary" type="button" data-account-action="update-email" data-account-role="customer">Update email</button>
+              </div>
+              <div class="account-center-section">
+                <label for="customerAccountPassword">New password</label>
+                <input id="customerAccountPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                <label for="customerAccountPasswordConfirm">Confirm password</label>
+                <input id="customerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                <button class="action-btn secondary" type="button" data-account-action="update-password" data-account-role="customer">Update password</button>
+              </div>
+            </div>
+            <p class="account-center-status" id="customerAccountCenterStatus" aria-live="polite"></p>
+          </div>
           <div class="account-control-actions">
             <button class="action-btn secondary" type="button" data-account-action="disable" data-account-role="customer">Disable temporarily</button>
             <button class="action-btn danger" type="button" data-account-action="delete" data-account-role="customer">Delete account</button>
@@ -25696,6 +25809,87 @@
       syncOverlayScrollLock();
     }
 
+    function setCustomerAccountCenterStatus(message, isError = false) {
+      const status = document.getElementById("customerAccountCenterStatus");
+      if (!status) return;
+      status.textContent = message || "";
+      status.classList.toggle("is-error", Boolean(isError));
+    }
+
+    function clearCustomerAccountCenterFields(type) {
+      if (!type || type === "email") {
+        const emailInput = document.getElementById("customerAccountEmail");
+        if (emailInput) emailInput.value = "";
+      }
+      if (!type || type === "password") {
+        const passwordInput = document.getElementById("customerAccountPassword");
+        const confirmInput = document.getElementById("customerAccountPasswordConfirm");
+        if (passwordInput) passwordInput.value = "";
+        if (confirmInput) confirmInput.value = "";
+      }
+    }
+
+    async function updateCustomerAccountEmail(button) {
+      const emailInput = document.getElementById("customerAccountEmail");
+      const email = emailInput?.value.trim().toLowerCase() || "";
+      if (!authSession?.accessToken) {
+        setCustomerAccountCenterStatus("Sign in required.", true);
+        return;
+      }
+      if (!email || !email.includes("@")) {
+        setCustomerAccountCenterStatus("Enter a valid email address.", true);
+        emailInput?.focus();
+        return;
+      }
+      if (button) button.disabled = true;
+      setCustomerAccountCenterStatus("Sending confirmation...");
+      try {
+        const data = await patchAuthenticatedJson("/api/account", { email });
+        if (data?.account) applyLiveAccountState(data.account);
+        clearCustomerAccountCenterFields("email");
+        setCustomerAccountCenterStatus(data?.message || "Check your new email address to confirm the change.");
+        showToast("Check your new email to confirm the change");
+      } catch (error) {
+        setCustomerAccountCenterStatus(error.message || "Could not update email.", true);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function updateCustomerAccountPassword(button) {
+      const passwordInput = document.getElementById("customerAccountPassword");
+      const confirmInput = document.getElementById("customerAccountPasswordConfirm");
+      const password = passwordInput?.value || "";
+      const confirmPassword = confirmInput?.value || "";
+      if (!authSession?.accessToken) {
+        setCustomerAccountCenterStatus("Sign in required.", true);
+        return;
+      }
+      if (password.length < 8) {
+        setCustomerAccountCenterStatus("Password must be at least 8 characters.", true);
+        passwordInput?.focus();
+        return;
+      }
+      if (password !== confirmPassword) {
+        setCustomerAccountCenterStatus("Passwords do not match.", true);
+        confirmInput?.focus();
+        return;
+      }
+      if (button) button.disabled = true;
+      setCustomerAccountCenterStatus("Updating password...");
+      try {
+        const data = await patchAuthenticatedJson("/api/account", { password });
+        if (data?.account) applyLiveAccountState(data.account);
+        clearCustomerAccountCenterFields("password");
+        setCustomerAccountCenterStatus(data?.message || "Password updated.");
+        showToast("Password updated");
+      } catch (error) {
+        setCustomerAccountCenterStatus(error.message || "Could not update password.", true);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
     function handleAccountControlClick(event) {
       const button = event.target.closest("[data-account-action]");
       if (!button) return false;
@@ -25707,6 +25901,18 @@
       event.stopPropagation();
       event.stopImmediatePropagation();
       const roleLabel = role === "dancer" ? "Dancer account" : "Customer account";
+
+      if (action === "update-email") {
+        if (role !== "customer") return true;
+        updateCustomerAccountEmail(button);
+        return true;
+      }
+
+      if (action === "update-password") {
+        if (role !== "customer") return true;
+        updateCustomerAccountPassword(button);
+        return true;
+      }
 
       if (action === "disable") {
         const previousDisabled = state.disabled;

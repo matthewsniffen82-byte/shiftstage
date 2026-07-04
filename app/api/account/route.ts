@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const PATCHABLE_STATES = new Set<AccountState>(["active", "disabled"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function GET(request: Request) {
   try {
@@ -28,6 +29,45 @@ export async function PATCH(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     const body = await request.json();
+    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body?.password === "string" ? body.password : "";
+
+    if (email) {
+      if (!EMAIL_PATTERN.test(email)) {
+        return NextResponse.json({ ok: false, error: "Enter a valid email address." }, { status: 400 });
+      }
+
+      const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://www.mydancr.com";
+      const emailRedirectTo = `${origin}/auth/callback?role=customer&return_to=${encodeURIComponent("/dashboard/customer")}`;
+      const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message || "Unable to update email." }, { status: 400 });
+      }
+
+      const account = await getAccountByUserId(client, user.id);
+      return NextResponse.json({
+        ok: true,
+        account,
+        message: "Check your new email address to confirm the change.",
+      });
+    }
+
+    if (password) {
+      if (password.length < 8) {
+        return NextResponse.json({ ok: false, error: "Password must be at least 8 characters." }, { status: 400 });
+      }
+
+      const { error } = await client.auth.updateUser({ password });
+
+      if (error) {
+        return NextResponse.json({ ok: false, error: error.message || "Unable to update password." }, { status: 400 });
+      }
+
+      const account = await getAccountByUserId(client, user.id);
+      return NextResponse.json({ ok: true, account, message: "Password updated." });
+    }
+
     const accountState = body?.accountState;
 
     if (!PATCHABLE_STATES.has(accountState)) {
