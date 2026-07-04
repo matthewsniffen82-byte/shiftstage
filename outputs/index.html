@@ -25495,16 +25495,26 @@
       return text;
     }
 
-    async function postAuthenticatedJson(url, payload) {
+    function authenticatedRequestHeaders(contentType) {
       const token = authSession?.accessToken;
       if (!token) return null;
+      const headers = {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`
+      };
+      if (contentType) headers["Content-Type"] = contentType;
+      if (authSession?.refreshToken) {
+        headers["X-Dancr-Refresh-Token"] = authSession.refreshToken;
+      }
+      return headers;
+    }
+
+    async function postAuthenticatedJson(url, payload) {
+      const headers = authenticatedRequestHeaders("application/json");
+      if (!headers) return null;
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
@@ -25530,15 +25540,11 @@
     }
 
     async function patchAuthenticatedJson(url, payload) {
-      const token = authSession?.accessToken;
-      if (!token) return null;
+      const headers = authenticatedRequestHeaders("application/json");
+      if (!headers) return null;
       const response = await fetch(url, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
@@ -25547,14 +25553,11 @@
     }
 
     async function deleteAuthenticatedJson(url) {
-      const token = authSession?.accessToken;
-      if (!token) return null;
+      const headers = authenticatedRequestHeaders();
+      if (!headers) return null;
       const response = await fetch(url, {
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        }
+        headers
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
@@ -25562,14 +25565,11 @@
     }
 
     async function postAuthenticatedFormData(url, formData) {
-      const token = authSession?.accessToken;
-      if (!token) throw new Error("Sign in required");
+      const headers = authenticatedRequestHeaders();
+      if (!headers) throw new Error("Sign in required");
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: formData
       });
       const data = await response.json().catch(() => ({}));
@@ -25588,13 +25588,10 @@
     }
 
     async function getAuthenticatedJson(url) {
-      const token = authSession?.accessToken;
-      if (!token) throw new Error("Sign in required");
+      const headers = authenticatedRequestHeaders();
+      if (!headers) throw new Error("Sign in required");
       const response = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`
-        }
+        headers
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
