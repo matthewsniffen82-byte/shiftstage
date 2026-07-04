@@ -23897,10 +23897,9 @@
                 <li>Free profile access after approval</li>
               </ul>
               <div class="role-actions">
-                <button class="ghost" id="dancerLoginBtn" type="button">Start demo setup</button>
+                <button class="ghost" id="dancerLoginBtn" type="button">Continue setup</button>
                 <button class="ghost" id="openDancerSignup" type="button">Dancer sign up</button>
               </div>
-              <div class="rule-note"><strong>Fresh setup demo:</strong> newdancer@dancr.app / dancr</div>
             </article>
           </div>
           <form class="auth-form" id="authForm" data-auth-view="customer">
@@ -23966,11 +23965,11 @@
             </div>
             <div class="field">
               <label for="dancerLoginEmail">Email</label>
-              <input id="dancerLoginEmail" type="email" value="newdancer@dancr.app">
+              <input id="dancerLoginEmail" type="email" value="">
             </div>
             <div class="field">
               <label for="dancerLoginPassword">Password</label>
-              <input id="dancerLoginPassword" type="password" value="dancr">
+              <input id="dancerLoginPassword" type="password" value="">
             </div>
             <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button">Forgot password?</button>
             <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
@@ -24201,11 +24200,11 @@
                   <div class="control-field-grid">
                     <label>
                       Stage name
-                      <input id="approvedControlStageName" type="text" value="Maya Lux" aria-label="Stage name shown publicly">
+                      <input id="approvedControlStageName" type="text" value="" aria-label="Stage name shown publicly">
                     </label>
                     <label>
                       Verification name
-                      <input id="approvedControlRealName" type="text" value="Maya Hernandez" readonly aria-label="Private verification name">
+                      <input id="approvedControlRealName" type="text" value="" readonly aria-label="Private verification name">
                     </label>
                     <label>
                       City
@@ -24743,34 +24742,8 @@
 
     const markets = {
       "Las Vegas": {
-        stats: { dancers: 128, shifts: 46, venues: 18 },
-        dancers: [
-          { name: "Tess Flame", status: "Verified", venue: "Velvet Room", time: "7:30 PM - 11:30 PM", tonight: true, scheduled: true, trend: 1, distance: "2.4 mi" },
-          { name: "Gia Night", status: "Verified", venue: "Prism Lounge", time: "8:15 PM - 12:30 AM", tonight: true, scheduled: true, trend: 2, distance: "8.2 mi" },
-          { name: "Maya Lux", status: "Verified", venue: "Velvet Room", time: "9:00 PM - 2:00 AM", tonight: true, scheduled: true, trend: 3, distance: "2.4 mi" },
-          { name: "Mina Voss", status: "Verified", venue: "Neon Hall", time: "9:30 PM - 2:00 AM", tonight: true, scheduled: true, trend: 4, distance: "4.1 mi" },
-          { name: "Nova Rae", status: "Verified", venue: "Neon Hall", time: "10:30 PM - 3:00 AM", tonight: true, scheduled: true, trend: 5, distance: "4.1 mi" },
-          { name: "Aria Vale", status: "Verified", venue: "Afterglow", time: "11:00 PM - 1:00 AM", tonight: true, scheduled: true, trend: 6, distance: "6.6 mi" },
-          { name: "Lux Sable", status: "Verified", venue: "Afterglow", time: "12:15 AM - 4:00 AM", tonight: true, scheduled: true, trend: 7, distance: "6.6 mi" },
-          { name: "Nell Quartz", status: "Verified", venue: "Monarch", time: "10:00 PM - 2:30 AM", tonight: true, scheduled: true, trend: 8, distance: "9.9 mi" },
-          { name: "Zia Velvet", status: "Verified", venue: "Prism Lounge", time: "8:45 PM - 1:30 AM", tonight: true, scheduled: true, trend: 9, distance: "8.2 mi" },
-          { name: "Cami Noir", status: "Verified", venue: "Velvet Room", time: "9:15 PM - 1:45 AM", tonight: true, scheduled: true, trend: 10, distance: "2.4 mi" },
-          { name: "Jade Vesper", status: "Verified", venue: "Neon Hall", time: "10:00 PM - 3:15 AM", tonight: true, scheduled: true, trend: 11, distance: "4.1 mi" },
-          { name: "Raven Sol", status: "Verified", venue: "Afterglow", time: "8:00 PM - 12:00 AM", tonight: true, scheduled: true, trend: 12, distance: "6.6 mi" },
-          { name: "Skye Reign", status: "Verified", venue: "Monarch", time: "11:30 PM - 4:00 AM", tonight: true, scheduled: true, trend: 13, distance: "9.9 mi" },
-          { name: "Elle Mirage", status: "Verified", venue: "Prism Lounge", time: "9:45 PM - 2:15 AM", tonight: true, scheduled: true, trend: 14, distance: "8.2 mi" },
-          { name: "Lola Saint", status: "Verified", venue: "Velvet Room", time: "10:15 PM - 2:45 AM", tonight: true, scheduled: true, trend: 15, distance: "2.4 mi" },
-          { name: "Sage Monroe", status: "Verified", venue: "Prism Lounge", time: "10:00 PM - 3:00 AM", shiftLabel: "7/2", tonight: false, scheduled: true, trend: 16, distance: "8.2 mi" },
-          { name: "Kira Sol", status: "Verified", venue: "Monarch", time: "9:00 PM - 2:00 AM", shiftLabel: "7/5", tonight: false, scheduled: true, trend: 17, distance: "9.9 mi" },
-          { name: "Rumi West", status: "Verified", venue: "Monarch", time: "10:00 PM - 2:30 AM", shiftLabel: "7/6", tonight: false, scheduled: true, trend: 18, distance: "9.9 mi" },
-          { name: "Lena Noir", status: "Verified", venue: "Velvet Room", time: "8:30 PM - 12:45 AM", shiftLabel: "7/8", tonight: false, scheduled: true, trend: 19, distance: "3.8 mi" },
-          { name: "Ivy Mars", status: "Verified", venue: "Neon Hall", time: "9:30 PM - 1:30 AM", shiftLabel: "7/9", tonight: false, scheduled: true, trend: 20, distance: "4.1 mi" },
-          { name: "Vera Sky", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 21, distance: "6.6 mi" },
-          { name: "Opal Starr", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 22, distance: "5.4 mi" },
-          { name: "Nico Bloom", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 23, distance: "7.1 mi" },
-          { name: "Sienna Fox", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 24, distance: "6.9 mi" },
-          { name: "Marlo Vale", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 25, distance: "8.4 mi" }
-        ],
+        stats: { dancers: 0, shifts: 0, venues: 18 },
+        dancers: [],
         venues: [
           { name: "Velvet Room", area: "Arts District", shifts: 8, distance: "2.4 mi" },
           { name: "Neon Hall", area: "The Strip", shifts: 11, distance: "4.1 mi" },
@@ -24779,23 +24752,8 @@
         ]
       },
       Miami: {
-        stats: { dancers: 94, shifts: 31, venues: 14 },
-        dancers: [
-          { name: "Sol Vega", status: "Verified", venue: "Azure Room", time: "8:30 PM - 1:00 AM", tonight: true, scheduled: true, trend: 1, distance: "1.9 mi" },
-          { name: "Mila Cruz", status: "Verified", venue: "Midnight Palm", time: "10:00 PM - 2:30 AM", tonight: true, scheduled: true, trend: 2, distance: "3.7 mi" },
-          { name: "Cleo Wave", status: "Pending", venue: "Biscayne Social", time: "Pending review", tonight: false, scheduled: false, trend: 4, distance: "4.6 mi" },
-          { name: "Nia Vale", status: "Verified", venue: "Azure Room", time: "Tomorrow 9 PM", tonight: false, scheduled: true, trend: 3, distance: "1.9 mi" },
-          { name: "Luna Bay", status: "Verified", venue: "Midnight Palm", time: "Friday 11 PM", tonight: false, scheduled: true, trend: 5, distance: "3.7 mi" },
-          { name: "Rhea Knox", status: "Verified", venue: "Biscayne Social", time: "Saturday 8 PM", tonight: false, scheduled: true, trend: 6, distance: "4.6 mi" },
-          { name: "Zara Quinn", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 7, distance: "7.5 mi" },
-          { name: "Talia Moon", status: "Pending", venue: "Coral Stage", time: "Pending review", tonight: false, scheduled: false, trend: 8, distance: "7.5 mi" },
-          { name: "Amara Blue", status: "Verified", venue: "Azure Room", time: "7:45 PM - 12:15 AM", tonight: true, scheduled: true, trend: 9, distance: "1.9 mi" },
-          { name: "Jade Rio", status: "Verified", venue: "Midnight Palm", time: "Tuesday 10 PM", tonight: false, scheduled: true, trend: 10, distance: "3.7 mi" },
-          { name: "Noa Shine", status: "Verified", venue: "Biscayne Social", time: "9:15 PM - 1:45 AM", tonight: true, scheduled: true, trend: 11, distance: "4.6 mi" },
-          { name: "Vivi Coast", status: "Verified", venue: "Coral Stage", time: "10:45 PM - 3:15 AM", tonight: true, scheduled: true, trend: 12, distance: "7.5 mi" },
-          { name: "Lara Night", status: "Verified", venue: "Azure Room", time: "11:30 PM - 4:00 AM", tonight: true, scheduled: true, trend: 13, distance: "1.9 mi" },
-          { name: "Remy Vale", status: "Verified", venue: "Midnight Palm", time: "12:10 AM - 3:30 AM", tonight: true, scheduled: true, trend: 14, distance: "3.7 mi" }
-        ],
+        stats: { dancers: 0, shifts: 0, venues: 14 },
+        dancers: [],
         venues: [
           { name: "Azure Room", area: "Brickell", shifts: 9, distance: "1.9 mi" },
           { name: "Midnight Palm", area: "South Beach", shifts: 8, distance: "3.7 mi" },
@@ -24804,23 +24762,8 @@
         ]
       },
       Atlanta: {
-        stats: { dancers: 76, shifts: 28, venues: 11 },
-        dancers: [
-          { name: "Zola Saint", status: "Verified", venue: "Peachtree Room", time: "9:30 PM - 2:00 AM", tonight: true, scheduled: true, trend: 1, distance: "2.1 mi" },
-          { name: "Raine Fox", status: "Verified", venue: "Southline", time: "11:00 PM - 3:00 AM", tonight: true, scheduled: true, trend: 3, distance: "5.0 mi" },
-          { name: "Demi Rose", status: "Pending", venue: "Blue Hour", time: "Pending review", tonight: false, scheduled: false, trend: 4, distance: "6.2 mi" },
-          { name: "Nora Lux", status: "Verified", venue: "Peachtree Room", time: "Tomorrow 9 PM", tonight: false, scheduled: true, trend: 2, distance: "2.1 mi" },
-          { name: "Kali West", status: "Verified", venue: "Southline", time: "Friday 11 PM", tonight: false, scheduled: true, trend: 5, distance: "5.0 mi" },
-          { name: "Elle Bloom", status: "Verified", venue: "Blue Hour", time: "Saturday 10 PM", tonight: false, scheduled: true, trend: 6, distance: "6.2 mi" },
-          { name: "Mara Stone", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 7, distance: "8.1 mi" },
-          { name: "Ari Fox", status: "Pending", venue: "Signal", time: "Pending review", tonight: false, scheduled: false, trend: 8, distance: "8.1 mi" },
-          { name: "Sia Gray", status: "Verified", venue: "Blue Hour", time: "8:45 PM - 12:45 AM", tonight: true, scheduled: true, trend: 9, distance: "6.2 mi" },
-          { name: "Vada Lane", status: "Verified", venue: "Peachtree Room", time: "Tuesday 10 PM", tonight: false, scheduled: true, trend: 10, distance: "2.1 mi" },
-          { name: "Lyra Knox", status: "Verified", venue: "Signal", time: "7:50 PM - 11:50 PM", tonight: true, scheduled: true, trend: 11, distance: "8.1 mi" },
-          { name: "Mae Silver", status: "Verified", venue: "Southline", time: "10:15 PM - 2:15 AM", tonight: true, scheduled: true, trend: 12, distance: "5.0 mi" },
-          { name: "Kora Vale", status: "Verified", venue: "Blue Hour", time: "11:45 PM - 3:45 AM", tonight: true, scheduled: true, trend: 13, distance: "6.2 mi" },
-          { name: "Nix Rose", status: "Verified", venue: "Signal", time: "12:20 AM - 4:00 AM", tonight: true, scheduled: true, trend: 14, distance: "8.1 mi" }
-        ],
+        stats: { dancers: 0, shifts: 0, venues: 11 },
+        dancers: [],
         venues: [
           { name: "Peachtree Room", area: "Midtown", shifts: 7, distance: "2.1 mi" },
           { name: "Southline", area: "Castleberry Hill", shifts: 6, distance: "5.0 mi" },
@@ -24829,23 +24772,8 @@
         ]
       },
       "New York": {
-        stats: { dancers: 112, shifts: 39, venues: 16 },
-        dancers: [
-          { name: "Val Stone", status: "Verified", venue: "Mercer Night", time: "8:00 PM - 12:30 AM", tonight: true, scheduled: true, trend: 2, distance: "1.4 mi" },
-          { name: "Eden Vale", status: "Verified", venue: "Chrome Room", time: "10:00 PM - 2:00 AM", tonight: true, scheduled: true, trend: 1, distance: "3.3 mi" },
-          { name: "Mira Lane", status: "Verified", venue: "Hudson Glow", time: "11:30 PM - 3:30 AM", tonight: true, scheduled: true, trend: 4, distance: "5.2 mi" },
-          { name: "Isla North", status: "Pending", venue: "Mercer Night", time: "Pending review", tonight: false, scheduled: false, trend: 5, distance: "1.4 mi" },
-          { name: "Opal Hart", status: "Verified", venue: "Chrome Room", time: "Tomorrow 8 PM", tonight: false, scheduled: true, trend: 3, distance: "3.3 mi" },
-          { name: "Tess Noir", status: "Verified", venue: "Hudson Glow", time: "Friday 11 PM", tonight: false, scheduled: true, trend: 6, distance: "5.2 mi" },
-          { name: "Livia West", status: "Verified", venue: "", time: "", tonight: false, scheduled: false, trend: 7, distance: "7.8 mi" },
-          { name: "Rox Quinn", status: "Pending", venue: "Eastline", time: "Pending review", tonight: false, scheduled: false, trend: 8, distance: "7.8 mi" },
-          { name: "Cami Moon", status: "Verified", venue: "Mercer Night", time: "7:15 PM - 11:45 PM", tonight: true, scheduled: true, trend: 9, distance: "1.4 mi" },
-          { name: "Nell Sable", status: "Verified", venue: "Chrome Room", time: "10:00 PM - 2:30 AM", shiftLabel: "Monday", tonight: false, scheduled: true, trend: 10, distance: "3.3 mi" },
-          { name: "Ava Frost", status: "Verified", venue: "Eastline", time: "9:15 PM - 1:15 AM", tonight: true, scheduled: true, trend: 11, distance: "7.8 mi" },
-          { name: "Rae Mercer", status: "Verified", venue: "Hudson Glow", time: "10:45 PM - 2:45 AM", tonight: true, scheduled: true, trend: 12, distance: "5.2 mi" },
-          { name: "Nico Belle", status: "Verified", venue: "Mercer Night", time: "12:05 AM - 3:30 AM", tonight: true, scheduled: true, trend: 13, distance: "1.4 mi" },
-          { name: "Sloane Lux", status: "Verified", venue: "Chrome Room", time: "12:40 AM - 4:00 AM", tonight: true, scheduled: true, trend: 14, distance: "3.3 mi" }
-        ],
+        stats: { dancers: 0, shifts: 0, venues: 16 },
+        dancers: [],
         venues: [
           { name: "Mercer Night", area: "SoHo", shifts: 10, distance: "1.4 mi" },
           { name: "Chrome Room", area: "Chelsea", shifts: 9, distance: "3.3 mi" },
@@ -25004,10 +24932,10 @@
     };
 
     const followedByCity = {
-      "Las Vegas": ["Maya Lux", "Nova Rae", "Sage Monroe", "Rumi West", "Tess Flame", "Mina Voss", "Vera Sky"],
-      Miami: ["Sol Vega", "Mila Cruz", "Nia Vale", "Luna Bay", "Amara Blue", "Jade Rio"],
-      Atlanta: ["Zola Saint", "Nora Lux", "Kali West", "Sia Gray", "Vada Lane", "Lyra Knox"],
-      "New York": ["Eden Vale", "Val Stone", "Opal Hart", "Tess Noir", "Cami Moon", "Nell Sable"]
+      "Las Vegas": [],
+      Miami: [],
+      Atlanta: [],
+      "New York": []
     };
     const favoritedByCity = {};
     const notifiedByCity = Object.fromEntries(
@@ -29552,9 +29480,9 @@
       closeDemoSurfaces();
       resetAccountControl("dancer");
       citySelect.value = "Las Vegas";
-      document.getElementById("dancerLegalName").value = "Maya Lawson";
-      document.getElementById("dancerStageName").value = "Maya Lux";
-      document.getElementById("dancerEmail").value = "maya@dancr.app";
+      document.getElementById("dancerLegalName").value = "";
+      document.getElementById("dancerStageName").value = "";
+      document.getElementById("dancerEmail").value = "";
       document.getElementById("dancerCity").value = "Las Vegas";
       Object.assign(dancerSetup, {
         profile: true,
@@ -29573,7 +29501,7 @@
       activeDashboardType = "dancer";
       updateAccountHeader();
       ensureActiveDancerProfile("Verified");
-      showToast("Approved dancer demo");
+      showToast("Dancer setup opened");
       openDancerDashboard();
     }
 
@@ -29581,9 +29509,9 @@
       closeDemoSurfaces();
       resetAccountControl("dancer");
       citySelect.value = "Las Vegas";
-      document.getElementById("dancerLegalName").value = "Lena Carter";
-      document.getElementById("dancerStageName").value = "Lena Vale";
-      document.getElementById("dancerEmail").value = "pending@dancr.app";
+      document.getElementById("dancerLegalName").value = "";
+      document.getElementById("dancerStageName").value = "";
+      document.getElementById("dancerEmail").value = "";
       document.getElementById("dancerCity").value = "Las Vegas";
       Object.assign(dancerSetup, {
         profile: true,
@@ -29602,7 +29530,7 @@
       activeDashboardType = "dancer";
       updateAccountHeader();
       ensureActiveDancerProfile("Pending");
-      showToast("Pending dancer demo");
+      showToast("Dancer review opened");
       openDancerDashboard();
     }
 
@@ -29618,7 +29546,7 @@
       dashboardFollowedExpanded = false;
       dashboardVenuesExpanded = false;
       updateAccountHeader();
-      showToast("Customer demo");
+      showToast("Customer dashboard");
       openDashboard();
     }
 
@@ -29653,7 +29581,7 @@
       updateAccountHeader();
       openAuthPage();
       setTimeout(() => scrollCustomerSignupBenefitsToTop(), 80);
-      showToast("Customer sign up demo");
+      showToast("Customer sign up");
     }
 
     function startCustomerDashboardSession(message = "Customer dashboard") {
@@ -31569,13 +31497,13 @@
       }
     });
 
-    function startDemoDancerSetup(message = "Demo dancer logged in. Start with profile setup.") {
+    function startDemoDancerSetup(message = "Start with profile setup.") {
       resetAccountControl("dancer");
       dancerSignupStarted = true;
       stripeConfirmed = true;
       document.getElementById("dancerLegalName").value = "";
-      document.getElementById("dancerStageName").value = "Lena Vale";
-      document.getElementById("dancerEmail").value = "newdancer@dancr.app";
+      document.getElementById("dancerStageName").value = "";
+      document.getElementById("dancerEmail").value = "";
       document.getElementById("dancerCity").value = "Las Vegas";
       Object.assign(dancerSetup, {
         profile: false,
