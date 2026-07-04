@@ -18024,6 +18024,35 @@
       box-shadow: 0 0 0 3px rgba(34, 199, 255, 0.08);
     }
 
+    .account-email-current {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 12px;
+      border: 1px solid rgba(34, 199, 255, 0.18);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow: inset 0 0 18px rgba(34, 199, 255, 0.045);
+    }
+
+    .account-email-current span {
+      color: #a9a0b8;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .account-email-current strong {
+      min-width: 0;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+      text-align: right;
+    }
+
     .account-center-section .action-btn {
       min-height: 42px;
       margin-top: 2px;
@@ -18081,6 +18110,16 @@
 
       .account-center-grid {
         grid-template-columns: 1fr;
+      }
+
+      .account-email-current {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .account-email-current strong {
+        text-align: left;
       }
     }
     .dancer-impact-card {
@@ -24445,6 +24484,41 @@
             <span class="account-control-status" data-account-status>Active</span>
           </div>
           <p class="account-control-copy" data-account-note>Your public profile, schedule posting, analytics, and follower alerts stay active.</p>
+          <div class="account-center">
+            <div class="account-center-head">
+              <strong>Account center</strong>
+              <span>Change the email or password you use to sign in.</span>
+            </div>
+            <div class="account-center-grid">
+              <div class="account-center-section">
+                <div class="account-email-current">
+                  <span>Current email</span>
+                  <strong id="dancerCurrentEmail">Not signed in</strong>
+                </div>
+                <label for="dancerAccountEmail">New email</label>
+                <input id="dancerAccountEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+                <button class="action-btn secondary" type="button" data-account-action="update-email" data-account-role="dancer">Update email</button>
+              </div>
+              <div class="account-center-section">
+                <label for="dancerAccountPassword">New password</label>
+                <div class="password-wrap">
+                  <input id="dancerAccountPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                  <button class="password-toggle" type="button" data-password-toggle="dancerAccountPassword" aria-label="Show password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+                <label for="dancerAccountPasswordConfirm">Confirm password</label>
+                <div class="password-wrap">
+                  <input id="dancerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                  <button class="password-toggle" type="button" data-password-toggle="dancerAccountPasswordConfirm" aria-label="Show password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+                <button class="action-btn secondary" type="button" data-account-action="update-password" data-account-role="dancer">Update password</button>
+              </div>
+            </div>
+            <p class="account-center-status" id="dancerAccountCenterStatus" aria-live="polite"></p>
+          </div>
           <div class="account-control-actions">
             <button class="action-btn secondary" type="button" data-account-action="disable" data-account-role="dancer">Disable temporarily</button>
             <button class="action-btn danger" type="button" data-account-action="delete" data-account-role="dancer">Delete account</button>
@@ -24714,6 +24788,10 @@
             </div>
             <div class="account-center-grid">
               <div class="account-center-section">
+                <div class="account-email-current">
+                  <span>Current email</span>
+                  <strong id="customerCurrentEmail">Not signed in</strong>
+                </div>
                 <label for="customerAccountEmail">New email</label>
                 <input id="customerAccountEmail" type="email" autocomplete="email" placeholder="you@example.com" />
                 <button class="action-btn secondary" type="button" data-account-action="update-email" data-account-role="customer">Update email</button>
@@ -25119,12 +25197,56 @@
       }
     }
 
+    function normalizeAccountEmail(value) {
+      return typeof value === "string" ? value.trim().toLowerCase() : "";
+    }
+
+    function accountEmailStorageKey(role) {
+      return `dancrAccountEmail:${role}`;
+    }
+
+    function persistAccountEmail(role, email) {
+      const normalized = normalizeAccountEmail(email);
+      if (!role || !normalized) return;
+      try {
+        localStorage.setItem(accountEmailStorageKey(role), normalized);
+      } catch (error) {}
+    }
+
+    function sessionEmailForRole(role) {
+      const sessionRole = authSession?.account?.role || authSession?.role;
+      const sessionEmail =
+        normalizeAccountEmail(authSession?.account?.email) ||
+        normalizeAccountEmail(authSession?.email) ||
+        normalizeAccountEmail(authSession?.user?.email);
+      if (sessionEmail && (!role || !sessionRole || sessionRole === role)) return sessionEmail;
+      try {
+        return normalizeAccountEmail(localStorage.getItem(accountEmailStorageKey(role)));
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function updateCurrentEmailDisplays() {
+      ["customer", "dancer"].forEach((role) => {
+        const node = document.getElementById(`${role}CurrentEmail`);
+        if (node) node.textContent = sessionEmailForRole(role) || "Not signed in";
+      });
+    }
+
     function saveAuthSession(session) {
       authSession = session;
+      const role = session?.account?.role || session?.role;
+      const email =
+        normalizeAccountEmail(session?.account?.email) ||
+        normalizeAccountEmail(session?.email) ||
+        normalizeAccountEmail(session?.user?.email);
+      if (role && email) persistAccountEmail(role, email);
       try {
         if (session) localStorage.setItem("dancrAuthSessionV1", JSON.stringify(session));
         else localStorage.removeItem("dancrAuthSessionV1");
       } catch (error) {}
+      updateCurrentEmailDisplays();
     }
 
     function savePendingAuthConfirmation(state) {
@@ -25179,24 +25301,28 @@
       try {
         const data = await getAuthenticatedJson("/api/account");
         if (data?.account) {
+          const accountEmail = normalizeAccountEmail(data.account.email) || normalizeAccountEmail(state?.email) || sessionEmailForRole(role);
           const account =
             role && data.account.role !== role
               ? {
                   ...data.account,
                   role,
                   displayName: state?.name || state?.stageName || state?.email || data.account.displayName || null,
-                  accountState: data.account.accountState || "active"
+                  accountState: data.account.accountState || "active",
+                  email: accountEmail || null
                 }
-              : data.account;
+              : { ...data.account, email: accountEmail || data.account.email || null };
           saveAuthSession({ ...authSession, account });
         }
       } catch (error) {
+        const fallbackEmail = normalizeAccountEmail(state?.email) || sessionEmailForRole(role);
         saveAuthSession({
           ...authSession,
           account: {
             role,
             displayName: state?.name || state?.stageName || state?.email || null,
-            accountState: "active"
+            accountState: "active",
+            email: fallbackEmail || null
           }
         });
       }
@@ -25336,7 +25462,8 @@
           ...(authSession?.account || {}),
           role: dashboardRole,
           displayName: state.name || state.stageName || state.email || authSession?.account?.displayName || null,
-          accountState: "active"
+          accountState: "active",
+          email: normalizeAccountEmail(state.email) || sessionEmailForRole(dashboardRole) || authSession?.account?.email || null
         }
       });
       return hydrateConfirmedSessionAccount(dashboardRole, state).finally(() => {
@@ -25477,7 +25604,14 @@
       if (!response.ok || data.ok === false) {
         throw new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
       }
-      if (data.session && payload.mode !== "signup") saveAuthSession({ ...data.session, account: data.account || null });
+      const email = normalizeAccountEmail(payload.email);
+      if (payload.role && email) persistAccountEmail(payload.role, email);
+      if (data.session && payload.mode !== "signup") {
+        const account = data.account
+          ? { ...data.account, email: normalizeAccountEmail(data.account.email) || email || null }
+          : { role: payload.role || null, email: email || null, accountState: "active" };
+        saveAuthSession({ ...data.session, email: email || data.session.email || null, account });
+      }
       return data;
     }
 
@@ -25622,7 +25756,12 @@
       saveAuthSession({
         ...authSession,
         ...data.session,
-        account: data.account || authSession?.account || null
+        account: data.account
+          ? {
+              ...data.account,
+              email: normalizeAccountEmail(data.account.email) || sessionEmailForRole(data.account.role) || authSession?.account?.email || null
+            }
+          : authSession?.account || null
       });
     }
 
@@ -25778,18 +25917,22 @@
     function renderAccountControls() {
       renderAccountControlPanel("customer");
       renderAccountControlPanel("dancer");
+      updateCurrentEmailDisplays();
     }
 
     function applyLiveAccountState(account) {
       const role = account?.role;
       const state = accountControlState[role];
       if (!state) return;
+      const email = normalizeAccountEmail(account.email) || sessionEmailForRole(role);
+      if (email) persistAccountEmail(role, email);
       state.disabled = account.accountState === "disabled";
       state.deleted = account.accountState === "deleted";
       if (authSession?.account && authSession.account.role === role) {
-        saveAuthSession({ ...authSession, account: { ...authSession.account, accountState: account.accountState } });
+        saveAuthSession({ ...authSession, account: { ...authSession.account, accountState: account.accountState, email: email || authSession.account.email || null } });
       }
       renderAccountControlPanel(role);
+      updateCurrentEmailDisplays();
     }
 
     async function loadLiveAccountState() {
@@ -25856,85 +25999,101 @@
       syncOverlayScrollLock();
     }
 
-    function setCustomerAccountCenterStatus(message, isError = false) {
-      const status = document.getElementById("customerAccountCenterStatus");
+    function setAccountCenterStatus(role, message, isError = false) {
+      const status = document.getElementById(`${role}AccountCenterStatus`);
       if (!status) return;
       status.textContent = message || "";
       status.classList.toggle("is-error", Boolean(isError));
     }
 
-    function clearCustomerAccountCenterFields(type) {
+    function setCustomerAccountCenterStatus(message, isError = false) {
+      setAccountCenterStatus("customer", message, isError);
+    }
+
+    function clearAccountCenterFields(role, type) {
       if (!type || type === "email") {
-        const emailInput = document.getElementById("customerAccountEmail");
+        const emailInput = document.getElementById(`${role}AccountEmail`);
         if (emailInput) emailInput.value = "";
       }
       if (!type || type === "password") {
-        const passwordInput = document.getElementById("customerAccountPassword");
-        const confirmInput = document.getElementById("customerAccountPasswordConfirm");
+        const passwordInput = document.getElementById(`${role}AccountPassword`);
+        const confirmInput = document.getElementById(`${role}AccountPasswordConfirm`);
         if (passwordInput) passwordInput.value = "";
         if (confirmInput) confirmInput.value = "";
       }
     }
 
-    async function updateCustomerAccountEmail(button) {
-      const emailInput = document.getElementById("customerAccountEmail");
+    function clearCustomerAccountCenterFields(type) {
+      clearAccountCenterFields("customer", type);
+    }
+
+    async function updateAccountEmail(role, button) {
+      const emailInput = document.getElementById(`${role}AccountEmail`);
       const email = emailInput?.value.trim().toLowerCase() || "";
       if (!authSession?.accessToken) {
-        setCustomerAccountCenterStatus("Sign in required.", true);
+        setAccountCenterStatus(role, "Sign in required.", true);
         return;
       }
       if (!email || !email.includes("@")) {
-        setCustomerAccountCenterStatus("Enter a valid email address.", true);
+        setAccountCenterStatus(role, "Enter a valid email address.", true);
         emailInput?.focus();
         return;
       }
       if (button) button.disabled = true;
-      setCustomerAccountCenterStatus("Sending confirmation...");
+      setAccountCenterStatus(role, "Sending confirmation...");
       try {
         const data = await patchAuthenticatedJson("/api/account", { email });
         if (data?.account) applyLiveAccountState(data.account);
-        clearCustomerAccountCenterFields("email");
-        setCustomerAccountCenterStatus(data?.message || "Check your new email address to confirm the change.");
+        clearAccountCenterFields(role, "email");
+        setAccountCenterStatus(role, data?.message || "Check your new email address to confirm the change.");
         showToast("Check your new email to confirm the change");
       } catch (error) {
-        setCustomerAccountCenterStatus(error.message || "Could not update email.", true);
+        setAccountCenterStatus(role, error.message || "Could not update email.", true);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function updateCustomerAccountEmail(button) {
+      updateAccountEmail("customer", button);
+    }
+
+    async function updateAccountPassword(role, button) {
+      const passwordInput = document.getElementById(`${role}AccountPassword`);
+      const confirmInput = document.getElementById(`${role}AccountPasswordConfirm`);
+      const password = passwordInput?.value || "";
+      const confirmPassword = confirmInput?.value || "";
+      if (!authSession?.accessToken) {
+        setAccountCenterStatus(role, "Sign in required.", true);
+        return;
+      }
+      if (password.length < 8) {
+        setAccountCenterStatus(role, "Password must be at least 8 characters.", true);
+        passwordInput?.focus();
+        return;
+      }
+      if (password !== confirmPassword) {
+        setAccountCenterStatus(role, "Passwords do not match.", true);
+        confirmInput?.focus();
+        return;
+      }
+      if (button) button.disabled = true;
+      setAccountCenterStatus(role, "Updating password...");
+      try {
+        const data = await patchAuthenticatedJson("/api/account", { password });
+        if (data?.account) applyLiveAccountState(data.account);
+        clearAccountCenterFields(role, "password");
+        setAccountCenterStatus(role, data?.message || "Password updated.");
+        showToast("Password updated");
+      } catch (error) {
+        setAccountCenterStatus(role, error.message || "Could not update password.", true);
       } finally {
         if (button) button.disabled = false;
       }
     }
 
     async function updateCustomerAccountPassword(button) {
-      const passwordInput = document.getElementById("customerAccountPassword");
-      const confirmInput = document.getElementById("customerAccountPasswordConfirm");
-      const password = passwordInput?.value || "";
-      const confirmPassword = confirmInput?.value || "";
-      if (!authSession?.accessToken) {
-        setCustomerAccountCenterStatus("Sign in required.", true);
-        return;
-      }
-      if (password.length < 8) {
-        setCustomerAccountCenterStatus("Password must be at least 8 characters.", true);
-        passwordInput?.focus();
-        return;
-      }
-      if (password !== confirmPassword) {
-        setCustomerAccountCenterStatus("Passwords do not match.", true);
-        confirmInput?.focus();
-        return;
-      }
-      if (button) button.disabled = true;
-      setCustomerAccountCenterStatus("Updating password...");
-      try {
-        const data = await patchAuthenticatedJson("/api/account", { password });
-        if (data?.account) applyLiveAccountState(data.account);
-        clearCustomerAccountCenterFields("password");
-        setCustomerAccountCenterStatus(data?.message || "Password updated.");
-        showToast("Password updated");
-      } catch (error) {
-        setCustomerAccountCenterStatus(error.message || "Could not update password.", true);
-      } finally {
-        if (button) button.disabled = false;
-      }
+      updateAccountPassword("customer", button);
     }
 
     function handleAccountControlClick(event) {
@@ -25950,14 +26109,12 @@
       const roleLabel = role === "dancer" ? "Dancer account" : "Customer account";
 
       if (action === "update-email") {
-        if (role !== "customer") return true;
-        updateCustomerAccountEmail(button);
+        updateAccountEmail(role, button);
         return true;
       }
 
       if (action === "update-password") {
-        if (role !== "customer") return true;
-        updateCustomerAccountPassword(button);
+        updateAccountPassword(role, button);
         return true;
       }
 
