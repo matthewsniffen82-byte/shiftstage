@@ -27778,7 +27778,7 @@
             <div class="deal-pass-frame">
               <img id="dealPassImage" alt="Club deal QR code" loading="lazy" decoding="async">
             </div>
-            <p class="deal-pass-how" id="dealPassHow">How it works: save this QR, show it at the venue, and the club scans it to redeem the deal. Dancer profile QR codes only count for commission after the club scans the code.</p>
+            <p class="deal-pass-how" id="dealPassHow">How it works: no account is required. Save this QR on your phone, show it at the venue, and the club scans it to redeem the deal.</p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save on this device</button>
               <button class="deal-pass-action" type="button" data-download-deal-pass>Download QR</button>
@@ -27833,10 +27833,7 @@
       document.getElementById("dealPassCopy").textContent = `${pass.venueName} · ${pass.details}`;
       document.getElementById("dealPassImage").src = pass.qrImageUrl;
       document.getElementById("dealPassImage").alt = `${pass.venueName} deal QR code`;
-      const attribution = pass.sourceType === "dancer_profile" && pass.dancerName
-        ? ` This QR came from ${pass.dancerName}'s profile, so commission is only eligible if the club scans this exact code.`
-        : " This official venue QR does not create dancer commission.";
-      document.getElementById("dealPassHow").textContent = `How it works: no account is required. Save this QR on your phone, show it at ${pass.venueName}, and the club scans it to redeem the deal.${attribution}`;
+      document.getElementById("dealPassHow").textContent = `How it works: no account is required. Save this QR on your phone, show it at ${pass.venueName}, and the club scans it to redeem the deal.`;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
