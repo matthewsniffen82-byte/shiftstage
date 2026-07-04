@@ -14,6 +14,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/mydancr-icon.svg">
+  <link rel="preload" as="image" href="./dancr-hero.png" fetchpriority="high">
   <meta property="og:title" content="mydancr">
   <meta property="og:site_name" content="mydancr">
   <meta property="og:description" content="Choose your city. See who's working now.">
@@ -23571,9 +23572,11 @@
     </header>
 
     <main class="stack">
-      <section class="hero">
-        <div class="eyebrow">Now in <span data-city-label>Las Vegas</span></div>
-        <h2>Verified nightlife schedules. No noise.</h2>
+      <section class="hero reference-hero uploaded-hero-ready">
+        <div class="hero-copy">
+          <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
+          <p>Choose your city. See who's working now.</p>
+        </div>
       </section>
 
       <section class="controls" aria-label="Discovery filters">
@@ -32022,17 +32025,8 @@
       }
 
       const hero = document.querySelector(".hero");
-      if (hero && !hero.classList.contains("reference-hero")) {
-        hero.classList.add("reference-hero");
-        hero.innerHTML = `
-          <div class="hero-copy">
-            <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
-            <p>Choose your city. See who's working now.</p>
-          </div>
-        `;
-        const uploadedHero = new Image();
-        uploadedHero.onload = () => hero.classList.add("uploaded-hero-ready");
-        uploadedHero.src = "./dancr-hero.png";
+      if (hero) {
+        hero.classList.add("reference-hero", "uploaded-hero-ready");
       }
 
       document.querySelectorAll("[data-jump-tonight]").forEach((button) => {
