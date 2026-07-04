@@ -25422,6 +25422,29 @@
       return `${window.location.origin}/auth/callback?dancr_confirm=1&resume=${encodeURIComponent(token)}&role=${encodeURIComponent(role)}&dancr_role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(destination)}`;
     }
 
+    function savePasswordResetResume(role, email, returnTo = "") {
+      const dashboardRole = role === "dancer" || role === "venue" ? role : "customer";
+      const token = authResumeToken();
+      const store = readAuthResumeStore();
+      const destination = returnTo || (dashboardRole === "dancer" ? "/dashboard/dancer" : dashboardRole === "venue" ? "/dashboard/venue" : "/dashboard/customer");
+      const state = {
+        role: dashboardRole,
+        email: normalizeAccountEmail(email),
+        city: citySelect.value,
+        activeTab,
+        selectedVenueName,
+        scrollY: window.scrollY || 0,
+        destination,
+        resumeTarget: "account_password",
+        authIntent: "password_reset",
+        createdAt: Date.now()
+      };
+      store[token] = state;
+      writeAuthResumeStore(store);
+      savePendingAuthConfirmation({ ...state, resumeToken: token });
+      return `${window.location.origin}/auth/callback?dancr_reset=1&resume=${encodeURIComponent(token)}&role=${encodeURIComponent(dashboardRole)}&dancr_role=${encodeURIComponent(dashboardRole)}&reset_target=account_password&return_to=${encodeURIComponent(destination)}`;
+    }
+
     function takeAuthResume(token) {
       const store = readAuthResumeStore();
       const state = store[token];
@@ -25454,8 +25477,28 @@
       target?.scrollIntoView({ block: "start", behavior: "smooth" });
     }
 
+    function scrollAccountPasswordIntoView(role) {
+      const accountRole = role === "dancer" ? "dancer" : "customer";
+      const passwordInput = document.getElementById(`${accountRole}AccountPassword`);
+      const confirmInput = document.getElementById(`${accountRole}AccountPasswordConfirm`);
+      const status = document.getElementById(`${accountRole}AccountCenterStatus`);
+      const target =
+        passwordInput?.closest(".account-center-panel") ||
+        passwordInput?.closest(".panel-card") ||
+        passwordInput?.closest("label") ||
+        passwordInput ||
+        confirmInput;
+      if (status) {
+        status.hidden = false;
+        status.textContent = "Enter a new password, confirm it, then tap Update password.";
+      }
+      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+      setTimeout(() => passwordInput?.focus({ preventScroll: true }), 260);
+    }
+
     function openConfirmedSessionDashboard(role, state = {}) {
       const dashboardRole = role === "dancer" || role === "venue" ? role : "customer";
+      const isPasswordReset = state.resumeTarget === "account_password" || state.authIntent === "password_reset";
       saveAuthSession({
         ...authSession,
         account: {
@@ -25482,6 +25525,13 @@
         updateAccountHeader();
         maybeShowAccountTooltip(dashboardRole);
         if (dashboardRole === "customer") {
+          if (isPasswordReset) {
+            closeAuthPage();
+            openDashboard();
+            showToast("Enter a new password to finish reset.");
+            setTimeout(() => scrollAccountPasswordIntoView("customer"), 220);
+            return;
+          }
           closeDashboard();
           closeAuthPage();
           showToast("Email confirmed. You're signed in.");
@@ -25489,12 +25539,28 @@
           return;
         }
         if (dashboardRole === "dancer") {
+          if (isPasswordReset) {
+            closeAuthPage();
+            closeDashboard();
+            closeVenueDashboard();
+            openDancerDashboard();
+            showToast("Enter a new password to finish reset.");
+            setTimeout(() => scrollAccountPasswordIntoView("dancer"), 220);
+            return;
+          }
           closeAuthPage();
           closeDashboard();
           closeVenueDashboard();
           showToast("Email confirmed. Complete your 4-step dancer verification.");
           openDancerDashboard();
           setTimeout(scrollDancerVerificationIntoView, 180);
+          return;
+        }
+        if (dashboardRole === "venue" && isPasswordReset) {
+          closeAuthPage();
+          closeDashboard();
+          openVenueDashboard();
+          showToast("You're signed in. Venue account settings are ready.");
           return;
         }
         showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 4-step dancer verification." : "Email confirmed. Welcome back to Mydancr.");
@@ -25504,12 +25570,21 @@
 
     function restoreAuthConfirmationResume() {
       const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
       const token = params.get("resume");
       const confirmedSession = readConfirmationSessionFromUrl();
       const pendingConfirmation = readPendingAuthConfirmation();
       const roleParam = params.get("role") || params.get("dancr_role") || "";
       const roleHint = roleParam || pendingConfirmation?.role || "";
+      const isPasswordReset = params.get("dancr_reset") === "1" || params.get("reset_target") === "account_password" || hashParams.get("type") === "recovery";
       if (!token && !confirmedSession?.accessToken) {
+        if (isPasswordReset) {
+          saveAuthSession(null);
+          window.history.replaceState({}, document.title, "/");
+          openAuthRole(roleHint === "dancer" || roleHint === "venue" ? roleHint : "customer");
+          showToast("Password reset link opened. Sign in, then update your password in Account Center.");
+          return true;
+        }
         if (params.get("dancr_confirm") === "1" && roleHint === "dancer") {
           saveAuthSession(null);
           window.history.replaceState({}, document.title, "/");
@@ -25521,9 +25596,18 @@
         return false;
       }
 
-      const state = (token ? takeAuthResume(token) : null) || pendingConfirmation;
+      const state = {
+        ...((token ? takeAuthResume(token) : null) || pendingConfirmation || {}),
+        ...(isPasswordReset
+          ? {
+              role: roleHint === "dancer" || roleHint === "venue" || roleHint === "customer" ? roleHint : ((token ? null : pendingConfirmation)?.role || "customer"),
+              resumeTarget: "account_password",
+              authIntent: "password_reset"
+            }
+          : {})
+      };
       window.history.replaceState({}, document.title, "/");
-      if (!state) {
+      if (!state.role && !state.resumeTarget) {
         if (confirmedSession?.accessToken) {
           const hintedRole = roleHint === "dancer" || roleHint === "venue" || roleHint === "customer" ? roleHint : "";
           const sessionRole =
@@ -25532,7 +25616,14 @@
               : "";
           const confirmedRole = hintedRole || sessionRole || "customer";
           const fallbackState =
-            confirmedRole === "dancer"
+            isPasswordReset
+              ? {
+                  role: confirmedRole,
+                  email: confirmedSession.account?.email || "",
+                  resumeTarget: "account_password",
+                  authIntent: "password_reset"
+                }
+              : confirmedRole === "dancer"
               ? {
                   role: "dancer",
                   email: confirmedSession.account?.email || "",
@@ -25558,8 +25649,10 @@
       render();
 
       if (state.role === "dancer") {
-        document.getElementById("dancerEmail").value = state.email || "";
-        document.getElementById("dancerCity").value = state.dancerCity || state.city || "Las Vegas";
+        const dancerEmailField = document.getElementById("dancerEmail");
+        const dancerCityField = document.getElementById("dancerCity");
+        if (dancerEmailField) dancerEmailField.value = state.email || "";
+        if (dancerCityField) dancerCityField.value = state.dancerCity || state.city || "Las Vegas";
         if (confirmedSession?.accessToken) {
           saveAuthSession(confirmedSession);
           clearPendingAuthConfirmation();
@@ -25646,7 +25739,7 @@
           mode: "reset_password",
           role,
           email,
-          emailRedirectTo: `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`
+          emailRedirectTo: savePasswordResetResume(role, email, returnTo)
         });
         const message = "Password reset email sent. Open the newest Mydancr email to continue.";
         if (status) {
