@@ -2198,6 +2198,18 @@
       cursor: wait;
     }
 
+    .auth-help-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .auth-help-row .forgot-password-link {
+      justify-self: auto;
+    }
+
     .dashboard-stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -23944,7 +23956,10 @@
                 </button>
               </div>
             </div>
-            <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button">Forgot password?</button>
+            <div class="auth-help-row">
+              <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button">Forgot password?</button>
+              <button class="forgot-password-link" id="customerForgotLoginBtn" type="button">Forgot email/login?</button>
+            </div>
             <div class="field" id="customerConfirmPasswordField" hidden>
               <label for="customerConfirmPassword">Confirm password</label>
               <div class="password-wrap">
@@ -23969,9 +23984,17 @@
             </div>
             <div class="field">
               <label for="dancerLoginPassword">Password</label>
-              <input id="dancerLoginPassword" type="password" value="">
+              <div class="password-wrap">
+                <input id="dancerLoginPassword" type="password" value="">
+                <button class="password-toggle" type="button" data-password-toggle="dancerLoginPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
             </div>
-            <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button">Forgot password?</button>
+            <div class="auth-help-row">
+              <button class="forgot-password-link" id="dancerForgotPasswordBtn" type="button">Forgot password?</button>
+              <button class="forgot-password-link" id="dancerForgotLoginBtn" type="button">Forgot email/login?</button>
+            </div>
             <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
             <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
           </form>
@@ -23990,7 +24013,12 @@
             </div>
             <div class="field">
               <label for="venueLoginPassword">Password</label>
-              <input id="venueLoginPassword" type="password" value="dancr">
+              <div class="password-wrap">
+                <input id="venueLoginPassword" type="password" value="dancr">
+                <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
             </div>
             <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button">Forgot password?</button>
             <button class="action-btn" id="venueLoginSubmit" type="submit">Venue login</button>
@@ -24027,7 +24055,12 @@
             </div>
             <div class="field">
               <label for="dancerPassword">Password</label>
-              <input id="dancerPassword" type="password" value="" required>
+              <div class="password-wrap">
+                <input id="dancerPassword" type="password" value="" required>
+                <button class="password-toggle" type="button" data-password-toggle="dancerPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
             </div>
             <div class="rule-note">Dancer accounts are free while launch access is open. Public profile access still waits for verification and approval.</div>
             <button class="action-btn" type="submit">Create dancer account</button>
@@ -24515,7 +24548,12 @@
           </div>
           <div class="field">
             <label for="adminPassword">Password</label>
-            <input id="adminPassword" type="password" autocomplete="current-password">
+            <div class="password-wrap">
+              <input id="adminPassword" type="password" autocomplete="current-password">
+              <button class="password-toggle" type="button" data-password-toggle="adminPassword" aria-label="Show password" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
           </div>
           <button class="forgot-password-link" id="adminForgotPasswordBtn" type="button">Forgot password?</button>
           <button class="admin-login" id="adminLoginBtn" type="submit">Admin login</button>
@@ -24682,9 +24720,19 @@
               </div>
               <div class="account-center-section">
                 <label for="customerAccountPassword">New password</label>
-                <input id="customerAccountPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                <div class="password-wrap">
+                  <input id="customerAccountPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                  <button class="password-toggle" type="button" data-password-toggle="customerAccountPassword" aria-label="Show password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
                 <label for="customerAccountPasswordConfirm">Confirm password</label>
-                <input id="customerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                <div class="password-wrap">
+                  <input id="customerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                  <button class="password-toggle" type="button" data-password-toggle="customerAccountPasswordConfirm" aria-label="Show confirm password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
                 <button class="action-btn secondary" type="button" data-account-action="update-password" data-account-role="customer">Update password</button>
               </div>
             </div>
@@ -25474,6 +25522,66 @@
         showToast(message);
       } catch (error) {
         const message = friendlyAuthErrorMessage(error.message, "Unable to send reset email.");
+        if (status) {
+          status.textContent = message;
+          status.hidden = false;
+        }
+        showToast(message);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = previousText;
+        }
+      }
+    }
+
+    function openLoginRecoveryEmail(role) {
+      const roleLabel = role === "dancer" ? "dancer" : "customer";
+      const subject = encodeURIComponent(`Mydancr ${roleLabel} login help`);
+      const body = encodeURIComponent(
+        `Hi Mydancr support,\n\nI need help finding the email/login for my ${roleLabel} account.\n\nAccount details I remember:\n- Name or stage name:\n- City:\n- Phone, if attached:\n\n`
+      );
+      window.location.href = `mailto:support@mydancr.com?subject=${subject}&body=${body}`;
+    }
+
+    async function sendLoginRecoveryHelp({ role, emailInputId, buttonId, statusId = "" }) {
+      const email = document.getElementById(emailInputId)?.value?.trim() || "";
+      const button = document.getElementById(buttonId);
+      const status = statusId ? document.getElementById(statusId) : null;
+      const previousText = button?.textContent || "Forgot email/login?";
+
+      if (!email) {
+        const message = "If you do not remember the email, contact Mydancr support with your account details.";
+        if (status) {
+          status.textContent = message;
+          status.hidden = false;
+        }
+        showToast("Opening Mydancr support to help find your login.");
+        openLoginRecoveryEmail(role);
+        return;
+      }
+
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Sending login help...";
+      }
+
+      try {
+        const returnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
+        await requestAuth({
+          mode: "reset_password",
+          role,
+          email,
+          emailRedirectTo: `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`
+        });
+        const message = "If that email has a Mydancr account, we sent login help.";
+        if (status) {
+          status.textContent = message;
+          status.hidden = false;
+        }
+        showToast(message);
+      } catch (error) {
+        const message = friendlyAuthErrorMessage(error.message, "Unable to send login help.");
         if (status) {
           status.textContent = message;
           status.hidden = false;
@@ -29265,6 +29373,8 @@
       if (joinButton) joinButton.hidden = isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
+      const forgotLoginButton = document.getElementById("customerForgotLoginBtn");
+      if (forgotLoginButton) forgotLoginButton.hidden = mode !== "login";
       setCustomerAuthStatus("");
       document.querySelectorAll(".auth-tab").forEach((item) => item.classList.toggle("active", item.dataset.authMode === mode));
     }
@@ -31419,11 +31529,28 @@
       });
     });
 
+    document.getElementById("customerForgotLoginBtn").addEventListener("click", () => {
+      sendLoginRecoveryHelp({
+        role: "customer",
+        emailInputId: "customerEmail",
+        buttonId: "customerForgotLoginBtn",
+        statusId: "customerAuthStatus"
+      });
+    });
+
     document.getElementById("dancerForgotPasswordBtn").addEventListener("click", () => {
       sendPasswordReset({
         role: "dancer",
         emailInputId: "dancerLoginEmail",
         buttonId: "dancerForgotPasswordBtn"
+      });
+    });
+
+    document.getElementById("dancerForgotLoginBtn").addEventListener("click", () => {
+      sendLoginRecoveryHelp({
+        role: "dancer",
+        emailInputId: "dancerLoginEmail",
+        buttonId: "dancerForgotLoginBtn"
       });
     });
 

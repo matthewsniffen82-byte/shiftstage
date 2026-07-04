@@ -33,6 +33,7 @@ export default function AccountClient() {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isSendingLoginHelp, setIsSendingLoginHelp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const customerBenefitsRef = useRef<HTMLElement | null>(null);
@@ -184,6 +185,51 @@ export default function AccountClient() {
     }
   }
 
+  function openLoginRecoveryEmail() {
+    const roleLabel = role === "dancer" ? "dancer" : "customer";
+    const subject = encodeURIComponent(`Mydancr ${roleLabel} login help`);
+    const body = encodeURIComponent(
+      `Hi Mydancr support,\n\nI need help finding the email/login for my ${roleLabel} account.\n\nAccount details I remember:\n- Name or stage name:\n- City:\n- Phone, if attached:\n\n`,
+    );
+    window.location.href = `mailto:support@mydancr.com?subject=${subject}&body=${body}`;
+  }
+
+  async function sendLoginRecoveryHelp() {
+    setStatus("");
+
+    if (!email.trim()) {
+      setStatus("If you do not remember the email, contact Mydancr support with your account details.");
+      openLoginRecoveryEmail();
+      return;
+    }
+
+    setIsSendingLoginHelp(true);
+
+    try {
+      const resetReturnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          mode: "reset_password",
+          role,
+          email,
+          emailRedirectTo:
+            typeof window === "undefined"
+              ? undefined
+              : `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(resetReturnTo)}`,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send login help.");
+      setStatus("If that email has a Mydancr account, we sent login help.");
+    } catch (error) {
+      setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to send login help."));
+    } finally {
+      setIsSendingLoginHelp(false);
+    }
+  }
+
   return (
     <main className="account-shell">
       <AccountStyles />
@@ -325,9 +371,14 @@ export default function AccountClient() {
             </label>
           ) : null}
           {mode === "login" ? (
-            <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
-              {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
-            </button>
+            <div className="auth-help-row">
+              <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
+                {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
+              </button>
+              <button className="forgot-password" type="button" onClick={sendLoginRecoveryHelp} disabled={isSendingLoginHelp}>
+                {isSendingLoginHelp ? "Sending login help..." : "Forgot email/login?"}
+              </button>
+            </div>
           ) : null}
           {mode === "signup" && role === "customer" ? (
             <label>
@@ -389,6 +440,7 @@ function AccountStyles() {
       .account-panel-customer .continue-signup { border: 1px solid rgba(53,216,255,.62); background: linear-gradient(135deg, #061b31 0%, #0a4f88 52%, #1ecfff 100%); color: #fff; box-shadow: 0 12px 28px rgba(14,109,185,.24), 0 0 22px rgba(53,216,255,.2); }
       .account-panel-dancer .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
       .account-panel-customer .continue-signup span { color: #8ff2ff; }
+      .auth-help-row { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; }
       .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .forgot-password:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
