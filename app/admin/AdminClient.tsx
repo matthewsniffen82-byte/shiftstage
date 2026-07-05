@@ -620,8 +620,9 @@ function ApprovalQueue({
 }) {
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [statusById, setStatusById] = useState<Record<string, string>>({});
+  const [openById, setOpenById] = useState<Record<string, boolean>>({});
 
-  if (!items.length) return <p className="empty">No approval queue.</p>;
+  if (!items.length) return <p className="empty">No real pending dancer applications.</p>;
 
   async function reviewProfile(dancerId: string, status: "approved" | "rejected") {
     const token = readToken();
@@ -649,17 +650,33 @@ function ApprovalQueue({
     <div className="approval-list">
       {items.slice(0, 6).map((item) => {
         const dancerId = String(item.id || "");
+        const stageName = asText(item.stageName || item.stage_name);
+        const city = asText(item.city);
+        const status = asText(item.status);
+        const isOpen = Boolean(openById[dancerId]);
         return (
           <div className="approval-row" key={dancerId}>
-            <strong>{String(item.stageName || item.stage_name || "Dancer")}</strong>
-            <span>{String(item.city || "City pending")}</span>
+            <div className="approval-summary">
+              <span>
+                <strong>{stageName || "Stage name not submitted"}</strong>
+                <small>{[city || "City not submitted", status || "pending"].join(" - ")}</small>
+              </span>
+              <button
+                className="secondary-action"
+                type="button"
+                onClick={() => setOpenById((current) => ({ ...current, [dancerId]: !isOpen }))}
+              >
+                {isOpen ? "Hide submission" : "View submission"}
+              </button>
+            </div>
+            {isOpen ? <SubmissionDetails item={item} /> : null}
             <textarea
               placeholder="Review notes"
               rows={2}
               value={notesById[dancerId] || ""}
               onChange={(event) => setNotesById((current) => ({ ...current, [dancerId]: event.target.value }))}
             />
-            <div>
+            <div className="approval-actions">
               <button type="button" onClick={() => reviewProfile(dancerId, "approved")}>
                 Approve
               </button>
@@ -673,6 +690,139 @@ function ApprovalQueue({
       })}
     </div>
   );
+}
+
+function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
+  const photos = asRecordArray(item.photos);
+  const socials = asRecordArray(item.socialLinks || item.social_links);
+  const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
+  const reviews = asRecordArray(item.reviews);
+
+  return (
+    <div className="submission-detail">
+      <section className="submission-section">
+        <h3>Profile information</h3>
+        <div className="submission-grid">
+          <SubmissionValue label="Legal name" value={item.realName || item.real_name} />
+          <SubmissionValue label="Stage name" value={item.stageName || item.stage_name} />
+          <SubmissionValue label="City" value={item.city} />
+          <SubmissionValue label="Slug" value={item.slug} />
+          <SubmissionValue label="Profile status" value={item.status} />
+          <SubmissionValue label="Identity review" value={item.verificationStatus || item.verification_status} />
+          <SubmissionValue label="Photo review" value={item.photoReviewStatus || item.photo_review_status} />
+          <SubmissionValue label="Submitted" value={formatDate(item.createdAt || item.created_at)} />
+        </div>
+        <SubmissionValue label="Bio" value={item.bio} wide />
+      </section>
+
+      <section className="submission-section">
+        <h3>Photos submitted</h3>
+        {photos.length ? (
+          <div className="submission-media-grid">
+            {photos.map((photo, index) => {
+              const imageUrl = asText(photo.imageUrl || photo.image_url);
+              return (
+                <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer" key={asText(photo.id) || index}>
+                  {imageUrl ? <img src={imageUrl} alt={`Submitted dancer photo ${index + 1}`} /> : <span>No image URL</span>}
+                  <small>{asText(photo.reviewStatus || photo.review_status) || "pending"}</small>
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="submission-empty">No photos submitted.</p>
+        )}
+      </section>
+
+      <section className="submission-section">
+        <h3>Proof / verification uploads</h3>
+        {documents.length ? (
+          <div className="submission-files">
+            {documents.map((document, index) => {
+              const fileUrl = asText(document.fileUrl || document.file_url);
+              return (
+                <a className="submission-link" href={fileUrl || "#"} target="_blank" rel="noreferrer" key={asText(document.storagePath || document.storage_path) || index}>
+                  <strong>{asText(document.name) || "Verification file"}</strong>
+                  <small>{asText(document.status) || "pending review"}</small>
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="submission-empty">No verification files submitted.</p>
+        )}
+      </section>
+
+      <section className="submission-section">
+        <h3>Social links</h3>
+        {socials.length ? (
+          <div className="submission-files">
+            {socials.map((social, index) => (
+              <a className="submission-link" href={asText(social.url) || "#"} target="_blank" rel="noreferrer" key={asText(social.id) || index}>
+                <strong>{asText(social.platform) || "Social"}</strong>
+                <small>{asText(social.handle) || asText(social.url) || "No handle submitted"}</small>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <p className="submission-empty">No social links submitted.</p>
+        )}
+      </section>
+
+      <section className="submission-section">
+        <h3>Review history</h3>
+        {reviews.length ? (
+          <div className="submission-files">
+            {reviews.map((review, index) => (
+              <div className="submission-link" key={asText(review.id) || index}>
+                <strong>{asText(review.reviewType || review.review_type) || "Review"}</strong>
+                <small>
+                  {asText(review.status) || "pending"}
+                  {asText(review.notes) ? ` - ${asText(review.notes)}` : ""}
+                </small>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="submission-empty">No prior review notes.</p>
+        )}
+      </section>
+
+      <details className="submission-json">
+        <summary>Full submitted record</summary>
+        <pre>{JSON.stringify(item, null, 2)}</pre>
+      </details>
+    </div>
+  );
+}
+
+function SubmissionValue({ label, value, wide = false }: { label: string; value: unknown; wide?: boolean }) {
+  const text = asText(value);
+  return (
+    <div className={wide ? "submission-value wide" : "submission-value"}>
+      <span>{label}</span>
+      <strong>{text || "Not submitted"}</strong>
+    </div>
+  );
+}
+
+function asText(value: unknown) {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return "";
+}
+
+function asRecordArray(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object" && !Array.isArray(item));
+}
+
+function formatDate(value: unknown) {
+  const text = asText(value);
+  if (!text) return "";
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text;
+  return date.toLocaleString();
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -798,11 +948,35 @@ function AdminStyles() {
       li { color: #d8cfeb; overflow-wrap: anywhere; }
       .approval-list { display: grid; gap: 12px; }
       .approval-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .approval-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .approval-summary span { display: grid; gap: 2px; min-width: 0; }
+      .approval-summary small { color: #b9accd; font-size: 12px; font-weight: 850; overflow-wrap: anywhere; }
       .approval-row span { color: #b9accd; }
       .approval-row textarea { min-height: 72px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .approval-row div { display: flex; gap: 8px; flex-wrap: wrap; }
+      .approval-actions { display: flex; gap: 8px; flex-wrap: wrap; }
       .approval-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .approval-row .secondary-action { color: #f7f2ff; background: rgba(139,92,246,.16); border: 1px solid rgba(139,92,246,.34); }
       .approval-row p { color: #94e5ff; font-size: 14px; }
+      .submission-detail { display: grid; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(139,92,246,.24); background: rgba(5,5,8,.72); }
+      .submission-section { display: grid; gap: 8px; }
+      .submission-section h3 { margin: 0; color: #fff; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
+      .submission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .submission-value { display: grid; gap: 3px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06); }
+      .submission-value.wide { grid-column: 1 / -1; }
+      .submission-value span { color: #9c90b3; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+      .submission-value strong { color: #f7f2ff; font-size: 13px; overflow-wrap: anywhere; white-space: pre-wrap; }
+      .submission-media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .submission-thumb, .submission-link { color: #f7f2ff; text-decoration: none; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.045); overflow: hidden; }
+      .submission-thumb { display: grid; gap: 6px; padding: 6px; }
+      .submission-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #050507; }
+      .submission-thumb small, .submission-link small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .submission-files { display: grid; gap: 8px; }
+      .submission-link { display: grid; gap: 3px; padding: 10px; }
+      .submission-link strong { overflow-wrap: anywhere; }
+      .submission-empty { color: #9c90b3; font-size: 13px; }
+      .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
+      .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }
+      .submission-json pre { max-height: 260px; overflow: auto; color: #d8cfeb; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
       .venue-manager { display: grid; gap: 12px; }
       .venue-manager form { display: grid; gap: 10px; }
       .venue-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }

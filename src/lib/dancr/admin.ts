@@ -76,6 +76,7 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
         verification_status,
         photo_review_status,
         created_at,
+        social_links(id, platform, handle, url, is_active),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, created_at),
         approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
       `,
@@ -85,37 +86,48 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
 
   if (error) throw error;
 
-  return (data || []).map((row: any) => ({
-    id: row.id,
-    userId: row.user_id,
-    realName: row.real_name,
-    stageName: row.stage_name,
-    slug: row.slug,
-    city: row.city,
-    bio: row.bio,
-    status: row.status,
-    verificationStatus: row.verification_status,
-    photoReviewStatus: row.photo_review_status,
-    createdAt: row.created_at,
-    photos: (row.dancer_photos || [])
-      .map((photo: any) => ({
-        id: photo.id,
-        imageUrl: toDancerPhotoUrl(client, photo.storage_path),
-        isPrimary: photo.is_primary,
-        reviewStatus: photo.review_status,
-        sortOrder: photo.sort_order,
-        createdAt: photo.created_at,
-      }))
-      .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-    reviews: (row.approval_reviews || []).map((review: any) => ({
-      id: review.id,
-      reviewType: review.review_type,
-      status: review.status,
-      notes: review.notes,
-      createdAt: review.created_at,
-      reviewedAt: review.reviewed_at,
+  return Promise.all(
+    (data || []).map(async (row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      realName: row.real_name,
+      stageName: row.stage_name,
+      slug: row.slug,
+      city: row.city,
+      bio: row.bio,
+      status: row.status,
+      verificationStatus: row.verification_status,
+      photoReviewStatus: row.photo_review_status,
+      createdAt: row.created_at,
+      socialLinks: (row.social_links || [])
+        .filter((social: any) => social.is_active !== false)
+        .map((social: any) => ({
+          id: social.id,
+          platform: social.platform,
+          handle: social.handle,
+          url: social.url,
+        })),
+      photos: (row.dancer_photos || [])
+        .map((photo: any) => ({
+          id: photo.id,
+          imageUrl: toDancerPhotoUrl(client, photo.storage_path),
+          isPrimary: photo.is_primary,
+          reviewStatus: photo.review_status,
+          sortOrder: photo.sort_order,
+          createdAt: photo.created_at,
+        }))
+        .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
+      verificationDocuments: await listVerificationDocumentsForUser(client, row.user_id),
+      reviews: (row.approval_reviews || []).map((review: any) => ({
+        id: review.id,
+        reviewType: review.review_type,
+        status: review.status,
+        notes: review.notes,
+        createdAt: review.created_at,
+        reviewedAt: review.reviewed_at,
+      })),
     })),
-  }));
+  );
 }
 
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
@@ -792,4 +804,37 @@ function slugify(value: string) {
 function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
   if (/^https?:\/\//i.test(storagePath)) return storagePath;
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
+}
+
+async function listVerificationDocumentsForUser(client: DancrClient, userId: string) {
+  if (!userId) return [];
+
+  const prefix = `${userId}/verification`;
+  const bucket = client.storage.from("verification-documents");
+  const { data, error } = await bucket.list(prefix, {
+    limit: 50,
+    offset: 0,
+    sortBy: { column: "created_at", order: "desc" },
+  });
+
+  if (error) return [];
+
+  return Promise.all(
+    (data || [])
+      .filter((document: any) => Boolean(document.name))
+      .map(async (document: any) => {
+        const storagePath = `${prefix}/${document.name}`;
+        const { data: signedData } = await bucket.createSignedUrl(storagePath, 60 * 60);
+        const publicUrl = bucket.getPublicUrl(storagePath).data.publicUrl;
+
+        return {
+          name: document.name,
+          storagePath,
+          fileUrl: signedData?.signedUrl || publicUrl,
+          status: "pending_review" as const,
+          createdAt: document.created_at || document.updated_at || null,
+          updatedAt: document.updated_at || null,
+        };
+      }),
+  );
 }

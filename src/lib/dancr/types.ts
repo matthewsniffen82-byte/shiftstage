@@ -129,6 +129,15 @@ export type ApprovalReview = {
   reviewedAt: string | null;
 };
 
+export type VerificationDocument = {
+  name: string;
+  storagePath: string;
+  fileUrl: string;
+  status: "pending_review";
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 export type AdminApprovalDancer = {
   id: string;
   userId: string;
@@ -141,7 +150,9 @@ export type AdminApprovalDancer = {
   verificationStatus: ReviewStatus;
   photoReviewStatus: ReviewStatus;
   createdAt: string;
+  socialLinks: SocialLink[];
   photos: DancerPhoto[];
+  verificationDocuments: VerificationDocument[];
   reviews: ApprovalReview[];
 };
 
