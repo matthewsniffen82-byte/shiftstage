@@ -24143,7 +24143,7 @@
         <div class="page-head">
           <div>
             <span class="eyebrow">Dancer dashboard</span>
-            <h2 id="dancerDashName">Mira Nova</h2>
+            <h2 id="dancerDashName">Dancer dashboard</h2>
           </div>
           <button class="close-btn" id="dancerDashboardClose" aria-label="Close dancer dashboard">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -28898,7 +28898,7 @@
       });
       Object.assign(dancerSignupSocials, normalizedSocials);
       document.getElementById("dancerStageName").value = stageName;
-      document.getElementById("dancerDashName").textContent = stageName;
+      updateDancerDashboardName(stageName);
       if (lastPostedShift?.name === oldName) {
         lastPostedShift.name = stageName;
         lastPostedShift.city = newCity;
@@ -29784,7 +29784,7 @@
         openDancerSignupPage();
         return;
       }
-      document.getElementById("dancerDashName").textContent = document.getElementById("dancerStageName").value || "Dancer dashboard";
+      updateDancerDashboardName();
       if (!dancerSetup.approval) {
         setupChecklistExpanded = true;
         activeSetupStep = nextIncompleteStep() || "profile";
@@ -30204,7 +30204,7 @@
       setDancerSetupField("dancerLegalName", legalName);
       setDancerSetupField("dancerStageName", stageName);
       setDancerSetupField("dancerCity", city);
-      setDancerSetupField("dancerDashName", stageName || "Dancer dashboard", "textContent");
+      updateDancerDashboardName(stageName);
 
       Object.assign(dancerSignupSocials, dancerSocialMapFromProfile(profile));
       Object.assign(dancerSetup, {
@@ -30238,6 +30238,16 @@
       const element = document.getElementById(id);
       if (!element || value === undefined || value === null) return;
       element[property] = value;
+    }
+
+    function getDancerDashboardStageName(stageName = "") {
+      return cleanDisplayValue(stageName || document.getElementById("dancerStageName")?.value || "");
+    }
+
+    function updateDancerDashboardName(stageName = "") {
+      const dashName = document.getElementById("dancerDashName");
+      if (!dashName) return;
+      dashName.textContent = getDancerDashboardStageName(stageName) || "Dancer dashboard";
     }
 
     function dancerSocialMapFromProfile(profile) {
@@ -32284,8 +32294,7 @@
         const cityValue = document.getElementById("approvedControlCity")?.value.trim();
         if (stageName) {
           document.getElementById("dancerStageName").value = stageName;
-          const dashName = document.getElementById("dancerDashName");
-          if (dashName) dashName.textContent = stageName;
+          updateDancerDashboardName(stageName);
         }
         if (cityValue && markets[cityValue]) document.getElementById("dancerCity").value = cityValue;
         setResult("Profile changes saved in this demo.");
@@ -32459,7 +32468,7 @@
       document.getElementById("dancerLegalName").value = legalName;
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
-      document.getElementById("dancerDashName").textContent = stageName;
+      updateDancerDashboardName(stageName);
       Object.assign(dancerSignupSocials, normalizedSocials);
       const submit = form.querySelector('button[type="submit"]');
       if (submit) submit.disabled = true;
