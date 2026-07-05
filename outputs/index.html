@@ -29244,9 +29244,12 @@
       `;
     }
 
-    function findProfile(name) {
-      const profile = markets[citySelect.value].dancers.find((item) => item.name === name && isApprovedPublicProfile(item));
-      return profile ? withTrendingRank(profile, citySelect.value) : null;
+    function findProfile(name, options = {}) {
+      const includePending = Boolean(options.includePending);
+      const profile = markets[citySelect.value].dancers.find((item) => (
+        item.name === name && (includePending || isApprovedPublicProfile(item))
+      ));
+      return profile ? (profile.status === "Pending" ? profile : withTrendingRank(profile, citySelect.value)) : null;
     }
 
     function setModalPhoto(photoClass, photoUrl = "") {
@@ -29353,18 +29356,21 @@
       `;
     }
 
-    function openProfileModal(profileName) {
+    function openProfileModal(profileName, options = {}) {
       const city = citySelect.value;
+      const isPrivatePreview = Boolean(options.preview);
       const baseProfile = markets[city].dancers.find((item) => item.name === profileName && !item.hidden);
       if (baseProfile?.status === "Verified") {
         recordUniqueTrendEvent("profileViews", city, profileName);
         if (baseProfile.scheduled) recordUniqueTrendEvent("scheduleViews", city, profileName);
       }
-      recordLiveEvent("profile_view", { dancerName: profileName, source: "profile_modal" });
-      if (baseProfile?.scheduled) {
-        recordLiveEvent("schedule_view", { dancerName: profileName, source: "profile_modal" });
+      if (!isPrivatePreview) {
+        recordLiveEvent("profile_view", { dancerName: profileName, source: "profile_modal" });
+        if (baseProfile?.scheduled) {
+          recordLiveEvent("schedule_view", { dancerName: profileName, source: "profile_modal" });
+        }
       }
-      const profile = findProfile(profileName);
+      const profile = findProfile(profileName, { includePending: isPrivatePreview });
       if (!profile) return;
 
       const profileIndex = markets[city].dancers.findIndex((item) => item.name === profile.name);
@@ -29394,7 +29400,7 @@
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
       setModalPhoto(basePhoto, basePhotoUrl);
 
-      if (isPending) {
+      if (isPending && !isPrivatePreview) {
         modalBody.innerHTML = `
           <div class="lock-list">
             <div class="lock-row"><strong>Pending.</strong> Profile under review.</div>
@@ -31767,8 +31773,19 @@
       handleVenueAdminTool(toolButton.dataset.venueTool);
     });
     document.getElementById("previewPublicProfile").addEventListener("click", () => {
+      const setupStageName = document.getElementById("setupStageName")?.value || "";
+      const stageName = getDancerDashboardStageName(setupStageName);
+      if (!stageName) {
+        showToast("Add a stage name first");
+        return;
+      }
+      document.getElementById("dancerStageName").value = stageName;
+      const setupCity = document.getElementById("setupCity")?.value?.trim();
+      if (setupCity && markets[setupCity]) {
+        document.getElementById("dancerCity").value = setupCity;
+      }
       const city = activeDancerCity();
-      const profile = activeDancerProfile(city);
+      const profile = ensureActiveDancerProfile(dancerSetup.approval ? "Verified" : "Pending");
       if (!profile) {
         showToast("Create a profile first");
         return;
@@ -31779,7 +31796,7 @@
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
       render();
-      openProfileModal(profile.name);
+      openProfileModal(profile.name, { preview: true });
     });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
     document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
