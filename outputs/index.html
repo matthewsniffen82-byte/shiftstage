@@ -17940,6 +17940,13 @@
       color: #ffd37a;
     }
 
+    .account-control-card.is-pending .account-control-status {
+      border-color: rgba(255, 194, 71, 0.42);
+      background: rgba(255, 194, 71, 0.1);
+      box-shadow: 0 0 16px rgba(255, 194, 71, 0.14);
+      color: #ffd37a;
+    }
+
     .account-control-card.is-deleted .account-control-status {
       border-color: rgba(255, 104, 124, 0.42);
       background: rgba(255, 104, 124, 0.1);
@@ -26034,13 +26041,17 @@
       const note = panel.querySelector("[data-account-note]");
       const disableButton = panel.querySelector('[data-account-action="disable"]');
       const deleteButton = panel.querySelector('[data-account-action="delete"]');
-      const mode = state.deleted ? "deleted" : state.disabled ? "disabled" : "active";
+      const dancerPending = role === "dancer" && !(dancerSetup.approval || activeDancerProfile()?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved");
+      const mode = state.deleted ? "deleted" : state.disabled ? "disabled" : dancerPending ? "pending" : "active";
       panel.classList.toggle("is-disabled", state.disabled && !state.deleted);
       panel.classList.toggle("is-deleted", state.deleted);
+      panel.classList.toggle("is-pending", dancerPending && !state.disabled && !state.deleted);
       if (status) {
-        status.textContent = mode === "deleted" ? "Deleted" : mode === "disabled" ? "Paused" : "Active";
+        status.textContent = mode === "deleted" ? "Deleted" : mode === "disabled" ? "Paused" : mode === "pending" ? "Pending" : "Active";
       }
-      if (note) note.textContent = accountControlCopy[role][mode];
+      if (note) note.textContent = mode === "pending"
+        ? "Your dancer account is pending review. Public profile tools activate after approval."
+        : accountControlCopy[role][mode];
       if (disableButton) {
         disableButton.textContent = state.disabled ? "Reactivate account" : "Disable temporarily";
         disableButton.disabled = state.deleted;
