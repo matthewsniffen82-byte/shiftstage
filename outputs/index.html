@@ -26613,6 +26613,7 @@
           detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
         }));
       }
+      if (isDancerSession()) return [];
 
       const city = selectedCity();
       const followed = followedProfiles(city);
@@ -26644,7 +26645,7 @@
               <span>${displayText(item.detail)}</span>
             </button>
           `).join("")
-        : `<div class="customer-quick-empty">No new alerts yet. Recent dancer, venue, and deal notifications will appear here.</div>`;
+        : `<div class="customer-quick-empty">${isDancerSession() ? "No new alerts yet. Dancer account updates will appear here." : "No new alerts yet. Recent dancer, venue, and deal notifications will appear here."}</div>`;
     }
 
     function renderCustomerQuickDeals() {
@@ -26664,17 +26665,33 @@
 
     function renderCustomerQuickActions() {
       if (!customerQuickActions) return;
-      const show = isCustomerSession();
+      const showNotifications = isCustomerSession() || isDancerSession();
+      const showDeals = isCustomerSession();
+      const show = showNotifications || showDeals;
       customerQuickActions.hidden = !show;
+      customerNotificationQuickBtn.hidden = !showNotifications;
+      customerDealQuickBtn.hidden = !showDeals;
+      if (!showNotifications) {
+        customerNotificationsQuickPanel.hidden = true;
+        customerNotificationQuickBtn.classList.remove("active");
+        customerNotificationQuickBtn.setAttribute("aria-expanded", "false");
+      }
+      if (!showDeals) {
+        customerDealsQuickPanel.hidden = true;
+        customerDealQuickBtn.classList.remove("active");
+        customerDealQuickBtn.setAttribute("aria-expanded", "false");
+      }
       if (!show) {
         closeCustomerQuickPanels();
         return;
       }
-      renderCustomerQuickNotifications();
-      renderCustomerQuickDeals();
+      if (showNotifications) renderCustomerQuickNotifications();
+      if (showDeals) renderCustomerQuickDeals();
     }
 
     function toggleCustomerQuickPanel(panelName) {
+      if (panelName === "notifications" && !(isCustomerSession() || isDancerSession())) return;
+      if (panelName === "deals" && !isCustomerSession()) return;
       const openNotifications = panelName === "notifications" && customerNotificationsQuickPanel.hidden;
       const openDeals = panelName === "deals" && customerDealsQuickPanel.hidden;
       closeCustomerQuickPanels();
@@ -32644,6 +32661,7 @@
     render();
     loadLiveDiscovery(citySelect.value);
     if (isCustomerSession()) loadLiveCustomerDashboardData();
+    if (authSession?.accessToken) loadLiveNotifications();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume) openSharedProfileFromUrl();
   </script>
