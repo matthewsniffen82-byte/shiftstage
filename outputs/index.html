@@ -24994,6 +24994,7 @@
       shift: false
     };
     let liveVerificationDocuments = [];
+    let freshDancerVerificationLockedToProfile = false;
     const verificationDocumentLabels = [
       { documentType: "government_id", displayName: "Government ID" },
       { documentType: "selfie", displayName: "Selfie verification" },
@@ -25472,6 +25473,7 @@
     }
 
     function resetFreshDancerVerificationDraft() {
+      freshDancerVerificationLockedToProfile = true;
       Object.assign(dancerSetup, {
         profile: false,
         photos: false,
@@ -25479,7 +25481,8 @@
         approval: false,
         shift: false
       });
-      ["dancerLegalName", "dancerStageName", "dancerCity"].forEach((id) => {
+      liveVerificationDocuments = [];
+      ["dancerLegalName", "dancerStageName", "dancerCity", "setupLegalName", "setupStageName", "setupCity"].forEach((id) => {
         const field = document.getElementById(id);
         if (field) field.value = "";
       });
@@ -25509,6 +25512,9 @@
         dancerCity.value = "";
       } else if (dancerCity && !dancerCity.value.trim()) {
         dancerCity.value = state.dancerCity || state.city || citySelect.value || "Las Vegas";
+      }
+      if (freshVerification) {
+        activeSetupStep = "profile";
       }
     }
 
@@ -30066,6 +30072,7 @@
       }
       setupChecklistExpanded = true;
       dancerSetup[step] = true;
+      if (step === "profile") freshDancerVerificationLockedToProfile = false;
       if (step === "profile") ensureActiveDancerProfile("Pending");
       if (step === "approval") ensureActiveDancerProfile("Verified");
       activeSetupStep = nextIncompleteStep() || step;
@@ -30199,6 +30206,18 @@
 
     async function hydrateDancerVerificationProgress() {
       if (!isDancerSession()) return null;
+      if (freshDancerVerificationLockedToProfile) {
+        Object.assign(dancerSetup, {
+          profile: false,
+          photos: false,
+          verification: false,
+          approval: false,
+          shift: dancerSetup.shift
+        });
+        activeSetupStep = "profile";
+        renderDancerSetup();
+        return null;
+      }
       try {
         const data = await getAuthenticatedJson("/api/dancer/profile");
         if (!data?.profile) return null;
