@@ -455,7 +455,9 @@ function DancerPanel({
           <DancerDealPanel deals={deals} />
           <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
         </>
-      ) : null}
+      ) : (
+        <DancerLockedAnalyticsPanel />
+      )}
       <DancerSetupPanel profile={profile} />
       <DancerSocialPanel profile={profile} />
       <DancerSharePanel profile={profile} />
@@ -464,6 +466,24 @@ function DancerPanel({
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       <DancerBillingPanel />
     </>
+  );
+}
+
+function DancerLockedAnalyticsPanel() {
+  return (
+    <article className="info-panel locked-analytics-panel">
+      <div className="locked-analytics-head">
+        <h2>Analytics</h2>
+        <span>Locked</span>
+      </div>
+      <p>Locked until profile approval.</p>
+      <small>Once your profile is approved, you&apos;ll see profile views, QR scans, followers, and shift activity here.</small>
+      <div className="locked-preview-list" aria-label="Analytics preview">
+        <span>Profile views</span>
+        <span>QR scans</span>
+        <span>Followers</span>
+      </div>
+    </article>
   );
 }
 
@@ -1315,6 +1335,13 @@ function DashboardStyles() {
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .event-row span { color: #b9accd; font-size: 13px; }
       .impact-panel p { color: #94e5ff; font-size: 14px; }
+      .locked-analytics-panel { grid-column: span 2; align-content: start; }
+      .locked-analytics-head { display: flex !important; align-items: center; justify-content: space-between; gap: 12px; }
+      .locked-analytics-head span { width: fit-content; padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(148,229,255,.2); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-weight: 950; letter-spacing: .12em; text-transform: uppercase; }
+      .locked-analytics-panel p { color: #fff; font-size: 18px; font-weight: 900; }
+      .locked-analytics-panel small { color: #b9accd; font-size: 14px; line-height: 1.55; }
+      .locked-preview-list { display: grid; gap: 8px; margin-top: 2px; }
+      .locked-preview-list span { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); color: rgba(247,242,255,.72); font-size: 13px; font-weight: 850; }
       .share-grid { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; align-items: center; }
       .share-grid img, .qr-placeholder { width: 180px; height: 180px; border-radius: 8px; background: #f7f2ff; }
       .qr-placeholder { display: grid; place-items: center; color: #050507; font-weight: 950; }
@@ -1361,7 +1388,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .deal-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .deal-panel, .locked-analytics-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
