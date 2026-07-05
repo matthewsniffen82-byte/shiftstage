@@ -24087,7 +24087,7 @@
             </div>
             <input id="dancerStageName" type="hidden" value="">
             <input id="dancerLegalName" type="hidden" value="">
-            <input id="dancerCity" type="hidden" value="Las Vegas">
+            <input id="dancerCity" type="hidden" value="">
             <div class="field">
               <label for="dancerEmail">Email</label>
               <input id="dancerEmail" type="email" value="" required>
@@ -25403,10 +25403,13 @@
       }
 
       if (role === "dancer") {
+        const dancerCityValue = document.getElementById("dancerCity")?.value?.trim() || "";
         state.email = document.getElementById("dancerEmail")?.value || "";
-        state.dancerCity = document.getElementById("dancerCity")?.value || citySelect.value;
+        state.dancerCity = dancerCityValue;
         state.resumeTarget = "dancer_verification";
         state.setupStep = "profile";
+        state.authIntent = "signup";
+        state.freshDancerVerification = true;
       }
 
       if (role === "venue") {
@@ -25455,7 +25458,36 @@
       return state || null;
     }
 
+    function isFreshDancerVerificationState(state = {}) {
+      return state.role === "dancer"
+        && state.resumeTarget === "dancer_verification"
+        && (state.authIntent === "signup" || state.freshDancerVerification);
+    }
+
+    function resetFreshDancerVerificationDraft() {
+      Object.assign(dancerSetup, {
+        profile: false,
+        photos: false,
+        verification: false,
+        approval: false,
+        shift: false
+      });
+      ["dancerLegalName", "dancerStageName", "dancerCity"].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) field.value = "";
+      });
+      if (typeof dancerSignupSocials === "object" && dancerSignupSocials) {
+        Object.keys(dancerSignupSocials).forEach((key) => {
+          dancerSignupSocials[key] = "";
+        });
+      }
+    }
+
     function prepareConfirmedDancerVerification(state = {}) {
+      const freshVerification = isFreshDancerVerificationState(state);
+      if (freshVerification) {
+        resetFreshDancerVerificationDraft();
+      }
       dancerSignupStarted = true;
       stripeConfirmed = true;
       setupChecklistExpanded = true;
@@ -25466,15 +25498,21 @@
       const dancerCity = document.getElementById("dancerCity");
       if (dancerEmail && state.email) dancerEmail.value = state.email;
       if (dancerLoginEmail && state.email) dancerLoginEmail.value = state.email;
-      if (dancerCity && !dancerCity.value.trim()) {
+      if (dancerCity && freshVerification) {
+        dancerCity.value = "";
+      } else if (dancerCity && !dancerCity.value.trim()) {
         dancerCity.value = state.dancerCity || state.city || citySelect.value || "Las Vegas";
       }
     }
 
     function scrollDancerVerificationIntoView() {
+      const profileForm = document.querySelector('[data-setup-form="profile"]');
       const profileStep = document.querySelector('#setupChecklist [data-step="profile"]');
-      const target = profileStep || document.getElementById("setupChecklistWrap") || document.getElementById("dancerApprovalCommand");
+      const target = profileForm || profileStep || document.getElementById("setupChecklistWrap") || document.getElementById("dancerApprovalCommand");
       target?.scrollIntoView({ block: "start", behavior: "smooth" });
+      setTimeout(() => {
+        document.getElementById("setupLegalName")?.focus({ preventScroll: true });
+      }, 260);
     }
 
     function scrollAccountPasswordIntoView(role) {
@@ -25627,9 +25665,11 @@
               ? {
                   role: "dancer",
                   email: confirmedSession.account?.email || "",
-                  dancerCity: citySelect.value || "Las Vegas",
+                  dancerCity: "",
                   resumeTarget: "dancer_verification",
-                  setupStep: "profile"
+                  setupStep: "profile",
+                  authIntent: "signup",
+                  freshDancerVerification: true
                 }
               : {};
           saveAuthSession(confirmedSession);
@@ -25649,10 +25689,11 @@
       render();
 
       if (state.role === "dancer") {
+        const freshVerification = isFreshDancerVerificationState(state);
         const dancerEmailField = document.getElementById("dancerEmail");
         const dancerCityField = document.getElementById("dancerCity");
         if (dancerEmailField) dancerEmailField.value = state.email || "";
-        if (dancerCityField) dancerCityField.value = state.dancerCity || state.city || "Las Vegas";
+        if (dancerCityField) dancerCityField.value = freshVerification ? "" : (state.dancerCity || state.city || "Las Vegas");
         if (confirmedSession?.accessToken) {
           saveAuthSession(confirmedSession);
           clearPendingAuthConfirmation();
@@ -29444,7 +29485,7 @@
         if (input) input.value = "";
       });
       const dancerCity = document.getElementById("dancerCity");
-      if (dancerCity) dancerCity.value = citySelect.value || "Las Vegas";
+      if (dancerCity) dancerCity.value = "";
       setDancerSignupStatus("");
     }
 
@@ -30139,7 +30180,7 @@
     function applyDancerVerificationProfile(profile) {
       const legalName = profile.real_name || profile.realName || "";
       const stageName = profile.stage_name || profile.stageName || "";
-      const city = profile.city || citySelect.value || "Las Vegas";
+      const city = profile.city || profile.cityName || "";
       const approved = profile.status === "approved";
       const photos = dancerProfilePhotoUrls(profile);
 
@@ -30164,7 +30205,7 @@
       if (localProfile) {
         Object.assign(localProfile, {
           name: stageName || localProfile.name,
-          city,
+          city: city || localProfile.city || citySelect.value || "Las Vegas",
           mainPhotoUrl: photos[0] || localProfile.mainPhotoUrl,
           galleryPhotoUrls: photos.length ? photos : (localProfile.galleryPhotoUrls || []),
           photoStatus: dancerSetup.photos ? "Pending" : localProfile.photoStatus,
@@ -30588,7 +30629,7 @@
             <input id="setupStageName" type="text" value="${document.getElementById("dancerStageName").value || ""}">
             <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
           </div>
-          <div class="field"><label for="setupCity">City</label><input id="setupCity" type="text" value="${document.getElementById("dancerCity").value || citySelect.value}"></div>
+          <div class="field"><label for="setupCity">City</label><input id="setupCity" type="text" value="${document.getElementById("dancerCity")?.value || ""}"></div>
           <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
           <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
           <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="username or snapchat.com/add/username"></div>
@@ -31927,7 +31968,6 @@
       stripeConfirmed = true;
       const loginEmail = document.getElementById("dancerLoginEmail").value.trim();
       if (loginEmail) document.getElementById("dancerEmail").value = loginEmail;
-      if (!document.getElementById("dancerCity").value.trim()) document.getElementById("dancerCity").value = citySelect.value || "Las Vegas";
       setupChecklistExpanded = true;
       activeSetupStep = "profile";
       isCustomerLoggedIn = false;
@@ -32046,7 +32086,7 @@
           role: "dancer",
           email,
           password: document.getElementById("dancerPassword").value,
-          city: document.getElementById("dancerCity").value || citySelect.value || "Las Vegas",
+          city: document.getElementById("dancerCity").value.trim(),
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
