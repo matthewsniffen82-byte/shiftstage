@@ -24170,8 +24170,8 @@
         <div class="approval-command" id="dancerApprovalCommand" role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
           <div>
             <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
-            <h3 id="dancerApprovalTitle">Finish approval to go live</h3>
-            <p id="dancerApprovalCopy">Complete each step in order. Your public profile and paid subscription activate only after approval.</p>
+            <h3 id="dancerApprovalTitle">Finish verification to go live</h3>
+            <p id="dancerApprovalCopy">Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.</p>
           </div>
           <div class="approval-progress">
             <strong id="dancerApprovalProgress">0/4</strong>
@@ -24181,7 +24181,7 @@
         </div>
         <div id="setupChecklistWrap" class="auth-card setup-panel setup-panel-inline" hidden>
           <div class="setup-list" id="setupChecklist" hidden></div>
-          <div class="lock-row" id="setupChecklistLock" hidden>Post shift locked until profile approval.</div>
+          <div class="lock-row" id="setupChecklistLock" hidden>Complete the four-step verification so Dancr can review your profile and unlock shift posting.</div>
         </div>
         <div class="dashboard-status-row">
           <details class="status-chip">
@@ -24194,9 +24194,9 @@
           <details class="status-chip">
             <summary>
               <span>Public profile</span>
-              <strong id="dancerPublicStatus">Pending review</strong>
+              <strong id="dancerPublicStatus">Verification required</strong>
             </summary>
-            <p id="dancerPublicDetail">Profile, gallery, schedule posting, and public discovery stay locked until photos and verification are approved.</p>
+            <p id="dancerPublicDetail">Your dancer account is free. Complete profile setup, photos, and verification so Dancr can review your profile and unlock public discovery.</p>
           </details>
           <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
         </div>
@@ -24471,9 +24471,9 @@
           <button class="action-btn secondary" id="billingPortalBtn">Manage subscription</button>
         </div>
         <div class="auth-card">
-          <h3>Approval gate</h3>
-          <div class="lock-row">Do not fully activate paid profile until approved.</div>
-          <div class="lock-row">Rejected profiles stay private and are not charged/captured.</div>
+          <h3>Approval status</h3>
+          <div class="lock-row">Dancr reviews profile details, photos, ID/selfie, and proof that you dance before the public profile goes live.</div>
+          <div class="lock-row">Rejected profiles stay private. Dancer accounts are free while launch access is open.</div>
         </div>
         <div class="auth-card account-control-card" data-account-panel="dancer">
           <div class="account-control-head">
@@ -30436,10 +30436,10 @@
         approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       }
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
-      document.getElementById("dancerApprovalTitle").textContent = approved ? "Approved. Start posting shifts." : "Finish approval to go live";
+      document.getElementById("dancerApprovalTitle").textContent = approved ? "Approved. Start posting shifts." : "Finish verification to go live";
       document.getElementById("dancerApprovalCopy").textContent = approved
         ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
-        : "Complete each step in order. Your public profile and paid subscription activate only after approval.";
+        : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = approved ? "Ready to post shifts" : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
@@ -30447,13 +30447,13 @@
         approvalExpand.textContent = approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
       }
       document.getElementById("dancerSubscriptionStatus").textContent = billingSummary.label;
-      document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Pending review";
+      document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Verification required";
       document.getElementById("dancerSubscriptionDetail").textContent = billingSummary.detail;
       const billingButton = document.getElementById("billingPortalBtn");
       if (billingButton) billingButton.textContent = billingSummary.action;
       document.getElementById("dancerPublicDetail").textContent = approved
         ? "Customers can discover this profile, follow it, view schedules, and request venue directions."
-        : "Profile, gallery, schedule posting, and public discovery stay locked until photos and verification are approved.";
+        : "Your dancer account is free. Public discovery, gallery, and shift posting unlock after Dancr approves your verification.";
       document.getElementById("dancerFollowerStat").textContent = activeProfile
         ? followerNumber(activeProfile, city).toLocaleString()
         : "0";
