@@ -27432,7 +27432,7 @@
         scheduled: profile?.scheduled || false,
         trend: profile?.trend || 10,
         distance: profile?.distance || "0.0 mi",
-        photoStatus: dancerSetup.photos || status === "Verified" ? "Approved" : "Pending",
+        photoStatus: status === "Verified" ? "Approved" : "Pending",
         idStatus: dancerSetup.verification || status === "Verified" ? "Passed" : "Needs review",
         selfieStatus: dancerSetup.verification || status === "Verified" ? "Matched" : "Needs review",
         socials: { ...(profile?.socials || {}), ...socials }
@@ -29374,16 +29374,27 @@
       });
     }
 
-    function galleryMarkup(profile, baseIndex) {
-      if (profile.status === "Pending") {
+    function uploadedProfilePhotoUrls(profile) {
+      const submittedUrls = (profile?.submittedPhotos || [])
+        .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
+        .filter(Boolean);
+      const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
+      const mainUrl = profile?.mainPhotoUrl ? [profile.mainPhotoUrl] : [];
+      return [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].filter(Boolean);
+    }
+
+    function galleryMarkup(profile, baseIndex, options = {}) {
+      const isPrivatePreview = Boolean(options.preview);
+      if (profile.status === "Pending" && !isPrivatePreview) {
         return '<div class="lock-row" style="grid-column:1/-1">Gallery locked.</div>';
       }
-      if (profile.photoStatus !== "Approved") {
+      if (profile.photoStatus !== "Approved" && !isPrivatePreview) {
         return '<div class="lock-row" style="grid-column:1/-1">Photos pending admin approval.</div>';
       }
-      return [0, 1, 2, 3].map((offset) => {
+      const uploadedUrls = uploadedProfilePhotoUrls(profile);
+      const galleryOffsets = uploadedUrls.length ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl })) : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
+      return galleryOffsets.map(({ offset, photoUrl }) => {
         const photoClass = portraitClass(baseIndex + offset);
-        const photoUrl = customPhotoUrl(profile, offset);
         const photoAttrs = customPhotoAttrs(photoUrl);
         return `
           <button class="thumb ${offset === 0 ? "active" : ""}" data-photo="${photoClass}" data-photo-url="${displayText(photoUrl)}" aria-label="Show gallery photo ${offset + 1}">
@@ -29506,7 +29517,7 @@
         modalRank.removeAttribute("aria-hidden");
         modalRank.setAttribute("aria-label", `Trending rank ${modalTrendRank}`);
       }
-      modalGallery.innerHTML = galleryMarkup(profile, profileIndex);
+      modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
       setModalPhoto(basePhoto, basePhotoUrl);
 
       if (isPending && !isPrivatePreview) {
