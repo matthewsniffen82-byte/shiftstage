@@ -27071,10 +27071,13 @@
       return response.json();
     }
 
-    async function loadLiveDiscovery(city = selectedCity()) {
-      if (!markets[city] || liveMarketState[city] === "loading" || liveMarketState[city] === "ready") return;
+    async function loadLiveDiscovery(city = selectedCity(), options = {}) {
+      const force = Boolean(options.force);
+      if (!markets[city] || liveMarketState[city] === "loading" || (!force && liveMarketState[city] === "ready")) return;
       liveMarketState[city] = "loading";
-      const query = new URLSearchParams({ city }).toString();
+      const params = new URLSearchParams({ city });
+      if (force) params.set("refresh", String(Date.now()));
+      const query = params.toString();
       try {
         const [allDancers, tonightDancers, venueList] = await Promise.all([
           fetchJson(`/api/public/dancers?${query}`),
@@ -27091,6 +27094,17 @@
       } catch (error) {
         liveMarketState[city] = "fallback";
         console.warn("Live discovery fallback", error);
+      }
+    }
+
+    async function refreshPublicDiscoveryAfterAdminReview(profile, status) {
+      if (status !== "approved") return;
+      const city = profile?.city && markets[profile.city] ? profile.city : selectedCity();
+      liveMarketState[city] = null;
+      await loadLiveDiscovery(city, { force: true });
+      if (citySelect.value === city) {
+        render();
+        if (customerDashboard.classList.contains("show")) renderDashboard();
       }
     }
 
@@ -31345,6 +31359,7 @@
       }).then(() => {
         showToast(status === "approved" ? "Live approval saved" : "Live rejection saved");
         loadLiveAdminApprovals();
+        refreshPublicDiscoveryAfterAdminReview(profile, status);
       }).catch((error) => showToast(error.message || "Could not save live review"));
     }
 
