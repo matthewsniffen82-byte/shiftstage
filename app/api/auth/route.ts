@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const mode = readMode(body.mode);
     const role = readRole(body.role);
-    const email = readRequired(body.email, "Email is required.").toLowerCase();
+    const credential = readAuthCredential(body, role);
+    const email = credential.email;
     const client = createServerSupabaseClient();
 
     if (mode === "reset_password") {
@@ -42,7 +43,30 @@ export async function POST(request: Request) {
     }
 
     if (role === "admin") {
-      throw new Error("Admin signup is not available.");
+      validateAdminSignupCode(body.adminCode);
+
+      const admin = createAdminSupabaseClient();
+      const displayName = credential.username || "Admin";
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role,
+          display_name: displayName,
+          admin_username: credential.username,
+        },
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error("Unable to create admin account.");
+
+      await upsertAccount(role, data.user.id, email, displayName, "Las Vegas", body);
+
+      const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });
+      if (sessionError) throw sessionError;
+
+      return NextResponse.json(await authResponse(data.user.id, role, sessionData.session, false));
     }
 
     const city = readOptional(body.city) || "Las Vegas";
@@ -150,6 +174,10 @@ async function upsertAccount(
     return;
   }
 
+  if (role === "admin") {
+    return;
+  }
+
   const stageName = readOptional(body.stageName) || displayName;
   const realName = readOptional(body.realName) || "Verification pending";
   const { data: existingProfile, error: existingProfileError } = await admin
@@ -217,6 +245,28 @@ function readRole(value: unknown): AuthRole {
   throw new Error("Role must be customer, dancer, venue, or admin.");
 }
 
+function readAuthCredential(body: Record<string, unknown>, role: AuthRole) {
+  if (role !== "admin") {
+    return { email: readRequired(body.email, "Email is required.").toLowerCase(), username: "" };
+  }
+
+  const username = readOptional(body.username) || readOptional(body.email);
+  if (!username) throw new Error("Admin username is required.");
+
+  return {
+    email: adminAuthEmail(username),
+    username: username.includes("@") ? username.split("@")[0] || "admin" : username,
+  };
+}
+
+function validateAdminSignupCode(value: unknown) {
+  const expected = process.env.DANCR_ADMIN_SIGNUP_CODE || process.env.DANCR_ADMIN_SEED_KEY;
+  if (!expected) throw new Error("Admin signup code is not configured.");
+  if (readRequired(value, "Admin code is required.") !== expected) {
+    throw new Error("Admin code is invalid.");
+  }
+}
+
 function readRequired(value: unknown, message: string) {
   const text = readOptional(value);
   if (!text) throw new Error(message);
@@ -225,6 +275,18 @@ function readRequired(value: unknown, message: string) {
 
 function readOptional(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function adminAuthEmail(username: string) {
+  const normalized = username.trim().toLowerCase();
+  if (normalized.includes("@")) return normalized;
+
+  const slug = normalized
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!slug) throw new Error("Admin username is required.");
+
+  return `${slug}@admin.mydancr.local`;
 }
 
 function customerDisplayName(email: string) {

@@ -16,8 +16,10 @@ type AdminState = {
 const SESSION_KEY = "dancrAuthSessionV1";
 
 export default function AdminClient() {
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [state, setState] = useState<AdminState>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -37,7 +39,7 @@ export default function AdminClient() {
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode: "login", role: "admin", email, password }),
+        body: JSON.stringify({ mode, role: "admin", username, password, adminCode }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
@@ -61,8 +63,8 @@ export default function AdminClient() {
   }
 
   async function sendPasswordReset() {
-    if (!email.trim()) {
-      setState({ error: "Enter your admin email first, then tap Forgot password." });
+    if (!username.trim()) {
+      setState({ error: "Enter your admin username first, then tap Forgot password." });
       return;
     }
 
@@ -76,7 +78,7 @@ export default function AdminClient() {
         body: JSON.stringify({
           mode: "reset_password",
           role: "admin",
-          email,
+          username,
           emailRedirectTo:
             typeof window === "undefined"
               ? undefined
@@ -152,9 +154,17 @@ export default function AdminClient() {
 
       {needsSignIn ? (
         <form className="admin-panel sign-in" onSubmit={signIn}>
+          <div className="segmented" aria-label="Admin auth mode">
+            <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
+              Sign in
+            </button>
+            <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => setMode("signup")}>
+              Create
+            </button>
+          </div>
           <label>
-            Admin email
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            Admin username
+            <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
           </label>
           <label>
             Password
@@ -163,6 +173,7 @@ export default function AdminClient() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 minLength={6}
                 required
               />
@@ -179,11 +190,25 @@ export default function AdminClient() {
               </button>
             </span>
           </label>
-          <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
-            {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
-          </button>
+          {mode === "signup" ? (
+            <label>
+              Admin code
+              <input
+                type="password"
+                value={adminCode}
+                onChange={(event) => setAdminCode(event.target.value)}
+                autoComplete="one-time-code"
+                required
+              />
+            </label>
+          ) : null}
+          {mode === "login" ? (
+            <button className="forgot-password" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
+              {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
+            </button>
+          ) : null}
           <button type="submit" disabled={isSigningIn}>
-            {isSigningIn ? "Working..." : "Sign in"}
+            {isSigningIn ? "Working..." : mode === "signup" ? "Create admin" : "Sign in"}
           </button>
         </form>
       ) : (
@@ -930,6 +955,9 @@ function AdminStyles() {
       .admin-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
       .admin-panel > div { display: grid; gap: 10px; }
       .sign-in { max-width: 430px; }
+      .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
+      .segmented button { min-height: 42px; border: 0; border-radius: 8px; color: #fff; background: transparent; font-weight: 900; cursor: pointer; }
+      .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
       .sign-in label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       input, select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 0 12px; font: inherit; }
       .password-control { position: relative; display: flex; align-items: center; }
