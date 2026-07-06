@@ -723,7 +723,7 @@ function ApprovalQueue({
 
 function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
   const photos = asRecordArray(item.photos);
-  const socials = asRecordArray(item.socialLinks || item.social_links);
+  const socials = normalizeSubmissionSocials(item);
   const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
   const reviews = asRecordArray(item.reviews);
 
@@ -787,9 +787,10 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
         {socials.length ? (
           <div className="submission-files">
             {socials.map((social, index) => (
-              <a className="submission-link" href={asText(social.url) || "#"} target="_blank" rel="noreferrer" key={asText(social.id) || index}>
-                <strong>{asText(social.platform) || "Social"}</strong>
-                <small>{asText(social.handle) || asText(social.url) || "No handle submitted"}</small>
+              <a className="submission-link" href={social.url || "#"} target="_blank" rel="noreferrer" key={social.id || `${social.platform}-${index}`}>
+                <strong>{social.label}</strong>
+                <small>{social.handle ? `@${social.handle.replace(/^@/, "")}` : "No handle submitted"}</small>
+                {social.url ? <small>{social.url}</small> : null}
               </a>
             ))}
           </div>
@@ -823,6 +824,50 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
       </details>
     </div>
   );
+}
+
+function normalizeSubmissionSocials(item: Record<string, unknown>) {
+  const rawLinks = asRecordArray(item.socialLinks || item.social_links);
+  const mappedLinks: Array<Record<string, unknown>> = rawLinks.length
+    ? rawLinks
+    : Object.entries((item.socials || {}) as Record<string, unknown>).map(([platform, value]) => ({ platform, url: value, handle: value }));
+
+  return mappedLinks
+    .filter((social) => social.isActive !== false && social.is_active !== false)
+    .map((social) => {
+      const platform = asText(social.platform || social.type).toLowerCase();
+      const url = asText(social.url || social.href);
+      const handle = asText(social.handle || social.username || social.value) || socialHandleFromUrl(url);
+      return {
+        id: asText(social.id),
+        platform,
+        label: socialPlatformLabel(platform),
+        handle,
+        url,
+      };
+    })
+    .filter((social) => social.platform && (social.handle || social.url));
+}
+
+function socialPlatformLabel(platform: string) {
+  const labels: Record<string, string> = {
+    instagram: "Instagram",
+    tiktok: "TikTok",
+    snapchat: "Snapchat",
+    onlyfans: "OnlyFans",
+    x: "X",
+  };
+  return labels[platform] || labelize(platform || "Social");
+}
+
+function socialHandleFromUrl(url: string) {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.split("/").filter(Boolean).pop()?.replace(/^@/, "") || parsed.hostname;
+  } catch {
+    return url.replace(/^@/, "");
+  }
 }
 
 function SubmissionValue({ label, value, wide = false }: { label: string; value: unknown; wide?: boolean }) {

@@ -26219,6 +26219,38 @@
       }
     }
 
+    function socialPlatformLabel(platform) {
+      return socialPlatforms.find((item) => item.key === platform)?.label || String(platform || "Social").replaceAll("_", " ");
+    }
+
+    function normalizeSubmittedSocials(profile) {
+      const rawSocialLinks = Array.isArray(profile?.socialLinks)
+        ? profile.socialLinks
+        : Array.isArray(profile?.social_links)
+          ? profile.social_links
+          : [];
+      const mappedSocials = rawSocialLinks.length
+        ? rawSocialLinks
+        : Object.entries(profile?.socials || {}).map(([platform, value]) => ({ platform, url: value, handle: value }));
+
+      return mappedSocials
+        .filter((social) => social && social.isActive !== false && social.is_active !== false)
+        .map((social) => {
+          const platform = String(social.platform || social.type || "").toLowerCase();
+          const rawUrl = String(social.url || social.href || "").trim();
+          const rawHandle = String(social.handle || social.username || social.value || "").trim();
+          const normalizedUrl = rawUrl || normalizeSocialInput(platform, rawHandle);
+          const handle = rawHandle || socialHandleFromUrl(normalizedUrl);
+          return {
+            platform,
+            label: socialPlatformLabel(platform),
+            url: normalizedUrl,
+            handle
+          };
+        })
+        .filter((social) => social.platform && (social.url || social.handle));
+    }
+
     function shiftIsoRange(dateValue, startValue, endValue) {
       const start = new Date(`${dateValue}T${startValue || "00:00"}:00`);
       const end = new Date(`${dateValue}T${endValue || "00:00"}:00`);
@@ -26579,7 +26611,7 @@
         const market = markets[city];
         if (!market) return;
         const photos = Array.isArray(item.photos) ? item.photos : [];
-        const socialLinks = Array.isArray(item.socialLinks) ? item.socialLinks : [];
+        const socialLinks = normalizeSubmittedSocials(item);
         const verificationDocuments = Array.isArray(item.verificationDocuments) ? item.verificationDocuments : [];
         const reviews = Array.isArray(item.reviews) ? item.reviews : [];
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
@@ -31265,7 +31297,7 @@
     function adminProfileRow(city, profile) {
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : "No active shift";
-      const socialCount = profile.socialLinks?.length || Object.values(profile.socials || {}).filter(Boolean).length;
+      const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
       const documentCount = profile.verificationDocuments?.length || 0;
       return `
@@ -31285,14 +31317,13 @@
     }
 
     function adminSubmittedSocialsMarkup(profile) {
-      const socials = profile.socialLinks?.length
-        ? profile.socialLinks
-        : Object.entries(profile.socials || {}).map(([platform, url]) => ({ platform, url, handle: url }));
+      const socials = normalizeSubmittedSocials(profile);
       if (!socials.length) return '<div class="locked">No social links submitted.</div>';
       return socials.map((social) => {
-        const url = social.url || "";
-        const label = social.handle || url || "Submitted social";
-        return `<a class="lock-row" href="${displayText(url || "#")}" target="_blank" rel="noreferrer"><strong>${displayText(social.platform || "Social")}</strong><span>${displayText(label)}</span></a>`;
+        const url = social.url || "#";
+        const handle = social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url;
+        const hrefAttr = social.url ? ` href="${displayText(url)}" target="_blank" rel="noreferrer"` : "";
+        return `<a class="lock-row"${hrefAttr}><strong>${displayText(social.label)}</strong><span>${displayText(handle || "Submitted social")}</span>${social.url ? `<span>${displayText(social.url)}</span>` : ""}</a>`;
       }).join("");
     }
 
@@ -31330,7 +31361,7 @@
 
     function adminDancerApprovalCard(city, profile, index) {
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
-      const socialCount = profile.socialLinks?.length || Object.values(profile.socials || {}).filter(Boolean).length;
+      const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
       const documentCount = profile.verificationDocuments?.length || 0;
       return `
