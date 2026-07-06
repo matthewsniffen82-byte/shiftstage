@@ -25506,6 +25506,7 @@
 
     function resetFreshDancerVerificationDraft() {
       freshDancerVerificationLockedToProfile = true;
+      markDancerProfileSetupSaved(false);
       Object.assign(dancerSetup, {
         profile: false,
         photos: false,
@@ -30120,6 +30121,32 @@
       return `mydancr:verification-documents:${userKey}`;
     }
 
+    function dancerProfileSetupStorageKey() {
+      const userKey =
+        authSession?.user?.id ||
+        normalizeAccountEmail(authSession?.account?.email) ||
+        normalizeAccountEmail(authSession?.email) ||
+        normalizeAccountEmail(authSession?.user?.email) ||
+        normalizeAccountEmail(document.getElementById("dancerEmail")?.value) ||
+        "dancer";
+      return `mydancr:dancer-profile-setup-saved:${userKey}`;
+    }
+
+    function hasSavedDancerProfileSetup() {
+      try {
+        return localStorage.getItem(dancerProfileSetupStorageKey()) === "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function markDancerProfileSetupSaved(saved = true) {
+      try {
+        if (saved) localStorage.setItem(dancerProfileSetupStorageKey(), "true");
+        else localStorage.removeItem(dancerProfileSetupStorageKey());
+      } catch (error) {}
+    }
+
     function escapeHtml(value) {
       return String(value || "")
         .replace(/&/g, "&amp;")
@@ -30280,7 +30307,7 @@
 
       Object.assign(dancerSignupSocials, dancerSocialMapFromProfile(profile));
       Object.assign(dancerSetup, {
-        profile: Boolean(legalName && stageName && city),
+        profile: approved || hasSavedDancerProfileSetup(),
         photos: photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
         verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved" || hasSubmittedVerificationDocuments(),
         approval: approved,
@@ -30720,20 +30747,20 @@
         <form class="auth-form" data-setup-form="profile">
           <div class="field">
             <label for="setupLegalName">Real legal name</label>
-            <input id="setupLegalName" type="text" value="${document.getElementById("dancerLegalName")?.value || ""}">
+            <input id="setupLegalName" data-setup-profile-field="legalName" type="text" value="${escapeHtml(document.getElementById("dancerLegalName")?.value || "")}">
             <div class="field-note"><strong>Private verification only.</strong> Dancr uses this for ID/selfie review and billing records. Customers never see it.</div>
           </div>
           <div class="field">
             <label for="setupStageName">Stage name</label>
-            <input id="setupStageName" type="text" value="${document.getElementById("dancerStageName").value || ""}">
+            <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}">
             <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
           </div>
-          <div class="field"><label for="setupCity">City</label><input id="setupCity" type="text" value="${document.getElementById("dancerCity")?.value || ""}"></div>
-          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" type="text" value="${dancerSignupSocials.instagram}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
-          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" type="text" value="${dancerSignupSocials.tiktok}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
-          <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" type="text" value="${dancerSignupSocials.snapchat}" placeholder="username or snapchat.com/add/username"></div>
-          <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" type="text" value="${dancerSignupSocials.onlyfans}" placeholder="@stagehandle or onlyfans.com/stagehandle"></div>
-          <div class="field"><label for="setupX">Optional X</label><input id="setupX" type="text" value="${dancerSignupSocials.x}" placeholder="@stagehandle or x.com/stagehandle"></div>
+          <div class="field"><label for="setupCity">City</label><input id="setupCity" data-setup-profile-field="city" type="text" value="${escapeHtml(document.getElementById("dancerCity")?.value || "")}"></div>
+          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
+          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
+          <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" data-setup-social="snapchat" type="text" value="${escapeHtml(dancerSignupSocials.snapchat)}" placeholder="username or snapchat.com/add/username"></div>
+          <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="@stagehandle or onlyfans.com/stagehandle"></div>
+          <div class="field"><label for="setupX">Optional X</label><input id="setupX" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="@stagehandle or x.com/stagehandle"></div>
           <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
@@ -32569,6 +32596,24 @@
       renderDancerSetup();
     });
 
+    dancerDashboard.addEventListener("input", (event) => {
+      const socialField = event.target.closest("[data-setup-social]");
+      if (socialField) {
+        dancerSignupSocials[socialField.dataset.setupSocial] = socialField.value;
+        return;
+      }
+
+      const profileField = event.target.closest("[data-setup-profile-field]");
+      if (!profileField) return;
+      const value = profileField.value;
+      if (profileField.dataset.setupProfileField === "legalName") setDancerSetupField("dancerLegalName", value);
+      if (profileField.dataset.setupProfileField === "stageName") {
+        setDancerSetupField("dancerStageName", value);
+        updateDancerDashboardName(value);
+      }
+      if (profileField.dataset.setupProfileField === "city") setDancerSetupField("dancerCity", value);
+    });
+
     dancerDashboard.addEventListener("submit", async (event) => {
       const shiftForm = event.target.closest("#shiftPostForm");
       if (shiftForm) {
@@ -32636,13 +32681,17 @@
       if (submit) submit.disabled = true;
       try {
         if (isDancerSession()) {
-          await patchAuthenticatedJson("/api/dancer/profile", {
+          const data = await patchAuthenticatedJson("/api/dancer/profile", {
             legalName,
             stageName,
             city,
             socials: socialPayloadFromMap(normalizedSocials)
           });
+          if (!data) throw new Error("Sign in required");
+          markDancerProfileSetupSaved(true);
           showToast("Profile saved");
+        } else {
+          markDancerProfileSetupSaved(true);
         }
         completeSetupStep("profile");
       } catch (error) {
