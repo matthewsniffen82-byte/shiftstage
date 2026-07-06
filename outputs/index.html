@@ -24236,7 +24236,7 @@
           </details>
           <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
         </div>
-        <div class="auth-card approved-analytics dancer-impact-card">
+        <div class="auth-card approved-analytics dancer-impact-card" id="dancerAnalyticsPreviewCard">
           <span class="eyebrow">Monthly impact</span>
           <div class="value-message" id="dancerValueMessage">Posting your schedule brings customers, followers, and direction requests.</div>
         </div>
@@ -30710,8 +30710,9 @@
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
-        section.hidden = false;
-        section.classList.toggle("locked-analytics", !approved);
+        const isPreviewCard = section.id === "dancerAnalyticsPreviewCard";
+        section.hidden = !approved && !isPreviewCard;
+        section.classList.toggle("locked-analytics", !approved && isPreviewCard);
       });
       document.querySelectorAll("#dancerDashboard .approved-dancer-stat").forEach((stat) => {
         stat.hidden = !approved;
@@ -30844,7 +30845,7 @@
           : `<article class="rank-event stable"><span class="rank-event-icon">⚡</span><span><strong>Ranking milestones ready</strong><p>We will notify you when you enter Top 10, move up 3+ spots, or hit #1.</p></span></article>`;
       } else {
         document.getElementById("dancerValueMessage").textContent =
-          "Complete setup and approval to unlock the full value dashboard: profile views, schedule views, follower growth, social clicks, rankings, and club direction requests.";
+          "Analytics unlock after approval. Dancr tracks profile views, schedule views, follower growth, social clicks, ranking movement, notifications, favorites, Going Now clicks, and club direction requests so you can see what brings customers to you.";
         document.getElementById("dancerRankMetrics").innerHTML = lockedMetricCards([
           "Current city rank",
           "Rank change this week",
