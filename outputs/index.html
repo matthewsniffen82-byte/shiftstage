@@ -2774,6 +2774,15 @@
       line-height: 1.25;
     }
 
+    .submitted-photo-slot img {
+      width: 100%;
+      max-width: 96px;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
     @media (max-width: 560px) {
       .photo-upload-grid {
         grid-template-columns: 1fr;
@@ -26421,13 +26430,18 @@
         const market = markets[city];
         if (!market) return;
         const photos = Array.isArray(item.photos) ? item.photos : [];
+        const socialLinks = Array.isArray(item.socialLinks) ? item.socialLinks : [];
+        const verificationDocuments = Array.isArray(item.verificationDocuments) ? item.verificationDocuments : [];
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
         const profileData = {
           id: item.id,
           slug: item.slug || slugify(item.stageName),
           name: item.stageName,
+          legalName: item.realName || item.real_name || "",
           city,
+          bio: item.bio || "",
           status: approvalStatusLabel(item.status),
+          reviewSubmitted: item.status === "pending_review",
           venue: "",
           time: "No upcoming shifts",
           tonight: false,
@@ -26439,7 +26453,10 @@
           idStatus: reviewStatusLabel(item.verificationStatus, "Passed", "Needs review"),
           selfieStatus: reviewStatusLabel(item.verificationStatus, "Matched", "Needs review"),
           photoStatus: reviewStatusLabel(item.photoReviewStatus, "Approved", "Pending"),
-          socials: {},
+          socials: Object.fromEntries(socialLinks.map((social) => [social.platform, social.url || social.handle || ""]).filter(([, value]) => Boolean(value))),
+          socialLinks,
+          verificationDocuments,
+          submittedPhotos: photos,
           mainPhotoUrl: primaryPhoto,
           galleryPhotoUrls: photos.map((photo) => photo.imageUrl).filter(Boolean)
         };
@@ -30927,6 +30944,9 @@
     function adminProfileRow(city, profile) {
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : "No active shift";
+      const socialCount = profile.socialLinks?.length || Object.values(profile.socials || {}).filter(Boolean).length;
+      const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
+      const documentCount = profile.verificationDocuments?.length || 0;
       return `
         <article class="admin-item" data-admin-profile="${profile.name}" data-admin-city="${city}">
           <div class="row">
@@ -30937,8 +30957,43 @@
             <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${visibleStatus}</span>
           </div>
           <div class="meta">ID: ${profile.idStatus} · Selfie: ${profile.selfieStatus} · Photos: ${profile.photoStatus}</div>
+          <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · Socials: ${socialCount} · Photos: ${photoCount} · Docs: ${documentCount}</div>
+          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
         </article>
       `;
+    }
+
+    function adminSubmittedSocialsMarkup(profile) {
+      const socials = profile.socialLinks?.length
+        ? profile.socialLinks
+        : Object.entries(profile.socials || {}).map(([platform, url]) => ({ platform, url, handle: url }));
+      if (!socials.length) return '<div class="locked">No social links submitted.</div>';
+      return socials.map((social) => {
+        const url = social.url || "";
+        const label = social.handle || url || "Submitted social";
+        return `<a class="lock-row" href="${displayText(url || "#")}" target="_blank" rel="noreferrer"><strong>${displayText(social.platform || "Social")}</strong><span>${displayText(label)}</span></a>`;
+      }).join("");
+    }
+
+    function adminSubmittedDocumentsMarkup(profile) {
+      const documents = profile.verificationDocuments || [];
+      if (!documents.length) return '<div class="locked">No verification files submitted.</div>';
+      return documents.map((document) => {
+        const href = document.fileUrl || document.file_url || "#";
+        const label = document.displayName || document.display_name || document.name || "Verification file";
+        return `<a class="lock-row" href="${displayText(href)}" target="_blank" rel="noreferrer"><strong>${displayText(label)}</strong><span>${displayText(document.status || "pending review")}</span></a>`;
+      }).join("");
+    }
+
+    function adminSubmittedPhotosMarkup(profile) {
+      const photos = profile.submittedPhotos?.length
+        ? profile.submittedPhotos
+        : (profile.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, sortOrder: index }));
+      if (!photos.length) return '<div class="locked">No photos submitted.</div>';
+      return photos.slice(0, 6).map((photo, index) => {
+        const imageUrl = photo.imageUrl || photo.image_url || "";
+        return `<a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" target="_blank" rel="noreferrer">${imageUrl ? `<img src="${displayText(imageUrl)}" alt="Submitted dancer photo ${index + 1}">` : `Photo ${index + 1}`}<span>${displayText(photo.reviewStatus || photo.review_status || "pending")}</span></a>`;
+      }).join("");
     }
 
     function subscriptionStatusLabel(status) {
@@ -31032,6 +31087,12 @@
 
       document.getElementById("adminDancers").innerHTML = pendingProfiles.length ? pendingProfiles.map(({ city, profile }) => `
         ${adminProfileRow(city, profile)}
+        <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
+          <div class="row"><div><h3>Submitted profile package</h3><div class="meta">${displayText(profile.name)} · ${displayText(city)}</div></div><span class="badge pending">${profile.reviewSubmitted ? "Submitted" : "Pending"}</span></div>
+          <div class="meta">Legal name: ${displayText(profile.legalName || "Not submitted")} · Stage name: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
+          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
+          ${adminSubmittedSocialsMarkup(profile)}
+        </article>
         <div class="admin-actions" data-admin-city="${city}" data-admin-profile="${profile.name}">
           <button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>
           <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
@@ -31043,6 +31104,7 @@
       document.getElementById("adminVerification").innerHTML = reviewProfiles.map(({ city, profile }) => `
         <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
           <div class="row"><div><h3>${profile.name}</h3><div class="meta">${city}</div></div><span class="pill">${profile.idStatus} / ${profile.selfieStatus}</span></div>
+          ${adminSubmittedDocumentsMarkup(profile)}
           <div class="admin-actions">
             <button class="action-btn" data-admin-action="approve-id">Approve ID/selfie</button>
             <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
@@ -31054,7 +31116,7 @@
         <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
           <div class="row"><div><h3>${profile.name}</h3><div class="meta">Photo status: ${profile.photoStatus}</div></div><span class="pill">${city}</span></div>
           <div class="photo-upload-grid">
-            <div class="upload-slot">Photo 1</div><div class="upload-slot">Photo 2</div><div class="upload-slot">Photo 3</div>
+            ${adminSubmittedPhotosMarkup(profile)}
           </div>
           <div class="admin-actions">
             <button class="action-btn" data-admin-action="approve-photos">Approve photos</button>

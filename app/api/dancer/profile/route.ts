@@ -144,7 +144,9 @@ async function submitProfileForReview(
     .list(`${userId}/verification`, { limit: 3 });
 
   if (documentsError) throw documentsError;
-  if (!documents?.length) throw new Error("Upload verification documents before submitting for review.");
+  if ((documents || []).filter((document: any) => Boolean(document?.name)).length < 3) {
+    throw new Error("Upload ID, selfie, and proof that you dance before submitting for review.");
+  }
 
   const { error } = await db
     .from("dancer_profiles")
