@@ -30799,13 +30799,14 @@
       Object.assign(dancerSignupSocials, savedProfileSetup ? { ...draftSocials, ...liveSocials } : { ...liveSocials, ...draftSocials });
       Object.assign(dancerSetup, {
         profile: savedProfileSetup,
-        photos: photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
+        photos: approved || photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
         verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved" || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
       });
 
-      setupChecklistExpanded = true;
+      if (approved) markDancerProfileSetupSaved(true);
+      setupChecklistExpanded = !approved;
       activeSetupStep = nextIncompleteStep() || (approved ? "approval" : "profile");
       ensureLocalDancerApprovalNotification(profile);
 
@@ -30816,11 +30817,13 @@
           city: city || localProfile.city || citySelect.value || "Las Vegas",
           mainPhotoUrl: photos[0] || localProfile.mainPhotoUrl,
           galleryPhotoUrls: photos.length ? photos : (localProfile.galleryPhotoUrls || []),
-          photoStatus: dancerSetup.photos ? "Pending" : localProfile.photoStatus,
-          idStatus: dancerSetup.verification ? "Needs review" : localProfile.idStatus,
-          selfieStatus: dancerSetup.verification ? "Needs review" : localProfile.selfieStatus,
-          danceProofStatus: dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus,
-          reviewSubmitted: submittedForReview || localProfile.reviewSubmitted,
+          status: approved ? "Verified" : "Pending",
+          photoStatus: approved ? "Approved" : (dancerSetup.photos ? "Pending" : localProfile.photoStatus),
+          idStatus: approved ? "Passed" : (dancerSetup.verification ? "Needs review" : localProfile.idStatus),
+          selfieStatus: approved ? "Matched" : (dancerSetup.verification ? "Needs review" : localProfile.selfieStatus),
+          danceProofStatus: approved ? "Approved" : (dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus),
+          reviewSubmitted: approved ? false : (submittedForReview || localProfile.reviewSubmitted),
+          hidden: approved ? false : localProfile.hidden,
           socials: { ...(localProfile.socials || {}), ...dancerSignupSocials }
         });
       }
@@ -31898,6 +31901,29 @@
       showToast(message);
     }
 
+    function unlockApprovedDancerProfile(profile) {
+      if (!profile) return;
+      Object.assign(profile, {
+        status: "Verified",
+        idStatus: "Passed",
+        selfieStatus: "Matched",
+        danceProofStatus: "Approved",
+        photoStatus: "Approved",
+        reviewSubmitted: false,
+        hidden: false,
+        contentFlagged: false
+      });
+      (profile.submittedPhotos || []).forEach((photo) => {
+        photo.reviewStatus = "approved";
+      });
+      (profile.verificationDocuments || []).forEach((document) => {
+        document.status = "approved";
+      });
+      (profile.socialLinks || profile.social_links || []).forEach((social) => {
+        social.reviewStatus = "approved";
+      });
+    }
+
     function saveLiveAdminReview(profile, status) {
       if (!profile?.id || !isAdminSession()) return;
       postAuthenticatedJson("/api/admin/approvals", {
@@ -32053,12 +32079,12 @@
           showToast(`Review pending items first: ${pendingItems.join(", ")}`);
           return;
         }
-        Object.assign(profileMatch.profile, {
-          status: "Verified",
-          idStatus: "Passed",
-          selfieStatus: "Matched",
-          hidden: false
-        });
+        unlockApprovedDancerProfile(profileMatch.profile);
+        if (activeDancerProfile(profileMatch.city)?.id === profileMatch.profile.id || activeDancerProfile(profileMatch.city)?.name === profileMatch.profile.name) {
+          Object.assign(dancerSetup, { profile: true, photos: true, verification: true, approval: true });
+          setupChecklistExpanded = false;
+          activeSetupStep = "";
+        }
         refreshAfterAdminAction(`${profileMatch.profile.name} approved`);
         saveLiveAdminReview(profileMatch.profile, "approved");
         return;
