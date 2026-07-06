@@ -24646,6 +24646,7 @@
           </div>
           <button class="forgot-password-link" id="adminForgotPasswordBtn" type="button">Forgot password?</button>
           <button class="admin-login" id="adminLoginBtn" type="submit">Admin login</button>
+          <button class="admin-login" id="adminCreateBtn" type="submit" hidden>Create admin account</button>
           <div class="rule-note" id="adminLiveStatus">Sign in or create an admin account to continue.</div>
         </form>
         <div id="adminDashboardContent" hidden>
@@ -30976,13 +30977,21 @@
       const codeField = document.getElementById("adminCodeField");
       const codeInput = document.getElementById("adminCode");
       const forgotButton = document.getElementById("adminForgotPasswordBtn");
-      const submitButton = document.getElementById("adminLoginBtn");
+      const loginButton = document.getElementById("adminLoginBtn");
+      const createButton = document.getElementById("adminCreateBtn");
       if (codeField) codeField.hidden = adminAuthMode !== "signup";
       if (codeInput) codeInput.required = adminAuthMode === "signup";
       if (forgotButton) forgotButton.hidden = adminAuthMode !== "login";
-      if (submitButton) submitButton.textContent = adminAuthMode === "signup" ? "Create admin" : "Admin login";
+      if (loginButton) loginButton.hidden = adminAuthMode !== "login";
+      if (createButton) createButton.hidden = adminAuthMode !== "signup";
       const passwordInput = document.getElementById("adminPassword");
       if (passwordInput) passwordInput.autocomplete = adminAuthMode === "signup" ? "new-password" : "current-password";
+      const status = document.getElementById("adminLiveStatus");
+      if (status) {
+        status.textContent = adminAuthMode === "signup"
+          ? "Enter a username, password, and admin code, then create the admin account."
+          : "Sign in with an existing admin account.";
+      }
     }
 
     function showAdminAuthPage(message = "Sign in or create an admin account to continue.") {
@@ -31914,7 +31923,7 @@
     });
     document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const button = document.getElementById("adminLoginBtn");
+      const button = adminAuthMode === "signup" ? document.getElementById("adminCreateBtn") : document.getElementById("adminLoginBtn");
       const status = document.getElementById("adminLiveStatus");
       button.disabled = true;
       try {
@@ -31927,7 +31936,7 @@
         });
         const name = result.account?.displayName || "platform admin";
         if (status) status.textContent = `Logged in as ${name}.`;
-        button.textContent = "Admin session active";
+        button.textContent = adminAuthMode === "signup" ? "Admin created" : "Admin session active";
         showToast("Admin session active");
         await loadLiveAdminApprovals();
       } catch (error) {
@@ -31935,6 +31944,8 @@
         showToast(error.message || "Admin login failed");
       } finally {
         button.disabled = false;
+        if (adminAuthMode === "signup") button.textContent = "Create admin account";
+        else button.textContent = "Admin login";
       }
     });
 

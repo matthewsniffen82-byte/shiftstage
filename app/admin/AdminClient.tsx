@@ -212,7 +212,7 @@ export default function AdminClient() {
             </button>
           ) : null}
           <button type="submit" disabled={isSigningIn}>
-            {isSigningIn ? "Working..." : mode === "signup" ? "Create admin" : "Sign in"}
+            {isSigningIn ? "Working..." : mode === "signup" ? "Create admin account" : "Sign in"}
           </button>
         </form>
       ) : (
