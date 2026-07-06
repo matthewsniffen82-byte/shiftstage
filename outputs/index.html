@@ -25507,6 +25507,9 @@
     function resetFreshDancerVerificationDraft() {
       freshDancerVerificationLockedToProfile = true;
       markDancerProfileSetupSaved(false);
+      try {
+        localStorage.removeItem(dancerProfileDraftStorageKey());
+      } catch (error) {}
       Object.assign(dancerSetup, {
         profile: false,
         photos: false,
@@ -29844,6 +29847,7 @@
         openDancerSignupPage();
         return;
       }
+      applyStoredDancerProfileDraft();
       updateDancerDashboardName();
       if (!dancerSetup.approval) {
         setupChecklistExpanded = true;
@@ -30147,6 +30151,62 @@
       } catch (error) {}
     }
 
+    function dancerProfileDraftStorageKey() {
+      return `${dancerProfileSetupStorageKey()}:draft`;
+    }
+
+    function currentDancerProfileDraft() {
+      return {
+        legalName: document.getElementById("dancerLegalName")?.value || "",
+        stageName: document.getElementById("dancerStageName")?.value || "",
+        city: document.getElementById("dancerCity")?.value || "",
+        socials: { ...dancerSignupSocials },
+        updatedAt: Date.now()
+      };
+    }
+
+    function readStoredDancerProfileDraft() {
+      try {
+        const draft = JSON.parse(localStorage.getItem(dancerProfileDraftStorageKey()) || "null");
+        return draft && typeof draft === "object" ? draft : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveDancerProfileDraft(update = {}) {
+      const draft = {
+        ...currentDancerProfileDraft(),
+        ...update,
+        socials: {
+          ...dancerSignupSocials,
+          ...(update.socials || {})
+        },
+        updatedAt: Date.now()
+      };
+      try {
+        localStorage.setItem(dancerProfileDraftStorageKey(), JSON.stringify(draft));
+      } catch (error) {}
+    }
+
+    function applyStoredDancerProfileDraft() {
+      const draft = readStoredDancerProfileDraft();
+      if (!draft) return false;
+      const socials = draft.socials && typeof draft.socials === "object" ? draft.socials : {};
+      setDancerSetupField("dancerLegalName", draft.legalName || "");
+      setDancerSetupField("dancerStageName", draft.stageName || "");
+      setDancerSetupField("dancerCity", draft.city || "");
+      Object.assign(dancerSignupSocials, {
+        instagram: socials.instagram || "",
+        tiktok: socials.tiktok || "",
+        snapchat: socials.snapchat || "",
+        onlyfans: socials.onlyfans || "",
+        x: socials.x || ""
+      });
+      updateDancerDashboardName(draft.stageName || "");
+      return true;
+    }
+
     function escapeHtml(value) {
       return String(value || "")
         .replace(/&/g, "&amp;")
@@ -30294,10 +30354,15 @@
     }
 
     function applyDancerVerificationProfile(profile) {
-      const legalName = profile.real_name || profile.realName || "";
-      const stageName = profile.stage_name || profile.stageName || "";
-      const city = profile.city || profile.cityName || "";
       const approved = profile.status === "approved";
+      const savedProfileSetup = approved || hasSavedDancerProfileSetup();
+      const draft = readStoredDancerProfileDraft();
+      const useDraftFields = Boolean(draft && !savedProfileSetup);
+      const liveSocials = dancerSocialMapFromProfile(profile);
+      const draftSocials = draft?.socials && typeof draft.socials === "object" ? draft.socials : {};
+      const legalName = useDraftFields ? (draft.legalName || profile.real_name || profile.realName || "") : (profile.real_name || profile.realName || draft?.legalName || "");
+      const stageName = useDraftFields ? (draft.stageName || profile.stage_name || profile.stageName || "") : (profile.stage_name || profile.stageName || draft?.stageName || "");
+      const city = useDraftFields ? (draft.city || profile.city || profile.cityName || "") : (profile.city || profile.cityName || draft?.city || "");
       const photos = dancerProfilePhotoUrls(profile);
 
       setDancerSetupField("dancerLegalName", legalName);
@@ -30305,9 +30370,9 @@
       setDancerSetupField("dancerCity", city);
       updateDancerDashboardName(stageName);
 
-      Object.assign(dancerSignupSocials, dancerSocialMapFromProfile(profile));
+      Object.assign(dancerSignupSocials, savedProfileSetup ? { ...draftSocials, ...liveSocials } : { ...liveSocials, ...draftSocials });
       Object.assign(dancerSetup, {
-        profile: approved || hasSavedDancerProfileSetup(),
+        profile: savedProfileSetup,
         photos: photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
         verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved" || hasSubmittedVerificationDocuments(),
         approval: approved,
@@ -32600,18 +32665,26 @@
       const socialField = event.target.closest("[data-setup-social]");
       if (socialField) {
         dancerSignupSocials[socialField.dataset.setupSocial] = socialField.value;
+        saveDancerProfileDraft({ socials: { [socialField.dataset.setupSocial]: socialField.value } });
         return;
       }
 
       const profileField = event.target.closest("[data-setup-profile-field]");
       if (!profileField) return;
       const value = profileField.value;
-      if (profileField.dataset.setupProfileField === "legalName") setDancerSetupField("dancerLegalName", value);
+      if (profileField.dataset.setupProfileField === "legalName") {
+        setDancerSetupField("dancerLegalName", value);
+        saveDancerProfileDraft({ legalName: value });
+      }
       if (profileField.dataset.setupProfileField === "stageName") {
         setDancerSetupField("dancerStageName", value);
         updateDancerDashboardName(value);
+        saveDancerProfileDraft({ stageName: value });
       }
-      if (profileField.dataset.setupProfileField === "city") setDancerSetupField("dancerCity", value);
+      if (profileField.dataset.setupProfileField === "city") {
+        setDancerSetupField("dancerCity", value);
+        saveDancerProfileDraft({ city: value });
+      }
     });
 
     dancerDashboard.addEventListener("submit", async (event) => {
@@ -32677,6 +32750,7 @@
       document.getElementById("dancerCity").value = city;
       updateDancerDashboardName(stageName);
       Object.assign(dancerSignupSocials, normalizedSocials);
+      saveDancerProfileDraft({ legalName, stageName, city, socials: normalizedSocials });
       const submit = form.querySelector('button[type="submit"]');
       if (submit) submit.disabled = true;
       try {
