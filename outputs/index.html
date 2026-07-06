@@ -30702,8 +30702,8 @@
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
-        section.hidden = !approved;
-        section.classList.remove("locked-analytics");
+        section.hidden = false;
+        section.classList.toggle("locked-analytics", !approved);
       });
       document.querySelectorAll("#dancerDashboard .approved-dancer-stat").forEach((stat) => {
         stat.hidden = !approved;
