@@ -1343,7 +1343,7 @@ function AdminStyles() {
       .submission-review-card > small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
       .submission-review-card textarea { width: 100%; min-height: 68px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .content-review-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .content-review-actions button { min-height: 38px; padding: 0 10px; font-size: 12px; }
+      .content-review-actions button { min-height: 38px; padding: 0 10px; font-size: 12px; white-space: normal; line-height: 1.15; }
       .submitted-social-icons, .submitted-social-review-list { display: grid; gap: 8px; }
       .submitted-social-review { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
       .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 2; }
@@ -1411,6 +1411,12 @@ function AdminStyles() {
         .approval-summary { display: grid; grid-template-columns: 1fr; }
         .approval-actions, .report-row div, .content-review-actions { display: grid; grid-template-columns: 1fr; }
         .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
+        .admin-panel, .approval-row, .submission-detail, .submission-section, .submission-review-card, .submitted-social-review { width: 100%; max-width: 100%; overflow: visible; }
+        .submitted-social-review { grid-template-columns: 36px minmax(0, 1fr); align-items: start; }
+        .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 1 / -1; }
+        .submitted-social-icon { width: 36px; height: 36px; flex-basis: 36px; }
+        .submitted-social-icon svg { width: 19px; height: 19px; flex-basis: 19px; }
+        .submission-thumb img { max-height: 260px; object-fit: contain; }
         .admin-head { gap: 10px; margin-bottom: 18px; }
       }
     `}</style>

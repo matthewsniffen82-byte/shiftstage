@@ -2983,7 +2983,7 @@
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 10px;
       background: rgba(255,255,255,.035);
-      overflow: hidden;
+      overflow: visible;
     }
 
     #adminDashboard .admin-submission-review textarea {
@@ -3121,8 +3121,21 @@
     }
 
     @media (max-width: 560px) {
-      #adminDashboard.dashboard-wide {
-        width: 100%;
+      #adminDashboard.page-panel.show {
+        display: block !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+
+      #adminDashboard.dashboard-wide,
+      #adminDashboard .page-inner.dashboard-wide {
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        overflow-x: hidden !important;
       }
 
       #adminDashboard .modal-body {
@@ -3135,6 +3148,39 @@
       #adminDashboard .admin-review-actions,
       #adminDashboard .photo-upload-grid {
         grid-template-columns: 1fr;
+      }
+
+      #adminDashboard .auth-card,
+      #adminDashboard .admin-item,
+      #adminDashboard .info-tile,
+      #adminDashboard .admin-submission-review,
+      #adminDashboard .admin-social-review {
+        width: 100%;
+        max-width: 100%;
+        overflow: visible;
+      }
+
+      #adminDashboard .admin-social-review {
+        grid-template-columns: 36px minmax(0, 1fr);
+        align-items: start;
+      }
+
+      #adminDashboard .admin-social-review textarea,
+      #adminDashboard .admin-social-review .admin-review-actions {
+        grid-column: 1 / -1;
+      }
+
+      #adminDashboard .admin-social-icon {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+      }
+
+      #adminDashboard .admin-social-icon .social-icon,
+      #adminDashboard .admin-social-icon svg {
+        width: 19px;
+        height: 19px;
+        flex-basis: 19px;
       }
 
       #adminDashboard .row,
@@ -3151,6 +3197,13 @@
 
       #adminDashboard .upload-slot {
         min-height: 66px;
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+      }
+
+      #adminDashboard .submitted-photo-slot img {
+        max-height: 260px;
+        object-fit: contain;
       }
     }
 
