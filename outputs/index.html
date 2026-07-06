@@ -26433,6 +26433,7 @@
         const photos = Array.isArray(item.photos) ? item.photos : [];
         const socialLinks = Array.isArray(item.socialLinks) ? item.socialLinks : [];
         const verificationDocuments = Array.isArray(item.verificationDocuments) ? item.verificationDocuments : [];
+        const reviews = Array.isArray(item.reviews) ? item.reviews : [];
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
         const profileData = {
           id: item.id,
@@ -26457,6 +26458,7 @@
           socials: Object.fromEntries(socialLinks.map((social) => [social.platform, social.url || social.handle || ""]).filter(([, value]) => Boolean(value))),
           socialLinks,
           verificationDocuments,
+          reviews,
           submittedPhotos: photos,
           mainPhotoUrl: primaryPhoto,
           galleryPhotoUrls: photos.map((photo) => photo.imageUrl).filter(Boolean)
@@ -31109,6 +31111,61 @@
       }).join("");
     }
 
+    function adminReviewHistoryMarkup(profile) {
+      const reviews = Array.isArray(profile.reviews) ? profile.reviews : [];
+      if (!reviews.length) return '<div class="locked">No prior review history.</div>';
+      return reviews.map((review) => `
+        <div class="lock-row">
+          <strong>${displayText(review.reviewType || review.review_type || "Review")}: ${displayText(review.status || "pending")}</strong>
+          <span>${displayText(review.notes || "No notes")}${review.reviewedAt || review.reviewed_at ? ` · ${displayText(formatBillingDate(review.reviewedAt || review.reviewed_at))}` : ""}</span>
+        </div>
+      `).join("");
+    }
+
+    function adminDancerApprovalCard(city, profile, index) {
+      const visibleStatus = profile.hidden ? "Hidden" : profile.status;
+      const socialCount = profile.socialLinks?.length || Object.values(profile.socials || {}).filter(Boolean).length;
+      const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
+      const documentCount = profile.verificationDocuments?.length || 0;
+      return `
+        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" ${index === 0 ? "open" : ""}>
+          <summary class="row">
+            <div>
+              <h3>${displayText(profile.name || "Stage name missing")}</h3>
+              <div class="meta">${displayText(city)} · ${displayText(visibleStatus)} · ${profile.reviewSubmitted ? "Submitted for review" : "Pending submission"}</div>
+            </div>
+            <span class="${profile.reviewSubmitted ? "badge pending" : "pill"}">${profile.reviewSubmitted ? "Submitted" : "Pending"}</span>
+          </summary>
+          <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
+          <div class="meta">ID: ${displayText(profile.idStatus)} · Selfie: ${displayText(profile.selfieStatus)} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Socials: ${socialCount} · Photos: ${photoCount} · Verification files: ${documentCount}</div>
+          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
+          <div class="info-tile">
+            <strong>Submitted socials</strong>
+            ${adminSubmittedSocialsMarkup(profile)}
+          </div>
+          <div class="info-tile">
+            <strong>Submitted photos</strong>
+            <div class="photo-upload-grid">${adminSubmittedPhotosMarkup(profile)}</div>
+          </div>
+          <div class="info-tile">
+            <strong>ID, selfie, and proof</strong>
+            ${adminSubmittedDocumentsMarkup(profile)}
+          </div>
+          <div class="info-tile">
+            <strong>Review history</strong>
+            ${adminReviewHistoryMarkup(profile)}
+          </div>
+          <div class="admin-actions">
+            <button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>
+            <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
+            <button class="action-btn secondary" data-admin-action="remove-profile">Remove fake profile</button>
+            <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
+          </div>
+        </details>
+      `;
+    }
+
     function subscriptionStatusLabel(status) {
       return String(status || "unknown").replaceAll("_", " ");
     }
@@ -31198,45 +31255,17 @@
         ...visibleProfiles.slice(0, 6).map(({ city, profile }) => adminProfileRow(city, profile))
       ].join("");
 
-      document.getElementById("adminDancers").innerHTML = pendingProfiles.length ? pendingProfiles.map(({ city, profile }) => `
-        ${adminProfileRow(city, profile)}
-        <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
-          <div class="row"><div><h3>Submitted profile package</h3><div class="meta">${displayText(profile.name)} · ${displayText(city)}</div></div><span class="badge pending">${profile.reviewSubmitted ? "Submitted" : "Pending"}</span></div>
-          <div class="meta">Legal name: ${displayText(profile.legalName || "Not submitted")} · Stage name: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
-          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
-          ${adminSubmittedSocialsMarkup(profile)}
-        </article>
-        <div class="admin-actions" data-admin-city="${city}" data-admin-profile="${profile.name}">
-          <button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>
-          <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
-          <button class="action-btn secondary" data-admin-action="remove-profile">Remove fake profile</button>
-          <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
-        </div>
-      `).join("") : '<div class="locked">No pending dancers.</div>';
+      document.getElementById("adminDancers").innerHTML = pendingProfiles.length
+        ? pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index)).join("")
+        : '<div class="locked">No pending dancers.</div>';
 
-      document.getElementById("adminVerification").innerHTML = reviewProfiles.map(({ city, profile }) => `
-        <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
-          <div class="row"><div><h3>${profile.name}</h3><div class="meta">${city}</div></div><span class="pill">${profile.idStatus} / ${profile.selfieStatus}</span></div>
-          ${adminSubmittedDocumentsMarkup(profile)}
-          <div class="admin-actions">
-            <button class="action-btn" data-admin-action="approve-id">Approve ID/selfie</button>
-            <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
-          </div>
-        </article>
-      `).join("") || '<div class="locked">No ID or selfie reviews.</div>';
+      document.getElementById("adminVerification").innerHTML = reviewProfiles.length
+        ? '<div class="locked">ID, selfie, and proof files are now reviewed inside each collapsible dancer approval card above.</div>'
+        : '<div class="locked">No ID or selfie reviews.</div>';
 
-      document.getElementById("adminPhotos").innerHTML = reviewProfiles.map(({ city, profile }) => `
-        <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
-          <div class="row"><div><h3>${profile.name}</h3><div class="meta">Photo status: ${profile.photoStatus}</div></div><span class="pill">${city}</span></div>
-          <div class="photo-upload-grid">
-            ${adminSubmittedPhotosMarkup(profile)}
-          </div>
-          <div class="admin-actions">
-            <button class="action-btn" data-admin-action="approve-photos">Approve photos</button>
-            <button class="action-btn danger" data-admin-action="reject-photos">Reject photos</button>
-          </div>
-        </article>
-      `).join("") || '<div class="locked">No pending content.</div>';
+      document.getElementById("adminPhotos").innerHTML = reviewProfiles.length
+        ? '<div class="locked">Submitted photos are now reviewed inside each collapsible dancer approval card above.</div>'
+        : '<div class="locked">No pending content.</div>';
 
       const visibleReports = liveAdminReports.length
         ? liveAdminReports.filter((report) => report.status === "open")
