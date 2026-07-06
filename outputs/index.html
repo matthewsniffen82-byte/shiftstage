@@ -28962,7 +28962,7 @@
       renderDancerSetup();
       if (customerDashboard.classList.contains("show")) renderDashboard();
       showToast("Public profile saved");
-      postAuthenticatedJson("/api/dancer/profile", {
+      patchAuthenticatedJson("/api/dancer/profile", {
         stageName,
         city: newCity,
         socials: socialPayloadFromMap(normalizedSocials)
@@ -32636,7 +32636,7 @@
       if (submit) submit.disabled = true;
       try {
         if (isDancerSession()) {
-          await postAuthenticatedJson("/api/dancer/profile", {
+          await patchAuthenticatedJson("/api/dancer/profile", {
             legalName,
             stageName,
             city,
