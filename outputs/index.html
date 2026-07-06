@@ -25035,6 +25035,7 @@
       shift: false
     };
     let liveVerificationDocuments = [];
+    let verificationSubmitNotice = "";
     let freshDancerVerificationLockedToProfile = false;
     const verificationDocumentLabels = [
       { documentType: "government_id", displayName: "Government ID" },
@@ -30359,6 +30360,11 @@
       `;
     }
 
+    function verificationReviewNoticeMarkup() {
+      if (!verificationSubmitNotice) return "";
+      return `<div class="rule-note verification-review-notice" role="status" aria-live="polite">${escapeHtml(verificationSubmitNotice)}</div>`;
+    }
+
     async function loadLiveVerificationDocuments() {
       if (!isDancerSession()) return;
       const storedDocuments = readStoredVerificationDocuments();
@@ -30585,8 +30591,9 @@
     async function submitSetupVerification(form) {
       if (!canOpenStep("verification")) return;
       if (!isDancerSession()) {
+        verificationSubmitNotice = "Verification submitted. Dancr will notify you by email or in your site notifications when your review is complete.";
         completeSetupStep("verification");
-        showToast("Demo verification submitted");
+        showToast("Verification submitted. Watch email and site notifications.");
         return;
       }
       const submit = form.querySelector('button[type="submit"]');
@@ -30618,9 +30625,10 @@
         }
         dancerSetup.verification = true;
         activeSetupStep = nextIncompleteStep() || "approval";
-        if (result) result.textContent = "3 verification files uploaded and waiting for Dancr review.";
-        showToast("Verification uploaded for review");
+        verificationSubmitNotice = "Verification submitted. Dancr will notify you by email or in your site notifications when your review is complete.";
+        if (result) result.textContent = verificationSubmitNotice;
         renderDancerSetup();
+        showToast("Verification submitted. Watch email and site notifications.");
       } catch (error) {
         if (result) result.textContent = error.message || "Could not upload verification";
         showToast(error.message || "Could not upload verification");
@@ -30984,6 +30992,7 @@
         </form>
       `;
       const approvalBody = `
+        ${verificationReviewNoticeMarkup()}
         ${dancerReviewFeedbackMarkup()}
         <button class="action-btn" type="button" data-submit-review ${readyForReview && !reviewSubmitted ? "" : "disabled"}>
           ${reviewSubmitted ? "Submitted for review" : "Submit for review"}
