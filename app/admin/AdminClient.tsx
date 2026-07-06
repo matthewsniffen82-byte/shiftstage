@@ -10,6 +10,7 @@ type AdminState = {
   subscriptions?: unknown[];
   reports?: Array<Record<string, unknown>>;
   deals?: Array<Record<string, unknown>>;
+  supportThreads?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -106,12 +107,13 @@ export default function AdminClient() {
 
     try {
       const headers = { authorization: `Bearer ${token}` };
-      const [monitoring, approvals, venues, subscriptions, deals] = await Promise.all([
+      const [monitoring, approvals, venues, subscriptions, deals, support] = await Promise.all([
         readJson("/api/admin/monitoring", headers),
         readJson("/api/admin/approvals", headers),
         readJson("/api/admin/venues", headers),
         readJson("/api/admin/subscriptions", headers),
         readJson("/api/admin/deals", headers),
+        readJson("/api/admin/support", headers),
       ]);
       const reports = await readJson("/api/admin/reports", headers);
 
@@ -121,6 +123,7 @@ export default function AdminClient() {
         venues: venues.venues || [],
         subscriptions: subscriptions.subscriptions || [],
         deals: deals.activity || [],
+        supportThreads: support.threads || [],
         reports: reports.reports || [],
       });
     } catch (error) {
@@ -259,6 +262,13 @@ export default function AdminClient() {
             <DealActivityManager
               activity={state.deals || []}
               onActivityChange={(deals) => setState((current) => ({ ...current, deals }))}
+            />
+          </Panel>
+          <Panel title="Support Inbox">
+            <Metric label="Open conversations" value={String(state.supportThreads?.filter((thread) => String(thread.status || "open") !== "answered").length || 0)} />
+            <AdminSupportInbox
+              threads={state.supportThreads || []}
+              onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
             />
           </Panel>
           <Panel title="Rankings">
@@ -470,6 +480,88 @@ function RankingManager() {
         ))}
       </div>
       {status ? <p>{status}</p> : null}
+    </div>
+  );
+}
+
+function AdminSupportInbox({
+  threads,
+  onThreadsChange,
+}: {
+  threads: Array<Record<string, unknown>>;
+  onThreadsChange: (threads: Array<Record<string, unknown>>) => void;
+}) {
+  const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
+  const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
+
+  async function reply(threadId: string) {
+    const token = readToken();
+    if (!token) {
+      setStatusByThread((current) => ({ ...current, [threadId]: "Admin sign in required." }));
+      return;
+    }
+
+    const message = (replyByThread[threadId] || "").trim();
+    if (!message) {
+      setStatusByThread((current) => ({ ...current, [threadId]: "Enter a reply first." }));
+      return;
+    }
+
+    setStatusByThread((current) => ({ ...current, [threadId]: "Sending reply..." }));
+    const response = await fetch("/api/admin/support", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ threadId, message }),
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      setStatusByThread((current) => ({ ...current, [threadId]: data.error || "Unable to send reply." }));
+      return;
+    }
+
+    onThreadsChange([data.thread, ...threads.filter((thread) => String(thread.id) !== threadId)]);
+    setReplyByThread((current) => ({ ...current, [threadId]: "" }));
+    setStatusByThread((current) => ({ ...current, [threadId]: "Reply sent." }));
+  }
+
+  if (!threads.length) return <p className="empty">No support messages yet.</p>;
+
+  return (
+    <div className="support-inbox-list">
+      {threads.slice(0, 8).map((thread) => {
+        const threadId = String(thread.id || "");
+        const messages = asRecordArray(thread.messages);
+        const userLabel = String(thread.userName || thread.userEmail || thread.userRole || "User");
+        return (
+          <details className="support-inbox-thread" key={threadId} open={threads.length === 1}>
+            <summary>
+              <span>
+                <strong>{String(thread.subject || "Support message")}</strong>
+                <small>{userLabel} / {String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
+              </span>
+            </summary>
+            <div className="support-inbox-messages">
+              {messages.map((message) => (
+                <div className={String(message.senderRole) === "admin" ? "support-inbox-message from-admin" : "support-inbox-message"} key={String(message.id)}>
+                  <strong>{String(message.senderRole) === "admin" ? "Admin" : userLabel}</strong>
+                  <p>{String(message.body || "")}</p>
+                  <small>{formatDate(message.createdAt)}</small>
+                </div>
+              ))}
+            </div>
+            <textarea
+              value={replyByThread[threadId] || ""}
+              onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
+              placeholder="Reply to this customer or dancer"
+            />
+            <button type="button" onClick={() => reply(threadId)}>
+              Reply
+            </button>
+            {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
+          </details>
+        );
+      })}
     </div>
   );
 }
@@ -1095,7 +1187,7 @@ function formatDate(value: unknown) {
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <article className="admin-panel">
+    <article className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}>
       <h2>{title}</h2>
       <div>{children}</div>
     </article>
@@ -1283,6 +1375,17 @@ function AdminStyles() {
       .report-row p { color: #94e5ff; font-size: 14px; }
       .report-row div { display: flex; gap: 8px; flex-wrap: wrap; }
       .report-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .support-admin-panel { grid-column: span 2; }
+      .support-inbox-list, .support-inbox-thread, .support-inbox-messages { display: grid; gap: 10px; }
+      .support-inbox-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .support-inbox-thread summary { cursor: pointer; color: #fff; font-weight: 900; }
+      .support-inbox-thread summary span { display: grid; gap: 3px; }
+      .support-inbox-thread small { color: #b9accd; font-size: 12px; }
+      .support-inbox-message { display: grid; gap: 4px; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .support-inbox-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
+      .support-inbox-message p, .support-inbox-thread p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
+      .support-inbox-thread textarea { width: 100%; min-height: 82px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .support-inbox-thread button { justify-self: start; color: #090911; background: #f7f2ff; padding: 0 14px; }
       .ranking-manager { display: grid; gap: 12px; }
       .ranking-manager form { display: grid; gap: 10px; }
       .ranking-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
@@ -1302,6 +1405,7 @@ function AdminStyles() {
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) {
         .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid { grid-template-columns: 1fr; }
+        .support-admin-panel { grid-column: auto; }
         .top-nav { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }
         .approval-summary { display: grid; grid-template-columns: 1fr; }

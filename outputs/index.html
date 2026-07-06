@@ -12277,6 +12277,47 @@
       color: #ffb3bf;
     }
 
+    .support-inbox-card textarea,
+    #adminSupportInbox textarea {
+      width: 100%;
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .support-thread-list,
+    .support-message-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .support-thread,
+    .support-message {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+    }
+
+    .support-thread summary {
+      cursor: pointer;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .support-message.from-admin {
+      border-color: rgba(34,199,255,.34);
+      background: rgba(34,199,255,.08);
+    }
+
+    .support-message small,
+    .support-thread small {
+      color: #b9accd;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .venue-card:hover,
     .venue:hover {
       border-color: rgba(124, 58, 237, .56);
@@ -24596,6 +24637,16 @@
           </div>
           <div class="rank-notification-list" id="dancerNotificationList">Notifications will appear here.</div>
         </div>
+        <div class="auth-card support-inbox-card" data-support-panel="dancer">
+          <h3 class="section-title">Contact Admin</h3>
+          <form class="auth-form support-contact-form" data-support-form="dancer">
+            <div class="field"><label for="dancerSupportSubject">Subject</label><input id="dancerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
+            <div class="field"><label for="dancerSupportMessage">Message</label><textarea id="dancerSupportMessage" rows="4" placeholder="Write your message to admin" required></textarea></div>
+            <button class="action-btn" type="submit">Send to admin</button>
+            <div class="rule-note" id="dancerSupportStatus">Messages and admin replies appear below.</div>
+          </form>
+          <div class="rank-notification-list support-thread-list" id="dancerSupportThreads">No admin messages yet.</div>
+        </div>
         <details class="auth-card approved-analytics advanced-analytics-card">
           <summary><span>Advanced Analytics</span><small>Search, returning viewers, and conversion detail</small></summary>
           <div class="metric-grid" id="dancerAdvancedMetrics" aria-label="Advanced analytics"></div>
@@ -25027,6 +25078,10 @@
           <div class="admin-grid" id="adminReports"></div>
         </div>
         <div class="auth-card">
+          <h3>Support inbox</h3>
+          <div class="admin-grid" id="adminSupportInbox"></div>
+        </div>
+        <div class="auth-card">
           <h3>Billing subscriptions</h3>
           <div class="admin-grid" id="adminSubscriptions"></div>
         </div>
@@ -25135,6 +25190,16 @@
             <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
           </div>
           <div class="rank-notification-list" id="customerNotificationList">Notifications will appear here.</div>
+        </div>
+        <div class="auth-card customer-notification-card support-inbox-card" data-dashboard-section="support" data-support-panel="customer">
+          <h3 class="section-title">Contact Admin</h3>
+          <form class="auth-form support-contact-form" data-support-form="customer">
+            <div class="field"><label for="customerSupportSubject">Subject</label><input id="customerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
+            <div class="field"><label for="customerSupportMessage">Message</label><textarea id="customerSupportMessage" rows="4" placeholder="Write your message to admin" required></textarea></div>
+            <button class="action-btn" type="submit">Send to admin</button>
+            <div class="rule-note" id="customerSupportStatus">Messages and admin replies appear below.</div>
+          </form>
+          <div class="rank-notification-list support-thread-list" id="customerSupportThreads">No admin messages yet.</div>
         </div>
         <div class="auth-card account-control-card" data-account-panel="customer" data-dashboard-section="account">
           <div class="account-control-head">
@@ -25408,6 +25473,8 @@
     let liveAdminMonitoring = null;
     let liveCustomerProfile = null;
     let liveNotifications = [];
+    let liveSupportThreads = [];
+    let liveAdminSupportThreads = [];
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
 
@@ -27341,6 +27408,191 @@
       return true;
     }
 
+    function handleSupportActionClick(event) {
+      const button = event.target.closest("[data-support-action]");
+      if (!button) return false;
+      const threadId = button.dataset.supportThread || "";
+      const textarea = document.querySelector(`[data-support-reply="${CSS.escape(threadId)}"]`);
+      const body = textarea?.value.trim() || "";
+      if (button.dataset.supportAction === "admin-reply") {
+        sendAdminSupportReply(threadId, body).then(() => {
+          if (textarea) textarea.value = "";
+        });
+        return true;
+      }
+      const role = isDancerSession() || dancerDashboard.classList.contains("show") ? "dancer" : "customer";
+      sendSupportMessage(role, "", body, threadId).then(() => {
+        if (textarea) textarea.value = "";
+      });
+      return true;
+    }
+
+    function supportStorageKey() {
+      return "mydancr:support-threads:v1";
+    }
+
+    function readStoredSupportThreads() {
+      try {
+        const rows = JSON.parse(localStorage.getItem(supportStorageKey()) || "[]");
+        return Array.isArray(rows) ? rows : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function writeStoredSupportThreads(threads) {
+      try {
+        localStorage.setItem(supportStorageKey(), JSON.stringify(threads || []));
+      } catch {}
+    }
+
+    function supportUserKey(role) {
+      return authSession?.user?.id || authSession?.account?.email || authSession?.email || `${role}-local`;
+    }
+
+    function ownSupportThreads(role) {
+      const userKey = supportUserKey(role);
+      const liveThreads = liveSupportThreads.length ? liveSupportThreads : readStoredSupportThreads().filter((thread) => thread.userKey === userKey && thread.userRole === role);
+      return liveThreads.slice().sort((a, b) => Date.parse(b.lastMessageAt || b.createdAt || "") - Date.parse(a.lastMessageAt || a.createdAt || ""));
+    }
+
+    function supportThreadMarkup(thread, isAdmin = false) {
+      const messages = Array.isArray(thread.messages) ? thread.messages : [];
+      const userLabel = thread.userName || thread.userEmail || thread.userRole || "User";
+      return `
+        <details class="support-thread" data-support-thread="${displayText(thread.id)}" ${isAdmin ? "" : messages.length <= 2 ? "open" : ""}>
+          <summary>
+            <strong>${displayText(thread.subject || "Admin conversation")}</strong>
+            <small>${isAdmin ? `${displayText(userLabel)} · ` : ""}${displayText(thread.status || "open")} · ${displayText(formatBillingDate(thread.lastMessageAt || thread.createdAt))}</small>
+          </summary>
+          <div class="support-message-list">
+            ${messages.map((message) => `
+              <div class="support-message ${message.senderRole === "admin" ? "from-admin" : ""}">
+                <strong>${message.senderRole === "admin" ? "Admin" : isAdmin ? displayText(userLabel) : "You"}</strong>
+                <p>${displayText(message.body || "")}</p>
+                <small>${displayText(formatBillingDate(message.createdAt))}</small>
+              </div>
+            `).join("")}
+          </div>
+          <textarea data-support-reply="${displayText(thread.id)}" placeholder="${isAdmin ? "Reply to this customer or dancer" : "Reply to admin"}"></textarea>
+          <button class="action-btn secondary" type="button" data-support-action="${isAdmin ? "admin-reply" : "user-reply"}" data-support-thread="${displayText(thread.id)}">Send reply</button>
+        </details>
+      `;
+    }
+
+    function renderSupportInbox(role) {
+      const container = document.getElementById(`${role}SupportThreads`);
+      if (!container) return;
+      const threads = ownSupportThreads(role);
+      container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread)).join("") : "No admin messages yet.";
+    }
+
+    function renderAdminSupportInbox() {
+      const container = document.getElementById("adminSupportInbox");
+      if (!container) return;
+      const threads = liveAdminSupportThreads.length ? liveAdminSupportThreads : readStoredSupportThreads();
+      container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread, true)).join("") : '<div class="locked">No support messages yet.</div>';
+    }
+
+    function upsertStoredSupportThread(thread) {
+      const threads = readStoredSupportThreads();
+      const next = [thread, ...threads.filter((item) => item.id !== thread.id)];
+      writeStoredSupportThreads(next);
+    }
+
+    function localSupportThread(role, subject, body, threadId = "") {
+      const now = new Date().toISOString();
+      const userKey = supportUserKey(role);
+      const userName = authSession?.account?.displayName || document.getElementById(role === "dancer" ? "dancerStageName" : "customerEmail")?.value || role;
+      const existing = readStoredSupportThreads().find((thread) => thread.id === threadId);
+      const thread = existing || {
+        id: `support-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        userKey,
+        userRole: role,
+        userName,
+        userEmail: authSession?.account?.email || authSession?.email || "",
+        subject: subject || "Message to admin",
+        status: "open",
+        createdAt: now,
+        messages: []
+      };
+      thread.lastMessageAt = now;
+      thread.status = role === "admin" ? "answered" : "open";
+      thread.messages = [...(thread.messages || []), {
+        id: `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        senderRole: role === "admin" ? "admin" : role,
+        body,
+        createdAt: now
+      }];
+      upsertStoredSupportThread(thread);
+      return thread;
+    }
+
+    async function loadLiveSupportThreads() {
+      if (!authSession?.accessToken || (!isCustomerSession() && !isDancerSession())) return;
+      try {
+        const data = await getAuthenticatedJson("/api/support");
+        liveSupportThreads = data.threads || [];
+      } catch {
+        liveSupportThreads = [];
+      }
+      renderSupportInbox(isDancerSession() ? "dancer" : "customer");
+    }
+
+    async function loadLiveAdminSupportThreads() {
+      if (!isAdminSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/admin/support");
+        liveAdminSupportThreads = data.threads || [];
+      } catch {
+        liveAdminSupportThreads = [];
+      }
+      renderAdminSupportInbox();
+    }
+
+    async function sendSupportMessage(role, subject, body, threadId = "") {
+      const status = document.getElementById(`${role}SupportStatus`);
+      if (!body.trim()) {
+        if (status) status.textContent = "Enter a message before sending.";
+        return;
+      }
+      try {
+        if (authSession?.accessToken) {
+          const data = await postAuthenticatedJson("/api/support", { subject, message: body, threadId });
+          if (data?.thread) {
+            liveSupportThreads = [data.thread, ...liveSupportThreads.filter((thread) => thread.id !== data.thread.id)];
+          }
+        } else {
+          const thread = localSupportThread(role, subject, body, threadId);
+          liveSupportThreads = [thread, ...liveSupportThreads.filter((item) => item.id !== thread.id)];
+        }
+        if (status) status.textContent = "Message sent to admin.";
+        renderSupportInbox(role);
+      } catch (error) {
+        if (status) status.textContent = error.message || "Could not send message.";
+      }
+    }
+
+    async function sendAdminSupportReply(threadId, body) {
+      if (!body.trim()) {
+        showToast("Enter a reply first");
+        return;
+      }
+      try {
+        if (isAdminSession()) {
+          const data = await postAuthenticatedJson("/api/admin/support", { threadId, message: body });
+          if (data?.thread) liveAdminSupportThreads = [data.thread, ...liveAdminSupportThreads.filter((thread) => thread.id !== data.thread.id)];
+        } else {
+          const thread = localSupportThread("admin", "", body, threadId);
+          liveAdminSupportThreads = [thread, ...liveAdminSupportThreads.filter((item) => item.id !== thread.id)];
+        }
+        renderAdminSupportInbox();
+        showToast("Reply sent");
+      } catch (error) {
+        showToast(error.message || "Could not send reply");
+      }
+    }
+
     async function loadLiveAdminApprovals() {
       const status = document.getElementById("adminLiveStatus");
       if (!isAdminSession()) {
@@ -27362,6 +27614,7 @@
         } catch {
           liveAdminReports = [];
         }
+        await loadLiveAdminSupportThreads();
         const queue = approvalData.queue || [];
         const venues = venueData.venues || [];
         liveAdminSubscriptions = subscriptionData.subscriptions || [];
@@ -30461,6 +30714,8 @@
       loadLiveAccountState();
       loadLiveCustomerDashboardData();
       loadLiveNotifications();
+      loadLiveSupportThreads();
+      renderSupportInbox("customer");
     }
 
     function closeDashboard() {
@@ -30495,6 +30750,8 @@
       loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
       loadLiveNotifications();
+      loadLiveSupportThreads();
+      renderSupportInbox("dancer");
     }
 
     function closeDancerDashboard() {
@@ -31286,6 +31543,7 @@
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
       renderNotificationCenters();
+      renderSupportInbox("dancer");
       dancerDashboard.classList.toggle("is-approved", approved);
       dancerDashboard.classList.toggle("is-pending-approval", !approved);
       document.querySelectorAll("#dancerDashboard .approved-analytics").forEach((section) => {
@@ -31951,6 +32209,7 @@
         ? liveAdminReports.filter((report) => report.status === "open")
         : reportQueue.filter((report) => report.status === "Open");
       document.getElementById("adminReports").innerHTML = visibleReports.map(adminReportRow).join("") || '<div class="locked">No reported users or content.</div>';
+      renderAdminSupportInbox();
 
       document.getElementById("adminSubscriptions").innerHTML = liveAdminSubscriptions.length
         ? liveAdminSubscriptions.slice(0, 12).map(adminSubscriptionRow).join("")
@@ -32050,6 +32309,7 @@
         "adminVerification",
         "adminPhotos",
         "adminReports",
+        "adminSupportInbox",
         "adminSubscriptions",
         "adminShifts",
         "adminFeatured",
@@ -32107,6 +32367,7 @@
       dashTonightViewAll.hidden = workingTonight.length <= 5 || dashboardTonightExpanded;
       dashFollowedViewAll.hidden = followed.length <= 5 || dashboardFollowedExpanded;
       dashVenueViewAll.hidden = venues.length <= 5 || dashboardVenuesExpanded;
+      renderSupportInbox("customer");
       renderNotificationSettings();
       renderNotificationCenters();
     }
@@ -33099,6 +33360,7 @@
     });
 
     adminDashboard.addEventListener("click", (event) => {
+      if (handleSupportActionClick(event)) return;
       const contentReviewButton = event.target.closest("[data-admin-content-review]");
       if (contentReviewButton) {
         event.preventDefault();
@@ -33109,6 +33371,23 @@
       if (!button) return;
       const host = button.closest("[data-admin-profile], [data-admin-venue], [data-report]");
       runAdminAction(button.dataset.adminAction, host, button);
+    });
+
+    document.querySelectorAll("[data-support-form]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const role = form.dataset.supportForm;
+        const subject = document.getElementById(`${role}SupportSubject`)?.value.trim() || "";
+        const message = document.getElementById(`${role}SupportMessage`)?.value.trim() || "";
+        sendSupportMessage(role, subject, message).then(() => {
+          if (message) {
+            const subjectInput = document.getElementById(`${role}SupportSubject`);
+            const messageInput = document.getElementById(`${role}SupportMessage`);
+            if (subjectInput) subjectInput.value = "";
+            if (messageInput) messageInput.value = "";
+          }
+        });
+      });
     });
 
     document.querySelectorAll(".auth-tab").forEach((tab) => {
@@ -33506,6 +33785,7 @@
 
     customerDashboard.addEventListener("click", (event) => {
       if (handleNotificationCenterClick(event)) return;
+      if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       const statButton = event.target.closest("[data-dashboard-jump]");
       if (!statButton) return;
@@ -33544,6 +33824,7 @@
 
     customerDashboard.addEventListener("click", (event) => {
       if (handleNotificationCenterClick(event)) return;
+      if (handleSupportActionClick(event)) return;
       const cardVenueLink = event.target.closest("[data-card-venue]");
       if (cardVenueLink) {
         event.preventDefault();
@@ -33638,6 +33919,7 @@
 
     dancerDashboard.addEventListener("click", (event) => {
       if (handleNotificationCenterClick(event)) return;
+      if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
@@ -34005,6 +34287,8 @@
     loadLiveDiscovery(citySelect.value);
     if (isCustomerSession()) loadLiveCustomerDashboardData();
     if (authSession?.accessToken) loadLiveNotifications();
+    if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
+    if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume) openSharedProfileFromUrl();
   </script>

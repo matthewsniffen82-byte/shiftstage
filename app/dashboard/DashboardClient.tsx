@@ -18,6 +18,7 @@ type LoadState = {
   analytics?: Record<string, unknown> | null;
   deals?: Record<string, unknown> | null;
   reviews?: Array<Record<string, unknown>>;
+  supportThreads?: Array<Record<string, unknown>>;
   weeklyReport?: Record<string, unknown> | null;
   rankingEvents?: Array<Record<string, unknown>>;
   error?: string;
@@ -45,6 +46,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
         const account = await readJson("/api/account", authHeaders);
         const profile = await readJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders);
         const secondary = await readJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders);
+        const support = await readJson("/api/support", authHeaders);
         const [reviews, weeklyReport, rankingEvents] =
           role === "dancer"
             ? await Promise.all([
@@ -62,6 +64,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             analytics: secondary.analytics || null,
             deals: secondary.deals || null,
             reviews: reviews?.reviews || [],
+            supportThreads: support.threads || [],
             weeklyReport: weeklyReport?.report || null,
             rankingEvents: rankingEvents?.events || [],
           });
@@ -119,6 +122,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           </InfoPanel>
           <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
           <NotificationPanel />
+          <SupportInboxPanel initialThreads={state.supportThreads || []} />
 
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
           {role === "dancer" ? (
@@ -216,6 +220,129 @@ function NotificationPanel() {
           </button>
         ))}
         {!notifications.length ? <p>No notifications yet.</p> : null}
+      </div>
+      {status ? <p>{status}</p> : null}
+    </article>
+  );
+}
+
+function SupportInboxPanel({ initialThreads }: { initialThreads: Array<Record<string, unknown>> }) {
+  const [threads, setThreads] = useState(initialThreads);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    setThreads(initialThreads);
+  }, [initialThreads]);
+
+  async function sendMessage(payload: { message: string; subject?: string; threadId?: string }) {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return null;
+    }
+
+    const response = await fetch("/api/support", {
+      method: "POST",
+      headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send message.");
+    return data.thread;
+  }
+
+  async function startThread(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSending(true);
+    setStatus("");
+    try {
+      const thread = await sendMessage({ subject, message });
+      if (thread) setThreads((current) => [thread, ...current.filter((item) => String(item.id) !== String(thread.id))]);
+      setSubject("");
+      setMessage("");
+      setStatus("Message sent to admin.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to send message.");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function replyToThread(threadId: string) {
+    const body = (replyByThread[threadId] || "").trim();
+    if (!body) {
+      setStatus("Enter a reply first.");
+      return;
+    }
+
+    setStatus("");
+    try {
+      const thread = await sendMessage({ threadId, message: body });
+      if (thread) setThreads((current) => [thread, ...current.filter((item) => String(item.id) !== String(thread.id))]);
+      setReplyByThread((current) => ({ ...current, [threadId]: "" }));
+      setStatus("Reply sent to admin.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to send reply.");
+    }
+  }
+
+  return (
+    <article className="info-panel support-panel">
+      <h2>Contact Admin</h2>
+      <form onSubmit={startThread}>
+        <label>
+          Subject
+          <input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="What do you need help with?" required />
+        </label>
+        <label>
+          Message
+          <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={4} placeholder="Write your message to admin" required />
+        </label>
+        <button type="submit" disabled={isSending}>
+          {isSending ? "Sending..." : "Send to admin"}
+        </button>
+      </form>
+      <div className="support-thread-list">
+        {threads.slice(0, 6).map((thread) => {
+          const threadId = String(thread.id || "");
+          const messages = Array.isArray(thread.messages) ? thread.messages as Array<Record<string, unknown>> : [];
+          return (
+            <details className="support-thread" key={threadId} open={threads.length === 1}>
+              <summary>
+                <span>
+                  <strong>{String(thread.subject || "Admin conversation")}</strong>
+                  <small>{String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
+                </span>
+              </summary>
+              <div className="support-message-list">
+                {messages.map((item) => (
+                  <div className={String(item.senderRole) === "admin" ? "support-message from-admin" : "support-message"} key={String(item.id)}>
+                    <strong>{String(item.senderRole) === "admin" ? "Admin" : "You"}</strong>
+                    <p>{String(item.body || "")}</p>
+                    <small>{formatDate(item.createdAt)}</small>
+                  </div>
+                ))}
+              </div>
+              <label>
+                Reply
+                <textarea
+                  value={replyByThread[threadId] || ""}
+                  onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
+                  rows={3}
+                  placeholder="Reply to admin"
+                />
+              </label>
+              <button type="button" onClick={() => replyToThread(threadId)}>
+                Send reply
+              </button>
+            </details>
+          );
+        })}
+        {!threads.length ? <p>No admin messages yet.</p> : null}
       </div>
       {status ? <p>{status}</p> : null}
     </article>
@@ -1308,6 +1435,13 @@ function dashboardName(profile: Record<string, unknown> | null | undefined, role
   return "";
 }
 
+function formatDate(value: unknown) {
+  if (typeof value !== "string" || !value) return "recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
 function DashboardStyles() {
   return (
     <style>{`
@@ -1336,7 +1470,7 @@ function DashboardStyles() {
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button, .share-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled, .socials-panel button:disabled { opacity: .62; cursor: wait; }
       .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p, .socials-panel p, .share-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel { grid-column: span 3; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -1390,6 +1524,22 @@ function DashboardStyles() {
       .notification-row.read { opacity: .58; }
       .notification-row span { color: #b9accd; }
       .notification-panel p { color: #94e5ff; font-size: 14px; }
+      .support-panel form, .support-thread { display: grid; gap: 10px; }
+      .support-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .support-panel input, .support-panel textarea { border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .support-panel input { min-height: 42px; }
+      .support-panel textarea { resize: vertical; }
+      .support-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .support-panel button:disabled { opacity: .62; cursor: wait; }
+      .support-thread-list { display: grid; gap: 10px; }
+      .support-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .support-thread summary { cursor: pointer; color: #fff; font-weight: 900; }
+      .support-thread summary span { display: grid; gap: 3px; }
+      .support-thread small { color: #b9accd; font-size: 12px; }
+      .support-message-list { display: grid; gap: 8px; }
+      .support-message { display: grid; gap: 4px; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .support-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
+      .support-message p, .support-panel p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .deal-panel { grid-column: span 2; }
@@ -1398,7 +1548,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .deal-panel, .locked-analytics-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

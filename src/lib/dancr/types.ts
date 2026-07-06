@@ -23,6 +23,7 @@ export type NotificationType =
   | "shift_cancelled"
   | "ranking_milestone"
   | "approval_status"
+  | "support_message"
   | "weekly_summary";
 
 export type Database = {
