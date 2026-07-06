@@ -24508,8 +24508,8 @@
         </div>
         <div class="auth-card">
           <h3>Approval status</h3>
-          <div class="lock-row">Dancr reviews profile details, photos, ID/selfie, and proof that you dance before the public profile goes live.</div>
-          <div class="lock-row">Rejected profiles stay private. Dancer accounts are free while launch access is open.</div>
+          <div class="lock-row" id="dancerApprovalStatusPrimary">Complete the four verification steps so Dancr can review your profile.</div>
+          <div class="lock-row" id="dancerApprovalStatusSecondary">You will be notified by email and site notifications when review is complete.</div>
         </div>
         <div class="auth-card account-control-card" data-account-panel="dancer">
           <div class="account-control-head">
@@ -30696,13 +30696,13 @@
         verification: "Start verification",
         approval: "Platform review"
       };
-      document.getElementById("dancerApprovalStatus").textContent = dancerSetup.approval ? "Approved" : "Pending";
       const dancerName = activeDancerName();
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
       const approved = dancerSetup.approval || activeProfile?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved";
       const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
+      const approvalStateLabel = approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
@@ -30722,13 +30722,24 @@
         approvalCommand.classList.toggle("approved", approved);
         approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       }
+      document.getElementById("dancerApprovalStatus").textContent = approvalStateLabel;
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
-      document.getElementById("dancerApprovalTitle").textContent = approved ? "Approved. Start posting shifts." : "Finish verification to go live";
+      document.getElementById("dancerApprovalTitle").textContent = approved
+        ? "Approved. Start posting shifts."
+        : reviewSubmitted
+          ? "Submitted for Dancr review"
+          : "Finish verification to go live";
       document.getElementById("dancerApprovalCopy").textContent = approved
         ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
-        : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
+        : reviewSubmitted
+          ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email or site notifications when review is complete."
+          : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
-      document.getElementById("dancerApprovalNext").textContent = approved ? "Ready to post shifts" : `Next: ${nextLabels[nextStep] || "Approval"}`;
+      document.getElementById("dancerApprovalNext").textContent = approved
+        ? "Ready to post shifts"
+        : reviewSubmitted
+          ? "Waiting for review"
+          : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
         approvalExpand.textContent = approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
@@ -30741,6 +30752,23 @@
       document.getElementById("dancerPublicDetail").textContent = approved
         ? "Customers can discover this profile, follow it, view schedules, and request venue directions."
         : "Your dancer account is free. Public discovery, gallery, and shift posting unlock after Dancr approves your verification.";
+      const approvalStatusPrimary = document.getElementById("dancerApprovalStatusPrimary");
+      const approvalStatusSecondary = document.getElementById("dancerApprovalStatusSecondary");
+      if (approvalStatusPrimary && approvalStatusSecondary) {
+        if (approved) {
+          approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
+          approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
+        } else if (reviewSubmitted) {
+          approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
+          approvalStatusSecondary.textContent = "You will be notified by email and site notifications when review is complete.";
+        } else if (readyForReview) {
+          approvalStatusPrimary.textContent = "Ready for review. Tap Submit for review in Step 4 when everything looks correct.";
+          approvalStatusSecondary.textContent = "After submission, Dancr will notify you by email and site notifications.";
+        } else {
+          approvalStatusPrimary.textContent = "Complete profile, photos, and verification before submitting for Dancr review.";
+          approvalStatusSecondary.textContent = "Public discovery and shift posting unlock after approval.";
+        }
+      }
       document.getElementById("dancerFollowerStat").textContent = activeProfile
         ? followerNumber(activeProfile, city).toLocaleString()
         : "0";
