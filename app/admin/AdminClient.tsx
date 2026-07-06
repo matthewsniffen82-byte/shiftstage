@@ -945,7 +945,8 @@ function AdminStyles() {
   return (
     <style>{`
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .admin-shell { min-height: 100vh; padding: 22px clamp(16px, 4vw, 56px) 56px; background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
+      * { box-sizing: border-box; min-width: 0; }
+      .admin-shell { min-height: 100vh; padding: 22px clamp(12px, 4vw, 56px) 56px; background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); overflow-x: hidden; }
       .top-nav, .admin-head, .admin-grid, .sign-in { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .top-nav { margin-bottom: 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #cfc5de; }
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
@@ -953,11 +954,11 @@ function AdminStyles() {
       .nav-links a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); font-weight: 850; }
       .admin-head { display: grid; gap: 14px; margin-bottom: 24px; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
-      h1 { margin: 0; font-size: clamp(40px, 7vw, 76px); line-height: .94; letter-spacing: 0; }
-      h2 { margin: 0; font-size: 22px; }
-      p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
+      h1 { margin: 0; font-size: clamp(32px, 8vw, 76px); line-height: .94; letter-spacing: 0; overflow-wrap: anywhere; }
+      h2 { margin: 0; font-size: clamp(18px, 4vw, 22px); line-height: 1.15; overflow-wrap: anywhere; }
+      p { margin: 0; color: #cfc5de; font-size: clamp(14px, 3.8vw, 18px); line-height: 1.45; max-width: 58ch; overflow-wrap: anywhere; }
       .admin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-      .admin-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
+      .admin-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: clamp(12px, 2.8vw, 16px); display: grid; gap: 14px; overflow: hidden; }
       .admin-panel > div { display: grid; gap: 10px; }
       .sign-in { max-width: 430px; }
       .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
@@ -970,18 +971,18 @@ function AdminStyles() {
       .password-control button { position: absolute; right: 8px; width: 30px; height: 30px; min-height: 30px; border: 0; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; color: #d8cfeb; background: rgba(255,255,255,.055); cursor: pointer; }
       .password-control button[aria-pressed="true"], .password-control button:hover { color: #fff; background: rgba(155,92,255,.18); box-shadow: 0 0 16px rgba(155,92,255,.18); }
       .password-control svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
+      button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; white-space: normal; line-height: 1.15; }
       button:disabled { opacity: .62; cursor: wait; }
       .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .metric { min-height: 54px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span, .empty { color: #b9accd; font-size: 13px; font-weight: 850; }
-      .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
+      .metric strong { color: #fff; font-size: clamp(17px, 4.4vw, 20px); overflow-wrap: anywhere; }
       ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
       li { color: #d8cfeb; overflow-wrap: anywhere; }
       .approval-list { display: grid; gap: 12px; }
       .approval-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
-      .approval-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .approval-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
       .approval-summary span { display: grid; gap: 2px; min-width: 0; }
       .approval-summary small { color: #b9accd; font-size: 12px; font-weight: 850; overflow-wrap: anywhere; }
       .approval-row span { color: #b9accd; }
@@ -1017,7 +1018,7 @@ function AdminStyles() {
       .venue-manager button { color: #090911; background: #f7f2ff; padding: 0 12px; }
       .venue-manager p { color: #94e5ff; font-size: 14px; }
       .venue-list { display: grid; gap: 8px; }
-      .venue-admin-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .venue-admin-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); overflow: hidden; }
       .venue-admin-row span { display: grid; gap: 3px; }
       .venue-admin-row small { color: #b9accd; }
       .venue-admin-row em { color: #94e5ff; font-style: normal; font-weight: 850; }
@@ -1044,7 +1045,15 @@ function AdminStyles() {
       .deal-activity-row em { color: #94e5ff; font-size: 13px; font-style: normal; font-weight: 850; }
       .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (max-width: 680px) { .admin-grid, .venue-admin-row, .deal-filters { grid-template-columns: 1fr; } .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
+      @media (max-width: 680px) {
+        .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid { grid-template-columns: 1fr; }
+        .top-nav { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
+        .nav-links { justify-content: flex-start; }
+        .approval-summary { display: grid; grid-template-columns: 1fr; }
+        .approval-actions, .report-row div { display: grid; grid-template-columns: 1fr; }
+        .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
+        .admin-head { gap: 10px; margin-bottom: 18px; }
+      }
     `}</style>
   );
 }

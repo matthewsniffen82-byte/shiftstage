@@ -2882,6 +2882,146 @@
       line-height: 1.28;
     }
 
+    #adminDashboard.dashboard-wide {
+      width: min(100%, 720px);
+    }
+
+    #adminDashboard,
+    #adminDashboard * {
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    #adminDashboard .modal-body {
+      gap: 12px;
+      padding-inline: clamp(10px, 3vw, 16px);
+    }
+
+    #adminDashboard .auth-card,
+    #adminDashboard .admin-item,
+    #adminDashboard .info-tile,
+    #adminDashboard .metric-card,
+    #adminDashboard .value-message,
+    #adminDashboard .lock-row {
+      max-width: 100%;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      border-radius: 12px;
+    }
+
+    #adminDashboard .auth-card,
+    #adminDashboard .admin-item {
+      gap: 10px;
+      padding: 12px;
+    }
+
+    #adminDashboard h3,
+    #adminDashboard .admin-item h3,
+    #adminDashboard .section-title {
+      font-size: clamp(15px, 4.6vw, 18px);
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    #adminDashboard .meta,
+    #adminDashboard .locked,
+    #adminDashboard .lock-row,
+    #adminDashboard .info-tile,
+    #adminDashboard .value-message {
+      font-size: 12px;
+      line-height: 1.32;
+    }
+
+    #adminDashboard .row,
+    #adminDashboard summary.row {
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    #adminDashboard summary.row {
+      cursor: pointer;
+      list-style-position: inside;
+    }
+
+    #adminDashboard .badge,
+    #adminDashboard .pill {
+      flex: 0 1 auto;
+      max-width: 44%;
+      min-height: 28px;
+      padding-inline: 9px;
+      font-size: 10px;
+      white-space: normal;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    #adminDashboard .admin-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #adminDashboard .admin-actions .action-btn,
+    #adminDashboard .admin-item > .action-btn {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 10px;
+      white-space: normal;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    #adminDashboard .photo-upload-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #adminDashboard .upload-slot {
+      min-height: 84px;
+      padding: 9px;
+      width: 100%;
+      overflow: hidden;
+      font-size: 11px;
+    }
+
+    #adminDashboard .submitted-photo-slot img {
+      max-width: 100%;
+      width: 100%;
+      aspect-ratio: 1;
+    }
+
+    @media (max-width: 560px) {
+      #adminDashboard.dashboard-wide {
+        width: 100%;
+      }
+
+      #adminDashboard .modal-body {
+        padding: 10px 9px 18px;
+      }
+
+      #adminDashboard .dashboard-stats,
+      #adminDashboard .metric-grid,
+      #adminDashboard .admin-actions,
+      #adminDashboard .photo-upload-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #adminDashboard .row,
+      #adminDashboard summary.row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      #adminDashboard .badge,
+      #adminDashboard .pill {
+        max-width: 100%;
+        justify-self: start;
+      }
+
+      #adminDashboard .upload-slot {
+        min-height: 66px;
+      }
+    }
+
     .toast {
       position: fixed;
       left: 50%;
