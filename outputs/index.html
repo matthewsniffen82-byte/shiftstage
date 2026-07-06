@@ -2317,13 +2317,33 @@
     }
 
     .admin-login {
-      padding: 0;
-      border: 0;
-      color: var(--muted);
-      background: transparent;
-      text-align: left;
-      font-size: 12px;
-      font-weight: 800;
+      width: 100%;
+      min-height: 54px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border: 1px solid rgba(53,216,255,.64);
+      border-radius: 16px;
+      color: #f7f4fb;
+      background: linear-gradient(135deg, rgba(4,91,105,.95), rgba(83,48,124,.86));
+      box-shadow: 0 0 24px rgba(53,216,255,.24), 0 16px 42px rgba(0,0,0,.38);
+      text-align: center;
+      font-size: 15px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .admin-login:hover,
+    .admin-login:focus-visible {
+      border-color: rgba(148,229,255,.9);
+      box-shadow: 0 0 30px rgba(53,216,255,.34), 0 18px 46px rgba(0,0,0,.44);
+      outline: none;
+    }
+
+    .admin-login:disabled {
+      opacity: .62;
+      cursor: wait;
     }
 
     .switch {
