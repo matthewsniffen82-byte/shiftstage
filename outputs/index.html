@@ -32607,6 +32607,16 @@
         .find((input) => input.dataset.reviewReason === key);
     }
 
+    function markAdminReviewButton(button, status) {
+      if (!button) return;
+      button.textContent = status === "approved" ? "Approved" : "Disapproved";
+      button.disabled = true;
+      const actions = button.closest(".admin-review-actions, .admin-actions");
+      actions?.querySelectorAll("button").forEach((item) => {
+        if (item !== button) item.disabled = true;
+      });
+    }
+
     function applyLocalAdminContentReview(profile, targetType, targetId, status, notes) {
       const reviewedAt = new Date().toISOString();
       if (targetType === "photo") {
@@ -32658,8 +32668,11 @@
         return;
       }
 
+      const originalText = button.textContent;
       button.disabled = true;
+      button.textContent = "Saving...";
       applyLocalAdminContentReview(profileMatch.profile, targetType, targetId, status, notes);
+      markAdminReviewButton(button, status);
       if (status === "rejected") {
         addLocalDancerReviewNotification(profileMatch.profile, targetType, targetId, label, notes);
       }
@@ -32681,9 +32694,14 @@
         }
         showToast(status === "approved" ? `${label} approved` : `${label} disapproved`);
       } catch (error) {
+        button.textContent = originalText;
+        button.disabled = false;
+        button.closest(".admin-review-actions")?.querySelectorAll("button").forEach((item) => {
+          item.disabled = false;
+        });
         showToast(error.message || "Could not save content review");
       } finally {
-        button.disabled = false;
+        if (button.textContent === "Saving...") button.disabled = false;
       }
     }
 
@@ -32747,13 +32765,14 @@
           showToast(`Review pending items first: ${pendingItems.join(", ")}`);
           return;
         }
+        markAdminReviewButton(button, "approved");
         unlockApprovedDancerProfile(profileMatch.profile);
         if (activeDancerProfile(profileMatch.city)?.id === profileMatch.profile.id || activeDancerProfile(profileMatch.city)?.name === profileMatch.profile.name) {
           Object.assign(dancerSetup, { profile: true, photos: true, verification: true, approval: true });
           setupChecklistExpanded = false;
           activeSetupStep = "";
         }
-        refreshAfterAdminAction(`${profileMatch.profile.name} approved`);
+        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name} approved`), 700);
         saveLiveAdminReview(profileMatch.profile, "approved");
         return;
       }
@@ -32763,9 +32782,10 @@
           showToast(`Review pending items first: ${pendingItems.join(", ")}`);
           return;
         }
+        markAdminReviewButton(button, "rejected");
         profileMatch.profile.status = "Rejected";
         profileMatch.profile.hidden = true;
-        refreshAfterAdminAction(`${profileMatch.profile.name} rejected and hidden`);
+        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name} disapproved and hidden`), 700);
         saveLiveAdminReview(profileMatch.profile, "rejected");
         return;
       }

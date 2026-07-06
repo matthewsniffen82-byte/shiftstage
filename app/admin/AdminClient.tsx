@@ -767,6 +767,8 @@ function ApprovalQueue({
       return;
     }
 
+    setStatusById((current) => ({ ...current, [dancerId]: status === "approved" ? "Approved." : "Disapproved." }));
+    await new Promise((resolve) => window.setTimeout(resolve, 700));
     onReviewed(dancerId);
   }
 
@@ -780,6 +782,9 @@ function ApprovalQueue({
         const isOpen = Boolean(openById[dancerId]);
         const pendingItems = pendingSubmittedContent(item);
         const hasPendingItems = pendingItems.length > 0;
+        const reviewStatus = statusById[dancerId] || "";
+        const profileApproved = reviewStatus === "Approved.";
+        const profileDisapproved = reviewStatus === "Disapproved.";
         return (
           <div className="approval-row" key={dancerId}>
             <div className="approval-summary">
@@ -805,13 +810,13 @@ function ApprovalQueue({
             />
             <div className="approval-actions">
               <button type="button" onClick={() => reviewProfile(dancerId, "approved")} disabled={hasPendingItems}>
-                Approve
+                {profileApproved ? "Approved" : "Approve"}
               </button>
               <button type="button" onClick={() => reviewProfile(dancerId, "rejected")} disabled={hasPendingItems}>
-                Reject
+                {profileDisapproved ? "Disapproved" : "Disapprove"}
               </button>
             </div>
-            {statusById[dancerId] ? <p>{statusById[dancerId]}</p> : null}
+            {reviewStatus ? <p>{reviewStatus}</p> : null}
           </div>
         );
       })}
@@ -899,6 +904,8 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const key = `photo:${targetId}`;
               const status = statusByKey[key] || asText(photo.reviewStatus || photo.review_status) || "pending";
               const reason = asText(photo.reviewNotes || photo.review_notes);
+              const isApproved = status === "Approved." || status === "approved";
+              const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
               return (
                 <div className="submission-review-card" key={photoId || index}>
                   <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer">
@@ -915,10 +922,10 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
                     <button type="button" onClick={() => reviewContent("photo", targetId, "approved", `Photo ${index + 1}`)}>
-                      Approve picture
+                      {isApproved ? "Approved" : "Approve picture"}
                     </button>
                     <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", `Photo ${index + 1}`)}>
-                      Save disapproval
+                      {isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
                 </div>
@@ -941,6 +948,8 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const key = `verification_document:${targetId}`;
               const status = statusByKey[key] || asText(document.status) || "pending review";
               const reason = asText(document.reviewNotes || document.review_notes);
+              const isApproved = status === "Approved." || status === "approved";
+              const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
               return (
                 <div className="submission-review-card" key={targetId || index}>
                   <a className="submission-link" href={fileUrl || "#"} target="_blank" rel="noreferrer">
@@ -957,10 +966,10 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
                     <button type="button" onClick={() => reviewContent("verification_document", targetId, "approved", label)} disabled={!targetId}>
-                      Approve file
+                      {isApproved ? "Approved" : "Approve file"}
                     </button>
                     <button className="secondary-action" type="button" onClick={() => reviewContent("verification_document", targetId, "rejected", label)} disabled={!targetId}>
-                      Save disapproval
+                      {isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
                 </div>
@@ -981,6 +990,8 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const key = `social_link:${targetId}`;
               const status = statusByKey[key] || asText(social.reviewStatus) || "pending";
               const reason = asText(social.reviewNotes);
+              const isApproved = status === "Approved." || status === "approved";
+              const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
               return (
                 <div className="submitted-social-review" key={targetId || `${social.platform}-${index}`}>
                   <a
@@ -1002,10 +1013,10 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   />
                   <div className="content-review-actions">
                     <button type="button" onClick={() => reviewContent("social_link", targetId, "approved", social.label)} disabled={!targetId}>
-                      Approve social
+                      {isApproved ? "Approved" : "Approve social"}
                     </button>
                     <button className="secondary-action" type="button" onClick={() => reviewContent("social_link", targetId, "rejected", social.label)} disabled={!targetId}>
-                      Save disapproval
+                      {isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
                 </div>
