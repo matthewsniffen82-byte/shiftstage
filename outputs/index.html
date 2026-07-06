@@ -2975,6 +2975,45 @@
       gap: 8px;
     }
 
+    #adminDashboard .admin-submission-review {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      background: rgba(255,255,255,.035);
+      overflow: hidden;
+    }
+
+    #adminDashboard .admin-submission-review textarea {
+      width: 100%;
+      min-height: 70px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(3,3,7,.62);
+      color: var(--text);
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 12px;
+    }
+
+    #adminDashboard .admin-review-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #adminDashboard .admin-review-actions .action-btn {
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 9px;
+      font-size: 11px;
+      line-height: 1.15;
+      white-space: normal;
+    }
+
     #adminDashboard .upload-slot {
       min-height: 84px;
       padding: 9px;
@@ -3001,6 +3040,7 @@
       #adminDashboard .dashboard-stats,
       #adminDashboard .metric-grid,
       #adminDashboard .admin-actions,
+      #adminDashboard .admin-review-actions,
       #adminDashboard .photo-upload-grid {
         grid-template-columns: 1fr;
       }
@@ -31330,10 +31370,26 @@
     function adminSubmittedDocumentsMarkup(profile) {
       const documents = profile.verificationDocuments || [];
       if (!documents.length) return '<div class="locked">No verification files submitted.</div>';
-      return documents.map((document) => {
+      return documents.map((document, index) => {
         const href = document.fileUrl || document.file_url || "#";
-        const label = document.displayName || document.display_name || document.name || "Verification file";
-        return `<a class="lock-row" href="${displayText(href)}" target="_blank" rel="noreferrer"><strong>${displayText(label)}</strong><span>${displayText(document.status || "pending review")}</span></a>`;
+        const label = document.displayName || document.display_name || document.name || ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
+        const targetId = document.storagePath || document.storage_path || document.name || href;
+        const key = `verification_document:${targetId}`;
+        return `
+          <div class="admin-submission-review">
+            <a class="lock-row" href="${displayText(href)}" target="_blank" rel="noreferrer">
+              <strong>${displayText(label)}</strong>
+              <span>${displayText(document.status || "pending review")}</span>
+              <span>Submitted by ${displayText(profile.name || "dancer")}</span>
+              ${document.reviewNotes || document.review_notes ? `<span>Reason: ${displayText(document.reviewNotes || document.review_notes)}</span>` : ""}
+            </a>
+            <textarea data-review-reason="${displayText(key)}" placeholder="Reason if not approved"></textarea>
+            <div class="admin-review-actions">
+              <button class="action-btn" data-admin-content-review="approved" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Approve file</button>
+              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Disapprove file</button>
+            </div>
+          </div>
+        `;
       }).join("");
     }
 
@@ -31344,7 +31400,23 @@
       if (!photos.length) return '<div class="locked">No photos submitted.</div>';
       return photos.slice(0, 6).map((photo, index) => {
         const imageUrl = photo.imageUrl || photo.image_url || "";
-        return `<a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" target="_blank" rel="noreferrer">${imageUrl ? `<img src="${displayText(imageUrl)}" alt="Submitted dancer photo ${index + 1}">` : `Photo ${index + 1}`}<span>${displayText(photo.reviewStatus || photo.review_status || "pending")}</span></a>`;
+        const targetId = photo.id || `${profile.id || profile.name}-photo-${index}`;
+        const key = `photo:${targetId}`;
+        return `
+          <div class="admin-submission-review">
+            <a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" target="_blank" rel="noreferrer">
+              ${imageUrl ? `<img src="${displayText(imageUrl)}" alt="Submitted dancer photo ${index + 1}">` : `Photo ${index + 1}`}
+              <span>${displayText(photo.reviewStatus || photo.review_status || "pending")}</span>
+              <span>Submitted by ${displayText(profile.name || "dancer")}</span>
+              ${photo.reviewNotes || photo.review_notes ? `<span>Reason: ${displayText(photo.reviewNotes || photo.review_notes)}</span>` : ""}
+            </a>
+            <textarea data-review-reason="${displayText(key)}" placeholder="Reason if not approved"></textarea>
+            <div class="admin-review-actions">
+              <button class="action-btn" data-admin-content-review="approved" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" ${photo.id ? "" : "disabled"}>Approve picture</button>
+              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" ${photo.id ? "" : "disabled"}>Disapprove picture</button>
+            </div>
+          </div>
+        `;
       }).join("");
     }
 
@@ -31702,6 +31774,77 @@
         loadLiveAdminApprovals();
         refreshPublicDiscoveryAfterAdminReview(profile, status);
       }).catch((error) => showToast(error.message || "Could not save live review"));
+    }
+
+    function findAdminReviewReason(host, key) {
+      return Array.from(host?.querySelectorAll("[data-review-reason]") || [])
+        .find((input) => input.dataset.reviewReason === key);
+    }
+
+    function applyLocalAdminContentReview(profile, targetType, targetId, status, notes) {
+      const reviewedAt = new Date().toISOString();
+      if (targetType === "photo") {
+        const photo = (profile.submittedPhotos || []).find((item) => String(item.id || "") === targetId);
+        if (photo) {
+          photo.reviewStatus = status;
+          photo.reviewNotes = notes;
+          photo.reviewedAt = reviewedAt;
+        }
+      }
+      if (targetType === "verification_document") {
+        const document = (profile.verificationDocuments || []).find((item) =>
+          [item.storagePath, item.storage_path, item.name, item.fileUrl, item.file_url].map((value) => String(value || "")).includes(targetId)
+        );
+        if (document) {
+          document.status = status;
+          document.reviewNotes = notes;
+          document.reviewedAt = reviewedAt;
+        }
+      }
+    }
+
+    async function reviewAdminSubmittedContent(button) {
+      const host = button.closest("[data-admin-profile]");
+      const profileMatch = adminProfileFromNode(host);
+      if (!profileMatch) return;
+
+      const status = button.dataset.adminContentReview;
+      const targetType = button.dataset.reviewType;
+      const targetId = button.dataset.reviewTarget || "";
+      const label = button.dataset.reviewLabel || "Submitted item";
+      const reasonInput = findAdminReviewReason(host, button.dataset.reviewKey || `${targetType}:${targetId}`);
+      const notes = reasonInput?.value.trim() || "";
+
+      if (status === "rejected" && !notes) {
+        showToast("Add a reason before disapproving this item");
+        if (reasonInput) reasonInput.focus();
+        return;
+      }
+
+      button.disabled = true;
+      applyLocalAdminContentReview(profileMatch.profile, targetType, targetId, status, notes);
+
+      try {
+        if (isAdminSession() && profileMatch.profile.id) {
+          await postAuthenticatedJson("/api/admin/approvals", {
+            action: "review_content",
+            dancerId: profileMatch.profile.id,
+            targetType,
+            targetId,
+            status,
+            notes,
+            label
+          });
+          await loadLiveAdminApprovals();
+        } else {
+          renderAdminDashboard();
+        }
+        showToast(status === "approved" ? `${label} approved` : `${label} disapproved`);
+      } catch (error) {
+        showToast(error.message || "Could not save content review");
+      } finally {
+        button.disabled = false;
+      }
     }
 
     function saveLiveAdminVenueRemoval(venue) {
@@ -32534,6 +32677,12 @@
     });
 
     adminDashboard.addEventListener("click", (event) => {
+      const contentReviewButton = event.target.closest("[data-admin-content-review]");
+      if (contentReviewButton) {
+        event.preventDefault();
+        reviewAdminSubmittedContent(contentReviewButton);
+        return;
+      }
       const button = event.target.closest("[data-admin-action]");
       if (!button) return;
       const host = button.closest("[data-admin-profile], [data-admin-venue], [data-report]");

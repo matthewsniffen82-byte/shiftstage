@@ -726,6 +726,51 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
   const socials = normalizeSubmissionSocials(item);
   const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
   const reviews = asRecordArray(item.reviews);
+  const dancerId = asText(item.id);
+  const submittedBy = asText(item.stageName || item.stage_name) || asText(item.realName || item.real_name) || "this dancer";
+  const [reasonByKey, setReasonByKey] = useState<Record<string, string>>({});
+  const [statusByKey, setStatusByKey] = useState<Record<string, string>>({});
+
+  async function reviewContent(
+    targetType: "photo" | "verification_document",
+    targetId: string,
+    status: "approved" | "rejected",
+    label: string,
+  ) {
+    const key = `${targetType}:${targetId}`;
+    const notes = reasonByKey[key]?.trim() || "";
+    const token = readToken();
+    if (!token) {
+      setStatusByKey((current) => ({ ...current, [key]: "Admin sign in required." }));
+      return;
+    }
+    if (status === "rejected" && !notes) {
+      setStatusByKey((current) => ({ ...current, [key]: "Add a reason before disapproving this item." }));
+      return;
+    }
+
+    setStatusByKey((current) => ({ ...current, [key]: "Saving review..." }));
+    const response = await fetch("/api/admin/approvals", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "review_content",
+        dancerId,
+        targetType,
+        targetId,
+        status,
+        notes,
+        label,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatusByKey((current) => ({ ...current, [key]: data.error || "Unable to save this review." }));
+      return;
+    }
+
+    setStatusByKey((current) => ({ ...current, [key]: status === "approved" ? "Approved." : "Disapproved with reason saved." }));
+  }
 
   return (
     <div className="submission-detail">
@@ -750,11 +795,33 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
           <div className="submission-media-grid">
             {photos.map((photo, index) => {
               const imageUrl = asText(photo.imageUrl || photo.image_url);
+              const photoId = asText(photo.id);
+              const targetId = photoId || `${dancerId}-photo-${index}`;
+              const key = `photo:${targetId}`;
+              const status = statusByKey[key] || asText(photo.reviewStatus || photo.review_status) || "pending";
+              const reason = asText(photo.reviewNotes || photo.review_notes);
               return (
-                <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer" key={asText(photo.id) || index}>
-                  {imageUrl ? <img src={imageUrl} alt={`Submitted dancer photo ${index + 1}`} /> : <span>No image URL</span>}
-                  <small>{asText(photo.reviewStatus || photo.review_status) || "pending"}</small>
-                </a>
+                <div className="submission-review-card" key={photoId || index}>
+                  <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer">
+                    {imageUrl ? <img src={imageUrl} alt={`Submitted dancer photo ${index + 1}`} /> : <span>No image URL</span>}
+                    <small>{status}</small>
+                  </a>
+                  <small>Submitted by {submittedBy}</small>
+                  {reason ? <small>Reason: {reason}</small> : null}
+                  <textarea
+                    placeholder="Reason if not approved"
+                    value={reasonByKey[key] || ""}
+                    onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
+                  />
+                  <div className="content-review-actions">
+                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", `Photo ${index + 1}`)} disabled={!photoId}>
+                      Approve picture
+                    </button>
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", `Photo ${index + 1}`)} disabled={!photoId}>
+                      Disapprove picture
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -769,11 +836,33 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
           <div className="submission-files">
             {documents.map((document, index) => {
               const fileUrl = asText(document.fileUrl || document.file_url);
+              const targetId = asText(document.storagePath || document.storage_path);
+              const label = verificationDocumentLabel(document, index);
+              const key = `verification_document:${targetId}`;
+              const status = statusByKey[key] || asText(document.status) || "pending review";
+              const reason = asText(document.reviewNotes || document.review_notes);
               return (
-                <a className="submission-link" href={fileUrl || "#"} target="_blank" rel="noreferrer" key={asText(document.storagePath || document.storage_path) || index}>
-                  <strong>{asText(document.name) || "Verification file"}</strong>
-                  <small>{asText(document.status) || "pending review"}</small>
-                </a>
+                <div className="submission-review-card" key={targetId || index}>
+                  <a className="submission-link" href={fileUrl || "#"} target="_blank" rel="noreferrer">
+                    <strong>{label}</strong>
+                    <small>{status}</small>
+                  </a>
+                  <small>Submitted by {submittedBy}</small>
+                  {reason ? <small>Reason: {reason}</small> : null}
+                  <textarea
+                    placeholder="Reason if not approved"
+                    value={reasonByKey[key] || ""}
+                    onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
+                  />
+                  <div className="content-review-actions">
+                    <button type="button" onClick={() => reviewContent("verification_document", targetId, "approved", label)} disabled={!targetId}>
+                      Approve file
+                    </button>
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("verification_document", targetId, "rejected", label)} disabled={!targetId}>
+                      Disapprove file
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -824,6 +913,12 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
       </details>
     </div>
   );
+}
+
+function verificationDocumentLabel(document: Record<string, unknown>, index: number) {
+  const existing = asText(document.displayName || document.display_name || document.documentType || document.document_type || document.name);
+  if (existing) return existing;
+  return ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
 }
 
 function normalizeSubmissionSocials(item: Record<string, unknown>) {
@@ -1052,6 +1147,11 @@ function AdminStyles() {
       .submission-files { display: grid; gap: 8px; }
       .submission-link { display: grid; gap: 3px; padding: 10px; }
       .submission-link strong { overflow-wrap: anywhere; }
+      .submission-review-card { display: grid; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
+      .submission-review-card > small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .submission-review-card textarea { width: 100%; min-height: 68px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
+      .content-review-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .content-review-actions button { min-height: 38px; padding: 0 10px; font-size: 12px; }
       .submission-empty { color: #9c90b3; font-size: 13px; }
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }
@@ -1095,7 +1195,7 @@ function AdminStyles() {
         .top-nav { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }
         .approval-summary { display: grid; grid-template-columns: 1fr; }
-        .approval-actions, .report-row div { display: grid; grid-template-columns: 1fr; }
+        .approval-actions, .report-row div, .content-review-actions { display: grid; grid-template-columns: 1fr; }
         .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
         .admin-head { gap: 10px; margin-bottom: 18px; }
       }

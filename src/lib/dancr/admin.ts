@@ -14,6 +14,16 @@ export type ReviewDancerInput = {
   notes?: string | null;
 };
 
+export type ReviewSubmissionContentInput = {
+  dancerId: string;
+  reviewerId: string;
+  targetType: "photo" | "verification_document";
+  targetId: string;
+  status: ReviewStatus;
+  notes?: string | null;
+  label?: string | null;
+};
+
 export type AdminVenueInput = {
   name?: string;
   slug?: string;
@@ -87,7 +97,9 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
   if (error) throw error;
 
   return Promise.all(
-    (data || []).map(async (row: any) => ({
+    (data || []).map(async (row: any) => {
+      const reviews = row.approval_reviews || [];
+      return {
       id: row.id,
       userId: row.user_id,
       realName: row.real_name,
@@ -108,17 +120,22 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
           url: social.url,
         })),
       photos: (row.dancer_photos || [])
-        .map((photo: any) => ({
-          id: photo.id,
-          imageUrl: toDancerPhotoUrl(client, photo.storage_path),
-          isPrimary: photo.is_primary,
-          reviewStatus: photo.review_status,
-          sortOrder: photo.sort_order,
-          createdAt: photo.created_at,
-        }))
+        .map((photo: any) => {
+          const review = latestReviewFor(reviews, contentReviewType("photo", photo.id));
+          return {
+            id: photo.id,
+            imageUrl: toDancerPhotoUrl(client, photo.storage_path),
+            isPrimary: photo.is_primary,
+            reviewStatus: review?.status || photo.review_status,
+            reviewNotes: review?.notes || null,
+            reviewedAt: review?.reviewed_at || null,
+            sortOrder: photo.sort_order,
+            createdAt: photo.created_at,
+          };
+        })
         .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-      verificationDocuments: await listVerificationDocumentsForUser(client, row.user_id),
-      reviews: (row.approval_reviews || []).map((review: any) => ({
+      verificationDocuments: await listVerificationDocumentsForUser(client, row.user_id, reviews),
+      reviews: reviews.map((review: any) => ({
         id: review.id,
         reviewType: review.review_type,
         status: review.status,
@@ -126,7 +143,8 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
         createdAt: review.created_at,
         reviewedAt: review.reviewed_at,
       })),
-    })),
+      };
+    }),
   );
 }
 
@@ -563,6 +581,79 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   };
 }
 
+export async function reviewSubmissionContent(client: DancrClient, input: ReviewSubmissionContentInput) {
+  if (!REVIEW_STATUSES.has(input.status)) {
+    throw new Error("Review status must be approved or rejected.");
+  }
+
+  const notes = optionalText(input.notes);
+  if (input.status === "rejected" && !notes) {
+    throw new Error("Add a reason before disapproving this submitted item.");
+  }
+
+  const reviewedAt = new Date().toISOString();
+  const db = client as any;
+  const { data: dancer, error: dancerError } = await db
+    .from("dancer_profiles")
+    .select("id, user_id, stage_name")
+    .eq("id", input.dancerId)
+    .maybeSingle();
+
+  if (dancerError) throw dancerError;
+  if (!dancer) throw new Error("Dancer profile not found.");
+
+  const reviewType = contentReviewType(input.targetType, input.targetId);
+  if (input.targetType === "photo") {
+    const { data: photo, error: photoError } = await db
+      .from("dancer_photos")
+      .update({ review_status: input.status })
+      .eq("id", input.targetId)
+      .eq("dancer_id", input.dancerId)
+      .select("id")
+      .maybeSingle();
+
+    if (photoError) throw photoError;
+    if (!photo) throw new Error("Submitted photo not found.");
+    await updatePhotoReviewSummary(client, input.dancerId);
+  } else {
+    const expectedPrefix = `${dancer.user_id}/verification/`;
+    if (!input.targetId.startsWith(expectedPrefix)) {
+      throw new Error("Verification file not found for this dancer.");
+    }
+  }
+
+  const { error: reviewError } = await db.from("approval_reviews").insert({
+    dancer_id: input.dancerId,
+    reviewer_id: input.reviewerId,
+    review_type: reviewType,
+    status: input.status,
+    notes,
+    reviewed_at: reviewedAt,
+  });
+
+  if (reviewError) throw reviewError;
+
+  if (input.targetType === "verification_document") {
+    await updateVerificationReviewSummary(client, dancer.user_id, input.dancerId);
+  }
+
+  await logAdminAction(client, {
+    adminId: input.reviewerId,
+    targetType: input.targetType,
+    targetId: input.dancerId,
+    action: input.status === "approved" ? "approve_submitted_content" : "reject_submitted_content",
+    notes: `${input.label || input.targetId}${notes ? `: ${notes}` : ""}`,
+  });
+
+  return {
+    dancerId: input.dancerId,
+    targetType: input.targetType,
+    targetId: input.targetId,
+    status: input.status,
+    reviewedAt,
+  };
+}
+
 function dancerApprovalNotificationCopy(stageName: string | null | undefined, approved: boolean, notes?: string | null) {
   const displayName = stageName?.trim() || "Your Dancr profile";
   if (approved) {
@@ -822,7 +913,7 @@ function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
 
-async function listVerificationDocumentsForUser(client: DancrClient, userId: string) {
+async function listVerificationDocumentsForUser(client: DancrClient, userId: string, reviews: any[] = []) {
   if (!userId) return [];
 
   const prefix = `${userId}/verification`;
@@ -838,19 +929,78 @@ async function listVerificationDocumentsForUser(client: DancrClient, userId: str
   return Promise.all(
     (data || [])
       .filter((document: any) => Boolean(document.name))
-      .map(async (document: any) => {
+      .map(async (document: any, index: number) => {
         const storagePath = `${prefix}/${document.name}`;
         const { data: signedData } = await bucket.createSignedUrl(storagePath, 60 * 60);
         const publicUrl = bucket.getPublicUrl(storagePath).data.publicUrl;
+        const review = latestReviewFor(reviews, contentReviewType("verification_document", storagePath));
+        const display = verificationDocumentDisplay(document.name, index);
 
         return {
           name: document.name,
+          documentType: display.documentType,
+          displayName: display.displayName,
           storagePath,
           fileUrl: signedData?.signedUrl || publicUrl,
-          status: "pending_review" as const,
+          status: review?.status || ("pending_review" as const),
+          reviewNotes: review?.notes || null,
+          reviewedAt: review?.reviewed_at || null,
           createdAt: document.created_at || document.updated_at || null,
           updatedAt: document.updated_at || null,
         };
       }),
   );
+}
+
+async function updatePhotoReviewSummary(client: DancrClient, dancerId: string) {
+  const db = client as any;
+  const { data, error } = await db.from("dancer_photos").select("review_status").eq("dancer_id", dancerId);
+  if (error) throw error;
+
+  const status = aggregateReviewStatus((data || []).map((row: any) => row.review_status));
+  const { error: updateError } = await db.from("dancer_profiles").update({ photo_review_status: status }).eq("id", dancerId);
+  if (updateError) throw updateError;
+}
+
+async function updateVerificationReviewSummary(client: DancrClient, userId: string, dancerId: string) {
+  const db = client as any;
+  const { data: reviews, error } = await db
+    .from("approval_reviews")
+    .select("review_type, status, notes, created_at, reviewed_at")
+    .eq("dancer_id", dancerId);
+
+  if (error) throw error;
+  const documents = await listVerificationDocumentsForUser(client, userId, reviews || []);
+  const status = aggregateReviewStatus(documents.map((document: any) => document.status === "pending_review" ? "pending" : document.status));
+  const { error: updateError } = await db.from("dancer_profiles").update({ verification_status: status }).eq("id", dancerId);
+  if (updateError) throw updateError;
+}
+
+function aggregateReviewStatus(statuses: string[]) {
+  if (!statuses.length) return "pending";
+  if (statuses.some((status) => status === "rejected")) return "rejected";
+  if (statuses.every((status) => status === "approved")) return "approved";
+  return "pending";
+}
+
+function contentReviewType(targetType: ReviewSubmissionContentInput["targetType"], targetId: string) {
+  return `${targetType}:${targetId}`;
+}
+
+function latestReviewFor(reviews: any[], reviewType: string) {
+  return (reviews || [])
+    .filter((review) => review.review_type === reviewType || review.reviewType === reviewType)
+    .sort((a, b) => Date.parse(b.reviewed_at || b.reviewedAt || b.created_at || b.createdAt || "") - Date.parse(a.reviewed_at || a.reviewedAt || a.created_at || a.createdAt || ""))[0];
+}
+
+function verificationDocumentDisplay(name: string, index: number) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("selfie")) return { documentType: "selfie", displayName: "Selfie verification" };
+  if (normalized.includes("proof") || normalized.includes("dance")) return { documentType: "dance_proof", displayName: "Proof that they dance" };
+  if (normalized.includes("id") || normalized.includes("license") || normalized.includes("passport")) {
+    return { documentType: "government_id", displayName: "Government ID" };
+  }
+
+  const fallback = ["Government ID", "Selfie verification", "Proof that they dance"][index];
+  return { documentType: fallback ? slugify(fallback) : "verification_file", displayName: fallback || "Verification file" };
 }
