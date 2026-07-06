@@ -562,7 +562,7 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
     channel: "in_app",
     title: notificationCopy.title,
     body: notificationCopy.body,
-    payload: { dancerId: input.dancerId, status: input.status, reviewedAt },
+    payload: { dancerId: input.dancerId, status: input.status, notes: input.notes || null, setupStep: approved ? null : "approval", reviewedAt },
     sent_at: reviewedAt,
   };
 
@@ -663,12 +663,39 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     notes: `${input.label || input.targetId}${notes ? `: ${notes}` : ""}`,
   });
 
+  let notificationDelivery = null;
+  if (input.status === "rejected") {
+    const notificationCopy = submittedContentRejectedNotificationCopy(input.targetType, input.label, notes);
+    const notificationRow = {
+      recipient_id: dancer.user_id,
+      notification_type: "approval_status" as const,
+      channel: "in_app",
+      title: notificationCopy.title,
+      body: notificationCopy.body,
+      payload: {
+        dancerId: input.dancerId,
+        status: "rejected",
+        targetType: input.targetType,
+        targetId: input.targetId,
+        label: input.label || notificationCopy.label,
+        notes,
+        setupStep: setupStepForRejectedContent(input.targetType),
+        reviewedAt,
+      },
+      sent_at: reviewedAt,
+    };
+    const { error: notificationError } = await db.from("notifications").insert(notificationRow);
+    if (notificationError) throw notificationError;
+    notificationDelivery = await deliverNotificationRows(client, [notificationRow]);
+  }
+
   return {
     dancerId: input.dancerId,
     targetType: input.targetType,
     targetId: input.targetId,
     status: input.status,
     reviewedAt,
+    notificationDelivery,
   };
 }
 
@@ -686,6 +713,28 @@ function dancerApprovalNotificationCopy(stageName: string | null | undefined, ap
     title: "Your Dancr profile needs changes",
     body: `Your Dancr profile review is complete. Update your verification setup and resubmit.${reviewNotes}`,
   };
+}
+
+function submittedContentRejectedNotificationCopy(targetType: ReviewSubmissionContentInput["targetType"], label?: string | null, notes?: string | null) {
+  const itemLabel = label?.trim() || rejectedContentLabel(targetType);
+  const reason = notes?.trim() ? ` Reason: ${notes.trim()}` : "";
+  return {
+    title: `${itemLabel} needs changes`,
+    body: `Dancr reviewed your ${itemLabel.toLowerCase()} and needs you to fix or resend it.${reason}`,
+    label: itemLabel,
+  };
+}
+
+function rejectedContentLabel(targetType: ReviewSubmissionContentInput["targetType"]) {
+  if (targetType === "photo") return "Profile photo";
+  if (targetType === "verification_document") return "Verification file";
+  return "Social link";
+}
+
+function setupStepForRejectedContent(targetType: ReviewSubmissionContentInput["targetType"]) {
+  if (targetType === "photo") return "photos";
+  if (targetType === "verification_document") return "verification";
+  return "profile";
 }
 
 async function getTrendingMetricCounts(client: DancrClient, dancerId: string, since: Date): Promise<TrendingMetricCounts> {

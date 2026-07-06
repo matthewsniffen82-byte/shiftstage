@@ -12238,6 +12238,11 @@
       box-shadow: 0 0 22px rgba(124, 58, 237, .22);
     }
 
+    .field-needs-review {
+      border-color: rgba(255, 199, 46, .82) !important;
+      box-shadow: 0 0 0 3px rgba(255, 199, 46, .16), 0 0 24px rgba(255, 199, 46, .22) !important;
+    }
+
     .venue-card:hover,
     .venue:hover {
       border-color: rgba(124, 58, 237, .56);
@@ -26968,8 +26973,10 @@
         const date = formatBillingDate(notification.sentAt || notification.createdAt);
         const notificationId = notification.id || "";
         const canMarkRead = unread && notificationId && !notification.localOnly;
+        const actionable = isActionableDancerReviewNotification(notification);
+        const notificationIndex = liveNotifications.indexOf(notification);
         return `
-          <article class="rank-event ${unread ? "top-ten" : "stable"}" ${notificationId ? `data-notification-id="${notificationId}"` : ""}>
+          <article class="rank-event ${unread ? "top-ten" : "stable"}" ${notificationId ? `data-notification-id="${notificationId}"` : ""} data-notification-index="${notificationIndex}" ${actionable ? 'role="button" tabindex="0" title="Open the issue to fix"' : ""}>
             <span class="rank-event-icon">${unread ? "!" : "OK"}</span>
             <span>
               <strong>${displayText(notification.title || "Dancr notification")}</strong>
@@ -27011,6 +27018,107 @@
       renderCustomerQuickActions();
     }
 
+    function isActionableDancerReviewNotification(notification) {
+      return isDancerSession() && notification?.payload?.status === "rejected" && Boolean(notification.payload.setupStep || notification.payload.targetType);
+    }
+
+    function setupStepForNotificationPayload(payload = {}) {
+      if (payload.setupStep) return payload.setupStep;
+      if (payload.targetType === "photo") return "photos";
+      if (payload.targetType === "verification_document") return "verification";
+      return "profile";
+    }
+
+    function inputSelectorForReviewPayload(payload = {}) {
+      const label = String(payload.label || "").toLowerCase();
+      if (payload.targetType === "photo") return "#setupProfilePhotos";
+      if (payload.targetType === "verification_document") {
+        if (label.includes("selfie")) return "#setupSelfieDocument";
+        if (label.includes("proof") || label.includes("dance")) return "#setupDanceProofDocument";
+        return "#setupIdDocument";
+      }
+      if (payload.targetType === "social_link") {
+        if (label.includes("instagram")) return "#setupInstagram";
+        if (label.includes("tiktok")) return "#setupTiktok";
+        if (label.includes("snap")) return "#setupSnapchat";
+        if (label.includes("onlyfans")) return "#setupOnlyfans";
+        if (label === "x" || label.includes("twitter")) return "#setupX";
+      }
+      if (payload.setupStep === "approval") return "";
+      return "#setupStageName";
+    }
+
+    function setupStepForRejectedTarget(targetType) {
+      if (targetType === "photo") return "photos";
+      if (targetType === "verification_document") return "verification";
+      return "profile";
+    }
+
+    function rejectedTargetTitle(targetType, label) {
+      if (label) return `${label} needs changes`;
+      if (targetType === "photo") return "Profile photo needs changes";
+      if (targetType === "verification_document") return "Verification file needs changes";
+      return "Social link needs changes";
+    }
+
+    function addLocalDancerReviewNotification(profile, targetType, targetId, label, notes) {
+      if (!isDancerSession()) return;
+      const activeProfile = activeDancerProfile();
+      const sameProfile = activeProfile && profile && (
+        activeProfile.id === profile.id ||
+        activeProfile.name === profile.name ||
+        activeProfile.slug === profile.slug
+      );
+      if (!sameProfile) return;
+      liveNotifications = [{
+        id: "",
+        localOnly: true,
+        type: "approval_status",
+        title: rejectedTargetTitle(targetType, label),
+        body: `Dancr reviewed this item and needs you to fix or resend it. Reason: ${notes}`,
+        payload: {
+          status: "rejected",
+          targetType,
+          targetId,
+          label,
+          notes,
+          setupStep: setupStepForRejectedTarget(targetType)
+        },
+        readAt: null,
+        sentAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      }, ...liveNotifications];
+      renderNotificationCenters();
+    }
+
+    function openDancerReviewIssue(notification) {
+      if (!isActionableDancerReviewNotification(notification)) return false;
+      const payload = notification.payload || {};
+      setupChecklistExpanded = true;
+      activeSetupStep = setupStepForNotificationPayload(payload);
+      renderDancerSetup();
+      showToast(payload.notes ? `Fix requested: ${payload.notes}` : "Open the highlighted item and resubmit it.");
+      window.requestAnimationFrame(() => {
+        const input = document.querySelector(inputSelectorForReviewPayload(payload));
+        const target = input || document.querySelector(`#setupChecklist [data-step="${activeSetupStep}"]`) || document.getElementById("setupChecklistWrap");
+        target?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        if (input) {
+          input.focus({ preventScroll: true });
+          input.classList.add("field-needs-review");
+          window.setTimeout(() => input.classList.remove("field-needs-review"), 2400);
+        }
+      });
+      if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
+      return true;
+    }
+
+    function notificationFromNode(node) {
+      const id = node?.dataset.notificationId || node?.dataset.quickNotificationId || "";
+      if (id) return liveNotifications.find((notification) => notification.id === id);
+      const index = Number(node?.dataset.notificationIndex);
+      return Number.isFinite(index) ? liveNotifications[index] : null;
+    }
+
     function closeCustomerQuickPanels() {
       customerNotificationsQuickPanel.hidden = true;
       customerDealsQuickPanel.hidden = true;
@@ -27022,8 +27130,9 @@
 
     function customerQuickNotificationItems() {
       if (liveNotifications.length) {
-        return liveNotifications.slice(0, 5).map((notification) => ({
+        return liveNotifications.slice(0, 5).map((notification, index) => ({
           id: notification.id,
+          index,
           unread: !notification.readAt,
           title: notification.title || "Dancr notification",
           detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
@@ -27056,7 +27165,7 @@
       customerNotificationQuickCount.textContent = String(Math.min(count, 9));
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
-            <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""}>
+            <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
               <strong>${displayText(item.title)}</strong>
               <span>${displayText(item.detail)}</span>
             </button>
@@ -27162,21 +27271,40 @@
 
     function handleNotificationCenterClick(event) {
       const button = event.target.closest("[data-notification-action]");
-      if (!button) return false;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      const action = button.dataset.notificationAction;
-      if (action === "mark-all") {
-        markAllLiveNotificationsRead();
-        return true;
+      if (button) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        const action = button.dataset.notificationAction;
+        if (action === "mark-all") {
+          markAllLiveNotificationsRead();
+          return true;
+        }
+        if (action === "mark-read") {
+          const item = button.closest("[data-notification-id]");
+          markLiveNotificationRead(item?.dataset.notificationId);
+          return true;
+        }
       }
-      if (action === "mark-read") {
-        const item = button.closest("[data-notification-id]");
-        markLiveNotificationRead(item?.dataset.notificationId);
+      const item = event.target.closest("[data-notification-id], [data-notification-index]");
+      const notification = notificationFromNode(item);
+      if (openDancerReviewIssue(notification)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
         return true;
       }
       return false;
+    }
+
+    function handleNotificationCenterKeydown(event) {
+      if (event.key !== "Enter" && event.key !== " ") return false;
+      const item = event.target.closest("[data-notification-id], [data-notification-index]");
+      const notification = notificationFromNode(item);
+      if (!isActionableDancerReviewNotification(notification)) return false;
+      event.preventDefault();
+      openDancerReviewIssue(notification);
+      return true;
     }
 
     async function loadLiveAdminApprovals() {
@@ -31995,6 +32123,9 @@
 
       button.disabled = true;
       applyLocalAdminContentReview(profileMatch.profile, targetType, targetId, status, notes);
+      if (status === "rejected") {
+        addLocalDancerReviewNotification(profileMatch.profile, targetType, targetId, label, notes);
+      }
 
       try {
         if (isAdminSession() && profileMatch.profile.id && hasLiveTarget) {
@@ -32738,8 +32869,12 @@
 
     customerNotificationsQuickList.addEventListener("click", (event) => {
       const item = event.target.closest("[data-quick-notification-id]");
-      if (!item) return;
-      markLiveNotificationRead(item.dataset.quickNotificationId);
+      const indexedItem = item || event.target.closest("[data-notification-index]");
+      if (!indexedItem) return;
+      closeCustomerQuickPanels();
+      const notification = notificationFromNode(indexedItem);
+      if (openDancerReviewIssue(notification)) return;
+      markLiveNotificationRead(indexedItem.dataset.quickNotificationId);
     });
 
     document.addEventListener("click", (event) => {
@@ -33458,6 +33593,7 @@
     });
 
     dancerDashboard.addEventListener("keydown", (event) => {
+      if (handleNotificationCenterKeydown(event)) return;
       const approvalToggle = event.target.closest("#dancerApprovalCommand");
       if (!approvalToggle || approvalToggle.classList.contains("approved")) return;
       if (event.key !== "Enter" && event.key !== " ") return;
