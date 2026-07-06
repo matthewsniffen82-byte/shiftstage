@@ -203,6 +203,11 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
   if (redemptionError) throw redemptionError;
   if (commissionError) throw commissionError;
 
+  const commissionTotal = (statuses: string[]) =>
+    (commissions || [])
+      .filter((item: any) => statuses.includes(item.status))
+      .reduce((sum: number, item: any) => sum + Number(item.amount_cents || 0), 0);
+
   return {
     tokensGenerated: redemptions?.length || 0,
     qrOpens: redemptions?.length || 0,
@@ -212,6 +217,11 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
     payableCommissions: (commissions || []).filter((item: any) => item.status === "payable").length,
     paidCommissions: (commissions || []).filter((item: any) => item.status === "paid").length,
     rejectedCommissions: (commissions || []).filter((item: any) => item.status === "rejected" || item.status === "voided").length,
+    pendingCommissionCents: commissionTotal(["pending_club_payment"]),
+    payableCommissionCents: commissionTotal(["payable"]),
+    paidCommissionCents: commissionTotal(["paid"]),
+    earnedCommissionCents: commissionTotal(["payable", "paid"]),
+    totalCommissionCents: commissionTotal(["pending_club_payment", "payable", "paid"]),
     recentRedemptions: redemptions || [],
     recentCommissions: commissions || [],
   };

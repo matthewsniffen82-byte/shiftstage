@@ -488,19 +488,26 @@ function DancerLockedAnalyticsPanel() {
 }
 
 function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
+  const earnedCommissionCents = Number(deals?.earnedCommissionCents || 0);
+  const pendingCommissionCents = Number(deals?.pendingCommissionCents || 0);
+
   return (
     <article className="info-panel deal-panel">
-      <h2>Club Deals</h2>
+      <h2>QR commissions</h2>
       <div className="deal-metrics">
+        <Metric label="Earned commissions" value={formatCents(earnedCommissionCents)} />
+        <Metric label="Pending commissions" value={formatCents(pendingCommissionCents)} />
         <Metric label="QR opens" value={String(deals?.qrOpens || 0)} />
-        <Metric label="Tokens generated" value={String(deals?.tokensGenerated || 0)} />
         <Metric label="Redeemed QR codes" value={String(deals?.redeemed || 0)} />
-        <Metric label="Pending commissions" value={String(deals?.pendingCommissions || 0)} />
         <Metric label="Payable / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
         <Metric label="Rejected / voided" value={String(deals?.rejectedCommissions || 0)} />
       </div>
     </article>
   );
+}
+
+function formatCents(value: number) {
+  return `$${(value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {

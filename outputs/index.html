@@ -24264,6 +24264,12 @@
           <div class="metric-grid" id="dancerClubMetrics" aria-label="Club traffic"></div>
         </div>
         <div class="auth-card approved-analytics">
+          <h3>QR commissions</h3>
+          <p class="value-message" id="dancerCommissionSummary">QR commissions appear after customers scan and redeem deals from your profile.</p>
+          <div class="metric-grid" id="dancerCommissionMetrics" aria-label="QR commission metrics"></div>
+          <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
+        </div>
+        <div class="auth-card approved-analytics">
           <h3>Social growth</h3>
           <p class="value-message" id="dancerSocialSummary">Social clicks unlock after approval.</p>
           <div class="metric-grid" id="dancerSocialMetrics" aria-label="Social growth"></div>
@@ -25081,6 +25087,7 @@
     const trendEventStore = loadTrendEventStore();
     const liveMarketState = {};
     let liveDancerAnalytics = null;
+    let liveDancerDeals = null;
     let liveDancerWeeklyReport = null;
     let liveDancerBilling = null;
     let liveDancerRankingEvents = [];
@@ -26167,6 +26174,7 @@
         liveCustomerProfile = null;
         liveNotifications = [];
         liveDancerAnalytics = null;
+        liveDancerDeals = null;
         liveDancerWeeklyReport = null;
         liveDancerBilling = null;
         liveDancerRankingEvents = [];
@@ -26907,6 +26915,19 @@
       }
     }
 
+    async function loadLiveDancerDeals() {
+      if (!isDancerSession()) return;
+      try {
+        const data = await getAuthenticatedJson("/api/dancer/dashboard");
+        liveDancerDeals = data.deals || null;
+        if (data.analytics) liveDancerAnalytics = data.analytics;
+        renderDancerSetup();
+      } catch (error) {
+        liveDancerDeals = null;
+        showToast(error.message || "Could not load QR commissions");
+      }
+    }
+
     async function loadLiveDancerWeeklyReport() {
       if (!isDancerSession()) return;
       try {
@@ -27237,6 +27258,23 @@
 
     function compactNumber(value) {
       return Number(value || 0).toLocaleString();
+    }
+
+    function moneyFromCents(value) {
+      return `$${(Number(value || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function readJoinedName(value, fallback = "Dancr venue") {
+      const row = Array.isArray(value) ? value[0] : value;
+      return row?.name || row?.deal_title || fallback;
+    }
+
+    function dancerCommissionActivityMarkup(item) {
+      const deal = escapeHtml(readJoinedName(item?.club_deals, "Profile QR deal"));
+      const venue = escapeHtml(readJoinedName(item?.venues, "Venue"));
+      const amount = moneyFromCents(item?.amount_cents);
+      const status = escapeHtml(String(item?.status || "pending").replace(/_/g, " "));
+      return `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>${amount} ${status}</strong><p>${deal} at ${venue}</p></span></article>`;
     }
 
     function metricPhraseMarkup(value) {
@@ -29772,6 +29810,7 @@
       isVenueLoggedIn = false;
       activeDashboardType = "customer";
       liveDancerAnalytics = null;
+      liveDancerDeals = null;
       liveDancerWeeklyReport = null;
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
@@ -29932,6 +29971,7 @@
       loadLiveVerificationDocuments();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
+      loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
       loadLiveDancerBilling();
       loadLiveDancerRankingEvents();
@@ -30802,6 +30842,10 @@
         const weeklyGoing = liveDancerWeeklyReport?.goingSignals ?? dashboardMetrics.weeklyGoing;
         const weeklySocialClicks = liveDancerWeeklyReport?.socialClicks ?? Math.round(totalSocialClicks * .28);
         const weeklyNotificationOpens = liveDancerWeeklyReport?.notificationOpens ?? Math.round(dashboardMetrics.notificationOpens * .26);
+        const qrOpens = liveDancerDeals?.qrOpens || 0;
+        const qrRedeemed = liveDancerDeals?.redeemed || 0;
+        const earnedCommissionCents = liveDancerDeals?.earnedCommissionCents || 0;
+        const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
 
         document.getElementById("dancerValueMessage").innerHTML =
           `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`;
@@ -30844,6 +30888,19 @@
             .slice(0, 2)
             .map((club) => metricCardMarkup(compactNumber(club.avgViews), `${club.name} avg views`))
         ].join("");
+        document.getElementById("dancerCommissionSummary").textContent =
+          qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
+            ? `Profile QR scans generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
+            : "QR commission tracking is ready. Earnings appear here when customers scan and redeem a deal from your profile.";
+        document.getElementById("dancerCommissionMetrics").innerHTML = [
+          metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
+          metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
+          metricCardMarkup(compactNumber(qrOpens), "Profile QR scans"),
+          metricCardMarkup(compactNumber(qrRedeemed), "Redeemed QR deals")
+        ].join("");
+        document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
+          ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No QR commission activity yet</strong><p>When customers redeem a profile QR deal, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = `${bestSocial.name} is your top-performing link this month.`;
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup(compactNumber(totalSocialClicks), "Total social clicks"),
@@ -30909,6 +30966,15 @@
           "Direction requests",
           "Average views by club"
         ]);
+        document.getElementById("dancerCommissionSummary").textContent = "QR commissions unlock after approval and track scans, redeemed deals, earned commission, and pending commission from your profile QR.";
+        document.getElementById("dancerCommissionMetrics").innerHTML = lockedMetricCards([
+          "Earned commissions",
+          "Pending commissions",
+          "Profile QR scans",
+          "Redeemed QR deals"
+        ]);
+        document.getElementById("dancerCommissionActivity").innerHTML =
+          `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>QR commissions locked</strong><p>Commission activity appears here after approval and customer redemptions.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Total social clicks",
