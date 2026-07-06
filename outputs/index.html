@@ -3022,10 +3022,39 @@
     }
 
     #adminDashboard .admin-social-icons {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
       gap: 8px;
       min-width: 0;
+    }
+
+    #adminDashboard .admin-social-review {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      background: rgba(255,255,255,.035);
+    }
+
+    #adminDashboard .admin-social-review textarea,
+    #adminDashboard .admin-social-review .admin-review-actions {
+      grid-column: 2;
+    }
+
+    #adminDashboard .admin-social-review textarea {
+      width: 100%;
+      min-height: 58px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(3,3,7,.62);
+      color: var(--text);
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 12px;
     }
 
     #adminDashboard .admin-social-icon {
@@ -26328,17 +26357,23 @@
 
       return mappedSocials
         .filter((social) => social && social.isActive !== false && social.is_active !== false)
-        .map((social) => {
+        .map((social, index) => {
           const platform = String(social.platform || social.type || "").toLowerCase();
           const rawUrl = String(social.url || social.href || "").trim();
           const rawHandle = String(social.handle || social.username || social.value || "").trim();
           const normalizedUrl = rawUrl || normalizeSocialInput(platform, rawHandle);
           const handle = rawHandle || socialHandleFromUrl(normalizedUrl);
+          const id = social.id || `${profile?.id || profile?.name || "profile"}-social-${index}`;
+          const localReview = profile?.socialReviewStatuses?.[id] || {};
           return {
+            id,
+            hasLiveId: Boolean(social.id),
             platform,
             label: socialPlatformLabel(platform),
             url: normalizedUrl,
-            handle
+            handle,
+            reviewStatus: localReview.status || social.reviewStatus || social.review_status || "pending",
+            reviewNotes: localReview.notes || social.reviewNotes || social.review_notes || ""
           };
         })
         .filter((social) => social.platform && (social.url || social.handle));
@@ -31412,12 +31447,25 @@
     function adminSubmittedSocialsMarkup(profile) {
       const socials = normalizeSubmittedSocials(profile);
       if (!socials.length) return '<div class="locked">No social links submitted.</div>';
-      return `<div class="admin-social-icons">${socials.map((social) => {
+      return `<div class="admin-social-icons">${socials.map((social, index) => {
         const url = social.url || "#";
         const handle = social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url;
         const label = `${social.label}${handle ? ` ${handle}` : ""}`;
         const hrefAttr = social.url ? ` href="${displayText(url)}" target="_blank" rel="noreferrer"` : "";
-        return `<a class="admin-social-icon social-${displayText(social.platform)}"${hrefAttr} aria-label="${displayText(label)}" title="${displayText(label)}">${socialIconMarkup(social.platform)}<span>${displayText(social.label)}</span></a>`;
+        const targetId = social.id || `${profile.id || profile.name}-social-${index}`;
+        const key = `social_link:${targetId}`;
+        return `
+          <div class="admin-social-review">
+            <a class="admin-social-icon social-${displayText(social.platform)}"${hrefAttr} aria-label="${displayText(label)}" title="${displayText(label)}">${socialIconMarkup(social.platform)}<span>${displayText(social.label)}</span></a>
+            <span class="admin-review-hint">${displayText(social.label)} · ${displayText(social.reviewStatus || "pending")}</span>
+            ${social.reviewNotes ? `<span class="admin-review-hint">Reason: ${displayText(social.reviewNotes)}</span>` : ""}
+            <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
+            <div class="admin-review-actions">
+              <button class="action-btn" data-admin-content-review="approved" data-review-type="social_link" data-review-target="${displayText(targetId)}" data-review-label="${displayText(social.label)}" data-review-key="${displayText(key)}" data-review-live-target="${social.hasLiveId ? "true" : "false"}" ${social.hasLiveId ? "" : "disabled"}>Approve social</button>
+              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="social_link" data-review-target="${displayText(targetId)}" data-review-label="${displayText(social.label)}" data-review-key="${displayText(key)}" data-review-live-target="${social.hasLiveId ? "true" : "false"}">Save disapproval</button>
+            </div>
+          </div>
+        `;
       }).join("")}</div>`;
     }
 
@@ -31487,11 +31535,31 @@
       `).join("");
     }
 
+    function isFinalAdminReviewStatus(status) {
+      return status === "approved" || status === "rejected";
+    }
+
+    function pendingAdminSubmissionItems(profile) {
+      const socials = normalizeSubmittedSocials(profile).filter((social) => !isFinalAdminReviewStatus(social.reviewStatus));
+      const photos = (profile.submittedPhotos?.length
+        ? profile.submittedPhotos
+        : (profile.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, sortOrder: index }))
+      ).filter((photo) => !isFinalAdminReviewStatus(photo.reviewStatus || photo.review_status));
+      const documents = (profile.verificationDocuments || []).filter((document) => !isFinalAdminReviewStatus(document.status));
+      const pending = [];
+      if (socials.length) pending.push(`${socials.length} social${socials.length === 1 ? "" : "s"}`);
+      if (photos.length) pending.push(`${photos.length} photo${photos.length === 1 ? "" : "s"}`);
+      if (documents.length) pending.push(`${documents.length} verification file${documents.length === 1 ? "" : "s"}`);
+      return pending;
+    }
+
     function adminDancerApprovalCard(city, profile, index) {
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
       const documentCount = profile.verificationDocuments?.length || 0;
+      const pendingItems = pendingAdminSubmissionItems(profile);
+      const finalReviewDisabled = pendingItems.length ? "disabled" : "";
       return `
         <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" ${index === 0 ? "open" : ""}>
           <summary class="row">
@@ -31521,9 +31589,10 @@
             <strong>Review history</strong>
             ${adminReviewHistoryMarkup(profile)}
           </div>
+          ${pendingItems.length ? `<div class="locked">Review pending items first: ${displayText(pendingItems.join(", "))}.</div>` : ""}
           <div class="admin-actions">
-            <button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>
-            <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
+            <button class="action-btn" data-admin-action="approve-dancer" ${finalReviewDisabled}>Approve dancer</button>
+            <button class="action-btn danger" data-admin-action="reject-dancer" ${finalReviewDisabled}>Reject dancer</button>
             <button class="action-btn secondary" data-admin-action="remove-profile">Remove fake profile</button>
             <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
           </div>
@@ -31857,6 +31926,16 @@
           document.reviewedAt = reviewedAt;
         }
       }
+      if (targetType === "social_link") {
+        const social = (profile.socialLinks || profile.social_links || []).find((item) => String(item.id || "") === targetId);
+        if (social) {
+          social.reviewStatus = status;
+          social.reviewNotes = notes;
+          social.reviewedAt = reviewedAt;
+        }
+        profile.socialReviewStatuses = profile.socialReviewStatuses || {};
+        profile.socialReviewStatuses[targetId] = { status, notes, reviewedAt };
+      }
     }
 
     async function reviewAdminSubmittedContent(button) {
@@ -31959,6 +32038,11 @@
         return;
       }
       if (action === "approve-dancer" && profileMatch) {
+        const pendingItems = pendingAdminSubmissionItems(profileMatch.profile);
+        if (pendingItems.length) {
+          showToast(`Review pending items first: ${pendingItems.join(", ")}`);
+          return;
+        }
         Object.assign(profileMatch.profile, {
           status: "Verified",
           idStatus: "Passed",
@@ -31970,6 +32054,11 @@
         return;
       }
       if (action === "reject-dancer" && profileMatch) {
+        const pendingItems = pendingAdminSubmissionItems(profileMatch.profile);
+        if (pendingItems.length) {
+          showToast(`Review pending items first: ${pendingItems.join(", ")}`);
+          return;
+        }
         profileMatch.profile.status = "Rejected";
         profileMatch.profile.hidden = true;
         refreshAfterAdminAction(`${profileMatch.profile.name} rejected and hidden`);

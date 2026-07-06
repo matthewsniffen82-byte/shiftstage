@@ -17,7 +17,7 @@ export type ReviewDancerInput = {
 export type ReviewSubmissionContentInput = {
   dancerId: string;
   reviewerId: string;
-  targetType: "photo" | "verification_document";
+  targetType: "photo" | "verification_document" | "social_link";
   targetId: string;
   status: ReviewStatus;
   notes?: string | null;
@@ -113,12 +113,18 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
       createdAt: row.created_at,
       socialLinks: (row.social_links || [])
         .filter((social: any) => social.is_active !== false)
-        .map((social: any) => ({
-          id: social.id,
-          platform: social.platform,
-          handle: social.handle,
-          url: social.url,
-        })),
+        .map((social: any) => {
+          const review = latestReviewFor(reviews, contentReviewType("social_link", social.id));
+          return {
+            id: social.id,
+            platform: social.platform,
+            handle: social.handle,
+            url: social.url,
+            reviewStatus: review?.status || "pending",
+            reviewNotes: review?.notes || null,
+            reviewedAt: review?.reviewed_at || null,
+          };
+        }),
       photos: (row.dancer_photos || [])
         .map((photo: any) => {
           const review = latestReviewFor(reviews, contentReviewType("photo", photo.id));
@@ -516,6 +522,8 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   if (dancerError) throw dancerError;
   if (!dancer) throw new Error("Dancer profile not found.");
 
+  await assertAllSubmittedContentReviewed(client, dancer);
+
   const { error: updateError } = await db
     .from("dancer_profiles")
     .update({
@@ -615,11 +623,21 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (photoError) throw photoError;
     if (!photo) throw new Error("Submitted photo not found.");
     await updatePhotoReviewSummary(client, input.dancerId);
-  } else {
+  } else if (input.targetType === "verification_document") {
     const expectedPrefix = `${dancer.user_id}/verification/`;
     if (!input.targetId.startsWith(expectedPrefix)) {
       throw new Error("Verification file not found for this dancer.");
     }
+  } else {
+    const { data: social, error: socialError } = await db
+      .from("social_links")
+      .select("id")
+      .eq("id", input.targetId)
+      .eq("dancer_id", input.dancerId)
+      .maybeSingle();
+
+    if (socialError) throw socialError;
+    if (!social) throw new Error("Submitted social link not found.");
   }
 
   const { error: reviewError } = await db.from("approval_reviews").insert({
@@ -913,6 +931,32 @@ function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
 
+async function assertAllSubmittedContentReviewed(client: DancrClient, dancer: { id: string; user_id: string }) {
+  const db = client as any;
+  const [{ data: photos, error: photosError }, { data: socials, error: socialsError }, { data: reviews, error: reviewsError }] =
+    await Promise.all([
+      db.from("dancer_photos").select("id, review_status").eq("dancer_id", dancer.id),
+      db.from("social_links").select("id, is_active").eq("dancer_id", dancer.id),
+      db.from("approval_reviews").select("review_type, status, notes, created_at, reviewed_at").eq("dancer_id", dancer.id),
+    ]);
+
+  if (photosError) throw photosError;
+  if (socialsError) throw socialsError;
+  if (reviewsError) throw reviewsError;
+
+  const reviewRows = reviews || [];
+  const pendingPhotos = (photos || []).filter((photo: any) => !isFinalReviewStatus(latestReviewFor(reviewRows, contentReviewType("photo", photo.id))?.status || photo.review_status));
+  const pendingSocials = (socials || [])
+    .filter((social: any) => social.is_active !== false)
+    .filter((social: any) => !isFinalReviewStatus(latestReviewFor(reviewRows, contentReviewType("social_link", social.id))?.status));
+  const documents = await listVerificationDocumentsForUser(client, dancer.user_id, reviewRows);
+  const pendingDocuments = documents.filter((document: any) => !isFinalReviewStatus(document.status));
+
+  if (pendingPhotos.length || pendingSocials.length || pendingDocuments.length) {
+    throw new Error("Review every submitted social link, photo, and verification file before approving or rejecting this dancer.");
+  }
+}
+
 async function listVerificationDocumentsForUser(client: DancrClient, userId: string, reviews: any[] = []) {
   if (!userId) return [];
 
@@ -981,6 +1025,10 @@ function aggregateReviewStatus(statuses: string[]) {
   if (statuses.some((status) => status === "rejected")) return "rejected";
   if (statuses.every((status) => status === "approved")) return "approved";
   return "pending";
+}
+
+function isFinalReviewStatus(status: string | null | undefined) {
+  return status === "approved" || status === "rejected";
 }
 
 function contentReviewType(targetType: ReviewSubmissionContentInput["targetType"], targetId: string) {
