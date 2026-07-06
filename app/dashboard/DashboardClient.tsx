@@ -980,7 +980,7 @@ function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }
       </form>
       <div className="review-list">
         {(reviews || []).slice(0, 4).map((review) => (
-          <div className="review-row" key={String(review.id || `${review.reviewType}-${review.createdAt}`)}>
+          <div className={`review-row ${String(review.status || "") === "rejected" ? "is-rejected" : String(review.status || "") === "approved" ? "is-approved" : ""}`} key={String(review.id || `${review.reviewType}-${review.createdAt}`)}>
             <strong>{String(review.reviewType || "Review")}</strong>
             <span>{String(review.status || "pending")}</span>
             {review.notes ? <p>{String(review.notes)}</p> : null}
@@ -1364,6 +1364,9 @@ function DashboardStyles() {
       .review-list { display: grid; gap: 10px; }
       .review-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .review-row span { color: #94e5ff; font-size: 13px; font-weight: 850; text-transform: capitalize; }
+      .review-row.is-rejected { border-color: rgba(255,104,124,.58); background: rgba(255,104,124,.12); box-shadow: inset 3px 0 0 rgba(255,104,124,.9); }
+      .review-row.is-rejected strong, .review-row.is-rejected span { color: #ffb3bf; }
+      .review-row.is-approved { border-color: rgba(50,255,164,.36); background: rgba(50,255,164,.08); }
       .shift-list { display: grid; gap: 10px; }
       .dashboard-shift { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .dashboard-shift span { display: grid; gap: 4px; }

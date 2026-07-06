@@ -12243,6 +12243,40 @@
       box-shadow: 0 0 0 3px rgba(255, 199, 46, .16), 0 0 24px rgba(255, 199, 46, .22) !important;
     }
 
+    .review-feedback-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .review-feedback-item {
+      border: 1px solid rgba(34, 199, 255, .24);
+      background: rgba(34, 199, 255, .08);
+    }
+
+    .review-feedback-item.is-rejected {
+      border-color: rgba(255, 104, 124, .58);
+      background: rgba(255, 104, 124, .12);
+      box-shadow: inset 3px 0 0 rgba(255, 104, 124, .9);
+    }
+
+    .review-feedback-item.is-approved {
+      border-color: rgba(50, 255, 164, .38);
+      background: rgba(50, 255, 164, .08);
+    }
+
+    .review-feedback-item .review-status {
+      color: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .review-feedback-item.is-rejected .review-status,
+    .review-feedback-item.is-rejected strong {
+      color: #ffb3bf;
+    }
+
     .venue-card:hover,
     .venue:hover {
       border-color: rgba(124, 58, 237, .56);
@@ -27811,21 +27845,67 @@
       };
     }
 
+    function latestDancerReviews() {
+      const latest = new Map();
+      liveDancerReviews.forEach((review) => {
+        const type = review.reviewType || review.review_type || "review";
+        const previous = latest.get(type);
+        const currentTime = Date.parse(review.reviewedAt || review.reviewed_at || review.createdAt || review.created_at || "") || 0;
+        const previousTime = previous ? Date.parse(previous.reviewedAt || previous.reviewed_at || previous.createdAt || previous.created_at || "") || 0 : -1;
+        if (!previous || currentTime >= previousTime) latest.set(type, review);
+      });
+      return Array.from(latest.values());
+    }
+
+    function reviewSetupStep(reviewType = "") {
+      if (reviewType.startsWith("photo:") || reviewType === "photos") return "photos";
+      if (reviewType.startsWith("verification_document:") || reviewType === "identity") return "verification";
+      if (reviewType.startsWith("social_link:") || reviewType === "profile") return "profile";
+      return "approval";
+    }
+
+    function reviewDisplayLabel(reviewType = "") {
+      if (reviewType === "identity") return "ID, selfie, and proof";
+      if (reviewType === "photos") return "Photo set";
+      if (reviewType === "profile") return "Profile details";
+      if (reviewType.startsWith("photo:")) return "Submitted photo";
+      if (reviewType.startsWith("verification_document:")) return "Verification file";
+      if (reviewType.startsWith("social_link:")) return "Social link";
+      return String(reviewType || "Review").replaceAll("_", " ");
+    }
+
+    function reviewStepLabel(step) {
+      if (step === "profile") return "Step 1 profile";
+      if (step === "photos") return "Step 2 photos";
+      if (step === "verification") return "Step 3 verification";
+      return "Step 4 approval";
+    }
+
+    function hasRejectedDancerReviews() {
+      return latestDancerReviews().some((review) => review.status === "rejected");
+    }
+
     function dancerReviewFeedbackMarkup() {
       if (!liveDancerReviews.length) {
         return '<div class="rule-note">No platform review notes yet. Dancr will update this step after ID, selfie, and photo review.</div>';
       }
-      return liveDancerReviews.slice(0, 3).map((review) => {
-        const status = String(review.status || "pending").replaceAll("_", " ");
-        const type = String(review.reviewType || "review").replaceAll("_", " ");
+      return `<div class="review-feedback-list">${latestDancerReviews().map((review) => {
+        const rawStatus = String(review.status || "pending");
+        const status = rawStatus.replaceAll("_", " ");
+        const type = String(review.reviewType || review.review_type || "review");
         const date = formatBillingDate(review.reviewedAt || review.createdAt);
+        const step = reviewSetupStep(type);
+        const stateClass = rawStatus === "rejected" ? "is-rejected" : rawStatus === "approved" ? "is-approved" : "is-pending";
+        const reason = review.notes || (rawStatus === "approved" ? "Approved. No changes needed." : "No reason added.");
         return `
-          <div class="info-tile">
-            <strong>${type} · ${status}</strong>
-            <div class="meta">${review.notes || "No notes added."}${date ? ` · ${date}` : ""}</div>
+          <div class="info-tile review-feedback-item ${stateClass}">
+            <span class="review-status">${status}</span>
+            <strong>${displayText(reviewDisplayLabel(type))}</strong>
+            <div class="meta">${displayText(reason)}${date ? ` · ${date}` : ""}</div>
+            ${rawStatus === "rejected" ? `<div class="meta">Fix or resend in ${displayText(reviewStepLabel(step))}.</div>` : ""}
           </div>
         `;
-      }).join("");
+      }).join("")}</div>`;
     }
 
     function buildRankingNotifications(profile, city, metrics) {
@@ -30908,8 +30988,9 @@
 
     function applyDancerVerificationProfile(profile) {
       const approved = profile.status === "approved";
+      const rejected = profile.status === "rejected";
       const submittedForReview = profile.status === "pending_review";
-      const savedProfileSetup = approved || hasSavedDancerProfileSetup();
+      const savedProfileSetup = approved || rejected || hasSavedDancerProfileSetup();
       const draft = readStoredDancerProfileDraft();
       const useDraftFields = Boolean(draft && !savedProfileSetup);
       const liveSocials = dancerSocialMapFromProfile(profile);
@@ -30934,23 +31015,23 @@
       });
 
       if (approved) markDancerProfileSetupSaved(true);
-      setupChecklistExpanded = !approved;
-      activeSetupStep = nextIncompleteStep() || (approved ? "approval" : "profile");
+      setupChecklistExpanded = rejected || !approved;
+      activeSetupStep = rejected ? "approval" : (nextIncompleteStep() || (approved ? "approval" : "profile"));
       ensureLocalDancerApprovalNotification(profile);
 
-      const localProfile = ensureActiveDancerProfile(approved ? "Verified" : "Pending");
+      const localProfile = ensureActiveDancerProfile(approved ? "Verified" : rejected ? "Rejected" : "Pending");
       if (localProfile) {
         Object.assign(localProfile, {
           name: stageName || localProfile.name,
           city: city || localProfile.city || citySelect.value || "Las Vegas",
           mainPhotoUrl: photos[0] || localProfile.mainPhotoUrl,
           galleryPhotoUrls: photos.length ? photos : (localProfile.galleryPhotoUrls || []),
-          status: approved ? "Verified" : "Pending",
+          status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
           photoStatus: approved ? "Approved" : (dancerSetup.photos ? "Pending" : localProfile.photoStatus),
           idStatus: approved ? "Passed" : (dancerSetup.verification ? "Needs review" : localProfile.idStatus),
           selfieStatus: approved ? "Matched" : (dancerSetup.verification ? "Needs review" : localProfile.selfieStatus),
           danceProofStatus: approved ? "Approved" : (dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus),
-          reviewSubmitted: approved ? false : (submittedForReview || localProfile.reviewSubmitted),
+          reviewSubmitted: approved || rejected ? false : (submittedForReview || localProfile.reviewSubmitted),
           hidden: approved ? false : localProfile.hidden,
           socials: { ...(localProfile.socials || {}), ...dancerSignupSocials }
         });
@@ -31132,10 +31213,24 @@
           const data = await patchAuthenticatedJson("/api/dancer/profile", { submitForReview: true });
           if (!data) throw new Error("Sign in required");
         }
-        if (profile) profile.reviewSubmitted = true;
+        if (profile) {
+          profile.reviewSubmitted = true;
+          profile.status = "Pending";
+          (profile.submittedPhotos || []).forEach((photo) => {
+            if ((photo.reviewStatus || photo.review_status) === "rejected") {
+              photo.reviewStatus = "pending";
+              photo.review_status = "pending";
+            }
+          });
+        }
+        liveDancerReviews = liveDancerReviews.map((review) => (
+          review.status === "rejected"
+            ? { ...review, status: "pending", notes: "Resubmitted by dancer.", reviewedAt: null }
+            : review
+        ));
         activeSetupStep = "approval";
         renderDancerSetup();
-        showToast("Submitted for Dancr review");
+        showToast("Resubmitted for Dancr review");
       } catch (error) {
         showToast(error.message || "Could not submit for review");
       } finally {
@@ -31183,9 +31278,10 @@
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
       const approved = dancerSetup.approval || activeProfile?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved";
+      const rejected = activeProfile?.status === "Rejected" || hasRejectedDancerReviews();
       const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
-      const approvalStateLabel = approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
+      const approvalStateLabel = approved ? "Approved" : rejected ? "Rejected" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
@@ -31209,17 +31305,23 @@
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
       document.getElementById("dancerApprovalTitle").textContent = approved
         ? "Approved. Start posting shifts."
+        : rejected
+          ? "Profile needs fixes"
         : reviewSubmitted
           ? "Submitted for Dancr review"
           : "Finish verification to go live";
       document.getElementById("dancerApprovalCopy").textContent = approved
         ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
+        : rejected
+          ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
         : reviewSubmitted
           ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email or site notifications when review is complete."
           : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = approved
         ? "Ready to post shifts"
+        : rejected
+          ? "Fix red items"
         : reviewSubmitted
           ? "Waiting for review"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
@@ -31241,6 +31343,9 @@
         if (approved) {
           approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
+        } else if (rejected) {
+          approvalStatusPrimary.textContent = "Rejected. Fix or resend the red items in the review notes below.";
+          approvalStatusSecondary.textContent = "Approved items stay approved. After you fix the rejected items, press Resubmit for review.";
         } else if (reviewSubmitted) {
           approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
           approvalStatusSecondary.textContent = "You will be notified by email and site notifications when review is complete.";
@@ -31533,7 +31638,7 @@
         ${verificationReviewNoticeMarkup()}
         ${dancerReviewFeedbackMarkup()}
         <button class="action-btn" type="button" data-submit-review ${readyForReview && !reviewSubmitted ? "" : "disabled"}>
-          ${reviewSubmitted ? "Submitted for review" : "Submit for review"}
+          ${reviewSubmitted ? "Submitted for review" : rejected ? "Resubmit for review" : "Submit for review"}
         </button>
       `;
       document.getElementById("setupChecklist").innerHTML = [

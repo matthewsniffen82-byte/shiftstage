@@ -524,26 +524,36 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
 
   await assertAllSubmittedContentReviewed(client, dancer);
 
+  const statusUpdate = approved
+    ? {
+        status: "approved",
+        verification_status: input.status,
+        photo_review_status: input.status,
+        approved_at: reviewedAt,
+      }
+    : {
+        status: "rejected",
+        approved_at: null,
+      };
+
   const { error: updateError } = await db
     .from("dancer_profiles")
-    .update({
-      status: approved ? "approved" : "rejected",
-      verification_status: input.status,
-      photo_review_status: input.status,
-      approved_at: approved ? reviewedAt : null,
-    })
+    .update(statusUpdate)
     .eq("id", input.dancerId);
 
   if (updateError) throw updateError;
 
-  const { error: photosError } = await db
-    .from("dancer_photos")
-    .update({ review_status: input.status })
-    .eq("dancer_id", input.dancerId);
+  if (approved) {
+    const { error: photosError } = await db
+      .from("dancer_photos")
+      .update({ review_status: input.status })
+      .eq("dancer_id", input.dancerId);
 
-  if (photosError) throw photosError;
+    if (photosError) throw photosError;
+  }
 
-  const reviewRows = ["identity", "photos", "profile"].map((reviewType) => ({
+  const reviewTypes = approved ? ["identity", "photos", "profile"] : ["profile"];
+  const reviewRows = reviewTypes.map((reviewType) => ({
     dancer_id: input.dancerId,
     reviewer_id: input.reviewerId,
     review_type: reviewType,

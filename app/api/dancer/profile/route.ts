@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -53,7 +54,7 @@ export async function PATCH(request: Request) {
 
     const { data: profile, error: profileError } = await db
       .from("dancer_profiles")
-      .select("id, real_name, stage_name, city")
+      .select("id, real_name, stage_name, city, status")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -110,6 +111,7 @@ export async function PATCH(request: Request) {
         realName: update.real_name || profile.real_name,
         stageName: update.stage_name || profile.stage_name,
         city: update.city || profile.city,
+        status: profile.status,
       });
     }
 
@@ -124,7 +126,7 @@ async function submitProfileForReview(
   db: any,
   userId: string,
   dancerId: string,
-  profile: { realName?: string; stageName?: string; city?: string },
+  profile: { realName?: string; stageName?: string; city?: string; status?: string },
 ) {
   if (!profile.realName?.trim() || !profile.stageName?.trim() || !profile.city?.trim()) {
     throw new Error("Save legal name, stage name, and city before submitting for review.");
@@ -158,6 +160,51 @@ async function submitProfileForReview(
     .eq("id", dancerId);
 
   if (error) throw error;
+
+  if (profile.status === "rejected") {
+    const adminDb = createAdminSupabaseClient() as any;
+    const { error: photoError } = await db
+      .from("dancer_photos")
+      .update({ review_status: "pending" })
+      .eq("dancer_id", dancerId)
+      .eq("review_status", "rejected");
+
+    if (photoError) throw photoError;
+    await reopenRejectedReviewsForResubmission(adminDb, dancerId);
+  }
+}
+
+async function reopenRejectedReviewsForResubmission(db: any, dancerId: string) {
+  const { data: reviews, error } = await db
+    .from("approval_reviews")
+    .select("review_type, status, created_at, reviewed_at")
+    .eq("dancer_id", dancerId);
+
+  if (error) throw error;
+
+  const latestByType = new Map<string, any>();
+  for (const review of reviews || []) {
+    const type = review.review_type;
+    const previous = latestByType.get(type);
+    const reviewTime = Date.parse(review.reviewed_at || review.created_at || "") || 0;
+    const previousTime = previous ? Date.parse(previous.reviewed_at || previous.created_at || "") || 0 : -1;
+    if (!previous || reviewTime >= previousTime) latestByType.set(type, review);
+  }
+
+  const rows = Array.from(latestByType.entries())
+    .filter(([, review]) => review.status === "rejected")
+    .map(([reviewType]) => ({
+      dancer_id: dancerId,
+      reviewer_id: null,
+      review_type: reviewType,
+      status: "pending",
+      notes: "Resubmitted by dancer.",
+      reviewed_at: null,
+    }));
+
+  if (!rows.length) return;
+  const { error: insertError } = await db.from("approval_reviews").insert(rows);
+  if (insertError) throw insertError;
 }
 
 async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
