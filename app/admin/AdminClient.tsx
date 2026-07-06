@@ -874,12 +874,18 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
       <section className="submission-section">
         <h3>Social links</h3>
         {socials.length ? (
-          <div className="submission-files">
+          <div className="submitted-social-icons">
             {socials.map((social, index) => (
-              <a className="submission-link" href={social.url || "#"} target="_blank" rel="noreferrer" key={social.id || `${social.platform}-${index}`}>
-                <strong>{social.label}</strong>
-                <small>{social.handle ? `@${social.handle.replace(/^@/, "")}` : "No handle submitted"}</small>
-                {social.url ? <small>{social.url}</small> : null}
+              <a
+                className={`submitted-social-icon social-${social.platform}`}
+                href={social.url || "#"}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${social.label}: ${social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url || "submitted social"}`}
+                title={`${social.label}${social.handle ? ` @${social.handle.replace(/^@/, "")}` : ""}`}
+                key={social.id || `${social.platform}-${index}`}
+              >
+                <SubmittedSocialIcon platform={social.platform} />
               </a>
             ))}
           </div>
@@ -919,6 +925,50 @@ function verificationDocumentLabel(document: Record<string, unknown>, index: num
   const existing = asText(document.displayName || document.display_name || document.documentType || document.document_type || document.name);
   if (existing) return existing;
   return ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
+}
+
+function SubmittedSocialIcon({ platform }: { platform: string }) {
+  if (platform === "instagram") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="4" width="16" height="16" rx="5" />
+        <circle cx="12" cy="12" r="3.4" />
+        <path d="M17.2 6.8h.01" />
+      </svg>
+    );
+  }
+  if (platform === "tiktok") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.8 3c.3 2.5 1.8 4.1 4.2 4.4v3.2c-1.6 0-3-.5-4.2-1.4v6.1c0 3.3-2.3 5.7-5.5 5.7A5.2 5.2 0 0 1 5 15.8c0-3.1 2.4-5.4 5.5-5.4.4 0 .8 0 1.1.1v3.4a2.6 2.6 0 0 0-1.2-.3 2.1 2.1 0 0 0-2.1 2.2c0 1.3.9 2.2 2.1 2.2s2.1-.9 2.1-2.4V3h3.3Z" />
+      </svg>
+    );
+  }
+  if (platform === "snapchat") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3.2c2.7 0 4.6 2 4.6 4.8v2.5c0 .6.5.9 1.1 1.1.6.2 1.2.4 1.2.9 0 .6-.7.9-1.5 1.1-.4.1-.5.4-.3.8.6 1.1 1.5 1.8 2.7 2.1.3.1.4.5.2.8-.8.7-1.8.8-2.5.8-.5 0-.8.2-1.1.6-.6.7-1.3 1.1-2.2 1.1-.7 0-1.2-.2-1.7-.5a1.1 1.1 0 0 0-1.1 0c-.5.3-1 .5-1.7.5-.9 0-1.6-.4-2.2-1.1-.3-.4-.6-.6-1.1-.6-.7 0-1.7-.1-2.5-.8-.2-.3-.1-.7.2-.8 1.2-.3 2.1-1 2.7-2.1.2-.4.1-.7-.3-.8-.8-.2-1.5-.5-1.5-1.1 0-.5.6-.7 1.2-.9.6-.2 1.1-.5 1.1-1.1V8c0-2.8 1.9-4.8 4.6-4.8Z" />
+      </svg>
+    );
+  }
+  if (platform === "onlyfans") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9.2" cy="12" r="5.4" />
+        <circle cx="9.2" cy="12" r="2.15" className="logo-cutout" />
+        <path d="M13.9 8.2h6.2c.5 0 .8.5.6 1l-1 2.2c-.1.3-.4.5-.7.5h-3.2l-1.1 3.9c-.1.4-.5.7-.9.7h-3.1l2.3-7.5c.1-.5.5-.8.9-.8Z" />
+      </svg>
+    );
+  }
+  if (platform === "x") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 4l14 16" />
+        <path d="M19 4 5 20" />
+      </svg>
+    );
+  }
+  return <span aria-hidden="true">{platform.slice(0, 1).toUpperCase() || "S"}</span>;
 }
 
 function normalizeSubmissionSocials(item: Record<string, unknown>) {
@@ -1152,6 +1202,12 @@ function AdminStyles() {
       .submission-review-card textarea { width: 100%; min-height: 68px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .content-review-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .content-review-actions button { min-height: 38px; padding: 0 10px; font-size: 12px; }
+      .submitted-social-icons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .submitted-social-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; color: #f7f2ff; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.055); text-decoration: none; }
+      .submitted-social-icon:hover { color: #fff; border-color: rgba(34,199,255,.48); background: rgba(34,199,255,.12); }
+      .submitted-social-icon svg { width: 22px; height: 22px; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .submitted-social-icon.social-instagram svg, .submitted-social-icon.social-x svg { fill: none; }
+      .submitted-social-icon .logo-cutout { fill: #050507; stroke: none; }
       .submission-empty { color: #9c90b3; font-size: 13px; }
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }

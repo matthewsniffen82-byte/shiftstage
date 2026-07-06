@@ -3014,6 +3014,52 @@
       white-space: normal;
     }
 
+    #adminDashboard .admin-social-icons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    #adminDashboard .admin-social-icon {
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.055);
+      text-decoration: none;
+      overflow: hidden;
+    }
+
+    #adminDashboard .admin-social-icon:hover {
+      border-color: rgba(53,216,255,.46);
+      background: rgba(53,216,255,.12);
+    }
+
+    #adminDashboard .admin-social-icon .social-icon {
+      width: 22px;
+      height: 22px;
+      margin: 0;
+    }
+
+    #adminDashboard .admin-social-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    #adminDashboard .admin-social-icon > span:not(.social-icon) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
     #adminDashboard .upload-slot {
       min-height: 84px;
       padding: 9px;
@@ -31359,12 +31405,13 @@
     function adminSubmittedSocialsMarkup(profile) {
       const socials = normalizeSubmittedSocials(profile);
       if (!socials.length) return '<div class="locked">No social links submitted.</div>';
-      return socials.map((social) => {
+      return `<div class="admin-social-icons">${socials.map((social) => {
         const url = social.url || "#";
         const handle = social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url;
+        const label = `${social.label}${handle ? ` ${handle}` : ""}`;
         const hrefAttr = social.url ? ` href="${displayText(url)}" target="_blank" rel="noreferrer"` : "";
-        return `<a class="lock-row"${hrefAttr}><strong>${displayText(social.label)}</strong><span>${displayText(handle || "Submitted social")}</span>${social.url ? `<span>${displayText(social.url)}</span>` : ""}</a>`;
-      }).join("");
+        return `<a class="admin-social-icon social-${displayText(social.platform)}"${hrefAttr} aria-label="${displayText(label)}" title="${displayText(label)}">${socialIconMarkup(social.platform)}<span>${displayText(social.label)}</span></a>`;
+      }).join("")}</div>`;
     }
 
     function adminSubmittedDocumentsMarkup(profile) {
