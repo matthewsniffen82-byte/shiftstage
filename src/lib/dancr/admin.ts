@@ -529,15 +529,14 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   const { error: reviewError } = await db.from("approval_reviews").insert(reviewRows);
   if (reviewError) throw reviewError;
 
+  const notificationCopy = dancerApprovalNotificationCopy(dancer.stage_name, approved, input.notes);
   const notificationRow = {
     recipient_id: dancer.user_id,
     notification_type: "approval_status" as const,
     channel: "in_app",
-    title: approved ? "Your Dancr profile is approved" : "Your Dancr profile needs changes",
-    body: approved
-      ? `${dancer.stage_name} is now live on Dancr.`
-      : "Your profile review is complete. Check the notes and update your setup.",
-    payload: { dancerId: input.dancerId, status: input.status },
+    title: notificationCopy.title,
+    body: notificationCopy.body,
+    payload: { dancerId: input.dancerId, status: input.status, reviewedAt },
     sent_at: reviewedAt,
   };
 
@@ -554,12 +553,29 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
 
   if (actionError) throw actionError;
   if (notificationError) throw notificationError;
-  await deliverNotificationRows(client, [notificationRow]);
+  const notificationDelivery = await deliverNotificationRows(client, [notificationRow]);
 
   return {
     dancerId: input.dancerId,
     status: approved ? "approved" : "rejected",
     reviewedAt,
+    notificationDelivery,
+  };
+}
+
+function dancerApprovalNotificationCopy(stageName: string | null | undefined, approved: boolean, notes?: string | null) {
+  const displayName = stageName?.trim() || "Your Dancr profile";
+  if (approved) {
+    return {
+      title: "Your Dancr profile is approved",
+      body: `${displayName} is approved and live on Dancr. You can now post shifts, manage your public profile, and share your page.`,
+    };
+  }
+
+  const reviewNotes = notes?.trim() ? ` Notes: ${notes.trim()}` : "";
+  return {
+    title: "Your Dancr profile needs changes",
+    body: `Your Dancr profile review is complete. Update your verification setup and resubmit.${reviewNotes}`,
   };
 }
 

@@ -26645,17 +26645,42 @@
       return liveNotifications.slice(0, 8).map((notification) => {
         const unread = !notification.readAt;
         const date = formatBillingDate(notification.sentAt || notification.createdAt);
+        const notificationId = notification.id || "";
+        const canMarkRead = unread && notificationId && !notification.localOnly;
         return `
-          <article class="rank-event ${unread ? "top-ten" : "stable"}" data-notification-id="${notification.id}">
+          <article class="rank-event ${unread ? "top-ten" : "stable"}" ${notificationId ? `data-notification-id="${notificationId}"` : ""}>
             <span class="rank-event-icon">${unread ? "!" : "OK"}</span>
             <span>
               <strong>${displayText(notification.title || "Dancr notification")}</strong>
               <p>${displayText(notification.body || "You have a new update.")}${date ? ` · ${date}` : ""}</p>
-              ${unread ? '<button class="ghost" type="button" data-notification-action="mark-read">Mark read</button>' : ""}
+              ${canMarkRead ? '<button class="ghost" type="button" data-notification-action="mark-read">Mark read</button>' : ""}
             </span>
           </article>
         `;
       }).join("");
+    }
+
+    function ensureLocalDancerApprovalNotification(profile) {
+      if (!isDancerSession() || profile?.status !== "approved") return;
+      const alreadyShown = liveNotifications.some((notification) => (
+        notification.type === "approval_status" &&
+        (notification.payload?.status === "approved" || notification.title === "Your Dancr profile is approved")
+      ));
+      if (alreadyShown) return;
+
+      const stageName = profile.stage_name || profile.stageName || document.getElementById("dancerStageName")?.value || "Your Dancr profile";
+      liveNotifications = [{
+        id: "",
+        localOnly: true,
+        type: "approval_status",
+        title: "Your Dancr profile is approved",
+        body: `${stageName} is approved and live on Dancr.`,
+        payload: { status: "approved" },
+        readAt: null,
+        sentAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      }, ...liveNotifications];
+      renderNotificationCenters();
     }
 
     function renderNotificationCenters() {
@@ -30399,6 +30424,7 @@
 
       setupChecklistExpanded = true;
       activeSetupStep = nextIncompleteStep() || (approved ? "approval" : "profile");
+      ensureLocalDancerApprovalNotification(profile);
 
       const localProfile = ensureActiveDancerProfile(approved ? "Verified" : "Pending");
       if (localProfile) {
