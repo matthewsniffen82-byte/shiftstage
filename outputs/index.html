@@ -30933,12 +30933,10 @@
         </form>
       `;
       const approvalBody = `
-        <div class="rule-note">Dancr reviews profile, photos, ID, selfie, and proof that you dance. Approval unlocks schedules.</div>
         ${dancerReviewFeedbackMarkup()}
         <button class="action-btn" type="button" data-submit-review ${readyForReview && !reviewSubmitted ? "" : "disabled"}>
           ${reviewSubmitted ? "Submitted for review" : "Submit for review"}
         </button>
-        <div class="rule-note">${reviewSubmitted ? "Approval status: submitted and waiting for Dancr review." : readyForReview ? "Everything is ready. Submit your profile for Dancr review." : "Complete profile, photos, and verification uploads before submitting for review."}</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile", profileBody),
