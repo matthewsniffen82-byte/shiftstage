@@ -1257,9 +1257,9 @@ function AdminStyles() {
       .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 2; }
       .submitted-social-review small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
       .submitted-social-review textarea { width: 100%; min-height: 58px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 8px 10px; font: inherit; }
-      .submitted-social-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; color: #f7f2ff; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.055); text-decoration: none; }
+      .submitted-social-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; line-height: 1; border-radius: 999px; color: #f7f2ff; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.055); text-decoration: none; }
       .submitted-social-icon:hover { color: #fff; border-color: rgba(34,199,255,.48); background: rgba(34,199,255,.12); }
-      .submitted-social-icon svg { width: 22px; height: 22px; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .submitted-social-icon svg { display: block; width: 22px; height: 22px; margin: 0; flex: 0 0 22px; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .submitted-social-icon.social-instagram svg, .submitted-social-icon.social-x svg { fill: none; }
       .submitted-social-icon .logo-cutout { fill: #050507; stroke: none; }
       .submission-empty { color: #9c90b3; font-size: 13px; }
