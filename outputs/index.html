@@ -30492,6 +30492,31 @@
         .filter(Boolean);
     }
 
+    function dancerSetupPhotoPreviewMarkup() {
+      const profile = activeDancerProfile() || null;
+      const submittedUrls = (profile?.submittedPhotos || [])
+        .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
+        .filter(Boolean);
+      const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
+      const mainUrl = profile?.mainPhotoUrl ? [profile.mainPhotoUrl] : [];
+      const urls = [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].slice(0, 5);
+
+      if (!urls.length) {
+        return '<div class="locked">No uploaded photos yet.</div>';
+      }
+
+      return `
+        <div class="photo-upload-grid" aria-label="Uploaded profile photos">
+          ${urls.map((url, index) => `
+            <div class="upload-slot submitted-photo-slot">
+              <img src="${escapeHtml(url)}" alt="Uploaded profile photo ${index + 1}" loading="lazy" decoding="async">
+              <span>${index === 0 ? "Main photo" : `Gallery photo ${index + 1}`}<small>Submitted for review</small></span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
     async function submitSetupPhotos(form) {
       if (!canOpenStep("photos")) return;
       if (!isDancerSession()) {
@@ -30916,6 +30941,7 @@
       `;
       const photosBody = `
         <form class="auth-form" data-setup-form="photos">
+          ${dancerSetupPhotoPreviewMarkup()}
           <div class="field">
             <label for="setupProfilePhotos">Profile photos</label>
             <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
