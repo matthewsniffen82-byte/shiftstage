@@ -1411,12 +1411,17 @@ function AdminStyles() {
         .approval-summary { display: grid; grid-template-columns: 1fr; }
         .approval-actions, .report-row div, .content-review-actions { display: grid; grid-template-columns: 1fr; }
         .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
-        .admin-panel, .approval-row, .submission-detail, .submission-section, .submission-review-card, .submitted-social-review { width: 100%; max-width: 100%; overflow: visible; }
-        .submitted-social-review { grid-template-columns: 36px minmax(0, 1fr); align-items: start; }
+        .admin-shell { padding-left: 8px; padding-right: 8px; overflow-x: hidden; }
+        .admin-head, .admin-grid, .admin-panel, .approval-row, .submission-detail, .submission-section, .submission-review-card, .submitted-social-review, .submitted-social-review-list, .submitted-social-icons { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+        .admin-panel, .approval-row, .submission-detail { padding: 10px; }
+        .submission-review-card { padding: 8px; }
+        .submitted-social-review { grid-template-columns: 32px minmax(0, 1fr); gap: 7px; align-items: start; padding: 7px; }
         .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 1 / -1; }
-        .submitted-social-icon { width: 36px; height: 36px; flex-basis: 36px; }
-        .submitted-social-icon svg { width: 19px; height: 19px; flex-basis: 19px; }
+        .submitted-social-icon { width: 32px; height: 32px; min-width: 32px; flex-basis: 32px; }
+        .submitted-social-icon svg { width: 17px; height: 17px; min-width: 17px; flex-basis: 17px; }
+        .submission-review-card textarea, .submitted-social-review textarea, .content-review-actions button { width: 100%; max-width: 100%; }
         .submission-thumb img { max-height: 260px; object-fit: contain; }
+        h1, h2, h3, p, small, span, strong { overflow-wrap: anywhere; }
         .admin-head { gap: 10px; margin-bottom: 18px; }
       }
     `}</style>
