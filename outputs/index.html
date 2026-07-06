@@ -3014,6 +3014,13 @@
       white-space: normal;
     }
 
+    #adminDashboard .admin-review-hint {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
     #adminDashboard .admin-social-icons {
       display: flex;
       flex-wrap: wrap;
@@ -31430,10 +31437,11 @@
               <span>Submitted by ${displayText(profile.name || "dancer")}</span>
               ${document.reviewNotes || document.review_notes ? `<span>Reason: ${displayText(document.reviewNotes || document.review_notes)}</span>` : ""}
             </a>
-            <textarea data-review-reason="${displayText(key)}" placeholder="Reason if not approved"></textarea>
+            <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
+            <span class="admin-review-hint">Type the reason, then press Save disapproval.</span>
             <div class="admin-review-actions">
               <button class="action-btn" data-admin-content-review="approved" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Approve file</button>
-              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Disapprove file</button>
+              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Save disapproval</button>
             </div>
           </div>
         `;
@@ -31457,10 +31465,11 @@
               <span>Submitted by ${displayText(profile.name || "dancer")}</span>
               ${photo.reviewNotes || photo.review_notes ? `<span>Reason: ${displayText(photo.reviewNotes || photo.review_notes)}</span>` : ""}
             </a>
-            <textarea data-review-reason="${displayText(key)}" placeholder="Reason if not approved"></textarea>
+            <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
+            <span class="admin-review-hint">Type the reason, then press Save disapproval.</span>
             <div class="admin-review-actions">
-              <button class="action-btn" data-admin-content-review="approved" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" ${photo.id ? "" : "disabled"}>Approve picture</button>
-              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" ${photo.id ? "" : "disabled"}>Disapprove picture</button>
+              <button class="action-btn" data-admin-content-review="approved" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" data-review-live-target="${photo.id ? "true" : "false"}" ${photo.id ? "" : "disabled"}>Approve picture</button>
+              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" data-review-live-target="${photo.id ? "true" : "false"}">Save disapproval</button>
             </div>
           </div>
         `;
@@ -31859,6 +31868,7 @@
       const targetType = button.dataset.reviewType;
       const targetId = button.dataset.reviewTarget || "";
       const label = button.dataset.reviewLabel || "Submitted item";
+      const hasLiveTarget = button.dataset.reviewLiveTarget !== "false";
       const reasonInput = findAdminReviewReason(host, button.dataset.reviewKey || `${targetType}:${targetId}`);
       const notes = reasonInput?.value.trim() || "";
 
@@ -31872,7 +31882,7 @@
       applyLocalAdminContentReview(profileMatch.profile, targetType, targetId, status, notes);
 
       try {
-        if (isAdminSession() && profileMatch.profile.id) {
+        if (isAdminSession() && profileMatch.profile.id && hasLiveTarget) {
           await postAuthenticatedJson("/api/admin/approvals", {
             action: "review_content",
             dancerId: profileMatch.profile.id,

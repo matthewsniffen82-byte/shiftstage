@@ -809,16 +809,17 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
                   <small>Submitted by {submittedBy}</small>
                   {reason ? <small>Reason: {reason}</small> : null}
                   <textarea
-                    placeholder="Reason if not approved"
+                    placeholder="Reason for disapproval"
                     value={reasonByKey[key] || ""}
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
+                  <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", `Photo ${index + 1}`)} disabled={!photoId}>
+                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", `Photo ${index + 1}`)}>
                       Approve picture
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", `Photo ${index + 1}`)} disabled={!photoId}>
-                      Disapprove picture
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", `Photo ${index + 1}`)}>
+                      Save disapproval
                     </button>
                   </div>
                 </div>
@@ -850,16 +851,17 @@ function SubmissionDetails({ item }: { item: Record<string, unknown> }) {
                   <small>Submitted by {submittedBy}</small>
                   {reason ? <small>Reason: {reason}</small> : null}
                   <textarea
-                    placeholder="Reason if not approved"
+                    placeholder="Reason for disapproval"
                     value={reasonByKey[key] || ""}
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
+                  <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
                     <button type="button" onClick={() => reviewContent("verification_document", targetId, "approved", label)} disabled={!targetId}>
                       Approve file
                     </button>
                     <button className="secondary-action" type="button" onClick={() => reviewContent("verification_document", targetId, "rejected", label)} disabled={!targetId}>
-                      Disapprove file
+                      Save disapproval
                     </button>
                   </div>
                 </div>
