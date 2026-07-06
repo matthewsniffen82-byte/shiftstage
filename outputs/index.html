@@ -24624,8 +24624,8 @@
         </div>
         <form class="auth-form admin-login-form" id="adminLoginForm">
           <div class="field">
-            <label for="adminEmail">Admin email</label>
-            <input id="adminEmail" type="email" autocomplete="username">
+            <label for="adminEmail">Admin username</label>
+            <input id="adminEmail" type="text" autocomplete="username">
           </div>
           <div class="field">
             <label for="adminPassword">Password</label>
@@ -26453,7 +26453,7 @@
     }
 
     function isAdminSession() {
-      return authSession?.account?.role === "admin";
+      return Boolean(authSession?.accessToken && authSession?.account?.role === "admin");
     }
 
     function isDancerSession() {
@@ -29554,11 +29554,15 @@
     }
 
     function openAdminDashboard() {
-      renderAdminDashboard();
+      if (!isAdminSession()) {
+        lockAdminDashboard();
+      } else {
+        renderAdminDashboard();
+      }
       adminDashboard.classList.add("show");
       adminDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
-      loadLiveAdminApprovals();
+      if (isAdminSession()) loadLiveAdminApprovals();
     }
 
     function closeAdminDashboard() {
@@ -30845,6 +30849,11 @@
     }
 
     function renderAdminDashboard() {
+      if (!isAdminSession()) {
+        lockAdminDashboard();
+        return;
+      }
+
       const profiles = allProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
       const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
@@ -30945,6 +30954,32 @@
           </article>
         `)
       )).join("");
+    }
+
+    function lockAdminDashboard() {
+      const status = document.getElementById("adminLiveStatus");
+      if (status) status.textContent = "Admin username and password required.";
+      ["adminUserCount", "adminPendingCount", "adminSubscriptionCount", "adminActiveSubscriptionCount"].forEach((id) => {
+        const node = document.getElementById(id);
+        if (node) node.textContent = "0";
+      });
+      [
+        "adminMonitoring",
+        "adminUsers",
+        "adminDancers",
+        "adminVerification",
+        "adminPhotos",
+        "adminReports",
+        "adminSubscriptions",
+        "adminShifts",
+        "adminFeatured",
+        "adminVenues"
+      ].forEach((id) => {
+        const node = document.getElementById(id);
+        if (node) node.innerHTML = '<div class="locked">Admin login required.</div>';
+      });
+      const rankingStatus = document.getElementById("adminRankingStatus");
+      if (rankingStatus) rankingStatus.textContent = "Admin login required.";
     }
 
     function renderDashboard() {
@@ -31838,7 +31873,7 @@
         const result = await requestAuth({
           mode: "login",
           role: "admin",
-          email: document.getElementById("adminEmail").value,
+          username: document.getElementById("adminEmail").value,
           password: document.getElementById("adminPassword").value
         });
         const name = result.account?.displayName || "platform admin";

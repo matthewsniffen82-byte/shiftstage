@@ -152,7 +152,11 @@ export default function AdminClient() {
         <p>{isLoading ? "Loading live operations..." : needsSignIn ? state.error : "Live queue, venue, and subscription health."}</p>
       </section>
 
-      {needsSignIn ? (
+      {isLoading ? (
+        <section className="admin-panel sign-in" aria-live="polite">
+          <p>Checking admin session...</p>
+        </section>
+      ) : needsSignIn ? (
         <form className="admin-panel sign-in" onSubmit={signIn}>
           <div className="segmented" aria-label="Admin auth mode">
             <button className={mode === "login" ? "active" : ""} type="button" onClick={() => setMode("login")}>
@@ -910,6 +914,7 @@ function readFirst(value: unknown): Record<string, unknown> | null {
 function readToken() {
   try {
     const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
+    if (session?.account?.role !== "admin") return "";
     return typeof session?.accessToken === "string" ? session.accessToken : "";
   } catch {
     return "";
