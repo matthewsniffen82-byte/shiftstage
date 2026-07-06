@@ -24623,6 +24623,10 @@
           </button>
         </div>
         <form class="auth-form admin-login-form" id="adminLoginForm">
+          <div class="tabs" aria-label="Admin auth mode">
+            <button class="auth-tab active" id="adminLoginModeBtn" type="button" data-admin-auth-mode="login">Sign in</button>
+            <button class="auth-tab" id="adminSignupModeBtn" type="button" data-admin-auth-mode="signup">Create</button>
+          </div>
           <div class="field">
             <label for="adminEmail">Admin username</label>
             <input id="adminEmail" type="text" autocomplete="username">
@@ -24636,10 +24640,15 @@
               </button>
             </div>
           </div>
+          <div class="field" id="adminCodeField" hidden>
+            <label for="adminCode">Admin code</label>
+            <input id="adminCode" type="password" autocomplete="one-time-code">
+          </div>
           <button class="forgot-password-link" id="adminForgotPasswordBtn" type="button">Forgot password?</button>
           <button class="admin-login" id="adminLoginBtn" type="submit">Admin login</button>
-          <div class="rule-note" id="adminLiveStatus">Use an existing Supabase admin account.</div>
+          <div class="rule-note" id="adminLiveStatus">Sign in or create an admin account to continue.</div>
         </form>
+        <div id="adminDashboardContent" hidden>
         <div class="status-grid">
           <div class="stat"><strong id="adminUserCount">0</strong><span>Users</span></div>
           <div class="stat"><strong id="adminPendingCount">0</strong><span>Pending dancers</span></div>
@@ -24702,6 +24711,7 @@
         <div class="auth-card">
           <h3>Venue verification</h3>
           <div class="admin-grid" id="adminVenues"></div>
+        </div>
         </div>
       </div>
     </section>
@@ -24977,6 +24987,7 @@
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
     let authMode = "login";
+    let adminAuthMode = "login";
     let authSession = loadAuthSession();
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
@@ -25753,7 +25764,7 @@
       }
       const email = normalizeAccountEmail(payload.email);
       if (payload.role && email) persistAccountEmail(payload.role, email);
-      if (data.session && payload.mode !== "signup") {
+      if (data.session && (payload.mode !== "signup" || payload.role === "admin")) {
         const account = data.account
           ? { ...data.account, email: normalizeAccountEmail(data.account.email) || email || null }
           : { role: payload.role || null, email: email || null, accountState: "active" };
@@ -29555,9 +29566,9 @@
 
     function openAdminDashboard() {
       if (!isAdminSession()) {
-        lockAdminDashboard();
+        showAdminAuthPage("Admin username and password required.");
       } else {
-        renderAdminDashboard();
+        showAdminDashboardPage();
       }
       adminDashboard.classList.add("show");
       adminDashboard.setAttribute("aria-hidden", "false");
@@ -30850,10 +30861,11 @@
 
     function renderAdminDashboard() {
       if (!isAdminSession()) {
-        lockAdminDashboard();
+        showAdminAuthPage("Admin username and password required.");
         return;
       }
 
+      showAdminDashboardPage();
       const profiles = allProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
       const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
@@ -30956,7 +30968,40 @@
       )).join("");
     }
 
+    function setAdminAuthMode(mode) {
+      adminAuthMode = mode === "signup" ? "signup" : "login";
+      document.querySelectorAll("[data-admin-auth-mode]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.adminAuthMode === adminAuthMode);
+      });
+      const codeField = document.getElementById("adminCodeField");
+      const codeInput = document.getElementById("adminCode");
+      const forgotButton = document.getElementById("adminForgotPasswordBtn");
+      const submitButton = document.getElementById("adminLoginBtn");
+      if (codeField) codeField.hidden = adminAuthMode !== "signup";
+      if (codeInput) codeInput.required = adminAuthMode === "signup";
+      if (forgotButton) forgotButton.hidden = adminAuthMode !== "login";
+      if (submitButton) submitButton.textContent = adminAuthMode === "signup" ? "Create admin" : "Admin login";
+      const passwordInput = document.getElementById("adminPassword");
+      if (passwordInput) passwordInput.autocomplete = adminAuthMode === "signup" ? "new-password" : "current-password";
+    }
+
+    function showAdminAuthPage(message = "Sign in or create an admin account to continue.") {
+      document.getElementById("adminLoginForm").hidden = false;
+      const content = document.getElementById("adminDashboardContent");
+      if (content) content.hidden = true;
+      const status = document.getElementById("adminLiveStatus");
+      if (status) status.textContent = message;
+      setAdminAuthMode(adminAuthMode);
+    }
+
+    function showAdminDashboardPage() {
+      document.getElementById("adminLoginForm").hidden = true;
+      const content = document.getElementById("adminDashboardContent");
+      if (content) content.hidden = false;
+    }
+
     function lockAdminDashboard() {
+      showAdminAuthPage("Admin username and password required.");
       const status = document.getElementById("adminLiveStatus");
       if (status) status.textContent = "Admin username and password required.";
       ["adminUserCount", "adminPendingCount", "adminSubscriptionCount", "adminActiveSubscriptionCount"].forEach((id) => {
@@ -31864,6 +31909,9 @@
       openProfileModal(profile.name, { preview: true });
     });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
+    document.querySelectorAll("[data-admin-auth-mode]").forEach((button) => {
+      button.addEventListener("click", () => setAdminAuthMode(button.dataset.adminAuthMode));
+    });
     document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const button = document.getElementById("adminLoginBtn");
@@ -31871,10 +31919,11 @@
       button.disabled = true;
       try {
         const result = await requestAuth({
-          mode: "login",
+          mode: adminAuthMode,
           role: "admin",
           username: document.getElementById("adminEmail").value,
-          password: document.getElementById("adminPassword").value
+          password: document.getElementById("adminPassword").value,
+          adminCode: document.getElementById("adminCode")?.value || ""
         });
         const name = result.account?.displayName || "platform admin";
         if (status) status.textContent = `Logged in as ${name}.`;
