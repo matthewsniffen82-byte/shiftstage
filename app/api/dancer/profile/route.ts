@@ -53,7 +53,7 @@ export async function PATCH(request: Request) {
 
     const { data: profile, error: profileError } = await db
       .from("dancer_profiles")
-      .select("id")
+      .select("id, real_name, stage_name, city")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -105,10 +105,57 @@ export async function PATCH(request: Request) {
 
     await saveProfilePhotoUrls(db, profile.id, body);
 
+    if (body.submitForReview === true) {
+      await submitProfileForReview(client, db, user.id, profile.id, {
+        realName: update.real_name || profile.real_name,
+        stageName: update.stage_name || profile.stage_name,
+        city: update.city || profile.city,
+      });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     return apiError(error, "Unable to update dancer profile.");
   }
+}
+
+async function submitProfileForReview(
+  client: any,
+  db: any,
+  userId: string,
+  dancerId: string,
+  profile: { realName?: string; stageName?: string; city?: string },
+) {
+  if (!profile.realName?.trim() || !profile.stageName?.trim() || !profile.city?.trim()) {
+    throw new Error("Save legal name, stage name, and city before submitting for review.");
+  }
+
+  const { data: photos, error: photosError } = await db
+    .from("dancer_photos")
+    .select("id")
+    .eq("dancer_id", dancerId)
+    .limit(1);
+
+  if (photosError) throw photosError;
+  if (!photos?.length) throw new Error("Upload profile photos before submitting for review.");
+
+  const { data: documents, error: documentsError } = await client.storage
+    .from("verification-documents")
+    .list(`${userId}/verification`, { limit: 3 });
+
+  if (documentsError) throw documentsError;
+  if (!documents?.length) throw new Error("Upload verification documents before submitting for review.");
+
+  const { error } = await db
+    .from("dancer_profiles")
+    .update({
+      status: "pending_review",
+      verification_status: "pending",
+      photo_review_status: "pending",
+    })
+    .eq("id", dancerId);
+
+  if (error) throw error;
 }
 
 async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {

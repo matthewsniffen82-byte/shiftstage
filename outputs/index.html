@@ -30355,6 +30355,7 @@
 
     function applyDancerVerificationProfile(profile) {
       const approved = profile.status === "approved";
+      const submittedForReview = profile.status === "pending_review";
       const savedProfileSetup = approved || hasSavedDancerProfileSetup();
       const draft = readStoredDancerProfileDraft();
       const useDraftFields = Boolean(draft && !savedProfileSetup);
@@ -30393,6 +30394,7 @@
           idStatus: dancerSetup.verification ? "Needs review" : localProfile.idStatus,
           selfieStatus: dancerSetup.verification ? "Needs review" : localProfile.selfieStatus,
           danceProofStatus: dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus,
+          reviewSubmitted: submittedForReview || localProfile.reviewSubmitted,
           socials: { ...(localProfile.socials || {}), ...dancerSignupSocials }
         });
       }
@@ -30534,6 +30536,29 @@
       }
     }
 
+    async function submitDancerProfileForReview(button) {
+      if (!dancerSetup.profile || !dancerSetup.photos || !dancerSetup.verification) {
+        showToast("Complete profile, photos, and verification first");
+        return;
+      }
+      const profile = ensureActiveDancerProfile("Pending");
+      if (button) button.disabled = true;
+      try {
+        if (isDancerSession()) {
+          const data = await patchAuthenticatedJson("/api/dancer/profile", { submitForReview: true });
+          if (!data) throw new Error("Sign in required");
+        }
+        if (profile) profile.reviewSubmitted = true;
+        activeSetupStep = "approval";
+        renderDancerSetup();
+        showToast("Submitted for Dancr review");
+      } catch (error) {
+        showToast(error.message || "Could not submit for review");
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
     function setupStepMarkup(step, title, body) {
       const complete = dancerSetup[step];
       const locked = !canOpenStep(step);
@@ -30575,6 +30600,8 @@
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
       const approved = dancerSetup.approval || activeProfile?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved";
+      const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
+      const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
@@ -30865,7 +30892,10 @@
       const approvalBody = `
         <div class="rule-note">Dancr reviews profile, photos, ID, selfie, and proof that you dance. Approval unlocks schedules.</div>
         ${dancerReviewFeedbackMarkup()}
-        <div class="rule-note">Approval status: pending Dancr review.</div>
+        <button class="action-btn" type="button" data-submit-review ${readyForReview && !reviewSubmitted ? "" : "disabled"}>
+          ${reviewSubmitted ? "Submitted for review" : "Submit for review"}
+        </button>
+        <div class="rule-note">${reviewSubmitted ? "Approval status: submitted and waiting for Dancr review." : readyForReview ? "Everything is ready. Submit your profile for Dancr review." : "Complete profile, photos, and verification uploads before submitting for review."}</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile", profileBody),
@@ -32628,6 +32658,11 @@
           activeSetupStep = nextIncompleteStep() || "profile";
         }
         renderDancerSetup();
+        return;
+      }
+      const submitReviewButton = event.target.closest("[data-submit-review]");
+      if (submitReviewButton) {
+        submitDancerProfileForReview(submitReviewButton);
         return;
       }
       const toggle = event.target.closest("[data-step-toggle]");
