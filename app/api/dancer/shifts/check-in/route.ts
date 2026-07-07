@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const geofence = verifyGeofence(shift, latitude, longitude, "You must be near the club to check in.");
+    const geofence = verifyGeofence(shift, latitude, longitude, "Outside the club check-in radius. Move closer to the club and try again.");
     if ("response" in geofence) return geofence.response;
 
     const checkedInAt = new Date().toISOString();
@@ -194,7 +194,17 @@ function verifyGeofence(shift: any, latitude: number, longitude: number, outside
 
   const distanceFeet = distanceInFeet(latitude, longitude, Number(venue.latitude), Number(venue.longitude));
   if (distanceFeet > CHECK_IN_RADIUS_FEET) {
-    return { response: NextResponse.json({ ok: false, error: outsideMessage }, { status: 403 }) };
+    return {
+      response: NextResponse.json(
+        {
+          ok: false,
+          error: outsideMessage,
+          distanceFeet: Math.round(distanceFeet),
+          requiredRadiusFeet: CHECK_IN_RADIUS_FEET,
+        },
+        { status: 403 },
+      ),
+    };
   }
 
   return { distanceFeet: Math.round(distanceFeet * 100) / 100 };

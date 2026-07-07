@@ -27349,6 +27349,14 @@
       });
     }
 
+    function apiErrorMessage(data, fallback = "Request failed") {
+      const message = data?.error || fallback;
+      if (Number.isFinite(Number(data?.distanceFeet)) && Number.isFinite(Number(data?.requiredRadiusFeet))) {
+        return `${message} Your location was about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away; check-in requires ${Math.round(Number(data.requiredRadiusFeet)).toLocaleString()} ft or less.`;
+      }
+      return message;
+    }
+
     async function postAuthenticatedJson(url, payload) {
       const headers = authenticatedRequestHeaders("application/json");
       if (!headers) return null;
@@ -27358,7 +27366,7 @@
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      if (!response.ok || data.ok === false) throw new Error(apiErrorMessage(data));
       applyResponseSession(data);
       return data;
     }

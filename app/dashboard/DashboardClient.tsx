@@ -935,7 +935,7 @@ function DancerShiftPanel({ city }: { city: string }) {
         }),
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check in.");
+      if (!response.ok || !data.ok) throw new Error(checkInErrorMessage(data));
       setCheckInStatus("Checked in. Your shift can now appear in Working Now.");
       setStatus("Checked in.");
       await loadShifts(session.accessToken);
@@ -1594,6 +1594,14 @@ async function readJson(path: string, headers: Record<string, string>) {
   const data = await response.json();
   if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dashboard.");
   return data;
+}
+
+function checkInErrorMessage(data: any) {
+  const message = String(data?.error || "Unable to check in.");
+  if (Number.isFinite(Number(data?.distanceFeet)) && Number.isFinite(Number(data?.requiredRadiusFeet))) {
+    return `${message} Your location was about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away; check-in requires ${Math.round(Number(data.requiredRadiusFeet)).toLocaleString()} ft or less.`;
+  }
+  return message;
 }
 
 function dashboardName(profile: Record<string, unknown> | null | undefined, role: DashboardRole) {
