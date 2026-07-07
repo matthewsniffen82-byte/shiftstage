@@ -1078,7 +1078,11 @@ async function updateVerificationReviewSummary(client: DancrClient, userId: stri
 
   if (error) throw error;
   const documents = await listVerificationDocumentsForUser(client, userId, reviews || []);
-  const status = aggregateReviewStatus(documents.map((document: any) => document.status === "pending_review" ? "pending" : document.status));
+  const statuses = requiredVerificationDocuments().map((required) => {
+    const document = documents.find((item: any, index: number) => matchesRequiredVerificationDocument(item, required, index));
+    return document ? (document.status === "pending_review" ? "pending" : document.status) : "pending";
+  });
+  const status = aggregateReviewStatus(statuses);
   const { error: updateError } = await db.from("dancer_profiles").update({ verification_status: status }).eq("id", dancerId);
   if (updateError) throw updateError;
 }

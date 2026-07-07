@@ -32396,7 +32396,7 @@
       const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : "No active shift";
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
-      const documentCount = profile.verificationDocuments?.length || 0;
+      const documentCount = requiredSubmittedVerificationDocuments(profile).length;
       return `
         <article class="admin-item" data-admin-profile="${profile.name}" data-admin-city="${city}">
           <div class="row">
@@ -32439,7 +32439,7 @@
     }
 
     function adminSubmittedDocumentsMarkup(profile) {
-      const documents = profile.verificationDocuments || [];
+      const documents = requiredSubmittedVerificationDocuments(profile);
       if (!documents.length) return '<div class="locked">No verification files submitted.</div>';
       return documents.map((document, index) => {
         const href = document.fileUrl || document.file_url || "#";
@@ -32521,13 +32521,32 @@
       return !text.trim() && documentIndex === fallbackIndex;
     }
 
-    function pendingAdminSubmissionItems(profile) {
-      const documents = profile.verificationDocuments || [];
-      const requiredDocuments = [
+    function requiredVerificationDocumentDefinitions() {
+      return [
         { key: "government_id", label: "Government ID", terms: ["government", "id"] },
         { key: "selfie", label: "Selfie verification", terms: ["selfie"] },
         { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"] }
       ];
+    }
+
+    function requiredSubmittedVerificationDocuments(profile) {
+      const documents = profile.verificationDocuments || [];
+      const used = new Set();
+      return requiredVerificationDocumentDefinitions()
+        .map((required, fallbackIndex) => {
+          const foundIndex = documents.findIndex((item, documentIndex) =>
+            !used.has(documentIndex) && matchesRequiredVerificationDocument(item, required.key, required.terms, documentIndex, fallbackIndex)
+          );
+          if (foundIndex < 0) return null;
+          used.add(foundIndex);
+          return documents[foundIndex];
+        })
+        .filter(Boolean);
+    }
+
+    function pendingAdminSubmissionItems(profile) {
+      const documents = profile.verificationDocuments || [];
+      const requiredDocuments = requiredVerificationDocumentDefinitions();
       const pending = [];
       requiredDocuments.forEach((required, index) => {
         const document = documents.find((item, documentIndex) =>
@@ -32542,7 +32561,7 @@
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
-      const documentCount = profile.verificationDocuments?.length || 0;
+      const documentCount = requiredSubmittedVerificationDocuments(profile).length;
       const pendingItems = pendingAdminSubmissionItems(profile);
       const approveDisabled = pendingItems.length ? "disabled" : "";
       return `

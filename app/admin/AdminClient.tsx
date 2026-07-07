@@ -833,7 +833,8 @@ type AdminPreview = {
 function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, unknown>; onContentReviewed: () => void | Promise<void> }) {
   const photos = asRecordArray(item.photos);
   const socials = normalizeSubmissionSocials(item);
-  const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
+  const allDocuments = asRecordArray(item.verificationDocuments || item.verification_documents);
+  const documents = submittedRequiredDocuments(allDocuments);
   const reviews = asRecordArray(item.reviews);
   const dancerId = asText(item.id);
   const submittedBy = asText(item.stageName || item.stage_name) || asText(item.realName || item.real_name) || "this dancer";
@@ -1103,14 +1104,32 @@ function verificationDocumentLabel(document: Record<string, unknown>, index: num
   return ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
 }
 
-function pendingSubmittedContent(item: Record<string, unknown>) {
-  const pending: string[] = [];
-  const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
-  const requiredDocuments = [
+function requiredDocumentDefinitions() {
+  return [
     { key: "government_id", label: "Government ID", terms: ["government", "id"] },
     { key: "selfie", label: "Selfie verification", terms: ["selfie"] },
     { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"] },
   ];
+}
+
+function submittedRequiredDocuments(documents: Array<Record<string, unknown>>) {
+  const used = new Set<number>();
+  return requiredDocumentDefinitions()
+    .map((required, fallbackIndex) => {
+      const foundIndex = documents.findIndex((item, documentIndex) =>
+        !used.has(documentIndex) && matchesRequiredDocument(item, required.key, required.terms, documentIndex, fallbackIndex)
+      );
+      if (foundIndex < 0) return null;
+      used.add(foundIndex);
+      return documents[foundIndex];
+    })
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+}
+
+function pendingSubmittedContent(item: Record<string, unknown>) {
+  const pending: string[] = [];
+  const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
+  const requiredDocuments = requiredDocumentDefinitions();
 
   requiredDocuments.forEach((required, index) => {
     const document = documents.find((item, documentIndex) => matchesRequiredDocument(item, required.key, required.terms, documentIndex, index));
