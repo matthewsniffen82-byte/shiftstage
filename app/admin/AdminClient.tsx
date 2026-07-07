@@ -873,7 +873,6 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
     }
 
     setStatusByKey((current) => ({ ...current, [key]: status === "approved" ? "Approved." : "Disapproved with reason saved." }));
-    await onContentReviewed();
   }
 
   return (

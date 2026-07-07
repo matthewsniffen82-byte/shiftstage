@@ -32688,9 +32688,6 @@
             notes,
             label
           });
-          await loadLiveAdminApprovals();
-        } else {
-          renderAdminDashboard();
         }
         showToast(status === "approved" ? `${label} approved` : `${label} disapproved`);
       } catch (error) {
