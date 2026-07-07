@@ -26299,6 +26299,7 @@
     let setupChecklistExpanded = false;
     let lastPostedShift = null;
     const localPostedShiftStore = new Map();
+    let localPostedShiftList = [];
     const dancerSetup = {
       profile: false,
       photos: false,
@@ -29355,6 +29356,7 @@
       const shiftForm = document.getElementById("shiftPostForm");
       const shiftResult = document.getElementById("shiftPostResult");
       const shiftVerifyPanel = document.getElementById("shiftVerificationPanel");
+      const shiftManagerCard = document.getElementById("dancerShiftManager")?.closest(".dancer-manager-card");
       if (scheduleMount && shiftVerifyPanel && shiftVerifyPanel.parentElement !== scheduleMount) {
         scheduleMount.appendChild(shiftVerifyPanel);
       }
@@ -29362,7 +29364,11 @@
         scheduleMount.appendChild(shiftForm);
         if (shiftResult) scheduleMount.appendChild(shiftResult);
       }
+      if (scheduleMount && shiftManagerCard && shiftManagerCard.parentElement !== scheduleMount) {
+        scheduleMount.appendChild(shiftManagerCard);
+      }
       renderShiftVerificationPanel();
+      renderDancerShiftManager();
     }
 
     function jumpToDancerFixTarget(targetKey = "") {
@@ -29441,7 +29447,8 @@
 
     function locallyStoredPostedShifts(profile = null, city = activeDancerCity()) {
       const name = profile?.name || activeDancerName();
-      return localPostedShiftStore.get(postedShiftStoreKey(city, name)) || [];
+      const keyed = localPostedShiftStore.get(postedShiftStoreKey(city, name)) || [];
+      return profile ? keyed : mergePostedShiftLists(keyed, localPostedShiftList);
     }
 
     function mergePostedShiftLists(primary = [], fallback = []) {
@@ -29460,12 +29467,17 @@
         existing.filter((item) => String(item.shiftId) !== String(shift.shiftId)),
         [shift]
       ));
+      localPostedShiftList = mergePostedShiftLists(
+        localPostedShiftList.filter((item) => String(item.shiftId) !== String(shift.shiftId)),
+        [shift]
+      );
     }
 
     function removeLocalPostedShift(city, name, shiftId) {
       const key = postedShiftStoreKey(city, name);
       const existing = localPostedShiftStore.get(key) || [];
       localPostedShiftStore.set(key, existing.filter((shift) => String(shift.shiftId) !== String(shiftId)));
+      localPostedShiftList = localPostedShiftList.filter((shift) => String(shift.shiftId) !== String(shiftId));
     }
 
     function profilePostedShifts(profile) {
