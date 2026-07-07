@@ -26298,6 +26298,7 @@
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
     let lastPostedShift = null;
+    const localPostedShiftStore = new Map();
     const dancerSetup = {
       profile: false,
       photos: false,
@@ -29434,6 +29435,39 @@
       return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
     }
 
+    function postedShiftStoreKey(city = activeDancerCity(), name = activeDancerName()) {
+      return `${city}::${cleanDisplayValue(name)}`;
+    }
+
+    function locallyStoredPostedShifts(profile = null, city = activeDancerCity()) {
+      const name = profile?.name || activeDancerName();
+      return localPostedShiftStore.get(postedShiftStoreKey(city, name)) || [];
+    }
+
+    function mergePostedShiftLists(primary = [], fallback = []) {
+      const byId = new Map();
+      [...primary, ...fallback].forEach((shift) => {
+        if (!shift || shift.status === "cancelled") return;
+        byId.set(String(shift.shiftId || byId.size), shift);
+      });
+      return [...byId.values()];
+    }
+
+    function saveLocalPostedShift(city, name, shift) {
+      const key = postedShiftStoreKey(city, name);
+      const existing = localPostedShiftStore.get(key) || [];
+      localPostedShiftStore.set(key, mergePostedShiftLists(
+        existing.filter((item) => String(item.shiftId) !== String(shift.shiftId)),
+        [shift]
+      ));
+    }
+
+    function removeLocalPostedShift(city, name, shiftId) {
+      const key = postedShiftStoreKey(city, name);
+      const existing = localPostedShiftStore.get(key) || [];
+      localPostedShiftStore.set(key, existing.filter((shift) => String(shift.shiftId) !== String(shiftId)));
+    }
+
     function profilePostedShifts(profile) {
       if (!profile) return [];
       if (!Array.isArray(profile.postedShifts)) {
@@ -29455,6 +29489,7 @@
           workingStatus: profile.workingStatus || "self_reported"
         }] : [];
       }
+      profile.postedShifts = mergePostedShiftLists(profile.postedShifts, locallyStoredPostedShifts(profile, profile.city || activeDancerCity()));
       return profile.postedShifts.filter((shift) => shift && shift.status !== "cancelled");
     }
 
@@ -31067,9 +31102,9 @@
       const list = document.getElementById("dancerShiftManager");
       if (!list) return;
       const profile = activeDancerProfile();
-      const shifts = profilePostedShifts(profile)
+      const shifts = (profile ? profilePostedShifts(profile) : locallyStoredPostedShifts())
         .sort((left, right) => new Date(left.shiftStartsAt || 0).getTime() - new Date(right.shiftStartsAt || 0).getTime());
-      if (!profile || !shifts.length) {
+      if (!shifts.length) {
         list.innerHTML = `
           <div class="shift-manager-row">
             <strong>No posted shifts</strong>
@@ -31079,7 +31114,7 @@
         return;
       }
       list.innerHTML = shifts.map((shift) => {
-        const label = shift.shiftLabel || (shift.shiftId === profile.shiftId && profile.tonight ? "Now" : "Upcoming");
+        const label = shift.shiftLabel || (profile && shift.shiftId === profile.shiftId && profile.tonight ? "Now" : "Upcoming");
         return `
         <div class="shift-manager-row">
           <strong>${displayText(shift.venue || "Posted shift")}</strong>
@@ -31269,9 +31304,8 @@
 
     function handleShiftManagerAction(action, trigger = null) {
       const profile = activeDancerProfile();
-      if (!profile) return;
-      const shiftId = trigger?.dataset.shiftId || profile.shiftId || "";
-      const shifts = profilePostedShifts(profile);
+      const shiftId = trigger?.dataset.shiftId || profile?.shiftId || "";
+      const shifts = profile ? profilePostedShifts(profile) : locallyStoredPostedShifts();
       const selectedShift = shifts.find((shift) => String(shift.shiftId) === String(shiftId)) || shifts[0] || null;
       if (action === "edit") {
         if (!selectedShift) return;
@@ -31290,15 +31324,21 @@
       }
       if (action === "remove") {
         shiftCheckInMessage = "";
-        profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
-        applyDisplayShift(profile);
-        lastPostedShift = profile.postedShifts.length ? lastPostedShift : null;
+        removeLocalPostedShift(activeDancerCity(), profile?.name || activeDancerName(), shiftId);
+        if (profile) {
+          profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
+          applyDisplayShift(profile);
+          lastPostedShift = profile.postedShifts.length ? lastPostedShift : null;
+        } else {
+          lastPostedShift = locallyStoredPostedShifts().length ? lastPostedShift : null;
+        }
         const result = document.getElementById("shiftPostResult");
         if (result) {
           result.hidden = false;
           result.textContent = "Shift removed from your public profile and venue page.";
         }
         render();
+        renderDancerManagement();
         renderDancerSetup();
         if (customerDashboard.classList.contains("show")) renderDashboard();
         showToast("Shift removed");
@@ -31370,6 +31410,7 @@
         socials: existing?.socials || { ...dancerSignupSocials }
       };
       const postedShift = { ...shiftData };
+      saveLocalPostedShift(city, name, postedShift);
       let postedProfile = existing;
       if (existing) {
         Object.assign(existing, shiftData);
@@ -31415,7 +31456,11 @@
           if (postedProfile && data.shiftId) {
             const shifts = profilePostedShifts(postedProfile);
             const savedShift = shifts.find((shift) => String(shift.shiftId) === String(localShiftId));
-            if (savedShift) savedShift.shiftId = data.shiftId;
+            if (savedShift) {
+              removeLocalPostedShift(city, name, localShiftId);
+              savedShift.shiftId = data.shiftId;
+              saveLocalPostedShift(city, name, savedShift);
+            }
             applyDisplayShift(postedProfile, city);
           }
           document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
