@@ -31291,13 +31291,14 @@
         imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
         label: index === 0 ? "Submitted main photo" : `Submitted photo ${index + 1}`,
         status: normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending"),
-        notes: photo.reviewNotes || photo.review_notes || ""
+        notes: photo.reviewNotes || photo.review_notes || "",
+        target: `submitted:${index}`
       }));
       const existing = [
-        ...(profile?.mainPhotoUrl ? [{ imageUrl: profile.mainPhotoUrl, label: "Current main photo", status: "approved", notes: "" }] : []),
-        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, label: `Current gallery photo ${index + 1}`, status: "approved", notes: "" }))
+        ...(profile?.mainPhotoUrl ? [{ imageUrl: profile.mainPhotoUrl, label: "Current main photo", status: "approved", notes: "", target: "main" }] : []),
+        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, label: `Current gallery photo ${index + 1}`, status: "approved", notes: "", target: `gallery:${index}` }))
       ];
-      const photos = submitted.length ? submitted : existing;
+      const photos = [...submitted, ...existing];
       if (!photos.length) {
         return '<div class="rule-note">No profile photos uploaded yet. Use the replace buttons above to submit photos for approval.</div>';
       }
@@ -31313,6 +31314,7 @@
                 <span>${displayText(statusText)}</span>
                 ${rejected && photo.notes ? `<span>Reason: ${displayText(photo.notes)}</span>` : ""}
                 ${rejected ? "<span>Use Replace main photo or Replace gallery photo, then resubmit changes.</span>" : ""}
+                <button class="mini-action" type="button" data-dancer-control-action="replace-photo" data-photo-target="${displayText(photo.target)}">Replace this picture</button>
               </div>
             `;
           }).join("")}
@@ -33039,8 +33041,19 @@
     async function uploadApprovedDancerPhoto(file, target) {
       if (!isDancerSession()) throw new Error("Sign in as a dancer to upload live photos.");
       const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
-      const sortOrder = target === "main" ? 0 : (profile?.galleryPhotoUrls || []).length + 1;
-      const data = await uploadSetupPhotoFile(file, target === "main", sortOrder);
+      const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;
+      const galleryIndex = String(target || "").startsWith("gallery:") ? Number(String(target).split(":")[1]) : -1;
+      const replacingSubmitted = Number.isInteger(submittedIndex) && submittedIndex >= 0;
+      const existingSubmitted = replacingSubmitted ? profile?.submittedPhotos?.[submittedIndex] : null;
+      const isPrimary = target === "main" || Boolean(existingSubmitted?.isPrimary || existingSubmitted?.is_primary);
+      const sortOrder = replacingSubmitted
+        ? Number(existingSubmitted?.sortOrder ?? existingSubmitted?.sort_order ?? (isPrimary ? 0 : submittedIndex + 1))
+        : target === "main"
+          ? 0
+          : galleryIndex >= 0
+            ? galleryIndex + 1
+            : (profile?.galleryPhotoUrls || []).length + 1;
+      const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder);
       if (profile) {
         const uploaded = data?.photo || data || {};
         const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || "";
@@ -33048,17 +33061,26 @@
           id: uploaded.id || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
           imageUrl,
           image_url: imageUrl,
-          isPrimary: target === "main",
+          isPrimary,
           reviewStatus: "pending",
           review_status: "pending",
           reviewNotes: "",
           review_notes: "",
           sortOrder
         };
-        profile.submittedPhotos = [
-          photo,
-          ...(profile.submittedPhotos || []).filter((item) => target !== "main" || !(item.isPrimary || item.is_primary))
-        ].slice(0, 6);
+        const submittedPhotos = [...(profile.submittedPhotos || [])];
+        if (replacingSubmitted) {
+          submittedPhotos[submittedIndex] = photo;
+        } else {
+          const withoutSameSlot = submittedPhotos.filter((item) => {
+            const sameMain = target === "main" && (item.isPrimary || item.is_primary);
+            const sameGallery = galleryIndex >= 0 && Number(item.sortOrder ?? item.sort_order) === sortOrder;
+            return !sameMain && !sameGallery;
+          });
+          submittedPhotos.length = 0;
+          submittedPhotos.push(photo, ...withoutSameSlot);
+        }
+        profile.submittedPhotos = submittedPhotos.filter(Boolean).slice(0, 6);
         profile.photoStatus = "Pending";
         profile.approvalChangesPending = true;
       }
@@ -33416,7 +33438,7 @@
       const rejected = !approved && (isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews() || hasRejectedCoreVerificationReviews());
       const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
-      const approvalStateLabel = rejected ? "Needs fixes" : optionalProfileFixes ? "Photo/social fixes" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
+      const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
@@ -33441,9 +33463,9 @@
       document.getElementById("dancerApprovalStatus").textContent = approvalStateLabel;
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
       document.getElementById("dancerApprovalTitle").textContent = rejected
-          ? "Profile needs fixes"
+          ? "Rejected"
         : optionalProfileFixes
-          ? "Profile live. Photos or socials need fixes."
+          ? "Approved with fixes needed"
         : approved
           ? "Approved. Start posting shifts."
         : reviewSubmitted
@@ -33462,7 +33484,7 @@
       document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"
         : optionalProfileFixes
-          ? "Fix or leave blank"
+          ? "Approved with fixes"
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
@@ -33489,7 +33511,7 @@
           approvalStatusPrimary.textContent = "Rejected. Fix or resend the red items in the review notes below.";
           approvalStatusSecondary.textContent = "Approved items stay approved. After you fix the rejected items, press Resubmit for review.";
         } else if (optionalProfileFixes) {
-          approvalStatusPrimary.textContent = "Approved. Social links and/or pictures need fixes only.";
+          approvalStatusPrimary.textContent = "Approved with fixes needed. Social links and/or pictures need fixes only.";
           approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or leave that social/photo blank.";
         } else if (approved) {
           approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
@@ -36027,7 +36049,7 @@
       openProfileModal(card.dataset.profile);
     });
 
-    async function handleDancerControlAction(action) {
+    async function handleDancerControlAction(action, trigger = null) {
       const city = activeDancerCity();
       const profileName = activeDancerName();
       const result = document.getElementById("dancerControlResult");
@@ -36112,6 +36134,13 @@
         pendingApprovedPhotoTarget = "gallery";
         document.getElementById("approvedPhotoUploadInput")?.click();
         setResult("Choose a gallery photo to upload for review.");
+        return;
+      }
+
+      if (action === "replace-photo") {
+        pendingApprovedPhotoTarget = trigger?.dataset.photoTarget || "gallery";
+        document.getElementById("approvedPhotoUploadInput")?.click();
+        setResult("Choose a replacement picture to upload for review.");
       }
     }
 
@@ -36151,7 +36180,7 @@
       }
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
       if (dancerControlAction) {
-        handleDancerControlAction(dancerControlAction.dataset.dancerControlAction);
+        handleDancerControlAction(dancerControlAction.dataset.dancerControlAction, dancerControlAction);
         return;
       }
       const shiftVerifyAction = event.target.closest("[data-shift-verify-action]");
