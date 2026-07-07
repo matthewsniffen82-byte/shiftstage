@@ -25559,7 +25559,7 @@
               <input id="shiftEnd" type="time" value="02:00" required>
             </div>
             <div class="rule-note" id="shiftDisplayPreview">
-              Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date and start time, for example 7/8 at 9:30p.
+              Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date only. Exact times are private and used for shift windows and QR commission eligibility.
             </div>
             <div class="field">
               <label for="shiftRepeat">Repeat option</label>
@@ -29839,20 +29839,12 @@
     }
 
     function displayPublicShiftTime(timeValue, profile = null) {
-      const raw = shortMeridiemTime(timeValue, true).trim();
-      if (!raw) return "";
-      const explicitStart = raw.match(/(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:a|p|am|pm)\b)/i)?.[1] || "";
-      const start = (explicitStart || raw
-        .replace(/^Now\s*[·•]\s*/i, "")
-        .replace(/^Tonight\s*[·•]\s*/i, "")
-        .split(/\s*(?:-|–|—|\bto\b|\buntil\b)\s*/i)[0]
-        .trim()).replace(/\s+/g, "");
-      if (!start) return "";
       if (profile && isWorkingTonight(profile) && profile.scheduled) {
         return "Working Now";
       }
       const dateLabel = compactUpcomingDateLabel(profile);
-      return dateLabel ? `${dateLabel} at ${start}` : start;
+      if (dateLabel) return `Scheduled ${dateLabel}`;
+      return profile?.scheduled ? "Schedule posted" : "";
     }
 
     function publicShiftStartTime(timeValue) {
@@ -29868,9 +29860,8 @@
     }
 
     function activeShiftStartedMarkup(profile) {
-      const start = publicShiftStartTime(profile?.time);
-      return start
-        ? `<div class="detail-line modal-started-line"><span aria-hidden="true"></span><span class="modal-shift-started">Started ${start}</span></div>`
+      return profile?.scheduled
+        ? `<div class="detail-line modal-started-line"><span aria-hidden="true"></span><span class="modal-shift-started">Checked in for current shift</span></div>`
         : "";
     }
 
@@ -30682,7 +30673,7 @@
         shiftEndsAt: range.endsAt
       };
       const upcomingText = displayPublicShiftTime(profile.time, profile);
-      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong>. If you check in during that shift window, the card changes to <strong>Working Now</strong>.`;
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong>. Exact start and end times stay private and are used only for shift windows and QR commission eligibility. If you check in during that window, the card changes to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
