@@ -24427,6 +24427,7 @@
         <button class="legal-link" data-legal-page="privacyPage">Privacy</button>
         <button class="legal-link" data-legal-page="guidelinesPage">Guidelines</button>
         <button class="legal-link" data-legal-page="refundPage">Refunds</button>
+        <button class="legal-link" id="contactAdminBtn" type="button">Contact</button>
         <button class="legal-link admin-legal-link" id="adminBtn" type="button">Platform admin</button>
       </nav>
     </main>
@@ -25217,6 +25218,16 @@
           <div class="stat"><strong id="venueDirectionCount">86</strong><span>directions this week</span></div>
           <div class="stat"><strong id="venueShiftCount">7</strong><span>verified shifts</span></div>
         </div>
+        <div class="auth-card support-inbox-card" data-support-panel="venue">
+          <h3 class="section-title">Contact Admin</h3>
+          <form class="auth-form support-contact-form" data-support-form="venue">
+            <div class="field"><label for="venueSupportSubject">Subject</label><input id="venueSupportSubject" type="text" placeholder="What do you need help with?" required></div>
+            <div class="field"><label for="venueSupportMessage">Message</label><textarea id="venueSupportMessage" rows="4" placeholder="Write your message to admin" required></textarea></div>
+            <button class="action-btn" type="submit">Send to admin</button>
+            <div class="rule-note" id="venueSupportStatus">Messages and admin replies appear below.</div>
+          </form>
+          <div class="rank-notification-list support-thread-list" id="venueSupportThreads">No admin messages yet.</div>
+        </div>
         <div class="venue-dashboard-grid">
           <form class="auth-card auth-form" id="venueOfferForm">
             <div class="auth-form-head">
@@ -25641,6 +25652,7 @@
     const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
     const adminBtn = document.getElementById("adminBtn");
+    const contactAdminBtn = document.getElementById("contactAdminBtn");
     const moreMenuPanel = document.getElementById("moreMenuPanel");
     const customerQuickActions = document.getElementById("customerQuickActions");
     const customerNotificationQuickBtn = document.getElementById("customerNotificationQuickBtn");
@@ -27259,6 +27271,10 @@
       return authSession?.account?.role === "customer";
     }
 
+    function isVenueSession() {
+      return authSession?.account?.role === "venue";
+    }
+
     function findProfileBySavedDancer(savedDancer) {
       const dancer = savedDancer?.dancer || savedDancer;
       const city = dancer?.city;
@@ -27735,7 +27751,7 @@
         });
         return true;
       }
-      const role = isDancerSession() || dancerDashboard.classList.contains("show") ? "dancer" : "customer";
+      const role = isVenueSession() || venueDashboard.classList.contains("show") ? "venue" : isDancerSession() || dancerDashboard.classList.contains("show") ? "dancer" : "customer";
       sendSupportMessage(role, "", body, threadId).then(() => {
         if (textarea) textarea.value = "";
       });
@@ -27774,11 +27790,12 @@
     function supportThreadMarkup(thread, isAdmin = false) {
       const messages = Array.isArray(thread.messages) ? thread.messages : [];
       const userLabel = thread.userName || thread.userEmail || thread.userRole || "User";
+      const roleLabel = thread.userRole ? `${thread.userRole} account` : "account";
       return `
         <details class="support-thread" data-support-thread="${displayText(thread.id)}" ${isAdmin ? "" : messages.length <= 2 ? "open" : ""}>
           <summary>
             <strong>${displayText(thread.subject || "Admin conversation")}</strong>
-            <small>${isAdmin ? `${displayText(userLabel)} · ` : ""}${displayText(thread.status || "open")} · ${displayText(formatBillingDate(thread.lastMessageAt || thread.createdAt))}</small>
+            <small>${isAdmin ? `${displayText(userLabel)} · ${displayText(roleLabel)} · ` : ""}${displayText(thread.status || "open")} · ${displayText(formatBillingDate(thread.lastMessageAt || thread.createdAt))}</small>
           </summary>
           <div class="support-message-list">
             ${messages.map((message) => `
@@ -27789,7 +27806,7 @@
               </div>
             `).join("")}
           </div>
-          <textarea data-support-reply="${displayText(thread.id)}" placeholder="${isAdmin ? "Reply to this customer or dancer" : "Reply to admin"}"></textarea>
+          <textarea data-support-reply="${displayText(thread.id)}" placeholder="${isAdmin ? "Reply to this account" : "Reply to admin"}"></textarea>
           <button class="action-btn secondary" type="button" data-support-action="${isAdmin ? "admin-reply" : "user-reply"}" data-support-thread="${displayText(thread.id)}">Send reply</button>
         </details>
       `;
@@ -27818,7 +27835,8 @@
     function localSupportThread(role, subject, body, threadId = "") {
       const now = new Date().toISOString();
       const userKey = supportUserKey(role);
-      const userName = authSession?.account?.displayName || document.getElementById(role === "dancer" ? "dancerStageName" : "customerEmail")?.value || role;
+      const fallbackNameId = role === "dancer" ? "dancerStageName" : role === "venue" ? "venueLoginName" : "customerEmail";
+      const userName = authSession?.account?.displayName || document.getElementById(fallbackNameId)?.value || role;
       const existing = readStoredSupportThreads().find((thread) => thread.id === threadId);
       const thread = existing || {
         id: `support-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -27844,14 +27862,14 @@
     }
 
     async function loadLiveSupportThreads() {
-      if (!authSession?.accessToken || (!isCustomerSession() && !isDancerSession())) return;
+      if (!authSession?.accessToken || (!isCustomerSession() && !isDancerSession() && !isVenueSession())) return;
       try {
         const data = await getAuthenticatedJson("/api/support");
         liveSupportThreads = data.threads || [];
       } catch {
         liveSupportThreads = [];
       }
-      renderSupportInbox(isDancerSession() ? "dancer" : "customer");
+      renderSupportInbox(isVenueSession() ? "venue" : isDancerSession() ? "dancer" : "customer");
     }
 
     async function loadLiveAdminSupportThreads() {
@@ -31103,6 +31121,7 @@
       document.getElementById("venueOfferPreviewCode").textContent = offer.code;
       document.getElementById("venueOfferPreviewExpires").textContent = offer.expires;
       document.getElementById("venueOfferQrImage").src = qrCodeUrl(venueOfferUrl(activeVenueName));
+      renderSupportInbox("venue");
     }
 
     function openVenueDashboard() {
@@ -31114,12 +31133,52 @@
       venueDashboard.classList.add("show");
       venueDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveSupportThreads();
     }
 
     function closeVenueDashboard() {
       venueDashboard.classList.remove("show");
       venueDashboard.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
+    }
+
+    function activeSupportRole() {
+      if (isVenueSession() || isVenueLoggedIn) return "venue";
+      if (isDancerSession() || isDancerLoggedIn) return "dancer";
+      if (isCustomerSession() || isCustomerLoggedIn) return "customer";
+      return "";
+    }
+
+    function focusSupportPanel(role) {
+      const panel = document.querySelector(`[data-support-panel="${role}"]`);
+      const messageInput = document.getElementById(`${role}SupportMessage`);
+      const status = document.getElementById(`${role}SupportStatus`);
+      if (status) {
+        const accountLabel = authSession?.account?.email || authSession?.account?.displayName || `${role} account`;
+        status.textContent = `Signed in as ${accountLabel}. Admin will see this account with your message.`;
+      }
+      panel?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => messageInput?.focus({ preventScroll: true }), 260);
+    }
+
+    function openContactAdmin() {
+      const role = activeSupportRole();
+      if (!role) {
+        const subject = encodeURIComponent("Mydancr support request");
+        const body = encodeURIComponent("Hi Mydancr support,\n\nI need help with:\n\n");
+        window.location.href = `mailto:support@mydancr.com?subject=${subject}&body=${body}`;
+        return;
+      }
+      closeAuthPage();
+      closeDancerSignupPage();
+      closeDashboard();
+      closeDancerDashboard();
+      closeVenueDashboard();
+      if (role === "venue") openVenueDashboard();
+      else if (role === "dancer") openDancerDashboard();
+      else openDashboard();
+      setTimeout(() => focusSupportPanel(role), 220);
+      showToast("Contact admin opened");
     }
 
     function pulseVenueToolTarget(target) {
@@ -33664,6 +33723,10 @@
       closeUtilityMenu();
       openAdminDashboard();
     });
+    contactAdminBtn?.addEventListener("click", () => {
+      closeUtilityMenu();
+      openContactAdmin();
+    });
     dashboardBtn.addEventListener("click", () => {
       closeUtilityMenu();
       openDashboard();
@@ -33709,6 +33772,7 @@
       showToast("Venue offer uploaded");
     });
     venueDashboard.addEventListener("click", (event) => {
+      if (handleSupportActionClick(event)) return;
       const toolButton = event.target.closest("[data-venue-tool]");
       if (!toolButton) return;
       handleVenueAdminTool(toolButton.dataset.venueTool);
@@ -34715,7 +34779,7 @@
     loadLiveDiscovery(citySelect.value);
     if (isCustomerSession()) loadLiveCustomerDashboardData();
     if (authSession?.accessToken) loadLiveNotifications();
-    if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
+    if (isCustomerSession() || isDancerSession() || isVenueSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume) openSharedProfileFromUrl();

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 
-type DashboardRole = "customer" | "dancer";
+type DashboardRole = "customer" | "dancer" | "venue";
 
 type LoadState = {
   account?: { displayName?: string | null; email?: string | null; role?: string; accountState?: string } | null;
@@ -44,8 +44,8 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
       try {
         const authHeaders = { authorization: `Bearer ${session.accessToken}` };
         const account = await readJson("/api/account", authHeaders);
-        const profile = await readJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders);
-        const secondary = await readJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders);
+        const profile = role === "venue" ? { profile: null } : await readJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders);
+        const secondary = role === "venue" ? {} : await readJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders);
         const support = await readJson("/api/support", authHeaders);
         const [reviews, weeklyReport, rankingEvents] =
           role === "dancer"
@@ -86,6 +86,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
 
   const title = useMemo(() => {
     if (role === "dancer") return "Dancer dashboard";
+    if (role === "venue") return "Venue dashboard";
     return "Customer dashboard";
   }, [role]);
 
@@ -135,6 +136,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
               weeklyReport={state.weeklyReport}
             />
           ) : null}
+          {role === "venue" ? <VenuePanel /> : null}
         </section>
       ) : null}
     </main>
@@ -450,6 +452,21 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
         <Metric label="Going" value={String(saved?.goingSignals?.length || 0)} />
       </InfoPanel>
       <CustomerPreferencesPanel profile={profile} />
+    </>
+  );
+}
+
+function VenuePanel() {
+  return (
+    <>
+      <InfoPanel title="Venue tools">
+        <Metric label="Public page" value="Active" />
+        <Metric label="Offer QR" value="Ready" />
+        <Metric label="Admin messages" value="Contact Admin" />
+      </InfoPanel>
+      <InfoPanel title="Account visibility">
+        <p>Messages sent here go to the admin inbox with your venue account name, email, and role attached.</p>
+      </InfoPanel>
     </>
   );
 }

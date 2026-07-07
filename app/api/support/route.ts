@@ -21,8 +21,8 @@ export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     const account = await getOwnAccount(client, user.id);
-    if (account.role !== "customer" && account.role !== "dancer") {
-      return NextResponse.json({ ok: false, error: "Support inbox is available for customer and dancer accounts." }, { status: 403 });
+    if (account.role !== "customer" && account.role !== "dancer" && account.role !== "venue") {
+      return NextResponse.json({ ok: false, error: "Support inbox is available for customer, dancer, and venue accounts." }, { status: 403 });
     }
 
     const body = await request.json();
