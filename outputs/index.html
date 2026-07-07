@@ -30806,15 +30806,16 @@
       const checkedIn = isCheckedInShift(profile);
       const ended = profile.workingStatus === "ended" || profile.endedAt;
       const statusLabel = ended ? "Shift Ended" : checkedIn ? "Checked In" : "Self-Reported";
-      const canCheckIn = !checkedIn && !ended && checkInWindowOpen(profile);
+      const canAttemptCheckIn = !checkedIn && !ended;
+      const canCheckInNow = canAttemptCheckIn && checkInWindowOpen(profile);
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
       const statusCopy = ended
         ? "This shift has ended. QR commission tracking is stopped."
         : checkedIn
           ? "QR commission tracking is active while you remain checked in for this scheduled shift."
-          : canCheckIn
+          : canCheckInNow
             ? "Check in from the venue during your posted hours to appear in Working Now and start QR commission tracking."
-            : "The check-in button appears here during your posted hours. Location must be inside the club geofence.";
+            : "Your shift is posted. Tap Check in now during the posted hours and Dancr will verify your location at the club.";
 
       panel.hidden = false;
       panel.innerHTML = `
@@ -30824,7 +30825,7 @@
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${canCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
+          ${canAttemptCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
         </div>
         ${summary ? `
@@ -30863,18 +30864,12 @@
           }
           showToast("Shift ended");
         } else if (action === "check-in") {
+          if (!checkInWindowOpen(profile)) {
+            showToast("Check-in opens during your posted shift hours.");
+            return;
+          }
           const coords = await requestShiftPosition();
           const checkedInAt = new Date().toISOString();
-          applyShiftState(profile, {
-            workingStatus: "checked_in",
-            locationStatus: "location_confirmed",
-            checkedInAt,
-            checkedOutAt: "",
-            endedAt: "",
-            endedReason: "",
-            commissionTrackingStartedAt: checkedInAt,
-            commissionTrackingStoppedAt: ""
-          });
           if (profile.shiftId && isDancerSession()) {
             const data = await postAuthenticatedJson("/api/dancer/shifts/check-in", {
               shiftId: profile.shiftId,
@@ -30882,6 +30877,17 @@
               longitude: coords.longitude
             });
             if (data?.shift) applyShiftState(profile, data.shift);
+          } else {
+            applyShiftState(profile, {
+              workingStatus: "checked_in",
+              locationStatus: "location_confirmed",
+              checkedInAt,
+              checkedOutAt: "",
+              endedAt: "",
+              endedReason: "",
+              commissionTrackingStartedAt: checkedInAt,
+              commissionTrackingStoppedAt: ""
+            });
           }
           showToast("Checked in");
         }

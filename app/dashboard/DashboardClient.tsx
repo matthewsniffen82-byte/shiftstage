@@ -971,7 +971,10 @@ function DancerShiftPanel({ city }: { city: string }) {
     }
   }
 
-  const activeShift = shifts.find((shift) => canCheckOutOfShift(shift)) || shifts.find((shift) => canCheckInToShift(shift)) || null;
+  const activeShift =
+    shifts.find((shift) => canCheckOutOfShift(shift)) ||
+    shifts.find((shift) => shift.status === "posted" && !shift.checked_in_at && !shift.checked_out_at) ||
+    null;
   const isCheckedInToActiveShift = activeShift ? canCheckOutOfShift(activeShift) : false;
 
   return (
@@ -984,11 +987,11 @@ function DancerShiftPanel({ city }: { city: string }) {
             {activeShift
               ? isCheckedInToActiveShift
                 ? `${venueName(activeShift)} is live in Now. QR commission eligibility is active until you check out or the shift ends.`
-                : `${venueName(activeShift)} is inside your posted shift window. Use location check-in to appear in Now and start QR commission eligibility.`
+                : `${venueName(activeShift)} is posted. Tap Check in now during your posted hours and Dancr will verify your location at the club.`
               : "Post your shift hours first. The check-in button appears here during the scheduled hours and requires you to be inside the club geofence."}
           </small>
         </span>
-        {activeShift && canCheckInToShift(activeShift) ? (
+        {activeShift && !isCheckedInToActiveShift ? (
           <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkInShift(String(activeShift.id))}>
             {activeCheckInId === String(activeShift.id) ? "Checking location..." : "Check in now"}
           </button>
