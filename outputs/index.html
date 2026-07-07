@@ -2970,6 +2970,35 @@
       text-align: center;
     }
 
+    #adminDashboard .admin-directory-card summary {
+      cursor: pointer;
+    }
+
+    #adminDashboard .admin-search-field {
+      display: grid;
+      gap: 7px;
+      color: #d8cfeb;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    #adminDashboard .admin-search-field input {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.34);
+      color: #fff;
+      padding: 10px 12px;
+      font: inherit;
+      outline: none;
+    }
+
+    #adminDashboard .admin-search-field input:focus {
+      border-color: rgba(53,216,255,.72);
+      box-shadow: 0 0 0 3px rgba(53,216,255,.14);
+    }
+
     #adminDashboard .photo-upload-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
@@ -25339,6 +25368,28 @@
           <h3>Dancer approvals</h3>
           <div class="admin-grid" id="adminDancers"></div>
         </div>
+        <details class="auth-card admin-directory-card">
+          <summary class="row">
+            <h3>Approved dancers</h3>
+            <span class="pill" id="adminApprovedDancerCount">0</span>
+          </summary>
+          <label class="admin-search-field" for="adminApprovedDancerSearch">
+            <span>Search approved dancers</span>
+            <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
+          </label>
+          <div class="admin-grid" id="adminApprovedDancers"></div>
+        </details>
+        <details class="auth-card admin-directory-card">
+          <summary class="row">
+            <h3>Disapproved dancers</h3>
+            <span class="badge pending" id="adminDisapprovedDancerCount">0</span>
+          </summary>
+          <label class="admin-search-field" for="adminDisapprovedDancerSearch">
+            <span>Search disapproved dancers</span>
+            <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
+          </label>
+          <div class="admin-grid" id="adminDisapprovedDancers"></div>
+        </details>
         <div class="auth-card">
           <h3>Reports</h3>
           <div class="admin-grid" id="adminReports"></div>
@@ -25714,6 +25765,8 @@
     let isVenueLoggedIn = false;
     let authMode = "login";
     let adminAuthMode = "login";
+    let adminApprovedDancerSearch = "";
+    let adminDisapprovedDancerSearch = "";
     let authSession = loadAuthSession();
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
@@ -32399,6 +32452,73 @@
       `;
     }
 
+    function adminDirectoryDancerSearchText(city, profile) {
+      return [
+        profile.name,
+        profile.legalName,
+        profile.stageName,
+        profile.venue,
+        city,
+        profile.status,
+        profile.idStatus,
+        profile.selfieStatus,
+        profile.photoStatus,
+        profile.bio
+      ].map((value) => String(value || "")).join(" ").toLowerCase();
+    }
+
+    function adminDirectoryDancerRow(city, profile, statusLabel) {
+      const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : profile.venue || "No active shift";
+      const badgeClass = statusLabel === "Approved" ? "badge" : "badge pending";
+      return `
+        <article class="admin-item" data-admin-profile="${displayText(profile.name)}" data-admin-city="${displayText(city)}">
+          <div class="row">
+            <div>
+              <h3>${displayText(profile.name || "Stage name missing")}</h3>
+              <div class="meta">${displayText(city)} · ${displayText(shiftText)}</div>
+            </div>
+            <span class="${badgeClass}">${displayText(statusLabel)}</span>
+          </div>
+          <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · ID: ${displayText(profile.idStatus)} · Selfie: ${displayText(profile.selfieStatus)} · Photos: ${displayText(profile.photoStatus)}</div>
+          ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
+          <div class="admin-actions">
+            <button class="action-btn secondary" data-admin-action="feature-dancer">${profile.featured ? "Unfeature dancer" : "Feature dancer"}</button>
+            ${statusLabel === "Disapproved" ? '<button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>' : ""}
+          </div>
+        </article>
+      `;
+    }
+
+    function filterAdminDirectoryDancers(items, query) {
+      const normalized = String(query || "").trim().toLowerCase();
+      if (!normalized) return items;
+      return items.filter(({ city, profile }) => adminDirectoryDancerSearchText(city, profile).includes(normalized));
+    }
+
+    function renderAdminDancerDirectories() {
+      const profiles = allProfiles();
+      const approved = profiles.filter(({ profile }) => profile.status === "Verified");
+      const disapproved = profiles.filter(({ profile }) => profile.status === "Rejected");
+      const visibleApproved = filterAdminDirectoryDancers(approved, adminApprovedDancerSearch);
+      const visibleDisapproved = filterAdminDirectoryDancers(disapproved, adminDisapprovedDancerSearch);
+      const approvedCount = document.getElementById("adminApprovedDancerCount");
+      const disapprovedCount = document.getElementById("adminDisapprovedDancerCount");
+      const approvedList = document.getElementById("adminApprovedDancers");
+      const disapprovedList = document.getElementById("adminDisapprovedDancers");
+      if (approvedCount) approvedCount.textContent = String(approved.length);
+      if (disapprovedCount) disapprovedCount.textContent = String(disapproved.length);
+      if (approvedList) {
+        approvedList.innerHTML = visibleApproved.length
+          ? visibleApproved.map(({ city, profile }) => adminDirectoryDancerRow(city, profile, "Approved")).join("")
+          : `<div class="locked">${adminApprovedDancerSearch ? "No approved dancers match that search." : "No approved dancers yet."}</div>`;
+      }
+      if (disapprovedList) {
+        disapprovedList.innerHTML = visibleDisapproved.length
+          ? visibleDisapproved.map(({ city, profile }) => adminDirectoryDancerRow(city, profile, "Disapproved")).join("")
+          : `<div class="locked">${adminDisapprovedDancerSearch ? "No disapproved dancers match that search." : "No disapproved dancers yet."}</div>`;
+      }
+    }
+
     function adminSubmittedSocialsMarkup(profile) {
       const socials = normalizeSubmittedSocials(profile);
       if (!socials.length) return '<div class="locked">No social links submitted.</div>';
@@ -32685,6 +32805,11 @@
       document.getElementById("adminDancers").innerHTML = pendingProfiles.length
         ? pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index)).join("")
         : '<div class="locked">No pending dancers.</div>';
+      const approvedSearch = document.getElementById("adminApprovedDancerSearch");
+      const disapprovedSearch = document.getElementById("adminDisapprovedDancerSearch");
+      if (approvedSearch && approvedSearch.value !== adminApprovedDancerSearch) approvedSearch.value = adminApprovedDancerSearch;
+      if (disapprovedSearch && disapprovedSearch.value !== adminDisapprovedDancerSearch) disapprovedSearch.value = adminDisapprovedDancerSearch;
+      renderAdminDancerDirectories();
 
       const visibleReports = liveAdminReports.filter((report) => report.status === "open");
       document.getElementById("adminReports").innerHTML = visibleReports.map(adminReportRow).join("") || '<div class="locked">No reported users or content.</div>';
@@ -32778,7 +32903,7 @@
       showAdminAuthPage("Admin username and password required.");
       const status = document.getElementById("adminLiveStatus");
       if (status) status.textContent = "Admin username and password required.";
-      ["adminUserCount", "adminPendingCount", "adminSubscriptionCount", "adminActiveSubscriptionCount"].forEach((id) => {
+      ["adminUserCount", "adminPendingCount", "adminSubscriptionCount", "adminActiveSubscriptionCount", "adminApprovedDancerCount", "adminDisapprovedDancerCount"].forEach((id) => {
         const node = document.getElementById(id);
         if (node) node.textContent = "0";
       });
@@ -32786,6 +32911,8 @@
         "adminMonitoring",
         "adminUsers",
         "adminDancers",
+        "adminApprovedDancers",
+        "adminDisapprovedDancers",
         "adminReports",
         "adminSupportInbox",
         "adminSubscriptions",
@@ -33934,6 +34061,20 @@
       if (!button) return;
       const host = button.closest("[data-admin-profile], [data-admin-venue], [data-report]");
       runAdminAction(button.dataset.adminAction, host, button);
+    });
+
+    adminDashboard.addEventListener("input", (event) => {
+      const approvedSearch = event.target.closest("#adminApprovedDancerSearch");
+      if (approvedSearch) {
+        adminApprovedDancerSearch = approvedSearch.value;
+        renderAdminDancerDirectories();
+        return;
+      }
+      const disapprovedSearch = event.target.closest("#adminDisapprovedDancerSearch");
+      if (disapprovedSearch) {
+        adminDisapprovedDancerSearch = disapprovedSearch.value;
+        renderAdminDancerDirectories();
+      }
     });
 
     document.querySelectorAll("[data-support-form]").forEach((form) => {
