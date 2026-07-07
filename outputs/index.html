@@ -25168,7 +25168,6 @@
         </div>
         <div id="setupChecklistWrap" class="auth-card setup-panel setup-panel-inline" hidden>
           <div class="setup-list" id="setupChecklist" hidden></div>
-          <div class="lock-row" id="setupChecklistLock" hidden>Complete the four-step verification so Dancr can review your profile and unlock shift posting.</div>
         </div>
         <div class="dashboard-status-row">
           <details class="status-chip">
@@ -32935,7 +32934,7 @@
         setupToggle.textContent = setupChecklistExpanded ? "Hide steps" : "Show steps";
       }
       setupList.hidden = !setupChecklistExpanded;
-      setupLock.hidden = !setupChecklistExpanded;
+      if (setupLock) setupLock.hidden = true;
       if (setupSummary) {
         setupSummary.textContent = approved
           ? "Your profile is approved."
