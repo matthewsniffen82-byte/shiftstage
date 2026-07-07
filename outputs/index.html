@@ -30017,6 +30017,21 @@
       return `${formatClock(startValue)} - ${formatClock(endValue)}`;
     }
 
+    function postedShiftDateTimeLabel(shift, city = activeDancerCity()) {
+      const dateLabel = shift.shiftDate
+        ? new Date(`${shift.shiftDate}T12:00:00Z`).toLocaleDateString([], {
+            timeZone: "UTC",
+            weekday: "short",
+            month: "short",
+            day: "numeric"
+          })
+        : (shift.shiftLabel || "Date pending");
+      const timeLabel = shift.shiftStart && shift.shiftEnd
+        ? formatShiftTime(shift.shiftStart, shift.shiftEnd)
+        : (displayShiftTime(shift.time) || "Time pending");
+      return `${dateLabel} · ${timeLabel}`;
+    }
+
     function shortMeridiemTime(timeValue, omitZeroMinutes = false) {
       return String(timeValue || "").replace(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\b/gi, (_, hours, minutes = "", period) => {
         const minuteText = minutes && !(omitZeroMinutes && minutes === "00") ? `:${minutes}` : "";
@@ -31126,11 +31141,11 @@
         return;
       }
       list.innerHTML = shifts.map((shift) => {
-        const label = shift.shiftLabel || (profile && shift.shiftId === profile.shiftId && profile.tonight ? "Now" : "Upcoming");
+        const label = postedShiftDateTimeLabel(shift);
         return `
         <div class="shift-manager-row">
           <strong>${displayText(shift.venue || "Posted shift")}</strong>
-          <div class="shift-manager-meta">${displayText(label)} · ${displayText(displayShiftTime(shift.time) || "Time pending")}${shift.repeat && shift.repeat !== "No repeat" ? ` · ${displayText(shift.repeat)}` : ""}</div>
+          <div class="shift-manager-meta">${displayText(label)}${shift.repeat && shift.repeat !== "No repeat" ? ` · ${displayText(shift.repeat)}` : ""}</div>
           ${shift.notes ? `<div class="shift-manager-meta">${displayText(shift.notes)}</div>` : ""}
           <div class="shift-manager-actions">
             <button class="mini-action" type="button" data-shift-action="edit" data-shift-id="${displayText(shift.shiftId)}">Edit shift</button>
