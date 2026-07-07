@@ -6,7 +6,7 @@ import { getBearerToken } from "@/src/lib/supabase/request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TARGET_TYPES = new Set(["dancer_profile", "venue", "shift"]);
+const TARGET_TYPES = new Set(["dancer_profile", "venue", "shift", "contact_message"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function reporterIdForRequest(client: ReturnType<typeof createAdminSupabaseClient>, request: Request) {

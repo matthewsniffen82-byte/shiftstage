@@ -24426,7 +24426,6 @@
         <button class="legal-link" data-legal-page="termsPage">Terms</button>
         <button class="legal-link" data-legal-page="privacyPage">Privacy</button>
         <button class="legal-link" data-legal-page="guidelinesPage">Guidelines</button>
-        <button class="legal-link" data-legal-page="refundPage">Refunds</button>
         <button class="legal-link" id="contactAdminBtn" type="button">Contact</button>
         <button class="legal-link admin-legal-link" id="adminBtn" type="button">Platform admin</button>
       </nav>
@@ -24521,6 +24520,11 @@
         <div class="auth-card">
           <h3>Review standards</h3>
           <p>Dancer profiles, ID/selfie checks, photos, venues, and reports are reviewed for trust and safety. Rule-breaking content may be removed.</p>
+        </div>
+        <div class="auth-card">
+          <h3>Billing and refunds</h3>
+          <p>Refund details stay with the legal terms instead of the bottom footer.</p>
+          <button class="action-btn secondary" data-legal-page="refundPage" type="button">Open refund policy</button>
         </div>
       </div>
     </section>
@@ -25560,6 +25564,35 @@
       </section>
     </div>
 
+    <div class="admin-preview-popover" id="publicContactPopover" role="dialog" aria-modal="true" aria-labelledby="publicContactTitle" hidden>
+      <section class="admin-preview-sheet">
+        <button class="close-btn admin-preview-close" id="publicContactClose" type="button" aria-label="Close contact form">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <h3 id="publicContactTitle">Contact Admin</h3>
+        <form class="auth-form support-contact-form" id="publicContactForm">
+          <div class="field">
+            <label for="publicContactName">Name</label>
+            <input id="publicContactName" name="name" type="text" autocomplete="name" placeholder="Your name">
+          </div>
+          <div class="field">
+            <label for="publicContactEmail">Email</label>
+            <input id="publicContactEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label for="publicContactSubject">Subject</label>
+            <input id="publicContactSubject" name="subject" type="text" required placeholder="What do you need help with?">
+          </div>
+          <div class="field">
+            <label for="publicContactMessage">Message</label>
+            <textarea id="publicContactMessage" name="message" rows="4" required placeholder="Write your message to admin"></textarea>
+          </div>
+          <button class="action-btn" type="submit">Send to admin</button>
+          <div class="rule-note" id="publicContactStatus">You can send this without signing in. Add an email if you want admin to reply.</div>
+        </form>
+      </section>
+    </div>
+
     <div class="toast" id="toast" role="status"></div>
   </div>
 
@@ -25647,6 +25680,10 @@
     const adminPreviewTitle = document.getElementById("adminPreviewTitle");
     const adminPreviewBody = document.getElementById("adminPreviewBody");
     const adminPreviewClose = document.getElementById("adminPreviewClose");
+    const publicContactPopover = document.getElementById("publicContactPopover");
+    const publicContactClose = document.getElementById("publicContactClose");
+    const publicContactForm = document.getElementById("publicContactForm");
+    const publicContactStatus = document.getElementById("publicContactStatus");
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
     const accountTooltip = document.getElementById("accountTooltip");
@@ -25910,6 +25947,20 @@
       if (!adminPreviewPopover || !adminPreviewBody) return;
       adminPreviewPopover.hidden = true;
       adminPreviewBody.innerHTML = "";
+    }
+
+    function openPublicContactForm() {
+      if (!publicContactPopover) return;
+      if (publicContactStatus) {
+        publicContactStatus.textContent = "You can send this without signing in. Add an email if you want admin to reply.";
+      }
+      publicContactPopover.hidden = false;
+      setTimeout(() => document.getElementById("publicContactSubject")?.focus({ preventScroll: true }), 120);
+    }
+
+    function closePublicContactForm() {
+      if (!publicContactPopover) return;
+      publicContactPopover.hidden = true;
     }
 
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
@@ -31164,9 +31215,7 @@
     function openContactAdmin() {
       const role = activeSupportRole();
       if (!role) {
-        const subject = encodeURIComponent("Mydancr support request");
-        const body = encodeURIComponent("Hi Mydancr support,\n\nI need help with:\n\n");
-        window.location.href = `mailto:support@mydancr.com?subject=${subject}&body=${body}`;
+        openPublicContactForm();
         return;
       }
       closeAuthPage();
@@ -31179,6 +31228,47 @@
       else openDashboard();
       setTimeout(() => focusSupportPanel(role), 220);
       showToast("Contact admin opened");
+    }
+
+    async function submitPublicContactForm(event) {
+      event.preventDefault();
+      if (!publicContactForm || !publicContactStatus) return;
+      const formData = new FormData(publicContactForm);
+      const name = String(formData.get("name") || "").trim();
+      const email = String(formData.get("email") || "").trim();
+      const subject = String(formData.get("subject") || "").trim();
+      const message = String(formData.get("message") || "").trim();
+      if (!subject || !message) {
+        publicContactStatus.textContent = "Add a subject and message before sending.";
+        return;
+      }
+      publicContactStatus.textContent = "Sending message to admin...";
+      try {
+        const details = [
+          "Footer contact message",
+          `Name: ${name || "Not provided"}`,
+          `Email: ${email || "Not provided"}`,
+          `Page: ${window.location.href}`,
+          "",
+          "Message:",
+          message
+        ].join("\n");
+        const data = await postOptionalAuthJson("/api/reports", {
+          targetType: "contact_message",
+          targetId: null,
+          targetLabel: email || name || "Unsigned visitor",
+          reason: subject,
+          details
+        });
+        if (data?.report) {
+          liveAdminReports = [data.report, ...liveAdminReports.filter((item) => item.id !== data.report.id)];
+        }
+        publicContactStatus.textContent = "Sent to admin. Thank you.";
+        publicContactForm.reset();
+        showToast("Message sent to admin");
+      } catch (error) {
+        publicContactStatus.textContent = error?.message || "Unable to send message right now.";
+      }
     }
 
     function pulseVenueToolTarget(target) {
@@ -32545,12 +32635,15 @@
     function adminReportRow(report) {
       const reason = report.reason || report.name || "Content report";
       const target = report.targetLabel || report.target || "Reported target";
+      const details = report.details ? `<div class="meta">${displayText(report.details).replace(/\n/g, "<br>")}</div>` : "";
+      const isLiveReport = Boolean(report.targetType || report.createdAt);
+      const canRemoveTarget = report.targetType !== "contact_message";
       return `
-        <article class="admin-item" data-report="${report.id}" data-live-report="${report.targetId ? "true" : "false"}" data-report-target="${target}">
-          <div class="row"><div><h3>${displayText(reason)}</h3><div class="meta">${displayText(target)}</div></div><span class="badge pending">Open</span></div>
+        <article class="admin-item" data-report="${displayText(report.id)}" data-live-report="${isLiveReport ? "true" : "false"}" data-report-target="${displayText(target)}">
+          <div class="row"><div><h3>${displayText(reason)}</h3><div class="meta">${displayText(target)}</div>${details}</div><span class="badge pending">Open</span></div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
-            <button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>
+            ${canRemoveTarget ? '<button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>' : ""}
           </div>
         </article>
       `;
@@ -33673,6 +33766,11 @@
     adminPreviewPopover?.addEventListener("click", (event) => {
       if (event.target === adminPreviewPopover) closeAdminPreview();
     });
+    publicContactClose?.addEventListener("click", closePublicContactForm);
+    publicContactPopover?.addEventListener("click", (event) => {
+      if (event.target === publicContactPopover) closePublicContactForm();
+    });
+    publicContactForm?.addEventListener("submit", submitPublicContactForm);
 
     document.querySelectorAll("[data-legal-page]").forEach((button) => {
       button.addEventListener("click", () => openLegalPage(button.dataset.legalPage));
@@ -34609,6 +34707,10 @@
       if (event.key === "Escape") {
         if (adminPreviewPopover && !adminPreviewPopover.hidden) {
           closeAdminPreview();
+          return;
+        }
+        if (publicContactPopover && !publicContactPopover.hidden) {
+          closePublicContactForm();
           return;
         }
       }
