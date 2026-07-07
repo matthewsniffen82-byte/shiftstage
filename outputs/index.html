@@ -35401,8 +35401,10 @@
       if (action === "edit-profile") {
         document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
         setApprovedToolDropdown("edit");
-        document.getElementById("approvedEditProfileDropdown")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        document.getElementById("profileStageName")?.focus({ preventScroll: true });
+        window.requestAnimationFrame(() => {
+          document.getElementById("approvedEditProfileDropdown")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById("profileStageName")?.focus({ preventScroll: true });
+        });
         setResult("Edit profile tools opened.");
         return;
       }
@@ -35410,8 +35412,10 @@
       if (action === "post-schedule") {
         document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
         setApprovedToolDropdown("schedule");
-        document.getElementById("approvedScheduleDropdown")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        document.getElementById("shiftClub")?.focus({ preventScroll: true });
+        window.requestAnimationFrame(() => {
+          document.getElementById("approvedScheduleDropdown")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById("shiftClub")?.focus({ preventScroll: true });
+        });
         setResult("Schedule posting form opened.");
         return;
       }
