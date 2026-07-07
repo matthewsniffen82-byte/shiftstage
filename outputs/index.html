@@ -25340,14 +25340,6 @@
           <div class="admin-grid" id="adminDancers"></div>
         </div>
         <div class="auth-card">
-          <h3>ID and selfie review</h3>
-          <div class="admin-grid" id="adminVerification"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Content review</h3>
-          <div class="admin-grid" id="adminPhotos"></div>
-        </div>
-        <div class="auth-card">
           <h3>Reports</h3>
           <div class="admin-grid" id="adminReports"></div>
         </div>
@@ -32680,7 +32672,6 @@
       const profiles = allProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
       const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
-      const reviewProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending" || profile.photoStatus === "Pending" || profile.contentFlagged);
       const shiftProfiles = visibleProfiles.filter(({ profile }) => profile.scheduled);
       const activeSubscriptions = liveAdminSubscriptions.filter(isLiveSubscriptionActive);
       document.getElementById("adminUserCount").textContent = adminUsers.length + visibleProfiles.length;
@@ -32701,14 +32692,6 @@
       document.getElementById("adminDancers").innerHTML = pendingProfiles.length
         ? pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index)).join("")
         : '<div class="locked">No pending dancers.</div>';
-
-      document.getElementById("adminVerification").innerHTML = reviewProfiles.length
-        ? '<div class="locked">ID, selfie, and proof files are now reviewed inside each collapsible dancer approval card above.</div>'
-        : '<div class="locked">No ID or selfie reviews.</div>';
-
-      document.getElementById("adminPhotos").innerHTML = reviewProfiles.length
-        ? '<div class="locked">Submitted photos are now reviewed inside each collapsible dancer approval card above.</div>'
-        : '<div class="locked">No pending content.</div>';
 
       const visibleReports = liveAdminReports.length
         ? liveAdminReports.filter((report) => report.status === "open")
@@ -32811,8 +32794,6 @@
         "adminMonitoring",
         "adminUsers",
         "adminDancers",
-        "adminVerification",
-        "adminPhotos",
         "adminReports",
         "adminSupportInbox",
         "adminSubscriptions",
