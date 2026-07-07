@@ -25558,6 +25558,9 @@
               <label for="shiftEnd">End time</label>
               <input id="shiftEnd" type="time" value="02:00" required>
             </div>
+            <div class="rule-note" id="shiftDisplayPreview">
+              Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date and start time, for example 7/8 at 9:30p.
+            </div>
             <div class="field">
               <label for="shiftRepeat">Repeat option</label>
               <select id="shiftRepeat">
@@ -30660,6 +30663,26 @@
         result.hidden = false;
         result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only customers.";
       }
+      renderShiftDisplayPreview();
+    }
+
+    function renderShiftDisplayPreview() {
+      const preview = document.getElementById("shiftDisplayPreview");
+      if (!preview) return;
+      const city = activeDancerCity();
+      const dateValue = document.getElementById("shiftDate")?.value || todayValue(city);
+      const startValue = document.getElementById("shiftStart")?.value || "21:30";
+      const endValue = document.getElementById("shiftEnd")?.value || "02:00";
+      const range = shiftIsoRange(dateValue, startValue, endValue);
+      const profile = {
+        scheduled: true,
+        time: formatShiftTime(startValue, endValue),
+        shiftDate: dateValue,
+        shiftStartsAt: range.startsAt,
+        shiftEndsAt: range.endsAt
+      };
+      const upcomingText = displayPublicShiftTime(profile.time, profile);
+      preview.innerHTML = `Profile card display: <strong>${displayText(upcomingText)}</strong>. If you check in during that shift window, the card changes to <strong>Working Now</strong>.`;
     }
 
     function setFieldValueIfIdle(id, value = "") {
@@ -35663,6 +35686,11 @@
     });
 
     dancerDashboard.addEventListener("input", (event) => {
+      if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
+        renderShiftDisplayPreview();
+        return;
+      }
+
       const socialField = event.target.closest("[data-setup-social]");
       if (socialField) {
         dancerSignupSocials[socialField.dataset.setupSocial] = socialField.value;
@@ -35685,6 +35713,12 @@
       if (profileField.dataset.setupProfileField === "city") {
         setDancerSetupField("dancerCity", value);
         saveDancerProfileDraft({ city: value });
+      }
+    });
+
+    dancerDashboard.addEventListener("change", (event) => {
+      if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
+        renderShiftDisplayPreview();
       }
     });
 
