@@ -20965,6 +20965,22 @@
       box-shadow: 0 0 20px rgba(139,92,246,.14), inset 0 0 16px rgba(139,92,246,.08);
     }
 
+    #approvedDancerPanel .control-action-row button:disabled,
+    #publicProfileForm button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #approvedDancerPanel .control-action-row button.is-ready,
+    #publicProfileForm button.is-ready {
+      border-color: rgba(34,211,238,.75);
+      background: linear-gradient(135deg, rgba(6,182,212,.92), rgba(168,85,247,.9));
+      color: #fff;
+      box-shadow: 0 0 24px rgba(34,211,238,.24), 0 0 26px rgba(168,85,247,.18);
+    }
+
     #approvedDancerPanel .control-result {
       margin-top: 10px;
     }
@@ -25629,8 +25645,8 @@
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="share-profile">Share profile</button>
                     <button type="button" data-dancer-control-action="show-qr">Show QR code</button>
-                    <button type="button" data-dancer-control-action="save-profile">Save profile changes</button>
-                    <button type="button" data-dancer-control-action="resubmit-approval">Resubmit for approval</button>
+                    <button type="button" data-dancer-control-action="save-profile">Save profile</button>
+                    <button type="button" data-dancer-control-action="resubmit-approval" id="approvedControlSubmitApproval" disabled>Submit changes for approval</button>
                   </div>
                   <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
                 </section>
@@ -25742,7 +25758,8 @@
                     <input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="@username or profile URL">
                   </div>
                 </div>
-                <button class="action-btn" type="submit">Submit changes for approval</button>
+                <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save profile</button>
+                <button class="action-btn" id="approvedProfileSubmitApproval" type="submit" disabled>Submit changes for approval</button>
               </form>
               <div class="rule-note" id="profileEditResult" hidden>Changes submitted for admin approval.</div>
             </section>
@@ -27693,7 +27710,7 @@
         rollback?.();
         showToast(error.message || "Could not update account");
       } finally {
-        if (button) button.disabled = false;
+        syncApprovedProfileSubmitState();
       }
     }
 
@@ -31293,13 +31310,25 @@
       const city = markets[selectedCity] ? selectedCity : currentCity;
       const profile = activeDancerProfile(currentCity) || ensureActiveDancerProfile("Verified");
       cityField.innerHTML = Object.keys(markets).map((name) => `<option${name === city ? " selected" : ""}>${name}</option>`).join("");
+      const controlCityField = document.getElementById("approvedControlCity");
+      if (controlCityField) controlCityField.innerHTML = cityField.innerHTML;
       const venues = markets[city]?.venues || [];
       const venueName = profile?.venue || venues[0]?.name || "";
       venueField.innerHTML = venues.map((venue) => `<option${venue.name === venueName ? " selected" : ""}>${venue.name}</option>`).join("");
+      const controlVenueField = document.getElementById("approvedControlVenue");
+      if (controlVenueField) controlVenueField.innerHTML = venueField.innerHTML;
       cityField.onchange = () => renderApprovedDancerProfileEditor(true);
+      if (controlCityField) controlCityField.onchange = () => {
+        if (cityField) cityField.value = controlCityField.value;
+        renderApprovedDancerProfileEditor(true);
+      };
 
       const socials = { ...dancerSignupSocials, ...(profile?.socials || {}) };
       setFieldValueIfIdle("profileStageName", profile?.name || activeDancerName());
+      setFieldValueIfIdle("approvedControlStageName", profile?.name || activeDancerName());
+      setFieldValueIfIdle("approvedControlRealName", document.getElementById("dancerLegalName")?.value || profile?.legalName || "");
+      if (controlCityField) controlCityField.value = city;
+      if (controlVenueField) controlVenueField.value = venueName;
       const photoReview = document.getElementById("approvedProfilePhotoReview");
       if (photoReview) photoReview.innerHTML = approvedDancerPhotoReviewMarkup(profile);
       setFieldValueIfIdle("profileInstagram", socials.instagram || "");
@@ -31307,6 +31336,11 @@
       setFieldValueIfIdle("profileSnapchat", socials.snapchat || "");
       setFieldValueIfIdle("profileOnlyfans", socials.onlyfans || "");
       setFieldValueIfIdle("profileX", socials.x || "");
+      setFieldValueIfIdle("approvedControlInstagram", socials.instagram || "");
+      setFieldValueIfIdle("approvedControlTiktok", socials.tiktok || "");
+      setFieldValueIfIdle("approvedControlSnapchat", socials.snapchat || "");
+      setFieldValueIfIdle("approvedControlOnlyfans", socials.onlyfans || "");
+      setFieldValueIfIdle("approvedControlX", socials.x || "");
       normalizeSubmittedSocials(profile).forEach((social) => {
         const input = document.getElementById(`profile${social.platform.charAt(0).toUpperCase()}${social.platform.slice(1)}`);
         if (!input) return;
@@ -31324,33 +31358,119 @@
           note.textContent = rejected ? `Not approved: ${social.reviewNotes || "No reason added."}` : "";
         }
       });
+      syncApprovedProfileSubmitState();
     }
 
-    async function saveApprovedDancerProfile() {
+    function approvedProfileFieldValue(primaryId, fallbackId = "") {
+      const primary = document.getElementById(primaryId);
+      const fallback = fallbackId ? document.getElementById(fallbackId) : null;
+      return (primary?.value ?? fallback?.value ?? "").trim();
+    }
+
+    function readApprovedProfileEditValues() {
+      const rawSocials = {
+        instagram: approvedProfileFieldValue("profileInstagram", "approvedControlInstagram"),
+        tiktok: approvedProfileFieldValue("profileTiktok", "approvedControlTiktok"),
+        snapchat: approvedProfileFieldValue("profileSnapchat", "approvedControlSnapchat"),
+        onlyfans: approvedProfileFieldValue("profileOnlyfans", "approvedControlOnlyfans"),
+        x: approvedProfileFieldValue("profileX", "approvedControlX")
+      };
+      return {
+        stageName: cleanDisplayValue(approvedProfileFieldValue("profileStageName", "approvedControlStageName")) || activeDancerName(),
+        city: approvedProfileFieldValue("profileCity", "approvedControlCity") || activeDancerCity(),
+        venue: approvedProfileFieldValue("profileVenue", "approvedControlVenue"),
+        rawSocials,
+        normalizedSocials: Object.fromEntries(
+          Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
+        )
+      };
+    }
+
+    function approvedProfileChangeState(profile = activeDancerProfile()) {
+      if (!profile) return { hasAnyChange: false, needsApproval: false, hasDeletesOnly: false };
+      const values = readApprovedProfileEditValues();
+      const existingSocials = normalizeSubmittedSocials(profile);
+      const detailsChanged = values.stageName !== (profile.name || activeDancerName()) ||
+        values.city !== (profile.city || activeDancerCity()) ||
+        Boolean(values.venue && values.venue !== (profile.venue || ""));
+      const socialStates = socialPlatforms.map(({ key }) => {
+        const existing = existingSocials.find((social) => social.platform === key);
+        const current = values.normalizedSocials[key] || "";
+        const previous = existing?.url || "";
+        return {
+          key,
+          addedOrChanged: Boolean(current && current !== previous),
+          deleted: Boolean(previous && !current)
+        };
+      });
+      const pendingPhoto = (profile.submittedPhotos || []).some((photo) =>
+        normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending") === "pending"
+      );
+      const needsApproval = Boolean(profile.approvalChangesPending) || detailsChanged || pendingPhoto || socialStates.some((item) => item.addedOrChanged);
+      const hasDeletes = socialStates.some((item) => item.deleted);
+      const hasAnyChange = needsApproval || hasDeletes;
+      return { hasAnyChange, needsApproval, hasDeletesOnly: hasDeletes && !needsApproval };
+    }
+
+    function syncApprovedProfileSubmitState() {
+      const state = approvedProfileChangeState();
+      const submitButtons = [
+        document.getElementById("approvedProfileSubmitApproval"),
+        document.getElementById("approvedControlSubmitApproval")
+      ].filter(Boolean);
+      submitButtons.forEach((button) => {
+        button.disabled = !state.needsApproval;
+        button.classList.toggle("is-ready", state.needsApproval);
+        button.title = state.needsApproval
+          ? "Save, then send changed or uploaded items to admin."
+          : state.hasDeletesOnly
+            ? "Deleted items can be saved without admin approval."
+            : "Change or upload something to submit for approval.";
+      });
+      const result = document.getElementById("dancerControlResult");
+      if (result && state.hasDeletesOnly) {
+        result.textContent = "Only deleted items changed. Press Save profile to keep those changes.";
+      }
+    }
+
+    function mirrorApprovedProfileEditField(field) {
+      const pairs = [
+        ["profileStageName", "approvedControlStageName"],
+        ["profileCity", "approvedControlCity"],
+        ["profileVenue", "approvedControlVenue"],
+        ["profileInstagram", "approvedControlInstagram"],
+        ["profileTiktok", "approvedControlTiktok"],
+        ["profileSnapchat", "approvedControlSnapchat"],
+        ["profileOnlyfans", "approvedControlOnlyfans"],
+        ["profileX", "approvedControlX"]
+      ];
+      const pair = pairs.find(([left, right]) => field?.id === left || field?.id === right);
+      if (!pair) return;
+      const [leftId, rightId] = pair;
+      const other = document.getElementById(field.id === leftId ? rightId : leftId);
+      if (other && other.value !== field.value) other.value = field.value;
+      syncApprovedProfileSubmitState();
+    }
+
+    async function saveApprovedDancerProfile(options = {}) {
       const oldCity = activeDancerCity();
       const oldName = activeDancerName();
       const oldMarket = markets[oldCity];
       const oldProfile = activeDancerProfile(oldCity) || ensureActiveDancerProfile("Verified");
       if (!oldProfile || !oldMarket) return false;
-      const stageName = cleanDisplayValue(document.getElementById("profileStageName").value.trim()) || oldName;
-      const newCity = document.getElementById("profileCity").value || oldCity;
+      const changeStateBeforeSave = approvedProfileChangeState(oldProfile);
+      const editValues = readApprovedProfileEditValues();
+      const stageName = editValues.stageName || oldName;
+      const newCity = editValues.city || oldCity;
       const targetMarket = markets[newCity] || oldMarket;
-      const venueName = document.getElementById("profileVenue").value || oldProfile.venue;
+      const venueName = editValues.venue || oldProfile.venue;
       const venue = targetMarket.venues.find((item) => item.name === venueName);
-      const rawSocials = {
-        instagram: document.getElementById("profileInstagram").value.trim(),
-        tiktok: document.getElementById("profileTiktok").value.trim(),
-        snapchat: document.getElementById("profileSnapchat").value.trim(),
-        onlyfans: document.getElementById("profileOnlyfans").value.trim(),
-        x: document.getElementById("profileX").value.trim()
-      };
+      const rawSocials = editValues.rawSocials;
       if (hasBlockedSocialLink(Object.values(rawSocials))) {
         showToast("Escorting, payment, or solicitation links are not allowed");
         return false;
       }
-      const normalizedSocials = Object.fromEntries(
-        Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
-      );
+      const normalizedSocials = editValues.normalizedSocials;
       const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
       if (invalidSocial) {
         showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
@@ -31369,7 +31489,8 @@
         city: newCity,
         venue: venueName,
         distance: venue?.distance || profile.distance,
-        socials: normalizedSocials
+        socials: normalizedSocials,
+        approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval)
       });
       const existingSocials = normalizeSubmittedSocials(oldProfile);
       profile.socialLinks = Object.entries(normalizedSocials)
@@ -31398,7 +31519,9 @@
       const result = document.getElementById("profileEditResult");
       if (result) {
         result.hidden = false;
-        result.textContent = "Sending profile, photo, and social changes to admin review...";
+        result.textContent = options.submitForReview
+          ? "Saving profile before admin review..."
+          : "Saving profile changes...";
       }
       render();
       renderDancerSetup();
@@ -31412,8 +31535,11 @@
           });
           if (!data) throw new Error("Sign in required");
         }
-        if (result) result.textContent = "Changes saved. Submitting them to admin review...";
-        return true;
+        syncApprovedProfileSubmitState();
+        if (result) result.textContent = options.submitForReview
+          ? "Changes saved. Ready to submit to admin review."
+          : "Profile saved. If you added, changed, or uploaded anything, press Submit changes for approval.";
+        return { saved: true, needsApproval: changeStateBeforeSave.needsApproval || Boolean(profile.approvalChangesPending) };
       } catch (error) {
         if (result) result.textContent = error.message || "Could not save live profile";
         showToast(error.message || "Could not save live profile");
@@ -32914,6 +33040,7 @@
           ...(profile.submittedPhotos || []).filter((item) => target !== "main" || !(item.isPrimary || item.is_primary))
         ].slice(0, 6);
         profile.photoStatus = "Pending";
+        profile.approvalChangesPending = true;
       }
       return data;
     }
@@ -33176,6 +33303,7 @@
         if (profile) {
           profile.reviewSubmitted = true;
           profile.status = wasApproved ? "Verified" : "Pending";
+          profile.approvalChangesPending = false;
           (profile.submittedPhotos || []).forEach((photo) => {
             if ((photo.reviewStatus || photo.review_status) === "rejected") {
               photo.reviewStatus = "pending";
@@ -33199,6 +33327,12 @@
     }
 
     async function submitApprovedProfileChangesForReview(button) {
+      const changeState = approvedProfileChangeState();
+      if (!changeState.needsApproval) {
+        showToast(changeState.hasDeletesOnly ? "Deleted items only need Save profile" : "Change or upload something before submitting");
+        syncApprovedProfileSubmitState();
+        return;
+      }
       if (button) button.disabled = true;
       const result = document.getElementById("profileEditResult");
       if (result) {
@@ -33206,9 +33340,12 @@
         result.textContent = "Saving changes before admin review...";
       }
       try {
-        const saved = await saveApprovedDancerProfile();
-        if (!saved) return;
+        const saved = await saveApprovedDancerProfile({ submitForReview: true });
+        if (!saved?.saved || !saved.needsApproval) return;
         await submitDancerProfileForReview(null);
+        const profile = activeDancerProfile();
+        if (profile) profile.approvalChangesPending = false;
+        syncApprovedProfileSubmitState();
         if (result) result.textContent = "Submitted to admin. Only changed or replaced photos/social links will appear for review.";
       } finally {
         if (button) button.disabled = false;
@@ -35860,7 +35997,7 @@
       openProfileModal(card.dataset.profile);
     });
 
-    function handleDancerControlAction(action) {
+    async function handleDancerControlAction(action) {
       const city = activeDancerCity();
       const profileName = activeDancerName();
       const result = document.getElementById("dancerControlResult");
@@ -35913,22 +36050,24 @@
       }
 
       if (action === "save-profile") {
-        const stageName = document.getElementById("approvedControlStageName")?.value.trim();
-        const cityValue = document.getElementById("approvedControlCity")?.value.trim();
-        if (stageName) {
-          document.getElementById("dancerStageName").value = stageName;
-          updateDancerDashboardName(stageName);
-        }
-        if (cityValue && markets[cityValue]) document.getElementById("dancerCity").value = cityValue;
-        setResult("Profile changes saved in this demo.");
+        const saved = await saveApprovedDancerProfile();
+        if (!saved?.saved) return;
+        setResult(saved.needsApproval
+          ? "Profile saved. Submit changes for approval is ready."
+          : "Profile saved. Deleted-only changes do not need admin approval.");
         updateAccountHeader();
         render();
         return;
       }
 
       if (action === "resubmit-approval") {
+        if (!approvedProfileChangeState().needsApproval) {
+          setResult("Change or upload something before submitting for approval.");
+          syncApprovedProfileSubmitState();
+          return;
+        }
         setResult("Sending your changed profile back to admin review...");
-        submitDancerProfileForReview(null);
+        await submitApprovedProfileChangesForReview(document.getElementById("approvedControlSubmitApproval"));
         return;
       }
 
@@ -35957,6 +36096,7 @@
         await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
         renderAdminDashboard();
         renderDancerManagement();
+        syncApprovedProfileSubmitState();
         if (result) result.textContent = "Photo uploaded for admin review. Public photos stay unchanged until approved.";
         showToast("Photo uploaded for review");
       } catch (error) {
@@ -36055,6 +36195,11 @@
         return;
       }
 
+      if (event.target.closest("#publicProfileForm, #approvedProfileEditFields, .social-control-grid")) {
+        mirrorApprovedProfileEditField(event.target);
+        return;
+      }
+
       const socialField = event.target.closest("[data-setup-social]");
       if (socialField) {
         dancerSignupSocials[socialField.dataset.setupSocial] = socialField.value;
@@ -36083,6 +36228,10 @@
     dancerDashboard.addEventListener("change", (event) => {
       if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
         renderShiftDisplayPreview();
+        return;
+      }
+      if (event.target.closest("#publicProfileForm, #approvedProfileEditFields, .social-control-grid")) {
+        mirrorApprovedProfileEditField(event.target);
       }
     });
 
