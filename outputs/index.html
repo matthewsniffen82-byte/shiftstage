@@ -30357,8 +30357,9 @@
       });
     }
 
-    function uploadedProfilePhotoUrls(profile) {
+    function uploadedProfilePhotoUrls(profile, includeUnapproved = false) {
       const submittedUrls = (profile?.submittedPhotos || [])
+        .filter((photo) => includeUnapproved || (photo.reviewStatus || photo.review_status) === "approved")
         .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
         .filter(Boolean);
       const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
@@ -30374,7 +30375,7 @@
       if (profile.photoStatus !== "Approved" && !isPrivatePreview) {
         return '<div class="lock-row" style="grid-column:1/-1">Photos pending admin approval.</div>';
       }
-      const uploadedUrls = uploadedProfilePhotoUrls(profile);
+      const uploadedUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const galleryOffsets = uploadedUrls.length ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl })) : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
       return galleryOffsets.map(({ offset, photoUrl }) => {
         const photoClass = portraitClass(baseIndex + offset);
@@ -32214,17 +32215,33 @@
       return status === "approved" || status === "rejected";
     }
 
+    function matchesRequiredVerificationDocument(document, key, terms, documentIndex, fallbackIndex) {
+      const text = [
+        document.documentType,
+        document.document_type,
+        document.displayName,
+        document.display_name,
+        document.name
+      ].map((value) => String(value || "")).join(" ").toLowerCase();
+      if (text.includes(key)) return true;
+      if (terms.every((term) => text.includes(term))) return true;
+      return !text.trim() && documentIndex === fallbackIndex;
+    }
+
     function pendingAdminSubmissionItems(profile) {
-      const socials = normalizeSubmittedSocials(profile).filter((social) => !isFinalAdminReviewStatus(social.reviewStatus));
-      const photos = (profile.submittedPhotos?.length
-        ? profile.submittedPhotos
-        : (profile.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, sortOrder: index }))
-      ).filter((photo) => !isFinalAdminReviewStatus(photo.reviewStatus || photo.review_status));
-      const documents = (profile.verificationDocuments || []).filter((document) => !isFinalAdminReviewStatus(document.status));
+      const documents = profile.verificationDocuments || [];
+      const requiredDocuments = [
+        { key: "government_id", label: "Government ID", terms: ["government", "id"] },
+        { key: "selfie", label: "Selfie verification", terms: ["selfie"] },
+        { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"] }
+      ];
       const pending = [];
-      if (socials.length) pending.push(`${socials.length} social${socials.length === 1 ? "" : "s"}`);
-      if (photos.length) pending.push(`${photos.length} photo${photos.length === 1 ? "" : "s"}`);
-      if (documents.length) pending.push(`${documents.length} verification file${documents.length === 1 ? "" : "s"}`);
+      requiredDocuments.forEach((required, index) => {
+        const document = documents.find((item, documentIndex) =>
+          matchesRequiredVerificationDocument(item, required.key, required.terms, documentIndex, index)
+        );
+        if (!document || document.status !== "approved") pending.push(required.label);
+      });
       return pending;
     }
 
@@ -32234,7 +32251,7 @@
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
       const documentCount = profile.verificationDocuments?.length || 0;
       const pendingItems = pendingAdminSubmissionItems(profile);
-      const finalReviewDisabled = pendingItems.length ? "disabled" : "";
+      const approveDisabled = pendingItems.length ? "disabled" : "";
       return `
         <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" ${index === 0 ? "open" : ""}>
           <summary class="row">
@@ -32266,8 +32283,8 @@
           </div>
           ${pendingItems.length ? `<div class="locked">Review pending items first: ${displayText(pendingItems.join(", "))}.</div>` : ""}
           <div class="admin-actions">
-            <button class="action-btn" data-admin-action="approve-dancer" ${finalReviewDisabled}>Approve dancer</button>
-            <button class="action-btn danger" data-admin-action="reject-dancer" ${finalReviewDisabled}>Reject dancer</button>
+            <button class="action-btn" data-admin-action="approve-dancer" ${approveDisabled}>Approve dancer</button>
+            <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
             <button class="action-btn secondary" data-admin-action="remove-profile">Remove fake profile</button>
             <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
           </div>
@@ -32578,14 +32595,8 @@
         hidden: false,
         contentFlagged: false
       });
-      (profile.submittedPhotos || []).forEach((photo) => {
-        photo.reviewStatus = "approved";
-      });
       (profile.verificationDocuments || []).forEach((document) => {
         document.status = "approved";
-      });
-      (profile.socialLinks || profile.social_links || []).forEach((social) => {
-        social.reviewStatus = "approved";
       });
     }
 
@@ -32774,11 +32785,6 @@
         return;
       }
       if (action === "reject-dancer" && profileMatch) {
-        const pendingItems = pendingAdminSubmissionItems(profileMatch.profile);
-        if (pendingItems.length) {
-          showToast(`Review pending items first: ${pendingItems.join(", ")}`);
-          return;
-        }
         markAdminReviewButton(button, "rejected");
         profileMatch.profile.status = "Rejected";
         profileMatch.profile.hidden = true;

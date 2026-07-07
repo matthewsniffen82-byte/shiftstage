@@ -812,7 +812,7 @@ function ApprovalQueue({
               <button type="button" onClick={() => reviewProfile(dancerId, "approved")} disabled={hasPendingItems}>
                 {profileApproved ? "Approved" : "Approve"}
               </button>
-              <button type="button" onClick={() => reviewProfile(dancerId, "rejected")} disabled={hasPendingItems}>
+              <button type="button" onClick={() => reviewProfile(dancerId, "rejected")}>
                 {profileDisapproved ? "Disapproved" : "Disapprove"}
               </button>
             </div>
@@ -1062,18 +1062,32 @@ function verificationDocumentLabel(document: Record<string, unknown>, index: num
 
 function pendingSubmittedContent(item: Record<string, unknown>) {
   const pending: string[] = [];
-  const socials = normalizeSubmissionSocials(item).filter((social) => !isFinalReviewStatus(asText(social.reviewStatus)));
-  const photos = asRecordArray(item.photos).filter((photo) => !isFinalReviewStatus(asText(photo.reviewStatus || photo.review_status)));
-  const documents = asRecordArray(item.verificationDocuments || item.verification_documents).filter((document) => !isFinalReviewStatus(asText(document.status)));
+  const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
+  const requiredDocuments = [
+    { key: "government_id", label: "Government ID", terms: ["government", "id"] },
+    { key: "selfie", label: "Selfie verification", terms: ["selfie"] },
+    { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"] },
+  ];
 
-  if (socials.length) pending.push(`${socials.length} social${socials.length === 1 ? "" : "s"}`);
-  if (photos.length) pending.push(`${photos.length} photo${photos.length === 1 ? "" : "s"}`);
-  if (documents.length) pending.push(`${documents.length} verification file${documents.length === 1 ? "" : "s"}`);
+  requiredDocuments.forEach((required, index) => {
+    const document = documents.find((item, documentIndex) => matchesRequiredDocument(item, required.key, required.terms, documentIndex, index));
+    if (asText(document?.status) !== "approved") pending.push(required.label);
+  });
   return pending;
 }
 
-function isFinalReviewStatus(status: string) {
-  return status === "approved" || status === "rejected";
+function matchesRequiredDocument(document: Record<string, unknown>, key: string, terms: string[], documentIndex: number, fallbackIndex: number) {
+  const text = [
+    document.documentType,
+    document.document_type,
+    document.displayName,
+    document.display_name,
+    document.name,
+    verificationDocumentLabel(document, documentIndex),
+  ].map(asText).join(" ").toLowerCase();
+  if (text.includes(key)) return true;
+  if (terms.every((term) => text.includes(term))) return true;
+  return !text.trim() && documentIndex === fallbackIndex;
 }
 
 function SubmittedSocialIcon({ platform }: { platform: string }) {

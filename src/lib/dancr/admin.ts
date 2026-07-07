@@ -522,13 +522,12 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   if (dancerError) throw dancerError;
   if (!dancer) throw new Error("Dancer profile not found.");
 
-  await assertAllSubmittedContentReviewed(client, dancer);
+  if (approved) await assertAllSubmittedContentReviewed(client, dancer);
 
   const statusUpdate = approved
     ? {
         status: "approved",
         verification_status: input.status,
-        photo_review_status: input.status,
         approved_at: reviewedAt,
       }
     : {
@@ -543,16 +542,7 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
 
   if (updateError) throw updateError;
 
-  if (approved) {
-    const { error: photosError } = await db
-      .from("dancer_photos")
-      .update({ review_status: input.status })
-      .eq("dancer_id", input.dancerId);
-
-    if (photosError) throw photosError;
-  }
-
-  const reviewTypes = approved ? ["identity", "photos", "profile"] : ["profile"];
+  const reviewTypes = approved ? ["identity", "profile"] : ["profile"];
   const reviewRows = reviewTypes.map((reviewType) => ({
     dancer_id: input.dancerId,
     reviewer_id: input.reviewerId,
@@ -992,28 +982,42 @@ function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
 
 async function assertAllSubmittedContentReviewed(client: DancrClient, dancer: { id: string; user_id: string }) {
   const db = client as any;
-  const [{ data: photos, error: photosError }, { data: socials, error: socialsError }, { data: reviews, error: reviewsError }] =
-    await Promise.all([
-      db.from("dancer_photos").select("id, review_status").eq("dancer_id", dancer.id),
-      db.from("social_links").select("id, is_active").eq("dancer_id", dancer.id),
-      db.from("approval_reviews").select("review_type, status, notes, created_at, reviewed_at").eq("dancer_id", dancer.id),
-    ]);
+  const { data: reviews, error: reviewsError } = await db
+    .from("approval_reviews")
+    .select("review_type, status, notes, created_at, reviewed_at")
+    .eq("dancer_id", dancer.id);
 
-  if (photosError) throw photosError;
-  if (socialsError) throw socialsError;
   if (reviewsError) throw reviewsError;
 
   const reviewRows = reviews || [];
-  const pendingPhotos = (photos || []).filter((photo: any) => !isFinalReviewStatus(latestReviewFor(reviewRows, contentReviewType("photo", photo.id))?.status || photo.review_status));
-  const pendingSocials = (socials || [])
-    .filter((social: any) => social.is_active !== false)
-    .filter((social: any) => !isFinalReviewStatus(latestReviewFor(reviewRows, contentReviewType("social_link", social.id))?.status));
   const documents = await listVerificationDocumentsForUser(client, dancer.user_id, reviewRows);
-  const pendingDocuments = documents.filter((document: any) => !isFinalReviewStatus(document.status));
+  const pendingRequiredDocuments = requiredVerificationDocuments()
+    .filter((required) => !documents.some((document: any, index: number) =>
+      matchesRequiredVerificationDocument(document, required, index) && document.status === "approved"
+    ));
 
-  if (pendingPhotos.length || pendingSocials.length || pendingDocuments.length) {
-    throw new Error("Review every submitted social link, photo, and verification file before approving or rejecting this dancer.");
+  if (pendingRequiredDocuments.length) {
+    throw new Error(`Approve required verification first: ${pendingRequiredDocuments.map((item) => item.label).join(", ")}.`);
   }
+}
+
+function requiredVerificationDocuments() {
+  return [
+    { key: "government_id", label: "Government ID", terms: ["government", "id"], fallbackIndex: 0 },
+    { key: "selfie", label: "Selfie verification", terms: ["selfie"], fallbackIndex: 1 },
+    { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"], fallbackIndex: 2 },
+  ];
+}
+
+function matchesRequiredVerificationDocument(
+  document: { documentType?: string; displayName?: string; name?: string },
+  required: { key: string; terms: string[]; fallbackIndex: number },
+  index: number,
+) {
+  const text = [document.documentType, document.displayName, document.name].filter(Boolean).join(" ").toLowerCase();
+  if (text.includes(required.key)) return true;
+  if (required.terms.every((term) => text.includes(term))) return true;
+  return !text.trim() && index === required.fallbackIndex;
 }
 
 async function listVerificationDocumentsForUser(client: DancrClient, userId: string, reviews: any[] = []) {
