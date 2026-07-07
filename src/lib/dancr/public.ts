@@ -48,13 +48,17 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .eq("status", "approved")
     .eq("city", city)
     .eq("shifts.status", "posted")
+    .not("shifts.checked_in_at", "is", null)
+    .is("shifts.checked_out_at", null)
     .lt("shifts.starts_at", window.endsAt)
     .gt("shifts.ends_at", window.activeAfter)
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
   if (error) throw error;
 
-  return (data || []).map((row: any) => toDancerCard(client, row)).filter((card) => card.shiftId);
+  return (data || [])
+    .map((row: any) => toDancerCard(client, row, { checkedInOnly: true }))
+    .filter((card) => card.shiftId && card.locationStatus !== "self_reported");
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
@@ -172,11 +176,13 @@ async function countDancerGoingSignals(client: DancrClient, dancerId: string): P
   return count || 0;
 }
 
-function toDancerCard(client: DancrClient, row: any): DancerCard {
+function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: boolean } = {}): DancerCard {
   const shifts = Array.isArray(row.shifts) ? row.shifts : row.shifts ? [row.shifts] : [];
   const now = Date.now();
   const postedShifts = shifts.filter((item: any) => item.status === "posted");
-  const visibleShifts = postedShifts.filter((item: any) => isShiftPubliclyVisible(item, now));
+  const visibleShifts = postedShifts
+    .filter((item: any) => isShiftPubliclyVisible(item, now))
+    .filter((item: any) => !options.checkedInOnly || publicLocationStatus(item) !== "self_reported");
   const shift = visibleShifts.find((item: any) => new Date(item.ends_at).getTime() >= now) || visibleShifts[0] || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
@@ -268,24 +274,12 @@ async function getCityTimeZone(client: DancrClient, city: string) {
 }
 
 function formatShiftLabel(shift: any): string {
-  const startTime = formatPublicShiftStartTime(shift.starts_at);
   const startMs = new Date(shift.starts_at).getTime();
   const isCheckedIn = publicLocationStatus(shift) !== "self_reported";
 
-  if (isCheckedIn) return `Working Now · Started at ${startTime}`;
+  if (isCheckedIn) return "Working Now";
   if (startMs > Date.now()) return `Starts ${formatPublicShiftStartDate(shift.starts_at)}`;
-  return "Working Now";
-}
-
-function formatPublicShiftStartTime(startsAt: string): string {
-  const start = new Date(startsAt);
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return formatter.format(start);
+  return "Scheduled";
 }
 
 function formatPublicShiftStartDate(startsAt: string): string {
@@ -294,13 +288,8 @@ function formatPublicShiftStartDate(startsAt: string): string {
     month: "numeric",
     day: "numeric",
   });
-  const timeFormatter = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
 
-  return `${dateFormatter.format(start)} at ${timeFormatter.format(start)}`;
+  return dateFormatter.format(start);
 }
 
 export function formatVenueHours(opensAt: string | null, closesAt: string | null): string | null {

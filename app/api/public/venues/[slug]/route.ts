@@ -62,11 +62,6 @@ function formatPublicShiftStart(startsAt: string) {
     month: "numeric",
     day: "numeric",
   }).format(start);
-  const time = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(start);
 
-  return `${date} at ${time}`;
+  return `Scheduled ${date}`;
 }

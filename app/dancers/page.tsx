@@ -61,6 +61,7 @@ function randomizeDancerGroups(dancers: DancerCard[]) {
 
 function isWorkingNow(dancer: DancerCard, now: number) {
   if (!dancer.shiftStartsAt || !dancer.shiftEndsAt) return false;
+  if (dancer.locationStatus !== "location_confirmed" && dancer.locationStatus !== "club_confirmed") return false;
   return new Date(dancer.shiftStartsAt).getTime() <= now && new Date(dancer.shiftEndsAt).getTime() >= now;
 }
 

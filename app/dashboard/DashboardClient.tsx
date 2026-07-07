@@ -589,6 +589,7 @@ function DancerPanel({
         <Metric label="Status" value={String(profile?.status || "draft")} />
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
+      <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       {isApproved ? (
         <>
           <InfoPanel title="Last 30 days">
@@ -607,7 +608,6 @@ function DancerPanel({
       <DancerSharePanel profile={profile} />
       <DancerPhotoPanel />
       <DancerVerificationPanel reviews={reviews} />
-      <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       <DancerBillingPanel />
     </>
   );
@@ -766,6 +766,10 @@ function DancerShiftPanel({ city }: { city: string }) {
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeCheckInId, setActiveCheckInId] = useState("");
+  const [editingShiftId, setEditingShiftId] = useState("");
+  const [editVenueId, setEditVenueId] = useState("");
+  const [editStartsAt, setEditStartsAt] = useState("");
+  const [editEndsAt, setEditEndsAt] = useState("");
 
   useEffect(() => {
     const session = readSession();
@@ -822,6 +826,58 @@ function DancerShiftPanel({ city }: { city: string }) {
       await loadShifts(session.accessToken);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to post shift.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function startEditingShift(shift: Record<string, any>) {
+    setEditingShiftId(String(shift.id));
+    setEditVenueId(String(shift.venue_id || ""));
+    setEditStartsAt(toDateTimeLocalValue(shift.starts_at));
+    setEditEndsAt(toDateTimeLocalValue(shift.ends_at));
+    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in and QR commission eligibility.");
+  }
+
+  function stopEditingShift() {
+    setEditingShiftId("");
+    setEditVenueId("");
+    setEditStartsAt("");
+    setEditEndsAt("");
+  }
+
+  async function saveShiftEdit(shiftId: string) {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    if (!editVenueId || !editStartsAt || !editEndsAt) {
+      setStatus("Choose a venue, start time, and end time before saving.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/dancer/shifts", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          shiftId,
+          venueId: editVenueId,
+          startsAt: new Date(editStartsAt).toISOString(),
+          endsAt: new Date(editEndsAt).toISOString(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update shift.");
+      setStatus("Shift updated. Check-in is available only during those posted hours and inside the club geofence.");
+      stopEditingShift();
+      await loadShifts(session.accessToken);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update shift.");
     } finally {
       setIsSaving(false);
     }
@@ -915,9 +971,34 @@ function DancerShiftPanel({ city }: { city: string }) {
     }
   }
 
+  const activeShift = shifts.find((shift) => canCheckOutOfShift(shift)) || shifts.find((shift) => canCheckInToShift(shift)) || null;
+  const isCheckedInToActiveShift = activeShift ? canCheckOutOfShift(activeShift) : false;
+
   return (
     <article className="info-panel shift-panel">
       <h2>Shifts</h2>
+      <div className={activeShift ? "shift-checkin-card ready" : "shift-checkin-card"}>
+        <span>
+          <strong>{activeShift ? (isCheckedInToActiveShift ? "Checked in" : "Check in available") : "No shift ready for check-in"}</strong>
+          <small>
+            {activeShift
+              ? isCheckedInToActiveShift
+                ? `${venueName(activeShift)} is live in Now. QR commission eligibility is active until you check out or the shift ends.`
+                : `${venueName(activeShift)} is inside your posted shift window. Use location check-in to appear in Now and start QR commission eligibility.`
+              : "Post your shift hours first. The check-in button appears here during the scheduled hours and requires you to be inside the club geofence."}
+          </small>
+        </span>
+        {activeShift && canCheckInToShift(activeShift) ? (
+          <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkInShift(String(activeShift.id))}>
+            {activeCheckInId === String(activeShift.id) ? "Checking location..." : "Check in now"}
+          </button>
+        ) : null}
+        {activeShift && canCheckOutOfShift(activeShift) ? (
+          <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkOutShift(String(activeShift.id))}>
+            {activeCheckInId === String(activeShift.id) ? "Saving..." : "Check out"}
+          </button>
+        ) : null}
+      </div>
       <form onSubmit={postShift}>
         <label>
           Venue
@@ -946,28 +1027,67 @@ function DancerShiftPanel({ city }: { city: string }) {
       <div className="shift-list">
         {shifts.slice(0, 8).map((shift) => (
           <div className="dashboard-shift" key={String(shift.id)}>
-            <span>
-              <strong>{venueName(shift)}</strong>
-              <small>{formatDashboardShift(shift.starts_at, shift.ends_at)}</small>
-            </span>
-            <em>{dashboardShiftStatus(shift)}</em>
-            <div className="shift-actions">
-              {canCheckInToShift(shift) ? (
-                <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkInShift(String(shift.id))}>
-                  {activeCheckInId === String(shift.id) ? "Checking..." : "Check In"}
-                </button>
-              ) : null}
-              {canCheckOutOfShift(shift) ? (
-                <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkOutShift(String(shift.id))}>
-                  {activeCheckInId === String(shift.id) ? "Saving..." : "Check Out"}
-                </button>
-              ) : null}
-              {shift.status !== "cancelled" ? (
-                <button type="button" onClick={() => cancelShift(String(shift.id))}>
-                  Cancel
-                </button>
-              ) : null}
-            </div>
+            {editingShiftId === String(shift.id) ? (
+              <>
+                <label>
+                  Venue
+                  <select value={editVenueId} onChange={(event) => setEditVenueId(event.target.value)} required>
+                    <option value="">Choose venue</option>
+                    {venues.map((venue) => (
+                      <option key={venue.id} value={venue.id}>
+                        {venue.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Starts
+                  <input type="datetime-local" value={editStartsAt} onChange={(event) => setEditStartsAt(event.target.value)} required />
+                </label>
+                <label>
+                  Ends
+                  <input type="datetime-local" value={editEndsAt} onChange={(event) => setEditEndsAt(event.target.value)} required />
+                </label>
+                <div className="shift-actions">
+                  <button type="button" disabled={isSaving} onClick={() => saveShiftEdit(String(shift.id))}>
+                    {isSaving ? "Saving..." : "Save shift"}
+                  </button>
+                  <button type="button" onClick={stopEditingShift}>
+                    Done
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <span>
+                  <strong>{venueName(shift)}</strong>
+                  <small>{formatDashboardShift(shift.starts_at, shift.ends_at)}</small>
+                </span>
+                <em>{dashboardShiftStatus(shift)}</em>
+                <div className="shift-actions">
+                  {canCheckInToShift(shift) ? (
+                    <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkInShift(String(shift.id))}>
+                      {activeCheckInId === String(shift.id) ? "Checking..." : "Check In"}
+                    </button>
+                  ) : null}
+                  {canCheckOutOfShift(shift) ? (
+                    <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkOutShift(String(shift.id))}>
+                      {activeCheckInId === String(shift.id) ? "Saving..." : "Check Out"}
+                    </button>
+                  ) : null}
+                  {shift.status !== "cancelled" ? (
+                    <>
+                      <button type="button" onClick={() => startEditingShift(shift)}>
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => cancelShift(String(shift.id))}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </>
+            )}
           </div>
         ))}
         {!shifts.length ? <p>No shifts posted yet.</p> : null}
@@ -1000,8 +1120,7 @@ function isShiftCheckInWindowOpen(shift: Record<string, any>) {
   const startsAt = new Date(shift.starts_at);
   const endsAt = new Date(shift.ends_at);
   const now = new Date();
-  const opensAt = new Date(startsAt.getTime() - 2 * 60 * 60 * 1000);
-  return isSameCalendarDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= opensAt && now <= endsAt;
+  return isSameCalendarDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= startsAt && now <= endsAt;
 }
 
 function isSameCalendarDay(left: Date, right: Date, timeZone: string) {
@@ -1040,6 +1159,14 @@ function formatDashboardShift(startsAt: string, endsAt: string) {
     minute: "2-digit",
   });
   return `${formatter.format(new Date(startsAt))} - ${formatter.format(new Date(endsAt))}`;
+}
+
+function toDateTimeLocalValue(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
 function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }) {
@@ -1509,6 +1636,12 @@ function DashboardStyles() {
       .socials-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
       .shift-panel form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; }
+      .shift-checkin-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px; border-radius: 8px; border: 1px solid rgba(148,229,255,.18); background: rgba(148,229,255,.06); }
+      .shift-checkin-card.ready { border-color: rgba(50,255,164,.42); background: rgba(50,255,164,.1); box-shadow: inset 3px 0 0 rgba(50,255,164,.78); }
+      .shift-checkin-card span { display: grid; gap: 5px; }
+      .shift-checkin-card strong { color: #fff; font-size: 18px; }
+      .shift-checkin-card small { color: #cfc5de; line-height: 1.45; }
+      .shift-checkin-card button { min-height: 44px; border: 0; border-radius: 8px; color: #050507; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 16px; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }
@@ -1523,6 +1656,8 @@ function DashboardStyles() {
       .dashboard-shift span { display: grid; gap: 4px; }
       .dashboard-shift small { color: #b9accd; }
       .dashboard-shift em { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+      .dashboard-shift label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .dashboard-shift input, .dashboard-shift select { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .dashboard-shift button { color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); padding: 0 12px; }
       .shift-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
       .shift-actions button:first-child { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.1); }
@@ -1565,7 +1700,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

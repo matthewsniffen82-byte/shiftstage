@@ -23,7 +23,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
   const heroPhoto = profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const gallery = profile.photos.length ? profile.photos : heroPhoto ? [{ id: "primary", imageUrl: heroPhoto, isPrimary: true, sortOrder: 0 }] : [];
-  const activeShift = profile.upcomingShifts.find((shift) => isActiveNow(shift.startsAt, shift.endsAt));
+  const activeShift = profile.upcomingShifts.find((shift) => isActiveNow(shift));
   const activeDeal = activeShift?.venueId ? await getActiveClubDealForVenue(client, activeShift.venueId) : null;
 
   return (
@@ -132,12 +132,11 @@ function initials(value: string) {
 }
 
 function formatShift(shift: { startsAt: string; locationStatus?: string | null; checkedInAt?: string | null }) {
-  const startTime = formatShiftStartTime(shift.startsAt);
   if (shift.locationStatus === "location_confirmed" || shift.locationStatus === "club_confirmed") {
-    return `Working Now · Started at ${startTime}`;
+    return "Working Now";
   }
-  if (new Date(shift.startsAt).getTime() <= Date.now()) return "Working Now";
-  return `${formatShiftStartDate(shift.startsAt)} at ${startTime}`;
+  if (new Date(shift.startsAt).getTime() <= Date.now()) return "Scheduled";
+  return `Starts ${formatShiftStartDate(shift.startsAt)}`;
 }
 
 function formatShiftStartDate(startsAt: string) {
@@ -147,24 +146,18 @@ function formatShiftStartDate(startsAt: string) {
   }).format(new Date(startsAt));
 }
 
-function formatShiftStartTime(startsAt: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(startsAt));
-}
-
 function shortShiftLabel(startsAt: string) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
-    hour: "numeric",
+    month: "numeric",
+    day: "numeric",
   }).format(new Date(startsAt));
 }
 
-function isActiveNow(startsAt: string, endsAt: string) {
+function isActiveNow(shift: { startsAt: string; endsAt: string; locationStatus?: string | null }) {
   const now = Date.now();
-  return new Date(startsAt).getTime() <= now && new Date(endsAt).getTime() >= now;
+  const isCheckedIn = shift.locationStatus === "location_confirmed" || shift.locationStatus === "club_confirmed";
+  return isCheckedIn && new Date(shift.startsAt).getTime() <= now && new Date(shift.endsAt).getTime() >= now;
 }
 
 function PublicProfileStyles() {

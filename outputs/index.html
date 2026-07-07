@@ -25541,6 +25541,7 @@
             <div><strong>Venue page</strong><span>shift appears there</span></div>
           </div>
           <div class="info-tile share-tile" id="dancerSharePanel"></div>
+          <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
           <form class="auth-form" id="shiftPostForm">
             <div class="field">
               <label for="shiftClub">Club</label>
@@ -25590,7 +25591,6 @@
                 <p>Edit the active schedule or remove it from your public profile and venue page.</p>
               </div>
               <div class="shift-manager-list" id="dancerShiftManager"></div>
-              <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
             </section>
             <section class="info-tile dancer-manager-card">
               <div class="manager-head">
@@ -26262,7 +26262,6 @@
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
     let lastPostedShift = null;
-    const SHIFT_EARLY_CHECKIN_MINUTES = 120;
     const dancerSetup = {
       profile: false,
       photos: false,
@@ -29784,13 +29783,11 @@
 
     function isWorkingTonight(profile, city = selectedCity()) {
       if (profile?.workingStatus === "ended" || profile?.endedAt || profile?.checkedOutAt) return false;
-      if (profile?.shiftId) {
-        const confirmed =
-          profile.locationStatus === "location_confirmed" ||
-          profile.locationStatus === "club_confirmed" ||
-          isCheckedInShift(profile);
-        if (!confirmed) return false;
-      }
+      const confirmed =
+        profile?.locationStatus === "location_confirmed" ||
+        profile?.locationStatus === "club_confirmed" ||
+        isCheckedInShift(profile);
+      if (!confirmed) return false;
       if (profile.liveTonight) return true;
       return Boolean(tonightShiftWindow(profile, new Date(), city));
     }
@@ -30705,8 +30702,7 @@
       const window = shiftWindowForProfile(profile, city);
       if (!window) return false;
       const now = new Date();
-      const opensAt = new Date(window.start.getTime() - SHIFT_EARLY_CHECKIN_MINUTES * 60000);
-      return localDateValue(now, city) === localDateValue(window.start, city) && now >= opensAt && now <= window.end;
+      return localDateValue(now, city) === localDateValue(window.start, city) && now >= window.start && now <= window.end;
     }
 
     function isShiftCurrentlyActive(profile, city = activeDancerCity()) {
@@ -30775,7 +30771,7 @@
       const panel = document.getElementById("shiftVerificationPanel");
       if (!panel) return;
       const profile = activeDancerProfile();
-      if (!profile || !profile.scheduled || !profile.shiftId) {
+      if (!profile || !profile.scheduled) {
         panel.hidden = true;
         panel.innerHTML = "";
         return;
@@ -30806,7 +30802,9 @@
         ? "This shift has ended. QR commission tracking is stopped."
         : checkedIn
           ? "QR commission tracking is active while you remain checked in for this scheduled shift."
-          : "Check in from the venue during your shift window to appear in Working Now and start QR commission tracking.";
+          : canCheckIn
+            ? "Check in from the venue during your posted hours to appear in Working Now and start QR commission tracking."
+            : "The check-in button appears here during your posted hours. Location must be inside the club geofence.";
 
       panel.hidden = false;
       panel.innerHTML = `
@@ -30816,7 +30814,7 @@
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
         <div class="shift-action-grid">
-          ${canCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check In</button>' : ""}
+          ${canCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
         </div>
         ${summary ? `
@@ -30836,7 +30834,7 @@
 
     async function handleShiftVerificationAction(action, trigger = null) {
       const profile = activeDancerProfile();
-      if (!profile?.shiftId) return;
+      if (!profile) return;
       try {
         if (action === "end") {
           const endedAt = new Date().toISOString();
@@ -30849,17 +30847,32 @@
             commissionTrackingStoppedAt: endedAt,
             shiftSummary: shiftSummaryForProfile(profile, "manual")
           });
-          const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
-          if (data?.shift) applyShiftState(profile, data.shift);
+          if (profile.shiftId && isDancerSession()) {
+            const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
+            if (data?.shift) applyShiftState(profile, data.shift);
+          }
           showToast("Shift ended");
         } else if (action === "check-in") {
           const coords = await requestShiftPosition();
-          const data = await postAuthenticatedJson("/api/dancer/shifts/check-in", {
-            shiftId: profile.shiftId,
-            latitude: coords.latitude,
-            longitude: coords.longitude
+          const checkedInAt = new Date().toISOString();
+          applyShiftState(profile, {
+            workingStatus: "checked_in",
+            locationStatus: "location_confirmed",
+            checkedInAt,
+            checkedOutAt: "",
+            endedAt: "",
+            endedReason: "",
+            commissionTrackingStartedAt: checkedInAt,
+            commissionTrackingStoppedAt: ""
           });
-          if (data?.shift) applyShiftState(profile, data.shift);
+          if (profile.shiftId && isDancerSession()) {
+            const data = await postAuthenticatedJson("/api/dancer/shifts/check-in", {
+              shiftId: profile.shiftId,
+              latitude: coords.latitude,
+              longitude: coords.longitude
+            });
+            if (data?.shift) applyShiftState(profile, data.shift);
+          }
           showToast("Checked in");
         }
       } catch (error) {
@@ -31163,16 +31176,16 @@
         shiftTimeZone: timeZoneByCity[city] || "America/Los_Angeles",
         shiftLabel: formatDateLabel(dateValue, city),
         shiftId: existing?.shiftId || editingShiftId || "",
-        locationStatus: existing?.locationStatus || "self_reported",
-        checkedInAt: existing?.checkedInAt || "",
-        checkedOutAt: existing?.checkedOutAt || "",
-        checkinDistanceFeet: existing?.checkinDistanceFeet || null,
-        workingStatus: existing?.workingStatus || "self_reported",
-        commissionTrackingStartedAt: existing?.commissionTrackingStartedAt || "",
-        commissionTrackingStoppedAt: existing?.commissionTrackingStoppedAt || "",
-        endedAt: existing?.endedAt || "",
-        endedReason: existing?.endedReason || "",
-        shiftSummary: existing?.shiftSummary || null,
+        locationStatus: "self_reported",
+        checkedInAt: "",
+        checkedOutAt: "",
+        checkinDistanceFeet: null,
+        workingStatus: "self_reported",
+        commissionTrackingStartedAt: "",
+        commissionTrackingStoppedAt: "",
+        endedAt: "",
+        endedReason: "",
+        shiftSummary: null,
         repeat,
         notes,
         socials: existing?.socials || { ...dancerSignupSocials }
@@ -31216,6 +31229,7 @@
           const postedProfile = market.dancers.find((profile) => profile.name === name);
           if (postedProfile && data.shiftId) postedProfile.shiftId = data.shiftId;
           document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
+          renderDancerManagement();
         }).catch((error) => showToast(error.message || "Could not save live shift"));
       }
       editingShiftId = null;

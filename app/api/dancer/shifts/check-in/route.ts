@@ -6,7 +6,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const CHECK_IN_RADIUS_FEET = 300;
-const CHECK_IN_LEAD_TIME_MS = 2 * 60 * 60 * 1000;
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
 
     if (!isCheckInWindowOpen(shift)) {
       return NextResponse.json(
-        { ok: false, error: "Check-in is only available near your scheduled shift time." },
+        { ok: false, error: "Check-in is only available during your posted shift hours." },
         { status: 403 },
       );
     }
@@ -182,9 +181,8 @@ function isCheckInWindowOpen(shift: { starts_at: string; ends_at: string; timezo
   const now = new Date();
   const startsAt = new Date(shift.starts_at);
   const endsAt = new Date(shift.ends_at);
-  const opensAt = new Date(startsAt.getTime() - CHECK_IN_LEAD_TIME_MS);
 
-  return isSameLocalDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= opensAt && now <= endsAt;
+  return isSameLocalDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= startsAt && now <= endsAt;
 }
 
 function verifyGeofence(shift: any, latitude: number, longitude: number, outsideMessage: string) {
