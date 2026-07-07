@@ -20940,6 +20940,52 @@
       grid-column: 1 / -1;
     }
 
+    #approvedDancerPanel .social-edit-field,
+    #publicProfileForm .social-edit-field {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 7px;
+      align-items: end;
+    }
+
+    #approvedDancerPanel .social-edit-field label,
+    #publicProfileForm .social-edit-field label {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      color: rgba(218,214,230,.84);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    #approvedDancerPanel .social-edit-field input,
+    #publicProfileForm .social-edit-field input {
+      width: 100%;
+    }
+
+    #approvedDancerPanel .social-edit-field button,
+    #publicProfileForm .social-edit-field button {
+      min-height: 40px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.28);
+      color: #f5f0ff;
+      background: rgba(8,8,12,.78);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    #approvedDancerPanel .social-edit-field button:hover,
+    #approvedDancerPanel .social-edit-field button:focus-visible,
+    #publicProfileForm .social-edit-field button:hover,
+    #publicProfileForm .social-edit-field button:focus-visible {
+      border-color: rgba(34,211,238,.58);
+      box-shadow: 0 0 16px rgba(34,211,238,.12);
+    }
+
     #approvedDancerPanel .control-action-row {
       display: flex;
       flex-wrap: wrap;
@@ -20995,6 +21041,11 @@
 
       #approvedDancerPanel .social-control-grid input:last-child {
         grid-column: auto;
+      }
+
+      #approvedDancerPanel .social-edit-field,
+      #publicProfileForm .social-edit-field {
+        grid-template-columns: minmax(0, 1fr);
       }
 
       #approvedDancerPanel .dancer-control-summary::after {
@@ -25628,11 +25679,31 @@
                     <p>Add Instagram, TikTok, Snapchat, OnlyFans, and X links to the public profile.</p>
                   </div>
                   <div class="social-control-grid">
-                    <input id="approvedControlInstagram" type="text" placeholder="Instagram handle" aria-label="Instagram handle">
-                    <input id="approvedControlTiktok" type="text" placeholder="TikTok handle" aria-label="TikTok handle">
-                    <input id="approvedControlSnapchat" type="text" placeholder="Snapchat handle" aria-label="Snapchat handle">
-                    <input id="approvedControlOnlyfans" type="text" placeholder="OnlyFans link" aria-label="OnlyFans link">
-                    <input id="approvedControlX" type="text" placeholder="X handle" aria-label="X handle">
+                    <div class="social-edit-field">
+                      <label for="approvedControlInstagram">Instagram<input id="approvedControlInstagram" type="text" placeholder="@username or profile URL" aria-label="Instagram handle"></label>
+                      <button type="button" data-social-focus="approvedControlInstagram">Edit</button>
+                      <button type="button" data-social-clear="approvedControlInstagram">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlTiktok">TikTok<input id="approvedControlTiktok" type="text" placeholder="@username or profile URL" aria-label="TikTok handle"></label>
+                      <button type="button" data-social-focus="approvedControlTiktok">Edit</button>
+                      <button type="button" data-social-clear="approvedControlTiktok">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlSnapchat">Snapchat<input id="approvedControlSnapchat" type="text" placeholder="username or profile URL" aria-label="Snapchat handle"></label>
+                      <button type="button" data-social-focus="approvedControlSnapchat">Edit</button>
+                      <button type="button" data-social-clear="approvedControlSnapchat">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlOnlyfans">OnlyFans<input id="approvedControlOnlyfans" type="text" placeholder="@username or profile URL" aria-label="OnlyFans link"></label>
+                      <button type="button" data-social-focus="approvedControlOnlyfans">Edit</button>
+                      <button type="button" data-social-clear="approvedControlOnlyfans">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlX">X<input id="approvedControlX" type="text" placeholder="@username or profile URL" aria-label="X handle"></label>
+                      <button type="button" data-social-focus="approvedControlX">Edit</button>
+                      <button type="button" data-social-clear="approvedControlX">Clear</button>
+                    </div>
                   </div>
                 </section>
 
@@ -25737,25 +25808,30 @@
                 </div>
                 <div id="approvedProfilePhotoReview"></div>
                 <div class="profile-edit-grid" data-fix-anchor="profile-socials">
-                  <div class="field">
-                    <label for="profileInstagram">Instagram</label>
-                    <input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="@username or profile URL">
+                  <div class="field social-edit-field">
+                    <label for="profileInstagram">Instagram<input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="@username or profile URL"></label>
+                    <button type="button" data-social-focus="profileInstagram">Edit</button>
+                    <button type="button" data-social-clear="profileInstagram">Clear</button>
                   </div>
-                  <div class="field">
-                    <label for="profileTiktok">TikTok</label>
-                    <input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="@username or profile URL">
+                  <div class="field social-edit-field">
+                    <label for="profileTiktok">TikTok<input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="@username or profile URL"></label>
+                    <button type="button" data-social-focus="profileTiktok">Edit</button>
+                    <button type="button" data-social-clear="profileTiktok">Clear</button>
                   </div>
-                  <div class="field">
-                    <label for="profileSnapchat">Snapchat</label>
-                    <input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="@username or profile URL">
+                  <div class="field social-edit-field">
+                    <label for="profileSnapchat">Snapchat<input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="@username or profile URL"></label>
+                    <button type="button" data-social-focus="profileSnapchat">Edit</button>
+                    <button type="button" data-social-clear="profileSnapchat">Clear</button>
                   </div>
-                  <div class="field">
-                    <label for="profileOnlyfans">OnlyFans</label>
-                    <input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="@username or profile URL">
+                  <div class="field social-edit-field">
+                    <label for="profileOnlyfans">OnlyFans<input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="@username or profile URL"></label>
+                    <button type="button" data-social-focus="profileOnlyfans">Edit</button>
+                    <button type="button" data-social-clear="profileOnlyfans">Clear</button>
                   </div>
-                  <div class="field">
-                    <label for="profileX">X</label>
-                    <input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="@username or profile URL">
+                  <div class="field social-edit-field">
+                    <label for="profileX">X<input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="@username or profile URL"></label>
+                    <button type="button" data-social-focus="profileX">Edit</button>
+                    <button type="button" data-social-clear="profileX">Clear</button>
                   </div>
                 </div>
                 <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save profile</button>
@@ -31474,6 +31550,24 @@
       syncApprovedProfileSubmitState();
     }
 
+    function focusApprovedSocialField(fieldId = "") {
+      const field = document.getElementById(fieldId);
+      if (!field) return;
+      openAncestorDetails(field);
+      field.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      field.focus({ preventScroll: true });
+      field.select?.();
+    }
+
+    function clearApprovedSocialField(fieldId = "") {
+      const field = document.getElementById(fieldId);
+      if (!field) return;
+      field.value = "";
+      mirrorApprovedProfileEditField(field);
+      focusApprovedSocialField(fieldId);
+      showToast("Social link cleared. Press Save profile to keep it blank.");
+    }
+
     async function saveApprovedDancerProfile(options = {}) {
       const oldCity = activeDancerCity();
       const oldName = activeDancerName();
@@ -36176,6 +36270,18 @@
       if (fixTargetButton) {
         event.preventDefault();
         jumpToDancerFixTarget(fixTargetButton.dataset.fixTarget);
+        return;
+      }
+      const socialFocusButton = event.target.closest("[data-social-focus]");
+      if (socialFocusButton) {
+        event.preventDefault();
+        focusApprovedSocialField(socialFocusButton.dataset.socialFocus);
+        return;
+      }
+      const socialClearButton = event.target.closest("[data-social-clear]");
+      if (socialClearButton) {
+        event.preventDefault();
+        clearApprovedSocialField(socialClearButton.dataset.socialClear);
         return;
       }
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
