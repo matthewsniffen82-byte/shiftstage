@@ -24450,15 +24450,16 @@
     @media (max-width: 640px) {
       header .customer-quick-panel {
         position: fixed !important;
-        top: calc(env(safe-area-inset-top, 0px) + 72px) !important;
-        left: 10px !important;
-        right: 10px !important;
+        top: calc(env(safe-area-inset-top, 0px) + 104px) !important;
+        left: 12px !important;
+        right: 12px !important;
         width: auto !important;
         max-width: none !important;
-        max-height: min(68dvh, 460px) !important;
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 124px) !important;
         border-radius: 14px !important;
         padding: 12px !important;
         transform: none !important;
+        box-sizing: border-box !important;
       }
 
       header .customer-quick-panel h3 {
