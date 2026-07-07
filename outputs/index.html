@@ -25264,7 +25264,6 @@
                 <button type="button" data-dancer-control-action="preview-profile">Preview profile</button>
                 <button type="button" data-dancer-control-action="main-photo">Replace main photo</button>
                 <button type="button" data-dancer-control-action="gallery-photo">Replace gallery photo</button>
-                <button type="button" data-dancer-control-action="resubmit-approval">Resubmit changes</button>
               </div>
               <div id="approvedProfileFormMount"></div>
             </div>
@@ -25588,9 +25587,9 @@
                     <input id="profileX" type="text" placeholder="@username or profile URL">
                   </div>
                 </div>
-                <button class="action-btn" type="submit">Save public profile</button>
+                <button class="action-btn" type="submit">Submit changes for approval</button>
               </form>
-              <div class="rule-note" id="profileEditResult" hidden>Public profile saved.</div>
+              <div class="rule-note" id="profileEditResult" hidden>Changes submitted for admin approval.</div>
             </section>
           </div>
             </div>
@@ -30873,12 +30872,12 @@
       setFieldValueIfIdle("profileX", socials.x || "");
     }
 
-    function saveApprovedDancerProfile() {
+    async function saveApprovedDancerProfile() {
       const oldCity = activeDancerCity();
       const oldName = activeDancerName();
       const oldMarket = markets[oldCity];
       const oldProfile = activeDancerProfile(oldCity) || ensureActiveDancerProfile("Verified");
-      if (!oldProfile || !oldMarket) return;
+      if (!oldProfile || !oldMarket) return false;
       const stageName = cleanDisplayValue(document.getElementById("profileStageName").value.trim()) || oldName;
       const newCity = document.getElementById("profileCity").value || oldCity;
       const targetMarket = markets[newCity] || oldMarket;
@@ -30893,7 +30892,7 @@
       };
       if (hasBlockedSocialLink(Object.values(rawSocials))) {
         showToast("Escorting, payment, or solicitation links are not allowed");
-        return;
+        return false;
       }
       const normalizedSocials = Object.fromEntries(
         Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
@@ -30901,7 +30900,7 @@
       const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
       if (invalidSocial) {
         showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
-        return;
+        return false;
       }
       let profile = oldProfile;
       if (targetMarket !== oldMarket) {
@@ -30945,19 +30944,27 @@
       const result = document.getElementById("profileEditResult");
       if (result) {
         result.hidden = false;
-        result.textContent = "Public profile saved. Customers now see your updated stage name, socials, photos, and venue.";
+        result.textContent = "Sending profile, photo, and social changes to admin review...";
       }
       render();
       renderDancerSetup();
       if (customerDashboard.classList.contains("show")) renderDashboard();
-      showToast("Public profile saved");
-      patchAuthenticatedJson("/api/dancer/profile", {
-        stageName,
-        city: newCity,
-        socials: socialPayloadFromMap(normalizedSocials)
-      }).then((data) => {
-        if (data) showToast("Live profile saved");
-      }).catch((error) => showToast(error.message || "Could not save live profile"));
+      try {
+        if (isDancerSession()) {
+          const data = await patchAuthenticatedJson("/api/dancer/profile", {
+            stageName,
+            city: newCity,
+            socials: socialPayloadFromMap(normalizedSocials)
+          });
+          if (!data) throw new Error("Sign in required");
+        }
+        if (result) result.textContent = "Changes saved. Submitting them to admin review...";
+        return true;
+      } catch (error) {
+        if (result) result.textContent = error.message || "Could not save live profile";
+        showToast(error.message || "Could not save live profile");
+        return false;
+      }
     }
 
     function handleShiftManagerAction(action) {
@@ -32688,9 +32695,10 @@
           const data = await patchAuthenticatedJson("/api/dancer/profile", { submitForReview: true });
           if (!data) throw new Error("Sign in required");
         }
+        const wasApproved = dancerCoreApprovalUnlocked(profile) || dancerSetup.approval;
         if (profile) {
           profile.reviewSubmitted = true;
-          profile.status = "Pending";
+          profile.status = wasApproved ? "Verified" : "Pending";
           (profile.submittedPhotos || []).forEach((photo) => {
             if ((photo.reviewStatus || photo.review_status) === "rejected") {
               photo.reviewStatus = "pending";
@@ -32708,6 +32716,23 @@
         showToast("Resubmitted for Dancr review");
       } catch (error) {
         showToast(error.message || "Could not submit for review");
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function submitApprovedProfileChangesForReview(button) {
+      if (button) button.disabled = true;
+      const result = document.getElementById("profileEditResult");
+      if (result) {
+        result.hidden = false;
+        result.textContent = "Saving changes before admin review...";
+      }
+      try {
+        const saved = await saveApprovedDancerProfile();
+        if (!saved) return;
+        await submitDancerProfileForReview(null);
+        if (result) result.textContent = "Submitted to admin. Only changed or replaced photos/social links will appear for review.";
       } finally {
         if (button) button.disabled = false;
       }
@@ -35577,7 +35602,7 @@
       const profileEditForm = event.target.closest("#publicProfileForm");
       if (profileEditForm) {
         event.preventDefault();
-        saveApprovedDancerProfile();
+        submitApprovedProfileChangesForReview(profileEditForm.querySelector('button[type="submit"]'));
         return;
       }
 
