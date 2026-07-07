@@ -29353,6 +29353,26 @@
       return latestDancerReviews().some((review) => review.status === "rejected");
     }
 
+    function isCoreVerificationReviewType(type = "") {
+      return type === "identity" || type.startsWith("verification_document:");
+    }
+
+    function isOptionalProfileFixReviewType(type = "") {
+      return type === "photos" || type.startsWith("photo:") || type.startsWith("social_link:");
+    }
+
+    function hasRejectedCoreVerificationReviews() {
+      return latestDancerReviews().some((review) =>
+        review.status === "rejected" && isCoreVerificationReviewType(String(review.reviewType || review.review_type || ""))
+      );
+    }
+
+    function hasOptionalProfileFixReviews() {
+      return latestDancerReviews().some((review) =>
+        review.status === "rejected" && isOptionalProfileFixReviewType(String(review.reviewType || review.review_type || ""))
+      );
+    }
+
     function reviewFixTarget(type = "") {
       if (type.startsWith("photo:")) {
         const targetId = type.split(":").slice(1).join(":");
@@ -33392,10 +33412,11 @@
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
       const approved = dancerSetup.approval || dancerCoreApprovalUnlocked(activeProfile) || normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved";
-      const rejected = isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews();
+      const optionalProfileFixes = approved && hasOptionalProfileFixReviews();
+      const rejected = !approved && (isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews() || hasRejectedCoreVerificationReviews());
       const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
-      const approvalStateLabel = rejected ? "Needs fixes" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
+      const approvalStateLabel = rejected ? "Needs fixes" : optionalProfileFixes ? "Photo/social fixes" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
@@ -33421,6 +33442,8 @@
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
       document.getElementById("dancerApprovalTitle").textContent = rejected
           ? "Profile needs fixes"
+        : optionalProfileFixes
+          ? "Profile live. Photos or socials need fixes."
         : approved
           ? "Approved. Start posting shifts."
         : reviewSubmitted
@@ -33428,6 +33451,8 @@
           : "Finish verification to go live";
       document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
+        : optionalProfileFixes
+          ? "Your required verification is approved. Only pictures and/or social links need fixes. You can replace them and submit again, or leave them blank."
         : approved
           ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
         : reviewSubmitted
@@ -33436,6 +33461,8 @@
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"
+        : optionalProfileFixes
+          ? "Fix or leave blank"
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
@@ -33461,6 +33488,9 @@
         if (rejected) {
           approvalStatusPrimary.textContent = "Rejected. Fix or resend the red items in the review notes below.";
           approvalStatusSecondary.textContent = "Approved items stay approved. After you fix the rejected items, press Resubmit for review.";
+        } else if (optionalProfileFixes) {
+          approvalStatusPrimary.textContent = "Approved. Social links and/or pictures need fixes only.";
+          approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or leave that social/photo blank.";
         } else if (approved) {
           approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
