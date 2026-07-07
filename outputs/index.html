@@ -2460,6 +2460,57 @@
       line-height: 1.4;
     }
 
+    .approval-tool-actions {
+      display: none;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .approval-tool-actions.show {
+      display: grid;
+    }
+
+    .approval-tool-actions button {
+      min-height: 54px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 12px 14px;
+      border: 1px solid rgba(34, 199, 255, 0.36);
+      border-radius: 12px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(34, 199, 255, 0.14), rgba(168, 85, 247, 0.12)),
+        rgba(8, 8, 12, 0.9);
+      text-align: left;
+      box-shadow: inset 0 0 16px rgba(255,255,255,.025), 0 12px 26px rgba(0,0,0,.24);
+    }
+
+    .approval-tool-actions strong,
+    .approval-tool-actions span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .approval-tool-actions strong {
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .approval-tool-actions span {
+      color: rgba(218, 214, 230, 0.86);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    @media (max-width: 560px) {
+      .approval-tool-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .approval-progress {
       min-width: 150px;
       display: grid;
@@ -25017,6 +25068,16 @@
             <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
             <h3 id="dancerApprovalTitle">Finish verification to go live</h3>
             <p id="dancerApprovalCopy">Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.</p>
+            <div class="approval-tool-actions" id="dancerApprovedTopTools" aria-label="Approved dancer tools">
+              <button type="button" data-dancer-control-action="edit-profile">
+                <strong>Edit profile</strong>
+                <span>Profile, photos, and socials</span>
+              </button>
+              <button type="button" data-dancer-control-action="post-schedule">
+                <strong>Post schedule</strong>
+                <span>Add or update your shift</span>
+              </button>
+            </div>
           </div>
           <div class="approval-progress">
             <strong id="dancerApprovalProgress">0/4</strong>
@@ -32392,6 +32453,7 @@
         approvalCommand.classList.toggle("approved", approved && !rejected);
         approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       }
+      document.getElementById("dancerApprovedTopTools")?.classList.toggle("show", approved);
       document.getElementById("dancerApprovalStatus").textContent = approvalStateLabel;
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
       document.getElementById("dancerApprovalTitle").textContent = rejected
@@ -34974,6 +35036,7 @@
       };
 
       if (action === "edit-profile") {
+        document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
         document.querySelector("#approvedDancerPanel .dancer-control-center")?.setAttribute("open", "");
         const fields = document.getElementById("approvedProfileEditFields");
         fields?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -34983,6 +35046,7 @@
       }
 
       if (action === "post-schedule") {
+        document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
         document.querySelector("#approvedDancerPanel .dancer-control-center")?.setAttribute("open", "");
         const form = document.getElementById("shiftPostForm");
         form?.scrollIntoView({ behavior: "smooth", block: "center" });
