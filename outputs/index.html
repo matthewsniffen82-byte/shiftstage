@@ -24346,6 +24346,39 @@
       font-weight: 900;
       text-decoration: none;
     }
+
+    /* Final quick notification polish: keep the header popover fully on screen. */
+    header,
+    header .topbar,
+    header .menu,
+    header .customer-quick-actions {
+      overflow: visible !important;
+    }
+
+    header .customer-quick-panel {
+      z-index: 120 !important;
+      text-align: left;
+    }
+
+    @media (max-width: 640px) {
+      header .customer-quick-panel {
+        position: fixed !important;
+        top: calc(env(safe-area-inset-top, 0px) + 72px) !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: min(68dvh, 460px) !important;
+        border-radius: 14px !important;
+        padding: 12px !important;
+        transform: none !important;
+      }
+
+      header .customer-quick-panel h3 {
+        font-size: 16px !important;
+        line-height: 1.15 !important;
+      }
+    }
   </style>
 </head>
 <body>
