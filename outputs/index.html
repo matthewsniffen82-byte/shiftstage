@@ -25646,6 +25646,7 @@
     let liveNotifications = [];
     let liveSupportThreads = [];
     let liveAdminSupportThreads = [];
+    let savedAdminContentReviews = loadSavedAdminContentReviews();
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
 
@@ -32360,6 +32361,8 @@
       }
 
       showAdminDashboardPage();
+      savedAdminContentReviews = loadSavedAdminContentReviews();
+      applySavedAdminContentReviews();
       const profiles = allProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
       const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
@@ -32576,6 +32579,74 @@
       return venue ? { city, venue } : null;
     }
 
+    function adminContentReviewStorageKey() {
+      const adminId = authSession?.account?.id || authSession?.account?.email || "local-admin";
+      return `mydancr:admin-content-reviews:${adminId}`;
+    }
+
+    function loadSavedAdminContentReviews() {
+      try {
+        const rows = JSON.parse(localStorage.getItem(adminContentReviewStorageKey()) || "[]");
+        return Array.isArray(rows) ? rows : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function writeSavedAdminContentReviews() {
+      try {
+        localStorage.setItem(adminContentReviewStorageKey(), JSON.stringify(savedAdminContentReviews.slice(-500)));
+      } catch {}
+    }
+
+    function adminContentReviewProfileKey(profile) {
+      return String(profile?.id || profile?.slug || profile?.name || "profile");
+    }
+
+    function saveAdminContentReview(profile, targetType, targetId, status, notes) {
+      const row = {
+        profileKey: adminContentReviewProfileKey(profile),
+        targetType,
+        targetId,
+        status,
+        notes,
+        reviewedAt: new Date().toISOString()
+      };
+      savedAdminContentReviews = [
+        ...savedAdminContentReviews.filter((item) => !(item.profileKey === row.profileKey && item.targetType === targetType && item.targetId === targetId)),
+        row
+      ];
+      writeSavedAdminContentReviews();
+    }
+
+    function findReviewPhoto(profile, targetId) {
+      return (profile.submittedPhotos || []).find((item, index) => (
+        String(item.id || `${profile.id || profile.name}-photo-${index}`) === targetId
+      ));
+    }
+
+    function findReviewDocument(profile, targetId) {
+      return (profile.verificationDocuments || []).find((item) =>
+        [item.storagePath, item.storage_path, item.name, item.fileUrl, item.file_url].map((value) => String(value || "")).includes(targetId)
+      );
+    }
+
+    function findReviewSocial(profile, targetId) {
+      const rows = profile.socialLinks || profile.social_links || [];
+      return rows.find((item, index) => String(item.id || `${profile.id || profile.name}-social-${index}`) === targetId);
+    }
+
+    function applySavedAdminContentReviewsToProfile(profile) {
+      const profileKey = adminContentReviewProfileKey(profile);
+      savedAdminContentReviews
+        .filter((item) => item.profileKey === profileKey)
+        .forEach((item) => applyLocalAdminContentReview(profile, item.targetType, item.targetId, item.status, item.notes || "", false));
+    }
+
+    function applySavedAdminContentReviews() {
+      allProfiles().forEach(({ profile }) => applySavedAdminContentReviewsToProfile(profile));
+    }
+
     function refreshAfterAdminAction(message) {
       renderAdminDashboard();
       render();
@@ -32628,10 +32699,10 @@
       });
     }
 
-    function applyLocalAdminContentReview(profile, targetType, targetId, status, notes) {
+    function applyLocalAdminContentReview(profile, targetType, targetId, status, notes, persist = true) {
       const reviewedAt = new Date().toISOString();
       if (targetType === "photo") {
-        const photo = (profile.submittedPhotos || []).find((item) => String(item.id || "") === targetId);
+        const photo = findReviewPhoto(profile, targetId);
         if (photo) {
           photo.reviewStatus = status;
           photo.reviewNotes = notes;
@@ -32639,9 +32710,7 @@
         }
       }
       if (targetType === "verification_document") {
-        const document = (profile.verificationDocuments || []).find((item) =>
-          [item.storagePath, item.storage_path, item.name, item.fileUrl, item.file_url].map((value) => String(value || "")).includes(targetId)
-        );
+        const document = findReviewDocument(profile, targetId);
         if (document) {
           document.status = status;
           document.reviewNotes = notes;
@@ -32649,7 +32718,7 @@
         }
       }
       if (targetType === "social_link") {
-        const social = (profile.socialLinks || profile.social_links || []).find((item) => String(item.id || "") === targetId);
+        const social = findReviewSocial(profile, targetId);
         if (social) {
           social.reviewStatus = status;
           social.reviewNotes = notes;
@@ -32658,6 +32727,7 @@
         profile.socialReviewStatuses = profile.socialReviewStatuses || {};
         profile.socialReviewStatuses[targetId] = { status, notes, reviewedAt };
       }
+      if (persist) saveAdminContentReview(profile, targetType, targetId, status, notes);
     }
 
     async function reviewAdminSubmittedContent(button) {
