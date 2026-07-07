@@ -101,6 +101,9 @@ export type DancerCard = {
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
   checkinDistanceFeet?: number | null;
+  followerCount?: number;
+  notificationCount?: number;
+  profileViewsToday?: number;
 };
 
 export type DancerProfile = DancerCard & {
@@ -198,6 +201,9 @@ export type DancerDashboardAnalytics = {
   highestRank: number | null;
   bestRankThisWeek: number | null;
   rankChangeSinceYesterday: number | null;
+  totalFollowers: number;
+  notificationSubscribers: number;
+  profileViewsToday: number;
   profileViews30Days: number;
   followersGained30Days: number;
   scheduleViews30Days: number;

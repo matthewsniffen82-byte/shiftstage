@@ -27945,6 +27945,9 @@
         checkedInAt: item.checkedInAt || item.checked_in_at || "",
         checkedOutAt: item.checkedOutAt || item.checked_out_at || "",
         checkinDistanceFeet: item.checkinDistanceFeet ?? item.checkin_distance_feet ?? null,
+        followerCount: item.followerCount ?? item.follower_count ?? 0,
+        notificationCount: item.notificationCount ?? item.notification_count ?? 0,
+        profileViewsToday: item.profileViewsToday ?? item.profile_views_today ?? 0,
         workingStatus: item.workingStatus || item.working_status || "self_reported",
         commissionTrackingStartedAt: item.commissionTrackingStartedAt || item.commission_tracking_started_at || "",
         commissionTrackingStoppedAt: item.commissionTrackingStoppedAt || item.commission_tracking_stopped_at || "",
@@ -28916,13 +28919,16 @@
         highestRankAchieved: liveMetricNumber(analytics.highestRank, 0),
         bestRankThisWeek: liveMetricNumber(analytics.bestRankThisWeek, 0),
         rankChangeYesterday: liveMetricNumber(analytics.rankChangeSinceYesterday, 0),
+        followers: liveMetricNumber(analytics.totalFollowers, baseProfile?.followers || 0),
+        notifications: liveMetricNumber(analytics.notificationSubscribers, baseProfile?.notifications || 0),
+        notificationsSent30Days: liveMetricNumber(analytics.notificationsSent30Days, 0),
+        profileViewsToday: liveMetricNumber(analytics.profileViewsToday, profile?.profileViewsToday || 0),
         profileViews30: liveMetricNumber(analytics.profileViews30Days, 0),
         newFollowers: liveMetricNumber(analytics.followersGained30Days, 0),
         scheduleViews30: liveMetricNumber(analytics.scheduleViews30Days, 0),
         directionRequests30: liveMetricNumber(analytics.directionRequests30Days, 0),
         goingTonightClicks: liveMetricNumber(analytics.goingSignals30Days, 0),
         favoritesAdded: liveMetricNumber(analytics.favoritesAdded30Days, 0),
-        notifications: liveMetricNumber(analytics.notificationsSent30Days, 0),
         notificationOpens: liveMetricNumber(analytics.notificationsOpened30Days, 0),
         instagramClicks: liveMetricNumber(social.instagram, 0),
         snapchatClicks: liveMetricNumber(social.snapchat, 0),
@@ -29128,9 +29134,20 @@
       if (index >= 0) notificationList.splice(index, 1);
     }
 
+    function firstRealMetric(source, keys, fallback = 0) {
+      for (const key of keys) {
+        const value = source?.[key];
+        if (value !== undefined && value !== null && value !== "") {
+          const number = Number(value);
+          return Number.isFinite(number) ? number : fallback;
+        }
+      }
+      return fallback;
+    }
+
     function followerNumber(profile, city = selectedCity()) {
-      const base = Math.max(1200, 12800 - (profile.trend * 740));
-      return isFollowingProfile(city, profile.name) ? base + 1 : base;
+      const realFollowers = firstRealMetric(profile, ["followerCount", "followers", "totalFollowers"]);
+      return realFollowers + (isFollowingProfile(city, profile.name) ? 1 : 0);
     }
 
     function followerCount(profile, city = selectedCity()) {
@@ -29138,9 +29155,8 @@
     }
 
     function notificationNumber(profile, city = selectedCity()) {
-      const followerBase = followerNumber(profile, city);
-      const seededSubscribers = Math.round(followerBase * 0.78) + seededRange(`${profile.name}|notification-subscribers|${city}`, 22, 180);
-      return isNotificationOn(city, profile.name) ? seededSubscribers + 1 : seededSubscribers;
+      const realNotifications = firstRealMetric(profile, ["notificationCount", "notificationsEnabled", "notificationSubscribers"]);
+      return realNotifications + (isNotificationOn(city, profile.name) ? 1 : 0);
     }
 
     function notificationCount(profile, city = selectedCity()) {
@@ -29149,7 +29165,7 @@
 
     function shiftRecipientCounts(profile, city = selectedCity()) {
       const followers = followerNumber(profile, city);
-      const notifyOnly = seededRange(`${profile.name}|notify-only-shift-recipients|${city}`, 42, 340);
+      const notifyOnly = Math.max(0, notificationNumber(profile, city) - followers);
       return {
         followers,
         notifyOnly,
@@ -29203,7 +29219,7 @@
     }
 
     function profileViewsToday(profile, city = selectedCity()) {
-      return Number(profile?.profileViewsToday || seededRange(`${profile?.name || "profile"}|views-today|${city}`, 84, 168));
+      return firstRealMetric(profile, ["profileViewsToday", "viewsToday", "todayProfileViews"]);
     }
 
     function profileViewsTodayMarkup(profile, city = selectedCity()) {
@@ -29697,58 +29713,47 @@
     function dancerDashboardMetrics(profile, city = selectedCity()) {
       if (!profile) return null;
       const ranked = withTrendingRank(profile, city);
-      const signals = ranked.trendSignals || privateTrendingSignals(profile, city);
       const followers = followerNumber(profile, city);
-      const newFollowers = Math.max(18, Math.round(followers * 0.035) + seededRange(`${profile.name}|new-followers|${city}`, 12, 94));
-      const profileViews30 = Math.round(signals.uniqueProfileViews * 3.15 + followers * 0.16);
-      const scheduleViews30 = Math.round(signals.scheduleViews * 2.4 + signals.uniqueProfileViews * 0.08);
-      const directionRequests30 = Math.round(signals.directionRequests * 1.35 + signals.clubPageClicks * 0.22);
-      const instagramClicks = seededRange(`${profile.name}|instagram-clicks|${city}`, 36, 180) + uniqueTrendEventCount("socialClicks", city, profile.name) * 4;
-      const snapchatClicks = seededRange(`${profile.name}|snapchat-clicks|${city}`, 22, 130);
-      const tiktokClicks = seededRange(`${profile.name}|tiktok-clicks|${city}`, 18, 118);
-      const onlyfansClicks = seededRange(`${profile.name}|onlyfans-clicks|${city}`, 14, 96);
-      const xClicks = seededRange(`${profile.name}|x-clicks|${city}`, 4, 42);
+      const newFollowers = firstRealMetric(profile, ["followersGained30Days", "newFollowers30", "newFollowers"]);
+      const profileViews30 = firstRealMetric(profile, ["profileViews30Days", "profileViews30", "profileViews"]);
+      const scheduleViews30 = firstRealMetric(profile, ["scheduleViews30Days", "scheduleViews30", "scheduleViews"]);
+      const directionRequests30 = firstRealMetric(profile, ["directionRequests30Days", "directionRequests30", "directionRequests"]);
+      const social = profile.socialClicks30Days || profile.socialClicks || {};
+      const instagramClicks = firstRealMetric(social, ["instagram"]);
+      const snapchatClicks = firstRealMetric(social, ["snapchat"]);
+      const tiktokClicks = firstRealMetric(social, ["tiktok"]);
+      const onlyfansClicks = firstRealMetric(social, ["onlyfans"]);
+      const xClicks = firstRealMetric(social, ["x"]);
       const weeklyViews = Math.round(profileViews30 * 0.28);
       const weeklyFollowers = Math.round(newFollowers * 0.28);
       const weeklyInstagram = Math.round(instagramClicks * 0.3);
-      const weeklyGoing = Math.max(0, Math.round(signals.goingTonight * 0.35));
+      const goingTonightClicks = firstRealMetric(profile, ["goingSignals30Days", "goingTonightClicks", "goingCount"]);
+      const weeklyGoing = Math.round(goingTonightClicks * 0.28);
       const venue = profile.venue || markets[city]?.venues[0]?.name || "Local venues";
-      const venueRank = seededRange(`${venue}|venue-rank|${city}`, 1, 4);
-      const notificationOpens = Math.round(notificationNumber(profile, city) * (0.18 + seededRange(`${profile.name}|notification-open-rate|${city}`, 3, 9) / 100));
-      const favoritesAdded = signals.favorites + seededRange(`${profile.name}|favorites-added|${city}`, 8, 46);
-      const interestedClicks = signals.interested + seededRange(`${profile.name}|interested-clicks|${city}`, 12, 82);
-      const goingTonightClicks = signals.goingTonight + uniqueTrendEventCount("goingTonight", city, profile.name);
-      const clubPageClicks = signals.clubPageClicks + seededRange(`${profile.name}|club-page-clicks|${city}`, 18, 92);
-      const profileShares = seededRange(`${profile.name}|profile-shares|${city}`, 9, 64);
-      const searchAppearances = profileViews30 + seededRange(`${profile.name}|search-appearances|${city}`, 420, 1800);
-      const profileToFollowRate = Math.max(4, Math.round((newFollowers / Math.max(1, profileViews30)) * 1000) / 10);
-      const scheduleToGoingRate = Math.max(3, Math.round((goingTonightClicks / Math.max(1, scheduleViews30)) * 1000) / 10);
-      const directionRate = Math.max(2, Math.round((directionRequests30 / Math.max(1, scheduleViews30)) * 1000) / 10);
-      const returningViewers = Math.round(signals.uniqueProfileViews * (0.22 + seededRange(`${profile.name}|returning-viewers|${city}`, 4, 14) / 100));
-      const nearbyViews = Math.round(profileViews30 * (0.52 + seededRange(`${profile.name}|nearby-views|${city}`, 1, 12) / 100));
-      const peakHourViews = seededRange(`${profile.name}|peak-hour-views|${city}`, 180, 740);
-      const shiftReminderSaves = seededRange(`${profile.name}|shift-reminders|${city}`, 34, 190);
-      const venueClicksFromProfile = Math.round(clubPageClicks * 0.68);
-      const directionsAfterProfile = Math.round(directionRequests30 * 0.72);
-      const socialClickRate = Math.max(2, Math.round(((instagramClicks + snapchatClicks + tiktokClicks + onlyfansClicks + xClicks) / Math.max(1, profileViews30)) * 1000) / 10);
-      const rankGain = seededRange(`${profile.name}|rank-gain|${city}`, 2, 8);
-      const currentRank = ranked.trendRank || null;
-      const rankDirectionSeed = seededRange(`${profile.name}|rank-direction|${city}`, 1, 10);
-      const previousRank = currentRank
-        ? rankDirectionSeed <= 2
-          ? Math.max(1, currentRank - seededRange(`${profile.name}|previous-rank-down|${city}`, 1, 2))
-          : currentRank + seededRange(`${profile.name}|previous-rank-up|${city}`, 1, 8)
-        : seededRange(`${profile.name}|previous-rank-outside|${city}`, 11, 22);
-      const rankChangeYesterday = currentRank ? previousRank - currentRank : 0;
-      const bestRankOffsetMax = currentRank ? Math.min(3, Math.max(0, currentRank - 1)) : 0;
-      const bestRankThisWeek = currentRank
-        ? Math.max(1, currentRank - (bestRankOffsetMax ? seededRange(`${profile.name}|best-rank-week-offset|${city}`, 0, bestRankOffsetMax) : 0))
-        : null;
-      const highestRankOffsetMax = bestRankThisWeek ? Math.min(2, Math.max(0, bestRankThisWeek - 1)) : 0;
-      const highestRankAchieved = bestRankThisWeek
-        ? Math.max(1, bestRankThisWeek - (highestRankOffsetMax ? seededRange(`${profile.name}|highest-rank-offset|${city}`, 0, highestRankOffsetMax) : 0))
-        : null;
-      const firstTimeTrending = Boolean(currentRank && (previousRank > 10 || seededRange(`${profile.name}|first-trending|${city}`, 1, 10) <= 2));
+      const venueRank = 0;
+      const notificationOpens = firstRealMetric(profile, ["notificationsOpened30Days", "notificationOpens"]);
+      const favoritesAdded = firstRealMetric(profile, ["favoritesAdded30Days", "favoritesAdded"]);
+      const interestedClicks = firstRealMetric(profile, ["interestedClicks"]);
+      const clubPageClicks = firstRealMetric(profile, ["clubPageClicks"]);
+      const profileShares = firstRealMetric(profile, ["profileShares"]);
+      const searchAppearances = firstRealMetric(profile, ["searchAppearances"]);
+      const profileToFollowRate = Math.max(0, Math.round((newFollowers / Math.max(1, profileViews30)) * 1000) / 10);
+      const scheduleToGoingRate = Math.max(0, Math.round((goingTonightClicks / Math.max(1, scheduleViews30)) * 1000) / 10);
+      const directionRate = Math.max(0, Math.round((directionRequests30 / Math.max(1, scheduleViews30)) * 1000) / 10);
+      const returningViewers = firstRealMetric(profile, ["returningViewers"]);
+      const nearbyViews = firstRealMetric(profile, ["nearbyViews"]);
+      const peakHourViews = firstRealMetric(profile, ["peakHourViews"]);
+      const shiftReminderSaves = firstRealMetric(profile, ["shiftReminderSaves"]);
+      const venueClicksFromProfile = firstRealMetric(profile, ["venueClicksFromProfile"]);
+      const directionsAfterProfile = firstRealMetric(profile, ["directionsAfterProfile"]);
+      const socialClickRate = Math.max(0, Math.round(((instagramClicks + snapchatClicks + tiktokClicks + onlyfansClicks + xClicks) / Math.max(1, profileViews30)) * 1000) / 10);
+      const rankGain = 0;
+      const currentRank = firstRealMetric(profile, ["currentRank", "trendRank"], ranked.trendRank || 0) || null;
+      const previousRank = firstRealMetric(profile, ["previousRank"]);
+      const rankChangeYesterday = firstRealMetric(profile, ["rankChangeSinceYesterday", "rankChangeYesterday"], previousRank && currentRank ? previousRank - currentRank : 0);
+      const bestRankThisWeek = firstRealMetric(profile, ["bestRankThisWeek"]) || null;
+      const highestRankAchieved = firstRealMetric(profile, ["highestRank", "highestRankAchieved"]) || null;
+      const firstTimeTrending = Boolean(currentRank && firstRealMetric(profile, ["firstTimeTrending"]));
       const biggestMover = Boolean(currentRank && rankChangeYesterday >= 5);
       const rankTrend = rankTrendFromChange(rankChangeYesterday);
       const rankingSignal = rankingSignalLabel({
@@ -29766,24 +29771,22 @@
         firstTimeTrending,
         biggestMover
       });
-      const dancrScore = Math.min(99, Math.max(54, Math.round(
+      const dancrScore = Math.min(99, Math.max(0, Math.round(
         48 +
         Math.min(18, followers / 520) +
         Math.min(14, profileViews30 / 520) +
         Math.min(11, scheduleViews30 / 390) +
         Math.min(8, goingTonightClicks / 30)
       )));
-      const weeklyStartRank = currentRank ? Math.min(24, currentRank + Math.max(3, rankGain)) : previousRank;
-      const weeklyEndRank = currentRank || Math.max(1, weeklyStartRank - Math.max(3, rankGain));
+      const weeklyStartRank = previousRank || currentRank || 0;
+      const weeklyEndRank = currentRank || 0;
       const clubPerformance = [
-        { name: "Neon Hall", avgViews: 1400 },
-        { name: "Velvet Lounge", avgViews: 650 },
-        { name: venue, avgViews: Math.max(520, Math.round(profileViews30 * 0.42)) }
+        { name: venue, avgViews: firstRealMetric(profile, ["venueAverageViews"], 0) }
       ].filter((club, index, list) => list.findIndex((item) => item.name === club.name) === index);
       const profileCompleteness = profile.scheduled ? 96 : 84;
       return {
         ranked,
-        signals,
+        signals: {},
         followers,
         notifications: notificationNumber(profile, city),
         notificationOpens,
@@ -33335,11 +33338,11 @@
           approvalStatusSecondary.textContent = "Public discovery and shift posting unlock after approval.";
         }
       }
-      document.getElementById("dancerFollowerStat").textContent = activeProfile
-        ? followerNumber(activeProfile, city).toLocaleString()
+      document.getElementById("dancerFollowerStat").textContent = dashboardMetrics
+        ? dashboardMetrics.followers.toLocaleString()
         : "0";
-      document.getElementById("dancerNotificationStat").textContent = activeProfile
-        ? notificationNumber(activeProfile, city).toLocaleString()
+      document.getElementById("dancerNotificationStat").textContent = dashboardMetrics
+        ? dashboardMetrics.notifications.toLocaleString()
         : "0";
       if (dashboardMetrics && approved) {
         const totalSocialClicks = dashboardMetrics.instagramClicks + dashboardMetrics.snapchatClicks + dashboardMetrics.tiktokClicks + dashboardMetrics.onlyfansClicks + dashboardMetrics.xClicks;
@@ -33352,7 +33355,7 @@
         ].sort((a, b) => b.clicks - a.clicks);
         const bestSocial = socialPlatforms[0] || { name: "Social links", clicks: 0 };
         const highIntentActions = dashboardMetrics.directionRequests30 + dashboardMetrics.goingTonightClicks;
-        const notificationOpenRate = Math.round((dashboardMetrics.notificationOpens / Math.max(1, dashboardMetrics.notifications)) * 100);
+        const notificationOpenRate = Math.round((dashboardMetrics.notificationOpens / Math.max(1, dashboardMetrics.notificationsSent30Days || dashboardMetrics.notifications)) * 100);
         const scheduleConversionRate = Math.round((dashboardMetrics.goingTonightClicks / Math.max(1, dashboardMetrics.scheduleViews30)) * 1000) / 10;
         const searchImpressions = dashboardMetrics.searchAppearances + dashboardMetrics.nearbyViews;
         const strongestClub = dashboardMetrics.clubPerformance.find((club) => club.name === dashboardMetrics.venue) || dashboardMetrics.clubPerformance[0] || { name: dashboardMetrics.venue, avgViews: 0 };
@@ -33441,7 +33444,8 @@
           metricCardMarkup(compactNumber(dashboardMetrics.xClicks), "X clicks")
         ].join("");
         document.getElementById("dancerNotificationMetrics").innerHTML = [
-          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications sent"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notifications), "Notifications enabled"),
+          metricCardMarkup(compactNumber(dashboardMetrics.notificationsSent30Days), "Notifications sent"),
           metricCardMarkup(compactNumber(dashboardMetrics.notificationOpens), "Notification opens"),
           metricCardMarkup(`${notificationOpenRate}%`, "Open rate")
         ].join("");

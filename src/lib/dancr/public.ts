@@ -25,7 +25,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
 
   if (error) throw error;
 
-  return (data || []).map((row: any) => toDancerCard(client, row));
+  return Promise.all((data || []).map((row: any) => toDancerCard(client, row)));
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
@@ -56,9 +56,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 
   if (error) throw error;
 
-  return (data || [])
-    .map((row: any) => toDancerCard(client, row, { checkedInOnly: true }))
-    .filter((card) => card.shiftId && card.locationStatus !== "self_reported");
+  const cards = await Promise.all((data || []).map((row: any) => toDancerCard(client, row, { checkedInOnly: true })));
+  return cards.filter((card) => card.shiftId && card.locationStatus !== "self_reported");
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
@@ -85,16 +84,13 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
   if (!data) return null;
 
   const row: any = data;
-  const card = toDancerCard(client, row);
-  const [followerCount, goingCount] = await Promise.all([
-    countDancerFollowers(client, row.id),
-    countDancerGoingSignals(client, row.id),
-  ]);
+  const card = await toDancerCard(client, row);
+  const goingCount = await countDancerGoingSignals(client, row.id);
 
   return {
     ...card,
     bio: row.bio || null,
-    followerCount,
+    followerCount: card.followerCount || 0,
     goingCount,
     photos: (row.dancer_photos || [])
       .filter((photo: any) => photo.review_status === "approved")
@@ -164,6 +160,31 @@ async function countDancerFollowers(client: DancrClient, dancerId: string): Prom
   return count || 0;
 }
 
+async function countDancerNotificationSubscribers(client: DancrClient, dancerId: string): Promise<number> {
+  const { count, error } = await client
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("dancer_id", dancerId)
+    .eq("notifications_enabled", true);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countDancerProfileViewsToday(client: DancrClient, dancerId: string): Promise<number> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { count, error } = await client
+    .from("profile_views")
+    .select("*", { count: "exact", head: true })
+    .eq("dancer_id", dancerId)
+    .gte("viewed_at", today.toISOString());
+
+  if (error) throw error;
+  return count || 0;
+}
+
 async function countDancerGoingSignals(client: DancrClient, dancerId: string): Promise<number> {
   const { count, error } = await client
     .from("going_signals")
@@ -176,7 +197,7 @@ async function countDancerGoingSignals(client: DancrClient, dancerId: string): P
   return count || 0;
 }
 
-function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: boolean } = {}): DancerCard {
+async function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: boolean } = {}): Promise<DancerCard> {
   const shifts = Array.isArray(row.shifts) ? row.shifts : row.shifts ? [row.shifts] : [];
   const now = Date.now();
   const postedShifts = shifts.filter((item: any) => item.status === "posted");
@@ -193,6 +214,11 @@ function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: 
   const shift = liveShift || upcomingShift || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
+  const [followerCount, notificationCount, profileViewsToday] = await Promise.all([
+    countDancerFollowers(client, row.id),
+    countDancerNotificationSubscribers(client, row.id),
+    countDancerProfileViewsToday(client, row.id),
+  ]);
 
   return {
     id: row.id,
@@ -214,6 +240,9 @@ function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: 
     checkedInAt: shift?.checked_in_at || null,
     checkedOutAt: shift?.checked_out_at || null,
     checkinDistanceFeet: shift?.checkin_distance_feet ?? null,
+    followerCount,
+    notificationCount,
+    profileViewsToday,
   };
 }
 

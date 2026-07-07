@@ -210,6 +210,8 @@ export async function getDancerDashboardAnalytics(
 ): Promise<DancerDashboardAnalytics> {
   const since = new Date();
   since.setDate(since.getDate() - 30);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const [
     profileViews,
@@ -219,6 +221,9 @@ export async function getDancerDashboardAnalytics(
     socialClicks,
     notifications,
     trending,
+    totalFollowers,
+    notificationSubscribers,
+    profileViewsToday,
   ] = await Promise.all([
     countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", since),
     countRows(client, "schedule_views", "dancer_id", dancerId, "viewed_at", since),
@@ -227,6 +232,9 @@ export async function getDancerDashboardAnalytics(
     getSocialClickCounts(client, dancerId, since),
     getNotificationCounts(client, dancerId, since),
     getTrendingSnapshot(client, dancerId),
+    countRowsAll(client, "follows", "dancer_id", dancerId),
+    countNotificationSubscribers(client, dancerId),
+    countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", today),
   ]);
 
   const [followersGained, favoritesAdded] = await Promise.all([
@@ -239,6 +247,9 @@ export async function getDancerDashboardAnalytics(
     highestRank: trending.highestRank,
     bestRankThisWeek: trending.bestRankThisWeek,
     rankChangeSinceYesterday: trending.rankChangeSinceYesterday,
+    totalFollowers,
+    notificationSubscribers,
+    profileViewsToday,
     profileViews30Days: profileViews,
     followersGained30Days: followersGained,
     scheduleViews30Days: scheduleViews,
@@ -370,6 +381,27 @@ async function countRows(
     .select("id", { count: "exact", head: true })
     .eq(idColumn, idValue)
     .gte(dateColumn, since.toISOString());
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countRowsAll(client: DancrClient, table: string, idColumn: string, idValue: string) {
+  const { count, error } = await client
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq(idColumn, idValue);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function countNotificationSubscribers(client: DancrClient, dancerId: string) {
+  const { count, error } = await client
+    .from("follows")
+    .select("id", { count: "exact", head: true })
+    .eq("dancer_id", dancerId)
+    .eq("notifications_enabled", true);
 
   if (error) throw error;
   return count || 0;
