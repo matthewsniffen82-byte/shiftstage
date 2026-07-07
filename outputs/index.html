@@ -29300,10 +29300,15 @@
       }
       const shiftForm = document.getElementById("shiftPostForm");
       const shiftResult = document.getElementById("shiftPostResult");
+      const shiftVerifyPanel = document.getElementById("shiftVerificationPanel");
+      if (scheduleMount && shiftVerifyPanel && shiftVerifyPanel.parentElement !== scheduleMount) {
+        scheduleMount.appendChild(shiftVerifyPanel);
+      }
       if (scheduleMount && shiftForm && shiftForm.parentElement !== scheduleMount) {
         scheduleMount.appendChild(shiftForm);
         if (shiftResult) scheduleMount.appendChild(shiftResult);
       }
+      renderShiftVerificationPanel();
     }
 
     function jumpToDancerFixTarget(targetKey = "") {
