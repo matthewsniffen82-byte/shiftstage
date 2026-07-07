@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, MouseEvent, useEffect, useState } from "react";
 import Link from "next/link";
 
 type AdminState = {
@@ -824,6 +824,12 @@ function ApprovalQueue({
   );
 }
 
+type AdminPreview = {
+  kind: "image" | "file" | "link";
+  title: string;
+  url: string;
+};
+
 function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, unknown>; onContentReviewed: () => void | Promise<void> }) {
   const photos = asRecordArray(item.photos);
   const socials = normalizeSubmissionSocials(item);
@@ -833,6 +839,13 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
   const submittedBy = asText(item.stageName || item.stage_name) || asText(item.realName || item.real_name) || "this dancer";
   const [reasonByKey, setReasonByKey] = useState<Record<string, string>>({});
   const [statusByKey, setStatusByKey] = useState<Record<string, string>>({});
+  const [preview, setPreview] = useState<AdminPreview | null>(null);
+
+  function openPreview(event: MouseEvent<HTMLAnchorElement>, nextPreview: AdminPreview) {
+    event.preventDefault();
+    if (!nextPreview.url || nextPreview.url === "#") return;
+    setPreview(nextPreview);
+  }
 
   async function reviewContent(
     targetType: "photo" | "verification_document" | "social_link",
@@ -907,7 +920,11 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
               return (
                 <div className="submission-review-card" key={photoId || index}>
-                  <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer">
+                  <a
+                    className="submission-thumb"
+                    href={imageUrl || "#"}
+                    onClick={(event) => openPreview(event, { kind: "image", title: `Submitted dancer photo ${index + 1}`, url: imageUrl })}
+                  >
                     {imageUrl ? <img src={imageUrl} alt={`Submitted dancer photo ${index + 1}`} /> : <span>No image URL</span>}
                     <small>{status}</small>
                   </a>
@@ -951,7 +968,11 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
               return (
                 <div className="submission-review-card" key={targetId || index}>
-                  <a className="submission-link" href={fileUrl || "#"} target="_blank" rel="noreferrer">
+                  <a
+                    className="submission-link"
+                    href={fileUrl || "#"}
+                    onClick={(event) => openPreview(event, { kind: "file", title: label, url: fileUrl })}
+                  >
                     <strong>{label}</strong>
                     <small>{status}</small>
                   </a>
@@ -996,8 +1017,7 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   <a
                     className={`submitted-social-icon social-${social.platform}`}
                     href={social.url || "#"}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={(event) => openPreview(event, { kind: "link", title: `${social.label} link`, url: social.url || "" })}
                     aria-label={`${social.label}: ${social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url || "submitted social"}`}
                     title={`${social.label}${social.handle ? ` @${social.handle.replace(/^@/, "")}` : ""}`}
                   >
@@ -1050,6 +1070,29 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
         <summary>Full submitted record</summary>
         <pre>{JSON.stringify(item, null, 2)}</pre>
       </details>
+      {preview ? (
+        <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label={preview.title} onClick={() => setPreview(null)}>
+          <div className="admin-preview-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="admin-preview-close" type="button" onClick={() => setPreview(null)} aria-label="Close preview">
+              ×
+            </button>
+            <h3>{preview.title}</h3>
+            {preview.kind === "image" ? (
+              <img src={preview.url} alt={preview.title} />
+            ) : preview.kind === "file" ? (
+              <iframe src={preview.url} title={preview.title} />
+            ) : (
+              <div className="admin-preview-link">
+                <strong>Submitted link</strong>
+                <p>{preview.url}</p>
+                <a href={preview.url} target="_blank" rel="noreferrer">
+                  Open link
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1378,6 +1421,15 @@ function AdminStyles() {
       .submitted-social-icon svg { display: block; width: 22px; height: 22px; margin: 0; flex: 0 0 22px; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .submitted-social-icon.social-instagram svg, .submitted-social-icon.social-x svg { fill: none; }
       .submitted-social-icon .logo-cutout { fill: #050507; stroke: none; }
+      .admin-preview-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.74); backdrop-filter: blur(10px); }
+      .admin-preview-modal { position: relative; width: min(760px, 100%); max-height: min(86vh, 760px); overflow: auto; display: grid; gap: 12px; padding: 16px; border-radius: 8px; border: 1px solid rgba(139,92,246,.34); background: #08080c; box-shadow: 0 24px 80px rgba(0,0,0,.62); }
+      .admin-preview-modal h3 { margin: 0; padding-right: 48px; color: #fff; font-size: 17px; overflow-wrap: anywhere; }
+      .admin-preview-close { position: absolute; top: 10px; right: 10px; width: 38px; min-height: 38px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); color: #f7f2ff; background: rgba(255,255,255,.06); font-size: 24px; line-height: 1; }
+      .admin-preview-modal img { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; background: #050507; }
+      .admin-preview-modal iframe { width: 100%; height: min(70vh, 620px); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: #050507; }
+      .admin-preview-link { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.045); color: #f7f2ff; overflow-wrap: anywhere; }
+      .admin-preview-link p { margin: 0; color: #b9accd; }
+      .admin-preview-link a { justify-self: start; color: #090911; background: #f7f2ff; border-radius: 999px; padding: 10px 14px; text-decoration: none; font-weight: 900; }
       .submission-empty { color: #9c90b3; font-size: 13px; }
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }

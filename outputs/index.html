@@ -24229,6 +24229,94 @@
         white-space: normal !important;
       }
     }
+
+    .admin-preview-popover {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0,0,0,.74);
+      backdrop-filter: blur(10px);
+    }
+
+    .admin-preview-popover[hidden] {
+      display: none !important;
+    }
+
+    .admin-preview-sheet {
+      position: relative;
+      width: min(760px, 100%);
+      max-height: min(86vh, 760px);
+      overflow: auto;
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid rgba(139,92,246,.34);
+      border-radius: 8px;
+      background: #08080c;
+      box-shadow: 0 24px 80px rgba(0,0,0,.62);
+    }
+
+    .admin-preview-sheet h3 {
+      padding-right: 48px;
+      overflow-wrap: anywhere;
+    }
+
+    .admin-preview-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+
+    .admin-preview-body {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .admin-preview-body img {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #050507;
+    }
+
+    .admin-preview-body iframe {
+      width: 100%;
+      height: min(70vh, 620px);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      background: #050507;
+    }
+
+    .admin-preview-link {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,.045);
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .admin-preview-link p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .admin-preview-link a {
+      justify-self: start;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: #050507;
+      background: #f7f2ff;
+      font-weight: 900;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -25451,6 +25539,16 @@
       </section>
     </div>
 
+    <div class="admin-preview-popover" id="adminPreviewPopover" role="dialog" aria-modal="true" aria-labelledby="adminPreviewTitle" hidden>
+      <section class="admin-preview-sheet">
+        <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" aria-label="Close preview">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <h3 id="adminPreviewTitle">Preview</h3>
+        <div class="admin-preview-body" id="adminPreviewBody"></div>
+      </section>
+    </div>
+
     <div class="toast" id="toast" role="status"></div>
   </div>
 
@@ -25534,6 +25632,10 @@
     const customerDashboard = document.getElementById("customerDashboard");
     const venueDashboard = document.getElementById("venueDashboard");
     const adminDashboard = document.getElementById("adminDashboard");
+    const adminPreviewPopover = document.getElementById("adminPreviewPopover");
+    const adminPreviewTitle = document.getElementById("adminPreviewTitle");
+    const adminPreviewBody = document.getElementById("adminPreviewBody");
+    const adminPreviewClose = document.getElementById("adminPreviewClose");
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
     const accountTooltip = document.getElementById("accountTooltip");
@@ -25755,6 +25857,47 @@
       toast.classList.add("show");
       window.clearTimeout(showToast.timer);
       showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1900);
+    }
+
+    function adminPreviewIsImage(url) {
+      return /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(String(url || ""));
+    }
+
+    function openAdminPreview({ kind = "file", title = "Preview", url = "" } = {}) {
+      if (!adminPreviewPopover || !adminPreviewBody || !adminPreviewTitle) return;
+      if (!url || url === "#") {
+        showToast("No preview available");
+        return;
+      }
+      const safeUrl = displayText(url);
+      const safeTitle = displayText(title || "Preview");
+      adminPreviewTitle.textContent = title || "Preview";
+      if (kind === "image" || adminPreviewIsImage(url)) {
+        adminPreviewBody.innerHTML = `<img src="${safeUrl}" alt="${safeTitle}">`;
+      } else if (kind === "link") {
+        adminPreviewBody.innerHTML = `
+          <div class="admin-preview-link">
+            <strong>Submitted link</strong>
+            <p>${safeUrl}</p>
+            <a href="${safeUrl}" target="_blank" rel="noreferrer">Open link</a>
+          </div>
+        `;
+      } else {
+        adminPreviewBody.innerHTML = `
+          <iframe src="${safeUrl}" title="${safeTitle}"></iframe>
+          <div class="admin-preview-link">
+            <p>${safeUrl}</p>
+            <a href="${safeUrl}" target="_blank" rel="noreferrer">Open file</a>
+          </div>
+        `;
+      }
+      adminPreviewPopover.hidden = false;
+    }
+
+    function closeAdminPreview() {
+      if (!adminPreviewPopover || !adminPreviewBody) return;
+      adminPreviewPopover.hidden = true;
+      adminPreviewBody.innerHTML = "";
     }
 
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
@@ -32128,12 +32271,12 @@
         const url = social.url || "#";
         const handle = social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url;
         const label = `${social.label}${handle ? ` ${handle}` : ""}`;
-        const hrefAttr = social.url ? ` href="${displayText(url)}" target="_blank" rel="noreferrer"` : "";
+        const hrefAttr = social.url ? ` href="${displayText(url)}"` : "";
         const targetId = social.id || `${profile.id || profile.name}-social-${index}`;
         const key = `social_link:${targetId}`;
         return `
           <div class="admin-social-review">
-            <a class="admin-social-icon social-${displayText(social.platform)}"${hrefAttr} aria-label="${displayText(label)}" title="${displayText(label)}">${socialIconMarkup(social.platform)}<span>${displayText(social.label)}</span></a>
+            <a class="admin-social-icon social-${displayText(social.platform)}"${hrefAttr} data-admin-preview-kind="link" data-admin-preview-title="${displayText(label)}" data-admin-preview-url="${displayText(url)}" aria-label="${displayText(label)}" title="${displayText(label)}">${socialIconMarkup(social.platform)}<span>${displayText(social.label)}</span></a>
             <span class="admin-review-hint">${displayText(social.label)} · ${displayText(social.reviewStatus || "pending")}</span>
             ${social.reviewNotes ? `<span class="admin-review-hint">Reason: ${displayText(social.reviewNotes)}</span>` : ""}
             <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
@@ -32156,7 +32299,7 @@
         const key = `verification_document:${targetId}`;
         return `
           <div class="admin-submission-review">
-            <a class="lock-row" href="${displayText(href)}" target="_blank" rel="noreferrer">
+            <a class="lock-row" href="${displayText(href)}" data-admin-preview-kind="file" data-admin-preview-title="${displayText(label)}" data-admin-preview-url="${displayText(href)}">
               <strong>${displayText(label)}</strong>
               <span>${displayText(document.status || "pending review")}</span>
               <span>Submitted by ${displayText(profile.name || "dancer")}</span>
@@ -32184,7 +32327,7 @@
         const key = `photo:${targetId}`;
         return `
           <div class="admin-submission-review">
-            <a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" target="_blank" rel="noreferrer">
+            <a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" data-admin-preview-kind="image" data-admin-preview-title="Submitted dancer photo ${index + 1}" data-admin-preview-url="${displayText(imageUrl)}">
               ${imageUrl ? `<img src="${displayText(imageUrl)}" alt="Submitted dancer photo ${index + 1}">` : `Photo ${index + 1}`}
               <span>${displayText(photo.reviewStatus || photo.review_status || "pending")}</span>
               <span>Submitted by ${displayText(profile.name || "dancer")}</span>
@@ -33467,6 +33610,11 @@
       if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
     });
 
+    adminPreviewClose?.addEventListener("click", closeAdminPreview);
+    adminPreviewPopover?.addEventListener("click", (event) => {
+      if (event.target === adminPreviewPopover) closeAdminPreview();
+    });
+
     document.querySelectorAll("[data-legal-page]").forEach((button) => {
       button.addEventListener("click", () => openLegalPage(button.dataset.legalPage));
     });
@@ -33625,6 +33773,16 @@
 
     adminDashboard.addEventListener("click", (event) => {
       if (handleSupportActionClick(event)) return;
+      const adminPreviewLink = event.target.closest("[data-admin-preview-url]");
+      if (adminPreviewLink) {
+        event.preventDefault();
+        openAdminPreview({
+          kind: adminPreviewLink.dataset.adminPreviewKind || "file",
+          title: adminPreviewLink.dataset.adminPreviewTitle || adminPreviewLink.getAttribute("aria-label") || "Preview",
+          url: adminPreviewLink.dataset.adminPreviewUrl || adminPreviewLink.getAttribute("href") || ""
+        });
+        return;
+      }
       const contentReviewButton = event.target.closest("[data-admin-content-review]");
       if (contentReviewButton) {
         event.preventDefault();
@@ -34383,6 +34541,12 @@
         if (customerDashboard.classList.contains("show")) closeDashboard();
         openVenueFromName(cardVenueLink.dataset.cardVenue);
         return;
+      }
+      if (event.key === "Escape") {
+        if (adminPreviewPopover && !adminPreviewPopover.hidden) {
+          closeAdminPreview();
+          return;
+        }
       }
       if (event.key === "Escape") {
         const dealOverlay = document.getElementById("dealPassOverlay");
