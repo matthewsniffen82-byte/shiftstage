@@ -27548,6 +27548,39 @@
       return pendingLabel;
     }
 
+    function normalizedReviewStatus(status) {
+      return String(status || "").trim().toLowerCase();
+    }
+
+    function isApprovedDancerStatus(status) {
+      const normalized = normalizedReviewStatus(status);
+      return normalized === "approved" || normalized === "verified";
+    }
+
+    function isRejectedDancerStatus(status) {
+      const normalized = normalizedReviewStatus(status);
+      return normalized === "rejected" || normalized === "disapproved";
+    }
+
+    function approvedRequiredVerificationDocuments(profile) {
+      const documents = profile?.verificationDocuments || profile?.verification_documents || [];
+      if (!documents.length) return false;
+      return requiredVerificationDocumentDefinitions().every((required, fallbackIndex) =>
+        documents.some((document, documentIndex) =>
+          matchesRequiredVerificationDocument(document, required.key, required.terms, documentIndex, fallbackIndex) &&
+          normalizedReviewStatus(document.status || document.reviewStatus || document.review_status) === "approved"
+        )
+      );
+    }
+
+    function dancerCoreApprovalUnlocked(profile) {
+      return Boolean(
+        isApprovedDancerStatus(profile?.status) ||
+        normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved" ||
+        approvedRequiredVerificationDocuments(profile)
+      );
+    }
+
     function applyLiveApprovalQueue(queue) {
       (queue || []).forEach((item, index) => {
         const city = item.city || citySelect.value;
@@ -32043,9 +32076,10 @@
     }
 
     function applyDancerVerificationProfile(profile) {
-      const approved = profile.status === "approved";
-      const rejected = profile.status === "rejected";
-      const submittedForReview = profile.status === "pending_review";
+      const statusApproved = isApprovedDancerStatus(profile.status);
+      const approved = dancerCoreApprovalUnlocked(profile);
+      const rejected = isRejectedDancerStatus(profile.status);
+      const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
       const savedProfileSetup = approved || rejected || hasSavedDancerProfileSetup();
       const draft = readStoredDancerProfileDraft();
       const useDraftFields = Boolean(draft && !savedProfileSetup);
@@ -32064,8 +32098,8 @@
       Object.assign(dancerSignupSocials, savedProfileSetup ? { ...draftSocials, ...liveSocials } : { ...liveSocials, ...draftSocials });
       Object.assign(dancerSetup, {
         profile: savedProfileSetup,
-        photos: approved || photos.length > 0 || profile.photo_review_status === "approved" || profile.photoReviewStatus === "approved",
-        verification: approved || profile.verification_status === "approved" || profile.verificationStatus === "approved" || hasSubmittedVerificationDocuments(),
+        photos: statusApproved || photos.length > 0 || normalizedReviewStatus(profile.photo_review_status || profile.photoReviewStatus) === "approved",
+        verification: approved || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
       });
@@ -32083,7 +32117,7 @@
           mainPhotoUrl: photos[0] || localProfile.mainPhotoUrl,
           galleryPhotoUrls: photos.length ? photos : (localProfile.galleryPhotoUrls || []),
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
-          photoStatus: approved ? "Approved" : (dancerSetup.photos ? "Pending" : localProfile.photoStatus),
+          photoStatus: reviewStatusLabel(profile.photo_review_status || profile.photoReviewStatus, "Approved", dancerSetup.photos ? "Pending" : localProfile.photoStatus),
           idStatus: approved ? "Passed" : (dancerSetup.verification ? "Needs review" : localProfile.idStatus),
           selfieStatus: approved ? "Matched" : (dancerSetup.verification ? "Needs review" : localProfile.selfieStatus),
           danceProofStatus: approved ? "Approved" : (dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus),
@@ -32333,8 +32367,8 @@
       const dancerName = activeDancerName();
       const city = activeDancerCity();
       const activeProfile = activeDancerProfile(city);
-      const approved = dancerSetup.approval || activeProfile?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved";
-      const rejected = activeProfile?.status === "Rejected" || hasRejectedDancerReviews();
+      const approved = dancerSetup.approval || dancerCoreApprovalUnlocked(activeProfile) || normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved";
+      const rejected = isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews();
       const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
       const approvalStateLabel = rejected ? "Needs fixes" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
