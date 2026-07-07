@@ -982,13 +982,16 @@ function DancerShiftPanel({ city }: { city: string }) {
     }
   }
 
-  const postedShifts = shifts
+  const editablePostedShifts = shifts
+    .filter((shift) => shift.status === "posted")
+    .sort((left, right) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
+  const checkInReadyShifts = editablePostedShifts
     .filter((shift) => shift.status === "posted" && !shift.checked_out_at && new Date(shift.ends_at).getTime() >= Date.now())
     .sort((left, right) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
   const activeShift =
-    postedShifts.find((shift) => canCheckOutOfShift(shift)) ||
-    postedShifts.find((shift) => canCheckInToShift(shift)) ||
-    postedShifts[0] ||
+    checkInReadyShifts.find((shift) => canCheckOutOfShift(shift)) ||
+    checkInReadyShifts.find((shift) => canCheckInToShift(shift)) ||
+    checkInReadyShifts[0] ||
     null;
   const isCheckedInToActiveShift = activeShift ? canCheckOutOfShift(activeShift) : false;
 
@@ -1048,7 +1051,7 @@ function DancerShiftPanel({ city }: { city: string }) {
         <small>All posted shifts live here for editing or deleting. Public cards show only Working Now or the closest upcoming shift.</small>
       </div>
       <div className="shift-list">
-        {postedShifts.map((shift) => (
+        {editablePostedShifts.map((shift) => (
           <div className="dashboard-shift" key={String(shift.id)}>
             {editingShiftId === String(shift.id) ? (
               <>
@@ -1113,7 +1116,7 @@ function DancerShiftPanel({ city }: { city: string }) {
             )}
           </div>
         ))}
-        {!postedShifts.length ? <p>No posted shifts yet. Add as many shifts as you need above.</p> : null}
+        {!editablePostedShifts.length ? <p>No posted shifts yet. Add as many shifts as you need above.</p> : null}
       </div>
     </article>
   );

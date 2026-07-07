@@ -30853,7 +30853,7 @@
 
     function applyShiftState(profile, patch = {}) {
       if (!profile) return;
-      Object.assign(profile, {
+      const nextState = {
         locationStatus: patch.location_status ?? patch.locationStatus ?? profile.locationStatus,
         checkedInAt: patch.checked_in_at ?? patch.checkedInAt ?? profile.checkedInAt,
         checkedOutAt: patch.checked_out_at ?? patch.checkedOutAt ?? profile.checkedOutAt,
@@ -30864,7 +30864,11 @@
         endedAt: patch.ended_at ?? patch.endedAt ?? profile.endedAt,
         endedReason: patch.ended_reason ?? patch.endedReason ?? profile.endedReason,
         shiftSummary: patch.shift_summary ?? patch.shiftSummary ?? profile.shiftSummary
-      });
+      };
+      Object.assign(profile, nextState);
+      const shiftId = patch.id || patch.shiftId || profile.shiftId;
+      const matchingShift = profilePostedShifts(profile).find((shift) => String(shift.shiftId) === String(shiftId));
+      if (matchingShift) Object.assign(matchingShift, nextState);
       profile.tonight = isWorkingTonight(profile, activeDancerCity());
     }
 
@@ -31033,7 +31037,6 @@
       if (!list) return;
       const profile = activeDancerProfile();
       const shifts = profilePostedShifts(profile)
-        .filter((shift) => !shift.checkedOutAt && (!shift.shiftEndsAt || new Date(shift.shiftEndsAt).getTime() >= Date.now()))
         .sort((left, right) => new Date(left.shiftStartsAt || 0).getTime() - new Date(right.shiftStartsAt || 0).getTime());
       if (!profile || !shifts.length) {
         list.innerHTML = `
@@ -31300,6 +31303,9 @@
       const wasScheduled = Boolean(existing?.scheduled);
       const range = shiftIsoRange(dateValue, startValue, endValue);
       const localShiftId = editingShiftId || `local-shift-${Date.now()}`;
+      const existingShift = editingShiftId && existing
+        ? profilePostedShifts(existing).find((shift) => String(shift.shiftId) === String(editingShiftId))
+        : null;
       shiftCheckInMessage = "Shift posted. Tap Check in now when you are ready to verify your location.";
       const shiftData = {
         name,
@@ -31318,16 +31324,16 @@
         shiftTimeZone: timeZoneByCity[city] || "America/Los_Angeles",
         shiftLabel: formatDateLabel(dateValue, city),
         shiftId: localShiftId,
-        locationStatus: "self_reported",
-        checkedInAt: "",
-        checkedOutAt: "",
-        checkinDistanceFeet: null,
-        workingStatus: "self_reported",
-        commissionTrackingStartedAt: "",
-        commissionTrackingStoppedAt: "",
-        endedAt: "",
-        endedReason: "",
-        shiftSummary: null,
+        locationStatus: existingShift?.locationStatus || "self_reported",
+        checkedInAt: existingShift?.checkedInAt || "",
+        checkedOutAt: existingShift?.checkedOutAt || "",
+        checkinDistanceFeet: existingShift?.checkinDistanceFeet ?? null,
+        workingStatus: existingShift?.workingStatus || "self_reported",
+        commissionTrackingStartedAt: existingShift?.commissionTrackingStartedAt || "",
+        commissionTrackingStoppedAt: existingShift?.commissionTrackingStoppedAt || "",
+        endedAt: existingShift?.endedAt || "",
+        endedReason: existingShift?.endedReason || "",
+        shiftSummary: existingShift?.shiftSummary || null,
         repeat,
         notes,
         socials: existing?.socials || { ...dancerSignupSocials }
