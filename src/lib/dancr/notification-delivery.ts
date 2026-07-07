@@ -83,6 +83,11 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
   for (const row of rows) {
     const email = recipientById.get(row.recipient_id)?.email;
     if (!email) continue;
+    const actionUrl = notificationActionUrl(row);
+    const text = actionUrl ? `${row.body}\n\nOpen your Dancr dashboard:\n${actionUrl}` : row.body;
+    const html = actionUrl
+      ? `<p>${escapeHtml(row.body)}</p><p><a href="${escapeHtml(actionUrl)}">Open your Dancr dashboard</a></p>`
+      : undefined;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -94,7 +99,8 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
         from,
         to: email,
         subject: row.title,
-        text: row.body,
+        text,
+        ...(html ? { html } : {}),
       }),
     });
 
@@ -106,4 +112,37 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
   }
 
   return delivered;
+}
+
+function notificationActionUrl(row: NotificationDeliveryRow) {
+  const payload = (row.payload || {}) as Record<string, unknown>;
+  if (row.notification_type !== "approval_status") return "";
+  const baseUrl = appBaseUrl();
+  if (!baseUrl) return "";
+
+  const params = new URLSearchParams({
+    dancr_dashboard: "dancer",
+    dancr_status: String(payload.status || ""),
+    dancr_step: String(payload.setupStep || (payload.status === "approved" ? "approved" : "approval")),
+  });
+  if (payload.targetType) params.set("dancr_target_type", String(payload.targetType));
+  if (payload.targetId) params.set("dancr_target_id", String(payload.targetId));
+  if (payload.label) params.set("dancr_label", String(payload.label));
+  return `${baseUrl}/?${params.toString()}`;
+}
+
+function appBaseUrl() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  const vercelUrl = process.env.VERCEL_URL;
+  return vercelUrl ? `https://${vercelUrl.replace(/\/+$/, "")}` : "";
+}
+
+function escapeHtml(value: unknown) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

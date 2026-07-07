@@ -25165,6 +25165,7 @@
                     <button type="button" data-dancer-control-action="share-profile">Share profile</button>
                     <button type="button" data-dancer-control-action="show-qr">Show QR code</button>
                     <button type="button" data-dancer-control-action="save-profile">Save profile changes</button>
+                    <button type="button" data-dancer-control-action="resubmit-approval">Resubmit for approval</button>
                   </div>
                   <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
                 </section>
@@ -26505,6 +26506,102 @@
       setTimeout(() => {
         document.getElementById("setupLegalName")?.focus({ preventScroll: true });
       }, 260);
+    }
+
+    const dancerDashboardLinkStorageKey = "dancrPendingDancerDashboardLinkV1";
+
+    function storePendingDancerDashboardLink(linkState) {
+      try {
+        localStorage.setItem(dancerDashboardLinkStorageKey, JSON.stringify({ ...linkState, createdAt: Date.now() }));
+      } catch (error) {}
+    }
+
+    function takePendingDancerDashboardLink() {
+      try {
+        const raw = localStorage.getItem(dancerDashboardLinkStorageKey);
+        if (!raw) return null;
+        localStorage.removeItem(dancerDashboardLinkStorageKey);
+        const state = JSON.parse(raw);
+        if (Date.now() - Number(state.createdAt || 0) > 1000 * 60 * 60 * 24 * 7) return null;
+        return state;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function dancerDashboardLinkFromParams(params) {
+      if (params.get("dancr_dashboard") !== "dancer") return null;
+      return {
+        status: params.get("dancr_status") || "",
+        setupStep: params.get("dancr_step") || "",
+        targetType: params.get("dancr_target_type") || "",
+        targetId: params.get("dancr_target_id") || "",
+        label: params.get("dancr_label") || ""
+      };
+    }
+
+    function stepForDancerDashboardLink(linkState = {}) {
+      if (linkState.setupStep && linkState.setupStep !== "approved") return linkState.setupStep;
+      if (linkState.targetType === "photo") return "photos";
+      if (linkState.targetType === "verification_document") return "verification";
+      if (linkState.targetType === "social_link") return "profile";
+      return linkState.status === "approved" ? "approved" : "approval";
+    }
+
+    function scrollDancerDashboardLinkTarget(linkState = {}) {
+      const step = stepForDancerDashboardLink(linkState);
+      if (step === "approved") {
+        const target = document.getElementById("approvedDancerPanel") || document.getElementById("dancerDashboard");
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+        target?.classList.add("field-needs-review");
+        window.setTimeout(() => target?.classList.remove("field-needs-review"), 2400);
+        return;
+      }
+      setupChecklistExpanded = true;
+      activeSetupStep = step;
+      renderDancerSetup();
+      window.requestAnimationFrame(() => {
+        const label = String(linkState.label || "").toLowerCase();
+        const input =
+          linkState.targetType === "photo" ? document.getElementById("setupProfilePhotos") :
+          linkState.targetType === "verification_document" && label.includes("selfie") ? document.getElementById("setupSelfieDocument") :
+          linkState.targetType === "verification_document" && (label.includes("proof") || label.includes("dance")) ? document.getElementById("setupDanceProofDocument") :
+          linkState.targetType === "verification_document" ? document.getElementById("setupIdDocument") :
+          null;
+        const reviewNote = document.querySelector(".review-feedback-item.is-rejected");
+        const stepCard = document.querySelector(`#setupChecklist [data-step="${step}"]`);
+        const target = input || reviewNote || stepCard || document.getElementById("setupChecklistWrap");
+        target?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        target?.classList.add("field-needs-review");
+        if (input) input.focus({ preventScroll: true });
+        window.setTimeout(() => target?.classList.remove("field-needs-review"), 2400);
+      });
+    }
+
+    function openDancerDashboardFromLink(linkState = {}) {
+      dancerSignupStarted = true;
+      stripeConfirmed = true;
+      activeDashboardType = "dancer";
+      isCustomerLoggedIn = false;
+      isDancerLoggedIn = true;
+      isVenueLoggedIn = false;
+      const step = stepForDancerDashboardLink(linkState);
+      setupChecklistExpanded = step !== "approved";
+      activeSetupStep = step === "approved" ? "" : step;
+      updateAccountHeader();
+      closeAuthPage();
+      closeDashboard();
+      closeVenueDashboard();
+      openDancerDashboard();
+      showToast(linkState.status === "approved" ? "Dancer dashboard opened." : "Open the highlighted section, fix the issue, then resubmit.");
+      window.setTimeout(() => scrollDancerDashboardLinkTarget(linkState), 260);
+    }
+
+    function consumePendingDancerDashboardLink() {
+      const pending = takePendingDancerDashboardLink();
+      if (!pending || !isDancerSession()) return false;
+      openDancerDashboardFromLink(pending);
+      return true;
     }
 
     function scrollAccountPasswordIntoView(role) {
@@ -32186,7 +32283,7 @@
       const rejected = activeProfile?.status === "Rejected" || hasRejectedDancerReviews();
       const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
-      const approvalStateLabel = approved ? "Approved" : rejected ? "Rejected" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
+      const approvalStateLabel = rejected ? "Needs fixes" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
@@ -32204,36 +32301,38 @@
       });
       const approvalCommand = document.getElementById("dancerApprovalCommand");
       if (approvalCommand) {
-        approvalCommand.classList.toggle("approved", approved);
+        approvalCommand.classList.toggle("approved", approved && !rejected);
         approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       }
       document.getElementById("dancerApprovalStatus").textContent = approvalStateLabel;
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
-      document.getElementById("dancerApprovalTitle").textContent = approved
-        ? "Approved. Start posting shifts."
-        : rejected
+      document.getElementById("dancerApprovalTitle").textContent = rejected
           ? "Profile needs fixes"
+        : approved
+          ? "Approved. Start posting shifts."
         : reviewSubmitted
           ? "Submitted for Dancr review"
           : "Finish verification to go live";
-      document.getElementById("dancerApprovalCopy").textContent = approved
-        ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
-        : rejected
+      document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
+        : approved
+          ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
         : reviewSubmitted
           ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email or site notifications when review is complete."
           : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
-      document.getElementById("dancerApprovalNext").textContent = approved
-        ? "Ready to post shifts"
-        : rejected
+      document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"
+        : approved
+          ? "Ready to post shifts"
         : reviewSubmitted
           ? "Waiting for review"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
-        approvalExpand.textContent = approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
+        approvalExpand.textContent = rejected
+          ? setupChecklistExpanded ? "Hide fixes" : "Show fixes"
+          : approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
       }
       document.getElementById("dancerSubscriptionStatus").textContent = billingSummary.label;
       document.getElementById("dancerPublicStatus").textContent = approved ? "Visible to customers" : "Verification required";
@@ -32246,12 +32345,12 @@
       const approvalStatusPrimary = document.getElementById("dancerApprovalStatusPrimary");
       const approvalStatusSecondary = document.getElementById("dancerApprovalStatusSecondary");
       if (approvalStatusPrimary && approvalStatusSecondary) {
-        if (approved) {
-          approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
-          approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
-        } else if (rejected) {
+        if (rejected) {
           approvalStatusPrimary.textContent = "Rejected. Fix or resend the red items in the review notes below.";
           approvalStatusSecondary.textContent = "Approved items stay approved. After you fix the rejected items, press Resubmit for review.";
+        } else if (approved) {
+          approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
+          approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
           approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
           approvalStatusSecondary.textContent = "You will be notified by email and site notifications when review is complete.";
@@ -32540,7 +32639,7 @@
       const setupList = document.getElementById("setupChecklist");
       const setupLock = document.getElementById("setupChecklistLock");
       const setupSummary = document.getElementById("setupChecklistSummary");
-      setupWrap.hidden = approved || !setupChecklistExpanded;
+      setupWrap.hidden = (approved && !rejected) || !setupChecklistExpanded;
       setupWrap.classList.toggle("expanded", setupChecklistExpanded);
       if (setupToggle) {
         setupToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
@@ -32556,7 +32655,7 @@
       document.getElementById("approvedDancerPanel").hidden = !approved;
       renderShiftPostForm();
       if (approved) renderDancerManagement();
-      if (approved) {
+      if (approved && !rejected) {
         const sharePanel = document.getElementById("dancerSharePanel");
         if (sharePanel) {
           sharePanel.innerHTML = `
@@ -34512,6 +34611,7 @@
       showToast(message);
       await hydrateDancerVerificationProgress();
       openDancerDashboard();
+      window.setTimeout(consumePendingDancerDashboardLink, 220);
     }
 
     document.getElementById("dancerLoginBtn").addEventListener("click", startDemoDancerSetup);
@@ -34808,6 +34908,12 @@
         setResult("Profile changes saved in this demo.");
         updateAccountHeader();
         render();
+        return;
+      }
+
+      if (action === "resubmit-approval") {
+        setResult("Sending your changed profile back to admin review...");
+        submitDancerProfileForReview(null);
         return;
       }
 
@@ -35220,6 +35326,22 @@
       }
     }
 
+    function handleDancerDashboardDeepLink() {
+      const params = new URLSearchParams(window.location.search);
+      const linkState = dancerDashboardLinkFromParams(params);
+      if (!linkState) return false;
+      window.history.replaceState({}, document.title, "/");
+      if (isDancerSession()) {
+        openDancerDashboardFromLink(linkState);
+      } else {
+        storePendingDancerDashboardLink(linkState);
+        openAuthRole("dancer");
+        showToast("Sign in to open your dancer dashboard and review changes.");
+        setTimeout(() => document.getElementById("dancerLoginEmail")?.focus(), 120);
+      }
+      return true;
+    }
+
     installReferenceHomeShell();
     restoreLoggedInSessionState();
     updateAccountHeader();
@@ -35230,7 +35352,7 @@
     if (isCustomerSession() || isDancerSession() || isVenueSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume) openSharedProfileFromUrl();
+    if (!restoredAuthResume && !handleDancerDashboardDeepLink()) openSharedProfileFromUrl();
   </script>
 </body>
 </html>
