@@ -25651,26 +25651,26 @@
                   </div>
                 </div>
                 <div id="approvedProfilePhotoReview"></div>
-                <div class="profile-edit-grid">
+                <div class="profile-edit-grid" data-fix-anchor="profile-socials">
                   <div class="field">
                     <label for="profileInstagram">Instagram</label>
-                    <input id="profileInstagram" type="text" placeholder="@username or profile URL">
+                    <input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="@username or profile URL">
                   </div>
                   <div class="field">
                     <label for="profileTiktok">TikTok</label>
-                    <input id="profileTiktok" type="text" placeholder="@username or profile URL">
+                    <input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="@username or profile URL">
                   </div>
                   <div class="field">
                     <label for="profileSnapchat">Snapchat</label>
-                    <input id="profileSnapchat" type="text" placeholder="@username or profile URL">
+                    <input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="@username or profile URL">
                   </div>
                   <div class="field">
                     <label for="profileOnlyfans">OnlyFans</label>
-                    <input id="profileOnlyfans" type="text" placeholder="@username or profile URL">
+                    <input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="@username or profile URL">
                   </div>
                   <div class="field">
                     <label for="profileX">X</label>
-                    <input id="profileX" type="text" placeholder="@username or profile URL">
+                    <input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="@username or profile URL">
                   </div>
                 </div>
                 <button class="action-btn" type="submit">Submit changes for approval</button>
@@ -29251,12 +29251,21 @@
     }
 
     function reviewFixTarget(type = "") {
-      if (type.startsWith("photo:")) return `dancer-photo-${type.split(":").slice(1).join(":")}`;
+      if (type.startsWith("photo:")) {
+        const targetId = type.split(":").slice(1).join(":");
+        return targetId ? `dancer-photo-${targetId}` : "dancer-photo-review-card";
+      }
       if (type === "photos") return "dancer-photo-review-card";
       if (type.startsWith("social_link:")) {
         const targetId = type.split(":").slice(1).join(":");
+        const platformTarget = socialPlatforms.find((platform) => platform.key === targetId);
+        if (platformTarget) return `profile-${platformTarget.key}`;
         const profile = activeDancerProfile() || null;
-        const social = normalizeSubmittedSocials(profile).find((item) => item.id === targetId);
+        const social = normalizeSubmittedSocials(profile).find((item) =>
+          item.id === targetId ||
+          item.platform === targetId ||
+          String(item.id || "").toLowerCase().includes(`social-${targetId}`)
+        );
         return social ? `profile-${social.platform}` : "profile-socials";
       }
       if (type === "profile") return "profile-socials";
@@ -29374,7 +29383,8 @@
     function jumpToDancerFixTarget(targetKey = "") {
       if (!targetKey) return;
       const target = document.querySelector(`[data-fix-anchor="${CSS.escape(targetKey)}"]`)
-        || (targetKey.startsWith("dancer-photo-") ? document.querySelector('[data-fix-anchor="dancer-photo-review-card"]') : null);
+        || (targetKey.startsWith("dancer-photo-") ? document.querySelector(".dancer-photo-review-card.is-rejected") || document.querySelector('[data-fix-anchor="dancer-photo-review-card"]') : null)
+        || (targetKey.startsWith("profile-") ? document.getElementById(`profile${targetKey.replace("profile-", "").charAt(0).toUpperCase()}${targetKey.replace("profile-", "").slice(1)}`) : null);
       if (!target) return;
       target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
       target.classList.add("dancer-fix-highlight");
