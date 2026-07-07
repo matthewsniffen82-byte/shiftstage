@@ -2627,8 +2627,59 @@
       background: rgba(70, 10, 38, 0.42);
     }
 
+    .dancer-photo-review-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 4px 0 12px;
+    }
+
+    .dancer-photo-review-card {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(139, 92, 246, 0.24);
+      border-radius: 12px;
+      background: rgba(7, 7, 11, 0.78);
+    }
+
+    .dancer-photo-review-card.is-rejected {
+      border-color: rgba(255, 79, 195, 0.48);
+      background: rgba(70, 10, 38, 0.38);
+    }
+
+    .dancer-photo-review-card img {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      border-radius: 10px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .dancer-photo-review-card strong,
+    .dancer-photo-review-card span {
+      overflow-wrap: anywhere;
+    }
+
+    .dancer-photo-review-card strong {
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.15;
+    }
+
+    .dancer-photo-review-card span {
+      color: rgba(218, 214, 230, 0.84);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
     @media (max-width: 560px) {
       .approval-tool-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .dancer-photo-review-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -25211,8 +25262,8 @@
               <div id="approvedProfileFixList"></div>
               <div class="approved-tool-dropdown-actions">
                 <button type="button" data-dancer-control-action="preview-profile">Preview profile</button>
-                <button type="button" data-dancer-control-action="main-photo">Resubmit main photo</button>
-                <button type="button" data-dancer-control-action="gallery-photo">Resubmit gallery photo</button>
+                <button type="button" data-dancer-control-action="main-photo">Replace main photo</button>
+                <button type="button" data-dancer-control-action="gallery-photo">Replace gallery photo</button>
                 <button type="button" data-dancer-control-action="resubmit-approval">Resubmit changes</button>
               </div>
               <div id="approvedProfileFormMount"></div>
@@ -25513,16 +25564,8 @@
                     <label for="profileVenue">Home club</label>
                     <select id="profileVenue"></select>
                   </div>
-                  <div class="field">
-                    <label for="profileMainPhoto">Main photo URL</label>
-                    <input id="profileMainPhoto" type="url" placeholder="https://...">
-                  </div>
                 </div>
-                <div class="field">
-                  <label for="profileGalleryPhotos">Gallery photo URLs</label>
-                  <textarea id="profileGalleryPhotos" rows="3" placeholder="One photo URL per line"></textarea>
-                  <div class="field-note">Use full-body, portrait, or gallery photos. Approved photos appear on your public profile.</div>
-                </div>
+                <div id="approvedProfilePhotoReview"></div>
                 <div class="profile-edit-grid">
                   <div class="field">
                     <label for="profileInstagram">Instagram</label>
@@ -30770,6 +30813,40 @@
       `;
     }
 
+    function approvedDancerPhotoReviewMarkup(profile) {
+      const submitted = (profile?.submittedPhotos || []).map((photo, index) => ({
+        imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
+        label: index === 0 ? "Submitted main photo" : `Submitted photo ${index + 1}`,
+        status: normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending"),
+        notes: photo.reviewNotes || photo.review_notes || ""
+      }));
+      const existing = [
+        ...(profile?.mainPhotoUrl ? [{ imageUrl: profile.mainPhotoUrl, label: "Current main photo", status: "approved", notes: "" }] : []),
+        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, label: `Current gallery photo ${index + 1}`, status: "approved", notes: "" }))
+      ];
+      const photos = submitted.length ? submitted : existing;
+      if (!photos.length) {
+        return '<div class="rule-note">No profile photos uploaded yet. Use the replace buttons above to submit photos for approval.</div>';
+      }
+      return `
+        <div class="dancer-photo-review-grid">
+          ${photos.map((photo) => {
+            const rejected = photo.status === "rejected";
+            const statusText = rejected ? "Not approved" : photo.status === "approved" ? "Approved" : "Pending approval";
+            return `
+              <div class="dancer-photo-review-card ${rejected ? "is-rejected" : ""}">
+                ${photo.imageUrl ? `<img src="${displayText(photo.imageUrl)}" alt="${displayText(photo.label)}">` : ""}
+                <strong>${displayText(photo.label)}</strong>
+                <span>${displayText(statusText)}</span>
+                ${rejected && photo.notes ? `<span>Reason: ${displayText(photo.notes)}</span>` : ""}
+                ${rejected ? "<span>Use Replace main photo or Replace gallery photo, then resubmit changes.</span>" : ""}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
     function renderApprovedDancerProfileEditor(preserveCitySelection = false) {
       const stageField = document.getElementById("profileStageName");
       const cityField = document.getElementById("profileCity");
@@ -30787,8 +30864,8 @@
 
       const socials = { ...dancerSignupSocials, ...(profile?.socials || {}) };
       setFieldValueIfIdle("profileStageName", profile?.name || activeDancerName());
-      setFieldValueIfIdle("profileMainPhoto", profile?.mainPhotoUrl || "");
-      setFieldValueIfIdle("profileGalleryPhotos", Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.join("\n") : "");
+      const photoReview = document.getElementById("approvedProfilePhotoReview");
+      if (photoReview) photoReview.innerHTML = approvedDancerPhotoReviewMarkup(profile);
       setFieldValueIfIdle("profileInstagram", socials.instagram || "");
       setFieldValueIfIdle("profileTiktok", socials.tiktok || "");
       setFieldValueIfIdle("profileSnapchat", socials.snapchat || "");
@@ -30826,10 +30903,6 @@
         showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
         return;
       }
-      const galleryPhotoUrls = document.getElementById("profileGalleryPhotos").value
-        .split(/\n|,/)
-        .map((value) => value.trim())
-        .filter(Boolean);
       let profile = oldProfile;
       if (targetMarket !== oldMarket) {
         oldMarket.dancers = oldMarket.dancers.filter((item) => item !== oldProfile);
@@ -30843,10 +30916,24 @@
         city: newCity,
         venue: venueName,
         distance: venue?.distance || profile.distance,
-        socials: normalizedSocials,
-        mainPhotoUrl: document.getElementById("profileMainPhoto").value.trim(),
-        galleryPhotoUrls
+        socials: normalizedSocials
       });
+      const existingSocials = normalizeSubmittedSocials(oldProfile);
+      profile.socialLinks = Object.entries(normalizedSocials)
+        .filter(([, url]) => Boolean(url))
+        .map(([platform, url], index) => {
+          const existingSocial = existingSocials.find((social) => social.platform === platform);
+          const unchangedApproved = existingSocial?.url === url && normalizedReviewStatus(existingSocial.reviewStatus) === "approved";
+          return {
+            id: existingSocial?.id || `${profile.id || profile.name}-social-${platform}-${index}`,
+            platform,
+            url,
+            handle: socialHandleFromUrl(url),
+            isActive: true,
+            reviewStatus: unchangedApproved ? "approved" : "pending",
+            reviewNotes: unchangedApproved ? existingSocial.reviewNotes || "" : ""
+          };
+        });
       Object.assign(dancerSignupSocials, normalizedSocials);
       document.getElementById("dancerStageName").value = stageName;
       updateDancerDashboardName(stageName);
@@ -32324,7 +32411,26 @@
       const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       const sortOrder = target === "main" ? 0 : (profile?.galleryPhotoUrls || []).length + 1;
       const data = await uploadSetupPhotoFile(file, target === "main", sortOrder);
-      if (profile) profile.photoStatus = "Pending";
+      if (profile) {
+        const uploaded = data?.photo || data || {};
+        const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || "";
+        const photo = {
+          id: uploaded.id || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
+          imageUrl,
+          image_url: imageUrl,
+          isPrimary: target === "main",
+          reviewStatus: "pending",
+          review_status: "pending",
+          reviewNotes: "",
+          review_notes: "",
+          sortOrder
+        };
+        profile.submittedPhotos = [
+          photo,
+          ...(profile.submittedPhotos || []).filter((item) => target !== "main" || !(item.isPrimary || item.is_primary))
+        ].slice(0, 6);
+        profile.photoStatus = "Pending";
+      }
       return data;
     }
 
@@ -33215,8 +33321,10 @@
     }
 
     function adminSubmittedSocialsMarkup(profile) {
-      const socials = normalizeSubmittedSocials(profile);
-      if (!socials.length) return '<div class="locked">No social links submitted.</div>';
+      const socials = normalizeSubmittedSocials(profile).filter((social) =>
+        !isFinalAdminReviewStatus(normalizedReviewStatus(social.reviewStatus))
+      );
+      if (!socials.length) return '<div class="locked">No newly submitted social links waiting for review.</div>';
       return `<div class="admin-social-icons">${socials.map((social, index) => {
         const url = social.url || "#";
         const handle = social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url;
@@ -33270,8 +33378,11 @@
       const photos = profile.submittedPhotos?.length
         ? profile.submittedPhotos
         : (profile.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, sortOrder: index }));
-      if (!photos.length) return '<div class="locked">No photos submitted.</div>';
-      return photos.slice(0, 6).map((photo, index) => {
+      const reviewablePhotos = photos.filter((photo) =>
+        !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))
+      );
+      if (!reviewablePhotos.length) return '<div class="locked">No newly submitted photos waiting for review.</div>';
+      return reviewablePhotos.slice(0, 6).map((photo, index) => {
         const imageUrl = photo.imageUrl || photo.image_url || "";
         const targetId = photo.id || `${profile.id || profile.name}-photo-${index}`;
         const key = `photo:${targetId}`;
