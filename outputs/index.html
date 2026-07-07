@@ -27649,18 +27649,30 @@
     function openDancerReviewIssue(notification) {
       if (!isActionableDancerReviewNotification(notification)) return false;
       const payload = notification.payload || {};
+      closeCustomerQuickPanels();
+      if (!dancerDashboard.classList.contains("show")) {
+        closeDashboard();
+        closeVenueDashboard();
+        openDancerDashboard();
+      }
       setupChecklistExpanded = true;
       activeSetupStep = setupStepForNotificationPayload(payload);
       renderDancerSetup();
       showToast(payload.notes ? `Fix requested: ${payload.notes}` : "Open the highlighted item and resubmit it.");
       window.requestAnimationFrame(() => {
-        const input = document.querySelector(inputSelectorForReviewPayload(payload));
-        const target = input || document.querySelector(`#setupChecklist [data-step="${activeSetupStep}"]`) || document.getElementById("setupChecklistWrap");
+        const selector = inputSelectorForReviewPayload(payload);
+        const input = selector ? document.querySelector(selector) : null;
+        const reviewNote = document.querySelector(".review-feedback-item.is-rejected");
+        const stepCard = document.querySelector(`#setupChecklist [data-step="${activeSetupStep}"]`);
+        const target = input || reviewNote || stepCard || document.getElementById("setupChecklistWrap");
         target?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
         if (input) {
           input.focus({ preventScroll: true });
           input.classList.add("field-needs-review");
           window.setTimeout(() => input.classList.remove("field-needs-review"), 2400);
+        } else if (target) {
+          target.classList.add("field-needs-review");
+          window.setTimeout(() => target.classList.remove("field-needs-review"), 2400);
         }
       });
       if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
