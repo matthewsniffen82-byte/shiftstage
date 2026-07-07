@@ -2627,6 +2627,21 @@
       background: rgba(70, 10, 38, 0.42);
     }
 
+    .approved-tool-dropdown .review-feedback-item[data-fix-target] {
+      cursor: pointer;
+    }
+
+    .approved-tool-dropdown .review-feedback-item[data-fix-target]:hover,
+    .approved-tool-dropdown .review-feedback-item[data-fix-target]:focus-visible {
+      border-color: rgba(255, 79, 195, 0.72);
+      box-shadow: 0 0 18px rgba(255, 79, 195, 0.16);
+    }
+
+    .dancer-fix-highlight {
+      outline: 2px solid rgba(255, 79, 195, 0.9) !important;
+      box-shadow: 0 0 0 4px rgba(255, 79, 195, 0.18), 0 0 24px rgba(255, 79, 195, 0.26) !important;
+    }
+
     .dancer-photo-review-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -29141,6 +29156,19 @@
       return latestDancerReviews().some((review) => review.status === "rejected");
     }
 
+    function reviewFixTarget(type = "") {
+      if (type.startsWith("photo:")) return `dancer-photo-${type.split(":").slice(1).join(":")}`;
+      if (type === "photos") return "dancer-photo-review-card";
+      if (type.startsWith("social_link:")) {
+        const targetId = type.split(":").slice(1).join(":");
+        const profile = activeDancerProfile() || null;
+        const social = normalizeSubmittedSocials(profile).find((item) => item.id === targetId);
+        return social ? `profile-${social.platform}` : "profile-socials";
+      }
+      if (type === "profile") return "profile-socials";
+      return "";
+    }
+
     function dancerReviewFeedbackMarkup() {
       if (!liveDancerReviews.length) {
         return '<div class="rule-note">No platform review notes yet. Dancr will update this step after ID, selfie, and photo review.</div>';
@@ -29181,12 +29209,14 @@
         const type = String(review.reviewType || review.review_type || "review");
         const date = formatBillingDate(review.reviewedAt || review.createdAt);
         const reason = review.notes || "No reason added.";
+        const fixTarget = reviewFixTarget(type);
         return `
-          <div class="info-tile review-feedback-item is-rejected">
+          <button class="info-tile review-feedback-item is-rejected" type="button" ${fixTarget ? `data-fix-target="${displayText(fixTarget)}"` : ""}>
             <span class="review-status">needs fix</span>
             <strong>${displayText(reviewDisplayLabel(type))}</strong>
             <div class="meta">${displayText(reason)}${date ? ` · ${date}` : ""}</div>
-          </div>
+            <div class="meta">Tap to jump to the exact item.</div>
+          </button>
         `;
       }).join("")}</div>`;
     }
@@ -29231,6 +29261,17 @@
         scheduleMount.appendChild(shiftForm);
         if (shiftResult) scheduleMount.appendChild(shiftResult);
       }
+    }
+
+    function jumpToDancerFixTarget(targetKey = "") {
+      if (!targetKey) return;
+      const target = document.querySelector(`[data-fix-anchor="${CSS.escape(targetKey)}"]`)
+        || (targetKey.startsWith("dancer-photo-") ? document.querySelector('[data-fix-anchor="dancer-photo-review-card"]') : null);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      target.classList.add("dancer-fix-highlight");
+      if (typeof target.focus === "function") target.focus({ preventScroll: true });
+      window.setTimeout(() => target.classList.remove("dancer-fix-highlight"), 2200);
     }
 
     function buildRankingNotifications(profile, city, metrics) {
@@ -30814,6 +30855,7 @@
 
     function approvedDancerPhotoReviewMarkup(profile) {
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => ({
+        id: photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`,
         imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
         label: index === 0 ? "Submitted main photo" : `Submitted photo ${index + 1}`,
         status: normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending"),
@@ -30833,7 +30875,7 @@
             const rejected = photo.status === "rejected";
             const statusText = rejected ? "Not approved" : photo.status === "approved" ? "Approved" : "Pending approval";
             return `
-              <div class="dancer-photo-review-card ${rejected ? "is-rejected" : ""}">
+              <div class="dancer-photo-review-card ${rejected ? "is-rejected" : ""}" ${rejected ? `data-fix-anchor="${displayText(photo.id ? `dancer-photo-${photo.id}` : "dancer-photo-review-card")}"` : ""}>
                 ${photo.imageUrl ? `<img src="${displayText(photo.imageUrl)}" alt="${displayText(photo.label)}">` : ""}
                 <strong>${displayText(photo.label)}</strong>
                 <span>${displayText(statusText)}</span>
@@ -30870,6 +30912,23 @@
       setFieldValueIfIdle("profileSnapchat", socials.snapchat || "");
       setFieldValueIfIdle("profileOnlyfans", socials.onlyfans || "");
       setFieldValueIfIdle("profileX", socials.x || "");
+      normalizeSubmittedSocials(profile).forEach((social) => {
+        const input = document.getElementById(`profile${social.platform.charAt(0).toUpperCase()}${social.platform.slice(1)}`);
+        if (!input) return;
+        const rejected = normalizedReviewStatus(social.reviewStatus) === "rejected";
+        input.dataset.fixAnchor = `profile-${social.platform}`;
+        input.classList.toggle("dancer-fix-highlight", false);
+        let note = input.parentElement?.querySelector(".social-review-reason");
+        if (!note && rejected) {
+          note = document.createElement("div");
+          note.className = "field-note social-review-reason";
+          input.insertAdjacentElement("afterend", note);
+        }
+        if (note) {
+          note.hidden = !rejected;
+          note.textContent = rejected ? `Not approved: ${social.reviewNotes || "No reason added."}` : "";
+        }
+      });
     }
 
     async function saveApprovedDancerProfile() {
@@ -35499,6 +35558,12 @@
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      const fixTargetButton = event.target.closest("[data-fix-target]");
+      if (fixTargetButton) {
+        event.preventDefault();
+        jumpToDancerFixTarget(fixTargetButton.dataset.fixTarget);
+        return;
+      }
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
       if (dancerControlAction) {
         handleDancerControlAction(dancerControlAction.dataset.dancerControlAction);
