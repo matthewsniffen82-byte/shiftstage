@@ -26337,6 +26337,7 @@
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
     let activeApprovedToolDropdown = "";
+    let shiftCheckInMessage = "";
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -30805,7 +30806,7 @@
 
       const checkedIn = isCheckedInShift(profile);
       const ended = profile.workingStatus === "ended" || profile.endedAt;
-      const statusLabel = ended ? "Shift Ended" : checkedIn ? "Checked In" : "Self-Reported";
+      const statusLabel = ended ? "Shift Ended" : checkedIn ? "Checked In" : "Not checked in";
       const canAttemptCheckIn = !checkedIn && !ended;
       const canCheckInNow = canAttemptCheckIn && checkInWindowOpen(profile);
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
@@ -30824,6 +30825,7 @@
           <span class="shift-verification-copy">${displayText(displayShiftTime(profile.time) || "Shift time pending")}</span>
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
+        <div class="shift-verification-copy" id="shiftCheckInStatus" role="status" aria-live="polite">${displayText(shiftCheckInMessage)}</div>
         <div class="shift-action-grid">
           ${canAttemptCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
@@ -30846,8 +30848,15 @@
     async function handleShiftVerificationAction(action, trigger = null) {
       const profile = activeDancerProfile();
       if (!profile) return;
+      const status = document.getElementById("shiftCheckInStatus");
+      const setCheckInStatus = (message = "") => {
+        shiftCheckInMessage = message;
+        if (status) status.textContent = message;
+      };
+      if (trigger) trigger.disabled = true;
       try {
         if (action === "end") {
+          setCheckInStatus("Ending shift...");
           const endedAt = new Date().toISOString();
           applyShiftState(profile, {
             workingStatus: "ended",
@@ -30862,13 +30871,18 @@
             const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
             if (data?.shift) applyShiftState(profile, data.shift);
           }
+          setCheckInStatus("Shift ended. QR commission tracking is stopped.");
           showToast("Shift ended");
         } else if (action === "check-in") {
+          setCheckInStatus("Checking posted shift hours...");
           if (!checkInWindowOpen(profile)) {
+            setCheckInStatus("Check-in is only available during your posted shift hours.");
             showToast("Check-in opens during your posted shift hours.");
             return;
           }
+          setCheckInStatus("Asking your phone for location permission...");
           const coords = await requestShiftPosition();
+          setCheckInStatus("Checking your location against the venue geofence...");
           const checkedInAt = new Date().toISOString();
           if (profile.shiftId && isDancerSession()) {
             const data = await postAuthenticatedJson("/api/dancer/shifts/check-in", {
@@ -30889,10 +30903,15 @@
               commissionTrackingStoppedAt: ""
             });
           }
+          setCheckInStatus("Checked in. Your shift can now appear in Working Now.");
           showToast("Checked in");
         }
       } catch (error) {
-        showToast(error.message || "Could not update shift");
+        const message = error.message || "Could not update shift";
+        setCheckInStatus(message);
+        showToast(message);
+      } finally {
+        if (trigger) trigger.disabled = false;
       }
       render();
       renderDancerManagement();
@@ -31123,6 +31142,7 @@
         return;
       }
       if (action === "remove") {
+        shiftCheckInMessage = "";
         Object.assign(profile, {
           scheduled: false,
           tonight: false,
@@ -31175,6 +31195,7 @@
       const existing = market.dancers.find((profile) => profile.name === name);
       const wasScheduled = Boolean(existing?.scheduled);
       const range = shiftIsoRange(dateValue, startValue, endValue);
+      shiftCheckInMessage = "Shift posted. Tap Check in now when you are ready to verify your location.";
       const shiftData = {
         name,
         status: "Verified",

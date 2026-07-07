@@ -88,7 +88,7 @@ function DancerDirectoryCard({ dancer }: { dancer: DancerCard }) {
 function locationStatusLabel(status?: string | null) {
   if (status === "club_confirmed") return "Club Confirmed";
   if (status === "location_confirmed") return "Checked in";
-  return "Self-Reported";
+  return "Not checked in";
 }
 
 function initials(value: string) {

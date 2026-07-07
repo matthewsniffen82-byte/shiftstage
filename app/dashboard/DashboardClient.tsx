@@ -764,6 +764,7 @@ function DancerShiftPanel({ city }: { city: string }) {
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [status, setStatus] = useState("");
+  const [checkInStatus, setCheckInStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeCheckInId, setActiveCheckInId] = useState("");
   const [editingShiftId, setEditingShiftId] = useState("");
@@ -821,6 +822,7 @@ function DancerShiftPanel({ city }: { city: string }) {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to post shift.");
       setStatus(`Shift posted. ${data.broadcastRecipients || 0} followers notified.`);
+      setCheckInStatus("Shift posted. Tap Check in now when you are ready to verify your location.");
       setStartsAt("");
       setEndsAt("");
       await loadShifts(session.accessToken);
@@ -919,8 +921,10 @@ function DancerShiftPanel({ city }: { city: string }) {
 
     setActiveCheckInId(shiftId);
     setStatus("");
+    setCheckInStatus("Asking your phone for location permission...");
     try {
       const position = await readBrowserLocation();
+      setCheckInStatus("Checking your location against the venue geofence...");
       const response = await fetch("/api/dancer/shifts/check-in", {
         method: "POST",
         headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
@@ -932,13 +936,17 @@ function DancerShiftPanel({ city }: { city: string }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check in.");
+      setCheckInStatus("Checked in. Your shift can now appear in Working Now.");
       setStatus("Checked in.");
       await loadShifts(session.accessToken);
     } catch (error) {
       if ((error as any)?.code === 1) {
+        setCheckInStatus("Location permission is required to check in.");
         setStatus("Location permission is required to check in.");
       } else {
-        setStatus(error instanceof Error ? error.message : "Unable to check in.");
+        const message = error instanceof Error ? error.message : "Unable to check in.";
+        setCheckInStatus(message);
+        setStatus(message);
       }
     } finally {
       setActiveCheckInId("");
@@ -962,10 +970,13 @@ function DancerShiftPanel({ city }: { city: string }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check out.");
+      setCheckInStatus("Checked out. QR commission tracking is stopped.");
       setStatus("Checked out. This shift is no longer location confirmed.");
       await loadShifts(session.accessToken);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to check out.");
+      const message = error instanceof Error ? error.message : "Unable to check out.";
+      setCheckInStatus(message);
+      setStatus(message);
     } finally {
       setActiveCheckInId("");
     }
@@ -1001,6 +1012,7 @@ function DancerShiftPanel({ city }: { city: string }) {
             {activeCheckInId === String(activeShift.id) ? "Saving..." : "Check out"}
           </button>
         ) : null}
+        {checkInStatus ? <small className="shift-checkin-status">{checkInStatus}</small> : null}
       </div>
       <form onSubmit={postShift}>
         <label>
@@ -1144,7 +1156,7 @@ function dashboardShiftStatus(shift: Record<string, any>) {
   if (shift.location_status === "location_confirmed" && shift.checked_in_at && new Date(shift.ends_at).getTime() >= Date.now()) {
     return "Checked in";
   }
-  return "Self-Reported";
+  return "Not checked in";
 }
 
 function venueName(shift: Record<string, any>) {
@@ -1645,6 +1657,7 @@ function DashboardStyles() {
       .shift-checkin-card strong { color: #fff; font-size: 18px; }
       .shift-checkin-card small { color: #cfc5de; line-height: 1.45; }
       .shift-checkin-card button { min-height: 44px; border: 0; border-radius: 8px; color: #050507; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 16px; }
+      .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; color: #94e5ff; font-weight: 850; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }
