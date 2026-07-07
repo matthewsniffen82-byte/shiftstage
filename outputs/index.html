@@ -25855,12 +25855,6 @@
       { name: "Venue Ops", role: "Venue", status: "Verification pending" }
     ];
 
-    const reportQueue = [
-      { id: "r1", name: "Fake profile report", target: "Ivy Mars", status: "Open" },
-      { id: "r2", name: "Inappropriate content", target: "Rox Quinn", status: "Open" },
-      { id: "r3", name: "Reported user", target: "Talia Moon", status: "Open" }
-    ];
-
     Object.values(markets).forEach((market) => {
       market.dancers.forEach((profile, index) => {
         profile.photoStatus ??= profile.status === "Verified" ? "Approved" : "Pending";
@@ -32644,13 +32638,12 @@
     }
 
     function adminReportRow(report) {
-      const reason = report.reason || report.name || "Content report";
-      const target = report.targetLabel || report.target || "Reported target";
+      const reason = report.reason || "Content report";
+      const target = report.targetLabel || "Reported target";
       const details = report.details ? `<div class="meta">${displayText(report.details).replace(/\n/g, "<br>")}</div>` : "";
-      const isLiveReport = Boolean(report.targetType || report.createdAt);
       const canRemoveTarget = report.targetType !== "contact_message";
       return `
-        <article class="admin-item" data-report="${displayText(report.id)}" data-live-report="${isLiveReport ? "true" : "false"}" data-report-target="${displayText(target)}">
+        <article class="admin-item" data-report="${displayText(report.id)}" data-live-report="true" data-report-target="${displayText(target)}">
           <div class="row"><div><h3>${displayText(reason)}</h3><div class="meta">${displayText(target)}</div>${details}</div><span class="badge pending">Open</span></div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
@@ -32693,9 +32686,7 @@
         ? pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index)).join("")
         : '<div class="locked">No pending dancers.</div>';
 
-      const visibleReports = liveAdminReports.length
-        ? liveAdminReports.filter((report) => report.status === "open")
-        : reportQueue.filter((report) => report.status === "Open");
+      const visibleReports = liveAdminReports.filter((report) => report.status === "open");
       document.getElementById("adminReports").innerHTML = visibleReports.map(adminReportRow).join("") || '<div class="locked">No reported users or content.</div>';
       renderAdminSupportInbox();
 
@@ -33213,29 +33204,16 @@
         return;
       }
       const reportId = host?.dataset.report;
-      const isLiveReport = host?.dataset.liveReport === "true" || liveAdminReports.some((item) => item.id === reportId);
-      const report = isLiveReport
-        ? liveAdminReports.find((item) => item.id === reportId)
-        : reportQueue.find((item) => item.id === reportId);
+      const report = liveAdminReports.find((item) => item.id === reportId);
       if (action === "resolve-report" && report) {
-        if (isLiveReport) {
-          saveLiveAdminReportAction(reportId, "resolved");
-        } else {
-          report.status = "Resolved";
-          refreshAfterAdminAction("Report resolved");
-        }
+        saveLiveAdminReportAction(reportId, "resolved");
         return;
       }
       if (action === "remove-reported" && report) {
         const targetName = report.targetLabel || report.target || host?.dataset.reportTarget;
         const target = allProfiles().find(({ profile }) => profile.name === targetName);
         if (target) target.profile.hidden = true;
-        if (isLiveReport) {
-          saveLiveAdminReportAction(reportId, "removed");
-        } else {
-          report.status = "Resolved";
-          refreshAfterAdminAction("Reported target removed");
-        }
+        saveLiveAdminReportAction(reportId, "removed");
       }
     }
 
