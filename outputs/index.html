@@ -24986,10 +24986,10 @@
             <summary class="dancer-control-summary">
               <span>
                 <span class="eyebrow">Dancer controls</span>
-                <strong>Manage profile and shifts</strong>
+                <strong>Edit profile, photos, socials, and shifts</strong>
                 <small>Post shifts, edit photos, update socials, share your profile, and manage your public stage name.</small>
               </span>
-              <span class="control-summary-chip">Open tools</span>
+              <span class="control-summary-chip">Profile tools</span>
             </summary>
             <div class="dancer-control-body">
               <div class="dancer-control-grid">
@@ -28182,27 +28182,34 @@
     }
 
     function mergeLiveDancerDashboardMetrics(base, analytics, profile, city) {
-      if (!base || !analytics) return base;
+      if (!analytics) return null;
       const social = analytics.socialClicks30Days || {};
+      const baseProfile = base || dancerDashboardMetrics(profile, city);
       const merged = {
-        ...base,
-        currentRank: analytics.currentRank || base.currentRank,
-        highestRankAchieved: analytics.highestRank || base.highestRankAchieved,
-        bestRankThisWeek: analytics.bestRankThisWeek || base.bestRankThisWeek,
-        rankChangeYesterday: analytics.rankChangeSinceYesterday ?? base.rankChangeYesterday,
-        profileViews30: liveMetricNumber(analytics.profileViews30Days, base.profileViews30),
-        newFollowers: liveMetricNumber(analytics.followersGained30Days, base.newFollowers),
-        scheduleViews30: liveMetricNumber(analytics.scheduleViews30Days, base.scheduleViews30),
-        directionRequests30: liveMetricNumber(analytics.directionRequests30Days, base.directionRequests30),
-        goingTonightClicks: liveMetricNumber(analytics.goingSignals30Days, base.goingTonightClicks),
-        favoritesAdded: liveMetricNumber(analytics.favoritesAdded30Days, base.favoritesAdded),
-        notifications: liveMetricNumber(analytics.notificationsSent30Days, base.notifications),
-        notificationOpens: liveMetricNumber(analytics.notificationsOpened30Days, base.notificationOpens),
-        instagramClicks: liveMetricNumber(social.instagram, base.instagramClicks),
-        snapchatClicks: liveMetricNumber(social.snapchat, base.snapchatClicks),
-        tiktokClicks: liveMetricNumber(social.tiktok, base.tiktokClicks),
-        onlyfansClicks: liveMetricNumber(social.onlyfans, base.onlyfansClicks),
-        xClicks: liveMetricNumber(social.x, base.xClicks)
+        ...baseProfile,
+        currentRank: liveMetricNumber(analytics.currentRank, 0),
+        highestRankAchieved: liveMetricNumber(analytics.highestRank, 0),
+        bestRankThisWeek: liveMetricNumber(analytics.bestRankThisWeek, 0),
+        rankChangeYesterday: liveMetricNumber(analytics.rankChangeSinceYesterday, 0),
+        profileViews30: liveMetricNumber(analytics.profileViews30Days, 0),
+        newFollowers: liveMetricNumber(analytics.followersGained30Days, 0),
+        scheduleViews30: liveMetricNumber(analytics.scheduleViews30Days, 0),
+        directionRequests30: liveMetricNumber(analytics.directionRequests30Days, 0),
+        goingTonightClicks: liveMetricNumber(analytics.goingSignals30Days, 0),
+        favoritesAdded: liveMetricNumber(analytics.favoritesAdded30Days, 0),
+        notifications: liveMetricNumber(analytics.notificationsSent30Days, 0),
+        notificationOpens: liveMetricNumber(analytics.notificationsOpened30Days, 0),
+        instagramClicks: liveMetricNumber(social.instagram, 0),
+        snapchatClicks: liveMetricNumber(social.snapchat, 0),
+        tiktokClicks: liveMetricNumber(social.tiktok, 0),
+        onlyfansClicks: liveMetricNumber(social.onlyfans, 0),
+        xClicks: liveMetricNumber(social.x, 0),
+        clubPageClicks: 0,
+        searchAppearances: 0,
+        nearbyViews: 0,
+        returningViewers: 0,
+        peakHourViews: 0,
+        clubPerformance: []
       };
       merged.weeklyViews = Math.round(merged.profileViews30 * 0.28);
       merged.weeklyFollowers = Math.round(merged.newFollowers * 0.28);
@@ -28220,13 +28227,7 @@
         favoritesAdded: merged.favoritesAdded,
         goingTonightClicks: merged.goingTonightClicks
       });
-      merged.rankingNotifications = buildRankingNotifications(profile, city, {
-        currentRank: merged.currentRank,
-        previousRank: merged.previousRank,
-        rankChangeYesterday: merged.rankChangeYesterday,
-        firstTimeTrending: merged.firstTimeTrending,
-        biggestMover: merged.biggestMover
-      });
+      merged.rankingNotifications = [];
       merged.dancrScore = Math.min(99, Math.max(0, Math.round(
         48 +
         Math.min(18, merged.followers / 520) +
@@ -32169,27 +32170,27 @@
         ].sort((a, b) => b.clicks - a.clicks);
         const bestSocial = socialPlatforms[0] || { name: "Social links", clicks: 0 };
         const highIntentActions = dashboardMetrics.directionRequests30 + dashboardMetrics.goingTonightClicks;
-        const weekOverWeekViews = seededRange(`${activeProfile.name}|views-wow|${city}`, 8, 37);
-        const previousFollowers = Math.max(1, dashboardMetrics.followers - dashboardMetrics.newFollowers);
-        const followerGrowthPercent = Math.max(3, Math.round((dashboardMetrics.newFollowers / previousFollowers) * 1000) / 10);
         const notificationOpenRate = Math.round((dashboardMetrics.notificationOpens / Math.max(1, dashboardMetrics.notifications)) * 100);
         const scheduleConversionRate = Math.round((dashboardMetrics.goingTonightClicks / Math.max(1, dashboardMetrics.scheduleViews30)) * 1000) / 10;
         const searchImpressions = dashboardMetrics.searchAppearances + dashboardMetrics.nearbyViews;
         const strongestClub = dashboardMetrics.clubPerformance.find((club) => club.name === dashboardMetrics.venue) || dashboardMetrics.clubPerformance[0] || { name: dashboardMetrics.venue, avgViews: 0 };
-        const weeklyStartRank = liveDancerWeeklyReport?.startRank || dashboardMetrics.weeklyStartRank;
-        const weeklyEndRank = liveDancerWeeklyReport?.currentRank || dashboardMetrics.weeklyEndRank;
-        const weeklyFollowers = liveDancerWeeklyReport?.followersGained ?? dashboardMetrics.weeklyFollowers;
-        const weeklyViews = liveDancerWeeklyReport?.profileViews ?? dashboardMetrics.weeklyViews;
-        const weeklyGoing = liveDancerWeeklyReport?.goingSignals ?? dashboardMetrics.weeklyGoing;
-        const weeklySocialClicks = liveDancerWeeklyReport?.socialClicks ?? Math.round(totalSocialClicks * .28);
-        const weeklyNotificationOpens = liveDancerWeeklyReport?.notificationOpens ?? Math.round(dashboardMetrics.notificationOpens * .26);
+        const weeklyStartRank = liveMetricNumber(liveDancerWeeklyReport?.startRank, 0);
+        const weeklyEndRank = liveMetricNumber(liveDancerWeeklyReport?.currentRank, 0);
+        const weeklyFollowers = liveMetricNumber(liveDancerWeeklyReport?.followersGained, 0);
+        const weeklyViews = liveMetricNumber(liveDancerWeeklyReport?.profileViews, 0);
+        const weeklyGoing = liveMetricNumber(liveDancerWeeklyReport?.goingSignals, 0);
+        const weeklySocialClicks = liveMetricNumber(liveDancerWeeklyReport?.socialClicks, 0);
+        const weeklyNotificationOpens = liveMetricNumber(liveDancerWeeklyReport?.notificationOpens, 0);
+        const weeklyRankText = weeklyStartRank || weeklyEndRank ? `${rankLabel(weeklyStartRank)} -> ${rankLabel(weeklyEndRank)}` : "No rank yet";
         const qrOpens = liveDancerDeals?.qrOpens || 0;
         const qrRedeemed = liveDancerDeals?.redeemed || 0;
         const earnedCommissionCents = liveDancerDeals?.earnedCommissionCents || 0;
         const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
+        const hasTrafficData = dashboardMetrics.profileViews30 || dashboardMetrics.scheduleViews30 || dashboardMetrics.directionRequests30 || highIntentActions || totalSocialClicks;
 
-        document.getElementById("dancerValueMessage").innerHTML =
-          `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`;
+        document.getElementById("dancerValueMessage").innerHTML = hasTrafficData
+          ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`
+          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and QR commissions will appear here after customers interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
           metricCardMarkup(rankMovementText(dashboardMetrics.rankChangeYesterday), "Rank change this week"),
@@ -32197,28 +32198,31 @@
           metricCardMarkup(rankLabel(dashboardMetrics.bestRankThisWeek), "Best rank this week")
         ].join("");
         document.getElementById("dancerValueMetrics").innerHTML = [
-          metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), `Profile views · +${weekOverWeekViews}% WoW`),
-          metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), `Followers gained · +${followerGrowthPercent}%`),
+          metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
+          metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
           metricCardMarkup(compactNumber(dashboardMetrics.scheduleViews30), "Schedule views"),
           metricCardMarkup(compactNumber(dashboardMetrics.directionRequests30), "Direction requests · strongest value metric"),
           metricCardMarkup(compactNumber(dashboardMetrics.goingTonightClicks), "Going Now clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.favoritesAdded), "Favorites added")
         ].join("");
         document.getElementById("dancerCustomerImpact").innerHTML = `${compactNumber(highIntentActions)} <span>actions</span>`;
-        document.getElementById("dancerCustomerImpactDetail").textContent =
-          `Dancr generated ${compactNumber(highIntentActions)} high-intent customer actions for you this month.`;
-        document.getElementById("dancerWeeklySummary").textContent =
-          `Monday report: #${weeklyStartRank} to #${weeklyEndRank}, ${compactNumber(weeklyFollowers)} new followers, ${compactNumber(weeklyViews)} profile views, and ${compactNumber(weeklyGoing)} Going Now signals.`;
+        document.getElementById("dancerCustomerImpactDetail").textContent = highIntentActions
+          ? `Dancr generated ${compactNumber(highIntentActions)} high-intent customer actions for you this month.`
+          : "No high-intent customer actions yet. Direction requests and Going Now clicks will appear here.";
+        document.getElementById("dancerWeeklySummary").textContent = liveDancerWeeklyReport
+          ? `Monday report: ${weeklyRankText}, ${compactNumber(weeklyFollowers)} new followers, ${compactNumber(weeklyViews)} profile views, and ${compactNumber(weeklyGoing)} Going Now signals.`
+          : "No weekly report data yet. Once customer activity starts, this will show real weekly rank, follower, profile view, social click, and notification data.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
-          metricCardMarkup(`#${weeklyStartRank} → #${weeklyEndRank}`, "Previous rank → current rank"),
+          metricCardMarkup(weeklyRankText, "Previous rank -> current rank"),
           metricCardMarkup(compactNumber(weeklyFollowers), "New followers"),
           metricCardMarkup(compactNumber(weeklyViews), "Profile views"),
           metricCardMarkup(compactNumber(weeklyGoing), "Going Now signals"),
           metricCardMarkup(compactNumber(weeklySocialClicks), "Social clicks"),
           metricCardMarkup(compactNumber(weeklyNotificationOpens), "Notification opens")
         ].join("");
-        document.getElementById("dancerClubSummary").textContent =
-          `${dashboardMetrics.venue} is your strongest venue with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`;
+        document.getElementById("dancerClubSummary").textContent = dashboardMetrics.directionRequests30 || dashboardMetrics.clubPageClicks
+          ? `${dashboardMetrics.venue} is your strongest venue with ${compactNumber(dashboardMetrics.directionRequests30)} direction requests.`
+          : "No live club traffic yet. Club page clicks and direction requests will appear here.";
         document.getElementById("dancerClubMetrics").innerHTML = [
           metricCardMarkup(dashboardMetrics.venue, "Strongest venue"),
           metricCardMarkup(compactNumber(dashboardMetrics.clubPageClicks), "Club page clicks"),
@@ -32242,10 +32246,12 @@
         document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
           ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
           : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No QR commission activity yet</strong><p>When customers redeem a profile QR deal, the commission and venue will show here.</p></span></article>`;
-        document.getElementById("dancerSocialSummary").textContent = `${bestSocial.name} is your top-performing link this month.`;
+        document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
+          ? `${bestSocial.name} is your top-performing link this month.`
+          : "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup(compactNumber(totalSocialClicks), "Total social clicks"),
-          metricCardMarkup(bestSocial.name, "Best performing platform"),
+          metricCardMarkup(totalSocialClicks ? bestSocial.name : "None yet", "Best performing platform"),
           metricCardMarkup(compactNumber(dashboardMetrics.instagramClicks), "Instagram clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.snapchatClicks), "Snapchat clicks"),
           metricCardMarkup(compactNumber(dashboardMetrics.tiktokClicks), "TikTok clicks"),
@@ -32270,7 +32276,84 @@
           : dashboardMetrics.rankingNotifications;
         document.getElementById("dancerRankingNotifications").innerHTML = rankingNotifications.length
           ? rankingNotifications.map(rankingNotificationMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">⚡</span><span><strong>Ranking milestones ready</strong><p>We will notify you when you enter Top 10, move up 3+ spots, or hit #1.</p></span></article>`;
+          : `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
+      } else if (approved) {
+        document.getElementById("dancerValueMessage").textContent =
+          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and QR commissions will appear here after customers interact with your profile.";
+        document.getElementById("dancerRankMetrics").innerHTML = [
+          metricCardMarkup("No rank yet", `${city} rank`),
+          metricCardMarkup("No change", "Rank change this week"),
+          metricCardMarkup("No rank yet", "Highest rank achieved"),
+          metricCardMarkup("No rank yet", "Best rank this week")
+        ].join("");
+        document.getElementById("dancerValueMetrics").innerHTML = [
+          metricCardMarkup("0", "Profile views"),
+          metricCardMarkup("0", "Followers gained"),
+          metricCardMarkup("0", "Schedule views"),
+          metricCardMarkup("0", "Direction requests"),
+          metricCardMarkup("0", "Going Now clicks"),
+          metricCardMarkup("0", "Favorites added")
+        ].join("");
+        document.getElementById("dancerCustomerImpact").innerHTML = `0 <span>actions</span>`;
+        document.getElementById("dancerCustomerImpactDetail").textContent = "No high-intent customer actions yet.";
+        document.getElementById("dancerWeeklySummary").textContent = "No weekly report data yet. Once customer activity starts, this will show real weekly profile and ranking activity.";
+        document.getElementById("dancerWeeklyMetrics").innerHTML = [
+          metricCardMarkup("No rank yet", "Previous rank -> current rank"),
+          metricCardMarkup("0", "New followers"),
+          metricCardMarkup("0", "Profile views"),
+          metricCardMarkup("0", "Going Now signals"),
+          metricCardMarkup("0", "Social clicks"),
+          metricCardMarkup("0", "Notification opens")
+        ].join("");
+        document.getElementById("dancerClubSummary").textContent = "No live club traffic yet. Club page clicks and direction requests will appear here.";
+        document.getElementById("dancerClubMetrics").innerHTML = [
+          metricCardMarkup(activeProfile?.venue || "No venue yet", "Strongest venue"),
+          metricCardMarkup("0", "Club page clicks"),
+          metricCardMarkup("0", "Direction requests"),
+          metricCardMarkup("0", "Average views by club")
+        ].join("");
+        const qrOpens = liveDancerDeals?.qrOpens || 0;
+        const qrRedeemed = liveDancerDeals?.redeemed || 0;
+        const earnedCommissionCents = liveDancerDeals?.earnedCommissionCents || 0;
+        const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
+        document.getElementById("dancerCommissionSummary").textContent =
+          qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
+            ? `Profile QR scans generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
+            : "QR commission tracking is ready. Earnings appear here when customers scan and redeem a deal from your profile.";
+        document.getElementById("dancerCommissionMetrics").innerHTML = [
+          metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
+          metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
+          metricCardMarkup(compactNumber(qrOpens), "Profile QR scans"),
+          metricCardMarkup(compactNumber(qrRedeemed), "Redeemed QR deals")
+        ].join("");
+        document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
+          ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
+          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No QR commission activity yet</strong><p>When customers redeem a profile QR deal, the commission and venue will show here.</p></span></article>`;
+        document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
+        document.getElementById("dancerSocialMetrics").innerHTML = [
+          metricCardMarkup("0", "Total social clicks"),
+          metricCardMarkup("None yet", "Best performing platform"),
+          metricCardMarkup("0", "Instagram clicks"),
+          metricCardMarkup("0", "Snapchat clicks"),
+          metricCardMarkup("0", "TikTok clicks"),
+          metricCardMarkup("0", "OnlyFans clicks"),
+          metricCardMarkup("0", "X clicks")
+        ].join("");
+        document.getElementById("dancerNotificationMetrics").innerHTML = [
+          metricCardMarkup("0", "Notifications sent"),
+          metricCardMarkup("0", "Notification opens"),
+          metricCardMarkup("0%", "Open rate")
+        ].join("");
+        document.getElementById("dancerAdvancedMetrics").innerHTML = [
+          metricCardMarkup("0", "City search appearances"),
+          metricCardMarkup("0", "Returning viewers"),
+          metricCardMarkup("0", "Peak-hour views"),
+          metricCardMarkup("0%", "Notification open rate"),
+          metricCardMarkup("0%", "Schedule conversion rate"),
+          metricCardMarkup("0", "Search impressions")
+        ].join("");
+        document.getElementById("dancerRankingNotifications").innerHTML =
+          `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else {
         document.getElementById("dancerValueMessage").textContent =
           "Analytics unlock after approval. Dancr tracks profile views, schedule views, follower growth, social clicks, ranking movement, notifications, favorites, Going Now clicks, and club direction requests so you can see what brings customers to you.";
