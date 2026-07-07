@@ -182,8 +182,15 @@ function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: 
   const postedShifts = shifts.filter((item: any) => item.status === "posted");
   const visibleShifts = postedShifts
     .filter((item: any) => isShiftPubliclyVisible(item, now))
-    .filter((item: any) => !options.checkedInOnly || publicLocationStatus(item) !== "self_reported");
-  const shift = visibleShifts.find((item: any) => new Date(item.ends_at).getTime() >= now) || visibleShifts[0] || null;
+    .filter((item: any) => !options.checkedInOnly || publicLocationStatus(item) !== "self_reported")
+    .sort((left: any, right: any) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
+  const liveShift = visibleShifts.find((item: any) => {
+    const startsAt = new Date(item.starts_at).getTime();
+    const endsAt = new Date(item.ends_at).getTime();
+    return startsAt <= now && endsAt >= now && publicLocationStatus(item) !== "self_reported";
+  });
+  const upcomingShift = visibleShifts.find((item: any) => new Date(item.ends_at).getTime() >= now);
+  const shift = liveShift || upcomingShift || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
 

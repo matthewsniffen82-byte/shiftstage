@@ -982,24 +982,28 @@ function DancerShiftPanel({ city }: { city: string }) {
     }
   }
 
+  const postedShifts = shifts
+    .filter((shift) => shift.status === "posted" && !shift.checked_out_at && new Date(shift.ends_at).getTime() >= Date.now())
+    .sort((left, right) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
   const activeShift =
-    shifts.find((shift) => canCheckOutOfShift(shift)) ||
-    shifts.find((shift) => shift.status === "posted" && !shift.checked_in_at && !shift.checked_out_at) ||
+    postedShifts.find((shift) => canCheckOutOfShift(shift)) ||
+    postedShifts.find((shift) => canCheckInToShift(shift)) ||
+    postedShifts[0] ||
     null;
   const isCheckedInToActiveShift = activeShift ? canCheckOutOfShift(activeShift) : false;
 
   return (
     <article className="info-panel shift-panel">
-      <h2>Shifts</h2>
+      <h2>Post Schedule</h2>
       <div className={activeShift ? "shift-checkin-card ready" : "shift-checkin-card"}>
         <span>
-          <strong>{activeShift ? (isCheckedInToActiveShift ? "Checked in" : "Check in available") : "No shift ready for check-in"}</strong>
+          <strong>{activeShift ? (isCheckedInToActiveShift ? "Checked in" : canCheckInToShift(activeShift) ? "Check in available" : "Next posted shift") : "No shift ready for check-in"}</strong>
           <small>
             {activeShift
               ? isCheckedInToActiveShift
                 ? `${venueName(activeShift)} is live in Now. QR commission eligibility is active until you check out or the shift ends.`
                 : `${venueName(activeShift)} is posted. Tap Check in now during your posted hours and Dancr will verify your location at the club.`
-              : "Post your shift hours first. The check-in button appears here during the scheduled hours and requires you to be inside the club geofence."}
+              : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>
         </span>
         {activeShift && !isCheckedInToActiveShift ? (
@@ -1035,12 +1039,16 @@ function DancerShiftPanel({ city }: { city: string }) {
           <input type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} required />
         </label>
         <button type="submit" disabled={isSaving}>
-          {isSaving ? "Posting..." : "Post shift"}
+          {isSaving ? "Posting..." : "Post another shift"}
         </button>
         {status ? <p>{status}</p> : null}
       </form>
+      <div className="shift-list-head">
+        <strong>Posted shifts</strong>
+        <small>All posted shifts live here for editing or deleting. Public cards show only Working Now or the closest upcoming shift.</small>
+      </div>
       <div className="shift-list">
-        {shifts.slice(0, 8).map((shift) => (
+        {postedShifts.map((shift) => (
           <div className="dashboard-shift" key={String(shift.id)}>
             {editingShiftId === String(shift.id) ? (
               <>
@@ -1096,7 +1104,7 @@ function DancerShiftPanel({ city }: { city: string }) {
                         Edit
                       </button>
                       <button type="button" onClick={() => cancelShift(String(shift.id))}>
-                        Cancel
+                        Delete shift
                       </button>
                     </>
                   ) : null}
@@ -1105,7 +1113,7 @@ function DancerShiftPanel({ city }: { city: string }) {
             )}
           </div>
         ))}
-        {!shifts.length ? <p>No shifts posted yet.</p> : null}
+        {!postedShifts.length ? <p>No posted shifts yet. Add as many shifts as you need above.</p> : null}
       </div>
     </article>
   );
@@ -1658,6 +1666,9 @@ function DashboardStyles() {
       .shift-checkin-card small { color: #cfc5de; line-height: 1.45; }
       .shift-checkin-card button { min-height: 44px; border: 0; border-radius: 8px; color: #050507; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 16px; }
       .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; color: #94e5ff; font-weight: 850; }
+      .shift-list-head { display: grid; gap: 4px; padding-top: 4px; }
+      .shift-list-head strong { color: #fff; font-size: 18px; }
+      .shift-list-head small { color: #b9accd; line-height: 1.45; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }

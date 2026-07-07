@@ -25580,7 +25580,7 @@
               <label for="shiftNotes">Notes</label>
               <textarea id="shiftNotes" placeholder="Venue-confirmed schedule note"></textarea>
             </div>
-            <button class="action-btn post-shift-submit" type="submit">Post shift + notify followers</button>
+            <button class="action-btn post-shift-submit" type="submit">Post another shift + notify followers</button>
           </form>
           <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only customers.</div>
           <div class="schedule-broadcast-note">
@@ -25593,7 +25593,7 @@
               <div class="manager-head">
                 <span class="eyebrow">Manage shifts</span>
                 <h4>Posted shifts</h4>
-                <p>Edit the active schedule or remove it from your public profile and venue page.</p>
+                <p>See every posted shift here. Edit or delete any shift; public cards only show Working Now or the closest upcoming shift.</p>
               </div>
               <div class="shift-manager-list" id="dancerShiftManager"></div>
             </section>
@@ -27839,7 +27839,20 @@
         commissionTrackingStoppedAt: item.commissionTrackingStoppedAt || item.commission_tracking_stopped_at || "",
         endedAt: item.endedAt || item.ended_at || "",
         endedReason: item.endedReason || item.ended_reason || "",
-        shiftSummary: item.shiftSummary || item.shift_summary || null
+        shiftSummary: item.shiftSummary || item.shift_summary || null,
+        postedShifts: item.shiftId || item.shiftStartsAt ? [{
+          shiftId: item.shiftId || "",
+          venue: item.venueName || "Venue pending",
+          time: item.shiftLabel || "Schedule pending",
+          shiftLabel: item.shiftLabel || "",
+          shiftStartsAt: item.shiftStartsAt || "",
+          shiftEndsAt: item.shiftEndsAt || "",
+          shiftTimeZone: item.shiftTimeZone || "",
+          locationStatus: item.locationStatus || item.location_status || "self_reported",
+          checkedInAt: item.checkedInAt || item.checked_in_at || "",
+          checkedOutAt: item.checkedOutAt || item.checked_out_at || "",
+          workingStatus: item.workingStatus || item.working_status || "self_reported"
+        }] : []
       };
     }
 
@@ -29382,6 +29395,88 @@
       return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
     }
 
+    function profilePostedShifts(profile) {
+      if (!profile) return [];
+      if (!Array.isArray(profile.postedShifts)) {
+        profile.postedShifts = profile.scheduled ? [{
+          shiftId: profile.shiftId || `shift-${Date.now()}`,
+          venue: profile.venue || "",
+          time: profile.time || "",
+          shiftDate: profile.shiftDate || "",
+          shiftStart: profile.shiftStart || "",
+          shiftEnd: profile.shiftEnd || "",
+          shiftLabel: profile.shiftLabel || "",
+          shiftStartsAt: profile.shiftStartsAt || "",
+          shiftEndsAt: profile.shiftEndsAt || "",
+          repeat: profile.repeat || "No repeat",
+          notes: profile.notes || "",
+          locationStatus: profile.locationStatus || "self_reported",
+          checkedInAt: profile.checkedInAt || "",
+          checkedOutAt: profile.checkedOutAt || "",
+          workingStatus: profile.workingStatus || "self_reported"
+        }] : [];
+      }
+      return profile.postedShifts.filter((shift) => shift && shift.status !== "cancelled");
+    }
+
+    function displayShiftForProfile(profile, city = activeDancerCity()) {
+      const now = Date.now();
+      const shifts = profilePostedShifts(profile)
+        .filter((shift) => !shift.checkedOutAt && (!shift.shiftEndsAt || new Date(shift.shiftEndsAt).getTime() >= now))
+        .sort((left, right) => new Date(left.shiftStartsAt || 0).getTime() - new Date(right.shiftStartsAt || 0).getTime());
+      const live = shifts.find((shift) => {
+        const startsAt = new Date(shift.shiftStartsAt || 0).getTime();
+        const endsAt = new Date(shift.shiftEndsAt || 0).getTime();
+        const checkedIn = shift.locationStatus === "location_confirmed" || shift.locationStatus === "club_confirmed" || (shift.checkedInAt && !shift.checkedOutAt);
+        return checkedIn && startsAt <= now && endsAt >= now;
+      });
+      return live || shifts.find((shift) => new Date(shift.shiftEndsAt || 0).getTime() >= now) || null;
+    }
+
+    function applyDisplayShift(profile, city = activeDancerCity()) {
+      const shift = displayShiftForProfile(profile, city);
+      if (!shift) {
+        Object.assign(profile, {
+          scheduled: false,
+          tonight: false,
+          venue: "",
+          time: "No upcoming shifts",
+          shiftDate: "",
+          shiftStart: "",
+          shiftEnd: "",
+          shiftLabel: "",
+          shiftStartsAt: "",
+          shiftEndsAt: "",
+          shiftId: "",
+          locationStatus: "self_reported",
+          checkedInAt: "",
+          checkedOutAt: "",
+          workingStatus: "self_reported"
+        });
+        return null;
+      }
+      Object.assign(profile, {
+        scheduled: true,
+        venue: shift.venue || "",
+        time: shift.time || "",
+        shiftDate: shift.shiftDate || "",
+        shiftStart: shift.shiftStart || "",
+        shiftEnd: shift.shiftEnd || "",
+        shiftLabel: shift.shiftLabel || "",
+        shiftStartsAt: shift.shiftStartsAt || "",
+        shiftEndsAt: shift.shiftEndsAt || "",
+        shiftId: shift.shiftId || "",
+        repeat: shift.repeat || "No repeat",
+        notes: shift.notes || "",
+        locationStatus: shift.locationStatus || "self_reported",
+        checkedInAt: shift.checkedInAt || "",
+        checkedOutAt: shift.checkedOutAt || "",
+        workingStatus: shift.workingStatus || "self_reported"
+      });
+      profile.tonight = isWorkingTonight(profile, city);
+      return shift;
+    }
+
     function savedDancerSocials() {
       return Object.fromEntries(
         Object.entries(dancerSignupSocials).filter(([, url]) => Boolean(url))
@@ -29404,6 +29499,7 @@
         time: profile?.time || "No upcoming shifts",
         tonight: profile?.tonight || false,
         scheduled: profile?.scheduled || false,
+        postedShifts: profilePostedShifts(profile),
         trend: profile?.trend || 10,
         distance: profile?.distance || "0.0 mi",
         photoStatus: status === "Verified" ? "Approved" : "Pending",
@@ -30928,27 +31024,32 @@
       const list = document.getElementById("dancerShiftManager");
       if (!list) return;
       const profile = activeDancerProfile();
-      if (!profile || !profile.scheduled) {
+      const shifts = profilePostedShifts(profile)
+        .filter((shift) => !shift.checkedOutAt && (!shift.shiftEndsAt || new Date(shift.shiftEndsAt).getTime() >= Date.now()))
+        .sort((left, right) => new Date(left.shiftStartsAt || 0).getTime() - new Date(right.shiftStartsAt || 0).getTime());
+      if (!profile || !shifts.length) {
         list.innerHTML = `
           <div class="shift-manager-row">
-            <strong>No posted shift</strong>
-            <div class="shift-manager-meta">Post a verified shift above when you're ready.</div>
+            <strong>No posted shifts</strong>
+            <div class="shift-manager-meta">Post one or more shifts above. This list is where you edit or delete them.</div>
           </div>
         `;
         return;
       }
-      const label = profile.shiftLabel || (profile.tonight ? "Now" : "Upcoming");
-      list.innerHTML = `
+      list.innerHTML = shifts.map((shift) => {
+        const label = shift.shiftLabel || (shift.shiftId === profile.shiftId && profile.tonight ? "Now" : "Upcoming");
+        return `
         <div class="shift-manager-row">
-          <strong>${displayText(profile.venue || "Posted shift")}</strong>
-          <div class="shift-manager-meta">${displayText(label)} · ${displayText(displayShiftTime(profile.time) || "Time pending")}${profile.repeat && profile.repeat !== "No repeat" ? ` · ${displayText(profile.repeat)}` : ""}</div>
-          ${profile.notes ? `<div class="shift-manager-meta">${displayText(profile.notes)}</div>` : ""}
+          <strong>${displayText(shift.venue || "Posted shift")}</strong>
+          <div class="shift-manager-meta">${displayText(label)} · ${displayText(displayShiftTime(shift.time) || "Time pending")}${shift.repeat && shift.repeat !== "No repeat" ? ` · ${displayText(shift.repeat)}` : ""}</div>
+          ${shift.notes ? `<div class="shift-manager-meta">${displayText(shift.notes)}</div>` : ""}
           <div class="shift-manager-actions">
-            <button class="mini-action" type="button" data-shift-action="edit">Edit shift</button>
-            <button class="mini-action danger" type="button" data-shift-action="remove">Remove shift</button>
+            <button class="mini-action" type="button" data-shift-action="edit" data-shift-id="${displayText(shift.shiftId)}">Edit shift</button>
+            <button class="mini-action danger" type="button" data-shift-action="remove" data-shift-id="${displayText(shift.shiftId)}">Delete shift</button>
           </div>
         </div>
       `;
+      }).join("");
     }
 
     function approvedDancerPhotoReviewMarkup(profile) {
@@ -31124,37 +31225,32 @@
       }
     }
 
-    function handleShiftManagerAction(action) {
+    function handleShiftManagerAction(action, trigger = null) {
       const profile = activeDancerProfile();
       if (!profile) return;
+      const shiftId = trigger?.dataset.shiftId || profile.shiftId || "";
+      const shifts = profilePostedShifts(profile);
+      const selectedShift = shifts.find((shift) => String(shift.shiftId) === String(shiftId)) || shifts[0] || null;
       if (action === "edit") {
-        editingShiftId = profile.shiftId || null;
+        if (!selectedShift) return;
+        editingShiftId = selectedShift.shiftId || null;
         const clubField = document.getElementById("shiftClub");
-        if (clubField && profile.venue) clubField.value = profile.venue;
-        setFieldValueIfIdle("shiftDate", profile.shiftDate || todayValue(activeDancerCity()));
-        setFieldValueIfIdle("shiftStart", profile.shiftStart || "21:30");
-        setFieldValueIfIdle("shiftEnd", profile.shiftEnd || "02:00");
+        if (clubField && selectedShift.venue) clubField.value = selectedShift.venue;
+        setFieldValueIfIdle("shiftDate", selectedShift.shiftDate || todayValue(activeDancerCity()));
+        setFieldValueIfIdle("shiftStart", selectedShift.shiftStart || "21:30");
+        setFieldValueIfIdle("shiftEnd", selectedShift.shiftEnd || "02:00");
         const repeatField = document.getElementById("shiftRepeat");
-        if (repeatField) repeatField.value = profile.repeat || "No repeat";
-        setFieldValueIfIdle("shiftNotes", profile.notes || "");
+        if (repeatField) repeatField.value = selectedShift.repeat || "No repeat";
+        setFieldValueIfIdle("shiftNotes", selectedShift.notes || "");
         document.getElementById("shiftPostForm")?.scrollIntoView({ behavior: "smooth", block: "center" });
         showToast("Shift loaded for editing");
         return;
       }
       if (action === "remove") {
         shiftCheckInMessage = "";
-        Object.assign(profile, {
-          scheduled: false,
-          tonight: false,
-          time: "No upcoming shifts",
-          shiftDate: "",
-          shiftStart: "",
-          shiftEnd: "",
-          shiftLabel: "",
-          repeat: "No repeat",
-          notes: ""
-        });
-        lastPostedShift = null;
+        profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
+        applyDisplayShift(profile);
+        lastPostedShift = profile.postedShifts.length ? lastPostedShift : null;
         const result = document.getElementById("shiftPostResult");
         if (result) {
           result.hidden = false;
@@ -31164,9 +31260,9 @@
         renderDancerSetup();
         if (customerDashboard.classList.contains("show")) renderDashboard();
         showToast("Shift removed");
-        if (profile.shiftId && isDancerSession()) {
+        if (shiftId && isDancerSession()) {
           patchAuthenticatedJson("/api/dancer/shifts", {
-            shiftId: profile.shiftId,
+            shiftId,
             status: "cancelled"
           }).then((data) => {
             if (data) showToast("Live shift cancelled");
@@ -31195,6 +31291,7 @@
       const existing = market.dancers.find((profile) => profile.name === name);
       const wasScheduled = Boolean(existing?.scheduled);
       const range = shiftIsoRange(dateValue, startValue, endValue);
+      const localShiftId = editingShiftId || `local-shift-${Date.now()}`;
       shiftCheckInMessage = "Shift posted. Tap Check in now when you are ready to verify your location.";
       const shiftData = {
         name,
@@ -31212,7 +31309,7 @@
         shiftEndsAt: range.endsAt,
         shiftTimeZone: timeZoneByCity[city] || "America/Los_Angeles",
         shiftLabel: formatDateLabel(dateValue, city),
-        shiftId: existing?.shiftId || editingShiftId || "",
+        shiftId: localShiftId,
         locationStatus: "self_reported",
         checkedInAt: "",
         checkedOutAt: "",
@@ -31227,12 +31324,19 @@
         notes,
         socials: existing?.socials || { ...dancerSignupSocials }
       };
+      const postedShift = { ...shiftData };
+      let postedProfile = existing;
       if (existing) {
         Object.assign(existing, shiftData);
+        const shifts = profilePostedShifts(existing).filter((shift) => String(shift.shiftId) !== String(localShiftId));
+        existing.postedShifts = editingShiftId ? [...shifts, postedShift] : [...shifts, postedShift];
+        postedProfile = existing;
       } else {
-        market.dancers.push(shiftData);
+        postedProfile = { ...shiftData, postedShifts: [postedShift] };
+        market.dancers.push(postedProfile);
         market.stats.dancers += 1;
       }
+      applyDisplayShift(postedProfile, city);
       if (!wasScheduled) {
         if (venue) venue.shifts += 1;
         market.stats.shifts += 1;
@@ -31241,7 +31345,6 @@
       citySelect.value = city;
       selectedVenueName = null;
       if (!followedByCity[city].includes(name)) followedByCity[city].push(name);
-      const postedProfile = market.dancers.find((profile) => profile.name === name);
       const noticeText = shiftNotificationMessage(postedProfile || shiftData, city, dateValue);
       const noticeCounts = shiftRecipientCounts(postedProfile || shiftData, city);
       lastPostedShift = { city, name, venue: venueName, dateValue, noticeText, noticeCounts };
@@ -31264,7 +31367,12 @@
         request.then((data) => {
           if (!data) return;
           const postedProfile = market.dancers.find((profile) => profile.name === name);
-          if (postedProfile && data.shiftId) postedProfile.shiftId = data.shiftId;
+          if (postedProfile && data.shiftId) {
+            const shifts = profilePostedShifts(postedProfile);
+            const savedShift = shifts.find((shift) => String(shift.shiftId) === String(localShiftId));
+            if (savedShift) savedShift.shiftId = data.shiftId;
+            applyDisplayShift(postedProfile, city);
+          }
           document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
           renderDancerManagement();
         }).catch((error) => showToast(error.message || "Could not save live shift"));
@@ -35669,7 +35777,7 @@
       }
       const shiftAction = event.target.closest("[data-shift-action]");
       if (shiftAction) {
-        handleShiftManagerAction(shiftAction.dataset.shiftAction);
+        handleShiftManagerAction(shiftAction.dataset.shiftAction, shiftAction);
         return;
       }
       const approvalToggle = event.target.closest("#dancerApprovalCommand");
