@@ -2472,19 +2472,57 @@
     }
 
     .approval-tool-actions button {
+      position: relative;
       min-height: 54px;
       display: grid;
       align-content: center;
-      gap: 4px;
-      padding: 12px 14px;
-      border: 1px solid rgba(34, 199, 255, 0.36);
-      border-radius: 12px;
+      justify-items: center;
+      gap: 5px;
+      padding: 13px 42px 13px 16px;
+      border: 1px solid rgba(34, 199, 255, 0.62);
+      border-radius: 999px;
       color: #fff;
       background:
-        linear-gradient(135deg, rgba(34, 199, 255, 0.14), rgba(168, 85, 247, 0.12)),
-        rgba(8, 8, 12, 0.9);
-      text-align: left;
-      box-shadow: inset 0 0 16px rgba(255,255,255,.025), 0 12px 26px rgba(0,0,0,.24);
+        linear-gradient(135deg, rgba(34, 199, 255, 0.30), rgba(168, 85, 247, 0.28)),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.018)),
+        rgba(9, 9, 14, 0.96);
+      text-align: center;
+      cursor: pointer;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        0 14px 30px rgba(0,0,0,.34),
+        0 0 20px rgba(34,199,255,.12);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .approval-tool-actions button::after {
+      content: "+";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #041016;
+      background: #35d8ff;
+      font-size: 18px;
+      font-weight: 950;
+      line-height: 1;
+      transform: translateY(-50%);
+      box-shadow: 0 0 14px rgba(53,216,255,.34);
+    }
+
+    .approval-tool-actions button:hover,
+    .approval-tool-actions button:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(53, 216, 255, 0.95);
+      box-shadow:
+        0 0 0 1px rgba(53,216,255,.12) inset,
+        0 16px 34px rgba(0,0,0,.36),
+        0 0 28px rgba(53,216,255,.24),
+        0 0 24px rgba(168,85,247,.18);
     }
 
     .approval-tool-actions button.is-expanded {
@@ -2495,6 +2533,10 @@
       box-shadow:
         0 0 22px rgba(34, 199, 255, 0.16),
         inset 0 0 18px rgba(255,255,255,.035);
+    }
+
+    .approval-tool-actions button.is-expanded::after {
+      content: "-";
     }
 
     .approval-tool-actions strong,
