@@ -2487,6 +2487,16 @@
       box-shadow: inset 0 0 16px rgba(255,255,255,.025), 0 12px 26px rgba(0,0,0,.24);
     }
 
+    .approval-tool-actions button.is-expanded {
+      border-color: rgba(34, 199, 255, 0.68);
+      background:
+        linear-gradient(135deg, rgba(34, 199, 255, 0.22), rgba(168, 85, 247, 0.18)),
+        rgba(12, 12, 18, 0.96);
+      box-shadow:
+        0 0 22px rgba(34, 199, 255, 0.16),
+        inset 0 0 18px rgba(255,255,255,.035);
+    }
+
     .approval-tool-actions strong,
     .approval-tool-actions span {
       display: block;
@@ -2496,6 +2506,16 @@
     .approval-tool-actions strong {
       font-size: 14px;
       line-height: 1.1;
+    }
+
+    .approval-tool-actions button.is-expanded strong::after {
+      content: " open";
+      margin-left: 6px;
+      color: #35d8ff;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
     .approval-tool-actions span {
@@ -25143,6 +25163,9 @@
                 <strong>Edit profile</strong>
                 <span>Update public profile fields, resubmit rejected photos or social links, and preview your profile.</span>
               </div>
+              <div class="approved-tool-dropdown-actions">
+                <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse edit profile</button>
+              </div>
               <div id="approvedProfileFixList"></div>
               <div class="approved-tool-dropdown-actions">
                 <button type="button" data-dancer-control-action="preview-profile">Preview profile</button>
@@ -25156,6 +25179,9 @@
               <div class="approved-tool-dropdown-head">
                 <strong>Post schedule</strong>
                 <span>Add or update the shift customers see on your public profile and venue page.</span>
+              </div>
+              <div class="approved-tool-dropdown-actions">
+                <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
               </div>
               <div id="approvedScheduleFormMount"></div>
             </div>
@@ -29097,6 +29123,18 @@
       schedulePanel?.classList.toggle("show", activeApprovedToolDropdown === "schedule");
       if (editPanel) editPanel.hidden = activeApprovedToolDropdown !== "edit";
       if (schedulePanel) schedulePanel.hidden = activeApprovedToolDropdown !== "schedule";
+      document.querySelectorAll('[data-dancer-control-action="edit-profile"]').forEach((button) => {
+        const expanded = activeApprovedToolDropdown === "edit";
+        button.classList.toggle("is-expanded", expanded);
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+        button.setAttribute("aria-controls", "approvedEditProfileDropdown");
+      });
+      document.querySelectorAll('[data-dancer-control-action="post-schedule"]').forEach((button) => {
+        const expanded = activeApprovedToolDropdown === "schedule";
+        button.classList.toggle("is-expanded", expanded);
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+        button.setAttribute("aria-controls", "approvedScheduleDropdown");
+      });
       const profileForm = document.getElementById("publicProfileForm");
       const profileResult = document.getElementById("profileEditResult");
       if (profileMount && profileForm && profileForm.parentElement !== profileMount) {
@@ -35174,6 +35212,13 @@
         if (result) result.textContent = message;
         showToast(message);
       };
+
+      if (action === "collapse-approved-tool") {
+        activeApprovedToolDropdown = "";
+        renderApprovedToolDropdowns();
+        setResult("Approved dancer tools collapsed.");
+        return;
+      }
 
       if (action === "edit-profile") {
         document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
