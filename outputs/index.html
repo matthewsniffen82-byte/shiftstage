@@ -32729,15 +32729,16 @@
       `;
 
       document.getElementById("adminVenues").innerHTML = Object.entries(markets).flatMap(([city, market]) => (
-        market.venues.filter((venue) => !venue.hidden).map((venue) => `
-          <article class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}">
-            <div class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="${venue.verified ? "badge" : "badge pending"}">${venue.verified ? "Verified" : "Pending"}</span></div>
+        market.venues.filter((venue) => !venue.hidden).map((venue, index) => `
+          <details class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}" ${index === 0 ? "open" : ""}>
+            <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="${venue.verified ? "badge" : "badge pending"}">${venue.verified ? "Verified" : "Pending"}</span></summary>
+            <div class="meta">Verification status: ${venue.verified ? "Approved" : "Needs review"} · Featured: ${venue.featured ? "Yes" : "No"}</div>
             <div class="admin-actions">
               <button class="action-btn" data-admin-action="verify-venue">Verify venue</button>
               <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
               <button class="action-btn danger" data-admin-action="remove-venue">Remove venue</button>
             </div>
-          </article>
+          </details>
         `)
       )).join("");
     }

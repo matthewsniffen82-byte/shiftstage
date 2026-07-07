@@ -715,16 +715,19 @@ function VenueManager({
       </form>
       <div className="venue-list">
         {venues.slice(0, 6).map((venue) => (
-          <div className="venue-admin-row" key={String(venue.id)}>
-            <span>
+          <details className="venue-admin-row" key={String(venue.id)}>
+            <summary>
               <strong>{String(venue.name || "Venue")}</strong>
               <small>{String(venue.city || "City")}</small>
-            </span>
-            <em>{venue.is_active === false ? "Inactive" : "Active"}</em>
-            <button type="button" onClick={() => toggleVenue(venue)}>
-              {venue.is_active === false ? "Activate" : "Hide"}
-            </button>
-          </div>
+              <em>{venue.is_active === false ? "Inactive" : "Active"}</em>
+            </summary>
+            <div className="venue-admin-actions">
+              <small>{String(venue.address || "No address submitted")}</small>
+              <button type="button" onClick={() => toggleVenue(venue)}>
+                {venue.is_active === false ? "Activate" : "Hide"}
+              </button>
+            </div>
+          </details>
         ))}
         {!venues.length ? <p className="empty">No venues returned.</p> : null}
       </div>
@@ -1460,10 +1463,13 @@ function AdminStyles() {
       .venue-manager button { color: #090911; background: #f7f2ff; padding: 0 12px; }
       .venue-manager p { color: #94e5ff; font-size: 14px; }
       .venue-list { display: grid; gap: 8px; }
-      .venue-admin-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); overflow: hidden; }
-      .venue-admin-row span { display: grid; gap: 3px; }
+      .venue-admin-row { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); overflow: hidden; }
+      .venue-admin-row summary { cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; color: #fff; }
+      .venue-admin-row summary strong, .venue-admin-row summary small { display: block; min-width: 0; overflow-wrap: anywhere; }
       .venue-admin-row small { color: #b9accd; }
       .venue-admin-row em { color: #94e5ff; font-style: normal; font-weight: 850; }
+      .venue-admin-actions { display: grid; gap: 8px; }
+      .venue-admin-actions button { justify-self: start; }
       .report-list { display: grid; gap: 12px; }
       .report-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .report-row span { color: #b9accd; }
