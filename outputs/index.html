@@ -2627,6 +2627,38 @@
       background: rgba(70, 10, 38, 0.42);
     }
 
+    .fix-link-summary {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(255, 79, 195, 0.36);
+      border-radius: 12px;
+      background: rgba(70, 10, 38, 0.28);
+    }
+
+    .fix-link-summary strong {
+      color: #ff9bdd;
+      font-size: 13px;
+      line-height: 1.15;
+    }
+
+    .fix-link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .fix-link-row button {
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 79, 195, 0.48);
+      color: #ffd7ef;
+      background: rgba(22, 8, 18, 0.84);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
     .approved-tool-dropdown .review-feedback-item[data-fix-target] {
       cursor: pointer;
     }
@@ -29203,22 +29235,26 @@
         );
       });
       if (!rejected.length) {
-        return '<div class="rule-note">No rejected photo or social link items right now. You can still edit and resubmit profile changes when needed.</div>';
+        return "";
       }
-      return `<div class="review-feedback-list">${rejected.map((review) => {
+      const links = rejected.map((review, index) => {
         const type = String(review.reviewType || review.review_type || "review");
         const date = formatBillingDate(review.reviewedAt || review.createdAt);
         const reason = review.notes || "No reason added.";
         const fixTarget = reviewFixTarget(type);
+        const label = reviewDisplayLabel(type);
         return `
-          <button class="info-tile review-feedback-item is-rejected" type="button" ${fixTarget ? `data-fix-target="${displayText(fixTarget)}"` : ""}>
-            <span class="review-status">needs fix</span>
-            <strong>${displayText(reviewDisplayLabel(type))}</strong>
-            <div class="meta">${displayText(reason)}${date ? ` · ${date}` : ""}</div>
-            <div class="meta">Tap to jump to the exact item.</div>
+          <button type="button" ${fixTarget ? `data-fix-target="${displayText(fixTarget)}"` : ""} title="${displayText(reason)}${date ? ` · ${date}` : ""}">
+            ${displayText(label)} ${index + 1}
           </button>
         `;
-      }).join("")}</div>`;
+      }).join("");
+      return `
+        <div class="fix-link-summary">
+          <strong>${rejected.length} item${rejected.length === 1 ? "" : "s"} need${rejected.length === 1 ? "s" : ""} to be fixed</strong>
+          <div class="fix-link-row">${links}</div>
+        </div>
+      `;
     }
 
     function setApprovedToolDropdown(panel = "") {
@@ -35460,10 +35496,6 @@
       if (action === "edit-profile") {
         document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
         setApprovedToolDropdown("edit");
-        window.requestAnimationFrame(() => {
-          document.getElementById("approvedEditProfileDropdown")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          document.getElementById("profileStageName")?.focus({ preventScroll: true });
-        });
         setResult("Edit profile tools opened.");
         return;
       }
@@ -35471,10 +35503,6 @@
       if (action === "post-schedule") {
         document.getElementById("approvedDancerPanel")?.removeAttribute("hidden");
         setApprovedToolDropdown("schedule");
-        window.requestAnimationFrame(() => {
-          document.getElementById("approvedScheduleDropdown")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          document.getElementById("shiftClub")?.focus({ preventScroll: true });
-        });
         setResult("Schedule posting form opened.");
         return;
       }
