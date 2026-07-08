@@ -25026,6 +25026,40 @@
         max-width: min(46vw, 156px) !important;
       }
     }
+
+    /* Final profile preview thumbnails: one row only. */
+    .profile-modal .gallery {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
+      grid-auto-flow: column !important;
+      grid-auto-columns: minmax(0, 1fr) !important;
+      gap: clamp(5px, 1.6vw, 9px) !important;
+      width: 100% !important;
+      max-width: min(100%, 620px) !important;
+      margin-inline: auto !important;
+      padding: 8px clamp(10px, 2.8vw, 14px) !important;
+      overflow: hidden !important;
+    }
+
+    .profile-modal .thumb {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      height: clamp(42px, 11vw, 66px) !important;
+      min-height: 0 !important;
+      aspect-ratio: 1 / 1 !important;
+    }
+
+    @media (max-width: 390px) {
+      .profile-modal .gallery {
+        gap: 4px !important;
+        padding-inline: 8px !important;
+      }
+
+      .profile-modal .thumb {
+        height: clamp(38px, 10vw, 52px) !important;
+      }
+    }
   </style>
 </head>
 <body>
