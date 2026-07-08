@@ -2057,6 +2057,12 @@
       box-shadow: 0 0 0 3px rgba(255,104,124,.2), 0 0 24px rgba(255,104,124,.3) !important;
     }
 
+    .approved-visual-profile .profile-modal .thumb.is-pending,
+    .approved-visual-profile .profile-modal .social-link.is-pending {
+      border-color: rgba(217,173,79,.78) !important;
+      box-shadow: 0 0 0 2px rgba(217,173,79,.16), 0 0 18px rgba(217,173,79,.2) !important;
+    }
+
     .approved-visual-profile .profile-modal .modal-actions {
       position: static;
       display: grid;
@@ -31939,19 +31945,23 @@
           target: `submitted:${index}`
         };
       });
-      const existing = [
-        ...(profile?.mainPhotoUrl ? [{ id: "main", imageUrl: profile.mainPhotoUrl, label: "Main photo", status: "approved", notes: "", target: "main" }] : []),
-        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({
-          id: `gallery-${index}`,
+      const submittedByUrl = new Map(submitted.filter((photo) => photo.imageUrl).map((photo) => [photo.imageUrl, photo]));
+      const previewUrls = uploadedProfilePhotoUrls(profile, true);
+      const existing = previewUrls.map((imageUrl, index) => {
+        const submittedMatch = submittedByUrl.get(imageUrl);
+        if (submittedMatch) return submittedMatch;
+        const isMain = imageUrl === profile?.mainPhotoUrl || index === 0;
+        return {
+          id: isMain ? "main" : `gallery-${index - 1}`,
           imageUrl,
-          label: `Gallery photo ${index + 1}`,
+          label: isMain ? "Main photo" : `Gallery photo ${index}`,
           status: "approved",
           notes: "",
-          target: `gallery:${index}`
-        }))
-      ];
+          target: isMain ? "main" : `gallery:${Math.max(0, index - 1)}`
+        };
+      });
       const byUrl = new Map();
-      [...submitted, ...existing].forEach((photo) => {
+      [...existing, ...submitted].forEach((photo) => {
         const key = photo.imageUrl || photo.id;
         if (!byUrl.has(key)) byUrl.set(key, photo);
       });
@@ -31976,7 +31986,7 @@
         const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
         return {
           ...platform,
-          value: currentValue || submitted?.url || "",
+          value: submitted?.url || currentValue || "",
           status: normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : "")),
           notes: submitted?.reviewNotes || ""
         };
@@ -32003,7 +32013,7 @@
             <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}"></button>
             <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
-                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.label)}">
+                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
@@ -32026,7 +32036,7 @@
                   </div>
                   <div class="social-links">
                     ${socials.map((social) => `
-                      <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`profile-${social.key}`)}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.label)}">
+                      <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`profile-${social.key}`)}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
                         ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
                       </button>
                     `).join("")}
