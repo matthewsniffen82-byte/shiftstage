@@ -2244,10 +2244,11 @@
 
     .approved-edit-popover.is-social {
       position: absolute;
-      inset: 0;
+      inset: -14px -10px auto -10px;
       z-index: 6;
       align-items: center;
       justify-items: center;
+      min-height: 260px;
       padding: 10px;
       background: rgba(0,0,0,.58);
       backdrop-filter: blur(8px);
@@ -2269,7 +2270,7 @@
     .approved-edit-popover.is-social .approved-edit-card {
       position: relative;
       width: min(100%, 430px);
-      max-height: 100%;
+      max-height: none;
       overflow-y: auto;
       transform: none;
       pointer-events: auto;
@@ -2281,6 +2282,7 @@
     .approved-visual-profile .profile-modal .social-tile {
       position: relative;
       overflow: visible;
+      z-index: 5;
     }
 
     .approved-edit-card .row {
