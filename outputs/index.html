@@ -33385,9 +33385,9 @@
     async function submitSetupVerification(form) {
       if (!canOpenStep("verification")) return;
       if (!isDancerSession()) {
-        verificationSubmitNotice = "Verification submitted. Dancr will notify you by email or in your site notifications when your review is complete.";
+        verificationSubmitNotice = "";
         completeSetupStep("verification");
-        showToast("Verification submitted. Watch email and site notifications.");
+        showToast("Verification saved. Continue to Step 4 to submit for review.");
         return;
       }
       const submit = form.querySelector('button[type="submit"]');
@@ -33419,10 +33419,10 @@
         }
         dancerSetup.verification = true;
         activeSetupStep = nextIncompleteStep() || "approval";
-        verificationSubmitNotice = "Verification submitted. Dancr will notify you by email or in your site notifications when your review is complete.";
-        if (result) result.textContent = verificationSubmitNotice;
+        verificationSubmitNotice = "";
+        if (result) result.textContent = "Verification files uploaded. Continue to Step 4 to preview your profile and submit for review.";
         renderDancerSetup();
-        showToast("Verification submitted. Watch email and site notifications.");
+        showToast("Verification saved. Continue to Step 4 to submit for review.");
       } catch (error) {
         if (result) result.textContent = error.message || "Could not upload verification";
         showToast(error.message || "Could not upload verification");
@@ -33461,8 +33461,9 @@
             : review
         ));
         activeSetupStep = "approval";
+        verificationSubmitNotice = "Submitted for review. Dancr will notify you by email or in your site notifications when your review is complete.";
         renderDancerSetup();
-        showToast("Resubmitted for Dancr review");
+        showToast("Submitted for review. Watch email and site notifications.");
       } catch (error) {
         showToast(error.message || "Could not submit for review");
       } finally {
