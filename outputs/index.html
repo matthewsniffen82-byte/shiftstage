@@ -32006,7 +32006,7 @@
                   </div>
                 </div>
               </div>
-              <button class="close-btn" type="button" data-dancer-control-action="collapse-approved-tool" aria-label="Close edit profile">
+              <button class="close-btn" id="approvedProfileEditorClose" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
               </button>
             </div>
@@ -32068,6 +32068,13 @@
     function closeApprovedVisualEditPopover() {
       const popover = document.getElementById("approvedEditItemPopover");
       if (popover) popover.hidden = true;
+    }
+
+    function closeApprovedProfileEditor() {
+      closeApprovedVisualEditPopover();
+      activeApprovedToolDropdown = "";
+      renderApprovedToolDropdowns();
+      showToast("Edit profile closed");
     }
 
     function openApprovedVisualEditPopover(kind, data = {}) {
@@ -37147,6 +37154,13 @@
     });
 
     dancerDashboard.addEventListener("click", async (event) => {
+      const profileEditorClose = event.target.closest("[data-approved-profile-editor-close]");
+      if (profileEditorClose) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeApprovedProfileEditor();
+        return;
+      }
       if (handleNotificationCenterClick(event)) return;
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
