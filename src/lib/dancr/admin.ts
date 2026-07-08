@@ -555,7 +555,8 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   const { error: reviewError } = await db.from("approval_reviews").insert(reviewRows);
   if (reviewError) throw reviewError;
 
-  const notificationCopy = dancerApprovalNotificationCopy(dancer.stage_name, approved, input.notes);
+  const approvalIssues = await profileApprovalIssueSummary(client, input.dancerId);
+  const notificationCopy = dancerApprovalNotificationCopy(dancer.stage_name, approved, input.notes, approvalIssues);
   const notificationRow = {
     recipient_id: dancer.user_id,
     notification_type: "approval_status" as const,
@@ -603,7 +604,7 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
   const db = client as any;
   const { data: dancer, error: dancerError } = await db
     .from("dancer_profiles")
-    .select("id, user_id, stage_name")
+    .select("id, user_id, stage_name, status")
     .eq("id", input.dancerId)
     .maybeSingle();
 
@@ -663,9 +664,13 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     notes: `${input.label || input.targetId}${notes ? `: ${notes}` : ""}`,
   });
 
+  const isApprovedProfileContentFix = dancer.status === "approved" && (input.targetType === "photo" || input.targetType === "social_link");
   let notificationDelivery = null;
-  if (input.status === "rejected") {
-    const notificationCopy = submittedContentRejectedNotificationCopy(input.targetType, input.label, notes);
+  if (input.status === "rejected" || isApprovedProfileContentFix) {
+    const notificationCopy =
+      input.status === "approved"
+        ? submittedContentApprovedNotificationCopy(input.targetType, input.label)
+        : submittedContentRejectedNotificationCopy(input.targetType, input.label, notes);
     const notificationRow = {
       recipient_id: dancer.user_id,
       notification_type: "approval_status" as const,
@@ -674,7 +679,7 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
       body: notificationCopy.body,
       payload: {
         dancerId: input.dancerId,
-        status: "rejected",
+        status: input.status,
         targetType: input.targetType,
         targetId: input.targetId,
         label: input.label || notificationCopy.label,
@@ -686,7 +691,7 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     };
     const { error: notificationError } = await db.from("notifications").insert(notificationRow);
     if (notificationError) throw notificationError;
-    notificationDelivery = await deliverNotificationRows(client, [notificationRow]);
+    notificationDelivery = await deliverNotificationRows(client, [notificationRow], { email: isApprovedProfileContentFix });
   }
 
   return {
@@ -699,20 +704,66 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
   };
 }
 
-function dancerApprovalNotificationCopy(stageName: string | null | undefined, approved: boolean, notes?: string | null) {
+function dancerApprovalNotificationCopy(
+  stageName: string | null | undefined,
+  approved: boolean,
+  notes?: string | null,
+  approvalIssues: string[] = [],
+) {
   const displayName = stageName?.trim() || "Your Dancr profile";
+  const issueCopy = approvalIssues.length ? ` Items to fix: ${approvalIssues.join("; ")}.` : "";
   if (approved) {
     return {
       title: "Your Dancr profile is approved",
-      body: `${displayName} is approved and live on Dancr. You can now post shifts, manage your public profile, and share your page.`,
+      body: `${displayName} is approved and live on Dancr. You can now post shifts, manage your public profile, and share your page.${issueCopy}`,
     };
   }
 
   const reviewNotes = notes?.trim() ? ` Notes: ${notes.trim()}` : "";
   return {
     title: "Your Dancr profile needs changes",
-    body: `Your Dancr profile review is complete. Update your verification setup and resubmit.${reviewNotes}`,
+    body: `Your Dancr profile review is complete. Update your verification setup and resubmit.${reviewNotes}${issueCopy}`,
   };
+}
+
+async function profileApprovalIssueSummary(client: DancrClient, dancerId: string) {
+  const db = client as any;
+  const { data, error } = await db
+    .from("approval_reviews")
+    .select("review_type, status, notes, created_at, reviewed_at")
+    .eq("dancer_id", dancerId);
+
+  if (error) throw error;
+
+  const latestByType = new Map<string, any>();
+  for (const review of data || []) {
+    const reviewType = review.review_type;
+    const previous = latestByType.get(reviewType);
+    const reviewTime = Date.parse(review.reviewed_at || review.created_at || "") || 0;
+    const previousTime = previous ? Date.parse(previous.reviewed_at || previous.created_at || "") || 0 : -1;
+    if (!previous || reviewTime >= previousTime) latestByType.set(reviewType, review);
+  }
+
+  return Array.from(latestByType.entries())
+    .filter(([reviewType, review]) => review.status === "rejected" && reviewType !== "profile" && reviewType !== "identity")
+    .map(([reviewType, review]) => {
+      const label = approvalIssueLabel(reviewType);
+      return review.notes ? `${label} - ${review.notes}` : label;
+    });
+}
+
+function approvalIssueLabel(reviewType: string) {
+  if (reviewType.startsWith("photo:")) return "Profile photo";
+  if (reviewType.startsWith("social_link:")) return "Social link";
+  if (reviewType.startsWith("verification_document:")) {
+    const normalized = reviewType.toLowerCase();
+    if (normalized.includes("selfie")) return "Selfie verification";
+    if (normalized.includes("proof") || normalized.includes("dance")) return "Proof that they dance";
+    if (normalized.includes("id") || normalized.includes("license") || normalized.includes("passport")) return "Government ID";
+    return "Verification file";
+  }
+  if (reviewType === "identity") return "Identity review";
+  return "Profile review";
 }
 
 function submittedContentRejectedNotificationCopy(targetType: ReviewSubmissionContentInput["targetType"], label?: string | null, notes?: string | null) {
@@ -721,6 +772,15 @@ function submittedContentRejectedNotificationCopy(targetType: ReviewSubmissionCo
   return {
     title: `${itemLabel} needs changes`,
     body: `Dancr reviewed your ${itemLabel.toLowerCase()} and needs you to fix or resend it.${reason}`,
+    label: itemLabel,
+  };
+}
+
+function submittedContentApprovedNotificationCopy(targetType: ReviewSubmissionContentInput["targetType"], label?: string | null) {
+  const itemLabel = label?.trim() || rejectedContentLabel(targetType);
+  return {
+    title: `${itemLabel} approved`,
+    body: `Dancr approved your ${itemLabel.toLowerCase()} update. Your live profile has been updated for that item.`,
     label: itemLabel,
   };
 }

@@ -16,12 +16,12 @@ type Recipient = {
   email: string | null;
 };
 
-export async function deliverNotificationRows(client: DancrClient, rows: NotificationDeliveryRow[]) {
+export async function deliverNotificationRows(client: DancrClient, rows: NotificationDeliveryRow[], options: { email?: boolean; push?: boolean } = {}) {
   if (!rows.length) return { push: 0, email: 0 };
 
   const recipients = await getRecipients(client, rows.map((row) => row.recipient_id));
-  const push = await deliverPushNotifications(rows);
-  const email = await deliverEmailNotifications(rows, recipients);
+  const push = options.push === false ? 0 : await deliverPushNotifications(rows);
+  const email = options.email === false ? 0 : await deliverEmailNotifications(rows, recipients);
 
   return { push, email };
 }
