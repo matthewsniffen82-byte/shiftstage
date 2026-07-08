@@ -1961,6 +1961,135 @@
       color: #f5f1ff;
     }
 
+    #approvedProfileFormMount #publicProfileForm,
+    #approvedProfileFormMount #profileEditResult {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
+
+    .approved-visual-profile {
+      display: grid;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .approved-visual-profile-card {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid rgba(139,92,246,.28);
+      border-radius: 16px;
+      background: rgba(5,5,8,.82);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.025);
+    }
+
+    .approved-visual-hero {
+      display: grid;
+      gap: 10px;
+    }
+
+    .approved-visual-main-photo {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      border: 1px solid rgba(139,92,246,.22);
+      border-radius: 14px;
+      background: #050507;
+      object-fit: cover;
+      overflow: hidden;
+    }
+
+    .approved-visual-thumb-row,
+    .approved-visual-social-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .approved-visual-photo,
+    .approved-visual-social {
+      position: relative;
+      flex: 0 0 auto;
+      border: 1px solid rgba(139,92,246,.24);
+      border-radius: 12px;
+      background: rgba(12,12,18,.86);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .approved-visual-photo {
+      width: 76px;
+      aspect-ratio: 4 / 5;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .approved-visual-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .approved-visual-social {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+    }
+
+    .approved-visual-photo.is-rejected,
+    .approved-visual-social.is-rejected {
+      border-color: rgba(255,104,124,.9);
+      box-shadow: 0 0 0 3px rgba(255,104,124,.18), 0 0 20px rgba(255,104,124,.26);
+    }
+
+    .approved-visual-reason {
+      padding: 10px;
+      border: 1px solid rgba(255,104,124,.42);
+      border-radius: 12px;
+      color: #ffd7df;
+      background: rgba(92,12,28,.34);
+      font-size: 12px;
+      font-weight: 820;
+      line-height: 1.35;
+    }
+
+    .approved-edit-popover {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(10px);
+    }
+
+    .approved-edit-popover[hidden] {
+      display: none !important;
+    }
+
+    .approved-edit-card {
+      width: min(100%, 430px);
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255,104,124,.42);
+      border-radius: 16px;
+      background: rgba(7,7,11,.98);
+      box-shadow: 0 28px 80px rgba(0,0,0,.62), 0 0 34px rgba(255,104,124,.18);
+    }
+
+    .approved-edit-card .row {
+      align-items: start;
+    }
+
     #dancerDashboard.is-approved #approvedDancerPanel {
       order: -2;
     }
@@ -25648,11 +25777,7 @@
                 <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse edit profile</button>
               </div>
               <div id="approvedProfileFixList"></div>
-              <div class="approved-tool-dropdown-actions">
-                <button type="button" data-dancer-control-action="preview-profile">Preview profile</button>
-                <button type="button" data-dancer-control-action="main-photo">Replace main photo</button>
-                <button type="button" data-dancer-control-action="gallery-photo">Replace gallery photo</button>
-              </div>
+              <div id="approvedVisualProfileEditor"></div>
               <div id="approvedProfileFormMount"></div>
             </div>
             <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
@@ -26741,6 +26866,7 @@
     let savedAdminContentReviews = loadSavedAdminContentReviews();
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
+    let pendingApprovedPhotoAutoSubmit = false;
     let activeApprovedToolDropdown = "";
     let shiftCheckInMessage = "";
 
@@ -29813,6 +29939,7 @@
       }
       renderShiftVerificationPanel();
       renderDancerShiftManager();
+      renderApprovedVisualProfileEditor();
     }
 
     function openAncestorDetails(target) {
@@ -31664,6 +31791,132 @@
       `;
     }
 
+    function approvedVisualPhotoItems(profile) {
+      const submitted = (profile?.submittedPhotos || []).map((photo, index) => {
+        const id = photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`;
+        const review = latestContentReview(`photo:${id}`);
+        return {
+          id,
+          imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
+          label: index === 0 ? "Main photo" : `Photo ${index + 1}`,
+          status: normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
+          notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
+          target: `submitted:${index}`
+        };
+      });
+      const existing = [
+        ...(profile?.mainPhotoUrl ? [{ id: "main", imageUrl: profile.mainPhotoUrl, label: "Main photo", status: "approved", notes: "", target: "main" }] : []),
+        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({
+          id: `gallery-${index}`,
+          imageUrl,
+          label: `Gallery photo ${index + 1}`,
+          status: "approved",
+          notes: "",
+          target: `gallery:${index}`
+        }))
+      ];
+      const byUrl = new Map();
+      [...submitted, ...existing].forEach((photo) => {
+        const key = photo.imageUrl || photo.id;
+        if (!byUrl.has(key)) byUrl.set(key, photo);
+      });
+      return Array.from(byUrl.values());
+    }
+
+    function approvedVisualProfileEditorMarkup(profile) {
+      const photos = approvedVisualPhotoItems(profile);
+      const mainPhoto = photos[0] || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
+      const submittedSocials = normalizeSubmittedSocials(profile);
+      const socials = socialPlatforms.map((platform) => {
+        const submitted = submittedSocials.find((item) => item.platform === platform.key);
+        const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
+        return {
+          ...platform,
+          value: currentValue || submitted?.url || "",
+          status: normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : "")),
+          notes: submitted?.reviewNotes || ""
+        };
+      });
+      const rejectedCount = photos.filter((photo) => photo.status === "rejected").length + socials.filter((social) => social.status === "rejected").length;
+      return `
+        <div class="approved-visual-profile">
+          <div class="approved-visual-profile-card">
+            <div class="row">
+              <div>
+                <span class="eyebrow">Profile edit view</span>
+                <h3>${displayText(profile?.name || activeDancerName())}</h3>
+                <div class="meta">${displayText(activeDancerCity())}${profile?.status ? ` · ${displayText(profile.status)}` : ""}</div>
+              </div>
+              <span class="${rejectedCount ? "badge pending" : "pill"}">${rejectedCount ? `${rejectedCount} fix${rejectedCount === 1 ? "" : "es"}` : "No fixes"}</span>
+            </div>
+            <div class="approved-visual-hero">
+              ${mainPhoto.imageUrl ? `<button class="approved-visual-main-photo approved-visual-photo ${mainPhoto.status === "rejected" ? "is-rejected" : ""}" type="button" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label)}">${`<img src="${displayText(mainPhoto.imageUrl)}" alt="${displayText(mainPhoto.label)}">`}</button>` : `<button class="approved-visual-main-photo approved-visual-photo" type="button" data-profile-visual-edit="photo" data-photo-target="main" data-photo-label="Main photo">Add main photo</button>`}
+              <div class="approved-visual-thumb-row" aria-label="Profile pictures">
+                ${photos.map((photo) => `
+                  <button class="approved-visual-photo ${photo.status === "rejected" ? "is-rejected" : ""}" type="button" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.label)}">
+                    ${photo.imageUrl ? `<img src="${displayText(photo.imageUrl)}" alt="${displayText(photo.label)}">` : `<span>${displayText(photo.label)}</span>`}
+                  </button>
+                `).join("")}
+              </div>
+              ${photos.filter((photo) => photo.status === "rejected").map((photo) => `<div class="approved-visual-reason">${displayText(photo.label)} not approved: ${displayText(photo.notes || "No reason added.")}</div>`).join("")}
+            </div>
+            <div class="modal-grid">
+              ${shiftsMarkup(profile, shiftStatus(profile))}
+              <div class="info-tile">
+                <strong>Social links</strong>
+                <div class="approved-visual-social-row">
+                  ${socials.map((social) => `
+                    <button class="approved-visual-social social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : ""}" type="button" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.label)}">
+                      ${socialIconMarkup(social.key)}<span class="sr-only">${displayText(social.label)}</span>
+                    </button>
+                  `).join("")}
+                </div>
+                ${socials.filter((social) => social.status === "rejected").map((social) => `<div class="approved-visual-reason">${displayText(social.label)} not approved: ${displayText(social.notes || "No reason added.")}</div>`).join("")}
+              </div>
+            </div>
+          </div>
+          <div class="approved-edit-popover" id="approvedEditItemPopover" hidden>
+            <div class="approved-edit-card" id="approvedEditItemCard"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderApprovedVisualProfileEditor() {
+      const mount = document.getElementById("approvedVisualProfileEditor");
+      if (!mount) return;
+      const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
+      mount.innerHTML = approvedVisualProfileEditorMarkup(profile);
+    }
+
+    function closeApprovedVisualEditPopover() {
+      const popover = document.getElementById("approvedEditItemPopover");
+      if (popover) popover.hidden = true;
+    }
+
+    function openApprovedVisualEditPopover(kind, data = {}) {
+      const popover = document.getElementById("approvedEditItemPopover");
+      const card = document.getElementById("approvedEditItemCard");
+      if (!popover || !card) return;
+      if (kind === "photo") {
+        card.innerHTML = `
+          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace this picture and send it back to admin review.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <button class="action-btn" type="button" data-approved-visual-photo-replace data-photo-target="${displayText(data.target || "gallery")}">Replace and resubmit</button>
+        `;
+      } else {
+        const platform = socialPlatforms.find((item) => item.key === data.platform) || { key: data.platform, label: "Social link" };
+        const inputId = `profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`;
+        const value = approvedProfileFieldValue(inputId, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
+        card.innerHTML = `
+          <div class="row"><div><strong>${displayText(platform.label)}</strong><div class="meta">Add or change this link and send it back to admin review.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="field"><label for="approvedVisualSocialInput">${displayText(platform.label)} link</label><input id="approvedVisualSocialInput" type="text" value="${escapeHtml(value)}" placeholder="@username or profile URL"></div>
+          <button class="action-btn" type="button" data-approved-visual-social-save data-social-platform="${displayText(platform.key)}">Save and resubmit</button>
+        `;
+        window.setTimeout(() => document.getElementById("approvedVisualSocialInput")?.focus(), 50);
+      }
+      popover.hidden = false;
+    }
+
     function renderApprovedDancerProfileEditor(preserveCitySelection = false) {
       const stageField = document.getElementById("profileStageName");
       const cityField = document.getElementById("profileCity");
@@ -31727,6 +31980,7 @@
           note.textContent = rejected ? `Not approved: ${social.reviewNotes || "No reason added."}` : "";
         }
       });
+      renderApprovedVisualProfileEditor();
       syncApprovedProfileSubmitState();
     }
 
@@ -31819,6 +32073,7 @@
       const other = document.getElementById(field.id === leftId ? rightId : leftId);
       if (other && other.value !== field.value) other.value = field.value;
       syncApprovedProfileSubmitState();
+      renderApprovedVisualProfileEditor();
     }
 
     function focusApprovedSocialField(fieldId = "") {
@@ -36561,7 +36816,7 @@
         const panel = document.getElementById("approvedDancerPanel");
         panel?.removeAttribute("hidden");
         if (panel) panel.open = true;
-        setApprovedToolDropdown("edit");
+        setApprovedToolDropdown("edit", { force: true });
         setResult("Edit profile tools opened.");
         return;
       }
@@ -36633,6 +36888,7 @@
         pendingApprovedPhotoTarget = trigger?.dataset.photoTarget || "gallery";
         document.getElementById("approvedPhotoUploadInput")?.click();
         setResult("Choose a replacement picture to upload for review.");
+        return;
       }
     }
 
@@ -36648,12 +36904,19 @@
         renderAdminDashboard();
         renderDancerManagement();
         syncApprovedProfileSubmitState();
-        if (result) result.textContent = "Photo uploaded for admin review. Public photos stay unchanged until approved.";
-        showToast("Photo uploaded for review");
+        if (pendingApprovedPhotoAutoSubmit) {
+          if (result) result.textContent = "Photo uploaded. Sending it back to admin review...";
+          await submitApprovedProfileChangesForReview(document.getElementById("approvedControlSubmitApproval"));
+          showToast("Photo replaced and resubmitted");
+        } else {
+          if (result) result.textContent = "Photo uploaded for admin review. Public photos stay unchanged until approved.";
+          showToast("Photo uploaded for review");
+        }
       } catch (error) {
         if (result) result.textContent = error.message || "Could not upload photo";
         showToast(error.message || "Could not upload photo");
       } finally {
+        pendingApprovedPhotoAutoSubmit = false;
         input.value = "";
         input.disabled = false;
       }
@@ -36664,6 +36927,46 @@
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      const visualEdit = event.target.closest("[data-profile-visual-edit]");
+      if (visualEdit) {
+        event.preventDefault();
+        openApprovedVisualEditPopover(visualEdit.dataset.profileVisualEdit, {
+          target: visualEdit.dataset.photoTarget,
+          label: visualEdit.dataset.photoLabel,
+          platform: visualEdit.dataset.socialPlatform
+        });
+        return;
+      }
+      const visualPhotoReplace = event.target.closest("[data-approved-visual-photo-replace]");
+      if (visualPhotoReplace) {
+        event.preventDefault();
+        pendingApprovedPhotoTarget = visualPhotoReplace.dataset.photoTarget || "gallery";
+        pendingApprovedPhotoAutoSubmit = true;
+        closeApprovedVisualEditPopover();
+        document.getElementById("approvedPhotoUploadInput")?.click();
+        showToast("Choose a replacement picture to resubmit");
+        return;
+      }
+      const visualSocialSave = event.target.closest("[data-approved-visual-social-save]");
+      if (visualSocialSave) {
+        event.preventDefault();
+        const platform = visualSocialSave.dataset.socialPlatform || "";
+        const input = document.getElementById("approvedVisualSocialInput");
+        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
+        const field = document.getElementById(fieldId);
+        if (field && input) {
+          field.value = input.value.trim();
+          mirrorApprovedProfileEditField(field);
+          closeApprovedVisualEditPopover();
+          submitApprovedProfileChangesForReview(visualSocialSave);
+        }
+        return;
+      }
+      if (event.target.closest("[data-approved-edit-close]")) {
+        event.preventDefault();
+        closeApprovedVisualEditPopover();
+        return;
+      }
       const fixTargetButton = event.target.closest("[data-fix-target]");
       if (fixTargetButton) {
         event.preventDefault();
