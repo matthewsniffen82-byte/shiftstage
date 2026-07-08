@@ -26778,11 +26778,7 @@
       "Canceled shift alerts"
     ];
 
-    const adminUsers = [
-      { name: "Alex Rivera", role: "Customer", status: "Active" },
-      { name: "Mira Nova", role: "Dancer", status: "Pending approval" },
-      { name: "Venue Ops", role: "Venue", status: "Verification pending" }
-    ];
+    const adminUsers = [];
 
     Object.values(markets).forEach((market) => {
       market.dancers.forEach((profile, index) => {
@@ -28315,6 +28311,7 @@
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
         const profileData = {
           id: item.id,
+          isRealDancerAccount: true,
           slug: item.slug || slugify(item.stageName),
           name: item.stageName,
           legalName: item.realName || item.real_name || "",
@@ -29992,6 +29989,7 @@
       const wasVerified = profile?.status === "Verified";
       const profileData = {
         name,
+        isRealDancerAccount: true,
         status,
         city,
         venue: profile?.venue || "",
@@ -34245,6 +34243,23 @@
       ));
     }
 
+    function hasRealSubmittedDancerData(profile) {
+      return Boolean(
+        profile?.id ||
+        profile?.isRealDancerAccount ||
+        profile?.reviewSubmitted ||
+        profile?.approvalChangesPending ||
+        (Array.isArray(profile?.submittedPhotos) && profile.submittedPhotos.length) ||
+        (Array.isArray(profile?.verificationDocuments) && profile.verificationDocuments.length) ||
+        (Array.isArray(profile?.reviews) && profile.reviews.length) ||
+        (Array.isArray(profile?.socialLinks) && profile.socialLinks.length)
+      );
+    }
+
+    function adminProfiles() {
+      return allProfiles().filter(({ profile }) => hasRealSubmittedDancerData(profile));
+    }
+
     function adminProfileRow(city, profile) {
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : "No active shift";
@@ -34311,7 +34326,7 @@
     }
 
     function renderAdminDancerDirectories() {
-      const profiles = allProfiles();
+      const profiles = adminProfiles();
       const approved = profiles.filter(({ profile }) => profile.status === "Verified");
       const disapproved = profiles.filter(({ profile }) => profile.status === "Rejected");
       const visibleApproved = filterAdminDirectoryDancers(approved, adminApprovedDancerSearch);
@@ -34524,7 +34539,6 @@
           <div class="admin-actions">
             <button class="action-btn" data-admin-action="approve-dancer" ${approveDisabled}>Approve dancer</button>
             <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
-            <button class="action-btn secondary" data-admin-action="remove-profile">Remove fake profile</button>
             <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
           </div>
         </details>
@@ -34603,7 +34617,7 @@
       showAdminDashboardPage();
       savedAdminContentReviews = loadSavedAdminContentReviews();
       applySavedAdminContentReviews();
-      const profiles = allProfiles();
+      const profiles = adminProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
       const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
       const shiftProfiles = visibleProfiles.filter(({ profile }) => profile.scheduled);
@@ -34614,14 +34628,17 @@
       document.getElementById("adminActiveSubscriptionCount").textContent = activeSubscriptions.length;
       document.getElementById("adminMonitoring").innerHTML = adminMonitoringMarkup();
 
-      document.getElementById("adminUsers").innerHTML = [
+      const adminUserRows = [
         ...adminUsers.map((user) => `
           <article class="admin-item">
             <div class="row"><div><h3>${user.name}</h3><div class="meta">${user.role}</div></div><span class="pill">${user.status}</span></div>
           </article>
         `),
         ...visibleProfiles.slice(0, 6).map(({ city, profile }) => adminProfileRow(city, profile))
-      ].join("");
+      ];
+      document.getElementById("adminUsers").innerHTML = adminUserRows.length
+        ? adminUserRows.join("")
+        : '<div class="locked">No real users found yet.</div>';
 
       document.getElementById("adminDancers").innerHTML = pendingProfiles.length
         ? pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index)).join("")
