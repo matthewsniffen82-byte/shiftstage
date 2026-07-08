@@ -32119,7 +32119,7 @@
       return `
         <div class="approved-visual-profile">
           <section class="profile-modal">
-            <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}">
+            <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
               <div class="modal-identity-stack">
                 <div class="modal-identity">
                   <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
@@ -32142,7 +32142,6 @@
                 <button type="button" data-approved-visual-photo-add="main">Add main photo</button>
                 <button type="button" data-approved-visual-photo-add="gallery">Add gallery photo</button>
               </div>
-              ${photos.filter((photo) => photo.status === "rejected").map((photo) => `<div class="approved-visual-reason">${displayText(photo.label)} not approved: ${displayText(photo.notes || "No reason added.")}</div>`).join("")}
               <div class="modal-grid">
                 ${shiftsMarkup(profile, shiftStatus(profile))}
                 <div class="info-tile">
@@ -32159,13 +32158,12 @@
                         <span class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
                           ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
                         </span>
-                        <button class="approved-social-edit-btn" type="button" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" aria-label="Edit ${displayText(social.label)}">
+                        <button class="approved-social-edit-btn" type="button" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" aria-label="Edit ${displayText(social.label)}">
                           <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
                         </button>
                       </span>
                     `).join("")}
                   </div>
-                  ${socials.filter((social) => social.status === "rejected").map((social) => `<div class="approved-visual-reason">${displayText(social.label)} not approved: ${displayText(social.notes || "No reason added.")}</div>`).join("")}
                 </div>
               </div>
               <div class="modal-actions">
@@ -32213,8 +32211,12 @@
       popover.style.removeProperty("--approved-social-popover-top");
       if (kind === "photo") {
         document.querySelector(".approved-visual-profile")?.appendChild(popover);
+        const rejectionReason = normalizedReviewStatus(data.status) === "rejected"
+          ? `<div class="approved-visual-reason">${displayText(data.label || "Photo")} not approved: ${displayText(data.notes || "No reason added.")}</div>`
+          : "";
         card.innerHTML = `
           <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Use Submit for review once your changes look right.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          ${rejectionReason}
           <div class="approved-visual-photo-actions">
             <button type="button" data-approved-visual-photo-replace data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>
             <button class="approved-visual-delete" type="button" data-approved-visual-photo-delete data-photo-target="${displayText(data.target || "gallery")}">Delete picture</button>
@@ -32224,8 +32226,12 @@
         const platform = socialPlatforms.find((item) => item.key === data.platform) || { key: data.platform, label: "Social link" };
         const inputId = `profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`;
         const value = approvedProfileFieldValue(inputId, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
+        const rejectionReason = normalizedReviewStatus(data.status) === "rejected"
+          ? `<div class="approved-visual-reason">${displayText(platform.label)} not approved: ${displayText(data.notes || "No reason added.")}</div>`
+          : "";
         card.innerHTML = `
           <div class="row"><div><strong>${displayText(platform.label)}</strong><div class="meta">Add, change, or delete this link. Use Submit for review once your changes look right.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          ${rejectionReason}
           <div class="field"><label for="approvedVisualSocialInput">${displayText(platform.label)} link</label><input id="approvedVisualSocialInput" type="text" value="${escapeHtml(value)}" placeholder="@username or profile URL"></div>
           <div class="approved-visual-social-actions">
             <button class="action-btn" type="button" data-approved-visual-social-save data-social-platform="${displayText(platform.key)}">Save link</button>
@@ -37321,6 +37327,8 @@
           target: visualEdit.dataset.photoTarget,
           label: visualEdit.dataset.photoLabel,
           platform: visualEdit.dataset.socialPlatform,
+          status: visualEdit.dataset.reviewStatus,
+          notes: visualEdit.dataset.reviewNotes,
           anchor: visualEdit
         });
         return;
