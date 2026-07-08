@@ -35664,8 +35664,21 @@
       event.stopPropagation();
       closeProfilePhotoViewer();
     });
+    profilePhotoViewerClose?.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    }, { passive: false });
     profilePhotoViewer?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       if (event.target === profilePhotoViewer) closeProfilePhotoViewer();
+    });
+    profilePhotoViewer?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    }, { passive: true });
+    profilePhotoViewerImage?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
     });
     document.addEventListener("pointerdown", (event) => {
       const closeButton = event.target.closest?.("#modalClose");
@@ -35676,6 +35689,7 @@
     }, { capture: true, passive: false });
 
     profileBackdrop.addEventListener("click", (event) => {
+      if (event.target.closest?.("#profilePhotoViewer")) return;
       if (event.target === profileBackdrop) closeProfileModal();
       if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
     });
