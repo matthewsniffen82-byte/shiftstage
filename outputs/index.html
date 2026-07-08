@@ -25027,27 +25027,33 @@
       }
     }
 
-    /* Final profile preview thumbnails: one row only. */
+    /* Final profile preview thumbnails: one row without horizontal squashing. */
     .profile-modal .gallery {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
-      grid-auto-flow: column !important;
-      grid-auto-columns: minmax(0, 1fr) !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
       gap: clamp(5px, 1.6vw, 9px) !important;
       width: 100% !important;
       max-width: min(100%, 620px) !important;
       margin-inline: auto !important;
       padding: 8px clamp(10px, 2.8vw, 14px) !important;
-      overflow: hidden !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+    }
+
+    .profile-modal .gallery::-webkit-scrollbar {
+      display: none !important;
     }
 
     .profile-modal .thumb {
-      width: 100% !important;
-      min-width: 0 !important;
-      max-width: none !important;
-      height: clamp(42px, 11vw, 66px) !important;
+      flex: 0 0 clamp(52px, 13vw, 72px) !important;
+      width: clamp(52px, 13vw, 72px) !important;
+      min-width: clamp(52px, 13vw, 72px) !important;
+      max-width: clamp(52px, 13vw, 72px) !important;
+      height: clamp(58px, 14vw, 82px) !important;
       min-height: 0 !important;
-      aspect-ratio: 1 / 1 !important;
+      aspect-ratio: 2 / 3 !important;
     }
 
     @media (max-width: 390px) {
@@ -25057,7 +25063,11 @@
       }
 
       .profile-modal .thumb {
-        height: clamp(38px, 10vw, 52px) !important;
+        flex-basis: 48px !important;
+        width: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        height: 62px !important;
       }
     }
   </style>
