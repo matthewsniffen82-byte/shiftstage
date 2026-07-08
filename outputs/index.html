@@ -25050,6 +25050,45 @@
       display: none !important;
     }
 
+    .profile-modal .modal-image {
+      cursor: zoom-in !important;
+    }
+
+    .profile-photo-viewer {
+      align-items: center;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(10px);
+      display: flex;
+      inset: 0;
+      justify-content: center;
+      padding: clamp(14px, 3vw, 26px);
+      position: fixed;
+      z-index: 80;
+    }
+
+    .profile-photo-viewer[hidden] {
+      display: none !important;
+    }
+
+    .profile-photo-viewer-image {
+      background-color: #050507;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-size: contain !important;
+      border: 1px solid rgba(168, 85, 247, 0.42);
+      border-radius: 18px;
+      box-shadow: 0 28px 88px rgba(0, 0, 0, 0.64), 0 0 34px rgba(139, 92, 246, 0.20);
+      height: min(82svh, 760px);
+      width: min(92vw, 760px);
+    }
+
+    .profile-photo-viewer-close {
+      position: fixed !important;
+      right: max(18px, env(safe-area-inset-right)) !important;
+      top: max(18px, env(safe-area-inset-top)) !important;
+      z-index: 82 !important;
+    }
+
     .profile-modal .thumb {
       flex: 0 0 clamp(52px, 13vw, 72px) !important;
       width: clamp(52px, 13vw, 72px) !important;
@@ -26412,6 +26451,12 @@
         </button>
         <div class="modal-body" id="modalBody"></div>
       </section>
+      <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
+        <button class="close-btn profile-photo-viewer-close" id="profilePhotoViewerClose" type="button" aria-label="Close larger profile photo">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" aria-label="Selected profile photo"></div>
+      </div>
     </div>
 
     <div class="admin-preview-popover" id="adminPreviewPopover" role="dialog" aria-modal="true" aria-labelledby="adminPreviewTitle" hidden>
@@ -26521,6 +26566,9 @@
     const profileBackdrop = document.getElementById("profileBackdrop");
     const profileModal = document.getElementById("profileModal");
     const modalImage = document.getElementById("modalImage");
+    const profilePhotoViewer = document.getElementById("profilePhotoViewer");
+    const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
+    const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
     const modalScrollCue = document.getElementById("modalScrollCue");
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
@@ -32168,6 +32216,20 @@
       });
     }
 
+    function openProfilePhotoViewer() {
+      if (!profilePhotoViewer || !profilePhotoViewerImage || !modalImage) return;
+      const photoStyle = getComputedStyle(modalImage);
+      profilePhotoViewerImage.style.backgroundImage = photoStyle.backgroundImage;
+      profilePhotoViewerImage.style.backgroundPosition = photoStyle.backgroundPosition;
+      profilePhotoViewerImage.style.backgroundRepeat = photoStyle.backgroundRepeat;
+      profilePhotoViewer.hidden = false;
+    }
+
+    function closeProfilePhotoViewer() {
+      if (!profilePhotoViewer) return;
+      profilePhotoViewer.hidden = true;
+    }
+
     function uploadedProfilePhotoUrls(profile, includeUnapproved = false) {
       const submittedUrls = (profile?.submittedPhotos || [])
         .filter((photo) => includeUnapproved || (photo.reviewStatus || photo.review_status) === "approved")
@@ -32365,6 +32427,7 @@
     }
 
     function closeProfileModal() {
+      closeProfilePhotoViewer();
       closeDealPassOverlay();
       closeQrPopovers();
       profileBackdrop.classList.remove("show");
@@ -35436,6 +35499,12 @@
       setModalPhoto(thumb.dataset.photo, thumb.dataset.photoUrl || "");
     });
 
+    modalImage?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openProfilePhotoViewer();
+    });
+
     modalBody.addEventListener("click", (event) => {
       if (handleQrClick(event)) return;
       if (handleShareClick(event)) return;
@@ -35589,6 +35658,14 @@
       event.preventDefault();
       event.stopPropagation();
       modalBody?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    profilePhotoViewerClose?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeProfilePhotoViewer();
+    });
+    profilePhotoViewer?.addEventListener("click", (event) => {
+      if (event.target === profilePhotoViewer) closeProfilePhotoViewer();
     });
     document.addEventListener("pointerdown", (event) => {
       const closeButton = event.target.closest?.("#modalClose");
@@ -36678,6 +36755,10 @@
         }
       }
       if (event.key === "Escape" && profileBackdrop.classList.contains("show")) {
+        if (profilePhotoViewer && !profilePhotoViewer.hidden) {
+          closeProfilePhotoViewer();
+          return;
+        }
         closeProfileModal();
         return;
       }
