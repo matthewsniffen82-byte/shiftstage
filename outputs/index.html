@@ -2218,6 +2218,15 @@
       display: none !important;
     }
 
+    .approved-edit-popover.is-social {
+      align-items: start;
+      justify-items: center;
+      padding: 0 12px;
+      background: transparent;
+      backdrop-filter: none;
+      pointer-events: none;
+    }
+
     .approved-edit-card {
       width: min(100%, 430px);
       display: grid;
@@ -2228,6 +2237,20 @@
       background: rgba(7,7,11,.98);
       box-shadow: 0 28px 80px rgba(0,0,0,.62), 0 0 34px rgba(255,104,124,.18);
       margin-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    .approved-edit-popover.is-social .approved-edit-card {
+      position: fixed;
+      top: var(--approved-social-popover-top, 50%);
+      left: 50%;
+      width: min(calc(100vw - 24px), 430px);
+      max-height: min(340px, calc(100vh - 24px));
+      overflow-y: auto;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      border-color: rgba(53,216,255,.5);
+      box-shadow: 0 20px 54px rgba(0,0,0,.7), 0 0 26px rgba(53,216,255,.18);
+      margin-bottom: 0;
     }
 
     .approved-edit-card .row {
@@ -32104,7 +32127,11 @@
 
     function closeApprovedVisualEditPopover() {
       const popover = document.getElementById("approvedEditItemPopover");
-      if (popover) popover.hidden = true;
+      if (popover) {
+        popover.hidden = true;
+        popover.classList.remove("is-social");
+        popover.style.removeProperty("--approved-social-popover-top");
+      }
     }
 
     function closeApprovedProfileEditor() {
@@ -32118,6 +32145,8 @@
       const popover = document.getElementById("approvedEditItemPopover");
       const card = document.getElementById("approvedEditItemCard");
       if (!popover || !card) return;
+      popover.classList.toggle("is-social", kind !== "photo");
+      popover.style.removeProperty("--approved-social-popover-top");
       if (kind === "photo") {
         card.innerHTML = `
           <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Use Submit for review once your changes look right.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
@@ -32138,7 +32167,13 @@
             <button class="approved-visual-delete" type="button" data-approved-visual-social-delete data-social-platform="${displayText(platform.key)}">Delete link</button>
           </div>
         `;
-        window.setTimeout(() => document.getElementById("approvedVisualSocialInput")?.focus(), 50);
+        const anchor = data.anchor?.closest(".modal-body")?.querySelector(".social-links") || data.anchor;
+        if (anchor?.getBoundingClientRect) {
+          const rect = anchor.getBoundingClientRect();
+          const preferredTop = rect.top + (rect.height / 2);
+          const clampedTop = Math.min(Math.max(preferredTop, 190), Math.max(190, window.innerHeight - 190));
+          popover.style.setProperty("--approved-social-popover-top", `${clampedTop}px`);
+        }
       }
       popover.hidden = false;
     }
@@ -37226,7 +37261,8 @@
         openApprovedVisualEditPopover(visualEdit.dataset.profileVisualEdit, {
           target: visualEdit.dataset.photoTarget,
           label: visualEdit.dataset.photoLabel,
-          platform: visualEdit.dataset.socialPlatform
+          platform: visualEdit.dataset.socialPlatform,
+          anchor: visualEdit
         });
         return;
       }
