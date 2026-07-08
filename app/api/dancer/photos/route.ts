@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { uploadOwnDancerPhoto } from "@/src/lib/dancr/dancer";
+import { deleteOwnDancerPhoto, uploadOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -34,6 +34,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, photo });
   } catch (error) {
     return apiError(error, "Unable to upload dancer photo.");
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { client, user } = await createRequestSupabaseContext(request);
+    const body = await request.json().catch(() => ({}));
+    const photoId = typeof body?.photoId === "string" ? body.photoId.trim() : "";
+
+    if (!photoId) {
+      return NextResponse.json({ ok: false, error: "Photo id is required." }, { status: 400 });
+    }
+
+    const photo = await deleteOwnDancerPhoto(client, user.id, photoId);
+    return NextResponse.json({ ok: true, photo });
+  } catch (error) {
+    return apiError(error, "Unable to delete dancer photo.");
   }
 }
 

@@ -118,6 +118,35 @@ export async function uploadOwnDancerPhoto(
   };
 }
 
+export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, photoId: string) {
+  const profile = await getOwnDancerProfile(client, userId);
+  const { data: photo, error: photoError } = await client
+    .from("dancer_photos")
+    .select("id, storage_path")
+    .eq("id", photoId)
+    .eq("dancer_id", profile.id)
+    .maybeSingle();
+
+  if (photoError) throw photoError;
+  if (!photo) throw new Error("Photo not found.");
+
+  const { error: deleteError } = await client.from("dancer_photos").delete().eq("id", photo.id);
+  if (deleteError) throw deleteError;
+
+  if (photo.storage_path) {
+    await client.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
+  }
+
+  const { error: profileError } = await client
+    .from("dancer_profiles")
+    .update({ photo_review_status: "pending" })
+    .eq("id", profile.id);
+
+  if (profileError) throw profileError;
+
+  return { id: photo.id };
+}
+
 export async function uploadVerificationDocument(client: DancrClient, input: UploadVerificationDocumentInput) {
   const userId = await getCurrentUserId(client);
   const storagePath = `${userId}/verification/${makeStorageFileName(input.fileName)}`;
