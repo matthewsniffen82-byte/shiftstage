@@ -32052,7 +32052,6 @@
           notes: submitted?.reviewNotes || ""
         };
       });
-      const rejectedCount = photos.filter((photo) => photo.status === "rejected").length + socials.filter((social) => social.status === "rejected").length;
       const changeState = approvedProfileChangeState(profile);
       return `
         <div class="approved-visual-profile">
@@ -32062,7 +32061,6 @@
                 <div class="modal-identity">
                   <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
                   <div class="pill-row">
-                    <span class="badge ${rejectedCount ? "pending" : "modal-status-hidden"}">${rejectedCount ? `${rejectedCount} fix${rejectedCount === 1 ? "" : "es"}` : ""}</span>
                     <span class="pill" id="modalCity">${displayText(activeDancerCity())}</span>
                   </div>
                 </div>
