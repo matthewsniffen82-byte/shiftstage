@@ -2692,6 +2692,13 @@
       background: rgba(70, 10, 38, 0.42);
     }
 
+    .approved-tool-dropdown .social-edit-field.is-rejected,
+    .approved-tool-dropdown .field.is-rejected {
+      border-color: rgba(255, 104, 124, 0.62);
+      background: rgba(92, 12, 28, 0.34);
+      box-shadow: inset 3px 0 0 rgba(255, 104, 124, 0.92);
+    }
+
     .fix-link-summary {
       display: grid;
       gap: 8px;
@@ -2735,8 +2742,10 @@
     }
 
     .dancer-fix-highlight {
-      outline: 2px solid rgba(255, 79, 195, 0.9) !important;
-      box-shadow: 0 0 0 4px rgba(255, 79, 195, 0.18), 0 0 24px rgba(255, 79, 195, 0.26) !important;
+      outline: 2px solid rgba(255, 104, 124, 0.95) !important;
+      border-color: rgba(255, 104, 124, 0.82) !important;
+      background-color: rgba(92, 12, 28, 0.42) !important;
+      box-shadow: 0 0 0 4px rgba(255, 104, 124, 0.18), 0 0 24px rgba(255, 104, 124, 0.28) !important;
     }
 
     .dancer-photo-review-grid {
@@ -29617,9 +29626,23 @@
       if (reviewType === "identity") return "ID, selfie, and proof";
       if (reviewType === "photos") return "Photo set";
       if (reviewType === "profile") return "Profile details";
-      if (reviewType.startsWith("photo:")) return "Submitted photo";
+      if (reviewType.startsWith("photo:")) {
+        const targetId = reviewType.split(":").slice(1).join(":");
+        const profile = activeDancerProfile() || null;
+        const photoIndex = (profile?.submittedPhotos || []).findIndex((photo, index) =>
+          String(photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`) === targetId
+        );
+        return photoIndex >= 0 ? `Photo ${photoIndex + 1}` : "Submitted photo";
+      }
       if (reviewType.startsWith("verification_document:")) return "Verification file";
-      if (reviewType.startsWith("social_link:")) return "Social link";
+      if (reviewType.startsWith("social_link:")) {
+        const targetId = reviewType.split(":").slice(1).join(":");
+        const profile = activeDancerProfile() || null;
+        const social = normalizeSubmittedSocials(profile).find((item) =>
+          item.id === targetId || item.platform === targetId
+        );
+        return social?.label || "Social link";
+      }
       return String(reviewType || "Review").replaceAll("_", " ");
     }
 
@@ -29732,8 +29755,8 @@
       `;
     }
 
-    function setApprovedToolDropdown(panel = "") {
-      activeApprovedToolDropdown = activeApprovedToolDropdown === panel ? "" : panel;
+    function setApprovedToolDropdown(panel = "", options = {}) {
+      activeApprovedToolDropdown = options.force ? panel : activeApprovedToolDropdown === panel ? "" : panel;
       renderApprovedToolDropdowns();
     }
 
@@ -29792,17 +29815,46 @@
       }
     }
 
+    function findDancerFixTarget(targetKey = "") {
+      if (!targetKey) return;
+      const exact = document.querySelector(`[data-fix-anchor="${CSS.escape(targetKey)}"]`);
+      if (exact) return exact;
+      if (targetKey.startsWith("dancer-photo-")) {
+        const targetId = targetKey.replace("dancer-photo-", "");
+        const matchingPhoto = Array.from(document.querySelectorAll(".dancer-photo-review-card.is-rejected[data-fix-anchor]"))
+          .find((card) => String(card.dataset.fixAnchor || "").includes(targetId));
+        return matchingPhoto || document.querySelector(".dancer-photo-review-card.is-rejected") || document.querySelector('[data-fix-anchor="dancer-photo-review-card"]');
+      }
+      if (targetKey.startsWith("profile-")) {
+        const platform = targetKey.replace("profile-", "");
+        const input = document.getElementById(`profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`);
+        return input?.closest(".social-edit-field, .field") || input || document.querySelector('[data-fix-anchor="profile-socials"]');
+      }
+      return null;
+    }
+
     function jumpToDancerFixTarget(targetKey = "") {
       if (!targetKey) return;
-      const target = document.querySelector(`[data-fix-anchor="${CSS.escape(targetKey)}"]`)
-        || (targetKey.startsWith("dancer-photo-") ? document.querySelector(".dancer-photo-review-card.is-rejected") || document.querySelector('[data-fix-anchor="dancer-photo-review-card"]') : null)
-        || (targetKey.startsWith("profile-") ? document.getElementById(`profile${targetKey.replace("profile-", "").charAt(0).toUpperCase()}${targetKey.replace("profile-", "").slice(1)}`) : null);
+      const panel = document.getElementById("approvedDancerPanel");
+      panel?.removeAttribute("hidden");
+      if (panel) panel.open = true;
+      if (activeApprovedToolDropdown !== "edit") {
+        activeApprovedToolDropdown = "edit";
+        renderApprovedToolDropdowns();
+      }
+      const target = findDancerFixTarget(targetKey);
       if (!target) return;
       openAncestorDetails(target);
       target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      const highlightTarget = target.closest(".social-edit-field, .dancer-photo-review-card, .field") || target;
+      highlightTarget.classList.add("dancer-fix-highlight");
       target.classList.add("dancer-fix-highlight");
-      if (typeof target.focus === "function") target.focus({ preventScroll: true });
-      window.setTimeout(() => target.classList.remove("dancer-fix-highlight"), 2200);
+      const focusTarget = target.matches?.("input, textarea, select, button") ? target : target.querySelector?.("input, textarea, select, button");
+      if (typeof focusTarget?.focus === "function") focusTarget.focus({ preventScroll: true });
+      window.setTimeout(() => {
+        highlightTarget.classList.remove("dancer-fix-highlight");
+        target.classList.remove("dancer-fix-highlight");
+      }, 4200);
     }
 
     function buildRankingNotifications(profile, city, metrics) {
@@ -31649,7 +31701,12 @@
         const input = document.getElementById(`profile${social.platform.charAt(0).toUpperCase()}${social.platform.slice(1)}`);
         if (!input) return;
         const rejected = normalizedReviewStatus(social.reviewStatus) === "rejected";
+        const socialRow = input.closest(".social-edit-field, .field");
         input.dataset.fixAnchor = `profile-${social.platform}`;
+        if (socialRow) {
+          socialRow.dataset.fixAnchor = `profile-${social.platform}`;
+          socialRow.classList.toggle("is-rejected", rejected);
+        }
         input.classList.toggle("dancer-fix-highlight", false);
         let note = input.parentElement?.querySelector(".social-review-reason");
         if (!note && rejected) {
