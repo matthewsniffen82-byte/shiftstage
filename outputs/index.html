@@ -26648,6 +26648,7 @@
     let activeVenueName = "Velvet Room";
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
+    let profileModalReturnTarget = "";
     let lastPostedShift = null;
     const localPostedShiftStore = new Map();
     let localPostedShiftList = [];
@@ -32345,6 +32346,7 @@
     function openProfileModal(profileName, options = {}) {
       const city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
+      profileModalReturnTarget = options.returnTo || "";
       const baseProfile = markets[city].dancers.find((item) => item.name === profileName && !item.hidden);
       if (baseProfile?.status === "Verified") {
         recordUniqueTrendEvent("profileViews", city, profileName);
@@ -32439,10 +32441,23 @@
       closeProfilePhotoViewer();
       closeDealPassOverlay();
       closeQrPopovers();
+      const returnTarget = profileModalReturnTarget;
+      profileModalReturnTarget = "";
       profileBackdrop.classList.remove("show");
       profileBackdrop.setAttribute("aria-hidden", "true");
+      if (returnTarget === "dancer-dashboard") {
+        activeDashboardType = "dancer";
+        isCustomerLoggedIn = false;
+        isDancerLoggedIn = true;
+        isVenueLoggedIn = false;
+        updateAccountHeader();
+        renderDancerSetup();
+        renderAccountControls();
+        dancerDashboard.classList.add("show");
+        dancerDashboard.setAttribute("aria-hidden", "false");
+      }
       syncOverlayScrollLock();
-      window.scrollTo(0, savedScrollY);
+      if (returnTarget !== "dancer-dashboard") window.scrollTo(0, savedScrollY);
     }
 
     function syncOverlayScrollLock() {
@@ -35841,7 +35856,7 @@
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
       render();
-      openProfileModal(profile.name, { preview: true });
+      openProfileModal(profile.name, { preview: true, returnTo: "dancer-dashboard" });
     }
 
     document.getElementById("previewPublicProfile").addEventListener("click", () => {
