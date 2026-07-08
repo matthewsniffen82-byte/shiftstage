@@ -28385,6 +28385,7 @@
         : Array.isArray(profile?.social_links)
           ? profile.social_links
           : [];
+      const hasSubmittedSocialRows = rawSocialLinks.length > 0;
       const mappedSocials = rawSocialLinks.length
         ? rawSocialLinks
         : Object.entries(profile?.socials || {}).map(([platform, value]) => ({ platform, url: value, handle: value }));
@@ -28400,6 +28401,8 @@
           const id = social.id || `${profile?.id || profile?.name || "profile"}-social-${index}`;
           const liveReview = latestContentReview(`social_link:${id}`);
           const localReview = profile?.socialReviewStatuses?.[id] || {};
+          const explicitReviewStatus = liveReview?.status || localReview.status || social.reviewStatus || social.review_status;
+          const defaultReviewStatus = hasSubmittedSocialRows && !isApprovedDancerStatus(profile?.status) ? "pending" : "approved";
           return {
             id,
             hasLiveId: Boolean(social.id),
@@ -28407,7 +28410,7 @@
             label: socialPlatformLabel(platform),
             url: normalizedUrl,
             handle,
-            reviewStatus: liveReview?.status || localReview.status || social.reviewStatus || social.review_status || "pending",
+            reviewStatus: explicitReviewStatus || defaultReviewStatus,
             reviewNotes: liveReview?.notes || localReview.notes || social.reviewNotes || social.review_notes || ""
           };
         })
@@ -32865,7 +32868,7 @@
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : "";
-      const portraitPhotoAttrs = customPhotoAttrs(customPhotoUrl(profile, 0));
+      const portraitPhotoAttrs = customPhotoAttrs(isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile));
       const profileHref = profile.slug ? `/dancers/${profile.slug}` : `#profile-${slugify(profile.name)}`;
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${profileHref}" data-profile="${profile.name}" aria-label="${profile.name} profile">
@@ -33040,7 +33043,7 @@
 
     function uploadedProfilePhotoUrls(profile, includeUnapproved = false) {
       const submittedUrls = (profile?.submittedPhotos || [])
-        .filter((photo) => includeUnapproved || (photo.reviewStatus || photo.review_status) === "approved")
+        .filter((photo) => includeUnapproved || normalizedReviewStatus(photo.reviewStatus || photo.review_status) === "approved")
         .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
         .filter(Boolean);
       const submittedStatusByUrl = new Map((profile?.submittedPhotos || [])
@@ -33055,6 +33058,10 @@
         : [];
       const mainUrl = profile?.mainPhotoUrl && isVisibleApprovedUrl(profile.mainPhotoUrl) ? [profile.mainPhotoUrl] : [];
       return [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].filter(Boolean);
+    }
+
+    function publicProfilePhotoUrl(profile) {
+      return uploadedProfilePhotoUrls(profile, false)[0] || "";
     }
 
     function galleryMarkup(profile, baseIndex, options = {}) {
@@ -33173,7 +33180,8 @@
       const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
       const basePhoto = portraitClass(profileIndex);
-      const basePhotoUrl = customPhotoUrl(profile, 0);
+      const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
+      const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
       savedScrollY = window.scrollY;
 
       modalName.innerHTML = `${profile.name}${isPending ? "" : '<span class="verified-mark" aria-label="Verified">✓</span>'}`;
