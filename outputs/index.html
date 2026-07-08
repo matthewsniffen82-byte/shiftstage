@@ -2287,14 +2287,23 @@
 
     .approved-visual-profile .profile-modal .social-edit-item {
       position: relative;
-      display: inline-grid;
-      grid-template-columns: auto auto;
-      align-items: center;
-      gap: 6px;
+      display: inline-flex;
     }
 
     .approved-visual-profile .profile-modal .social-edit-item .social-link {
       pointer-events: none;
+    }
+
+    .approved-visual-profile .profile-modal .social-tile.is-social-editing .social-edit-item .social-link {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .approved-visual-profile .profile-modal .social-tile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .approved-social-edit-btn {
@@ -2309,6 +2318,13 @@
       color: #f7fdff;
       background: rgba(5,8,12,.86);
       box-shadow: 0 8px 20px rgba(0,0,0,.42), 0 0 16px rgba(53,216,255,.14);
+    }
+
+    .approved-social-edit-btn.is-active {
+      border-color: rgba(255,42,177,.72);
+      color: #fff;
+      background: rgba(70,14,55,.88);
+      box-shadow: 0 0 18px rgba(255,42,177,.26), 0 8px 20px rgba(0,0,0,.42);
     }
 
     .approved-social-edit-btn .icon {
@@ -27114,6 +27130,7 @@
     let pendingApprovedPhotoTarget = "gallery";
     let activeApprovedVisualPhotoTarget = "";
     let pendingApprovedPhotoAutoSubmit = false;
+    let approvedSocialEditMode = false;
     let activeApprovedToolDropdown = "";
     let shiftCheckInMessage = "";
 
@@ -32148,18 +32165,18 @@
                   <strong>Followers</strong>
                   <div class="meta profile-follower-metric"><span class="metric-value">${followerMetricMarkup(profile, activeDancerCity())}</span>${profileViewsTodayMarkup(profile, activeDancerCity())}</div>
                 </div>
-                <div class="info-tile social-tile">
+                <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
                   <div class="social-tile-head">
                     <strong>Social links</strong>
+                    <button class="approved-social-edit-btn ${approvedSocialEditMode ? "is-active" : ""}" type="button" data-approved-social-edit-toggle aria-label="${approvedSocialEditMode ? "Done editing social links" : "Edit social links"}" aria-pressed="${approvedSocialEditMode ? "true" : "false"}">
+                      <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
+                    </button>
                   </div>
                   <div class="social-links">
                     ${socials.map((social) => `
                       <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                        <span class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                        <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" ${approvedSocialEditMode ? `data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}"` : ""} title="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
                           ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                        </span>
-                        <button class="approved-social-edit-btn" type="button" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" aria-label="Edit ${displayText(social.label)}">
-                          <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
                         </button>
                       </span>
                     `).join("")}
@@ -37313,6 +37330,15 @@
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      const socialEditToggle = event.target.closest("[data-approved-social-edit-toggle]");
+      if (socialEditToggle) {
+        event.preventDefault();
+        approvedSocialEditMode = !approvedSocialEditMode;
+        closeApprovedVisualEditPopover();
+        renderApprovedVisualProfileEditor();
+        showToast(approvedSocialEditMode ? "Tap a social icon to edit it." : "Social edit mode closed.");
+        return;
+      }
       const visualPhotoSelect = event.target.closest("[data-approved-visual-photo-select]");
       if (visualPhotoSelect) {
         event.preventDefault();
