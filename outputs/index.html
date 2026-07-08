@@ -32183,17 +32183,21 @@
               ${profileDealTileMarkup(profile)}
             </div>
           </div>
-          ${shiftInterestTileMarkup(profile, status)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
           </div>
+          ${shiftInterestTileMarkup(profile, status)}
           ${shiftNotesMarkup(profile)}
         `;
       }
       if (profile.scheduled) {
         const upcomingLabel = upcomingFullLabel(profile);
         return `
+          <div class="info-tile">
+            <strong>Now</strong>
+            <div class="meta"><span class="muted-value">Not scheduled now</span></div>
+          </div>
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="schedule-stack">
@@ -32202,23 +32206,19 @@
             </div>
           </div>
           ${shiftInterestTileMarkup(profile, status)}
-          <div class="info-tile">
-            <strong>Now</strong>
-            <div class="meta"><span class="muted-value">Not scheduled now</span></div>
-          </div>
           ${shiftNotesMarkup(profile)}
         `;
       }
       return `
+        <div class="info-tile">
+          <strong>Now</strong>
+          <div class="meta"><span class="muted-value">Not scheduled now</span></div>
+        </div>
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="meta"><span class="muted-value">No upcoming shifts</span></div>
           </div>
         ${shiftInterestTileMarkup(profile, status)}
-        <div class="info-tile">
-          <strong>Now</strong>
-          <div class="meta"><span class="muted-value">Not scheduled now</span></div>
-        </div>
       `;
     }
 
