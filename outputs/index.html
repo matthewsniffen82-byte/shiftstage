@@ -25033,13 +25033,20 @@
       display: flex !important;
       flex-wrap: nowrap !important;
       gap: clamp(5px, 1.6vw, 9px) !important;
-      width: 100% !important;
-      max-width: min(100%, 620px) !important;
-      margin-inline: auto !important;
-      padding: 2px clamp(10px, 2.8vw, 14px) 5px !important;
-      border-top: 0 !important;
-      border-bottom: 0 !important;
-      box-shadow: none !important;
+      width: calc(100% - 22px) !important;
+      max-width: min(calc(100% - 22px), 620px) !important;
+      margin: 0 !important;
+      padding: 6px !important;
+      position: absolute !important;
+      left: 50% !important;
+      bottom: 9px !important;
+      transform: translateX(-50%) !important;
+      z-index: 5 !important;
+      border: 1px solid rgba(168, 85, 247, 0.24) !important;
+      border-radius: 16px !important;
+      background: rgba(5, 5, 8, 0.72) !important;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36), inset 0 0 0 1px rgba(255, 255, 255, 0.035) !important;
+      backdrop-filter: blur(10px) !important;
       overflow-x: auto !important;
       overflow-y: hidden !important;
       -webkit-overflow-scrolling: touch !important;
@@ -25102,8 +25109,10 @@
     @media (max-width: 390px) {
       .profile-modal .gallery {
         gap: 4px !important;
-        padding-inline: 8px !important;
-        padding-block: 2px 5px !important;
+        width: calc(100% - 18px) !important;
+        max-width: calc(100% - 18px) !important;
+        padding: 5px !important;
+        bottom: 8px !important;
       }
 
       .profile-modal .thumb {
@@ -26444,8 +26453,8 @@
             </div>
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
+          <div class="gallery" id="modalGallery"></div>
         </div>
-        <div class="gallery" id="modalGallery"></div>
         <button class="modal-scroll-cue" id="modalScrollCue" type="button" aria-label="Scroll down to profile details">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
@@ -35494,6 +35503,8 @@
     }
 
     modalGallery.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       const thumb = event.target.closest(".thumb");
       if (!thumb) return;
       setModalPhoto(thumb.dataset.photo, thumb.dataset.photoUrl || "");
