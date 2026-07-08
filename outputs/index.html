@@ -33678,9 +33678,9 @@
             : review
         ));
         activeSetupStep = "approval";
-        verificationSubmitNotice = "Submitted for review. Dancr will notify you by email or in your site notifications when your review is complete.";
+        verificationSubmitNotice = "Submitted for review. Dancr will notify you by email and in your site notifications when your review is complete.";
         renderDancerSetup();
-        showToast("Submitted for review. Watch email and site notifications.");
+        showToast("Submitted for review. Watch your email and site notifications.");
       } catch (error) {
         showToast(error.message || "Could not submit for review");
       } finally {
@@ -33798,7 +33798,7 @@
         : approved
           ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
         : reviewSubmitted
-          ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email or site notifications when review is complete."
+          ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email and in your site notifications when review is complete."
           : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -33838,10 +33838,10 @@
           approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
           approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
-          approvalStatusSecondary.textContent = "You will be notified by email and site notifications when review is complete.";
+          approvalStatusSecondary.textContent = "You will be notified by email and in your site notifications when review is complete.";
         } else if (readyForReview) {
           approvalStatusPrimary.textContent = "Ready for review. Tap Submit for review in Step 4 when everything looks correct.";
-          approvalStatusSecondary.textContent = "After submission, Dancr will notify you by email and site notifications.";
+          approvalStatusSecondary.textContent = "After submission, Dancr will notify you by email and in your site notifications.";
         } else {
           approvalStatusPrimary.textContent = "Complete profile, photos, and verification before submitting for Dancr review.";
           approvalStatusSecondary.textContent = "Public discovery and shift posting unlock after approval.";
