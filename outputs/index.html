@@ -25690,7 +25690,6 @@
             </summary>
             <p id="dancerPublicDetail">Your dancer account is free. Complete profile setup, photos, and verification so Dancr can review your profile and unlock public discovery.</p>
           </details>
-          <button class="ghost preview-profile-btn" id="previewPublicProfile" type="button">Preview profile</button>
         </div>
         <details class="auth-card dashboard-collapse dancer-analytics-section" id="dancerAnalyticsSection">
           <summary>
@@ -35858,7 +35857,7 @@
       openProfileModal(profile.name, { preview: true, returnTo: "dancer-dashboard" });
     }
 
-    document.getElementById("previewPublicProfile").addEventListener("click", () => {
+    document.getElementById("previewPublicProfile")?.addEventListener("click", () => {
       openDancerProfilePreview();
     });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
@@ -36440,7 +36439,7 @@
       }
 
       if (action === "preview-profile") {
-        document.getElementById("previewPublicProfile")?.click();
+        openDancerProfilePreview();
         setResult("Profile preview opened.");
         return;
       }
