@@ -27903,6 +27903,7 @@
           const normalizedUrl = rawUrl || normalizeSocialInput(platform, rawHandle);
           const handle = rawHandle || socialHandleFromUrl(normalizedUrl);
           const id = social.id || `${profile?.id || profile?.name || "profile"}-social-${index}`;
+          const liveReview = latestContentReview(`social_link:${id}`);
           const localReview = profile?.socialReviewStatuses?.[id] || {};
           return {
             id,
@@ -27911,8 +27912,8 @@
             label: socialPlatformLabel(platform),
             url: normalizedUrl,
             handle,
-            reviewStatus: localReview.status || social.reviewStatus || social.review_status || "pending",
-            reviewNotes: localReview.notes || social.reviewNotes || social.review_notes || ""
+            reviewStatus: liveReview?.status || localReview.status || social.reviewStatus || social.review_status || "pending",
+            reviewNotes: liveReview?.notes || localReview.notes || social.reviewNotes || social.review_notes || ""
           };
         })
         .filter((social) => social.platform && (social.url || social.handle));
@@ -29613,6 +29614,13 @@
         if (!previous || currentTime >= previousTime) latest.set(type, review);
       });
       return Array.from(latest.values());
+    }
+
+    function latestContentReview(reviewType = "") {
+      if (!reviewType) return null;
+      return latestDancerReviews().find((review) =>
+        String(review.reviewType || review.review_type || "") === reviewType
+      ) || null;
     }
 
     function reviewSetupStep(reviewType = "") {
@@ -31624,8 +31632,8 @@
         id: photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`,
         imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
         label: index === 0 ? "Submitted main photo" : `Submitted photo ${index + 1}`,
-        status: normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending"),
-        notes: photo.reviewNotes || photo.review_notes || "",
+        status: normalizedReviewStatus(latestContentReview(`photo:${photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`}`)?.status || photo.reviewStatus || photo.review_status || "pending"),
+        notes: latestContentReview(`photo:${photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`}`)?.notes || photo.reviewNotes || photo.review_notes || "",
         target: `submitted:${index}`
       }));
       const existing = [
@@ -33513,6 +33521,17 @@
       const stageName = useDraftFields ? (draft.stageName || profile.stage_name || profile.stageName || "") : (profile.stage_name || profile.stageName || draft?.stageName || "");
       const city = useDraftFields ? (draft.city || profile.city || profile.cityName || "") : (profile.city || profile.cityName || draft?.city || "");
       const photos = dancerProfilePhotoUrls(profile);
+      const submittedPhotos = dancerSubmittedPhotosFromProfile(profile);
+      const socialLinks = Array.isArray(profile.social_links)
+        ? profile.social_links.map((social) => ({
+          id: social.id,
+          platform: social.platform,
+          handle: social.handle,
+          url: social.url,
+          isActive: social.is_active !== false,
+          is_active: social.is_active !== false
+        }))
+        : [];
 
       setDancerSetupField("dancerLegalName", legalName);
       setDancerSetupField("dancerStageName", stageName);
@@ -33547,7 +33566,9 @@
           danceProofStatus: approved ? "Approved" : (dancerSetup.verification ? "Needs review" : localProfile.danceProofStatus),
           reviewSubmitted: approved || rejected ? false : (submittedForReview || localProfile.reviewSubmitted),
           hidden: approved ? false : localProfile.hidden,
-          socials: { ...(localProfile.socials || {}), ...dancerSignupSocials }
+          socials: { ...(localProfile.socials || {}), ...dancerSignupSocials },
+          submittedPhotos: submittedPhotos.length ? submittedPhotos : (localProfile.submittedPhotos || []),
+          socialLinks: socialLinks.length ? socialLinks : (localProfile.socialLinks || [])
         });
       }
     }
@@ -33585,6 +33606,30 @@
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
         .map((photo) => photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "")
         .filter(Boolean);
+    }
+
+    function dancerSubmittedPhotosFromProfile(profile) {
+      const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+      return rows
+        .slice()
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .map((photo, index) => {
+          const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
+          const review = latestContentReview(`photo:${photo.id || `${profile?.id || profile?.stage_name || profile?.stageName || "profile"}-photo-${index}`}`);
+          return {
+            id: photo.id || `${profile?.id || profile?.stage_name || profile?.stageName || "profile"}-photo-${index}`,
+            imageUrl,
+            image_url: imageUrl,
+            isPrimary: Boolean(photo.is_primary || photo.isPrimary || index === 0),
+            is_primary: Boolean(photo.is_primary || photo.isPrimary || index === 0),
+            sortOrder: Number(photo.sort_order ?? photo.sortOrder ?? index),
+            sort_order: Number(photo.sort_order ?? photo.sortOrder ?? index),
+            reviewStatus: review?.status || photo.review_status || photo.reviewStatus || "pending",
+            review_status: review?.status || photo.review_status || photo.reviewStatus || "pending",
+            reviewNotes: review?.notes || photo.review_notes || photo.reviewNotes || "",
+            review_notes: review?.notes || photo.review_notes || photo.reviewNotes || ""
+          };
+        });
     }
 
     function dancerSetupPhotoPreviewMarkup() {
