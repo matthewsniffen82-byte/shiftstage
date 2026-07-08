@@ -27026,6 +27026,7 @@
     let savedAdminContentReviews = loadSavedAdminContentReviews();
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
+    let activeApprovedVisualPhotoTarget = "";
     let pendingApprovedPhotoAutoSubmit = false;
     let activeApprovedToolDropdown = "";
     let shiftCheckInMessage = "";
@@ -32012,8 +32013,10 @@
 
     function approvedVisualProfileEditorMarkup(profile) {
       const photos = approvedVisualPhotoItems(profile);
-      const mainPhoto = photos[0] || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
-      const mainPhotoClass = portraitClass(0);
+      const selectedPhoto = photos.find((photo) => photo.target === activeApprovedVisualPhotoTarget || photo.id === activeApprovedVisualPhotoTarget) || photos[0];
+      const mainPhoto = selectedPhoto || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
+      const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
+      const mainPhotoClass = portraitClass(selectedPhotoIndex);
       const mainPhotoAttrs = customPhotoAttrs(mainPhoto.imageUrl);
       const submittedSocials = normalizeSubmittedSocials(profile);
       const socials = socialPlatforms.map((platform) => {
@@ -32050,7 +32053,7 @@
             </button>
             <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
-                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
+                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.target || photo.id)}" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
@@ -33991,6 +33994,7 @@
         removed = true;
       }
       if (!removed) return false;
+      if (activeApprovedVisualPhotoTarget === target) activeApprovedVisualPhotoTarget = "";
       if (deletedLivePhotoId && isDancerSession()) {
         const headers = authenticatedRequestHeaders("application/json");
         if (headers) {
@@ -37177,6 +37181,7 @@
       input.disabled = true;
       try {
         await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
+        activeApprovedVisualPhotoTarget = pendingApprovedPhotoTarget;
         renderAdminDashboard();
         renderDancerManagement();
         renderApprovedVisualProfileEditor();
@@ -37211,6 +37216,13 @@
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      const visualPhotoSelect = event.target.closest("[data-approved-visual-photo-select]");
+      if (visualPhotoSelect) {
+        event.preventDefault();
+        activeApprovedVisualPhotoTarget = visualPhotoSelect.dataset.approvedVisualPhotoSelect || visualPhotoSelect.dataset.photoTarget || "";
+        renderApprovedVisualProfileEditor();
+        return;
+      }
       const visualEdit = event.target.closest("[data-profile-visual-edit]");
       if (visualEdit) {
         event.preventDefault();
