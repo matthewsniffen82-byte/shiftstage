@@ -2261,7 +2261,7 @@
       width: min(calc(100vw - 24px), 430px);
       max-height: min(340px, calc(100vh - 24px));
       overflow-y: auto;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       pointer-events: auto;
       border-color: rgba(53,216,255,.5);
       box-shadow: 0 20px 54px rgba(0,0,0,.7), 0 0 26px rgba(53,216,255,.18);
@@ -32183,8 +32183,8 @@
         const anchor = data.anchor?.closest(".modal-body")?.querySelector(".social-links") || data.anchor;
         if (anchor?.getBoundingClientRect) {
           const rect = anchor.getBoundingClientRect();
-          const preferredTop = rect.top + (rect.height / 2);
-          const clampedTop = Math.min(Math.max(preferredTop, 190), Math.max(190, window.innerHeight - 190));
+          const preferredTop = rect.top - 8;
+          const clampedTop = Math.max(preferredTop, 12);
           popover.style.setProperty("--approved-social-popover-top", `${clampedTop}px`);
         }
       }
