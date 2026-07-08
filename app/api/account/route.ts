@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId, setAccountState } from "@/src/lib/dancr/auth";
 import type { AccountState } from "@/src/lib/dancr/types";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -86,6 +87,18 @@ export async function DELETE(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     const account = await setAccountState(client, user.id, "deleted");
+    const admin = createAdminSupabaseClient();
+    const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id);
+
+    if (deleteUserError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Account was marked deleted, but the login could not be removed. Contact admin before signing up again with this email.",
+        },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({ ok: true, account, session });
   } catch (error) {
