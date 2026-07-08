@@ -2306,6 +2306,32 @@
       gap: 10px;
     }
 
+    .approved-visual-profile .profile-modal .approved-social-tools {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-left: auto;
+      flex: 0 0 auto;
+    }
+
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-qr-trigger,
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger {
+      width: 30px;
+      min-width: 30px;
+      height: 30px;
+      min-height: 30px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-qr-trigger .icon,
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger .icon {
+      width: 16px;
+      height: 16px;
+    }
+
     .approved-social-edit-btn {
       width: 30px;
       height: 30px;
@@ -32211,6 +32237,21 @@
           notes: submitted?.reviewNotes || ""
         };
       });
+      const shareName = displayText(profile?.name || activeDancerName());
+      const shareCity = displayText(activeDancerCity());
+      const socialUtilityButtons = `
+        <div class="profile-utility-actions approved-social-tools" aria-label="Profile social tools">
+          <button class="profile-qr-trigger" type="button" data-profile-qr="${shareName}" data-share-city="${shareCity}" aria-expanded="false" aria-label="Show profile QR code">
+            ${actionIconMarkup("qr")}
+          </button>
+          <button class="profile-share-trigger" type="button" data-native-share="${shareName}" data-share-city="${shareCity}" aria-label="Share profile">
+            ${actionIconMarkup("share")}
+          </button>
+          <button class="approved-social-edit-btn ${approvedSocialEditMode ? "is-active" : ""}" type="button" data-approved-social-edit-toggle aria-label="${approvedSocialEditMode ? "Done editing social links" : "Edit social links"}" aria-pressed="${approvedSocialEditMode ? "true" : "false"}">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
+          </button>
+        </div>
+      `;
       const changeState = approvedProfileChangeState(profile);
       return `
         <div class="approved-visual-profile">
@@ -32247,14 +32288,12 @@
                 <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
                   <div class="social-tile-head">
                     <strong>Social links</strong>
-                    <button class="approved-social-edit-btn ${approvedSocialEditMode ? "is-active" : ""}" type="button" data-approved-social-edit-toggle aria-label="${approvedSocialEditMode ? "Done editing social links" : "Edit social links"}" aria-pressed="${approvedSocialEditMode ? "true" : "false"}">
-                      <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
-                    </button>
+                    ${socialUtilityButtons}
                   </div>
                   <div class="social-links">
                     ${socials.map((social) => `
                       <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                        <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" ${approvedSocialEditMode ? `data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}"` : ""} title="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                        <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.label)}" ${approvedSocialEditMode ? `data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}"` : ""} title="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
                           ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
                         </button>
                       </span>
