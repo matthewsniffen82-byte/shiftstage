@@ -24946,6 +24946,39 @@
         line-height: 1.15 !important;
       }
     }
+
+    /* Final profile preview photo fit: stable frame, whole photo visible. */
+    .profile-modal .modal-image,
+    .profile-modal .modal-image.one,
+    .profile-modal .modal-image.two,
+    .profile-modal .modal-image.three {
+      height: clamp(330px, 43dvh, 430px) !important;
+      min-height: clamp(330px, 43dvh, 430px) !important;
+      max-height: clamp(330px, 43dvh, 430px) !important;
+      flex: 0 0 clamp(330px, 43dvh, 430px) !important;
+      background-color: #050508 !important;
+      background-size: contain !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+    }
+
+    .profile-modal .modal-image.has-custom-photo {
+      background-size: contain, cover !important;
+      background-position: center center, center center !important;
+      background-repeat: no-repeat !important;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-image,
+      .profile-modal .modal-image.one,
+      .profile-modal .modal-image.two,
+      .profile-modal .modal-image.three {
+        height: clamp(300px, 41dvh, 390px) !important;
+        min-height: clamp(300px, 41dvh, 390px) !important;
+        max-height: clamp(300px, 41dvh, 390px) !important;
+        flex-basis: clamp(300px, 41dvh, 390px) !important;
+      }
+    }
   </style>
 </head>
 <body>
