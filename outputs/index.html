@@ -27065,6 +27065,14 @@
       }, 260);
     }
 
+    function scrollDancerDashboardToTop(behavior = "auto") {
+      window.requestAnimationFrame(() => {
+        dancerDashboard?.scrollTo?.({ top: 0, behavior });
+        dancerDashboard?.querySelector?.(".page-panel-inner")?.scrollTo?.({ top: 0, behavior });
+        window.scrollTo({ top: 0, behavior });
+      });
+    }
+
     const dancerDashboardLinkStorageKey = "dancrPendingDancerDashboardLinkV1";
 
     function storePendingDancerDashboardLink(linkState) {
@@ -27237,7 +27245,7 @@
           closeVenueDashboard();
           showToast("Email confirmed. Complete your 4-step dancer verification.");
           openDancerDashboard();
-          setTimeout(scrollDancerVerificationIntoView, 180);
+          setTimeout(() => scrollDancerDashboardToTop("auto"), 180);
           return;
         }
         if (dashboardRole === "venue" && isPasswordReset) {
