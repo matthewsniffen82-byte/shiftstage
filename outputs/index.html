@@ -2019,6 +2019,45 @@
       box-shadow: inset 0 0 18px rgba(255,255,255,.025);
     }
 
+    .approved-visual-profile .profile-modal {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      max-height: none;
+      overflow: visible;
+      margin: 0 auto;
+      transform: none;
+    }
+
+    .approved-visual-profile .profile-modal .modal-top {
+      position: relative;
+      z-index: 3;
+    }
+
+    .approved-visual-profile .profile-modal .close-btn {
+      position: static;
+    }
+
+    .approved-visual-profile .profile-modal .modal-image {
+      cursor: pointer;
+    }
+
+    .approved-visual-profile .profile-modal .modal-image.is-rejected,
+    .approved-visual-profile .profile-modal .thumb.is-rejected,
+    .approved-visual-profile .profile-modal .social-link.is-rejected {
+      border-color: rgba(255,104,124,.95) !important;
+      box-shadow: 0 0 0 3px rgba(255,104,124,.2), 0 0 24px rgba(255,104,124,.3) !important;
+    }
+
+    .approved-visual-profile .profile-modal .modal-actions {
+      position: static;
+      display: grid;
+      grid-template-columns: 1fr;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
     .approved-visual-hero {
       display: grid;
       gap: 10px;
@@ -31921,6 +31960,8 @@
     function approvedVisualProfileEditorMarkup(profile) {
       const photos = approvedVisualPhotoItems(profile);
       const mainPhoto = photos[0] || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
+      const mainPhotoClass = portraitClass(0);
+      const mainPhotoAttrs = customPhotoAttrs(mainPhoto.imageUrl);
       const submittedSocials = normalizeSubmittedSocials(profile);
       const socials = socialPlatforms.map((platform) => {
         const submitted = submittedSocials.find((item) => item.platform === platform.key);
@@ -31936,46 +31977,62 @@
       const changeState = approvedProfileChangeState(profile);
       return `
         <div class="approved-visual-profile">
-          <div class="approved-visual-profile-card">
-            <div class="row">
-              <div>
-                <span class="eyebrow">Full profile editor</span>
-                <h3>${displayText(profile?.name || activeDancerName())}</h3>
-                <div class="meta">${displayText(activeDancerCity())}${profile?.status ? ` · ${displayText(profile.status)}` : ""}</div>
+          <section class="profile-modal">
+            <div class="modal-top">
+              <div class="modal-identity-stack">
+                <div class="modal-identity">
+                  <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
+                  <div class="pill-row">
+                    <span class="badge ${rejectedCount ? "pending" : "modal-status-hidden"}">${rejectedCount ? `${rejectedCount} fix${rejectedCount === 1 ? "" : "es"}` : ""}</span>
+                    <span class="pill" id="modalCity">${displayText(activeDancerCity())}</span>
+                  </div>
+                </div>
               </div>
-              <span class="${rejectedCount ? "badge pending" : "pill"}">${rejectedCount ? `${rejectedCount} fix${rejectedCount === 1 ? "" : "es"}` : "No fixes"}</span>
+              <button class="close-btn" type="button" data-dancer-control-action="collapse-approved-tool" aria-label="Close edit profile">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
             </div>
-            <div class="approved-visual-hero">
-              ${mainPhoto.imageUrl ? `<button class="approved-visual-main-photo approved-visual-photo ${mainPhoto.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label)}">${`<img src="${displayText(mainPhoto.imageUrl)}" alt="${displayText(mainPhoto.label)}">`}</button>` : `<button class="approved-visual-main-photo approved-visual-photo" type="button" data-profile-visual-edit="photo" data-photo-target="main" data-photo-label="Main photo">Add main photo</button>`}
-              <div class="approved-visual-thumb-row" aria-label="Profile pictures">
+            <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}"></button>
+            <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
-                  <button class="approved-visual-photo ${photo.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.label)}">
-                    ${photo.imageUrl ? `<img src="${displayText(photo.imageUrl)}" alt="${displayText(photo.label)}">` : `<span>${displayText(photo.label)}</span>`}
+                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.label)}">
+                    <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
-              </div>
+            </div>
+            <div class="modal-body">
               <div class="approved-visual-photo-actions">
                 <button type="button" data-approved-visual-photo-add="main">Add main photo</button>
                 <button type="button" data-approved-visual-photo-add="gallery">Add gallery photo</button>
               </div>
               ${photos.filter((photo) => photo.status === "rejected").map((photo) => `<div class="approved-visual-reason">${displayText(photo.label)} not approved: ${displayText(photo.notes || "No reason added.")}</div>`).join("")}
-            </div>
-            <div class="modal-grid">
-              ${shiftsMarkup(profile, shiftStatus(profile))}
-              <div class="info-tile">
-                <strong>Social links</strong>
-                <div class="approved-visual-social-row">
-                  ${socials.map((social) => `
-                    <button class="approved-visual-social social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`profile-${social.key}`)}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.label)}">
-                      ${socialIconMarkup(social.key)}<span class="sr-only">${displayText(social.label)}</span>
-                    </button>
-                  `).join("")}
+              <div class="modal-grid">
+                ${shiftsMarkup(profile, shiftStatus(profile))}
+                <div class="info-tile">
+                  <strong>Followers</strong>
+                  <div class="meta profile-follower-metric"><span class="metric-value">${followerMetricMarkup(profile, activeDancerCity())}</span>${profileViewsTodayMarkup(profile, activeDancerCity())}</div>
                 </div>
-                ${socials.filter((social) => social.status === "rejected").map((social) => `<div class="approved-visual-reason">${displayText(social.label)} not approved: ${displayText(social.notes || "No reason added.")}</div>`).join("")}
+                <div class="info-tile social-tile">
+                  <div class="social-tile-head">
+                    <strong>Social links</strong>
+                  </div>
+                  <div class="social-links">
+                    ${socials.map((social) => `
+                      <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : ""}" type="button" data-fix-anchor="${displayText(`profile-${social.key}`)}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.label)}">
+                        ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                      </button>
+                    `).join("")}
+                  </div>
+                  ${socials.filter((social) => social.status === "rejected").map((social) => `<div class="approved-visual-reason">${displayText(social.label)} not approved: ${displayText(social.notes || "No reason added.")}</div>`).join("")}
+                </div>
+              </div>
+              <div class="modal-actions">
+                <button class="approved-visual-submit action-btn ${changeState.needsApproval ? "is-ready" : ""}" type="button" data-dancer-control-action="resubmit-approval" ${changeState.needsApproval ? "" : "disabled"}>
+                  ${actionButtonLabel("check", "Submit for review")}
+                </button>
               </div>
             </div>
-            <button class="approved-visual-submit ${changeState.needsApproval ? "is-ready" : ""}" type="button" data-dancer-control-action="resubmit-approval" ${changeState.needsApproval ? "" : "disabled"}>Submit for review</button>
-          </div>
+          </section>
           <div class="approved-edit-popover" id="approvedEditItemPopover" hidden>
             <div class="approved-edit-card" id="approvedEditItemCard"></div>
           </div>
