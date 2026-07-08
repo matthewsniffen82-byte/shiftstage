@@ -32490,7 +32490,8 @@
       const pendingPhoto = (profile.submittedPhotos || []).some((photo) =>
         normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending") === "pending"
       );
-      const needsApproval = Boolean(profile.approvalChangesPending) || detailsChanged || pendingPhoto || socialStates.some((item) => item.addedOrChanged || item.deleted);
+      const waitingOnAdmin = Boolean(profile.approvalChangesPending && profile.approvalChangesSubmitted);
+      const needsApproval = detailsChanged || (!waitingOnAdmin && pendingPhoto) || socialStates.some((item) => item.addedOrChanged || item.deleted) || Boolean(profile.approvalChangesPending && !profile.approvalChangesSubmitted);
       const hasDeletes = socialStates.some((item) => item.deleted);
       const hasAnyChange = needsApproval || hasDeletes;
       return { hasAnyChange, needsApproval, hasDeletesOnly: hasDeletes && !needsApproval };
@@ -32594,7 +32595,13 @@
         venue: venueName,
         distance: venue?.distance || profile.distance,
         socials: normalizedSocials,
-        approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval)
+        status: dancerCoreApprovalUnlocked(profile) ? "Verified" : profile.status,
+        hidden: dancerCoreApprovalUnlocked(profile) ? false : profile.hidden,
+        reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted,
+        approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval),
+        approvalChangesSubmitted: options.submitForReview
+          ? Boolean(profile.approvalChangesSubmitted)
+          : (changeStateBeforeSave.needsApproval ? false : Boolean(profile.approvalChangesSubmitted))
       });
       const existingSocials = normalizeSubmittedSocials(oldProfile);
       profile.socialLinks = Object.entries(normalizedSocials)
@@ -34203,6 +34210,12 @@
         profile.submittedPhotos = submittedPhotos.filter(Boolean).slice(0, 6);
         profile.photoStatus = "Pending";
         profile.approvalChangesPending = true;
+        profile.approvalChangesSubmitted = false;
+        if (dancerCoreApprovalUnlocked(profile)) {
+          profile.status = "Verified";
+          profile.reviewSubmitted = false;
+          profile.hidden = false;
+        }
       }
       return data;
     }
@@ -34240,6 +34253,12 @@
         }
       }
       profile.approvalChangesPending = true;
+      profile.approvalChangesSubmitted = false;
+      if (dancerCoreApprovalUnlocked(profile)) {
+        profile.status = "Verified";
+        profile.reviewSubmitted = false;
+        profile.hidden = false;
+      }
       profile.photoStatus = "Pending";
       render();
       renderDancerManagement();
@@ -34581,11 +34600,35 @@
         result.textContent = "Saving changes before admin review...";
       }
       try {
+        const wasCoreApproved = dancerCoreApprovalUnlocked(activeDancerProfile()) || dancerSetup.approval;
         const saved = await saveApprovedDancerProfile({ submitForReview: true });
         if (!saved?.saved || !saved.needsApproval) return;
-        await submitDancerProfileForReview(null);
         const profile = activeDancerProfile();
-        if (profile) profile.approvalChangesPending = false;
+        const stillCoreApproved = wasCoreApproved || dancerCoreApprovalUnlocked(profile);
+        if (stillCoreApproved && profile) {
+          Object.assign(profile, {
+            status: "Verified",
+            hidden: false,
+            reviewSubmitted: false,
+            approvalChangesPending: true,
+            approvalChangesSubmitted: true
+          });
+          dancerSetup.approval = true;
+          markDancerProfileSetupSaved(true);
+          renderAdminDashboard();
+          renderDancerSetup();
+          render();
+          if (customerDashboard.classList.contains("show")) renderDashboard();
+          syncApprovedProfileSubmitState();
+          if (result) result.textContent = "Submitted to admin. Your profile stays approved and live while only changed photos/social links are reviewed.";
+          showToast("Changes submitted. Your profile stays live.");
+          return;
+        }
+        await submitDancerProfileForReview(null);
+        if (profile) {
+          profile.approvalChangesPending = false;
+          profile.approvalChangesSubmitted = false;
+        }
         syncApprovedProfileSubmitState();
         if (result) result.textContent = "Submitted to admin. Only changed or replaced photos/social links will appear for review.";
       } finally {
@@ -35388,14 +35431,17 @@
       const documentCount = requiredSubmittedVerificationDocuments(profile).length;
       const pendingItems = pendingAdminSubmissionItems(profile);
       const approveDisabled = pendingItems.length ? "disabled" : "";
+      const submittedChanges = Boolean(profile.reviewSubmitted || profile.approvalChangesSubmitted);
+      const submittedLabel = profile.approvalChangesSubmitted ? "Profile changes submitted" : "Submitted for review";
+      const pendingLabel = profile.approvalChangesPending ? "Profile changes pending submission" : "Pending submission";
       return `
         <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
           <summary class="row">
             <div>
               <h3>${displayText(profile.name || "Stage name missing")}</h3>
-              <div class="meta">${displayText(city)} · ${displayText(visibleStatus)} · ${profile.reviewSubmitted ? "Submitted for review" : "Pending submission"}</div>
+              <div class="meta">${displayText(city)} · ${displayText(visibleStatus)} · ${submittedChanges ? submittedLabel : pendingLabel}</div>
             </div>
-            <span class="${profile.reviewSubmitted ? "badge pending" : "pill"}">${profile.reviewSubmitted ? "Submitted" : "Pending"}</span>
+            <span class="${submittedChanges ? "badge pending" : "pill"}">${submittedChanges ? "Submitted" : "Pending"}</span>
           </summary>
           <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
           <div class="meta">ID: ${displayText(profile.idStatus)} · Selfie: ${displayText(profile.selfieStatus)} · Photos: ${displayText(profile.photoStatus)}</div>
