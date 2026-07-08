@@ -24593,7 +24593,7 @@
       height: 34px !important;
       justify-content: center !important;
       left: auto !important;
-      margin: -17px auto -1px !important;
+      margin: 2px auto 5px !important;
       padding: 0 !important;
       position: relative !important;
       right: auto !important;
@@ -24629,7 +24629,7 @@
     @media (max-width: 560px) {
       .profile-modal .modal-scroll-cue {
         height: 32px !important;
-        margin: -16px auto -1px !important;
+        margin: 1px auto 5px !important;
         width: 32px !important;
       }
 
@@ -25036,7 +25036,7 @@
       width: 100% !important;
       max-width: min(100%, 620px) !important;
       margin-inline: auto !important;
-      padding: 8px clamp(10px, 2.8vw, 14px) !important;
+      padding: 2px clamp(10px, 2.8vw, 14px) 5px !important;
       overflow-x: auto !important;
       overflow-y: hidden !important;
       -webkit-overflow-scrolling: touch !important;
@@ -25061,6 +25061,7 @@
       .profile-modal .gallery {
         gap: 4px !important;
         padding-inline: 8px !important;
+        padding-block: 2px 5px !important;
       }
 
       .profile-modal .thumb {
@@ -26402,10 +26403,10 @@
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
         </div>
+        <div class="gallery" id="modalGallery"></div>
         <button class="modal-scroll-cue" id="modalScrollCue" type="button" aria-label="Scroll down to profile details">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
-        <div class="gallery" id="modalGallery"></div>
         <div class="modal-body" id="modalBody"></div>
       </section>
     </div>
