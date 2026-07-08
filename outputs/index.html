@@ -33994,6 +33994,9 @@
       `;
       const approvalBody = `
         ${verificationReviewNoticeMarkup()}
+        <button class="action-btn secondary" type="button" data-preview-profile>
+          Preview profile
+        </button>
         <button class="action-btn" type="button" data-submit-review ${readyForReview && !reviewSubmitted ? "" : "disabled"}>
           ${reviewSubmitted ? "Submitted for review" : rejected ? "Resubmit for review" : "Submit for review"}
         </button>
@@ -35581,7 +35584,7 @@
       if (!toolButton) return;
       handleVenueAdminTool(toolButton.dataset.venueTool);
     });
-    document.getElementById("previewPublicProfile").addEventListener("click", () => {
+    function openDancerProfilePreview() {
       const setupStageName = document.getElementById("setupStageName")?.value || "";
       const stageName = getDancerDashboardStageName(setupStageName);
       if (!stageName) {
@@ -35599,13 +35602,16 @@
         showToast("Create a profile first");
         return;
       }
-      closeDancerDashboard();
       citySelect.value = city;
       activeTab = "dancers";
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
       render();
       openProfileModal(profile.name, { preview: true });
+    }
+
+    document.getElementById("previewPublicProfile").addEventListener("click", () => {
+      openDancerProfilePreview();
     });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
     document.querySelectorAll("[data-admin-auth-mode]").forEach((button) => {
@@ -36328,6 +36334,11 @@
       const submitReviewButton = event.target.closest("[data-submit-review]");
       if (submitReviewButton) {
         submitDancerProfileForReview(submitReviewButton);
+        return;
+      }
+      const previewProfileButton = event.target.closest("[data-preview-profile]");
+      if (previewProfileButton) {
+        openDancerProfilePreview();
         return;
       }
       const toggle = event.target.closest("[data-step-toggle]");
