@@ -2050,6 +2050,28 @@
       cursor: pointer;
     }
 
+    .approved-photo-edit-badge {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      z-index: 4;
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(53,216,255,.72);
+      border-radius: 999px;
+      color: #f7fdff;
+      background: rgba(5,8,12,.88);
+      box-shadow: 0 12px 32px rgba(0,0,0,.54), 0 0 22px rgba(53,216,255,.24);
+      pointer-events: none;
+    }
+
+    .approved-photo-edit-badge .icon {
+      width: 20px;
+      height: 20px;
+    }
+
     .approved-visual-profile .profile-modal .modal-image.is-rejected,
     .approved-visual-profile .profile-modal .thumb.is-rejected,
     .approved-visual-profile .profile-modal .social-link.is-rejected {
@@ -2185,9 +2207,10 @@
       inset: 0;
       z-index: 90;
       display: grid;
-      place-items: center;
+      align-items: end;
+      justify-items: center;
       padding: 16px;
-      background: rgba(0,0,0,.72);
+      background: rgba(0,0,0,.38);
       backdrop-filter: blur(10px);
     }
 
@@ -2204,6 +2227,7 @@
       border-radius: 16px;
       background: rgba(7,7,11,.98);
       box-shadow: 0 28px 80px rgba(0,0,0,.62), 0 0 34px rgba(255,104,124,.18);
+      margin-bottom: max(14px, env(safe-area-inset-bottom));
     }
 
     .approved-edit-card .row {
@@ -31546,9 +31570,20 @@
       return values.some((value) => blocked.some((term) => String(value).toLowerCase().includes(term)));
     }
 
-    function socialLinksMarkup(profile) {
+    function socialLinksMarkup(profile, options = {}) {
+      const includeUnapproved = Boolean(options.preview || options.includeUnapproved);
+      const submittedByPlatform = new Map(normalizeSubmittedSocials(profile).map((social) => [social.platform, social]));
       const links = socialPlatforms
-        .map((platform) => ({ ...platform, url: profile.socials?.[platform.key] }))
+        .map((platform) => {
+          const submitted = submittedByPlatform.get(platform.key);
+          const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : "approved"));
+          return {
+            ...platform,
+            url: submitted?.url || profile.socials?.[platform.key] || "",
+            status
+          };
+        })
+        .filter((platform) => includeUnapproved || platform.status === "approved")
         .filter((platform) => platform.url);
       const city = selectedCity();
       const qrButton = `
@@ -32010,7 +32045,9 @@
                 <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
               </button>
             </div>
-            <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}"></button>
+            <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}">
+              <span class="approved-photo-edit-badge" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg></span>
+            </button>
             <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
                   <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
@@ -32764,8 +32801,17 @@
         .filter((photo) => includeUnapproved || (photo.reviewStatus || photo.review_status) === "approved")
         .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
         .filter(Boolean);
-      const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
-      const mainUrl = profile?.mainPhotoUrl ? [profile.mainPhotoUrl] : [];
+      const submittedStatusByUrl = new Map((profile?.submittedPhotos || [])
+        .map((photo) => [
+          photo.imageUrl || photo.image_url || photo.url || "",
+          normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending")
+        ])
+        .filter(([url]) => Boolean(url)));
+      const isVisibleApprovedUrl = (url) => includeUnapproved || !submittedStatusByUrl.has(url) || submittedStatusByUrl.get(url) === "approved";
+      const galleryUrls = Array.isArray(profile?.galleryPhotoUrls)
+        ? profile.galleryPhotoUrls.filter(Boolean).filter(isVisibleApprovedUrl)
+        : [];
+      const mainUrl = profile?.mainPhotoUrl && isVisibleApprovedUrl(profile.mainPhotoUrl) ? [profile.mainPhotoUrl] : [];
       return [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].filter(Boolean);
     }
 
@@ -32939,7 +32985,7 @@
                 ${profileViewsTodayMarkup(profile, city)}
               </div>
             </div>
-            ${socialLinksMarkup(profile)}
+            ${socialLinksMarkup(profile, { preview: isPrivatePreview })}
           </div>
           <div class="modal-actions">
             <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
