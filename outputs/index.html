@@ -34478,7 +34478,8 @@
         const document = documents.find((item, documentIndex) =>
           matchesRequiredVerificationDocument(item, required.key, required.terms, documentIndex, index)
         );
-        if (!document || document.status !== "approved") pending.push(required.label);
+        const status = normalizedReviewStatus(document?.status || document?.reviewStatus || document?.review_status);
+        if (!document || status !== "approved") pending.push(required.label);
       });
       return pending;
     }
@@ -35005,6 +35006,7 @@
           });
         }
         showToast(status === "approved" ? `${label} approved` : `${label} disapproved`);
+        renderAdminDashboard();
       } catch (error) {
         button.textContent = originalText;
         button.disabled = false;
