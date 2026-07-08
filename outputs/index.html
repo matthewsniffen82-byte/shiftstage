@@ -26219,54 +26219,69 @@
           <div class="stat"><strong id="adminSubscriptionCount">0</strong><span>Subscriptions</span></div>
           <div class="stat"><strong id="adminActiveSubscriptionCount">0</strong><span>Active billing</span></div>
         </div>
-        <div class="auth-card">
-          <h3>Platform monitoring</h3>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Platform monitoring</strong><span>Expand to view live system checks, approval queue health, reports, billing, and support activity.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminMonitoring"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Users</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Users</strong><span>Expand to view real dancer accounts and submitted profiles visible to admin.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminUsers"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Dancer approvals</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Dancer approvals</strong><span>Expand to review each pending dancer submission, including socials, photos, ID, selfie, proof, and final approval controls.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminDancers"></div>
-        </div>
-        <details class="auth-card admin-directory-card">
-          <summary class="row">
-            <h3>Approved dancers</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse admin-directory-card">
+          <summary><span class="dashboard-collapse-title"><strong>Approved dancers</strong><span>Expand to search real dancers whose required verification has been approved.</span></span>
             <span class="pill" id="adminApprovedDancerCount">0</span>
           </summary>
+          <div class="dashboard-collapse-body">
           <label class="admin-search-field" for="adminApprovedDancerSearch">
             <span>Search approved dancers</span>
             <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
           </label>
           <div class="admin-grid" id="adminApprovedDancers"></div>
+          </div>
         </details>
-        <details class="auth-card admin-directory-card">
-          <summary class="row">
-            <h3>Disapproved dancers</h3>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse admin-directory-card">
+          <summary><span class="dashboard-collapse-title"><strong>Disapproved dancers</strong><span>Expand to search rejected dancer profiles and review what was disapproved.</span></span>
             <span class="badge pending" id="adminDisapprovedDancerCount">0</span>
           </summary>
+          <div class="dashboard-collapse-body">
           <label class="admin-search-field" for="adminDisapprovedDancerSearch">
             <span>Search disapproved dancers</span>
             <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
           </label>
           <div class="admin-grid" id="adminDisapprovedDancers"></div>
+          </div>
         </details>
-        <div class="auth-card">
-          <h3>Reports</h3>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Reports</strong><span>Expand to review real open reports and public contact messages sent to admin.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminReports"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Support inbox</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, customer, venue, or visitor messages.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminSupportInbox"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Billing subscriptions</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Billing subscriptions</strong><span>Expand to view live subscription and billing status from connected accounts.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminSubscriptions"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Rankings</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Rankings</strong><span>Expand to refresh dancer ranking, trend, profile view, schedule view, and notification metrics.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid">
             <article class="admin-item">
               <div class="row">
@@ -26281,19 +26296,26 @@
               </div>
             </article>
           </div>
-        </div>
-        <div class="auth-card">
-          <h3>Shift controls</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Shift controls</strong><span>Expand to manage real posted shifts and remove shifts that should not be shown.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminShifts"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Featured placements</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Featured placements</strong><span>Expand to feature or unfeature approved dancers and visible venues.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminFeatured"></div>
-        </div>
-        <div class="auth-card">
-          <h3>Venue verification</h3>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Venue verification</strong><span>Expand to review venue submissions, approve verified venues, or remove invalid venues.</span></span></summary>
+          <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminVenues"></div>
-        </div>
+          </div>
+        </details>
         </div>
       </div>
     </section>
@@ -34507,7 +34529,7 @@
       const pendingItems = pendingAdminSubmissionItems(profile);
       const approveDisabled = pendingItems.length ? "disabled" : "";
       return `
-        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" ${index === 0 ? "open" : ""}>
+        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
           <summary class="row">
             <div>
               <h3>${displayText(profile.name || "Stage name missing")}</h3>
@@ -34735,6 +34757,9 @@
       document.getElementById("adminLoginForm").hidden = true;
       const content = document.getElementById("adminDashboardContent");
       if (content) content.hidden = false;
+      document.querySelectorAll("#adminDashboard .admin-dashboard-collapse, #adminDashboard #adminDancers details.admin-item").forEach((section) => {
+        section.open = false;
+      });
     }
 
     function lockAdminDashboard() {
