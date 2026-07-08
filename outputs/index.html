@@ -2035,7 +2035,15 @@
     }
 
     .approved-visual-profile .profile-modal .close-btn {
-      position: static;
+      position: fixed !important;
+      top: max(16px, env(safe-area-inset-top)) !important;
+      right: max(16px, env(safe-area-inset-right)) !important;
+      z-index: 95;
+      width: 56px;
+      min-height: 56px;
+      border-color: rgba(53,216,255,.72);
+      background: rgba(5,8,12,.88);
+      box-shadow: 0 16px 40px rgba(0,0,0,.58), 0 0 24px rgba(53,216,255,.22), inset 0 0 18px rgba(53,216,255,.08);
     }
 
     .approved-visual-profile .profile-modal .modal-image {
