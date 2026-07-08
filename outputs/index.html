@@ -2234,12 +2234,15 @@
     }
 
     .approved-edit-popover.is-social {
-      align-items: start;
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      align-items: center;
       justify-items: center;
-      padding: 0 12px;
-      background: transparent;
-      backdrop-filter: none;
-      pointer-events: none;
+      padding: 10px;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(8px);
+      pointer-events: auto;
     }
 
     .approved-edit-card {
@@ -2255,17 +2258,20 @@
     }
 
     .approved-edit-popover.is-social .approved-edit-card {
-      position: fixed;
-      top: var(--approved-social-popover-top, 50%);
-      left: 50%;
-      width: min(calc(100vw - 24px), 430px);
-      max-height: min(340px, calc(100vh - 24px));
+      position: relative;
+      width: min(100%, 430px);
+      max-height: 100%;
       overflow-y: auto;
-      transform: translateX(-50%);
+      transform: none;
       pointer-events: auto;
       border-color: rgba(53,216,255,.5);
       box-shadow: 0 20px 54px rgba(0,0,0,.7), 0 0 26px rgba(53,216,255,.18);
       margin-bottom: 0;
+    }
+
+    .approved-visual-profile .profile-modal .social-tile {
+      position: relative;
+      overflow: visible;
     }
 
     .approved-edit-card .row {
@@ -32161,6 +32167,7 @@
       popover.classList.toggle("is-social", kind !== "photo");
       popover.style.removeProperty("--approved-social-popover-top");
       if (kind === "photo") {
+        document.querySelector(".approved-visual-profile")?.appendChild(popover);
         card.innerHTML = `
           <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Use Submit for review once your changes look right.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
           <div class="approved-visual-photo-actions">
@@ -32180,13 +32187,7 @@
             <button class="approved-visual-delete" type="button" data-approved-visual-social-delete data-social-platform="${displayText(platform.key)}">Delete link</button>
           </div>
         `;
-        const anchor = data.anchor?.closest(".modal-body")?.querySelector(".social-links") || data.anchor;
-        if (anchor?.getBoundingClientRect) {
-          const rect = anchor.getBoundingClientRect();
-          const preferredTop = rect.top - 8;
-          const clampedTop = Math.max(preferredTop, 12);
-          popover.style.setProperty("--approved-social-popover-top", `${clampedTop}px`);
-        }
+        data.anchor?.closest(".social-tile")?.appendChild(popover);
       }
       popover.hidden = false;
     }
