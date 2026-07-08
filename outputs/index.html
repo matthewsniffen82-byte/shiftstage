@@ -25029,6 +25029,19 @@
     }
 
     /* Final profile preview thumbnails: one row without horizontal squashing. */
+    .profile-modal .modal-image,
+    .profile-modal .modal-image.one,
+    .profile-modal .modal-image.two,
+    .profile-modal .modal-image.three {
+      background-position: center top !important;
+      background-size: auto calc(100% - 62px) !important;
+    }
+
+    .profile-modal .modal-image.has-custom-photo {
+      background-position: center top, center center !important;
+      background-size: auto calc(100% - 62px), cover !important;
+    }
+
     .profile-modal .gallery {
       display: flex !important;
       flex-wrap: nowrap !important;
@@ -25039,7 +25052,7 @@
       padding: 2px 6px !important;
       position: absolute !important;
       left: 50% !important;
-      bottom: 4px !important;
+      bottom: 5px !important;
       transform: translateX(-50%) !important;
       z-index: 5 !important;
       border: 0 !important;
@@ -25107,6 +25120,17 @@
     }
 
     @media (max-width: 390px) {
+      .profile-modal .modal-image,
+      .profile-modal .modal-image.one,
+      .profile-modal .modal-image.two,
+      .profile-modal .modal-image.three {
+        background-size: auto calc(100% - 50px) !important;
+      }
+
+      .profile-modal .modal-image.has-custom-photo {
+        background-size: auto calc(100% - 50px), cover !important;
+      }
+
       .profile-modal .gallery {
         gap: 4px !important;
         width: calc(100% - 18px) !important;
