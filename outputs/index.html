@@ -2374,13 +2374,14 @@
     }
 
     .approved-edit-popover.is-social {
-      position: absolute;
-      inset: -14px -10px auto -10px;
-      z-index: 6;
+      position: fixed;
+      inset: 0;
+      z-index: 140;
       align-items: center;
       justify-items: center;
-      min-height: 232px;
-      padding: 10px;
+      min-height: 100dvh;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      overflow: visible;
       background: rgba(0,0,0,.58);
       backdrop-filter: blur(8px);
       pointer-events: auto;
@@ -2400,11 +2401,12 @@
 
     .approved-edit-popover.is-social .approved-edit-card {
       position: relative;
-      width: min(100%, 430px);
-      max-height: none;
-      overflow: visible;
-      gap: 8px;
-      padding: 12px;
+      width: min(calc(100vw - 32px), 520px);
+      max-width: 100%;
+      max-height: none !important;
+      overflow: visible !important;
+      gap: 12px;
+      padding: 16px;
       transform: none;
       pointer-events: auto;
       border-color: rgba(53,216,255,.5);
@@ -2423,11 +2425,14 @@
 
     .approved-edit-popover.is-social .approved-edit-card .field {
       gap: 5px;
+      min-width: 0;
     }
 
     .approved-edit-popover.is-social .approved-edit-card input {
-      min-height: 40px;
-      padding-block: 8px;
+      min-height: 54px;
+      padding-block: 12px;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .approved-edit-popover.is-social .approved-visual-social-actions {
@@ -33015,7 +33020,7 @@
             <button class="approved-visual-delete" type="button" data-approved-visual-social-delete data-social-platform="${displayText(platform.key)}">Delete link</button>
           </div>
         `;
-        data.anchor?.closest(".social-tile")?.appendChild(popover);
+        document.querySelector(".approved-visual-profile")?.appendChild(popover);
       }
       popover.hidden = false;
     }
