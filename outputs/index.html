@@ -2304,6 +2304,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      padding-right: 36px;
     }
 
     .approved-visual-profile .profile-modal .approved-social-tools {
@@ -2333,6 +2334,10 @@
     }
 
     .approved-social-edit-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 8;
       width: 30px;
       height: 30px;
       min-width: 30px;
@@ -32250,10 +32255,12 @@
           <button class="profile-share-trigger" type="button" data-native-share="${shareName}" data-share-city="${shareCity}" aria-label="Share profile">
             ${actionIconMarkup("share")}
           </button>
-          <button class="approved-social-edit-btn ${approvedSocialEditMode ? "is-active" : ""}" type="button" data-approved-social-edit-toggle aria-label="${approvedSocialEditMode ? "Done editing social links" : "Edit social links"}" aria-pressed="${approvedSocialEditMode ? "true" : "false"}">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
-          </button>
         </div>
+      `;
+      const socialEditButton = `
+        <button class="approved-social-edit-btn ${approvedSocialEditMode ? "is-active" : ""}" type="button" data-approved-social-edit-toggle aria-label="${approvedSocialEditMode ? "Done editing social links" : "Edit social links"}" aria-pressed="${approvedSocialEditMode ? "true" : "false"}">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
+        </button>
       `;
       const changeState = approvedProfileChangeState(profile);
       return `
@@ -32289,6 +32296,7 @@
                   <div class="meta profile-follower-metric"><span class="metric-value">${followerMetricMarkup(profile, activeDancerCity())}</span>${profileViewsTodayMarkup(profile, activeDancerCity())}</div>
                 </div>
                 <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
+                  ${socialEditButton}
                   <div class="social-tile-head">
                     <strong>Social links</strong>
                     ${socialUtilityButtons}
