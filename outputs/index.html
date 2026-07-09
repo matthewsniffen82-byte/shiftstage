@@ -28566,6 +28566,14 @@
       accountControlState[role].deleted = false;
     }
 
+    function syncSignedInAccountControl(role) {
+      const state = accountControlState[role];
+      if (!state || authSession?.account?.role !== role) return;
+      const sessionState = authSession.account.accountState || "active";
+      state.deleted = sessionState === "deleted";
+      state.disabled = sessionState === "disabled";
+    }
+
     function renderAccountControlPanel(role) {
       const panel = document.querySelector(`[data-account-panel="${role}"]`);
       const state = accountControlState[role];
@@ -33616,6 +33624,7 @@
       isDancerLoggedIn = role === "dancer";
       isVenueLoggedIn = role === "venue";
       activeDashboardType = role === "dancer" ? "dancer" : role === "venue" ? "venue" : "customer";
+      syncSignedInAccountControl(role);
       if (role === "customer") prepareRealCustomerDashboardState();
     }
 
@@ -33786,6 +33795,7 @@
         openDancerSignupPage();
         return;
       }
+      syncSignedInAccountControl("dancer");
       applyStoredDancerProfileDraft();
       updateDancerDashboardName();
       if (!dancerSetup.approval) {
