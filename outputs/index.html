@@ -26121,6 +26121,41 @@
       margin-right: 0 !important;
       overflow: visible !important;
     }
+
+    #approvedEditProfileDropdown.show #approvedVisualProfileEditor {
+      max-width: min(100%, 760px) !important;
+      max-height: min(78dvh, 780px) !important;
+      margin-inline: auto !important;
+      padding-right: 4px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    #approvedEditProfileDropdown.show #approvedVisualProfileEditor .approved-visual-profile,
+    #approvedEditProfileDropdown.show #approvedVisualProfileEditor .profile-modal {
+      width: min(100%, 760px) !important;
+      max-width: 760px !important;
+      margin-inline: auto !important;
+      overflow: visible !important;
+    }
+
+    #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-body {
+      overflow: visible !important;
+    }
+
+    #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      overflow: visible !important;
+    }
+
+    @media (max-width: 430px) {
+      #approvedEditProfileDropdown.show #approvedVisualProfileEditor {
+        max-height: 76dvh !important;
+        padding-right: 2px !important;
+      }
+    }
   </style>
 </head>
 <body>
