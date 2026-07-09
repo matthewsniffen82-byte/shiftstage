@@ -26651,9 +26651,6 @@
                 <strong>Edit profile</strong>
                 <span>Update public profile fields, resubmit rejected photos or social links, and preview your profile.</span>
               </div>
-              <div class="approved-tool-dropdown-actions">
-                <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse edit profile</button>
-              </div>
               <div id="approvedProfileFixList"></div>
               <div id="approvedVisualProfileEditor"></div>
               <div id="approvedProfileFormMount"></div>
@@ -38140,8 +38137,9 @@
         const panel = document.getElementById("approvedDancerPanel");
         panel?.removeAttribute("hidden");
         if (panel) panel.open = true;
-        setApprovedToolDropdown("edit", { force: true });
-        setResult("Edit profile tools opened.");
+        const willOpen = activeApprovedToolDropdown !== "edit";
+        setApprovedToolDropdown("edit");
+        setResult(willOpen ? "Edit profile tools opened." : "Edit profile tools collapsed.");
         return;
       }
 
