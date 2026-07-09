@@ -2248,7 +2248,7 @@
       z-index: 6;
       align-items: center;
       justify-items: center;
-      min-height: 260px;
+      min-height: 232px;
       padding: 10px;
       background: rgba(0,0,0,.58);
       backdrop-filter: blur(8px);
@@ -2271,12 +2271,40 @@
       position: relative;
       width: min(100%, 430px);
       max-height: none;
-      overflow-y: auto;
+      overflow: visible;
+      gap: 8px;
+      padding: 12px;
       transform: none;
       pointer-events: auto;
       border-color: rgba(53,216,255,.5);
       box-shadow: 0 20px 54px rgba(0,0,0,.7), 0 0 26px rgba(53,216,255,.18);
       margin-bottom: 0;
+    }
+
+    .approved-edit-popover.is-social .approved-edit-card .row {
+      gap: 8px;
+    }
+
+    .approved-edit-popover.is-social .approved-edit-card .meta {
+      font-size: 12px;
+      line-height: 1.22;
+    }
+
+    .approved-edit-popover.is-social .approved-edit-card .field {
+      gap: 5px;
+    }
+
+    .approved-edit-popover.is-social .approved-edit-card input {
+      min-height: 40px;
+      padding-block: 8px;
+    }
+
+    .approved-edit-popover.is-social .approved-visual-social-actions {
+      gap: 7px;
+    }
+
+    .approved-edit-popover.is-social .approved-visual-social-actions button {
+      min-height: 38px;
     }
 
     .approved-visual-profile .profile-modal .social-tile {
