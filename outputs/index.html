@@ -2088,7 +2088,14 @@
       color: #f7fdff;
       background: rgba(5,8,12,.88);
       box-shadow: 0 12px 32px rgba(0,0,0,.54), 0 0 22px rgba(53,216,255,.24);
-      pointer-events: none;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .approved-photo-edit-badge.is-active {
+      border-color: rgba(255,42,177,.74);
+      background: rgba(70,14,55,.9);
+      box-shadow: 0 12px 32px rgba(0,0,0,.54), 0 0 24px rgba(255,42,177,.28);
     }
 
     .approved-photo-edit-badge .icon {
@@ -27268,6 +27275,7 @@
     let pendingApprovedPhotoTarget = "gallery";
     let activeApprovedVisualPhotoTarget = "";
     let pendingApprovedPhotoAutoSubmit = false;
+    let approvedPhotoEditMode = false;
     let approvedSocialEditMode = false;
     let activeApprovedToolDropdown = "";
     let shiftCheckInMessage = "";
@@ -32290,6 +32298,11 @@
           <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
         </button>
       `;
+      const photoEditButton = `
+        <button class="approved-photo-edit-badge ${approvedPhotoEditMode ? "is-active" : ""}" type="button" data-approved-photo-edit-toggle aria-label="${approvedPhotoEditMode ? "Done editing photos" : "Edit photos"}" aria-pressed="${approvedPhotoEditMode ? "true" : "false"}">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
+        </button>
+      `;
       const changeState = approvedProfileChangeState(profile);
       return `
         <div class="approved-visual-profile">
@@ -32303,11 +32316,11 @@
                   </div>
                 </div>
               </div>
-              <span class="approved-photo-edit-badge" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg></span>
             </button>
+            ${photoEditButton}
             <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
-                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.target || photo.id)}" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" title="${displayText(photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
+                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.target || photo.id)}" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" data-review-status="${displayText(photo.status || "")}" data-review-notes="${displayText(photo.notes || "")}" title="${displayText(approvedPhotoEditMode ? `Edit ${photo.label}` : photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
@@ -33072,9 +33085,20 @@
       profilePhotoViewer.hidden = false;
     }
 
+    function openPhotoViewerFromElement(element) {
+      if (!profilePhotoViewer || !profilePhotoViewerImage || !element) return;
+      const photoStyle = getComputedStyle(element);
+      profilePhotoViewerImage.style.backgroundImage = photoStyle.backgroundImage;
+      profilePhotoViewerImage.style.backgroundPosition = photoStyle.backgroundPosition;
+      profilePhotoViewerImage.style.backgroundRepeat = photoStyle.backgroundRepeat;
+      profilePhotoViewer.style.zIndex = "120";
+      profilePhotoViewer.hidden = false;
+    }
+
     function closeProfilePhotoViewer() {
       if (!profilePhotoViewer) return;
       profilePhotoViewer.hidden = true;
+      profilePhotoViewer.style.removeProperty("z-index");
     }
 
     function uploadedProfilePhotoUrls(profile, includeUnapproved = false) {
@@ -37547,9 +37571,28 @@
         showToast(approvedSocialEditMode ? "Tap a social icon to edit it." : "Social edit mode closed.");
         return;
       }
+      const photoEditToggle = event.target.closest("[data-approved-photo-edit-toggle]");
+      if (photoEditToggle) {
+        event.preventDefault();
+        approvedPhotoEditMode = !approvedPhotoEditMode;
+        closeApprovedVisualEditPopover();
+        renderApprovedVisualProfileEditor();
+        showToast(approvedPhotoEditMode ? "Tap a profile picture to edit it." : "Photo edit mode closed.");
+        return;
+      }
       const visualPhotoSelect = event.target.closest("[data-approved-visual-photo-select]");
       if (visualPhotoSelect) {
         event.preventDefault();
+        if (approvedPhotoEditMode) {
+          openApprovedVisualEditPopover("photo", {
+            target: visualPhotoSelect.dataset.photoTarget,
+            label: visualPhotoSelect.dataset.photoLabel,
+            status: visualPhotoSelect.dataset.reviewStatus,
+            notes: visualPhotoSelect.dataset.reviewNotes,
+            anchor: visualPhotoSelect
+          });
+          return;
+        }
         activeApprovedVisualPhotoTarget = visualPhotoSelect.dataset.approvedVisualPhotoSelect || visualPhotoSelect.dataset.photoTarget || "";
         renderApprovedVisualProfileEditor();
         return;
@@ -37557,6 +37600,10 @@
       const visualEdit = event.target.closest("[data-profile-visual-edit]");
       if (visualEdit) {
         event.preventDefault();
+        if (visualEdit.dataset.profileVisualEdit === "photo" && !approvedPhotoEditMode) {
+          openPhotoViewerFromElement(visualEdit);
+          return;
+        }
         openApprovedVisualEditPopover(visualEdit.dataset.profileVisualEdit, {
           target: visualEdit.dataset.photoTarget,
           label: visualEdit.dataset.photoLabel,
