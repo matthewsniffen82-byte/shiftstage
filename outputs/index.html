@@ -32285,10 +32285,10 @@
       const shareCity = displayText(activeDancerCity());
       const socialUtilityButtons = `
         <div class="profile-utility-actions approved-social-tools" aria-label="Profile social tools">
-          <button class="profile-qr-trigger" type="button" data-profile-qr="${shareName}" data-share-city="${shareCity}" aria-expanded="false" aria-label="Show profile QR code">
+          <button class="profile-qr-trigger" type="button" data-readonly-profile-tool="qr" data-profile-qr="${shareName}" data-share-city="${shareCity}" aria-expanded="false" aria-label="Show profile QR code" title="Profile QR code - not editable">
             ${actionIconMarkup("qr")}
           </button>
-          <button class="profile-share-trigger" type="button" data-native-share="${shareName}" data-share-city="${shareCity}" aria-label="Share profile">
+          <button class="profile-share-trigger" type="button" data-readonly-profile-tool="share" data-native-share="${shareName}" data-share-city="${shareCity}" aria-label="Share profile" title="Share profile - not editable">
             ${actionIconMarkup("share")}
           </button>
         </div>
@@ -37562,6 +37562,7 @@
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
+      if (event.target.closest("[data-readonly-profile-tool]")) return;
       const socialEditToggle = event.target.closest("[data-approved-social-edit-toggle]");
       if (socialEditToggle) {
         event.preventDefault();
