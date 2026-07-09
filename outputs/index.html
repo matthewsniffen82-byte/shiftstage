@@ -26274,6 +26274,58 @@
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       }
     }
+
+    #locationBtn.location-btn {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      height: 48px !important;
+      min-height: 48px !important;
+      max-height: 48px !important;
+      aspect-ratio: auto !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      padding: 0 16px !important;
+      border-radius: 999px !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      text-align: center !important;
+      line-height: 1 !important;
+      background-size: 100% 100% !important;
+      background-repeat: no-repeat !important;
+      box-sizing: border-box !important;
+    }
+
+    #locationBtn.location-btn::before,
+    #locationBtn.location-btn::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    #locationBtn.location-btn .icon,
+    #locationBtn.location-btn svg {
+      width: 18px !important;
+      height: 18px !important;
+      min-width: 18px !important;
+      flex: 0 0 18px !important;
+    }
+
+    #locationBtn.location-btn .location-btn-label {
+      display: inline-block !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      line-height: 1 !important;
+    }
+
+    #locationBtn.location-btn:disabled {
+      opacity: .82 !important;
+      transform: none !important;
+    }
   </style>
 </head>
 <body>
@@ -26353,7 +26405,7 @@
         </div>
         <button class="location-btn" id="locationBtn">
           <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
-          Use my location
+          <span class="location-btn-label">Use my location</span>
         </button>
       </section>
 
@@ -38856,8 +38908,13 @@
 
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
-      const originalText = button?.textContent?.trim() || "Use my location";
-      if (button) button.disabled = true;
+      const label = button?.querySelector(".location-btn-label");
+      const originalText = "Use my location";
+      if (button) {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+      }
+      if (label) label.textContent = "Checking location...";
       try {
         showToast("Checking your location...");
         userLocation = await requestVenuePosition();
@@ -38879,10 +38936,9 @@
       } finally {
         if (button) {
           button.disabled = false;
-          button.childNodes.forEach((node) => {
-            if (node.nodeType === Node.TEXT_NODE) node.textContent = ` ${originalText}`;
-          });
+          button.removeAttribute("aria-busy");
         }
+        if (label) label.textContent = originalText;
       }
     });
 
