@@ -1582,6 +1582,44 @@
       backdrop-filter: blur(18px);
     }
 
+    #dancerDashboard .page-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 46px;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+      padding: 8px 8px 12px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    #dancerDashboard .page-head > div {
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    #dancerDashboard .page-head .eyebrow,
+    #dancerDashboard #dancerDashName {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #dancerDashboard #dancerDashName {
+      font-size: clamp(20px, 5vw, 26px);
+      line-height: 1.05;
+    }
+
+    #dancerDashboardClose {
+      width: 42px;
+      min-width: 42px;
+      min-height: 42px;
+      justify-self: end;
+    }
+
     .auth-card {
       display: grid;
       gap: 14px;
