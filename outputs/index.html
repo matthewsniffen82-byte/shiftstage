@@ -31987,13 +31987,21 @@
         .map((platform) => {
           const submitted = submittedByPlatform.get(platform.key);
           const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : "approved"));
+          const liveUrl = profile.socials?.[platform.key] || "";
+          const submittedUrl = submitted?.url || "";
+          const url = includeUnapproved
+            ? submittedUrl || liveUrl
+            : status === "approved"
+              ? submittedUrl || liveUrl
+              : liveUrl && liveUrl !== submittedUrl
+                ? liveUrl
+                : "";
           return {
             ...platform,
-            url: submitted?.url || profile.socials?.[platform.key] || "",
+            url,
             status
           };
         })
-        .filter((platform) => includeUnapproved || platform.status === "approved")
         .filter((platform) => platform.url);
       const city = selectedCity();
       const qrButton = `
@@ -33298,13 +33306,13 @@
 
     function galleryMarkup(profile, baseIndex, options = {}) {
       const isPrivatePreview = Boolean(options.preview);
+      const uploadedUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       if (profile.status === "Pending" && !isPrivatePreview) {
         return '<div class="lock-row" style="grid-column:1/-1">Gallery locked.</div>';
       }
-      if (profile.photoStatus !== "Approved" && !isPrivatePreview) {
+      if (profile.photoStatus !== "Approved" && !isPrivatePreview && !uploadedUrls.length) {
         return '<div class="lock-row" style="grid-column:1/-1">Photos pending admin approval.</div>';
       }
-      const uploadedUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const galleryOffsets = uploadedUrls.length ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl })) : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
       return galleryOffsets.map(({ offset, photoUrl }) => {
         const photoClass = portraitClass(baseIndex + offset);
