@@ -26011,10 +26011,38 @@
     #approvedScheduleDropdown #approvedScheduleFormMount {
       display: grid !important;
       gap: 14px !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
     }
 
     #approvedScheduleDropdown #dancerSharePanel:empty {
       display: none !important;
+    }
+
+    #approvedScheduleDropdown #shiftPostForm,
+    #approvedScheduleDropdown #shiftPostForm .field,
+    #approvedScheduleDropdown #shiftPostForm label,
+    #approvedScheduleDropdown #shiftPostForm select,
+    #approvedScheduleDropdown #shiftPostForm input,
+    #approvedScheduleDropdown #shiftPostForm textarea,
+    #approvedScheduleDropdown #shiftDisplayPreview,
+    #approvedScheduleDropdown .shift-verification-panel,
+    #approvedScheduleDropdown .dancer-manager-card,
+    #approvedScheduleDropdown .shift-manager-row {
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    #approvedScheduleDropdown #shiftPostForm select,
+    #approvedScheduleDropdown #shiftPostForm input,
+    #approvedScheduleDropdown #shiftPostForm textarea {
+      display: block !important;
+      inline-size: 100% !important;
     }
 
     #approvedScheduleDropdown .post-shift-value-row div,
