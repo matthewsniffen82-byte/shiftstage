@@ -2371,7 +2371,8 @@
     }
 
     .approved-visual-profile .profile-modal .social-edit-item .social-link {
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: pointer;
     }
 
     .approved-visual-profile .profile-modal .social-tile.is-social-editing .social-edit-item .social-link {
@@ -32395,7 +32396,7 @@
                   <div class="social-links">
                     ${socials.map((social) => `
                       <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                        <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.label)}" ${approvedSocialEditMode ? `data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}"` : ""} title="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                        <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.label)}" data-social-url="${displayText(social.value || "")}" ${approvedSocialEditMode ? `data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}"` : ""} title="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
                           ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
                         </button>
                       </span>
@@ -37646,6 +37647,18 @@
         }
         activeApprovedVisualPhotoTarget = visualPhotoSelect.dataset.approvedVisualPhotoSelect || visualPhotoSelect.dataset.photoTarget || "";
         renderApprovedVisualProfileEditor();
+        return;
+      }
+      const approvedSocialLink = event.target.closest(".approved-visual-profile .social-edit-item .social-link[data-social-url]");
+      if (approvedSocialLink && !approvedSocialEditMode) {
+        event.preventDefault();
+        const url = approvedSocialLink.dataset.socialUrl || "";
+        if (url) {
+          window.open(url, "_blank", "noopener,noreferrer");
+          showToast("Social link opened");
+        } else {
+          showToast("No social link added yet");
+        }
         return;
       }
       const visualEdit = event.target.closest("[data-profile-visual-edit]");
