@@ -1707,6 +1707,10 @@
         inset 0 0 24px rgba(255,255,255,.026);
     }
 
+    #approvedDancerPanel.post-shift-panel:not([open]) {
+      display: none;
+    }
+
     #approvedDancerPanel.post-shift-panel::before {
       content: "";
       position: absolute;
@@ -2565,6 +2569,10 @@
       position: relative;
       z-index: 1;
       margin-top: 10px;
+    }
+
+    #dancerDashboard.is-approved #dancerApprovalCommand {
+      margin-top: 34px;
     }
 
     #dancerDashboard #dancerAnalyticsSection {
