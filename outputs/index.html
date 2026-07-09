@@ -26182,7 +26182,8 @@
 
     #approvedEditProfileDropdown.show .approved-tool-dropdown-head,
     #approvedEditProfileDropdown.show .approved-tool-dropdown-actions,
-    #approvedEditProfileDropdown.show #approvedProfileFixList {
+    #approvedEditProfileDropdown.show #approvedProfileFixList,
+    #approvedEditProfileDropdown.show .approved-edit-help {
       display: none !important;
     }
 
@@ -26229,6 +26230,28 @@
       top: max(14px, env(safe-area-inset-top)) !important;
       right: max(14px, env(safe-area-inset-right)) !important;
       z-index: 360 !important;
+    }
+
+    #approvedEditProfileDropdown.show .approved-profile-editor-close {
+      position: fixed !important;
+      top: max(14px, env(safe-area-inset-top)) !important;
+      right: max(14px, env(safe-area-inset-right)) !important;
+      z-index: 380 !important;
+      width: 54px !important;
+      height: 54px !important;
+      min-height: 54px !important;
+      display: grid !important;
+      place-items: center !important;
+      border-radius: 999px !important;
+      border: 1px solid rgba(53,216,255,.72) !important;
+      color: #f7fdff !important;
+      background: rgba(5,8,12,.9) !important;
+      box-shadow: 0 16px 40px rgba(0,0,0,.58), 0 0 24px rgba(53,216,255,.22), inset 0 0 18px rgba(53,216,255,.08) !important;
+    }
+
+    #approvedEditProfileDropdown.show .approved-profile-editor-close .icon {
+      width: 24px !important;
+      height: 24px !important;
     }
 
     #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-body {
@@ -33067,6 +33090,9 @@
       const changeState = approvedProfileChangeState(profile);
       return `
         <div class="approved-visual-profile">
+          <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
           <div class="approved-edit-help">
             <strong>How editing works</strong>
             <span>Tap the pencil on the picture area first, then tap a picture to replace or delete it. Tap the pencil in Social links first, then tap a social icon to edit that link. Without the pencil turned on, photos open larger and social tools stay normal.</span>
