@@ -77,6 +77,8 @@ export type VenueSummary = {
   city: string;
   state: string | null;
   address: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   hoursLabel: string | null;
 };
 

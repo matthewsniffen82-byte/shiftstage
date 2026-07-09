@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const client = createAdminSupabaseClient();
     const { data, error } = await client
       .from("venues")
-      .select("id, slug, name, city, state, address, opens_at, closes_at")
+      .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at")
       .eq("is_active", true)
       .eq("city", city)
       .order("name", { ascending: true });
@@ -26,6 +26,8 @@ export async function GET(request: Request) {
       city: venue.city,
       state: venue.state,
       address: venue.address,
+      latitude: venue.latitude,
+      longitude: venue.longitude,
       hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
     }));
 

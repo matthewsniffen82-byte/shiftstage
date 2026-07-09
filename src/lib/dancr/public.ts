@@ -118,7 +118,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, address, opens_at, closes_at")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -132,6 +132,8 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     city: data.city,
     state: data.state,
     address: data.address,
+    latitude: data.latitude,
+    longitude: data.longitude,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
   };
 }

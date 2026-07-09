@@ -27380,40 +27380,40 @@
         stats: { dancers: 0, shifts: 0, venues: 18 },
         dancers: [],
         venues: [
-          { name: "Velvet Room", area: "Arts District", shifts: 8, distance: "2.4 mi" },
-          { name: "Neon Hall", area: "The Strip", shifts: 11, distance: "4.1 mi" },
-          { name: "Afterglow", area: "Downtown", shifts: 7, distance: "6.6 mi" },
-          { name: "Prism Lounge", area: "Paradise", shifts: 5, distance: "8.2 mi" }
+          { name: "Velvet Room", area: "Arts District", shifts: 8, distance: "2.4 mi", latitude: 36.1607, longitude: -115.1464 },
+          { name: "Neon Hall", area: "The Strip", shifts: 11, distance: "4.1 mi", latitude: 36.1147, longitude: -115.1728 },
+          { name: "Afterglow", area: "Downtown", shifts: 7, distance: "6.6 mi", latitude: 36.1699, longitude: -115.1398 },
+          { name: "Prism Lounge", area: "Paradise", shifts: 5, distance: "8.2 mi", latitude: 36.1097, longitude: -115.1363 }
         ]
       },
       Miami: {
         stats: { dancers: 0, shifts: 0, venues: 14 },
         dancers: [],
         venues: [
-          { name: "Azure Room", area: "Brickell", shifts: 9, distance: "1.9 mi" },
-          { name: "Midnight Palm", area: "South Beach", shifts: 8, distance: "3.7 mi" },
-          { name: "Biscayne Social", area: "Downtown", shifts: 5, distance: "4.6 mi" },
-          { name: "Coral Stage", area: "Coral Way", shifts: 4, distance: "7.5 mi" }
+          { name: "Azure Room", area: "Brickell", shifts: 9, distance: "1.9 mi", latitude: 25.7617, longitude: -80.1918 },
+          { name: "Midnight Palm", area: "South Beach", shifts: 8, distance: "3.7 mi", latitude: 25.7907, longitude: -80.13 },
+          { name: "Biscayne Social", area: "Downtown", shifts: 5, distance: "4.6 mi", latitude: 25.7743, longitude: -80.1937 },
+          { name: "Coral Stage", area: "Coral Way", shifts: 4, distance: "7.5 mi", latitude: 25.7506, longitude: -80.2587 }
         ]
       },
       Atlanta: {
         stats: { dancers: 0, shifts: 0, venues: 11 },
         dancers: [],
         venues: [
-          { name: "Peachtree Room", area: "Midtown", shifts: 7, distance: "2.1 mi" },
-          { name: "Southline", area: "Castleberry Hill", shifts: 6, distance: "5.0 mi" },
-          { name: "Blue Hour", area: "Old Fourth Ward", shifts: 5, distance: "6.2 mi" },
-          { name: "Signal", area: "Buckhead", shifts: 3, distance: "8.1 mi" }
+          { name: "Peachtree Room", area: "Midtown", shifts: 7, distance: "2.1 mi", latitude: 33.7833, longitude: -84.3831 },
+          { name: "Southline", area: "Castleberry Hill", shifts: 6, distance: "5.0 mi", latitude: 33.7489, longitude: -84.4008 },
+          { name: "Blue Hour", area: "Old Fourth Ward", shifts: 5, distance: "6.2 mi", latitude: 33.765, longitude: -84.3636 },
+          { name: "Signal", area: "Buckhead", shifts: 3, distance: "8.1 mi", latitude: 33.8484, longitude: -84.3733 }
         ]
       },
       "New York": {
         stats: { dancers: 0, shifts: 0, venues: 16 },
         dancers: [],
         venues: [
-          { name: "Mercer Night", area: "SoHo", shifts: 10, distance: "1.4 mi" },
-          { name: "Chrome Room", area: "Chelsea", shifts: 9, distance: "3.3 mi" },
-          { name: "Hudson Glow", area: "Hell's Kitchen", shifts: 8, distance: "5.2 mi" },
-          { name: "Eastline", area: "Lower East Side", shifts: 5, distance: "7.8 mi" }
+          { name: "Mercer Night", area: "SoHo", shifts: 10, distance: "1.4 mi", latitude: 40.7233, longitude: -74.003 },
+          { name: "Chrome Room", area: "Chelsea", shifts: 9, distance: "3.3 mi", latitude: 40.7465, longitude: -74.0014 },
+          { name: "Hudson Glow", area: "Hell's Kitchen", shifts: 8, distance: "5.2 mi", latitude: 40.7638, longitude: -73.9918 },
+          { name: "Eastline", area: "Lower East Side", shifts: 5, distance: "7.8 mi", latitude: 40.715, longitude: -73.9843 }
         ]
       }
     };
@@ -27439,6 +27439,13 @@
     const modalGallery = document.getElementById("modalGallery");
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
+    const cityCoordinates = {
+      "Las Vegas": { latitude: 36.1699, longitude: -115.1398 },
+      Miami: { latitude: 25.7617, longitude: -80.1918 },
+      Atlanta: { latitude: 33.749, longitude: -84.388 },
+      "New York": { latitude: 40.7128, longitude: -74.006 }
+    };
+    let userLocation = null;
     const authPage = document.getElementById("authPage");
     const dancerSignupPage = document.getElementById("dancerSignupPage");
     const stripeCheckoutPage = document.getElementById("stripeCheckoutPage");
@@ -29075,6 +29082,10 @@
     }
 
     function profileCardDistanceLabel(profile) {
+      const city = profile?.city || selectedCity();
+      const profileVenue = profile?.venue ? markets[city]?.venues.find((venue) => venue.name === profile.venue) : null;
+      const venueMiles = profileVenue ? venueDistanceMiles(profileVenue, city) : null;
+      if (Number.isFinite(venueMiles)) return formatDistanceMiles(venueMiles);
       const rawDistance = String(profile?.distance || "").trim();
       if (/^\d+(?:\.\d+)?\s*mi$/i.test(rawDistance)) {
         return rawDistance.replace(/\s*mi$/i, " mi");
@@ -29244,6 +29255,8 @@
         hours: formatVenueHours(item),
         shifts: existing?.shifts || 0,
         distance: existing?.distance && existing.distance !== "Nearby" ? existing.distance : "",
+        latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : existing?.latitude,
+        longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : existing?.longitude,
         verified: item.is_active !== false,
         featured: Boolean(existing?.featured),
         hidden: item.is_active === false,
@@ -30210,7 +30223,9 @@
         state: item.state || stateByCity[city] || "",
         hours: item.hoursLabel || "Hours pending",
         shifts: venueShiftCounts[item.name] || 0,
-        distance: ""
+        distance: "",
+        latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
+        longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : null
       };
     }
 
@@ -31222,8 +31237,87 @@
       return Number.isFinite(miles) ? miles : null;
     }
 
+    function hasCoordinates(value) {
+      const latitude = Number(value?.latitude);
+      const longitude = Number(value?.longitude);
+      return Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+    }
+
+    function distanceMilesBetween(left, right) {
+      if (!hasCoordinates(left) || !hasCoordinates(right)) return null;
+      const toRadians = (degrees) => degrees * Math.PI / 180;
+      const earthRadiusMiles = 3958.7613;
+      const lat1 = toRadians(Number(left.latitude));
+      const lat2 = toRadians(Number(right.latitude));
+      const deltaLat = toRadians(Number(right.latitude) - Number(left.latitude));
+      const deltaLng = toRadians(Number(right.longitude) - Number(left.longitude));
+      const a =
+        Math.sin(deltaLat / 2) ** 2 +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+      return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function activeDistanceOrigin(city = selectedCity()) {
+      return userLocation || cityCoordinates[city] || null;
+    }
+
+    function venueDistanceMiles(venue, city = selectedCity()) {
+      const coordinateDistance = distanceMilesBetween(activeDistanceOrigin(city), venue);
+      if (coordinateDistance !== null) return coordinateDistance;
+      const numericDistance = Number(venue?.distanceMiles);
+      if (Number.isFinite(numericDistance)) return numericDistance;
+      return parseMiles(venue?.distance);
+    }
+
+    function formatDistanceMiles(miles) {
+      if (!Number.isFinite(miles)) return "";
+      if (miles < 0.1) return "less than 0.1 mi";
+      if (miles < 10) return `${miles.toFixed(1)} mi`;
+      return `${Math.round(miles)} mi`;
+    }
+
+    function venueDistanceLabel(venue, city = selectedCity()) {
+      return formatDistanceMiles(venueDistanceMiles(venue, city)) || String(venue?.distance || "").trim() || "Distance unavailable";
+    }
+
+    function compareVenueDistance(left, right, city = selectedCity()) {
+      const leftDistance = venueDistanceMiles(left, city);
+      const rightDistance = venueDistanceMiles(right, city);
+      if (Number.isFinite(leftDistance) && Number.isFinite(rightDistance) && leftDistance !== rightDistance) {
+        return leftDistance - rightDistance;
+      }
+      if (Number.isFinite(leftDistance)) return -1;
+      if (Number.isFinite(rightDistance)) return 1;
+      return left.name.localeCompare(right.name);
+    }
+
+    function nearestCityForCoordinates(coords) {
+      return Object.entries(cityCoordinates)
+        .map(([city, coordinates]) => ({ city, miles: distanceMilesBetween(coords, coordinates) }))
+        .filter((item) => Number.isFinite(item.miles))
+        .sort((a, b) => a.miles - b.miles)[0]?.city || selectedCity();
+    }
+
+    function requestVenuePosition() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("Location permission is required for accurate venue distances."));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          }),
+          () => reject(new Error("Location permission is required for accurate venue distances.")),
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+        );
+      });
+    }
+
     function venueWithinSelectedRadius(venue) {
-      const miles = parseMiles(venue?.distance);
+      const miles = venueDistanceMiles(venue);
       return miles === null || miles <= selectedRadiusMiles();
     }
 
@@ -31246,7 +31340,7 @@
       const previous = venueSelect.value || "all";
       const venues = markets[city].venues
         .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .sort((a, b) => compareVenueDistance(a, b, city));
       venueSelect.innerHTML = [
         `<option value="all">All venues</option>`,
         ...venues.map((venue) => `<option value="${escapeOptionValue(venue.name)}">${escapeOptionValue(venue.name)}</option>`)
@@ -33307,7 +33401,8 @@
         ...venue,
         city,
         state,
-        address: `${streetNumber} ${venueArea} Ave, ${city}, ${state}`,
+        distanceLabel: venueDistanceLabel(venue, city),
+        address: venue.address || `${streetNumber} ${venueArea} Ave, ${city}, ${state}`,
         phone: `(555) ${String(streetNumber).padStart(3, "0")}-${String(venue.shifts * 137).slice(0, 4).padEnd(4, "0")}`,
         website: `https://${citySlug}.example.com`,
         hours: venue.hours || "8:00 PM - 4:00 AM",
@@ -33377,6 +33472,7 @@
             </div>
             <div class="pill-row">
               <span class="pill">Today ${displayShiftTime(details.hours)}</span>
+              <span class="pill">${details.distanceLabel}</span>
               <span class="pill venue-shift-pill">${venue.shifts} posted shifts</span>
             </div>
           </div>
@@ -33449,6 +33545,7 @@
                 <div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>
                 <div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>
                 <div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace("https://", "")}</div></div>
+                <div class="info-tile"><strong>Distance</strong><div class="meta">${details.distanceLabel}</div></div>
                 <div class="info-tile"><strong>Hours</strong><div class="meta">${displayShiftTime(details.hours)}</div></div>
               </div>
               <div class="map-preview has-live-map" aria-label="${details.name} map preview">
@@ -36626,7 +36723,9 @@
         return shuffledDancerDiscoveryProfiles(profiles, city);
       }
       if (tab === "venues") {
-        return market.venues.filter(venueMatchesCurrentFilter);
+        return market.venues
+          .filter(venueMatchesCurrentFilter)
+          .sort((a, b) => compareVenueDistance(a, b, city));
       }
       return trendingProfiles(city);
     }
@@ -38466,12 +38565,36 @@
       showToast(venueName === "all" ? "Showing all venues" : `Showing ${venueName}`);
     });
 
-    document.getElementById("locationBtn").addEventListener("click", () => {
-      citySelect.value = "Las Vegas";
-      if (venueSelect) venueSelect.value = "all";
-      render();
-      loadLiveDiscovery(citySelect.value);
-      showToast("Location matched to Las Vegas");
+    document.getElementById("locationBtn").addEventListener("click", async () => {
+      const button = document.getElementById("locationBtn");
+      const originalText = button?.textContent?.trim() || "Use my location";
+      if (button) button.disabled = true;
+      try {
+        showToast("Checking your location...");
+        userLocation = await requestVenuePosition();
+        const nearestCity = nearestCityForCoordinates(userLocation);
+        citySelect.value = nearestCity;
+        tonightExpanded = false;
+        dancersExpanded = false;
+        dashboardTonightExpanded = false;
+        dashboardFollowedExpanded = false;
+        dashboardVenuesExpanded = false;
+        selectedVenueName = null;
+        if (venueSelect) venueSelect.value = "all";
+        render();
+        loadLiveDiscovery(citySelect.value);
+        if (customerDashboard.classList.contains("show")) renderDashboard();
+        showToast(`Location found. Venue distances updated for ${nearestCity}.`);
+      } catch (error) {
+        showToast(error.message || "Could not read location.");
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.childNodes.forEach((node) => {
+            if (node.nodeType === Node.TEXT_NODE) node.textContent = ` ${originalText}`;
+          });
+        }
+      }
     });
 
     function installReferenceHomeShell() {

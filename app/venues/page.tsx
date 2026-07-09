@@ -58,7 +58,7 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
 async function getActiveVenues(city: string): Promise<VenueSummary[]> {
   const { data, error } = await createAdminSupabaseClient()
     .from("venues")
-    .select("id, slug, name, city, state, address, opens_at, closes_at")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at")
     .eq("is_active", true)
     .eq("city", city)
     .order("name", { ascending: true });
@@ -72,6 +72,8 @@ async function getActiveVenues(city: string): Promise<VenueSummary[]> {
     city: venue.city,
     state: venue.state,
     address: venue.address,
+    latitude: venue.latitude,
+    longitude: venue.longitude,
     hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
   }));
 }
