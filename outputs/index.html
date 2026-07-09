@@ -30372,15 +30372,17 @@
       if (!rejected.length) {
         return "";
       }
-      const links = rejected.map((review, index) => {
+      let photoFixNumber = 0;
+      const links = rejected.map((review) => {
         const type = String(review.reviewType || review.review_type || "review");
         const date = formatBillingDate(review.reviewedAt || review.createdAt);
         const reason = review.notes || "No reason added.";
         const fixTarget = reviewFixTarget(type);
-        const label = reviewDisplayLabel(type);
+        const isPhotoFix = type.startsWith("photo:") || type === "photos";
+        const label = isPhotoFix ? `Photo #${++photoFixNumber}` : "Social link";
         return `
           <button type="button" ${fixTarget ? `data-fix-target="${displayText(fixTarget)}"` : ""} title="${displayText(reason)}${date ? ` · ${date}` : ""}">
-            ${displayText(label)} ${index + 1}
+            ${displayText(label)}
           </button>
         `;
       }).join("");
