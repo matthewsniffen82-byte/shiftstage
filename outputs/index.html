@@ -2208,6 +2208,9 @@
       color: #f7f2ff;
       background: rgba(14,10,22,.88);
       font-weight: 920;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
 
     .approved-visual-photo-actions button:first-child,
@@ -2217,6 +2220,29 @@
       box-shadow: 0 0 22px rgba(53,216,255,.18);
     }
 
+    .approved-visual-submit.is-ready {
+      min-height: 54px;
+      border-width: 2px;
+      border-color: rgba(53,216,255,.94);
+      color: #fff;
+      background: linear-gradient(135deg, #00c8ff 0%, #7c3aed 58%, #ff2ab1 100%);
+      box-shadow: 0 0 0 3px rgba(53,216,255,.16), 0 18px 42px rgba(0,0,0,.45), 0 0 34px rgba(255,42,177,.28);
+      animation: submitReviewPulse 1.45s ease-in-out infinite;
+    }
+
+    .approved-visual-submit.is-ready:active {
+      transform: translateY(1px) scale(.99);
+    }
+
+    @keyframes submitReviewPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 3px rgba(53,216,255,.14), 0 18px 42px rgba(0,0,0,.45), 0 0 28px rgba(255,42,177,.22);
+      }
+      50% {
+        box-shadow: 0 0 0 5px rgba(53,216,255,.24), 0 20px 48px rgba(0,0,0,.5), 0 0 42px rgba(255,42,177,.38);
+      }
+    }
+
     .approved-visual-delete {
       border-color: rgba(255,104,124,.45) !important;
       color: #ffd7df !important;
@@ -2224,7 +2250,7 @@
     }
 
     .approved-visual-submit:disabled {
-      opacity: .55;
+      opacity: .68;
       cursor: not-allowed;
     }
 
