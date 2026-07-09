@@ -26376,11 +26376,11 @@
             </div>
             <div class="field">
               <label for="venueLoginName">Venue name</label>
-              <input id="venueLoginName" type="text" value="Velvet Room">
+              <input id="venueLoginName" type="text" value="Spearmint Rhino Las Vegas">
             </div>
             <div class="field">
               <label for="venueLoginEmail">Email</label>
-              <input id="venueLoginEmail" type="email" value="manager@velvetroom.com">
+              <input id="venueLoginEmail" type="email" value="manager@spearmintrhinolv.com">
             </div>
             <div class="field">
               <label for="venueLoginPassword">Password</label>
@@ -26674,10 +26674,10 @@
                     <label>
                       Primary venue
                       <select id="approvedControlVenue" aria-label="Primary venue">
-                        <option>Velvet Room</option>
-                        <option>Neon Hall</option>
-                        <option>Afterglow</option>
-                        <option>Prism Lounge</option>
+                        <option>Spearmint Rhino Las Vegas</option>
+                        <option>Sapphire Las Vegas</option>
+                        <option>Crazy Horse 3</option>
+                        <option>Palomino Club</option>
                         <option>Monarch</option>
                       </select>
                     </label>
@@ -26940,7 +26940,7 @@
         <div class="page-head">
           <div>
             <span class="eyebrow">Venue dashboard</span>
-            <h2 id="venueDashName">Velvet Room</h2>
+            <h2 id="venueDashName">Spearmint Rhino Las Vegas</h2>
           </div>
           <button class="close-btn" id="venueDashboardClose" aria-label="Close venue dashboard">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -26988,7 +26988,7 @@
             </div>
             <div class="field">
               <label for="venueOfferCodeInput">Internal code</label>
-              <input id="venueOfferCodeInput" type="text" value="DANCRVIP">
+              <input id="venueOfferCodeInput" type="text" value="RHINO">
             </div>
             <div class="field">
               <label for="venueOfferExpiresInput">Good through</label>
@@ -27002,7 +27002,7 @@
             <h3 id="venueOfferPreviewTitle">VIP entry perk</h3>
             <p id="venueOfferPreviewDetails">Show this QR at the door for a venue-approved perk now.</p>
             <div class="venue-offer-meta">
-              <span class="venue-offer-code" id="venueOfferPreviewCode">DANCRVIP</span>
+              <span class="venue-offer-code" id="venueOfferPreviewCode">RHINO</span>
               <span class="pill" id="venueOfferPreviewExpires">Now</span>
             </div>
             <div class="venue-offer-qr">
@@ -27395,10 +27395,10 @@
         stats: { dancers: 0, shifts: 0, venues: 18 },
         dancers: [],
         venues: [
-          { name: "Velvet Room", area: "Arts District", shifts: 8, distance: "2.4 mi", latitude: 36.1607, longitude: -115.1464 },
-          { name: "Neon Hall", area: "The Strip", shifts: 11, distance: "4.1 mi", latitude: 36.1147, longitude: -115.1728 },
-          { name: "Afterglow", area: "Downtown", shifts: 7, distance: "6.6 mi", latitude: 36.1699, longitude: -115.1398 },
-          { name: "Prism Lounge", area: "Paradise", shifts: 5, distance: "8.2 mi", latitude: 36.1097, longitude: -115.1363 }
+          { name: "Spearmint Rhino Las Vegas", area: "Highland Drive", shifts: 8, latitude: 36.1295, longitude: -115.1786 },
+          { name: "Sapphire Las Vegas", area: "Sammy Davis Jr Drive", shifts: 11, latitude: 36.1352, longitude: -115.1716 },
+          { name: "Crazy Horse 3", area: "West Russell Road", shifts: 7, latitude: 36.0855, longitude: -115.1858 },
+          { name: "Palomino Club", area: "North Las Vegas", shifts: 5, latitude: 36.1932, longitude: -115.132 }
         ]
       },
       Miami: {
@@ -27520,7 +27520,7 @@
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
     let activeDashboardType = "customer";
-    let activeVenueName = "Velvet Room";
+    let activeVenueName = "Spearmint Rhino Las Vegas";
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
     let profileModalReturnTarget = "";
@@ -27628,7 +27628,7 @@
       Object.entries(followedByCity).map(([city, names]) => [city, [...names]])
     );
     const followedVenuesByCity = {
-      "Las Vegas": ["Velvet Room", "Neon Hall"],
+      "Las Vegas": ["Spearmint Rhino Las Vegas", "Sapphire Las Vegas"],
       Miami: ["Scarlet Door", "Blue Room"],
       Atlanta: ["Peach Room", "Halo Lounge"],
       "New York": ["Monarch", "Afterglow"]
@@ -31981,10 +31981,10 @@
     }
 
     const venueOffers = {
-      "Velvet Room": {
+      "Spearmint Rhino Las Vegas": {
         title: "VIP entry perk",
         details: "Show this QR at the door for a venue-approved perk now.",
-        code: "DANCRVIP",
+        code: "RHINO",
         expires: "Now"
       }
     };
@@ -37378,7 +37378,7 @@
       venueOffers[activeVenueName] = {
         title: document.getElementById("venueOfferTitleInput").value.trim() || "Venue Offer",
         details: document.getElementById("venueOfferDetailsInput").value.trim() || "Show this QR at the venue for the current offer.",
-        code: document.getElementById("venueOfferCodeInput").value.trim() || "DANCRVIP",
+        code: document.getElementById("venueOfferCodeInput").value.trim() || "RHINO",
         expires: document.getElementById("venueOfferExpiresInput").value.trim() || "Now"
       };
       renderVenueDashboard();
