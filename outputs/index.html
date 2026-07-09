@@ -33180,7 +33180,7 @@
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
             : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No upcoming shifts</span></div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span></div>`
+        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span><span class="card-distance">• ${profile.distance}</span></div>`
         : "";
       const portraitPhotoAttrs = customPhotoAttrs(isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile));
       const profileHref = profile.slug ? `/dancers/${profile.slug}` : `#profile-${slugify(profile.name)}`;
