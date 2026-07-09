@@ -29920,20 +29920,82 @@
       return Number.isFinite(number) ? number : fallback;
     }
 
+    function realDancerDashboardMetrics(profile, city = selectedCity()) {
+      const venue = profile?.venue || markets[city]?.venues?.[0]?.name || "Local venues";
+      const metrics = {
+        ranked: { ...(profile || {}), trendRank: null, trendScore: 0, trendSignals: {} },
+        signals: {},
+        followers: 0,
+        notifications: 0,
+        notificationsSent30Days: 0,
+        notificationOpens: 0,
+        newFollowers: 0,
+        profileViewsToday: 0,
+        profileViews30: 0,
+        scheduleViews30: 0,
+        directionRequests30: 0,
+        favoritesAdded: 0,
+        interestedClicks: 0,
+        goingTonightClicks: 0,
+        clubPageClicks: 0,
+        profileShares: 0,
+        searchAppearances: 0,
+        profileToFollowRate: 0,
+        scheduleToGoingRate: 0,
+        directionRate: 0,
+        returningViewers: 0,
+        nearbyViews: 0,
+        peakHourViews: 0,
+        shiftReminderSaves: 0,
+        venueClicksFromProfile: 0,
+        directionsAfterProfile: 0,
+        socialClickRate: 0,
+        rankGain: 0,
+        currentRank: null,
+        previousRank: null,
+        rankChangeYesterday: 0,
+        bestRankThisWeek: null,
+        highestRankAchieved: null,
+        firstTimeTrending: false,
+        biggestMover: false,
+        rankTrend: "Stable",
+        rankingSignal: "Profile activity",
+        rankingNotifications: [],
+        dancrScore: 0,
+        weeklyStartRank: 0,
+        weeklyEndRank: 0,
+        clubPerformance: [],
+        profileCompleteness: profile?.scheduled ? 96 : 84,
+        instagramClicks: 0,
+        snapchatClicks: 0,
+        tiktokClicks: 0,
+        onlyfansClicks: 0,
+        xClicks: 0,
+        weeklyViews: 0,
+        weeklyFollowers: 0,
+        weeklyInstagram: 0,
+        weeklyGoing: 0,
+        venue,
+        venueRank: 0,
+        streak: 0
+      };
+      return metrics;
+    }
+
     function mergeLiveDancerDashboardMetrics(base, analytics, profile, city) {
-      if (!analytics) return null;
+      const realBase = realDancerDashboardMetrics(profile, city);
+      if (!analytics) return realBase;
       const social = analytics.socialClicks30Days || {};
-      const baseProfile = base || dancerDashboardMetrics(profile, city);
       const merged = {
-        ...baseProfile,
-        currentRank: liveMetricNumber(analytics.currentRank, 0),
-        highestRankAchieved: liveMetricNumber(analytics.highestRank, 0),
-        bestRankThisWeek: liveMetricNumber(analytics.bestRankThisWeek, 0),
+        ...realBase,
+        currentRank: liveMetricNumber(analytics.currentRank, 0) || null,
+        highestRankAchieved: liveMetricNumber(analytics.highestRank, 0) || null,
+        bestRankThisWeek: liveMetricNumber(analytics.bestRankThisWeek, 0) || null,
         rankChangeYesterday: liveMetricNumber(analytics.rankChangeSinceYesterday, 0),
-        followers: liveMetricNumber(analytics.totalFollowers, baseProfile?.followers || 0),
-        notifications: liveMetricNumber(analytics.notificationSubscribers, baseProfile?.notifications || 0),
+        followers: liveMetricNumber(analytics.totalFollowers, 0),
+        notifications: liveMetricNumber(analytics.notificationSubscribers, 0),
         notificationsSent30Days: liveMetricNumber(analytics.notificationsSent30Days, 0),
-        profileViewsToday: liveMetricNumber(analytics.profileViewsToday, profile?.profileViewsToday || 0),
+        profileViewsToday: liveMetricNumber(analytics.profileViewsToday, 0),
         profileViews30: liveMetricNumber(analytics.profileViews30Days, 0),
         newFollowers: liveMetricNumber(analytics.followersGained30Days, 0),
         scheduleViews30: liveMetricNumber(analytics.scheduleViews30Days, 0),
@@ -29953,6 +30015,10 @@
         peakHourViews: 0,
         clubPerformance: []
       };
+      merged.previousRank = liveMetricNumber(analytics.previousRank, 0) || null;
+      merged.weeklyStartRank = merged.previousRank || merged.currentRank || 0;
+      merged.weeklyEndRank = merged.currentRank || 0;
+      merged.rankTrend = rankTrendFromChange(merged.rankChangeYesterday);
       merged.weeklyViews = Math.round(merged.profileViews30 * 0.28);
       merged.weeklyFollowers = Math.round(merged.newFollowers * 0.28);
       merged.weeklyGoing = Math.round(merged.goingTonightClicks * 0.28);
@@ -34941,8 +35007,7 @@
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
       const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
-      const baseDashboardMetrics = dancerDashboardMetrics(activeProfile, city);
-      const dashboardMetrics = mergeLiveDancerDashboardMetrics(baseDashboardMetrics, liveDancerAnalytics, activeProfile, city);
+      const dashboardMetrics = mergeLiveDancerDashboardMetrics(null, liveDancerAnalytics, activeProfile, city);
       renderNotificationCenters();
       renderSupportInbox("dancer");
       dancerDashboard.classList.toggle("is-approved", approved);
@@ -38331,6 +38396,12 @@
     render();
     loadLiveDiscovery(citySelect.value);
     if (isCustomerSession()) loadLiveCustomerDashboardData();
+    if (isDancerSession()) {
+      loadLiveDancerAnalytics();
+      loadLiveDancerDeals();
+      loadLiveDancerWeeklyReport();
+      loadLiveDancerRankingEvents();
+    }
     if (authSession?.accessToken) loadLiveNotifications();
     if (isCustomerSession() || isDancerSession() || isVenueSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
