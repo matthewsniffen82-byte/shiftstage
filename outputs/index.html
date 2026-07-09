@@ -26237,24 +26237,6 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
-        <div class="status-grid">
-          <div class="stat">
-            <strong id="dancerApprovalStatus">Pending</strong>
-            <span>Verification status</span>
-          </div>
-          <div class="stat approved-dancer-stat">
-            <strong id="dancerFollowerStat">0</strong>
-            <span>Followers</span>
-          </div>
-          <div class="stat approved-dancer-stat">
-            <strong id="dancerNotificationStat">0</strong>
-            <span>Notifications enabled</span>
-          </div>
-          <div class="stat">
-            <strong>FREE</strong>
-            <span>Monthly subscription</span>
-          </div>
-        </div>
         <div class="approval-command" id="dancerApprovalCommand" role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
           <div>
             <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
@@ -34892,7 +34874,8 @@
         approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       }
       document.getElementById("dancerApprovedTopTools")?.classList.toggle("show", approved);
-      document.getElementById("dancerApprovalStatus").textContent = approvalStateLabel;
+      const dancerApprovalStatus = document.getElementById("dancerApprovalStatus");
+      if (dancerApprovalStatus) dancerApprovalStatus.textContent = approvalStateLabel;
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
       document.getElementById("dancerApprovalTitle").textContent = rejected
           ? "Rejected"
@@ -34959,12 +34942,18 @@
           approvalStatusSecondary.textContent = "Public discovery and shift posting unlock after approval.";
         }
       }
-      document.getElementById("dancerFollowerStat").textContent = dashboardMetrics
-        ? dashboardMetrics.followers.toLocaleString()
-        : "0";
-      document.getElementById("dancerNotificationStat").textContent = dashboardMetrics
-        ? dashboardMetrics.notifications.toLocaleString()
-        : "0";
+      const dancerFollowerStat = document.getElementById("dancerFollowerStat");
+      if (dancerFollowerStat) {
+        dancerFollowerStat.textContent = dashboardMetrics
+          ? dashboardMetrics.followers.toLocaleString()
+          : "0";
+      }
+      const dancerNotificationStat = document.getElementById("dancerNotificationStat");
+      if (dancerNotificationStat) {
+        dancerNotificationStat.textContent = dashboardMetrics
+          ? dashboardMetrics.notifications.toLocaleString()
+          : "0";
+      }
       if (dashboardMetrics && approved) {
         const totalSocialClicks = dashboardMetrics.instagramClicks + dashboardMetrics.snapchatClicks + dashboardMetrics.tiktokClicks + dashboardMetrics.onlyfansClicks + dashboardMetrics.xClicks;
         const socialPlatforms = [
