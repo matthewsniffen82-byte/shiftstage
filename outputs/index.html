@@ -2234,6 +2234,16 @@
       transform: translateY(1px) scale(.99);
     }
 
+    .approved-visual-submit.is-submitted {
+      min-height: 54px;
+      border-width: 2px;
+      border-color: rgba(34,197,94,.76);
+      color: #dcffe9;
+      background: linear-gradient(135deg, rgba(12,80,44,.94), rgba(14,116,144,.88));
+      box-shadow: 0 0 0 3px rgba(34,197,94,.14), 0 16px 36px rgba(0,0,0,.42), 0 0 30px rgba(34,197,94,.2);
+      animation: none;
+    }
+
     @keyframes submitReviewPulse {
       0%, 100% {
         box-shadow: 0 0 0 3px rgba(53,216,255,.14), 0 18px 42px rgba(0,0,0,.45), 0 0 28px rgba(255,42,177,.22);
@@ -2249,9 +2259,14 @@
       background: rgba(72,9,24,.44) !important;
     }
 
-    .approved-visual-submit:disabled {
+    .approved-visual-submit:disabled:not(.is-submitted) {
       opacity: .68;
       cursor: not-allowed;
+    }
+
+    .approved-visual-submit.is-submitted:disabled {
+      opacity: 1;
+      cursor: default;
     }
 
     .approved-visual-social {
@@ -32405,8 +32420,8 @@
                 </div>
               </div>
               <div class="modal-actions">
-                <button class="approved-visual-submit action-btn ${changeState.needsApproval ? "is-ready" : ""}" type="button" data-dancer-control-action="resubmit-approval" ${changeState.needsApproval ? "" : "disabled"}>
-                  ${actionButtonLabel("check", "Submit for review")}
+                <button class="approved-visual-submit action-btn ${changeState.needsApproval ? "is-ready" : ""} ${changeState.submitted ? "is-submitted" : ""}" type="button" data-dancer-control-action="resubmit-approval" ${changeState.needsApproval ? "" : "disabled"}>
+                  ${actionButtonLabel("check", changeState.submitted ? "Submitted for review" : "Submit for review")}
                 </button>
               </div>
             </div>
@@ -32597,7 +32612,7 @@
       const needsApproval = detailsChanged || (!waitingOnAdmin && pendingPhoto) || socialStates.some((item) => item.addedOrChanged || item.deleted) || Boolean(profile.approvalChangesPending && !profile.approvalChangesSubmitted);
       const hasDeletes = socialStates.some((item) => item.deleted);
       const hasAnyChange = needsApproval || hasDeletes;
-      return { hasAnyChange, needsApproval, hasDeletesOnly: hasDeletes && !needsApproval };
+      return { hasAnyChange, needsApproval, hasDeletesOnly: hasDeletes && !needsApproval, submitted: waitingOnAdmin && !needsApproval };
     }
 
     function syncApprovedProfileSubmitState() {
@@ -32610,8 +32625,18 @@
       submitButtons.forEach((button) => {
         button.disabled = !state.needsApproval;
         button.classList.toggle("is-ready", state.needsApproval);
+        button.classList.toggle("is-submitted", state.submitted);
+        if (button.classList.contains("approved-visual-submit")) {
+          button.innerHTML = state.submitted
+            ? actionButtonLabel("check", "Submitted for review")
+            : actionButtonLabel("check", "Submit for review");
+        } else {
+          button.textContent = state.submitted ? "Submitted for review" : "Submit changes for approval";
+        }
         button.title = state.needsApproval
           ? "Save, then send changed or uploaded items to admin."
+          : state.submitted
+            ? "Your latest photo or social changes were submitted for admin review."
           : state.hasDeletesOnly
             ? "Deleted items can be saved without admin approval."
             : "Change or upload something to submit for approval.";
