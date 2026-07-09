@@ -30425,7 +30425,9 @@
         const targetId = reviewType.split(":").slice(1).join(":");
         const profile = activeDancerProfile() || null;
         const photoIndex = (profile?.submittedPhotos || []).findIndex((photo, index) =>
-          String(photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`) === targetId
+          String(photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`) === targetId ||
+          String(photo.id || "").toLowerCase().includes(targetId.toLowerCase()) ||
+          targetId.toLowerCase().includes(`photo-${index}`)
         );
         return photoIndex >= 0 ? `Photo ${photoIndex + 1}` : "Submitted photo";
       }
@@ -30433,8 +30435,18 @@
       if (reviewType.startsWith("social_link:")) {
         const targetId = reviewType.split(":").slice(1).join(":");
         const profile = activeDancerProfile() || null;
+        const normalizedTarget = targetId.toLowerCase();
+        const platformTarget = socialPlatforms.find((item) =>
+          item.key === normalizedTarget ||
+          normalizedTarget.includes(item.key) ||
+          normalizedTarget.includes(`social-${item.key}`)
+        );
+        if (platformTarget) return platformTarget.label;
         const social = normalizeSubmittedSocials(profile).find((item) =>
-          item.id === targetId || item.platform === targetId
+          item.id === targetId ||
+          item.platform === normalizedTarget ||
+          String(item.id || "").toLowerCase().includes(normalizedTarget) ||
+          normalizedTarget.includes(item.platform)
         );
         return social?.label || "Social link";
       }
@@ -30530,14 +30542,12 @@
       if (!rejected.length) {
         return "";
       }
-      let photoFixNumber = 0;
       const links = rejected.map((review) => {
         const type = String(review.reviewType || review.review_type || "review");
         const date = formatBillingDate(review.reviewedAt || review.createdAt);
         const reason = review.notes || "No reason added.";
         const fixTarget = reviewFixTarget(type);
-        const isPhotoFix = type.startsWith("photo:") || type === "photos";
-        const label = isPhotoFix ? `Photo #${++photoFixNumber}` : "Social link";
+        const label = reviewDisplayLabel(type);
         return `
           <button type="button" ${fixTarget ? `data-fix-target="${displayText(fixTarget)}"` : ""} title="${displayText(reason)}${date ? ` · ${date}` : ""}">
             ${displayText(label)}
