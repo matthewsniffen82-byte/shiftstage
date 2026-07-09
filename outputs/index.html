@@ -1695,32 +1695,28 @@
 
     #approvedDancerPanel.post-shift-panel {
       position: relative;
-      overflow: hidden;
-      border-color: rgba(168,85,247,.34);
-      background:
-        radial-gradient(circle at 100% 0%, rgba(53,216,255,.12), transparent 0 190px),
-        linear-gradient(135deg, rgba(168,85,247,.14), rgba(53,216,255,.045)),
-        rgba(10,10,15,.88);
-      box-shadow:
-        0 24px 70px rgba(0,0,0,.46),
-        0 0 30px rgba(168,85,247,.12),
-        inset 0 0 24px rgba(255,255,255,.026);
+      overflow: visible;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     #approvedDancerPanel.post-shift-panel:not([open]) {
       display: none;
     }
 
+    #approvedDancerPanel.post-shift-panel > summary {
+      display: none;
+    }
+
+    #approvedDancerPanel.post-shift-panel > .dashboard-collapse-body {
+      margin-top: 0;
+    }
+
     #approvedDancerPanel.post-shift-panel::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 18px;
-      bottom: 18px;
-      width: 3px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #a855f7, #35d8ff);
-      box-shadow: 0 0 18px rgba(168,85,247,.42);
+      display: none;
     }
 
     .post-shift-head {
@@ -2575,11 +2571,11 @@
       margin-top: 34px;
     }
 
-    #dancerDashboard #dancerAnalyticsSection {
+    #dancerDashboard #approvedDancerPanel {
       order: -3;
     }
 
-    #dancerDashboard.is-approved #approvedDancerPanel {
+    #dancerDashboard #dancerAnalyticsSection {
       order: -2;
     }
 
@@ -21715,6 +21711,19 @@
         min-height: 34px;
         font-size: 20px;
       }
+    }
+
+    #approvedDancerPanel.post-shift-panel {
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+
+    #approvedDancerPanel.post-shift-panel > summary,
+    #approvedDancerPanel .approved-tool-launcher {
+      display: none !important;
     }
 
     /* Mobile launch hardening: final overrides for narrow phones. */
