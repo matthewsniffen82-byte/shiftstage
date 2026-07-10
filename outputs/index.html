@@ -25256,25 +25256,26 @@
     .profile-modal .modal-scroll-cue {
       -webkit-tap-highlight-color: transparent;
       align-items: center !important;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.24), transparent 58%),
-        rgba(5, 5, 8, 0.78) !important;
-      border: 1px solid rgba(168, 85, 247, 0.56) !important;
+      background: rgba(5, 5, 8, 0.18) !important;
+      border: 1px solid rgba(255, 255, 255, 0.34) !important;
       border-radius: 999px !important;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.34), 0 0 14px rgba(139, 92, 246, 0.18) !important;
-      color: #35D8FF !important;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34) !important;
+      color: rgba(255, 255, 255, 0.92) !important;
       cursor: pointer;
       display: flex !important;
       height: 34px !important;
       justify-content: center !important;
-      left: auto !important;
-      margin: 2px auto 5px !important;
+      left: 50% !important;
+      margin: 0 !important;
       padding: 0 !important;
-      position: relative !important;
+      position: absolute !important;
       right: auto !important;
-      transform: none !important;
+      bottom: 10px !important;
+      transform: translateX(-50%) !important;
       width: 34px !important;
       z-index: 6 !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
     }
 
     .profile-modal .modal-scroll-cue .icon {
@@ -25304,7 +25305,6 @@
     @media (max-width: 560px) {
       .profile-modal .modal-scroll-cue {
         height: 32px !important;
-        margin: 1px auto 5px !important;
         width: 32px !important;
       }
 
@@ -25315,6 +25315,7 @@
     }
 
     .profile-modal .modal-image {
+      position: relative !important;
       height: clamp(460px, 72vh, 620px);
       min-height: clamp(460px, 72vh, 620px);
       max-height: clamp(460px, 72vh, 620px);
@@ -25743,7 +25744,7 @@
       width: 100% !important;
       max-width: min(100%, 620px) !important;
       margin-inline: auto !important;
-      padding: 4px clamp(10px, 2.8vw, 14px) 5px !important;
+      padding: 4px clamp(10px, 2.8vw, 14px) 2px !important;
       position: relative !important;
       left: auto !important;
       bottom: auto !important;
@@ -25766,6 +25767,10 @@
 
     .profile-modal .modal-image {
       cursor: zoom-in !important;
+    }
+
+    .profile-modal .modal-body {
+      padding-top: 6px !important;
     }
 
     .profile-photo-viewer {
@@ -25818,7 +25823,7 @@
         gap: 4px !important;
         width: 100% !important;
         max-width: 100% !important;
-        padding: 4px 8px 5px !important;
+        padding: 4px 8px 2px !important;
       }
 
       .profile-modal .thumb {
@@ -28017,11 +28022,11 @@
             </div>
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
+          <button class="modal-scroll-cue" id="modalScrollCue" type="button" aria-label="Scroll down to profile details">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
         </div>
         <div class="gallery" id="modalGallery"></div>
-        <button class="modal-scroll-cue" id="modalScrollCue" type="button" aria-label="Scroll down to profile details">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
-        </button>
         <div class="modal-body" id="modalBody"></div>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
