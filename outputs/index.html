@@ -33686,12 +33686,14 @@
         const submitted = submittedSocials.find((item) => item.platform === platform.key);
         const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
         const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : ""));
+        const deleted = (profile?.deletedSocialPlatforms || []).includes(platform.key);
         const previewValue = normalizeSocialInput(platform.key, currentValue) || currentValue;
         return {
           ...platform,
-          value: previewValue,
+          value: deleted ? "" : previewValue,
           status,
-          notes: submitted?.reviewNotes || ""
+          notes: submitted?.reviewNotes || "",
+          deleted
         };
       });
       const shareName = displayText(profile?.name || activeDancerName());
@@ -33773,7 +33775,7 @@
                   </div>
                   <div class="meta">Use the pencil in this box, then tap a social icon to edit. QR and Share are not editable.</div>
                   <div class="social-links">
-                    ${socials.map((social) => `
+                    ${socials.filter((social) => !social.deleted).map((social) => `
                       <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
                         ${approvedSocialEditMode ? `
                           <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(`Edit ${social.label}`)}" data-social-url="${displayText(social.value || "")}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" title="${displayText(`Edit ${social.label}`)}">
@@ -33917,6 +33919,7 @@
         const field = document.getElementById(fieldId);
         if (field && input) {
           field.value = input.value.trim();
+          clearApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
           showToast("Social link saved. Submit for review when ready.");
@@ -33930,6 +33933,7 @@
         const field = document.getElementById(fieldId);
         if (field) {
           field.value = "";
+          markApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
           showToast("Social link deleted. Submit for review when ready.");
@@ -34112,6 +34116,28 @@
       renderApprovedVisualProfileEditor();
     }
 
+    function markApprovedSocialDeleted(platform = "") {
+      const key = String(platform || "").toLowerCase();
+      if (!key) return;
+      const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
+      if (!profile) return;
+      profile.deletedSocialPlatforms = [...new Set([...(profile.deletedSocialPlatforms || []), key])];
+      profile.approvalChangesPending = true;
+      profile.approvalChangesSubmitted = false;
+    }
+
+    function clearApprovedSocialDeleted(platform = "") {
+      const key = String(platform || "").toLowerCase();
+      const profile = activeDancerProfile();
+      if (!profile || !key) return;
+      profile.deletedSocialPlatforms = (profile.deletedSocialPlatforms || []).filter((item) => item !== key);
+    }
+
+    function socialPlatformFromApprovedFieldId(fieldId = "") {
+      const match = String(fieldId || "").match(/^(?:profile|approvedControl)(Instagram|Tiktok|Snapchat|Onlyfans|X)$/);
+      return match ? match[1].toLowerCase() : "";
+    }
+
     function focusApprovedSocialField(fieldId = "") {
       const field = document.getElementById(fieldId);
       if (!field) return;
@@ -34125,6 +34151,7 @@
       const field = document.getElementById(fieldId);
       if (!field) return;
       field.value = "";
+      markApprovedSocialDeleted(socialPlatformFromApprovedFieldId(fieldId));
       mirrorApprovedProfileEditField(field);
       focusApprovedSocialField(fieldId);
       showToast("Social link cleared. Press Save profile to keep it blank.");
@@ -34192,6 +34219,7 @@
             reviewNotes: unchangedApproved ? existingSocial.reviewNotes || "" : ""
           };
         });
+      profile.deletedSocialPlatforms = [];
       const submittedSocialPlatforms = profile.socialLinks
         .filter((social) => normalizedReviewStatus(social.reviewStatus) === "pending")
         .map((social) => social.platform);
@@ -35847,19 +35875,7 @@
         removed = true;
       }
       if (!removed) return false;
-      if (deletedLivePhotoId && isDancerSession()) {
-        const headers = authenticatedRequestHeaders("application/json");
-        if (headers) {
-          const response = await fetch("/api/dancer/photos", {
-            method: "DELETE",
-            headers,
-            body: JSON.stringify({ photoId: deletedLivePhotoId })
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || data.ok === false) throw new Error(data.error || "Could not delete photo");
-        }
-      }
-      removeLocalDancerPhoto(profile, { target, photoId: deletedLivePhotoId, photoUrl: deletedPhotoUrl });
+      const locallyRemoved = removeLocalDancerPhoto(profile, { target, photoId: deletedLivePhotoId, photoUrl: deletedPhotoUrl });
       if (activeApprovedVisualPhotoTarget === target || activeApprovedVisualPhotoTarget === deletedLivePhotoId) activeApprovedVisualPhotoTarget = "";
       profile.approvalChangesPending = true;
       profile.approvalChangesSubmitted = false;
@@ -35873,7 +35889,19 @@
       renderDancerManagement();
       renderApprovedVisualProfileEditor();
       syncApprovedProfileSubmitState();
-      return true;
+      if (deletedLivePhotoId && isDancerSession()) {
+        const headers = authenticatedRequestHeaders("application/json");
+        if (headers) {
+          const response = await fetch("/api/dancer/photos", {
+            method: "DELETE",
+            headers,
+            body: JSON.stringify({ photoId: deletedLivePhotoId })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.ok === false) throw new Error(data.error || "Could not delete photo");
+        }
+      }
+      return locallyRemoved || removed;
     }
 
     async function hydrateDancerVerificationProgress() {
@@ -39339,6 +39367,7 @@
         const field = document.getElementById(fieldId);
         if (field && input) {
           field.value = input.value.trim();
+          clearApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
           showToast("Social link saved. Submit for review when ready.");
@@ -39353,6 +39382,7 @@
         const field = document.getElementById(fieldId);
         if (field) {
           field.value = "";
+          markApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
           showToast("Social link deleted. Submit for review when ready.");
