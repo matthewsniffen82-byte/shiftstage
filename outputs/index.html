@@ -30702,7 +30702,12 @@
       }
     }
 
-    async function loadLiveDancerAnalytics() {
+    function reportOptionalDancerLoadError(error, fallbackMessage, options = {}) {
+      if (options.notify === true) showToast(error.message || fallbackMessage);
+      else console.warn(fallbackMessage, error);
+    }
+
+    async function loadLiveDancerAnalytics(options = {}) {
       if (!isDancerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/dancer/analytics");
@@ -30710,11 +30715,11 @@
         renderDancerSetup();
       } catch (error) {
         liveDancerAnalytics = null;
-        showToast(error.message || "Could not load live analytics");
+        reportOptionalDancerLoadError(error, "Could not load live analytics", options);
       }
     }
 
-    async function loadLiveDancerDeals() {
+    async function loadLiveDancerDeals(options = {}) {
       if (!isDancerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/dancer/dashboard");
@@ -30723,11 +30728,11 @@
         renderDancerSetup();
       } catch (error) {
         liveDancerDeals = null;
-        showToast(error.message || "Could not load QR commissions");
+        reportOptionalDancerLoadError(error, "Could not load QR commissions", options);
       }
     }
 
-    async function loadLiveDancerWeeklyReport() {
+    async function loadLiveDancerWeeklyReport(options = {}) {
       if (!isDancerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/dancer/weekly-report");
@@ -30735,11 +30740,11 @@
         renderDancerSetup();
       } catch (error) {
         liveDancerWeeklyReport = null;
-        showToast(error.message || "Could not load weekly report");
+        reportOptionalDancerLoadError(error, "Could not load weekly report", options);
       }
     }
 
-    async function loadLiveDancerBilling() {
+    async function loadLiveDancerBilling(options = {}) {
       if (!isDancerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/dancer/billing");
@@ -30747,11 +30752,11 @@
         renderDancerSetup();
       } catch (error) {
         liveDancerBilling = null;
-        showToast(error.message || "Could not load billing status");
+        reportOptionalDancerLoadError(error, "Could not load billing status", options);
       }
     }
 
-    async function loadLiveDancerRankingEvents() {
+    async function loadLiveDancerRankingEvents(options = {}) {
       if (!isDancerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/dancer/ranking-events");
@@ -30759,11 +30764,11 @@
         renderDancerSetup();
       } catch (error) {
         liveDancerRankingEvents = [];
-        showToast(error.message || "Could not load ranking alerts");
+        reportOptionalDancerLoadError(error, "Could not load ranking alerts", options);
       }
     }
 
-    async function loadLiveDancerReviews() {
+    async function loadLiveDancerReviews(options = {}) {
       if (!isDancerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/dancer/reviews");
@@ -30771,7 +30776,7 @@
         renderDancerSetup();
       } catch (error) {
         liveDancerReviews = [];
-        showToast(error.message || "Could not load review notes");
+        reportOptionalDancerLoadError(error, "Could not load review notes", options);
       }
     }
 
