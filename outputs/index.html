@@ -28237,6 +28237,7 @@
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";
     let adminDisapprovedDancerSearch = "";
+    const adminOpenDancerApprovalCards = new Set();
     let authSession = loadAuthSession();
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
@@ -36995,7 +36996,21 @@
       return pending;
     }
 
+    function adminApprovalCardKey(city, profile) {
+      return `${city || ""}::${profile?.id || profile?.slug || profile?.name || ""}`;
+    }
+
+    function rememberOpenAdminApprovalCards() {
+      document.querySelectorAll("#adminDancers details[data-admin-approval-key]").forEach((card) => {
+        const key = card.dataset.adminApprovalKey;
+        if (!key) return;
+        if (card.open) adminOpenDancerApprovalCards.add(key);
+        else adminOpenDancerApprovalCards.delete(key);
+      });
+    }
+
     function adminDancerApprovalCard(city, profile, index) {
+      const approvalKey = adminApprovalCardKey(city, profile);
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
@@ -37006,7 +37021,7 @@
       const submittedLabel = profile.approvalChangesSubmitted ? "Profile changes submitted" : "Submitted for review";
       const pendingLabel = profile.approvalChangesPending ? "Profile changes pending submission" : "Pending submission";
       return `
-        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
+        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" data-admin-approval-key="${displayText(approvalKey)}" ${adminOpenDancerApprovalCards.has(approvalKey) ? "open" : ""}>
           <summary class="row">
             <div>
               <h3>${displayText(profile.name || "Stage name missing")}</h3>
@@ -37113,6 +37128,7 @@
         return;
       }
 
+      rememberOpenAdminApprovalCards();
       showAdminDashboardPage();
       savedAdminContentReviews = loadSavedAdminContentReviews();
       applySavedAdminContentReviews();
@@ -38438,6 +38454,15 @@
       const host = button.closest("[data-admin-profile], [data-admin-venue], [data-report]");
       runAdminAction(button.dataset.adminAction, host, button);
     });
+
+    adminDashboard.addEventListener("toggle", (event) => {
+      const card = event.target.closest?.("#adminDancers details[data-admin-approval-key]");
+      if (!card) return;
+      const key = card.dataset.adminApprovalKey;
+      if (!key) return;
+      if (card.open) adminOpenDancerApprovalCards.add(key);
+      else adminOpenDancerApprovalCards.delete(key);
+    }, true);
 
     adminDashboard.addEventListener("input", (event) => {
       const approvedSearch = event.target.closest("#adminApprovedDancerSearch");
