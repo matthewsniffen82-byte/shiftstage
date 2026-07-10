@@ -29490,10 +29490,26 @@
       accountControlState[role].deleted = false;
     }
 
+    function hasLiveEditableDancerAccount() {
+      if (!isDancerSession()) return false;
+      const profile = activeDancerProfile() || null;
+      return Boolean(
+        dancerSetup.approval ||
+        dancerCoreApprovalUnlocked(profile) ||
+        normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved"
+      );
+    }
+
+    function resolvedAccountControlState(role, accountState) {
+      const normalizedState = normalizedReviewStatus(accountState || "active");
+      if (role === "dancer" && normalizedState === "deleted" && hasLiveEditableDancerAccount()) return "active";
+      return normalizedState;
+    }
+
     function syncSignedInAccountControl(role) {
       const state = accountControlState[role];
       if (!state || authSession?.account?.role !== role) return;
-      const sessionState = authSession.account.accountState || "active";
+      const sessionState = resolvedAccountControlState(role, authSession.account.accountState);
       state.deleted = sessionState === "deleted";
       state.disabled = sessionState === "disabled";
     }
@@ -29506,6 +29522,10 @@
       const note = panel.querySelector("[data-account-note]");
       const disableButton = panel.querySelector('[data-account-action="disable"]');
       const deleteButton = panel.querySelector('[data-account-action="delete"]');
+      if (role === "dancer" && state.deleted && hasLiveEditableDancerAccount()) {
+        state.deleted = false;
+        state.disabled = false;
+      }
       const dancerPending = role === "dancer" && !(dancerSetup.approval || activeDancerProfile()?.status === "Verified" || liveDancerBilling?.dancerStatus === "approved");
       const mode = state.deleted ? "deleted" : state.disabled ? "disabled" : dancerPending ? "pending" : "active";
       panel.classList.toggle("is-disabled", state.disabled && !state.deleted);
@@ -29535,11 +29555,12 @@
       const state = accountControlState[role];
       if (!state) return;
       const email = normalizeAccountEmail(account.email) || sessionEmailForRole(role);
+      const accountState = resolvedAccountControlState(role, account.accountState);
       if (email) persistAccountEmail(role, email);
-      state.disabled = account.accountState === "disabled";
-      state.deleted = account.accountState === "deleted";
+      state.disabled = accountState === "disabled";
+      state.deleted = accountState === "deleted";
       if (authSession?.account && authSession.account.role === role) {
-        saveAuthSession({ ...authSession, account: { ...authSession.account, accountState: account.accountState, email: email || authSession.account.email || null } });
+        saveAuthSession({ ...authSession, account: { ...authSession.account, accountState, email: email || authSession.account.email || null } });
       }
       renderAccountControlPanel(role);
       updateCurrentEmailDisplays();
