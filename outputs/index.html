@@ -2380,6 +2380,7 @@
       padding: 16px;
       background: rgba(0,0,0,.38);
       backdrop-filter: blur(10px);
+      touch-action: manipulation;
     }
 
     .approved-edit-popover[hidden] {
@@ -2410,6 +2411,11 @@
       background: rgba(7,7,11,.98);
       box-shadow: 0 28px 80px rgba(0,0,0,.62), 0 0 34px rgba(255,104,124,.18);
       margin-bottom: max(14px, env(safe-area-inset-bottom));
+      touch-action: manipulation;
+    }
+
+    .approved-edit-card button {
+      touch-action: manipulation;
     }
 
     .approved-edit-popover.is-social .approved-edit-card {
@@ -2446,6 +2452,7 @@
       padding-block: 12px;
       min-width: 0;
       box-sizing: border-box;
+      font-size: 16px;
     }
 
     .approved-edit-popover.is-social .approved-visual-social-actions {
@@ -33745,6 +33752,7 @@
     function closeApprovedVisualEditPopover() {
       const popover = document.getElementById("approvedEditItemPopover");
       if (popover) {
+        if (popover.contains(document.activeElement)) document.activeElement.blur?.();
         popover.hidden = true;
         popover.classList.remove("is-social");
         popover.style.removeProperty("--approved-social-popover-top");
@@ -33796,6 +33804,73 @@
         document.querySelector(".approved-visual-profile")?.appendChild(popover);
       }
       popover.hidden = false;
+    }
+
+    async function handleApprovedEditPopoverClick(event) {
+      const popover = event.target.closest("#approvedEditItemPopover");
+      if (!popover) return false;
+      const replaceButton = event.target.closest("[data-approved-visual-photo-replace]");
+      const deleteButton = event.target.closest("[data-approved-visual-photo-delete]");
+      const socialSaveButton = event.target.closest("[data-approved-visual-social-save]");
+      const socialDeleteButton = event.target.closest("[data-approved-visual-social-delete]");
+      const closeButton = event.target.closest("[data-approved-edit-close]");
+      if (!replaceButton && !deleteButton && !socialSaveButton && !socialDeleteButton && !closeButton) return false;
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (replaceButton) {
+        pendingApprovedPhotoTarget = replaceButton.dataset.photoTarget || "gallery";
+        pendingApprovedPhotoAutoSubmit = false;
+        closeApprovedVisualEditPopover();
+        document.getElementById("approvedPhotoUploadInput")?.click();
+        showToast("Choose a replacement picture, then submit for review");
+        return true;
+      }
+
+      if (deleteButton) {
+        const target = deleteButton.dataset.photoTarget || "";
+        deleteButton.disabled = true;
+        try {
+          const deleted = await deleteApprovedDancerPhoto(target);
+          closeApprovedVisualEditPopover();
+          showToast(deleted ? "Photo deleted. Submit for review when ready." : "Photo could not be deleted.");
+        } catch (error) {
+          showToast(error.message || "Could not delete photo");
+        } finally {
+          deleteButton.disabled = false;
+        }
+        return true;
+      }
+
+      if (socialSaveButton) {
+        const platform = socialSaveButton.dataset.socialPlatform || "";
+        const input = document.getElementById("approvedVisualSocialInput");
+        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
+        const field = document.getElementById(fieldId);
+        if (field && input) {
+          field.value = input.value.trim();
+          mirrorApprovedProfileEditField(field);
+          closeApprovedVisualEditPopover();
+          showToast("Social link saved. Submit for review when ready.");
+        }
+        return true;
+      }
+
+      if (socialDeleteButton) {
+        const platform = socialDeleteButton.dataset.socialPlatform || "";
+        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.value = "";
+          mirrorApprovedProfileEditField(field);
+          closeApprovedVisualEditPopover();
+          showToast("Social link deleted. Submit for review when ready.");
+        }
+        return true;
+      }
+
+      closeApprovedVisualEditPopover();
+      return true;
     }
 
     function renderApprovedDancerProfileEditor(preserveCitySelection = false) {
@@ -38989,6 +39064,7 @@
         closeApprovedProfileEditor();
         return;
       }
+      if (await handleApprovedEditPopoverClick(event)) return;
       if (handleNotificationCenterClick(event)) return;
       if (handleSupportActionClick(event)) return;
       if (handleAccountControlClick(event)) return;
