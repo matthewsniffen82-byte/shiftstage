@@ -29959,6 +29959,10 @@
         const socialLinks = normalizeSubmittedSocials(item);
         const verificationDocuments = Array.isArray(item.verificationDocuments) ? item.verificationDocuments : [];
         const reviews = Array.isArray(item.reviews) ? item.reviews : [];
+        const hasPendingContent =
+          photos.some((photo) => !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))) ||
+          socialLinks.some((social) => !isFinalAdminReviewStatus(normalizedReviewStatus(social.reviewStatus))) ||
+          verificationDocuments.some((document) => !isFinalAdminReviewStatus(normalizedReviewStatus(document.status || document.reviewStatus || document.review_status)));
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
         const profileData = {
           id: item.id,
@@ -29970,6 +29974,8 @@
           bio: item.bio || "",
           status: approvalStatusLabel(item.status),
           reviewSubmitted: item.status === "pending_review",
+          approvalChangesPending: item.status === "approved" && hasPendingContent,
+          approvalChangesSubmitted: item.status === "approved" && hasPendingContent,
           venue: "",
           time: "No upcoming shifts",
           tonight: false,
@@ -34148,7 +34154,8 @@
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
             stageName,
             city: newCity,
-            socials: socialPayloadFromMap(normalizedSocials)
+            socials: socialPayloadFromMap(normalizedSocials),
+            submitForReview: options.submitForReview === true
           });
           if (!data) throw new Error("Sign in required");
         }
@@ -36946,6 +36953,19 @@
       return status === "approved" || status === "rejected";
     }
 
+    function hasPendingAdminSubmittedContent(profile) {
+      const hasPendingSocial = normalizeSubmittedSocials(profile).some((social) =>
+        !isFinalAdminReviewStatus(normalizedReviewStatus(social.reviewStatus))
+      );
+      const hasPendingPhoto = (profile.submittedPhotos || []).some((photo) =>
+        !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))
+      );
+      const hasPendingDocument = (profile.verificationDocuments || []).some((document) =>
+        !isFinalAdminReviewStatus(normalizedReviewStatus(document.status || document.reviewStatus || document.review_status))
+      );
+      return hasPendingSocial || hasPendingPhoto || hasPendingDocument;
+    }
+
     function matchesRequiredVerificationDocument(document, key, terms, documentIndex, fallbackIndex) {
       const text = [
         document.documentType,
@@ -37134,7 +37154,9 @@
       applySavedAdminContentReviews();
       const profiles = adminProfiles();
       const visibleProfiles = profiles.filter(({ profile }) => !profile.hidden);
-      const pendingProfiles = visibleProfiles.filter(({ profile }) => profile.status === "Pending");
+      const pendingProfiles = visibleProfiles.filter(({ profile }) =>
+        profile.status === "Pending" || profile.approvalChangesSubmitted || hasPendingAdminSubmittedContent(profile)
+      );
       const shiftProfiles = visibleProfiles.filter(({ profile }) => profile.scheduled);
       const activeSubscriptions = liveAdminSubscriptions.filter(isLiveSubscriptionActive);
       document.getElementById("adminUserCount").textContent = adminUsers.length + visibleProfiles.length;

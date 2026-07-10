@@ -75,6 +75,7 @@ export async function PATCH(request: Request) {
       if (error) throw error;
     }
 
+    let changedSocialPlatforms: SocialPlatform[] = [];
     if (Array.isArray(body.socials)) {
       const rows = body.socials
         .filter((social: any) => SOCIAL_PLATFORMS.has(social?.platform))
@@ -88,8 +89,35 @@ export async function PATCH(request: Request) {
         .filter((social: any) => social.handle || social.url);
 
       if (rows.length) {
+        const { data: existingSocials, error: existingSocialsError } = await db
+          .from("social_links")
+          .select("platform, handle, url, is_active")
+          .eq("dancer_id", profile.id)
+          .in("platform", rows.map((social: any) => social.platform));
+
+        if (existingSocialsError) throw existingSocialsError;
+
+        const existingByPlatform = new Map<string, any>(
+          (existingSocials || []).map((social: any) => [social.platform, social]),
+        );
+        changedSocialPlatforms = rows
+          .filter((social: any) => {
+            const existing = existingByPlatform.get(social.platform);
+            return !existing ||
+              String(existing.handle || "") !== social.handle ||
+              String(existing.url || "") !== social.url ||
+              existing.is_active === false;
+          })
+          .map((social: any) => social.platform);
+      }
+
+      if (rows.length) {
         const { error } = await db.from("social_links").upsert(rows, { onConflict: "dancer_id,platform" });
         if (error) throw error;
+      }
+
+      if (body.submitForReview === true && changedSocialPlatforms.length) {
+        await submitChangedSocialLinksForReview(db, profile.id, changedSocialPlatforms);
       }
 
       const activePlatforms = rows.map((social: any) => social.platform);
@@ -107,7 +135,7 @@ export async function PATCH(request: Request) {
 
     await saveProfilePhotoUrls(db, profile.id, body);
 
-    if (body.submitForReview === true) {
+    if (body.submitForReview === true && profile.status !== "approved") {
       await submitProfileForReview(client, db, user.id, profile.id, {
         realName: update.real_name || profile.real_name,
         stageName: update.stage_name || profile.stage_name,
@@ -120,6 +148,34 @@ export async function PATCH(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to update dancer profile.");
   }
+}
+
+async function submitChangedSocialLinksForReview(db: any, dancerId: string, platforms: SocialPlatform[]) {
+  const uniquePlatforms = [...new Set(platforms)];
+  if (!uniquePlatforms.length) return;
+
+  const { data: socials, error } = await db
+    .from("social_links")
+    .select("id, platform")
+    .eq("dancer_id", dancerId)
+    .in("platform", uniquePlatforms);
+
+  if (error) throw error;
+  if (!socials?.length) return;
+
+  const adminDb = createAdminSupabaseClient() as any;
+  const { error: insertError } = await adminDb.from("approval_reviews").insert(
+    socials.map((social: any) => ({
+      dancer_id: dancerId,
+      reviewer_id: null,
+      review_type: `social_link:${social.id}`,
+      status: "pending",
+      notes: "Submitted by dancer.",
+      reviewed_at: null,
+    })),
+  );
+
+  if (insertError) throw insertError;
 }
 
 async function submitProfileForReview(

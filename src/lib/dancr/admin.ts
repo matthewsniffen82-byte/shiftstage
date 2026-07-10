@@ -6,6 +6,22 @@ type DancrClient = SupabaseClient;
 
 const REVIEWABLE_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "rejected"]);
 const REVIEW_STATUSES = new Set<ReviewStatus>(["approved", "rejected"]);
+const APPROVAL_QUEUE_SELECT = `
+  id,
+  user_id,
+  real_name,
+  stage_name,
+  slug,
+  city,
+  bio,
+  status,
+  verification_status,
+  photo_review_status,
+  created_at,
+  social_links(id, platform, handle, url, is_active),
+  dancer_photos(id, storage_path, is_primary, review_status, sort_order, created_at),
+  approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
+`;
 
 export type ReviewDancerInput = {
   dancerId: string;
@@ -71,33 +87,31 @@ export async function requireAdmin(client: DancrClient, userId: string) {
 }
 
 export async function getApprovalQueue(client: DancrClient): Promise<AdminApprovalDancer[]> {
-  const { data, error } = await (client as any)
+  const db = client as any;
+  const pendingContentDancerIds = await pendingContentReviewDancerIds(db);
+  const { data, error } = await db
     .from("dancer_profiles")
-    .select(
-      `
-        id,
-        user_id,
-        real_name,
-        stage_name,
-        slug,
-        city,
-        bio,
-        status,
-        verification_status,
-        photo_review_status,
-        created_at,
-        social_links(id, platform, handle, url, is_active),
-        dancer_photos(id, storage_path, is_primary, review_status, sort_order, created_at),
-        approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
-      `,
-    )
+    .select(APPROVAL_QUEUE_SELECT)
     .or(`status.in.(${Array.from(REVIEWABLE_STATUSES).join(",")}),photo_review_status.eq.pending`)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
 
+  const rowsById = new Map((data || []).map((row: any) => [row.id, row]));
+  const missingPendingContentIds = pendingContentDancerIds.filter((id) => !rowsById.has(id));
+  if (missingPendingContentIds.length) {
+    const { data: contentRows, error: contentError } = await db
+      .from("dancer_profiles")
+      .select(APPROVAL_QUEUE_SELECT)
+      .in("id", missingPendingContentIds)
+      .order("created_at", { ascending: true });
+
+    if (contentError) throw contentError;
+    (contentRows || []).forEach((row: any) => rowsById.set(row.id, row));
+  }
+
   return Promise.all(
-    (data || []).map(async (row: any) => {
+    Array.from(rowsById.values()).map(async (row: any) => {
       const reviews = row.approval_reviews || [];
       return {
       id: row.id,
@@ -152,6 +166,24 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
       };
     }),
   );
+}
+
+async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
+  const { data, error } = await db
+    .from("approval_reviews")
+    .select("dancer_id, review_type")
+    .eq("status", "pending");
+
+  if (error) throw error;
+
+  return [
+    ...new Set<string>(
+      (data || [])
+        .filter((review: any) => /^(photo|social_link|verification_document):/.test(String(review.review_type || "")))
+        .map((review: any) => review.dancer_id)
+        .filter(Boolean),
+    ),
+  ];
 }
 
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
