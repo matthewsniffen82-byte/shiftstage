@@ -28316,6 +28316,7 @@
     let approvedSocialEditMode = false;
     let activeApprovedToolDropdown = "";
     let shiftCheckInMessage = "";
+    const MAX_DANCER_PROFILE_PHOTOS = 8;
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -33513,6 +33514,37 @@
       return Array.from(byUrl.values());
     }
 
+    function dancerProfilePhotoCount(profile) {
+      const keys = new Set();
+      (profile?.submittedPhotos || []).forEach((photo, index) => {
+        const key = photo?.id || photo?.imageUrl || photo?.image_url || photo?.url || `submitted:${index}`;
+        keys.add(String(key));
+      });
+      if (profile?.mainPhotoUrl) keys.add(String(profile.mainPhotoUrl));
+      (profile?.galleryPhotoUrls || []).forEach((url) => {
+        if (url) keys.add(String(url));
+      });
+      return keys.size;
+    }
+
+    function isReplacingApprovedPhotoTarget(profile, target) {
+      const text = String(target || "");
+      if (text.startsWith("submitted:") || text.startsWith("gallery:")) return true;
+      if (text !== "main") return false;
+      return Boolean(
+        profile?.mainPhotoUrl ||
+        (profile?.submittedPhotos || []).some((photo) => photo?.isPrimary || photo?.is_primary)
+      );
+    }
+
+    function assertDancerProfilePhotoLimit(profile, { adding = 1, replacing = false } = {}) {
+      if (replacing) return;
+      const remaining = MAX_DANCER_PROFILE_PHOTOS - dancerProfilePhotoCount(profile);
+      if (remaining < adding) {
+        throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+      }
+    }
+
     function approvedVisualProfileFixCount(profile = activeDancerProfile()) {
       const photos = approvedVisualPhotoItems(profile);
       const submittedSocials = normalizeSubmittedSocials(profile);
@@ -35528,11 +35560,12 @@
       }
     }
 
-    async function uploadSetupPhotoFile(file, isPrimary, sortOrder) {
+    async function uploadSetupPhotoFile(file, isPrimary, sortOrder, options = {}) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("isPrimary", isPrimary ? "true" : "false");
       formData.append("sortOrder", String(sortOrder));
+      if (options.replaceExisting) formData.append("replaceExisting", "true");
       return postAuthenticatedFormData("/api/dancer/photos", formData);
     }
 
@@ -35544,6 +35577,8 @@
       const replacingSubmitted = Number.isInteger(submittedIndex) && submittedIndex >= 0;
       const existingSubmitted = replacingSubmitted ? profile?.submittedPhotos?.[submittedIndex] : null;
       const isPrimary = target === "main" || Boolean(existingSubmitted?.isPrimary || existingSubmitted?.is_primary);
+      const replacingExistingPhoto = isReplacingApprovedPhotoTarget(profile, target);
+      assertDancerProfilePhotoLimit(profile, { replacing: replacingExistingPhoto });
       const sortOrder = replacingSubmitted
         ? Number(existingSubmitted?.sortOrder ?? existingSubmitted?.sort_order ?? (isPrimary ? 0 : submittedIndex + 1))
         : target === "main"
@@ -35551,7 +35586,7 @@
           : galleryIndex >= 0
             ? galleryIndex + 1
             : (profile?.galleryPhotoUrls || []).length + 1;
-      const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder);
+      const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto });
       let uploadedPhotoTarget = target;
       if (profile) {
         const uploaded = data?.photo || data || {};
@@ -35582,7 +35617,7 @@
         profile.submittedPhotos = submittedPhotos
           .filter(Boolean)
           .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
-          .slice(0, 6);
+          .slice(0, MAX_DANCER_PROFILE_PHOTOS);
         const uploadedIndex = profile.submittedPhotos.findIndex((item) => item.id === photo.id);
         if (uploadedIndex >= 0) uploadedPhotoTarget = `submitted:${uploadedIndex}`;
         profile.photoStatus = "Pending";
@@ -35802,7 +35837,7 @@
         .filter(Boolean);
       const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
       const mainUrl = profile?.mainPhotoUrl ? [profile.mainPhotoUrl] : [];
-      const urls = [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].slice(0, 5);
+      const urls = [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].slice(0, MAX_DANCER_PROFILE_PHOTOS);
 
       if (!urls.length) {
         return '<div class="locked">No uploaded photos yet.</div>';
@@ -35829,14 +35864,24 @@
       }
       const submit = form.querySelector('button[type="submit"]');
       const result = document.getElementById("photoUploadResult");
-      const photoFiles = Array.from(document.getElementById("setupProfilePhotos")?.files || []).slice(0, 5);
+      const inputFiles = Array.from(document.getElementById("setupProfilePhotos")?.files || []);
+      const photoFiles = inputFiles.slice(0, MAX_DANCER_PROFILE_PHOTOS);
       if (!photoFiles.length) {
         showToast("Choose at least one photo");
         return;
       }
-      if ((document.getElementById("setupProfilePhotos")?.files?.length || 0) > 5) {
-        showToast("Choose up to 5 photos");
-        if (result) result.textContent = "Choose up to 5 photos for review.";
+      try {
+        assertDancerProfilePhotoLimit(activeDancerProfile(), { adding: inputFiles.length });
+      } catch (error) {
+        const message = error.message || `Choose up to ${MAX_DANCER_PROFILE_PHOTOS} photos`;
+        showToast(message);
+        if (result) result.textContent = message;
+        return;
+      }
+      if (inputFiles.length > MAX_DANCER_PROFILE_PHOTOS) {
+        const message = `Choose up to ${MAX_DANCER_PROFILE_PHOTOS} photos for review.`;
+        showToast(message);
+        if (result) result.textContent = message;
         return;
       }
       submit.disabled = true;
@@ -35849,7 +35894,7 @@
         const urls = uploaded.map((item) => item.photo?.imageUrl).filter(Boolean);
         if (profile && urls.length) {
           profile.mainPhotoUrl = profile.mainPhotoUrl || urls[0];
-          profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls];
+          profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls].slice(0, MAX_DANCER_PROFILE_PHOTOS);
           profile.photoStatus = "Pending";
         }
         dancerSetup.photos = true;
@@ -36488,7 +36533,7 @@
           <div class="field">
             <label for="setupProfilePhotos">Profile photos</label>
             <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
-            <div class="field-note"><strong>Upload up to 5 photos.</strong> The first photo becomes your main profile photo. The rest are reviewed for your gallery.</div>
+            <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> The first photo becomes your main profile photo. The rest are reviewed for your gallery.</div>
           </div>
           <div class="rule-note" id="photoUploadResult">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
           <button class="action-btn" type="submit">Submit photos</button>
@@ -36719,7 +36764,7 @@
         !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))
       );
       if (!reviewablePhotos.length) return '<div class="locked">No newly submitted photos waiting for review.</div>';
-      return reviewablePhotos.slice(0, 6).map((photo, index) => {
+      return reviewablePhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo, index) => {
         const imageUrl = photo.imageUrl || photo.image_url || "";
         const targetId = photo.id || `${profile.id || profile.name}-photo-${index}`;
         const key = `photo:${targetId}`;

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
+const MAX_DANCER_PROFILE_PHOTOS = 8;
 
 export type DancerProfileInput = {
   dancerId: string;
@@ -26,6 +27,7 @@ export type UploadDancerPhotoInput = {
   isPrimary?: boolean;
   sortOrder?: number;
   altText?: string;
+  replaceExisting?: boolean;
 };
 
 export type UploadVerificationDocumentInput = {
@@ -66,6 +68,10 @@ export async function updateSocialLink(
 }
 
 export async function uploadDancerPhoto(client: DancrClient, input: UploadDancerPhotoInput) {
+  if (!input.replaceExisting) {
+    await assertDancerPhotoLimit(client, input.dancerId);
+  }
+
   const userId = await getCurrentUserId(client);
   const storagePath = `${userId}/${input.dancerId}/${makeStorageFileName(input.fileName)}`;
 
@@ -423,6 +429,18 @@ async function countRowsAll(client: DancrClient, table: string, idColumn: string
 
   if (error) throw error;
   return count || 0;
+}
+
+async function assertDancerPhotoLimit(client: DancrClient, dancerId: string) {
+  const { count, error } = await client
+    .from("dancer_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("dancer_id", dancerId);
+
+  if (error) throw error;
+  if ((count || 0) >= MAX_DANCER_PROFILE_PHOTOS) {
+    throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
+  }
 }
 
 async function countNotificationSubscribers(client: DancrClient, dancerId: string) {

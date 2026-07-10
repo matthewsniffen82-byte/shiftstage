@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
+const MAX_DANCER_PROFILE_PHOTOS = 8;
 
 export async function GET(request: Request) {
   try {
@@ -286,7 +287,7 @@ function readProfilePhotoUrls(body: any) {
     seen.add(url);
   }
 
-  return urls;
+  return urls.slice(0, MAX_DANCER_PROFILE_PHOTOS);
 }
 
 function readUrl(value: unknown) {

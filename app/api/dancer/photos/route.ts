@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       isPrimary: formData.get("isPrimary") === "true",
       sortOrder: parseOptionalInteger(formData.get("sortOrder")),
       altText: parseOptionalText(formData.get("altText")),
+      replaceExisting: formData.get("replaceExisting") === "true",
     });
 
     return NextResponse.json({ ok: true, photo });
