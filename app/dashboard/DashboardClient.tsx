@@ -589,6 +589,7 @@ function DancerPanel({
         <Metric label="Status" value={String(profile?.status || "draft")} />
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
+      {isApproved ? <DancerVisibilityPanel profile={profile} /> : null}
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       {isApproved ? (
         <>
@@ -610,6 +611,58 @@ function DancerPanel({
       <DancerVerificationPanel reviews={reviews} />
       <DancerBillingPanel />
     </>
+  );
+}
+
+function DancerVisibilityPanel({ profile }: { profile?: LoadState["profile"] }) {
+  const initialVisible = profile?.is_public !== false && profile?.isPublic !== false;
+  const [isPublic, setIsPublic] = useState(initialVisible);
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setIsPublic(profile?.is_public !== false && profile?.isPublic !== false);
+  }, [profile]);
+
+  async function toggleVisibility() {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    const nextPublic = !isPublic;
+    setIsSaving(true);
+    setStatus(nextPublic ? "Putting your profile back on the site..." : "Hiding your profile from the site...");
+    try {
+      const response = await fetch("/api/dancer/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ isPublic: nextPublic }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update profile visibility.");
+      setIsPublic(nextPublic);
+      setStatus(nextPublic ? "Profile is visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <article className={`info-panel visibility-panel ${isPublic ? "" : "is-incognito"}`}>
+      <h2>Incognito</h2>
+      <div className="visibility-copy">
+        <Metric label="Public profile" value={isPublic ? "Visible" : "Hidden"} />
+        <p>{isPublic ? "Your approved profile can appear in search, venue pages, and your public link." : "Your profile is hidden from public pages. Your dashboard and approved tools stay available."}</p>
+      </div>
+      <button type="button" onClick={toggleVisibility} disabled={isSaving}>
+        {isSaving ? "Saving..." : isPublic ? "Go incognito" : "Show profile"}
+      </button>
+      {status ? <p>{status}</p> : null}
+    </article>
   );
 }
 
@@ -1648,7 +1701,11 @@ function DashboardStyles() {
       .setup-panel button, .upload-panel button, .verification-panel button, .shift-panel button, .customer-settings-panel button, .socials-panel button, .share-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; }
       .setup-panel button:disabled, .upload-panel button:disabled, .verification-panel button:disabled, .shift-panel button:disabled, .customer-settings-panel button:disabled, .socials-panel button:disabled { opacity: .62; cursor: wait; }
       .setup-panel p, .upload-panel p, .verification-panel p, .shift-panel p, .customer-settings-panel p, .socials-panel p, .share-panel p { color: #94e5ff; font-size: 14px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel { grid-column: span 3; }
+      .visibility-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
+      .visibility-panel button:disabled { opacity: .62; cursor: wait; }
+      .visibility-panel.is-incognito { border-color: rgba(148,229,255,.34); box-shadow: inset 0 0 0 1px rgba(148,229,255,.08); }
+      .visibility-copy { display: grid; gap: 10px; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel { grid-column: span 3; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -1738,7 +1795,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .visibility-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

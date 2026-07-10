@@ -68,6 +68,7 @@ export type DancerAccountProfile = {
   status: DancerStatus;
   verificationStatus: string;
   photoReviewStatus: string;
+  isPublic: boolean;
 };
 
 export type VenueSummary = {

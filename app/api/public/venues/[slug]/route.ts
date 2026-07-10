@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { data, error } = await client
       .from("shifts")
-      .select("id, dancer_id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status)")
+      .select("id, dancer_id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status, is_public)")
       .eq("venue_id", venue.id)
       .eq("status", "posted")
       .gte("starts_at", new Date().toISOString())
@@ -35,7 +35,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
         return { shift, dancer };
       })
-      .filter(({ dancer }: any) => dancer?.status === "approved")
+      .filter(({ dancer }: any) => dancer?.status === "approved" && dancer?.is_public !== false)
       .map(({ shift, dancer }: any) => ({
         id: shift.id,
         dancerId: shift.dancer_id,

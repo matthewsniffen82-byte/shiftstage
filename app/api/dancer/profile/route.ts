@@ -64,11 +64,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
 
-    const update: Record<string, string> = {};
+    const update: Record<string, string | boolean> = {};
     if (typeof body.stageName === "string") update.stage_name = body.stageName.trim();
     if (typeof body.legalName === "string") update.real_name = body.legalName.trim();
     if (typeof body.city === "string") update.city = body.city.trim();
     if (typeof body.bio === "string") update.bio = body.bio.trim();
+    if (typeof body.isPublic === "boolean") update.is_public = body.isPublic;
 
     if (Object.keys(update).length) {
       const { error } = await db.from("dancer_profiles").update(update).eq("id", profile.id);

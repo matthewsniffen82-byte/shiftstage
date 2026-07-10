@@ -104,6 +104,7 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .eq("city", city)
       .eq("slug", slug)
       .eq("status", "approved")
+      .eq("is_public", true)
       .maybeSingle();
     const row = data as { id?: string } | null;
     if (row?.id) return row.id;
@@ -116,6 +117,7 @@ async function resolveDancerId(client: AdminClient, body: EventBody) {
       .eq("city", city)
       .ilike("stage_name", name)
       .eq("status", "approved")
+      .eq("is_public", true)
       .maybeSingle();
     const row = data as { id?: string } | null;
     if (row?.id) return row.id;

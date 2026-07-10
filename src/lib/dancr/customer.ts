@@ -136,7 +136,7 @@ export async function recordDirectionRequest(
 async function getFollowedDancers(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("follows")
-    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status)")
+    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, is_public)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -153,7 +153,7 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
 async function getFavoriteDancers(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("favorites")
-    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status)")
+    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, is_public)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -187,7 +187,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("going_signals")
     .select(
-      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status), venues(id, slug, name, city, state))",
+      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, is_public), venues(id, slug, name, city, state))",
     )
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
@@ -217,7 +217,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
 
 function toDancerSummary(value: any) {
   const dancer = single(value);
-  if (!dancer || dancer.status !== "approved") return null;
+  if (!dancer || dancer.status !== "approved" || dancer.is_public === false) return null;
 
   return {
     id: dancer.id,

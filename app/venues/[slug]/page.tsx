@@ -16,7 +16,7 @@ type PageProps = {
 
 type VenueShift = {
   id: string;
-  dancer_profiles?: { slug?: string; stage_name?: string; status?: string } | Array<{ slug?: string; stage_name?: string; status?: string }>;
+  dancer_profiles?: { slug?: string; stage_name?: string; status?: string; is_public?: boolean } | Array<{ slug?: string; stage_name?: string; status?: string; is_public?: boolean }>;
   starts_at: string;
   ends_at: string;
 };
@@ -30,7 +30,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
 
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, dancer_profiles(slug, stage_name, status)")
+    .select("id, starts_at, ends_at, dancer_profiles(slug, stage_name, status, is_public)")
     .eq("venue_id", venue.id)
     .eq("status", "posted")
     .gte("starts_at", new Date().toISOString())
@@ -43,7 +43,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
       const dancer = Array.isArray(shift.dancer_profiles) ? shift.dancer_profiles[0] : shift.dancer_profiles;
       return { ...shift, dancer };
     })
-    .filter((shift) => shift.dancer?.status === "approved");
+    .filter((shift) => shift.dancer?.status === "approved" && shift.dancer?.is_public !== false);
 
   return (
     <main className="public-profile-shell">

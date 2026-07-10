@@ -19,6 +19,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
       `,
     )
     .eq("status", "approved")
+    .eq("is_public", true)
     .eq("city", city)
     .order("stage_name", { ascending: true })
     .order("starts_at", { referencedTable: "shifts", ascending: true });
@@ -46,6 +47,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
       `,
     )
     .eq("status", "approved")
+    .eq("is_public", true)
     .eq("city", city)
     .eq("shifts.status", "posted")
     .not("shifts.checked_in_at", "is", null)
@@ -77,6 +79,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
       `,
     )
     .eq("status", "approved")
+    .eq("is_public", true)
     .eq("slug", slug)
     .maybeSingle();
 
