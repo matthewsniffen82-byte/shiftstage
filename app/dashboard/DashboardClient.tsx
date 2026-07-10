@@ -633,7 +633,7 @@ function DancerVisibilityPanel({ profile }: { profile?: LoadState["profile"] }) 
 
     const nextPublic = !isPublic;
     setIsSaving(true);
-    setStatus(nextPublic ? "Putting your profile back on the site..." : "Hiding your profile from the site...");
+    setStatus(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from the site...");
     try {
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -643,7 +643,7 @@ function DancerVisibilityPanel({ profile }: { profile?: LoadState["profile"] }) 
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update profile visibility.");
       setIsPublic(nextPublic);
-      setStatus(nextPublic ? "Profile is visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
+      setStatus(nextPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
     } finally {
@@ -656,10 +656,10 @@ function DancerVisibilityPanel({ profile }: { profile?: LoadState["profile"] }) 
       <h2>Incognito</h2>
       <div className="visibility-copy">
         <Metric label="Public profile" value={isPublic ? "Visible" : "Hidden"} />
-        <p>{isPublic ? "Your approved profile can appear in search, venue pages, and your public link." : "Your profile is hidden from public pages. Your dashboard and approved tools stay available."}</p>
+        <p>{isPublic ? "Your approved profile can appear in search, venue pages, and your public link." : "Your profile is hidden from public pages. Your dashboard and approved tools stay available. Press Reactivate profile any time to show it again."}</p>
       </div>
       <button type="button" onClick={toggleVisibility} disabled={isSaving}>
-        {isSaving ? "Saving..." : isPublic ? "Go incognito" : "Show profile"}
+        {isSaving ? "Saving..." : isPublic ? "Go incognito" : "Reactivate profile"}
       </button>
       {status ? <p>{status}</p> : null}
     </article>

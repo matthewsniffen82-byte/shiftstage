@@ -28473,8 +28473,19 @@
       });
     });
 
+    function dancerProfileIsHidden(profile) {
+      return Boolean(profile?.hidden || profile?.isPublic === false || profile?.is_public === false);
+    }
+
+    function setDancerProfilePublic(profile, isPublic = true) {
+      if (!profile) return;
+      profile.hidden = !isPublic;
+      profile.isPublic = isPublic;
+      profile.is_public = isPublic;
+    }
+
     function isApprovedPublicProfile(profile) {
-      return Boolean(profile && profile.status === "Verified" && !profile.hidden);
+      return Boolean(profile && profile.status === "Verified" && !dancerProfileIsHidden(profile));
     }
 
     function showToast(message) {
@@ -31854,7 +31865,9 @@
         name,
         isRealDancerAccount: true,
         status,
-        isPublic: profile?.isPublic ?? profile?.is_public ?? true,
+        isPublic: !dancerProfileIsHidden(profile),
+        is_public: !dancerProfileIsHidden(profile),
+        hidden: dancerProfileIsHidden(profile),
         city,
         venue: profile?.venue || "",
         time: profile?.time || "No upcoming shifts",
@@ -34207,7 +34220,6 @@
         distance: venue?.distance || profile.distance,
         socials: normalizedSocials,
         status: dancerCoreApprovalUnlocked(profile) ? "Verified" : profile.status,
-        hidden: dancerCoreApprovalUnlocked(profile) ? false : profile.hidden,
         reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted,
         approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval),
         approvalChangesSubmitted: options.submitForReview
@@ -35862,7 +35874,6 @@
         if (dancerCoreApprovalUnlocked(profile)) {
           profile.status = "Verified";
           profile.reviewSubmitted = false;
-          profile.hidden = false;
         }
       }
       return { ...data, photoTarget: uploadedPhotoTarget };
@@ -35892,7 +35903,6 @@
       if (dancerCoreApprovalUnlocked(profile)) {
         profile.status = "Verified";
         profile.reviewSubmitted = false;
-        profile.hidden = false;
       }
       profile.photoStatus = "Pending";
       render();
@@ -36285,7 +36295,6 @@
         if (stillCoreApproved && profile) {
           Object.assign(profile, {
             status: "Verified",
-            hidden: false,
             reviewSubmitted: false,
             approvalChangesPending: true,
             approvalChangesSubmitted: true
@@ -36341,13 +36350,13 @@
     function syncDancerIncognitoToggle(profile = activeDancerProfile(), approved = false) {
       const button = document.getElementById("dancerIncognitoToggle");
       if (!button) return;
-      const isHidden = Boolean(profile?.hidden || profile?.isPublic === false || profile?.is_public === false);
+      const isHidden = dancerProfileIsHidden(profile);
       button.hidden = !approved;
       button.classList.toggle("is-incognito", isHidden);
       const label = button.querySelector("strong");
       const helper = button.querySelector("span");
-      if (label) label.textContent = isHidden ? "Show profile" : "Go incognito";
-      if (helper) helper.textContent = isHidden ? "Make profile public" : "Hide profile from site";
+      if (label) label.textContent = isHidden ? "Reactivate profile" : "Go incognito";
+      if (helper) helper.textContent = isHidden ? "Show profile on Dancr" : "Hide profile from site";
     }
 
     function renderDancerSetup() {
@@ -36428,7 +36437,7 @@
           : approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
       }
       document.getElementById("dancerSubscriptionStatus").textContent = billingSummary.label;
-      const profileIncognito = Boolean(approved && activeProfile?.hidden);
+      const profileIncognito = Boolean(approved && dancerProfileIsHidden(activeProfile));
       document.getElementById("dancerPublicStatus").textContent = approved
         ? (profileIncognito ? "Incognito" : "Visible to customers")
         : "Verification required";
@@ -36437,7 +36446,7 @@
       if (billingButton) billingButton.textContent = billingSummary.action;
       document.getElementById("dancerPublicDetail").textContent = approved
         ? (profileIncognito
-          ? "Your approved tools stay available, but customers cannot discover this profile or open the public profile page."
+          ? "Your approved tools stay available. Press Reactivate profile any time to show your profile on Dancr again."
           : "Customers can discover this profile, follow it, view schedules, and request venue directions.")
         : "Your dancer account is free. Public discovery, gallery, and shift posting unlock after Dancr approves your verification.";
       syncDancerIncognitoToggle(activeProfile, approved);
@@ -37577,9 +37586,9 @@
         danceProofStatus: "Approved",
         photoStatus: "Approved",
         reviewSubmitted: false,
-        hidden: false,
         contentFlagged: false
       });
+      setDancerProfilePublic(profile, true);
       (profile.verificationDocuments || []).forEach((document) => {
         document.status = "approved";
       });
@@ -39137,22 +39146,20 @@
           setResult("Profile not found.");
           return;
         }
-        const nextPublic = Boolean(profile.hidden || profile.isPublic === false || profile.is_public === false);
+        const nextPublic = dancerProfileIsHidden(profile);
         if (trigger) trigger.disabled = true;
-        setResult(nextPublic ? "Putting your profile back on the site..." : "Hiding your profile from public pages...");
+        setResult(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from public pages...");
         try {
           if (isDancerSession()) {
             const data = await patchAuthenticatedJson("/api/dancer/profile", { isPublic: nextPublic });
             if (!data) throw new Error("Sign in required");
           }
-          profile.hidden = !nextPublic;
-          profile.isPublic = nextPublic;
-          profile.is_public = nextPublic;
+          setDancerProfilePublic(profile, nextPublic);
           syncDancerIncognitoToggle(profile, true);
           renderDancerSetup();
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
-          setResult(nextPublic ? "Profile is visible on Dancr." : "Incognito on. Your profile is hidden from the site.");
+          setResult(nextPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from the site.");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");
         } finally {
