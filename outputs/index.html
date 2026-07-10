@@ -33667,7 +33667,7 @@
         const submitted = submittedSocials.find((item) => item.platform === platform.key);
         const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
         const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : ""));
-        const previewValue = currentValue;
+        const previewValue = normalizeSocialInput(platform.key, currentValue) || currentValue;
         return {
           ...platform,
           value: previewValue,
@@ -33756,9 +33756,19 @@
                   <div class="social-links">
                     ${socials.map((social) => `
                       <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                        <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.label)}" data-social-url="${displayText(social.value || "")}" ${approvedSocialEditMode ? `data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}"` : ""} title="${displayText(approvedSocialEditMode ? `Edit ${social.label}` : social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
-                          ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                        </button>
+                        ${approvedSocialEditMode ? `
+                          <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(`Edit ${social.label}`)}" data-social-url="${displayText(social.value || "")}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" title="${displayText(`Edit ${social.label}`)}">
+                            ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                          </button>
+                        ` : social.value ? `
+                          <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(social.value)}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                            ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                          </a>
+                        ` : `
+                          <button class="social-link social-${displayText(social.key)}" type="button" aria-label="${displayText(`${social.label} not added`)}" data-social-url="" title="${displayText(`${social.label} not added`)}">
+                            ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                          </button>
+                        `}
                       </span>
                     `).join("")}
                   </div>
