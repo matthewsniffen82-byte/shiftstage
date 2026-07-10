@@ -34153,6 +34153,9 @@
             reviewNotes: unchangedApproved ? existingSocial.reviewNotes || "" : ""
           };
         });
+      const submittedSocialPlatforms = profile.socialLinks
+        .filter((social) => normalizedReviewStatus(social.reviewStatus) === "pending")
+        .map((social) => social.platform);
       Object.assign(dancerSignupSocials, normalizedSocials);
       document.getElementById("dancerStageName").value = stageName;
       updateDancerDashboardName(stageName);
@@ -34177,7 +34180,8 @@
             stageName,
             city: newCity,
             socials: socialPayloadFromMap(normalizedSocials),
-            submitForReview: options.submitForReview === true
+            submitForReview: options.submitForReview === true,
+            submittedSocialPlatforms
           });
           if (!data) throw new Error("Sign in required");
         }

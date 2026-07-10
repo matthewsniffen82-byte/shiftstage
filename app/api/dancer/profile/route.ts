@@ -116,8 +116,9 @@ export async function PATCH(request: Request) {
         if (error) throw error;
       }
 
-      if (body.submitForReview === true && changedSocialPlatforms.length) {
-        await submitChangedSocialLinksForReview(db, profile.id, changedSocialPlatforms);
+      if (body.submitForReview === true) {
+        const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
+        await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
       }
 
       const activePlatforms = rows.map((social: any) => social.platform);
@@ -142,6 +143,8 @@ export async function PATCH(request: Request) {
         city: update.city || profile.city,
         status: profile.status,
       });
+    } else if (body.submitForReview === true) {
+      await submitPendingApprovedContentForReview(db, profile.id);
     }
 
     return NextResponse.json({ ok: true });
@@ -158,6 +161,7 @@ async function submitChangedSocialLinksForReview(db: any, dancerId: string, plat
     .from("social_links")
     .select("id, platform")
     .eq("dancer_id", dancerId)
+    .eq("is_active", true)
     .in("platform", uniquePlatforms);
 
   if (error) throw error;
@@ -175,6 +179,37 @@ async function submitChangedSocialLinksForReview(db: any, dancerId: string, plat
     })),
   );
 
+  if (insertError) throw insertError;
+}
+
+function readSubmittedSocialPlatforms(body: any, fallbackPlatforms: SocialPlatform[]) {
+  const rawPlatforms = Array.isArray(body?.submittedSocialPlatforms) ? body.submittedSocialPlatforms : [];
+  const platforms = rawPlatforms.filter((platform: any) => SOCIAL_PLATFORMS.has(platform)) as SocialPlatform[];
+  return platforms.length ? platforms : fallbackPlatforms;
+}
+
+async function submitPendingApprovedContentForReview(db: any, dancerId: string) {
+  const { data: photos, error } = await db
+    .from("dancer_photos")
+    .select("id")
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "pending");
+
+  if (error) throw error;
+
+  const reviewRows = (photos || []).map((photo: any) => ({
+    dancer_id: dancerId,
+    reviewer_id: null,
+    review_type: `photo:${photo.id}`,
+    status: "pending",
+    notes: "Submitted by dancer.",
+    reviewed_at: null,
+  }));
+
+  if (!reviewRows.length) return;
+
+  const adminDb = createAdminSupabaseClient() as any;
+  const { error: insertError } = await adminDb.from("approval_reviews").insert(reviewRows);
   if (insertError) throw insertError;
 }
 

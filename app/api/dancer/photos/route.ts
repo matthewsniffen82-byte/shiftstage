@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto, uploadOwnDancerPhoto } from "@/src/lib/dancr/dancer";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       altText: parseOptionalText(formData.get("altText")),
       replaceExisting: formData.get("replaceExisting") === "true",
     });
+    await submitUploadedPhotoForReview(photo.id);
 
     return NextResponse.json({ ok: true, photo });
   } catch (error) {
@@ -53,6 +55,31 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to delete dancer photo.");
   }
+}
+
+async function submitUploadedPhotoForReview(photoId: string | null | undefined) {
+  if (!photoId) return;
+
+  const adminDb = createAdminSupabaseClient() as any;
+  const { data: photo, error } = await adminDb
+    .from("dancer_photos")
+    .select("id, dancer_id")
+    .eq("id", photoId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!photo) return;
+
+  const { error: reviewError } = await adminDb.from("approval_reviews").insert({
+    dancer_id: photo.dancer_id,
+    reviewer_id: null,
+    review_type: `photo:${photo.id}`,
+    status: "pending",
+    notes: "Submitted by dancer.",
+    reviewed_at: null,
+  });
+
+  if (reviewError) throw reviewError;
 }
 
 function getFileName(file: Blob) {

@@ -129,12 +129,13 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
         .filter((social: any) => social.is_active !== false)
         .map((social: any) => {
           const review = latestReviewFor(reviews, contentReviewType("social_link", social.id));
+          const defaultReviewStatus = row.status === "approved" ? "approved" : "pending";
           return {
             id: social.id,
             platform: social.platform,
             handle: social.handle,
             url: social.url,
-            reviewStatus: review?.status || "pending",
+            reviewStatus: review?.status || defaultReviewStatus,
             reviewNotes: review?.notes || null,
             reviewedAt: review?.reviewed_at || null,
           };
