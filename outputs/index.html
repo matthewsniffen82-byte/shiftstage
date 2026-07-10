@@ -2035,6 +2035,16 @@
       isolation: isolate;
     }
 
+    @media (max-width: 620px) {
+      #approvedEditProfileDropdown.show {
+        padding-top: max(88px, calc(env(safe-area-inset-top) + 68px));
+      }
+
+      .approved-visual-profile .profile-modal .close-btn {
+        top: max(82px, calc(env(safe-area-inset-top) + 62px)) !important;
+      }
+    }
+
     #approvedEditProfileDropdown.show .approved-tool-dropdown-head,
     #approvedEditProfileDropdown.show .approved-tool-dropdown-actions,
     #approvedEditProfileDropdown.show #approvedProfileFixList,
