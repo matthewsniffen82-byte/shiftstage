@@ -33545,6 +33545,55 @@
       }
     }
 
+    function normalizeLocalDancerPhotos(profile) {
+      if (!profile) return;
+      const submittedPhotos = (profile.submittedPhotos || [])
+        .filter(Boolean)
+        .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
+        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+      const submittedUrls = submittedPhotos
+        .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
+        .filter(Boolean);
+      const galleryUrls = Array.isArray(profile.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
+      const urls = [...new Set([profile.mainPhotoUrl, ...galleryUrls, ...submittedUrls].filter(Boolean))]
+        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+      profile.submittedPhotos = submittedPhotos;
+      profile.mainPhotoUrl = urls[0] || "";
+      profile.galleryPhotoUrls = urls;
+    }
+
+    function photoUrlFromTarget(profile, target, submittedIndex, galleryIndex) {
+      if (Number.isInteger(submittedIndex) && submittedIndex >= 0) {
+        const photo = profile?.submittedPhotos?.[submittedIndex];
+        return photo?.imageUrl || photo?.image_url || photo?.url || "";
+      }
+      if (target === "main") return profile?.mainPhotoUrl || "";
+      if (Number.isInteger(galleryIndex) && galleryIndex >= 0) return profile?.galleryPhotoUrls?.[galleryIndex] || "";
+      return "";
+    }
+
+    function removeLocalDancerPhoto(profile, { target = "", photoId = "", photoUrl = "" } = {}) {
+      if (!profile) return false;
+      const submittedBefore = profile.submittedPhotos?.length || 0;
+      const galleryBefore = profile.galleryPhotoUrls?.length || 0;
+      const mainBefore = profile.mainPhotoUrl || "";
+      profile.submittedPhotos = (profile.submittedPhotos || []).filter((photo, index) => {
+        const id = String(photo?.id || "");
+        const url = photo?.imageUrl || photo?.image_url || photo?.url || "";
+        return !(
+          (photoId && id === photoId) ||
+          (photoUrl && url === photoUrl) ||
+          (!photoId && !photoUrl && target === `submitted:${index}`)
+        );
+      });
+      if (photoUrl && profile.mainPhotoUrl === photoUrl) profile.mainPhotoUrl = "";
+      profile.galleryPhotoUrls = (profile.galleryPhotoUrls || []).filter((url) => !photoUrl || url !== photoUrl);
+      normalizeLocalDancerPhotos(profile);
+      return submittedBefore !== (profile.submittedPhotos?.length || 0) ||
+        galleryBefore !== (profile.galleryPhotoUrls?.length || 0) ||
+        mainBefore !== (profile.mainPhotoUrl || "");
+    }
+
     function approvedVisualProfileFixCount(profile = activeDancerProfile()) {
       const photos = approvedVisualPhotoItems(profile);
       const submittedSocials = normalizeSubmittedSocials(profile);
@@ -35618,6 +35667,7 @@
           .filter(Boolean)
           .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
           .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+        normalizeLocalDancerPhotos(profile);
         const uploadedIndex = profile.submittedPhotos.findIndex((item) => item.id === photo.id);
         if (uploadedIndex >= 0) uploadedPhotoTarget = `submitted:${uploadedIndex}`;
         profile.photoStatus = "Pending";
@@ -35639,19 +35689,16 @@
       const galleryIndex = String(target || "").startsWith("gallery:") ? Number(String(target).split(":")[1]) : -1;
       let removed = false;
       let deletedLivePhotoId = "";
+      let deletedPhotoUrl = photoUrlFromTarget(profile, target, submittedIndex, galleryIndex);
       if (Number.isInteger(submittedIndex) && submittedIndex >= 0 && profile.submittedPhotos?.[submittedIndex]) {
         deletedLivePhotoId = profile.submittedPhotos[submittedIndex]?.id || "";
-        profile.submittedPhotos = profile.submittedPhotos.filter((_, index) => index !== submittedIndex);
         removed = true;
       } else if (target === "main" && profile.mainPhotoUrl) {
-        profile.mainPhotoUrl = "";
         removed = true;
       } else if (Number.isInteger(galleryIndex) && galleryIndex >= 0 && Array.isArray(profile.galleryPhotoUrls)) {
-        profile.galleryPhotoUrls = profile.galleryPhotoUrls.filter((_, index) => index !== galleryIndex);
         removed = true;
       }
       if (!removed) return false;
-      if (activeApprovedVisualPhotoTarget === target) activeApprovedVisualPhotoTarget = "";
       if (deletedLivePhotoId && isDancerSession()) {
         const headers = authenticatedRequestHeaders("application/json");
         if (headers) {
@@ -35664,6 +35711,8 @@
           if (!response.ok || data.ok === false) throw new Error(data.error || "Could not delete photo");
         }
       }
+      removeLocalDancerPhoto(profile, { target, photoId: deletedLivePhotoId, photoUrl: deletedPhotoUrl });
+      if (activeApprovedVisualPhotoTarget === target || activeApprovedVisualPhotoTarget === deletedLivePhotoId) activeApprovedVisualPhotoTarget = "";
       profile.approvalChangesPending = true;
       profile.approvalChangesSubmitted = false;
       if (dancerCoreApprovalUnlocked(profile)) {
@@ -35895,6 +35944,25 @@
         if (profile && urls.length) {
           profile.mainPhotoUrl = profile.mainPhotoUrl || urls[0];
           profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls].slice(0, MAX_DANCER_PROFILE_PHOTOS);
+          uploaded.forEach((item, index) => {
+            const uploadedPhoto = item.photo || item || {};
+            const imageUrl = uploadedPhoto.imageUrl || uploadedPhoto.image_url || uploadedPhoto.url || urls[index] || "";
+            if (!imageUrl) return;
+            profile.submittedPhotos = [...(profile.submittedPhotos || []), {
+              id: uploadedPhoto.id || `${profile.id || profile.name}-setup-photo-${Date.now()}-${index}`,
+              imageUrl,
+              image_url: imageUrl,
+              isPrimary: index === 0,
+              is_primary: index === 0,
+              sortOrder: index,
+              sort_order: index,
+              reviewStatus: "pending",
+              review_status: "pending",
+              reviewNotes: "",
+              review_notes: ""
+            }];
+          });
+          normalizeLocalDancerPhotos(profile);
           profile.photoStatus = "Pending";
         }
         dancerSetup.photos = true;
