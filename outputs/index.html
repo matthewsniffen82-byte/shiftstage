@@ -33778,6 +33778,9 @@
                 <button class="approved-visual-submit action-btn ${changeState.needsApproval ? "is-ready" : ""} ${changeState.submitted ? "is-submitted" : ""}" type="button" data-dancer-control-action="resubmit-approval" ${changeState.needsApproval ? "" : "disabled"}>
                   ${actionButtonLabel("check", changeState.submitted ? "Submitted for review" : "Submit for review")}
                 </button>
+                <button class="approved-visual-save action-btn secondary" type="button" data-dancer-control-action="save-profile">
+                  ${actionButtonLabel("save", "Save profile")}
+                </button>
               </div>
             </div>
           </section>
