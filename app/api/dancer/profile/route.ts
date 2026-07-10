@@ -118,7 +118,8 @@ export async function PATCH(request: Request) {
 
       if (body.submitForReview === true) {
         const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
-        await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
+        const submittedSocialCount = await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
+        if (submittedSocialCount > 0) await markApprovedProfileContentPending(db, profile.id);
       }
 
       const activePlatforms = rows.map((social: any) => social.platform);
@@ -155,7 +156,7 @@ export async function PATCH(request: Request) {
 
 async function submitChangedSocialLinksForReview(db: any, dancerId: string, platforms: SocialPlatform[]) {
   const uniquePlatforms = [...new Set(platforms)];
-  if (!uniquePlatforms.length) return;
+  if (!uniquePlatforms.length) return 0;
 
   const { data: socials, error } = await db
     .from("social_links")
@@ -165,7 +166,7 @@ async function submitChangedSocialLinksForReview(db: any, dancerId: string, plat
     .in("platform", uniquePlatforms);
 
   if (error) throw error;
-  if (!socials?.length) return;
+  if (!socials?.length) return 0;
 
   const adminDb = createAdminSupabaseClient() as any;
   const { error: insertError } = await adminDb.from("approval_reviews").insert(
@@ -180,6 +181,7 @@ async function submitChangedSocialLinksForReview(db: any, dancerId: string, plat
   );
 
   if (insertError) throw insertError;
+  return socials.length;
 }
 
 function readSubmittedSocialPlatforms(body: any, fallbackPlatforms: SocialPlatform[]) {
@@ -211,6 +213,15 @@ async function submitPendingApprovedContentForReview(db: any, dancerId: string) 
   const adminDb = createAdminSupabaseClient() as any;
   const { error: insertError } = await adminDb.from("approval_reviews").insert(reviewRows);
   if (insertError) throw insertError;
+}
+
+async function markApprovedProfileContentPending(db: any, dancerId: string) {
+  const { error } = await db
+    .from("dancer_profiles")
+    .update({ photo_review_status: "pending" })
+    .eq("id", dancerId);
+
+  if (error) throw error;
 }
 
 async function submitProfileForReview(

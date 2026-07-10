@@ -687,6 +687,8 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
 
   if (input.targetType === "verification_document") {
     await updateVerificationReviewSummary(client, dancer.user_id, input.dancerId);
+  } else if (input.targetType === "social_link") {
+    await updatePhotoReviewSummary(client, input.dancerId);
   }
 
   await logAdminAction(client, {

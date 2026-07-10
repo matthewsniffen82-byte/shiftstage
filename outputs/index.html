@@ -34118,6 +34118,7 @@
       const oldProfile = activeDancerProfile(oldCity) || ensureActiveDancerProfile("Verified");
       if (!oldProfile || !oldMarket) return false;
       const changeStateBeforeSave = approvedProfileChangeState(oldProfile);
+      const existingSocialsBeforeSave = normalizeSubmittedSocials(oldProfile).map((social) => ({ ...social }));
       const editValues = readApprovedProfileEditValues();
       const stageName = editValues.stageName || oldName;
       const newCity = editValues.city || oldCity;
@@ -34157,11 +34158,10 @@
           ? Boolean(profile.approvalChangesSubmitted)
           : (changeStateBeforeSave.needsApproval ? false : Boolean(profile.approvalChangesSubmitted))
       });
-      const existingSocials = normalizeSubmittedSocials(oldProfile);
       profile.socialLinks = Object.entries(normalizedSocials)
         .filter(([, url]) => Boolean(url))
         .map(([platform, url], index) => {
-          const existingSocial = existingSocials.find((social) => social.platform === platform);
+          const existingSocial = existingSocialsBeforeSave.find((social) => social.platform === platform);
           const unchangedApproved = existingSocial?.url === url && normalizedReviewStatus(existingSocial.reviewStatus) === "approved";
           return {
             id: existingSocial?.id || `${profile.id || profile.name}-social-${platform}-${index}`,
