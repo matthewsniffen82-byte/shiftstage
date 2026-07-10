@@ -33429,7 +33429,7 @@
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => ({
         id: photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`,
         imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
-        label: index === 0 ? "Submitted main photo" : `Submitted photo ${index + 1}`,
+        label: photo.isPrimary || photo.is_primary ? "Submitted main photo" : `Submitted gallery photo ${index + 1}`,
         status: normalizedReviewStatus(latestContentReview(`photo:${photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`}`)?.status || photo.reviewStatus || photo.review_status || "pending"),
         notes: latestContentReview(`photo:${photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`}`)?.notes || photo.reviewNotes || photo.review_notes || "",
         target: `submitted:${index}`
@@ -33470,7 +33470,7 @@
         return {
           id,
           imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
-          label: index === 0 ? "Main photo" : `Photo ${index + 1}`,
+          label: photo.isPrimary || photo.is_primary ? "Main photo" : `Gallery photo ${index + 1}`,
           status: normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
           notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
           target: `submitted:${index}`
@@ -33508,8 +33508,7 @@
     }
 
     function approvedVisualProfileEditorMarkup(profile) {
-      const livePhotos = approvedVisualPhotoItems(profile, { includeUnapproved: false });
-      const photos = livePhotos.length ? livePhotos : approvedVisualPhotoItems(profile);
+      const photos = approvedVisualPhotoItems(profile);
       const selectedPhoto = photos.find((photo) => photo.target === activeApprovedVisualPhotoTarget || photo.id === activeApprovedVisualPhotoTarget) || photos[0];
       const mainPhoto = selectedPhoto || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
       const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
@@ -35534,6 +35533,7 @@
             ? galleryIndex + 1
             : (profile?.galleryPhotoUrls || []).length + 1;
       const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder);
+      let uploadedPhotoTarget = target;
       if (profile) {
         const uploaded = data?.photo || data || {};
         const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || "";
@@ -35558,9 +35558,14 @@
             return !sameMain && !sameGallery;
           });
           submittedPhotos.length = 0;
-          submittedPhotos.push(photo, ...withoutSameSlot);
+          submittedPhotos.push(...withoutSameSlot, photo);
         }
-        profile.submittedPhotos = submittedPhotos.filter(Boolean).slice(0, 6);
+        profile.submittedPhotos = submittedPhotos
+          .filter(Boolean)
+          .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
+          .slice(0, 6);
+        const uploadedIndex = profile.submittedPhotos.findIndex((item) => item.id === photo.id);
+        if (uploadedIndex >= 0) uploadedPhotoTarget = `submitted:${uploadedIndex}`;
         profile.photoStatus = "Pending";
         profile.approvalChangesPending = true;
         profile.approvalChangesSubmitted = false;
@@ -35570,7 +35575,7 @@
           profile.hidden = false;
         }
       }
-      return data;
+      return { ...data, photoTarget: uploadedPhotoTarget };
     }
 
     async function deleteApprovedDancerPhoto(target) {
@@ -38820,8 +38825,8 @@
       if (result) result.textContent = "Uploading photo for review...";
       input.disabled = true;
       try {
-        await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
-        activeApprovedVisualPhotoTarget = pendingApprovedPhotoTarget;
+        const uploadResult = await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
+        activeApprovedVisualPhotoTarget = uploadResult?.photoTarget || pendingApprovedPhotoTarget;
         renderAdminDashboard();
         renderDancerManagement();
         renderApprovedVisualProfileEditor();
