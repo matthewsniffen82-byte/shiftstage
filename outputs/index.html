@@ -26478,14 +26478,16 @@
       }
     }
 
-    .approved-visual-profile .profile-modal {
-      --approved-photo-edit-top: calc(clamp(330px, 43dvh, 430px) - 58px);
+    .approved-visual-profile .approved-photo-edit-frame {
+      position: relative !important;
+      width: 100% !important;
+      flex: 0 0 auto !important;
     }
 
-    .approved-visual-profile .approved-photo-edit-badge {
-      top: var(--approved-photo-edit-top) !important;
+    .approved-visual-profile .approved-photo-edit-frame .approved-photo-edit-badge {
+      top: auto !important;
       right: 10px !important;
-      bottom: auto !important;
+      bottom: 10px !important;
       width: 46px !important;
       height: 46px !important;
       min-width: 46px !important;
@@ -33483,18 +33485,20 @@
             <span>Tap the pencil on the picture area first, then tap a picture to replace or delete it. Tap the pencil in Social links first, then tap a social icon to edit that link. Without the pencil turned on, photos open larger and social tools stay normal.</span>
           </div>
           <section class="profile-modal">
-            <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
-              <div class="modal-identity-stack">
-                <div class="modal-identity">
-                  <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
-                  <div class="pill-row">
-                    <span class="pill" id="modalCity">${displayText(activeDancerCity())}</span>
+            <div class="approved-photo-edit-frame">
+              <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${mainPhoto.status === "rejected" ? "is-rejected" : ""} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
+                <div class="modal-identity-stack">
+                  <div class="modal-identity">
+                    <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
+                    <div class="pill-row">
+                      <span class="pill" id="modalCity">${displayText(activeDancerCity())}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <span class="approved-photo-edit-instruction">${approvedPhotoEditMode ? "Photo edit is on. Tap any photo to replace or delete it." : "Tap the pencil, then tap a photo to replace or delete it."}</span>
-            </button>
-            ${photoEditButton}
+                <span class="approved-photo-edit-instruction">${approvedPhotoEditMode ? "Photo edit is on. Tap any photo to replace or delete it." : "Tap the pencil, then tap a photo to replace or delete it."}</span>
+              </button>
+              ${photoEditButton}
+            </div>
             <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
                   <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.target || photo.id)}" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" data-review-status="${displayText(photo.status || "")}" data-review-notes="${displayText(photo.notes || "")}" title="${displayText(approvedPhotoEditMode ? `Edit ${photo.label}` : photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
