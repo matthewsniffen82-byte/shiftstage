@@ -26160,7 +26160,7 @@
     #approvedEditProfileDropdown.show {
       position: fixed !important;
       inset: 0 !important;
-      z-index: 320 !important;
+      z-index: 20000 !important;
       display: grid !important;
       place-items: stretch center !important;
       width: 100vw !important;
@@ -26178,6 +26178,21 @@
       backdrop-filter: blur(14px) saturate(120%) !important;
       -webkit-backdrop-filter: blur(14px) saturate(120%) !important;
       isolation: isolate !important;
+    }
+
+    #dancerDashboard.is-edit-profile-fullscreen {
+      overflow: hidden !important;
+    }
+
+    #dancerDashboard.is-edit-profile-fullscreen .page-head {
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
+    }
+
+    #dancerDashboard.is-edit-profile-fullscreen #approvedEditProfileDropdown.show {
+      z-index: 20000 !important;
     }
 
     #approvedEditProfileDropdown.show .approved-tool-dropdown-head,
@@ -26236,7 +26251,7 @@
       position: fixed !important;
       top: max(14px, env(safe-area-inset-top)) !important;
       right: max(14px, env(safe-area-inset-right)) !important;
-      z-index: 380 !important;
+      z-index: 20002 !important;
       width: 54px !important;
       height: 54px !important;
       min-height: 54px !important;
@@ -31065,6 +31080,7 @@
       if (fixList) fixList.innerHTML = editableDancerFixFeedbackMarkup();
       editPanel?.classList.toggle("show", activeApprovedToolDropdown === "edit");
       schedulePanel?.classList.toggle("show", activeApprovedToolDropdown === "schedule");
+      dancerDashboard?.classList.toggle("is-edit-profile-fullscreen", activeApprovedToolDropdown === "edit");
       if (editPanel) editPanel.hidden = activeApprovedToolDropdown !== "edit";
       if (schedulePanel) schedulePanel.hidden = activeApprovedToolDropdown !== "schedule";
       document.querySelectorAll('[data-dancer-control-action="edit-profile"]').forEach((button) => {
