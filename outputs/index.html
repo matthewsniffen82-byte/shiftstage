@@ -26367,6 +26367,82 @@
       padding-bottom: 56px !important;
     }
 
+    #profileModal .profile-qr-tile,
+    .approved-visual-profile .profile-qr-tile {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto !important;
+      align-items: center !important;
+      gap: 12px !important;
+      min-height: 132px !important;
+    }
+
+    #profileModal .profile-qr-tile .profile-deal-copy,
+    .approved-visual-profile .profile-qr-tile .profile-deal-copy {
+      align-self: stretch !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      min-width: 0 !important;
+    }
+
+    #profileModal .profile-qr-tile .profile-deal-main,
+    .approved-visual-profile .profile-qr-tile .profile-deal-main {
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+      line-height: 1.12 !important;
+    }
+
+    #profileModal .profile-qr-tile .profile-deal-note,
+    .approved-visual-profile .profile-qr-tile .profile-deal-note {
+      display: block !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    #profileModal .profile-qr-tile .profile-deal-qr,
+    .approved-visual-profile .profile-qr-tile .profile-deal-qr {
+      width: 92px !important;
+      min-width: 92px !important;
+      justify-self: end !important;
+    }
+
+    #profileModal .profile-qr-tile .profile-deal-qr img,
+    .approved-visual-profile .profile-qr-tile .profile-deal-qr img {
+      width: 84px !important;
+      height: 84px !important;
+      padding: 7px !important;
+      border-radius: 16px !important;
+    }
+
+    #profileModal .profile-qr-tile .profile-deal-qr span,
+    .approved-visual-profile .profile-qr-tile .profile-deal-qr span {
+      display: block !important;
+      max-width: 92px !important;
+      font-size: 0.65rem !important;
+      line-height: 1.1 !important;
+    }
+
+    @media (max-width: 430px) {
+      #profileModal .profile-qr-tile,
+      .approved-visual-profile .profile-qr-tile {
+        grid-template-columns: minmax(0, 1fr) 78px !important;
+        gap: 8px !important;
+        min-height: 124px !important;
+      }
+
+      #profileModal .profile-qr-tile .profile-deal-qr,
+      .approved-visual-profile .profile-qr-tile .profile-deal-qr {
+        width: 78px !important;
+        min-width: 78px !important;
+      }
+
+      #profileModal .profile-qr-tile .profile-deal-qr img,
+      .approved-visual-profile .profile-qr-tile .profile-deal-qr img {
+        width: 70px !important;
+        height: 70px !important;
+        padding: 6px !important;
+      }
+    }
+
     #locationBtn.location-btn {
       width: 100% !important;
       min-width: 0 !important;
@@ -32667,12 +32743,12 @@
       if (!profile?.venue || !isWorkingTonight(profile)) return "";
       const pass = dealPassPayload({ venueName: profile.venue, sourceType: "dancer_profile", dancerName: profile.name });
       return `
-        <div class="profile-deal-row">
+        <div class="info-tile profile-qr-tile">
           <div class="profile-deal-copy">
-            <strong>Venue Offer</strong>
+            <strong>Dancer QR</strong>
             <div class="meta profile-deal-meta">
-              <span class="profile-deal-main">Scan at Club</span>
-              <span class="profile-deal-note">Offer from ${profile.name}</span>
+              <span class="profile-deal-main">Scan at ${profile.venue}</span>
+              <span class="profile-deal-note">Works while ${profile.name} is checked in.</span>
             </div>
           </div>
           ${dealPassButtonMarkup(pass, "profile-deal-qr")}
@@ -34126,9 +34202,9 @@
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayPublicShiftTime(profile.time, profile)}</span></div>
               ${activeShiftStartedMarkup(profile)}
-              ${profileDealTileMarkup(profile)}
             </div>
           </div>
+          ${profileDealTileMarkup(profile)}
           <div class="info-tile">
             <strong>Upcoming shifts</strong>
             <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
