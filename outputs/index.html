@@ -29487,7 +29487,7 @@
         body: formData
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.error, "Request failed"));
+      if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.message || data.error, "Request failed"));
       applyResponseSession(data);
       return data;
     }
@@ -35812,6 +35812,7 @@
       formData.append("file", file);
       formData.append("isPrimary", isPrimary ? "true" : "false");
       formData.append("sortOrder", String(sortOrder));
+      formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:${isPrimary}:${sortOrder}`);
       if (options.replaceExisting) formData.append("replaceExisting", "true");
       return postAuthenticatedFormData("/api/dancer/photos", formData);
     }
@@ -35835,6 +35836,9 @@
             : (profile?.galleryPhotoUrls || []).length + 1;
       const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto });
       let uploadedPhotoTarget = target;
+      if (data?.decision && data.decision !== "approved") {
+        return { ...data, photoTarget: uploadedPhotoTarget };
+      }
       if (profile) {
         const uploaded = data?.photo || data || {};
         const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || "";
@@ -36131,13 +36135,15 @@
         return;
       }
       submit.disabled = true;
-      if (result) result.textContent = `Uploading ${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"}...`;
+      if (result) result.textContent = `Checking ${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"}...`;
       try {
         const uploaded = await Promise.all(
           photoFiles.map((file, index) => uploadSetupPhotoFile(file, index === 0, index))
         );
         const profile = ensureActiveDancerProfile("Pending");
-        const urls = uploaded.map((item) => item.photo?.imageUrl).filter(Boolean);
+        const approvedUploads = uploaded.filter((item) => item.decision === "approved" || item.photo?.imageUrl);
+        const reviewCount = uploaded.filter((item) => item.decision === "review").length;
+        const urls = approvedUploads.map((item) => item.photo?.imageUrl).filter(Boolean);
         if (profile && urls.length) {
           profile.mainPhotoUrl = profile.mainPhotoUrl || urls[0];
           profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls].slice(0, MAX_DANCER_PROFILE_PHOTOS);
@@ -36162,10 +36168,13 @@
           normalizeLocalDancerPhotos(profile);
           profile.photoStatus = "Pending";
         }
-        dancerSetup.photos = true;
+        dancerSetup.photos = Boolean(urls.length || reviewCount);
         activeSetupStep = nextIncompleteStep() || "verification";
-        if (result) result.textContent = `${urls.length || photoFiles.length} photo${(urls.length || photoFiles.length) === 1 ? "" : "s"} uploaded for review.`;
-        showToast("Photos uploaded for review");
+        const message = reviewCount
+          ? "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."
+          : "Photo uploaded successfully.";
+        if (result) result.textContent = message;
+        showToast(message);
         renderDancerSetup();
       } catch (error) {
         const message = normalizeRequestError(error, "Could not upload photos");
@@ -39235,7 +39244,7 @@
       const file = input.files?.[0];
       const result = document.getElementById("dancerControlResult");
       if (!file) return;
-      if (result) result.textContent = "Uploading photo for review...";
+      if (result) result.textContent = "Checking your photo...";
       input.disabled = true;
       try {
         const uploadResult = await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
@@ -39244,13 +39253,16 @@
         renderDancerManagement();
         renderApprovedVisualProfileEditor();
         syncApprovedProfileSubmitState();
-        if (pendingApprovedPhotoAutoSubmit) {
+        if (uploadResult?.decision === "review") {
+          if (result) result.textContent = uploadResult.message || "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.";
+          showToast("Photo awaiting review");
+        } else if (pendingApprovedPhotoAutoSubmit) {
           if (result) result.textContent = "Photo uploaded. Sending it back to admin review...";
           await submitApprovedProfileChangesForReview(document.getElementById("approvedControlSubmitApproval"));
           showToast("Photo replaced and resubmitted");
         } else {
-          if (result) result.textContent = "Photo uploaded for admin review. Public photos stay unchanged until approved.";
-          showToast("Photo uploaded for review");
+          if (result) result.textContent = uploadResult?.message || "Photo uploaded successfully.";
+          showToast("Photo uploaded successfully");
         }
       } catch (error) {
         if (result) result.textContent = error.message || "Could not upload photo";

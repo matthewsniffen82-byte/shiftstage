@@ -11,6 +11,7 @@ type AdminState = {
   reports?: Array<Record<string, unknown>>;
   deals?: Array<Record<string, unknown>>;
   supportThreads?: Array<Record<string, unknown>>;
+  imageModeration?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -107,13 +108,14 @@ export default function AdminClient() {
 
     try {
       const headers = { authorization: `Bearer ${token}` };
-      const [monitoring, approvals, venues, subscriptions, deals, support] = await Promise.all([
+      const [monitoring, approvals, venues, subscriptions, deals, support, imageModeration] = await Promise.all([
         readJson("/api/admin/monitoring", headers),
         readJson("/api/admin/approvals", headers),
         readJson("/api/admin/venues", headers),
         readJson("/api/admin/subscriptions", headers),
         readJson("/api/admin/deals", headers),
         readJson("/api/admin/support", headers),
+        readJson("/api/admin/image-moderation?decision=review", headers),
       ]);
       const reports = await readJson("/api/admin/reports", headers);
 
@@ -124,6 +126,7 @@ export default function AdminClient() {
         subscriptions: subscriptions.subscriptions || [],
         deals: deals.activity || [],
         supportThreads: support.threads || [],
+        imageModeration: imageModeration.records || [],
         reports: reports.reports || [],
       });
     } catch (error) {
@@ -255,6 +258,13 @@ export default function AdminClient() {
             <ReportManager
               reports={state.reports || []}
               onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
+            />
+          </Panel>
+          <Panel title="Image Moderation">
+            <Metric label="Needs review" value={String(state.imageModeration?.filter((item) => String(item.decision) === "review").length || 0)} />
+            <ImageModerationQueue
+              records={state.imageModeration || []}
+              onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
             />
           </Panel>
           <Panel title="Deal QR Attribution">
@@ -480,6 +490,124 @@ function RankingManager() {
         ))}
       </div>
       {status ? <p>{status}</p> : null}
+    </div>
+  );
+}
+
+function ImageModerationQueue({
+  records,
+  onRecordsChange,
+}: {
+  records: Array<Record<string, unknown>>;
+  onRecordsChange: (records: Array<Record<string, unknown>>) => void;
+}) {
+  const [filter, setFilter] = useState("review");
+  const [notesById, setNotesById] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function loadQueue(nextFilter = filter) {
+    const token = readToken();
+    if (!token) {
+      setMessage("Admin sign in required.");
+      return;
+    }
+    setIsLoading(true);
+    setMessage("");
+    const response = await fetch(`/api/admin/image-moderation?decision=${encodeURIComponent(nextFilter)}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    setIsLoading(false);
+    if (!response.ok || !data.ok) {
+      setMessage(data.error || "Unable to load image moderation queue.");
+      return;
+    }
+    onRecordsChange(data.records || []);
+    setMessage(`${data.records?.length || 0} image moderation records loaded.`);
+  }
+
+  async function decide(recordId: string, decision: "approved" | "rejected") {
+    const token = readToken();
+    if (!token) {
+      setMessage("Admin sign in required.");
+      return;
+    }
+    const confirmed = window.confirm(decision === "approved" ? "Approve this photo and publish it?" : "Reject this photo and keep it private?");
+    if (!confirmed) return;
+
+    setMessage(decision === "approved" ? "Publishing approved photo..." : "Rejecting photo...");
+    const response = await fetch("/api/admin/image-moderation", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ recordId, decision, notes: notesById[recordId] || "" }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setMessage(data.error || "Unable to update moderation record.");
+      return;
+    }
+    onRecordsChange(records.filter((record) => String(record.id) !== recordId));
+    setMessage(decision === "approved" ? "Photo approved and published." : "Photo rejected and removed from private review storage.");
+  }
+
+  return (
+    <div className="image-moderation-manager">
+      <div className="image-moderation-filters">
+        <select
+          value={filter}
+          onChange={(event) => {
+            setFilter(event.target.value);
+            loadQueue(event.target.value);
+          }}
+        >
+          <option value="review">Pending review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button type="button" onClick={() => loadQueue()} disabled={isLoading}>
+          {isLoading ? "Loading..." : "Refresh"}
+        </button>
+      </div>
+      {message ? <p>{message}</p> : null}
+      <div className="image-moderation-list">
+        {records.slice(0, 12).map((record) => {
+          const recordId = String(record.id || "");
+          const reasonCodes = Array.isArray(record.reasonCodes) ? record.reasonCodes : Array.isArray(record.reason_codes) ? record.reason_codes : [];
+          const scores = (record.categoryScores || record.category_scores || {}) as Record<string, unknown>;
+          const flags = (record.categoryFlags || record.category_flags || {}) as Record<string, unknown>;
+          return (
+            <article className="image-moderation-row" key={recordId}>
+              {record.thumbnailUrl ? <img src={String(record.thumbnailUrl)} alt="Moderation thumbnail" /> : <div className="moderation-thumb-empty">Private</div>}
+              <div className="image-moderation-copy">
+                <strong>{String(record.upload_context || "photo upload")}</strong>
+                <span>{String(record.decision || "review")} / {String(record.status || "pending")}</span>
+                <small>{String(record.created_at || "")}</small>
+                <small>Model: {String(record.provider_model || "openai")}</small>
+                <small>Reasons: {reasonCodes.length ? reasonCodes.join(", ") : "None"}</small>
+                <details>
+                  <summary>Category flags and scores</summary>
+                  <pre>{JSON.stringify({ flags, scores }, null, 2)}</pre>
+                </details>
+                {String(record.decision) === "review" ? (
+                  <>
+                    <textarea
+                      value={notesById[recordId] || ""}
+                      onChange={(event) => setNotesById((current) => ({ ...current, [recordId]: event.target.value }))}
+                      placeholder="Reviewer notes"
+                    />
+                    <div className="image-moderation-actions">
+                      <button type="button" onClick={() => decide(recordId, "approved")}>Approve</button>
+                      <button type="button" onClick={() => decide(recordId, "rejected")}>Reject</button>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
+        {!records.length ? <p className="empty">No image moderation records for this filter.</p> : null}
+      </div>
     </div>
   );
 }
@@ -1497,6 +1625,18 @@ function AdminStyles() {
       .ranking-list { display: grid; gap: 8px; }
       .ranking-row { display: flex; justify-content: space-between; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .ranking-row span { color: #94e5ff; font-weight: 850; }
+      .image-moderation-manager, .image-moderation-list, .image-moderation-copy { display: grid; gap: 10px; }
+      .image-moderation-filters { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+      .image-moderation-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .image-moderation-row img, .moderation-thumb-empty { width: 112px; aspect-ratio: 1; border-radius: 8px; background: #050507; object-fit: cover; border: 1px solid rgba(255,255,255,.08); }
+      .moderation-thumb-empty { display: grid; place-items: center; color: #b9accd; font-size: 12px; font-weight: 900; }
+      .image-moderation-copy strong { color: #fff; overflow-wrap: anywhere; }
+      .image-moderation-copy span, .image-moderation-copy small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .image-moderation-copy details { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 8px; background: rgba(5,5,8,.52); }
+      .image-moderation-copy summary { cursor: pointer; color: #94e5ff; font-size: 12px; font-weight: 900; }
+      .image-moderation-copy pre { max-height: 180px; overflow: auto; color: #d8cfeb; white-space: pre-wrap; font-size: 11px; }
+      .image-moderation-copy textarea { width: 100%; min-height: 64px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 8px 10px; font: inherit; }
+      .image-moderation-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
       .deal-activity-manager, .deal-activity-list { display: grid; gap: 10px; }
       .deal-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; }
       .deal-filters label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
@@ -1506,7 +1646,7 @@ function AdminStyles() {
       .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) {
-        .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid { grid-template-columns: 1fr; }
+        .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters { grid-template-columns: 1fr; }
         .support-admin-panel { grid-column: auto; }
         .top-nav { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }
@@ -1521,6 +1661,7 @@ function AdminStyles() {
         .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 1 / -1; }
         .submitted-social-icon { width: 32px; height: 32px; min-width: 32px; flex-basis: 32px; }
         .submitted-social-icon svg { width: 17px; height: 17px; min-width: 17px; flex-basis: 17px; }
+        .image-moderation-row img, .moderation-thumb-empty { width: 100%; max-height: 260px; object-fit: contain; }
         .submission-review-card textarea, .submitted-social-review textarea, .content-review-actions button { width: 100%; max-width: 100%; }
         .submission-thumb img { max-height: 260px; object-fit: contain; }
         h1, h2, h3, p, small, span, strong { overflow-wrap: anywhere; }

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { deleteOwnDancerPhoto, uploadOwnDancerPhoto } from "@/src/lib/dancr/dancer";
+import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
+import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request: Request) {
   try {
@@ -19,22 +18,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Photo file is required." }, { status: 400 });
     }
 
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      return NextResponse.json({ ok: false, error: "Photo must be a JPEG, PNG, or WebP image." }, { status: 400 });
-    }
-
-    const photo = await uploadOwnDancerPhoto(client, user.id, {
+    const result = await moderateAndStoreDancerPhoto(client, createAdminSupabaseClient(), {
       file,
-      fileName: getFileName(file),
-      contentType: file.type,
+      userId: user.id,
       isPrimary: formData.get("isPrimary") === "true",
       sortOrder: parseOptionalInteger(formData.get("sortOrder")),
       altText: parseOptionalText(formData.get("altText")),
       replaceExisting: formData.get("replaceExisting") === "true",
+      uploadContext: formData.get("isPrimary") === "true" ? "profile_main" : "profile_gallery",
+      idempotencyKey: request.headers.get("idempotency-key") || parseOptionalText(formData.get("idempotencyKey")),
+      ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "",
     });
-    await submitUploadedPhotoForReview(photo.id);
 
-    return NextResponse.json({ ok: true, photo });
+    const status = result.decision === "rejected" ? 422 : 200;
+    return NextResponse.json({ ok: result.decision !== "rejected", ...result }, { status });
   } catch (error) {
     return apiError(error, "Unable to upload dancer photo.");
   }
@@ -55,35 +52,6 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to delete dancer photo.");
   }
-}
-
-async function submitUploadedPhotoForReview(photoId: string | null | undefined) {
-  if (!photoId) return;
-
-  const adminDb = createAdminSupabaseClient() as any;
-  const { data: photo, error } = await adminDb
-    .from("dancer_photos")
-    .select("id, dancer_id")
-    .eq("id", photoId)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!photo) return;
-
-  const { error: reviewError } = await adminDb.from("approval_reviews").insert({
-    dancer_id: photo.dancer_id,
-    reviewer_id: null,
-    review_type: `photo:${photo.id}`,
-    status: "pending",
-    notes: "Submitted by dancer.",
-    reviewed_at: null,
-  });
-
-  if (reviewError) throw reviewError;
-}
-
-function getFileName(file: Blob) {
-  return "name" in file && typeof file.name === "string" ? file.name : "photo";
 }
 
 function parseOptionalInteger(value: FormDataEntryValue | null) {

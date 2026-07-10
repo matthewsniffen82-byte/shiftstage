@@ -5,6 +5,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "next": "^15.3.4",
+    "openai": "^5.10.2",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -1574,17 +1574,17 @@ function DancerPhotoPanel() {
     formData.set("isPrimary", String(isPrimary));
 
     setIsUploading(true);
-    setStatus("");
+    setStatus("Checking your photo...");
     try {
       const response = await fetch("/api/dancer/photos", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}` },
+        headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": `${file.name}:${file.size}:${file.lastModified}` },
         body: formData,
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload photo.");
-      setPhotoUrl(data.photo?.imageUrl || "");
-      setStatus("Photo uploaded for review.");
+      if (!response.ok || data.decision === "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
+      setPhotoUrl(data.decision === "approved" ? data.photo?.imageUrl || "" : "");
+      setStatus(data.message || (data.decision === "approved" ? "Photo uploaded successfully." : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."));
       setFile(null);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to upload photo.");
