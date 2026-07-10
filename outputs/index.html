@@ -33667,15 +33667,10 @@
         const submitted = submittedSocials.find((item) => item.platform === platform.key);
         const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
         const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : ""));
-        const liveValue = profile?.socials?.[platform.key] || "";
-        const previewValue = status === "approved"
-          ? submitted?.url || liveValue
-          : liveValue && liveValue !== submitted?.url
-            ? liveValue
-            : liveValue;
+        const previewValue = currentValue;
         return {
           ...platform,
-          value: approvedSocialEditMode ? submitted?.url || currentValue || "" : previewValue,
+          value: previewValue,
           status,
           notes: submitted?.reviewNotes || ""
         };
