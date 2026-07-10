@@ -33431,7 +33431,8 @@
       `;
     }
 
-    function approvedVisualPhotoItems(profile) {
+    function approvedVisualPhotoItems(profile, options = {}) {
+      const includeUnapproved = options.includeUnapproved !== false;
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => {
         const id = photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`;
         const review = latestContentReview(`photo:${id}`);
@@ -33445,7 +33446,7 @@
         };
       });
       const submittedByUrl = new Map(submitted.filter((photo) => photo.imageUrl).map((photo) => [photo.imageUrl, photo]));
-      const previewUrls = uploadedProfilePhotoUrls(profile, true);
+      const previewUrls = uploadedProfilePhotoUrls(profile, includeUnapproved);
       const existing = previewUrls.map((imageUrl, index) => {
         const submittedMatch = submittedByUrl.get(imageUrl);
         if (submittedMatch) return submittedMatch;
@@ -33460,7 +33461,8 @@
         };
       });
       const byUrl = new Map();
-      [...existing, ...submitted].forEach((photo) => {
+      const sourcePhotos = includeUnapproved ? [...existing, ...submitted] : existing;
+      sourcePhotos.forEach((photo) => {
         const key = photo.imageUrl || photo.id;
         if (!byUrl.has(key)) byUrl.set(key, photo);
       });
@@ -33475,7 +33477,8 @@
     }
 
     function approvedVisualProfileEditorMarkup(profile) {
-      const photos = approvedVisualPhotoItems(profile);
+      const livePhotos = approvedVisualPhotoItems(profile, { includeUnapproved: false });
+      const photos = livePhotos.length ? livePhotos : approvedVisualPhotoItems(profile);
       const selectedPhoto = photos.find((photo) => photo.target === activeApprovedVisualPhotoTarget || photo.id === activeApprovedVisualPhotoTarget) || photos[0];
       const mainPhoto = selectedPhoto || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
       const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
@@ -33485,10 +33488,17 @@
       const socials = socialPlatforms.map((platform) => {
         const submitted = submittedSocials.find((item) => item.platform === platform.key);
         const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
+        const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : ""));
+        const liveValue = profile?.socials?.[platform.key] || "";
+        const previewValue = status === "approved"
+          ? submitted?.url || liveValue
+          : liveValue && liveValue !== submitted?.url
+            ? liveValue
+            : liveValue;
         return {
           ...platform,
-          value: submitted?.url || currentValue || "",
-          status: normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : "")),
+          value: approvedSocialEditMode ? submitted?.url || currentValue || "" : previewValue,
+          status,
           notes: submitted?.reviewNotes || ""
         };
       });
