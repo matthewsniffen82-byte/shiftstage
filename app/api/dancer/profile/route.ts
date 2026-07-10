@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const MAX_DANCER_PROFILE_PHOTOS = 8;
+const MAX_DANCER_PROFILE_PHOTOS = 5;
 
 export async function GET(request: Request) {
   try {

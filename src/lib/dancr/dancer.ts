@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
-const MAX_DANCER_PROFILE_PHOTOS = 8;
+const MAX_DANCER_PROFILE_PHOTOS = 5;
 
 export type DancerProfileInput = {
   dancerId: string;
