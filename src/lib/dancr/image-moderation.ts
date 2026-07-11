@@ -38,6 +38,7 @@ type ModeratedPhotoResult = {
     storage_path: string;
     imageUrl: string;
     reviewStatus: string;
+    isPrimary?: boolean;
   };
 };
 
@@ -334,10 +335,7 @@ async function safeRemoveObject(client: DancrClient, bucket: string, path: strin
 }
 
 async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId: string; storagePath: string; isPrimary: boolean; sortOrder: number; altText: string | null }) {
-  if (input.isPrimary) {
-    const { error } = await client.from("dancer_photos").update({ is_primary: false }).eq("dancer_id", input.dancerId);
-    if (error) throw error;
-  }
+  const previousPrimary = input.isPrimary ? await findCurrentPrimaryPhoto(client, input.dancerId) : null;
   const { data, error } = await client
     .from("dancer_photos")
     .insert({
@@ -351,8 +349,46 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
     .select("id, storage_path")
     .single();
   if (error) throw error;
+  if (input.isPrimary) {
+    const { error: demoteError } = await client
+      .from("dancer_photos")
+      .update({ is_primary: false })
+      .eq("dancer_id", input.dancerId)
+      .neq("id", data.id);
+    if (demoteError) {
+      await safeDeleteDancerPhotoRow(client, data.id);
+      await client.storage.from(APPROVED_PHOTO_BUCKET).remove([input.storagePath]).catch(() => null);
+      throw demoteError;
+    }
+    if (previousPrimary?.id && previousPrimary.id !== data.id) {
+      await safeDeleteDancerPhotoRow(client, previousPrimary.id);
+      if (previousPrimary.storage_path) {
+        await client.storage.from(APPROVED_PHOTO_BUCKET).remove([previousPrimary.storage_path]).catch(() => null);
+      }
+    }
+  }
   await client.from("dancer_profiles").update({ photo_review_status: "approved" }).eq("id", input.dancerId);
-  return data as { id: string; storage_path: string };
+  return { ...(data as { id: string; storage_path: string }), isPrimary: input.isPrimary };
+}
+
+async function findCurrentPrimaryPhoto(client: DancrClient, dancerId: string) {
+  const { data, error } = await client
+    .from("dancer_photos")
+    .select("id, storage_path")
+    .eq("dancer_id", dancerId)
+    .eq("is_primary", true)
+    .maybeSingle();
+  if (error) throw error;
+  return data as { id: string; storage_path: string } | null;
+}
+
+async function safeDeleteDancerPhotoRow(client: DancrClient, photoId: string) {
+  try {
+    const { error } = await client.from("dancer_photos").delete().eq("id", photoId);
+    if (error) logModeration("photo_row_cleanup_error", { photoId, error: error.message });
+  } catch {
+    logModeration("photo_row_cleanup_error", { photoId });
+  }
 }
 
 function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
@@ -401,7 +437,7 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {
   const { data, error } = await client
     .from("image_moderation_records")
-    .select("id, image_id, decision, status, final_storage_path, reason_codes, provider_flagged, error_code")
+    .select("id, image_id, decision, status, final_storage_path, upload_context, reason_codes, provider_flagged, error_code")
     .eq("user_id", userId)
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
@@ -422,6 +458,7 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
         storage_path: record.final_storage_path,
         imageUrl: getDancerPhotoUrl(client, record.final_storage_path),
         reviewStatus: "approved",
+        isPrimary: record.upload_context === "profile_main",
       },
     };
   }

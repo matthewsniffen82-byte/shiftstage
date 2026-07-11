@@ -1630,6 +1630,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
     const formData = new FormData();
     formData.set("file", file);
     formData.set("isPrimary", String(isPrimary));
+    formData.set("replaceExisting", String(isPrimary));
     const uploadKey = `${file.name}:${file.size}:${file.lastModified}:${isPrimary ? "primary" : "gallery"}`;
     formData.set("idempotencyKey", uploadKey);
 
@@ -1649,7 +1650,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
       const uploadedPhoto: DancerPhotoItem = {
         id: String(data.photo?.id || data.moderationRecordId || `${file.name}:${file.lastModified}`),
         imageUrl: approved ? String(data.photo?.imageUrl || localPreviewUrl) : localPreviewUrl,
-        label: isPrimary ? "Primary photo" : "Gallery photo",
+        label: Boolean(data.photo?.isPrimary || data.photo?.is_primary || isPrimary) ? "Primary photo" : "Gallery photo",
         status: uploadStatus,
         note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
       };
