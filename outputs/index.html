@@ -26616,6 +26616,10 @@
       .approved-visual-profile .profile-modal .social-tile .social-links {
         grid-row: 3 !important;
       }
+
+      .approved-visual-profile .profile-modal .approved-social-edit-row {
+        grid-row: 4 !important;
+      }
     }
 
     .approved-visual-profile .approved-photo-edit-frame {
@@ -26723,6 +26727,46 @@
 
     .approved-visual-profile .profile-modal .social-tile {
       padding-bottom: 56px !important;
+    }
+
+    .approved-visual-profile .profile-modal .approved-social-edit-row {
+      grid-column: 1 / -1 !important;
+      grid-row: 3 !important;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) 46px !important;
+      align-items: center !important;
+      gap: 10px !important;
+      width: 100% !important;
+      margin-top: 2px !important;
+    }
+
+    .approved-visual-profile .profile-modal .approved-social-edit-row .approved-social-edit-guidance {
+      position: static !important;
+      right: auto !important;
+      bottom: auto !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      color: #cfc5de !important;
+      font-size: 11px !important;
+      font-weight: 850 !important;
+      line-height: 1.2 !important;
+      text-align: left !important;
+    }
+
+    .approved-visual-profile .profile-modal .approved-social-edit-row .approved-social-edit-btn {
+      position: static !important;
+      top: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      justify-self: end !important;
+      width: 46px !important;
+      height: 46px !important;
+      min-width: 46px !important;
+      min-height: 46px !important;
+    }
+
+    .approved-visual-profile .profile-modal .social-tile:has(.approved-social-edit-row) {
+      padding-bottom: 14px !important;
     }
 
     #profileModal .profile-qr-tile,
@@ -33906,8 +33950,10 @@
                   <div class="meta profile-follower-metric"><span class="metric-value">${followerMetricMarkup(profile, activeDancerCity())}</span>${profileViewsTodayMarkup(profile, activeDancerCity())}</div>
                 </div>
                 <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
-                  <span class="approved-social-edit-guidance">Tap pencil, then social icon to edit. QR/Share stay live.</span>
-                  ${socialEditButton}
+                  <div class="approved-social-edit-row">
+                    <span class="approved-social-edit-guidance">Tap pencil, then social icon to edit. QR/Share stay live.</span>
+                    ${socialEditButton}
+                  </div>
                   <div class="social-tile-head">
                     <strong>Social links</strong>
                     ${socialUtilityButtons}
