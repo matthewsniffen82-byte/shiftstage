@@ -13,11 +13,7 @@ const MAX_DANCER_PROFILE_PHOTOS = 5;
 export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const { data, error } = await (client as any)
-      .from("dancer_profiles")
-      .select("*, social_links(*), dancer_photos(*)")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data, error } = await loadDancerProfile(client, user.id);
 
     if (error) throw error;
     if (!data) {
@@ -170,10 +166,29 @@ export async function PATCH(request: Request) {
       await submitPendingApprovedContentForReview(db, profile.id);
     }
 
-    return NextResponse.json({ ok: true });
+    const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
+    if (refreshedProfileError) throw refreshedProfileError;
+
+    return NextResponse.json({
+      ok: true,
+      profile: refreshedProfile
+        ? {
+            ...withPhotoUrls(client, refreshedProfile),
+            pending_photo_reviews: await loadPendingPhotoReviews(user.id),
+          }
+        : null,
+    });
   } catch (error) {
     return apiError(error, "Unable to update dancer profile.");
   }
+}
+
+function loadDancerProfile(client: any, userId: string) {
+  return client
+    .from("dancer_profiles")
+    .select("*, social_links(*), dancer_photos(*)")
+    .eq("user_id", userId)
+    .maybeSingle();
 }
 
 async function submitChangedSocialLinksForReview(db: any, dancerId: string, platforms: SocialPlatform[]) {

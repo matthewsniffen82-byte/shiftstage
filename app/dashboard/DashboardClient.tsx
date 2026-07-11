@@ -84,6 +84,11 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
     };
   }, [role]);
 
+  function updateProfile(profile: Record<string, unknown> | null | undefined) {
+    if (!profile) return;
+    setState((current) => ({ ...current, profile }));
+  }
+
   const title = useMemo(() => {
     if (role === "dancer") return "Dancer dashboard";
     if (role === "venue") return "Venue dashboard";
@@ -131,6 +136,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
               analytics={state.analytics}
               deals={state.deals}
               profile={state.profile}
+              onProfileChange={updateProfile}
               rankingEvents={state.rankingEvents}
               reviews={state.reviews}
               weeklyReport={state.weeklyReport}
@@ -590,6 +596,7 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
 function DancerPanel({
   analytics,
   deals,
+  onProfileChange,
   profile,
   rankingEvents,
   reviews,
@@ -597,6 +604,7 @@ function DancerPanel({
 }: {
   analytics?: LoadState["analytics"];
   deals?: LoadState["deals"];
+  onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   rankingEvents?: LoadState["rankingEvents"];
   reviews?: LoadState["reviews"];
@@ -627,8 +635,8 @@ function DancerPanel({
       ) : (
         <DancerLockedAnalyticsPanel />
       )}
-      <DancerSetupPanel profile={profile} />
-      <DancerSocialPanel profile={profile} />
+      <DancerSetupPanel profile={profile} onProfileChange={onProfileChange} />
+      <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
       <DancerSharePanel profile={profile} />
       <DancerPhotoPanel profile={profile} />
       <DancerVerificationPanel reviews={reviews} />
@@ -730,7 +738,13 @@ function formatCents(value: number) {
   return `$${(value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
+function DancerSetupPanel({
+  onProfileChange,
+  profile,
+}: {
+  onProfileChange?: (profile: Record<string, unknown>) => void;
+  profile?: LoadState["profile"];
+}) {
   const [stageName, setStageName] = useState("");
   const [legalName, setLegalName] = useState("");
   const [city, setCity] = useState("");
@@ -763,6 +777,7 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
+      if (data.profile) onProfileChange?.(data.profile);
       setStatus("Saved profile.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save profile.");
@@ -1466,7 +1481,13 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
   );
 }
 
-function DancerSocialPanel({ profile }: { profile?: LoadState["profile"] }) {
+function DancerSocialPanel({
+  onProfileChange,
+  profile,
+}: {
+  onProfileChange?: (profile: Record<string, unknown>) => void;
+  profile?: LoadState["profile"];
+}) {
   const [socials, setSocials] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -1509,6 +1530,7 @@ function DancerSocialPanel({ profile }: { profile?: LoadState["profile"] }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save socials.");
+      if (data.profile) onProfileChange?.(data.profile);
       setStatus("Social links saved.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save socials.");
