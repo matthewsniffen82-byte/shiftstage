@@ -34003,7 +34003,8 @@
     function dancerProfilePhotoCount(profile) {
       const keys = new Set();
       (profile?.submittedPhotos || []).forEach((photo, index) => {
-        const key = photo?.id || photo?.imageUrl || photo?.image_url || photo?.url || `submitted:${index}`;
+        const photoUrl = photo?.imageUrl || photo?.image_url || photo?.url || "";
+        const key = photoUrl || photo?.id || `submitted:${index}`;
         keys.add(String(key));
       });
       if (profile?.mainPhotoUrl) keys.add(String(profile.mainPhotoUrl));
@@ -34037,15 +34038,16 @@
         .filter(Boolean)
         .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
         .slice(0, MAX_DANCER_PROFILE_PHOTOS);
-      const submittedUrls = submittedPhotos
+      const approvedSubmittedUrls = submittedPhotos
+        .filter((photo) => normalizedReviewStatus(photo.reviewStatus || photo.review_status) === "approved")
         .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
         .filter(Boolean);
       const galleryUrls = Array.isArray(profile.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
-      const urls = [...new Set([profile.mainPhotoUrl, ...galleryUrls, ...submittedUrls].filter(Boolean))]
+      const urls = [...new Set([profile.mainPhotoUrl, ...galleryUrls, ...approvedSubmittedUrls].filter(Boolean))]
         .slice(0, MAX_DANCER_PROFILE_PHOTOS);
       profile.submittedPhotos = submittedPhotos;
       profile.mainPhotoUrl = urls[0] || "";
-      profile.galleryPhotoUrls = urls;
+      profile.galleryPhotoUrls = urls.slice(1);
     }
 
     function photoUrlFromTarget(profile, target, submittedIndex, galleryIndex) {
