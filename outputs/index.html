@@ -30543,17 +30543,60 @@
       }).catch((error) => showToast(error.message || "Could not save customer profile"));
     }
 
+    function notificationClearStorageKey() {
+      const account = authSession?.account || {};
+      const identity = account.id || account.email || authSession?.user?.id || authSession?.email || "anonymous";
+      const role = account.role || authSession?.role || "user";
+      return `mydancr:notifications-cleared-at:${role}:${identity}`;
+    }
+
+    function notificationClearedAtMs() {
+      try {
+        const value = Number(localStorage.getItem(notificationClearStorageKey()) || 0);
+        return Number.isFinite(value) ? value : 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    function markNotificationsClearedNow() {
+      try {
+        localStorage.setItem(notificationClearStorageKey(), String(Date.now()));
+      } catch {
+        // Local persistence is only used to suppress regenerated browser-only notices.
+      }
+    }
+
+    function notificationTimestampMs(notification) {
+      const value = notification?.sentAt || notification?.createdAt || notification?.created_at || "";
+      const timestamp = value ? new Date(value).getTime() : 0;
+      return Number.isFinite(timestamp) ? timestamp : 0;
+    }
+
+    function isVisibleAfterNotificationClear(notification) {
+      const clearedAt = notificationClearedAtMs();
+      if (!clearedAt) return true;
+      if (notification?.localOnly && notification.type === "approval_status" && notification.payload?.status === "approved") return false;
+      const timestamp = notificationTimestampMs(notification);
+      return timestamp > clearedAt;
+    }
+
+    function visibleLiveNotifications() {
+      return liveNotifications.filter(isVisibleAfterNotificationClear);
+    }
+
     function notificationCenterMarkup() {
-      if (!liveNotifications.length) {
+      const notifications = visibleLiveNotifications();
+      if (!notifications.length) {
         return '<div class="locked">No notifications yet.</div>';
       }
-      return liveNotifications.slice(0, 8).map((notification) => {
+      return notifications.slice(0, 8).map((notification) => {
         const unread = !notification.readAt;
         const date = formatBillingDate(notification.sentAt || notification.createdAt);
         const notificationId = notification.id || "";
         const canMarkRead = unread && notificationId && !notification.localOnly;
         const actionable = isActionableDancerReviewNotification(notification);
-        const notificationIndex = liveNotifications.indexOf(notification);
+        const notificationIndex = notifications.indexOf(notification);
         return `
           <article class="rank-event ${unread ? "top-ten" : "stable"}" ${notificationId ? `data-notification-id="${notificationId}"` : ""} data-notification-index="${notificationIndex}" ${actionable ? 'role="button" tabindex="0" title="Open the issue to fix"' : ""}>
             <span class="rank-event-icon">${unread ? "!" : "OK"}</span>
@@ -30576,7 +30619,8 @@
       if (alreadyShown) return;
 
       const stageName = profile.stage_name || profile.stageName || document.getElementById("dancerStageName")?.value || "Your Dancr profile";
-      liveNotifications = [{
+      const createdAt = new Date().toISOString();
+      const notification = {
         id: "",
         localOnly: true,
         type: "approval_status",
@@ -30584,13 +30628,16 @@
         body: `${stageName} is approved and live on Dancr.`,
         payload: { status: "approved" },
         readAt: null,
-        sentAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      }, ...liveNotifications];
+        sentAt: createdAt,
+        createdAt
+      };
+      if (!isVisibleAfterNotificationClear(notification)) return;
+      liveNotifications = [notification, ...liveNotifications];
       renderNotificationCenters();
     }
 
     function renderNotificationCenters() {
+      liveNotifications = visibleLiveNotifications();
       const markup = notificationCenterMarkup();
       if (customerNotificationList) customerNotificationList.innerHTML = markup;
       if (dancerNotificationList) dancerNotificationList.innerHTML = markup;
@@ -30707,7 +30754,7 @@
       const id = node?.dataset.notificationId || node?.dataset.quickNotificationId || "";
       if (id) return liveNotifications.find((notification) => notification.id === id);
       const index = Number(node?.dataset.notificationIndex);
-      return Number.isFinite(index) ? liveNotifications[index] : null;
+      return Number.isFinite(index) ? visibleLiveNotifications()[index] : null;
     }
 
     function closeCustomerQuickPanels() {
@@ -30720,8 +30767,9 @@
     }
 
     function customerQuickNotificationItems() {
-      if (liveNotifications.length) {
-        return liveNotifications.slice(0, 5).map((notification, index) => ({
+      const notifications = visibleLiveNotifications();
+      if (notifications.length) {
+        return notifications.slice(0, 5).map((notification, index) => ({
           id: notification.id,
           index,
           unread: !notification.readAt,
@@ -30750,7 +30798,7 @@
     function renderCustomerQuickNotifications() {
       if (!customerNotificationsQuickList) return;
       const items = customerQuickNotificationItems();
-      const unreadCount = liveNotifications.filter((notification) => !notification.readAt).length;
+      const unreadCount = visibleLiveNotifications().filter((notification) => !notification.readAt).length;
       const count = unreadCount;
       customerNotificationQuickCount.hidden = count <= 0;
       customerNotificationQuickCount.textContent = String(Math.min(count, 9));
@@ -30829,7 +30877,7 @@
       if (!authSession?.accessToken) return;
       try {
         const data = await getAuthenticatedJson("/api/notifications");
-        liveNotifications = data.notifications || [];
+        liveNotifications = (data.notifications || []).filter(isVisibleAfterNotificationClear);
         renderNotificationCenters();
       } catch (error) {
         showToast(error.message || "Could not load notifications");
@@ -30875,6 +30923,7 @@
           if (!response.ok || data.ok === false) throw new Error(data.error || "Could not clear notifications");
           return data;
         });
+        markNotificationsClearedNow();
       } catch (error) {
         liveNotifications = previousNotifications;
         renderNotificationCenters();
