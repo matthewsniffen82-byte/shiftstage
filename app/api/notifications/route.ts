@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import {
+  clearUserNotifications,
   getUserNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -41,5 +42,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true, notification });
   } catch (error) {
     return apiError(error, "Unable to update notification.");
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { client, user } = await createRequestSupabaseContext(request);
+    const result = await clearUserNotifications(client, user.id);
+    return NextResponse.json({ ok: true, ...result });
+  } catch (error) {
+    return apiError(error, "Unable to clear notifications.");
   }
 }

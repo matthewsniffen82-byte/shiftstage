@@ -26874,7 +26874,7 @@
               <h3>Notifications</h3>
               <p>Recent alerts from the settings you turned on.</p>
               <div class="customer-quick-list" id="customerNotificationsQuickList"></div>
-              <button class="customer-quick-clear" type="button" data-notification-action="mark-all">Clear notifications</button>
+              <button class="customer-quick-clear" type="button" data-notification-action="clear-all">Clear notifications</button>
             </div>
             <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
               <h3>Saved club deals</h3>
@@ -27466,7 +27466,7 @@
               <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
             </div>
             <div class="rank-notification-list" id="dancerNotificationList">Notifications will appear here.</div>
-            <button class="notification-clear-btn" type="button" data-notification-action="mark-all">Clear notifications</button>
+            <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
           </div>
         </details>
         <details class="auth-card dashboard-collapse support-inbox-card" data-support-panel="dancer">
@@ -28095,7 +28095,7 @@
             <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
           </div>
           <div class="rank-notification-list" id="customerNotificationList">Notifications will appear here.</div>
-          <button class="notification-clear-btn" type="button" data-notification-action="mark-all">Clear notifications</button>
+          <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
         </div>
         <div class="auth-card customer-notification-card support-inbox-card" data-dashboard-section="support" data-support-panel="customer">
           <h3 class="section-title">Contact Admin</h3>
@@ -30658,6 +30658,28 @@
       }
     }
 
+    async function clearAllLiveNotifications() {
+      const previousNotifications = liveNotifications.slice();
+      liveNotifications = [];
+      renderNotificationCenters();
+      showToast("Notifications cleared");
+      if (!authSession?.accessToken) return;
+      try {
+        await fetch("/api/notifications", {
+          method: "DELETE",
+          headers: authenticatedRequestHeaders("application/json") || {}
+        }).then(async (response) => {
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.ok === false) throw new Error(data.error || "Could not clear notifications");
+          return data;
+        });
+      } catch (error) {
+        liveNotifications = previousNotifications;
+        renderNotificationCenters();
+        showToast(error.message || "Could not clear notifications");
+      }
+    }
+
     function handleNotificationCenterClick(event) {
       const button = event.target.closest("[data-notification-action]");
       if (button) {
@@ -30667,6 +30689,10 @@
         const action = button.dataset.notificationAction;
         if (action === "mark-all") {
           markAllLiveNotificationsRead();
+          return true;
+        }
+        if (action === "clear-all") {
+          clearAllLiveNotifications();
           return true;
         }
         if (action === "mark-read") {

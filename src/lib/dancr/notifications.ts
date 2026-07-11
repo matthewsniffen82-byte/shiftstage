@@ -57,3 +57,15 @@ export async function markAllNotificationsRead(client: DancrClient, userId: stri
 
   return { readAt, count: data?.length || 0 };
 }
+
+export async function clearUserNotifications(client: DancrClient, userId: string) {
+  const { data, error } = await (client as any)
+    .from("notifications")
+    .delete()
+    .eq("recipient_id", userId)
+    .select("id");
+
+  if (error) throw error;
+
+  return { count: data?.length || 0 };
+}
