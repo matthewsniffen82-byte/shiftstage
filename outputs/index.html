@@ -2469,6 +2469,37 @@
       margin-bottom: 0;
     }
 
+    .approved-edit-popover.is-social .approved-edit-card {
+      animation: none !important;
+      transition: none !important;
+      transform: none !important;
+    }
+
+    .approved-social-form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .approved-social-form-grid .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .approved-social-form-grid label {
+      color: #d7cbed;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .approved-social-form-grid small {
+      color: #a99cbc;
+      font-size: 11px;
+      font-weight: 780;
+      line-height: 1.3;
+    }
+
     .approved-edit-popover.is-social .approved-edit-card .row {
       gap: 8px;
     }
@@ -34149,7 +34180,7 @@
       const approvedEditableSocialMarkup = `
         <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
           <div class="approved-social-edit-row">
-            <span class="approved-social-edit-guidance">Tap pencil, then social icon to edit. QR/Share stay live.</span>
+            <span class="approved-social-edit-guidance">Tap pencil to edit all accepted social links. Blank links stay hidden.</span>
             ${socialEditButton}
           </div>
           <div class="social-tile-head">
@@ -34157,21 +34188,11 @@
             ${socialUtilityButtons}
           </div>
           <div class="social-links">
-            ${socials.filter((social) => !social.deleted).map((social) => `
+            ${socials.filter((social) => !social.deleted && social.value).map((social) => `
               <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                ${approvedSocialEditMode ? `
-                  <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(`Edit ${social.label}`)}" data-social-url="${displayText(social.value || "")}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" title="${displayText(`Edit ${social.label}`)}">
-                    ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                  </button>
-                ` : social.value ? `
-                  <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(social.value)}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
-                    ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                  </a>
-                ` : `
-                  <button class="social-link social-${displayText(social.key)}" type="button" aria-label="${displayText(`${social.label} not added`)}" data-social-url="" title="${displayText(`${social.label} not added`)}">
-                    ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                  </button>
-                `}
+                <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(social.value)}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                  ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                </a>
               </span>
             `).join("")}
           </div>
@@ -34181,7 +34202,7 @@
         <div class="approved-visual-profile">
           <div class="approved-edit-help">
             <strong>How editing works</strong>
-            <span>Tap the pencil on the picture area first, then tap a picture to replace or delete it. Tap the pencil in Social links first, then tap a social icon to edit that link. Without the pencil turned on, photos open larger and social tools stay normal.</span>
+            <span>Tap the pencil on the picture area first, then tap a picture to replace or delete it. Tap the pencil in Social links to open all accepted social link fields. Blank social links stay hidden from preview and live profile.</span>
           </div>
           <section class="profile-modal">
             <div class="approved-photo-edit-frame">
@@ -34309,19 +34330,27 @@
           </div>
         `;
       } else {
-        const platform = socialPlatforms.find((item) => item.key === data.platform) || { key: data.platform, label: "Social link" };
-        const inputId = `profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`;
-        const value = approvedProfileFieldValue(inputId, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
-        const rejectionReason = normalizedReviewStatus(data.status) === "rejected"
-          ? `<div class="approved-visual-reason">${displayText(platform.label)} not approved: ${displayText(data.notes || "No reason added.")}</div>`
-          : "";
+        const submittedSocials = normalizeSubmittedSocials(activeDancerProfile());
         card.innerHTML = `
-          <div class="row"><div><strong>${displayText(platform.label)}</strong><div class="meta">Add, change, or delete this link. Save Profile sends changed links to admin for manual approval.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
-          ${rejectionReason}
-          <div class="field"><label for="approvedVisualSocialInput">${displayText(platform.label)} link</label><input id="approvedVisualSocialInput" type="text" value="${escapeHtml(value)}" placeholder="@username or profile URL"></div>
+          <div class="row"><div><strong>Social links</strong><div class="meta">Add accepted social profile links below. Leave a box blank to hide that social icon from edit preview and the live profile.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="approved-social-form-grid">
+            ${socialPlatforms.map((platform) => {
+              const inputId = `profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`;
+              const value = approvedProfileFieldValue(inputId, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
+              const submitted = submittedSocials.find((item) => item.platform === platform.key);
+              const rejected = normalizedReviewStatus(submitted?.reviewStatus) === "rejected";
+              return `
+                <div class="field">
+                  <label for="approvedSocialInput-${displayText(platform.key)}">${displayText(platform.label)}</label>
+                  <input id="approvedSocialInput-${displayText(platform.key)}" data-approved-social-bulk-input data-social-platform="${displayText(platform.key)}" type="text" value="${escapeHtml(value)}" placeholder="${escapeHtml(platform.label === "Snapchat" ? "username or profile URL" : "@username or profile URL")}">
+                  ${rejected ? `<small>Not approved: ${displayText(submitted?.reviewNotes || "No reason added.")}</small>` : `<small>${displayText(platform.label)} is optional. Blank means hidden.</small>`}
+                </div>
+              `;
+            }).join("")}
+          </div>
           <div class="approved-visual-social-actions">
-            <button class="action-btn" type="button" data-approved-visual-social-save data-social-platform="${displayText(platform.key)}">Save link</button>
-            <button class="approved-visual-delete" type="button" data-approved-visual-social-delete data-social-platform="${displayText(platform.key)}">Delete link</button>
+            <button class="action-btn" type="button" data-approved-visual-social-save-all>Apply links</button>
+            <button class="approved-visual-delete" type="button" data-approved-edit-close>Cancel</button>
           </div>
         `;
         document.querySelector(".approved-visual-profile")?.appendChild(popover);
@@ -34334,10 +34363,11 @@
       if (!popover) return false;
       const replaceButton = event.target.closest("[data-approved-visual-photo-replace]");
       const deleteButton = event.target.closest("[data-approved-visual-photo-delete]");
+      const socialSaveAllButton = event.target.closest("[data-approved-visual-social-save-all]");
       const socialSaveButton = event.target.closest("[data-approved-visual-social-save]");
       const socialDeleteButton = event.target.closest("[data-approved-visual-social-delete]");
       const closeButton = event.target.closest("[data-approved-edit-close]");
-      if (!replaceButton && !deleteButton && !socialSaveButton && !socialDeleteButton && !closeButton) return false;
+      if (!replaceButton && !deleteButton && !socialSaveAllButton && !socialSaveButton && !socialDeleteButton && !closeButton) return false;
       event.preventDefault();
       event.stopPropagation();
 
@@ -34361,6 +34391,22 @@
         } finally {
           deleteButton.disabled = false;
         }
+        return true;
+      }
+
+      if (socialSaveAllButton) {
+        document.querySelectorAll("[data-approved-social-bulk-input]").forEach((input) => {
+          const platform = input.dataset.socialPlatform || "";
+          const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
+          const field = document.getElementById(fieldId);
+          if (!field) return;
+          field.value = input.value.trim();
+          if (field.value) clearApprovedSocialDeleted(platform);
+          else markApprovedSocialDeleted(platform);
+          mirrorApprovedProfileEditField(field);
+        });
+        closeApprovedVisualEditPopover();
+        showToast("Social links updated. Press Save profile to keep them.");
         return true;
       }
 
@@ -39965,10 +40011,9 @@
       const socialEditToggle = event.target.closest("[data-approved-social-edit-toggle]");
       if (socialEditToggle) {
         event.preventDefault();
-        approvedSocialEditMode = !approvedSocialEditMode;
-        closeApprovedVisualEditPopover();
-        renderApprovedVisualProfileEditor();
-        showToast(approvedSocialEditMode ? "Tap a social icon to edit it." : "Social edit mode closed.");
+        approvedSocialEditMode = false;
+        openApprovedVisualEditPopover("socials", { anchor: socialEditToggle });
+        showToast("Edit social links.");
         return;
       }
       const photoEditToggle = event.target.closest("[data-approved-photo-edit-toggle]");
