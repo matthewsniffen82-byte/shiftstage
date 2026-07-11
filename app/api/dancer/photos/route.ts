@@ -33,6 +33,10 @@ export async function POST(request: Request) {
     const status = result.decision === "rejected" ? 422 : 200;
     return NextResponse.json({ ok: result.decision !== "rejected", ...result }, { status });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.startsWith("Image moderation ")) {
+      return apiError(error, "Unable to upload dancer photo.", 503);
+    }
     return apiError(error, "Unable to upload dancer photo.");
   }
 }

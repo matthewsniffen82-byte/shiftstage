@@ -31,6 +31,8 @@ type ModeratedPhotoResult = {
   decision: DancrImageModerationDecision;
   message: string;
   moderationRecordId?: string;
+  reasonCodes?: string[];
+  providerFlagged?: boolean;
   photo?: {
     id: string;
     storage_path: string;
@@ -47,9 +49,12 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (!input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id);
 
   const image = await validateAndPrepareDancrImage(input.file);
-  const idempotencyKey = safeIdempotencyKey(input.idempotencyKey) || image.sha256;
+  let idempotencyKey = safeIdempotencyKey(input.idempotencyKey) || image.sha256;
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
-  if (existing) return moderationRecordToUploadResponse(admin, existing);
+  if (existing && existing.status !== "error") return moderationRecordToUploadResponse(admin, existing);
+  if (existing?.status === "error") {
+    idempotencyKey = safeIdempotencyKey(`${input.idempotencyKey || image.sha256}:retry:${Date.now()}`);
+  }
 
   const tempPath = `${input.userId}/${profile.id}/${Date.now()}-${image.storageFileName}`;
   const uploadContext = input.uploadContext || (input.isPrimary ? "profile_main" : "profile_gallery");
@@ -75,15 +80,12 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   } catch (error) {
     errorCode = moderationErrorCode(error);
     evaluation = {
-      decision: errorCode === "missing_openai_api_key" ? "review" : "review",
+      decision: "review",
       reasonCodes: [errorCode],
       categoryScores: {},
       providerFlagged: false,
     };
     logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", { recordId: record.id, errorCode });
-  }
-
-  if (errorCode === "missing_openai_api_key") {
     await updateModerationRecord(admin, record.id, {
       decision: "review",
       status: "error",
@@ -94,7 +96,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       errorCode,
     });
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    throw new Error("Image moderation is not configured.");
+    throw new Error(moderationUploadErrorMessage(errorCode));
   }
 
   if (evaluation.decision === "approved") {
@@ -130,6 +132,8 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     return {
       decision: "review",
       moderationRecordId: record.id,
+      reasonCodes: evaluation.reasonCodes,
+      providerFlagged: evaluation.providerFlagged,
       message: "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
     };
   }
@@ -149,6 +153,8 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   return {
     decision: "rejected",
     moderationRecordId: record.id,
+    reasonCodes: evaluation.reasonCodes,
+    providerFlagged: evaluation.providerFlagged,
     message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
   };
 }
@@ -216,6 +222,8 @@ async function approveModeratedUpload(
     return {
       decision: "approved",
       moderationRecordId: input.recordId,
+      reasonCodes: input.evaluation.reasonCodes,
+      providerFlagged: input.evaluation.providerFlagged,
       message: "Photo uploaded successfully.",
       photo: {
         ...photo,
@@ -393,7 +401,7 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {
   const { data, error } = await client
     .from("image_moderation_records")
-    .select("id, image_id, decision, status, final_storage_path")
+    .select("id, image_id, decision, status, final_storage_path, reason_codes, provider_flagged, error_code")
     .eq("user_id", userId)
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
@@ -406,6 +414,8 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
     return {
       decision: "approved",
       moderationRecordId: record.id,
+      reasonCodes: record.reason_codes || [],
+      providerFlagged: Boolean(record.provider_flagged),
       message: "Photo uploaded successfully.",
       photo: {
         id: record.image_id,
@@ -418,6 +428,8 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
   return {
     decision: record.decision || "review",
     moderationRecordId: record.id,
+    reasonCodes: record.reason_codes || [],
+    providerFlagged: Boolean(record.provider_flagged),
     message: record.decision === "rejected"
       ? "This photo does not meet Dancr's photo guidelines. Please upload a different image."
       : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
@@ -442,11 +454,25 @@ function safeIdempotencyKey(value: string | null | undefined) {
 }
 
 function moderationErrorCode(error: unknown) {
+  const status = Number((error as any)?.status || (error as any)?.response?.status || 0);
+  const code = String((error as any)?.code || (error as any)?.error?.code || "");
   const message = error instanceof Error ? error.message : String(error || "");
   if (message.includes("OPENAI_API_KEY")) return "missing_openai_api_key";
+  if (status === 401 || code.includes("invalid_api_key")) return "invalid_openai_api_key";
+  if (status === 429) return "provider_rate_limited";
   if (message.includes("provider_timeout")) return "provider_timeout";
   if (message.includes("provider_response_incomplete")) return "provider_response_incomplete";
   return "provider_error";
+}
+
+function moderationUploadErrorMessage(errorCode: string | null) {
+  if (errorCode === "missing_openai_api_key" || errorCode === "invalid_openai_api_key") {
+    return "Image moderation is not configured. Photo uploads are paused until moderation is connected.";
+  }
+  if (errorCode === "provider_rate_limited") {
+    return "Image moderation is busy right now. Please try the photo again in a minute.";
+  }
+  return "Image moderation did not finish. Please try the photo again.";
 }
 
 function logModeration(event: string, details: Record<string, unknown>) {
