@@ -140,11 +140,8 @@ export async function PATCH(request: Request) {
         if (error) throw error;
       }
 
-      if (body.submitForReview === true) {
-        const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
-        const submittedSocialCount = await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
-        if (submittedSocialCount > 0) await markApprovedProfileContentPending(db, profile.id);
-      }
+      const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
+      await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
 
       const activePlatforms = rows.map((social: any) => social.platform);
       const inactivePlatforms = Array.from(SOCIAL_PLATFORMS).filter((platform) => !activePlatforms.includes(platform));

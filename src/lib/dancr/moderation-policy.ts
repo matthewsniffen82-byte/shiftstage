@@ -18,7 +18,7 @@ export const DANCR_IMAGE_MODERATION_MODEL = "omni-moderation-latest";
 
 export function dancrImageModerationThresholds() {
   return {
-    sexualReview: readThreshold("DANCR_SEXUAL_REVIEW_THRESHOLD", 0.38),
+    sexualReview: readThreshold("DANCR_SEXUAL_REVIEW_THRESHOLD", 0.72),
     sexualReject: readThreshold("DANCR_SEXUAL_REJECT_THRESHOLD", 0.92),
     violenceReject: readThreshold("DANCR_VIOLENCE_REJECT_THRESHOLD", 0.82),
     selfHarmReject: readThreshold("DANCR_SELF_HARM_REJECT_THRESHOLD", 0.72),
@@ -73,7 +73,7 @@ export function evaluateDancrImageModeration(result: ProviderModerationResult | 
     return { decision: "rejected", reasonCodes: [...reasonCodes], categoryScores, providerFlagged };
   }
 
-  if (sexual >= thresholds.sexualReview) {
+  if (sexual >= thresholds.sexualReview && Boolean(categories.sexual)) {
     reasonCodes.add("sexual_signal_requires_human_review");
   }
 
