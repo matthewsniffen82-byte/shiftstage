@@ -198,6 +198,26 @@ function NotificationPanel() {
     }
   }
 
+  async function clearNotifications() {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    const response = await fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${session.accessToken}` },
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setStatus(data.error || "Unable to clear notifications.");
+      return;
+    }
+    setNotifications([]);
+    setStatus(`${data.count || 0} notifications cleared.`);
+  }
+
   const unreadCount = notifications.filter((item) => !item.readAt).length;
 
   return (
@@ -223,7 +243,7 @@ function NotificationPanel() {
         ))}
         {!notifications.length ? <p>No notifications yet.</p> : null}
       </div>
-      <button className="notification-clear-button" type="button" onClick={markAllRead}>
+      <button className="notification-clear-button" type="button" onClick={clearNotifications}>
         Clear notifications
       </button>
       {status ? <p>{status}</p> : null}
