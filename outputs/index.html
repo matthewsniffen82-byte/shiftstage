@@ -31186,12 +31186,14 @@
         }
         await loadLiveAdminSupportThreads();
         const queue = approvalData.queue || [];
+        const adminDancers = approvalData.dancers || [];
         const venues = venueData.venues || [];
         liveAdminSubscriptions = subscriptionData.subscriptions || [];
+        applyLiveApprovalQueue(adminDancers);
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${liveAdminImageModeration.length} pending photo review${liveAdminImageModeration.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${liveAdminImageModeration.length} pending photo review${liveAdminImageModeration.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");

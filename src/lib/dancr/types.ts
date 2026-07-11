@@ -156,6 +156,7 @@ export type AdminApprovalDancer = {
   city: string;
   bio: string | null;
   status: DancerStatus;
+  isPublic?: boolean;
   verificationStatus: ReviewStatus;
   photoReviewStatus: ReviewStatus;
   createdAt: string;

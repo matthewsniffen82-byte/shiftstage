@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getApprovalQueue, requireAdmin, reviewDancerProfile, reviewSubmissionContent } from "@/src/lib/dancr/admin";
+import { getAdminDancerDirectory, getApprovalQueue, requireAdmin, reviewDancerProfile, reviewSubmissionContent } from "@/src/lib/dancr/admin";
 import type { ReviewStatus } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -15,8 +15,9 @@ export async function GET(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
 
-    const queue = await getApprovalQueue(createAdminSupabaseClient());
-    return NextResponse.json({ ok: true, queue });
+    const admin = createAdminSupabaseClient();
+    const [queue, dancers] = await Promise.all([getApprovalQueue(admin), getAdminDancerDirectory(admin)]);
+    return NextResponse.json({ ok: true, queue, dancers });
   } catch (error) {
     return apiError(error, "Unable to load approval queue.");
   }

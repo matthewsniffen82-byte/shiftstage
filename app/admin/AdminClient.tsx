@@ -6,6 +6,7 @@ import Link from "next/link";
 type AdminState = {
   monitoring?: Record<string, unknown> | null;
   queue?: Array<Record<string, unknown>>;
+  dancers?: Array<Record<string, unknown>>;
   venues?: Array<Record<string, unknown>>;
   subscriptions?: unknown[];
   reports?: Array<Record<string, unknown>>;
@@ -122,6 +123,7 @@ export default function AdminClient() {
       setState({
         monitoring: monitoring.monitoring,
         queue: approvals.queue || [],
+        dancers: approvals.dancers || [],
         venues: venues.venues || [],
         subscriptions: subscriptions.subscriptions || [],
         deals: deals.activity || [],
@@ -231,6 +233,7 @@ export default function AdminClient() {
           </Panel>
           <Panel title="Approvals">
             <Metric label="Pending profiles" value={String(state.queue?.length || 0)} />
+            <Metric label="All real dancers" value={String(state.dancers?.length || 0)} />
             <ApprovalQueue
               items={state.queue || []}
               onRefresh={loadAdmin}
@@ -241,6 +244,10 @@ export default function AdminClient() {
                 }))
               }
             />
+          </Panel>
+          <Panel title="Dancer Directory">
+            <Metric label="Approved dancers" value={String(state.dancers?.filter((item) => String(item.status) === "approved").length || 0)} />
+            <ListPreview items={state.dancers} empty="No dancers returned from Supabase." />
           </Panel>
           <Panel title="Venues">
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />

@@ -5,6 +5,7 @@ import { deliverNotificationRows } from "./notification-delivery";
 type DancrClient = SupabaseClient;
 
 const REVIEWABLE_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "rejected"]);
+const ADMIN_DIRECTORY_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "approved", "rejected", "disabled"]);
 const REVIEW_STATUSES = new Set<ReviewStatus>(["approved", "rejected"]);
 const APPROVAL_QUEUE_SELECT = `
   id,
@@ -111,64 +112,76 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
     (contentRows || []).forEach((row: any) => rowsById.set(row.id, row));
   }
 
-  return Promise.all(
-    Array.from(rowsById.values()).map(async (row: any) => {
-      const reviews = row.approval_reviews || [];
-      return {
-      id: row.id,
-      userId: row.user_id,
-      realName: row.real_name,
-      stageName: row.stage_name,
-      slug: row.slug,
-      city: row.city,
-      bio: row.bio,
-      status: row.status,
-      isPublic: row.is_public !== false,
-      verificationStatus: row.verification_status,
-      photoReviewStatus: row.photo_review_status,
-      createdAt: row.created_at,
-      socialLinks: (row.social_links || [])
-        .filter((social: any) => social.is_active !== false)
-        .map((social: any) => {
-          const review = latestReviewFor(reviews, contentReviewType("social_link", social.id));
-          const defaultReviewStatus = row.status === "approved" ? "approved" : "pending";
-          return {
-            id: social.id,
-            platform: social.platform,
-            handle: social.handle,
-            url: social.url,
-            reviewStatus: review?.status || defaultReviewStatus,
-            reviewNotes: review?.notes || null,
-            reviewedAt: review?.reviewed_at || null,
-          };
-        }),
-      photos: (row.dancer_photos || [])
-        .map((photo: any) => {
-          const review = latestReviewFor(reviews, contentReviewType("photo", photo.id));
-          return {
-            id: photo.id,
-            imageUrl: toDancerPhotoUrl(client, photo.storage_path),
-            isPrimary: photo.is_primary,
-            reviewStatus: review?.status || photo.review_status,
-            reviewNotes: review?.notes || null,
-            reviewedAt: review?.reviewed_at || null,
-            sortOrder: photo.sort_order,
-            createdAt: photo.created_at,
-          };
-        })
-        .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-      verificationDocuments: await listVerificationDocumentsForUser(client, row.user_id, reviews),
-      reviews: reviews.map((review: any) => ({
-        id: review.id,
-        reviewType: review.review_type,
-        status: review.status,
-        notes: review.notes,
-        createdAt: review.created_at,
-        reviewedAt: review.reviewed_at,
-      })),
-      };
-    }),
-  );
+  return Promise.all(Array.from(rowsById.values()).map((row: any) => mapAdminApprovalDancer(client, row)));
+}
+
+export async function getAdminDancerDirectory(client: DancrClient): Promise<AdminApprovalDancer[]> {
+  const { data, error } = await (client as any)
+    .from("dancer_profiles")
+    .select(APPROVAL_QUEUE_SELECT)
+    .in("status", Array.from(ADMIN_DIRECTORY_STATUSES))
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return Promise.all((data || []).map((row: any) => mapAdminApprovalDancer(client, row)));
+}
+
+async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<AdminApprovalDancer> {
+  const reviews = row.approval_reviews || [];
+  return {
+    id: row.id,
+    userId: row.user_id,
+    realName: row.real_name,
+    stageName: row.stage_name,
+    slug: row.slug,
+    city: row.city,
+    bio: row.bio,
+    status: row.status,
+    isPublic: row.is_public !== false,
+    verificationStatus: row.verification_status,
+    photoReviewStatus: row.photo_review_status,
+    createdAt: row.created_at,
+    socialLinks: (row.social_links || [])
+      .filter((social: any) => social.is_active !== false)
+      .map((social: any) => {
+        const review = latestReviewFor(reviews, contentReviewType("social_link", social.id));
+        const defaultReviewStatus = row.status === "approved" ? "approved" : "pending";
+        return {
+          id: social.id,
+          platform: social.platform,
+          handle: social.handle,
+          url: social.url,
+          reviewStatus: review?.status || defaultReviewStatus,
+          reviewNotes: review?.notes || null,
+          reviewedAt: review?.reviewed_at || null,
+        };
+      }),
+    photos: (row.dancer_photos || [])
+      .map((photo: any) => {
+        const review = latestReviewFor(reviews, contentReviewType("photo", photo.id));
+        return {
+          id: photo.id,
+          imageUrl: toDancerPhotoUrl(client, photo.storage_path),
+          isPrimary: photo.is_primary,
+          reviewStatus: review?.status || photo.review_status,
+          reviewNotes: review?.notes || null,
+          reviewedAt: review?.reviewed_at || null,
+          sortOrder: photo.sort_order,
+          createdAt: photo.created_at,
+        };
+      })
+      .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
+    verificationDocuments: await listVerificationDocumentsForUser(client, row.user_id, reviews),
+    reviews: reviews.map((review: any) => ({
+      id: review.id,
+      reviewType: review.review_type,
+      status: review.status,
+      notes: review.notes,
+      createdAt: review.created_at,
+      reviewedAt: review.reviewed_at,
+    })),
+  };
 }
 
 async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
