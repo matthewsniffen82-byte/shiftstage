@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 }
 
 async function withSignedThumbnail(admin: any, record: any) {
-  const bucket = record.decision === "approved" && record.final_storage_path ? APPROVED_PHOTO_BUCKET : MODERATION_REVIEW_BUCKET;
+  const bucket = moderationStorageBucket(record);
   const path = record.decision === "approved" ? record.final_storage_path : record.temporary_storage_path;
   let thumbnailUrl = "";
   if (path) {
@@ -93,7 +93,8 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
   const profile = await profileForModerationRecord(admin, record);
   const sourcePath = record.temporary_storage_path;
   if (!sourcePath) throw new Error("Review image is missing.");
-  const { data: file, error: downloadError } = await admin.storage.from(MODERATION_REVIEW_BUCKET).download(sourcePath);
+  const sourceBucket = moderationStorageBucket(record);
+  const { data: file, error: downloadError } = await admin.storage.from(sourceBucket).download(sourcePath);
   if (downloadError || !file) throw downloadError || new Error("Unable to read review image.");
 
   const extension = sourcePath.split(".").pop() || "jpg";
@@ -133,7 +134,7 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
     };
     const { data: updated, error: updateError } = await admin.from("image_moderation_records").update(update).eq("id", record.id).select("*").single();
     if (updateError) throw updateError;
-    await admin.storage.from(MODERATION_REVIEW_BUCKET).remove([sourcePath]).catch(() => null);
+    await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
     return updated;
   } catch (error) {
@@ -162,6 +163,12 @@ async function rejectReviewRecord(admin: any, record: any, reviewerId: string, n
   await createNeutralNotification(admin, record.user_id);
   console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "rejected" }));
   return updated;
+}
+
+function moderationStorageBucket(record: any) {
+  if (record.decision === "approved" && record.final_storage_path) return APPROVED_PHOTO_BUCKET;
+  if (record.status === "pending") return MODERATION_TEMP_BUCKET;
+  return MODERATION_REVIEW_BUCKET;
 }
 
 async function profileForModerationRecord(admin: any, record: any) {

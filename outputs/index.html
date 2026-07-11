@@ -28635,6 +28635,7 @@
     let liveAdminSubscriptions = [];
     let liveAdminReports = [];
     let liveAdminMonitoring = null;
+    let liveAdminImageModeration = [];
     let liveCustomerProfile = null;
     let liveNotifications = [];
     let liveSupportThreads = [];
@@ -31168,13 +31169,15 @@
       }
       if (status) status.textContent = "Loading live admin data...";
       try {
-        const [approvalData, venueData, subscriptionData, monitoringData] = await Promise.all([
+        const [approvalData, venueData, subscriptionData, monitoringData, imageModerationData] = await Promise.all([
           getAuthenticatedJson("/api/admin/approvals"),
           getAuthenticatedJson("/api/admin/venues"),
           getAuthenticatedJson("/api/admin/subscriptions"),
-          getAuthenticatedJson("/api/admin/monitoring")
+          getAuthenticatedJson("/api/admin/monitoring"),
+          getAuthenticatedJson("/api/admin/image-moderation?decision=review&pageSize=50")
         ]);
         liveAdminMonitoring = monitoringData.monitoring || null;
+        liveAdminImageModeration = imageModerationData.records || [];
         try {
           const reportData = await getAuthenticatedJson("/api/admin/reports");
           liveAdminReports = reportData.reports || [];
@@ -31188,7 +31191,7 @@
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${liveAdminImageModeration.length} pending photo review${liveAdminImageModeration.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");
@@ -37796,6 +37799,47 @@
       `;
     }
 
+    function adminImageModerationCard(record, index) {
+      const recordId = record.id || "";
+      const thumbnail = record.thumbnailUrl || record.thumbnail_url || "";
+      const context = String(record.upload_context || "profile photo").replaceAll("_", " ");
+      const reasons = Array.isArray(record.reasonCodes) ? record.reasonCodes : Array.isArray(record.reason_codes) ? record.reason_codes : [];
+      const createdAt = record.created_at ? formatBillingDate(record.created_at) : "Just submitted";
+      const scores = record.categoryScores || record.category_scores || {};
+      const flags = record.categoryFlags || record.category_flags || {};
+      return `
+        <details class="admin-item" data-admin-image-moderation="${displayText(recordId)}" ${index === 0 ? "open" : ""}>
+          <summary class="row">
+            <div>
+              <h3>Pending photo moderation</h3>
+              <div class="meta">${displayText(context)} · ${displayText(createdAt)} · ${displayText(record.status || "pending")}</div>
+            </div>
+            <span class="badge pending">Photo review</span>
+          </summary>
+          <div class="info-tile">
+            <strong>Submitted photo</strong>
+            <div class="photo-upload-grid">
+              <a class="upload-slot submitted-photo-slot" href="${displayText(thumbnail || "#")}" data-admin-preview-kind="image" data-admin-preview-title="Pending moderated photo" data-admin-preview-url="${displayText(thumbnail)}">
+                ${thumbnail ? `<img src="${displayText(thumbnail)}" alt="Pending moderated photo">` : "Private photo"}
+                <span>${displayText(record.decision || "review")}</span>
+                <span>Uploader: ${displayText(record.user_id || "unknown")}</span>
+              </a>
+            </div>
+          </div>
+          <div class="meta">Model: ${displayText(record.provider_model || "openai")} · Reasons: ${displayText(reasons.length ? reasons.join(", ") : "None")}</div>
+          <details class="submission-json">
+            <summary>Category flags and scores</summary>
+            <pre>${displayText(JSON.stringify({ flags, scores }, null, 2))}</pre>
+          </details>
+          <textarea data-image-moderation-notes="${displayText(recordId)}" placeholder="Reviewer notes"></textarea>
+          <div class="admin-actions">
+            <button class="action-btn" data-admin-image-moderation-action="approved" data-record-id="${displayText(recordId)}">Approve picture</button>
+            <button class="action-btn secondary" data-admin-image-moderation-action="rejected" data-record-id="${displayText(recordId)}">Reject picture</button>
+          </div>
+        </details>
+      `;
+    }
+
     function subscriptionStatusLabel(status) {
       return String(status || "unknown").replaceAll("_", " ");
     }
@@ -37874,10 +37918,11 @@
       const pendingProfiles = visibleProfiles.filter(({ profile }) =>
         profile.status === "Pending" || profile.approvalChangesSubmitted || hasPendingAdminSubmittedContent(profile)
       );
+      const pendingImageReviews = liveAdminImageModeration.filter((record) => normalizedReviewStatus(record.decision) === "review");
       const shiftProfiles = visibleProfiles.filter(({ profile }) => profile.scheduled);
       const activeSubscriptions = liveAdminSubscriptions.filter(isLiveSubscriptionActive);
       document.getElementById("adminUserCount").textContent = adminUsers.length + visibleProfiles.length;
-      document.getElementById("adminPendingCount").textContent = pendingProfiles.length;
+      document.getElementById("adminPendingCount").textContent = pendingProfiles.length + pendingImageReviews.length;
       document.getElementById("adminSubscriptionCount").textContent = liveAdminSubscriptions.length;
       document.getElementById("adminActiveSubscriptionCount").textContent = activeSubscriptions.length;
       document.getElementById("adminMonitoring").innerHTML = adminMonitoringMarkup();
@@ -37894,8 +37939,10 @@
         ? adminUserRows.join("")
         : '<div class="locked">No real users found yet.</div>';
 
-      document.getElementById("adminDancers").innerHTML = pendingProfiles.length
-        ? pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index)).join("")
+      const imageModerationCards = pendingImageReviews.map(adminImageModerationCard);
+      const dancerApprovalCards = pendingProfiles.map(({ city, profile }, index) => adminDancerApprovalCard(city, profile, index));
+      document.getElementById("adminDancers").innerHTML = imageModerationCards.length || dancerApprovalCards.length
+        ? [...imageModerationCards, ...dancerApprovalCards].join("")
         : '<div class="locked">No pending dancers.</div>';
       const approvedSearch = document.getElementById("adminApprovedDancerSearch");
       const disapprovedSearch = document.getElementById("adminDisapprovedDancerSearch");
@@ -38290,6 +38337,38 @@
         showToast(error.message || "Could not save content review");
       } finally {
         if (button.textContent === "Saving...") button.disabled = false;
+      }
+    }
+
+    async function reviewAdminImageModeration(button) {
+      const recordId = button.dataset.recordId || "";
+      const decision = button.dataset.adminImageModerationAction || "";
+      if (!recordId || !decision) return;
+      const host = button.closest("[data-admin-image-moderation]");
+      const notes = host?.querySelector(`[data-image-moderation-notes="${CSS.escape(recordId)}"]`)?.value.trim() || "";
+      const confirmed = decision === "approved"
+        ? confirm("Approve this photo and publish it?")
+        : confirm("Reject this photo and keep it private?");
+      if (!confirmed) return;
+      button.disabled = true;
+      button.textContent = decision === "approved" ? "Approving..." : "Rejecting...";
+      try {
+        const data = await postAuthenticatedJson("/api/admin/image-moderation", {
+          recordId,
+          decision,
+          notes
+        });
+        liveAdminImageModeration = liveAdminImageModeration.filter((record) => record.id !== recordId);
+        renderAdminDashboard();
+        if (decision === "approved") {
+          liveMarketState[selectedCity()] = null;
+          await loadLiveDiscovery(selectedCity(), { force: true });
+        }
+        showToast(decision === "approved" ? "Photo approved and published" : "Photo rejected and removed");
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = decision === "approved" ? "Approve picture" : "Reject picture";
+        showToast(error.message || "Could not update photo review");
       }
     }
 
@@ -39190,6 +39269,12 @@
       if (contentReviewButton) {
         event.preventDefault();
         reviewAdminSubmittedContent(contentReviewButton);
+        return;
+      }
+      const imageModerationButton = event.target.closest("[data-admin-image-moderation-action]");
+      if (imageModerationButton) {
+        event.preventDefault();
+        reviewAdminImageModeration(imageModerationButton);
         return;
       }
       const button = event.target.closest("[data-admin-action]");
