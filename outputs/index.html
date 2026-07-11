@@ -34210,6 +34210,7 @@
     }
 
     async function saveApprovedDancerProfile(options = {}) {
+      const trigger = options.trigger || null;
       const oldCity = activeDancerCity();
       const oldName = activeDancerName();
       const oldMarket = markets[oldCity];
@@ -34234,34 +34235,13 @@
         showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
         return false;
       }
-      let profile = oldProfile;
-      if (targetMarket !== oldMarket) {
-        oldMarket.dancers = oldMarket.dancers.filter((item) => item !== oldProfile);
-        profile = { ...oldProfile };
-        targetMarket.dancers.push(profile);
-        document.getElementById("dancerCity").value = newCity;
-        citySelect.value = newCity;
-      }
-      Object.assign(profile, {
-        name: stageName,
-        city: newCity,
-        venue: venueName,
-        distance: venue?.distance || profile.distance,
-        socials: normalizedSocials,
-        status: dancerCoreApprovalUnlocked(profile) ? "Verified" : profile.status,
-        reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted,
-        approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval),
-        approvalChangesSubmitted: options.submitForReview
-          ? Boolean(profile.approvalChangesSubmitted)
-          : (changeStateBeforeSave.needsApproval ? false : Boolean(profile.approvalChangesSubmitted))
-      });
-      profile.socialLinks = Object.entries(normalizedSocials)
+      const nextSocialLinks = Object.entries(normalizedSocials)
         .filter(([, url]) => Boolean(url))
         .map(([platform, url], index) => {
           const existingSocial = existingSocialsBeforeSave.find((social) => social.platform === platform);
           const unchangedApproved = existingSocial?.url === url && normalizedReviewStatus(existingSocial.reviewStatus) === "approved";
           return {
-            id: existingSocial?.id || `${profile.id || profile.name}-social-${platform}-${index}`,
+            id: existingSocial?.id || `${oldProfile.id || oldProfile.name}-social-${platform}-${index}`,
             platform,
             url,
             handle: socialHandleFromUrl(url),
@@ -34270,18 +34250,9 @@
             reviewNotes: unchangedApproved ? existingSocial.reviewNotes || "" : ""
           };
         });
-      profile.deletedSocialPlatforms = [];
-      const submittedSocialPlatforms = profile.socialLinks
+      const submittedSocialPlatforms = nextSocialLinks
         .filter((social) => normalizedReviewStatus(social.reviewStatus) === "pending")
         .map((social) => social.platform);
-      Object.assign(dancerSignupSocials, normalizedSocials);
-      document.getElementById("dancerStageName").value = stageName;
-      updateDancerDashboardName(stageName);
-      if (lastPostedShift?.name === oldName) {
-        lastPostedShift.name = stageName;
-        lastPostedShift.city = newCity;
-        lastPostedShift.venue = venueName;
-      }
       const result = document.getElementById("profileEditResult");
       if (result) {
         result.hidden = false;
@@ -34289,9 +34260,7 @@
           ? "Saving profile before admin review..."
           : "Saving profile changes...";
       }
-      render();
-      renderDancerSetup();
-      if (customerDashboard.classList.contains("show")) renderDashboard();
+      if (trigger) trigger.disabled = true;
       try {
         if (isDancerSession()) {
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
@@ -34303,6 +34272,40 @@
           });
           if (!data) throw new Error("Sign in required");
         }
+        let profile = oldProfile;
+        if (targetMarket !== oldMarket) {
+          oldMarket.dancers = oldMarket.dancers.filter((item) => item !== oldProfile);
+          profile = { ...oldProfile };
+          targetMarket.dancers.push(profile);
+          document.getElementById("dancerCity").value = newCity;
+          citySelect.value = newCity;
+        }
+        Object.assign(profile, {
+          name: stageName,
+          city: newCity,
+          venue: venueName,
+          distance: venue?.distance || profile.distance,
+          socials: normalizedSocials,
+          status: dancerCoreApprovalUnlocked(profile) ? "Verified" : profile.status,
+          reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted,
+          approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval),
+          approvalChangesSubmitted: options.submitForReview
+            ? Boolean(profile.approvalChangesSubmitted)
+            : (changeStateBeforeSave.needsApproval ? false : Boolean(profile.approvalChangesSubmitted))
+        });
+        profile.socialLinks = nextSocialLinks;
+        profile.deletedSocialPlatforms = [];
+        Object.assign(dancerSignupSocials, normalizedSocials);
+        document.getElementById("dancerStageName").value = stageName;
+        updateDancerDashboardName(stageName);
+        if (lastPostedShift?.name === oldName) {
+          lastPostedShift.name = stageName;
+          lastPostedShift.city = newCity;
+          lastPostedShift.venue = venueName;
+        }
+        render();
+        renderDancerSetup();
+        if (customerDashboard.classList.contains("show")) renderDashboard();
         syncApprovedProfileSubmitState();
         if (result) result.textContent = options.submitForReview
           ? "Changes saved. Ready to submit to admin review."
@@ -34312,6 +34315,8 @@
         if (result) result.textContent = error.message || "Could not save live profile";
         showToast(error.message || "Could not save live profile");
         return false;
+      } finally {
+        if (trigger) trigger.disabled = false;
       }
     }
 
@@ -39268,7 +39273,7 @@
       }
 
       if (action === "save-profile") {
-        const saved = await saveApprovedDancerProfile();
+        const saved = await saveApprovedDancerProfile({ trigger });
         if (!saved?.saved) return;
         setResult(saved.needsApproval
           ? "Profile saved. Submit changes for approval is ready."
@@ -39523,6 +39528,8 @@
       }
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
       if (dancerControlAction) {
+        event.preventDefault();
+        event.stopPropagation();
         handleDancerControlAction(dancerControlAction.dataset.dancerControlAction, dancerControlAction);
         return;
       }
