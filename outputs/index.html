@@ -30205,6 +30205,17 @@
 
     function mapLiveDancer(item, isTonight, index, venueShiftCounts) {
       if (item.venueName) venueShiftCounts[item.venueName] = (venueShiftCounts[item.venueName] || 0) + 1;
+      const galleryPhotoUrls = Array.isArray(item.galleryPhotoUrls)
+        ? item.galleryPhotoUrls.filter(Boolean)
+        : item.primaryPhotoUrl
+          ? [item.primaryPhotoUrl]
+          : [];
+      const socialLinks = Array.isArray(item.socialLinks) ? item.socialLinks : [];
+      const socials = Object.fromEntries(
+        socialLinks
+          .filter((link) => link?.platform && link?.url)
+          .map((link) => [String(link.platform).toLowerCase(), link.url])
+      );
       return {
         id: item.id,
         slug: item.slug,
@@ -30220,8 +30231,10 @@
         trend: item.currentRank || index + 1,
         trendRank: item.currentRank || index + 1,
         distance: formatLiveDistance(item.distanceMiles),
-        mainPhotoUrl: item.primaryPhotoUrl || "",
-        galleryPhotoUrls: item.primaryPhotoUrl ? [item.primaryPhotoUrl] : [],
+        mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
+        galleryPhotoUrls,
+        socialLinks,
+        socials,
         shiftLabel: item.shiftLabel || "",
         shiftStartsAt: item.shiftStartsAt || "",
         shiftEndsAt: item.shiftEndsAt || "",
@@ -34076,6 +34089,37 @@
         </button>
       `;
       const changeState = approvedProfileChangeState(profile);
+      const approvedEditableSocialMarkup = `
+        <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
+          <div class="approved-social-edit-row">
+            <span class="approved-social-edit-guidance">Tap pencil, then social icon to edit. QR/Share stay live.</span>
+            ${socialEditButton}
+          </div>
+          <div class="social-tile-head">
+            <strong>Social links</strong>
+            ${socialUtilityButtons}
+          </div>
+          <div class="social-links">
+            ${socials.filter((social) => !social.deleted).map((social) => `
+              <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
+                ${approvedSocialEditMode ? `
+                  <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(`Edit ${social.label}`)}" data-social-url="${displayText(social.value || "")}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" title="${displayText(`Edit ${social.label}`)}">
+                    ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                  </button>
+                ` : social.value ? `
+                  <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(social.value)}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                    ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                  </a>
+                ` : `
+                  <button class="social-link social-${displayText(social.key)}" type="button" aria-label="${displayText(`${social.label} not added`)}" data-social-url="" title="${displayText(`${social.label} not added`)}">
+                    ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
+                  </button>
+                `}
+              </span>
+            `).join("")}
+          </div>
+        </div>
+      `;
       return `
         <div class="approved-visual-profile">
           <div class="approved-edit-help">
@@ -34110,42 +34154,7 @@
                 <button type="button" data-approved-visual-photo-add="gallery">Add gallery photo</button>
               </div>
               <div class="meta" id="approvedPhotoUploadStatus" aria-live="polite">Choose a photo button to upload a new picture.</div>
-              <div class="modal-grid">
-                ${shiftsMarkup(profile, shiftStatus(profile))}
-                <div class="info-tile">
-                  <strong>Followers</strong>
-                  <div class="meta profile-follower-metric"><span class="metric-value">${followerMetricMarkup(profile, activeDancerCity())}</span>${profileViewsTodayMarkup(profile, activeDancerCity())}</div>
-                </div>
-                <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
-                  <div class="approved-social-edit-row">
-                    <span class="approved-social-edit-guidance">Tap pencil, then social icon to edit. QR/Share stay live.</span>
-                    ${socialEditButton}
-                  </div>
-                  <div class="social-tile-head">
-                    <strong>Social links</strong>
-                    ${socialUtilityButtons}
-                  </div>
-                  <div class="social-links">
-                    ${socials.filter((social) => !social.deleted).map((social) => `
-                      <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                        ${approvedSocialEditMode ? `
-                          <button class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" type="button" aria-label="${displayText(`Edit ${social.label}`)}" data-social-url="${displayText(social.value || "")}" data-profile-visual-edit="social" data-social-platform="${displayText(social.key)}" data-social-label="${displayText(social.label)}" data-review-status="${displayText(social.status || "")}" data-review-notes="${displayText(social.notes || "")}" title="${displayText(`Edit ${social.label}`)}">
-                            ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                          </button>
-                        ` : social.value ? `
-                          <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(social.value)}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
-                            ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                          </a>
-                        ` : `
-                          <button class="social-link social-${displayText(social.key)}" type="button" aria-label="${displayText(`${social.label} not added`)}" data-social-url="" title="${displayText(`${social.label} not added`)}">
-                            ${socialIconMarkup(social.key)}<span>${displayText(social.label)}</span>
-                          </button>
-                        `}
-                      </span>
-                    `).join("")}
-                  </div>
-                </div>
-              </div>
+              ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity(), socialMarkup: approvedEditableSocialMarkup })}
               <div class="modal-actions">
                 <button class="approved-visual-save action-btn secondary" type="button" data-dancer-control-action="save-profile">
                   ${actionButtonLabel("save", "Save profile")}
@@ -34623,6 +34632,10 @@
         Object.assign(dancerSignupSocials, normalizedSocials);
         document.getElementById("dancerStageName").value = stageName;
         updateDancerDashboardName(stageName);
+        if (isDancerSession()) {
+          liveMarketState[newCity] = null;
+          await loadLiveDiscovery(newCity, { force: true });
+        }
         if (lastPostedShift?.name === oldName) {
           lastPostedShift.name = stageName;
           lastPostedShift.city = newCity;
@@ -35174,6 +35187,48 @@
       `;
     }
 
+    function profileModalGridMarkup(profile, options = {}) {
+      const status = options.status || shiftStatus(profile);
+      const city = options.city || selectedCity();
+      const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
+      return `
+        <div class="modal-grid">
+          ${shiftsMarkup(profile, status)}
+          ${profileLocationStatusTile(profile)}
+          <div class="info-tile">
+            <strong>Followers</strong>
+            <div class="meta profile-follower-metric">
+              <span class="metric-value">${followerMetricMarkup(profile, city)}</span>
+              ${profileViewsTodayMarkup(profile, city)}
+            </div>
+          </div>
+          ${socialMarkup}
+        </div>
+      `;
+    }
+
+    function liveProfileModalActionsMarkup(profile, status) {
+      const city = selectedCity();
+      const isFollowed = isFollowingProfile(city, profile.name);
+      const isNotified = isNotificationOn(city, profile.name);
+      const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
+      const canMarkGoing = status.state === "active" || (profile.scheduled && status.state !== "ended");
+      const goingCopy = status.state === "active"
+        ? { idle: "I'm Going Now", active: "You're going now" }
+        : { idle: "I'm Going", active: "You're going" };
+      const goingButton = canMarkGoing
+        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="${status.state === "active" ? "tonight" : "upcoming"}">${actionButtonLabel(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
+        : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" data-shift-state="none" disabled>${actionButtonLabel("clock", status.state === "ended" ? "Shift ended" : "No shift posted")}</button>`;
+      return `
+        <div class="modal-actions">
+          <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+          <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
+          ${goingButton}
+          <button class="action-btn secondary" id="reportBtn" data-profile="${profile.name}">${actionButtonLabel("report", "Report")}</button>
+        </div>
+      `;
+    }
+
     function openProfileModal(profileName, options = {}) {
       const city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
@@ -35231,35 +35286,9 @@
         `;
       } else {
         const status = shiftStatus(profile);
-        const isFollowed = isFollowingProfile(city, profile.name);
-        const isNotified = isNotificationOn(city, profile.name);
-        const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-        const canMarkGoing = status.state === "active" || (profile.scheduled && status.state !== "ended");
-        const goingCopy = status.state === "active"
-          ? { idle: "I'm Going Now", active: "You're going now" }
-          : { idle: "I'm Going", active: "You're going" };
-        const goingButton = canMarkGoing
-          ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="${status.state === "active" ? "tonight" : "upcoming"}">${actionButtonLabel(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
-          : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" data-shift-state="none" disabled>${actionButtonLabel("clock", status.state === "ended" ? "Shift ended" : "No shift posted")}</button>`;
         modalBody.innerHTML = `
-          <div class="modal-grid">
-            ${shiftsMarkup(profile, status)}
-            ${profileLocationStatusTile(profile)}
-            <div class="info-tile">
-              <strong>Followers</strong>
-              <div class="meta profile-follower-metric">
-                <span class="metric-value" id="modalFollowerCount">${followerMetricMarkup(profile, city)}</span>
-                ${profileViewsTodayMarkup(profile, city)}
-              </div>
-            </div>
-            ${socialLinksMarkup(profile, { preview: isPrivatePreview })}
-          </div>
-          <div class="modal-actions">
-            <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
-            <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
-            ${goingButton}
-            <button class="action-btn secondary" id="reportBtn" data-profile="${profile.name}">${actionButtonLabel("report", "Report")}</button>
-          </div>
+          ${profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city })}
+          ${liveProfileModalActionsMarkup(profile, status)}
         `;
       }
 

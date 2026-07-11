@@ -91,6 +91,8 @@ export type DancerCard = {
   verified: boolean;
   distanceMiles?: number;
   primaryPhotoUrl: string | null;
+  galleryPhotoUrls?: string[];
+  socialLinks?: SocialLink[];
   currentRank: number | null;
   venueName: string | null;
   venueSlug: string | null;

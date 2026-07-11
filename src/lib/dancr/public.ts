@@ -15,6 +15,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
+        social_links(id, platform, handle, url, is_active),
         shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone))
       `,
     )
@@ -43,6 +44,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         city,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
+        social_links(id, platform, handle, url, is_active),
         shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone))
       `,
     )
@@ -231,6 +233,7 @@ async function toDancerCard(client: DancrClient, row: any, options: { checkedInO
   const shift = liveShift || upcomingShift || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
+  const approvedPhotoUrls = approvedDancerPhotoUrls(client, row);
   const [followerCount, notificationCount, profileViewsToday] = await Promise.all([
     countDancerFollowers(client, row.id),
     countDancerNotificationSubscribers(client, row.id),
@@ -243,7 +246,9 @@ async function toDancerCard(client: DancrClient, row: any, options: { checkedInO
     stageName: row.stage_name,
     city: row.city,
     verified: true,
-    primaryPhotoUrl: getPrimaryPhotoUrl(client, row),
+    primaryPhotoUrl: approvedPhotoUrls[0] || null,
+    galleryPhotoUrls: approvedPhotoUrls,
+    socialLinks: approvedSocialLinks(row),
     currentRank: score?.rank || null,
     venueName: venue?.name || null,
     venueSlug: venue?.slug || null,
@@ -263,11 +268,24 @@ async function toDancerCard(client: DancrClient, row: any, options: { checkedInO
   };
 }
 
-function getPrimaryPhotoUrl(client: DancrClient, row: any): string | null {
+function approvedDancerPhotoUrls(client: DancrClient, row: any): string[] {
   const photos = (row.dancer_photos || []).filter((photo: any) => photo.review_status === "approved");
-  const primary = photos.find((photo: any) => photo.is_primary) || photos.sort((a: any, b: any) => a.sort_order - b.sort_order)[0];
+  const ordered = [...photos].sort((left: any, right: any) => {
+    if (left.is_primary !== right.is_primary) return left.is_primary ? -1 : 1;
+    return Number(left.sort_order || 0) - Number(right.sort_order || 0);
+  });
+  return ordered.map((photo: any) => photo.storage_path ? toDancerPhotoUrl(client, photo.storage_path) : "").filter(Boolean);
+}
 
-  return primary?.storage_path ? toDancerPhotoUrl(client, primary.storage_path) : null;
+function approvedSocialLinks(row: any) {
+  return (row.social_links || [])
+    .filter((link: any) => link.is_active !== false && link.url)
+    .map((link: any) => ({
+      id: link.id,
+      platform: link.platform,
+      handle: link.handle,
+      url: link.url,
+    }));
 }
 
 function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
