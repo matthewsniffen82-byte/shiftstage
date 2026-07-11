@@ -87,7 +87,8 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
   if (!data) return null;
 
   const row: any = data;
-  const card = await toDancerCard(client, row);
+  const approvedPhotos = await getApprovedDancerPhotos(client, row.id);
+  const card = await toDancerCard(client, { ...row, dancer_photos: approvedPhotos });
   const goingCount = await countDancerGoingSignals(client, row.id);
 
   return {
@@ -95,15 +96,12 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
     bio: row.bio || null,
     followerCount: card.followerCount || 0,
     goingCount,
-    photos: (row.dancer_photos || [])
-      .filter((photo: any) => photo.review_status === "approved")
-      .map((photo: any) => ({
-        id: photo.id,
-        imageUrl: toDancerPhotoUrl(client, photo.storage_path),
-        isPrimary: photo.is_primary,
-        sortOrder: photo.sort_order,
-      }))
-      .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
+    photos: approvedPhotos.map((photo: any) => ({
+      id: photo.id,
+      imageUrl: toDancerPhotoUrl(client, photo.storage_path),
+      isPrimary: photo.is_primary,
+      sortOrder: photo.sort_order,
+    })),
     socialLinks: (row.social_links || [])
       .filter((link: any) => link.is_active !== false)
       .map((link: any) => ({
@@ -116,6 +114,20 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
       .filter((shift: any) => shift.status === "posted" && isShiftPubliclyVisible(shift))
       .map(toShiftSummary),
   };
+}
+
+async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
+  const { data, error } = await client
+    .from("dancer_photos")
+    .select("id, storage_path, is_primary, sort_order, review_status, created_at")
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "approved")
+    .order("is_primary", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
 }
 
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
