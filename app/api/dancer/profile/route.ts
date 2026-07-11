@@ -235,7 +235,22 @@ async function submitPendingApprovedContentForReview(db: any, dancerId: string) 
 
   if (error) throw error;
 
-  const reviewRows = (photos || []).map((photo: any) => ({
+  const reviewTypes = (photos || []).map((photo: any) => `photo:${photo.id}`);
+  if (!reviewTypes.length) return;
+
+  const adminDb = createAdminSupabaseClient() as any;
+  const { data: existingReviews, error: existingReviewsError } = await adminDb
+    .from("approval_reviews")
+    .select("review_type")
+    .eq("dancer_id", dancerId)
+    .eq("status", "pending")
+    .in("review_type", reviewTypes);
+
+  if (existingReviewsError) throw existingReviewsError;
+  const existingTypes = new Set((existingReviews || []).map((review: any) => review.review_type));
+  const reviewRows = (photos || [])
+    .filter((photo: any) => !existingTypes.has(`photo:${photo.id}`))
+    .map((photo: any) => ({
     dancer_id: dancerId,
     reviewer_id: null,
     review_type: `photo:${photo.id}`,
@@ -246,7 +261,6 @@ async function submitPendingApprovedContentForReview(db: any, dancerId: string) 
 
   if (!reviewRows.length) return;
 
-  const adminDb = createAdminSupabaseClient() as any;
   const { error: insertError } = await adminDb.from("approval_reviews").insert(reviewRows);
   if (insertError) throw insertError;
 }

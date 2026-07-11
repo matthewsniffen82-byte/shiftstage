@@ -34666,7 +34666,7 @@
             stageName,
             city: newCity,
             socials: socialPayloadFromMap(normalizedSocials),
-            submitForReview: false,
+            submitForReview: options.submitForReview === true,
             submittedSocialPlatforms
           });
           if (!data) throw new Error("Sign in required");
