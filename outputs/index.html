@@ -27337,6 +27337,9 @@
               </button>
             </div>
             <div class="approved-tool-dropdown" id="approvedEditProfileDropdown" hidden>
+              <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
               <div class="approved-tool-dropdown-head">
                 <strong>Edit profile</strong>
                 <span>Update public profile fields, resubmit rejected photos or social links, and preview your profile.</span>
@@ -27585,7 +27588,6 @@
                     <button type="button" data-dancer-control-action="share-profile">Share profile</button>
                     <button type="button" data-dancer-control-action="show-qr">Show QR code</button>
                     <button type="button" data-dancer-control-action="save-profile">Save profile</button>
-                    <button type="button" data-dancer-control-action="resubmit-approval" id="approvedControlSubmitApproval" disabled>Submit changes for approval</button>
                   </div>
                   <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
                 </section>
@@ -27703,7 +27705,6 @@
                   </div>
                 </div>
                 <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save profile</button>
-                <button class="action-btn" id="approvedProfileSubmitApproval" type="submit" disabled>Submit changes for approval</button>
               </form>
               <div class="rule-note" id="profileEditResult" hidden>Changes submitted for admin approval.</div>
             </section>
@@ -33648,11 +33649,13 @@
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => {
         const id = photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`;
         const review = latestContentReview(`photo:${id}`);
+        const imageUrl = photo.imageUrl || photo.image_url || photo.url || "";
+        const savedApprovedUrls = new Set([profile?.mainPhotoUrl, ...(profile?.galleryPhotoUrls || [])].filter(Boolean));
         return {
           id,
-          imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
+          imageUrl,
           label: photo.isPrimary || photo.is_primary ? "Main photo" : `Gallery photo ${index + 1}`,
-          status: normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
+          status: normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || (savedApprovedUrls.has(imageUrl) ? "approved" : "pending")),
           notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
           target: `submitted:${index}`
         };
@@ -33821,9 +33824,6 @@
       const changeState = approvedProfileChangeState(profile);
       return `
         <div class="approved-visual-profile">
-          <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
           <div class="approved-edit-help">
             <strong>How editing works</strong>
             <span>Tap the pencil on the picture area first, then tap a picture to replace or delete it. Tap the pencil in Social links first, then tap a social icon to edit that link. Without the pencil turned on, photos open larger and social tools stay normal.</span>
@@ -33900,9 +33900,6 @@
                 <button class="approved-visual-save action-btn secondary" type="button" data-dancer-control-action="save-profile">
                   ${actionButtonLabel("save", "Save profile")}
                 </button>
-                <button class="approved-visual-submit action-btn ${changeState.needsApproval ? "is-ready" : ""} ${changeState.submitted ? "is-submitted" : ""}" type="button" data-dancer-control-action="resubmit-approval" ${changeState.needsApproval ? "" : "disabled"}>
-                  ${actionButtonLabel("check", changeState.submitted ? "Submitted for review" : "Submit for review")}
-                </button>
               </div>
             </div>
           </section>
@@ -33949,7 +33946,7 @@
           ? `<div class="approved-visual-reason">${displayText(data.label || "Photo")} not approved: ${displayText(data.notes || "No reason added.")}</div>`
           : "";
         card.innerHTML = `
-          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Use Submit for review once your changes look right.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
           ${rejectionReason}
           <div class="approved-visual-photo-actions">
             <button type="button" data-approved-visual-photo-replace data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>
@@ -33964,7 +33961,7 @@
           ? `<div class="approved-visual-reason">${displayText(platform.label)} not approved: ${displayText(data.notes || "No reason added.")}</div>`
           : "";
         card.innerHTML = `
-          <div class="row"><div><strong>${displayText(platform.label)}</strong><div class="meta">Add, change, or delete this link. Use Submit for review once your changes look right.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="row"><div><strong>${displayText(platform.label)}</strong><div class="meta">Add, change, or delete this link. Save Profile sends changed links to admin for manual approval.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
           ${rejectionReason}
           <div class="field"><label for="approvedVisualSocialInput">${displayText(platform.label)} link</label><input id="approvedVisualSocialInput" type="text" value="${escapeHtml(value)}" placeholder="@username or profile URL"></div>
           <div class="approved-visual-social-actions">
@@ -33993,7 +33990,7 @@
         pendingApprovedPhotoTarget = replaceButton.dataset.photoTarget || "gallery";
         pendingApprovedPhotoAutoSubmit = false;
         closeApprovedVisualEditPopover();
-        openApprovedPhotoUploadPicker("Choose a replacement picture, then submit for review.");
+        openApprovedPhotoUploadPicker("Choose a replacement picture. Approved photos go live automatically.");
         return true;
       }
 
@@ -34003,7 +34000,7 @@
         try {
           const deleted = await deleteApprovedDancerPhoto(target);
           closeApprovedVisualEditPopover();
-          showToast(deleted ? "Photo deleted. Submit for review when ready." : "Photo could not be deleted.");
+          showToast(deleted ? "Photo deleted. Press Save profile when ready." : "Photo could not be deleted.");
         } catch (error) {
           showToast(error.message || "Could not delete photo");
         } finally {
@@ -34022,7 +34019,7 @@
           clearApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
-          showToast("Social link saved. Submit for review when ready.");
+          showToast("Social link saved. Press Save profile to send it to admin.");
         }
         return true;
       }
@@ -34036,7 +34033,7 @@
           markApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
-          showToast("Social link deleted. Submit for review when ready.");
+          showToast("Social link deleted. Press Save profile to send the change to admin.");
         }
         return true;
       }
@@ -34315,7 +34312,7 @@
             stageName,
             city: newCity,
             socials: socialPayloadFromMap(normalizedSocials),
-            submitForReview: options.submitForReview === true,
+            submitForReview: false,
             submittedSocialPlatforms
           });
           if (!data) throw new Error("Sign in required");
@@ -34336,10 +34333,8 @@
           socials: normalizedSocials,
           status: dancerCoreApprovalUnlocked(profile) ? "Verified" : profile.status,
           reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted,
-          approvalChangesPending: Boolean(profile.approvalChangesPending || changeStateBeforeSave.needsApproval),
-          approvalChangesSubmitted: options.submitForReview
-            ? Boolean(profile.approvalChangesSubmitted)
-            : (changeStateBeforeSave.needsApproval ? false : Boolean(profile.approvalChangesSubmitted))
+          approvalChangesPending: submittedSocialPlatforms.length > 0,
+          approvalChangesSubmitted: submittedSocialPlatforms.length > 0
         });
         profile.socialLinks = nextSocialLinks;
         profile.deletedSocialPlatforms = [];
@@ -34356,9 +34351,9 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
         syncApprovedProfileSubmitState();
         if (result) result.textContent = options.submitForReview
-          ? "Changes saved. Ready to submit to admin review."
-          : "Profile saved. If you added, changed, or uploaded anything, press Submit changes for approval.";
-        return { saved: true, needsApproval: changeStateBeforeSave.needsApproval || Boolean(profile.approvalChangesPending) };
+          ? "Profile saved. Changed social links were sent to admin."
+          : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved. Approved photos are live.");
+        return { saved: true, needsApproval: submittedSocialPlatforms.length > 0 };
       } catch (error) {
         if (result) result.textContent = error.message || "Could not save live profile";
         showToast(error.message || "Could not save live profile");
@@ -39328,8 +39323,8 @@
         const saved = await saveApprovedDancerProfile({ trigger });
         if (!saved?.saved) return;
         setResult(saved.needsApproval
-          ? "Profile saved. Submit changes for approval is ready."
-          : "Profile saved. Deleted-only changes do not need admin approval.");
+          ? "Profile saved. Changed social links were sent to admin for approval."
+          : "Profile saved. Approved photos are live now.");
         updateAccountHeader();
         render();
         return;
@@ -39348,19 +39343,19 @@
 
       if (action === "main-photo") {
         pendingApprovedPhotoTarget = "main";
-        openApprovedPhotoUploadPicker("Choose a main photo to upload for review.");
+        openApprovedPhotoUploadPicker("Choose a main photo. Approved photos go live automatically.");
         return;
       }
 
       if (action === "gallery-photo") {
         pendingApprovedPhotoTarget = "gallery";
-        openApprovedPhotoUploadPicker("Choose a gallery photo to upload for review.");
+        openApprovedPhotoUploadPicker("Choose a gallery photo. Approved photos go live automatically.");
         return;
       }
 
       if (action === "replace-photo") {
         pendingApprovedPhotoTarget = trigger?.dataset.photoTarget || "gallery";
-        openApprovedPhotoUploadPicker("Choose a replacement picture to upload for review.");
+        openApprovedPhotoUploadPicker("Choose a replacement picture. Approved photos go live automatically.");
         return;
       }
     }
@@ -39497,7 +39492,7 @@
         pendingApprovedPhotoTarget = visualPhotoReplace.dataset.photoTarget || "gallery";
         pendingApprovedPhotoAutoSubmit = false;
         closeApprovedVisualEditPopover();
-        openApprovedPhotoUploadPicker("Choose a replacement picture, then submit for review.");
+        openApprovedPhotoUploadPicker("Choose a replacement picture. Approved photos go live automatically.");
         return;
       }
       const visualPhotoAdd = event.target.closest("[data-approved-visual-photo-add]");
@@ -39505,7 +39500,7 @@
         event.preventDefault();
         pendingApprovedPhotoTarget = visualPhotoAdd.dataset.approvedVisualPhotoAdd || "gallery";
         pendingApprovedPhotoAutoSubmit = false;
-        openApprovedPhotoUploadPicker("Choose a picture, then submit for review.");
+        openApprovedPhotoUploadPicker("Choose a picture. Approved photos go live automatically.");
         return;
       }
       const visualPhotoDelete = event.target.closest("[data-approved-visual-photo-delete]");
@@ -39516,7 +39511,7 @@
         try {
           const deleted = await deleteApprovedDancerPhoto(target);
           closeApprovedVisualEditPopover();
-          showToast(deleted ? "Photo deleted. Submit for review when ready." : "Photo could not be deleted.");
+          showToast(deleted ? "Photo deleted. Press Save profile when ready." : "Photo could not be deleted.");
         } catch (error) {
           showToast(error.message || "Could not delete photo");
         } finally {
@@ -39536,7 +39531,7 @@
           clearApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
-          showToast("Social link saved. Submit for review when ready.");
+          showToast("Social link saved. Press Save profile to send it to admin.");
         }
         return;
       }
@@ -39551,7 +39546,7 @@
           markApprovedSocialDeleted(platform);
           mirrorApprovedProfileEditField(field);
           closeApprovedVisualEditPopover();
-          showToast("Social link deleted. Submit for review when ready.");
+          showToast("Social link deleted. Press Save profile to send the change to admin.");
         }
         return;
       }
@@ -39712,7 +39707,7 @@
       const profileEditForm = event.target.closest("#publicProfileForm");
       if (profileEditForm) {
         event.preventDefault();
-        submitApprovedProfileChangesForReview(profileEditForm.querySelector('button[type="submit"]'));
+        saveApprovedDancerProfile({ trigger: profileEditForm.querySelector("[data-dancer-control-action='save-profile']") });
         return;
       }
 
