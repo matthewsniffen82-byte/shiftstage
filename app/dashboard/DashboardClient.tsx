@@ -44,15 +44,15 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
       try {
         const authHeaders = { authorization: `Bearer ${session.accessToken}` };
         const account = await readJson("/api/account", authHeaders);
-        const profile = role === "venue" ? { profile: null } : await readJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders);
-        const secondary = role === "venue" ? {} : await readJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders);
-        const support = await readJson("/api/support", authHeaders);
+        const profile = role === "venue" ? { profile: null } : await readOptionalJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders, { profile: null });
+        const secondary = role === "venue" ? {} : await readOptionalJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders, {});
+        const support = await readOptionalJson("/api/support", authHeaders, { threads: [] });
         const [reviews, weeklyReport, rankingEvents] =
           role === "dancer"
             ? await Promise.all([
-                readJson("/api/dancer/reviews", authHeaders),
-                readJson("/api/dancer/weekly-report", authHeaders),
-                readJson("/api/dancer/ranking-events", authHeaders),
+                readOptionalJson("/api/dancer/reviews", authHeaders, { reviews: [] }),
+                readOptionalJson("/api/dancer/weekly-report", authHeaders, { report: null }),
+                readOptionalJson("/api/dancer/ranking-events", authHeaders, { events: [] }),
               ])
             : [null, null, null];
 
@@ -1806,6 +1806,15 @@ async function readJson(path: string, headers: Record<string, string>) {
   const data = await response.json();
   if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dashboard.");
   return data;
+}
+
+async function readOptionalJson<T>(path: string, headers: Record<string, string>, fallback: T): Promise<T | any> {
+  try {
+    return await readJson(path, headers);
+  } catch (error) {
+    console.warn("Dashboard panel did not load", { path, message: error instanceof Error ? error.message : "Request failed" });
+    return fallback;
+  }
 }
 
 function checkInErrorMessage(data: any) {

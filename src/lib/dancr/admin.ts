@@ -676,16 +676,40 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (!social) throw new Error("Submitted social link not found.");
   }
 
-  const { error: reviewError } = await db.from("approval_reviews").insert({
-    dancer_id: input.dancerId,
-    reviewer_id: input.reviewerId,
-    review_type: reviewType,
-    status: input.status,
-    notes,
-    reviewed_at: reviewedAt,
-  });
+  const { data: pendingReview, error: pendingReviewError } = await db
+    .from("approval_reviews")
+    .select("id")
+    .eq("dancer_id", input.dancerId)
+    .eq("review_type", reviewType)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  if (reviewError) throw reviewError;
+  if (pendingReviewError) throw pendingReviewError;
+
+  if (pendingReview?.id) {
+    const { error: reviewError } = await db
+      .from("approval_reviews")
+      .update({
+        reviewer_id: input.reviewerId,
+        status: input.status,
+        notes,
+        reviewed_at: reviewedAt,
+      })
+      .eq("id", pendingReview.id);
+    if (reviewError) throw reviewError;
+  } else {
+    const { error: reviewError } = await db.from("approval_reviews").insert({
+      dancer_id: input.dancerId,
+      reviewer_id: input.reviewerId,
+      review_type: reviewType,
+      status: input.status,
+      notes,
+      reviewed_at: reviewedAt,
+    });
+    if (reviewError) throw reviewError;
+  }
 
   if (input.targetType === "verification_document") {
     await updateVerificationReviewSummary(client, dancer.user_id, input.dancerId);

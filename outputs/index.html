@@ -27579,6 +27579,11 @@
                         <option>Sapphire Las Vegas</option>
                         <option>Crazy Horse 3</option>
                         <option>Palomino Club</option>
+                        <option>HUSTLER Club Las Vegas</option>
+                        <option>Little Darlings Las Vegas</option>
+                        <option>Treasures Las Vegas</option>
+                        <option>Chicas Bonitas</option>
+                        <option>Peppermint Hippo Las Vegas</option>
                         <option>Monarch</option>
                       </select>
                     </label>
@@ -28292,13 +28297,18 @@
 
     const markets = {
       "Las Vegas": {
-        stats: { dancers: 0, shifts: 0, venues: 18 },
+        stats: { dancers: 0, shifts: 0, venues: 9 },
         dancers: [],
         venues: [
-          { name: "Spearmint Rhino Las Vegas", area: "Highland Drive", shifts: 8, latitude: 36.1295, longitude: -115.1786 },
-          { name: "Sapphire Las Vegas", area: "Sammy Davis Jr Drive", shifts: 11, latitude: 36.1352, longitude: -115.1716 },
-          { name: "Crazy Horse 3", area: "West Russell Road", shifts: 7, latitude: 36.0855, longitude: -115.1858 },
-          { name: "Palomino Club", area: "North Las Vegas", shifts: 5, latitude: 36.1932, longitude: -115.132 }
+          { name: "Spearmint Rhino Las Vegas", area: "Highland Drive", address: "3340 S Highland Dr, Las Vegas, NV 89109", shifts: 8, latitude: 36.1295, longitude: -115.1786 },
+          { name: "Sapphire Las Vegas", area: "Sammy Davis Jr Drive", address: "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109", shifts: 11, latitude: 36.1352, longitude: -115.1716 },
+          { name: "Crazy Horse 3", area: "West Russell Road", address: "3525 W Russell Rd, Las Vegas, NV 89118", shifts: 7, latitude: 36.0855, longitude: -115.1858 },
+          { name: "Palomino Club", area: "North Las Vegas", address: "1848 Las Vegas Blvd N, North Las Vegas, NV 89030", shifts: 5, latitude: 36.1932, longitude: -115.132 },
+          { name: "HUSTLER Club Las Vegas", area: "Dean Martin Drive", address: "6007 Dean Martin Dr, Las Vegas, NV 89118", shifts: 6, latitude: 36.0799, longitude: -115.1822 },
+          { name: "Little Darlings Las Vegas", area: "Western Avenue", address: "1514 Western Ave, Las Vegas, NV 89102", shifts: 6, latitude: 36.1538, longitude: -115.1634 },
+          { name: "Treasures Las Vegas", area: "Westwood Drive", address: "2801 Westwood Dr, Las Vegas, NV 89109", shifts: 6, latitude: 36.139, longitude: -115.174 },
+          { name: "Chicas Bonitas", area: "Procyon Street", address: "3606 Procyon St, Las Vegas, NV 89103", shifts: 5, latitude: 36.1243, longitude: -115.1877 },
+          { name: "Peppermint Hippo Las Vegas", area: "Paradise Road", address: "4316 Paradise Rd, Las Vegas, NV 89169", shifts: 7, latitude: 36.111, longitude: -115.1539 }
         ]
       },
       Miami: {
@@ -31221,14 +31231,41 @@
         id: item.id,
         slug: item.slug,
         name: item.name,
-        area: item.state || item.city || city,
+        area: item.address || item.state || item.city || city,
         state: item.state || stateByCity[city] || "",
+        address: item.address || "",
         hours: item.hoursLabel || "Hours pending",
         shifts: venueShiftCounts[item.name] || 0,
         distance: "",
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
         longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : null
       };
+    }
+
+    function mergeLiveVenues(existingVenues, liveVenues) {
+      if (!liveVenues.length) return existingVenues;
+      const merged = [...existingVenues];
+      liveVenues.forEach((liveVenue) => {
+        const matchIndex = merged.findIndex((venue) => (
+          (liveVenue.id && venue.id === liveVenue.id) ||
+          (liveVenue.slug && venue.slug === liveVenue.slug) ||
+          venue.name === liveVenue.name
+        ));
+        if (matchIndex >= 0) {
+          merged[matchIndex] = {
+            ...merged[matchIndex],
+            ...liveVenue,
+            shifts: liveVenue.shifts || merged[matchIndex].shifts || 0,
+            area: liveVenue.area || merged[matchIndex].area,
+            address: liveVenue.address || merged[matchIndex].address || "",
+            latitude: liveVenue.latitude ?? merged[matchIndex].latitude ?? null,
+            longitude: liveVenue.longitude ?? merged[matchIndex].longitude ?? null
+          };
+        } else {
+          merged.push(liveVenue);
+        }
+      });
+      return merged;
     }
 
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
@@ -31240,7 +31277,7 @@
       const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
 
       if (liveDancers.length) market.dancers = liveDancers;
-      if (liveVenues.length) market.venues = liveVenues;
+      if (liveVenues.length) market.venues = mergeLiveVenues(market.venues, liveVenues);
       market.stats = {
         dancers: market.dancers.filter(isApprovedPublicProfile).length,
         shifts: market.dancers.filter((profile) => profile.scheduled).length,

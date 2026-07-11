@@ -87,17 +87,26 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       providerFlagged: false,
     };
     logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", { recordId: record.id, errorCode });
+    const reviewPath = tempPath.replace(`${input.userId}/${profile.id}/`, `${input.userId}/${profile.id}/review-`);
+    await movePrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, image.contentType);
     await updateModerationRecord(admin, record.id, {
       decision: "review",
-      status: "error",
+      status: "completed",
+      temporaryStoragePath: reviewPath,
       reasonCodes: evaluation.reasonCodes,
       categoryFlags,
       categoryScores: evaluation.categoryScores,
       providerFlagged: evaluation.providerFlagged,
       errorCode,
     });
-    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    throw new Error(moderationUploadErrorMessage(errorCode));
+    logModeration("queued_for_review", { recordId: record.id, errorCode });
+    return {
+      decision: "review",
+      moderationRecordId: record.id,
+      reasonCodes: evaluation.reasonCodes,
+      providerFlagged: evaluation.providerFlagged,
+      message: "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
+    };
   }
 
   if (evaluation.decision === "approved") {

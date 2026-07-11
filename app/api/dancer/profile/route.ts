@@ -190,19 +190,34 @@ async function submitChangedSocialLinksForReview(db: any, dancerId: string, plat
   if (!socials?.length) return 0;
 
   const adminDb = createAdminSupabaseClient() as any;
-  const { error: insertError } = await adminDb.from("approval_reviews").insert(
-    socials.map((social: any) => ({
+  const reviewTypes = socials.map((social: any) => `social_link:${social.id}`);
+  const { data: existingReviews, error: existingReviewsError } = await adminDb
+    .from("approval_reviews")
+    .select("review_type")
+    .eq("dancer_id", dancerId)
+    .eq("status", "pending")
+    .in("review_type", reviewTypes);
+
+  if (existingReviewsError) throw existingReviewsError;
+  const existingTypes = new Set((existingReviews || []).map((review: any) => review.review_type));
+  const rows = socials
+    .filter((social: any) => !existingTypes.has(`social_link:${social.id}`))
+    .map((social: any) => ({
       dancer_id: dancerId,
       reviewer_id: null,
       review_type: `social_link:${social.id}`,
       status: "pending",
       notes: "Submitted by dancer.",
       reviewed_at: null,
-    })),
+    }));
+
+  if (!rows.length) return 0;
+  const { error: insertError } = await adminDb.from("approval_reviews").insert(
+    rows,
   );
 
   if (insertError) throw insertError;
-  return socials.length;
+  return rows.length;
 }
 
 function readSubmittedSocialPlatforms(body: any, fallbackPlatforms: SocialPlatform[]) {
