@@ -26775,46 +26775,6 @@
       box-shadow: 0 10px 28px rgba(0,0,0,.4), 0 0 20px rgba(255,42,177,.16) !important;
     }
 
-    .approved-photo-status-guide {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      flex-wrap: wrap !important;
-      gap: 7px 10px !important;
-      width: min(100%, 520px) !important;
-      margin: 2px auto 8px !important;
-      padding: 8px 10px !important;
-      border: 1px solid rgba(139,92,246,.18) !important;
-      border-radius: 12px !important;
-      color: rgba(245,241,255,.72) !important;
-      background: rgba(5,5,8,.48) !important;
-      box-shadow: inset 0 0 14px rgba(139,92,246,.035) !important;
-      font-size: 10px !important;
-      font-weight: 850 !important;
-      line-height: 1 !important;
-    }
-
-    .approved-photo-status-guide span {
-      display: inline-flex !important;
-      align-items: center !important;
-      gap: 5px !important;
-      white-space: nowrap !important;
-    }
-
-    .approved-photo-status-dot {
-      width: 8px !important;
-      height: 8px !important;
-      min-width: 8px !important;
-      border-radius: 999px !important;
-      background: var(--photo-status-color, #c084fc) !important;
-      box-shadow: 0 0 10px var(--photo-status-glow, rgba(192,132,252,.45)) !important;
-    }
-
-    .approved-photo-status-dot.is-main { --photo-status-color: #35d8ff; --photo-status-glow: rgba(53,216,255,.62); }
-    .approved-photo-status-dot.is-rejected { --photo-status-color: #ff687c; --photo-status-glow: rgba(255,104,124,.58); }
-    .approved-photo-status-dot.is-pending { --photo-status-color: #d9ad4f; --photo-status-glow: rgba(217,173,79,.52); }
-    .approved-photo-status-dot.is-live { --photo-status-color: #c084fc; --photo-status-glow: rgba(192,132,252,.48); }
-
     .approved-visual-profile .approved-social-edit-btn {
       top: auto !important;
       right: 12px !important;
@@ -34076,12 +34036,6 @@
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
-            </div>
-            <div class="approved-photo-status-guide" aria-label="Photo preview border guide">
-              <span><i class="approved-photo-status-dot is-main" aria-hidden="true"></i>Main photo</span>
-              <span><i class="approved-photo-status-dot is-live" aria-hidden="true"></i>Live</span>
-              <span><i class="approved-photo-status-dot is-pending" aria-hidden="true"></i>Pending</span>
-              <span><i class="approved-photo-status-dot is-rejected" aria-hidden="true"></i>Needs fix</span>
             </div>
             <div class="modal-body">
               <div class="approved-visual-photo-actions">
