@@ -26398,6 +26398,17 @@
       height: 24px !important;
     }
 
+    #approvedEditProfileDropdown.show [data-dancer-control-action="save-profile"].is-saving {
+      opacity: .72 !important;
+      pointer-events: none !important;
+    }
+
+    #approvedEditProfileDropdown.show [data-dancer-control-action="save-profile"].is-saved {
+      border-color: rgba(53,216,255,.9) !important;
+      color: #f7fdff !important;
+      box-shadow: 0 0 0 1px rgba(53,216,255,.32), 0 0 24px rgba(53,216,255,.28) !important;
+    }
+
     #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-body {
       overflow: visible !important;
       padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
@@ -33917,6 +33928,38 @@
       mount.innerHTML = approvedVisualProfileEditorMarkup(profile);
     }
 
+    function releaseEditProfileMobileFocus(trigger = null) {
+      const active = document.activeElement;
+      if (active && typeof active.blur === "function" && active !== document.body) active.blur();
+      if (trigger && typeof trigger.blur === "function") trigger.blur();
+      window.__dancrSyncViewportSafeTop?.();
+    }
+
+    function setApprovedProfileSaveFeedback(message, options = {}) {
+      const profileResult = document.getElementById("profileEditResult");
+      const visualStatus = document.getElementById("approvedPhotoUploadStatus");
+      const controlResult = document.getElementById("dancerControlResult");
+      const saveButtons = document.querySelectorAll('[data-dancer-control-action="save-profile"]');
+      if (profileResult) {
+        profileResult.hidden = false;
+        profileResult.textContent = message;
+      }
+      if (visualStatus) visualStatus.textContent = message;
+      if (controlResult) controlResult.textContent = message;
+      saveButtons.forEach((button) => {
+        button.classList.toggle("is-saved", options.saved === true);
+        button.classList.toggle("is-saving", options.saving === true);
+        button.setAttribute("aria-busy", options.saving ? "true" : "false");
+      });
+      if (options.toast !== false) showToast(message);
+      if (options.saved) {
+        window.clearTimeout(setApprovedProfileSaveFeedback.savedTimer);
+        setApprovedProfileSaveFeedback.savedTimer = window.setTimeout(() => {
+          document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saved').forEach((button) => button.classList.remove("is-saved"));
+        }, 2200);
+      }
+    }
+
     function closeApprovedVisualEditPopover() {
       const popover = document.getElementById("approvedEditItemPopover");
       if (popover) {
@@ -34252,6 +34295,9 @@
 
     async function saveApprovedDancerProfile(options = {}) {
       const trigger = options.trigger || null;
+      releaseEditProfileMobileFocus(trigger);
+      const editWasOpen = activeApprovedToolDropdown === "edit";
+      const editorScrollTop = document.getElementById("approvedVisualProfileEditor")?.scrollTop || 0;
       const oldCity = activeDancerCity();
       const oldName = activeDancerName();
       const oldMarket = markets[oldCity];
@@ -34301,6 +34347,7 @@
           ? "Saving profile before admin review..."
           : "Saving profile changes...";
       }
+      setApprovedProfileSaveFeedback(options.submitForReview ? "Saving profile before admin review..." : "Saving profile changes...", { saving: true, toast: false });
       if (trigger) trigger.disabled = true;
       try {
         if (isDancerSession()) {
@@ -34343,19 +34390,37 @@
           lastPostedShift.venue = venueName;
         }
         render();
-        renderDancerSetup();
+        if (editWasOpen) {
+          activeApprovedToolDropdown = "edit";
+          renderApprovedToolDropdowns();
+          const editor = document.getElementById("approvedVisualProfileEditor");
+          if (editor) editor.scrollTop = editorScrollTop;
+        } else {
+          renderDancerSetup();
+        }
         if (customerDashboard.classList.contains("show")) renderDashboard();
         syncApprovedProfileSubmitState();
-        if (result) result.textContent = options.submitForReview
+        const successMessage = options.submitForReview
           ? "Profile saved. Changed social links were sent to admin."
           : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved. Approved photos are live.");
+        if (result) result.textContent = successMessage;
+        setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: true });
+        releaseEditProfileMobileFocus(trigger);
         return { saved: true, needsApproval: submittedSocialPlatforms.length > 0 };
       } catch (error) {
-        if (result) result.textContent = error.message || "Could not save live profile";
-        showToast(error.message || "Could not save live profile");
+        const errorMessage = error.message || "Could not save live profile";
+        if (result) result.textContent = errorMessage;
+        setApprovedProfileSaveFeedback(errorMessage, { toast: true });
         return false;
       } finally {
-        if (trigger) trigger.disabled = false;
+        if (trigger) {
+          trigger.disabled = false;
+          trigger.removeAttribute("aria-busy");
+        }
+        document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saving').forEach((button) => {
+          button.classList.remove("is-saving");
+          button.removeAttribute("aria-busy");
+        });
       }
     }
 
@@ -39316,13 +39381,13 @@
       }
 
       if (action === "save-profile") {
+        releaseEditProfileMobileFocus(trigger);
         const saved = await saveApprovedDancerProfile({ trigger });
         if (!saved?.saved) return;
         setResult(saved.needsApproval
           ? "Profile saved. Changed social links were sent to admin for approval."
           : "Profile saved. Approved photos are live now.");
         updateAccountHeader();
-        render();
         return;
       }
 
