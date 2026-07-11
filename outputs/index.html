@@ -36294,16 +36294,20 @@
       if (profile) {
         const uploaded = data?.photo || data || {};
         const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || URL.createObjectURL(file);
-        const approvedUpload = data?.decision === "approved";
+        const uploadReviewStatus = normalizedReviewStatus(uploaded.reviewStatus || uploaded.review_status || data?.decision || "pending");
+        const approvedUpload = uploadReviewStatus === "approved";
+        const rejectedUpload = uploadReviewStatus === "rejected";
+        const pendingUpload = !approvedUpload && !rejectedUpload;
         const photo = {
           id: uploaded.id || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
           imageUrl,
           image_url: imageUrl,
           isPrimary,
-          reviewStatus: approvedUpload ? "approved" : "pending",
-          review_status: approvedUpload ? "approved" : "pending",
-          reviewNotes: approvedUpload ? "" : "Waiting for admin verification.",
-          review_notes: approvedUpload ? "" : "Waiting for admin verification.",
+          is_primary: isPrimary,
+          reviewStatus: approvedUpload ? "approved" : rejectedUpload ? "rejected" : "pending",
+          review_status: approvedUpload ? "approved" : rejectedUpload ? "rejected" : "pending",
+          reviewNotes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Waiting for admin verification.",
+          review_notes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Waiting for admin verification.",
           sortOrder
         };
         const submittedPhotos = [...(profile.submittedPhotos || [])];
@@ -36332,7 +36336,7 @@
           profile.photoStatus = "Approved";
           profile.approvalChangesPending = false;
           profile.approvalChangesSubmitted = false;
-        } else {
+        } else if (pendingUpload) {
           if (replacingSubmitted) {
             submittedPhotos[submittedIndex] = photo;
           } else {
@@ -36354,6 +36358,8 @@
           profile.photoStatus = "Pending";
           profile.approvalChangesPending = true;
           profile.approvalChangesSubmitted = false;
+        } else {
+          profile.photoStatus = "Rejected";
         }
         if (dancerCoreApprovalUnlocked(profile)) {
           profile.status = "Verified";

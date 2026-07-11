@@ -1655,7 +1655,8 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
         note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
       };
       if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
-      setPhotos((current) => mergePhotoItems([uploadedPhoto], current));
+      if (uploadStatus === "rejected") URL.revokeObjectURL(localPreviewUrl);
+      else setPhotos((current) => mergePhotoItems([uploadedPhoto], current));
       setStatus(photoUploadStatusMessage(uploadStatus, data.message));
       selectPhoto(null);
     } catch (error) {
@@ -1746,7 +1747,7 @@ function mergePhotoItems(...groups: DancerPhotoItem[][]) {
     const existing = byId.get(photo.id);
     if (!existing || (existing.status !== "approved" && photo.status === "approved")) byId.set(photo.id, photo);
   });
-  return Array.from(byId.values()).slice(0, 8);
+  return Array.from(byId.values()).slice(0, 5);
 }
 
 function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
