@@ -763,7 +763,7 @@ function DancerSetupPanel({ profile }: { profile?: LoadState["profile"] }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
-      setStatus("Profile saved.");
+      setStatus("Saved profile.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save profile.");
     } finally {

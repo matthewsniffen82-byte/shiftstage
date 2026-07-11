@@ -34249,12 +34249,19 @@
         button.classList.toggle("is-saved", options.saved === true);
         button.classList.toggle("is-saving", options.saving === true);
         button.setAttribute("aria-busy", options.saving ? "true" : "false");
+        if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = button.textContent || "Save profile";
+        if (options.saving) button.textContent = "Saving profile...";
+        else if (options.saved) button.textContent = "Saved profile";
+        else button.textContent = button.dataset.saveProfileIdleText || "Save profile";
       });
       if (options.toast !== false) showToast(message);
       if (options.saved) {
         window.clearTimeout(setApprovedProfileSaveFeedback.savedTimer);
         setApprovedProfileSaveFeedback.savedTimer = window.setTimeout(() => {
-          document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saved').forEach((button) => button.classList.remove("is-saved"));
+          document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saved').forEach((button) => {
+            button.classList.remove("is-saved");
+            button.textContent = button.dataset.saveProfileIdleText || "Save profile";
+          });
         }, 2200);
       }
     }
@@ -34704,8 +34711,8 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
         syncApprovedProfileSubmitState();
         const successMessage = options.submitForReview
-          ? "Profile saved. Changed social links were sent to admin."
-          : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved. Approved photos are live.");
+          ? "Saved profile. Changed social links were sent to admin."
+          : (submittedSocialPlatforms.length ? "Saved profile. Changed social links were sent to admin for approval." : "Saved profile.");
         if (result) result.textContent = successMessage;
         setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: true });
         releaseEditProfileMobileFocus(trigger);
@@ -39774,8 +39781,8 @@
         const saved = await saveApprovedDancerProfile({ trigger });
         if (!saved?.saved) return;
         setResult(saved.needsApproval
-          ? "Profile saved. Changed social links were sent to admin for approval."
-          : "Profile saved. Approved photos are live now.");
+          ? "Saved profile. Changed social links were sent to admin for approval."
+          : "Saved profile.");
         updateAccountHeader();
         return;
       }
@@ -40134,7 +40141,7 @@
       const profileEditForm = event.target.closest("#publicProfileForm");
       if (profileEditForm) {
         event.preventDefault();
-        saveApprovedDancerProfile({ trigger: profileEditForm.querySelector("[data-dancer-control-action='save-profile']") });
+        await saveApprovedDancerProfile({ trigger: profileEditForm.querySelector("[data-dancer-control-action='save-profile']") });
         return;
       }
 
