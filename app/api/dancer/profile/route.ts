@@ -24,10 +24,33 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile: withPhotoUrls(client, data) });
+    const pendingPhotoReviews = await loadPendingPhotoReviews(user.id);
+
+    return NextResponse.json({
+      ok: true,
+      profile: {
+        ...withPhotoUrls(client, data),
+        pending_photo_reviews: pendingPhotoReviews,
+      },
+    });
   } catch (error) {
     return apiError(error, "Unable to load dancer profile.");
   }
+}
+
+async function loadPendingPhotoReviews(userId: string) {
+  const admin = createAdminSupabaseClient() as any;
+  const { data, error } = await admin
+    .from("image_moderation_records")
+    .select("id, decision, status, upload_context, created_at")
+    .eq("user_id", userId)
+    .eq("decision", "review")
+    .in("status", ["pending", "completed"])
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (error) throw error;
+  return data || [];
 }
 
 function withPhotoUrls(client: any, profile: any) {

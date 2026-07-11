@@ -2025,7 +2025,8 @@
       width: 100%;
       max-width: none;
       min-height: 100dvh;
-      padding: max(18px, env(safe-area-inset-top)) 12px max(18px, env(safe-area-inset-bottom));
+      padding: max(96px, calc(env(safe-area-inset-top) + 76px)) 12px max(18px, env(safe-area-inset-bottom));
+      scroll-padding-top: max(96px, calc(env(safe-area-inset-top) + 76px));
       overflow-y: auto;
       background:
         radial-gradient(circle at 18% 0%, rgba(53,216,255,.10), transparent 28rem),
@@ -2037,7 +2038,8 @@
 
     @media (max-width: 620px) {
       #approvedEditProfileDropdown.show {
-        padding-top: max(88px, calc(env(safe-area-inset-top) + 68px));
+        padding-top: max(112px, calc(env(safe-area-inset-top) + 92px));
+        scroll-padding-top: max(112px, calc(env(safe-area-inset-top) + 92px));
       }
 
       .approved-visual-profile .profile-modal .close-btn {
@@ -26651,6 +26653,18 @@
       bottom: 12px !important;
     }
 
+    .approved-visual-profile .profile-modal .approved-social-edit-guidance {
+      position: absolute !important;
+      right: 66px !important;
+      bottom: 20px !important;
+      max-width: min(250px, calc(100% - 92px)) !important;
+      color: #cfc5de !important;
+      font-size: 11px !important;
+      font-weight: 850 !important;
+      line-height: 1.2 !important;
+      text-align: right !important;
+    }
+
     .approved-visual-profile .profile-modal .social-tile {
       padding-bottom: 56px !important;
     }
@@ -27475,7 +27489,7 @@
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
                     <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
-                    <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                    <input id="approvedPhotoUploadInput" type="file" accept="image/*" hidden>
                   </div>
                 </section>
 
@@ -29904,7 +29918,7 @@
 
     function safeCssUrl(value) {
       const trimmed = String(value || "").trim();
-      if (!trimmed || (!/^https?:\/\//i.test(trimmed) && !/^data:image\//i.test(trimmed))) return "";
+      if (!trimmed || (!/^https?:\/\//i.test(trimmed) && !/^data:image\//i.test(trimmed) && !/^blob:/i.test(trimmed))) return "";
       return trimmed.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
     }
 
@@ -33807,12 +33821,12 @@
                   <div class="meta profile-follower-metric"><span class="metric-value">${followerMetricMarkup(profile, activeDancerCity())}</span>${profileViewsTodayMarkup(profile, activeDancerCity())}</div>
                 </div>
                 <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
+                  <span class="approved-social-edit-guidance">Tap pencil, then social icon to edit. QR/Share stay live.</span>
                   ${socialEditButton}
                   <div class="social-tile-head">
                     <strong>Social links</strong>
                     ${socialUtilityButtons}
                   </div>
-                  <div class="meta">Use the pencil in this box, then tap a social icon to edit. QR and Share are not editable.</div>
                   <div class="social-links">
                     ${socials.filter((social) => !social.deleted).map((social) => `
                       <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
@@ -35851,12 +35865,9 @@
             : (profile?.galleryPhotoUrls || []).length + 1;
       const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto });
       let uploadedPhotoTarget = target;
-      if (data?.decision && data.decision !== "approved") {
-        return { ...data, photoTarget: uploadedPhotoTarget };
-      }
       if (profile) {
         const uploaded = data?.photo || data || {};
-        const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || "";
+        const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || URL.createObjectURL(file);
         const approvedUpload = data?.decision === "approved";
         const photo = {
           id: uploaded.id || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
@@ -35865,8 +35876,8 @@
           isPrimary,
           reviewStatus: approvedUpload ? "approved" : "pending",
           review_status: approvedUpload ? "approved" : "pending",
-          reviewNotes: "",
-          review_notes: "",
+          reviewNotes: approvedUpload ? "" : "Waiting for admin verification.",
+          review_notes: approvedUpload ? "" : "Waiting for admin verification.",
           sortOrder
         };
         const submittedPhotos = [...(profile.submittedPhotos || [])];
@@ -36884,7 +36895,7 @@
           ${dancerSetupPhotoPreviewMarkup()}
           <div class="field">
             <label for="setupProfilePhotos">Profile photos</label>
-            <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+            <input id="setupProfilePhotos" type="file" accept="image/*" multiple>
             <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> The first photo becomes your main profile photo. The rest are reviewed for your gallery.</div>
           </div>
           <div class="rule-note" id="photoUploadResult">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
@@ -39316,7 +39327,7 @@
         renderDancerManagement();
         renderApprovedVisualProfileEditor();
         syncApprovedProfileSubmitState();
-        if (uploadResult?.decision === "review") {
+        if (uploadResult?.decision && uploadResult.decision !== "approved") {
           const message = uploadResult.message || "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.";
           if (result) result.textContent = message;
           if (visualStatus) visualStatus.textContent = message;

@@ -607,7 +607,7 @@ function DancerPanel({
       <DancerSetupPanel profile={profile} />
       <DancerSocialPanel profile={profile} />
       <DancerSharePanel profile={profile} />
-      <DancerPhotoPanel />
+      <DancerPhotoPanel profile={profile} />
       <DancerVerificationPanel reviews={reviews} />
       <DancerBillingPanel />
     </>
@@ -1549,12 +1549,47 @@ function toSocialUrl(platform: string, value: string) {
   return text;
 }
 
-function DancerPhotoPanel() {
+type DancerPhotoItem = {
+  id: string;
+  imageUrl: string;
+  label: string;
+  status: "approved" | "pending" | "rejected";
+  note: string;
+};
+
+function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
   const [file, setFile] = useState<File | null>(null);
   const [isPrimary, setIsPrimary] = useState(true);
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photos, setPhotos] = useState<DancerPhotoItem[]>(() => dancerPhotoItemsFromProfile(profile));
+  const [selectedPreview, setSelectedPreview] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    setPhotos((current) => mergePhotoItems(current, dancerPhotoItemsFromProfile(profile)));
+  }, [profile]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedPreview) URL.revokeObjectURL(selectedPreview);
+    };
+  }, [selectedPreview]);
+
+  function selectPhoto(nextFile: File | null) {
+    if (selectedPreview) URL.revokeObjectURL(selectedPreview);
+    setFile(nextFile);
+    if (!nextFile) {
+      setSelectedPreview("");
+      return;
+    }
+
+    setSelectedPreview(URL.createObjectURL(nextFile));
+    if (!nextFile.type.startsWith("image/")) {
+      setStatus("Choose an image from your photo gallery.");
+      return;
+    }
+    setStatus(`${nextFile.name || "Photo"} selected. Press Upload photo to send it for verification.`);
+  }
 
   async function uploadPhoto(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1575,6 +1610,7 @@ function DancerPhotoPanel() {
 
     setIsUploading(true);
     setStatus("Checking your photo...");
+    const localPreviewUrl = URL.createObjectURL(file);
     try {
       const response = await fetch("/api/dancer/photos", {
         method: "POST",
@@ -1583,11 +1619,22 @@ function DancerPhotoPanel() {
       });
       const data = await response.json();
       if (!response.ok || data.decision === "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
-      setPhotoUrl(data.decision === "approved" ? data.photo?.imageUrl || "" : "");
-      setStatus(data.message || (data.decision === "approved" ? "Photo uploaded successfully." : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."));
-      setFile(null);
+      const approved = data.decision === "approved";
+      const uploadedPhoto: DancerPhotoItem = {
+        id: String(data.photo?.id || data.moderationRecordId || `${file.name}:${file.lastModified}`),
+        imageUrl: approved ? String(data.photo?.imageUrl || localPreviewUrl) : localPreviewUrl,
+        label: isPrimary ? "Primary photo" : "Gallery photo",
+        status: approved ? "approved" : "pending",
+        note: approved ? "Live on your profile." : "Awaiting admin verification before it appears publicly.",
+      };
+      if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
+      setPhotos((current) => mergePhotoItems([uploadedPhoto], current));
+      setStatus(data.message || (approved ? "Photo uploaded successfully." : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."));
+      selectPhoto(null);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to upload photo.");
+      URL.revokeObjectURL(localPreviewUrl);
+      const message = error instanceof Error ? error.message : "Unable to upload photo.";
+      setStatus(message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF") ? "That gallery photo format needs conversion first. Please choose a JPEG, PNG, or WebP photo, or set your phone camera to Most Compatible for new photos." : message);
     } finally {
       setIsUploading(false);
     }
@@ -1600,9 +1647,9 @@ function DancerPhotoPanel() {
         <label>
           Profile photo
           <input
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*"
             type="file"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
+            onChange={(event) => selectPhoto(event.target.files?.[0] || null)}
           />
         </label>
         <label className="check-row">
@@ -1614,9 +1661,64 @@ function DancerPhotoPanel() {
         </button>
         {status ? <p>{status}</p> : null}
       </form>
-      {photoUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photoUrl})` }} /> : null}
+      {selectedPreview ? (
+        <div className="photo-review-card is-pending">
+          <div className="photo-preview" style={{ backgroundImage: `url(${selectedPreview})` }} />
+          <span>
+            <strong>{isPrimary ? "Primary photo" : "Gallery photo"}</strong>
+            <small>Ready to upload</small>
+            <em>Selected from your photo gallery. Press Upload photo to send it for verification.</em>
+          </span>
+        </div>
+      ) : null}
+      <div className="photo-review-list">
+        {photos.map((photo) => (
+          <div className={`photo-review-card is-${photo.status}`} key={photo.id}>
+            {photo.imageUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photo.imageUrl})` }} /> : <div className="photo-preview empty">Review</div>}
+            <span>
+              <strong>{photo.label}</strong>
+              <small>{photo.status === "approved" ? "Approved" : photo.status === "rejected" ? "Needs fix" : "Needs verification"}</small>
+              <em>{photo.note}</em>
+            </span>
+          </div>
+        ))}
+        {!photos.length ? <p>No profile photos uploaded yet.</p> : null}
+      </div>
     </article>
   );
+}
+
+function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhotoItem[] {
+  const approvedPhotos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos as Array<Record<string, unknown>> : [];
+  const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews as Array<Record<string, unknown>> : [];
+
+  return [
+    ...approvedPhotos.map((photo, index) => {
+      const reviewStatus = String(photo.review_status || photo.reviewStatus || "approved").toLowerCase();
+      return {
+        id: String(photo.id || `photo-${index}`),
+        imageUrl: String(photo.imageUrl || photo.image_url || ""),
+        label: photo.is_primary || photo.isPrimary ? "Primary photo" : `Gallery photo ${index + 1}`,
+        status: reviewStatus === "rejected" ? "rejected" as const : reviewStatus === "pending" ? "pending" as const : "approved" as const,
+        note: reviewStatus === "rejected" ? "Admin asked for a replacement." : reviewStatus === "pending" ? "Awaiting admin verification before it appears publicly." : "Live on your profile.",
+      };
+    }),
+    ...pendingReviews.map((review, index) => ({
+      id: String(review.id || `pending-photo-${index}`),
+      imageUrl: "",
+      label: String(review.upload_context || "").includes("main") ? "Primary photo" : `Gallery photo ${index + 1}`,
+      status: "pending" as const,
+      note: "Uploaded and awaiting admin verification before it appears publicly.",
+    })),
+  ];
+}
+
+function mergePhotoItems(...groups: DancerPhotoItem[][]) {
+  const byId = new Map<string, DancerPhotoItem>();
+  groups.flat().forEach((photo) => {
+    if (!byId.has(photo.id)) byId.set(photo.id, photo);
+  });
+  return Array.from(byId.values()).slice(0, 8);
 }
 
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -1677,7 +1779,7 @@ function DashboardStyles() {
   return (
     <style>{`
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .dashboard-shell { min-height: 100vh; padding: 22px clamp(16px, 4vw, 56px) 56px; background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
+      .dashboard-shell { min-height: 100vh; padding: max(22px, calc(env(safe-area-inset-top) + 22px)) clamp(16px, 4vw, 56px) 56px; scroll-padding-top: max(22px, calc(env(safe-area-inset-top) + 22px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
       .top-nav, .dashboard-head, .dashboard-grid { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .top-nav { margin-bottom: 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #cfc5de; }
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
@@ -1739,7 +1841,16 @@ function DashboardStyles() {
       .shift-list-head small { color: #b9accd; line-height: 1.45; }
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
-      .photo-preview { width: 180px; aspect-ratio: 3 / 4; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); }
+      .photo-review-list { display: grid; gap: 10px; }
+      .photo-review-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .photo-review-card.is-pending { border-color: rgba(217,173,79,.58); background: rgba(217,173,79,.1); box-shadow: inset 3px 0 0 rgba(217,173,79,.88); }
+      .photo-review-card.is-approved { border-color: rgba(50,255,164,.36); background: rgba(50,255,164,.08); }
+      .photo-review-card.is-rejected { border-color: rgba(255,104,124,.58); background: rgba(255,104,124,.12); box-shadow: inset 3px 0 0 rgba(255,104,124,.9); }
+      .photo-review-card span { display: grid; gap: 4px; }
+      .photo-review-card strong { color: #fff; }
+      .photo-review-card small { color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; }
+      .photo-review-card em { color: #cfc5de; font-size: 13px; font-style: normal; line-height: 1.35; }
+      .photo-preview { width: 96px; aspect-ratio: 3 / 4; display: grid; place-items: center; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; }
       .review-list { display: grid; gap: 10px; }
       .review-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .review-row span { color: #94e5ff; font-size: 13px; font-weight: 850; text-transform: capitalize; }

@@ -18,7 +18,11 @@ export async function validateAndPrepareDancrImage(file: Blob): Promise<Validate
     throw new Error("Photo must be 10 MB or smaller.");
   }
 
-  const original = Buffer.from(await file.arrayBuffer());
+  let original = Buffer.from(await file.arrayBuffer());
+  if (isHeicImage(original)) {
+    original = await convertHeicToJpeg(original);
+  }
+
   const detected = detectImage(original);
   if (!detected) {
     throw new Error("Photo must be a valid JPEG, PNG, or WebP image.");
@@ -43,6 +47,30 @@ function detectImage(buffer: Buffer): Omit<ValidatedDancrImage, "buffer" | "sha2
   if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return detectPng(buffer);
   if (buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP") return detectWebp(buffer);
   return null;
+}
+
+function isHeicImage(buffer: Buffer) {
+  if (buffer.length < 12 || buffer.toString("ascii", 4, 8) !== "ftyp") return false;
+  const brand = buffer.toString("ascii", 8, 12).toLowerCase();
+  return ["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(brand);
+}
+
+async function convertHeicToJpeg(buffer: Buffer) {
+  try {
+    const importer = new Function("specifier", "return import(specifier)");
+    const mod = await importer("sharp");
+    const sharp = mod.default || mod;
+    return await sharp(buffer, { limitInputPixels: false })
+      .rotate()
+      .jpeg({ quality: 92, mozjpeg: true })
+      .toBuffer();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error || "");
+    if (message.includes("Cannot find package") || message.includes("Cannot find module")) {
+      throw new Error("HEIC/HEIF photo conversion is not installed. Run npm install before uploading iPhone gallery photos.");
+    }
+    throw new Error("Unable to convert this HEIC/HEIF photo. Please choose another photo or export it as JPEG.");
+  }
 }
 
 function detectJpeg(buffer: Buffer) {
