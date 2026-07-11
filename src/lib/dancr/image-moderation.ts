@@ -80,6 +80,20 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     evaluation = evaluateDancrImageModeration(providerResult);
   } catch (error) {
     errorCode = moderationErrorCode(error);
+    if (errorCode === "missing_openai_api_key" || errorCode === "invalid_openai_api_key") {
+      await updateModerationRecord(admin, record.id, {
+        decision: "review",
+        status: "error",
+        reasonCodes: [errorCode],
+        categoryFlags,
+        categoryScores: {},
+        providerFlagged: false,
+        errorCode,
+      });
+      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+      logModeration("provider_error", { recordId: record.id, errorCode });
+      throw new Error(moderationUploadErrorMessage(errorCode));
+    }
     evaluation = {
       decision: "review",
       reasonCodes: [errorCode],

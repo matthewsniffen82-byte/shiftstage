@@ -26837,6 +26837,68 @@
       padding-bottom: 14px !important;
     }
 
+    #approvedPhotoUploadStatus,
+    #photoUploadResult {
+      min-height: 34px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 8px 10px !important;
+      border: 1px solid rgba(139,92,246,.18) !important;
+      border-radius: 10px !important;
+      background: rgba(5,5,8,.42) !important;
+      color: #cfc5de !important;
+      font-size: 12px !important;
+      font-weight: 850 !important;
+      line-height: 1.25 !important;
+    }
+
+    #approvedPhotoUploadStatus.is-moderating,
+    #photoUploadResult.is-moderating {
+      border-color: rgba(53,216,255,.52) !important;
+      color: #e8fbff !important;
+      background: rgba(6,42,50,.72) !important;
+      box-shadow: 0 0 18px rgba(53,216,255,.14), inset 0 0 18px rgba(53,216,255,.06) !important;
+    }
+
+    #approvedPhotoUploadStatus.is-moderating::before,
+    #photoUploadResult.is-moderating::before {
+      content: "";
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      border-radius: 999px !important;
+      background: #35d8ff !important;
+      box-shadow: 0 0 12px rgba(53,216,255,.76) !important;
+      animation: dancrModerationPulse 1s ease-in-out infinite !important;
+    }
+
+    #approvedPhotoUploadStatus.is-success,
+    #photoUploadResult.is-success {
+      border-color: rgba(53,216,255,.46) !important;
+      color: #e8fbff !important;
+      background: rgba(6,42,50,.46) !important;
+    }
+
+    #approvedPhotoUploadStatus.is-review,
+    #photoUploadResult.is-review {
+      border-color: rgba(217,173,79,.52) !important;
+      color: #ffe9b0 !important;
+      background: rgba(48,34,8,.48) !important;
+    }
+
+    #approvedPhotoUploadStatus.is-error,
+    #photoUploadResult.is-error {
+      border-color: rgba(255,104,124,.58) !important;
+      color: #ffd4da !important;
+      background: rgba(66,10,20,.5) !important;
+    }
+
+    @keyframes dancrModerationPulse {
+      0%, 100% { opacity: .42; transform: scale(.82); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
     #profileModal .profile-qr-tile,
     .approved-visual-profile .profile-qr-tile {
       display: grid !important;
@@ -36470,7 +36532,28 @@
         return;
       }
       submit.disabled = true;
-      if (result) result.textContent = `Checking ${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"}...`;
+      let setupProgressIndex = 0;
+      const setupProgressSteps = [
+        `Uploading ${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"} securely...`,
+        "Server is validating the real image file data...",
+        "Auto moderator is checking the photo content...",
+        "Saving approved photos or review records...",
+        "Almost done. Finalizing photo status..."
+      ];
+      const setSetupPhotoStatus = (message, state = "") => {
+        if (!result) return;
+        result.textContent = message;
+        result.classList.toggle("is-moderating", state === "moderating");
+        result.classList.toggle("is-success", state === "success");
+        result.classList.toggle("is-review", state === "review");
+        result.classList.toggle("is-error", state === "error");
+        result.setAttribute("aria-busy", state === "moderating" ? "true" : "false");
+      };
+      setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
+      const setupProgressTimer = window.setInterval(() => {
+        setupProgressIndex = Math.min(setupProgressIndex + 1, setupProgressSteps.length - 1);
+        setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
+      }, 1400);
       try {
         const uploaded = await Promise.all(
           photoFiles.map((file, index) => uploadSetupPhotoFile(file, index === 0, index))
@@ -36508,14 +36591,21 @@
         const message = reviewCount
           ? "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."
           : "Photo uploaded successfully.";
-        if (result) result.textContent = message;
+        setSetupPhotoStatus(message, reviewCount ? "review" : "success");
         showToast(message);
         renderDancerSetup();
+        const refreshedResult = document.getElementById("photoUploadResult");
+        if (refreshedResult) {
+          refreshedResult.textContent = message;
+          refreshedResult.classList.add(reviewCount ? "is-review" : "is-success");
+          refreshedResult.setAttribute("aria-busy", "false");
+        }
       } catch (error) {
         const message = normalizeRequestError(error, "Could not upload photos");
-        if (result) result.textContent = message;
+        setSetupPhotoStatus(message, "error");
         showToast(message);
       } finally {
+        window.clearInterval(setupProgressTimer);
         submit.disabled = false;
       }
     }
@@ -36671,17 +36761,53 @@
       const result = document.getElementById("dancerControlResult");
       const visualStatus = document.getElementById("approvedPhotoUploadStatus");
       if (result) result.textContent = message;
-      if (visualStatus) visualStatus.textContent = message;
+      if (visualStatus) {
+        visualStatus.textContent = message;
+        visualStatus.classList.remove("is-moderating", "is-success", "is-review", "is-error");
+        visualStatus.setAttribute("aria-busy", "false");
+      }
       showToast(message);
       if (!input) {
         const missingMessage = "Photo uploader is still loading. Close Edit Profile, open it again, and try once more.";
         if (result) result.textContent = missingMessage;
-        if (visualStatus) visualStatus.textContent = missingMessage;
+        if (visualStatus) {
+          visualStatus.textContent = missingMessage;
+          visualStatus.classList.add("is-error");
+        }
         showToast(missingMessage);
         return;
       }
       input.value = "";
       input.click();
+    }
+
+    function setApprovedPhotoUploadStatus(message, state = "") {
+      const result = document.getElementById("dancerControlResult");
+      const visualStatus = document.getElementById("approvedPhotoUploadStatus");
+      if (result) result.textContent = message;
+      if (!visualStatus) return;
+      visualStatus.textContent = message;
+      visualStatus.classList.toggle("is-moderating", state === "moderating");
+      visualStatus.classList.toggle("is-success", state === "success");
+      visualStatus.classList.toggle("is-review", state === "review");
+      visualStatus.classList.toggle("is-error", state === "error");
+      visualStatus.setAttribute("aria-busy", state === "moderating" ? "true" : "false");
+    }
+
+    function startApprovedPhotoModerationProgress(fileName) {
+      const steps = [
+        `Uploading ${fileName} securely...`,
+        "Server is validating the real image file...",
+        "Auto moderator is checking the photo...",
+        "Saving the moderation result...",
+        "Almost done. Finalizing photo status..."
+      ];
+      let index = 0;
+      setApprovedPhotoUploadStatus(steps[index], "moderating");
+      return window.setInterval(() => {
+        index = Math.min(index + 1, steps.length - 1);
+        setApprovedPhotoUploadStatus(steps[index], "moderating");
+      }, 1400);
     }
 
     function setupStepMarkup(step, title, body) {
@@ -39586,12 +39712,8 @@
       if (event.target?.id !== "approvedPhotoUploadInput") return;
       const input = event.target;
       const file = input.files?.[0];
-      const result = document.getElementById("dancerControlResult");
-      const visualStatus = document.getElementById("approvedPhotoUploadStatus");
       if (!file) return;
-      const checkingMessage = `Checking ${file.name}...`;
-      if (result) result.textContent = checkingMessage;
-      if (visualStatus) visualStatus.textContent = checkingMessage;
+      const progressTimer = startApprovedPhotoModerationProgress(file.name || "photo");
       showToast("Checking your photo...");
       input.disabled = true;
       try {
@@ -39603,21 +39725,19 @@
         syncApprovedProfileSubmitState();
         if (uploadResult?.decision && uploadResult.decision !== "approved") {
           const message = uploadResult.message || "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.";
-          if (result) result.textContent = message;
-          if (visualStatus) visualStatus.textContent = message;
+          setApprovedPhotoUploadStatus(message, "review");
           showToast("Photo awaiting review");
         } else {
           const message = uploadResult?.message || "Photo uploaded successfully.";
-          if (result) result.textContent = message;
-          if (visualStatus) visualStatus.textContent = message;
+          setApprovedPhotoUploadStatus(message, "success");
           showToast("Photo uploaded successfully");
         }
       } catch (error) {
         const message = normalizeRequestError(error, "Could not upload photo");
-        if (result) result.textContent = message;
-        if (visualStatus) visualStatus.textContent = message;
+        setApprovedPhotoUploadStatus(message, "error");
         showToast(message);
       } finally {
+        window.clearInterval(progressTimer);
         pendingApprovedPhotoAutoSubmit = false;
         input.value = "";
         input.disabled = false;
