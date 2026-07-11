@@ -1631,7 +1631,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
     formData.set("file", file);
     formData.set("isPrimary", String(isPrimary));
     formData.set("replaceExisting", String(isPrimary));
-    const uploadKey = `${file.name}:${file.size}:${file.lastModified}:${isPrimary ? "primary" : "gallery"}`;
+    const uploadKey = `${file.name}:${file.size}:${file.lastModified}:${isPrimary ? "primary" : "gallery"}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     formData.set("idempotencyKey", uploadKey);
 
     setIsUploading(true);

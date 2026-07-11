@@ -50,7 +50,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (!input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id);
 
   const image = await validateAndPrepareDancrImage(input.file);
-  let idempotencyKey = safeIdempotencyKey(input.idempotencyKey) || image.sha256;
+  let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
   if (existing && existing.status !== "error") return moderationRecordToUploadResponse(admin, existing);
   if (existing?.status === "error") {

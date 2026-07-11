@@ -36269,7 +36269,7 @@
       formData.append("file", file);
       formData.append("isPrimary", isPrimary ? "true" : "false");
       formData.append("sortOrder", String(sortOrder));
-      formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:${isPrimary}:${sortOrder}`);
+      formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:${isPrimary}:${sortOrder}:${Date.now()}:${Math.random().toString(36).slice(2)}`);
       if (options.replaceExisting) formData.append("replaceExisting", "true");
       return postAuthenticatedFormData("/api/dancer/photos", formData);
     }
