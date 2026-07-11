@@ -14,10 +14,17 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function GET(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
-    const account = await getAccountByUserId(client, user.id);
+    let account = await getAccountByUserId(client, user.id);
 
     if (!account) {
       return NextResponse.json({ ok: false, error: "Account not found." }, { status: 404 });
+    }
+
+    if (account.role === "dancer" && account.accountState === "deleted") {
+      const hasLiveProfile = await hasLiveDancerProfile(client, user.id);
+      if (hasLiveProfile) {
+        account = await setAccountState(client, user.id, "active");
+      }
     }
 
     return NextResponse.json({ ok: true, account, session });
@@ -104,4 +111,16 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to delete account.");
   }
+}
+
+async function hasLiveDancerProfile(client: any, userId: string) {
+  const { data, error } = await client
+    .from("dancer_profiles")
+    .select("id, status, is_public")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  const status = String(data.status || "").toLowerCase();
+  return status !== "deleted" && status !== "disabled" && (data.is_public !== false || status === "approved");
 }

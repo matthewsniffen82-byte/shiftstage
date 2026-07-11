@@ -29592,7 +29592,22 @@
     function hasLiveEditableDancerAccount() {
       if (!isDancerSession()) return false;
       const profile = activeDancerProfile() || null;
+      const profileStatus = normalizedReviewStatus(profile?.status);
+      const hasEditableProfile = Boolean(
+        profile &&
+        profileStatus !== "deleted" &&
+        profileStatus !== "disabled" &&
+        (
+          profile.name ||
+          profile.stageName ||
+          profile.mainPhotoUrl ||
+          (profile.galleryPhotoUrls || []).length ||
+          (profile.submittedPhotos || []).length ||
+          profile.isPublic !== false
+        )
+      );
       return Boolean(
+        hasEditableProfile ||
         dancerSetup.approval ||
         dancerCoreApprovalUnlocked(profile) ||
         normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved"
