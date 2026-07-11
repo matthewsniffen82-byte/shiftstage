@@ -33784,6 +33784,7 @@
                 <button type="button" data-approved-visual-photo-add="main">Add main photo</button>
                 <button type="button" data-approved-visual-photo-add="gallery">Add gallery photo</button>
               </div>
+              <div class="meta" id="approvedPhotoUploadStatus" aria-live="polite">Choose a photo button to upload a new picture.</div>
               <div class="modal-grid">
                 ${shiftsMarkup(profile, shiftStatus(profile))}
                 <div class="info-tile">
@@ -33915,8 +33916,7 @@
         pendingApprovedPhotoTarget = replaceButton.dataset.photoTarget || "gallery";
         pendingApprovedPhotoAutoSubmit = false;
         closeApprovedVisualEditPopover();
-        document.getElementById("approvedPhotoUploadInput")?.click();
-        showToast("Choose a replacement picture, then submit for review");
+        openApprovedPhotoUploadPicker("Choose a replacement picture, then submit for review.");
         return true;
       }
 
@@ -36329,6 +36329,24 @@
       } finally {
         if (button) button.disabled = false;
       }
+    }
+
+    function openApprovedPhotoUploadPicker(message) {
+      const input = document.getElementById("approvedPhotoUploadInput");
+      const result = document.getElementById("dancerControlResult");
+      const visualStatus = document.getElementById("approvedPhotoUploadStatus");
+      if (result) result.textContent = message;
+      if (visualStatus) visualStatus.textContent = message;
+      showToast(message);
+      if (!input) {
+        const missingMessage = "Photo uploader is still loading. Close Edit Profile, open it again, and try once more.";
+        if (result) result.textContent = missingMessage;
+        if (visualStatus) visualStatus.textContent = missingMessage;
+        showToast(missingMessage);
+        return;
+      }
+      input.value = "";
+      input.click();
     }
 
     function setupStepMarkup(step, title, body) {
@@ -39219,32 +39237,34 @@
 
       if (action === "main-photo") {
         pendingApprovedPhotoTarget = "main";
-        document.getElementById("approvedPhotoUploadInput")?.click();
-        setResult("Choose a main photo to upload for review.");
+        openApprovedPhotoUploadPicker("Choose a main photo to upload for review.");
         return;
       }
 
       if (action === "gallery-photo") {
         pendingApprovedPhotoTarget = "gallery";
-        document.getElementById("approvedPhotoUploadInput")?.click();
-        setResult("Choose a gallery photo to upload for review.");
+        openApprovedPhotoUploadPicker("Choose a gallery photo to upload for review.");
         return;
       }
 
       if (action === "replace-photo") {
         pendingApprovedPhotoTarget = trigger?.dataset.photoTarget || "gallery";
-        document.getElementById("approvedPhotoUploadInput")?.click();
-        setResult("Choose a replacement picture to upload for review.");
+        openApprovedPhotoUploadPicker("Choose a replacement picture to upload for review.");
         return;
       }
     }
 
-    document.getElementById("approvedPhotoUploadInput")?.addEventListener("change", async (event) => {
-      const input = event.currentTarget;
+    dancerDashboard.addEventListener("change", async (event) => {
+      if (event.target?.id !== "approvedPhotoUploadInput") return;
+      const input = event.target;
       const file = input.files?.[0];
       const result = document.getElementById("dancerControlResult");
+      const visualStatus = document.getElementById("approvedPhotoUploadStatus");
       if (!file) return;
-      if (result) result.textContent = "Checking your photo...";
+      const checkingMessage = `Checking ${file.name}...`;
+      if (result) result.textContent = checkingMessage;
+      if (visualStatus) visualStatus.textContent = checkingMessage;
+      showToast("Checking your photo...");
       input.disabled = true;
       try {
         const uploadResult = await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
@@ -39254,19 +39274,27 @@
         renderApprovedVisualProfileEditor();
         syncApprovedProfileSubmitState();
         if (uploadResult?.decision === "review") {
-          if (result) result.textContent = uploadResult.message || "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.";
+          const message = uploadResult.message || "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.";
+          if (result) result.textContent = message;
+          if (visualStatus) visualStatus.textContent = message;
           showToast("Photo awaiting review");
         } else if (pendingApprovedPhotoAutoSubmit) {
-          if (result) result.textContent = "Photo uploaded. Sending it back to admin review...";
+          const message = "Photo uploaded. Sending it back to admin review...";
+          if (result) result.textContent = message;
+          if (visualStatus) visualStatus.textContent = message;
           await submitApprovedProfileChangesForReview(document.getElementById("approvedControlSubmitApproval"));
           showToast("Photo replaced and resubmitted");
         } else {
-          if (result) result.textContent = uploadResult?.message || "Photo uploaded successfully.";
+          const message = uploadResult?.message || "Photo uploaded successfully.";
+          if (result) result.textContent = message;
+          if (visualStatus) visualStatus.textContent = message;
           showToast("Photo uploaded successfully");
         }
       } catch (error) {
-        if (result) result.textContent = error.message || "Could not upload photo";
-        showToast(error.message || "Could not upload photo");
+        const message = normalizeRequestError(error, "Could not upload photo");
+        if (result) result.textContent = message;
+        if (visualStatus) visualStatus.textContent = message;
+        showToast(message);
       } finally {
         pendingApprovedPhotoAutoSubmit = false;
         input.value = "";
@@ -39358,8 +39386,7 @@
         pendingApprovedPhotoTarget = visualPhotoReplace.dataset.photoTarget || "gallery";
         pendingApprovedPhotoAutoSubmit = false;
         closeApprovedVisualEditPopover();
-        document.getElementById("approvedPhotoUploadInput")?.click();
-        showToast("Choose a replacement picture, then submit for review");
+        openApprovedPhotoUploadPicker("Choose a replacement picture, then submit for review.");
         return;
       }
       const visualPhotoAdd = event.target.closest("[data-approved-visual-photo-add]");
@@ -39367,8 +39394,7 @@
         event.preventDefault();
         pendingApprovedPhotoTarget = visualPhotoAdd.dataset.approvedVisualPhotoAdd || "gallery";
         pendingApprovedPhotoAutoSubmit = false;
-        document.getElementById("approvedPhotoUploadInput")?.click();
-        showToast("Choose a picture, then submit for review");
+        openApprovedPhotoUploadPicker("Choose a picture, then submit for review.");
         return;
       }
       const visualPhotoDelete = event.target.closest("[data-approved-visual-photo-delete]");
