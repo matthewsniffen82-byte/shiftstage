@@ -1624,13 +1624,14 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
       });
       const data = await response.json();
       if (!response.ok || data.decision === "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
-      const approved = data.decision === "approved";
+      const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
+      const approved = uploadStatus === "approved";
       const uploadedPhoto: DancerPhotoItem = {
         id: String(data.photo?.id || data.moderationRecordId || `${file.name}:${file.lastModified}`),
         imageUrl: approved ? String(data.photo?.imageUrl || localPreviewUrl) : localPreviewUrl,
         label: isPrimary ? "Primary photo" : "Gallery photo",
-        status: approved ? "approved" : "pending",
-        note: approved ? "Live on your profile." : "Awaiting admin verification before it appears publicly.",
+        status: uploadStatus,
+        note: photoStatusNote(uploadStatus),
       };
       if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
       setPhotos((current) => mergePhotoItems([uploadedPhoto], current));
@@ -1699,13 +1700,13 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
 
   return [
     ...approvedPhotos.map((photo, index) => {
-      const reviewStatus = String(photo.review_status || photo.reviewStatus || "approved").toLowerCase();
+      const reviewStatus = normalizePhotoStatus(photo.review_status || photo.reviewStatus || "approved");
       return {
         id: String(photo.id || `photo-${index}`),
         imageUrl: String(photo.imageUrl || photo.image_url || ""),
         label: photo.is_primary || photo.isPrimary ? "Primary photo" : `Gallery photo ${index + 1}`,
-        status: reviewStatus === "rejected" ? "rejected" as const : reviewStatus === "pending" ? "pending" as const : "approved" as const,
-        note: reviewStatus === "rejected" ? "Admin asked for a replacement." : reviewStatus === "pending" ? "Awaiting admin verification before it appears publicly." : "Live on your profile.",
+        status: reviewStatus,
+        note: photoStatusNote(reviewStatus),
       };
     }),
     ...pendingReviews.map((review, index) => ({
@@ -1721,9 +1722,23 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
 function mergePhotoItems(...groups: DancerPhotoItem[][]) {
   const byId = new Map<string, DancerPhotoItem>();
   groups.flat().forEach((photo) => {
-    if (!byId.has(photo.id)) byId.set(photo.id, photo);
+    const existing = byId.get(photo.id);
+    if (!existing || (existing.status !== "approved" && photo.status === "approved")) byId.set(photo.id, photo);
   });
   return Array.from(byId.values()).slice(0, 8);
+}
+
+function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
+  const status = String(value || "").toLowerCase();
+  if (status === "approved" || status === "live") return "approved";
+  if (status === "rejected" || status === "denied") return "rejected";
+  return "pending";
+}
+
+function photoStatusNote(status: DancerPhotoItem["status"]) {
+  if (status === "approved") return "Live on your profile.";
+  if (status === "rejected") return "Admin asked for a replacement.";
+  return "Awaiting admin verification before it appears publicly.";
 }
 
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {

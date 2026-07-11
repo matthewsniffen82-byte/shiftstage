@@ -77,10 +77,6 @@ export function evaluateDancrImageModeration(result: ProviderModerationResult | 
     reasonCodes.add("sexual_signal_requires_human_review");
   }
 
-  if (providerFlagged) {
-    reasonCodes.add("provider_flagged_without_clear_auto_reject");
-  }
-
   if (reasonCodes.size) {
     return { decision: "review", reasonCodes: [...reasonCodes], categoryScores, providerFlagged };
   }
