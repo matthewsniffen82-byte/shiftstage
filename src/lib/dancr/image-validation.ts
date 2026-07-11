@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "crypto";
 
 export const MAX_DANCR_IMAGE_BYTES = 10 * 1024 * 1024;
+export const MAX_DANCR_RAW_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const MAX_DANCR_IMAGE_DIMENSION = 6000;
 
 export type ValidatedDancrImage = {
@@ -14,12 +15,17 @@ export type ValidatedDancrImage = {
 };
 
 export async function validateAndPrepareDancrImage(file: Blob): Promise<ValidatedDancrImage> {
-  if (file.size > MAX_DANCR_IMAGE_BYTES) {
-    throw new Error("Photo must be 10 MB or smaller.");
+  if (file.size > MAX_DANCR_RAW_UPLOAD_BYTES) {
+    throw new Error("Photo must be 25 MB or smaller.");
   }
 
   let original = Buffer.from(await file.arrayBuffer());
-  if (isHeicImage(original)) {
+  const isHeic = isHeicImage(original);
+  if (!isHeic && original.length > MAX_DANCR_IMAGE_BYTES) {
+    throw new Error("Photo must be 10 MB or smaller.");
+  }
+
+  if (isHeic) {
     original = await convertHeicToJpeg(original);
   }
 
@@ -33,6 +39,10 @@ export async function validateAndPrepareDancrImage(file: Blob): Promise<Validate
   }
 
   const buffer = stripImageMetadata(original, detected.contentType);
+  if (buffer.length > MAX_DANCR_IMAGE_BYTES) {
+    throw new Error("Photo must be 10 MB or smaller after conversion.");
+  }
+
   return {
     ...detected,
     buffer,
@@ -62,7 +72,13 @@ async function convertHeicToJpeg(buffer: Buffer) {
     const sharp = mod.default || mod;
     return await sharp(buffer, { limitInputPixels: false })
       .rotate()
-      .jpeg({ quality: 92, mozjpeg: true })
+      .resize({
+        width: MAX_DANCR_IMAGE_DIMENSION,
+        height: MAX_DANCR_IMAGE_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 88, mozjpeg: true })
       .toBuffer();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error || "");

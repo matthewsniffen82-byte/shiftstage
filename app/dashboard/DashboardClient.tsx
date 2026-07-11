@@ -1559,7 +1559,7 @@ type DancerPhotoItem = {
 
 function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
   const [file, setFile] = useState<File | null>(null);
-  const [isPrimary, setIsPrimary] = useState(true);
+  const [isPrimary, setIsPrimary] = useState(false);
   const [photos, setPhotos] = useState<DancerPhotoItem[]>(() => dancerPhotoItemsFromProfile(profile));
   const [selectedPreview, setSelectedPreview] = useState("");
   const [status, setStatus] = useState("");
@@ -1588,7 +1588,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
       setStatus("Choose an image from your photo gallery.");
       return;
     }
-    setStatus(`${nextFile.name || "Photo"} selected. Press Upload photo to send it for verification.`);
+    setStatus(`${nextFile.name || "Photo"} selected as a ${isPrimary ? "primary" : "gallery"} photo.`);
   }
 
   async function uploadPhoto(event: React.FormEvent<HTMLFormElement>) {
@@ -1607,6 +1607,8 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
     const formData = new FormData();
     formData.set("file", file);
     formData.set("isPrimary", String(isPrimary));
+    const uploadKey = `${file.name}:${file.size}:${file.lastModified}:${isPrimary ? "primary" : "gallery"}`;
+    formData.set("idempotencyKey", uploadKey);
 
     setIsUploading(true);
     setStatus("Checking your photo...");
@@ -1614,7 +1616,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
     try {
       const response = await fetch("/api/dancer/photos", {
         method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": `${file.name}:${file.size}:${file.lastModified}` },
+        headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": uploadKey },
         body: formData,
       });
       const data = await response.json();
@@ -1634,7 +1636,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
     } catch (error) {
       URL.revokeObjectURL(localPreviewUrl);
       const message = error instanceof Error ? error.message : "Unable to upload photo.";
-      setStatus(message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF") ? "That gallery photo format needs conversion first. Please choose a JPEG, PNG, or WebP photo, or set your phone camera to Most Compatible for new photos." : message);
+      setStatus(message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF") ? "That gallery photo could not be converted. Please choose another photo or set your phone camera to Most Compatible for new photos." : message);
     } finally {
       setIsUploading(false);
     }
@@ -1654,7 +1656,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
         </label>
         <label className="check-row">
           <input checked={isPrimary} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
-          Primary photo
+          Make this my primary photo
         </label>
         <button type="submit" disabled={isUploading}>
           {isUploading ? "Uploading..." : "Upload photo"}
