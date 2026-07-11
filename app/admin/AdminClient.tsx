@@ -563,7 +563,6 @@ function ImageModerationQueue({
         >
           <option value="review">Pending review</option>
           <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
         </select>
         <button type="button" onClick={() => loadQueue()} disabled={isLoading}>
           {isLoading ? "Loading..." : "Refresh"}

@@ -179,10 +179,12 @@ async function nextPhotoSortOrder(admin: any, dancerId: string) {
 
 async function createNeutralNotification(admin: any, userId: string) {
   await admin.from("notifications").insert({
-    user_id: userId,
-    type: "photo_moderation",
+    recipient_id: userId,
+    notification_type: "approval_status",
+    channel: "in_app",
     title: "Photo not approved",
     body: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
-    payload: {},
+    payload: { status: "rejected", targetType: "photo", setupStep: "photos" },
+    sent_at: new Date().toISOString(),
   }).catch(() => null);
 }

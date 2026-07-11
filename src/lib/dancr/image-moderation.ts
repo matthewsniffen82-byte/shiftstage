@@ -144,12 +144,34 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     errorCode,
   });
   await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+  await createAutoRejectedPhotoNotification(admin, input.userId, record.id);
   logModeration("rejected", { recordId: record.id, reasonCodes: evaluation.reasonCodes });
   return {
     decision: "rejected",
     moderationRecordId: record.id,
     message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
   };
+}
+
+async function createAutoRejectedPhotoNotification(client: DancrClient, userId: string, moderationRecordId: string) {
+  const now = new Date().toISOString();
+  await (client as any)
+    .from("notifications")
+    .insert({
+      recipient_id: userId,
+      notification_type: "approval_status",
+      channel: "in_app",
+      title: "Photo not approved",
+      body: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
+      payload: {
+        status: "rejected",
+        targetType: "photo",
+        moderationRecordId,
+        setupStep: "photos",
+      },
+      sent_at: now,
+    })
+    .catch(() => null);
 }
 
 async function approveModeratedUpload(
