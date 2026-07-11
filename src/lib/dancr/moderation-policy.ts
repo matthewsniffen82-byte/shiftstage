@@ -18,7 +18,9 @@ export const DANCR_IMAGE_MODERATION_MODEL = "omni-moderation-latest";
 
 export function dancrImageModerationThresholds() {
   return {
-    sexualReview: readThreshold("DANCR_SEXUAL_REVIEW_THRESHOLD", 0.72),
+    // Dancr allows revealing promotional photos. Keep review close to reject so ordinary
+    // clothed, bikini, lingerie, and stage outfit photos can auto-approve more often.
+    sexualReview: readThreshold("DANCR_SEXUAL_REVIEW_THRESHOLD", 0.86),
     sexualReject: readThreshold("DANCR_SEXUAL_REJECT_THRESHOLD", 0.92),
     violenceReject: readThreshold("DANCR_VIOLENCE_REJECT_THRESHOLD", 0.82),
     selfHarmReject: readThreshold("DANCR_SELF_HARM_REJECT_THRESHOLD", 0.72),
