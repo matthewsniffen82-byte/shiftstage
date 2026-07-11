@@ -1,6 +1,6 @@
 # Dancr Live Stack
 
-This repo currently contains the visual prototype in `outputs/index.html`. The production app should keep that visual system, but move all account, profile, shift, payment, notification, approval, and analytics behavior into real services.
+This repo is the live Dancr app. Account, profile, shift, payment, notification, approval, venue, discovery, moderation, and analytics behavior should be built in the Next.js app and Supabase-backed services.
 
 ## Production Services
 
@@ -21,7 +21,7 @@ This repo currently contains the visual prototype in `outputs/index.html`. The p
 3. Run `supabase/migrations/202606250002_auth_bootstrap.sql`.
 4. Run `supabase/migrations/202606250003_storage_policies.sql`.
 5. Add environment variables from `.env.example`.
-6. Convert the static prototype into a Next.js app while preserving the current Dancr UI.
+6. Keep public pages and dashboards served by the live Next.js app.
 7. Connect public pages to Supabase:
    - home
    - dancer profile
@@ -79,7 +79,7 @@ This repo currently contains the visual prototype in `outputs/index.html`. The p
 - Customer profiles are private.
 - Customers do not have public profile pages.
 - Public pages can view approved dancer profiles without login.
-- Follow, notify, and going actions can be anonymous in prototype, but should require a customer account in production unless intentionally designed as anonymous lead capture.
+- Follow, notify, and going actions should require a customer account unless intentionally designed as anonymous lead capture.
 
 ## Launch Order
 

@@ -1,12 +1,12 @@
 # Dancr
 
-Premium nightlife schedule discovery prototype.
+Premium nightlife schedule discovery live app.
 
-The current visual prototype lives at `outputs/index.html`. The production app shell is a Next.js app so Dancr can add real API routes while preserving the existing preview URL.
+Dancr is a Next.js, Supabase, Vercel, and TypeScript application. Public discovery pages, dashboards, approvals, photo moderation, schedules, notifications, venues, and account tools are served from the live app and database.
 
-## Live stack foundation
+## Live Stack
 
-Production backend planning has started in:
+The production app is implemented across:
 
 - `docs/live-stack.md`
 - `docs/backend-roadmap.md`
@@ -14,14 +14,15 @@ Production backend planning has started in:
 - `supabase/migrations/202606250001_initial_schema.sql`
 - `.env.example`
 
-The current visual prototype stays in `outputs/index.html` while the real Supabase, Stripe, notification, approval, and dashboard systems are built behind it.
-
-The first production app service layer lives in `src/lib`. It provides Supabase clients and Dancr service functions for auth, public pages, customer actions, dancer profile controls, shift posting, and dashboard analytics.
+The app service layer lives in `src/lib`. It provides Supabase clients and Dancr service functions for auth, public pages, customer actions, dancer profile controls, shift posting, dashboard analytics, approvals, notifications, support, billing, and image moderation.
 
 ## Production routes
 
-- `/` redirects to `/outputs/index.html`
-- `/outputs/index.html` serves the current Dancr prototype
+- `/` serves the live database-backed Dancr homepage
+- `/tonight`, `/dancers`, `/venues`, `/dancers/[slug]`, and `/venues/[slug] serve live public discovery pages
+- `/account` handles live auth and account access
+- `/dashboard/customer`, `/dashboard/dancer`, and `/dashboard/venue` serve authenticated dashboards
+- `/admin` serves the live admin console
 - `/api/health` verifies the Next.js API runtime is deployed
 - `/api/health/supabase` verifies the Vercel app can reach Supabase
 - `/api/public/dancers` and `/api/public/venues` serve public discovery data

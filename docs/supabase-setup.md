@@ -1,6 +1,6 @@
 # Supabase setup
 
-Use this when turning the Dancr prototype into the live app.
+Use this to configure the live Dancr app and database.
 
 ## 1. Create the project
 

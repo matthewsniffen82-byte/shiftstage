@@ -5,7 +5,7 @@
 - Supabase schema and RLS policies.
 - Environment variables.
 - Storage buckets.
-- Seed data for Las Vegas demo.
+- Live Las Vegas venue records with addresses and coordinates.
 - Public approved profile reads.
 
 ## Phase 2: Auth
@@ -82,4 +82,3 @@
   - moved up 3+ spots
   - first time trending
   - biggest mover
-

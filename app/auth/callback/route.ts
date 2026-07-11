@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
@@ -21,20 +19,76 @@ type CallbackSession = {
 } | null;
 
 export async function GET(request: Request) {
-  const htmlPath = path.join(process.cwd(), "outputs", "index.html");
-  const html = await readFile(htmlPath, "utf8");
   const callbackSession = await readCallbackSession(request);
-  const sessionScript = callbackSession
-    ? `<script>window.__DANCR_CONFIRMED_SESSION__=${JSON.stringify(callbackSession).replace(/</g, "\\u003c")};</script>`
-    : "";
-  const withBase = html.replace("<head>", `<head><base href="/outputs/">${sessionScript}`);
+  const redirectPath = callbackRedirectPath(request, callbackSession);
 
-  return new Response(withBase, {
+  return new Response(callbackHtml(callbackSession, redirectPath), {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
     },
   });
+}
+
+function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
+  const url = new URL(request.url);
+  const explicitReturnTo = safeReturnPath(url.searchParams.get("return_to"));
+  if (explicitReturnTo) return explicitReturnTo;
+
+  const role = callbackSession?.account?.role;
+  if (role === "dancer") return "/dashboard/dancer";
+  if (role === "customer") return "/dashboard/customer";
+  if (role === "venue") return "/dashboard/venue";
+  if (role === "admin") return "/admin";
+  return "/account";
+}
+
+function safeReturnPath(value: string | null) {
+  if (!value) return "";
+  try {
+    const path = value.startsWith("http") ? new URL(value).pathname : value;
+    return path.startsWith("/") && !path.startsWith("//") ? path : "";
+  } catch {
+    return "";
+  }
+}
+
+function callbackHtml(callbackSession: Awaited<ReturnType<typeof readCallbackSession>>, redirectPath: string) {
+  const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
+  const redirectJson = JSON.stringify(redirectPath);
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Opening Dancr</title>
+    <script>
+      const session = ${sessionJson};
+      const redirectTo = ${redirectJson};
+      if (session && session.accessToken) {
+        localStorage.setItem("dancrAuthSessionV1", JSON.stringify(session));
+      }
+      window.location.replace(redirectTo);
+    </script>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      main { max-width: 440px; padding: 24px; display: grid; gap: 12px; text-align: center; }
+      strong { font-size: 28px; }
+      a { color: #94e5ff; font-weight: 900; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <strong>Opening Dancr</strong>
+      <span>Your live account is being connected.</span>
+      <a href="${escapeHtml(redirectPath)}">Continue</a>
+    </main>
+  </body>
+</html>`;
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] || char);
 }
 
 async function readCallbackSession(request: Request) {
