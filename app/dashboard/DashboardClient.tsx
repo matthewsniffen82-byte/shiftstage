@@ -1643,7 +1643,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
         body: formData,
       });
       const data = await response.json();
-      if (!response.ok || data.decision === "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
+      if (!response.ok && data.decision !== "rejected") throw new Error(data.message || data.error || "Unable to upload photo.");
       const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
       const approved = uploadStatus === "approved";
       const uploadedPhoto: DancerPhotoItem = {
@@ -1651,11 +1651,11 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
         imageUrl: approved ? String(data.photo?.imageUrl || localPreviewUrl) : localPreviewUrl,
         label: isPrimary ? "Primary photo" : "Gallery photo",
         status: uploadStatus,
-        note: photoStatusNote(uploadStatus),
+        note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
       };
       if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
       setPhotos((current) => mergePhotoItems([uploadedPhoto], current));
-      setStatus(data.message || (approved ? "Photo uploaded successfully." : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."));
+      setStatus(photoUploadStatusMessage(uploadStatus, data.message));
       selectPhoto(null);
     } catch (error) {
       URL.revokeObjectURL(localPreviewUrl);
@@ -1693,7 +1693,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
           <span>
             <strong>{isPrimary ? "Primary photo" : "Gallery photo"}</strong>
             <small>Ready to upload</small>
-            <em>Selected from your photo gallery. Press Upload photo to send it for verification.</em>
+            <em>Selected from your photo gallery. Press Upload photo to check it with live moderation.</em>
           </span>
         </div>
       ) : null}
@@ -1703,7 +1703,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
             {photo.imageUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photo.imageUrl})` }} /> : <div className="photo-preview empty">Review</div>}
             <span>
               <strong>{photo.label}</strong>
-              <small>{photo.status === "approved" ? "Approved" : photo.status === "rejected" ? "Needs fix" : "Needs verification"}</small>
+              <small>{photoStatusLabel(photo.status)}</small>
               <em>{photo.note}</em>
             </span>
           </div>
@@ -1755,10 +1755,23 @@ function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
   return "pending";
 }
 
+function photoStatusLabel(status: DancerPhotoItem["status"]) {
+  if (status === "approved") return "Approved";
+  if (status === "rejected") return "Rejected";
+  return "Needs review";
+}
+
 function photoStatusNote(status: DancerPhotoItem["status"]) {
   if (status === "approved") return "Live on your profile.";
-  if (status === "rejected") return "Admin asked for a replacement.";
+  if (status === "rejected") return "Rejected by automated moderation. Choose a different photo.";
   return "Awaiting admin verification before it appears publicly.";
+}
+
+function photoUploadStatusMessage(status: DancerPhotoItem["status"], message?: unknown) {
+  const detail = typeof message === "string" && message.trim() ? message.trim() : photoStatusNote(status);
+  if (status === "approved") return `Approved: ${detail}`;
+  if (status === "rejected") return `Rejected: ${detail}`;
+  return `Needs review: ${detail}`;
 }
 
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {
