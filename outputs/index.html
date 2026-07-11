@@ -36672,6 +36672,8 @@
             const uploadedPhoto = item.photo || item || {};
             const imageUrl = uploadedPhoto.imageUrl || uploadedPhoto.image_url || uploadedPhoto.url || urls[index] || "";
             if (!imageUrl) return;
+            const reviewStatus = normalizedReviewStatus(uploadedPhoto.reviewStatus || uploadedPhoto.review_status || item.decision || "pending");
+            const finalReviewStatus = reviewStatus === "approved" || reviewStatus === "rejected" ? reviewStatus : "pending";
             profile.submittedPhotos = [...(profile.submittedPhotos || []), {
               id: uploadedPhoto.id || `${profile.id || profile.name}-setup-photo-${Date.now()}-${index}`,
               imageUrl,
@@ -36680,14 +36682,14 @@
               is_primary: index === 0,
               sortOrder: index,
               sort_order: index,
-              reviewStatus: "pending",
-              review_status: "pending",
-              reviewNotes: "",
-              review_notes: ""
+              reviewStatus: finalReviewStatus,
+              review_status: finalReviewStatus,
+              reviewNotes: finalReviewStatus === "rejected" ? (item.message || "Rejected by automatic moderation.") : "",
+              review_notes: finalReviewStatus === "rejected" ? (item.message || "Rejected by automatic moderation.") : ""
             }];
           });
           normalizeLocalDancerPhotos(profile);
-          profile.photoStatus = "Pending";
+          profile.photoStatus = reviewCount ? "Pending" : "Approved";
         }
         dancerSetup.photos = Boolean(urls.length || reviewCount);
         activeSetupStep = nextIncompleteStep() || "verification";
