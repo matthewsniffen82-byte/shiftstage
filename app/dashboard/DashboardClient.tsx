@@ -223,6 +223,9 @@ function NotificationPanel() {
         ))}
         {!notifications.length ? <p>No notifications yet.</p> : null}
       </div>
+      <button className="notification-clear-button" type="button" onClick={markAllRead}>
+        Clear notifications
+      </button>
       {status ? <p>{status}</p> : null}
     </article>
   );
@@ -1781,7 +1784,7 @@ function DashboardStyles() {
   return (
     <style>{`
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .dashboard-shell { min-height: 100vh; padding: max(22px, calc(env(safe-area-inset-top) + 22px)) clamp(16px, 4vw, 56px) 56px; scroll-padding-top: max(22px, calc(env(safe-area-inset-top) + 22px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
+      .dashboard-shell { min-height: 100vh; padding: max(46px, calc(env(safe-area-inset-top) + 38px)) clamp(16px, 4vw, 56px) 56px; scroll-padding-top: max(46px, calc(env(safe-area-inset-top) + 38px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
       .top-nav, .dashboard-head, .dashboard-grid { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .top-nav { margin-bottom: 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #cfc5de; }
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
@@ -1883,6 +1886,7 @@ function DashboardStyles() {
       .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; }
       .notification-row.read { opacity: .58; }
       .notification-row span { color: #b9accd; }
+      .notification-clear-button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 14px; }
       .notification-panel p { color: #94e5ff; font-size: 14px; }
       .support-panel form, .support-thread { display: grid; gap: 10px; }
       .support-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
