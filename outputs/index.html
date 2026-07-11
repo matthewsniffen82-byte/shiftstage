@@ -29779,14 +29779,15 @@
     }
 
     function socialPayloadFromMap(socials) {
-      return Object.entries(socials)
-        .filter(([, url]) => Boolean(url))
-        .map(([platform, url]) => ({
+      return socialPlatforms.map(({ key: platform }) => {
+        const url = String(socials?.[platform] || "").trim();
+        return {
           platform,
           url,
           handle: socialHandleFromUrl(url),
-          isActive: true
-        }));
+          isActive: Boolean(url)
+        };
+      });
     }
 
     function socialHandleFromUrl(url) {
