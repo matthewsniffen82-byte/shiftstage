@@ -1475,7 +1475,7 @@ function DancerSocialPanel({ profile }: { profile?: LoadState["profile"] }) {
     const existing = Array.isArray(profile?.social_links) ? profile.social_links : [];
     const nextSocials: Record<string, string> = {};
     for (const platform of SOCIAL_PLATFORMS) {
-      const row = existing.find((item: any) => item?.platform === platform.key);
+      const row = existing.find((item: any) => item?.platform === platform.key && item?.is_active !== false);
       nextSocials[platform.key] = String(row?.url || row?.handle || "");
     }
     setSocials(nextSocials);

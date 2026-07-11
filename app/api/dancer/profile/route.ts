@@ -101,7 +101,7 @@ export async function PATCH(request: Request) {
 
     let changedSocialPlatforms: SocialPlatform[] = [];
     if (Array.isArray(body.socials)) {
-      const rows = body.socials
+      const submittedRows = body.socials
         .filter((social: any) => SOCIAL_PLATFORMS.has(social?.platform))
         .map((social: any) => ({
           dancer_id: profile.id,
@@ -109,8 +109,8 @@ export async function PATCH(request: Request) {
           handle: String(social.handle || "").trim(),
           url: String(social.url || "").trim(),
           is_active: social.isActive !== false,
-        }))
-        .filter((social: any) => social.handle || social.url);
+        }));
+      const rows = submittedRows.filter((social: any) => social.is_active && (social.handle || social.url));
 
       if (rows.length) {
         const { data: existingSocials, error: existingSocialsError } = await db
@@ -143,12 +143,13 @@ export async function PATCH(request: Request) {
       const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
       await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
 
-      const activePlatforms = rows.map((social: any) => social.platform);
-      const inactivePlatforms = Array.from(SOCIAL_PLATFORMS).filter((platform) => !activePlatforms.includes(platform));
+      const activePlatforms: SocialPlatform[] = rows.map((social: any) => social.platform);
+      const submittedPlatforms: SocialPlatform[] = submittedRows.map((social: any) => social.platform);
+      const inactivePlatforms = submittedPlatforms.filter((platform: SocialPlatform) => !activePlatforms.includes(platform));
       if (inactivePlatforms.length) {
         const { error } = await db
           .from("social_links")
-          .update({ is_active: false })
+          .update({ handle: "", url: "", is_active: false })
           .eq("dancer_id", profile.id)
           .in("platform", inactivePlatforms);
 
