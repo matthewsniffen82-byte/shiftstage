@@ -8,11 +8,10 @@ export const dynamic = "force-dynamic";
 const DEFAULT_CITY = "Las Vegas";
 
 export default async function HomePage() {
-  const client = createAdminSupabaseClient();
   const [dancers, workingNow, venues] = await Promise.all([
-    getApprovedDancersByCity(client, DEFAULT_CITY),
-    getTonightShifts(client, DEFAULT_CITY),
-    getActiveVenues(DEFAULT_CITY),
+    safeHomeLoad("approved dancers", () => getApprovedDancersByCity(createAdminSupabaseClient(), DEFAULT_CITY), []),
+    safeHomeLoad("working now", () => getTonightShifts(createAdminSupabaseClient(), DEFAULT_CITY), []),
+    safeHomeLoad("active venues", () => getActiveVenues(DEFAULT_CITY), []),
   ]);
 
   return (
@@ -108,6 +107,27 @@ async function getActiveVenues(city: string) {
     longitude: venue.longitude,
     hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
   }));
+}
+
+async function safeHomeLoad<T>(label: string, loader: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await loader();
+  } catch (error) {
+    console.error(`[home] Unable to load ${label}`, toLogSafeError(error));
+    return fallback;
+  }
+}
+
+function toLogSafeError(error: unknown) {
+  if (!error || typeof error !== "object") return { message: String(error) };
+  const record = error as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown };
+
+  return {
+    message: typeof record.message === "string" ? record.message : "Unknown error",
+    code: typeof record.code === "string" ? record.code : undefined,
+    details: typeof record.details === "string" ? record.details : undefined,
+    hint: typeof record.hint === "string" ? record.hint : undefined,
+  };
 }
 
 function LiveStat({ label, value, href }: { label: string; value: string; href: string }) {
