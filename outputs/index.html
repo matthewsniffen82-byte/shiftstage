@@ -34662,6 +34662,7 @@
       setApprovedProfileSaveFeedback(options.submitForReview ? "Saving profile before admin review..." : "Saving profile changes...", { saving: true, toast: false });
       if (trigger) trigger.disabled = true;
       try {
+        let savedServerProfile = null;
         if (isDancerSession()) {
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
             stageName,
@@ -34671,6 +34672,7 @@
             submittedSocialPlatforms
           });
           if (!data) throw new Error("Sign in required");
+          savedServerProfile = data.profile || null;
         }
         let profile = oldProfile;
         if (targetMarket !== oldMarket) {
@@ -34693,9 +34695,12 @@
         });
         profile.socialLinks = nextSocialLinks;
         profile.deletedSocialPlatforms = [];
-        Object.assign(dancerSignupSocials, normalizedSocials);
+        assignSocialMap(dancerSignupSocials, normalizedSocials);
         document.getElementById("dancerStageName").value = stageName;
         updateDancerDashboardName(stageName);
+        if (savedServerProfile) {
+          applyDancerVerificationProfile(savedServerProfile);
+        }
         if (isDancerSession()) {
           liveMarketState[newCity] = null;
           await loadLiveDiscovery(newCity, { force: true });
@@ -36486,7 +36491,7 @@
       setDancerSetupField("dancerCity", city);
       updateDancerDashboardName(stageName);
 
-      Object.assign(dancerSignupSocials, savedProfileSetup ? { ...draftSocials, ...liveSocials } : { ...liveSocials, ...draftSocials });
+      assignSocialMap(dancerSignupSocials, useDraftFields ? { ...liveSocials, ...draftSocials } : liveSocials);
       Object.assign(dancerSetup, {
         profile: savedProfileSetup,
         photos: statusApproved || photos.length > 0 || normalizedReviewStatus(profile.photo_review_status || profile.photoReviewStatus) === "approved",
@@ -36515,9 +36520,9 @@
           reviewSubmitted: approved || rejected ? false : (submittedForReview || localProfile.reviewSubmitted),
           hidden: approved ? (profile.is_public === false || profile.isPublic === false) : localProfile.hidden,
           isPublic: profile.is_public !== false && profile.isPublic !== false,
-          socials: { ...(localProfile.socials || {}), ...dancerSignupSocials },
+          socials: { ...emptySocialMap(), ...dancerSignupSocials },
           submittedPhotos: submittedPhotos.length ? submittedPhotos : (localProfile.submittedPhotos || []),
-          socialLinks: socialLinks.length ? socialLinks : (localProfile.socialLinks || [])
+          socialLinks: Array.isArray(profile.social_links) ? socialLinks : (localProfile.socialLinks || [])
         });
       }
     }
@@ -36539,13 +36544,24 @@
     }
 
     function dancerSocialMapFromProfile(profile) {
-      const socials = {};
+      const socials = emptySocialMap();
       const rows = Array.isArray(profile?.social_links) ? profile.social_links : [];
       rows.forEach((row) => {
         if (!row?.platform || row.is_active === false) return;
         socials[row.platform] = row.url || row.handle || "";
       });
       return socials;
+    }
+
+    function emptySocialMap() {
+      return Object.fromEntries(socialPlatforms.map(({ key }) => [key, ""]));
+    }
+
+    function assignSocialMap(target, source = {}) {
+      socialPlatforms.forEach(({ key }) => {
+        target[key] = String(source?.[key] || "");
+      });
+      return target;
     }
 
     function dancerProfilePhotoUrls(profile) {
@@ -40282,7 +40298,7 @@
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
       updateDancerDashboardName(stageName);
-      Object.assign(dancerSignupSocials, normalizedSocials);
+      assignSocialMap(dancerSignupSocials, normalizedSocials);
       saveDancerProfileDraft({ legalName, stageName, city, socials: normalizedSocials });
       const submit = form.querySelector('button[type="submit"]');
       if (submit) submit.disabled = true;
@@ -40295,6 +40311,7 @@
             socials: socialPayloadFromMap(normalizedSocials)
           });
           if (!data) throw new Error("Sign in required");
+          if (data.profile) applyDancerVerificationProfile(data.profile);
           markDancerProfileSetupSaved(true);
           showToast("Profile saved");
         } else {
