@@ -1049,24 +1049,27 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
           <div className="submission-media-grid">
             {photos.map((photo, index) => {
               const imageUrl = asText(photo.imageUrl || photo.image_url);
+              const storagePath = asText(photo.storagePath || photo.storage_path);
               const photoId = asText(photo.id);
-              const targetId = photoId || `${dancerId}-photo-${index}`;
+              const targetId = photoId;
               const key = `photo:${targetId}`;
               const status = statusByKey[key] || asText(photo.reviewStatus || photo.review_status) || "pending";
               const reason = asText(photo.reviewNotes || photo.review_notes);
               const isApproved = status === "Approved." || status === "approved";
               const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
+              const label = adminPhotoLabel(photo, index);
               return (
-                <div className="submission-review-card" key={photoId || index}>
+                <div className="submission-review-card" key={photoId || storagePath || imageUrl || `${dancerId}-photo-missing-id`}>
                   <a
                     className="submission-thumb"
                     href={imageUrl || "#"}
-                    onClick={(event) => openPreview(event, { kind: "image", title: `Submitted dancer photo ${index + 1}`, url: imageUrl })}
+                    onClick={(event) => openPreview(event, { kind: "image", title: `Submitted dancer ${label}`, url: imageUrl })}
                   >
-                    {imageUrl ? <img src={imageUrl} alt={`Submitted dancer photo ${index + 1}`} /> : <span>No image URL</span>}
+                    {imageUrl ? <img src={imageUrl} alt={`Submitted dancer ${label}`} /> : <span>No image URL</span>}
                     <small>{status}</small>
                   </a>
                   <small>Submitted by {submittedBy}</small>
+                  {!targetId ? <small>Missing photo ID. Refresh the queue before approving this picture.</small> : null}
                   {reason ? <small>Reason: {reason}</small> : null}
                   <textarea
                     placeholder="Reason for disapproval"
@@ -1075,10 +1078,10 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", `Photo ${index + 1}`)}>
+                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", label)} disabled={!targetId}>
                       {isApproved ? "Approved" : "Approve picture"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", `Photo ${index + 1}`)}>
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", label)} disabled={!targetId}>
                       {isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
@@ -1239,6 +1242,10 @@ function verificationDocumentLabel(document: Record<string, unknown>, index: num
   const existing = asText(document.displayName || document.display_name || document.documentType || document.document_type || document.name);
   if (existing) return existing;
   return ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
+}
+
+function adminPhotoLabel(photo: Record<string, unknown>, index: number) {
+  return photo.isPrimary || photo.is_primary ? "Main photo" : `Photo ${index + 1}`;
 }
 
 function requiredDocumentDefinitions() {

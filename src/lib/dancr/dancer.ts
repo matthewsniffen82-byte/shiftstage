@@ -128,7 +128,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   const profile = await getOwnDancerProfile(client, userId);
   const { data: photo, error: photoError } = await client
     .from("dancer_photos")
-    .select("id, storage_path")
+    .select("id, storage_path, is_primary")
     .eq("id", photoId)
     .eq("dancer_id", profile.id)
     .maybeSingle();
@@ -140,6 +140,9 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       storagePath: photo.storage_path,
       urlPresent: false,
     });
+    console.log("PHOTO_DELETE_BY_ID", {
+      requestedPhotoId: photo.id,
+    });
     const { data: deletedRows, error: deleteError } = await adminClient
       .from("dancer_photos")
       .delete()
@@ -148,6 +151,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     if (deleteError) throw deleteError;
     const deletedIds = (deletedRows || []).map((row: any) => row.id);
     console.log("PHOTO_DELETE_RESULT", {
+      requestedPhotoId: photo.id,
       requestedIds: [photo.id],
       deletedIds,
       error: null,
@@ -158,6 +162,10 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
     if (photo.storage_path) {
       await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
+    }
+
+    if (photo.is_primary) {
+      await promoteNextApprovedPrimaryPhoto(adminClient, profile.id);
     }
 
     await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
@@ -181,6 +189,9 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     storagePath: moderationRecord.temporary_storage_path || moderationRecord.final_storage_path,
     urlPresent: false,
   });
+  console.log("PHOTO_DELETE_BY_ID", {
+    requestedPhotoId: moderationRecord.id,
+  });
   const { data: deletedModerationRows, error: deleteModerationError } = await (adminClient as any)
     .from("image_moderation_records")
     .delete()
@@ -190,6 +201,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   if (deleteModerationError) throw deleteModerationError;
   const deletedIds = (deletedModerationRows || []).map((row: any) => row.id);
   console.log("PHOTO_DELETE_RESULT", {
+    requestedPhotoId: moderationRecord.id,
     requestedIds: [moderationRecord.id],
     deletedIds,
     error: null,
@@ -223,6 +235,37 @@ async function getOwnPhotoIds(client: DancrClient, dancerId: string) {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data || []).map((photo: any) => photo.id);
+}
+
+async function promoteNextApprovedPrimaryPhoto(client: DancrClient, dancerId: string) {
+  const { data: nextPhoto, error: nextPhotoError } = await client
+    .from("dancer_photos")
+    .select("id")
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "approved")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (nextPhotoError) throw nextPhotoError;
+  if (!nextPhoto?.id) return null;
+
+  const { error: clearPrimaryError } = await client
+    .from("dancer_photos")
+    .update({ is_primary: false })
+    .eq("dancer_id", dancerId);
+  if (clearPrimaryError) throw clearPrimaryError;
+
+  const { error: promoteError } = await client
+    .from("dancer_photos")
+    .update({ is_primary: true, sort_order: 0 })
+    .eq("id", nextPhoto.id)
+    .eq("dancer_id", dancerId);
+  if (promoteError) throw promoteError;
+
+  console.log("PHOTO_PRIMARY_PROMOTED", { dancerId, promotedPhotoId: nextPhoto.id });
+  return nextPhoto.id;
 }
 
 async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, dancerId: string) {
