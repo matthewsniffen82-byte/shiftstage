@@ -62,6 +62,13 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   logModeration("moderation_started", { userId: input.userId, uploadContext });
 
   await uploadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, image);
+  logModeration("uploaded_successfully", {
+    userId: input.userId,
+    uploadContext,
+    temporaryStoragePath: tempPath,
+    contentType: image.contentType,
+    size: image.buffer.byteLength,
+  });
 
   const record = await createModerationRecord(admin, {
     userId: input.userId,
@@ -78,49 +85,28 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     const providerResult = await moderateImageWithOpenAI(image);
     categoryFlags = providerResult.categories || {};
     evaluation = evaluateDancrImageModeration(providerResult);
+    logModeration("decision_evaluated", {
+      recordId: record.id,
+      flagged: Boolean(providerResult.flagged),
+      categories: providerResult.categories || {},
+      categoryScores: providerResult.category_scores || providerResult.categoryScores || {},
+      decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
+    });
   } catch (error) {
     errorCode = moderationErrorCode(error);
-    if (errorCode === "missing_openai_api_key" || errorCode === "invalid_openai_api_key") {
-      await updateModerationRecord(admin, record.id, {
-        decision: "review",
-        status: "error",
-        reasonCodes: [errorCode],
-        categoryFlags,
-        categoryScores: {},
-        providerFlagged: false,
-        errorCode,
-      });
-      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-      logModeration("provider_error", { recordId: record.id, errorCode });
-      throw new Error(moderationUploadErrorMessage(errorCode));
-    }
-    evaluation = {
-      decision: "review",
-      reasonCodes: [errorCode],
-      categoryScores: {},
-      providerFlagged: false,
-    };
     logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", { recordId: record.id, errorCode });
-    const reviewPath = tempPath.replace(`${input.userId}/${profile.id}/`, `${input.userId}/${profile.id}/review-`);
-    await movePrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, image.contentType);
     await updateModerationRecord(admin, record.id, {
       decision: "review",
-      status: "completed",
-      temporaryStoragePath: reviewPath,
-      reasonCodes: evaluation.reasonCodes,
+      status: "error",
+      reasonCodes: [errorCode],
       categoryFlags,
-      categoryScores: evaluation.categoryScores,
-      providerFlagged: evaluation.providerFlagged,
+      categoryScores: {},
+      providerFlagged: false,
       errorCode,
     });
-    logModeration("queued_for_review", { recordId: record.id, errorCode });
-    return {
-      decision: "review",
-      moderationRecordId: record.id,
-      reasonCodes: evaluation.reasonCodes,
-      providerFlagged: evaluation.providerFlagged,
-      message: "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
-    };
+    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    logModeration("database_status_written", { recordId: record.id, databaseStatus: "error", errorCode });
+    throw new Error(moderationUploadErrorMessage(errorCode));
   }
 
   if (evaluation.decision === "approved") {
@@ -153,6 +139,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       errorCode,
     });
     logModeration("queued_for_review", { recordId: record.id });
+    logModeration("database_status_written", { recordId: record.id, databaseStatus: "pending_review" });
     return {
       decision: "review",
       moderationRecordId: record.id,
@@ -174,6 +161,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
   await createAutoRejectedPhotoNotification(admin, input.userId, record.id);
   logModeration("rejected", { recordId: record.id, reasonCodes: evaluation.reasonCodes });
+  logModeration("database_status_written", { recordId: record.id, databaseStatus: "rejected" });
   return {
     decision: "rejected",
     moderationRecordId: record.id,
@@ -243,6 +231,7 @@ async function approveModeratedUpload(
     });
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
     logModeration("approved", { recordId: input.recordId, photoId: photo.id });
+    logModeration("database_status_written", { recordId: input.recordId, photoId: photo.id, databaseStatus: "approved" });
     return {
       decision: "approved",
       moderationRecordId: input.recordId,
@@ -278,6 +267,7 @@ async function moderateImageWithOpenAI(image: ValidatedDancrImage): Promise<any>
   const openai = new OpenAI({ apiKey });
   const dataUrl = `data:${image.contentType};base64,${image.buffer.toString("base64")}`;
 
+  logModeration("calling_openai_moderation", { model: DANCR_IMAGE_MODERATION_MODEL });
   const response = await withRetry<any>(() =>
     withTimeout(
       openai.moderations.create({
@@ -289,7 +279,16 @@ async function moderateImageWithOpenAI(image: ValidatedDancrImage): Promise<any>
   );
   const result = response?.results?.[0];
   if (!result) throw new Error("provider_response_incomplete");
-  logModeration("moderation_completed", { model: DANCR_IMAGE_MODERATION_MODEL });
+  logModeration("provider_response", {
+    model: DANCR_IMAGE_MODERATION_MODEL,
+    response: sanitizeModerationResponse(response),
+  });
+  logModeration("moderation_completed", {
+    model: DANCR_IMAGE_MODERATION_MODEL,
+    flagged: Boolean(result.flagged),
+    categories: result.categories || {},
+    categoryScores: result.category_scores || result.categoryScores || {},
+  });
   return result;
 }
 
@@ -554,4 +553,18 @@ function moderationUploadErrorMessage(errorCode: string | null) {
 
 function logModeration(event: string, details: Record<string, unknown>) {
   console.info(JSON.stringify({ event: `image_moderation.${event}`, ...details }));
+}
+
+function sanitizeModerationResponse(response: any) {
+  return {
+    id: response?.id,
+    model: response?.model,
+    results: Array.isArray(response?.results)
+      ? response.results.map((result: any) => ({
+        flagged: Boolean(result?.flagged),
+        categories: result?.categories || {},
+        category_scores: result?.category_scores || result?.categoryScores || {},
+      }))
+      : [],
+  };
 }
