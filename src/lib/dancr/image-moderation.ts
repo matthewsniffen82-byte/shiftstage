@@ -97,6 +97,8 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   } catch (error) {
     errorCode = moderationErrorCode(error);
     const diagnosticCode = moderationDiagnosticCode(errorCode);
+    const retryable = retryableModerationError(errorCode);
+    const nextAttemptAt = retryable ? retryDelayTimestamp(1) : null;
     console.error("DANCR_MODERATION_ERROR", {
       imageId: record.id,
       storagePath: tempPath,
@@ -111,25 +113,31 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     });
     await updateModerationRecord(admin, record.id, {
       decision: "review",
-      status: "moderation_error",
+      status: retryable ? "moderation_retry" : "moderation_error",
       reasonCodes: [diagnosticCode],
       categoryFlags,
       categoryScores: {},
       providerFlagged: false,
       errorCode: diagnosticCode,
       attemptCount: 1,
-      nextAttemptAt: null,
+      nextAttemptAt,
       lastErrorCode: diagnosticCode,
       lastErrorMessage: safeErrorMessage(error),
     });
-    logModeration("database_status_written", { recordId: record.id, databaseStatus: "moderation_error", errorCode, diagnosticCode });
+    logModeration("database_status_written", {
+      recordId: record.id,
+      databaseStatus: retryable ? "moderation_retry" : "moderation_error",
+      errorCode,
+      diagnosticCode,
+      nextAttemptAt,
+    });
     return {
-      decision: "moderation_error",
+      decision: retryable ? "moderation_retry" : "moderation_error",
       moderationRecordId: record.id,
       reasonCodes: [diagnosticCode],
       diagnosticCode,
       providerFlagged: false,
-      message: moderationDiagnosticMessage(diagnosticCode),
+      message: retryable ? moderationUploadErrorMessage(errorCode) : moderationDiagnosticMessage(diagnosticCode),
     };
   }
 
