@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -168,7 +169,15 @@ export async function PATCH(request: Request) {
       }
     }
 
-    await saveProfilePhotoUrls(db, profile.id, body);
+    const deletedPhotoIds = readDeletedPhotoIds(body);
+    if (deletedPhotoIds.length) {
+      const adminDb = createAdminSupabaseClient();
+      for (const photoId of deletedPhotoIds) {
+        await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
+      }
+    }
+
+    await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds);
     await removeSupersededPendingPhotoRows(createAdminSupabaseClient() as any, profile.id);
 
     if (body.submitForReview === true && profile.status !== "approved") {
@@ -392,9 +401,10 @@ async function reopenRejectedReviewsForResubmission(db: any, dancerId: string) {
   if (insertError) throw insertError;
 }
 
-async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
+async function saveProfilePhotoUrls(db: any, dancerId: string, body: any, deletedPhotoIds: string[] = []) {
   const photoUrls = readProfilePhotoUrls(body);
   if (!photoUrls.length) return;
+  const deletedIds = new Set(deletedPhotoIds);
 
   const storagePaths = photoUrls.map((photo) => photo.storagePath);
   const { data: existing, error: existingError } = await db
@@ -406,7 +416,9 @@ async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
   if (existingError) throw existingError;
 
   const existingByPath = new Map<string, { id: string }>(
-    (existing || []).map((photo: any) => [photo.storage_path, { id: photo.id }]),
+    (existing || [])
+      .filter((photo: any) => !deletedIds.has(String(photo.id || "")))
+      .map((photo: any) => [photo.storage_path, { id: photo.id }]),
   );
 
   await removeDuplicatePublicUrlPhotoRows(db, dancerId, photoUrls, existingByPath);
@@ -510,6 +522,15 @@ function readProfilePhotoUrls(body: any) {
   }
 
   return urls.slice(0, MAX_DANCER_PROFILE_PHOTOS);
+}
+
+function readDeletedPhotoIds(body: any): string[] {
+  if (!Array.isArray(body?.deletedPhotoIds)) return [];
+  return [...new Set<string>(
+    body.deletedPhotoIds
+      .map((id: any) => String(id || "").trim())
+      .filter(Boolean),
+  )];
 }
 
 function readPhotoStorageValue(value: unknown): Omit<ProfilePhotoStorageValue, "isPrimary" | "sortOrder"> | null {

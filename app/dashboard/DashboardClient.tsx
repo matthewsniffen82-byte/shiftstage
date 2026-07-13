@@ -638,7 +638,7 @@ function DancerPanel({
       <DancerSetupPanel profile={profile} onProfileChange={onProfileChange} />
       <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
       <DancerSharePanel profile={profile} />
-      <DancerPhotoPanel profile={profile} />
+      <DancerPhotoPanel profile={profile} onProfileChange={onProfileChange} />
       <DancerVerificationPanel reviews={reviews} />
       <DancerBillingPanel />
     </>
@@ -1602,7 +1602,13 @@ type DancerPhotoItem = {
   note: string;
 };
 
-function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
+function DancerPhotoPanel({
+  onProfileChange,
+  profile,
+}: {
+  onProfileChange?: (profile: Record<string, unknown>) => void;
+  profile?: LoadState["profile"];
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [isPrimary, setIsPrimary] = useState(false);
   const [photos, setPhotos] = useState<DancerPhotoItem[]>(() => dancerPhotoItemsFromProfile(profile));
@@ -1710,6 +1716,11 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete photo.");
       setPhotos((current) => current.filter((item) => item.id !== photo.id));
+      const refreshed = await readOptionalJson("/api/dancer/profile", { authorization: `Bearer ${session.accessToken}` }, { profile: null });
+      if (refreshed?.profile) {
+        onProfileChange?.(refreshed.profile);
+        setPhotos(dancerPhotoItemsFromProfile(refreshed.profile));
+      }
       setStatus("Photo deleted.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
