@@ -4,7 +4,7 @@
   "crons": [
     {
       "path": "/api/cron/image-moderation",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }
