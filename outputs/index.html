@@ -28681,6 +28681,7 @@
     let activeApprovedToolDropdown = "";
     let shiftCheckInMessage = "";
     const MAX_DANCER_PROFILE_PHOTOS = 5;
+    console.log("PHOTO_NUMBERING_FIX_VERSION", "2026-07-13-v1");
 
     const stateByCity = {
       "Las Vegas": "NV",
@@ -33964,16 +33965,16 @@
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => ({
         id: photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`,
         imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
-        label: photo.isPrimary || photo.is_primary ? "Submitted main photo" : `Submitted gallery photo ${index + 1}`,
+        label: photoDisplayLabel(index),
         status: normalizedReviewStatus(latestContentReview(`photo:${photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`}`)?.status || photo.reviewStatus || photo.review_status || "pending"),
         notes: latestContentReview(`photo:${photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`}`)?.notes || photo.reviewNotes || photo.review_notes || "",
         target: `submitted:${index}`
       }));
       const existing = [
-        ...(profile?.mainPhotoUrl ? [{ imageUrl: profile.mainPhotoUrl, label: "Current main photo", status: "approved", notes: "", target: "main" }] : []),
-        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, label: `Current gallery photo ${index + 1}`, status: "approved", notes: "", target: `gallery:${index}` }))
+        ...(profile?.mainPhotoUrl ? [{ imageUrl: profile.mainPhotoUrl, label: "Main Photo", status: "approved", notes: "", target: "main" }] : []),
+        ...(profile?.galleryPhotoUrls || []).map((imageUrl, index) => ({ imageUrl, label: "Photo", status: "approved", notes: "", target: `gallery:${index}` }))
       ];
-      const photos = [...submitted, ...existing];
+      const photos = relabelVisualPhotoItems([...submitted, ...existing]);
       if (!photos.length) {
         return '<div class="rule-note">No profile photos uploaded yet. Use the replace buttons above to submit photos for approval.</div>';
       }
@@ -34008,7 +34009,7 @@
         return {
           id,
           imageUrl,
-          label: photo.isPrimary || photo.is_primary ? "Main photo" : `Gallery photo ${index + 1}`,
+          label: "Photo",
           status: storedApproved ? "approved" : normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
           notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
           target: storedApproved && imageUrl === profile?.mainPhotoUrl ? "main" : storedApproved ? `gallery:${Math.max(0, (profile?.galleryPhotoUrls || []).indexOf(imageUrl))}` : `submitted:${index}`
@@ -34023,7 +34024,7 @@
         return {
           id: isMain ? "main" : `gallery-${index - 1}`,
           imageUrl,
-          label: isMain ? "Main photo" : `Gallery photo ${index}`,
+          label: "Photo",
           status: "approved",
           notes: "",
           target: isMain ? "main" : `gallery:${Math.max(0, index - 1)}`
@@ -34035,7 +34036,20 @@
         const key = photo.imageUrl || photo.id;
         if (!byUrl.has(key)) byUrl.set(key, photo);
       });
-      return Array.from(byUrl.values());
+      return relabelVisualPhotoItems(Array.from(byUrl.values()));
+    }
+
+    function photoDisplayLabel(index) {
+      return index === 0 ? "Main Photo" : `Photo ${index + 1}`;
+    }
+
+    function relabelVisualPhotoItems(photos) {
+      const primary = photos.find((photo) => photo.target === "main" || photo.isPrimary || photo.is_primary);
+      const ordered = primary ? [primary, ...photos.filter((photo) => photo !== primary)] : photos;
+      return ordered.map((photo, index) => ({
+        ...photo,
+        label: photoDisplayLabel(index)
+      }));
     }
 
     function dancerProfilePhotoCount(profile) {
@@ -34130,8 +34144,21 @@
     function approvedVisualProfileEditorMarkup(profile) {
       const photos = approvedVisualPhotoItems(profile);
       const selectedPhoto = photos.find((photo) => photo.target === activeApprovedVisualPhotoTarget || photo.id === activeApprovedVisualPhotoTarget) || photos[0];
-      const mainPhoto = selectedPhoto || { imageUrl: customPhotoUrl(profile, 0), label: "Main photo", status: "approved", notes: "", target: "main" };
+      const mainPhoto = selectedPhoto || { imageUrl: customPhotoUrl(profile, 0), label: "Main Photo", status: "approved", notes: "", target: "main" };
       const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
+      const primaryPhoto = photos.find((photo) => photo.target === "main" || photo.isPrimary || photo.is_primary) || photos[0] || null;
+      console.log("PHOTO_NUMBERING_DEBUG", {
+        photos: photos.map((photo, index) => ({
+          index,
+          id: photo.id,
+          isPrimary: Boolean(photo.isPrimary || photo.is_primary || photo.target === "main"),
+          sortOrder: photo.sortOrder ?? photo.sort_order ?? null,
+          label: photo.label
+        })),
+        primaryPhotoId: primaryPhoto?.id,
+        orderedPhotoIds: photos.map((photo) => photo.id),
+        renderedLabels: photos.map((photo) => photo.label)
+      });
       const mainPhotoClass = portraitClass(selectedPhotoIndex);
       const mainPhotoAttrs = customPhotoAttrs(mainPhoto.imageUrl);
       const photoStatusClass = [
@@ -34207,7 +34234,7 @@
           </div>
           <section class="profile-modal">
             <div class="approved-photo-edit-frame">
-              <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${photoStatusClass} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
+              <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${photoStatusClass} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main Photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
                 <div class="modal-identity-stack">
                   <div class="modal-identity">
                     <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
@@ -36672,7 +36699,7 @@
           ${urls.map((url, index) => `
             <div class="upload-slot submitted-photo-slot">
               <img src="${escapeHtml(url)}" alt="Uploaded profile photo ${index + 1}" loading="lazy" decoding="async">
-              <span>${index === 0 ? "Main photo" : `Gallery photo ${index + 1}`}<small>Submitted for review</small></span>
+              <span>${photoDisplayLabel(index)}<small>Submitted for review</small></span>
             </div>
           `).join("")}
         </div>
@@ -37713,14 +37740,15 @@
         !isFinalAdminReviewStatus(normalizedReviewStatus(photo.reviewStatus || photo.review_status))
       );
       if (!reviewablePhotos.length) return '<div class="locked">No newly submitted photos waiting for review.</div>';
-      return reviewablePhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo, index) => {
+      return relabelVisualPhotoItems(reviewablePhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS)).map((photo, index) => {
         const imageUrl = photo.imageUrl || photo.image_url || "";
         const targetId = photo.id || `${profile.id || profile.name}-photo-${index}`;
         const key = `photo:${targetId}`;
+        const label = photo.label || photoDisplayLabel(index);
         return `
           <div class="admin-submission-review">
-            <a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" data-admin-preview-kind="image" data-admin-preview-title="Submitted dancer photo ${index + 1}" data-admin-preview-url="${displayText(imageUrl)}">
-              ${imageUrl ? `<img src="${displayText(imageUrl)}" alt="Submitted dancer photo ${index + 1}">` : `Photo ${index + 1}`}
+            <a class="upload-slot submitted-photo-slot" href="${displayText(imageUrl || "#")}" data-admin-preview-kind="image" data-admin-preview-title="Submitted dancer ${displayText(label)}" data-admin-preview-url="${displayText(imageUrl)}">
+              ${imageUrl ? `<img src="${displayText(imageUrl)}" alt="Submitted dancer ${displayText(label)}">` : displayText(label)}
               <span>${displayText(photo.reviewStatus || photo.review_status || "pending")}</span>
               <span>Submitted by ${displayText(profile.name || "dancer")}</span>
               ${photo.reviewNotes || photo.review_notes ? `<span>Reason: ${displayText(photo.reviewNotes || photo.review_notes)}</span>` : ""}
@@ -37728,8 +37756,8 @@
             <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
             <span class="admin-review-hint">Type the reason, then press Save disapproval.</span>
             <div class="admin-review-actions">
-              <button class="action-btn" data-admin-content-review="approved" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" data-review-live-target="${photo.id ? "true" : "false"}" ${photo.id ? "" : "disabled"}>Approve picture</button>
-              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="Photo ${index + 1}" data-review-key="${displayText(key)}" data-review-live-target="${photo.id ? "true" : "false"}">Save disapproval</button>
+              <button class="action-btn" data-admin-content-review="approved" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}" data-review-live-target="${photo.id ? "true" : "false"}" ${photo.id ? "" : "disabled"}>Approve picture</button>
+              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="photo" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}" data-review-live-target="${photo.id ? "true" : "false"}">Save disapproval</button>
             </div>
           </div>
         `;
