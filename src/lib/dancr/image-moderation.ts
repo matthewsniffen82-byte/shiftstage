@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
+import OpenAI from "openai";
 import { getServerEnv } from "../env";
 import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-validation";
 import {
@@ -421,7 +422,6 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
   logModeration("openai_key_present", { present: apiKeyPresent });
   if (!apiKeyPresent) throw new Error("MODERATION_AUTH_KEY_MISSING");
   const apiKey = getServerEnv("OPENAI_API_KEY");
-  const OpenAI = await loadOpenAI();
   const openai = new OpenAI({ apiKey });
   const imageUrl = await createModerationSignedUrl(admin, tempPath);
   await probeSignedImageUrl(imageUrl, tempPath);
@@ -471,12 +471,6 @@ async function createModeration(openai: any, input: Array<{ type: "image_url"; i
       20000,
     ),
   );
-}
-
-async function loadOpenAI(): Promise<any> {
-  const importer = new Function("specifier", "return import(specifier)");
-  const mod = await importer("openai");
-  return mod.default || mod.OpenAI;
 }
 
 async function createModerationSignedUrl(client: DancrClient, tempPath: string) {
