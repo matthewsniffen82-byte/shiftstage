@@ -125,7 +125,7 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       image_id: photo.id,
       final_storage_path: finalPath,
       decision: "approved",
-      status: "completed",
+      status: "approved",
       reviewed_by: reviewerId,
       reviewed_at: new Date().toISOString(),
       review_decision: "approved",
@@ -147,7 +147,7 @@ async function rejectReviewRecord(admin: any, record: any, reviewerId: string, n
   const sourcePath = record.temporary_storage_path;
   const update = {
     decision: "rejected",
-    status: "completed",
+    status: "rejected",
     reviewed_by: reviewerId,
     reviewed_at: new Date().toISOString(),
     review_decision: "rejected",
@@ -167,7 +167,7 @@ async function rejectReviewRecord(admin: any, record: any, reviewerId: string, n
 
 function moderationStorageBucket(record: any) {
   if (record.decision === "approved" && record.final_storage_path) return APPROVED_PHOTO_BUCKET;
-  if (record.status === "pending") return MODERATION_TEMP_BUCKET;
+  if (["pending", "moderating", "moderation_retry", "moderation_error", "error"].includes(record.status)) return MODERATION_TEMP_BUCKET;
   return MODERATION_REVIEW_BUCKET;
 }
 

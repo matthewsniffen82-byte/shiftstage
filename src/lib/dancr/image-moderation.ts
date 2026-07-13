@@ -99,21 +99,26 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       errorCode,
       providerError: sanitizeProviderError(error),
     });
+    const retryable = retryableModerationError(errorCode);
     await updateModerationRecord(admin, record.id, {
       decision: "review",
-      status: "error",
+      status: retryable ? "moderation_retry" : "moderation_error",
       reasonCodes: [errorCode],
       categoryFlags,
       categoryScores: {},
       providerFlagged: false,
       errorCode,
+      attemptCount: 1,
+      nextAttemptAt: retryable ? retryDelayTimestamp(1) : null,
+      lastErrorCode: errorCode,
+      lastErrorMessage: safeErrorMessage(error),
     });
-    logModeration("database_status_written", { recordId: record.id, databaseStatus: retryableModerationError(errorCode) ? "moderation_retry" : "moderation_error", errorCode });
-    if (!retryableModerationError(errorCode)) {
+    logModeration("database_status_written", { recordId: record.id, databaseStatus: retryable ? "moderation_retry" : "moderation_error", errorCode });
+    if (!retryable) {
       await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     }
     return {
-      decision: retryableModerationError(errorCode) ? "moderation_retry" : "moderation_error",
+      decision: retryable ? "moderation_retry" : "moderation_error",
       moderationRecordId: record.id,
       reasonCodes: [errorCode],
       providerFlagged: false,
@@ -142,13 +147,14 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     await movePrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, image.contentType);
     await updateModerationRecord(admin, record.id, {
       decision: "review",
-      status: "completed",
+      status: "pending_review",
       temporaryStoragePath: reviewPath,
       reasonCodes: evaluation.reasonCodes,
       categoryFlags,
       categoryScores: evaluation.categoryScores,
       providerFlagged: evaluation.providerFlagged,
       errorCode,
+      completedAt: new Date().toISOString(),
     });
     logModeration("queued_for_review", { recordId: record.id });
     logModeration("database_status_written", { recordId: record.id, databaseStatus: "pending_review" });
@@ -163,12 +169,13 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
 
   await updateModerationRecord(admin, record.id, {
     decision: "rejected",
-    status: "completed",
+    status: "rejected",
     reasonCodes: evaluation.reasonCodes,
     categoryFlags,
     categoryScores: evaluation.categoryScores,
     providerFlagged: evaluation.providerFlagged,
     errorCode,
+    completedAt: new Date().toISOString(),
   });
   await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
   await createAutoRejectedPhotoNotification(admin, input.userId, record.id);
@@ -181,6 +188,135 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     providerFlagged: evaluation.providerFlagged,
     message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
   };
+}
+
+export async function processImageModerationRetryRecord(admin: DancrClient, record: any): Promise<ModeratedPhotoResult> {
+  const tempPath = String(record?.temporary_storage_path || "");
+  if (!record?.id || !record?.user_id || !tempPath) {
+    throw new Error("retry_record_incomplete");
+  }
+
+  const profile = await getOwnDancerProfile(admin, record.user_id);
+  const uploadContext = record.upload_context || "profile_gallery";
+  const attemptCount = Number(record.attempt_count || 0) + 1;
+  await updateModerationRecord(admin, record.id, {
+    status: "moderating",
+    attemptCount,
+    lockedAt: new Date().toISOString(),
+    nextAttemptAt: null,
+  });
+
+  let categoryFlags: Record<string, boolean> = {};
+  let errorCode: string | null = null;
+
+  try {
+    const providerResult = await moderateImageWithOpenAI(admin, tempPath);
+    categoryFlags = providerResult.categories || {};
+    const evaluation = evaluateDancrImageModeration(providerResult);
+    logModeration("retry_decision_evaluated", {
+      recordId: record.id,
+      attemptCount,
+      flagged: Boolean(providerResult.flagged),
+      decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
+    });
+
+    if (evaluation.decision === "approved") {
+      const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+      return approveModeratedUpload(admin, {
+        recordId: record.id,
+        profileId: profile.id,
+        userId: record.user_id,
+        image: moderationImageFromPrivateObject(downloaded),
+        tempPath,
+        uploadContext,
+        isPrimary: uploadContext === "profile_main",
+        sortOrder: 0,
+        altText: null,
+        evaluation,
+        categoryFlags,
+      });
+    }
+
+    if (evaluation.decision === "review") {
+      const reviewPath = tempPath.replace(`${record.user_id}/${profile.id}/`, `${record.user_id}/${profile.id}/review-`);
+      await movePrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, "image/jpeg");
+      await updateModerationRecord(admin, record.id, {
+        decision: "review",
+        status: "pending_review",
+        temporaryStoragePath: reviewPath,
+        reasonCodes: evaluation.reasonCodes,
+        categoryFlags,
+        categoryScores: evaluation.categoryScores,
+        providerFlagged: evaluation.providerFlagged,
+        attemptCount,
+        lockedAt: null,
+        completedAt: new Date().toISOString(),
+      });
+      logModeration("retry_database_status_written", { recordId: record.id, databaseStatus: "pending_review", attemptCount });
+      return {
+        decision: "review",
+        moderationRecordId: record.id,
+        reasonCodes: evaluation.reasonCodes,
+        providerFlagged: evaluation.providerFlagged,
+        message: "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
+      };
+    }
+
+    await updateModerationRecord(admin, record.id, {
+      decision: "rejected",
+      status: "rejected",
+      reasonCodes: evaluation.reasonCodes,
+      categoryFlags,
+      categoryScores: evaluation.categoryScores,
+      providerFlagged: evaluation.providerFlagged,
+      attemptCount,
+      lockedAt: null,
+      completedAt: new Date().toISOString(),
+    });
+    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    await createAutoRejectedPhotoNotification(admin, record.user_id, record.id);
+    logModeration("retry_database_status_written", { recordId: record.id, databaseStatus: "rejected", attemptCount });
+    return {
+      decision: "rejected",
+      moderationRecordId: record.id,
+      reasonCodes: evaluation.reasonCodes,
+      providerFlagged: evaluation.providerFlagged,
+      message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
+    };
+  } catch (error) {
+    errorCode = moderationErrorCode(error);
+    const retryable = retryableModerationError(errorCode) && attemptCount < 4;
+    await updateModerationRecord(admin, record.id, {
+      decision: "review",
+      status: retryable ? "moderation_retry" : "moderation_error",
+      reasonCodes: [errorCode],
+      categoryFlags,
+      categoryScores: {},
+      providerFlagged: false,
+      errorCode,
+      attemptCount,
+      nextAttemptAt: retryable ? retryDelayTimestamp(attemptCount) : null,
+      lockedAt: null,
+      lastErrorCode: errorCode,
+      lastErrorMessage: safeErrorMessage(error),
+    });
+    if (!retryable) {
+      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    }
+    logModeration("retry_database_status_written", {
+      recordId: record.id,
+      databaseStatus: retryable ? "moderation_retry" : "moderation_error",
+      errorCode,
+      attemptCount,
+    });
+    return {
+      decision: retryable ? "moderation_retry" : "moderation_error",
+      moderationRecordId: record.id,
+      reasonCodes: [errorCode],
+      providerFlagged: false,
+      message: moderationUploadErrorMessage(errorCode),
+    };
+  }
 }
 
 async function createAutoRejectedPhotoNotification(client: DancrClient, userId: string, moderationRecordId: string) {
@@ -235,11 +371,12 @@ async function approveModeratedUpload(
       imageId: photo.id,
       finalStoragePath: finalPath,
       decision: "approved",
-      status: "completed",
+      status: "approved",
       reasonCodes: input.evaluation.reasonCodes,
       categoryFlags: input.categoryFlags,
       categoryScores: input.evaluation.categoryScores,
       providerFlagged: input.evaluation.providerFlagged,
+      completedAt: new Date().toISOString(),
     });
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
     logModeration("approved", { recordId: input.recordId, photoId: photo.id });
@@ -261,7 +398,7 @@ async function approveModeratedUpload(
     await updateModerationRecord(admin, input.recordId, {
       finalStoragePath: finalPath,
       decision: "review",
-      status: "error",
+      status: "moderation_error",
       reasonCodes: ["approved_storage_db_compensation"],
       categoryFlags: input.categoryFlags,
       categoryScores: input.evaluation.categoryScores,
@@ -351,6 +488,25 @@ async function downloadPrivateObject(client: DancrClient, bucket: string, path: 
     throw new Error("provider_private_download_unsupported_type");
   }
   return { buffer, contentType };
+}
+
+function moderationImageFromPrivateObject(image: { buffer: Buffer; contentType: string }): ValidatedDancrImage {
+  const contentType = image.contentType as ValidatedDancrImage["contentType"];
+  return {
+    buffer: image.buffer,
+    contentType,
+    extension: imageExtension(contentType),
+    width: 0,
+    height: 0,
+    sha256: createHash("sha256").update(image.buffer).digest("hex"),
+    storageFileName: `${randomUUID()}.${imageExtension(contentType)}`,
+  };
+}
+
+function imageExtension(contentType: ValidatedDancrImage["contentType"]) {
+  if (contentType === "image/png") return "png" as const;
+  if (contentType === "image/webp") return "webp" as const;
+  return "jpg" as const;
 }
 
 async function withRetry<T>(operation: () => Promise<T>) {
@@ -504,11 +660,12 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
       provider_model: DANCR_IMAGE_MODERATION_MODEL,
       provider_flagged: false,
       decision: "review",
-      status: "pending",
+      status: "moderating",
       reason_codes: [],
       category_flags: {},
       category_scores: {},
       idempotency_key: input.idempotencyKey,
+      attempt_count: 1,
     })
     .select("id")
     .single();
@@ -528,6 +685,12 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
   if ("categoryScores" in update) dbUpdate.category_scores = update.categoryScores;
   if ("providerFlagged" in update) dbUpdate.provider_flagged = update.providerFlagged;
   if ("errorCode" in update) dbUpdate.error_code = update.errorCode;
+  if ("attemptCount" in update) dbUpdate.attempt_count = update.attemptCount;
+  if ("nextAttemptAt" in update) dbUpdate.next_attempt_at = update.nextAttemptAt;
+  if ("lockedAt" in update) dbUpdate.locked_at = update.lockedAt;
+  if ("lastErrorCode" in update) dbUpdate.last_error_code = update.lastErrorCode;
+  if ("lastErrorMessage" in update) dbUpdate.last_error_message = update.lastErrorMessage;
+  if ("completedAt" in update) dbUpdate.completed_at = update.completedAt;
   const { error } = await client.from("image_moderation_records").update(dbUpdate).eq("id", id);
   if (error) throw error;
 }
@@ -658,4 +821,17 @@ function retryableModerationError(errorCode: string | null) {
     "provider_signed_url_error",
     "provider_private_download_error",
   ].includes(String(errorCode || ""));
+}
+
+function retryDelayTimestamp(attemptCount: number) {
+  const delayMs = attemptCount <= 1
+    ? 30_000
+    : attemptCount === 2
+      ? 120_000
+      : 600_000;
+  return new Date(Date.now() + delayMs).toISOString();
+}
+
+function safeErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message.slice(0, 500) : String(error || "").slice(0, 500);
 }
