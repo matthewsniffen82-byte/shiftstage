@@ -24,6 +24,7 @@ const APPROVAL_QUEUE_SELECT = `
   dancer_photos(id, storage_path, is_primary, review_status, sort_order, created_at),
   approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
 `;
+const APPROVAL_QUEUE_SELECT_WITHOUT_VISIBILITY = APPROVAL_QUEUE_SELECT.replace(/\n\s*is_public,\s*/m, "\n");
 
 export type ReviewDancerInput = {
   dancerId: string;
@@ -91,24 +92,20 @@ export async function requireAdmin(client: DancrClient, userId: string) {
 export async function getApprovalQueue(client: DancrClient): Promise<AdminApprovalDancer[]> {
   const db = client as any;
   const pendingContentDancerIds = await pendingContentReviewDancerIds(db);
-  const { data, error } = await db
-    .from("dancer_profiles")
-    .select(APPROVAL_QUEUE_SELECT)
-    .or(`status.in.(${Array.from(REVIEWABLE_STATUSES).join(",")}),photo_review_status.eq.pending`)
-    .order("created_at", { ascending: true });
-
-  if (error) throw error;
+  const data = await selectApprovalRows(db, (query) =>
+    query
+      .or(`status.in.(${Array.from(REVIEWABLE_STATUSES).join(",")}),photo_review_status.eq.pending`)
+      .order("created_at", { ascending: true }),
+  );
 
   const rowsById = new Map((data || []).map((row: any) => [row.id, row]));
   const missingPendingContentIds = pendingContentDancerIds.filter((id) => !rowsById.has(id));
   if (missingPendingContentIds.length) {
-    const { data: contentRows, error: contentError } = await db
-      .from("dancer_profiles")
-      .select(APPROVAL_QUEUE_SELECT)
-      .in("id", missingPendingContentIds)
-      .order("created_at", { ascending: true });
-
-    if (contentError) throw contentError;
+    const contentRows = await selectApprovalRows(db, (query) =>
+      query
+        .in("id", missingPendingContentIds)
+        .order("created_at", { ascending: true }),
+    );
     (contentRows || []).forEach((row: any) => rowsById.set(row.id, row));
   }
 
@@ -116,15 +113,30 @@ export async function getApprovalQueue(client: DancrClient): Promise<AdminApprov
 }
 
 export async function getAdminDancerDirectory(client: DancrClient): Promise<AdminApprovalDancer[]> {
-  const { data, error } = await (client as any)
-    .from("dancer_profiles")
-    .select(APPROVAL_QUEUE_SELECT)
-    .in("status", Array.from(ADMIN_DIRECTORY_STATUSES))
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
+  const data = await selectApprovalRows((client as any), (query) =>
+    query
+      .in("status", Array.from(ADMIN_DIRECTORY_STATUSES))
+      .order("created_at", { ascending: false }),
+  );
 
   return Promise.all((data || []).map((row: any) => mapAdminApprovalDancer(client, row)));
+}
+
+async function selectApprovalRows(db: any, configure: (query: any) => any) {
+  const { data, error } = await configure(db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT));
+  if (!error) return data || [];
+  if (!isMissingVisibilityColumnError(error)) throw error;
+
+  const { data: fallbackData, error: fallbackError } = await configure(
+    db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT_WITHOUT_VISIBILITY),
+  );
+  if (fallbackError) throw fallbackError;
+  return fallbackData || [];
+}
+
+function isMissingVisibilityColumnError(error: any) {
+  const message = String(error?.message || error?.details || "");
+  return error?.code === "42703" && message.includes("is_public");
 }
 
 async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<AdminApprovalDancer> {
