@@ -34001,6 +34001,16 @@
     function approvedVisualPhotoItems(profile, options = {}) {
       const includeUnapproved = options.includeUnapproved !== false;
       const savedApprovedUrls = new Set([profile?.mainPhotoUrl, ...(profile?.galleryPhotoUrls || [])].filter(Boolean));
+      const storedPhotoRows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+      const storedPhotoUrl = (photo) => photo?.imageUrl || photo?.image_url || photo?.url || photo?.storage_path || "";
+      const storedPhotoMatch = (imageUrl, index, isMain) => storedPhotoRows.find((photo) => {
+        const url = storedPhotoUrl(photo);
+        if (url && url === imageUrl) return true;
+        if (photo?.storage_path && photo.storage_path === imageUrl) return true;
+        if (isMain && (photo?.is_primary || photo?.isPrimary)) return true;
+        if (!isMain && !(photo?.is_primary || photo?.isPrimary) && Number(photo?.sort_order ?? photo?.sortOrder ?? -1) === index) return true;
+        return false;
+      });
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => {
         const id = photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`;
         const review = latestContentReview(`photo:${id}`);
@@ -34012,7 +34022,8 @@
           label: "Photo",
           status: storedApproved ? "approved" : normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
           notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
-          target: storedApproved && imageUrl === profile?.mainPhotoUrl ? "main" : storedApproved ? `gallery:${Math.max(0, (profile?.galleryPhotoUrls || []).indexOf(imageUrl))}` : `submitted:${index}`
+          target: storedApproved && imageUrl === profile?.mainPhotoUrl ? "main" : storedApproved ? `gallery:${Math.max(0, (profile?.galleryPhotoUrls || []).indexOf(imageUrl))}` : `submitted:${index}`,
+          storagePath: photo.storagePath || photo.storage_path || ""
         };
       }).filter((photo) => includeUnapproved || photo.status === "approved");
       const submittedByUrl = new Map(submitted.filter((photo) => photo.imageUrl).map((photo) => [photo.imageUrl, photo]));
@@ -34021,13 +34032,19 @@
         const submittedMatch = submittedByUrl.get(imageUrl);
         if (submittedMatch && !savedApprovedUrls.has(imageUrl)) return submittedMatch;
         const isMain = imageUrl === profile?.mainPhotoUrl || index === 0;
+        const row = storedPhotoMatch(imageUrl, Math.max(0, index - 1), isMain);
         return {
-          id: isMain ? "main" : `gallery-${index - 1}`,
+          id: row?.id || (isMain ? "main" : `gallery-${index - 1}`),
           imageUrl,
           label: "Photo",
           status: "approved",
           notes: "",
-          target: isMain ? "main" : `gallery:${Math.max(0, index - 1)}`
+          target: isMain ? "main" : `gallery:${Math.max(0, index - 1)}`,
+          storagePath: row?.storage_path || row?.storagePath || "",
+          sortOrder: row?.sort_order ?? row?.sortOrder ?? index,
+          sort_order: row?.sort_order ?? row?.sortOrder ?? index,
+          isPrimary: Boolean(row?.is_primary || row?.isPrimary || isMain),
+          is_primary: Boolean(row?.is_primary || row?.isPrimary || isMain)
         };
       });
       const byUrl = new Map();
@@ -34234,7 +34251,7 @@
           </div>
           <section class="profile-modal">
             <div class="approved-photo-edit-frame">
-              <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${photoStatusClass} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-target="${displayText(mainPhoto.target)}" data-photo-label="${displayText(mainPhoto.label || "Main Photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
+              <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${photoStatusClass} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-id="${displayText(mainPhoto.id || "")}" data-photo-target="${displayText(mainPhoto.target)}" data-photo-url="${displayText(mainPhoto.imageUrl || "")}" data-photo-storage-path="${displayText(mainPhoto.storagePath || mainPhoto.storage_path || "")}" data-photo-label="${displayText(mainPhoto.label || "Main Photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
                 <div class="modal-identity-stack">
                   <div class="modal-identity">
                     <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
@@ -34249,7 +34266,7 @@
             </div>
             <div class="gallery" aria-label="Profile pictures">
                 ${photos.map((photo) => `
-                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : photo.status === "approved" ? "is-live" : ""} ${photo.status === "approved" && photo.target === "main" ? "is-main" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.target || photo.id)}" data-photo-target="${displayText(photo.target)}" data-photo-label="${displayText(photo.label)}" data-review-status="${displayText(photo.status || "")}" data-review-notes="${displayText(photo.notes || "")}" title="${displayText(approvedPhotoEditMode ? `Edit ${photo.label}` : photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
+                  <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : photo.status === "approved" ? "is-live" : ""} ${photo.status === "approved" && photo.target === "main" ? "is-main" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.id || photo.target)}" data-photo-id="${displayText(photo.id || "")}" data-photo-target="${displayText(photo.target)}" data-photo-url="${displayText(photo.imageUrl || "")}" data-photo-storage-path="${displayText(photo.storagePath || photo.storage_path || "")}" data-photo-label="${displayText(photo.label)}" data-review-status="${displayText(photo.status || "")}" data-review-notes="${displayText(photo.notes || "")}" title="${displayText(approvedPhotoEditMode ? `Edit ${photo.label}` : photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
@@ -34353,8 +34370,8 @@
           <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
           ${rejectionReason}
           <div class="approved-visual-photo-actions">
-            <button type="button" data-approved-visual-photo-replace data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>
-            <button class="approved-visual-delete" type="button" data-approved-visual-photo-delete data-photo-target="${displayText(data.target || "gallery")}">Delete picture</button>
+            <button type="button" data-approved-visual-photo-replace data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>
+            <button class="approved-visual-delete" type="button" data-approved-visual-photo-delete data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}" data-photo-label="${displayText(data.label || "Profile photo")}" data-photo-url="${displayText(data.photoUrl || "")}" data-photo-storage-path="${displayText(data.storagePath || "")}">Delete picture</button>
           </div>
         `;
       } else {
@@ -34408,10 +34425,20 @@
       }
 
       if (deleteButton) {
-        const target = deleteButton.dataset.photoTarget || "";
+        const payload = {
+          photoId: deleteButton.dataset.photoId || "",
+          target: deleteButton.dataset.photoTarget || "",
+          label: deleteButton.dataset.photoLabel || "Profile photo",
+          photoUrl: deleteButton.dataset.photoUrl || "",
+          storagePath: deleteButton.dataset.photoStoragePath || ""
+        };
+        console.log("DELETE_CONFIRM", {
+          photoId: payload.photoId,
+          label: payload.label
+        });
         deleteButton.disabled = true;
         try {
-          const deleted = await deleteApprovedDancerPhoto(target);
+          const deleted = await deleteApprovedDancerPhoto(payload);
           closeApprovedVisualEditPopover();
           showToast(deleted ? "Photo deleted. Press Save profile when ready." : "Photo could not be deleted.");
         } catch (error) {
@@ -36463,15 +36490,43 @@
       return { ...data, photoTarget: uploadedPhotoTarget };
     }
 
-    async function deleteApprovedDancerPhoto(target) {
+    async function deleteApprovedDancerPhoto(deleteRequest) {
       const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       if (!profile) return false;
+      const request = typeof deleteRequest === "string" ? { target: deleteRequest } : (deleteRequest || {});
+      const requestedPhotoId = String(request.photoId || "");
+      const target = String(request.target || "");
+      const photos = approvedVisualPhotoItems(profile);
+      console.log("DELETE_HANDLER_RECEIVED", {
+        photoId: requestedPhotoId,
+        label: request.label || "",
+        target,
+        currentPhotos: photos.map((photo) => ({
+          id: photo.id,
+          target: photo.target,
+          sortOrder: photo.sort_order ?? photo.sortOrder ?? null,
+          isPrimary: Boolean(photo.is_primary || photo.isPrimary || photo.target === "main")
+        }))
+      });
+      const targetPhoto = requestedPhotoId
+        ? photos.find((photo) => String(photo.id || "") === requestedPhotoId)
+        : photos.find((photo) => String(photo.target || "") === target);
       const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;
       const galleryIndex = String(target || "").startsWith("gallery:") ? Number(String(target).split(":")[1]) : -1;
       let removed = false;
-      let deletedLivePhotoId = "";
-      let deletedPhotoUrl = photoUrlFromTarget(profile, target, submittedIndex, galleryIndex);
-      if (Number.isInteger(submittedIndex) && submittedIndex >= 0 && profile.submittedPhotos?.[submittedIndex]) {
+      let deletedLivePhotoId = targetPhoto?.id && !["main"].includes(String(targetPhoto.id)) && !String(targetPhoto.id).startsWith("gallery-")
+        ? String(targetPhoto.id)
+        : "";
+      let deletedPhotoUrl = request.photoUrl || targetPhoto?.imageUrl || photoUrlFromTarget(profile, target, submittedIndex, galleryIndex);
+      console.log("DELETE_TARGET_RESOLVED", {
+        requestedPhotoId,
+        resolvedPhotoId: targetPhoto?.id || deletedLivePhotoId || "",
+        target,
+        storagePath: request.storagePath || targetPhoto?.storagePath || targetPhoto?.storage_path || ""
+      });
+      if (targetPhoto?.id) {
+        removed = true;
+      } else if (Number.isInteger(submittedIndex) && submittedIndex >= 0 && profile.submittedPhotos?.[submittedIndex]) {
         deletedLivePhotoId = profile.submittedPhotos[submittedIndex]?.id || "";
         removed = true;
       } else if (target === "main" && profile.mainPhotoUrl) {
@@ -36480,7 +36535,7 @@
         removed = true;
       }
       if (!removed) return false;
-      const locallyRemoved = removeLocalDancerPhoto(profile, { target, photoId: deletedLivePhotoId, photoUrl: deletedPhotoUrl });
+      const locallyRemoved = removeLocalDancerPhoto(profile, { target, photoId: deletedLivePhotoId || requestedPhotoId, photoUrl: deletedPhotoUrl });
       if (activeApprovedVisualPhotoTarget === target || activeApprovedVisualPhotoTarget === deletedLivePhotoId) activeApprovedVisualPhotoTarget = "";
       profile.approvalChangesPending = true;
       profile.approvalChangesSubmitted = false;
@@ -36503,6 +36558,11 @@
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok || data.ok === false) throw new Error(data.error || "Could not delete photo");
+          console.log("DATABASE_DELETE_RESULT", {
+            requestedIds: [deletedLivePhotoId],
+            deletedIds: data.photo?.deletedIds || data.photo?.deleted_ids || [],
+            error: null
+          });
         }
       }
       return locallyRemoved || removed;
@@ -40068,8 +40128,16 @@
       if (visualPhotoSelect) {
         event.preventDefault();
         if (approvedPhotoEditMode) {
+          console.log("DELETE_CLICK", {
+            photoId: visualPhotoSelect.dataset.photoId || "",
+            label: visualPhotoSelect.dataset.photoLabel || "",
+            storagePath: visualPhotoSelect.dataset.photoStoragePath || ""
+          });
           openApprovedVisualEditPopover("photo", {
+            photoId: visualPhotoSelect.dataset.photoId,
             target: visualPhotoSelect.dataset.photoTarget,
+            photoUrl: visualPhotoSelect.dataset.photoUrl,
+            storagePath: visualPhotoSelect.dataset.photoStoragePath,
             label: visualPhotoSelect.dataset.photoLabel,
             status: visualPhotoSelect.dataset.reviewStatus,
             notes: visualPhotoSelect.dataset.reviewNotes,
@@ -40101,7 +40169,10 @@
           return;
         }
         openApprovedVisualEditPopover(visualEdit.dataset.profileVisualEdit, {
+          photoId: visualEdit.dataset.photoId,
           target: visualEdit.dataset.photoTarget,
+          photoUrl: visualEdit.dataset.photoUrl,
+          storagePath: visualEdit.dataset.photoStoragePath,
           label: visualEdit.dataset.photoLabel,
           platform: visualEdit.dataset.socialPlatform,
           status: visualEdit.dataset.reviewStatus,
@@ -40130,10 +40201,16 @@
       const visualPhotoDelete = event.target.closest("[data-approved-visual-photo-delete]");
       if (visualPhotoDelete) {
         event.preventDefault();
-        const target = visualPhotoDelete.dataset.photoTarget || "";
+        const payload = {
+          photoId: visualPhotoDelete.dataset.photoId || "",
+          target: visualPhotoDelete.dataset.photoTarget || "",
+          label: visualPhotoDelete.dataset.photoLabel || "Profile photo",
+          photoUrl: visualPhotoDelete.dataset.photoUrl || "",
+          storagePath: visualPhotoDelete.dataset.photoStoragePath || ""
+        };
         visualPhotoDelete.disabled = true;
         try {
-          const deleted = await deleteApprovedDancerPhoto(target);
+          const deleted = await deleteApprovedDancerPhoto(payload);
           closeApprovedVisualEditPopover();
           showToast(deleted ? "Photo deleted. Press Save profile when ready." : "Photo could not be deleted.");
         } catch (error) {
