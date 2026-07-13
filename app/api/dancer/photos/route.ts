@@ -51,7 +51,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ ok: false, error: "Photo id is required." }, { status: 400 });
     }
 
-    const photo = await deleteOwnDancerPhoto(client, user.id, photoId);
+    const photo = await deleteOwnDancerPhoto(client, user.id, photoId, createAdminSupabaseClient());
     return NextResponse.json({ ok: true, photo });
   } catch (error) {
     return apiError(error, "Unable to delete dancer photo.");

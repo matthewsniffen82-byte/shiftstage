@@ -1609,6 +1609,7 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
   const [selectedPreview, setSelectedPreview] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingPhotoId, setDeletingPhotoId] = useState("");
 
   useEffect(() => {
     setPhotos((current) => mergePhotoItems(current, dancerPhotoItemsFromProfile(profile)));
@@ -1690,6 +1691,33 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
     }
   }
 
+  async function deletePhoto(photo: DancerPhotoItem) {
+    if (!window.confirm("Delete this photo from your profile?")) return;
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    setDeletingPhotoId(photo.id);
+    setStatus("Deleting photo...");
+    try {
+      const response = await fetch("/api/dancer/photos", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ photoId: photo.id }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete photo.");
+      setPhotos((current) => current.filter((item) => item.id !== photo.id));
+      setStatus("Photo deleted.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
+    } finally {
+      setDeletingPhotoId("");
+    }
+  }
+
   return (
     <article className="info-panel upload-panel">
       <h2>Photos</h2>
@@ -1729,6 +1757,14 @@ function DancerPhotoPanel({ profile }: { profile?: LoadState["profile"] }) {
               <strong>{photo.label}</strong>
               <small>{photoStatusLabel(photo.status)}</small>
               <em>{photo.note}</em>
+              <button
+                className="photo-delete-button"
+                type="button"
+                disabled={deletingPhotoId === photo.id}
+                onClick={() => deletePhoto(photo)}
+              >
+                {deletingPhotoId === photo.id ? "Deleting..." : "Delete photo"}
+              </button>
             </span>
           </div>
         ))}
@@ -1936,6 +1972,8 @@ function DashboardStyles() {
       .photo-review-card strong { color: #fff; }
       .photo-review-card small { color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; }
       .photo-review-card em { color: #cfc5de; font-size: 13px; font-style: normal; line-height: 1.35; }
+      .photo-delete-button { width: fit-content; min-height: 36px; margin-top: 4px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.14); color: #ffd6dc; font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
+      .photo-delete-button:disabled { opacity: .62; cursor: wait; }
       .photo-preview { width: 96px; aspect-ratio: 3 / 4; display: grid; place-items: center; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.12); color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; }
       .review-list { display: grid; gap: 10px; }
       .review-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }

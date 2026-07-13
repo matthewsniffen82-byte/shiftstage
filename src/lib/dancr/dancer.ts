@@ -124,7 +124,7 @@ export async function uploadOwnDancerPhoto(
   };
 }
 
-export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, photoId: string) {
+export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, photoId: string, adminClient: DancrClient = client) {
   const profile = await getOwnDancerProfile(client, userId);
   const { data: photo, error: photoError } = await client
     .from("dancer_photos")
@@ -134,23 +134,71 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     .maybeSingle();
 
   if (photoError) throw photoError;
-  if (!photo) throw new Error("Photo not found.");
+  if (photo) {
+    const { error: deleteError } = await adminClient.from("dancer_photos").delete().eq("id", photo.id);
+    if (deleteError) throw deleteError;
 
-  const { error: deleteError } = await client.from("dancer_photos").delete().eq("id", photo.id);
-  if (deleteError) throw deleteError;
+    if (photo.storage_path) {
+      await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
+    }
 
-  if (photo.storage_path) {
-    await client.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
+    await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
+    return { id: photo.id, kind: "approved_photo" };
   }
 
+  const { data: moderationRecord, error: moderationError } = await (adminClient as any)
+    .from("image_moderation_records")
+    .select("id, user_id, temporary_storage_path, final_storage_path")
+    .eq("id", photoId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (moderationError) throw moderationError;
+  if (!moderationRecord) throw new Error("Photo not found.");
+
+  const { error: deleteModerationError } = await (adminClient as any)
+    .from("image_moderation_records")
+    .delete()
+    .eq("id", moderationRecord.id)
+    .eq("user_id", userId);
+  if (deleteModerationError) throw deleteModerationError;
+
+  const temporaryPath = String(moderationRecord.temporary_storage_path || "");
+  const finalPath = String(moderationRecord.final_storage_path || "");
+  if (temporaryPath) {
+    await adminClient.storage.from("dancr-image-moderation-temp").remove([temporaryPath]).catch(() => null);
+    await adminClient.storage.from("dancr-image-moderation-review").remove([temporaryPath]).catch(() => null);
+  }
+  if (finalPath) {
+    await adminClient.storage.from("dancer-photos").remove([finalPath]).catch(() => null);
+  }
+
+  await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
+  return { id: moderationRecord.id, kind: "moderation_photo" };
+}
+
+async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, dancerId: string) {
+  const { count: pendingPhotoCount, error: pendingPhotoError } = await client
+    .from("dancer_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "pending");
+  if (pendingPhotoError) throw pendingPhotoError;
+
+  const { count: pendingModerationCount, error: pendingModerationError } = await (client as any)
+    .from("image_moderation_records")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("decision", "review")
+    .in("status", ["pending", "moderating", "pending_review", "moderation_retry", "moderation_error"]);
+  if (pendingModerationError) throw pendingModerationError;
+
+  const nextStatus = (pendingPhotoCount || 0) + (pendingModerationCount || 0) > 0 ? "pending" : "approved";
   const { error: profileError } = await client
     .from("dancer_profiles")
-    .update({ photo_review_status: "pending" })
-    .eq("id", profile.id);
-
+    .update({ photo_review_status: nextStatus })
+    .eq("id", dancerId);
   if (profileError) throw profileError;
-
-  return { id: photo.id };
 }
 
 export async function uploadVerificationDocument(client: DancrClient, input: UploadVerificationDocumentInput) {
