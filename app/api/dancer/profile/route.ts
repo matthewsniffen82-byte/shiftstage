@@ -9,6 +9,15 @@ export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
 const MAX_DANCER_PROFILE_PHOTOS = 5;
+const APPROVED_PHOTO_BUCKET = "dancer-photos";
+
+type ProfilePhotoStorageValue = {
+  storagePath: string;
+  publicUrl?: string;
+  fromApprovedBucket: boolean;
+  isPrimary: boolean;
+  sortOrder: number;
+};
 
 export async function GET(request: Request) {
   try {
@@ -380,22 +389,26 @@ async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
   const photoUrls = readProfilePhotoUrls(body);
   if (!photoUrls.length) return;
 
+  const storagePaths = photoUrls.map((photo) => photo.storagePath);
   const { data: existing, error: existingError } = await db
     .from("dancer_photos")
     .select("id, storage_path")
     .eq("dancer_id", dancerId)
-    .in("storage_path", photoUrls.map((photo) => photo.url));
+    .in("storage_path", storagePaths);
 
   if (existingError) throw existingError;
 
   const existingByPath = new Map<string, { id: string }>(
     (existing || []).map((photo: any) => [photo.storage_path, { id: photo.id }]),
   );
+
+  await removeDuplicatePublicUrlPhotoRows(db, dancerId, photoUrls, existingByPath);
+
   const newRows = photoUrls
-    .filter((photo) => !existingByPath.has(photo.url))
+    .filter((photo) => !photo.fromApprovedBucket && !existingByPath.has(photo.storagePath))
     .map((photo) => ({
       dancer_id: dancerId,
-      storage_path: photo.url,
+      storage_path: photo.storagePath,
       is_primary: photo.isPrimary,
       sort_order: photo.sortOrder,
       review_status: "pending",
@@ -407,7 +420,7 @@ async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
   }
 
   const existingUpdates = photoUrls.flatMap((photo) => {
-    const existingPhoto = existingByPath.get(photo.url);
+    const existingPhoto = existingByPath.get(photo.storagePath);
     return existingPhoto ? [{ ...photo, id: existingPhoto.id }] : [];
   });
 
@@ -437,36 +450,74 @@ async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
 }
 
 function readProfilePhotoUrls(body: any) {
-  const urls: Array<{ url: string; isPrimary: boolean; sortOrder: number }> = [];
+  const urls: ProfilePhotoStorageValue[] = [];
   const seen = new Set<string>();
-  const mainPhotoUrl = readUrl(body?.mainPhotoUrl);
+  const mainPhotoUrl = readPhotoStorageValue(body?.mainPhotoUrl);
 
   if (mainPhotoUrl) {
-    urls.push({ url: mainPhotoUrl, isPrimary: true, sortOrder: 0 });
-    seen.add(mainPhotoUrl);
+    urls.push({ ...mainPhotoUrl, isPrimary: true, sortOrder: 0 });
+    seen.add(mainPhotoUrl.storagePath);
   }
 
   const galleryUrls = Array.isArray(body?.galleryPhotoUrls) ? body.galleryPhotoUrls : [];
   for (const value of galleryUrls) {
-    const url = readUrl(value);
-    if (!url || seen.has(url)) continue;
+    const url = readPhotoStorageValue(value);
+    if (!url || seen.has(url.storagePath)) continue;
 
-    urls.push({ url, isPrimary: !mainPhotoUrl && urls.length === 0, sortOrder: urls.length + 1 });
-    seen.add(url);
+    urls.push({ ...url, isPrimary: !mainPhotoUrl && urls.length === 0, sortOrder: urls.length + 1 });
+    seen.add(url.storagePath);
   }
 
   return urls.slice(0, MAX_DANCER_PROFILE_PHOTOS);
 }
 
-function readUrl(value: unknown) {
-  if (typeof value !== "string") return "";
+function readPhotoStorageValue(value: unknown): Omit<ProfilePhotoStorageValue, "isPrimary" | "sortOrder"> | null {
+  if (typeof value !== "string") return null;
   const text = value.trim();
-  if (!text) return "";
+  if (!text) return null;
 
   try {
     const url = new URL(text);
-    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : "";
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    const approvedStoragePath = approvedBucketPathFromPublicUrl(url);
+    return {
+      storagePath: approvedStoragePath || url.toString(),
+      publicUrl: url.toString(),
+      fromApprovedBucket: Boolean(approvedStoragePath),
+    };
   } catch {
-    return "";
+    return {
+      storagePath: text.replace(/^\/+/, ""),
+      fromApprovedBucket: false,
+    };
   }
+}
+
+function approvedBucketPathFromPublicUrl(url: URL) {
+  const marker = `/storage/v1/object/public/${APPROVED_PHOTO_BUCKET}/`;
+  const index = url.pathname.indexOf(marker);
+  if (index === -1) return "";
+  return decodeURIComponent(url.pathname.slice(index + marker.length));
+}
+
+async function removeDuplicatePublicUrlPhotoRows(
+  db: any,
+  dancerId: string,
+  photoUrls: Array<{ storagePath: string; publicUrl?: string; fromApprovedBucket: boolean }>,
+  existingByPath: Map<string, { id: string }>,
+) {
+  const duplicatePublicUrls = photoUrls
+    .filter((photo) => photo.fromApprovedBucket && photo.publicUrl && existingByPath.has(photo.storagePath))
+    .map((photo) => photo.publicUrl as string);
+
+  if (!duplicatePublicUrls.length) return;
+
+  const { error } = await db
+    .from("dancer_photos")
+    .delete()
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "pending")
+    .in("storage_path", duplicatePublicUrls);
+
+  if (error) throw error;
 }
