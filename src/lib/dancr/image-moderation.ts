@@ -45,6 +45,7 @@ type ModeratedPhotoResult = {
 };
 
 const rateLimitMemory = new Map<string, { count: number; resetAt: number }>();
+let openAITextDiagnosticPromise: Promise<void> | null = null;
 
 export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: DancrClient, input: ModeratedPhotoInput): Promise<ModeratedPhotoResult> {
   enforceUploadRateLimit(input.userId, input.ipAddress);
@@ -70,6 +71,13 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     temporaryStoragePath: tempPath,
     contentType: image.contentType,
     size: image.buffer.byteLength,
+  });
+  console.log("STORAGE_IMAGE_RECORD", {
+    imageId: "pending_record_creation",
+    bucket: MODERATION_TEMP_BUCKET,
+    storagePath: tempPath,
+    mimeType: image.contentType,
+    fileSize: image.buffer.byteLength,
   });
 
   const record = await createModerationRecord(admin, {
@@ -443,7 +451,14 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
   logModeration("openai_key_present", { present: apiKeyPresent });
   if (!apiKeyPresent) throw new Error("MODERATION_AUTH_KEY_MISSING");
   const apiKey = getServerEnv("OPENAI_API_KEY");
+  console.log("OPENAI_CONFIGURATION", {
+    apiKeyPresent: Boolean(apiKey),
+    apiKeySuffix: apiKey ? apiKey.slice(-4) : null,
+    model: DANCR_IMAGE_MODERATION_MODEL,
+  });
   const openai = new OpenAI({ apiKey });
+  await runOpenAITextDiagnostic(openai);
+  await verifyStorageObjectExists(admin, MODERATION_TEMP_BUCKET, tempPath);
   const imageUrl = await createModerationSignedUrl(admin, tempPath);
   await probeSignedImageUrl(imageUrl, tempPath);
 
@@ -455,6 +470,7 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
   try {
     response = await createModeration(openai, [{ type: "image_url", image_url: { url: imageUrl } }]);
   } catch (error) {
+    console.error("OPENAI_IMAGE_REQUEST_FAILED", openAIRequestFailureDetails(error));
     if (!shouldAttemptDataUrlFallback(error)) throw error;
     const image = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     const dataUrl = `data:${image.contentType};base64,${image.buffer.toString("base64")}`;
@@ -465,11 +481,25 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
       fileSize: image.buffer.byteLength,
       mimeType: image.contentType,
     });
-    response = await createModeration(openai, [{ type: "image_url", image_url: { url: dataUrl } }]);
+    try {
+      response = await createModeration(openai, [{ type: "image_url", image_url: { url: dataUrl } }]);
+    } catch (fallbackError) {
+      console.error("OPENAI_IMAGE_REQUEST_FAILED", {
+        ...openAIRequestFailureDetails(fallbackError),
+        imageSource: "server_data_url",
+      });
+      throw fallbackError;
+    }
   }
   const result = response?.results?.[0];
   if (!result) throw new Error("provider_response_incomplete");
+  if (typeof result.flagged !== "boolean") throw new Error("INVALID_MODERATION_RESPONSE");
   console.log("OPENAI_MODERATION_RESULT", {
+    requestId: response?._request_id,
+    resultExists: Boolean(result),
+    flagged: result?.flagged,
+  });
+  console.log("OPENAI_IMAGE_MODERATION_RESULT", {
     requestId: response?._request_id,
     resultExists: Boolean(result),
     flagged: result?.flagged,
@@ -499,6 +529,54 @@ async function createModeration(openai: any, input: Array<{ type: "image_url"; i
   );
 }
 
+async function runOpenAITextDiagnostic(openai: any) {
+  if (!openAITextDiagnosticPromise) {
+    openAITextDiagnosticPromise = (async () => {
+      try {
+        const testResponse: any = await withTimeout(
+          openai.moderations.create({
+            model: DANCR_IMAGE_MODERATION_MODEL,
+            input: "A normal profile photo",
+          }),
+          20000,
+        );
+        console.log("OPENAI_TEXT_TEST", {
+          success: true,
+          requestId: testResponse?._request_id,
+          flagged: testResponse?.results?.[0]?.flagged,
+        });
+      } catch (error) {
+        console.error("OPENAI_TEXT_TEST_FAILED", openAIRequestFailureDetails(error));
+        openAITextDiagnosticPromise = null;
+        throw error;
+      }
+    })();
+  }
+  return openAITextDiagnosticPromise;
+}
+
+async function verifyStorageObjectExists(client: DancrClient, bucket: string, storagePath: string) {
+  const { data, error } = await client.storage.from(bucket).download(storagePath);
+  if (error || !data) {
+    console.error("STORAGE_IMAGE_RECORD", {
+      imageId: "moderation_temp",
+      bucket,
+      storagePath,
+      exists: false,
+      error: error?.message || "No storage object returned",
+    });
+    throw new Error(`STORAGE_IMAGE_MISSING: ${error?.message || "No storage object returned"}`);
+  }
+  console.log("STORAGE_IMAGE_RECORD", {
+    imageId: "moderation_temp",
+    bucket,
+    storagePath,
+    exists: true,
+    mimeType: data.type || null,
+    fileSize: data.size,
+  });
+}
+
 async function createModerationSignedUrl(client: DancrClient, tempPath: string) {
   const { data, error } = await client.storage
     .from(MODERATION_TEMP_BUCKET)
@@ -522,6 +600,14 @@ async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
   const startedAt = Date.now();
   const probe = await fetch(imageUrl, { method: "GET" });
   const contentType = probe.headers.get("content-type") || "";
+  const failedBody = !probe.ok ? await probe.text().catch(() => "") : "";
+  console.log("IMAGE_PROBE_RESULT", {
+    status: probe.status,
+    ok: probe.ok,
+    contentType,
+    contentLength: probe.headers.get("content-length"),
+    failedBodyPreview: failedBody.slice(0, 200),
+  });
   console.log("IMAGE_URL_PROBE", {
     status: probe.status,
     ok: probe.ok,
@@ -537,10 +623,10 @@ async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
     durationMs: Date.now() - startedAt,
   });
   if (!probe.ok) {
-    throw new Error(`MODERATION_IMAGE_INACCESSIBLE_${probe.status}`);
+    throw new Error(`IMAGE_LOAD_FAILED_HTTP_${probe.status}`);
   }
   if (!contentType.startsWith("image/")) {
-    throw new Error(`MODERATION_INVALID_CONTENT_TYPE_${contentType || "missing"}`);
+    throw new Error(`IMAGE_LOAD_FAILED_CONTENT_TYPE_${contentType || "missing"}`);
   }
 }
 
@@ -778,6 +864,10 @@ async function logStoredModerationStatus(client: DancrClient, recordId: string, 
     expected,
     stored: data?.status || null,
   });
+  console.log("FINAL_MODERATION_STATUS", {
+    expected,
+    stored: data?.status || null,
+  });
 }
 
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {
@@ -844,8 +934,11 @@ function moderationErrorCode(error: unknown) {
   if (message.includes("MODERATION_AUTH_KEY_MISSING")) return "missing_openai_api_key";
   if (message.includes("MODERATION_SIGNED_URL_FAILED")) return "provider_signed_url_error";
   if (message.includes("MODERATION_IMAGE_INACCESSIBLE")) return "provider_image_inaccessible";
+  if (message.includes("IMAGE_LOAD_FAILED_HTTP")) return "provider_image_inaccessible";
   if (message.includes("MODERATION_IMAGE_URL_NOT_HTTPS")) return "provider_image_inaccessible";
   if (message.includes("MODERATION_INVALID_CONTENT_TYPE")) return "provider_invalid_content_type";
+  if (message.includes("IMAGE_LOAD_FAILED_CONTENT_TYPE")) return "provider_invalid_content_type";
+  if (message.includes("STORAGE_IMAGE_MISSING")) return "provider_storage_object_missing";
   if (status === 401 || code.includes("invalid_api_key")) return "invalid_openai_api_key";
   if (status === 400) return "provider_invalid_request";
   if (status === 403) return "provider_forbidden";
@@ -865,6 +958,7 @@ function moderationDiagnosticCode(errorCode: string | null, error?: unknown) {
   if (errorCode === "provider_signed_url_error") return "IMAGE_URL_SIGNING_FAILED";
   if (errorCode === "provider_image_inaccessible") return imageInaccessibleDiagnosticCode(error);
   if (errorCode === "provider_invalid_content_type") return "IMAGE_URL_INVALID_CONTENT_TYPE";
+  if (errorCode === "provider_storage_object_missing") return "STORAGE_IMAGE_MISSING";
   if (errorCode === "provider_rate_limited") return "OPENAI_RATE_LIMITED";
   if (errorCode === "provider_timeout") return "OPENAI_TIMEOUT";
   if (errorCode === "provider_response_incomplete") return "OPENAI_RESPONSE_INCOMPLETE";
@@ -918,6 +1012,20 @@ function sanitizeProviderError(error: unknown) {
   };
 }
 
+function openAIRequestFailureDetails(error: unknown) {
+  const anyError = error as any;
+  return {
+    status: Number(anyError?.status || anyError?.response?.status || 0) || undefined,
+    code: anyError?.code || anyError?.error?.code || undefined,
+    type: anyError?.type || anyError?.error?.type || undefined,
+    message: error instanceof Error ? error.message.slice(0, 500) : String(error || "").slice(0, 500),
+    requestId: anyError?.request_id || anyError?.headers?.["x-request-id"],
+    responseData: anyError?.response?.data ? JSON.stringify(anyError.response.data).slice(0, 500) : undefined,
+    cause: anyError?.cause ? String(anyError.cause).slice(0, 500) : undefined,
+    stack: error instanceof Error ? error.stack?.slice(0, 1000) : undefined,
+  };
+}
+
 function didReachOpenAI(errorCode: string | null) {
   return [
     "provider_invalid_request",
@@ -938,6 +1046,8 @@ function didOpenAIReturnResponse(error: unknown) {
 function imageInaccessibleDiagnosticCode(error: unknown) {
   const message = error instanceof Error ? error.message : String(error || "");
   const status = message.match(/MODERATION_IMAGE_INACCESSIBLE_(\d+)/)?.[1];
+  const loadStatus = message.match(/IMAGE_LOAD_FAILED_HTTP_(\d+)/)?.[1];
+  if (loadStatus) return `IMAGE_URL_INACCESSIBLE_${loadStatus}`;
   return status ? `IMAGE_URL_INACCESSIBLE_${status}` : "IMAGE_URL_INACCESSIBLE";
 }
 
