@@ -57,6 +57,8 @@ Required production environment variables:
 
 Dancr dancer photo uploads now go through a server-side OpenAI moderation pipeline before any image can become public.
 
+Deployment marker: image moderation diagnostics and retry worker are expected in production builds after July 12, 2026.
+
 ### Setup
 
 1. Run `npm install` so the official `openai` Node.js SDK from `package.json` is installed and `package-lock.json` is refreshed.
