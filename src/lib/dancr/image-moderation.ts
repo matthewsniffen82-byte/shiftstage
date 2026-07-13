@@ -96,48 +96,59 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     });
   } catch (error) {
     errorCode = moderationErrorCode(error);
-    const diagnosticCode = moderationDiagnosticCode(errorCode);
-    const retryable = retryableModerationError(errorCode);
-    const nextAttemptAt = retryable ? retryDelayTimestamp(1) : null;
+    const diagnosticCode = moderationDiagnosticCode(errorCode, error);
+    const providerError = sanitizeProviderError(error);
     console.error("DANCR_MODERATION_ERROR", {
       imageId: record.id,
       storagePath: tempPath,
       diagnosticCode,
-      ...sanitizeProviderError(error),
+      ...providerError,
+    });
+    console.error("DANCR_MODERATION_FAILURE", {
+      imageId: record.id,
+      functionFile: "src/lib/dancr/image-moderation.ts",
+      reachedOpenAI: didReachOpenAI(errorCode),
+      openaiReturnedResponse: didOpenAIReturnResponse(error),
+      diagnosticCode,
+      status: providerError.status,
+      code: providerError.code,
+      type: providerError.type,
+      message: providerError.message,
+      response: providerError.response,
+      stack: providerError.stack,
     });
     logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", {
       recordId: record.id,
       errorCode,
       diagnosticCode,
-      providerError: sanitizeProviderError(error),
+      providerError,
     });
     await updateModerationRecord(admin, record.id, {
       decision: "review",
-      status: retryable ? "moderation_retry" : "moderation_error",
+      status: "moderation_error",
       reasonCodes: [diagnosticCode],
       categoryFlags,
       categoryScores: {},
       providerFlagged: false,
       errorCode: diagnosticCode,
       attemptCount: 1,
-      nextAttemptAt,
+      nextAttemptAt: null,
       lastErrorCode: diagnosticCode,
       lastErrorMessage: safeErrorMessage(error),
     });
     logModeration("database_status_written", {
       recordId: record.id,
-      databaseStatus: retryable ? "moderation_retry" : "moderation_error",
+      databaseStatus: "moderation_error",
       errorCode,
       diagnosticCode,
-      nextAttemptAt,
     });
     return {
-      decision: retryable ? "moderation_retry" : "moderation_error",
+      decision: "moderation_error",
       moderationRecordId: record.id,
       reasonCodes: [diagnosticCode],
       diagnosticCode,
       providerFlagged: false,
-      message: retryable ? moderationUploadErrorMessage(errorCode) : moderationDiagnosticMessage(diagnosticCode),
+      message: moderationDiagnosticMessage(diagnosticCode),
     };
   }
 
@@ -396,6 +407,7 @@ async function approveModeratedUpload(
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
     logModeration("approved", { recordId: input.recordId, photoId: photo.id });
     logModeration("database_status_written", { recordId: input.recordId, photoId: photo.id, databaseStatus: "approved" });
+    await logStoredModerationStatus(admin, input.recordId, "approved");
     return {
       decision: "approved",
       moderationRecordId: input.recordId,
@@ -427,6 +439,7 @@ async function approveModeratedUpload(
 
 async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
   const apiKeyPresent = Boolean(process.env.OPENAI_API_KEY);
+  console.log("OPENAI_KEY_PRESENT", apiKeyPresent);
   logModeration("openai_key_present", { present: apiKeyPresent });
   if (!apiKeyPresent) throw new Error("MODERATION_AUTH_KEY_MISSING");
   const apiKey = getServerEnv("OPENAI_API_KEY");
@@ -456,6 +469,11 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
   }
   const result = response?.results?.[0];
   if (!result) throw new Error("provider_response_incomplete");
+  console.log("OPENAI_MODERATION_RESULT", {
+    requestId: response?._request_id,
+    resultExists: Boolean(result),
+    flagged: result?.flagged,
+  });
   logModeration("provider_response", {
     model: DANCR_IMAGE_MODERATION_MODEL,
     response: sanitizeModerationResponse(response),
@@ -504,6 +522,11 @@ async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
   const startedAt = Date.now();
   const probe = await fetch(imageUrl, { method: "GET" });
   const contentType = probe.headers.get("content-type") || "";
+  console.log("IMAGE_URL_PROBE", {
+    status: probe.status,
+    ok: probe.ok,
+    contentType,
+  });
   logModeration("signed_image_probe", {
     storageBucket: MODERATION_TEMP_BUCKET,
     storagePath: tempPath,
@@ -737,6 +760,26 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
   if (error) throw error;
 }
 
+async function logStoredModerationStatus(client: DancrClient, recordId: string, expected: string) {
+  const { data, error } = await client
+    .from("image_moderation_records")
+    .select("status")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (error) {
+    console.error("DATABASE_STATUS_RESULT", {
+      expected,
+      stored: null,
+      error: error.message,
+    });
+    throw new Error(`DATABASE_UPDATE_FAILED: ${error.message}`);
+  }
+  console.log("DATABASE_STATUS_RESULT", {
+    expected,
+    stored: data?.status || null,
+  });
+}
+
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {
   const { data, error } = await client
     .from("image_moderation_records")
@@ -815,12 +858,17 @@ function moderationErrorCode(error: unknown) {
   return "provider_error";
 }
 
-function moderationDiagnosticCode(errorCode: string | null) {
-  if (errorCode === "missing_openai_api_key" || errorCode === "invalid_openai_api_key") return "MODERATION_AUTH_FAILED";
-  if (errorCode === "provider_invalid_request") return "MODERATION_INVALID_REQUEST";
-  if (errorCode === "provider_signed_url_error" || errorCode === "provider_image_inaccessible" || errorCode === "provider_invalid_content_type") return "MODERATION_IMAGE_INACCESSIBLE";
-  if (errorCode === "provider_rate_limited") return "MODERATION_RATE_LIMITED";
-  if (errorCode === "database_after_storage_error") return "MODERATION_DATABASE_UPDATE_FAILED";
+function moderationDiagnosticCode(errorCode: string | null, error?: unknown) {
+  if (errorCode === "missing_openai_api_key") return "OPENAI_API_KEY_MISSING";
+  if (errorCode === "invalid_openai_api_key") return "OPENAI_AUTH_FAILED";
+  if (errorCode === "provider_invalid_request") return "OPENAI_INVALID_REQUEST";
+  if (errorCode === "provider_signed_url_error") return "IMAGE_URL_SIGNING_FAILED";
+  if (errorCode === "provider_image_inaccessible") return imageInaccessibleDiagnosticCode(error);
+  if (errorCode === "provider_invalid_content_type") return "IMAGE_URL_INVALID_CONTENT_TYPE";
+  if (errorCode === "provider_rate_limited") return "OPENAI_RATE_LIMITED";
+  if (errorCode === "provider_timeout") return "OPENAI_TIMEOUT";
+  if (errorCode === "provider_response_incomplete") return "OPENAI_RESPONSE_INCOMPLETE";
+  if (errorCode === "database_after_storage_error") return "DATABASE_UPDATE_FAILED";
   return "MODERATION_UNKNOWN_ERROR";
 }
 
@@ -868,6 +916,29 @@ function sanitizeProviderError(error: unknown) {
     message: error instanceof Error ? error.message.slice(0, 240) : String(error || "").slice(0, 240),
     stack: error instanceof Error ? error.stack?.slice(0, 1000) : undefined,
   };
+}
+
+function didReachOpenAI(errorCode: string | null) {
+  return [
+    "provider_invalid_request",
+    "provider_forbidden",
+    "provider_rate_limited",
+    "provider_timeout",
+    "provider_response_incomplete",
+    "provider_error",
+    "invalid_openai_api_key",
+  ].includes(String(errorCode || ""));
+}
+
+function didOpenAIReturnResponse(error: unknown) {
+  const anyError = error as any;
+  return Boolean(anyError?.response || anyError?.status || anyError?.request_id || anyError?.headers);
+}
+
+function imageInaccessibleDiagnosticCode(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  const status = message.match(/MODERATION_IMAGE_INACCESSIBLE_(\d+)/)?.[1];
+  return status ? `IMAGE_URL_INACCESSIBLE_${status}` : "IMAGE_URL_INACCESSIBLE";
 }
 
 function signedUrlType(url: string) {
