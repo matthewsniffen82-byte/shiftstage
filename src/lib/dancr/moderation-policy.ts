@@ -35,7 +35,7 @@ export function evaluateDancrImageModeration(result: ProviderModerationResult | 
   const categoryScores = normalizeScores(result?.category_scores || result?.categoryScores || {});
   const providerFlagged = Boolean(result?.flagged);
 
-  if (!result || typeof result.flagged !== "boolean" || !result.categories || !(result.category_scores || result.categoryScores)) {
+  if (!result || typeof result.flagged !== "boolean") {
     return {
       decision: "review",
       reasonCodes: ["provider_response_incomplete"],

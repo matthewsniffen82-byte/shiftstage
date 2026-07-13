@@ -28,7 +28,7 @@ type ModeratedPhotoInput = {
 };
 
 type ModeratedPhotoResult = {
-  decision: DancrImageModerationDecision;
+  decision: DancrImageModerationDecision | "moderation_retry" | "moderation_error";
   message: string;
   moderationRecordId?: string;
   reasonCodes?: string[];
@@ -108,9 +108,17 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       providerFlagged: false,
       errorCode,
     });
-    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    logModeration("database_status_written", { recordId: record.id, databaseStatus: "error", errorCode });
-    throw new Error(moderationUploadErrorMessage(errorCode));
+    logModeration("database_status_written", { recordId: record.id, databaseStatus: retryableModerationError(errorCode) ? "moderation_retry" : "moderation_error", errorCode });
+    if (!retryableModerationError(errorCode)) {
+      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    }
+    return {
+      decision: retryableModerationError(errorCode) ? "moderation_retry" : "moderation_error",
+      moderationRecordId: record.id,
+      reasonCodes: [errorCode],
+      providerFlagged: false,
+      message: moderationUploadErrorMessage(errorCode),
+    };
   }
 
   if (evaluation.decision === "approved") {
@@ -275,15 +283,22 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
     model: DANCR_IMAGE_MODERATION_MODEL,
     imageSource: "supabase_signed_url",
   });
-  const response = await withRetry<any>(() =>
-    withTimeout(
-      openai.moderations.create({
-        model: DANCR_IMAGE_MODERATION_MODEL,
-        input: [{ type: "image_url", image_url: { url: imageUrl } }],
-      }),
-      12000,
-    ),
-  );
+  let response: any;
+  try {
+    response = await createModeration(openai, [{ type: "image_url", image_url: { url: imageUrl } }]);
+  } catch (error) {
+    if (!shouldAttemptDataUrlFallback(error)) throw error;
+    const image = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    const dataUrl = `data:${image.contentType};base64,${image.buffer.toString("base64")}`;
+    logModeration("signed_url_fallback_to_data_url", {
+      model: DANCR_IMAGE_MODERATION_MODEL,
+      signedUrlError: sanitizeProviderError(error),
+      imageSource: "server_data_url",
+      fileSize: image.buffer.byteLength,
+      mimeType: image.contentType,
+    });
+    response = await createModeration(openai, [{ type: "image_url", image_url: { url: dataUrl } }]);
+  }
   const result = response?.results?.[0];
   if (!result) throw new Error("provider_response_incomplete");
   logModeration("provider_response", {
@@ -297,6 +312,18 @@ async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Pr
     categoryScores: result.category_scores || result.categoryScores || {},
   });
   return result;
+}
+
+async function createModeration(openai: any, input: Array<{ type: "image_url"; image_url: { url: string } }>) {
+  return withRetry<any>(() =>
+    withTimeout(
+      openai.moderations.create({
+        model: DANCR_IMAGE_MODERATION_MODEL,
+        input,
+      }),
+      20000,
+    ),
+  );
 }
 
 async function loadOpenAI(): Promise<any> {
@@ -315,8 +342,20 @@ async function createModerationSignedUrl(client: DancrClient, tempPath: string) 
   return data.signedUrl;
 }
 
+async function downloadPrivateObject(client: DancrClient, bucket: string, path: string) {
+  const { data, error } = await client.storage.from(bucket).download(path);
+  if (error || !data) throw error || new Error("provider_private_download_error");
+  const buffer = Buffer.from(await data.arrayBuffer());
+  const contentType = data.type || "image/jpeg";
+  if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
+    throw new Error("provider_private_download_unsupported_type");
+  }
+  return { buffer, contentType };
+}
+
 async function withRetry<T>(operation: () => Promise<T>) {
   let lastError: unknown;
+  const retryDelays = [500, 1500];
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await operation();
@@ -324,7 +363,10 @@ async function withRetry<T>(operation: () => Promise<T>) {
       lastError = error;
       const status = Number(error?.status || error?.response?.status || 0);
       if (status >= 400 && status < 500 && status !== 429) break;
-      await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+      const delay = retryDelays[attempt] ?? 0;
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay + Math.floor(Math.random() * 150)));
+      }
     }
   }
   throw lastError;
@@ -556,6 +598,8 @@ function moderationErrorCode(error: unknown) {
   if (message.includes("provider_timeout")) return "provider_timeout";
   if (message.includes("provider_response_incomplete")) return "provider_response_incomplete";
   if (message.includes("provider_signed_url_error")) return "provider_signed_url_error";
+  if (message.includes("provider_private_download_error")) return "provider_private_download_error";
+  if (message.includes("provider_private_download_unsupported_type")) return "provider_private_download_unsupported_type";
   return "provider_error";
 }
 
@@ -563,10 +607,10 @@ function moderationUploadErrorMessage(errorCode: string | null) {
   if (errorCode === "missing_openai_api_key" || errorCode === "invalid_openai_api_key") {
     return "Image moderation is not configured. Photo uploads are paused until moderation is connected.";
   }
-  if (errorCode === "provider_rate_limited") {
-    return "Image moderation is busy right now. Please try the photo again in a minute.";
+  if (retryableModerationError(errorCode)) {
+    return "Your photo uploaded successfully, but the safety check is taking longer than expected. We'll retry it automatically.";
   }
-  return "Image moderation did not finish. Please try the photo again.";
+  return "Image moderation could not check this photo. Please try a JPG, PNG, or WebP image.";
 }
 
 function logModeration(event: string, details: Record<string, unknown>) {
@@ -595,4 +639,23 @@ function sanitizeProviderError(error: unknown) {
     type: anyError?.type || anyError?.error?.type || undefined,
     message: error instanceof Error ? error.message.slice(0, 240) : String(error || "").slice(0, 240),
   };
+}
+
+function shouldAttemptDataUrlFallback(error: unknown) {
+  const anyError = error as any;
+  const status = Number(anyError?.status || anyError?.response?.status || 0);
+  const code = String(anyError?.code || anyError?.error?.code || "");
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error || "").toLowerCase();
+  return status === 400 || code.includes("invalid") || message.includes("image") || message.includes("url");
+}
+
+function retryableModerationError(errorCode: string | null) {
+  return [
+    "provider_error",
+    "provider_timeout",
+    "provider_rate_limited",
+    "provider_response_incomplete",
+    "provider_signed_url_error",
+    "provider_private_download_error",
+  ].includes(String(errorCode || ""));
 }
