@@ -1603,6 +1603,7 @@ type DancerPhotoItem = {
   status: "approved" | "pending" | "rejected";
   note: string;
   storagePath?: string;
+  isPrimary?: boolean;
 };
 
 function DancerPhotoPanel({
@@ -1624,7 +1625,7 @@ function DancerPhotoPanel({
   useEffect(() => {
     setPhotos((current) => {
       const deleted = new Set(deletedPhotoIds);
-      return mergePhotoItems(current, dancerPhotoItemsFromProfile(profile)).filter((photo) => !deleted.has(photo.id));
+      return relabelPhotoItems(mergePhotoItems(current, dancerPhotoItemsFromProfile(profile)).filter((photo) => !deleted.has(photo.id)));
     });
   }, [profile, deletedPhotoIds]);
 
@@ -1690,10 +1691,11 @@ function DancerPhotoPanel({
         status: uploadStatus,
         note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
         storagePath: String(data.photo?.storage_path || ""),
+        isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary || isPrimary),
       };
       if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
       if (uploadStatus === "rejected") URL.revokeObjectURL(localPreviewUrl);
-      else setPhotos((current) => mergePhotoItems([uploadedPhoto], current));
+      else setPhotos((current) => relabelPhotoItems(mergePhotoItems([uploadedPhoto], current)));
       setStatus(photoUploadStatusMessage(uploadStatus, data.message));
       selectPhoto(null);
     } catch (error) {
@@ -1728,7 +1730,7 @@ function DancerPhotoPanel({
       primaryPhotoId: primaryPhotoIdFromProfile(profile),
     });
     setDeletedPhotoIds(nextDeletedPhotoIds);
-    setPhotos((current) => current.filter((item) => item.id !== photo.id));
+    setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
     try {
       const response = await fetch("/api/dancer/photos", {
         method: "DELETE",
@@ -1745,7 +1747,7 @@ function DancerPhotoPanel({
       const refreshed = await readOptionalJson("/api/dancer/profile", { authorization: `Bearer ${session.accessToken}` }, { profile: null });
       if (refreshed?.profile) {
         onProfileChange?.(refreshed.profile);
-        const refreshedPhotos = dancerPhotoItemsFromProfile(refreshed.profile).filter((item) => !nextDeletedPhotoIds.includes(item.id));
+        const refreshedPhotos = relabelPhotoItems(dancerPhotoItemsFromProfile(refreshed.profile).filter((item) => !nextDeletedPhotoIds.includes(item.id)));
         console.log("PROFILE_IMAGES_AFTER_SAVE", {
           databasePhotos: refreshedPhotos.map((item) => item.id),
         });
@@ -1755,7 +1757,7 @@ function DancerPhotoPanel({
       setStatus("Photo deleted.");
     } catch (error) {
       setDeletedPhotoIds((current) => current.filter((id) => id !== photo.id));
-      setPhotos((current) => mergePhotoItems([photo], current));
+      setPhotos((current) => relabelPhotoItems(mergePhotoItems([photo], current)));
       setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
     } finally {
       setDeletingPhotoId("");
@@ -1821,27 +1823,34 @@ function DancerPhotoPanel({
 function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhotoItem[] {
   const approvedPhotos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos as Array<Record<string, unknown>> : [];
   const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews as Array<Record<string, unknown>> : [];
+  let galleryNumber = 0;
 
   return [
     ...approvedPhotos.map((photo, index) => {
       const reviewStatus = normalizePhotoStatus(photo.review_status || photo.reviewStatus || "approved");
+      const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
       return {
         id: String(photo.id || `photo-${index}`),
         imageUrl: String(photo.imageUrl || photo.image_url || ""),
-        label: photo.is_primary || photo.isPrimary ? "Primary photo" : `Gallery photo ${index + 1}`,
+        label: isPrimary ? "Primary photo" : `Gallery photo ${++galleryNumber}`,
         status: reviewStatus,
         note: photoStatusNote(reviewStatus),
         storagePath: String(photo.storage_path || photo.storagePath || ""),
+        isPrimary,
       };
     }),
-    ...pendingReviews.map((review, index) => ({
-      id: String(review.id || `pending-photo-${index}`),
-      imageUrl: "",
-      label: String(review.upload_context || "").includes("main") ? "Primary photo" : `Gallery photo ${index + 1}`,
-      status: "pending" as const,
-      note: "Uploaded and awaiting admin verification before it appears publicly.",
-      storagePath: "",
-    })),
+    ...pendingReviews.map((review, index) => {
+      const isPrimary = String(review.upload_context || "").includes("main");
+      return {
+        id: String(review.id || `pending-photo-${index}`),
+        imageUrl: "",
+        label: isPrimary ? "Primary photo" : `Gallery photo ${++galleryNumber}`,
+        status: "pending" as const,
+        note: "Uploaded and awaiting admin verification before it appears publicly.",
+        storagePath: "",
+        isPrimary,
+      };
+    }),
   ];
 }
 
@@ -1858,6 +1867,15 @@ function mergePhotoItems(...groups: DancerPhotoItem[][]) {
     if (!existing || (existing.status !== "approved" && photo.status === "approved")) byId.set(photo.id, photo);
   });
   return Array.from(byId.values()).slice(0, 5);
+}
+
+function relabelPhotoItems(items: DancerPhotoItem[]) {
+  let galleryNumber = 0;
+  return items.map((photo) => {
+    if (photo.isPrimary) return { ...photo, label: "Primary photo" };
+    galleryNumber += 1;
+    return { ...photo, label: `Gallery photo ${galleryNumber}` };
+  });
 }
 
 function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
