@@ -170,6 +170,18 @@ export async function PATCH(request: Request) {
     }
 
     const deletedPhotoIds = readDeletedPhotoIds(body);
+    console.log("PROFILE_SAVE_PAYLOAD", {
+      hasMainPhotoUrl: typeof body?.mainPhotoUrl === "string" && Boolean(body.mainPhotoUrl.trim()),
+      galleryPhotoUrlCount: Array.isArray(body?.galleryPhotoUrls) ? body.galleryPhotoUrls.length : 0,
+      deletedPhotoIds,
+      fields: {
+        stageName: typeof body.stageName === "string",
+        legalName: typeof body.legalName === "string",
+        city: typeof body.city === "string",
+        bio: typeof body.bio === "string",
+        socials: Array.isArray(body.socials),
+      },
+    });
     if (deletedPhotoIds.length) {
       const adminDb = createAdminSupabaseClient();
       for (const photoId of deletedPhotoIds) {
@@ -190,6 +202,15 @@ export async function PATCH(request: Request) {
     } else if (body.submitForReview === true) {
       await submitPendingApprovedContentForReview(db, profile.id);
     }
+
+    const { data: databasePhotosAfterSave, error: databasePhotosAfterSaveError } = await db
+      .from("dancer_photos")
+      .select("id, is_primary, sort_order, review_status")
+      .eq("dancer_id", profile.id)
+      .order("is_primary", { ascending: false })
+      .order("sort_order", { ascending: true });
+    if (databasePhotosAfterSaveError) throw databasePhotosAfterSaveError;
+    console.log("PROFILE_IMAGES_AFTER_SAVE", databasePhotosAfterSave || []);
 
     const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
     if (refreshedProfileError) throw refreshedProfileError;

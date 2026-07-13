@@ -135,15 +135,35 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
   if (photoError) throw photoError;
   if (photo) {
-    const { error: deleteError } = await adminClient.from("dancer_photos").delete().eq("id", photo.id);
+    console.log("PHOTO_DELETE_CLICKED", {
+      id: photo.id,
+      storagePath: photo.storage_path,
+      urlPresent: false,
+    });
+    const { data: deletedRows, error: deleteError } = await adminClient
+      .from("dancer_photos")
+      .delete()
+      .eq("id", photo.id)
+      .select("id");
     if (deleteError) throw deleteError;
+    const deletedIds = (deletedRows || []).map((row: any) => row.id);
+    console.log("PHOTO_DELETE_RESULT", {
+      requestedIds: [photo.id],
+      deletedIds,
+      error: null,
+    });
+    if (!deletedIds.includes(photo.id)) {
+      throw new Error("PHOTO_DELETE_FAILED: no database row was deleted.");
+    }
 
     if (photo.storage_path) {
       await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
     }
 
     await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
-    return { id: photo.id, kind: "approved_photo" };
+    const remainingIds = await getOwnPhotoIds(adminClient, profile.id);
+    console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
+    return { id: photo.id, kind: "approved_photo", deletedIds, remainingPhotoIds: remainingIds };
   }
 
   const { data: moderationRecord, error: moderationError } = await (adminClient as any)
@@ -156,12 +176,27 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   if (moderationError) throw moderationError;
   if (!moderationRecord) throw new Error("Photo not found.");
 
-  const { error: deleteModerationError } = await (adminClient as any)
+  console.log("PHOTO_DELETE_CLICKED", {
+    id: moderationRecord.id,
+    storagePath: moderationRecord.temporary_storage_path || moderationRecord.final_storage_path,
+    urlPresent: false,
+  });
+  const { data: deletedModerationRows, error: deleteModerationError } = await (adminClient as any)
     .from("image_moderation_records")
     .delete()
     .eq("id", moderationRecord.id)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .select("id");
   if (deleteModerationError) throw deleteModerationError;
+  const deletedIds = (deletedModerationRows || []).map((row: any) => row.id);
+  console.log("PHOTO_DELETE_RESULT", {
+    requestedIds: [moderationRecord.id],
+    deletedIds,
+    error: null,
+  });
+  if (!deletedIds.includes(moderationRecord.id)) {
+    throw new Error("PHOTO_DELETE_FAILED: no moderation row was deleted.");
+  }
 
   const temporaryPath = String(moderationRecord.temporary_storage_path || "");
   const finalPath = String(moderationRecord.final_storage_path || "");
@@ -174,7 +209,20 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   }
 
   await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
-  return { id: moderationRecord.id, kind: "moderation_photo" };
+  const remainingIds = await getOwnPhotoIds(adminClient, profile.id);
+  console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
+  return { id: moderationRecord.id, kind: "moderation_photo", deletedIds, remainingPhotoIds: remainingIds };
+}
+
+async function getOwnPhotoIds(client: DancrClient, dancerId: string) {
+  const { data, error } = await client
+    .from("dancer_photos")
+    .select("id")
+    .eq("dancer_id", dancerId)
+    .order("is_primary", { ascending: false })
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data || []).map((photo: any) => photo.id);
 }
 
 async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, dancerId: string) {
