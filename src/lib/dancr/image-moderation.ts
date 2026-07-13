@@ -82,7 +82,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   let errorCode: string | null = null;
 
   try {
-    const providerResult = await moderateImageWithOpenAI(image);
+    const providerResult = await moderateImageWithOpenAI(admin, tempPath);
     categoryFlags = providerResult.categories || {};
     evaluation = evaluateDancrImageModeration(providerResult);
     logModeration("decision_evaluated", {
@@ -94,7 +94,11 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     });
   } catch (error) {
     errorCode = moderationErrorCode(error);
-    logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", { recordId: record.id, errorCode });
+    logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", {
+      recordId: record.id,
+      errorCode,
+      providerError: sanitizeProviderError(error),
+    });
     await updateModerationRecord(admin, record.id, {
       decision: "review",
       status: "error",
@@ -261,18 +265,21 @@ async function approveModeratedUpload(
   }
 }
 
-async function moderateImageWithOpenAI(image: ValidatedDancrImage): Promise<any> {
+async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
   const apiKey = getServerEnv("OPENAI_API_KEY");
   const OpenAI = await loadOpenAI();
   const openai = new OpenAI({ apiKey });
-  const dataUrl = `data:${image.contentType};base64,${image.buffer.toString("base64")}`;
+  const imageUrl = await createModerationSignedUrl(admin, tempPath);
 
-  logModeration("calling_openai_moderation", { model: DANCR_IMAGE_MODERATION_MODEL });
+  logModeration("calling_openai_moderation", {
+    model: DANCR_IMAGE_MODERATION_MODEL,
+    imageSource: "supabase_signed_url",
+  });
   const response = await withRetry<any>(() =>
     withTimeout(
       openai.moderations.create({
         model: DANCR_IMAGE_MODERATION_MODEL,
-        input: [{ type: "image_url", image_url: { url: dataUrl } }],
+        input: [{ type: "image_url", image_url: { url: imageUrl } }],
       }),
       12000,
     ),
@@ -296,6 +303,16 @@ async function loadOpenAI(): Promise<any> {
   const importer = new Function("specifier", "return import(specifier)");
   const mod = await importer("openai");
   return mod.default || mod.OpenAI;
+}
+
+async function createModerationSignedUrl(client: DancrClient, tempPath: string) {
+  const { data, error } = await client.storage
+    .from(MODERATION_TEMP_BUCKET)
+    .createSignedUrl(tempPath, 5 * 60);
+  if (error || !data?.signedUrl) {
+    throw new Error("provider_signed_url_error");
+  }
+  return data.signedUrl;
 }
 
 async function withRetry<T>(operation: () => Promise<T>) {
@@ -538,6 +555,7 @@ function moderationErrorCode(error: unknown) {
   if (status === 429) return "provider_rate_limited";
   if (message.includes("provider_timeout")) return "provider_timeout";
   if (message.includes("provider_response_incomplete")) return "provider_response_incomplete";
+  if (message.includes("provider_signed_url_error")) return "provider_signed_url_error";
   return "provider_error";
 }
 
@@ -566,5 +584,15 @@ function sanitizeModerationResponse(response: any) {
         category_scores: result?.category_scores || result?.categoryScores || {},
       }))
       : [],
+  };
+}
+
+function sanitizeProviderError(error: unknown) {
+  const anyError = error as any;
+  return {
+    status: Number(anyError?.status || anyError?.response?.status || 0) || undefined,
+    code: anyError?.code || anyError?.error?.code || undefined,
+    type: anyError?.type || anyError?.error?.type || undefined,
+    message: error instanceof Error ? error.message.slice(0, 240) : String(error || "").slice(0, 240),
   };
 }
