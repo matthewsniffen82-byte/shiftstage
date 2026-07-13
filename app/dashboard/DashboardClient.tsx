@@ -1687,7 +1687,7 @@ function DancerPhotoPanel({
       const uploadedPhoto: DancerPhotoItem = {
         id: String(data.photo?.id || data.moderationRecordId || `${file.name}:${file.lastModified}`),
         imageUrl: approved ? String(data.photo?.imageUrl || localPreviewUrl) : localPreviewUrl,
-        label: Boolean(data.photo?.isPrimary || data.photo?.is_primary || isPrimary) ? "Main photo" : "Photo",
+        label: Boolean(data.photo?.isPrimary || data.photo?.is_primary || isPrimary) ? "Main Photo" : "Photo",
         status: uploadStatus,
         note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
         storagePath: String(data.photo?.storage_path || ""),
@@ -1796,7 +1796,7 @@ function DancerPhotoPanel({
         <div className="photo-review-card is-pending">
           <div className="photo-preview" style={{ backgroundImage: `url(${selectedPreview})` }} />
           <span>
-            <strong>{isPrimary ? "Main photo" : "Photo"}</strong>
+            <strong>{isPrimary ? "Main Photo" : "Photo"}</strong>
             <small>Ready to upload</small>
             <em>Selected from your photo gallery. Press Upload photo to check it with live moderation.</em>
           </span>
@@ -1838,7 +1838,7 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
       return {
         id: String(photo.id || `photo-${index}`),
         imageUrl: String(photo.imageUrl || photo.image_url || ""),
-        label: isPrimary ? "Main photo" : "Photo",
+        label: isPrimary ? "Main Photo" : "Photo",
         status: reviewStatus,
         note: photoStatusNote(reviewStatus),
         storagePath: String(photo.storage_path || photo.storagePath || ""),
@@ -1850,7 +1850,7 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
       return {
         id: String(review.id || `pending-photo-${index}`),
         imageUrl: "",
-        label: isPrimary ? "Main photo" : "Photo",
+        label: isPrimary ? "Main Photo" : "Photo",
         status: "pending" as const,
         note: "Uploaded and awaiting admin verification before it appears publicly.",
         storagePath: "",
@@ -1876,12 +1876,16 @@ function mergePhotoItems(...groups: DancerPhotoItem[][]) {
 }
 
 function relabelPhotoItems(items: DancerPhotoItem[]) {
-  let overallPosition = 0;
-  return items.map((photo) => {
-    overallPosition += 1;
-    if (photo.isPrimary) return { ...photo, label: "Main photo" };
-    return { ...photo, label: `Photo ${overallPosition}` };
+  return orderPhotoItemsForDisplay(items).map((photo, index) => {
+    if (index === 0) return { ...photo, label: "Main Photo" };
+    return { ...photo, label: `Photo ${index + 1}` };
   });
+}
+
+function orderPhotoItemsForDisplay(items: DancerPhotoItem[]) {
+  const primary = items.find((photo) => photo.isPrimary);
+  if (!primary) return items;
+  return [primary, ...items.filter((photo) => photo.id !== primary.id)];
 }
 
 function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {

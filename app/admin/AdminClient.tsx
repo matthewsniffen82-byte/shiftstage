@@ -968,7 +968,7 @@ type AdminPreview = {
 };
 
 function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, unknown>; onContentReviewed: () => void | Promise<void> }) {
-  const photos = asRecordArray(item.photos);
+  const photos = labelSubmittedPhotos(asRecordArray(item.photos));
   const socials = normalizeSubmissionSocials(item);
   const allDocuments = asRecordArray(item.verificationDocuments || item.verification_documents);
   const documents = submittedRequiredDocuments(allDocuments);
@@ -1057,7 +1057,7 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const reason = asText(photo.reviewNotes || photo.review_notes);
               const isApproved = status === "Approved." || status === "approved";
               const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
-              const label = adminPhotoLabel(photo, index);
+              const label = asText(photo.displayLabel) || adminPhotoLabel(photos, photo);
               return (
                 <div className="submission-review-card" key={photoId || storagePath || imageUrl || `${dancerId}-photo-missing-id`}>
                   <a
@@ -1244,8 +1244,19 @@ function verificationDocumentLabel(document: Record<string, unknown>, index: num
   return ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
 }
 
-function adminPhotoLabel(photo: Record<string, unknown>, index: number) {
-  return photo.isPrimary || photo.is_primary ? "Main photo" : `Photo ${index + 1}`;
+function labelSubmittedPhotos(photos: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  const primary = photos.find((photo) => photo.isPrimary || photo.is_primary);
+  const ordered = primary ? [primary, ...photos.filter((photo) => photo !== primary)] : photos;
+  return ordered.map((photo, index) => ({
+    ...photo,
+    displayLabel: index === 0 ? "Main Photo" : `Photo ${index + 1}`,
+  }));
+}
+
+function adminPhotoLabel(photos: Array<Record<string, unknown>>, photo: Record<string, unknown>) {
+  const index = photos.findIndex((item) => asText(item.id) === asText(photo.id) && asText(item.id));
+  if (index >= 0) return index === 0 ? "Main Photo" : `Photo ${index + 1}`;
+  return photo.isPrimary || photo.is_primary ? "Main Photo" : "Photo";
 }
 
 function requiredDocumentDefinitions() {
