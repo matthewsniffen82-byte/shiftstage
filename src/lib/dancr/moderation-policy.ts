@@ -20,8 +20,10 @@ export function dancrImageModerationThresholds() {
   return {
     // Dancr allows revealing promotional photos. Keep review close to reject so ordinary
     // clothed, bikini, lingerie, and stage outfit photos can auto-approve more often.
-    sexualReview: readThreshold("DANCR_SEXUAL_REVIEW_THRESHOLD", 0.86),
-    sexualReject: readThreshold("DANCR_SEXUAL_REJECT_THRESHOLD", 0.92),
+    // Old deployments may still have a very low env value such as 0.38. Do not let
+    // stale config force normal photos into manual review.
+    sexualReview: readThreshold("DANCR_SEXUAL_REVIEW_THRESHOLD", 0.92, { minimum: 0.9 }),
+    sexualReject: readThreshold("DANCR_SEXUAL_REJECT_THRESHOLD", 0.98, { minimum: 0.92 }),
     violenceReject: readThreshold("DANCR_VIOLENCE_REJECT_THRESHOLD", 0.82),
     selfHarmReject: readThreshold("DANCR_SELF_HARM_REJECT_THRESHOLD", 0.72),
     minorReject: readThreshold("DANCR_MINOR_REJECT_THRESHOLD", 0.001),
@@ -94,8 +96,10 @@ function score(scores: Record<string, number>, key: string) {
   return Number(scores[key] || 0);
 }
 
-function readThreshold(name: string, fallback: number) {
+function readThreshold(name: string, fallback: number, options: { minimum?: number; maximum?: number } = {}) {
   const value = Number(process.env[name]);
-  if (!Number.isFinite(value)) return fallback;
-  return Math.max(0, Math.min(1, value));
+  const threshold = Number.isFinite(value) ? value : fallback;
+  const minimum = options.minimum ?? 0;
+  const maximum = options.maximum ?? 1;
+  return Math.max(minimum, Math.min(maximum, threshold));
 }
