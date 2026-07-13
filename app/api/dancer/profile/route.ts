@@ -22,11 +22,17 @@ type ProfilePhotoStorageValue = {
 export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const { data, error } = await loadDancerProfile(client, user.id);
+    let { data, error } = await loadDancerProfile(client, user.id);
 
     if (error) throw error;
     if (!data) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
+    }
+
+    if (await removeSupersededPendingPhotoRows(createAdminSupabaseClient() as any, data.id)) {
+      const refreshed = await loadDancerProfile(client, user.id);
+      if (refreshed.error) throw refreshed.error;
+      data = refreshed.data || data;
     }
 
     const pendingPhotoReviews = await loadPendingPhotoReviews(user.id);
@@ -163,6 +169,7 @@ export async function PATCH(request: Request) {
     }
 
     await saveProfilePhotoUrls(db, profile.id, body);
+    await removeSupersededPendingPhotoRows(createAdminSupabaseClient() as any, profile.id);
 
     if (body.submitForReview === true && profile.status !== "approved") {
       await submitProfileForReview(client, db, user.id, profile.id, {
@@ -447,6 +454,40 @@ async function saveProfilePhotoUrls(db: any, dancerId: string, body: any) {
 
     if (profileError) throw profileError;
   }
+}
+
+async function removeSupersededPendingPhotoRows(db: any, dancerId: string) {
+  const { data, error } = await db
+    .from("dancer_photos")
+    .select("id, is_primary, sort_order, review_status, created_at")
+    .eq("dancer_id", dancerId);
+
+  if (error) throw error;
+  const rows = data || [];
+  const approvedSlots = new Set(
+    rows
+      .filter((photo: any) => photo.review_status === "approved")
+      .map((photo: any) => photoSlotKey(photo)),
+  );
+  const pendingIds = rows
+    .filter((photo: any) => photo.review_status === "pending" && approvedSlots.has(photoSlotKey(photo)))
+    .map((photo: any) => photo.id)
+    .filter(Boolean);
+
+  if (!pendingIds.length) return false;
+
+  const { error: deleteError } = await db
+    .from("dancer_photos")
+    .delete()
+    .eq("dancer_id", dancerId)
+    .in("id", pendingIds);
+
+  if (deleteError) throw deleteError;
+  return true;
+}
+
+function photoSlotKey(photo: any) {
+  return `${photo?.is_primary ? "main" : "gallery"}:${Number(photo?.sort_order || 0)}`;
 }
 
 function readProfilePhotoUrls(body: any) {

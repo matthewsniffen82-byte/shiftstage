@@ -390,8 +390,25 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       }
     }
   }
+  await removeSupersededPendingPhotos(client, input.dancerId, input.isPrimary, input.sortOrder, data.id);
   await client.from("dancer_profiles").update({ photo_review_status: "approved" }).eq("id", input.dancerId);
   return { ...(data as { id: string; storage_path: string }), isPrimary: input.isPrimary };
+}
+
+async function removeSupersededPendingPhotos(client: DancrClient, dancerId: string, isPrimary: boolean, sortOrder: number, approvedPhotoId: string) {
+  let query = (client as any)
+    .from("dancer_photos")
+    .delete()
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "pending")
+    .neq("id", approvedPhotoId);
+
+  query = isPrimary
+    ? query.eq("is_primary", true)
+    : query.eq("is_primary", false).eq("sort_order", sortOrder);
+
+  const { error } = await query;
+  if (error) throw error;
 }
 
 async function findCurrentPrimaryPhoto(client: DancrClient, dancerId: string) {

@@ -33999,25 +33999,26 @@
 
     function approvedVisualPhotoItems(profile, options = {}) {
       const includeUnapproved = options.includeUnapproved !== false;
+      const savedApprovedUrls = new Set([profile?.mainPhotoUrl, ...(profile?.galleryPhotoUrls || [])].filter(Boolean));
       const submitted = (profile?.submittedPhotos || []).map((photo, index) => {
         const id = photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`;
         const review = latestContentReview(`photo:${id}`);
         const imageUrl = photo.imageUrl || photo.image_url || photo.url || "";
-        const savedApprovedUrls = new Set([profile?.mainPhotoUrl, ...(profile?.galleryPhotoUrls || [])].filter(Boolean));
+        const storedApproved = savedApprovedUrls.has(imageUrl);
         return {
           id,
           imageUrl,
           label: photo.isPrimary || photo.is_primary ? "Main photo" : `Gallery photo ${index + 1}`,
-          status: normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || (savedApprovedUrls.has(imageUrl) ? "approved" : "pending")),
+          status: storedApproved ? "approved" : normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
           notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
-          target: `submitted:${index}`
+          target: storedApproved && imageUrl === profile?.mainPhotoUrl ? "main" : storedApproved ? `gallery:${Math.max(0, (profile?.galleryPhotoUrls || []).indexOf(imageUrl))}` : `submitted:${index}`
         };
-      });
+      }).filter((photo) => includeUnapproved || photo.status === "approved");
       const submittedByUrl = new Map(submitted.filter((photo) => photo.imageUrl).map((photo) => [photo.imageUrl, photo]));
       const previewUrls = uploadedProfilePhotoUrls(profile, includeUnapproved);
       const existing = previewUrls.map((imageUrl, index) => {
         const submittedMatch = submittedByUrl.get(imageUrl);
-        if (submittedMatch) return submittedMatch;
+        if (submittedMatch && !savedApprovedUrls.has(imageUrl)) return submittedMatch;
         const isMain = imageUrl === profile?.mainPhotoUrl || index === 0;
         return {
           id: isMain ? "main" : `gallery-${index - 1}`,
@@ -36615,15 +36616,25 @@
       return rows
         .slice()
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved")
         .map((photo) => photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "")
         .filter(Boolean);
     }
 
     function dancerSubmittedPhotosFromProfile(profile) {
       const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+      const approvedSlots = new Set(rows
+        .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved")
+        .map((photo, index) => `${photo.is_primary || photo.isPrimary || index === 0 ? "main" : "gallery"}:${Number(photo.sort_order ?? photo.sortOrder ?? index)}`));
       return rows
         .slice()
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .filter((photo, index) => {
+          const status = normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending");
+          if (status === "approved") return false;
+          const slot = `${photo.is_primary || photo.isPrimary || index === 0 ? "main" : "gallery"}:${Number(photo.sort_order ?? photo.sortOrder ?? index)}`;
+          return !approvedSlots.has(slot);
+        })
         .map((photo, index) => {
           const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
           const review = latestContentReview(`photo:${photo.id || `${profile?.id || profile?.stage_name || profile?.stageName || "profile"}-photo-${index}`}`);
