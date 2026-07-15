@@ -34406,7 +34406,7 @@
         button.setAttribute("aria-busy", options.saving ? "true" : "false");
         if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = button.textContent || "Save profile";
         if (options.saving) button.textContent = "Saving profile...";
-        else if (options.saved) button.textContent = "Saved profile";
+        else if (options.saved) button.textContent = "Profile saved";
         else button.textContent = button.dataset.saveProfileIdleText || "Save profile";
       });
       if (options.toast !== false) showToast(message);
@@ -34915,8 +34915,8 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
         syncApprovedProfileSubmitState();
         const successMessage = options.submitForReview
-          ? "Saved profile. Changed social links were sent to admin."
-          : (submittedSocialPlatforms.length ? "Saved profile. Changed social links were sent to admin for approval." : "Saved profile.");
+          ? "Profile saved. Changed social links were sent to admin."
+          : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved.");
         if (result) result.textContent = successMessage;
         setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: true });
         releaseEditProfileMobileFocus(trigger);
@@ -40149,8 +40149,8 @@
         const saved = await saveApprovedDancerProfile({ trigger });
         if (!saved?.saved) return;
         setResult(saved.needsApproval
-          ? "Saved profile. Changed social links were sent to admin for approval."
-          : "Saved profile.");
+          ? "Profile saved. Changed social links were sent to admin for approval."
+          : "Profile saved.");
         updateAccountHeader();
         return;
       }
