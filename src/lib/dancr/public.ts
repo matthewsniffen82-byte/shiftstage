@@ -5,7 +5,18 @@ import { getTonightWindow } from "./schedule";
 type DancrClient = SupabaseClient;
 
 export function isApprovedPublicDancerRow(dancer: any) {
-  return Boolean(dancer && dancer.status === "approved" && dancer.is_public !== false);
+  const status = String(dancer?.status || "").toLowerCase();
+  const verificationStatus = String(dancer?.verification_status || dancer?.verificationStatus || "").toLowerCase();
+  const photoReviewStatus = String(dancer?.photo_review_status || dancer?.photoReviewStatus || "").toLowerCase();
+  const explicitlyBlocked = status === "rejected" || status === "disabled";
+  const fullyReviewed = verificationStatus === "approved" && photoReviewStatus === "approved";
+
+  return Boolean(
+    dancer &&
+    !explicitlyBlocked &&
+    dancer.is_public !== false &&
+    (status === "approved" || fullyReviewed),
+  );
 }
 
 export async function getApprovedDancersByCity(client: DancrClient, city: string): Promise<DancerCard[]> {
@@ -18,13 +29,16 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         slug,
         stage_name,
         city,
+        status,
+        verification_status,
+        photo_review_status,
+        is_public,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
         shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone))
       `,
     )
-    .eq("status", "approved")
     .ilike("city", cityName)
     .or("is_public.is.true,is_public.is.null")
     .order("stage_name", { ascending: true })
@@ -32,7 +46,14 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
 
   if (error) throw error;
 
-  return Promise.all((data || []).map((row: any) => toDancerCard(client, row)));
+  const rows = (data || []).filter(isApprovedPublicDancerRow);
+  console.log("PUBLIC_DANCERS_QUERY_RESULT", {
+    city: cityName,
+    rawCount: data?.length || 0,
+    publicApprovedCount: rows.length,
+  });
+
+  return Promise.all(rows.map((row: any) => toDancerCard(client, row)));
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
@@ -48,13 +69,16 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         slug,
         stage_name,
         city,
+        status,
+        verification_status,
+        photo_review_status,
+        is_public,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
         shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone))
       `,
     )
-    .eq("status", "approved")
     .ilike("city", cityName)
     .or("is_public.is.true,is_public.is.null")
     .eq("shifts.status", "posted")
@@ -66,7 +90,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 
   if (error) throw error;
 
-  const cards = await Promise.all((data || []).map((row: any) => toDancerCard(client, row, { checkedInOnly: true })));
+  const rows = (data || []).filter(isApprovedPublicDancerRow);
+  const cards = await Promise.all(rows.map((row: any) => toDancerCard(client, row, { checkedInOnly: true })));
   return cards.filter((card) => card.shiftId && card.locationStatus !== "self_reported");
 }
 
@@ -80,13 +105,16 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         stage_name,
         city,
         bio,
+        status,
+        verification_status,
+        photo_review_status,
+        is_public,
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url, is_active),
         shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(id, name, slug, timezone))
       `,
     )
-    .eq("status", "approved")
     .eq("slug", slug)
     .or("is_public.is.true,is_public.is.null")
     .maybeSingle();
@@ -95,6 +123,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
   if (!data) return null;
 
   const row: any = data;
+  if (!isApprovedPublicDancerRow(row)) return null;
   const approvedPhotos = await getApprovedDancerPhotos(client, row.id);
   const card = await toDancerCard(client, { ...row, dancer_photos: approvedPhotos });
   const goingCount = await countDancerGoingSignals(client, row.id);
