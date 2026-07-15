@@ -503,6 +503,8 @@ async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerI
   if (photosError) throw photosError;
 
   const matchingPhotos = (photos || []).filter((photo: any) => deletedPathSet.has(normalizeStorageKey(photo?.storage_path)));
+  const photoIds = matchingPhotos.map((photo: any) => photo.id).filter(Boolean);
+  await deleteModerationRecordsForDeletedPhotos(db, userId, photoIds, Array.from(deletedPathSet));
   if (!matchingPhotos.length) {
     console.log("PROFILE_PHOTO_DELETE_BY_PATH_NO_MATCH", {
       dancerId,
@@ -511,7 +513,6 @@ async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerI
     return [];
   }
 
-  const photoIds = matchingPhotos.map((photo: any) => photo.id).filter(Boolean);
   const removedStoragePaths = [
     ...new Set(
       matchingPhotos
@@ -547,6 +548,43 @@ async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerI
   await refreshPhotoReviewStatus(db, userId, dancerId);
 
   return deletedIds;
+}
+
+async function deleteModerationRecordsForDeletedPhotos(
+  db: any,
+  userId: string,
+  photoIds: string[],
+  storagePaths: string[],
+) {
+  const moderationIds = new Set<string>();
+
+  if (photoIds.length) {
+    const { data, error } = await db
+      .from("image_moderation_records")
+      .select("id")
+      .eq("user_id", userId)
+      .in("image_id", photoIds);
+    if (error) throw error;
+    for (const row of data || []) moderationIds.add(String(row.id));
+  }
+
+  if (storagePaths.length) {
+    const { data, error } = await db
+      .from("image_moderation_records")
+      .select("id")
+      .eq("user_id", userId)
+      .in("final_storage_path", storagePaths);
+    if (error) throw error;
+    for (const row of data || []) moderationIds.add(String(row.id));
+  }
+
+  if (!moderationIds.size) return;
+  const { error } = await db
+    .from("image_moderation_records")
+    .delete()
+    .eq("user_id", userId)
+    .in("id", Array.from(moderationIds));
+  if (error) throw error;
 }
 
 async function promoteNextApprovedPrimaryPhoto(db: any, dancerId: string) {

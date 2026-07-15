@@ -135,6 +135,17 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
   if (photoError) throw photoError;
   if (photo) {
+    const { data: matchingPhotos, error: matchingPhotosError } = await adminClient
+      .from("dancer_photos")
+      .select("id, storage_path, is_primary")
+      .eq("dancer_id", profile.id)
+      .eq("storage_path", photo.storage_path);
+    if (matchingPhotosError) throw matchingPhotosError;
+
+    const photoRows = matchingPhotos?.length ? matchingPhotos : [photo];
+    const photoIds = photoRows.map((row: any) => String(row.id || "")).filter(Boolean);
+    await deleteLinkedModerationRecords(adminClient, userId, photoIds, photo.storage_path);
+
     console.log("PHOTO_DELETE_CLICKED", {
       id: photo.id,
       storagePath: photo.storage_path,
@@ -146,7 +157,8 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     const { data: deletedRows, error: deleteError } = await adminClient
       .from("dancer_photos")
       .delete()
-      .eq("id", photo.id)
+      .eq("dancer_id", profile.id)
+      .in("id", photoIds)
       .select("id");
     if (deleteError) throw deleteError;
     const deletedIds = (deletedRows || []).map((row: any) => row.id);
@@ -164,7 +176,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
     }
 
-    if (photo.is_primary) {
+    if (photoRows.some((row: any) => row.is_primary)) {
       await promoteNextApprovedPrimaryPhoto(adminClient, profile.id);
     }
 
@@ -224,6 +236,43 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   const remainingIds = await getOwnPhotoIds(adminClient, profile.id);
   console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
   return { id: moderationRecord.id, kind: "moderation_photo", deletedIds, remainingPhotoIds: remainingIds };
+}
+
+async function deleteLinkedModerationRecords(
+  client: DancrClient,
+  userId: string,
+  photoIds: string[],
+  storagePath: string | null | undefined,
+) {
+  const moderationIds = new Set<string>();
+
+  if (photoIds.length) {
+    const { data, error } = await (client as any)
+      .from("image_moderation_records")
+      .select("id")
+      .eq("user_id", userId)
+      .in("image_id", photoIds);
+    if (error) throw error;
+    for (const row of data || []) moderationIds.add(String(row.id));
+  }
+
+  if (storagePath) {
+    const { data, error } = await (client as any)
+      .from("image_moderation_records")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("final_storage_path", storagePath);
+    if (error) throw error;
+    for (const row of data || []) moderationIds.add(String(row.id));
+  }
+
+  if (!moderationIds.size) return;
+  const { error } = await (client as any)
+    .from("image_moderation_records")
+    .delete()
+    .eq("user_id", userId)
+    .in("id", Array.from(moderationIds));
+  if (error) throw error;
 }
 
 async function getOwnPhotoIds(client: DancrClient, dancerId: string) {

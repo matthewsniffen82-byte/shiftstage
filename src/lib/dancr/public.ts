@@ -9,13 +9,14 @@ export function isApprovedPublicDancerRow(dancer: any) {
   const verificationStatus = String(dancer?.verification_status || dancer?.verificationStatus || "").toLowerCase();
   const photoReviewStatus = String(dancer?.photo_review_status || dancer?.photoReviewStatus || "").toLowerCase();
   const explicitlyBlocked = status === "rejected" || status === "disabled";
+  const approvedStatus = status === "approved" || status === "verified";
   const fullyReviewed = verificationStatus === "approved" && photoReviewStatus === "approved";
 
   return Boolean(
     dancer &&
     !explicitlyBlocked &&
     dancer.is_public !== false &&
-    (status === "approved" || fullyReviewed),
+    (approvedStatus || fullyReviewed),
   );
 }
 
