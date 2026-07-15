@@ -31562,6 +31562,11 @@
       } catch (error) {
         liveMarketState[city] = "fallback";
         console.warn("Live discovery fallback", error);
+        if (citySelect.value === city) {
+          render();
+          if (customerDashboard.classList.contains("show")) renderDashboard();
+          if (adminDashboard.classList.contains("show")) renderAdminDashboard();
+        }
       }
     }
 

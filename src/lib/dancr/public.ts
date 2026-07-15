@@ -20,8 +20,8 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
       `,
     )
     .eq("status", "approved")
-    .eq("is_public", true)
     .eq("city", city)
+    .or("is_public.is.true,is_public.is.null")
     .order("stage_name", { ascending: true })
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
@@ -49,8 +49,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
       `,
     )
     .eq("status", "approved")
-    .eq("is_public", true)
     .eq("city", city)
+    .or("is_public.is.true,is_public.is.null")
     .eq("shifts.status", "posted")
     .not("shifts.checked_in_at", "is", null)
     .is("shifts.checked_out_at", null)
@@ -81,8 +81,8 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
       `,
     )
     .eq("status", "approved")
-    .eq("is_public", true)
     .eq("slug", slug)
+    .or("is_public.is.true,is_public.is.null")
     .maybeSingle();
 
   if (error) throw error;
