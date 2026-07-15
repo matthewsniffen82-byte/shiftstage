@@ -26558,6 +26558,12 @@
       z-index: 20003 !important;
     }
 
+    body.social-edit-popover-open #approvedEditProfileDropdown.show .approved-profile-editor-close {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
     @media (max-width: 560px) {
       #approvedEditProfileDropdown.show #approvedVisualProfileEditor .profile-modal {
         width: 100vw !important;
@@ -34423,6 +34429,7 @@
         popover.classList.remove("is-social");
         popover.style.removeProperty("--approved-social-popover-top");
       }
+      document.body.classList.remove("social-edit-popover-open");
     }
 
     function closeApprovedProfileEditor() {
@@ -34437,6 +34444,7 @@
       const card = document.getElementById("approvedEditItemCard");
       if (!popover || !card) return;
       popover.classList.toggle("is-social", kind !== "photo");
+      document.body.classList.toggle("social-edit-popover-open", kind !== "photo");
       popover.style.removeProperty("--approved-social-popover-top");
       if (kind === "photo") {
         document.querySelector(".approved-visual-profile")?.appendChild(popover);
