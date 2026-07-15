@@ -34069,18 +34069,37 @@
       }));
     }
 
-    function dancerProfilePhotoCount(profile) {
+    function dancerProfilePhotoSlots(profile) {
+      const slots = [];
       const keys = new Set();
-      (profile?.submittedPhotos || []).forEach((photo, index) => {
-        const photoUrl = photo?.imageUrl || photo?.image_url || photo?.url || "";
-        const key = photoUrl || photo?.id || `submitted:${index}`;
-        keys.add(String(key));
+      const deletedPhotoKeys = deletedDancerPhotoKeySet(profile);
+      const addSlot = (photo, fallbackKey = "") => {
+        if (!photo) return;
+        const imageUrl = typeof photo === "string"
+          ? photo
+          : (photo.imageUrl || photo.image_url || photo.url || photo.storagePath || photo.storage_path || "");
+        const key = normalizeDancerPhotoKey(imageUrl || photo.id || fallbackKey);
+        if (!key || deletedPhotoKeys.has(key) || keys.has(key)) return;
+        keys.add(key);
+        slots.push({ key, imageUrl, photo });
+      };
+
+      addSlot(profile?.mainPhotoUrl || "", "main");
+      (Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls : []).forEach((url, index) => {
+        addSlot(url, `gallery:${index}`);
       });
-      if (profile?.mainPhotoUrl) keys.add(String(profile.mainPhotoUrl));
-      (profile?.galleryPhotoUrls || []).forEach((url) => {
-        if (url) keys.add(String(url));
-      });
-      return keys.size;
+      (Array.isArray(profile?.submittedPhotos) ? profile.submittedPhotos : [])
+        .filter(Boolean)
+        .filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo))
+        .filter((photo) => normalizedReviewStatus(photo.reviewStatus || photo.review_status) !== "rejected")
+        .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
+        .forEach((photo, index) => addSlot(photo, `submitted:${index}`));
+
+      return slots.slice(0, MAX_DANCER_PROFILE_PHOTOS);
+    }
+
+    function dancerProfilePhotoCount(profile) {
+      return dancerProfilePhotoSlots(profile).length;
     }
 
     function isReplacingApprovedPhotoTarget(profile, target) {
@@ -34095,7 +34114,8 @@
 
     function assertDancerProfilePhotoLimit(profile, { adding = 1, replacing = false } = {}) {
       if (replacing) return;
-      const remaining = MAX_DANCER_PROFILE_PHOTOS - dancerProfilePhotoCount(profile);
+      const currentCount = dancerProfilePhotoCount(profile);
+      const remaining = MAX_DANCER_PROFILE_PHOTOS - currentCount;
       if (remaining < adding) {
         throw new Error(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
       }
