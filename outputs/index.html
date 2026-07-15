@@ -34405,9 +34405,10 @@
         button.classList.toggle("is-saving", options.saving === true);
         button.setAttribute("aria-busy", options.saving ? "true" : "false");
         if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = button.textContent || "Save profile";
-        if (options.saving) button.textContent = "Saving profile...";
-        else if (options.saved) button.textContent = "Profile saved";
-        else button.textContent = button.dataset.saveProfileIdleText || "Save profile";
+        if (!button.dataset.saveProfileIdleHtml) button.dataset.saveProfileIdleHtml = button.innerHTML || button.textContent || "Save profile";
+        if (options.saving) button.innerHTML = actionButtonLabel("save", "Saving profile...");
+        else if (options.saved) button.innerHTML = actionButtonLabel("check", "Profile saved");
+        else button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save profile";
       });
       if (options.toast !== false) showToast(message);
       if (options.saved) {
@@ -34415,7 +34416,7 @@
         setApprovedProfileSaveFeedback.savedTimer = window.setTimeout(() => {
           document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saved').forEach((button) => {
             button.classList.remove("is-saved");
-            button.textContent = button.dataset.saveProfileIdleText || "Save profile";
+            button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save profile";
           });
         }, 2200);
       }
@@ -34919,6 +34920,7 @@
           : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved.");
         if (result) result.textContent = successMessage;
         setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: true });
+        window.requestAnimationFrame(() => setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: false }));
         releaseEditProfileMobileFocus(trigger);
         return { saved: true, needsApproval: submittedSocialPlatforms.length > 0 };
       } catch (error) {

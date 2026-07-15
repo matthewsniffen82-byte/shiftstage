@@ -214,6 +214,9 @@ export async function PATCH(request: Request) {
         }
       }
     }
+    if (deletedPhotoStoragePaths.length) {
+      await deleteDancerPhotosByStoragePaths(adminDb as any, user.id, profile.id, deletedPhotoStoragePaths);
+    }
 
     await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds, deletedPhotoStoragePaths);
     await removeSupersededPendingPhotoRows(adminDb as any, profile.id);
@@ -487,6 +490,108 @@ async function loadDeletedPhotoStoragePaths(db: any, dancerId: string, userId: s
   }
 
   return Array.from(paths);
+}
+
+async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerId: string, storagePaths: string[]) {
+  const deletedPathSet = new Set(storagePaths.map(normalizeStorageKey).filter(Boolean));
+  if (!deletedPathSet.size) return [];
+
+  const { data: photos, error: photosError } = await db
+    .from("dancer_photos")
+    .select("id, storage_path, is_primary")
+    .eq("dancer_id", dancerId);
+  if (photosError) throw photosError;
+
+  const matchingPhotos = (photos || []).filter((photo: any) => deletedPathSet.has(normalizeStorageKey(photo?.storage_path)));
+  if (!matchingPhotos.length) {
+    console.log("PROFILE_PHOTO_DELETE_BY_PATH_NO_MATCH", {
+      dancerId,
+      deletedPhotoPathCount: deletedPathSet.size,
+    });
+    return [];
+  }
+
+  const photoIds = matchingPhotos.map((photo: any) => photo.id).filter(Boolean);
+  const removedStoragePaths = [
+    ...new Set(
+      matchingPhotos
+        .map((photo: any) => normalizeStorageKey(photo?.storage_path))
+        .filter(Boolean),
+    ),
+  ];
+
+  const { data: deletedRows, error: deleteError } = await db
+    .from("dancer_photos")
+    .delete()
+    .eq("dancer_id", dancerId)
+    .in("id", photoIds)
+    .select("id");
+  if (deleteError) throw deleteError;
+
+  const deletedIds = (deletedRows || []).map((row: any) => row.id);
+  console.log("PROFILE_PHOTO_DELETE_BY_PATH_RESULT", {
+    dancerId,
+    requestedIds: photoIds,
+    deletedIds,
+    deletedPhotoPathCount: deletedPathSet.size,
+  });
+
+  if (removedStoragePaths.length) {
+    const { error: storageError } = await db.storage.from(APPROVED_PHOTO_BUCKET).remove(removedStoragePaths);
+    if (storageError) console.log("PROFILE_PHOTO_DELETE_STORAGE_WARNING", { message: storageError.message });
+  }
+
+  if (matchingPhotos.some((photo: any) => photo.is_primary)) {
+    await promoteNextApprovedPrimaryPhoto(db, dancerId);
+  }
+  await refreshPhotoReviewStatus(db, userId, dancerId);
+
+  return deletedIds;
+}
+
+async function promoteNextApprovedPrimaryPhoto(db: any, dancerId: string) {
+  const { data: nextPhoto, error: nextPhotoError } = await db
+    .from("dancer_photos")
+    .select("id")
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "approved")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (nextPhotoError) throw nextPhotoError;
+  if (!nextPhoto?.id) return;
+
+  const { error: clearPrimaryError } = await db.from("dancer_photos").update({ is_primary: false }).eq("dancer_id", dancerId);
+  if (clearPrimaryError) throw clearPrimaryError;
+
+  const { error: promoteError } = await db
+    .from("dancer_photos")
+    .update({ is_primary: true, sort_order: 0 })
+    .eq("id", nextPhoto.id)
+    .eq("dancer_id", dancerId);
+  if (promoteError) throw promoteError;
+}
+
+async function refreshPhotoReviewStatus(db: any, userId: string, dancerId: string) {
+  const { count: pendingPhotoCount, error: pendingPhotoError } = await db
+    .from("dancer_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("dancer_id", dancerId)
+    .eq("review_status", "pending");
+  if (pendingPhotoError) throw pendingPhotoError;
+
+  const { count: pendingModerationCount, error: pendingModerationError } = await db
+    .from("image_moderation_records")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("decision", "review")
+    .in("status", ["pending", "moderating", "pending_review", "moderation_retry", "moderation_error"]);
+  if (pendingModerationError) throw pendingModerationError;
+
+  const nextStatus = (pendingPhotoCount || 0) + (pendingModerationCount || 0) > 0 ? "pending" : "approved";
+  const { error: profileError } = await db.from("dancer_profiles").update({ photo_review_status: nextStatus }).eq("id", dancerId);
+  if (profileError) throw profileError;
 }
 
 async function saveProfilePhotoUrls(
