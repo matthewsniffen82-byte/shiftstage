@@ -36,12 +36,14 @@ export async function GET(request: Request) {
       data = refreshed.data || data;
     }
 
-    const pendingPhotoReviews = await loadPendingPhotoReviews(user.id);
+    const profileWithPhotos = withPhotoUrls(client, data);
+    const pendingPhotoLimit = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (profileWithPhotos.dancer_photos?.length || 0));
+    const pendingPhotoReviews = await loadPendingPhotoReviews(user.id, pendingPhotoLimit);
 
     return NextResponse.json({
       ok: true,
       profile: {
-        ...withPhotoUrls(client, data),
+        ...profileWithPhotos,
         pending_photo_reviews: pendingPhotoReviews,
       },
     });
@@ -50,7 +52,8 @@ export async function GET(request: Request) {
   }
 }
 
-async function loadPendingPhotoReviews(userId: string) {
+async function loadPendingPhotoReviews(userId: string, limit = MAX_DANCER_PROFILE_PHOTOS) {
+  if (limit <= 0) return [];
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
@@ -59,7 +62,7 @@ async function loadPendingPhotoReviews(userId: string) {
     .eq("decision", "review")
     .in("status", ["pending", "completed"])
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(Math.min(limit, MAX_DANCER_PROFILE_PHOTOS));
 
   if (error) throw error;
   return data || [];
@@ -67,9 +70,21 @@ async function loadPendingPhotoReviews(userId: string) {
 
 function withPhotoUrls(client: any, profile: any) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+  const byPath = new Map<string, any>();
+  photos
+    .slice()
+    .sort((left: any, right: any) => {
+      if (Boolean(left.is_primary) !== Boolean(right.is_primary)) return left.is_primary ? -1 : 1;
+      return Number(left.sort_order || 0) - Number(right.sort_order || 0);
+    })
+    .forEach((photo: any) => {
+      const key = String(photo.storage_path || photo.id || "");
+      if (!key || byPath.has(key)) return;
+      byPath.set(key, photo);
+    });
   return {
     ...profile,
-    dancer_photos: photos.map((photo: any) => ({
+    dancer_photos: Array.from(byPath.values()).slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo: any) => ({
       ...photo,
       imageUrl: getPhotoUrl(client, photo.storage_path),
     })),

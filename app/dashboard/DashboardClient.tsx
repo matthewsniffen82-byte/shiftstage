@@ -1606,6 +1606,8 @@ type DancerPhotoItem = {
   isPrimary?: boolean;
 };
 
+const MAX_DANCER_PROFILE_PHOTOS = 5;
+
 function DancerPhotoPanel({
   onProfileChange,
   profile,
@@ -1661,6 +1663,11 @@ function DancerPhotoPanel({
 
     if (!file) {
       setStatus("Choose a photo first.");
+      return;
+    }
+
+    if (!isPrimary && photos.length >= MAX_DANCER_PROFILE_PHOTOS) {
+      setStatus(`You can upload up to ${MAX_DANCER_PROFILE_PHOTOS} profile pictures. Delete or replace one before adding more.`);
       return;
     }
 
@@ -1831,7 +1838,7 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
   const approvedPhotos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos as Array<Record<string, unknown>> : [];
   const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews as Array<Record<string, unknown>> : [];
 
-  return [
+  return mergePhotoItems([
     ...approvedPhotos.map((photo, index) => {
       const reviewStatus = normalizePhotoStatus(photo.review_status || photo.reviewStatus || "approved");
       const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
@@ -1857,7 +1864,7 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
         isPrimary,
       };
     }),
-  ];
+  ]);
 }
 
 function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {
@@ -1867,16 +1874,17 @@ function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {
 }
 
 function mergePhotoItems(...groups: DancerPhotoItem[][]) {
-  const byId = new Map<string, DancerPhotoItem>();
+  const byKey = new Map<string, DancerPhotoItem>();
   groups.flat().forEach((photo) => {
-    const existing = byId.get(photo.id);
-    if (!existing || (existing.status !== "approved" && photo.status === "approved")) byId.set(photo.id, photo);
+    const key = photo.storagePath || photo.imageUrl || photo.id;
+    const existing = byKey.get(key);
+    if (!existing || (existing.status !== "approved" && photo.status === "approved")) byKey.set(key, photo);
   });
-  return Array.from(byId.values()).slice(0, 5);
+  return Array.from(byKey.values()).slice(0, MAX_DANCER_PROFILE_PHOTOS);
 }
 
 function relabelPhotoItems(items: DancerPhotoItem[]) {
-  return orderPhotoItemsForDisplay(items).map((photo, index) => {
+  return orderPhotoItemsForDisplay(mergePhotoItems(items)).map((photo, index) => {
     if (index === 0) return { ...photo, label: "Main Photo" };
     return { ...photo, label: `Photo ${index + 1}` };
   });
