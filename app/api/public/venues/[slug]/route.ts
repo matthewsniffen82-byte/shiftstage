@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getVenueProfile } from "@/src/lib/dancr/public";
+import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -35,7 +35,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
         return { shift, dancer };
       })
-      .filter(({ dancer }: any) => dancer?.status === "approved" && dancer?.is_public !== false)
+      .filter(({ dancer }: any) => isApprovedPublicDancerRow(dancer))
       .map(({ shift, dancer }: any) => ({
         id: shift.id,
         dancerId: shift.dancer_id,

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
-import { getVenueProfile } from "@/src/lib/dancr/public";
+import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DirectionsLink } from "./DirectionsLink";
 import { VenueProfileActions } from "./VenueProfileActions";
@@ -43,7 +43,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
       const dancer = Array.isArray(shift.dancer_profiles) ? shift.dancer_profiles[0] : shift.dancer_profiles;
       return { ...shift, dancer };
     })
-    .filter((shift) => shift.dancer?.status === "approved" && shift.dancer?.is_public !== false);
+    .filter((shift) => isApprovedPublicDancerRow(shift.dancer));
 
   return (
     <main className="public-profile-shell">

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isApprovedPublicDancerRow } from "./public";
 
 type DancrClient = SupabaseClient;
 
@@ -217,7 +218,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
 
 function toDancerSummary(value: any) {
   const dancer = single(value);
-  if (!dancer || dancer.status !== "approved" || dancer.is_public === false) return null;
+  if (!isApprovedPublicDancerRow(dancer)) return null;
 
   return {
     id: dancer.id,

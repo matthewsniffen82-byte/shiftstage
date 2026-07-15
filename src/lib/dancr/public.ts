@@ -4,7 +4,12 @@ import { getTonightWindow } from "./schedule";
 
 type DancrClient = SupabaseClient;
 
+export function isApprovedPublicDancerRow(dancer: any) {
+  return Boolean(dancer && dancer.status === "approved" && dancer.is_public !== false);
+}
+
 export async function getApprovedDancersByCity(client: DancrClient, city: string): Promise<DancerCard[]> {
+  const cityName = city.trim();
   const { data, error } = await client
     .from("dancer_profiles")
     .select(
@@ -20,7 +25,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
       `,
     )
     .eq("status", "approved")
-    .eq("city", city)
+    .ilike("city", cityName)
     .or("is_public.is.true,is_public.is.null")
     .order("stage_name", { ascending: true })
     .order("starts_at", { referencedTable: "shifts", ascending: true });
@@ -31,7 +36,8 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
-  const timeZone = await getCityTimeZone(client, city);
+  const cityName = city.trim();
+  const timeZone = await getCityTimeZone(client, cityName);
   const window = getTonightWindow(timeZone, now);
 
   const { data, error } = await client
@@ -49,7 +55,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
       `,
     )
     .eq("status", "approved")
-    .eq("city", city)
+    .ilike("city", cityName)
     .or("is_public.is.true,is_public.is.null")
     .eq("shifts.status", "posted")
     .not("shifts.checked_in_at", "is", null)
@@ -334,7 +340,7 @@ async function getCityTimeZone(client: DancrClient, city: string) {
   const { data, error } = await client
     .from("venues")
     .select("timezone")
-    .eq("city", city)
+    .ilike("city", city.trim())
     .eq("is_active", true)
     .order("name", { ascending: true })
     .limit(1)

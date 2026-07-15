@@ -28787,7 +28787,12 @@
     }
 
     function isApprovedPublicProfile(profile) {
-      return Boolean(profile && profile.status === "Verified" && !dancerProfileIsHidden(profile));
+      const normalizedStatus = String(profile?.status || "").trim().toLowerCase();
+      return Boolean(
+        profile &&
+        (normalizedStatus === "verified" || normalizedStatus === "approved") &&
+        !dancerProfileIsHidden(profile)
+      );
     }
 
     function showToast(message) {
