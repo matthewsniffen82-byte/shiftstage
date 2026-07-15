@@ -197,15 +197,18 @@ export async function PATCH(request: Request) {
         socials: Array.isArray(body.socials),
       },
     });
+    const adminDb = createAdminSupabaseClient();
+    const deletedPhotoStoragePaths = deletedPhotoIds.length
+      ? await loadDeletedPhotoStoragePaths(adminDb, profile.id, user.id, deletedPhotoIds)
+      : [];
     if (deletedPhotoIds.length) {
-      const adminDb = createAdminSupabaseClient();
       for (const photoId of deletedPhotoIds) {
         await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
       }
     }
 
-    await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds);
-    await removeSupersededPendingPhotoRows(createAdminSupabaseClient() as any, profile.id);
+    await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds, deletedPhotoStoragePaths);
+    await removeSupersededPendingPhotoRows(adminDb as any, profile.id);
 
     if (body.submitForReview === true && profile.status !== "approved") {
       await submitProfileForReview(client, db, user.id, profile.id, {
@@ -442,8 +445,59 @@ async function reopenRejectedReviewsForResubmission(db: any, dancerId: string) {
   if (insertError) throw insertError;
 }
 
-async function saveProfilePhotoUrls(db: any, dancerId: string, body: any, deletedPhotoIds: string[] = []) {
-  const photoUrls = readProfilePhotoUrls(body);
+async function loadDeletedPhotoStoragePaths(db: any, dancerId: string, userId: string, deletedPhotoIds: string[]) {
+  const deletedIds = deletedPhotoIds.map((id) => String(id || "").trim()).filter(Boolean);
+  if (!deletedIds.length) return [];
+
+  const paths = new Set<string>();
+
+  const { data: deletedPhotos, error: deletedPhotosError } = await db
+    .from("dancer_photos")
+    .select("id, storage_path")
+    .eq("dancer_id", dancerId)
+    .in("id", deletedIds);
+  if (deletedPhotosError) throw deletedPhotosError;
+  for (const photo of deletedPhotos || []) {
+    const path = normalizeStorageKey(photo?.storage_path);
+    if (path) paths.add(path);
+  }
+
+  const { data: moderationRows, error: moderationRowsError } = await db
+    .from("image_moderation_records")
+    .select("id, temporary_storage_path, final_storage_path")
+    .eq("user_id", userId)
+    .in("id", deletedIds);
+  if (moderationRowsError) throw moderationRowsError;
+  for (const row of moderationRows || []) {
+    const temporaryPath = normalizeStorageKey(row?.temporary_storage_path);
+    const finalPath = normalizeStorageKey(row?.final_storage_path);
+    if (temporaryPath) paths.add(temporaryPath);
+    if (finalPath) paths.add(finalPath);
+  }
+
+  return Array.from(paths);
+}
+
+async function saveProfilePhotoUrls(
+  db: any,
+  dancerId: string,
+  body: any,
+  deletedPhotoIds: string[] = [],
+  deletedPhotoStoragePaths: string[] = [],
+) {
+  const rawPhotoUrls = readProfilePhotoUrls(body);
+  const deletedPaths = new Set(deletedPhotoStoragePaths.map(normalizeStorageKey).filter(Boolean));
+  const photoUrls = rawPhotoUrls.filter((photo) => {
+    const storagePath = normalizeStorageKey(photo.storagePath);
+    const publicUrlPath = normalizeStorageKey(photo.publicUrl);
+    return !deletedPaths.has(storagePath) && !deletedPaths.has(publicUrlPath);
+  });
+  console.log("PROFILE_SAVE_PHOTO_URL_FILTER", {
+    submittedCount: rawPhotoUrls.length,
+    keptCount: photoUrls.length,
+    deletedPhotoIds,
+    deletedPhotoPathCount: deletedPaths.size,
+  });
   if (!photoUrls.length) return;
   const deletedIds = new Set(deletedPhotoIds);
 
@@ -593,6 +647,19 @@ function readPhotoStorageValue(value: unknown): Omit<ProfilePhotoStorageValue, "
       storagePath: text.replace(/^\/+/, ""),
       fromApprovedBucket: false,
     };
+  }
+}
+
+function normalizeStorageKey(value: unknown) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+
+  try {
+    const url = new URL(text);
+    const approvedStoragePath = approvedBucketPathFromPublicUrl(url);
+    return (approvedStoragePath || url.toString()).replace(/^\/+/, "");
+  } catch {
+    return text.replace(/^\/+/, "");
   }
 }
 
