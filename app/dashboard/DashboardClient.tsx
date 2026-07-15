@@ -613,6 +613,7 @@ function DancerPanel({
   const dancerStatus = String(profile?.status || "").toLowerCase();
   const isApproved = dancerStatus === "approved" || dancerStatus === "verified";
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
+  const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
 
   return (
     <>
@@ -638,7 +639,11 @@ function DancerPanel({
       )}
       <DancerSetupPanel
         deletedPhotoIds={deletedPhotoIds}
-        onDeletedPhotoIdsSaved={() => setDeletedPhotoIds([])}
+        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+        onDeletedPhotoIdsSaved={() => {
+          setDeletedPhotoIds([]);
+          setDeletedPhotoStoragePaths([]);
+        }}
         profile={profile}
         onProfileChange={onProfileChange}
       />
@@ -646,7 +651,9 @@ function DancerPanel({
       <DancerSharePanel profile={profile} />
       <DancerPhotoPanel
         deletedPhotoIds={deletedPhotoIds}
+        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
         onDeletedPhotoIdsChange={setDeletedPhotoIds}
+        onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
         profile={profile}
         onProfileChange={onProfileChange}
       />
@@ -751,11 +758,13 @@ function formatCents(value: number) {
 
 function DancerSetupPanel({
   deletedPhotoIds = [],
+  deletedPhotoStoragePaths = [],
   onDeletedPhotoIdsSaved,
   onProfileChange,
   profile,
 }: {
   deletedPhotoIds?: string[];
+  deletedPhotoStoragePaths?: string[];
   onDeletedPhotoIdsSaved?: () => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
@@ -785,8 +794,19 @@ function DancerSetupPanel({
     setIsSaving(true);
     setStatus("");
     try {
-      const payload = { stageName, legalName, city, bio, deletedPhotoIds };
-      console.log("PROFILE_SAVE_PAYLOAD", payload);
+      const payload = { stageName, legalName, city, bio, deletedPhotoIds, deletedPhotoStoragePaths };
+      console.log("EDIT_PROFILE_BEFORE_SAVE", {
+        deletedPhotoIds,
+        profilePhotoIds: Array.isArray(profile?.dancer_photos) ? (profile.dancer_photos as Array<any>).map((photo) => photo.id) : [],
+      });
+      console.log("EDIT_PROFILE_SAVE_PAYLOAD", {
+        stageName: Boolean(stageName),
+        legalName: Boolean(legalName),
+        city,
+        bio: Boolean(bio),
+        deletedPhotoIds,
+        deletedPhotoStoragePathCount: deletedPhotoStoragePaths.length,
+      });
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
         headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
@@ -794,7 +814,12 @@ function DancerSetupPanel({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
-      if (data.profile) onProfileChange?.(data.profile);
+      if (data.profile) {
+        console.log("EDIT_PROFILE_REFETCHED_PHOTOS", {
+          photoIds: Array.isArray(data.profile?.dancer_photos) ? data.profile.dancer_photos.map((photo: any) => photo.id) : [],
+        });
+        onProfileChange?.(data.profile);
+      }
       onDeletedPhotoIdsSaved?.();
       setStatus("Saved profile.");
     } catch (error) {
@@ -1626,12 +1651,16 @@ const MAX_DANCER_PROFILE_PHOTOS = 5;
 
 function DancerPhotoPanel({
   deletedPhotoIds = [],
+  deletedPhotoStoragePaths = [],
   onDeletedPhotoIdsChange,
+  onDeletedPhotoStoragePathsChange,
   onProfileChange,
   profile,
 }: {
   deletedPhotoIds?: string[];
+  deletedPhotoStoragePaths?: string[];
   onDeletedPhotoIdsChange?: (deletedPhotoIds: string[]) => void;
+  onDeletedPhotoStoragePathsChange?: (deletedPhotoStoragePaths: string[]) => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
@@ -1744,6 +1773,15 @@ function DancerPhotoPanel({
     setDeletingPhotoId(photo.id);
     setStatus("Deleting photo...");
     const nextDeletedPhotoIds = deletedPhotoIds.includes(photo.id) ? deletedPhotoIds : [...deletedPhotoIds, photo.id];
+    const photoStorageKeys = [photo.storagePath, photo.imageUrl].map((value) => String(value || "").trim()).filter(Boolean);
+    const nextDeletedPhotoStoragePaths = [
+      ...deletedPhotoStoragePaths,
+      ...photoStorageKeys.filter((path) => !deletedPhotoStoragePaths.includes(path)),
+    ];
+    console.log("EDIT_PROFILE_DELETE_CLICK", {
+      photoId: photo.id,
+      currentPhotoIds: photos.map((item) => item.id),
+    });
     console.log("PHOTO_ACTION_DEBUG", {
       clickedPhotoId: photo.id,
       clickedPhotoLabel: photo.label,
@@ -1763,6 +1801,7 @@ function DancerPhotoPanel({
       primaryPhotoId: primaryPhotoIdFromProfile(profile),
     });
     onDeletedPhotoIdsChange?.(nextDeletedPhotoIds);
+    onDeletedPhotoStoragePathsChange?.(nextDeletedPhotoStoragePaths);
     setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
     try {
       const response = await fetch("/api/dancer/photos", {
@@ -1789,6 +1828,7 @@ function DancerPhotoPanel({
       setStatus("Photo deleted.");
     } catch (error) {
       onDeletedPhotoIdsChange?.(deletedPhotoIds.filter((id) => id !== photo.id));
+      onDeletedPhotoStoragePathsChange?.(deletedPhotoStoragePaths);
       setPhotos((current) => relabelPhotoItems(mergePhotoItems([photo], current)));
       setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
     } finally {

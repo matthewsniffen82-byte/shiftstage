@@ -199,11 +199,19 @@ export async function PATCH(request: Request) {
     });
     const adminDb = createAdminSupabaseClient();
     const deletedPhotoStoragePaths = deletedPhotoIds.length
-      ? await loadDeletedPhotoStoragePaths(adminDb, profile.id, user.id, deletedPhotoIds)
-      : [];
+      ? [
+          ...readDeletedPhotoStoragePaths(body),
+          ...(await loadDeletedPhotoStoragePaths(adminDb, profile.id, user.id, deletedPhotoIds)),
+        ]
+      : readDeletedPhotoStoragePaths(body);
     if (deletedPhotoIds.length) {
       for (const photoId of deletedPhotoIds) {
-        await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
+        try {
+          await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
+        } catch (error) {
+          if (!isAlreadyDeletedPhotoError(error)) throw error;
+          console.log("PROFILE_PHOTO_DELETE_ALREADY_GONE", { photoId });
+        }
       }
     }
 
@@ -229,6 +237,9 @@ export async function PATCH(request: Request) {
       .order("sort_order", { ascending: true });
     if (databasePhotosAfterSaveError) throw databasePhotosAfterSaveError;
     console.log("PROFILE_IMAGES_AFTER_SAVE", databasePhotosAfterSave || []);
+    console.log("EDIT_PROFILE_DATABASE_PHOTOS_AFTER_SAVE", {
+      photoIds: (databasePhotosAfterSave || []).map((photo: any) => photo.id),
+    });
 
     const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
     if (refreshedProfileError) throw refreshedProfileError;
@@ -626,6 +637,19 @@ function readDeletedPhotoIds(body: any): string[] {
       .map((id: any) => String(id || "").trim())
       .filter(Boolean),
   )];
+}
+
+function readDeletedPhotoStoragePaths(body: any): string[] {
+  if (!Array.isArray(body?.deletedPhotoStoragePaths)) return [];
+  return [...new Set<string>(
+    body.deletedPhotoStoragePaths
+      .map((path: any) => normalizeStorageKey(path))
+      .filter(Boolean),
+  )];
+}
+
+function isAlreadyDeletedPhotoError(error: unknown) {
+  return error instanceof Error && error.message === "Photo not found.";
 }
 
 function readPhotoStorageValue(value: unknown): Omit<ProfilePhotoStorageValue, "isPrimary" | "sortOrder"> | null {
