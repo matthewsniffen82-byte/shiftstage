@@ -40087,18 +40087,31 @@
         if (trigger) trigger.disabled = true;
         setResult(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from public pages...");
         try {
+          let savedProfile = null;
           if (isDancerSession()) {
             const data = await patchAuthenticatedJson("/api/dancer/profile", { isPublic: nextPublic });
             if (!data) throw new Error("Sign in required");
+            savedProfile = data.profile || null;
+            const savedPublic = savedProfile
+              ? (savedProfile.is_public !== false && savedProfile.isPublic !== false)
+              : null;
+            if (savedPublic !== nextPublic) {
+              throw new Error("Profile visibility did not save. Try again.");
+            }
+            applyDancerVerificationProfile(savedProfile);
           }
-          setDancerProfilePublic(profile, nextPublic);
-          syncDancerIncognitoToggle(profile, true);
+          const updatedProfile = activeDancerProfile(city) || profile;
+          setDancerProfilePublic(updatedProfile, nextPublic);
+          liveMarketState[city] = null;
+          syncDancerIncognitoToggle(updatedProfile, true);
           renderDancerSetup();
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
           setResult(nextPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from the site.");
+          showToast(nextPublic ? "Profile reactivated" : "Incognito on");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");
+          showToast(error.message || "Could not update profile visibility.");
         } finally {
           if (trigger) trigger.disabled = false;
         }

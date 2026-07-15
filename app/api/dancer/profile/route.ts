@@ -105,7 +105,7 @@ export async function PATCH(request: Request) {
 
     const { data: profile, error: profileError } = await db
       .from("dancer_profiles")
-      .select("id, real_name, stage_name, city, status")
+      .select("id, real_name, stage_name, city, status, is_public")
       .eq("user_id", user.id)
       .maybeSingle();
 
