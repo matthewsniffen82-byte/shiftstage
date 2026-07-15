@@ -230,12 +230,17 @@ export async function PATCH(request: Request) {
     const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
     if (refreshedProfileError) throw refreshedProfileError;
 
+    const refreshedProfileWithPhotos = refreshedProfile ? withPhotoUrls(client, refreshedProfile) : null;
+    const refreshedPendingLimit = refreshedProfileWithPhotos
+      ? Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (refreshedProfileWithPhotos.dancer_photos?.length || 0))
+      : MAX_DANCER_PROFILE_PHOTOS;
+
     return NextResponse.json({
       ok: true,
-      profile: refreshedProfile
+      profile: refreshedProfileWithPhotos
         ? {
-            ...withPhotoUrls(client, refreshedProfile),
-            pending_photo_reviews: await loadPendingPhotoReviews(user.id),
+            ...refreshedProfileWithPhotos,
+            pending_photo_reviews: await loadPendingPhotoReviews(user.id, refreshedPendingLimit),
           }
         : null,
     });

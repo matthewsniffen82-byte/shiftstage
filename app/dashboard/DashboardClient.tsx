@@ -612,6 +612,7 @@ function DancerPanel({
 }) {
   const dancerStatus = String(profile?.status || "").toLowerCase();
   const isApproved = dancerStatus === "approved" || dancerStatus === "verified";
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
 
   return (
     <>
@@ -635,10 +636,20 @@ function DancerPanel({
       ) : (
         <DancerLockedAnalyticsPanel />
       )}
-      <DancerSetupPanel profile={profile} onProfileChange={onProfileChange} />
+      <DancerSetupPanel
+        deletedPhotoIds={deletedPhotoIds}
+        onDeletedPhotoIdsSaved={() => setDeletedPhotoIds([])}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
       <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
       <DancerSharePanel profile={profile} />
-      <DancerPhotoPanel profile={profile} onProfileChange={onProfileChange} />
+      <DancerPhotoPanel
+        deletedPhotoIds={deletedPhotoIds}
+        onDeletedPhotoIdsChange={setDeletedPhotoIds}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
       <DancerVerificationPanel reviews={reviews} />
       <DancerBillingPanel />
     </>
@@ -739,9 +750,13 @@ function formatCents(value: number) {
 }
 
 function DancerSetupPanel({
+  deletedPhotoIds = [],
+  onDeletedPhotoIdsSaved,
   onProfileChange,
   profile,
 }: {
+  deletedPhotoIds?: string[];
+  onDeletedPhotoIdsSaved?: () => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
@@ -770,7 +785,7 @@ function DancerSetupPanel({
     setIsSaving(true);
     setStatus("");
     try {
-      const payload = { stageName, legalName, city, bio };
+      const payload = { stageName, legalName, city, bio, deletedPhotoIds };
       console.log("PROFILE_SAVE_PAYLOAD", payload);
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -780,6 +795,7 @@ function DancerSetupPanel({
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
       if (data.profile) onProfileChange?.(data.profile);
+      onDeletedPhotoIdsSaved?.();
       setStatus("Saved profile.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save profile.");
@@ -1609,9 +1625,13 @@ type DancerPhotoItem = {
 const MAX_DANCER_PROFILE_PHOTOS = 5;
 
 function DancerPhotoPanel({
+  deletedPhotoIds = [],
+  onDeletedPhotoIdsChange,
   onProfileChange,
   profile,
 }: {
+  deletedPhotoIds?: string[];
+  onDeletedPhotoIdsChange?: (deletedPhotoIds: string[]) => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
@@ -1622,7 +1642,6 @@ function DancerPhotoPanel({
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState("");
-  const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
 
   useEffect(() => {
     setPhotos((current) => {
@@ -1743,7 +1762,7 @@ function DancerPhotoPanel({
       profilePhotoIds: Array.isArray(profile?.dancer_photos) ? (profile.dancer_photos as Array<any>).map((item) => item.id) : [],
       primaryPhotoId: primaryPhotoIdFromProfile(profile),
     });
-    setDeletedPhotoIds(nextDeletedPhotoIds);
+    onDeletedPhotoIdsChange?.(nextDeletedPhotoIds);
     setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
     try {
       const response = await fetch("/api/dancer/photos", {
@@ -1766,11 +1785,10 @@ function DancerPhotoPanel({
           databasePhotos: refreshedPhotos.map((item) => item.id),
         });
         setPhotos(refreshedPhotos);
-        setDeletedPhotoIds((current) => current.filter((id) => refreshedPhotos.some((item) => item.id === id)));
       }
       setStatus("Photo deleted.");
     } catch (error) {
-      setDeletedPhotoIds((current) => current.filter((id) => id !== photo.id));
+      onDeletedPhotoIdsChange?.(deletedPhotoIds.filter((id) => id !== photo.id));
       setPhotos((current) => relabelPhotoItems(mergePhotoItems([photo], current)));
       setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
     } finally {
