@@ -31517,7 +31517,7 @@
       const liveDancers = (dancers || []).map((item, index) => mapLiveDancer(item, tonightIds.has(item.id), index, venueShiftCounts));
       const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
 
-      if (liveDancers.length) market.dancers = liveDancers;
+      market.dancers = liveDancers;
       if (liveVenues.length) market.venues = mergeLiveVenues(market.venues, liveVenues);
       market.stats = {
         dancers: market.dancers.filter(isApprovedPublicProfile).length,
@@ -31533,6 +31533,10 @@
       const response = await fetch(url, { headers: { Accept: "application/json" } });
       if (!response.ok) throw new Error(`Request failed: ${response.status}`);
       return response.json();
+    }
+
+    function liveDiscoveryIsLoading(city = selectedCity()) {
+      return liveMarketState[city] === "loading";
     }
 
     async function loadLiveDiscovery(city = selectedCity(), options = {}) {
@@ -38814,6 +38818,7 @@
     }
 
     function updateTabCounts(city) {
+      const loading = liveDiscoveryIsLoading(city);
       const counts = {
         tonight: getItems(city, "tonight").length,
         dancers: getItems(city, "dancers").length,
@@ -38822,7 +38827,8 @@
       };
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const label = tab.dataset.tabLabel || tab.textContent.trim();
-        const count = counts[tab.dataset.tab] ?? 0;
+        const tabName = tab.dataset.tab;
+        const count = loading && ["tonight", "dancers", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
         tab.innerHTML = `<span>${label}</span><span class="tab-count">${count}</span>`;
       });
     }
@@ -38849,6 +38855,7 @@
       updateHomeLiveSummary(city);
 
       const allItems = getItems(city, activeTab);
+      const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
       const venueFilter = selectedVenueFilter();
@@ -38867,7 +38874,9 @@
         return;
       }
       tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
-      tabCount.textContent = selectedVenue
+      tabCount.textContent = loadingLiveProfiles
+        ? "Loading live profiles..."
+        : selectedVenue
         ? city
         : (activeTab === "tonight" || activeTab === "dancers") && allItems.length > items.length
           ? `${items.length} of ${allItems.length}`
@@ -38879,6 +38888,10 @@
         viewAllBtn.hidden = true;
         results.classList.remove("card-grid");
         results.innerHTML = venueDetailPage(selectedVenue);
+        return;
+      }
+      if (loadingLiveProfiles && !items.length) {
+        results.innerHTML = '<div class="locked">Loading live profiles from Dancr...</div>';
         return;
       }
       results.innerHTML = items.map((item, index) => (
@@ -40840,8 +40853,8 @@
     installReferenceHomeShell();
     restoreLoggedInSessionState();
     updateAccountHeader();
-    render();
     loadLiveDiscovery(citySelect.value);
+    render();
     if (isCustomerSession()) loadLiveCustomerDashboardData();
     if (isDancerSession()) {
       loadLiveDancerAnalytics();
