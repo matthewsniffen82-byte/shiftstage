@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "hard-reset-save-fix-v1";
+const PROFILE_SAVE_VERSION = "protected-fields-save-fix-v2";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -33,15 +33,66 @@ function logProfileSaveStage(stage: ProfileSaveStage) {
   console.log("PROFILE_SAVE_STAGE", { stage });
 }
 
-function publicProfileState(profile: any) {
+type ProtectedProfileKey =
+  | "status"
+  | "isPublic"
+  | "approvedAt"
+  | "disabledAt"
+  | "verificationStatus"
+  | "photoReviewStatus";
+
+type ProtectedProfileState = Record<ProtectedProfileKey, string | boolean | null> & {
+  dancerId: string | null;
+};
+
+const PROTECTED_PROFILE_KEYS: ProtectedProfileKey[] = [
+  "status",
+  "isPublic",
+  "approvedAt",
+  "disabledAt",
+  "verificationStatus",
+  "photoReviewStatus",
+];
+
+function normalizeBoolean(value: unknown): boolean | null {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  if (value === null || value === undefined) return null;
+  return Boolean(value);
+}
+
+function normalizeStatus(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return String(value).trim().toLowerCase();
+}
+
+function normalizeTimestamp(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  const timestamp = Date.parse(text);
+  return Number.isNaN(timestamp) ? text : new Date(timestamp).toISOString();
+}
+
+function publicProfileState(profile: any): ProtectedProfileState {
   return {
     dancerId: profile?.id || null,
-    status: profile?.status ?? null,
-    isPublic: profile?.is_public ?? null,
-    approvedAt: profile?.approved_at ?? null,
-    verificationStatus: profile?.verification_status ?? null,
-    photoReviewStatus: profile?.photo_review_status ?? null,
+    status: normalizeStatus(profile?.status),
+    isPublic: normalizeBoolean(profile?.is_public),
+    approvedAt: normalizeTimestamp(profile?.approved_at),
+    disabledAt: normalizeTimestamp(profile?.disabled_at),
+    verificationStatus: normalizeStatus(profile?.verification_status),
+    photoReviewStatus: normalizeStatus(profile?.photo_review_status),
   };
+}
+
+function protectedFieldChanges(
+  before: ProtectedProfileState,
+  after: ProtectedProfileState,
+  keys: ProtectedProfileKey[],
+) {
+  return keys
+    .filter((field) => before[field] !== after[field])
+    .map((field) => ({ field, before: before[field], after: after[field] }));
 }
 
 function isMissingIsPublicColumnError(error: any) {
@@ -51,7 +102,7 @@ function isMissingIsPublicColumnError(error: any) {
 }
 
 async function loadProfileForSave(db: any, userId: string) {
-  const columns = "id, real_name, stage_name, city, status, approved_at, verification_status, photo_review_status";
+  const columns = "id, real_name, stage_name, city, status, approved_at, disabled_at, verification_status, photo_review_status";
   const current = await db
     .from("dancer_profiles")
     .select(`${columns}, is_public`)
@@ -79,6 +130,7 @@ function safeProfileSaveError(stage: ProfileSaveStage, error: any) {
   if (message === "PROFILE_VISIBILITY_SCHEMA_UNAVAILABLE") return "Profile visibility is temporarily unavailable while the live database is upgraded.";
   if (message.startsWith("DELETED_PHOTO_RETURNED_AFTER_SAVE")) return "The deleted photo returned during save verification.";
   if (message.startsWith("PROFILE_PHOTO_DELETE_COUNT_MISMATCH")) return "The selected photo could not be permanently deleted.";
+  if (message.startsWith("PROTECTED_FIELDS_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
   if (message.startsWith("PUBLIC_PROFILE_STATE_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
   if (message === "Sign in required." || message === "Dancer profile not found.") return message;
 
@@ -205,8 +257,12 @@ export async function PATCH(request: Request) {
     if (!profile) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
-    const publicStateBeforeSave = publicProfileState(profile);
-    console.log("PUBLIC_PROFILE_STATE_BEFORE_SAVE", publicStateBeforeSave);
+    const protectedFieldsBefore = publicProfileState(profile);
+    console.log("PROTECTED_FIELDS_BEFORE_SAVE", {
+      profileId: profile.id,
+      ...protectedFieldsBefore,
+    });
+    console.log("PUBLIC_PROFILE_STATE_BEFORE_SAVE", protectedFieldsBefore);
 
     const update: Record<string, string | boolean> = {};
     if (typeof body.stageName === "string") update.stage_name = body.stageName.trim();
@@ -222,6 +278,12 @@ export async function PATCH(request: Request) {
       }
       update.is_public = body.isPublic;
     }
+    const cleanProfilePayload = Object.fromEntries(
+      Object.entries(update).filter(([, value]) => value !== undefined),
+    ) as Record<string, string | boolean>;
+    console.log("PROFILE_SAVE_PAYLOAD_KEYS", {
+      keys: Object.keys(cleanProfilePayload),
+    });
 
     let changedSocialPlatforms: SocialPlatform[] = [];
     setSaveStage("update_social_links");
@@ -304,11 +366,14 @@ export async function PATCH(request: Request) {
         ]
       : readDeletedPhotoStoragePaths(body);
     const confirmedDeletedPhotoIds: string[] = [];
+    const expectedProtectedChanges = new Set<ProtectedProfileKey>();
+    if (typeof body.isPublic === "boolean") expectedProtectedChanges.add("isPublic");
     if (deletedPhotoIds.length) {
       for (const photoId of deletedPhotoIds) {
         try {
           const result = await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
           confirmedDeletedPhotoIds.push(...(result.deletedIds || []).map((id: unknown) => String(id)));
+          if (result.photoReviewStatusMayChange) expectedProtectedChanges.add("photoReviewStatus");
         } catch (error) {
           if (!isAlreadyDeletedPhotoError(error)) throw error;
           confirmedDeletedPhotoIds.push(photoId);
@@ -321,10 +386,10 @@ export async function PATCH(request: Request) {
     }
 
     setSaveStage("update_profile_fields");
-    if (Object.keys(update).length) {
+    if (Object.keys(cleanProfilePayload).length) {
       const { data: updatedProfile, error } = await db
         .from("dancer_profiles")
-        .update(update)
+        .update(cleanProfilePayload)
         .eq("id", profile.id)
         .eq("user_id", user.id)
         .select("id")
@@ -348,9 +413,9 @@ export async function PATCH(request: Request) {
     setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
       await submitProfileForReview(client, db, user.id, profile.id, {
-        realName: update.real_name || profile.real_name,
-        stageName: update.stage_name || profile.stage_name,
-        city: update.city || profile.city,
+        realName: String(cleanProfilePayload.real_name || profile.real_name || ""),
+        stageName: String(cleanProfilePayload.stage_name || profile.stage_name || ""),
+        city: String(cleanProfilePayload.city || profile.city || ""),
         status: profile.status,
       });
     } else if (body.submitForReview === true) {
@@ -370,19 +435,53 @@ export async function PATCH(request: Request) {
       photoIds: (databasePhotosAfterSave || []).map((photo: any) => photo.id),
     });
 
+    const {
+      profile: protectedProfileAfter,
+      error: protectedProfileAfterError,
+      supportsIsPublic: supportsIsPublicAfter,
+    } = await loadProfileForSave(db, user.id);
+    if (protectedProfileAfterError) throw protectedProfileAfterError;
+    if (!protectedProfileAfter) throw new Error("Dancer profile not found.");
+
+    const protectedFieldsAfter = publicProfileState(protectedProfileAfter);
+    console.log("PROTECTED_FIELDS_AFTER_SAVE", {
+      profileId: profile.id,
+      ...protectedFieldsAfter,
+    });
+    console.log("PUBLIC_PROFILE_STATE_AFTER_SAVE", protectedFieldsAfter);
+
+    const comparableProtectedKeys = PROTECTED_PROFILE_KEYS.filter(
+      (key) => key !== "isPublic" || (supportsIsPublic && supportsIsPublicAfter),
+    );
+    const allProtectedChanges = protectedFieldChanges(
+      protectedFieldsBefore,
+      protectedFieldsAfter,
+      comparableProtectedKeys,
+    );
+    const unexpectedProtectedChanges = allProtectedChanges.filter(
+      (change) => !expectedProtectedChanges.has(change.field),
+    );
+    if (allProtectedChanges.length && !unexpectedProtectedChanges.length) {
+      console.log("EXPECTED_PROTECTED_FIELD_CHANGES", {
+        protectedChanges: allProtectedChanges,
+      });
+    }
+    if (unexpectedProtectedChanges.length) {
+      console.error("UNEXPECTED_PROTECTED_FIELD_CHANGES", {
+        protectedChanges: unexpectedProtectedChanges.map((change) => change.field),
+        changes: unexpectedProtectedChanges,
+        before: protectedFieldsBefore,
+        after: protectedFieldsAfter,
+      });
+      const protectedError = new Error(
+        `PROTECTED_FIELDS_CHANGED: ${unexpectedProtectedChanges.map((change) => change.field).join(",")}`,
+      ) as Error & { code?: string };
+      protectedError.code = "PROTECTED_FIELDS_CHANGED";
+      throw protectedError;
+    }
+
     const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
     if (refreshedProfileError) throw refreshedProfileError;
-
-    const publicStateAfterSave = publicProfileState(refreshedProfile);
-    console.log("PUBLIC_PROFILE_STATE_AFTER_SAVE", publicStateAfterSave);
-    const protectedPublicKeys = ["status", "approvedAt", "verificationStatus", "photoReviewStatus"];
-    if (typeof body.isPublic !== "boolean") protectedPublicKeys.push("isPublic");
-    const changedPublicKeys = protectedPublicKeys.filter(
-      (key) => (publicStateBeforeSave as any)[key] !== (publicStateAfterSave as any)[key],
-    );
-    if (changedPublicKeys.length) {
-      throw new Error(`PUBLIC_PROFILE_STATE_CHANGED: ${changedPublicKeys.join(",")}`);
-    }
 
     const refreshedProfileWithPhotos = refreshedProfile ? withPhotoUrls(client, refreshedProfile) : null;
     const refreshedPendingLimit = refreshedProfileWithPhotos

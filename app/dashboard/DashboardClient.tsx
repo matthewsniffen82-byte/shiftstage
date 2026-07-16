@@ -789,7 +789,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "hard-reset-save-fix-v1");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "protected-fields-save-fix-v2");
   }, []);
 
   useEffect(() => {

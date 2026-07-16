@@ -128,7 +128,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   const profile = await getOwnDancerProfile(client, userId);
   const { data: photo, error: photoError } = await client
     .from("dancer_photos")
-    .select("id, storage_path, is_primary, sort_order")
+    .select("id, storage_path, is_primary, sort_order, review_status")
     .eq("id", photoId)
     .eq("dancer_id", profile.id)
     .maybeSingle();
@@ -137,7 +137,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   if (photo) {
     let matchingPhotosQuery = adminClient
       .from("dancer_photos")
-      .select("id, storage_path, is_primary, sort_order")
+      .select("id, storage_path, is_primary, sort_order, review_status")
       .eq("dancer_id", profile.id)
       .eq("is_primary", photo.is_primary);
     if (!photo.is_primary) matchingPhotosQuery = matchingPhotosQuery.eq("sort_order", photo.sort_order);
@@ -146,6 +146,9 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
     const photoRows = matchingPhotos?.length ? matchingPhotos : [photo];
     const photoIds = photoRows.map((row: any) => String(row.id || "")).filter(Boolean);
+    const photoReviewStatusMayChange = photoRows.some(
+      (row: any) => String(row.review_status || "").toLowerCase() === "pending",
+    );
 
     console.log("PHOTO_DELETE_CLICKED", {
       id: photo.id,
@@ -189,12 +192,14 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       await promoteNextApprovedPrimaryPhoto(adminClient, profile.id);
     }
 
-    await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id).catch((error: any) => {
-      console.warn("PHOTO_REVIEW_STATUS_REFRESH_WARNING", {
-        dancerId: profile.id,
-        message: error?.message || "Unable to refresh photo review status.",
+    if (photoReviewStatusMayChange) {
+      await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id).catch((error: any) => {
+        console.warn("PHOTO_REVIEW_STATUS_REFRESH_WARNING", {
+          dancerId: profile.id,
+          message: error?.message || "Unable to refresh photo review status.",
+        });
       });
-    });
+    }
     const remainingIds = await getOwnPhotoIds(adminClient, profile.id).catch((error: any) => {
       console.warn("PHOTO_REMAINING_IDS_READ_WARNING", {
         dancerId: profile.id,
@@ -203,7 +208,13 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       return [];
     });
     console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
-    return { id: photo.id, kind: "approved_photo", deletedIds, remainingPhotoIds: remainingIds };
+    return {
+      id: photo.id,
+      kind: "approved_photo",
+      deletedIds,
+      remainingPhotoIds: remainingIds,
+      photoReviewStatusMayChange,
+    };
   }
 
   const { data: moderationRecord, error: moderationError } = await (adminClient as any)
@@ -255,7 +266,13 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
   const remainingIds = await getOwnPhotoIds(adminClient, profile.id);
   console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
-  return { id: moderationRecord.id, kind: "moderation_photo", deletedIds, remainingPhotoIds: remainingIds };
+  return {
+    id: moderationRecord.id,
+    kind: "moderation_photo",
+    deletedIds,
+    remainingPhotoIds: remainingIds,
+    photoReviewStatusMayChange: true,
+  };
 }
 
 async function deleteLinkedModerationRecords(
