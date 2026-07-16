@@ -31,10 +31,6 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (role === "dancer") console.log("ACTIVE_EDIT_PROFILE_BUILD", "photo-save-fix-v1");
-  }, [role]);
-
-  useEffect(() => {
     let cancelled = false;
 
     async function load() {
