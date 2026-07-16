@@ -34088,6 +34088,32 @@
       });
     }
 
+    function runPhotoSourceOfTruthSelfTest() {
+      const profile = {
+        dancer_photos: [
+          { id: "A", storage_path: "test/A.jpg", is_primary: true, sort_order: 0, review_status: "approved", created_at: "2026-01-01T00:00:00.000Z" },
+          { id: "B", storage_path: "test/B.jpg", is_primary: false, sort_order: 1, review_status: "approved", created_at: "2026-01-02T00:00:00.000Z" },
+          { id: "C", storage_path: "test/C.jpg", is_primary: false, sort_order: 2, review_status: "approved", created_at: "2026-01-03T00:00:00.000Z" },
+          { id: "X", storage_path: "test/X-old.jpg", is_primary: false, sort_order: 3, review_status: "approved", created_at: "2026-01-04T00:00:00.000Z" },
+          { id: "D", storage_path: "test/D.jpg", is_primary: false, sort_order: 3, review_status: "approved", created_at: "2026-01-05T00:00:00.000Z" }
+        ],
+        deletedPhotoIds: ["D"]
+      };
+      const visiblePhotoIds = activeDancerPhotoRows(profile).map((photo) => photo.id);
+      return {
+        passed: visiblePhotoIds.join(",") === "A,B,C",
+        visiblePhotoIds,
+        deletedPhotoExcluded: !visiblePhotoIds.includes("D"),
+        previousUploadExcluded: !visiblePhotoIds.includes("X"),
+        emptySlotPreserved: visiblePhotoIds.length === 3
+      };
+    }
+
+    if (new URLSearchParams(window.location.search).get("photo-source-test") === "1") {
+      window.__dancrPhotoSourceTestResult = runPhotoSourceOfTruthSelfTest();
+      console.log("PHOTO_SOURCE_OF_TRUTH_SELF_TEST", window.__dancrPhotoSourceTestResult);
+    }
+
     function approvedVisualPhotoItems(profile, options = {}) {
       const includeUnapproved = options.includeUnapproved !== false;
       let galleryIndex = 0;
