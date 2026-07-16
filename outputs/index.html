@@ -34111,7 +34111,8 @@
 
     if (new URLSearchParams(window.location.search).get("photo-source-test") === "1") {
       window.__dancrPhotoSourceTestResult = runPhotoSourceOfTruthSelfTest();
-      console.log("PHOTO_SOURCE_OF_TRUTH_SELF_TEST", window.__dancrPhotoSourceTestResult);
+      document.documentElement.setAttribute("data-photo-source-test", JSON.stringify(window.__dancrPhotoSourceTestResult));
+      console.log(`PHOTO_SOURCE_OF_TRUTH_SELF_TEST ${JSON.stringify(window.__dancrPhotoSourceTestResult)}`);
     }
 
     function approvedVisualPhotoItems(profile, options = {}) {
