@@ -27,6 +27,10 @@ type ProfilePhotoStorageValue = {
 };
 
 export async function GET(request: Request) {
+  if (new URL(request.url).searchParams.get("profile-save-version") === "1") {
+    return withProfileSaveVersion(NextResponse.json({ ok: true, profileSaveVersion: PROFILE_SAVE_VERSION }));
+  }
+
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     let { data, error } = await loadDancerProfile(client, user.id);
