@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 
@@ -29,6 +29,10 @@ const SESSION_KEY = "dancrAuthSessionV1";
 export default function DashboardClient({ role }: { role: DashboardRole }) {
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (role === "dancer") console.log("ACTIVE_EDIT_PROFILE_BUILD", "photo-save-fix-v1");
+  }, [role]);
 
   useEffect(() => {
     let cancelled = false;
@@ -774,7 +778,11 @@ function DancerSetupPanel({
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
   const [status, setStatus] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
+  const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
+  const saveInFlightRef = useRef(false);
+  const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setStageName(String(profile?.stage_name || profile?.stageName || ""));
@@ -783,20 +791,48 @@ function DancerSetupPanel({
     setBio(String(profile?.bio || ""));
   }, [profile]);
 
+  useEffect(() => {
+    deletedPhotoIdsRef.current = [...deletedPhotoIds];
+    deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
+    if ((deletedPhotoIds.length || deletedPhotoStoragePaths.length) && saveStatus === "saved" && !saveInFlightRef.current) {
+      setSaveStatus("idle");
+    }
+  }, [deletedPhotoIds, deletedPhotoStoragePaths, saveStatus]);
+
+  useEffect(() => {
+    return () => {
+      if (savedResetTimerRef.current !== null) window.clearTimeout(savedResetTimerRef.current);
+    };
+  }, []);
+
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saveInFlightRef.current) return;
+
     const session = readSession();
     if (!session?.accessToken) {
+      setSaveStatus("error");
       setStatus("Sign in required.");
       return;
     }
 
-    setIsSaving(true);
-    setStatus("");
+    saveInFlightRef.current = true;
+    setSaveStatus("saving");
+    setStatus("Saving...");
+    const idsToDelete = [...deletedPhotoIdsRef.current];
+    const storagePathsToDelete = [...deletedPhotoStoragePathsRef.current];
+
     try {
-      const payload = { stageName, legalName, city, bio, deletedPhotoIds, deletedPhotoStoragePaths };
+      const payload = {
+        stageName,
+        legalName,
+        city,
+        bio,
+        deletedPhotoIds: idsToDelete,
+        deletedPhotoStoragePaths: storagePathsToDelete,
+      };
       console.log("EDIT_PROFILE_BEFORE_SAVE", {
-        deletedPhotoIds,
+        deletedPhotoIds: idsToDelete,
         profilePhotoIds: Array.isArray(profile?.dancer_photos) ? (profile.dancer_photos as Array<any>).map((photo) => photo.id) : [],
       });
       console.log("EDIT_PROFILE_SAVE_PAYLOAD", {
@@ -804,8 +840,8 @@ function DancerSetupPanel({
         legalName: Boolean(legalName),
         city,
         bio: Boolean(bio),
-        deletedPhotoIds,
-        deletedPhotoStoragePathCount: deletedPhotoStoragePaths.length,
+        deletedPhotoIds: idsToDelete,
+        deletedPhotoStoragePathCount: storagePathsToDelete.length,
       });
       const response = await fetch("/api/dancer/profile", {
         method: "PATCH",
@@ -814,18 +850,40 @@ function DancerSetupPanel({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save profile.");
-      if (data.profile) {
-        console.log("EDIT_PROFILE_REFETCHED_PHOTOS", {
-          photoIds: Array.isArray(data.profile?.dancer_photos) ? data.profile.dancer_photos.map((photo: any) => photo.id) : [],
-        });
-        onProfileChange?.(data.profile);
-      }
+
+      const refreshedPhotoRows = [
+        ...(Array.isArray(data.profile?.dancer_photos) ? data.profile.dancer_photos : []),
+        ...(Array.isArray(data.profile?.pending_photo_reviews) ? data.profile.pending_photo_reviews : []),
+      ];
+      const refreshedPhotoIds = new Set(refreshedPhotoRows.map((photo: any) => String(photo?.id || "")).filter(Boolean));
+      const incorrectlyRestoredIds = idsToDelete.filter((id) => refreshedPhotoIds.has(id));
+      const confirmedDeletedIds = new Set((Array.isArray(data.deletedPhotoIds) ? data.deletedPhotoIds : []).map((id: unknown) => String(id)));
+      const unconfirmedDeletedIds = idsToDelete.filter((id) => !confirmedDeletedIds.has(id));
+      console.log("EDIT_PROFILE_REFETCHED_PHOTOS", {
+        photoIds: Array.from(refreshedPhotoIds),
+        requestedDeletedIds: idsToDelete,
+        confirmedDeletedIds: Array.from(confirmedDeletedIds),
+      });
+      if (incorrectlyRestoredIds.length) throw new Error("DELETED_PHOTO_RETURNED_AFTER_SAVE");
+      if (unconfirmedDeletedIds.length) throw new Error("PROFILE_PHOTO_DELETE_COUNT_MISMATCH");
+
+      if (data.profile) onProfileChange?.(data.profile);
+      deletedPhotoIdsRef.current = [];
+      deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
-      setStatus("Saved profile.");
+      setSaveStatus("saved");
+      setStatus("Saved Profile");
+      if (savedResetTimerRef.current !== null) window.clearTimeout(savedResetTimerRef.current);
+      savedResetTimerRef.current = window.setTimeout(() => {
+        setSaveStatus((current) => current === "saved" ? "idle" : current);
+        savedResetTimerRef.current = null;
+      }, 2000);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to save profile.");
+      console.error("EDIT_PROFILE_SAVE_FAILED", error);
+      setSaveStatus("error");
+      setStatus("Profile could not be saved");
     } finally {
-      setIsSaving(false);
+      saveInFlightRef.current = false;
     }
   }
 
@@ -849,8 +907,8 @@ function DancerSetupPanel({
           Bio
           <textarea value={bio} onChange={(event) => setBio(event.target.value)} rows={4} />
         </label>
-        <button type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save profile"}
+        <button type="submit" disabled={saveStatus === "saving"}>
+          {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}
         </button>
         {status ? <p>{status}</p> : null}
       </form>
@@ -1666,18 +1724,25 @@ function DancerPhotoPanel({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [isPrimary, setIsPrimary] = useState(false);
-  const [photos, setPhotos] = useState<DancerPhotoItem[]>(() => relabelPhotoItems(dancerPhotoItemsFromProfile(profile)));
+  const [photos, setPhotos] = useState<DancerPhotoItem[]>(() =>
+    excludePendingDeletions(relabelPhotoItems(dancerPhotoItemsFromProfile(profile)), deletedPhotoIds),
+  );
   const [selectedPreview, setSelectedPreview] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [deletingPhotoId, setDeletingPhotoId] = useState("");
+  const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
+  const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
 
   useEffect(() => {
-    setPhotos((current) => {
-      const deleted = new Set(deletedPhotoIds);
-      return relabelPhotoItems(mergePhotoItems(current, dancerPhotoItemsFromProfile(profile)).filter((photo) => !deleted.has(photo.id)));
-    });
-  }, [profile, deletedPhotoIds]);
+    deletedPhotoIdsRef.current = [...deletedPhotoIds];
+    deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
+    setPhotos((current) =>
+      excludePendingDeletions(
+        relabelPhotoItems(mergePhotoItems(current, dancerPhotoItemsFromProfile(profile))),
+        deletedPhotoIdsRef.current,
+      ),
+    );
+  }, [profile, deletedPhotoIds, deletedPhotoStoragePaths]);
 
   useEffect(() => {
     return () => {
@@ -1762,26 +1827,18 @@ function DancerPhotoPanel({
     }
   }
 
-  async function deletePhoto(photo: DancerPhotoItem) {
+  function deletePhoto(photo: DancerPhotoItem) {
     if (!window.confirm("Delete this photo from your profile?")) return;
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return;
-    }
 
-    setDeletingPhotoId(photo.id);
-    setStatus("Deleting photo...");
-    const nextDeletedPhotoIds = deletedPhotoIds.includes(photo.id) ? deletedPhotoIds : [...deletedPhotoIds, photo.id];
+    const nextDeletedPhotoIds = deletedPhotoIdsRef.current.includes(photo.id)
+      ? deletedPhotoIdsRef.current
+      : [...deletedPhotoIdsRef.current, photo.id];
     const photoStorageKeys = [photo.storagePath, photo.imageUrl].map((value) => String(value || "").trim()).filter(Boolean);
     const nextDeletedPhotoStoragePaths = [
-      ...deletedPhotoStoragePaths,
-      ...photoStorageKeys.filter((path) => !deletedPhotoStoragePaths.includes(path)),
+      ...deletedPhotoStoragePathsRef.current,
+      ...photoStorageKeys.filter((path) => !deletedPhotoStoragePathsRef.current.includes(path)),
     ];
-    console.log("EDIT_PROFILE_DELETE_CLICK", {
-      photoId: photo.id,
-      currentPhotoIds: photos.map((item) => item.id),
-    });
+    console.log("EDIT_PROFILE_PHOTO_DELETE", { photoId: photo.id });
     console.log("PHOTO_ACTION_DEBUG", {
       clickedPhotoId: photo.id,
       clickedPhotoLabel: photo.label,
@@ -1800,40 +1857,13 @@ function DancerPhotoPanel({
       profilePhotoIds: Array.isArray(profile?.dancer_photos) ? (profile.dancer_photos as Array<any>).map((item) => item.id) : [],
       primaryPhotoId: primaryPhotoIdFromProfile(profile),
     });
+
+    deletedPhotoIdsRef.current = nextDeletedPhotoIds;
+    deletedPhotoStoragePathsRef.current = nextDeletedPhotoStoragePaths;
     onDeletedPhotoIdsChange?.(nextDeletedPhotoIds);
     onDeletedPhotoStoragePathsChange?.(nextDeletedPhotoStoragePaths);
-    setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
-    try {
-      const response = await fetch("/api/dancer/photos", {
-        method: "DELETE",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-        body: JSON.stringify({ photoId: photo.id }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete photo.");
-      console.log("PHOTO_DELETE_RESULT", {
-        requestedIds: [photo.id],
-        deletedIds: data.photo?.deletedIds || [],
-        error: null,
-      });
-      const refreshed = await readOptionalJson("/api/dancer/profile", { authorization: `Bearer ${session.accessToken}` }, { profile: null });
-      if (refreshed?.profile) {
-        onProfileChange?.(refreshed.profile);
-        const refreshedPhotos = relabelPhotoItems(dancerPhotoItemsFromProfile(refreshed.profile).filter((item) => !nextDeletedPhotoIds.includes(item.id)));
-        console.log("PROFILE_IMAGES_AFTER_SAVE", {
-          databasePhotos: refreshedPhotos.map((item) => item.id),
-        });
-        setPhotos(refreshedPhotos);
-      }
-      setStatus("Photo deleted.");
-    } catch (error) {
-      onDeletedPhotoIdsChange?.(deletedPhotoIds.filter((id) => id !== photo.id));
-      onDeletedPhotoStoragePathsChange?.(deletedPhotoStoragePaths);
-      setPhotos((current) => relabelPhotoItems(mergePhotoItems([photo], current)));
-      setStatus(error instanceof Error ? error.message : "Unable to delete photo.");
-    } finally {
-      setDeletingPhotoId("");
-    }
+    setPhotos((current) => excludePendingDeletions(relabelPhotoItems(current), nextDeletedPhotoIds));
+    setStatus("Photo hidden. Select Save Profile to permanently delete it.");
   }
 
   return (
@@ -1878,10 +1908,9 @@ function DancerPhotoPanel({
               <button
                 className="photo-delete-button"
                 type="button"
-                disabled={deletingPhotoId === photo.id}
                 onClick={() => deletePhoto(photo)}
               >
-                {deletingPhotoId === photo.id ? "Deleting..." : "Delete photo"}
+                Delete photo
               </button>
             </span>
           </div>
@@ -1896,33 +1925,43 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
   const approvedPhotos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos as Array<Record<string, unknown>> : [];
   const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews as Array<Record<string, unknown>> : [];
 
-  return mergePhotoItems([
-    ...approvedPhotos.map((photo, index) => {
-      const reviewStatus = normalizePhotoStatus(photo.review_status || photo.reviewStatus || "approved");
-      const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
-      return {
-        id: String(photo.id || `photo-${index}`),
-        imageUrl: String(photo.imageUrl || photo.image_url || ""),
-        label: isPrimary ? "Main Photo" : "Photo",
-        status: reviewStatus,
-        note: photoStatusNote(reviewStatus),
-        storagePath: String(photo.storage_path || photo.storagePath || ""),
-        isPrimary,
-      };
-    }),
-    ...pendingReviews.map((review, index) => {
-      const isPrimary = String(review.upload_context || "").includes("main");
-      return {
-        id: String(review.id || `pending-photo-${index}`),
-        imageUrl: "",
-        label: isPrimary ? "Main Photo" : "Photo",
-        status: "pending" as const,
-        note: "Uploaded and awaiting admin verification before it appears publicly.",
-        storagePath: "",
-        isPrimary,
-      };
-    }),
-  ]);
+  const approvedItems = approvedPhotos.flatMap<DancerPhotoItem>((photo) => {
+    const id = String(photo.id || "").trim();
+    if (!id) return [];
+    const reviewStatus = normalizePhotoStatus(photo.review_status || photo.reviewStatus || "approved");
+    const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
+    return [{
+      id,
+      imageUrl: String(photo.imageUrl || photo.image_url || ""),
+      label: isPrimary ? "Main Photo" : "Photo",
+      status: reviewStatus,
+      note: photoStatusNote(reviewStatus),
+      storagePath: String(photo.storage_path || photo.storagePath || ""),
+      isPrimary,
+    }];
+  });
+
+  const pendingItems = pendingReviews.flatMap<DancerPhotoItem>((review) => {
+    const id = String(review.id || "").trim();
+    if (!id) return [];
+    const isPrimary = String(review.upload_context || "").includes("main");
+    return [{
+      id,
+      imageUrl: "",
+      label: isPrimary ? "Main Photo" : "Photo",
+      status: "pending",
+      note: "Uploaded and awaiting admin verification before it appears publicly.",
+      storagePath: "",
+      isPrimary,
+    }];
+  });
+
+  return mergePhotoItems([approvedItems, pendingItems].flat());
+}
+
+function excludePendingDeletions(incomingPhotos: DancerPhotoItem[], pendingDeletedIds: string[]) {
+  const deleted = new Set(pendingDeletedIds);
+  return incomingPhotos.filter((photo) => !deleted.has(photo.id));
 }
 
 function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {
@@ -1934,7 +1973,7 @@ function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {
 function mergePhotoItems(...groups: DancerPhotoItem[][]) {
   const byKey = new Map<string, DancerPhotoItem>();
   groups.flat().forEach((photo) => {
-    const key = photo.storagePath || photo.imageUrl || photo.id;
+    const key = photo.id;
     const existing = byKey.get(key);
     if (!existing || (existing.status !== "approved" && photo.status === "approved")) byKey.set(key, photo);
   });

@@ -121,11 +121,6 @@ export async function PATCH(request: Request) {
     if (typeof body.bio === "string") update.bio = body.bio.trim();
     if (typeof body.isPublic === "boolean") update.is_public = body.isPublic;
 
-    if (Object.keys(update).length) {
-      const { error } = await db.from("dancer_profiles").update(update).eq("id", profile.id);
-      if (error) throw error;
-    }
-
     let changedSocialPlatforms: SocialPlatform[] = [];
     if (Array.isArray(body.socials)) {
       const submittedRows = body.socials
@@ -204,18 +199,26 @@ export async function PATCH(request: Request) {
           ...(await loadDeletedPhotoStoragePaths(adminDb, profile.id, user.id, deletedPhotoIds)),
         ]
       : readDeletedPhotoStoragePaths(body);
+    const confirmedDeletedPhotoIds: string[] = [];
     if (deletedPhotoIds.length) {
       for (const photoId of deletedPhotoIds) {
         try {
-          await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
+          const result = await deleteOwnDancerPhoto(client, user.id, photoId, adminDb);
+          confirmedDeletedPhotoIds.push(...(result.deletedIds || []).map((id: unknown) => String(id)));
         } catch (error) {
           if (!isAlreadyDeletedPhotoError(error)) throw error;
+          confirmedDeletedPhotoIds.push(photoId);
           console.log("PROFILE_PHOTO_DELETE_ALREADY_GONE", { photoId });
         }
       }
     }
     if (deletedPhotoStoragePaths.length) {
       await deleteDancerPhotosByStoragePaths(adminDb as any, user.id, profile.id, deletedPhotoStoragePaths);
+    }
+
+    if (Object.keys(update).length) {
+      const { error } = await db.from("dancer_profiles").update(update).eq("id", profile.id);
+      if (error) throw error;
     }
 
     await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds, deletedPhotoStoragePaths);
@@ -251,13 +254,30 @@ export async function PATCH(request: Request) {
     const refreshedPendingLimit = refreshedProfileWithPhotos
       ? Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (refreshedProfileWithPhotos.dancer_photos?.length || 0))
       : MAX_DANCER_PROFILE_PHOTOS;
+    const refreshedPendingPhotoReviews = await loadPendingPhotoReviews(user.id, refreshedPendingLimit);
+    const remainingPhotoIds = new Set([
+      ...((refreshedProfileWithPhotos?.dancer_photos || []).map((photo: any) => String(photo.id || ""))),
+      ...refreshedPendingPhotoReviews.map((photo: any) => String(photo.id || "")),
+    ].filter(Boolean));
+    const incorrectlyRestoredIds = deletedPhotoIds.filter((id) => remainingPhotoIds.has(id));
+    if (incorrectlyRestoredIds.length) {
+      throw new Error(`DELETED_PHOTO_RETURNED_AFTER_SAVE: ${incorrectlyRestoredIds.join(",")}`);
+    }
+
+    const confirmedIds = [...new Set(confirmedDeletedPhotoIds)];
+    console.log("EDIT_PROFILE_SAVE_DELETION_CONFIRMED", {
+      requestedIds: deletedPhotoIds,
+      deletedIds: confirmedIds,
+      remainingPhotoIds: Array.from(remainingPhotoIds),
+    });
 
     return NextResponse.json({
       ok: true,
+      deletedPhotoIds: confirmedIds,
       profile: refreshedProfileWithPhotos
         ? {
             ...refreshedProfileWithPhotos,
-            pending_photo_reviews: await loadPendingPhotoReviews(user.id, refreshedPendingLimit),
+            pending_photo_reviews: refreshedPendingPhotoReviews,
           }
         : null,
     });
