@@ -694,9 +694,14 @@ async function getOwnDancerProfile(client: DancrClient, userId: string) {
 }
 
 async function assertDancerPhotoLimit(client: DancrClient, dancerId: string) {
-  const { count, error } = await client.from("dancer_photos").select("id", { count: "exact", head: true }).eq("dancer_id", dancerId);
+  const { data, error } = await client
+    .from("dancer_photos")
+    .select("is_primary, sort_order, review_status")
+    .eq("dancer_id", dancerId)
+    .in("review_status", ["approved", "pending"]);
   if (error) throw error;
-  if ((count || 0) >= 5) throw new Error("You can upload up to 5 profile pictures. Delete or replace one before adding more.");
+  const activeSlots = new Set((data || []).map((photo: any) => photoSlotKey(photo)));
+  if (activeSlots.size >= 5) throw new Error("You can upload up to 5 profile pictures. Delete or replace one before adding more.");
 }
 
 async function uploadPrivateObject(client: DancrClient, bucket: string, path: string, image: ValidatedDancrImage) {
@@ -723,7 +728,7 @@ async function safeRemoveObject(client: DancrClient, bucket: string, path: strin
 }
 
 async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId: string; storagePath: string; isPrimary: boolean; sortOrder: number; altText: string | null }) {
-  const previousPrimary = input.isPrimary ? await findCurrentPrimaryPhoto(client, input.dancerId) : null;
+  const supersededPhotos = await findCurrentPhotoSlot(client, input.dancerId, input.isPrimary, input.sortOrder);
   const { data, error } = await client
     .from("dancer_photos")
     .insert({
@@ -737,6 +742,20 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
     .select("id, storage_path")
     .single();
   if (error) throw error;
+  const supersededIds = supersededPhotos
+    .map((photo) => photo.id)
+    .filter((id) => id && id !== data.id);
+  if (supersededIds.length) {
+    const { error: supersededDeleteError } = await client
+      .from("dancer_photos")
+      .delete()
+      .eq("dancer_id", input.dancerId)
+      .in("id", supersededIds);
+    if (supersededDeleteError) {
+      await safeDeleteDancerPhotoRow(client, data.id);
+      throw supersededDeleteError;
+    }
+  }
   if (input.isPrimary) {
     const { error: demoteError } = await client
       .from("dancer_photos")
@@ -748,43 +767,25 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       await client.storage.from(APPROVED_PHOTO_BUCKET).remove([input.storagePath]).catch(() => null);
       throw demoteError;
     }
-    if (previousPrimary?.id && previousPrimary.id !== data.id) {
-      await safeDeleteDancerPhotoRow(client, previousPrimary.id);
-      if (previousPrimary.storage_path) {
-        await client.storage.from(APPROVED_PHOTO_BUCKET).remove([previousPrimary.storage_path]).catch(() => null);
-      }
-    }
   }
-  await removeSupersededPendingPhotos(client, input.dancerId, input.isPrimary, input.sortOrder, data.id);
   await client.from("dancer_profiles").update({ photo_review_status: "approved" }).eq("id", input.dancerId);
   return { ...(data as { id: string; storage_path: string }), isPrimary: input.isPrimary };
 }
 
-async function removeSupersededPendingPhotos(client: DancrClient, dancerId: string, isPrimary: boolean, sortOrder: number, approvedPhotoId: string) {
-  let query = (client as any)
+async function findCurrentPhotoSlot(client: DancrClient, dancerId: string, isPrimary: boolean, sortOrder: number) {
+  let query = client
     .from("dancer_photos")
-    .delete()
+    .select("id, storage_path, is_primary, sort_order")
     .eq("dancer_id", dancerId)
-    .eq("review_status", "pending")
-    .neq("id", approvedPhotoId);
-
-  query = isPrimary
-    ? query.eq("is_primary", true)
-    : query.eq("is_primary", false).eq("sort_order", sortOrder);
-
-  const { error } = await query;
+    .eq("is_primary", isPrimary);
+  if (!isPrimary) query = query.eq("sort_order", sortOrder);
+  const { data, error } = await query;
   if (error) throw error;
+  return (data || []) as Array<{ id: string; storage_path: string; is_primary: boolean; sort_order: number }>;
 }
 
-async function findCurrentPrimaryPhoto(client: DancrClient, dancerId: string) {
-  const { data, error } = await client
-    .from("dancer_photos")
-    .select("id, storage_path")
-    .eq("dancer_id", dancerId)
-    .eq("is_primary", true)
-    .maybeSingle();
-  if (error) throw error;
-  return data as { id: string; storage_path: string } | null;
+function photoSlotKey(photo: any) {
+  return `${photo?.is_primary ? "main" : "gallery"}:${Number(photo?.sort_order || 0)}`;
 }
 
 async function safeDeleteDancerPhotoRow(client: DancrClient, photoId: string) {

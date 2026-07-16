@@ -70,21 +70,28 @@ async function loadPendingPhotoReviews(userId: string, limit = MAX_DANCER_PROFIL
 
 function withPhotoUrls(client: any, profile: any) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
-  const byPath = new Map<string, any>();
+  const bySlot = new Map<string, any>();
   photos
     .slice()
     .sort((left: any, right: any) => {
+      const createdOrder = String(right.created_at || "").localeCompare(String(left.created_at || ""));
+      if (createdOrder) return createdOrder;
       if (Boolean(left.is_primary) !== Boolean(right.is_primary)) return left.is_primary ? -1 : 1;
       return Number(left.sort_order || 0) - Number(right.sort_order || 0);
     })
+    .filter((photo: any) => ["approved", "pending"].includes(String(photo.review_status || "pending")))
     .forEach((photo: any) => {
-      const key = String(photo.storage_path || photo.id || "");
-      if (!key || byPath.has(key)) return;
-      byPath.set(key, photo);
+      const key = photoSlotKey(photo);
+      if (!photo.id || !photo.storage_path || bySlot.has(key)) return;
+      bySlot.set(key, photo);
     });
+  const activePhotos = Array.from(bySlot.values()).sort((left: any, right: any) => {
+    if (Boolean(left.is_primary) !== Boolean(right.is_primary)) return left.is_primary ? -1 : 1;
+    return Number(left.sort_order || 0) - Number(right.sort_order || 0);
+  });
   return {
     ...profile,
-    dancer_photos: Array.from(byPath.values()).slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo: any) => ({
+    dancer_photos: activePhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo: any) => ({
       ...photo,
       imageUrl: getPhotoUrl(client, photo.storage_path),
     })),

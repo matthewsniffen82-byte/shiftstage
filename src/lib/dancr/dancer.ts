@@ -128,18 +128,20 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
   const profile = await getOwnDancerProfile(client, userId);
   const { data: photo, error: photoError } = await client
     .from("dancer_photos")
-    .select("id, storage_path, is_primary")
+    .select("id, storage_path, is_primary, sort_order")
     .eq("id", photoId)
     .eq("dancer_id", profile.id)
     .maybeSingle();
 
   if (photoError) throw photoError;
   if (photo) {
-    const { data: matchingPhotos, error: matchingPhotosError } = await adminClient
+    let matchingPhotosQuery = adminClient
       .from("dancer_photos")
-      .select("id, storage_path, is_primary")
+      .select("id, storage_path, is_primary, sort_order")
       .eq("dancer_id", profile.id)
-      .eq("storage_path", photo.storage_path);
+      .eq("is_primary", photo.is_primary);
+    if (!photo.is_primary) matchingPhotosQuery = matchingPhotosQuery.eq("sort_order", photo.sort_order);
+    const { data: matchingPhotos, error: matchingPhotosError } = await matchingPhotosQuery;
     if (matchingPhotosError) throw matchingPhotosError;
 
     const photoRows = matchingPhotos?.length ? matchingPhotos : [photo];
@@ -166,6 +168,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       requestedPhotoId: photo.id,
       requestedIds: [photo.id],
       deletedIds,
+      clearedSlotIds: photoIds,
       error: null,
     });
     if (!deletedIds.includes(photo.id)) {

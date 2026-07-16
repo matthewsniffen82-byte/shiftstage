@@ -26440,6 +26440,24 @@
       box-shadow: 0 0 0 1px rgba(53,216,255,.32), 0 0 24px rgba(53,216,255,.28) !important;
     }
 
+    #approvedEditProfileDropdown.show .approved-photo-empty-slot {
+      display: grid !important;
+      place-items: center !important;
+      gap: 2px !important;
+      border: 1px dashed rgba(53,216,255,.58) !important;
+      color: rgba(247,253,255,.84) !important;
+      background: rgba(5,8,12,.72) !important;
+    }
+
+    #approvedEditProfileDropdown.show .approved-photo-empty-slot > span {
+      font-size: 1.5rem !important;
+      line-height: 1 !important;
+    }
+
+    #approvedEditProfileDropdown.show .modal-image.approved-photo-empty-preview {
+      background: linear-gradient(145deg, rgba(12,22,28,.96), rgba(5,8,12,.98)) !important;
+    }
+
     #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-body {
       overflow: visible !important;
       padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
@@ -27814,7 +27832,7 @@
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="share-profile">Share profile</button>
                     <button type="button" data-dancer-control-action="show-qr">Show QR code</button>
-                    <button type="button" data-dancer-control-action="save-profile">Save profile</button>
+                    <button type="button" data-dancer-control-action="save-profile">Save Profile</button>
                   </div>
                   <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
                 </section>
@@ -27931,7 +27949,7 @@
                     <button type="button" data-social-clear="profileX">Clear</button>
                   </div>
                 </div>
-                <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save profile</button>
+                <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save Profile</button>
               </form>
               <div class="rule-note" id="profileEditResult" hidden>Changes submitted for admin approval.</div>
             </section>
@@ -34018,62 +34036,83 @@
       `;
     }
 
+    function canonicalDancerPhotoRows(profile) {
+      const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+      const orderedNewestFirst = rows
+        .map((photo, sourceIndex) => ({ photo, sourceIndex }))
+        .filter(({ photo }) => {
+          const status = normalizedReviewStatus(photo?.review_status || photo?.reviewStatus || "pending");
+          const storagePath = photo?.storage_path || photo?.storagePath || "";
+          return Boolean(photo?.id && storagePath && ["approved", "pending"].includes(status));
+        })
+        .sort((left, right) => {
+          const createdOrder = String(right.photo.created_at || right.photo.createdAt || "")
+            .localeCompare(String(left.photo.created_at || left.photo.createdAt || ""));
+          return createdOrder || right.sourceIndex - left.sourceIndex;
+        });
+      const bySlot = new Map();
+      orderedNewestFirst.forEach(({ photo }) => {
+        const slotKey = photo.is_primary || photo.isPrimary
+          ? "main"
+          : `gallery:${Number(photo.sort_order ?? photo.sortOrder ?? 0)}`;
+        if (!bySlot.has(slotKey)) bySlot.set(slotKey, photo);
+      });
+      return Array.from(bySlot.values()).sort((left, right) => {
+        const leftPrimary = Boolean(left.is_primary || left.isPrimary);
+        const rightPrimary = Boolean(right.is_primary || right.isPrimary);
+        if (leftPrimary !== rightPrimary) return leftPrimary ? -1 : 1;
+        return Number(left.sort_order ?? left.sortOrder ?? 0) - Number(right.sort_order ?? right.sortOrder ?? 0);
+      });
+    }
+
+    function activeDancerPhotoRows(profile) {
+      const canonicalRows = canonicalDancerPhotoRows(profile);
+      return canonicalRows.filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo));
+    }
+
+    function dancerPhotoDebugShape(photo = {}) {
+      return {
+        id: photo.id || "",
+        storagePath: photo.storage_path || photo.storagePath || "",
+        deletedAt: photo.deleted_at || photo.deletedAt || null,
+        isActive: photo.is_active !== false && photo.isActive !== false,
+        moderationStatus: photo.review_status || photo.reviewStatus || "pending"
+      };
+    }
+
+    function logPhotoReplacementDebug(profile, deletedPhotoIds = []) {
+      console.log("PHOTO_REPLACEMENT_DEBUG", {
+        deletedPhotoIds,
+        currentVisiblePhotos: activeDancerPhotoRows(profile).map(dancerPhotoDebugShape),
+        fetchedPhotoRows: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map(dancerPhotoDebugShape)
+      });
+    }
+
     function approvedVisualPhotoItems(profile, options = {}) {
       const includeUnapproved = options.includeUnapproved !== false;
-      const savedApprovedUrls = new Set([profile?.mainPhotoUrl, ...(profile?.galleryPhotoUrls || [])].filter(Boolean));
-      const storedPhotoRows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
-      const storedPhotoUrl = (photo) => photo?.imageUrl || photo?.image_url || photo?.url || photo?.storage_path || "";
-      const storedPhotoMatch = (imageUrl, index, isMain) => storedPhotoRows.find((photo) => {
-        const url = storedPhotoUrl(photo);
-        if (url && url === imageUrl) return true;
-        if (photo?.storage_path && photo.storage_path === imageUrl) return true;
-        if (isMain && (photo?.is_primary || photo?.isPrimary)) return true;
-        if (!isMain && !(photo?.is_primary || photo?.isPrimary) && Number(photo?.sort_order ?? photo?.sortOrder ?? -1) === index) return true;
-        return false;
-      });
-      const submitted = (profile?.submittedPhotos || []).map((photo, index) => {
-        const id = photo.id || `${profile?.id || profile?.name || "profile"}-photo-${index}`;
-        const review = latestContentReview(`photo:${id}`);
-        const imageUrl = photo.imageUrl || photo.image_url || photo.url || "";
-        const storedApproved = savedApprovedUrls.has(imageUrl);
-        return {
-          id,
-          imageUrl,
-          label: "Photo",
-          status: storedApproved ? "approved" : normalizedReviewStatus(review?.status || photo.reviewStatus || photo.review_status || "pending"),
-          notes: review?.notes || photo.reviewNotes || photo.review_notes || "",
-          target: storedApproved && imageUrl === profile?.mainPhotoUrl ? "main" : storedApproved ? `gallery:${Math.max(0, (profile?.galleryPhotoUrls || []).indexOf(imageUrl))}` : `submitted:${index}`,
-          storagePath: photo.storagePath || photo.storage_path || ""
-        };
-      }).filter((photo) => includeUnapproved || photo.status === "approved");
-      const submittedByUrl = new Map(submitted.filter((photo) => photo.imageUrl).map((photo) => [photo.imageUrl, photo]));
-      const previewUrls = uploadedProfilePhotoUrls(profile, includeUnapproved);
-      const existing = previewUrls.map((imageUrl, index) => {
-        const submittedMatch = submittedByUrl.get(imageUrl);
-        if (submittedMatch && !savedApprovedUrls.has(imageUrl)) return submittedMatch;
-        const isMain = imageUrl === profile?.mainPhotoUrl || index === 0;
-        const row = storedPhotoMatch(imageUrl, Math.max(0, index - 1), isMain);
-        return {
-          id: row?.id || (isMain ? "main" : `gallery-${index - 1}`),
-          imageUrl,
-          label: "Photo",
-          status: "approved",
-          notes: "",
-          target: isMain ? "main" : `gallery:${Math.max(0, index - 1)}`,
-          storagePath: row?.storage_path || row?.storagePath || "",
-          sortOrder: row?.sort_order ?? row?.sortOrder ?? index,
-          sort_order: row?.sort_order ?? row?.sortOrder ?? index,
-          isPrimary: Boolean(row?.is_primary || row?.isPrimary || isMain),
-          is_primary: Boolean(row?.is_primary || row?.isPrimary || isMain)
-        };
-      });
-      const byUrl = new Map();
-      const sourcePhotos = includeUnapproved ? [...existing, ...submitted] : existing;
-      sourcePhotos.forEach((photo) => {
-        const key = photo.imageUrl || photo.id;
-        if (!byUrl.has(key)) byUrl.set(key, photo);
-      });
-      return relabelVisualPhotoItems(Array.from(byUrl.values()));
+      let galleryIndex = 0;
+      return relabelVisualPhotoItems(activeDancerPhotoRows(profile)
+        .filter((photo) => includeUnapproved || normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved")
+        .map((photo) => {
+          const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
+          const target = isPrimary ? "main" : `gallery:${galleryIndex++}`;
+          const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
+          const review = latestContentReview(`photo:${photo.id}`);
+          return {
+            ...photo,
+            id: String(photo.id),
+            imageUrl,
+            label: "Photo",
+            status: normalizedReviewStatus(review?.status || photo.review_status || photo.reviewStatus || "pending"),
+            notes: review?.notes || photo.review_notes || photo.reviewNotes || "",
+            target,
+            storagePath: photo.storage_path || photo.storagePath || "",
+            sortOrder: Number(photo.sort_order ?? photo.sortOrder ?? 0),
+            sort_order: Number(photo.sort_order ?? photo.sortOrder ?? 0),
+            isPrimary,
+            is_primary: isPrimary
+          };
+        }));
     }
 
     function photoDisplayLabel(index) {
@@ -34090,32 +34129,11 @@
     }
 
     function dancerProfilePhotoSlots(profile) {
-      const slots = [];
-      const keys = new Set();
-      const deletedPhotoKeys = deletedDancerPhotoKeySet(profile);
-      const addSlot = (photo, fallbackKey = "") => {
-        if (!photo) return;
-        const imageUrl = typeof photo === "string"
-          ? photo
-          : (photo.imageUrl || photo.image_url || photo.url || photo.storagePath || photo.storage_path || "");
-        const key = normalizeDancerPhotoKey(imageUrl || photo.id || fallbackKey);
-        if (!key || deletedPhotoKeys.has(key) || keys.has(key)) return;
-        keys.add(key);
-        slots.push({ key, imageUrl, photo });
-      };
-
-      addSlot(profile?.mainPhotoUrl || "", "main");
-      (Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls : []).forEach((url, index) => {
-        addSlot(url, `gallery:${index}`);
-      });
-      (Array.isArray(profile?.submittedPhotos) ? profile.submittedPhotos : [])
-        .filter(Boolean)
-        .filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo))
-        .filter((photo) => normalizedReviewStatus(photo.reviewStatus || photo.review_status) !== "rejected")
-        .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
-        .forEach((photo, index) => addSlot(photo, `submitted:${index}`));
-
-      return slots.slice(0, MAX_DANCER_PROFILE_PHOTOS);
+      return activeDancerPhotoRows(profile).slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo) => ({
+        key: normalizeDancerPhotoKey(photo.id || photo.storage_path || photo.storagePath),
+        imageUrl: photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "",
+        photo
+      }));
     }
 
     function dancerProfilePhotoCount(profile) {
@@ -34143,25 +34161,16 @@
 
     function normalizeLocalDancerPhotos(profile) {
       if (!profile) return;
-      const deletedPhotoKeys = deletedDancerPhotoKeySet(profile);
-      const submittedPhotos = (profile.submittedPhotos || [])
-        .filter(Boolean)
-        .filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo))
-        .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
-        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
-      const approvedSubmittedUrls = submittedPhotos
-        .filter((photo) => normalizedReviewStatus(photo.reviewStatus || photo.review_status) === "approved")
-        .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
-        .filter(Boolean);
-      const galleryUrls = Array.isArray(profile.galleryPhotoUrls)
-        ? profile.galleryPhotoUrls.filter(Boolean).filter((url) => !deletedPhotoKeys.has(normalizeDancerPhotoKey(url)))
-        : [];
-      const mainPhotoUrl = deletedPhotoKeys.has(normalizeDancerPhotoKey(profile.mainPhotoUrl)) ? "" : profile.mainPhotoUrl;
-      const urls = [...new Set([mainPhotoUrl, ...galleryUrls, ...approvedSubmittedUrls].filter(Boolean))]
-        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
-      profile.submittedPhotos = submittedPhotos;
-      profile.mainPhotoUrl = urls[0] || "";
-      profile.galleryPhotoUrls = urls.slice(1);
+      const activeRows = activeDancerPhotoRows(profile);
+      const approvedRows = activeRows.filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved");
+      const primary = approvedRows.find((photo) => photo.is_primary || photo.isPrimary) || approvedRows[0] || null;
+      const approvedGallery = approvedRows.filter((photo) => photo !== primary);
+      const photoUrl = (photo) => photo?.imageUrl || photo?.image_url || photo?.url || photo?.storage_path || "";
+      profile.mainPhotoUrl = photoUrl(primary);
+      profile.galleryPhotoUrls = approvedGallery.map(photoUrl).filter(Boolean);
+      profile.submittedPhotos = activeRows
+        .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "pending")
+        .map((photo) => ({ ...photo, imageUrl: photoUrl(photo), storagePath: photo.storage_path || photo.storagePath || "" }));
     }
 
     function normalizeDancerPhotoKey(value = "") {
@@ -34285,9 +34294,14 @@
     function approvedVisualProfileEditorMarkup(profile) {
       const photos = approvedVisualPhotoItems(profile);
       const selectedPhoto = photos.find((photo) => photo.target === activeApprovedVisualPhotoTarget || photo.id === activeApprovedVisualPhotoTarget) || photos[0];
-      const mainPhoto = selectedPhoto || { imageUrl: customPhotoUrl(profile, 0), label: "Main Photo", status: "approved", notes: "", target: "main" };
+      const mainPhoto = selectedPhoto || { imageUrl: "", label: "Main Photo", status: "", notes: "", target: "main" };
       const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
       const primaryPhoto = photos.find((photo) => photo.target === "main" || photo.isPrimary || photo.is_primary) || photos[0] || null;
+      const emptyPhotoSlots = Array.from({ length: Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length) }, (_, index) => {
+        const slotNumber = photos.length + index + 1;
+        const target = slotNumber === 1 ? "main" : "gallery";
+        return `<button class="thumb approved-photo-empty-slot" type="button" data-approved-visual-photo-add="${target}" aria-label="Upload Photo ${slotNumber}" title="Upload Photo ${slotNumber}"><span aria-hidden="true">+</span><small>Photo ${slotNumber}</small></button>`;
+      }).join("");
       console.log("PHOTO_NUMBERING_DEBUG", {
         photos: photos.map((photo, index) => ({
           index,
@@ -34300,7 +34314,7 @@
         orderedPhotoIds: photos.map((photo) => photo.id),
         renderedLabels: photos.map((photo) => photo.label)
       });
-      const mainPhotoClass = portraitClass(selectedPhotoIndex);
+      const mainPhotoClass = mainPhoto.imageUrl ? portraitClass(selectedPhotoIndex) : "approved-photo-empty-preview";
       const mainPhotoAttrs = customPhotoAttrs(mainPhoto.imageUrl);
       const photoStatusClass = [
         mainPhoto.status === "rejected" ? "is-rejected" : "",
@@ -34394,6 +34408,7 @@
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
                   </button>
                 `).join("")}
+                ${emptyPhotoSlots}
             </div>
             <div class="modal-body">
               <div class="approved-visual-photo-actions">
@@ -34404,7 +34419,7 @@
               ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity(), socialMarkup: approvedEditableSocialMarkup })}
               <div class="modal-actions">
                 <button class="approved-visual-save action-btn secondary" type="button" data-dancer-control-action="save-profile">
-                  ${actionButtonLabel("save", "Save profile")}
+                  ${actionButtonLabel("save", "Save Profile")}
                 </button>
               </div>
             </div>
@@ -34445,11 +34460,11 @@
         button.classList.toggle("is-saved", options.saved === true);
         button.classList.toggle("is-saving", options.saving === true);
         button.setAttribute("aria-busy", options.saving ? "true" : "false");
-        if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = button.textContent || "Save profile";
-        if (!button.dataset.saveProfileIdleHtml) button.dataset.saveProfileIdleHtml = button.innerHTML || button.textContent || "Save profile";
-        if (options.saving) button.innerHTML = actionButtonLabel("save", "Saving profile...");
-        else if (options.saved) button.innerHTML = actionButtonLabel("check", "Profile saved");
-        else button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save profile";
+        if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = button.textContent || "Save Profile";
+        if (!button.dataset.saveProfileIdleHtml) button.dataset.saveProfileIdleHtml = button.innerHTML || button.textContent || "Save Profile";
+        if (options.saving) button.innerHTML = actionButtonLabel("save", "Saving...");
+        else if (options.saved) button.innerHTML = actionButtonLabel("check", "Saved Profile");
+        else button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save Profile";
       });
       if (options.toast !== false) showToast(message);
       if (options.saved) {
@@ -34457,7 +34472,7 @@
         setApprovedProfileSaveFeedback.savedTimer = window.setTimeout(() => {
           document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saved').forEach((button) => {
             button.classList.remove("is-saved");
-            button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save profile";
+            button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save Profile";
           });
         }, 2200);
       }
@@ -34739,7 +34754,7 @@
       );
       const waitingOnAdmin = Boolean(profile.approvalChangesPending && profile.approvalChangesSubmitted);
       const needsApproval = detailsChanged || (!waitingOnAdmin && pendingPhoto) || socialStates.some((item) => item.addedOrChanged || item.deleted) || Boolean(profile.approvalChangesPending && !profile.approvalChangesSubmitted);
-      const hasDeletes = socialStates.some((item) => item.deleted);
+      const hasDeletes = socialStates.some((item) => item.deleted) || deletedDancerPhotoKeySet(profile).size > 0;
       const hasAnyChange = needsApproval || hasDeletes;
       return { hasAnyChange, needsApproval, hasDeletesOnly: hasDeletes && !needsApproval, submitted: waitingOnAdmin && !needsApproval };
     }
@@ -36584,6 +36599,27 @@
               return !sameMain && !sameGallery;
             });
           profile.submittedPhotos = withoutReplacedSubmitted;
+          const existingRows = Array.isArray(profile.dancer_photos) ? profile.dancer_photos : [];
+          profile.dancer_photos = [
+            ...existingRows.filter((item) => {
+              const sameMain = isPrimary && Boolean(item.is_primary || item.isPrimary);
+              const sameGallery = !isPrimary && !(item.is_primary || item.isPrimary) && Number(item.sort_order ?? item.sortOrder ?? 0) === sortOrder;
+              return !sameMain && !sameGallery;
+            }),
+            {
+              ...uploaded,
+              id: photo.id,
+              storage_path: uploaded.storage_path || uploaded.storagePath || "",
+              imageUrl,
+              is_primary: isPrimary,
+              isPrimary,
+              sort_order: sortOrder,
+              sortOrder,
+              review_status: "approved",
+              reviewStatus: "approved",
+              created_at: new Date().toISOString()
+            }
+          ];
           const galleryUrls = Array.isArray(profile.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
           if (isPrimary) {
             profile.mainPhotoUrl = imageUrl;
@@ -36692,34 +36728,11 @@
         profile.reviewSubmitted = false;
       }
       profile.photoStatus = approvedVisualPhotoItems(profile).some((photo) => photo.status === "pending") ? "Pending" : "Approved";
+      logPhotoReplacementDebug(profile, [deletedLivePhotoId || requestedPhotoId].filter(Boolean));
       render();
       renderDancerManagement();
       renderApprovedVisualProfileEditor();
       syncApprovedProfileSubmitState();
-      if (deletedLivePhotoId && isDancerSession()) {
-        const headers = authenticatedRequestHeaders("application/json");
-        if (headers) {
-          const response = await fetch("/api/dancer/photos", {
-            method: "DELETE",
-            headers,
-            body: JSON.stringify({ photoId: deletedLivePhotoId })
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || data.ok === false) throw new Error(data.error || "Could not delete photo");
-          console.log("DATABASE_DELETE_RESULT", {
-            requestedIds: [deletedLivePhotoId],
-            deletedIds: data.photo?.deletedIds || data.photo?.deleted_ids || [],
-            error: null
-          });
-          const refreshedProfileData = await getAuthenticatedJson("/api/dancer/profile");
-          const deletedPayload = photoDeletedPayloadFromProfile(profile);
-          const undeletedServerPhotos = deletedPhotosStillInServerProfile(refreshedProfileData?.profile, deletedPayload);
-          if (undeletedServerPhotos.length) {
-            throw new Error("The photo was not removed from your live profile. Please try deleting it again.");
-          }
-          if (refreshedProfileData?.profile) applyDancerVerificationProfile(refreshedProfileData.profile);
-        }
-      }
       render();
       renderDancerManagement();
       renderApprovedVisualProfileEditor();
@@ -36806,17 +36819,11 @@
 
       const localProfile = ensureActiveDancerProfile(approved ? "Verified" : rejected ? "Rejected" : "Pending");
       if (localProfile) {
-        const deletedPhotoKeys = deletedDancerPhotoKeySet(localProfile);
-        const safeLocalMainPhotoUrl = deletedPhotoKeys.has(normalizeDancerPhotoKey(localProfile.mainPhotoUrl)) ? "" : localProfile.mainPhotoUrl;
-        const safeLocalGalleryPhotoUrls = (localProfile.galleryPhotoUrls || [])
-          .filter((url) => !deletedPhotoKeys.has(normalizeDancerPhotoKey(url)));
-        const safeLocalSubmittedPhotos = (localProfile.submittedPhotos || [])
-          .filter((photo) => !photoMatchesDeletedDancerPhoto(localProfile, photo));
         Object.assign(localProfile, {
           name: stageName || localProfile.name,
           city: city || localProfile.city || citySelect.value || "Las Vegas",
-          mainPhotoUrl: photos[0] || safeLocalMainPhotoUrl || "",
-          galleryPhotoUrls: photos.length ? photos.slice(1) : safeLocalGalleryPhotoUrls,
+          mainPhotoUrl: photos[0] || "",
+          galleryPhotoUrls: photos.slice(1),
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
           photoStatus: reviewStatusLabel(profile.photo_review_status || profile.photoReviewStatus, "Approved", dancerSetup.photos ? "Pending" : localProfile.photoStatus),
           idStatus: approved ? "Passed" : (dancerSetup.verification ? "Needs review" : localProfile.idStatus),
@@ -36826,7 +36833,7 @@
           hidden: approved ? (profile.is_public === false || profile.isPublic === false) : localProfile.hidden,
           isPublic: profile.is_public !== false && profile.isPublic !== false,
           socials: { ...emptySocialMap(), ...dancerSignupSocials },
-          submittedPhotos: submittedPhotos.length ? submittedPhotos : safeLocalSubmittedPhotos,
+          submittedPhotos,
           dancer_photos: dancerPhotos,
           socialLinks: Array.isArray(profile.social_links) ? socialLinks : (localProfile.socialLinks || [])
         });
