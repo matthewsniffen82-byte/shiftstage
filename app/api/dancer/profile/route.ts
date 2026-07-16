@@ -9,6 +9,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
+const PROFILE_SAVE_VERSION = "gallery-delete-after-history-cleanup-v1";
+
+function withProfileSaveVersion(response: NextResponse) {
+  response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
+  return response;
+}
 const MAX_DANCER_PROFILE_PHOTOS = 5;
 const APPROVED_PHOTO_BUCKET = "dancer-photos";
 
@@ -27,7 +33,7 @@ export async function GET(request: Request) {
 
     if (error) throw error;
     if (!data) {
-      return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
+      return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
 
     if (await removeSupersededPendingPhotoRows(createAdminSupabaseClient() as any, data.id)) {
@@ -40,15 +46,15 @@ export async function GET(request: Request) {
     const pendingPhotoLimit = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (profileWithPhotos.dancer_photos?.length || 0));
     const pendingPhotoReviews = await loadPendingPhotoReviews(user.id, pendingPhotoLimit);
 
-    return NextResponse.json({
+    return withProfileSaveVersion(NextResponse.json({
       ok: true,
       profile: {
         ...profileWithPhotos,
         pending_photo_reviews: pendingPhotoReviews,
       },
-    });
+    }));
   } catch (error) {
-    return apiError(error, "Unable to load dancer profile.");
+    return withProfileSaveVersion(apiError(error, "Unable to load dancer profile."));
   }
 }
 
@@ -118,7 +124,7 @@ export async function PATCH(request: Request) {
 
     if (profileError) throw profileError;
     if (!profile) {
-      return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
+      return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
 
     const update: Record<string, string | boolean> = {};
@@ -278,7 +284,7 @@ export async function PATCH(request: Request) {
       remainingPhotoIds: Array.from(remainingPhotoIds),
     });
 
-    return NextResponse.json({
+    return withProfileSaveVersion(NextResponse.json({
       ok: true,
       deletedPhotoIds: confirmedIds,
       profile: refreshedProfileWithPhotos
@@ -287,9 +293,9 @@ export async function PATCH(request: Request) {
             pending_photo_reviews: refreshedPendingPhotoReviews,
           }
         : null,
-    });
+    }));
   } catch (error) {
-    return apiError(error, "Unable to update dancer profile.");
+    return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
   }
 }
 
