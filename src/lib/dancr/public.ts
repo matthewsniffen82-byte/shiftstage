@@ -10,13 +10,14 @@ export function isApprovedPublicDancerRow(dancer: any) {
   const photoReviewStatus = String(dancer?.photo_review_status || dancer?.photoReviewStatus || "").toLowerCase();
   const explicitlyBlocked = status === "rejected" || status === "disabled";
   const approvedStatus = status === "approved" || status === "verified";
+  const previouslyApproved = approvedStatus || Boolean(dancer?.approved_at || dancer?.approvedAt);
   const fullyReviewed = verificationStatus === "approved" && photoReviewStatus === "approved";
 
   return Boolean(
     dancer &&
     !explicitlyBlocked &&
     dancer.is_public !== false &&
-    (approvedStatus || fullyReviewed),
+    (previouslyApproved || fullyReviewed),
   );
 }
 
@@ -31,6 +32,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         stage_name,
         city,
         status,
+        approved_at,
         verification_status,
         photo_review_status,
         is_public,
@@ -71,6 +73,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         stage_name,
         city,
         status,
+        approved_at,
         verification_status,
         photo_review_status,
         is_public,
@@ -107,6 +110,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         city,
         bio,
         status,
+        approved_at,
         verification_status,
         photo_review_status,
         is_public,

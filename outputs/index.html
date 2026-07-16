@@ -34165,7 +34165,18 @@
     }
 
     function normalizeDancerPhotoKey(value = "") {
-      return String(value || "").trim();
+      const text = String(value || "").trim();
+      if (!text) return "";
+      try {
+        const parsed = new URL(text, window.location.origin);
+        const marker = "/storage/v1/object/public/dancer-photos/";
+        const markerIndex = parsed.pathname.indexOf(marker);
+        return markerIndex >= 0
+          ? decodeURIComponent(parsed.pathname.slice(markerIndex + marker.length)).replace(/^\/+/, "")
+          : text;
+      } catch (error) {
+        return text.replace(/^\/+/, "");
+      }
     }
 
     function deletedDancerPhotoKeySet(profile) {
@@ -34184,6 +34195,22 @@
           ...(profile?.deletedPhotoUrls || [])
         ].map(normalizeDancerPhotoKey).filter(Boolean))]
       };
+    }
+
+    function deletedPhotosStillInServerProfile(serverProfile, deletedPayload) {
+      const deletedKeys = new Set([
+        ...(deletedPayload?.deletedPhotoIds || []),
+        ...(deletedPayload?.deletedPhotoStoragePaths || [])
+      ].map(normalizeDancerPhotoKey).filter(Boolean));
+      if (!deletedKeys.size) return [];
+      return (serverProfile?.dancer_photos || []).filter((photo) => [
+        photo?.id,
+        photo?.storage_path,
+        photo?.storagePath,
+        photo?.imageUrl,
+        photo?.image_url,
+        photo?.url
+      ].map(normalizeDancerPhotoKey).filter(Boolean).some((key) => deletedKeys.has(key)));
     }
 
     function rememberDeletedDancerPhoto(profile, { photoId = "", photoUrl = "", storagePath = "" } = {}) {
@@ -34880,6 +34907,14 @@
           });
           if (!data) throw new Error("Sign in required");
           savedServerProfile = data.profile || null;
+          const undeletedServerPhotos = deletedPhotosStillInServerProfile(savedServerProfile, deletedPhotoPayload);
+          if (undeletedServerPhotos.length) {
+            console.error("PROFILE_DELETE_PERSISTENCE_FAILED", {
+              requestedPhotoIds: deletedPhotoPayload.deletedPhotoIds,
+              remainingPhotoIds: undeletedServerPhotos.map((photo) => photo.id)
+            });
+            throw new Error("The photo was not removed from your live profile. Please try deleting it again.");
+          }
         }
         let profile = oldProfile;
         if (targetMarket !== oldMarket) {
@@ -36656,7 +36691,7 @@
         profile.status = "Verified";
         profile.reviewSubmitted = false;
       }
-      profile.photoStatus = "Pending";
+      profile.photoStatus = approvedVisualPhotoItems(profile).some((photo) => photo.status === "pending") ? "Pending" : "Approved";
       render();
       renderDancerManagement();
       renderApprovedVisualProfileEditor();
@@ -36676,8 +36711,18 @@
             deletedIds: data.photo?.deletedIds || data.photo?.deleted_ids || [],
             error: null
           });
+          const refreshedProfileData = await getAuthenticatedJson("/api/dancer/profile");
+          const deletedPayload = photoDeletedPayloadFromProfile(profile);
+          const undeletedServerPhotos = deletedPhotosStillInServerProfile(refreshedProfileData?.profile, deletedPayload);
+          if (undeletedServerPhotos.length) {
+            throw new Error("The photo was not removed from your live profile. Please try deleting it again.");
+          }
+          if (refreshedProfileData?.profile) applyDancerVerificationProfile(refreshedProfileData.profile);
         }
       }
+      render();
+      renderDancerManagement();
+      renderApprovedVisualProfileEditor();
       return locallyRemoved || removed;
     }
 
@@ -36722,6 +36767,13 @@
       const city = useDraftFields ? (draft.city || profile.city || profile.cityName || "") : (profile.city || profile.cityName || draft?.city || "");
       const photos = dancerProfilePhotoUrls(profile);
       const submittedPhotos = dancerSubmittedPhotosFromProfile(profile);
+      const dancerPhotos = Array.isArray(profile?.dancer_photos)
+        ? profile.dancer_photos.map((photo) => ({
+          ...photo,
+          imageUrl: photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "",
+          storagePath: photo.storagePath || photo.storage_path || ""
+        }))
+        : [];
       const socialLinks = Array.isArray(profile.social_links)
         ? profile.social_links.map((social) => ({
           id: social.id,
@@ -36775,6 +36827,7 @@
           isPublic: profile.is_public !== false && profile.isPublic !== false,
           socials: { ...emptySocialMap(), ...dancerSignupSocials },
           submittedPhotos: submittedPhotos.length ? submittedPhotos : safeLocalSubmittedPhotos,
+          dancer_photos: dancerPhotos,
           socialLinks: Array.isArray(profile.social_links) ? socialLinks : (localProfile.socialLinks || [])
         });
         normalizeLocalDancerPhotos(localProfile);
