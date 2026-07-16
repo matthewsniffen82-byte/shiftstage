@@ -44,8 +44,39 @@ function publicProfileState(profile: any) {
   };
 }
 
+function isMissingIsPublicColumnError(error: any) {
+  const code = String(error?.code || "");
+  const message = String(error?.message || "").toLowerCase();
+  return (code === "42703" || code === "PGRST204") && message.includes("is_public");
+}
+
+async function loadProfileForSave(db: any, userId: string) {
+  const columns = "id, real_name, stage_name, city, status, approved_at, verification_status, photo_review_status";
+  const current = await db
+    .from("dancer_profiles")
+    .select(`${columns}, is_public`)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!current.error || !isMissingIsPublicColumnError(current.error)) {
+    return { profile: current.data, error: current.error, supportsIsPublic: true };
+  }
+
+  console.warn("DANCER_PROFILE_VISIBILITY_COLUMN_MISSING", {
+    code: current.error.code,
+    message: current.error.message,
+  });
+  const legacy = await db
+    .from("dancer_profiles")
+    .select(columns)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return { profile: legacy.data, error: legacy.error, supportsIsPublic: false };
+}
+
 function safeProfileSaveError(stage: ProfileSaveStage, error: any) {
   const message = typeof error?.message === "string" ? error.message : "";
+  if (message === "PROFILE_VISIBILITY_SCHEMA_UNAVAILABLE") return "Profile visibility is temporarily unavailable while the live database is upgraded.";
   if (message.startsWith("DELETED_PHOTO_RETURNED_AFTER_SAVE")) return "The deleted photo returned during save verification.";
   if (message.startsWith("PROFILE_PHOTO_DELETE_COUNT_MISMATCH")) return "The selected photo could not be permanently deleted.";
   if (message.startsWith("PUBLIC_PROFILE_STATE_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
@@ -168,11 +199,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const db = client as any;
 
-    const { data: profile, error: profileError } = await db
-      .from("dancer_profiles")
-      .select("id, real_name, stage_name, city, status, is_public, approved_at, verification_status, photo_review_status")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(db, user.id);
 
     if (profileError) throw profileError;
     if (!profile) {
@@ -186,7 +213,15 @@ export async function PATCH(request: Request) {
     if (typeof body.legalName === "string") update.real_name = body.legalName.trim();
     if (typeof body.city === "string") update.city = body.city.trim();
     if (typeof body.bio === "string") update.bio = body.bio.trim();
-    if (typeof body.isPublic === "boolean") update.is_public = body.isPublic;
+    if (typeof body.isPublic === "boolean") {
+      if (!supportsIsPublic) {
+        setSaveStage("update_profile_fields");
+        const visibilityError = new Error("PROFILE_VISIBILITY_SCHEMA_UNAVAILABLE") as Error & { code?: string };
+        visibilityError.code = "PGRST204";
+        throw visibilityError;
+      }
+      update.is_public = body.isPublic;
+    }
 
     let changedSocialPlatforms: SocialPlatform[] = [];
     setSaveStage("update_social_links");

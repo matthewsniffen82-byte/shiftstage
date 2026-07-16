@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardSource, profileRouteSource, authRouteSource, rootRouteSource] = await Promise.all([
+const [dashboardSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, visibilityMigrationSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202607150001_dancer_profile_visibility.sql", import.meta.url), "utf8"),
 ]);
 
 test("Hard Reset is a read-only database reload", () => {
@@ -46,6 +48,8 @@ test("save verifies affected rows, deletion, stages, and public state", () => {
   assert.match(profileRouteSource, /PROFILE_UPDATE_NOT_APPLIED/);
   assert.match(profileRouteSource, /DANCER_PROFILE_SAVE_ERROR/);
   assert.match(profileRouteSource, /PUBLIC_PROFILE_STATE_CHANGED/);
+  assert.match(profileRouteSource, /DANCER_PROFILE_VISIBILITY_COLUMN_MISSING/);
+  assert.match(profileRouteSource, /loadProfileForSave/);
   assert.match(dashboardSource, /Saving\.\.\.[\s\S]*Saved Profile[\s\S]*Save Profile/);
 });
 
@@ -53,10 +57,14 @@ test("existing dancer signup cannot reset approval or visibility", () => {
   const existingProfileBranch = authRouteSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
   assert.match(existingProfileBranch, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP/);
   assert.doesNotMatch(existingProfileBranch, /\.update\(|status:\s*"draft"|is_public\s*:/);
+  assert.match(authRouteSource, /\.select\("\*"\)/);
 });
 
-test("the served live entry point exposes the active profile editor marker", () => {
+test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
   assert.match(rootRouteSource, /hard-reset-save-fix-v1/);
   assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "hard-reset-save-fix-v1"/);
+  assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
+  assert.match(publicSource, /isMissingIsPublicColumnError/);
+  assert.match(visibilityMigrationSource, /add column if not exists is_public/);
 });

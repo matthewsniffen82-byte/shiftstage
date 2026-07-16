@@ -182,7 +182,7 @@ async function upsertAccount(
   const realName = readOptional(body.realName) || "Verification pending";
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
-    .select("id, status, is_public, approved_at, verification_status, photo_review_status")
+    .select("*")
     .eq("user_id", userId)
     .maybeSingle();
   if (existingProfileError) throw existingProfileError;

@@ -4,6 +4,12 @@ import { getTonightWindow } from "./schedule";
 
 type DancrClient = SupabaseClient;
 
+function isMissingIsPublicColumnError(error: any) {
+  const code = String(error?.code || "");
+  const message = String(error?.message || "").toLowerCase();
+  return (code === "42703" || code === "PGRST204") && message.includes("is_public");
+}
+
 export function isApprovedPublicDancerRow(dancer: any) {
   const status = String(dancer?.status || "").toLowerCase();
   const verificationStatus = String(dancer?.verification_status || dancer?.verificationStatus || "").toLowerCase();
@@ -23,7 +29,7 @@ export function isApprovedPublicDancerRow(dancer: any) {
 
 export async function getApprovedDancersByCity(client: DancrClient, city: string): Promise<DancerCard[]> {
   const cityName = city.trim();
-  const { data, error } = await client
+  const current = await client
     .from("dancer_profiles")
     .select(
       `
@@ -47,6 +53,35 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
     .order("stage_name", { ascending: true })
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
+  let data: any[] | null = current.data as any[] | null;
+  let error: any = current.error;
+  if (isMissingIsPublicColumnError(error)) {
+    console.warn("PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING", { city: cityName, code: error.code });
+    const legacy = await client
+      .from("dancer_profiles")
+      .select(
+        `
+          id,
+          slug,
+          stage_name,
+          city,
+          status,
+          approved_at,
+          verification_status,
+          photo_review_status,
+          trending_scores(rank),
+          dancer_photos(storage_path, is_primary, review_status, sort_order),
+          social_links(id, platform, handle, url, is_active),
+          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone))
+        `,
+      )
+      .ilike("city", cityName)
+      .order("stage_name", { ascending: true })
+      .order("starts_at", { referencedTable: "shifts", ascending: true });
+    data = legacy.data as any[] | null;
+    error = legacy.error;
+  }
+
   if (error) throw error;
 
   const rows = (data || []).filter(isApprovedPublicDancerRow);
@@ -64,7 +99,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
   const timeZone = await getCityTimeZone(client, cityName);
   const window = getTonightWindow(timeZone, now);
 
-  const { data, error } = await client
+  const current = await client
     .from("dancer_profiles")
     .select(
       `
@@ -92,6 +127,39 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .gt("shifts.ends_at", window.activeAfter)
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
+  let data: any[] | null = current.data as any[] | null;
+  let error: any = current.error;
+  if (isMissingIsPublicColumnError(error)) {
+    console.warn("PUBLIC_SHIFTS_VISIBILITY_COLUMN_MISSING", { city: cityName, code: error.code });
+    const legacy = await client
+      .from("dancer_profiles")
+      .select(
+        `
+          id,
+          slug,
+          stage_name,
+          city,
+          status,
+          approved_at,
+          verification_status,
+          photo_review_status,
+          trending_scores(rank),
+          dancer_photos(storage_path, is_primary, review_status, sort_order),
+          social_links(id, platform, handle, url, is_active),
+          shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone))
+        `,
+      )
+      .ilike("city", cityName)
+      .eq("shifts.status", "posted")
+      .not("shifts.checked_in_at", "is", null)
+      .is("shifts.checked_out_at", null)
+      .lt("shifts.starts_at", window.endsAt)
+      .gt("shifts.ends_at", window.activeAfter)
+      .order("starts_at", { referencedTable: "shifts", ascending: true });
+    data = legacy.data as any[] | null;
+    error = legacy.error;
+  }
+
   if (error) throw error;
 
   const rows = (data || []).filter(isApprovedPublicDancerRow);
@@ -100,7 +168,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
-  const { data, error } = await client
+  const current = await client
     .from("dancer_profiles")
     .select(
       `
@@ -123,6 +191,35 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
     .eq("slug", slug)
     .or("is_public.is.true,is_public.is.null")
     .maybeSingle();
+
+  let data: any = current.data;
+  let error: any = current.error;
+  if (isMissingIsPublicColumnError(error)) {
+    console.warn("PUBLIC_DANCER_PROFILE_VISIBILITY_COLUMN_MISSING", { slug, code: error.code });
+    const legacy = await client
+      .from("dancer_profiles")
+      .select(
+        `
+          id,
+          slug,
+          stage_name,
+          city,
+          bio,
+          status,
+          approved_at,
+          verification_status,
+          photo_review_status,
+          trending_scores(rank),
+          dancer_photos(id, storage_path, is_primary, sort_order, review_status),
+          social_links(id, platform, handle, url, is_active),
+          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(id, name, slug, timezone))
+        `,
+      )
+      .eq("slug", slug)
+      .maybeSingle();
+    data = legacy.data;
+    error = legacy.error;
+  }
 
   if (error) throw error;
   if (!data) return null;
