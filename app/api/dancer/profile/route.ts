@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "gallery-delete-after-history-cleanup-v1";
+const PROFILE_SAVE_VERSION = "hard-reset-save-fix-v1";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -17,6 +17,53 @@ function withProfileSaveVersion(response: NextResponse) {
 }
 const MAX_DANCER_PROFILE_PHOTOS = 5;
 const APPROVED_PHOTO_BUCKET = "dancer-photos";
+
+type ProfileSaveStage =
+  | "authenticate"
+  | "update_social_links"
+  | "delete_photos"
+  | "update_profile_fields"
+  | "update_primary_photo"
+  | "insert_new_photos"
+  | "persist_photo_order"
+  | "submit_for_review"
+  | "verify_saved_profile";
+
+function logProfileSaveStage(stage: ProfileSaveStage) {
+  console.log("PROFILE_SAVE_STAGE", { stage });
+}
+
+function publicProfileState(profile: any) {
+  return {
+    dancerId: profile?.id || null,
+    status: profile?.status ?? null,
+    isPublic: profile?.is_public ?? null,
+    approvedAt: profile?.approved_at ?? null,
+    verificationStatus: profile?.verification_status ?? null,
+    photoReviewStatus: profile?.photo_review_status ?? null,
+  };
+}
+
+function safeProfileSaveError(stage: ProfileSaveStage, error: any) {
+  const message = typeof error?.message === "string" ? error.message : "";
+  if (message.startsWith("DELETED_PHOTO_RETURNED_AFTER_SAVE")) return "The deleted photo returned during save verification.";
+  if (message.startsWith("PROFILE_PHOTO_DELETE_COUNT_MISMATCH")) return "The selected photo could not be permanently deleted.";
+  if (message.startsWith("PUBLIC_PROFILE_STATE_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
+  if (message === "Sign in required." || message === "Dancer profile not found.") return message;
+
+  const stageMessages: Record<ProfileSaveStage, string> = {
+    authenticate: "Unable to verify the signed-in dancer profile.",
+    update_social_links: "Social links could not be saved.",
+    delete_photos: "The selected profile photo could not be deleted.",
+    update_profile_fields: "Profile details could not be updated.",
+    update_primary_photo: "The primary photo could not be updated.",
+    insert_new_photos: "New profile photos could not be saved.",
+    persist_photo_order: "The profile photo order could not be saved.",
+    submit_for_review: "The profile could not be submitted for review.",
+    verify_saved_profile: "The saved profile could not be verified.",
+  };
+  return stageMessages[stage];
+}
 
 type ProfilePhotoStorageValue = {
   storagePath: string;
@@ -38,12 +85,6 @@ export async function GET(request: Request) {
     if (error) throw error;
     if (!data) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
-    }
-
-    if (await removeSupersededPendingPhotoRows(createAdminSupabaseClient() as any, data.id)) {
-      const refreshed = await loadDancerProfile(client, user.id);
-      if (refreshed.error) throw refreshed.error;
-      data = refreshed.data || data;
     }
 
     const profileWithPhotos = withPhotoUrls(client, data);
@@ -115,14 +156,21 @@ function getPhotoUrl(client: any, storagePath: unknown) {
 }
 
 export async function PATCH(request: Request) {
+  let saveStage: ProfileSaveStage = "authenticate";
+  const setSaveStage = (stage: ProfileSaveStage) => {
+    saveStage = stage;
+    logProfileSaveStage(stage);
+  };
+
   try {
+    setSaveStage("authenticate");
     const { client, user } = await createRequestSupabaseContext(request);
     const body = await request.json();
     const db = client as any;
 
     const { data: profile, error: profileError } = await db
       .from("dancer_profiles")
-      .select("id, real_name, stage_name, city, status, is_public")
+      .select("id, real_name, stage_name, city, status, is_public, approved_at, verification_status, photo_review_status")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -130,6 +178,8 @@ export async function PATCH(request: Request) {
     if (!profile) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
+    const publicStateBeforeSave = publicProfileState(profile);
+    console.log("PUBLIC_PROFILE_STATE_BEFORE_SAVE", publicStateBeforeSave);
 
     const update: Record<string, string | boolean> = {};
     if (typeof body.stageName === "string") update.stage_name = body.stageName.trim();
@@ -139,6 +189,7 @@ export async function PATCH(request: Request) {
     if (typeof body.isPublic === "boolean") update.is_public = body.isPublic;
 
     let changedSocialPlatforms: SocialPlatform[] = [];
+    setSaveStage("update_social_links");
     if (Array.isArray(body.socials)) {
       const submittedRows = body.socials
         .filter((social: any) => SOCIAL_PLATFORMS.has(social?.platform))
@@ -210,6 +261,7 @@ export async function PATCH(request: Request) {
       },
     });
     const adminDb = createAdminSupabaseClient();
+    setSaveStage("delete_photos");
     const deletedPhotoStoragePaths = deletedPhotoIds.length
       ? [
           ...readDeletedPhotoStoragePaths(body),
@@ -233,14 +285,32 @@ export async function PATCH(request: Request) {
       await deleteDancerPhotosByStoragePaths(adminDb as any, user.id, profile.id, deletedPhotoStoragePaths);
     }
 
+    setSaveStage("update_profile_fields");
     if (Object.keys(update).length) {
-      const { error } = await db.from("dancer_profiles").update(update).eq("id", profile.id);
+      const { data: updatedProfile, error } = await db
+        .from("dancer_profiles")
+        .update(update)
+        .eq("id", profile.id)
+        .eq("user_id", user.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!updatedProfile?.id) throw new Error("PROFILE_UPDATE_NOT_APPLIED");
     }
 
+    setSaveStage("update_primary_photo");
+    setSaveStage("insert_new_photos");
     await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds, deletedPhotoStoragePaths);
-    await removeSupersededPendingPhotoRows(adminDb as any, profile.id);
+    setSaveStage("persist_photo_order");
+    await removeSupersededPendingPhotoRows(adminDb as any, profile.id).catch((error: any) => {
+      console.warn("PROFILE_PHOTO_HISTORY_CLEANUP_WARNING", {
+        dancerId: profile.id,
+        message: error?.message || "Unable to clean superseded photo rows.",
+      });
+      return false;
+    });
 
+    setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
       await submitProfileForReview(client, db, user.id, profile.id, {
         realName: update.real_name || profile.real_name,
@@ -252,6 +322,7 @@ export async function PATCH(request: Request) {
       await submitPendingApprovedContentForReview(db, profile.id);
     }
 
+    setSaveStage("verify_saved_profile");
     const { data: databasePhotosAfterSave, error: databasePhotosAfterSaveError } = await db
       .from("dancer_photos")
       .select("id, is_primary, sort_order, review_status")
@@ -266,6 +337,17 @@ export async function PATCH(request: Request) {
 
     const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
     if (refreshedProfileError) throw refreshedProfileError;
+
+    const publicStateAfterSave = publicProfileState(refreshedProfile);
+    console.log("PUBLIC_PROFILE_STATE_AFTER_SAVE", publicStateAfterSave);
+    const protectedPublicKeys = ["status", "approvedAt", "verificationStatus", "photoReviewStatus"];
+    if (typeof body.isPublic !== "boolean") protectedPublicKeys.push("isPublic");
+    const changedPublicKeys = protectedPublicKeys.filter(
+      (key) => (publicStateBeforeSave as any)[key] !== (publicStateAfterSave as any)[key],
+    );
+    if (changedPublicKeys.length) {
+      throw new Error(`PUBLIC_PROFILE_STATE_CHANGED: ${changedPublicKeys.join(",")}`);
+    }
 
     const refreshedProfileWithPhotos = refreshedProfile ? withPhotoUrls(client, refreshedProfile) : null;
     const refreshedPendingLimit = refreshedProfileWithPhotos
@@ -298,8 +380,25 @@ export async function PATCH(request: Request) {
           }
         : null,
     }));
-  } catch (error) {
-    return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
+  } catch (error: any) {
+    console.error("DANCER_PROFILE_SAVE_ERROR", {
+      stage: saveStage,
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      status: error?.status,
+      stack: error?.stack,
+    });
+    if (error instanceof Error && (error.message === "Sign in required." || error.message === "Dancer profile not found.")) {
+      return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
+    }
+    return withProfileSaveVersion(NextResponse.json({
+      ok: false,
+      error: safeProfileSaveError(saveStage, error),
+      saveStage,
+      errorCode: typeof error?.code === "string" ? error.code : null,
+    }, { status: 500 }));
   }
 }
 

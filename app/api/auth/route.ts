@@ -182,22 +182,20 @@ async function upsertAccount(
   const realName = readOptional(body.realName) || "Verification pending";
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
-    .select("id")
+    .select("id, status, is_public, approved_at, verification_status, photo_review_status")
     .eq("user_id", userId)
     .maybeSingle();
   if (existingProfileError) throw existingProfileError;
 
   if (existingProfile) {
-    const { error } = await admin
-      .from("dancer_profiles")
-      .update({
-        real_name: realName,
-        stage_name: stageName,
-        city,
-        status: "draft",
-      })
-      .eq("user_id", userId);
-    if (error) throw error;
+    console.log("EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP", {
+      dancerId: existingProfile.id,
+      status: existingProfile.status,
+      isPublic: existingProfile.is_public,
+      approvedAt: existingProfile.approved_at,
+      verificationStatus: existingProfile.verification_status,
+      photoReviewStatus: existingProfile.photo_review_status,
+    });
     return;
   }
 

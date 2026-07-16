@@ -622,7 +622,7 @@ function DancerPanel({
         <Metric label="Status" value={String(profile?.status || "draft")} />
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
-      {isApproved ? <DancerVisibilityPanel profile={profile} /> : null}
+      {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       {isApproved ? (
         <>
@@ -663,7 +663,13 @@ function DancerPanel({
   );
 }
 
-function DancerVisibilityPanel({ profile }: { profile?: LoadState["profile"] }) {
+function DancerVisibilityPanel({
+  onProfileChange,
+  profile,
+}: {
+  onProfileChange?: (profile: Record<string, unknown>) => void;
+  profile?: LoadState["profile"];
+}) {
   const initialVisible = profile?.is_public !== false && profile?.isPublic !== false;
   const [isPublic, setIsPublic] = useState(initialVisible);
   const [status, setStatus] = useState("");
@@ -691,6 +697,7 @@ function DancerVisibilityPanel({ profile }: { profile?: LoadState["profile"] }) 
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update profile visibility.");
+      if (data.profile) onProfileChange?.(data.profile);
       setIsPublic(nextPublic);
       setStatus(nextPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
     } catch (error) {
@@ -775,10 +782,15 @@ function DancerSetupPanel({
   const [bio, setBio] = useState("");
   const [status, setStatus] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [isResetting, setIsResetting] = useState(false);
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
   const saveInFlightRef = useRef(false);
   const savedResetTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "hard-reset-save-fix-v1");
+  }, []);
 
   useEffect(() => {
     setStageName(String(profile?.stage_name || profile?.stageName || ""));
@@ -800,6 +812,55 @@ function DancerSetupPanel({
       if (savedResetTimerRef.current !== null) window.clearTimeout(savedResetTimerRef.current);
     };
   }, []);
+
+  async function hardResetProfile() {
+    if (isResetting || saveInFlightRef.current) return;
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    console.log("PUBLIC_PROFILE_STATE_BEFORE_RESET", {
+      dancerId: profile?.id || null,
+      status: profile?.status ?? null,
+      isPublic: profile?.is_public ?? profile?.isPublic ?? null,
+      approvedAt: profile?.approved_at ?? null,
+      verificationStatus: profile?.verification_status ?? null,
+      photoReviewStatus: profile?.photo_review_status ?? null,
+    });
+    setIsResetting(true);
+    setStatus("Reloading the latest saved profile...");
+    try {
+      const response = await fetch("/api/dancer/profile", {
+        method: "GET",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.profile) throw new Error(data.error || "Unable to reload the saved profile.");
+
+      console.log("PUBLIC_PROFILE_STATE_AFTER_RESET", {
+        dancerId: data.profile.id || null,
+        status: data.profile.status ?? null,
+        isPublic: data.profile.is_public ?? data.profile.isPublic ?? null,
+        approvedAt: data.profile.approved_at ?? null,
+        verificationStatus: data.profile.verification_status ?? null,
+        photoReviewStatus: data.profile.photo_review_status ?? null,
+      });
+      deletedPhotoIdsRef.current = [];
+      deletedPhotoStoragePathsRef.current = [];
+      onDeletedPhotoIdsSaved?.();
+      onProfileChange?.(data.profile);
+      setSaveStatus("idle");
+      setStatus("Latest saved profile reloaded.");
+    } catch (error) {
+      console.error("DANCER_PROFILE_HARD_RESET_FAILED", error);
+      setStatus(error instanceof Error ? error.message : "Unable to reload the saved profile.");
+    } finally {
+      setIsResetting(false);
+    }
+  }
 
   async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -877,7 +938,7 @@ function DancerSetupPanel({
     } catch (error) {
       console.error("EDIT_PROFILE_SAVE_FAILED", error);
       setSaveStatus("error");
-      setStatus("Profile could not be saved");
+      setStatus(error instanceof Error ? error.message : "Profile could not be saved.");
     } finally {
       saveInFlightRef.current = false;
     }
@@ -905,6 +966,9 @@ function DancerSetupPanel({
         </label>
         <button type="submit" disabled={saveStatus === "saving"}>
           {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}
+        </button>
+        <button type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
+          {isResetting ? "Resetting..." : "Hard Reset"}
         </button>
         {status ? <p>{status}</p> : null}
       </form>
@@ -1732,9 +1796,9 @@ function DancerPhotoPanel({
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
     deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
-    setPhotos((current) =>
+    setPhotos(
       excludePendingDeletions(
-        relabelPhotoItems(mergePhotoItems(current, dancerPhotoItemsFromProfile(profile))),
+        relabelPhotoItems(dancerPhotoItemsFromProfile(profile)),
         deletedPhotoIdsRef.current,
       ),
     );
