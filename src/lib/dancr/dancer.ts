@@ -146,7 +146,6 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
     const photoRows = matchingPhotos?.length ? matchingPhotos : [photo];
     const photoIds = photoRows.map((row: any) => String(row.id || "")).filter(Boolean);
-    await deleteLinkedModerationRecords(adminClient, userId, photoIds, photo.storage_path);
 
     console.log("PHOTO_DELETE_CLICKED", {
       id: photo.id,
@@ -175,6 +174,13 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       throw new Error("PHOTO_DELETE_FAILED: no database row was deleted.");
     }
 
+    await deleteLinkedModerationRecords(adminClient, userId, photoIds, photo.storage_path).catch((error: any) => {
+      console.warn("PHOTO_MODERATION_HISTORY_CLEANUP_WARNING", {
+        requestedPhotoId: photo.id,
+        message: error?.message || "Unable to clean moderation history.",
+      });
+    });
+
     if (photo.storage_path) {
       await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
     }
@@ -183,8 +189,19 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       await promoteNextApprovedPrimaryPhoto(adminClient, profile.id);
     }
 
-    await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
-    const remainingIds = await getOwnPhotoIds(adminClient, profile.id);
+    await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id).catch((error: any) => {
+      console.warn("PHOTO_REVIEW_STATUS_REFRESH_WARNING", {
+        dancerId: profile.id,
+        message: error?.message || "Unable to refresh photo review status.",
+      });
+    });
+    const remainingIds = await getOwnPhotoIds(adminClient, profile.id).catch((error: any) => {
+      console.warn("PHOTO_REMAINING_IDS_READ_WARNING", {
+        dancerId: profile.id,
+        message: error?.message || "Unable to read remaining photo ids.",
+      });
+      return [];
+    });
     console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
     return { id: photo.id, kind: "approved_photo", deletedIds, remainingPhotoIds: remainingIds };
   }

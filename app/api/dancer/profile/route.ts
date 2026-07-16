@@ -531,7 +531,6 @@ async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerI
 
   const matchingPhotos = (photos || []).filter((photo: any) => deletedPathSet.has(normalizeStorageKey(photo?.storage_path)));
   const photoIds = matchingPhotos.map((photo: any) => photo.id).filter(Boolean);
-  await deleteModerationRecordsForDeletedPhotos(db, userId, photoIds, Array.from(deletedPathSet));
   if (!matchingPhotos.length) {
     console.log("PROFILE_PHOTO_DELETE_BY_PATH_NO_MATCH", {
       dancerId,
@@ -557,6 +556,12 @@ async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerI
   if (deleteError) throw deleteError;
 
   const deletedIds = (deletedRows || []).map((row: any) => row.id);
+  await deleteModerationRecordsForDeletedPhotos(db, userId, photoIds, Array.from(deletedPathSet)).catch((error: any) => {
+    console.warn("PROFILE_PHOTO_MODERATION_HISTORY_CLEANUP_WARNING", {
+      dancerId,
+      message: error?.message || "Unable to clean moderation history.",
+    });
+  });
   console.log("PROFILE_PHOTO_DELETE_BY_PATH_RESULT", {
     dancerId,
     requestedIds: photoIds,
