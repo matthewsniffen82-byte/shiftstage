@@ -789,7 +789,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "protected-fields-save-fix-v2");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-preview-save-fix-v3");
   }, []);
 
   useEffect(() => {
@@ -1796,9 +1796,9 @@ function DancerPhotoPanel({
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
     deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
-    setPhotos(
+    setPhotos((current) =>
       excludePendingDeletions(
-        relabelPhotoItems(dancerPhotoItemsFromProfile(profile)),
+        relabelPhotoItems(preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(profile), current)),
         deletedPhotoIdsRef.current,
       ),
     );
@@ -2022,6 +2022,15 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
 function excludePendingDeletions(incomingPhotos: DancerPhotoItem[], pendingDeletedIds: string[]) {
   const deleted = new Set(pendingDeletedIds);
   return incomingPhotos.filter((photo) => !deleted.has(photo.id));
+}
+
+function preserveConfirmedPhotoPreviews(incomingPhotos: DancerPhotoItem[], currentPhotos: DancerPhotoItem[]) {
+  const currentById = new Map(currentPhotos.map((photo) => [photo.id, photo]));
+  return incomingPhotos.map((photo) => {
+    const current = currentById.get(photo.id);
+    if (photo.imageUrl || !current?.imageUrl) return photo;
+    return { ...photo, imageUrl: current.imageUrl };
+  });
 }
 
 function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {

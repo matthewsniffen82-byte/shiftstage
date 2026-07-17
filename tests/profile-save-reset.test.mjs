@@ -25,6 +25,7 @@ test("Hard Reset is a read-only database reload", () => {
 test("fresh database photos replace stale editor photos", () => {
   assert.match(dashboardSource, /relabelPhotoItems\(dancerPhotoItemsFromProfile\(profile\)\)/);
   assert.doesNotMatch(dashboardSource, /mergePhotoItems\(current, dancerPhotoItemsFromProfile\(profile\)\)/);
+  assert.match(dashboardSource, /preserveConfirmedPhotoPreviews\(dancerPhotoItemsFromProfile\(profile\), current\)/);
 
   const stalePhotos = [{ id: "A" }, { id: "DELETED" }];
   const fetchedPhotos = [{ id: "A" }, { id: "B" }];
@@ -34,6 +35,29 @@ test("fresh database photos replace stale editor photos", () => {
   assert.equal(visiblePhotos.some((photo) => photo.id === "DELETED"), false);
   assert.match(dancerSource, /photoReviewStatusMayChange/);
   assert.match(dancerSource, /promoteNextApprovedPrimaryPhoto/);
+});
+
+test("save refresh preserves previews only for photos confirmed by the server", () => {
+  const currentPhotos = [
+    { id: "PENDING", imageUrl: "blob:pending-preview" },
+    { id: "DELETED", imageUrl: "blob:deleted-preview" },
+  ];
+  const incomingPhotos = [
+    { id: "PENDING", imageUrl: "" },
+    { id: "APPROVED", imageUrl: "https://example.com/approved.jpg" },
+  ];
+  const currentById = new Map(currentPhotos.map((photo) => [photo.id, photo]));
+  const refreshed = incomingPhotos.map((photo) => {
+    const current = currentById.get(photo.id);
+    return photo.imageUrl || !current?.imageUrl ? photo : { ...photo, imageUrl: current.imageUrl };
+  });
+
+  assert.deepEqual(refreshed, [
+    { id: "PENDING", imageUrl: "blob:pending-preview" },
+    { id: "APPROVED", imageUrl: "https://example.com/approved.jpg" },
+  ]);
+  assert.equal(refreshed.some((photo) => photo.id === "DELETED"), false);
+  assert.match(dashboardSource, /if \(photo\.imageUrl \|\| !current\?\.imageUrl\) return photo/);
 });
 
 test("save verifies affected rows, deletion, stages, and public state", () => {
@@ -71,8 +95,8 @@ test("existing dancer signup cannot reset approval or visibility", () => {
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /protected-fields-save-fix-v2/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "protected-fields-save-fix-v2"/);
+  assert.match(rootRouteSource, /photo-preview-save-fix-v3/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-preview-save-fix-v3"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);
