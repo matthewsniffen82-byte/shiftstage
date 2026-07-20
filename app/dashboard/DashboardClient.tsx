@@ -789,7 +789,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-preview-save-fix-v3");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-database-sync-fix-v4");
   }, []);
 
   useEffect(() => {
@@ -929,7 +929,10 @@ function DancerSetupPanel({
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
       setSaveStatus("saved");
-      setStatus("Saved Profile");
+      const hasPendingPhotos = Array.isArray(data.profile?.pending_photo_reviews) && data.profile.pending_photo_reviews.length > 0;
+      setStatus(hasPendingPhotos
+        ? "Saved Profile. Photos awaiting review will appear on your live profile after approval."
+        : "Saved Profile");
       if (savedResetTimerRef.current !== null) window.clearTimeout(savedResetTimerRef.current);
       savedResetTimerRef.current = window.setTimeout(() => {
         setSaveStatus((current) => current === "saved" ? "idle" : current);
@@ -1763,6 +1766,7 @@ type DancerPhotoItem = {
   note: string;
   storagePath?: string;
   isPrimary?: boolean;
+  sortOrder?: number;
 };
 
 const MAX_DANCER_PROFILE_PHOTOS = 5;
@@ -1845,9 +1849,11 @@ function DancerPhotoPanel({
     }
 
     const formData = new FormData();
+    const uploadSortOrder = isPrimary ? 0 : nextGalleryPhotoSortOrder(photos);
     formData.set("file", file);
     formData.set("isPrimary", String(isPrimary));
     formData.set("replaceExisting", String(isPrimary));
+    formData.set("sortOrder", String(uploadSortOrder));
     const uploadKey = `${file.name}:${file.size}:${file.lastModified}:${isPrimary ? "primary" : "gallery"}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
     formData.set("idempotencyKey", uploadKey);
 
@@ -1872,6 +1878,7 @@ function DancerPhotoPanel({
         note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
         storagePath: String(data.photo?.storage_path || ""),
         isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary || isPrimary),
+        sortOrder: Number(data.photo?.sortOrder ?? data.photo?.sort_order ?? uploadSortOrder),
       };
       if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
       if (uploadStatus === "rejected") URL.revokeObjectURL(localPreviewUrl);
@@ -1998,6 +2005,7 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
       note: photoStatusNote(reviewStatus),
       storagePath: String(photo.storage_path || photo.storagePath || ""),
       isPrimary,
+      sortOrder: Number(photo.sort_order ?? photo.sortOrder ?? 0),
     }];
   });
 
@@ -2022,6 +2030,19 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
 function excludePendingDeletions(incomingPhotos: DancerPhotoItem[], pendingDeletedIds: string[]) {
   const deleted = new Set(pendingDeletedIds);
   return incomingPhotos.filter((photo) => !deleted.has(photo.id));
+}
+
+function nextGalleryPhotoSortOrder(photos: DancerPhotoItem[]) {
+  const used = new Set(
+    photos
+      .filter((photo) => !photo.isPrimary)
+      .map((photo) => Number(photo.sortOrder))
+      .filter((sortOrder) => Number.isInteger(sortOrder) && sortOrder > 0),
+  );
+  for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
+    if (!used.has(sortOrder)) return sortOrder;
+  }
+  return MAX_DANCER_PROFILE_PHOTOS;
 }
 
 function preserveConfirmedPhotoPreviews(incomingPhotos: DancerPhotoItem[], currentPhotos: DancerPhotoItem[]) {

@@ -135,20 +135,8 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
   if (photoError) throw photoError;
   if (photo) {
-    let matchingPhotosQuery = adminClient
-      .from("dancer_photos")
-      .select("id, storage_path, is_primary, sort_order, review_status")
-      .eq("dancer_id", profile.id)
-      .eq("is_primary", photo.is_primary);
-    if (!photo.is_primary) matchingPhotosQuery = matchingPhotosQuery.eq("sort_order", photo.sort_order);
-    const { data: matchingPhotos, error: matchingPhotosError } = await matchingPhotosQuery;
-    if (matchingPhotosError) throw matchingPhotosError;
-
-    const photoRows = matchingPhotos?.length ? matchingPhotos : [photo];
-    const photoIds = photoRows.map((row: any) => String(row.id || "")).filter(Boolean);
-    const photoReviewStatusMayChange = photoRows.some(
-      (row: any) => String(row.review_status || "").toLowerCase() === "pending",
-    );
+    const photoIds = [String(photo.id)];
+    const photoReviewStatusMayChange = String(photo.review_status || "").toLowerCase() === "pending";
 
     console.log("PHOTO_DELETE_CLICKED", {
       id: photo.id,
@@ -162,7 +150,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       .from("dancer_photos")
       .delete()
       .eq("dancer_id", profile.id)
-      .in("id", photoIds)
+      .eq("id", photo.id)
       .select("id");
     if (deleteError) throw deleteError;
     const deletedIds = (deletedRows || []).map((row: any) => row.id);
@@ -170,7 +158,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       requestedPhotoId: photo.id,
       requestedIds: [photo.id],
       deletedIds,
-      clearedSlotIds: photoIds,
+      exactIdOnly: true,
       error: null,
     });
     if (!deletedIds.includes(photo.id)) {
@@ -188,7 +176,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
     }
 
-    if (photoRows.some((row: any) => row.is_primary)) {
+    if (photo.is_primary) {
       await promoteNextApprovedPrimaryPhoto(adminClient, profile.id);
     }
 

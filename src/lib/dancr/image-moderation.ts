@@ -41,6 +41,7 @@ type ModeratedPhotoResult = {
     imageUrl: string;
     reviewStatus: string;
     isPrimary?: boolean;
+    sortOrder?: number;
   };
 };
 
@@ -51,6 +52,9 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   enforceUploadRateLimit(input.userId, input.ipAddress);
   const profile = await getOwnDancerProfile(client, input.userId);
   if (!input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id);
+  const resolvedSortOrder = input.isPrimary
+    ? 0
+    : await resolveDancerPhotoSortOrder(admin, profile.id, input.sortOrder);
 
   const image = await validateAndPrepareDancrImage(input.file);
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
@@ -169,7 +173,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       tempPath,
       uploadContext,
       isPrimary: Boolean(input.isPrimary),
-      sortOrder: input.sortOrder || 0,
+      sortOrder: resolvedSortOrder,
       altText: input.altText || null,
       evaluation,
       categoryFlags,
@@ -264,7 +268,9 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         tempPath,
         uploadContext,
         isPrimary: uploadContext === "profile_main",
-        sortOrder: 0,
+        sortOrder: uploadContext === "profile_main"
+          ? 0
+          : await resolveDancerPhotoSortOrder(admin, profile.id),
         altText: null,
         evaluation,
         categoryFlags,
@@ -704,6 +710,24 @@ async function assertDancerPhotoLimit(client: DancrClient, dancerId: string) {
   if (activeSlots.size >= 5) throw new Error("You can upload up to 5 profile pictures. Delete or replace one before adding more.");
 }
 
+async function resolveDancerPhotoSortOrder(client: DancrClient, dancerId: string, preferredSortOrder?: number) {
+  const { data, error } = await client
+    .from("dancer_photos")
+    .select("sort_order")
+    .eq("dancer_id", dancerId)
+    .eq("is_primary", false)
+    .in("review_status", ["approved", "pending"]);
+  if (error) throw error;
+
+  const used = new Set((data || []).map((photo: any) => Number(photo.sort_order)));
+  const preferred = Number(preferredSortOrder);
+  if (Number.isInteger(preferred) && preferred > 0 && !used.has(preferred)) return preferred;
+  for (let sortOrder = 1; sortOrder <= 5; sortOrder += 1) {
+    if (!used.has(sortOrder)) return sortOrder;
+  }
+  throw new Error("You can upload up to 5 profile pictures. Delete or replace one before adding more.");
+}
+
 async function uploadPrivateObject(client: DancrClient, bucket: string, path: string, image: ValidatedDancrImage) {
   const { error } = await client.storage.from(bucket).upload(path, image.buffer, { contentType: image.contentType, upsert: false });
   if (error) throw error;
@@ -769,7 +793,11 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
     }
   }
   await client.from("dancer_profiles").update({ photo_review_status: "approved" }).eq("id", input.dancerId);
-  return { ...(data as { id: string; storage_path: string }), isPrimary: input.isPrimary };
+  return {
+    ...(data as { id: string; storage_path: string }),
+    isPrimary: input.isPrimary,
+    sortOrder: input.sortOrder,
+  };
 }
 
 async function findCurrentPhotoSlot(client: DancrClient, dancerId: string, isPrimary: boolean, sortOrder: number) {
