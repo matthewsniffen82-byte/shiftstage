@@ -110,10 +110,22 @@ test("existing dancer signup cannot reset approval or visibility", () => {
   assert.match(authRouteSource, /\.select\("\*"\)/);
 });
 
+test("save keeps non-deleted photos and releases deleted slots before upload", () => {
+  for (const status of ["moderating", "pending_review", "moderation_retry", "moderation_error"]) {
+    assert.match(profileRouteSource, new RegExp(`ACTIVE_PENDING_PHOTO_REVIEW_STATUSES[\s\S]*?"${status}"`));
+  }
+  assert.match(profileRouteSource, /createSignedUrl\(storagePath, 60 \* 60\)/);
+  assert.match(profileRouteSource, /if \(submittedPhotoUrls\.length\) \{[\s\S]*?removeSupersededPendingPhotoRows/);
+  assert.match(profileRouteSource, /NON_DELETED_PHOTO_MISSING_AFTER_SAVE/);
+  assert.match(dashboardSource, /async function persistQueuedPhotoDeletions/);
+  assert.match(dashboardSource, /await persistQueuedPhotoDeletions\(session\.accessToken\);[\s\S]*?fetch\("\/api\/dancer\/photos"/);
+  assert.match(dashboardSource, /review\.previewUrl/);
+});
+
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /photo-database-sync-fix-v4/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-database-sync-fix-v4"/);
+  assert.match(rootRouteSource, /photo-save-integrity-fix-v5/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-save-integrity-fix-v5"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);
