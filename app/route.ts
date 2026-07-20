@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
   const html = await readFile(htmlPath, "utf8");
-  const activeEditProfileMarker = '<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-database-sync-fix-v4");document.documentElement.setAttribute("data-active-edit-profile-version","photo-database-sync-fix-v4");</script>';
+  const activeEditProfileMarker = '<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-save-integrity-fix-v5");document.documentElement.setAttribute("data-active-edit-profile-version","photo-save-integrity-fix-v5");</script>';
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
 
   return new Response(withBase, {
