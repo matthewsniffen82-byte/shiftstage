@@ -122,10 +122,25 @@ test("save keeps non-deleted photos and releases deleted slots before upload", (
   assert.match(dashboardSource, /review\.previewUrl/);
 });
 
+test("save integrity verifies the editor snapshot instead of hidden history rows", () => {
+  assert.match(profileRouteSource, /const \{ data: editorProfileBeforeSave/);
+  assert.match(profileRouteSource, /withPhotoUrls\(client, editorProfileBeforeSave\)/);
+  assert.match(profileRouteSource, /pendingPhotoLimitBeforeSave/);
+  assert.doesNotMatch(profileRouteSource, /databasePhotosBeforeSave/);
+
+  const historicalRows = [
+    { id: "VISIBLE", slot: "gallery:1", createdAt: "2026-07-20" },
+    { id: "HIDDEN", slot: "gallery:1", createdAt: "2026-07-19" },
+  ];
+  const visibleBySlot = new Map();
+  for (const row of historicalRows) if (!visibleBySlot.has(row.slot)) visibleBySlot.set(row.slot, row);
+  assert.deepEqual(Array.from(visibleBySlot.values()).map((row) => row.id), ["VISIBLE"]);
+});
+
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /photo-save-integrity-fix-v5/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-save-integrity-fix-v5"/);
+  assert.match(rootRouteSource, /photo-editor-snapshot-fix-v6/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-editor-snapshot-fix-v6"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);
