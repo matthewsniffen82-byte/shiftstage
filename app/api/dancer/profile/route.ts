@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "photo-database-sync-fix-v4";
+const PROFILE_SAVE_VERSION = "photo-save-integrity-fix-v5";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -17,6 +17,16 @@ function withProfileSaveVersion(response: NextResponse) {
 }
 const MAX_DANCER_PROFILE_PHOTOS = 5;
 const APPROVED_PHOTO_BUCKET = "dancer-photos";
+const MODERATION_TEMP_BUCKET = "dancr-image-moderation-temp";
+const MODERATION_REVIEW_BUCKET = "dancr-image-moderation-review";
+const ACTIVE_PENDING_PHOTO_REVIEW_STATUSES = [
+  "pending",
+  "completed",
+  "moderating",
+  "pending_review",
+  "moderation_retry",
+  "moderation_error",
+];
 
 type ProfileSaveStage =
   | "authenticate"
@@ -191,15 +201,21 @@ async function loadPendingPhotoReviews(userId: string, limit = MAX_DANCER_PROFIL
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, decision, status, upload_context, created_at")
+    .select("id, decision, status, upload_context, temporary_storage_path, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
-    .in("status", ["pending", "completed"])
+    .in("status", ACTIVE_PENDING_PHOTO_REVIEW_STATUSES)
     .order("created_at", { ascending: false })
     .limit(Math.min(limit, MAX_DANCER_PROFILE_PHOTOS));
 
   if (error) throw error;
-  return data || [];
+  return Promise.all((data || []).map(async (review: any) => {
+    const storagePath = String(review.temporary_storage_path || "").trim();
+    if (!storagePath) return { ...review, previewUrl: "" };
+    const bucket = review.status === "pending_review" ? MODERATION_REVIEW_BUCKET : MODERATION_TEMP_BUCKET;
+    const { data: signed, error: signedError } = await admin.storage.from(bucket).createSignedUrl(storagePath, 60 * 60);
+    return { ...review, previewUrl: signedError ? "" : String(signed?.signedUrl || "") };
+  }));
 }
 
 function withPhotoUrls(client: any, profile: any) {
@@ -358,6 +374,22 @@ export async function PATCH(request: Request) {
       },
     });
     const adminDb = createAdminSupabaseClient();
+    const submittedPhotoUrls = readProfilePhotoUrls(body);
+    const { data: databasePhotosBeforeSave, error: databasePhotosBeforeSaveError } = await (adminDb as any)
+      .from("dancer_photos")
+      .select("id, review_status")
+      .eq("dancer_id", profile.id)
+      .in("review_status", ["approved", "pending"]);
+    if (databasePhotosBeforeSaveError) throw databasePhotosBeforeSaveError;
+    const pendingPhotoReviewsBeforeSave = await loadPendingPhotoReviews(user.id, MAX_DANCER_PROFILE_PHOTOS);
+    const expectedRemainingPhotoIds = new Set([
+      ...(databasePhotosBeforeSave || []).map((photo: any) => String(photo.id || "")),
+      ...pendingPhotoReviewsBeforeSave.map((photo: any) => String(photo.id || "")),
+    ].filter((id) => id && !deletedPhotoIds.includes(id)));
+    console.log("EDIT_PROFILE_EXPECTED_PHOTOS_AFTER_SAVE", {
+      expectedPhotoIds: Array.from(expectedRemainingPhotoIds),
+      deletedPhotoIds,
+    });
     setSaveStage("delete_photos");
     const deletedPhotoStoragePaths = deletedPhotoIds.length
       ? [
@@ -402,13 +434,15 @@ export async function PATCH(request: Request) {
     setSaveStage("insert_new_photos");
     await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds, deletedPhotoStoragePaths);
     setSaveStage("persist_photo_order");
-    await removeSupersededPendingPhotoRows(adminDb as any, profile.id).catch((error: any) => {
-      console.warn("PROFILE_PHOTO_HISTORY_CLEANUP_WARNING", {
-        dancerId: profile.id,
-        message: error?.message || "Unable to clean superseded photo rows.",
+    if (submittedPhotoUrls.length) {
+      await removeSupersededPendingPhotoRows(adminDb as any, profile.id).catch((error: any) => {
+        console.warn("PROFILE_PHOTO_HISTORY_CLEANUP_WARNING", {
+          dancerId: profile.id,
+          message: error?.message || "Unable to clean superseded photo rows.",
+        });
+        return false;
       });
-      return false;
-    });
+    }
 
     setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
@@ -495,6 +529,11 @@ export async function PATCH(request: Request) {
     const incorrectlyRestoredIds = deletedPhotoIds.filter((id) => remainingPhotoIds.has(id));
     if (incorrectlyRestoredIds.length) {
       throw new Error(`DELETED_PHOTO_RETURNED_AFTER_SAVE: ${incorrectlyRestoredIds.join(",")}`);
+    }
+    const missingNonDeletedPhotoIds = Array.from(expectedRemainingPhotoIds)
+      .filter((id) => !remainingPhotoIds.has(id));
+    if (missingNonDeletedPhotoIds.length) {
+      throw new Error(`NON_DELETED_PHOTO_MISSING_AFTER_SAVE: ${missingNonDeletedPhotoIds.join(",")}`);
     }
 
     const confirmedIds = [...new Set(confirmedDeletedPhotoIds)];
