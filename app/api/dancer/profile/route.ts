@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "photo-save-integrity-fix-v5";
+const PROFILE_SAVE_VERSION = "photo-editor-snapshot-fix-v6";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -375,15 +375,17 @@ export async function PATCH(request: Request) {
     });
     const adminDb = createAdminSupabaseClient();
     const submittedPhotoUrls = readProfilePhotoUrls(body);
-    const { data: databasePhotosBeforeSave, error: databasePhotosBeforeSaveError } = await (adminDb as any)
-      .from("dancer_photos")
-      .select("id, review_status")
-      .eq("dancer_id", profile.id)
-      .in("review_status", ["approved", "pending"]);
-    if (databasePhotosBeforeSaveError) throw databasePhotosBeforeSaveError;
-    const pendingPhotoReviewsBeforeSave = await loadPendingPhotoReviews(user.id, MAX_DANCER_PROFILE_PHOTOS);
+    const { data: editorProfileBeforeSave, error: editorProfileBeforeSaveError } = await loadDancerProfile(client, user.id);
+    if (editorProfileBeforeSaveError) throw editorProfileBeforeSaveError;
+    const editorProfileWithPhotosBeforeSave = editorProfileBeforeSave
+      ? withPhotoUrls(client, editorProfileBeforeSave)
+      : null;
+    const pendingPhotoLimitBeforeSave = editorProfileWithPhotosBeforeSave
+      ? Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (editorProfileWithPhotosBeforeSave.dancer_photos?.length || 0))
+      : MAX_DANCER_PROFILE_PHOTOS;
+    const pendingPhotoReviewsBeforeSave = await loadPendingPhotoReviews(user.id, pendingPhotoLimitBeforeSave);
     const expectedRemainingPhotoIds = new Set([
-      ...(databasePhotosBeforeSave || []).map((photo: any) => String(photo.id || "")),
+      ...((editorProfileWithPhotosBeforeSave?.dancer_photos || []).map((photo: any) => String(photo.id || ""))),
       ...pendingPhotoReviewsBeforeSave.map((photo: any) => String(photo.id || "")),
     ].filter((id) => id && !deletedPhotoIds.includes(id)));
     console.log("EDIT_PROFILE_EXPECTED_PHOTOS_AFTER_SAVE", {
