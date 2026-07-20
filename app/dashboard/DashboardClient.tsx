@@ -1830,6 +1830,35 @@ function DancerPhotoPanel({
     setStatus(`${nextFile.name || "Photo"} selected as a ${isPrimary ? "primary" : "gallery"} photo.`);
   }
 
+  async function persistQueuedPhotoDeletions(accessToken: string) {
+    const idsToDelete = [...deletedPhotoIdsRef.current];
+    if (!idsToDelete.length) return;
+
+    setStatus("Saving deleted photos before upload...");
+    const response = await fetch("/api/dancer/profile", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        deletedPhotoIds: idsToDelete,
+        deletedPhotoStoragePaths: [...deletedPhotoStoragePathsRef.current],
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to save deleted photos before upload.");
+
+    const confirmedIds = new Set((data.deletedPhotoIds || []).map((id: unknown) => String(id)));
+    const unconfirmedIds = idsToDelete.filter((id) => !confirmedIds.has(id));
+    if (unconfirmedIds.length) {
+      throw new Error("The deleted photo slots could not be confirmed. Please try again.");
+    }
+
+    deletedPhotoIdsRef.current = [];
+    deletedPhotoStoragePathsRef.current = [];
+    onDeletedPhotoIdsChange?.([]);
+    onDeletedPhotoStoragePathsChange?.([]);
+    if (data.profile) onProfileChange?.(data.profile);
+  }
+
   async function uploadPhoto(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const session = readSession();
@@ -1861,6 +1890,7 @@ function DancerPhotoPanel({
     setStatus("Checking your photo...");
     const localPreviewUrl = URL.createObjectURL(file);
     try {
+      await persistQueuedPhotoDeletions(session.accessToken);
       const response = await fetch("/api/dancer/photos", {
         method: "POST",
         headers: { authorization: `Bearer ${session.accessToken}`, "idempotency-key": uploadKey },
@@ -2015,11 +2045,11 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
     const isPrimary = String(review.upload_context || "").includes("main");
     return [{
       id,
-      imageUrl: "",
+      imageUrl: String(review.previewUrl || review.preview_url || ""),
       label: isPrimary ? "Main Photo" : "Photo",
       status: "pending",
       note: "Uploaded and awaiting admin verification before it appears publicly.",
-      storagePath: "",
+      storagePath: String(review.temporary_storage_path || review.storagePath || ""),
       isPrimary,
     }];
   });
