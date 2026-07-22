@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, visibilityMigrationSource] = await Promise.all([
+const [dashboardSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, visibilityMigrationSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
@@ -10,6 +10,7 @@ const [dashboardSource, profileRouteSource, authRouteSource, rootRouteSource, pu
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/image-moderation-status.ts", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607150001_dancer_profile_visibility.sql", import.meta.url), "utf8"),
 ]);
 
@@ -61,13 +62,33 @@ test("save refresh preserves previews only for photos confirmed by the server", 
   assert.match(dashboardSource, /if \(photo\.imageUrl \|\| !current\?\.imageUrl\) return photo/);
 });
 
+test("saved profiles keep every active photo moderation state in the editor", () => {
+  for (const status of [
+    "pending",
+    "completed",
+    "error",
+    "moderating",
+    "pending_review",
+    "moderation_retry",
+    "moderation_error",
+  ]) {
+    assert.match(imageModerationStatusSource, new RegExp(`"${status}"`));
+  }
+
+  const pendingPhotoLoader = profileRouteSource.match(/async function loadPendingPhotoReviews[\s\S]*?\n}/)?.[0] || "";
+  assert.match(pendingPhotoLoader, /\.eq\("decision", "review"\)/);
+  assert.match(pendingPhotoLoader, /\.in\("status", ACTIVE_IMAGE_MODERATION_STATUSES\)/);
+  assert.match(profileRouteSource, /import \{ ACTIVE_IMAGE_MODERATION_STATUSES \}/);
+  assert.match(dancerSource, /import \{ ACTIVE_IMAGE_MODERATION_STATUSES \}/);
+});
+
 test("gallery uploads use unique database slots and deletion targets one exact id", () => {
   assert.match(dashboardSource, /formData\.set\("sortOrder", String\(uploadSortOrder\)\)/);
   assert.match(dashboardSource, /nextGalleryPhotoSortOrder\(photos\)/);
   assert.match(imageModerationSource, /resolveDancerPhotoSortOrder\(admin, profile\.id, input\.sortOrder\)/);
   assert.match(imageModerationSource, /sortOrder: input\.sortOrder/);
 
-  const deleteHandler = dancerSource.match(/export async function deleteOwnDancerPhoto[\s\S]*?\n}\n\nasync function deleteLinkedModerationRecords/)?.[0] || "";
+  const deleteHandler = dancerSource.match(/export async function deleteOwnDancerPhoto[\s\S]*?\r?\n}\r?\n\r?\nasync function deleteLinkedModerationRecords/)?.[0] || "";
   assert.match(deleteHandler, /\.eq\("id", photo\.id\)/);
   assert.match(deleteHandler, /exactIdOnly: true/);
   assert.doesNotMatch(deleteHandler, /matchingPhotosQuery|\.eq\("sort_order", photo\.sort_order\)/);
@@ -112,7 +133,7 @@ test("existing dancer signup cannot reset approval or visibility", () => {
 
 test("save keeps non-deleted photos and releases deleted slots before upload", () => {
   for (const status of ["moderating", "pending_review", "moderation_retry", "moderation_error"]) {
-    assert.ok(profileRouteSource.includes(`"${status}"`));
+    assert.ok(imageModerationStatusSource.includes(`"${status}"`));
   }
   assert.match(profileRouteSource, /createSignedUrl\(storagePath, 60 \* 60\)/);
   assert.match(profileRouteSource, /if \(submittedPhotoUrls\.length\) \{[\s\S]*?removeSupersededPendingPhotoRows/);
@@ -139,8 +160,8 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /photo-editor-snapshot-fix-v6/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-editor-snapshot-fix-v6"/);
+  assert.match(rootRouteSource, /photo-editor-status-sync-fix-v7/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-editor-status-sync-fix-v7"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);

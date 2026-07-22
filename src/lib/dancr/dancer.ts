@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
@@ -355,7 +356,7 @@ async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, 
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("decision", "review")
-    .in("status", ["pending", "moderating", "pending_review", "moderation_retry", "moderation_error"]);
+    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES);
   if (pendingModerationError) throw pendingModerationError;
 
   const nextStatus = (pendingPhotoCount || 0) + (pendingModerationCount || 0) > 0 ? "pending" : "approved";

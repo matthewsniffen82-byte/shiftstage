@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
+import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -9,7 +10,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "photo-editor-snapshot-fix-v6";
+const PROFILE_SAVE_VERSION = "photo-editor-status-sync-fix-v7";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -19,14 +20,6 @@ const MAX_DANCER_PROFILE_PHOTOS = 5;
 const APPROVED_PHOTO_BUCKET = "dancer-photos";
 const MODERATION_TEMP_BUCKET = "dancr-image-moderation-temp";
 const MODERATION_REVIEW_BUCKET = "dancr-image-moderation-review";
-const ACTIVE_PENDING_PHOTO_REVIEW_STATUSES = [
-  "pending",
-  "completed",
-  "moderating",
-  "pending_review",
-  "moderation_retry",
-  "moderation_error",
-];
 
 type ProfileSaveStage =
   | "authenticate"
@@ -204,7 +197,7 @@ async function loadPendingPhotoReviews(userId: string, limit = MAX_DANCER_PROFIL
     .select("id, decision, status, upload_context, temporary_storage_path, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
-    .in("status", ACTIVE_PENDING_PHOTO_REVIEW_STATUSES)
+    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
     .order("created_at", { ascending: false })
     .limit(Math.min(limit, MAX_DANCER_PROFILE_PHOTOS));
 
@@ -940,7 +933,7 @@ async function refreshPhotoReviewStatus(db: any, userId: string, dancerId: strin
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("decision", "review")
-    .in("status", ["pending", "moderating", "pending_review", "moderation_retry", "moderation_error"]);
+    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES);
   if (pendingModerationError) throw pendingModerationError;
 
   const nextStatus = (pendingPhotoCount || 0) + (pendingModerationCount || 0) > 0 ? "pending" : "approved";
