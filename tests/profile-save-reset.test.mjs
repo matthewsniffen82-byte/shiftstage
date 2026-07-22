@@ -76,6 +76,15 @@ test("mobile profile save restores authenticated photos after public discovery r
   assert.match(saveHandler, /EDIT_PROFILE_PHOTOS_RESTORED_AFTER_DISCOVERY/);
 });
 
+test("mobile profile cards do not repaint or animate during touch scrolling", () => {
+  assert.match(mobileAppSource, /const editorOpen = document\.getElementById\("approvedEditProfileDropdown"\)\?\.classList\.contains\("show"\)/);
+  assert.match(mobileAppSource, /if \(viewportTop === dancrViewportTop\) return/);
+  assert.match(mobileAppSource, /addEventListener\("scroll", window\.__dancrQueueViewportSafeTop/);
+  assert.match(mobileAppSource, /@media \(hover: none\) and \(pointer: coarse\)/);
+  assert.match(mobileAppSource, /\.list\.card-grid \.dancer-card:hover[\s\S]*?transform: none !important/);
+  assert.match(mobileAppSource, /\.list\.card-grid \.dancer-card \.portrait[\s\S]*?-webkit-filter: none !important/);
+});
+
 test("saved profiles keep every active photo moderation state in the editor", () => {
   for (const status of [
     "pending",
@@ -174,8 +183,8 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /mobile-photo-save-refresh-fix-v8/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "mobile-photo-save-refresh-fix-v8"/);
+  assert.match(rootRouteSource, /mobile-profile-scroll-stability-v9/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "mobile-profile-scroll-stability-v9"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);

@@ -48,13 +48,27 @@
         window.__dancrApplyDeviceClasses();
       }
 
+      let dancrViewportTop = null;
+      let dancrViewportFrame = 0;
       window.__dancrSyncViewportSafeTop = () => {
-        const viewportTop = Math.max(0, Math.round(window.visualViewport?.offsetTop || 0));
+        const editorOpen = document.getElementById("approvedEditProfileDropdown")?.classList.contains("show");
+        const viewportTop = editorOpen
+          ? Math.max(0, Math.round(window.visualViewport?.offsetTop || 0))
+          : 0;
+        if (viewportTop === dancrViewportTop) return;
+        dancrViewportTop = viewportTop;
         document.documentElement.style.setProperty("--dancr-viewport-top", `${viewportTop}px`);
+      };
+      window.__dancrQueueViewportSafeTop = () => {
+        if (!document.getElementById("approvedEditProfileDropdown")?.classList.contains("show") || dancrViewportFrame) return;
+        dancrViewportFrame = window.requestAnimationFrame(() => {
+          dancrViewportFrame = 0;
+          window.__dancrSyncViewportSafeTop();
+        });
       };
       window.__dancrSyncViewportSafeTop();
       window.visualViewport?.addEventListener("resize", window.__dancrSyncViewportSafeTop, { passive: true });
-      window.visualViewport?.addEventListener("scroll", window.__dancrSyncViewportSafeTop, { passive: true });
+      window.visualViewport?.addEventListener("scroll", window.__dancrQueueViewportSafeTop, { passive: true });
       window.addEventListener("orientationchange", window.__dancrSyncViewportSafeTop, { passive: true });
     })();
   </script>
@@ -27080,6 +27094,57 @@
     #locationBtn.location-btn:disabled {
       opacity: .82 !important;
       transform: none !important;
+    }
+    /* Keep production profile photos stable while a touch viewport is scrolling. */
+    @media (hover: none) and (pointer: coarse) {
+      .list.card-grid .dancer-card,
+      .list.card-grid .dancer-card:hover,
+      .list.card-grid .dancer-card:focus-visible,
+      .list.card-grid .dancer-card:active,
+      .list.card-grid .dancer-card.trending-card:hover,
+      .list.card-grid .dancer-card.rank-one-card:hover {
+        transform: none !important;
+        -webkit-transform: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+        transition: none !important;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+
+      .list.card-grid .dancer-card:not(.pending),
+      .list.card-grid .dancer-card:not(.pending):hover,
+      .list.card-grid .dancer-card:not(.pending):focus-visible,
+      .list.card-grid .dancer-card:not(.pending):active {
+        border-color: rgba(139, 92, 246, 0.34) !important;
+        box-shadow:
+          0 18px 44px rgba(0, 0, 0, 0.48),
+          inset 0 0 0 1px rgba(139, 92, 246, 0.06),
+          0 0 18px rgba(139, 92, 246, 0.08) !important;
+      }
+
+      .list.card-grid .dancer-card.pending,
+      .list.card-grid .dancer-card.pending:hover,
+      .list.card-grid .dancer-card.pending:focus-visible,
+      .list.card-grid .dancer-card.pending:active {
+        border-color: rgba(245, 190, 58, 0.44) !important;
+        box-shadow:
+          0 18px 44px rgba(0, 0, 0, 0.48),
+          inset 0 0 0 1px rgba(245, 190, 58, 0.05),
+          0 0 18px rgba(245, 190, 58, 0.1) !important;
+      }
+
+      .list.card-grid .dancer-card .portrait,
+      .list.card-grid .dancer-card:hover .portrait,
+      .list.card-grid .dancer-card:active .portrait {
+        transform: none !important;
+        -webkit-transform: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+        transition: none !important;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
     }
   </style>
 </head>
