@@ -27796,27 +27796,27 @@
                   </div>
                   <div class="social-control-grid">
                     <div class="social-edit-field">
-                      <label for="approvedControlInstagram">Instagram<input id="approvedControlInstagram" type="text" placeholder="@username or profile URL" aria-label="Instagram handle"></label>
+                      <label for="approvedControlInstagram">Instagram<input id="approvedControlInstagram" type="text" placeholder="Username or profile URL" aria-label="Instagram handle"></label>
                       <button type="button" data-social-focus="approvedControlInstagram">Edit</button>
                       <button type="button" data-social-clear="approvedControlInstagram">Clear</button>
                     </div>
                     <div class="social-edit-field">
-                      <label for="approvedControlTiktok">TikTok<input id="approvedControlTiktok" type="text" placeholder="@username or profile URL" aria-label="TikTok handle"></label>
+                      <label for="approvedControlTiktok">TikTok<input id="approvedControlTiktok" type="text" placeholder="Username or profile URL" aria-label="TikTok handle"></label>
                       <button type="button" data-social-focus="approvedControlTiktok">Edit</button>
                       <button type="button" data-social-clear="approvedControlTiktok">Clear</button>
                     </div>
                     <div class="social-edit-field">
-                      <label for="approvedControlSnapchat">Snapchat<input id="approvedControlSnapchat" type="text" placeholder="username or profile URL" aria-label="Snapchat handle"></label>
+                      <label for="approvedControlSnapchat">Snapchat<input id="approvedControlSnapchat" type="text" placeholder="Username or profile URL" aria-label="Snapchat handle"></label>
                       <button type="button" data-social-focus="approvedControlSnapchat">Edit</button>
                       <button type="button" data-social-clear="approvedControlSnapchat">Clear</button>
                     </div>
                     <div class="social-edit-field">
-                      <label for="approvedControlOnlyfans">OnlyFans<input id="approvedControlOnlyfans" type="text" placeholder="@username or profile URL" aria-label="OnlyFans link"></label>
+                      <label for="approvedControlOnlyfans">OnlyFans<input id="approvedControlOnlyfans" type="text" placeholder="Username or profile URL" aria-label="OnlyFans link"></label>
                       <button type="button" data-social-focus="approvedControlOnlyfans">Edit</button>
                       <button type="button" data-social-clear="approvedControlOnlyfans">Clear</button>
                     </div>
                     <div class="social-edit-field">
-                      <label for="approvedControlX">X<input id="approvedControlX" type="text" placeholder="@username or profile URL" aria-label="X handle"></label>
+                      <label for="approvedControlX">X<input id="approvedControlX" type="text" placeholder="Username or profile URL" aria-label="X handle"></label>
                       <button type="button" data-social-focus="approvedControlX">Edit</button>
                       <button type="button" data-social-clear="approvedControlX">Clear</button>
                     </div>
@@ -27924,27 +27924,27 @@
                 <div id="approvedProfilePhotoReview"></div>
                 <div class="profile-edit-grid" data-fix-anchor="profile-socials">
                   <div class="field social-edit-field">
-                    <label for="profileInstagram">Instagram<input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="@username or profile URL"></label>
+                    <label for="profileInstagram">Instagram<input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="Username or profile URL"></label>
                     <button type="button" data-social-focus="profileInstagram">Edit</button>
                     <button type="button" data-social-clear="profileInstagram">Clear</button>
                   </div>
                   <div class="field social-edit-field">
-                    <label for="profileTiktok">TikTok<input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="@username or profile URL"></label>
+                    <label for="profileTiktok">TikTok<input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="Username or profile URL"></label>
                     <button type="button" data-social-focus="profileTiktok">Edit</button>
                     <button type="button" data-social-clear="profileTiktok">Clear</button>
                   </div>
                   <div class="field social-edit-field">
-                    <label for="profileSnapchat">Snapchat<input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="@username or profile URL"></label>
+                    <label for="profileSnapchat">Snapchat<input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="Username or profile URL"></label>
                     <button type="button" data-social-focus="profileSnapchat">Edit</button>
                     <button type="button" data-social-clear="profileSnapchat">Clear</button>
                   </div>
                   <div class="field social-edit-field">
-                    <label for="profileOnlyfans">OnlyFans<input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="@username or profile URL"></label>
+                    <label for="profileOnlyfans">OnlyFans<input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="Username or profile URL"></label>
                     <button type="button" data-social-focus="profileOnlyfans">Edit</button>
                     <button type="button" data-social-clear="profileOnlyfans">Clear</button>
                   </div>
                   <div class="field social-edit-field">
-                    <label for="profileX">X<input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="@username or profile URL"></label>
+                    <label for="profileX">X<input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="Username or profile URL"></label>
                     <button type="button" data-social-focus="profileX">Edit</button>
                     <button type="button" data-social-clear="profileX">Clear</button>
                   </div>
@@ -34556,7 +34556,7 @@
               return `
                 <div class="field">
                   <label for="approvedSocialInput-${displayText(platform.key)}">${displayText(platform.label)}</label>
-                  <input id="approvedSocialInput-${displayText(platform.key)}" data-approved-social-bulk-input data-social-platform="${displayText(platform.key)}" type="text" value="${escapeHtml(value)}" placeholder="${escapeHtml(platform.label === "Snapchat" ? "username or profile URL" : "@username or profile URL")}">
+                  <input id="approvedSocialInput-${displayText(platform.key)}" data-approved-social-bulk-input data-social-platform="${displayText(platform.key)}" type="text" value="${escapeHtml(value)}" placeholder="Username or profile URL">
                   ${rejected ? `<small>Not approved: ${displayText(submitted?.reviewNotes || "No reason added.")}</small>` : `<small>${displayText(platform.label)} is optional. Blank means hidden.</small>`}
                 </div>
               `;

@@ -1727,11 +1727,11 @@ function DancerSocialPanel({
 }
 
 const SOCIAL_PLATFORMS = [
-  { key: "instagram", label: "Instagram", placeholder: "@stage_name or profile URL" },
-  { key: "tiktok", label: "TikTok", placeholder: "@stage_name or profile URL" },
-  { key: "snapchat", label: "Snapchat", placeholder: "@stage_name" },
-  { key: "x", label: "X", placeholder: "@stage_name or profile URL" },
-  { key: "onlyfans", label: "OnlyFans", placeholder: "@stage_name or profile URL" },
+  { key: "instagram", label: "Instagram", placeholder: "Username or profile URL" },
+  { key: "tiktok", label: "TikTok", placeholder: "Username or profile URL" },
+  { key: "snapchat", label: "Snapchat", placeholder: "Username or profile URL" },
+  { key: "x", label: "X", placeholder: "Username or profile URL" },
+  { key: "onlyfans", label: "OnlyFans", placeholder: "Username or profile URL" },
 ];
 
 function toSocialHandle(value: string) {
