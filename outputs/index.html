@@ -34985,11 +34985,20 @@
         if (savedServerProfile) {
           applyDancerVerificationProfile(savedServerProfile);
         }
-        clearDeletedDancerPhotos(profile);
         if (isDancerSession()) {
           liveMarketState[newCity] = null;
           await loadLiveDiscovery(newCity, { force: true });
+          if (savedServerProfile) {
+            applyDancerVerificationProfile(savedServerProfile);
+            profile = activeDancerProfile(newCity) || profile;
+            console.log("EDIT_PROFILE_PHOTOS_RESTORED_AFTER_DISCOVERY", {
+              profileId: savedServerProfile.id || profile.id || null,
+              savedPhotoIds: (savedServerProfile.dancer_photos || []).map((photo) => photo.id).filter(Boolean),
+              visiblePhotoIds: activeDancerPhotoRows(profile).map((photo) => photo.id).filter(Boolean)
+            });
+          }
         }
+        clearDeletedDancerPhotos(profile);
         if (lastPostedShift?.name === oldName) {
           lastPostedShift.name = stageName;
           lastPostedShift.city = newCity;

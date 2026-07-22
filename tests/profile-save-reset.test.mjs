@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, visibilityMigrationSource] = await Promise.all([
+const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, visibilityMigrationSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
@@ -60,6 +61,19 @@ test("save refresh preserves previews only for photos confirmed by the server", 
   ]);
   assert.equal(refreshed.some((photo) => photo.id === "DELETED"), false);
   assert.match(dashboardSource, /if \(photo\.imageUrl \|\| !current\?\.imageUrl\) return photo/);
+});
+
+test("mobile profile save restores authenticated photos after public discovery refresh", () => {
+  const saveHandler = mobileAppSource.match(/async function saveApprovedDancerProfile[\s\S]*?\r?\n    function handleShiftManagerAction/)?.[0] || "";
+  const discoveryRefreshIndex = saveHandler.indexOf('await loadLiveDiscovery(newCity, { force: true });');
+  const authenticatedRestoreIndex = saveHandler.indexOf("applyDancerVerificationProfile(savedServerProfile);", discoveryRefreshIndex);
+  const deletedStateClearIndex = saveHandler.indexOf("clearDeletedDancerPhotos(profile);", authenticatedRestoreIndex);
+
+  assert.ok(discoveryRefreshIndex >= 0, "mobile save must refresh public discovery");
+  assert.ok(authenticatedRestoreIndex > discoveryRefreshIndex, "authenticated profile must be restored after public discovery replaces market cards");
+  assert.ok(deletedStateClearIndex > authenticatedRestoreIndex, "deletion state must clear on the restored authenticated profile");
+  assert.match(saveHandler, /profile = activeDancerProfile\(newCity\) \|\| profile/);
+  assert.match(saveHandler, /EDIT_PROFILE_PHOTOS_RESTORED_AFTER_DISCOVERY/);
 });
 
 test("saved profiles keep every active photo moderation state in the editor", () => {
@@ -160,8 +174,8 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /photo-editor-status-sync-fix-v7/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-editor-status-sync-fix-v7"/);
+  assert.match(rootRouteSource, /mobile-photo-save-refresh-fix-v8/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "mobile-photo-save-refresh-fix-v8"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);

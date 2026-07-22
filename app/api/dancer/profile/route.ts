@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "photo-editor-status-sync-fix-v7";
+const PROFILE_SAVE_VERSION = "mobile-photo-save-refresh-fix-v8";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);

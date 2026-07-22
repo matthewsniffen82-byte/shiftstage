@@ -789,7 +789,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-editor-status-sync-fix-v7");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "mobile-photo-save-refresh-fix-v8");
   }, []);
 
   useEffect(() => {
