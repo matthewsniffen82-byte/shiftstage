@@ -31,7 +31,7 @@ export async function PATCH(request: Request) {
     const db = client as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
-      .select("id, status, disabled_at, is_public")
+      .select("id, status, verification_status, disabled_at, is_public")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -40,7 +40,12 @@ export async function PATCH(request: Request) {
       return json({ ok: false, error: "Dancer profile not found." }, 404);
     }
 
-    if (body.isPublic && String(currentProfile.status || "").toLowerCase() !== "approved") {
+    const profileStatus = String(currentProfile.status || "").toLowerCase();
+    const verificationStatus = String(currentProfile.verification_status || "").toLowerCase();
+    const coreApprovalComplete = profileStatus === "approved" || verificationStatus === "approved";
+    const profileBlocked = profileStatus === "rejected" || profileStatus === "disabled";
+
+    if (body.isPublic && (!coreApprovalComplete || profileBlocked)) {
       return json({ ok: false, error: "Profile approval is required before reactivation." }, 409);
     }
     if (body.isPublic && currentProfile.disabled_at) {

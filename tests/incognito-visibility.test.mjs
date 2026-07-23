@@ -15,6 +15,8 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /\.eq\("user_id", user\.id\)/);
   assert.match(routeSource, /\.update\(\{ is_public: body\.isPublic \}\)/);
   assert.match(routeSource, /updatedProfile\.is_public !== body\.isPublic/);
+  assert.match(routeSource, /coreApprovalComplete = profileStatus === "approved" \|\| verificationStatus === "approved"/);
+  assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
   assert.match(dashboardSource, /fetch\("\/api\/dancer\/profile\/visibility"/);
   assert.doesNotMatch(
@@ -35,6 +37,8 @@ test("the production mobile control cannot report a local-only incognito success
 });
 
 test("incognito privacy is enforced for every public dancer relation", () => {
+  assert.match(migrationSource, /verification_status = 'approved'/);
+  assert.match(migrationSource, /status not in \('rejected', 'disabled'\)/);
   assert.match(migrationSource, /public_dancer_profiles[\s\S]*?dp\.is_public = true/);
   assert.match(migrationSource, /approved public dancers are public[\s\S]*?is_public = true/);
   assert.match(migrationSource, /approved photos are public[\s\S]*?dp\.is_public = true/);

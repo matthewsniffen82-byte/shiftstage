@@ -1,9 +1,21 @@
 alter table public.dancer_profiles
   add column if not exists is_public boolean not null default true;
 
+update public.dancer_profiles
+set is_public = true
+where is_public is null;
+
+alter table public.dancer_profiles
+  alter column is_public set default true,
+  alter column is_public set not null;
+
 create index if not exists dancer_profiles_public_discovery_idx
 on public.dancer_profiles (city, stage_name)
-where status = 'approved' and is_public = true and disabled_at is null;
+where
+  (status = 'approved' or verification_status = 'approved')
+  and status not in ('rejected', 'disabled')
+  and is_public = true
+  and disabled_at is null;
 
 create or replace view public.public_dancer_profiles as
 select
@@ -18,7 +30,8 @@ select
   ts.trend
 from public.dancer_profiles dp
 left join public.trending_scores ts on ts.dancer_id = dp.id
-where dp.status = 'approved'
+where (dp.status = 'approved' or dp.verification_status = 'approved')
+  and dp.status not in ('rejected', 'disabled')
   and dp.is_public = true
   and dp.disabled_at is null;
 
@@ -27,7 +40,12 @@ create policy "approved public dancers are public"
 on public.dancer_profiles
 for select
 using (
-  (status = 'approved' and is_public = true and disabled_at is null)
+  (
+    (status = 'approved' or verification_status = 'approved')
+    and status not in ('rejected', 'disabled')
+    and is_public = true
+    and disabled_at is null
+  )
   or user_id = auth.uid()
   or public.is_admin()
 );
@@ -43,7 +61,8 @@ using (
       select 1
       from public.dancer_profiles dp
       where dp.id = dancer_id
-        and dp.status = 'approved'
+        and (dp.status = 'approved' or dp.verification_status = 'approved')
+        and dp.status not in ('rejected', 'disabled')
         and dp.is_public = true
         and dp.disabled_at is null
     )
@@ -68,7 +87,8 @@ using (
       select 1
       from public.dancer_profiles dp
       where dp.id = dancer_id
-        and dp.status = 'approved'
+        and (dp.status = 'approved' or dp.verification_status = 'approved')
+        and dp.status not in ('rejected', 'disabled')
         and dp.is_public = true
         and dp.disabled_at is null
     )
@@ -93,7 +113,8 @@ using (
       select 1
       from public.dancer_profiles dp
       where dp.id = dancer_id
-        and dp.status = 'approved'
+        and (dp.status = 'approved' or dp.verification_status = 'approved')
+        and dp.status not in ('rejected', 'disabled')
         and dp.is_public = true
         and dp.disabled_at is null
     )
@@ -116,7 +137,8 @@ using (
     select 1
     from public.dancer_profiles dp
     where dp.id = dancer_id
-      and dp.status = 'approved'
+      and (dp.status = 'approved' or dp.verification_status = 'approved')
+      and dp.status not in ('rejected', 'disabled')
       and dp.is_public = true
       and dp.disabled_at is null
   )
@@ -141,7 +163,8 @@ using (
     join public.dancer_profiles d on d.id = dp.dancer_id
     where dp.storage_path = storage.objects.name
       and dp.review_status = 'approved'
-      and d.status = 'approved'
+      and (d.status = 'approved' or d.verification_status = 'approved')
+      and d.status not in ('rejected', 'disabled')
       and d.is_public = true
       and d.disabled_at is null
   )
