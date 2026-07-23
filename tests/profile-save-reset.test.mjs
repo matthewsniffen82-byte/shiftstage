@@ -19,12 +19,28 @@ const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, ro
 
 test("Hard Reset is a read-only database reload", () => {
   const resetHandler = dashboardSource.match(/async function hardResetProfile\(\)[\s\S]*?\n  async function saveProfile/)?.[0] || "";
+  const dancerPanel = dashboardSource.match(/function DancerPanel\([\s\S]*?\nfunction DancerVisibilityPanel/)?.[0] || "";
   assert.match(resetHandler, /fetch\("\/api\/dancer\/profile"/);
   assert.match(resetHandler, /method: "GET"/);
   assert.doesNotMatch(resetHandler, /method: "PATCH"|\.update\(|\.insert\(|\.upsert\(|\.delete\(/);
+  assert.match(resetHandler, /onProfileChange\?\.\(data\.profile\)/);
+  assert.match(dancerPanel, /isCoreApprovedDancerProfile\(profile\)/);
+  assert.match(dancerPanel, /verification_status \|\| profile\.verificationStatus/);
+  assert.match(dancerPanel, /verificationStatus === "approved"/);
+  assert.match(dancerPanel, /status === "rejected" \|\| status === "disabled"/);
 
   const getHandler = profileRouteSource.match(/export async function GET[\s\S]*?\n}\n\nasync function loadPendingPhotoReviews/)?.[0] || "";
   assert.doesNotMatch(getHandler, /removeSupersededPendingPhotoRows|\.update\(|\.insert\(|\.upsert\(|\.delete\(/);
+
+  const approvedFromVerification = { status: "pending_review", verification_status: "approved" };
+  const remainsApproved = (profile) => {
+    const status = String(profile.status || "").toLowerCase();
+    const verificationStatus = String(profile.verification_status || profile.verificationStatus || "").toLowerCase();
+    return status !== "rejected" && status !== "disabled" &&
+      (status === "approved" || status === "verified" || verificationStatus === "approved");
+  };
+  assert.equal(remainsApproved(approvedFromVerification), true);
+  assert.equal(remainsApproved({ ...approvedFromVerification }), true);
 });
 
 test("fresh database photos replace stale editor photos", () => {
@@ -197,8 +213,8 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /photo-delete-core-approval-v11/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-delete-core-approval-v11"/);
+  assert.match(rootRouteSource, /hard-refresh-core-approval-v12/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "hard-refresh-core-approval-v12"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(publicSource, /coreVerificationApproved = status === "approved" \|\| verificationStatus === "approved"/);

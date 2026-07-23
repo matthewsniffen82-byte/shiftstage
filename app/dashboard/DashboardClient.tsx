@@ -610,8 +610,7 @@ function DancerPanel({
   reviews?: LoadState["reviews"];
   weeklyReport?: LoadState["weeklyReport"];
 }) {
-  const dancerStatus = String(profile?.status || "").toLowerCase();
-  const isApproved = dancerStatus === "approved" || dancerStatus === "verified";
+  const isApproved = isCoreApprovedDancerProfile(profile);
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
 
@@ -661,6 +660,14 @@ function DancerPanel({
       <DancerBillingPanel />
     </>
   );
+}
+
+function isCoreApprovedDancerProfile(profile: LoadState["profile"]) {
+  if (!profile || profile.disabled_at || profile.disabledAt) return false;
+  const status = String(profile.status || "").toLowerCase();
+  const verificationStatus = String(profile.verification_status || profile.verificationStatus || "").toLowerCase();
+  if (status === "rejected" || status === "disabled") return false;
+  return status === "approved" || status === "verified" || verificationStatus === "approved";
 }
 
 function DancerVisibilityPanel({
@@ -791,7 +798,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-delete-core-approval-v11");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "hard-refresh-core-approval-v12");
   }, []);
 
   useEffect(() => {
