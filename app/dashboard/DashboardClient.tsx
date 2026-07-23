@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
+import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 
 type DashboardRole = "customer" | "dancer" | "venue";
 
@@ -133,6 +134,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
           {role === "dancer" ? (
             <DancerPanel
+              accountState={state.account?.accountState}
               analytics={state.analytics}
               deals={state.deals}
               profile={state.profile}
@@ -594,6 +596,7 @@ function readSetting(profile: LoadState["profile"], key: string, fallback: boole
 }
 
 function DancerPanel({
+  accountState,
   analytics,
   deals,
   onProfileChange,
@@ -602,6 +605,7 @@ function DancerPanel({
   reviews,
   weeklyReport,
 }: {
+  accountState?: string;
   analytics?: LoadState["analytics"];
   deals?: LoadState["deals"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
@@ -610,7 +614,8 @@ function DancerPanel({
   reviews?: LoadState["reviews"];
   weeklyReport?: LoadState["weeklyReport"];
 }) {
-  const isApproved = isCoreApprovedDancerProfile(profile);
+  const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
+  const isApproved = effectiveStatus === "approved";
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
 
@@ -618,7 +623,7 @@ function DancerPanel({
     <>
       <InfoPanel title="Profile">
         <Metric label="Stage name" value={String(profile?.stage_name || profile?.stageName || "Draft")} />
-        <Metric label="Status" value={String(profile?.status || "draft")} />
+        <Metric label="Status" value={effectiveStatus} />
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
       {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
@@ -660,14 +665,6 @@ function DancerPanel({
       <DancerBillingPanel />
     </>
   );
-}
-
-function isCoreApprovedDancerProfile(profile: LoadState["profile"]) {
-  if (!profile || profile.disabled_at || profile.disabledAt) return false;
-  const status = String(profile.status || "").toLowerCase();
-  const verificationStatus = String(profile.verification_status || profile.verificationStatus || "").toLowerCase();
-  if (status === "rejected" || status === "disabled") return false;
-  return status === "approved" || status === "verified" || verificationStatus === "approved";
 }
 
 function DancerVisibilityPanel({
@@ -798,7 +795,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "hard-refresh-core-approval-v12");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");
   }, []);
 
   useEffect(() => {

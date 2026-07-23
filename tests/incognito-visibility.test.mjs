@@ -15,7 +15,7 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /\.eq\("user_id", user\.id\)/);
   assert.match(routeSource, /\.update\(\{ is_public: body\.isPublic \}\)/);
   assert.match(routeSource, /updatedProfile\.is_public !== body\.isPublic/);
-  assert.match(routeSource, /coreApprovalComplete = profileStatus === "approved" \|\| verificationStatus === "approved"/);
+  assert.match(routeSource, /coreApprovalComplete = isCoreVerificationApproved\(currentProfile\)/);
   assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
   assert.match(dashboardSource, /fetch\("\/api\/dancer\/profile\/visibility"/);

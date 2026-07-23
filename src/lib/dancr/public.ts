@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./types";
 import { getTonightWindow } from "./schedule";
+import { isPublicDancerProfileEligible } from "./profile-approval";
 
 type DancrClient = SupabaseClient;
 
@@ -11,19 +12,7 @@ function isMissingIsPublicColumnError(error: any) {
 }
 
 export function isApprovedPublicDancerRow(dancer: any) {
-  const status = String(dancer?.status || "").toLowerCase();
-  const verificationStatus = String(dancer?.verification_status || dancer?.verificationStatus || "").toLowerCase();
-  const coreVerificationApproved = status === "approved" || verificationStatus === "approved";
-  const explicitlyBlocked = status === "rejected" || status === "disabled";
-  const explicitlyPrivate = dancer?.is_public === false || dancer?.isPublic === false;
-  return Boolean(
-    dancer &&
-    coreVerificationApproved &&
-    !explicitlyBlocked &&
-    !dancer.disabled_at &&
-    !dancer.disabledAt &&
-    !explicitlyPrivate,
-  );
+  return isPublicDancerProfileEligible(dancer);
 }
 
 export async function getApprovedDancersByCity(client: DancrClient, city: string): Promise<DancerCard[]> {

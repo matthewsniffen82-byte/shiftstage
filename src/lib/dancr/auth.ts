@@ -172,13 +172,17 @@ export async function setAccountState(client: DancrClient, userId: string, accou
 
   if (error) throw error;
 
-  if (data.role === "dancer" && accountState !== "active") {
+  if (data.role === "dancer") {
+    const dancerUpdate =
+      accountState === "active"
+        ? await activeDancerProfileState(client, userId)
+        : {
+            status: "disabled" as const,
+            disabled_at: new Date().toISOString(),
+          };
     const { error: dancerError } = await client
       .from("dancer_profiles")
-      .update({
-        status: "disabled",
-        disabled_at: new Date().toISOString(),
-      })
+      .update(dancerUpdate)
       .eq("user_id", userId);
 
     if (dancerError) throw dancerError;
@@ -191,6 +195,26 @@ export async function setAccountState(client: DancrClient, userId: string, accou
     email: data.email,
     accountState: data.account_state,
   };
+}
+
+async function activeDancerProfileState(client: DancrClient, userId: string) {
+  const { data, error } = await client
+    .from("dancer_profiles")
+    .select("status, verification_status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  const verificationStatus = String(data?.verification_status || "").toLowerCase();
+  const currentStatus = String(data?.status || "").toLowerCase();
+  const status =
+    verificationStatus === "approved"
+      ? "approved"
+      : currentStatus === "rejected"
+        ? "rejected"
+        : "pending_review";
+
+  return { status, disabled_at: null };
 }
 
 export async function getCustomerProfile(client: DancrClient, userId: string): Promise<CustomerProfile | null> {

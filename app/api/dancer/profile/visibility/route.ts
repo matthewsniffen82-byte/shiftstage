@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,8 +42,7 @@ export async function PATCH(request: Request) {
     }
 
     const profileStatus = String(currentProfile.status || "").toLowerCase();
-    const verificationStatus = String(currentProfile.verification_status || "").toLowerCase();
-    const coreApprovalComplete = profileStatus === "approved" || verificationStatus === "approved";
+    const coreApprovalComplete = isCoreVerificationApproved(currentProfile);
     const profileBlocked = profileStatus === "rejected" || profileStatus === "disabled";
 
     if (body.isPublic && (!coreApprovalComplete || profileBlocked)) {

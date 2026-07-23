@@ -575,14 +575,25 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
 
   const { data: dancer, error: dancerError } = await db
     .from("dancer_profiles")
-    .select("id, user_id, stage_name")
+    .select("id, user_id, stage_name, disabled_at")
     .eq("id", input.dancerId)
     .maybeSingle();
 
   if (dancerError) throw dancerError;
   if (!dancer) throw new Error("Dancer profile not found.");
 
-  if (approved) await assertAllSubmittedContentReviewed(client, dancer);
+  if (approved) {
+    const { data: account, error: accountError } = await db
+      .from("app_users")
+      .select("account_state")
+      .eq("id", dancer.user_id)
+      .maybeSingle();
+    if (accountError) throw accountError;
+    if (account?.account_state !== "active" || dancer.disabled_at) {
+      throw new Error("Reactivate the dancer account before approving this profile.");
+    }
+    await assertAllSubmittedContentReviewed(client, dancer);
+  }
 
   const statusUpdate = approved
     ? {
@@ -1217,19 +1228,52 @@ async function updatePhotoReviewSummary(client: DancrClient, dancerId: string) {
 
 async function updateVerificationReviewSummary(client: DancrClient, userId: string, dancerId: string) {
   const db = client as any;
-  const { data: reviews, error } = await db
-    .from("approval_reviews")
-    .select("review_type, status, notes, created_at, reviewed_at")
-    .eq("dancer_id", dancerId);
+  const [reviewsResult, accountResult, profileResult] = await Promise.all([
+    db
+      .from("approval_reviews")
+      .select("review_type, status, notes, created_at, reviewed_at")
+      .eq("dancer_id", dancerId),
+    db
+      .from("app_users")
+      .select("account_state")
+      .eq("id", userId)
+      .maybeSingle(),
+    db
+      .from("dancer_profiles")
+      .select("status, approved_at, disabled_at")
+      .eq("id", dancerId)
+      .maybeSingle(),
+  ]);
 
-  if (error) throw error;
-  const documents = await listVerificationDocumentsForUser(client, userId, reviews || []);
+  if (reviewsResult.error) throw reviewsResult.error;
+  if (accountResult.error) throw accountResult.error;
+  if (profileResult.error) throw profileResult.error;
+  if (!profileResult.data) throw new Error("Dancer profile not found.");
+
+  const documents = await listVerificationDocumentsForUser(client, userId, reviewsResult.data || []);
   const statuses = requiredVerificationDocuments().map((required) => {
     const document = documents.find((item: any, index: number) => matchesRequiredVerificationDocument(item, required, index));
     return document ? (document.status === "pending_review" ? "pending" : document.status) : "pending";
   });
   const status = aggregateReviewStatus(statuses);
-  const { error: updateError } = await db.from("dancer_profiles").update({ verification_status: status }).eq("id", dancerId);
+  const accountIsActive = accountResult.data?.account_state === "active";
+  const profileIsDisabled = Boolean(profileResult.data.disabled_at);
+  const profileUpdate: Record<string, string | null> = { verification_status: status };
+
+  if (!accountIsActive || profileIsDisabled) {
+    profileUpdate.status = "disabled";
+  } else if (status === "approved") {
+    profileUpdate.status = "approved";
+    profileUpdate.approved_at = profileResult.data.approved_at || new Date().toISOString();
+  } else if (status === "rejected") {
+    profileUpdate.status = "rejected";
+    profileUpdate.approved_at = null;
+  } else if (profileResult.data.status !== "rejected") {
+    profileUpdate.status = "pending_review";
+    profileUpdate.approved_at = null;
+  }
+
+  const { error: updateError } = await db.from("dancer_profiles").update(profileUpdate).eq("id", dancerId);
   if (updateError) throw updateError;
 }
 
