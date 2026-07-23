@@ -26084,8 +26084,13 @@
     }
     /* Dancer dashboard cleanup: keep the title readable and remove the phantom wrapper outline. */
     #dancerDashboard .page-inner.dashboard-wide {
-      gap: 18px !important;
+      --dancer-dashboard-box-gap: 18px;
+      gap: var(--dancer-dashboard-box-gap) !important;
       padding-top: calc(18px + env(safe-area-inset-top, 0px)) !important;
+    }
+
+    #dancerDashboard .dashboard-status-row {
+      gap: var(--dancer-dashboard-box-gap) !important;
     }
 
     #dancerDashboard .page-head {
