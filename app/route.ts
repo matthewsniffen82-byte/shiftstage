@@ -9,8 +9,12 @@ export async function GET() {
   const html = await readFile(htmlPath, "utf8");
   const activeEditProfileMarker = '<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "pending-photo-slot-occupancy-v10");document.documentElement.setAttribute("data-active-edit-profile-version","pending-photo-slot-occupancy-v10");</script>';
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
+  const withLiveProfileStyles = withBase.replace(
+    "</head>",
+    '<link rel="stylesheet" href="/mobile-social-strip.css?v=1"></head>',
+  );
 
-  return new Response(withBase, {
+  return new Response(withLiveProfileStyles, {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",

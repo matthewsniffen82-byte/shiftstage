@@ -12,12 +12,17 @@ function isMissingIsPublicColumnError(error: any) {
 
 export function isApprovedPublicDancerRow(dancer: any) {
   const status = String(dancer?.status || "").toLowerCase();
+  const verificationStatus = String(dancer?.verification_status || dancer?.verificationStatus || "").toLowerCase();
+  const coreVerificationApproved = status === "approved" || verificationStatus === "approved";
+  const explicitlyBlocked = status === "rejected" || status === "disabled";
+  const explicitlyPrivate = dancer?.is_public === false || dancer?.isPublic === false;
   return Boolean(
     dancer &&
-    status === "approved" &&
+    coreVerificationApproved &&
+    !explicitlyBlocked &&
     !dancer.disabled_at &&
     !dancer.disabledAt &&
-    (dancer.is_public === true || dancer.isPublic === true),
+    !explicitlyPrivate,
   );
 }
 
@@ -44,9 +49,9 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
       `,
     )
     .ilike("city", cityName)
-    .eq("status", "approved")
+    .or("status.eq.approved,verification_status.eq.approved")
     .is("disabled_at", null)
-    .eq("is_public", true)
+    .or("is_public.eq.true,is_public.is.null")
     .order("stage_name", { ascending: true })
     .order("starts_at", { referencedTable: "shifts", ascending: true });
 
@@ -74,7 +79,7 @@ export async function getApprovedDancersByCity(client: DancrClient, city: string
         `,
       )
       .ilike("city", cityName)
-      .eq("status", "approved")
+      .or("status.eq.approved,verification_status.eq.approved")
       .is("disabled_at", null)
       .order("stage_name", { ascending: true })
       .order("starts_at", { referencedTable: "shifts", ascending: true });
@@ -120,9 +125,9 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
       `,
     )
     .ilike("city", cityName)
-    .eq("status", "approved")
+    .or("status.eq.approved,verification_status.eq.approved")
     .is("disabled_at", null)
-    .eq("is_public", true)
+    .or("is_public.eq.true,is_public.is.null")
     .eq("shifts.status", "posted")
     .not("shifts.checked_in_at", "is", null)
     .is("shifts.checked_out_at", null)
@@ -154,7 +159,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         `,
       )
       .ilike("city", cityName)
-      .eq("status", "approved")
+      .or("status.eq.approved,verification_status.eq.approved")
       .is("disabled_at", null)
       .eq("shifts.status", "posted")
       .not("shifts.checked_in_at", "is", null)
@@ -196,9 +201,9 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
       `,
     )
     .eq("slug", slug)
-    .eq("status", "approved")
+    .or("status.eq.approved,verification_status.eq.approved")
     .is("disabled_at", null)
-    .eq("is_public", true)
+    .or("is_public.eq.true,is_public.is.null")
     .maybeSingle();
 
   let data: any = current.data;
@@ -226,7 +231,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         `,
       )
       .eq("slug", slug)
-      .eq("status", "approved")
+      .or("status.eq.approved,verification_status.eq.approved")
       .is("disabled_at", null)
       .maybeSingle();
     data = legacy.data;

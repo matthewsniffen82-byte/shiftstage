@@ -2234,8 +2234,8 @@
     .approved-visual-profile .profile-modal .modal-image.is-pending,
     .approved-visual-profile .profile-modal .thumb.is-pending,
     .approved-visual-profile .profile-modal .social-link.is-pending {
-      border-color: rgba(217,173,79,.78) !important;
-      box-shadow: 0 0 0 2px rgba(217,173,79,.16), 0 0 18px rgba(217,173,79,.2) !important;
+      border-color: rgba(255,194,71,.98) !important;
+      box-shadow: 0 0 0 3px rgba(255,194,71,.26), 0 0 22px rgba(255,194,71,.34) !important;
     }
 
     .approved-visual-profile .profile-modal .modal-image.is-live,
@@ -2252,8 +2252,8 @@
 
     .approved-visual-profile .profile-modal .modal-image.is-main.is-pending,
     .approved-visual-profile .profile-modal .thumb.is-main.is-pending {
-      border-color: rgba(217,173,79,.78) !important;
-      box-shadow: 0 0 0 2px rgba(217,173,79,.16), 0 0 18px rgba(217,173,79,.2) !important;
+      border-color: rgba(255,194,71,.98) !important;
+      box-shadow: 0 0 0 3px rgba(255,194,71,.26), 0 0 22px rgba(255,194,71,.34) !important;
     }
 
     .approved-visual-profile .profile-modal .modal-image.is-main.is-rejected,
@@ -26473,8 +26473,7 @@
       line-height: 1 !important;
     }
 
-    #approvedEditProfileDropdown.show .approved-photo-review-badge,
-    #approvedEditProfileDropdown.show .approved-photo-slot-status {
+    #approvedEditProfileDropdown.show .approved-photo-review-badge {
       position: absolute !important;
       z-index: 8 !important;
       display: inline-flex !important;
@@ -26491,18 +26490,11 @@
     }
 
     #approvedEditProfileDropdown.show .approved-photo-review-badge {
-      top: max(14px, env(safe-area-inset-top)) !important;
-      left: 14px !important;
-      padding: 7px 11px !important;
-      font-size: .76rem !important;
-    }
-
-    #approvedEditProfileDropdown.show .approved-photo-slot-status {
-      right: 2px !important;
-      bottom: 2px !important;
-      max-width: calc(100% - 4px) !important;
-      padding: 2px 5px !important;
-      font-size: .52rem !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      padding: 10px 16px !important;
+      font-size: .9rem !important;
       white-space: nowrap !important;
     }
 
@@ -34349,20 +34341,52 @@
       }
     }
 
+    const queuedDancerPhotoDeletions = new Map();
+
+    function dancerPhotoDeletionQueueKey(profile) {
+      const stableId = profile?.id || profile?.dancerId || profile?.user_id || profile?.userId;
+      if (stableId) return `dancer:${String(stableId)}`;
+      const city = profile?.city || activeDancerCity() || "";
+      const name = profile?.name || profile?.stage_name || profile?.stageName || activeDancerName() || "";
+      return `profile:${String(city).trim().toLowerCase()}:${String(name).trim().toLowerCase()}`;
+    }
+
+    function dancerPhotoDeletionQueue(profile, create = false) {
+      const key = dancerPhotoDeletionQueueKey(profile);
+      if (!queuedDancerPhotoDeletions.has(key) && create) {
+        queuedDancerPhotoDeletions.set(key, {
+          ids: new Set(),
+          storagePaths: new Set(),
+          urls: new Set()
+        });
+      }
+      return queuedDancerPhotoDeletions.get(key) || null;
+    }
+
     function deletedDancerPhotoKeySet(profile) {
+      const queued = dancerPhotoDeletionQueue(profile);
       return new Set([
         ...(profile?.deletedPhotoIds || []),
         ...(profile?.deletedPhotoStoragePaths || []),
-        ...(profile?.deletedPhotoUrls || [])
+        ...(profile?.deletedPhotoUrls || []),
+        ...(queued?.ids || []),
+        ...(queued?.storagePaths || []),
+        ...(queued?.urls || [])
       ].map(normalizeDancerPhotoKey).filter(Boolean));
     }
 
     function photoDeletedPayloadFromProfile(profile) {
+      const queued = dancerPhotoDeletionQueue(profile);
       return {
-        deletedPhotoIds: [...new Set((profile?.deletedPhotoIds || []).map(normalizeDancerPhotoKey).filter(Boolean))],
+        deletedPhotoIds: [...new Set([
+          ...(profile?.deletedPhotoIds || []),
+          ...(queued?.ids || [])
+        ].map(normalizeDancerPhotoKey).filter(Boolean))],
         deletedPhotoStoragePaths: [...new Set([
           ...(profile?.deletedPhotoStoragePaths || []),
-          ...(profile?.deletedPhotoUrls || [])
+          ...(profile?.deletedPhotoUrls || []),
+          ...(queued?.storagePaths || []),
+          ...(queued?.urls || [])
         ].map(normalizeDancerPhotoKey).filter(Boolean))]
       };
     }
@@ -34388,6 +34412,11 @@
       const id = normalizeDancerPhotoKey(photoId);
       const url = normalizeDancerPhotoKey(photoUrl);
       const path = normalizeDancerPhotoKey(storagePath);
+      const queued = dancerPhotoDeletionQueue(profile, true);
+      if (id) queued.ids.add(id);
+      if (url) queued.urls.add(url);
+      if (path) queued.storagePaths.add(path);
+      if (url) queued.storagePaths.add(url);
       profile.deletedPhotoIds = [...new Set([...(profile.deletedPhotoIds || []), id].filter(Boolean))];
       profile.deletedPhotoUrls = [...new Set([...(profile.deletedPhotoUrls || []), url].filter(Boolean))];
       profile.deletedPhotoStoragePaths = [...new Set([...(profile.deletedPhotoStoragePaths || []), path, url].filter(Boolean))];
@@ -34398,6 +34427,7 @@
       profile.deletedPhotoIds = [];
       profile.deletedPhotoUrls = [];
       profile.deletedPhotoStoragePaths = [];
+      queuedDancerPhotoDeletions.delete(dancerPhotoDeletionQueueKey(profile));
     }
 
     function photoMatchesDeletedDancerPhoto(profile, photo = {}) {
@@ -34568,7 +34598,6 @@
                 ${photos.map((photo) => `
                   <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : photo.status === "approved" ? "is-live" : ""} ${photo.status === "approved" && photo.target === "main" ? "is-main" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.id || photo.target)}" data-photo-id="${displayText(photo.id || "")}" data-photo-target="${displayText(photo.target)}" data-photo-url="${displayText(photo.imageUrl || "")}" data-photo-storage-path="${displayText(photo.storagePath || photo.storage_path || "")}" data-photo-label="${displayText(photo.label)}" data-review-status="${displayText(photo.status || "")}" data-review-notes="${displayText(photo.notes || "")}" title="${displayText(approvedPhotoEditMode ? `Edit ${photo.label}` : photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
-                    ${photo.status === "pending" ? '<span class="approved-photo-slot-status">Pending review</span>' : ""}
                   </button>
                 `).join("")}
                 ${emptyPhotoSlots}
@@ -36992,6 +37021,7 @@
       const localProfile = ensureActiveDancerProfile(approved ? "Verified" : rejected ? "Rejected" : "Pending");
       if (localProfile) {
         Object.assign(localProfile, {
+          id: profile.id || localProfile.id,
           name: stageName || localProfile.name,
           city: city || localProfile.city || citySelect.value || "Las Vegas",
           mainPhotoUrl: photos[0] || "",
@@ -40361,32 +40391,31 @@
           setResult("Profile not found.");
           return;
         }
+        if (!isDancerSession() || !authSession?.accessToken) {
+          setResult("Sign in to your dancer account to change profile visibility.");
+          openAuthRole("dancer");
+          return;
+        }
         const nextPublic = dancerProfileIsHidden(profile);
         if (trigger) trigger.disabled = true;
         setResult(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from public pages...");
         try {
-          let savedProfile = null;
-          if (isDancerSession()) {
-            const data = await patchAuthenticatedJson("/api/dancer/profile", { isPublic: nextPublic });
-            if (!data) throw new Error("Sign in required");
-            savedProfile = data.profile || null;
-            const savedPublic = savedProfile
-              ? (savedProfile.is_public !== false && savedProfile.isPublic !== false)
-              : null;
-            if (savedPublic !== nextPublic) {
-              throw new Error("Profile visibility did not save. Try again.");
-            }
-            applyDancerVerificationProfile(savedProfile);
+          const data = await patchAuthenticatedJson("/api/dancer/profile/visibility", { isPublic: nextPublic });
+          if (!data) throw new Error("Sign in required");
+          const savedProfile = data.profile || null;
+          const savedPublic = savedProfile?.is_public === true || savedProfile?.isPublic === true;
+          if (savedPublic !== nextPublic) {
+            throw new Error("Profile visibility did not save. Try again.");
           }
           const updatedProfile = activeDancerProfile(city) || profile;
-          setDancerProfilePublic(updatedProfile, nextPublic);
+          setDancerProfilePublic(updatedProfile, savedPublic);
           liveMarketState[city] = null;
           syncDancerIncognitoToggle(updatedProfile, true);
           renderDancerSetup();
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
-          setResult(nextPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from the site.");
-          showToast(nextPublic ? "Profile reactivated" : "Incognito on");
+          setResult(savedPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from the site.");
+          showToast(savedPublic ? "Profile reactivated" : "Incognito on");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");
           showToast(error.message || "Could not update profile visibility.");

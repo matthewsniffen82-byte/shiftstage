@@ -1,0 +1,49 @@
+/* Keep live and edit social actions in one compact, distinct mobile strip. */
+@media (max-width: 430px) {
+  #profileModal .social-tile,
+  .approved-visual-profile .profile-modal .social-tile {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    column-gap: 8px !important;
+    row-gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  #profileModal .social-tile .profile-utility-actions,
+  .approved-visual-profile .profile-modal .approved-social-tools {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    justify-self: start !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding-right: 8px !important;
+    border-right: 1px solid rgba(53, 216, 255, 0.28) !important;
+  }
+
+  #profileModal .social-tile .social-links,
+  .approved-visual-profile .profile-modal .social-tile .social-links {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    min-width: 0 !important;
+    justify-self: stretch !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+
+  #profileModal .social-tile .profile-qr-trigger,
+  #profileModal .social-tile .profile-share-trigger,
+  #profileModal .social-tile .social-link,
+  .approved-visual-profile .profile-modal .approved-social-tools .profile-qr-trigger,
+  .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger,
+  .approved-visual-profile .profile-modal .social-tile .social-link {
+    width: clamp(34px, 9.5vw, 40px) !important;
+    height: clamp(34px, 9.5vw, 40px) !important;
+    min-width: clamp(34px, 9.5vw, 40px) !important;
+    min-height: clamp(34px, 9.5vw, 40px) !important;
+    flex: 0 0 clamp(34px, 9.5vw, 40px) !important;
+  }
+
+  .approved-visual-profile .profile-modal .approved-social-edit-row {
+    grid-row: 3 !important;
+  }
+}

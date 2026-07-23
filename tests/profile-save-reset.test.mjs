@@ -110,6 +110,9 @@ test("saved profiles keep every active photo moderation state in the editor", ()
   assert.match(mobileAppSource, /pending_photo_reviews/);
   assert.match(mobileAppSource, /editableDancerPhotoRows\(profile\)/);
   assert.match(mobileAppSource, /approved-photo-review-badge[^]*Pending review/);
+  assert.match(mobileAppSource, /approved-photo-review-badge[^]*?top: 50% !important[^]*?left: 50% !important[^]*?translate\(-50%, -50%\)/);
+  assert.match(mobileAppSource, /\.thumb\.is-pending[^]*?border-color: rgba\(255,194,71,\.98\)/);
+  assert.doesNotMatch(mobileAppSource, /approved-photo-slot-status/);
 });
 
 test("gallery uploads use unique database slots and deletion targets one exact id", () => {
@@ -194,13 +197,15 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /pending-photo-slot-occupancy-v10/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "pending-photo-slot-occupancy-v10"/);
+  assert.match(rootRouteSource, /photo-delete-core-approval-v11/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "photo-delete-core-approval-v11"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
-  assert.match(publicSource, /status === "approved"/);
-  assert.match(publicSource, /dancer\.is_public === true \|\| dancer\.isPublic === true/);
-  assert.match(publicSource, /\.eq\("status", "approved"\)/);
+  assert.match(publicSource, /coreVerificationApproved = status === "approved" \|\| verificationStatus === "approved"/);
+  assert.match(publicSource, /explicitlyBlocked = status === "rejected" \|\| status === "disabled"/);
+  assert.match(publicSource, /explicitlyPrivate = dancer\?\.is_public === false \|\| dancer\?\.isPublic === false/);
+  assert.match(publicSource, /\.or\("status\.eq\.approved,verification_status\.eq\.approved"\)/);
+  assert.match(publicSource, /\.or\("is_public\.eq\.true,is_public\.is\.null"\)/);
   assert.match(publicSource, /\.is\("disabled_at", null\)/);
   assert.doesNotMatch(publicSource, /previouslyApproved|fullyReviewed/);
   assert.match(mobileAppSource, /liveMarketState\[city\] !== "ready"/);
@@ -210,6 +215,10 @@ test("the live entry point and visibility query support the production schema", 
 
 test("photo save persists queued changes regardless of pencil highlight state", () => {
   const saveHandler = mobileAppSource.match(/async function saveApprovedDancerProfile[^]*?\n    function handleShiftManagerAction/)?.[0] || "";
+  assert.match(mobileAppSource, /const queuedDancerPhotoDeletions = new Map\(\)/);
+  assert.match(mobileAppSource, /const queued = dancerPhotoDeletionQueue\(profile, true\)/);
+  assert.match(mobileAppSource, /\.\.\.\(queued\?\.ids \|\| \[\]\)/);
+  assert.match(mobileAppSource, /queuedDancerPhotoDeletions\.delete\(dancerPhotoDeletionQueueKey\(profile\)\)/);
   assert.match(saveHandler, /const deletedPhotoPayload = photoDeletedPayloadFromProfile\(oldProfile\)/);
   assert.match(saveHandler, /\.\.\.deletedPhotoPayload/);
   assert.doesNotMatch(saveHandler, /if \(approvedPhotoEditMode\)/);

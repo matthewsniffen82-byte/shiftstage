@@ -690,16 +690,18 @@ function DancerVisibilityPanel({
     setIsSaving(true);
     setStatus(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from the site...");
     try {
-      const response = await fetch("/api/dancer/profile", {
+      const response = await fetch("/api/dancer/profile/visibility", {
         method: "PATCH",
         headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
         body: JSON.stringify({ isPublic: nextPublic }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update profile visibility.");
-      if (data.profile) onProfileChange?.(data.profile);
-      setIsPublic(nextPublic);
-      setStatus(nextPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
+      const savedPublic = data.profile?.is_public === true || data.profile?.isPublic === true;
+      if (savedPublic !== nextPublic) throw new Error("Profile visibility did not save. Try again.");
+      if (data.profile) onProfileChange?.({ ...(profile || {}), ...data.profile });
+      setIsPublic(savedPublic);
+      setStatus(savedPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
     } finally {
@@ -789,7 +791,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "pending-photo-slot-occupancy-v10");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "photo-delete-core-approval-v11");
   }, []);
 
   useEffect(() => {
