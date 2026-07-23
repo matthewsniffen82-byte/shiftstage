@@ -789,7 +789,7 @@ function DancerSetupPanel({
   const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log("ACTIVE_EDIT_PROFILE_VERSION", "mobile-profile-scroll-stability-v9");
+    console.log("ACTIVE_EDIT_PROFILE_VERSION", "pending-photo-slot-occupancy-v10");
   }, []);
 
   useEffect(() => {
@@ -1912,7 +1912,7 @@ function DancerPhotoPanel({
       };
       if (approved && data.photo?.imageUrl) URL.revokeObjectURL(localPreviewUrl);
       if (uploadStatus === "rejected") URL.revokeObjectURL(localPreviewUrl);
-      else setPhotos((current) => relabelPhotoItems(mergePhotoItems([uploadedPhoto], current)));
+      else setPhotos((current) => relabelPhotoItems(mergePhotoItems(current, [uploadedPhoto])));
       setStatus(photoUploadStatusMessage(uploadStatus, data.message));
       selectPhoto(null);
     } catch (error) {
@@ -2042,15 +2042,16 @@ function dancerPhotoItemsFromProfile(profile: LoadState["profile"]): DancerPhoto
   const pendingItems = pendingReviews.flatMap<DancerPhotoItem>((review) => {
     const id = String(review.id || "").trim();
     if (!id) return [];
-    const isPrimary = String(review.upload_context || "").includes("main");
+    const isPrimary = Boolean(review.is_primary || review.isPrimary || String(review.upload_context || "").includes("main"));
     return [{
       id,
       imageUrl: String(review.previewUrl || review.preview_url || ""),
       label: isPrimary ? "Main Photo" : "Photo",
       status: "pending",
-      note: "Uploaded and awaiting admin verification before it appears publicly.",
+      note: "Pending review. This photo keeps its slot occupied until it is approved or rejected.",
       storagePath: String(review.temporary_storage_path || review.storagePath || ""),
       isPrimary,
+      sortOrder: Number(review.sort_order ?? review.sortOrder ?? (isPrimary ? 0 : 0)),
     }];
   });
 
@@ -2093,9 +2094,13 @@ function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {
 function mergePhotoItems(...groups: DancerPhotoItem[][]) {
   const byKey = new Map<string, DancerPhotoItem>();
   groups.flat().forEach((photo) => {
-    const key = photo.id;
-    const existing = byKey.get(key);
-    if (!existing || (existing.status !== "approved" && photo.status === "approved")) byKey.set(key, photo);
+    const sortOrder = Number(photo.sortOrder);
+    const key = photo.isPrimary
+      ? "main"
+      : Number.isInteger(sortOrder) && sortOrder > 0
+        ? `gallery:${sortOrder}`
+        : `photo:${photo.id}`;
+    byKey.set(key, photo);
   });
   return Array.from(byKey.values()).slice(0, MAX_DANCER_PROFILE_PHOTOS);
 }
@@ -2109,8 +2114,10 @@ function relabelPhotoItems(items: DancerPhotoItem[]) {
 
 function orderPhotoItemsForDisplay(items: DancerPhotoItem[]) {
   const primary = items.find((photo) => photo.isPrimary);
-  if (!primary) return items;
-  return [primary, ...items.filter((photo) => photo.id !== primary.id)];
+  const gallery = items
+    .filter((photo) => photo !== primary)
+    .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
+  return primary ? [primary, ...gallery] : gallery;
 }
 
 function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
@@ -2123,20 +2130,20 @@ function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
 function photoStatusLabel(status: DancerPhotoItem["status"]) {
   if (status === "approved") return "Approved";
   if (status === "rejected") return "Rejected";
-  return "Needs review";
+  return "Pending review";
 }
 
 function photoStatusNote(status: DancerPhotoItem["status"]) {
   if (status === "approved") return "Live on your profile.";
   if (status === "rejected") return "Rejected by automated moderation. Choose a different photo.";
-  return "Awaiting admin verification before it appears publicly.";
+  return "Pending review. This photo keeps its slot occupied until it is approved or rejected.";
 }
 
 function photoUploadStatusMessage(status: DancerPhotoItem["status"], message?: unknown) {
   const detail = typeof message === "string" && message.trim() ? message.trim() : photoStatusNote(status);
   if (status === "approved") return `Approved: ${detail}`;
   if (status === "rejected") return `Rejected: ${detail}`;
-  return `Needs review: ${detail}`;
+  return `Pending review: ${detail}`;
 }
 
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {

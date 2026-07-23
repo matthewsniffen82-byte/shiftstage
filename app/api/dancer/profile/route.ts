@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
+import { profilePhotoSlotFromUploadContext, profilePhotoSlotKey } from "@/src/lib/dancr/photo-slot";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -10,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOCIAL_PLATFORMS = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
-const PROFILE_SAVE_VERSION = "mobile-profile-scroll-stability-v9";
+const PROFILE_SAVE_VERSION = "pending-photo-slot-occupancy-v10";
 
 function withProfileSaveVersion(response: NextResponse) {
   response.headers.set("x-dancr-profile-save-version", PROFILE_SAVE_VERSION);
@@ -174,8 +175,7 @@ export async function GET(request: Request) {
     }
 
     const profileWithPhotos = withPhotoUrls(client, data);
-    const pendingPhotoLimit = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (profileWithPhotos.dancer_photos?.length || 0));
-    const pendingPhotoReviews = await loadPendingPhotoReviews(user.id, pendingPhotoLimit);
+    const pendingPhotoReviews = await loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos);
 
     return withProfileSaveVersion(NextResponse.json({
       ok: true,
@@ -189,8 +189,7 @@ export async function GET(request: Request) {
   }
 }
 
-async function loadPendingPhotoReviews(userId: string, limit = MAX_DANCER_PROFILE_PHOTOS) {
-  if (limit <= 0) return [];
+async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = []) {
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
@@ -199,15 +198,50 @@ async function loadPendingPhotoReviews(userId: string, limit = MAX_DANCER_PROFIL
     .eq("decision", "review")
     .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
     .order("created_at", { ascending: false })
-    .limit(Math.min(limit, MAX_DANCER_PROFILE_PHOTOS));
+    .limit(25);
 
   if (error) throw error;
-  return Promise.all((data || []).map(async (review: any) => {
+  const occupiedSlots = new Set(occupiedPhotos.map((photo: any) => profilePhotoSlotKey(photo)));
+  const pendingSlots = new Set<string>();
+  const slottedReviews = (data || []).flatMap((review: any) => {
+    let slot = profilePhotoSlotFromUploadContext(review.upload_context);
+    if (!slot.isPrimary && slot.sortOrder === null) {
+      let fallbackSortOrder = 0;
+      for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
+        if (!occupiedSlots.has(`gallery:${sortOrder}`) && !pendingSlots.has(`gallery:${sortOrder}`)) {
+          fallbackSortOrder = sortOrder;
+          break;
+        }
+      }
+      if (!fallbackSortOrder) {
+        for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
+          if (!pendingSlots.has(`gallery:${sortOrder}`)) {
+            fallbackSortOrder = sortOrder;
+            break;
+          }
+        }
+      }
+      slot = profilePhotoSlotFromUploadContext(review.upload_context, fallbackSortOrder || 1);
+    }
+    if (pendingSlots.has(slot.key)) return [];
+    pendingSlots.add(slot.key);
+    return [{ ...review, slot }];
+  }).slice(0, MAX_DANCER_PROFILE_PHOTOS);
+
+  return Promise.all(slottedReviews.map(async ({ slot, ...review }: any) => {
     const storagePath = String(review.temporary_storage_path || "").trim();
-    if (!storagePath) return { ...review, previewUrl: "" };
+    const slotFields = {
+      isPrimary: slot.isPrimary,
+      is_primary: slot.isPrimary,
+      sortOrder: slot.isPrimary ? 0 : slot.sortOrder,
+      sort_order: slot.isPrimary ? 0 : slot.sortOrder,
+      reviewStatus: "pending",
+      review_status: "pending",
+    };
+    if (!storagePath) return { ...review, ...slotFields, previewUrl: "" };
     const bucket = review.status === "pending_review" ? MODERATION_REVIEW_BUCKET : MODERATION_TEMP_BUCKET;
     const { data: signed, error: signedError } = await admin.storage.from(bucket).createSignedUrl(storagePath, 60 * 60);
-    return { ...review, previewUrl: signedError ? "" : String(signed?.signedUrl || "") };
+    return { ...review, ...slotFields, previewUrl: signedError ? "" : String(signed?.signedUrl || "") };
   }));
 }
 
@@ -373,10 +407,10 @@ export async function PATCH(request: Request) {
     const editorProfileWithPhotosBeforeSave = editorProfileBeforeSave
       ? withPhotoUrls(client, editorProfileBeforeSave)
       : null;
-    const pendingPhotoLimitBeforeSave = editorProfileWithPhotosBeforeSave
-      ? Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (editorProfileWithPhotosBeforeSave.dancer_photos?.length || 0))
-      : MAX_DANCER_PROFILE_PHOTOS;
-    const pendingPhotoReviewsBeforeSave = await loadPendingPhotoReviews(user.id, pendingPhotoLimitBeforeSave);
+    const pendingPhotoReviewsBeforeSave = await loadPendingPhotoReviews(
+      user.id,
+      editorProfileWithPhotosBeforeSave?.dancer_photos || [],
+    );
     const expectedRemainingPhotoIds = new Set([
       ...((editorProfileWithPhotosBeforeSave?.dancer_photos || []).map((photo: any) => String(photo.id || ""))),
       ...pendingPhotoReviewsBeforeSave.map((photo: any) => String(photo.id || "")),
@@ -513,10 +547,10 @@ export async function PATCH(request: Request) {
     if (refreshedProfileError) throw refreshedProfileError;
 
     const refreshedProfileWithPhotos = refreshedProfile ? withPhotoUrls(client, refreshedProfile) : null;
-    const refreshedPendingLimit = refreshedProfileWithPhotos
-      ? Math.max(0, MAX_DANCER_PROFILE_PHOTOS - (refreshedProfileWithPhotos.dancer_photos?.length || 0))
-      : MAX_DANCER_PROFILE_PHOTOS;
-    const refreshedPendingPhotoReviews = await loadPendingPhotoReviews(user.id, refreshedPendingLimit);
+    const refreshedPendingPhotoReviews = await loadPendingPhotoReviews(
+      user.id,
+      refreshedProfileWithPhotos?.dancer_photos || [],
+    );
     const remainingPhotoIds = new Set([
       ...((refreshedProfileWithPhotos?.dancer_photos || []).map((photo: any) => String(photo.id || ""))),
       ...refreshedPendingPhotoReviews.map((photo: any) => String(photo.id || "")),

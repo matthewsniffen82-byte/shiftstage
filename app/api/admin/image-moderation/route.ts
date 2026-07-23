@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import { APPROVED_PHOTO_BUCKET, MODERATION_REVIEW_BUCKET, MODERATION_TEMP_BUCKET } from "@/src/lib/dancr/image-moderation";
+import { profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -106,8 +107,17 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
   if (uploadError) throw uploadError;
 
   try {
-    const sortOrder = await nextPhotoSortOrder(admin, profile.id);
-    const isPrimary = record.upload_context === "profile_main" && sortOrder === 0;
+    const requestedSlot = profilePhotoSlotFromUploadContext(record.upload_context);
+    const isPrimary = requestedSlot.isPrimary;
+    const sortOrder = isPrimary ? 0 : requestedSlot.sortOrder || await nextPhotoSortOrder(admin, profile.id);
+    let supersededQuery = admin
+      .from("dancer_photos")
+      .select("id, storage_path")
+      .eq("dancer_id", profile.id)
+      .eq("is_primary", isPrimary);
+    if (!isPrimary) supersededQuery = supersededQuery.eq("sort_order", sortOrder);
+    const { data: supersededPhotos, error: supersededError } = await supersededQuery;
+    if (supersededError) throw supersededError;
     const { data: photo, error: photoError } = await admin
       .from("dancer_photos")
       .insert({
@@ -134,6 +144,26 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
     };
     const { data: updated, error: updateError } = await admin.from("image_moderation_records").update(update).eq("id", record.id).select("*").single();
     if (updateError) throw updateError;
+    const supersededIds = (supersededPhotos || []).map((item: any) => item.id).filter(Boolean);
+    if (supersededIds.length) {
+      const { error: deleteError } = await admin
+        .from("dancer_photos")
+        .delete()
+        .eq("dancer_id", profile.id)
+        .in("id", supersededIds);
+      if (deleteError) {
+        console.warn("IMAGE_MODERATION_SUPERSEDED_SLOT_CLEANUP_FAILED", {
+          recordId: record.id,
+          dancerId: profile.id,
+          message: deleteError.message,
+        });
+      } else {
+        const supersededPaths = (supersededPhotos || []).map((item: any) => item.storage_path).filter(Boolean);
+        if (supersededPaths.length) {
+          await admin.storage.from(APPROVED_PHOTO_BUCKET).remove(supersededPaths).catch(() => null);
+        }
+      }
+    }
     await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
     return updated;
@@ -179,9 +209,18 @@ async function profileForModerationRecord(admin: any, record: any) {
 }
 
 async function nextPhotoSortOrder(admin: any, dancerId: string) {
-  const { count, error } = await admin.from("dancer_photos").select("id", { count: "exact", head: true }).eq("dancer_id", dancerId);
+  const { data, error } = await admin
+    .from("dancer_photos")
+    .select("sort_order")
+    .eq("dancer_id", dancerId)
+    .eq("is_primary", false)
+    .in("review_status", ["approved", "pending"]);
   if (error) throw error;
-  return count || 0;
+  const used = new Set((data || []).map((photo: any) => Number(photo.sort_order)));
+  for (let sortOrder = 1; sortOrder <= 5; sortOrder += 1) {
+    if (!used.has(sortOrder)) return sortOrder;
+  }
+  throw new Error("No profile photo slot is available for this approval.");
 }
 
 async function createNeutralNotification(admin: any, userId: string) {

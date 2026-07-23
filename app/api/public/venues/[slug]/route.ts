@@ -21,7 +21,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { data, error } = await client
       .from("shifts")
-      .select("id, dancer_id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status, approved_at, verification_status, photo_review_status, is_public)")
+      .select("id, dancer_id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, status, approved_at, disabled_at, verification_status, photo_review_status, is_public)")
       .eq("venue_id", venue.id)
       .eq("status", "posted")
       .gte("starts_at", new Date().toISOString())

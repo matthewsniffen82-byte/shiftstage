@@ -26468,6 +26468,39 @@
       line-height: 1 !important;
     }
 
+    #approvedEditProfileDropdown.show .approved-photo-review-badge,
+    #approvedEditProfileDropdown.show .approved-photo-slot-status {
+      position: absolute !important;
+      z-index: 8 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 1px solid rgba(255, 194, 71, .88) !important;
+      border-radius: 999px !important;
+      color: #fff8dc !important;
+      background: rgba(24, 16, 3, .94) !important;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .5) !important;
+      font-weight: 900 !important;
+      letter-spacing: .02em !important;
+      pointer-events: none !important;
+    }
+
+    #approvedEditProfileDropdown.show .approved-photo-review-badge {
+      top: max(14px, env(safe-area-inset-top)) !important;
+      left: 14px !important;
+      padding: 7px 11px !important;
+      font-size: .76rem !important;
+    }
+
+    #approvedEditProfileDropdown.show .approved-photo-slot-status {
+      right: 2px !important;
+      bottom: 2px !important;
+      max-width: calc(100% - 4px) !important;
+      padding: 2px 5px !important;
+      font-size: .52rem !important;
+      white-space: nowrap !important;
+    }
+
     #approvedEditProfileDropdown.show .modal-image.approved-photo-empty-preview {
       background: linear-gradient(145deg, rgba(12,22,28,.96), rgba(5,8,12,.98)) !important;
     }
@@ -31649,7 +31682,12 @@
         }
       } catch (error) {
         liveMarketState[city] = "fallback";
-        console.warn("Live discovery fallback", error);
+        if (markets[city]) {
+          markets[city].dancers = [];
+          markets[city].stats.dancers = 0;
+          markets[city].stats.shifts = 0;
+        }
+        console.warn("Live discovery unavailable; public dancer profiles hidden", error);
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -34135,6 +34173,31 @@
       return canonicalRows.filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo));
     }
 
+    function dancerPhotoSlotKey(photo = {}) {
+      if (photo.is_primary || photo.isPrimary) return "main";
+      const sortOrder = Number(photo.sort_order ?? photo.sortOrder);
+      return Number.isInteger(sortOrder) && sortOrder > 0
+        ? `gallery:${sortOrder}`
+        : `photo:${photo.id || photo.storage_path || photo.storagePath || "unassigned"}`;
+    }
+
+    function editableDancerPhotoRows(profile) {
+      const bySlot = new Map();
+      activeDancerPhotoRows(profile).forEach((photo) => bySlot.set(dancerPhotoSlotKey(photo), photo));
+      (profile?.submittedPhotos || [])
+        .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "pending")
+        .filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo))
+        .forEach((photo) => bySlot.set(dancerPhotoSlotKey(photo), photo));
+      return Array.from(bySlot.values())
+        .sort((left, right) => {
+          const leftPrimary = Boolean(left.is_primary || left.isPrimary);
+          const rightPrimary = Boolean(right.is_primary || right.isPrimary);
+          if (leftPrimary !== rightPrimary) return leftPrimary ? -1 : 1;
+          return Number(left.sort_order ?? left.sortOrder ?? 0) - Number(right.sort_order ?? right.sortOrder ?? 0);
+        })
+        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+    }
+
     function dancerPhotoDebugShape(photo = {}) {
       return {
         id: photo.id || "",
@@ -34182,12 +34245,12 @@
 
     function approvedVisualPhotoItems(profile, options = {}) {
       const includeUnapproved = options.includeUnapproved !== false;
-      let galleryIndex = 0;
-      return relabelVisualPhotoItems(activeDancerPhotoRows(profile)
+      return relabelVisualPhotoItems(editableDancerPhotoRows(profile)
         .filter((photo) => includeUnapproved || normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved")
         .map((photo) => {
           const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
-          const target = isPrimary ? "main" : `gallery:${galleryIndex++}`;
+          const sortOrder = Number(photo.sort_order ?? photo.sortOrder ?? 1);
+          const target = isPrimary ? "main" : `gallery:${Math.max(0, sortOrder - 1)}`;
           const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
           const review = latestContentReview(`photo:${photo.id}`);
           return {
@@ -34199,8 +34262,8 @@
             notes: review?.notes || photo.review_notes || photo.reviewNotes || "",
             target,
             storagePath: photo.storage_path || photo.storagePath || "",
-            sortOrder: Number(photo.sort_order ?? photo.sortOrder ?? 0),
-            sort_order: Number(photo.sort_order ?? photo.sortOrder ?? 0),
+            sortOrder,
+            sort_order: sortOrder,
             isPrimary,
             is_primary: isPrimary
           };
@@ -34221,7 +34284,7 @@
     }
 
     function dancerProfilePhotoSlots(profile) {
-      return activeDancerPhotoRows(profile).slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo) => ({
+      return editableDancerPhotoRows(profile).slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo) => ({
         key: normalizeDancerPhotoKey(photo.id || photo.storage_path || photo.storagePath),
         imageUrl: photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "",
         photo
@@ -34254,13 +34317,14 @@
     function normalizeLocalDancerPhotos(profile) {
       if (!profile) return;
       const activeRows = activeDancerPhotoRows(profile);
+      const editableRows = editableDancerPhotoRows(profile);
       const approvedRows = activeRows.filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved");
       const primary = approvedRows.find((photo) => photo.is_primary || photo.isPrimary) || approvedRows[0] || null;
       const approvedGallery = approvedRows.filter((photo) => photo !== primary);
       const photoUrl = (photo) => photo?.imageUrl || photo?.image_url || photo?.url || photo?.storage_path || "";
       profile.mainPhotoUrl = photoUrl(primary);
       profile.galleryPhotoUrls = approvedGallery.map(photoUrl).filter(Boolean);
-      profile.submittedPhotos = activeRows
+      profile.submittedPhotos = editableRows
         .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "pending")
         .map((photo) => ({ ...photo, imageUrl: photoUrl(photo), storagePath: photo.storage_path || photo.storagePath || "" }));
     }
@@ -34491,6 +34555,7 @@
                   </div>
                 </div>
                 <span class="approved-photo-edit-instruction">${approvedPhotoEditMode ? "Photo edit is on. Tap any photo to replace or delete it." : "Tap the pencil, then tap a photo to replace or delete it."}</span>
+                ${mainPhoto.status === "pending" ? '<span class="approved-photo-review-badge">Pending review</span>' : ""}
               </button>
               ${photoEditButton}
             </div>
@@ -34498,6 +34563,7 @@
                 ${photos.map((photo) => `
                   <button class="thumb ${photo === mainPhoto ? "active" : ""} ${photo.status === "rejected" ? "is-rejected" : photo.status === "pending" ? "is-pending" : photo.status === "approved" ? "is-live" : ""} ${photo.status === "approved" && photo.target === "main" ? "is-main" : ""}" type="button" data-fix-anchor="${displayText(`dancer-photo-${photo.id}`)}" data-approved-visual-photo-select="${displayText(photo.id || photo.target)}" data-photo-id="${displayText(photo.id || "")}" data-photo-target="${displayText(photo.target)}" data-photo-url="${displayText(photo.imageUrl || "")}" data-photo-storage-path="${displayText(photo.storagePath || photo.storage_path || "")}" data-photo-label="${displayText(photo.label)}" data-review-status="${displayText(photo.status || "")}" data-review-notes="${displayText(photo.notes || "")}" title="${displayText(approvedPhotoEditMode ? `Edit ${photo.label}` : photo.status === "rejected" ? `Not approved: ${photo.notes || "No reason added."}` : photo.status === "pending" ? "Pending admin approval" : photo.label)}">
                     <span class="portrait ${portraitClass(photos.indexOf(photo))}${customPhotoAttrs(photo.imageUrl).className}"${customPhotoAttrs(photo.imageUrl).style}></span>
+                    ${photo.status === "pending" ? '<span class="approved-photo-slot-status">Pending review</span>' : ""}
                   </button>
                 `).join("")}
                 ${emptyPhotoSlots}
@@ -36679,16 +36745,17 @@
         const rejectedUpload = uploadReviewStatus === "rejected";
         const pendingUpload = !approvedUpload && !rejectedUpload;
         const photo = {
-          id: uploaded.id || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
+          id: uploaded.id || data?.moderationRecordId || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
           imageUrl,
           image_url: imageUrl,
           isPrimary,
           is_primary: isPrimary,
           reviewStatus: approvedUpload ? "approved" : rejectedUpload ? "rejected" : "pending",
           review_status: approvedUpload ? "approved" : rejectedUpload ? "rejected" : "pending",
-          reviewNotes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Waiting for admin verification.",
-          review_notes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Waiting for admin verification.",
-          sortOrder
+          reviewNotes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Pending review. This slot stays occupied until approval or rejection.",
+          review_notes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Pending review. This slot stays occupied until approval or rejection.",
+          sortOrder: Number(uploaded.sortOrder ?? uploaded.sort_order ?? sortOrder),
+          sort_order: Number(uploaded.sortOrder ?? uploaded.sort_order ?? sortOrder)
         };
         const submittedPhotos = [...(profile.submittedPhotos || [])];
         if (approvedUpload && imageUrl) {
@@ -36754,8 +36821,7 @@
             .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
             .slice(0, MAX_DANCER_PROFILE_PHOTOS);
           normalizeLocalDancerPhotos(profile);
-          const uploadedIndex = profile.submittedPhotos.findIndex((item) => item.id === photo.id);
-          if (uploadedIndex >= 0) uploadedPhotoTarget = `submitted:${uploadedIndex}`;
+          uploadedPhotoTarget = isPrimary ? "main" : `gallery:${Math.max(0, Number(photo.sortOrder) - 1)}`;
           profile.photoStatus = "Pending";
           profile.approvalChangesPending = true;
           profile.approvalChangesSubmitted = false;
@@ -36991,18 +37057,28 @@
 
     function dancerSubmittedPhotosFromProfile(profile) {
       const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
-      const approvedSlots = new Set(rows
-        .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "approved")
-        .map((photo, index) => `${photo.is_primary || photo.isPrimary || index === 0 ? "main" : "gallery"}:${Number(photo.sort_order ?? photo.sortOrder ?? index)}`));
-      return rows
+      const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
+      const pendingRows = [
+        ...rows.filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") !== "approved"),
+        ...pendingReviews.map((review) => ({
+          ...review,
+          imageUrl: review.previewUrl || review.preview_url || "",
+          image_url: review.previewUrl || review.preview_url || "",
+          isPrimary: Boolean(review.isPrimary || review.is_primary || String(review.upload_context || "").includes("main")),
+          is_primary: Boolean(review.isPrimary || review.is_primary || String(review.upload_context || "").includes("main")),
+          sortOrder: Number(review.sortOrder ?? review.sort_order ?? 0),
+          sort_order: Number(review.sortOrder ?? review.sort_order ?? 0),
+          reviewStatus: "pending",
+          review_status: "pending"
+        }))
+      ];
+      const bySlot = new Map();
+      pendingRows
         .slice()
-        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-        .filter((photo, index) => {
-          const status = normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending");
-          if (status === "approved") return false;
-          const slot = `${photo.is_primary || photo.isPrimary || index === 0 ? "main" : "gallery"}:${Number(photo.sort_order ?? photo.sortOrder ?? index)}`;
-          return !approvedSlots.has(slot);
-        })
+        .sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")))
+        .forEach((photo) => bySlot.set(dancerPhotoSlotKey(photo), photo));
+      return Array.from(bySlot.values())
+        .sort((a, b) => Number(a.sort_order ?? a.sortOrder ?? 0) - Number(b.sort_order ?? b.sortOrder ?? 0))
         .map((photo, index) => {
           const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
           const review = latestContentReview(`photo:${photo.id || `${profile?.id || profile?.stage_name || profile?.stageName || "profile"}-photo-${index}`}`);
@@ -37016,8 +37092,8 @@
             sort_order: Number(photo.sort_order ?? photo.sortOrder ?? index),
             reviewStatus: review?.status || photo.review_status || photo.reviewStatus || "pending",
             review_status: review?.status || photo.review_status || photo.reviewStatus || "pending",
-            reviewNotes: review?.notes || photo.review_notes || photo.reviewNotes || "",
-            review_notes: review?.notes || photo.review_notes || photo.reviewNotes || ""
+            reviewNotes: review?.notes || photo.review_notes || photo.reviewNotes || "Pending review. This slot stays occupied until approval or rejection.",
+            review_notes: review?.notes || photo.review_notes || photo.reviewNotes || "Pending review. This slot stays occupied until approval or rejection."
           };
         });
     }
@@ -38968,6 +39044,9 @@
 
     function getItems(city, tab) {
       const market = markets[city];
+      if (["tonight", "dancers", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
+        return [];
+      }
       if (tab === "tonight") {
         return market.dancers
           .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city) && profileMatchesVenueFilter(profile))

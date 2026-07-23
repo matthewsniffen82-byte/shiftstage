@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, visibilityMigrationSource] = await Promise.all([
+const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, rootRouteSource, publicSource, dancerSource, imageModerationSource, imageModerationStatusSource, imageModerationAdminSource, photoSlotSource, visibilityMigrationSource] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
@@ -12,6 +12,8 @@ const [dashboardSource, mobileAppSource, profileRouteSource, authRouteSource, ro
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation-status.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/image-moderation/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/photo-slot.ts", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607150001_dancer_profile_visibility.sql", import.meta.url), "utf8"),
 ]);
 
@@ -103,13 +105,22 @@ test("saved profiles keep every active photo moderation state in the editor", ()
   assert.match(pendingPhotoLoader, /\.in\("status", ACTIVE_IMAGE_MODERATION_STATUSES\)/);
   assert.match(profileRouteSource, /import \{ ACTIVE_IMAGE_MODERATION_STATUSES \}/);
   assert.match(dancerSource, /import \{ ACTIVE_IMAGE_MODERATION_STATUSES \}/);
+  assert.match(profileRouteSource, /sortOrder: slot\.isPrimary \? 0 : slot\.sortOrder/);
+  assert.match(profileRouteSource, /reviewStatus: "pending"/);
+  assert.match(mobileAppSource, /pending_photo_reviews/);
+  assert.match(mobileAppSource, /editableDancerPhotoRows\(profile\)/);
+  assert.match(mobileAppSource, /approved-photo-review-badge[^]*Pending review/);
 });
 
 test("gallery uploads use unique database slots and deletion targets one exact id", () => {
   assert.match(dashboardSource, /formData\.set\("sortOrder", String\(uploadSortOrder\)\)/);
   assert.match(dashboardSource, /nextGalleryPhotoSortOrder\(photos\)/);
-  assert.match(imageModerationSource, /resolveDancerPhotoSortOrder\(admin, profile\.id, input\.sortOrder\)/);
-  assert.match(imageModerationSource, /sortOrder: input\.sortOrder/);
+  assert.match(imageModerationSource, /resolveDancerPhotoSortOrder\([^]*?input\.userId,[^]*?input\.sortOrder/);
+  assert.match(imageModerationSource, /profilePhotoUploadContext\(Boolean\(input\.isPrimary\), resolvedSortOrder\)/);
+  assert.match(imageModerationSource, /occupiedDancerPhotoSlots/);
+  assert.match(photoSlotSource, /`\$\{PROFILE_GALLERY_CONTEXT\}:\$\{normalizedSortOrder\}`/);
+  assert.match(imageModerationAdminSource, /profilePhotoSlotFromUploadContext\(record\.upload_context\)/);
+  assert.match(imageModerationAdminSource, /requestedSlot\.sortOrder \|\| await nextPhotoSortOrder/);
 
   const deleteHandler = dancerSource.match(/export async function deleteOwnDancerPhoto[\s\S]*?\r?\n}\r?\n\r?\nasync function deleteLinkedModerationRecords/)?.[0] || "";
   assert.match(deleteHandler, /\.eq\("id", photo\.id\)/);
@@ -169,7 +180,7 @@ test("save keeps non-deleted photos and releases deleted slots before upload", (
 test("save integrity verifies the editor snapshot instead of hidden history rows", () => {
   assert.match(profileRouteSource, /const \{ data: editorProfileBeforeSave/);
   assert.match(profileRouteSource, /withPhotoUrls\(client, editorProfileBeforeSave\)/);
-  assert.match(profileRouteSource, /pendingPhotoLimitBeforeSave/);
+  assert.match(profileRouteSource, /pendingPhotoReviewsBeforeSave = await loadPendingPhotoReviews/);
   assert.doesNotMatch(profileRouteSource, /databasePhotosBeforeSave/);
 
   const historicalRows = [
@@ -183,9 +194,25 @@ test("save integrity verifies the editor snapshot instead of hidden history rows
 
 test("the live entry point and visibility query support the production schema", () => {
   assert.match(rootRouteSource, /ACTIVE_EDIT_PROFILE_VERSION/);
-  assert.match(rootRouteSource, /mobile-profile-scroll-stability-v9/);
-  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "mobile-profile-scroll-stability-v9"/);
+  assert.match(rootRouteSource, /pending-photo-slot-occupancy-v10/);
+  assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "pending-photo-slot-occupancy-v10"/);
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
+  assert.match(publicSource, /status === "approved"/);
+  assert.match(publicSource, /dancer\.is_public === true \|\| dancer\.isPublic === true/);
+  assert.match(publicSource, /\.eq\("status", "approved"\)/);
+  assert.match(publicSource, /\.is\("disabled_at", null\)/);
+  assert.doesNotMatch(publicSource, /previouslyApproved|fullyReviewed/);
+  assert.match(mobileAppSource, /liveMarketState\[city\] !== "ready"/);
+  assert.match(mobileAppSource, /Live discovery unavailable; public dancer profiles hidden/);
   assert.match(visibilityMigrationSource, /add column if not exists is_public/);
+});
+
+test("photo save persists queued changes regardless of pencil highlight state", () => {
+  const saveHandler = mobileAppSource.match(/async function saveApprovedDancerProfile[^]*?\n    function handleShiftManagerAction/)?.[0] || "";
+  assert.match(saveHandler, /const deletedPhotoPayload = photoDeletedPayloadFromProfile\(oldProfile\)/);
+  assert.match(saveHandler, /\.\.\.deletedPhotoPayload/);
+  assert.doesNotMatch(saveHandler, /if \(approvedPhotoEditMode\)/);
+  assert.match(mobileAppSource, /data-approved-photo-edit-toggle[^]*?approvedPhotoEditMode = !approvedPhotoEditMode/);
+  assert.match(mobileAppSource, /Pending review\. This slot stays occupied until approval or rejection\./);
 });
