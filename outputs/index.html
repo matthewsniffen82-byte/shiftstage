@@ -3789,18 +3789,21 @@
       min-height: 54px;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 24px 28px;
+      grid-template-rows: minmax(30px, auto);
       align-items: center;
-      gap: 8px;
+      column-gap: 8px;
       padding: 12px;
       border: 0;
       color: var(--text);
-      background: rgba(255,255,255,.025);
+      background: #181821;
       text-align: left;
       font-weight: 900;
       cursor: pointer;
     }
 
     .step-head > span:first-child {
+      grid-column: 1;
+      grid-row: 1;
       display: grid;
       gap: 3px;
       min-width: 0;
@@ -3817,15 +3820,29 @@
 
     .step-check {
       width: 24px;
-      aspect-ratio: 1;
+      height: 24px;
       display: grid;
       place-items: center;
-      flex: 0 0 auto;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: center;
+      align-self: center;
+      box-sizing: border-box;
+      border: 1px solid transparent;
       border-radius: 50%;
       color: #041116;
-      background: rgba(255,255,255,.2);
+      background: #3a3a48;
       font-size: 14px;
-      box-shadow: inset 0 0 10px rgba(255,255,255,.045);
+      line-height: 1;
+      box-shadow: none;
+    }
+
+    .step-status-dot {
+      width: 6px;
+      height: 6px;
+      display: block;
+      border-radius: 50%;
+      background: rgba(226,232,240,.72);
     }
 
     .step-expand {
@@ -3833,10 +3850,15 @@
       height: 28px;
       display: grid;
       place-items: center;
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: center;
+      align-self: center;
+      box-sizing: border-box;
       border: 1px solid rgba(192,132,252,.34);
       border-radius: 8px;
       color: #d8b4fe;
-      background: rgba(168,85,247,.08);
+      background: #301b46;
       font-size: 20px;
       font-weight: 800;
       line-height: 1;
@@ -3845,7 +3867,7 @@
     .setup-step.open .step-expand {
       border-color: rgba(245,158,11,.48);
       color: #fbbf24;
-      background: rgba(245,158,11,.1);
+      background: #3d2a0c;
     }
 
     .setup-step.locked .step-head {
@@ -3855,12 +3877,23 @@
     .setup-step.locked .step-expand {
       border-color: rgba(150,139,173,.18);
       color: rgba(203,194,221,.54);
-      background: rgba(255,255,255,.025);
+      background: #26242d;
     }
 
     .setup-step.complete .step-check {
-      background: var(--green);
+      border-color: #22c55e;
+      background: #22c55e;
       box-shadow: 0 0 16px rgba(53,216,255,.28);
+    }
+
+    .setup-step.submitted .step-check {
+      border-color: #f59e0b;
+      background: #4a350c;
+      box-shadow: 0 0 12px rgba(245,158,11,.14);
+    }
+
+    .setup-step.submitted .step-status-dot {
+      background: #fbbf24;
     }
 
     .step-body {
@@ -3876,6 +3909,7 @@
 
     .setup-step.locked .step-head {
       cursor: pointer;
+      background: #15141b;
     }
 
     .setup-step.complete {
@@ -3884,7 +3918,17 @@
 
     .setup-step.complete .step-head {
       color: #d9ffe5;
-      background: rgba(34,197,94,.08);
+      background: #12331f;
+    }
+
+    .setup-step.submitted .step-head {
+      color: #fff0bd;
+      background: #33240b;
+    }
+
+    .setup-step.open:not(.complete):not(.submitted) .step-head {
+      color: #fff2c7;
+      background: #2f220f;
     }
 
     .photo-upload-grid {
@@ -3944,6 +3988,31 @@
       object-fit: cover;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .submitted-photo-slot.is-pending {
+      border-color: rgba(255,194,71,.86);
+      background: rgba(70,49,5,.38);
+      box-shadow: 0 0 18px rgba(255,194,71,.14), inset 0 0 18px rgba(255,194,71,.07);
+    }
+
+    .submitted-photo-slot.is-pending small {
+      color: #ffe29a;
+    }
+
+    .submitted-photo-placeholder {
+      width: 100%;
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: #ffe29a;
+      background: rgba(255,194,71,.08);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: .04em;
     }
 
     @media (max-width: 560px) {
@@ -28785,6 +28854,7 @@
       shift: false
     };
     let liveVerificationDocuments = [];
+    let liveVerificationDocumentsAuthoritative = false;
     let verificationSubmitNotice = "";
     let freshDancerVerificationLockedToProfile = false;
     const verificationDocumentLabels = [
@@ -29383,6 +29453,7 @@
         shift: false
       });
       liveVerificationDocuments = [];
+      liveVerificationDocumentsAuthoritative = false;
       ["dancerLegalName", "dancerStageName", "dancerCity", "setupLegalName", "setupStageName", "setupCity"].forEach((id) => {
         const field = document.getElementById(id);
         if (field) field.value = "";
@@ -36139,6 +36210,8 @@
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
+      liveVerificationDocuments = [];
+      liveVerificationDocumentsAuthoritative = false;
       liveCustomerProfile = null;
       liveNotifications = [];
       saveAuthSession(null);
@@ -36845,6 +36918,7 @@
 
     async function loadLiveVerificationDocuments() {
       if (!isDancerSession()) return;
+      liveVerificationDocumentsAuthoritative = false;
       const storedDocuments = readStoredVerificationDocuments();
       if (storedDocuments.length) {
         setVerificationDocuments(storedDocuments, false);
@@ -36852,10 +36926,12 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/verification-documents");
         const liveDocuments = (data?.documents || []).map(normalizeVerificationDocument);
-        if (liveDocuments.length) {
-          setVerificationDocuments(mergeVerificationDocuments(storedDocuments, liveDocuments), true);
-          renderDancerSetup();
-        }
+        liveVerificationDocumentsAuthoritative = true;
+        setVerificationDocuments(
+          liveDocuments.length ? mergeVerificationDocuments(storedDocuments, liveDocuments) : [],
+          true
+        );
+        renderDancerSetup();
       } catch (error) {
         if (storedDocuments.length) renderDancerSetup();
       }
@@ -36868,7 +36944,20 @@
       formData.append("sortOrder", String(sortOrder));
       formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:${isPrimary}:${sortOrder}:${Date.now()}:${Math.random().toString(36).slice(2)}`);
       if (options.replaceExisting) formData.append("replaceExisting", "true");
-      return postAuthenticatedFormData("/api/dancer/photos", formData);
+      const headers = authenticatedRequestHeaders();
+      if (!headers) throw new Error("Sign in required");
+      const response = await fetch("/api/dancer/photos", {
+        method: "POST",
+        headers,
+        body: formData
+      });
+      const data = await response.json().catch(() => ({}));
+      if (normalizedReviewStatus(data?.decision) === "rejected") return data;
+      if (!response.ok || data.ok === false) {
+        throw new Error(normalizeRequestError(data.message || data.error, "Photo upload failed"));
+      }
+      applyResponseSession(data);
+      return data;
     }
 
     async function uploadApprovedDancerPhoto(file, target) {
@@ -37086,7 +37175,6 @@
     }
 
     function applyDancerVerificationProfile(profile) {
-      const statusApproved = isApprovedDancerStatus(profile.status);
       const approved = dancerCoreApprovalUnlocked(profile);
       const rejected = isRejectedDancerStatus(profile.status);
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
@@ -37126,7 +37214,7 @@
       assignSocialMap(dancerSignupSocials, useDraftFields ? { ...liveSocials, ...draftSocials } : liveSocials);
       Object.assign(dancerSetup, {
         profile: savedProfileSetup,
-        photos: statusApproved || photos.length > 0 || submittedPhotos.length > 0 || normalizedReviewStatus(profile.photo_review_status || profile.photoReviewStatus) === "approved",
+        photos: dancerProfileHasApprovedOrPendingPhoto(profile),
         verification: approved || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
@@ -37209,12 +37297,38 @@
         .filter(Boolean);
     }
 
+    function dancerSetupPhotoModerationCategory(photo = {}) {
+      const decision = normalizedReviewStatus(photo.decision || photo.moderationDecision || photo.moderation_decision);
+      const status = normalizedReviewStatus(photo.review_status || photo.reviewStatus || photo.status);
+      if (decision === "rejected" || status === "rejected") return "rejected";
+      if (decision === "approved" || status === "approved") return "approved";
+      if (
+        decision === "review" ||
+        decision === "moderation_retry" ||
+        decision === "moderation_error" ||
+        ["pending", "pending_review", "moderating", "moderation_retry", "moderation_error"].includes(status)
+      ) {
+        return "review";
+      }
+      return "";
+    }
+
+    function dancerProfileHasApprovedOrPendingPhoto(profile) {
+      const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
+      const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
+      const submittedPhotos = Array.isArray(profile?.submittedPhotos) ? profile.submittedPhotos : [];
+      return [...rows, ...pendingReviews, ...submittedPhotos].some((photo) => {
+        const category = dancerSetupPhotoModerationCategory(photo);
+        return category === "approved" || category === "review";
+      });
+    }
+
     function dancerSubmittedPhotosFromProfile(profile) {
       const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
       const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
       const pendingRows = [
-        ...rows.filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") !== "approved"),
-        ...pendingReviews.map((review) => ({
+        ...rows.filter((photo) => dancerSetupPhotoModerationCategory(photo) === "review"),
+        ...pendingReviews.filter((review) => dancerSetupPhotoModerationCategory(review) === "review").map((review) => ({
           ...review,
           imageUrl: review.previewUrl || review.preview_url || "",
           image_url: review.previewUrl || review.preview_url || "",
@@ -37254,27 +37368,69 @@
 
     function dancerSetupPhotoPreviewMarkup() {
       const profile = activeDancerProfile() || null;
-      const submittedUrls = (profile?.submittedPhotos || [])
-        .map((photo) => photo.imageUrl || photo.image_url || photo.url || "")
-        .filter(Boolean);
       const galleryUrls = Array.isArray(profile?.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
       const mainUrl = profile?.mainPhotoUrl ? [profile.mainPhotoUrl] : [];
-      const urls = [...new Set([...mainUrl, ...galleryUrls, ...submittedUrls])].slice(0, MAX_DANCER_PROFILE_PHOTOS);
+      const approvedItems = [...mainUrl, ...galleryUrls].map((imageUrl, index) => ({
+        id: `approved-${index}`,
+        imageUrl,
+        category: "approved"
+      }));
+      const pendingItems = (profile?.submittedPhotos || [])
+        .filter((photo) => dancerSetupPhotoModerationCategory(photo) === "review")
+        .map((photo, index) => ({
+          id: photo.id || `pending-${index}`,
+          imageUrl: photo.imageUrl || photo.image_url || photo.url || "",
+          category: "review"
+        }));
+      const seen = new Set();
+      const items = [...approvedItems, ...pendingItems]
+        .filter((photo) => {
+          const key = photo.imageUrl || photo.id;
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
 
-      if (!urls.length) {
+      if (!items.length) {
         return '<div class="locked">No uploaded photos yet.</div>';
       }
 
       return `
         <div class="photo-upload-grid" aria-label="Uploaded profile photos">
-          ${urls.map((url, index) => `
-            <div class="upload-slot submitted-photo-slot">
-              <img src="${escapeHtml(url)}" alt="Uploaded profile photo ${index + 1}" loading="lazy" decoding="async">
-              <span>${photoDisplayLabel(index)}<small>Submitted for review</small></span>
+          ${items.map((photo, index) => `
+            <div class="upload-slot submitted-photo-slot ${photo.category === "review" ? "is-pending" : "is-approved"}">
+              ${photo.imageUrl
+                ? `<img src="${escapeHtml(photo.imageUrl)}" alt="Uploaded profile photo ${index + 1}" loading="lazy" decoding="async">`
+                : '<div class="submitted-photo-placeholder" aria-label="Private pending photo preview">Pending review</div>'}
+              <span>${photoDisplayLabel(index)}<small>${photo.category === "review" ? "Pending human review" : "Approved automatically"}</small></span>
             </div>
           `).join("")}
         </div>
       `;
+    }
+
+    function setupPhotoModerationResultMessage({ approvedCount, reviewCount, rejectedCount, failedCount, canContinue }) {
+      const acceptedCount = approvedCount + reviewCount;
+      if (!acceptedCount) {
+        if (rejectedCount) {
+          return canContinue
+            ? `${rejectedCount} new photo${rejectedCount === 1 ? " was" : "s were"} fully rejected and did not occupy a slot. Your existing approved or pending-review photo still lets you continue to Step 3.`
+            : `${rejectedCount} photo${rejectedCount === 1 ? " was" : "s were"} fully rejected. Step 3 stays locked. Upload a different photo that meets Dancr's photo guidelines.`;
+        }
+        return canContinue
+          ? "The new upload could not be processed. Your existing approved or pending-review photo still lets you continue to Step 3."
+          : "No photos were accepted. Step 3 stays locked. Please try the upload again.";
+      }
+      const outcomes = [];
+      if (approvedCount) outcomes.push(`${approvedCount} approved automatically`);
+      if (reviewCount) outcomes.push(`${reviewCount} pending human review`);
+      if (rejectedCount) outcomes.push(`${rejectedCount} fully rejected`);
+      if (failedCount) outcomes.push(`${failedCount} could not be processed`);
+      const pendingNotice = reviewCount
+        ? " Pending-review slots stay occupied until a reviewer approves or rejects them."
+        : "";
+      return `${outcomes.join(" · ")}. You can continue to Step 3.${pendingNotice}`;
     }
 
     async function submitSetupPhotos(form) {
@@ -37330,51 +37486,95 @@
         setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
       }, 1400);
       try {
-        const uploaded = await Promise.all(
+        const uploadAttempts = await Promise.allSettled(
           photoFiles.map((file, index) => uploadSetupPhotoFile(file, index === 0, index))
         );
+        const uploaded = uploadAttempts
+          .filter((attempt) => attempt.status === "fulfilled")
+          .map((attempt) => attempt.value);
+        const failedAttempts = uploadAttempts.filter((attempt) => attempt.status === "rejected");
         const profile = ensureActiveDancerProfile("Pending");
-        const approvedUploads = uploaded.filter((item) => item.decision === "approved" || item.photo?.imageUrl);
-        const reviewCount = uploaded.filter((item) => item.decision === "review").length;
+        const approvedUploads = uploaded.filter((item) => dancerSetupPhotoModerationCategory(item) === "approved");
+        const reviewUploads = uploaded.filter((item) => dancerSetupPhotoModerationCategory(item) === "review");
+        const rejectedUploads = uploaded.filter((item) => dancerSetupPhotoModerationCategory(item) === "rejected");
+        const unresolvedUploads = uploaded.filter((item) => !dancerSetupPhotoModerationCategory(item));
         const urls = approvedUploads.map((item) => item.photo?.imageUrl).filter(Boolean);
         if (profile && urls.length) {
           profile.mainPhotoUrl = profile.mainPhotoUrl || urls[0];
           profile.galleryPhotoUrls = [...(profile.galleryPhotoUrls || []), ...urls].slice(0, MAX_DANCER_PROFILE_PHOTOS);
-          uploaded.forEach((item, index) => {
+          approvedUploads.forEach((item, index) => {
             const uploadedPhoto = item.photo || item || {};
             const imageUrl = uploadedPhoto.imageUrl || uploadedPhoto.image_url || uploadedPhoto.url || urls[index] || "";
             if (!imageUrl) return;
-            const reviewStatus = normalizedReviewStatus(uploadedPhoto.reviewStatus || uploadedPhoto.review_status || item.decision || "pending");
-            const finalReviewStatus = reviewStatus === "approved" || reviewStatus === "rejected" ? reviewStatus : "pending";
-            profile.submittedPhotos = [...(profile.submittedPhotos || []), {
+            profile.dancer_photos = [...(profile.dancer_photos || []), {
+              ...uploadedPhoto,
               id: uploadedPhoto.id || `${profile.id || profile.name}-setup-photo-${Date.now()}-${index}`,
               imageUrl,
               image_url: imageUrl,
-              isPrimary: index === 0,
-              is_primary: index === 0,
-              sortOrder: index,
-              sort_order: index,
-              reviewStatus: finalReviewStatus,
-              review_status: finalReviewStatus,
-              reviewNotes: finalReviewStatus === "rejected" ? (item.message || "Rejected by automatic moderation.") : "",
-              review_notes: finalReviewStatus === "rejected" ? (item.message || "Rejected by automatic moderation.") : ""
+              isPrimary: Boolean(uploadedPhoto.isPrimary ?? uploadedPhoto.is_primary ?? index === 0),
+              is_primary: Boolean(uploadedPhoto.isPrimary ?? uploadedPhoto.is_primary ?? index === 0),
+              sortOrder: Number(uploadedPhoto.sortOrder ?? uploadedPhoto.sort_order ?? index),
+              sort_order: Number(uploadedPhoto.sortOrder ?? uploadedPhoto.sort_order ?? index),
+              reviewStatus: "approved",
+              review_status: "approved"
             }];
           });
-          normalizeLocalDancerPhotos(profile);
-          profile.photoStatus = reviewCount ? "Pending" : "Approved";
         }
-        dancerSetup.photos = Boolean(urls.length || reviewCount);
-        activeSetupStep = nextIncompleteStep() || "verification";
-        const message = reviewCount
-          ? "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved."
-          : "Photo uploaded successfully.";
-        setSetupPhotoStatus(message, reviewCount ? "review" : "success");
+        if (profile && reviewUploads.length) {
+          const submittedPhotos = [...(profile.submittedPhotos || [])];
+          reviewUploads.forEach((item, index) => {
+            const uploadedPhoto = item.photo || item || {};
+            const sortOrder = Number(uploadedPhoto.sortOrder ?? uploadedPhoto.sort_order ?? index);
+            const isPrimary = Boolean(uploadedPhoto.isPrimary ?? uploadedPhoto.is_primary ?? sortOrder === 0);
+            const pendingPhoto = {
+              ...uploadedPhoto,
+              id: uploadedPhoto.id || item.moderationRecordId || `${profile.id || profile.name}-pending-photo-${Date.now()}-${index}`,
+              imageUrl: uploadedPhoto.imageUrl || uploadedPhoto.image_url || "",
+              image_url: uploadedPhoto.imageUrl || uploadedPhoto.image_url || "",
+              isPrimary,
+              is_primary: isPrimary,
+              sortOrder,
+              sort_order: sortOrder,
+              decision: "review",
+              reviewStatus: "pending",
+              review_status: "pending",
+              reviewNotes: "Pending review. This slot stays occupied until approval or rejection.",
+              review_notes: "Pending review. This slot stays occupied until approval or rejection."
+            };
+            const slotKey = dancerPhotoSlotKey(pendingPhoto);
+            const existingIndex = submittedPhotos.findIndex((photo) => dancerPhotoSlotKey(photo) === slotKey);
+            if (existingIndex >= 0) submittedPhotos[existingIndex] = pendingPhoto;
+            else submittedPhotos.push(pendingPhoto);
+          });
+          profile.submittedPhotos = submittedPhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS);
+        }
+        if (profile) {
+          normalizeLocalDancerPhotos(profile);
+          profile.photoStatus = reviewUploads.length ? "Pending" : approvedUploads.length ? "Approved" : profile.photoStatus;
+        }
+        const acceptedUploads = [...approvedUploads, ...reviewUploads];
+        dancerSetup.photos = dancerProfileHasApprovedOrPendingPhoto(profile) || acceptedUploads.length > 0;
+        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "verification") : "photos";
+        await hydrateDancerVerificationProgress();
+        if (acceptedUploads.length && !dancerSetup.photos) dancerSetup.photos = true;
+        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "verification") : "photos";
+        const message = setupPhotoModerationResultMessage({
+          approvedCount: approvedUploads.length,
+          reviewCount: reviewUploads.length,
+          rejectedCount: rejectedUploads.length,
+          failedCount: failedAttempts.length + unresolvedUploads.length,
+          canContinue: dancerSetup.photos
+        });
+        const messageState = dancerSetup.photos
+          ? (reviewUploads.length || rejectedUploads.length || failedAttempts.length || unresolvedUploads.length ? "review" : "success")
+          : "error";
+        setSetupPhotoStatus(message, messageState);
         showToast(message);
         renderDancerSetup();
         const refreshedResult = document.getElementById("photoUploadResult");
         if (refreshedResult) {
           refreshedResult.textContent = message;
-          refreshedResult.classList.add(reviewCount ? "is-review" : "is-success");
+          refreshedResult.classList.add(`is-${messageState}`);
           refreshedResult.setAttribute("aria-busy", "false");
         }
       } catch (error) {
@@ -37420,6 +37620,7 @@
           uploadVerificationFile(selfieFile, "selfie", "Selfie verification"),
           uploadVerificationFile(proofFile, "dance_proof", "Proof that you dance")
         ]);
+        liveVerificationDocumentsAuthoritative = true;
         setVerificationDocuments(
           uploads.map((upload, index) => normalizeVerificationDocument(upload.document || upload, index)),
           true
@@ -37587,8 +37788,21 @@
       }, 1400);
     }
 
+    function isVerificationAdminApproved() {
+      return Boolean(
+        dancerSetup.approval ||
+        (
+          liveVerificationDocumentsAuthoritative &&
+          approvedRequiredVerificationDocuments({ verificationDocuments: liveVerificationDocuments })
+        )
+      );
+    }
+
     function setupStepMarkup(step, title, body) {
-      const complete = isSavedSetupStepComplete(step);
+      const saved = isSavedSetupStepComplete(step);
+      const verificationApproved = step === "verification" && isVerificationAdminApproved();
+      const markerComplete = step === "verification" ? verificationApproved : saved;
+      const submittedForReview = step === "verification" && saved && !verificationApproved;
       const locked = !canOpenStep(step);
       const open = activeSetupStep === step && !locked;
       const stepNumber = setupOrder().indexOf(step) + 1;
@@ -37597,15 +37811,21 @@
         ? `Complete and save Step ${setupOrder().indexOf(missingStep) + 1} ${setupStepDisplayName(missingStep)} first.`
         : "";
       const bodyId = `setup-step-${step}-body`;
+      const statusText = markerComplete
+        ? (step === "verification" || step === "approval" ? "Approved" : "Saved")
+        : (submittedForReview ? "Submitted" : "");
+      const statusLabel = markerComplete
+        ? (step === "verification" ? "Approved by admin" : statusText)
+        : (submittedForReview ? "Submitted for admin review" : "Not saved");
       return `
-        <article class="setup-step ${complete ? "complete" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
+        <article class="setup-step ${markerComplete ? "complete" : ""} ${submittedForReview ? "submitted" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
           <button class="step-head" data-step-toggle="${step}" type="button"
             aria-expanded="${open ? "true" : "false"}"
             aria-controls="${bodyId}"
             aria-disabled="${locked ? "true" : "false"}"
             ${lockedMessage ? `title="${escapeHtml(lockedMessage)}"` : ""}>
-            <span><span class="step-number">Step ${stepNumber}${complete ? " · Saved" : ""}</span>${title}</span>
-            <span class="step-check" aria-label="${complete ? "Saved" : "Not saved"}">${complete ? "✓" : "•"}</span>
+            <span><span class="step-number">Step ${stepNumber}${statusText ? ` · ${statusText}` : ""}</span>${title}</span>
+            <span class="step-check" aria-label="${statusLabel}">${markerComplete ? "✓" : '<span class="step-status-dot" aria-hidden="true"></span>'}</span>
             <span class="step-expand" aria-hidden="true">${open ? "−" : "+"}</span>
           </button>
           <div class="step-body" id="${bodyId}" aria-hidden="${open ? "false" : "true"}">${body}</div>
@@ -38090,9 +38310,9 @@
           <div class="field">
             <label for="setupProfilePhotos">Profile photos</label>
             <input id="setupProfilePhotos" type="file" accept="image/*" multiple>
-            <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> The first photo becomes your main profile photo. The rest are reviewed for your gallery.</div>
+            <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
           </div>
-          <div class="rule-note" id="photoUploadResult">Photos stay pending until admin approval. Approved photos appear in your gallery.</div>
+          <div class="rule-note" id="photoUploadResult">Approved and pending-human-review photos unlock Step 3. Pending slots stay occupied. Fully rejected photos do not count and must be replaced.</div>
           <button class="action-btn" type="submit">Submit photos</button>
         </form>
       `;

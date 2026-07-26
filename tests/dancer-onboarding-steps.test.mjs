@@ -40,13 +40,51 @@ test("step headers align their markers and expose plus or minus expansion state"
 
   assert.match(stepStyles, /display: grid/);
   assert.match(stepStyles, /grid-template-columns: minmax\(0, 1fr\) 24px 28px/);
-  assert.match(stepStyles, /\.step-expand/);
+  assert.match(stepStyles, /grid-template-rows: minmax\(30px, auto\)/);
+  assert.match(stepStyles, /\.step-check \{[\s\S]*?width: 24px[\s\S]*?height: 24px/);
+  assert.match(stepStyles, /\.step-check \{[\s\S]*?grid-column: 2[\s\S]*?grid-row: 1/);
+  assert.match(stepStyles, /justify-self: center/);
+  assert.match(stepStyles, /align-self: center/);
+  assert.match(stepStyles, /\.step-status-dot \{[\s\S]*?width: 6px[\s\S]*?height: 6px/);
+  assert.match(stepStyles, /\.step-expand \{[\s\S]*?grid-column: 3[\s\S]*?grid-row: 1/);
   assert.match(stepMarkup, /aria-expanded="\$\{open \? "true" : "false"\}"/);
   assert.match(stepMarkup, /aria-controls="\$\{bodyId\}"/);
   assert.match(stepMarkup, /aria-disabled="\$\{locked \? "true" : "false"\}"/);
   assert.match(stepMarkup, /class="step-expand"/);
   assert.match(stepMarkup, /\$\{open \? "−" : "\+"\}/);
-  assert.match(stepMarkup, /Step \$\{stepNumber\}\$\{complete \? " · Saved" : ""\}/);
+  assert.match(stepMarkup, /class="step-status-dot"/);
+  assert.doesNotMatch(stepMarkup, />•</);
+});
+
+test("step buttons use solid colors for every setup state", () => {
+  assert.match(liveAppSource, /\.step-head \{[\s\S]*?background: #181821/);
+  assert.match(liveAppSource, /\.step-check \{[\s\S]*?background: #3a3a48/);
+  assert.match(liveAppSource, /\.step-expand \{[\s\S]*?background: #301b46/);
+  assert.match(liveAppSource, /\.setup-step\.complete \.step-head \{[\s\S]*?background: #12331f/);
+  assert.match(liveAppSource, /\.setup-step\.submitted \.step-head \{[\s\S]*?background: #33240b/);
+  assert.match(liveAppSource, /\.setup-step\.open:not\(\.complete\):not\(\.submitted\) \.step-head \{[\s\S]*?background: #2f220f/);
+  assert.match(liveAppSource, /\.setup-step\.locked \.step-head \{[\s\S]*?background: #15141b/);
+});
+
+test("Step 3 only shows an approval check after authoritative admin approval", () => {
+  const verificationApproval =
+    liveAppSource.match(/function isVerificationAdminApproved[\s\S]*?\n    function setupStepMarkup/)?.[0] || "";
+  const stepMarkup =
+    liveAppSource.match(/function setupStepMarkup[\s\S]*?\n    function scrollToSetupStep/)?.[0] || "";
+  const documentLoader =
+    liveAppSource.match(/async function loadLiveVerificationDocuments[\s\S]*?\n    async function uploadSetupPhotoFile/)?.[0] || "";
+
+  assert.match(verificationApproval, /dancerSetup\.approval/);
+  assert.match(verificationApproval, /liveVerificationDocumentsAuthoritative/);
+  assert.match(verificationApproval, /approvedRequiredVerificationDocuments\(\{ verificationDocuments: liveVerificationDocuments \}\)/);
+  assert.match(stepMarkup, /const markerComplete = step === "verification" \? verificationApproved : saved/);
+  assert.match(stepMarkup, /const submittedForReview = step === "verification" && saved && !verificationApproved/);
+  assert.match(stepMarkup, /Submitted for admin review/);
+  assert.match(stepMarkup, /Approved by admin/);
+  assert.match(stepMarkup, /\$\{markerComplete \? "✓" : '<span class="step-status-dot"/);
+  assert.match(documentLoader, /liveVerificationDocumentsAuthoritative = false/);
+  assert.match(documentLoader, /const data = await getAuthenticatedJson\("\/api\/dancer\/verification-documents"\)/);
+  assert.match(documentLoader, /liveVerificationDocumentsAuthoritative = true/);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {
@@ -60,15 +98,20 @@ test("real setup steps advance only after their production save succeeds", () =>
 
   assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
   assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile")'));
-  assert.ok(photoSubmit.indexOf("await Promise.all") < photoSubmit.indexOf("dancerSetup.photos = Boolean"));
+  assert.ok(photoSubmit.indexOf("await Promise.allSettled") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileHasApprovedOrPendingPhoto"));
   assert.ok(verificationSubmit.indexOf("await Promise.all") < verificationSubmit.indexOf("dancerSetup.verification = true"));
+  assert.ok(verificationSubmit.indexOf("await Promise.all") < verificationSubmit.indexOf("liveVerificationDocumentsAuthoritative = true"));
 });
 
 test("pending photo submissions keep the photo step complete", () => {
   const profileHydrator =
     liveAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
+  const photoEligibility =
+    liveAppSource.match(/function dancerSetupPhotoModerationCategory[\s\S]*?\n    function dancerSubmittedPhotosFromProfile/)?.[0] || "";
 
-  assert.match(profileHydrator, /photos: statusApproved \|\| photos\.length > 0 \|\| submittedPhotos\.length > 0/);
+  assert.match(profileHydrator, /photos: dancerProfileHasApprovedOrPendingPhoto\(profile\)/);
+  assert.match(photoEligibility, /category === "approved" \|\| category === "review"/);
+  assert.match(photoEligibility, /decision === "rejected" \|\| status === "rejected"/);
 });
 
 test("all four steps render inside the Profile Setup box", () => {

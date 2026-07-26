@@ -141,6 +141,27 @@ test("saved profiles keep every active photo moderation state in the editor", ()
   assert.doesNotMatch(mobileAppSource, /approved-photo-slot-status/);
 });
 
+test("onboarding Step 2 accepts only approved or human-review photo outcomes", () => {
+  const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\n    }\n\n    async function uploadApprovedDancerPhoto/)?.[0] || "";
+  const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    }\n\n    async function uploadVerificationFile/)?.[0] || "";
+  const profileHydration = mobileAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\n    }\n\n    function setDancerSetupField/)?.[0] || "";
+
+  assert.match(uploadHelper, /normalizedReviewStatus\(data\?\.decision\) === "rejected"/);
+  assert.match(uploadHelper, /return data/);
+  assert.match(setupSubmit, /Promise\.allSettled/);
+  assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "approved"/);
+  assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "review"/);
+  assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "rejected"/);
+  assert.match(setupSubmit, /dancerProfileHasApprovedOrPendingPhoto\(profile\) \|\| acceptedUploads\.length > 0/);
+  assert.match(setupSubmit, /activeSetupStep = dancerSetup\.photos \? \(nextIncompleteStep\(\) \|\| "verification"\) : "photos"/);
+  assert.match(profileHydration, /photos: dancerProfileHasApprovedOrPendingPhoto\(profile\)/);
+  assert.doesNotMatch(profileHydration, /photos: statusApproved \|\| photos\.length > 0 \|\| submittedPhotos\.length > 0/);
+  assert.match(mobileAppSource, /Pending human review/);
+  assert.match(mobileAppSource, /Approved automatically/);
+  assert.match(mobileAppSource, /Step 3 stays locked/);
+  assert.match(mobileAppSource, /\.submitted-photo-slot\.is-pending/);
+});
+
 test("gallery uploads use unique database slots and deletion targets one exact id", () => {
   assert.match(dashboardSource, /formData\.set\("sortOrder", String\(uploadSortOrder\)\)/);
   assert.match(dashboardSource, /nextGalleryPhotoSortOrder\(photos\)/);
