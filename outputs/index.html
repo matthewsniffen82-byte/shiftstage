@@ -29121,6 +29121,36 @@
       } catch (error) {}
     }
 
+    function readAuthTokenPayload(accessToken) {
+      if (!accessToken) return {};
+      try {
+        const encodedPayload = String(accessToken).split(".")[1] || "";
+        const normalizedPayload = encodedPayload.replace(/-/g, "+").replace(/_/g, "/");
+        const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "=");
+        return JSON.parse(window.atob(paddedPayload)) || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function confirmationAccountFromAccessToken(accessToken) {
+      const payload = readAuthTokenPayload(accessToken);
+      const metadata = payload.user_metadata && typeof payload.user_metadata === "object" ? payload.user_metadata : {};
+      const appMetadata = payload.app_metadata && typeof payload.app_metadata === "object" ? payload.app_metadata : {};
+      const roleCandidate = metadata.role || appMetadata.role || "";
+      const role = roleCandidate === "dancer" || roleCandidate === "venue" || roleCandidate === "customer"
+        ? roleCandidate
+        : null;
+      const email = normalizeAccountEmail(payload.email || metadata.email);
+      if (!role && !email) return null;
+      return {
+        role,
+        displayName: metadata.display_name || metadata.stage_name || metadata.venue_name || email || null,
+        email: email || null,
+        accountState: "active"
+      };
+    }
+
     function readConfirmationSessionFromUrl() {
       if (window.__DANCR_CONFIRMED_SESSION__?.accessToken) {
         return window.__DANCR_CONFIRMED_SESSION__;
@@ -29135,7 +29165,8 @@
       return {
         accessToken,
         refreshToken: hashParams.get("refresh_token") || queryParams.get("refresh_token") || undefined,
-        expiresAt: expiresAt ? Number(expiresAt) : undefined
+        expiresAt: expiresAt ? Number(expiresAt) : undefined,
+        account: confirmationAccountFromAccessToken(accessToken)
       };
     }
 

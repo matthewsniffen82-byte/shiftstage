@@ -99,12 +99,60 @@ function callbackHtml(callbackSession: Awaited<ReturnType<typeof readCallbackSes
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Opening Dancr</title>
     <script>
-      const session = ${sessionJson};
+      const serverSession = ${sessionJson};
       const redirectTo = ${redirectJson};
-      if (session && session.accessToken) {
-        localStorage.setItem("dancrAuthSessionV1", JSON.stringify(session));
+      const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
+      const fragmentAccessToken = fragmentParams.get("access_token") || "";
+      const fragmentRefreshToken = fragmentParams.get("refresh_token") || undefined;
+      const fragmentExpiresAt = fragmentParams.get("expires_at");
+      const fragmentExpiresIn = fragmentParams.get("expires_in");
+      let tokenPayload = {};
+      if (fragmentAccessToken) {
+        try {
+          const encodedPayload = fragmentAccessToken.split(".")[1] || "";
+          const normalizedPayload = encodedPayload.replace(/-/g, "+").replace(/_/g, "/");
+          const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "=");
+          tokenPayload = JSON.parse(window.atob(paddedPayload));
+        } catch (error) {}
       }
-      window.location.replace(redirectTo);
+      const tokenMetadata = tokenPayload.user_metadata && typeof tokenPayload.user_metadata === "object"
+        ? tokenPayload.user_metadata
+        : {};
+      const tokenRole = ["customer", "dancer", "venue"].includes(tokenMetadata.role) ? tokenMetadata.role : "";
+      const tokenEmail = typeof tokenPayload.email === "string" ? tokenPayload.email : "";
+      const redirectUrl = new URL(redirectTo, window.location.origin);
+      if (tokenRole && redirectUrl.pathname === "/account") {
+        redirectUrl.pathname = "/";
+        redirectUrl.searchParams.set("dancr_confirm", "1");
+      }
+      const redirectRole = redirectUrl.searchParams.get("role") || redirectUrl.searchParams.get("dancr_role") || tokenRole;
+      if (tokenRole && !redirectUrl.searchParams.get("role")) redirectUrl.searchParams.set("role", tokenRole);
+      if (tokenRole && !redirectUrl.searchParams.get("dancr_role")) redirectUrl.searchParams.set("dancr_role", tokenRole);
+      const fragmentSession = fragmentAccessToken
+        ? {
+            accessToken: fragmentAccessToken,
+            refreshToken: fragmentRefreshToken,
+            expiresAt: fragmentExpiresAt
+              ? Number(fragmentExpiresAt)
+              : fragmentExpiresIn
+                ? Math.floor(Date.now() / 1000) + Number(fragmentExpiresIn)
+                : undefined,
+            account: {
+              role: tokenRole || redirectRole || null,
+              displayName: tokenMetadata.display_name || tokenMetadata.stage_name || tokenEmail || null,
+              email: tokenEmail || null,
+              accountState: "active"
+            }
+          }
+        : null;
+      const session = serverSession && serverSession.accessToken ? serverSession : fragmentSession;
+      if (session && session.accessToken) {
+        try {
+          localStorage.setItem("dancrAuthSessionV1", JSON.stringify(session));
+        } catch (error) {}
+      }
+      const fragment = fragmentAccessToken ? window.location.hash : "";
+      window.location.replace(redirectUrl.pathname + redirectUrl.search + fragment);
     </script>
     <style>
       body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }

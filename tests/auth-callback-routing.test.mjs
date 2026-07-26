@@ -47,6 +47,24 @@ test("a confirmed session survives account synchronization errors", () => {
   assert.doesNotMatch(callbackSessionReader, /catch \(error\) \{\s*return null/);
 });
 
+test("implicit Supabase email-confirmation tokens are transferred into the live session", () => {
+  const callbackPage =
+    callbackSource.match(/function callbackHtml[\s\S]*?\n}\n\nfunction escapeHtml/)?.[0] || "";
+  const confirmationSessionReader =
+    liveAppSource.match(/function readAuthTokenPayload[\s\S]*?\n    async function hydrateConfirmedSessionAccount/)?.[0] || "";
+
+  assert.match(callbackPage, /fragmentParams\.get\("access_token"\)/);
+  assert.match(callbackPage, /const fragmentSession = fragmentAccessToken/);
+  assert.match(callbackPage, /try \{\s*localStorage\.setItem\("dancrAuthSessionV1", JSON\.stringify\(session\)\)/);
+  assert.match(callbackPage, /window\.location\.replace\(redirectUrl\.pathname \+ redirectUrl\.search \+ fragment\)/);
+  assert.match(callbackPage, /tokenRole && redirectUrl\.pathname === "\/account"/);
+  assert.match(callbackPage, /redirectUrl\.searchParams\.set\("dancr_confirm", "1"\)/);
+
+  assert.match(confirmationSessionReader, /function confirmationAccountFromAccessToken/);
+  assert.match(confirmationSessionReader, /metadata\.role \|\| appMetadata\.role/);
+  assert.match(confirmationSessionReader, /account: confirmationAccountFromAccessToken\(accessToken\)/);
+});
+
 test("email callbacks preserve existing dancer approval and account state", () => {
   const accountResolver =
     callbackSource.match(/const existingRole = readCallbackRole\(account\?\.role\)[\s\S]*?account = await getAccountByUserId/)?.[0] || "";
