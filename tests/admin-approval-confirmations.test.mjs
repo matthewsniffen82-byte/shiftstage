@@ -25,6 +25,10 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   const reviewContent =
     adminSource.match(/async function reviewContent[\s\S]*?\n  }\n\n  return \(/)?.[0] || "";
 
+  assert.match(adminSource, /const \[openApprovalIds, setOpenApprovalIds\] = useState<Record<string, boolean>>\(\{\}\)/);
+  assert.match(adminSource, /openById=\{openApprovalIds\}/);
+  assert.match(adminSource, /onKeepOpen=\{\(dancerId\) =>/);
+  assert.match(reviewContent, /onKeepOpen\(\)/);
   assert.match(reviewContent, /setWorkingByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: true \}\)\)/);
   assert.match(reviewContent, /const confirmation = `\$\{label\} \$\{status === "approved" \? "approved" : "rejected"\} successfully\.`/);
   assert.match(reviewContent, /setStatusByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: status \}\)\)/);
