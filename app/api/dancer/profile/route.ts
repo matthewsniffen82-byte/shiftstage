@@ -429,6 +429,11 @@ export async function PATCH(request: Request) {
     const confirmedDeletedPhotoIds: string[] = [];
     const expectedProtectedChanges = new Set<ProtectedProfileKey>();
     if (typeof body.isPublic === "boolean") expectedProtectedChanges.add("isPublic");
+    if (body.submitForReview === true) {
+      expectedProtectedChanges.add("status");
+      expectedProtectedChanges.add("verificationStatus");
+      expectedProtectedChanges.add("photoReviewStatus");
+    }
     if (deletedPhotoIds.length) {
       for (const photoId of deletedPhotoIds) {
         try {
@@ -722,14 +727,8 @@ async function submitProfileForReview(
     throw new Error("Save legal name, stage name, and city before submitting for review.");
   }
 
-  const { data: photos, error: photosError } = await db
-    .from("dancer_photos")
-    .select("id")
-    .eq("dancer_id", dancerId)
-    .limit(1);
-
-  if (photosError) throw photosError;
-  if (!photos?.length) throw new Error("Upload profile photos before submitting for review.");
+  const hasProfilePhoto = await hasSavedOrPendingProfilePhoto(db, userId, dancerId);
+  if (!hasProfilePhoto) throw new Error("Upload profile photos before submitting for review.");
 
   const { data: documents, error: documentsError } = await client.storage
     .from("verification-documents")
@@ -762,6 +761,28 @@ async function submitProfileForReview(
     if (photoError) throw photoError;
     await reopenRejectedReviewsForResubmission(adminDb, dancerId);
   }
+}
+
+async function hasSavedOrPendingProfilePhoto(db: any, userId: string, dancerId: string) {
+  const { data: photos, error: photosError } = await db
+    .from("dancer_photos")
+    .select("id")
+    .eq("dancer_id", dancerId)
+    .limit(1);
+
+  if (photosError) throw photosError;
+  if (photos?.length) return true;
+
+  const { data: pendingModeration, error: pendingModerationError } = await db
+    .from("image_moderation_records")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("decision", "review")
+    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
+    .limit(1);
+
+  if (pendingModerationError) throw pendingModerationError;
+  return Boolean(pendingModeration?.length);
 }
 
 async function reopenRejectedReviewsForResubmission(db: any, dancerId: string) {

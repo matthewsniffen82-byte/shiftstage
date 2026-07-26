@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const liveAppSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
+const profileRouteSource = await readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8");
 
 test("profile setup completion comes from the persisted dancer profile", () => {
   const completionResolver =
@@ -113,6 +114,29 @@ test("Step 3 keeps saved attachments visible without implying admin approval", (
   assert.doesNotMatch(verificationSubmit, /activeSetupStep = nextIncompleteStep\(\) \|\| "approval"/);
   assert.match(liveAppSource, /All 3 verification files are saved and attached/);
   assert.match(liveAppSource, /Replace all 3 files/);
+});
+
+test("Step 4 submits pending photo reviews and keeps a visible result", () => {
+  const reviewSubmit =
+    liveAppSource.match(/async function submitDancerProfileForReview[\s\S]*?\n    async function submitApprovedProfileChangesForReview/)?.[0] || "";
+  const reviewNotice =
+    liveAppSource.match(/function verificationReviewNoticeMarkup[\s\S]*?\n    async function loadLiveVerificationDocuments/)?.[0] || "";
+  const serverSubmit =
+    profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\nasync function hasSavedOrPendingProfilePhoto[\s\S]*?\n}/)?.[0] || "";
+
+  assert.match(serverSubmit, /hasSavedOrPendingProfilePhoto\(db, userId, dancerId\)/);
+  assert.match(serverSubmit, /\.from\("image_moderation_records"\)/);
+  assert.match(serverSubmit, /\.eq\("decision", "review"\)/);
+  assert.match(serverSubmit, /\.in\("status", ACTIVE_IMAGE_MODERATION_STATUSES\)/);
+  assert.match(profileRouteSource, /if \(body\.submitForReview === true\) \{[\s\S]*?expectedProtectedChanges\.add\("status"\)[\s\S]*?expectedProtectedChanges\.add\("verificationStatus"\)[\s\S]*?expectedProtectedChanges\.add\("photoReviewStatus"\)/);
+  assert.match(reviewSubmit, /button\.textContent = "Submitting\.\.\."/);
+  assert.match(reviewSubmit, /normalizedReviewStatus\(data\.profile\.status\) !== "pending_review"/);
+  assert.match(reviewSubmit, /verificationSubmitNoticeTone = "success"/);
+  assert.match(reviewSubmit, /verificationSubmitNoticeTone = "error"/);
+  assert.match(reviewNotice, /Submitted for review/);
+  assert.match(reviewNotice, /Submission not completed/);
+  assert.match(reviewNotice, /submitted successfully/);
+  assert.match(liveAppSource, /verificationReviewNoticeMarkup\(reviewSubmitted\)/);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {

@@ -4090,6 +4090,28 @@
       font-size: 12px;
     }
 
+    .verification-review-notice {
+      display: grid;
+      gap: 4px;
+    }
+
+    .verification-review-notice.is-success {
+      border-color: rgba(34, 197, 94, 0.48);
+      color: #d9ffe5;
+      background: rgba(8, 55, 31, 0.72);
+    }
+
+    .verification-review-notice.is-error {
+      border-color: rgba(248, 113, 113, 0.5);
+      color: #ffe1e1;
+      background: rgba(69, 10, 10, 0.68);
+    }
+
+    .verification-review-notice span {
+      color: inherit;
+      font-size: 12px;
+    }
+
     #setupChecklist .action-btn {
       width: 100%;
       min-width: 0;
@@ -28895,6 +28917,7 @@
     let liveVerificationDocuments = [];
     let liveVerificationDocumentsAuthoritative = false;
     let verificationSubmitNotice = "";
+    let verificationSubmitNoticeTone = "";
     let freshDancerVerificationLockedToProfile = false;
     const verificationDocumentLabels = [
       { documentType: "government_id", displayName: "Government ID" },
@@ -36963,9 +36986,19 @@
       `;
     }
 
-    function verificationReviewNoticeMarkup() {
-      if (!verificationSubmitNotice) return "";
-      return `<div class="rule-note verification-review-notice" role="status" aria-live="polite">${escapeHtml(verificationSubmitNotice)}</div>`;
+    function verificationReviewNoticeMarkup(reviewSubmitted = false) {
+      const message = verificationSubmitNotice || (reviewSubmitted
+        ? "Your profile, photos, and verification files were submitted successfully. Dancr will notify you by email and in your site notifications when the review is complete."
+        : "");
+      if (!message) return "";
+      const tone = verificationSubmitNotice ? (verificationSubmitNoticeTone || "success") : "success";
+      const heading = tone === "error" ? "Submission not completed" : "Submitted for review";
+      return `
+        <div class="rule-note verification-review-notice is-${tone}" role="${tone === "error" ? "alert" : "status"}" aria-live="polite">
+          <strong>${heading}</strong>
+          <span>${escapeHtml(message)}</span>
+        </div>
+      `;
     }
 
     async function loadLiveVerificationDocuments() {
@@ -37651,6 +37684,7 @@
       if (!canOpenStep("verification")) return;
       if (!isDancerSession()) {
         verificationSubmitNotice = "";
+        verificationSubmitNoticeTone = "";
         completeSetupStep("verification");
         showToast("Verification saved. Continue to Step 4 to submit for review.");
         return;
@@ -37686,6 +37720,7 @@
         dancerSetup.verification = true;
         activeSetupStep = "verification";
         verificationSubmitNotice = "";
+        verificationSubmitNoticeTone = "";
         renderDancerSetup();
         showToast("3 verification files saved and attached. Step 4 is now unlocked.");
       } catch (error) {
@@ -37698,15 +37733,26 @@
 
     async function submitDancerProfileForReview(button) {
       if (!dancerSetup.profile || !dancerSetup.photos || !dancerSetup.verification) {
+        activeSetupStep = "approval";
+        verificationSubmitNotice = "Complete and save Steps 1 through 3 before submitting your profile.";
+        verificationSubmitNoticeTone = "error";
+        renderDancerSetup();
         showToast("Complete profile, photos, and verification first");
         return;
       }
       const profile = ensureActiveDancerProfile("Pending");
-      if (button) button.disabled = true;
+      if (button) {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        button.textContent = "Submitting...";
+      }
       try {
         if (isDancerSession()) {
           const data = await patchAuthenticatedJson("/api/dancer/profile", { submitForReview: true });
           if (!data) throw new Error("Sign in required");
+          if (data.profile && normalizedReviewStatus(data.profile.status) !== "pending_review" && !dancerCoreApprovalUnlocked(data.profile)) {
+            throw new Error("Dancr could not confirm the review submission. Please try again.");
+          }
         }
         const wasApproved = dancerCoreApprovalUnlocked(profile) || dancerSetup.approval;
         if (profile) {
@@ -37727,12 +37773,22 @@
         ));
         activeSetupStep = "approval";
         verificationSubmitNotice = "Submitted for review. Dancr will notify you by email and in your site notifications when your review is complete.";
+        verificationSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Submitted for review. Watch your email and site notifications.");
       } catch (error) {
-        showToast(error.message || "Could not submit for review");
+        const message = error.message || "Could not submit for review";
+        activeSetupStep = "approval";
+        verificationSubmitNotice = message;
+        verificationSubmitNoticeTone = "error";
+        renderDancerSetup();
+        showToast(message);
       } finally {
-        if (button) button.disabled = false;
+        if (button?.isConnected) {
+          button.disabled = false;
+          button.removeAttribute("aria-busy");
+          button.textContent = "Submit for review";
+        }
       }
     }
 
@@ -38389,7 +38445,7 @@
         </form>
       `;
       const approvalBody = `
-        ${verificationReviewNoticeMarkup()}
+        ${verificationReviewNoticeMarkup(reviewSubmitted)}
         <button class="action-btn secondary" type="button" data-preview-profile>
           Preview profile
         </button>
