@@ -3887,13 +3887,13 @@
     }
 
     .setup-step.submitted .step-check {
-      border-color: #f59e0b;
-      background: #4a350c;
-      box-shadow: 0 0 12px rgba(245,158,11,.14);
+      border-color: #22c55e;
+      background: #184d2b;
+      box-shadow: 0 0 12px rgba(34,197,94,.18);
     }
 
     .setup-step.submitted .step-status-dot {
-      background: #fbbf24;
+      background: #86efac;
     }
 
     .step-body {
@@ -3922,8 +3922,8 @@
     }
 
     .setup-step.submitted .step-head {
-      color: #fff0bd;
-      background: #33240b;
+      color: #d9ffe5;
+      background: #10291b;
     }
 
     .setup-step.open:not(.complete):not(.submitted) .step-head {
@@ -4058,6 +4058,22 @@
     .verification-submission-list {
       border-color: rgba(34, 197, 94, 0.3);
       background: rgba(8, 35, 24, 0.5);
+    }
+
+    .verification-submission-status {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px 12px;
+      margin-bottom: 6px;
+      color: #d9ffe5;
+    }
+
+    .verification-submission-status span {
+      color: #86efac;
+      font-size: 12px;
+      font-weight: 800;
     }
 
     .verification-submission-list ul {
@@ -13061,7 +13077,7 @@
     }
 
     #setupChecklist .setup-step.submitted:not(.open) {
-      background: #33240b;
+      background: #10291b;
     }
 
     #setupChecklist .setup-step:not(.open) .step-head {
@@ -36904,11 +36920,16 @@
 
     function mergeVerificationDocuments(storedDocuments, liveDocuments) {
       if (!storedDocuments.length) return liveDocuments;
-      return liveDocuments.map((document, index) => ({
-        ...document,
-        documentType: storedDocuments[index]?.documentType || document.documentType,
-        displayName: storedDocuments[index]?.displayName || document.displayName,
-      }));
+      return liveDocuments.map((document, index) => {
+        const storedDocument = storedDocuments.find((item) => item.documentType === document.documentType)
+          || storedDocuments[index];
+        return {
+          ...document,
+          name: storedDocument?.name || document.name,
+          documentType: storedDocument?.documentType || document.documentType,
+          displayName: storedDocument?.displayName || document.displayName,
+        };
+      });
     }
 
     function setVerificationDocuments(documents, persist = true) {
@@ -36920,15 +36941,23 @@
     function verificationSubmissionMarkup() {
       const documents = submittedVerificationDocuments();
       if (!documents.length) return "";
-      const rows = verificationDocumentLabels.map((label, index) => {
-        const document = documents.find((item) => item.documentType === label.documentType) || documents[index];
-        const fileName = document?.name ? ` · ${escapeHtml(document.name)}` : "";
-        return `<li><strong>${escapeHtml(label.displayName)}</strong><span class="meta">Submitted for review${fileName}</span></li>`;
+      const attachedDocuments = documents.slice(0, verificationDocumentLabels.length);
+      const rows = attachedDocuments.map((document, index) => {
+        const label = verificationDocumentLabels.find((item) => item.documentType === document.documentType)
+          || verificationDocumentLabels[index]
+          || {};
+        const fileName = document?.name || label.displayName || `Document ${index + 1}`;
+        return `<li><strong>${escapeHtml(label.displayName || document.displayName)}</strong><span class="meta">Attached securely · ${escapeHtml(fileName)}</span></li>`;
       }).join("");
+      const attachmentCount = Math.min(attachedDocuments.length, verificationDocumentLabels.length);
+      const allFilesSaved = attachmentCount >= verificationDocumentLabels.length;
       return `
-        <div class="info-tile verification-submission-list">
-          <strong>Already submitted</strong>
-          <div class="meta">Your verification files are saved and waiting for Dancr review. File pickers look blank for security, but these uploads are still attached to your account.</div>
+        <div class="info-tile verification-submission-list" role="status" aria-live="polite">
+          <div class="verification-submission-status">
+            <strong>${attachmentCount} of ${verificationDocumentLabels.length} verification files saved</strong>
+            <span>${allFilesSaved ? "Pending admin approval" : "Upload the remaining files"}</span>
+          </div>
+          <div class="meta">These files are saved to your account and remain attached after submission. The file pickers below look blank because browsers do not repopulate secure file fields.</div>
           <ul>${rows}</ul>
         </div>
       `;
@@ -37655,11 +37684,10 @@
           profile.danceProofStatus = "Needs review";
         }
         dancerSetup.verification = true;
-        activeSetupStep = nextIncompleteStep() || "approval";
+        activeSetupStep = "verification";
         verificationSubmitNotice = "";
-        if (result) result.textContent = "Verification files uploaded. Continue to Step 4 to preview your profile and submit for review.";
         renderDancerSetup();
-        showToast("Verification saved. Continue to Step 4 to submit for review.");
+        showToast("3 verification files saved and attached. Step 4 is now unlocked.");
       } catch (error) {
         if (result) result.textContent = error.message || "Could not upload verification";
         showToast(error.message || "Could not upload verification");
@@ -37836,10 +37864,10 @@
       const bodyId = `setup-step-${step}-body`;
       const statusText = markerComplete
         ? (step === "verification" || step === "approval" ? "Approved" : "Saved")
-        : (submittedForReview ? "Submitted" : "");
+        : (submittedForReview ? "Files saved" : "");
       const statusLabel = markerComplete
         ? (step === "verification" ? "Approved by admin" : statusText)
-        : (submittedForReview ? "Submitted for admin review" : "Not saved");
+        : (submittedForReview ? "Files saved and pending admin approval" : "Not saved");
       return `
         <article class="setup-step ${markerComplete ? "complete" : ""} ${submittedForReview ? "submitted" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
           <button class="step-head" data-step-toggle="${step}" type="button"
@@ -38356,8 +38384,8 @@
             <input id="setupDanceProofDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
             <div class="field-note"><strong>Accepted examples:</strong> current schedule screenshot, club badge, venue confirmation, flyer, or other proof that shows you dance.</div>
           </div>
-          <div class="rule-note" id="verificationUploadResult">${hasSubmittedVerificationDocuments() ? "Your verification files are already submitted for review. Upload again only if Dancr requests updated files." : "Verification documents and dance proof are private and visible only to you and platform admins."}</div>
-          <button class="action-btn" type="submit">Submit verification</button>
+          <div class="rule-note" id="verificationUploadResult">${hasSubmittedVerificationDocuments() ? "All 3 verification files are saved and attached. They are pending admin approval; upload replacements only if Dancr asks for updated files." : "Verification documents and dance proof are private and visible only to you and platform admins."}</div>
+          <button class="action-btn" type="submit">${hasSubmittedVerificationDocuments() ? "Replace all 3 files" : "Save 3 verification files"}</button>
         </form>
       `;
       const approvalBody = `

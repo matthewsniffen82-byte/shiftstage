@@ -61,7 +61,7 @@ test("step buttons use solid colors for every setup state", () => {
   assert.match(liveAppSource, /\.step-check \{[\s\S]*?background: #3a3a48/);
   assert.match(liveAppSource, /\.step-expand \{[\s\S]*?background: #301b46/);
   assert.match(liveAppSource, /\.setup-step\.complete \.step-head \{[\s\S]*?background: #12331f/);
-  assert.match(liveAppSource, /\.setup-step\.submitted \.step-head \{[\s\S]*?background: #33240b/);
+  assert.match(liveAppSource, /\.setup-step\.submitted \.step-head \{[\s\S]*?background: #10291b/);
   assert.match(liveAppSource, /\.setup-step\.open:not\(\.complete\):not\(\.submitted\) \.step-head \{[\s\S]*?background: #2f220f/);
   assert.match(liveAppSource, /\.setup-step\.locked \.step-head \{[\s\S]*?background: #15141b/);
 });
@@ -70,7 +70,7 @@ test("collapsed setup pills fill their rounded shell with the matching state col
   assert.match(liveAppSource, /#setupChecklist \.setup-step:not\(\.open\) \{[\s\S]*?background: #181821/);
   assert.match(liveAppSource, /#setupChecklist \.setup-step\.locked:not\(\.open\) \{[\s\S]*?background: #15141b/);
   assert.match(liveAppSource, /#setupChecklist \.setup-step\.complete:not\(\.open\) \{[\s\S]*?background: #12331f/);
-  assert.match(liveAppSource, /#setupChecklist \.setup-step\.submitted:not\(\.open\) \{[\s\S]*?background: #33240b/);
+  assert.match(liveAppSource, /#setupChecklist \.setup-step\.submitted:not\(\.open\) \{[\s\S]*?background: #10291b/);
   assert.match(
     liveAppSource,
     /#setupChecklist \.setup-step:not\(\.open\) \.step-head \{[\s\S]*?border-radius: 17px[\s\S]*?background: inherit/
@@ -90,12 +90,29 @@ test("Step 3 only shows an approval check after authoritative admin approval", (
   assert.match(verificationApproval, /approvedRequiredVerificationDocuments\(\{ verificationDocuments: liveVerificationDocuments \}\)/);
   assert.match(stepMarkup, /const markerComplete = step === "verification" \? verificationApproved : saved/);
   assert.match(stepMarkup, /const submittedForReview = step === "verification" && saved && !verificationApproved/);
-  assert.match(stepMarkup, /Submitted for admin review/);
+  assert.match(stepMarkup, /Files saved and pending admin approval/);
   assert.match(stepMarkup, /Approved by admin/);
   assert.match(stepMarkup, /\$\{markerComplete \? "✓" : '<span class="step-status-dot"/);
   assert.match(documentLoader, /liveVerificationDocumentsAuthoritative = false/);
   assert.match(documentLoader, /const data = await getAuthenticatedJson\("\/api\/dancer\/verification-documents"\)/);
   assert.match(documentLoader, /liveVerificationDocumentsAuthoritative = true/);
+});
+
+test("Step 3 keeps saved attachments visible without implying admin approval", () => {
+  const submissionMarkup =
+    liveAppSource.match(/function verificationSubmissionMarkup[\s\S]*?\n    function verificationReviewNoticeMarkup/)?.[0] || "";
+  const verificationSubmit =
+    liveAppSource.match(/async function submitSetupVerification[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
+
+  assert.match(submissionMarkup, /verification files saved/);
+  assert.match(submissionMarkup, /Pending admin approval/);
+  assert.match(submissionMarkup, /remain attached after submission/);
+  assert.match(submissionMarkup, /Attached securely/);
+  assert.match(verificationSubmit, /activeSetupStep = "verification"/);
+  assert.match(verificationSubmit, /3 verification files saved and attached/);
+  assert.doesNotMatch(verificationSubmit, /activeSetupStep = nextIncompleteStep\(\) \|\| "approval"/);
+  assert.match(liveAppSource, /All 3 verification files are saved and attached/);
+  assert.match(liveAppSource, /Replace all 3 files/);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {
