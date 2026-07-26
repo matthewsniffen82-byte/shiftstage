@@ -16,6 +16,11 @@ type AdminState = {
   error?: string;
 };
 
+type AdminActionNotice = {
+  id: number;
+  message: string;
+};
+
 const SESSION_KEY = "dancrAuthSessionV1";
 
 export default function AdminClient() {
@@ -28,10 +33,23 @@ export default function AdminClient() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
 
   useEffect(() => {
     loadAdmin();
   }, []);
+
+  useEffect(() => {
+    if (!actionNotice) return;
+    const timeout = window.setTimeout(() => {
+      setActionNotice((current) => (current?.id === actionNotice.id ? null : current));
+    }, 6000);
+    return () => window.clearTimeout(timeout);
+  }, [actionNotice]);
+
+  function confirmAdminAction(message: string) {
+    setActionNotice({ id: Date.now(), message });
+  }
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,8 +116,8 @@ export default function AdminClient() {
     }
   }
 
-  async function loadAdmin() {
-    setIsLoading(true);
+  async function loadAdmin({ background = false }: { background?: boolean } = {}) {
+    if (!background) setIsLoading(true);
     const token = readToken();
     if (!token) {
       setState({ error: "Admin sign in required." });
@@ -134,15 +152,23 @@ export default function AdminClient() {
     } catch (error) {
       setState({ error: error instanceof Error ? error.message : "Unable to load admin dashboard." });
     } finally {
-      setIsLoading(false);
+      if (!background) setIsLoading(false);
     }
   }
 
   const needsSignIn = Boolean(state.error);
+  const pendingDancerApprovalCount = state.queue?.length || 0;
 
   return (
     <main className="admin-shell">
       <AdminStyles />
+      {actionNotice ? (
+        <div className="admin-action-toast" role="status" aria-live="polite" aria-atomic="true">
+          <span aria-hidden="true">✓</span>
+          <strong>{actionNotice.message}</strong>
+          <button type="button" aria-label="Dismiss confirmation" onClick={() => setActionNotice(null)}>×</button>
+        </div>
+      ) : null}
       <nav className="top-nav" aria-label="Primary">
         <Link className="brand" href="/">
           Dancr
@@ -231,12 +257,16 @@ export default function AdminClient() {
             ))}
             {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
           </Panel>
-          <Panel title="Approvals">
-            <Metric label="Pending profiles" value={String(state.queue?.length || 0)} />
+          <Panel
+            title="Dancer approvals"
+            badge={`${pendingDancerApprovalCount} needed`}
+          >
+            <Metric label="Dancers needing approval" value={String(pendingDancerApprovalCount)} />
             <Metric label="All real dancers" value={String(state.dancers?.length || 0)} />
             <ApprovalQueue
               items={state.queue || []}
-              onRefresh={loadAdmin}
+              onRefresh={() => loadAdmin({ background: true })}
+              onActionConfirmed={confirmAdminAction}
               onReviewed={(dancerId) =>
                 setState((current) => ({
                   ...current,
@@ -272,6 +302,7 @@ export default function AdminClient() {
             <ImageModerationQueue
               records={state.imageModeration || []}
               onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
+              onActionConfirmed={confirmAdminAction}
             />
           </Panel>
           <Panel title="Deal QR Attribution">
@@ -504,9 +535,11 @@ function RankingManager() {
 function ImageModerationQueue({
   records,
   onRecordsChange,
+  onActionConfirmed,
 }: {
   records: Array<Record<string, unknown>>;
   onRecordsChange: (records: Array<Record<string, unknown>>) => void;
+  onActionConfirmed: (message: string) => void;
 }) {
   const [filter, setFilter] = useState("review");
   const [notesById, setNotesById] = useState<Record<string, string>>({});
@@ -555,7 +588,12 @@ function ImageModerationQueue({
       return;
     }
     onRecordsChange(records.filter((record) => String(record.id) !== recordId));
-    setMessage(decision === "approved" ? "Photo approved and published." : "Photo rejected and removed from private review storage.");
+    const confirmation =
+      decision === "approved"
+        ? "Picture approved and published successfully."
+        : "Picture rejected successfully and removed from private review storage.";
+    setMessage(confirmation);
+    onActionConfirmed(confirmation);
   }
 
   return (
@@ -874,10 +912,12 @@ function ApprovalQueue({
   items,
   onRefresh,
   onReviewed,
+  onActionConfirmed,
 }: {
   items: Array<Record<string, unknown>>;
   onRefresh: () => void | Promise<void>;
   onReviewed: (dancerId: string) => void;
+  onActionConfirmed: (message: string) => void;
 }) {
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [statusById, setStatusById] = useState<Record<string, string>>({});
@@ -893,20 +933,27 @@ function ApprovalQueue({
     }
 
     setStatusById((current) => ({ ...current, [dancerId]: "Saving..." }));
-    const response = await fetch("/api/admin/approvals", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ dancerId, status, notes: notesById[dancerId] || null }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatusById((current) => ({ ...current, [dancerId]: data.error || "Unable to review profile." }));
-      return;
-    }
+    try {
+      const response = await fetch("/api/admin/approvals", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ dancerId, status, notes: notesById[dancerId] || null }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        setStatusById((current) => ({ ...current, [dancerId]: data.error || "Unable to review profile." }));
+        return;
+      }
 
-    setStatusById((current) => ({ ...current, [dancerId]: status === "approved" ? "Approved." : "Disapproved." }));
-    await new Promise((resolve) => window.setTimeout(resolve, 700));
-    onReviewed(dancerId);
+      const confirmation = status === "approved"
+        ? "Dancer profile approved successfully."
+        : "Dancer profile rejected successfully.";
+      setStatusById((current) => ({ ...current, [dancerId]: confirmation }));
+      onActionConfirmed(confirmation);
+      onReviewed(dancerId);
+    } catch {
+      setStatusById((current) => ({ ...current, [dancerId]: "Unable to review profile. Check your connection and try again." }));
+    }
   }
 
   return (
@@ -920,8 +967,7 @@ function ApprovalQueue({
         const pendingItems = pendingSubmittedContent(item);
         const hasPendingItems = pendingItems.length > 0;
         const reviewStatus = statusById[dancerId] || "";
-        const profileApproved = reviewStatus === "Approved.";
-        const profileDisapproved = reviewStatus === "Disapproved.";
+        const isSaving = reviewStatus === "Saving...";
         return (
           <div className="approval-row" key={dancerId}>
             <div className="approval-summary">
@@ -937,7 +983,13 @@ function ApprovalQueue({
                 {isOpen ? "Hide submission" : "View submission"}
               </button>
             </div>
-            {isOpen ? <SubmissionDetails item={item} onContentReviewed={onRefresh} /> : null}
+            {isOpen ? (
+              <SubmissionDetails
+                item={item}
+                onContentReviewed={onRefresh}
+                onActionConfirmed={onActionConfirmed}
+              />
+            ) : null}
             {hasPendingItems ? <p className="approval-blocked">Review pending items first: {pendingItems.join(", ")}.</p> : null}
             <textarea
               placeholder="Review notes"
@@ -946,14 +998,14 @@ function ApprovalQueue({
               onChange={(event) => setNotesById((current) => ({ ...current, [dancerId]: event.target.value }))}
             />
             <div className="approval-actions">
-              <button type="button" onClick={() => reviewProfile(dancerId, "approved")} disabled={hasPendingItems}>
-                {profileApproved ? "Approved" : "Approve"}
+              <button type="button" onClick={() => reviewProfile(dancerId, "approved")} disabled={hasPendingItems || isSaving}>
+                {isSaving ? "Saving..." : "Approve"}
               </button>
-              <button type="button" onClick={() => reviewProfile(dancerId, "rejected")}>
-                {profileDisapproved ? "Disapproved" : "Disapprove"}
+              <button type="button" onClick={() => reviewProfile(dancerId, "rejected")} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Disapprove"}
               </button>
             </div>
-            {reviewStatus ? <p>{reviewStatus}</p> : null}
+            {reviewStatus ? <p role="status" aria-live="polite">{reviewStatus}</p> : null}
           </div>
         );
       })}
@@ -967,7 +1019,20 @@ type AdminPreview = {
   url: string;
 };
 
-function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, unknown>; onContentReviewed: () => void | Promise<void> }) {
+type ReviewFeedback = {
+  tone: "working" | "success" | "error";
+  message: string;
+};
+
+function SubmissionDetails({
+  item,
+  onContentReviewed,
+  onActionConfirmed,
+}: {
+  item: Record<string, unknown>;
+  onContentReviewed: () => void | Promise<void>;
+  onActionConfirmed: (message: string) => void;
+}) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
   const socials = normalizeSubmissionSocials(item);
   const allDocuments = asRecordArray(item.verificationDocuments || item.verification_documents);
@@ -977,6 +1042,8 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
   const submittedBy = asText(item.stageName || item.stage_name) || asText(item.realName || item.real_name) || "this dancer";
   const [reasonByKey, setReasonByKey] = useState<Record<string, string>>({});
   const [statusByKey, setStatusByKey] = useState<Record<string, string>>({});
+  const [feedbackByKey, setFeedbackByKey] = useState<Record<string, ReviewFeedback>>({});
+  const [workingByKey, setWorkingByKey] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<AdminPreview | null>(null);
 
   function openPreview(event: MouseEvent<HTMLAnchorElement>, nextPreview: AdminPreview) {
@@ -995,35 +1062,75 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
     const notes = reasonByKey[key]?.trim() || "";
     const token = readToken();
     if (!token) {
-      setStatusByKey((current) => ({ ...current, [key]: "Admin sign in required." }));
+      setFeedbackByKey((current) => ({
+        ...current,
+        [key]: { tone: "error", message: "Admin sign in required." },
+      }));
       return;
     }
     if (status === "rejected" && !notes) {
-      setStatusByKey((current) => ({ ...current, [key]: "Add a reason before disapproving this item." }));
+      setFeedbackByKey((current) => ({
+        ...current,
+        [key]: { tone: "error", message: "Add a reason before disapproving this item." },
+      }));
       return;
     }
 
-    setStatusByKey((current) => ({ ...current, [key]: "Saving review..." }));
-    const response = await fetch("/api/admin/approvals", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        action: "review_content",
-        dancerId,
-        targetType,
-        targetId,
-        status,
-        notes,
-        label,
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      setStatusByKey((current) => ({ ...current, [key]: data.error || "Unable to save this review." }));
-      return;
-    }
+    setWorkingByKey((current) => ({ ...current, [key]: true }));
+    setFeedbackByKey((current) => ({
+      ...current,
+      [key]: { tone: "working", message: "Saving review..." },
+    }));
 
-    setStatusByKey((current) => ({ ...current, [key]: status === "approved" ? "Approved." : "Disapproved with reason saved." }));
+    try {
+      const response = await fetch("/api/admin/approvals", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "review_content",
+          dancerId,
+          targetType,
+          targetId,
+          status,
+          notes,
+          label,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        setFeedbackByKey((current) => ({
+          ...current,
+          [key]: { tone: "error", message: data.error || "Unable to save this review." },
+        }));
+        return;
+      }
+
+      const confirmation = `${label} ${status === "approved" ? "approved" : "rejected"} successfully.`;
+      setStatusByKey((current) => ({ ...current, [key]: status }));
+      setFeedbackByKey((current) => ({
+        ...current,
+        [key]: { tone: "success", message: confirmation },
+      }));
+      onActionConfirmed(confirmation);
+      try {
+        await onContentReviewed();
+      } catch {
+        setFeedbackByKey((current) => ({
+          ...current,
+          [key]: {
+            tone: "success",
+            message: `${confirmation} Refresh the dashboard to update the queue count.`,
+          },
+        }));
+      }
+    } catch {
+      setFeedbackByKey((current) => ({
+        ...current,
+        [key]: { tone: "error", message: "Unable to save this review. Check your connection and try again." },
+      }));
+    } finally {
+      setWorkingByKey((current) => ({ ...current, [key]: false }));
+    }
   }
 
   return (
@@ -1054,9 +1161,11 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const targetId = photoId;
               const key = `photo:${targetId}`;
               const status = statusByKey[key] || asText(photo.reviewStatus || photo.review_status) || "pending";
+              const feedback = feedbackByKey[key];
+              const isWorking = Boolean(workingByKey[key]);
               const reason = asText(photo.reviewNotes || photo.review_notes);
-              const isApproved = status === "Approved." || status === "approved";
-              const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
+              const isApproved = status === "approved";
+              const isDisapproved = status === "rejected";
               const label = asText(photo.displayLabel) || adminPhotoLabel(photos, photo);
               return (
                 <div className="submission-review-card" key={photoId || storagePath || imageUrl || `${dancerId}-photo-missing-id`}>
@@ -1078,13 +1187,14 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", label)} disabled={!targetId}>
-                      {isApproved ? "Approved" : "Approve picture"}
+                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", label)} disabled={!targetId || isWorking}>
+                      {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve picture"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", label)} disabled={!targetId}>
-                      {isDisapproved ? "Disapproved" : "Save disapproval"}
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", label)} disabled={!targetId || isWorking}>
+                      {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
+                  <ReviewFeedbackMessage feedback={feedback} />
                 </div>
               );
             })}
@@ -1104,9 +1214,11 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const label = verificationDocumentLabel(document, index);
               const key = `verification_document:${targetId}`;
               const status = statusByKey[key] || asText(document.status) || "pending review";
+              const feedback = feedbackByKey[key];
+              const isWorking = Boolean(workingByKey[key]);
               const reason = asText(document.reviewNotes || document.review_notes);
-              const isApproved = status === "Approved." || status === "approved";
-              const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
+              const isApproved = status === "approved";
+              const isDisapproved = status === "rejected";
               return (
                 <div className="submission-review-card" key={targetId || index}>
                   <a
@@ -1126,13 +1238,14 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("verification_document", targetId, "approved", label)} disabled={!targetId}>
-                      {isApproved ? "Approved" : "Approve file"}
+                    <button type="button" onClick={() => reviewContent("verification_document", targetId, "approved", label)} disabled={!targetId || isWorking}>
+                      {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve file"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("verification_document", targetId, "rejected", label)} disabled={!targetId}>
-                      {isDisapproved ? "Disapproved" : "Save disapproval"}
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("verification_document", targetId, "rejected", label)} disabled={!targetId || isWorking}>
+                      {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
+                  <ReviewFeedbackMessage feedback={feedback} />
                 </div>
               );
             })}
@@ -1150,9 +1263,11 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
               const targetId = asText(social.id);
               const key = `social_link:${targetId}`;
               const status = statusByKey[key] || asText(social.reviewStatus) || "pending";
+              const feedback = feedbackByKey[key];
+              const isWorking = Boolean(workingByKey[key]);
               const reason = asText(social.reviewNotes);
-              const isApproved = status === "Approved." || status === "approved";
-              const isDisapproved = status.startsWith("Disapproved") || status === "rejected";
+              const isApproved = status === "approved";
+              const isDisapproved = status === "rejected";
               return (
                 <div className="submitted-social-review" key={targetId || `${social.platform}-${index}`}>
                   <a
@@ -1172,13 +1287,14 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("social_link", targetId, "approved", social.label)} disabled={!targetId}>
-                      {isApproved ? "Approved" : "Approve social"}
+                    <button type="button" onClick={() => reviewContent("social_link", targetId, "approved", social.label)} disabled={!targetId || isWorking}>
+                      {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve social"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("social_link", targetId, "rejected", social.label)} disabled={!targetId}>
-                      {isDisapproved ? "Disapproved" : "Save disapproval"}
+                    <button className="secondary-action" type="button" onClick={() => reviewContent("social_link", targetId, "rejected", social.label)} disabled={!targetId || isWorking}>
+                      {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
+                  <ReviewFeedbackMessage feedback={feedback} />
                 </div>
               );
             })}
@@ -1235,6 +1351,20 @@ function SubmissionDetails({ item, onContentReviewed }: { item: Record<string, u
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ReviewFeedbackMessage({ feedback }: { feedback?: ReviewFeedback }) {
+  if (!feedback) return null;
+  return (
+    <p
+      className={`review-feedback ${feedback.tone}`}
+      role={feedback.tone === "error" ? "alert" : "status"}
+      aria-live="polite"
+    >
+      {feedback.tone === "success" ? <span aria-hidden="true">✓</span> : null}
+      {feedback.message}
+    </p>
   );
 }
 
@@ -1426,10 +1556,13 @@ function formatDate(value: unknown) {
   return date.toLocaleString();
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
   return (
     <article className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"}>
-      <h2>{title}</h2>
+      <header className="admin-panel-head">
+        <h2>{title}</h2>
+        {badge ? <span className="admin-panel-badge">{badge}</span> : null}
+      </header>
       <div>{children}</div>
     </article>
   );
@@ -1532,6 +1665,12 @@ function AdminStyles() {
       .admin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
       .admin-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: clamp(12px, 2.8vw, 16px); display: grid; gap: 14px; overflow: hidden; }
       .admin-panel > div { display: grid; gap: 10px; }
+      .admin-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .admin-panel-badge { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; color: #090911; background: #94e5ff; font-size: 12px; font-weight: 950; white-space: nowrap; }
+      .admin-action-toast { position: fixed; z-index: 120; top: 16px; left: 50%; width: min(520px, calc(100vw - 24px)); min-height: 56px; transform: translateX(-50%); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(50,255,164,.48); border-radius: 10px; color: #eafff4; background: #102b1c; box-shadow: 0 18px 56px rgba(0,0,0,.55); }
+      .admin-action-toast > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; color: #07140d; background: #32ffa4; font-weight: 950; }
+      .admin-action-toast strong { overflow-wrap: anywhere; }
+      .admin-action-toast button { width: 34px; min-height: 34px; padding: 0; border-radius: 999px; color: #eafff4; background: rgba(255,255,255,.08); font-size: 22px; line-height: 1; }
       .sign-in { max-width: 430px; }
       .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
       .segmented button { min-height: 42px; border: 0; border-radius: 8px; color: #fff; background: transparent; font-weight: 900; cursor: pointer; }
@@ -1586,9 +1725,13 @@ function AdminStyles() {
       .submission-review-card textarea { width: 100%; min-height: 68px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .content-review-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .content-review-actions button { min-height: 38px; padding: 0 10px; font-size: 12px; white-space: normal; line-height: 1.15; }
+      .review-feedback { display: flex; align-items: center; gap: 7px; width: 100%; max-width: none; padding: 9px 10px; border-radius: 8px; font-size: 12px !important; font-weight: 850; }
+      .review-feedback.success { color: #8dffc4 !important; border: 1px solid rgba(50,255,164,.36); background: rgba(50,255,164,.1); }
+      .review-feedback.working { color: #94e5ff !important; border: 1px solid rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
+      .review-feedback.error { color: #ffb3bf !important; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.1); }
       .submitted-social-icons, .submitted-social-review-list { display: grid; gap: 8px; }
       .submitted-social-review { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
-      .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 2; }
+      .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions, .submitted-social-review .review-feedback { grid-column: 2; }
       .submitted-social-review small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
       .submitted-social-review textarea { width: 100%; min-height: 58px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 8px 10px; font: inherit; }
       .submitted-social-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; line-height: 1; border-radius: 999px; color: #f7f2ff; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.055); text-decoration: none; }
@@ -1682,7 +1825,7 @@ function AdminStyles() {
         .admin-panel, .approval-row, .submission-detail { padding: 10px; }
         .submission-review-card { padding: 8px; }
         .submitted-social-review { grid-template-columns: 32px minmax(0, 1fr); gap: 7px; align-items: start; padding: 7px; }
-        .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions { grid-column: 1 / -1; }
+        .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions, .submitted-social-review .review-feedback { grid-column: 1 / -1; }
         .submitted-social-icon { width: 32px; height: 32px; min-width: 32px; flex-basis: 32px; }
         .submitted-social-icon svg { width: 17px; height: 17px; min-width: 17px; flex-basis: 17px; }
         .image-moderation-row img, .moderation-thumb-empty { width: 100%; max-height: 260px; object-fit: contain; }
