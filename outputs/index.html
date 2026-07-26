@@ -3787,21 +3787,23 @@
     .step-head {
       width: 100%;
       min-height: 54px;
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 24px 28px;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       padding: 12px;
       border: 0;
       color: var(--text);
       background: rgba(255,255,255,.025);
       text-align: left;
       font-weight: 900;
+      cursor: pointer;
     }
 
     .step-head > span:first-child {
       display: grid;
       gap: 3px;
+      min-width: 0;
     }
 
     .step-number {
@@ -3824,6 +3826,36 @@
       background: rgba(255,255,255,.2);
       font-size: 14px;
       box-shadow: inset 0 0 10px rgba(255,255,255,.045);
+    }
+
+    .step-expand {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(192,132,252,.34);
+      border-radius: 8px;
+      color: #d8b4fe;
+      background: rgba(168,85,247,.08);
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .setup-step.open .step-expand {
+      border-color: rgba(245,158,11,.48);
+      color: #fbbf24;
+      background: rgba(245,158,11,.1);
+    }
+
+    .setup-step.locked .step-head {
+      cursor: not-allowed;
+    }
+
+    .setup-step.locked .step-expand {
+      border-color: rgba(150,139,173,.18);
+      color: rgba(203,194,221,.54);
+      background: rgba(255,255,255,.025);
     }
 
     .setup-step.complete .step-check {
@@ -36583,10 +36615,30 @@
       return ["profile", "photos", "verification", "approval"];
     }
 
+    function isSavedSetupStepComplete(step) {
+      return Boolean(dancerSetup[step]);
+    }
+
+    function firstUnsavedSetupRequirement(step) {
+      const index = setupOrder().indexOf(step);
+      if (index < 0) return null;
+      return setupOrder().slice(0, index).find((requiredStep) => !isSavedSetupStepComplete(requiredStep)) || null;
+    }
+
+    function setupStepDisplayName(step) {
+      const labels = {
+        profile: "profile",
+        photos: "photos",
+        verification: "verification",
+        approval: "approval"
+      };
+      return labels[step] || "previous step";
+    }
+
     function canOpenStep(step) {
       const index = setupOrder().indexOf(step);
       if (index < 0) return false;
-      return setupOrder().slice(0, index).every((requiredStep) => dancerSetup[requiredStep]);
+      return firstUnsavedSetupRequirement(step) === null;
     }
 
     function nextIncompleteStep() {
@@ -37536,18 +37588,27 @@
     }
 
     function setupStepMarkup(step, title, body) {
-      const complete = dancerSetup[step];
+      const complete = isSavedSetupStepComplete(step);
       const locked = !canOpenStep(step);
       const open = activeSetupStep === step && !locked;
       const stepNumber = setupOrder().indexOf(step) + 1;
-      const lockedNote = locked ? `<div class="lock-row">Finish the previous step first.</div>` : "";
+      const missingStep = firstUnsavedSetupRequirement(step);
+      const lockedMessage = missingStep
+        ? `Complete and save Step ${setupOrder().indexOf(missingStep) + 1} ${setupStepDisplayName(missingStep)} first.`
+        : "";
+      const bodyId = `setup-step-${step}-body`;
       return `
         <article class="setup-step ${complete ? "complete" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
-          <button class="step-head" data-step-toggle="${step}">
-            <span><span class="step-number">Step ${stepNumber}</span>${title}</span>
-            <span class="step-check">${complete ? "✓" : ""}</span>
+          <button class="step-head" data-step-toggle="${step}" type="button"
+            aria-expanded="${open ? "true" : "false"}"
+            aria-controls="${bodyId}"
+            aria-disabled="${locked ? "true" : "false"}"
+            ${lockedMessage ? `title="${escapeHtml(lockedMessage)}"` : ""}>
+            <span><span class="step-number">Step ${stepNumber}${complete ? " · Saved" : ""}</span>${title}</span>
+            <span class="step-check" aria-label="${complete ? "Saved" : "Not saved"}">${complete ? "✓" : "•"}</span>
+            <span class="step-expand" aria-hidden="true">${open ? "−" : "+"}</span>
           </button>
-          <div class="step-body">${lockedNote}${body}</div>
+          <div class="step-body" id="${bodyId}" aria-hidden="${open ? "false" : "true"}">${body}</div>
         </article>
       `;
     }
@@ -40814,7 +40875,14 @@
           renderDancerSetup();
           scrollToSetupStep(step);
         } else {
-          scrollToSetupStep(step);
+          const missingStep = firstUnsavedSetupRequirement(step);
+          if (missingStep) {
+            setupChecklistExpanded = true;
+            activeSetupStep = missingStep;
+            renderDancerSetup();
+            showToast(`Complete and save Step ${setupOrder().indexOf(missingStep) + 1} ${setupStepDisplayName(missingStep)} first.`);
+            scrollToSetupStep(missingStep);
+          }
         }
         return;
       }

@@ -19,14 +19,49 @@ test("profile setup completion comes from the persisted dancer profile", () => {
   assert.doesNotMatch(liveAppSource, /function hasSavedDancerProfileSetup/);
 });
 
-test("every earlier setup step must be complete before a later step opens", () => {
+test("every earlier setup step must be saved before a later step opens", () => {
   const gate =
-    liveAppSource.match(/function canOpenStep[\s\S]*?\n    }/)?.[0] || "";
+    liveAppSource.match(/function isSavedSetupStepComplete[\s\S]*?\n    function nextIncompleteStep/)?.[0] || "";
 
+  assert.match(gate, /function isSavedSetupStepComplete/);
+  assert.match(gate, /Boolean\(dancerSetup\[step\]\)/);
+  assert.match(gate, /function firstUnsavedSetupRequirement/);
   assert.match(gate, /if \(index < 0\) return false/);
-  assert.match(gate, /setupOrder\(\)\.slice\(0, index\)\.every\(\(requiredStep\) => dancerSetup\[requiredStep\]\)/);
-  assert.doesNotMatch(gate, /dancerSetup\[setupOrder\(\)\[index - 1\]\]/);
-  assert.match(liveAppSource, /Finish the previous step first\./);
+  assert.match(gate, /firstUnsavedSetupRequirement\(step\) === null/);
+  assert.match(gate, /slice\(0, index\)\.find\(\(requiredStep\) => !isSavedSetupStepComplete\(requiredStep\)\)/);
+  assert.match(liveAppSource, /Complete and save Step/);
+});
+
+test("step headers align their markers and expose plus or minus expansion state", () => {
+  const stepStyles =
+    liveAppSource.match(/\.step-head \{[\s\S]*?\.setup-step\.complete \.step-check \{[\s\S]*?\n    }/)?.[0] || "";
+  const stepMarkup =
+    liveAppSource.match(/function setupStepMarkup[\s\S]*?\n    function scrollToSetupStep/)?.[0] || "";
+
+  assert.match(stepStyles, /display: grid/);
+  assert.match(stepStyles, /grid-template-columns: minmax\(0, 1fr\) 24px 28px/);
+  assert.match(stepStyles, /\.step-expand/);
+  assert.match(stepMarkup, /aria-expanded="\$\{open \? "true" : "false"\}"/);
+  assert.match(stepMarkup, /aria-controls="\$\{bodyId\}"/);
+  assert.match(stepMarkup, /aria-disabled="\$\{locked \? "true" : "false"\}"/);
+  assert.match(stepMarkup, /class="step-expand"/);
+  assert.match(stepMarkup, /\$\{open \? "−" : "\+"\}/);
+  assert.match(stepMarkup, /Step \$\{stepNumber\}\$\{complete \? " · Saved" : ""\}/);
+});
+
+test("real setup steps advance only after their production save succeeds", () => {
+  const profileSubmitStart = liveAppSource.indexOf('const form = event.target.closest("[data-setup-form=\'profile\']")');
+  const profileSubmitEnd = liveAppSource.indexOf('document.addEventListener("click"', profileSubmitStart);
+  const profileSubmit = liveAppSource.slice(profileSubmitStart, profileSubmitEnd);
+  const photoSubmit =
+    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function uploadVerificationFile/)?.[0] || "";
+  const verificationSubmit =
+    liveAppSource.match(/async function submitSetupVerification[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
+
+  assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
+  assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile")'));
+  assert.ok(photoSubmit.indexOf("await Promise.all") < photoSubmit.indexOf("dancerSetup.photos = Boolean"));
+  assert.ok(verificationSubmit.indexOf("await Promise.all") < verificationSubmit.indexOf("dancerSetup.verification = true"));
 });
 
 test("pending photo submissions keep the photo step complete", () => {
