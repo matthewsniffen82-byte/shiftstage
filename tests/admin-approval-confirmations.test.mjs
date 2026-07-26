@@ -23,7 +23,7 @@ test("successful approval decisions produce an accessible persistent confirmatio
 
 test("content decisions stay visible without collapsing the dancer approval", () => {
   const reviewContent =
-    adminSource.match(/async function reviewContent[\s\S]*?\n  }\n\n  return \(/)?.[0] || "";
+    adminSource.match(/async function reviewContent[\s\S]*?\r?\n  }\r?\n\r?\n  return \(/)?.[0] || "";
 
   assert.match(adminSource, /const \[openApprovalIds, setOpenApprovalIds\] = useState<Record<string, boolean>>\(\{\}\)/);
   assert.match(adminSource, /openById=\{openApprovalIds\}/);
