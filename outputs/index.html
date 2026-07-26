@@ -3202,10 +3202,7 @@
     }
 
     .approval-command {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 14px;
-      align-items: center;
+      display: block;
       padding: 16px;
       border: 1px solid rgba(168,85,247,.28);
       border-radius: 16px;
@@ -3214,26 +3211,47 @@
         linear-gradient(180deg, rgba(255,255,255,.045), transparent 72%),
         rgba(10,10,16,.82);
       box-shadow: 0 22px 58px rgba(0,0,0,.46), inset 0 0 26px rgba(168,85,247,.06);
-      cursor: pointer;
+      cursor: default;
       transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
 
-    .approval-command:hover,
-    .approval-command:focus-visible {
+    .approval-command:hover {
       border-color: rgba(168,85,247,.5);
       box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 0 24px rgba(168,85,247,.14), inset 0 0 26px rgba(168,85,247,.08);
-      outline: none;
       transform: translateY(-1px);
     }
 
     .approval-command.approved {
-      grid-template-columns: minmax(0, 1fr);
-      cursor: default;
       transform: none;
+    }
+
+    .approval-command-summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .approval-command-summary:focus-visible {
+      outline: 2px solid rgba(53,216,255,.82);
+      outline-offset: 6px;
+    }
+
+    .approval-command.approved .approval-command-summary {
+      cursor: default;
     }
 
     .approval-command.approved .approval-progress {
       display: none;
+    }
+
+    .approval-command #setupChecklistWrap {
+      width: 100%;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(168,85,247,.24);
     }
 
     .approval-command h3 {
@@ -12548,7 +12566,7 @@
     }
 
     @media (max-width: 560px) {
-      .approval-command,
+      .approval-command-summary,
       .dashboard-status-row {
         grid-template-columns: 1fr;
       }
@@ -27652,11 +27670,20 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
-        <div class="approval-command" id="dancerApprovalCommand" role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
+        <div class="approval-command" id="dancerApprovalCommand">
           <div>
-            <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
-            <h3 id="dancerApprovalTitle">Finish verification to go live</h3>
-            <p id="dancerApprovalCopy">Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.</p>
+            <div class="approval-command-summary" data-setup-checklist-toggle role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
+              <div>
+                <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
+                <h3 id="dancerApprovalTitle">Finish verification to go live</h3>
+                <p id="dancerApprovalCopy">Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.</p>
+              </div>
+              <div class="approval-progress">
+                <strong id="dancerApprovalProgress">0/4</strong>
+                <span id="dancerApprovalNext">Next: Create profile</span>
+                <span class="approval-expand" id="dancerApprovalExpand">Show steps</span>
+              </div>
+            </div>
             <div class="approval-tool-actions" id="dancerApprovedTopTools" aria-label="Approved dancer tools">
               <button type="button" data-dancer-control-action="edit-profile">
                 <strong>Edit profile</strong>
@@ -27694,14 +27721,9 @@
               <div id="approvedScheduleFormMount"></div>
             </div>
           </div>
-          <div class="approval-progress">
-            <strong id="dancerApprovalProgress">0/4</strong>
-            <span id="dancerApprovalNext">Next: Create profile</span>
-            <span class="approval-expand" id="dancerApprovalExpand">Show steps</span>
+          <div id="setupChecklistWrap" class="setup-panel setup-panel-inline" hidden>
+            <div class="setup-list" id="setupChecklist" hidden></div>
           </div>
-        </div>
-        <div id="setupChecklistWrap" class="auth-card setup-panel setup-panel-inline" hidden>
-          <div class="setup-list" id="setupChecklist" hidden></div>
         </div>
         <div class="dashboard-status-row">
           <details class="status-chip">
@@ -36532,7 +36554,8 @@
 
     function canOpenStep(step) {
       const index = setupOrder().indexOf(step);
-      return index === 0 || dancerSetup[setupOrder()[index - 1]];
+      if (index < 0) return false;
+      return setupOrder().slice(0, index).every((requiredStep) => dancerSetup[requiredStep]);
     }
 
     function nextIncompleteStep() {
@@ -36570,14 +36593,6 @@
       return `mydancr:dancer-profile-setup-saved:${userKey}`;
     }
 
-    function hasSavedDancerProfileSetup() {
-      try {
-        return localStorage.getItem(dancerProfileSetupStorageKey()) === "true";
-      } catch (error) {
-        return false;
-      }
-    }
-
     function markDancerProfileSetupSaved(saved = true) {
       try {
         if (saved) localStorage.setItem(dancerProfileSetupStorageKey(), "true");
@@ -36606,6 +36621,20 @@
       } catch (error) {
         return null;
       }
+    }
+
+    function hasCompletedDancerProfileSetup(profile = {}) {
+      const legalName = String(profile.real_name || profile.realName || "").trim();
+      const stageName = String(profile.stage_name || profile.stageName || "").trim();
+      const city = String(profile.city || profile.cityName || "").trim();
+      const placeholderLegalNames = new Set(["verification pending", "pending verification", "new dancer", "dancer"]);
+
+      return Boolean(
+        legalName &&
+        !placeholderLegalNames.has(legalName.toLowerCase()) &&
+        stageName &&
+        city
+      );
     }
 
     function saveDancerProfileDraft(update = {}) {
@@ -36978,7 +37007,7 @@
       const approved = dancerCoreApprovalUnlocked(profile);
       const rejected = isRejectedDancerStatus(profile.status);
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
-      const savedProfileSetup = approved || rejected || hasSavedDancerProfileSetup();
+      const savedProfileSetup = approved || rejected || hasCompletedDancerProfileSetup(profile);
       const draft = readStoredDancerProfileDraft();
       const useDraftFields = Boolean(draft && !savedProfileSetup);
       const liveSocials = dancerSocialMapFromProfile(profile);
@@ -37014,7 +37043,7 @@
       assignSocialMap(dancerSignupSocials, useDraftFields ? { ...liveSocials, ...draftSocials } : liveSocials);
       Object.assign(dancerSetup, {
         profile: savedProfileSetup,
-        photos: statusApproved || photos.length > 0 || normalizedReviewStatus(profile.photo_review_status || profile.photoReviewStatus) === "approved",
+        photos: statusApproved || photos.length > 0 || submittedPhotos.length > 0 || normalizedReviewStatus(profile.photo_review_status || profile.photoReviewStatus) === "approved",
         verification: approved || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
@@ -37549,8 +37578,9 @@
       const approvalCommand = document.getElementById("dancerApprovalCommand");
       if (approvalCommand) {
         approvalCommand.classList.toggle("approved", approved && !rejected);
-        approvalCommand.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       }
+      const approvalCommandToggle = approvalCommand?.querySelector("[data-setup-checklist-toggle]");
+      if (approvalCommandToggle) approvalCommandToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
       document.getElementById("dancerApprovedTopTools")?.classList.toggle("show", approved);
       const dancerApprovalStatus = document.getElementById("dancerApprovalStatus");
       if (dancerApprovalStatus) dancerApprovalStatus.textContent = approvalStateLabel;
@@ -40077,6 +40107,7 @@
 
     async function startRealDancerSession(message = "Dancer dashboard opened. Start with profile setup.") {
       resetAccountControl("dancer");
+      freshDancerVerificationLockedToProfile = false;
       dancerSignupStarted = true;
       stripeConfirmed = true;
       const loginEmail = document.getElementById("dancerLoginEmail").value.trim();
@@ -40714,8 +40745,9 @@
         handleShiftManagerAction(shiftAction.dataset.shiftAction, shiftAction);
         return;
       }
-      const approvalToggle = event.target.closest("#dancerApprovalCommand");
-      if (approvalToggle && !approvalToggle.classList.contains("approved")) {
+      const approvalToggle = event.target.closest("[data-setup-checklist-toggle]");
+      const approvalCommand = approvalToggle?.closest("#dancerApprovalCommand");
+      if (approvalToggle && approvalCommand && !approvalCommand.classList.contains("approved")) {
         setupChecklistExpanded = !setupChecklistExpanded;
         if (setupChecklistExpanded && !activeSetupStep) {
           activeSetupStep = nextIncompleteStep() || "profile";
@@ -40763,8 +40795,9 @@
 
     dancerDashboard.addEventListener("keydown", (event) => {
       if (handleNotificationCenterKeydown(event)) return;
-      const approvalToggle = event.target.closest("#dancerApprovalCommand");
-      if (!approvalToggle || approvalToggle.classList.contains("approved")) return;
+      const approvalToggle = event.target.closest("[data-setup-checklist-toggle]");
+      const approvalCommand = approvalToggle?.closest("#dancerApprovalCommand");
+      if (!approvalToggle || !approvalCommand || approvalCommand.classList.contains("approved")) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       setupChecklistExpanded = !setupChecklistExpanded;

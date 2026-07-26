@@ -36,6 +36,17 @@ test("the live app consumes the session saved by the server callback", () => {
   assert.match(liveAppSource, /showToast\("Email confirmed\. Complete your 4-step dancer verification\."\)/);
 });
 
+test("a confirmed session survives account synchronization errors", () => {
+  const callbackSessionReader =
+    callbackSource.match(/async function readCallbackSession[\s\S]*?\n}\n\nasync function confirmSupabaseCallback/)?.[0] || "";
+
+  assert.match(callbackSessionReader, /AUTH_CALLBACK_ACCOUNT_SYNC_FAILED/);
+  assert.match(callbackSessionReader, /accessToken: authData\.session\?\.access_token/);
+  assert.match(callbackSessionReader, /refreshToken: authData\.session\?\.refresh_token/);
+  assert.match(callbackSessionReader, /account: null/);
+  assert.doesNotMatch(callbackSessionReader, /catch \(error\) \{\s*return null/);
+});
+
 test("email callbacks preserve existing dancer approval and account state", () => {
   const accountResolver =
     callbackSource.match(/const existingRole = readCallbackRole\(account\?\.role\)[\s\S]*?account = await getAccountByUserId/)?.[0] || "";

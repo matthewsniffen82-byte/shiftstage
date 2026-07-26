@@ -155,8 +155,17 @@ async function readCallbackSession(request: Request) {
       expiresAt: authData.session?.expires_at,
       account,
     };
-  } catch {
-    return null;
+  } catch (error) {
+    console.error("AUTH_CALLBACK_ACCOUNT_SYNC_FAILED", {
+      userId: authData.user.id,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return {
+      accessToken: authData.session?.access_token,
+      refreshToken: authData.session?.refresh_token,
+      expiresAt: authData.session?.expires_at,
+      account: null,
+    };
   }
 }
 
