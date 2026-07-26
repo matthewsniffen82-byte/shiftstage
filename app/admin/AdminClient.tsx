@@ -34,6 +34,7 @@ export default function AdminClient() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
+  const [openApprovalIds, setOpenApprovalIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadAdmin();
@@ -265,13 +266,21 @@ export default function AdminClient() {
             <Metric label="All real dancers" value={String(state.dancers?.length || 0)} />
             <ApprovalQueue
               items={state.queue || []}
+              openById={openApprovalIds}
+              onToggleOpen={(dancerId) =>
+                setOpenApprovalIds((current) => ({ ...current, [dancerId]: !current[dancerId] }))
+              }
+              onKeepOpen={(dancerId) =>
+                setOpenApprovalIds((current) => ({ ...current, [dancerId]: true }))
+              }
               onActionConfirmed={confirmAdminAction}
-              onReviewed={(dancerId) =>
+              onReviewed={(dancerId) => {
                 setState((current) => ({
                   ...current,
                   queue: (current.queue || []).filter((item) => String(item.id) !== dancerId),
-                }))
-              }
+                }));
+                setOpenApprovalIds((current) => ({ ...current, [dancerId]: false }));
+              }}
             />
           </Panel>
           <Panel title="Dancer Directory">
@@ -909,16 +918,21 @@ function VenueManager({
 
 function ApprovalQueue({
   items,
+  openById,
+  onToggleOpen,
+  onKeepOpen,
   onReviewed,
   onActionConfirmed,
 }: {
   items: Array<Record<string, unknown>>;
+  openById: Record<string, boolean>;
+  onToggleOpen: (dancerId: string) => void;
+  onKeepOpen: (dancerId: string) => void;
   onReviewed: (dancerId: string) => void;
   onActionConfirmed: (message: string) => void;
 }) {
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [statusById, setStatusById] = useState<Record<string, string>>({});
-  const [openById, setOpenById] = useState<Record<string, boolean>>({});
 
   if (!items.length) return <p className="empty">No real pending dancer applications.</p>;
 
@@ -975,7 +989,7 @@ function ApprovalQueue({
               <button
                 className="secondary-action"
                 type="button"
-                onClick={() => setOpenById((current) => ({ ...current, [dancerId]: !isOpen }))}
+                onClick={() => onToggleOpen(dancerId)}
               >
                 {isOpen ? "Hide submission" : "View submission"}
               </button>
@@ -983,6 +997,7 @@ function ApprovalQueue({
             {isOpen ? (
               <SubmissionDetails
                 item={item}
+                onKeepOpen={() => onKeepOpen(dancerId)}
                 onActionConfirmed={onActionConfirmed}
               />
             ) : null}
@@ -1022,9 +1037,11 @@ type ReviewFeedback = {
 
 function SubmissionDetails({
   item,
+  onKeepOpen,
   onActionConfirmed,
 }: {
   item: Record<string, unknown>;
+  onKeepOpen: () => void;
   onActionConfirmed: (message: string) => void;
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
@@ -1052,6 +1069,7 @@ function SubmissionDetails({
     status: "approved" | "rejected",
     label: string,
   ) {
+    onKeepOpen();
     const key = `${targetType}:${targetId}`;
     const notes = reasonByKey[key]?.trim() || "";
     const token = readToken();
