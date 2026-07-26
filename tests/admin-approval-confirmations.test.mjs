@@ -21,7 +21,7 @@ test("successful approval decisions produce an accessible persistent confirmatio
   assert.match(adminSource, /onActionConfirmed\(confirmation\)/);
 });
 
-test("photos, verification files, and social links confirm saved decisions and prevent duplicate clicks", () => {
+test("content decisions stay visible without collapsing the dancer approval", () => {
   const reviewContent =
     adminSource.match(/async function reviewContent[\s\S]*?\n  }\n\n  return \(/)?.[0] || "";
 
@@ -29,7 +29,8 @@ test("photos, verification files, and social links confirm saved decisions and p
   assert.match(reviewContent, /const confirmation = `\$\{label\} \$\{status === "approved" \? "approved" : "rejected"\} successfully\.`/);
   assert.match(reviewContent, /setStatusByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: status \}\)\)/);
   assert.match(reviewContent, /onActionConfirmed\(confirmation\)/);
-  assert.match(reviewContent, /await onContentReviewed\(\)/);
+  assert.doesNotMatch(reviewContent, /onContentReviewed|loadAdmin/);
+  assert.doesNotMatch(adminSource, /onRefresh=\{\(\) => loadAdmin/);
   assert.match(adminSource, /disabled=\{!targetId \|\| isWorking\}/);
   assert.match(adminSource, /<ReviewFeedbackMessage feedback=\{feedback\} \/>/);
   assert.match(adminSource, /role=\{feedback\.tone === "error" \? "alert" : "status"\}/);

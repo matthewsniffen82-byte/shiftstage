@@ -116,8 +116,8 @@ export default function AdminClient() {
     }
   }
 
-  async function loadAdmin({ background = false }: { background?: boolean } = {}) {
-    if (!background) setIsLoading(true);
+  async function loadAdmin() {
+    setIsLoading(true);
     const token = readToken();
     if (!token) {
       setState({ error: "Admin sign in required." });
@@ -152,7 +152,7 @@ export default function AdminClient() {
     } catch (error) {
       setState({ error: error instanceof Error ? error.message : "Unable to load admin dashboard." });
     } finally {
-      if (!background) setIsLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -265,7 +265,6 @@ export default function AdminClient() {
             <Metric label="All real dancers" value={String(state.dancers?.length || 0)} />
             <ApprovalQueue
               items={state.queue || []}
-              onRefresh={() => loadAdmin({ background: true })}
               onActionConfirmed={confirmAdminAction}
               onReviewed={(dancerId) =>
                 setState((current) => ({
@@ -910,12 +909,10 @@ function VenueManager({
 
 function ApprovalQueue({
   items,
-  onRefresh,
   onReviewed,
   onActionConfirmed,
 }: {
   items: Array<Record<string, unknown>>;
-  onRefresh: () => void | Promise<void>;
   onReviewed: (dancerId: string) => void;
   onActionConfirmed: (message: string) => void;
 }) {
@@ -986,7 +983,6 @@ function ApprovalQueue({
             {isOpen ? (
               <SubmissionDetails
                 item={item}
-                onContentReviewed={onRefresh}
                 onActionConfirmed={onActionConfirmed}
               />
             ) : null}
@@ -1026,11 +1022,9 @@ type ReviewFeedback = {
 
 function SubmissionDetails({
   item,
-  onContentReviewed,
   onActionConfirmed,
 }: {
   item: Record<string, unknown>;
-  onContentReviewed: () => void | Promise<void>;
   onActionConfirmed: (message: string) => void;
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
@@ -1112,17 +1106,6 @@ function SubmissionDetails({
         [key]: { tone: "success", message: confirmation },
       }));
       onActionConfirmed(confirmation);
-      try {
-        await onContentReviewed();
-      } catch {
-        setFeedbackByKey((current) => ({
-          ...current,
-          [key]: {
-            tone: "success",
-            message: `${confirmation} Refresh the dashboard to update the queue count.`,
-          },
-        }));
-      }
     } catch {
       setFeedbackByKey((current) => ({
         ...current,
