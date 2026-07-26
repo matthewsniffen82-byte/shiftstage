@@ -29543,7 +29543,14 @@
       const params = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
       const token = params.get("resume");
-      const confirmedSession = readConfirmationSessionFromUrl();
+      const callbackSession = readConfirmationSessionFromUrl();
+      const isAuthCallback =
+        params.get("dancr_confirm") === "1" ||
+        params.get("dancr_reset") === "1" ||
+        hashParams.get("type") === "recovery";
+      const confirmedSession =
+        callbackSession ||
+        (isAuthCallback && authSession?.accessToken ? authSession : null);
       const pendingConfirmation = readPendingAuthConfirmation();
       const roleParam = params.get("role") || params.get("dancr_role") || "";
       const roleHint = roleParam || pendingConfirmation?.role || "";

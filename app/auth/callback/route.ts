@@ -33,13 +33,19 @@ export async function GET(request: Request) {
 function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
   const url = new URL(request.url);
   const explicitReturnTo = safeReturnPath(url.searchParams.get("return_to"));
-  if (explicitReturnTo) return explicitReturnTo;
+  const accountRole = callbackSession?.account?.role;
+  const role =
+    readCallbackRole(accountRole) ||
+    readCallbackRole(url.searchParams.get("role")) ||
+    readCallbackRole(url.searchParams.get("dancr_role")) ||
+    readCallbackRoleFromReturnTo(explicitReturnTo);
 
-  const role = callbackSession?.account?.role;
-  if (role === "dancer") return "/dashboard/dancer";
-  if (role === "customer") return "/dashboard/customer";
-  if (role === "venue") return "/dashboard/venue";
-  if (role === "admin") return "/admin";
+  if (role && isLiveAppDestination(explicitReturnTo)) {
+    return liveAppCallbackPath(url, role);
+  }
+  if (explicitReturnTo) return explicitReturnTo;
+  if (accountRole === "admin") return "/admin";
+  if (role) return liveAppCallbackPath(url, role);
   return "/account";
 }
 
@@ -51,6 +57,36 @@ function safeReturnPath(value: string | null) {
   } catch {
     return "";
   }
+}
+
+function isLiveAppDestination(value: string) {
+  if (!value) return true;
+
+  try {
+    const pathname = new URL(value, "https://mydancr.com").pathname;
+    return pathname === "/" || pathname.startsWith("/dashboard/customer") || pathname.startsWith("/dashboard/dancer") || pathname.startsWith("/dashboard/venue");
+  } catch {
+    return false;
+  }
+}
+
+function liveAppCallbackPath(url: URL, role: CallbackRole) {
+  const params = new URLSearchParams();
+  const isPasswordReset =
+    url.searchParams.get("dancr_reset") === "1" ||
+    url.searchParams.get("reset_target") === "account_password" ||
+    url.searchParams.get("type") === "recovery";
+
+  params.set(isPasswordReset ? "dancr_reset" : "dancr_confirm", "1");
+  params.set("role", role);
+  params.set("dancr_role", role);
+
+  for (const key of ["resume", "reset_target"]) {
+    const value = url.searchParams.get(key);
+    if (value) params.set(key, value);
+  }
+
+  return `/?${params.toString()}`;
 }
 
 function callbackHtml(callbackSession: Awaited<ReturnType<typeof readCallbackSession>>, redirectPath: string) {
@@ -106,8 +142,10 @@ async function readCallbackSession(request: Request) {
       readCallbackRoleFromReturnTo(url.searchParams.get("redirect_to"));
     const admin = createAdminSupabaseClient();
     let account = await getAccountByUserId(admin, authData.user.id);
-    if (roleHint) {
-      await ensureCallbackAccount(admin, authData.user, roleHint);
+    const existingRole = readCallbackRole(account?.role);
+    const authoritativeRole = existingRole || (!account ? roleHint : null);
+    if (authoritativeRole) {
+      await ensureCallbackAccount(admin, authData.user, authoritativeRole);
       account = await getAccountByUserId(admin, authData.user.id);
     }
 
@@ -157,7 +195,6 @@ async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, rol
     role,
     display_name: displayName,
     email,
-    account_state: "active",
   });
   if (accountError) throw accountError;
 
@@ -187,22 +224,19 @@ async function ensureCallbackDancerProfile(
 
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
-    .select("id")
+    .select("id, status, verification_status, is_public, disabled_at")
     .eq("user_id", userId)
     .maybeSingle();
   if (existingProfileError) throw existingProfileError;
 
   if (existingProfile) {
-    const { error } = await admin
-      .from("dancer_profiles")
-      .update({
-        real_name: realName,
-        stage_name: stageName,
-        city,
-        status: "draft",
-      })
-      .eq("user_id", userId);
-    if (error) throw error;
+    console.log("EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK", {
+      dancerId: existingProfile.id,
+      status: existingProfile.status,
+      verificationStatus: existingProfile.verification_status,
+      isPublic: existingProfile.is_public,
+      disabledAt: existingProfile.disabled_at,
+    });
     return;
   }
 
@@ -237,7 +271,7 @@ async function uniqueDancerSlug(admin: AdminClient, stageName: string, userId: s
   }
 }
 
-function readCallbackRole(value: string | null): CallbackRole | null {
+function readCallbackRole(value: unknown): CallbackRole | null {
   return value === "customer" || value === "dancer" || value === "venue" ? value : null;
 }
 
