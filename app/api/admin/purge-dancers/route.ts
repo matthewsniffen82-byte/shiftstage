@@ -17,6 +17,42 @@ const BUCKETS = [
 
 type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
 
+export function GET() {
+  return new Response(
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>Authorized production dancer purge</title>
+  </head>
+  <body>
+    <main>
+      <h1>Authorized production dancer purge</h1>
+      <form method="post" action="/api/admin/purge-dancers">
+        <label for="token">Purge token</label>
+        <input id="token" name="token" type="password" autocomplete="off" required>
+        <label for="mode">Mode</label>
+        <select id="mode" name="mode">
+          <option value="audit">Audit only</option>
+          <option value="execute">Execute deletion</option>
+        </select>
+        <button type="submit">Submit authorized operation</button>
+      </form>
+    </main>
+  </body>
+</html>`,
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Robots-Tag": "noindex, nofollow, noarchive",
+      },
+    },
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const form = await request.formData();
