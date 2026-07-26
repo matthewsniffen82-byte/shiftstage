@@ -40,7 +40,30 @@ export function GET() {
         </select>
         <button type="submit">Submit authorized operation</button>
       </form>
+      <pre id="result" aria-live="polite"></pre>
     </main>
+    <script>
+      const form = document.querySelector("form");
+      const button = document.querySelector("button");
+      const result = document.querySelector("#result");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        button.disabled = true;
+        result.textContent = "Running authorized operation...";
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+          });
+          result.textContent = await response.text();
+        } catch (error) {
+          result.textContent = String(error);
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>`,
     {
