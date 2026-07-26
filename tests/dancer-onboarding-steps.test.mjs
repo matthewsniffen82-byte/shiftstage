@@ -66,6 +66,17 @@ test("step buttons use solid colors for every setup state", () => {
   assert.match(liveAppSource, /\.setup-step\.locked \.step-head \{[\s\S]*?background: #15141b/);
 });
 
+test("collapsed setup pills fill their rounded shell with the matching state color", () => {
+  assert.match(liveAppSource, /#setupChecklist \.setup-step:not\(\.open\) \{[\s\S]*?background: #181821/);
+  assert.match(liveAppSource, /#setupChecklist \.setup-step\.locked:not\(\.open\) \{[\s\S]*?background: #15141b/);
+  assert.match(liveAppSource, /#setupChecklist \.setup-step\.complete:not\(\.open\) \{[\s\S]*?background: #12331f/);
+  assert.match(liveAppSource, /#setupChecklist \.setup-step\.submitted:not\(\.open\) \{[\s\S]*?background: #33240b/);
+  assert.match(
+    liveAppSource,
+    /#setupChecklist \.setup-step:not\(\.open\) \.step-head \{[\s\S]*?border-radius: 17px[\s\S]*?background: inherit/
+  );
+});
+
 test("Step 3 only shows an approval check after authoritative admin approval", () => {
   const verificationApproval =
     liveAppSource.match(/function isVerificationAdminApproved[\s\S]*?\n    function setupStepMarkup/)?.[0] || "";

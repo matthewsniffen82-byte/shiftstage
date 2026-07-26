@@ -13048,6 +13048,29 @@
       border-radius: 0;
     }
 
+    #setupChecklist .setup-step:not(.open) {
+      background: #181821;
+    }
+
+    #setupChecklist .setup-step.locked:not(.open) {
+      background: #15141b;
+    }
+
+    #setupChecklist .setup-step.complete:not(.open) {
+      background: #12331f;
+    }
+
+    #setupChecklist .setup-step.submitted:not(.open) {
+      background: #33240b;
+    }
+
+    #setupChecklist .setup-step:not(.open) .step-head {
+      min-height: 54px;
+      margin: 0;
+      border-radius: 17px;
+      background: inherit;
+    }
+
     #setupChecklist .setup-step.open .step-body {
       display: grid;
       grid-template-columns: 1fr;
