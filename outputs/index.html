@@ -25958,6 +25958,121 @@
       text-decoration: none;
     }
 
+    .admin-full-profile {
+      display: grid;
+      gap: 14px;
+    }
+
+    .admin-full-section {
+      display: grid;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .admin-full-section > strong {
+      color: #fff;
+      font-size: 14px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .admin-full-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .admin-full-value {
+      display: grid;
+      gap: 3px;
+      padding: 9px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 8px;
+      background: rgba(255,255,255,.035);
+      overflow-wrap: anywhere;
+    }
+
+    .admin-full-value span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .admin-full-value strong {
+      color: var(--text);
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .admin-full-photos {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .admin-full-photo {
+      display: grid;
+      gap: 5px;
+      padding: 6px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255,255,255,.035);
+      text-decoration: none;
+    }
+
+    .admin-preview-body .admin-full-photo img {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      max-height: none;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .admin-full-photo span,
+    .admin-full-row span {
+      color: var(--muted);
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .admin-full-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .admin-full-row {
+      display: grid;
+      gap: 3px;
+      padding: 9px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255,255,255,.035);
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    .admin-full-delete {
+      border-color: rgba(255,104,124,.4);
+      background: rgba(255,104,124,.08);
+    }
+
+    @media (max-width: 520px) {
+      .admin-full-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-full-photos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     /* Final quick notification polish: keep the header popover fully on screen. */
     header,
     header .topbar,
@@ -30722,6 +30837,7 @@
         const primaryPhoto = photos.find((photo) => photo.isPrimary)?.imageUrl || photos[0]?.imageUrl || "";
         const profileData = {
           id: item.id,
+          userId: item.userId || item.user_id || "",
           isRealDancerAccount: true,
           slug: item.slug || slugify(item.stageName),
           name: item.stageName,
@@ -30740,6 +30856,10 @@
           distance: "Pending",
           hidden: item.isPublic === false || item.is_public === false,
           isPublic: item.isPublic !== false && item.is_public !== false,
+          createdAt: item.createdAt || item.created_at || "",
+          updatedAt: item.updatedAt || item.updated_at || "",
+          approvedAt: item.approvedAt || item.approved_at || "",
+          disabledAt: item.disabledAt || item.disabled_at || "",
           contentFlagged: false,
           idStatus: reviewStatusLabel(item.verificationStatus, "Passed", "Needs review"),
           selfieStatus: reviewStatusLabel(item.verificationStatus, "Matched", "Needs review"),
@@ -38559,6 +38679,8 @@
           <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · ID: ${displayText(profile.idStatus)} · Selfie: ${displayText(profile.selfieStatus)} · Photos: ${displayText(profile.photoStatus)}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
+            <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
+            <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>
             <button class="action-btn secondary" data-admin-action="feature-dancer">${profile.featured ? "Unfeature dancer" : "Feature dancer"}</button>
             ${statusLabel === "Disapproved" ? '<button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>' : ""}
           </div>
@@ -38695,6 +38817,191 @@
           <span>${displayText(review.notes || "No notes")}${review.reviewedAt || review.reviewed_at ? ` · ${displayText(formatBillingDate(review.reviewedAt || review.reviewed_at))}` : ""}</span>
         </div>
       `).join("");
+    }
+
+    function adminFullProfileValue(label, value) {
+      return `
+        <div class="admin-full-value">
+          <span>${displayText(label)}</span>
+          <strong>${displayText(value || "Not submitted")}</strong>
+        </div>
+      `;
+    }
+
+    function adminFullProfileMarkup(profile) {
+      const account = profile.account && typeof profile.account === "object" ? profile.account : {};
+      const subscription = profile.subscription && typeof profile.subscription === "object" ? profile.subscription : {};
+      const photos = Array.isArray(profile.photos) ? profile.photos : [];
+      const socials = Array.isArray(profile.socialLinks) ? profile.socialLinks : [];
+      const documents = Array.isArray(profile.verificationDocuments) ? profile.verificationDocuments : [];
+      const reviews = Array.isArray(profile.reviews) ? profile.reviews : [];
+      const publicLabel = profile.isPublic === false || profile.is_public === false ? "Hidden" : "Visible";
+      const photoMarkup = photos.length ? photos.map((photo, index) => {
+        const imageUrl = photo.imageUrl || photo.image_url || "";
+        const label = photo.isPrimary || photo.is_primary ? "Main Photo" : `Photo ${index + 1}`;
+        return `
+          <a class="admin-full-photo" href="${displayText(imageUrl || "#")}" target="_blank" rel="noreferrer">
+            ${imageUrl ? `<img src="${displayText(imageUrl)}" alt="${displayText(label)}">` : "<span>No image available</span>"}
+            <strong>${displayText(label)}</strong>
+            <span>${displayText(photo.reviewStatus || photo.review_status || "pending")}</span>
+          </a>
+        `;
+      }).join("") : '<div class="locked">No profile photos.</div>';
+      const documentMarkup = documents.length ? documents.map((document, index) => {
+        const url = document.fileUrl || document.file_url || "";
+        const label = document.displayName || document.display_name || document.name || `Verification file ${index + 1}`;
+        return `
+          <a class="admin-full-row" href="${displayText(url || "#")}" target="_blank" rel="noreferrer">
+            <strong>${displayText(label)}</strong>
+            <span>${displayText(document.status || "pending review")}</span>
+            ${document.reviewNotes || document.review_notes ? `<span>${displayText(document.reviewNotes || document.review_notes)}</span>` : ""}
+          </a>
+        `;
+      }).join("") : '<div class="locked">No verification files.</div>';
+      const socialMarkup = socials.length ? socials.map((social) => `
+        <a class="admin-full-row" href="${displayText(social.url || "#")}" target="_blank" rel="noreferrer">
+          <strong>${displayText(social.platform || "Social link")}</strong>
+          <span>${displayText(social.handle || social.url || "No handle")}</span>
+          <span>${displayText(social.reviewStatus || social.review_status || "pending")}</span>
+        </a>
+      `).join("") : '<div class="locked">No social links.</div>';
+      const reviewMarkup = reviews.length ? reviews.map((review) => `
+        <div class="admin-full-row">
+          <strong>${displayText(review.reviewType || review.review_type || "Review")} · ${displayText(review.status || "pending")}</strong>
+          <span>${displayText(review.notes || "No notes")}</span>
+          <span>${displayText(formatBillingDate(review.reviewedAt || review.reviewed_at || review.createdAt || review.created_at) || "Not reviewed")}</span>
+        </div>
+      `).join("") : '<div class="locked">No review history.</div>';
+
+      return `
+        <div class="admin-full-profile">
+          <section class="admin-full-section">
+            <strong>Profile information</strong>
+            <div class="admin-full-grid">
+              ${adminFullProfileValue("Legal name", profile.realName || profile.real_name)}
+              ${adminFullProfileValue("Stage name", profile.stageName || profile.stage_name)}
+              ${adminFullProfileValue("City", profile.city)}
+              ${adminFullProfileValue("Slug", profile.slug)}
+              ${adminFullProfileValue("Profile ID", profile.id)}
+              ${adminFullProfileValue("User ID", profile.userId || profile.user_id)}
+              ${adminFullProfileValue("Profile status", profile.status)}
+              ${adminFullProfileValue("Public visibility", publicLabel)}
+              ${adminFullProfileValue("Identity review", profile.verificationStatus || profile.verification_status)}
+              ${adminFullProfileValue("Photo review", profile.photoReviewStatus || profile.photo_review_status)}
+              ${adminFullProfileValue("Created", formatBillingDate(profile.createdAt || profile.created_at))}
+              ${adminFullProfileValue("Updated", formatBillingDate(profile.updatedAt || profile.updated_at))}
+              ${adminFullProfileValue("Approved", formatBillingDate(profile.approvedAt || profile.approved_at))}
+              ${adminFullProfileValue("Disabled", formatBillingDate(profile.disabledAt || profile.disabled_at))}
+            </div>
+            ${adminFullProfileValue("Bio", profile.bio)}
+          </section>
+          <section class="admin-full-section">
+            <strong>Login account</strong>
+            <div class="admin-full-grid">
+              ${adminFullProfileValue("Email", account.email)}
+              ${adminFullProfileValue("Display name", account.displayName || account.display_name)}
+              ${adminFullProfileValue("Account state", account.accountState || account.account_state)}
+              ${adminFullProfileValue("Account created", formatBillingDate(account.createdAt || account.created_at))}
+            </div>
+          </section>
+          <section class="admin-full-section">
+            <strong>Photos (${photos.length})</strong>
+            <div class="admin-full-photos">${photoMarkup}</div>
+          </section>
+          <section class="admin-full-section">
+            <strong>Verification files (${documents.length})</strong>
+            <div class="admin-full-list">${documentMarkup}</div>
+          </section>
+          <section class="admin-full-section">
+            <strong>Social links (${socials.length})</strong>
+            <div class="admin-full-list">${socialMarkup}</div>
+          </section>
+          <section class="admin-full-section">
+            <strong>Subscription</strong>
+            <div class="admin-full-grid">
+              ${adminFullProfileValue("Status", subscription.status || "No subscription record")}
+              ${adminFullProfileValue("Period end", formatBillingDate(subscription.currentPeriodEnd || subscription.current_period_end))}
+              ${adminFullProfileValue("Stripe customer", subscription.stripeCustomerId || subscription.stripe_customer_id)}
+              ${adminFullProfileValue("Stripe subscription", subscription.stripeSubscriptionId || subscription.stripe_subscription_id)}
+            </div>
+          </section>
+          <section class="admin-full-section">
+            <strong>Review history (${reviews.length})</strong>
+            <div class="admin-full-list">${reviewMarkup}</div>
+          </section>
+          <section class="admin-full-section admin-full-delete">
+            <strong>Delete dancer profile</strong>
+            <span class="meta">This removes the profile and stored content. The dancer login account remains.</span>
+            <button class="action-btn danger" type="button" data-admin-delete-profile="${displayText(profile.id || "")}" data-admin-delete-name="${displayText(profile.stageName || profile.stage_name || "Dancer")}">Delete profile</button>
+          </section>
+        </div>
+      `;
+    }
+
+    async function openAdminFullProfile(profile, button) {
+      if (!profile?.id || !isAdminSession()) {
+        showToast("Admin login required");
+        return;
+      }
+      const originalText = button?.textContent || "View full profile";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Loading profile...";
+      }
+      adminPreviewTitle.textContent = "Loading full profile...";
+      adminPreviewBody.innerHTML = '<div class="locked">Loading live dancer profile...</div>';
+      adminPreviewPopover.hidden = false;
+      try {
+        const data = await getAuthenticatedJson(`/api/admin/dancers/${encodeURIComponent(profile.id)}`);
+        const detail = data.profile;
+        adminPreviewTitle.textContent = `${detail.stageName || profile.name || "Dancer"} · full profile`;
+        adminPreviewBody.innerHTML = adminFullProfileMarkup(detail);
+      } catch (error) {
+        closeAdminPreview();
+        showToast(error.message || "Could not load dancer profile");
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      }
+    }
+
+    async function deleteLiveAdminDancerProfile(profile, button) {
+      if (!profile?.id || !isAdminSession()) {
+        showToast("Admin login required");
+        return;
+      }
+      const stageName = profile.stageName || profile.stage_name || profile.name || "this dancer";
+      const confirmed = confirm(`Permanently delete ${stageName}'s dancer profile and all profile photos, verification files, schedules, and profile activity? Their login account will remain. This cannot be undone.`);
+      if (!confirmed) return;
+
+      const originalText = button?.textContent || "Delete profile";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Deleting profile...";
+      }
+      try {
+        const data = await deleteAuthenticatedJson(`/api/admin/dancers/${encodeURIComponent(profile.id)}`);
+        Object.values(markets).forEach((market) => {
+          market.dancers = market.dancers.filter((item) => item.id !== profile.id);
+        });
+        closeAdminPreview();
+        render();
+        renderAdminDashboard();
+        liveMarketState[selectedCity()] = null;
+        await loadLiveDiscovery(selectedCity(), { force: true });
+        const warningCount = Array.isArray(data.deleted?.warnings) ? data.deleted.warnings.length : 0;
+        showToast(warningCount
+          ? `Profile deleted; ${warningCount} cleanup warning${warningCount === 1 ? "" : "s"} logged`
+          : "Profile and stored content deleted");
+      } catch (error) {
+        showToast(error.message || "Could not delete dancer profile");
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      }
     }
 
     function isFinalAdminReviewStatus(status) {
@@ -38847,6 +39154,8 @@
           </div>
           ${pendingItems.length ? `<div class="locked">Review pending items first: ${displayText(pendingItems.join(", "))}.</div>` : ""}
           <div class="admin-actions">
+            <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
+            <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>
             <button class="action-btn" data-admin-action="approve-dancer" ${approveDisabled}>Approve dancer</button>
             <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
             <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
@@ -39485,6 +39794,14 @@
       const venueMatch = adminVenueFromNode(host);
       if (action === "recalculate-rankings") {
         recalculateLiveRankings(button);
+        return;
+      }
+      if (action === "view-dancer-profile" && profileMatch) {
+        openAdminFullProfile(profileMatch.profile, button);
+        return;
+      }
+      if (action === "delete-dancer-profile" && profileMatch) {
+        deleteLiveAdminDancerProfile(profileMatch.profile, button);
         return;
       }
       if (action === "approve-dancer" && profileMatch) {
@@ -40212,6 +40529,14 @@
     });
 
     adminPreviewClose?.addEventListener("click", closeAdminPreview);
+    adminPreviewBody?.addEventListener("click", (event) => {
+      const deleteButton = event.target.closest("[data-admin-delete-profile]");
+      if (!deleteButton) return;
+      deleteLiveAdminDancerProfile({
+        id: deleteButton.dataset.adminDeleteProfile,
+        stageName: deleteButton.dataset.adminDeleteName
+      }, deleteButton);
+    });
     adminPreviewPopover?.addEventListener("click", (event) => {
       if (event.target === adminPreviewPopover) closeAdminPreview();
     });

@@ -311,7 +311,18 @@ export default function AdminClient() {
           </Panel>
           <Panel title="Dancer Directory">
             <Metric label="Approved dancers" value={String(state.dancers?.filter((item) => String(item.status) === "approved").length || 0)} />
-            <ListPreview items={state.dancers} empty="No dancers returned from Supabase." />
+            <DancerDirectory
+              items={state.dancers || []}
+              onActionConfirmed={confirmAdminAction}
+              onDeleted={(dancerId) => {
+                setState((current) => ({
+                  ...current,
+                  queue: (current.queue || []).filter((item) => asText(item.id) !== dancerId),
+                  dancers: (current.dancers || []).filter((item) => asText(item.id) !== dancerId),
+                }));
+                setApprovalOpen(dancerId, false);
+              }}
+            />
           </Panel>
           <Panel title="Venues">
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
@@ -1555,6 +1566,264 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
     .filter((social) => social.platform && (social.handle || social.url));
 }
 
+function DancerDirectory({
+  items,
+  onDeleted,
+  onActionConfirmed,
+}: {
+  items: Array<Record<string, unknown>>;
+  onDeleted: (dancerId: string) => void;
+  onActionConfirmed: (message: string) => void;
+}) {
+  const [selectedId, setSelectedId] = useState("");
+  const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
+  const [status, setStatus] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function openProfile(item: Record<string, unknown>) {
+    const dancerId = asText(item.id);
+    const token = readToken();
+    if (!dancerId || !token) {
+      setStatus("Admin sign in required.");
+      return;
+    }
+
+    setSelectedId(dancerId);
+    setProfile(null);
+    setStatus("Loading full profile...");
+    try {
+      const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dancer profile.");
+      setProfile(data.profile || item);
+      setStatus("");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to load dancer profile.");
+    }
+  }
+
+  function closeProfile() {
+    if (isDeleting) return;
+    setSelectedId("");
+    setProfile(null);
+    setStatus("");
+  }
+
+  async function deleteProfile(item: Record<string, unknown>) {
+    const dancerId = asText(item.id);
+    const stageName = asText(item.stageName || item.stage_name) || "this dancer";
+    const token = readToken();
+    if (!dancerId || !token) {
+      setStatus("Admin sign in required.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Permanently delete ${stageName}'s dancer profile and all profile photos, verification files, schedules, and profile activity? Their login account will remain. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    setStatus("Deleting profile and stored content...");
+    try {
+      const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete dancer profile.");
+
+      onDeleted(dancerId);
+      const warningCount = Array.isArray(data.deleted?.warnings) ? data.deleted.warnings.length : 0;
+      onActionConfirmed(
+        warningCount
+          ? `${stageName}'s profile was deleted. ${warningCount} storage cleanup warning${warningCount === 1 ? "" : "s"} were logged.`
+          : `${stageName}'s profile and stored content were deleted. The login account remains.`,
+      );
+      setSelectedId("");
+      setProfile(null);
+      setStatus("");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to delete dancer profile.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  if (!items.length) return <p className="empty">No dancers returned from Supabase.</p>;
+
+  return (
+    <div className="dancer-directory-list">
+      {items.map((item) => {
+        const dancerId = asText(item.id);
+        const stageName = asText(item.stageName || item.stage_name) || "Stage name not submitted";
+        return (
+          <article className="dancer-directory-row" key={dancerId}>
+            <div>
+              <strong>{stageName}</strong>
+              <small>
+                {[asText(item.city) || "City not submitted", asText(item.status) || "draft"].join(" - ")}
+              </small>
+            </div>
+            <div className="dancer-directory-actions">
+              <button className="secondary-action" type="button" onClick={() => openProfile(item)}>
+                View full profile
+              </button>
+              <button className="danger-action" type="button" onClick={() => deleteProfile(item)}>
+                Delete profile
+              </button>
+            </div>
+          </article>
+        );
+      })}
+      {selectedId ? (
+        <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Full dancer profile" onClick={closeProfile}>
+          <div className="admin-preview-modal admin-profile-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="admin-preview-close" type="button" onClick={closeProfile} aria-label="Close full profile">
+              ×
+            </button>
+            <h3>{profile ? `${asText(profile.stageName || profile.stage_name) || "Dancer"} — full profile` : "Full dancer profile"}</h3>
+            {status ? <p role={status.startsWith("Unable") ? "alert" : "status"}>{status}</p> : null}
+            {profile ? <AdminDancerFullProfile profile={profile} /> : null}
+            {profile ? (
+              <div className="admin-profile-delete-zone">
+                <strong>Delete dancer profile</strong>
+                <p>This removes the profile and its stored content. The dancer&apos;s login account remains active.</p>
+                <button className="danger-action" type="button" onClick={() => deleteProfile(profile)} disabled={isDeleting}>
+                  {isDeleting ? "Deleting profile..." : "Delete profile"}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AdminDancerFullProfile({ profile }: { profile: Record<string, unknown> }) {
+  const account = asRecordObject(profile.account);
+  const subscription = asRecordObject(profile.subscription);
+  const photos = labelSubmittedPhotos(asRecordArray(profile.photos));
+  const socials = asRecordArray(profile.socialLinks || profile.social_links);
+  const documents = asRecordArray(profile.verificationDocuments || profile.verification_documents);
+  const reviews = asRecordArray(profile.reviews);
+
+  return (
+    <div className="admin-full-profile">
+      <section className="submission-section">
+        <h3>Profile information</h3>
+        <div className="submission-grid">
+          <SubmissionValue label="Legal name" value={profile.realName || profile.real_name} />
+          <SubmissionValue label="Stage name" value={profile.stageName || profile.stage_name} />
+          <SubmissionValue label="City" value={profile.city} />
+          <SubmissionValue label="Slug" value={profile.slug} />
+          <SubmissionValue label="Profile ID" value={profile.id} />
+          <SubmissionValue label="User ID" value={profile.userId || profile.user_id} />
+          <SubmissionValue label="Profile status" value={profile.status} />
+          <SubmissionValue label="Public visibility" value={profile.isPublic === false || profile.is_public === false ? "Hidden" : "Visible"} />
+          <SubmissionValue label="Identity review" value={profile.verificationStatus || profile.verification_status} />
+          <SubmissionValue label="Photo review" value={profile.photoReviewStatus || profile.photo_review_status} />
+          <SubmissionValue label="Created" value={formatDate(profile.createdAt || profile.created_at)} />
+          <SubmissionValue label="Last updated" value={formatDate(profile.updatedAt || profile.updated_at)} />
+          <SubmissionValue label="Approved" value={formatDate(profile.approvedAt || profile.approved_at)} />
+          <SubmissionValue label="Disabled" value={formatDate(profile.disabledAt || profile.disabled_at)} />
+        </div>
+        <SubmissionValue label="Bio" value={profile.bio} wide />
+      </section>
+
+      <section className="submission-section">
+        <h3>Login account</h3>
+        <div className="submission-grid">
+          <SubmissionValue label="Email" value={account.email} />
+          <SubmissionValue label="Display name" value={account.displayName || account.display_name} />
+          <SubmissionValue label="Account state" value={account.accountState || account.account_state} />
+          <SubmissionValue label="Account created" value={formatDate(account.createdAt || account.created_at)} />
+        </div>
+      </section>
+
+      <section className="submission-section">
+        <h3>Photos ({photos.length})</h3>
+        {photos.length ? (
+          <div className="submission-media-grid">
+            {photos.map((photo, index) => {
+              const imageUrl = asText(photo.imageUrl || photo.image_url);
+              return (
+                <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer" key={asText(photo.id) || index}>
+                  {imageUrl ? <img src={imageUrl} alt={asText(photo.displayLabel) || `Photo ${index + 1}`} /> : <span>No image URL</span>}
+                  <strong>{asText(photo.displayLabel) || `Photo ${index + 1}`}</strong>
+                  <small>{asText(photo.reviewStatus || photo.review_status) || "pending"}</small>
+                </a>
+              );
+            })}
+          </div>
+        ) : <p className="submission-empty">No profile photos.</p>}
+      </section>
+
+      <section className="submission-section">
+        <h3>Verification files ({documents.length})</h3>
+        {documents.length ? (
+          <div className="submission-files">
+            {documents.map((document, index) => {
+              const url = asText(document.fileUrl || document.file_url);
+              return (
+                <a className="submission-link" href={url || "#"} target="_blank" rel="noreferrer" key={asText(document.storagePath || document.storage_path) || index}>
+                  <strong>{verificationDocumentLabel(document, index)}</strong>
+                  <small>{asText(document.status) || "pending review"}</small>
+                </a>
+              );
+            })}
+          </div>
+        ) : <p className="submission-empty">No verification files.</p>}
+      </section>
+
+      <section className="submission-section">
+        <h3>Social links ({socials.length})</h3>
+        {socials.length ? (
+          <div className="submission-files">
+            {socials.map((social, index) => (
+              <a className="submission-link" href={asText(social.url) || "#"} target="_blank" rel="noreferrer" key={asText(social.id) || index}>
+                <strong>{asText(social.platform) || "Social link"}</strong>
+                <small>{asText(social.handle) || asText(social.url)}</small>
+                <small>{asText(social.reviewStatus || social.review_status) || "pending"}</small>
+              </a>
+            ))}
+          </div>
+        ) : <p className="submission-empty">No social links.</p>}
+      </section>
+
+      <section className="submission-section">
+        <h3>Subscription</h3>
+        {Object.keys(subscription).length ? (
+          <div className="submission-grid">
+            <SubmissionValue label="Status" value={subscription.status} />
+            <SubmissionValue label="Period end" value={formatDate(subscription.currentPeriodEnd || subscription.current_period_end)} />
+            <SubmissionValue label="Stripe customer" value={subscription.stripeCustomerId || subscription.stripe_customer_id} />
+            <SubmissionValue label="Stripe subscription" value={subscription.stripeSubscriptionId || subscription.stripe_subscription_id} />
+          </div>
+        ) : <p className="submission-empty">No subscription record.</p>}
+      </section>
+
+      <section className="submission-section">
+        <h3>Review history ({reviews.length})</h3>
+        {reviews.length ? (
+          <div className="submission-files">
+            {reviews.map((review, index) => (
+              <div className="submission-link" key={asText(review.id) || index}>
+                <strong>{asText(review.reviewType || review.review_type) || "Review"} — {asText(review.status) || "pending"}</strong>
+                <small>{asText(review.notes) || "No notes"}</small>
+                <small>{formatDate(review.reviewedAt || review.reviewed_at || review.createdAt || review.created_at)}</small>
+              </div>
+            ))}
+          </div>
+        ) : <p className="submission-empty">No review history.</p>}
+      </section>
+    </div>
+  );
+}
+
 function withReviewedSocial(
   item: Record<string, unknown>,
   targetId: string,
@@ -1617,6 +1886,11 @@ function asText(value: unknown) {
 function asRecordArray(value: unknown): Array<Record<string, unknown>> {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object" && !Array.isArray(item));
+}
+
+function asRecordObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
 }
 
 function formatDate(value: unknown) {
@@ -1799,6 +2073,16 @@ function AdminStyles() {
       .approval-row .secondary-action { color: #f7f2ff; background: rgba(139,92,246,.16); border: 1px solid rgba(139,92,246,.34); }
       .approval-row p { color: #94e5ff; font-size: 14px; }
       .approval-blocked { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,214,102,.22); background: rgba(255,214,102,.08); color: #ffd666 !important; font-size: 13px !important; }
+      .dancer-directory-list { display: grid; gap: 10px; }
+      .dancer-directory-row { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .dancer-directory-row > div:first-child { display: grid; gap: 3px; }
+      .dancer-directory-row strong { color: #fff; overflow-wrap: anywhere; }
+      .dancer-directory-row small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .dancer-directory-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .dancer-directory-actions button { min-height: 40px; padding: 8px 10px; }
+      .secondary-action { color: #f7f2ff; background: rgba(139,92,246,.16); border: 1px solid rgba(139,92,246,.34); }
+      .danger-action { color: #fff; background: rgba(202,36,63,.88); border: 1px solid rgba(255,122,142,.56); padding: 9px 12px; }
+      .danger-action:hover { background: rgba(225,45,73,.96); }
       .submission-detail { display: grid; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(139,92,246,.24); background: rgba(5,5,8,.72); }
       .submission-section { display: grid; gap: 8px; }
       .submission-section h3 { margin: 0; color: #fff; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
@@ -1851,6 +2135,12 @@ function AdminStyles() {
       .admin-preview-link { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.045); color: #f7f2ff; overflow-wrap: anywhere; }
       .admin-preview-link p { margin: 0; color: #b9accd; }
       .admin-preview-link a { justify-self: start; color: #090911; background: #f7f2ff; border-radius: 999px; padding: 10px 14px; text-decoration: none; font-weight: 900; }
+      .admin-profile-modal { width: min(920px, 100%); max-height: 92vh; }
+      .admin-full-profile { display: grid; gap: 18px; }
+      .admin-full-profile .submission-thumb img { aspect-ratio: 4 / 5; max-height: none; object-fit: cover; }
+      .admin-profile-delete-zone { display: grid; gap: 9px; padding: 14px; border-radius: 8px; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.08); }
+      .admin-profile-delete-zone p { color: #ffccd4; font-size: 13px; }
+      .admin-profile-delete-zone button { justify-self: start; }
       .submission-empty { color: #9c90b3; font-size: 13px; }
       .submission-json { border-radius: 8px; border: 1px solid rgba(255,255,255,.08); padding: 10px; background: rgba(255,255,255,.035); }
       .submission-json summary { cursor: pointer; color: #94e5ff; font-weight: 900; }
