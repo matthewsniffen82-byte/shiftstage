@@ -696,11 +696,16 @@ function DancerVisibilityPanel({
     try {
       const response = await fetch("/api/dancer/profile/visibility", {
         method: "PATCH",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${session.accessToken}`,
+          "content-type": "application/json",
+          ...(session.refreshToken ? { "x-dancr-refresh-token": session.refreshToken } : {}),
+        },
         body: JSON.stringify({ isPublic: nextPublic }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update profile visibility.");
+      persistResponseSession(data);
       const savedPublic = data.profile?.is_public === true || data.profile?.isPublic === true;
       if (savedPublic !== nextPublic) throw new Error("Profile visibility did not save. Try again.");
       if (data.profile) onProfileChange?.({ ...(profile || {}), ...data.profile });
@@ -2170,12 +2175,25 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function readSession(): { accessToken?: string } | null {
+type StoredSession = {
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  [key: string]: unknown;
+};
+
+function readSession(): StoredSession | null {
   try {
     return JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
   } catch {
     return null;
   }
+}
+
+function persistResponseSession(data: { session?: StoredSession } | null | undefined) {
+  if (!data?.session?.accessToken) return;
+  const current = readSession() || {};
+  window.localStorage.setItem(SESSION_KEY, JSON.stringify({ ...current, ...data.session }));
 }
 
 async function readJson(path: string, headers: Record<string, string>) {

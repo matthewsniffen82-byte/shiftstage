@@ -11,6 +11,7 @@ const [routeSource, dashboardSource, mobileAppSource, migrationSource] = await P
 
 test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /createRequestSupabaseContext\(request\)/);
+  assert.match(routeSource, /createAdminSupabaseClient\(\)/);
   assert.match(routeSource, /typeof body\.isPublic === "boolean"/);
   assert.match(routeSource, /\.eq\("user_id", user\.id\)/);
   assert.match(routeSource, /\.update\(\{ is_public: body\.isPublic \}\)/);
@@ -18,7 +19,10 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /coreApprovalComplete = isCoreVerificationApproved\(currentProfile\)/);
   assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
+  assert.match(routeSource, /session,/);
   assert.match(dashboardSource, /fetch\("\/api\/dancer\/profile\/visibility"/);
+  assert.match(dashboardSource, /"x-dancr-refresh-token": session\.refreshToken/);
+  assert.match(dashboardSource, /persistResponseSession\(data\)/);
   assert.doesNotMatch(
     dashboardSource.match(/async function toggleVisibility\(\)[\s\S]*?\n  }/)?.[0] || "",
     /fetch\("\/api\/dancer\/profile"/,
@@ -33,6 +37,8 @@ test("the production mobile control cannot report a local-only incognito success
   assert.match(handler, /!isDancerSession\(\) \|\| !authSession\?\.accessToken/);
   assert.match(handler, /patchAuthenticatedJson\("\/api\/dancer\/profile\/visibility"/);
   assert.match(handler, /savedPublic !== nextPublic/);
+  assert.match(handler, /trigger\.setAttribute\("aria-busy", "true"\)/);
+  assert.match(handler, /trigger\.removeAttribute\("aria-busy"\)/);
   assert.doesNotMatch(handler, /if \(isDancerSession\(\)\) \{/);
 });
 

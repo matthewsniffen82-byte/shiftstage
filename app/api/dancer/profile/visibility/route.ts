@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
 
 export const runtime = "nodejs";
@@ -28,8 +29,8 @@ export async function PATCH(request: Request) {
       return json({ ok: false, error: "isPublic must be a boolean." }, 400);
     }
 
-    const { client, user } = await createRequestSupabaseContext(request);
-    const db = client as any;
+    const { user, session } = await createRequestSupabaseContext(request);
+    const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
       .select("id, status, verification_status, disabled_at, is_public")
@@ -61,6 +62,7 @@ export async function PATCH(request: Request) {
           is_public: currentProfile.is_public,
           isPublic: currentProfile.is_public,
         },
+        session,
       });
     }
 
@@ -91,6 +93,7 @@ export async function PATCH(request: Request) {
         is_public: updatedProfile.is_public,
         isPublic: updatedProfile.is_public,
       },
+      session,
     });
   } catch (error: any) {
     if (error instanceof Error && error.message === "Sign in required.") {
