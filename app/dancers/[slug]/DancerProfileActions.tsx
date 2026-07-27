@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
 import Link from "next/link";
 
 type ShiftAction = {
@@ -16,25 +24,65 @@ type SavedState = {
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
+type DancerFollowState = {
+  followerCount: number;
+  adjustFollowerCount: (change: number) => void;
+};
+
+const DancerFollowStateContext = createContext<DancerFollowState | null>(null);
+
+export function DancerFollowStateProvider({
+  initialFollowerCount,
+  children,
+}: PropsWithChildren<{ initialFollowerCount: number }>) {
+  const [followerCount, setFollowerCount] = useState(Math.max(0, initialFollowerCount));
+  const adjustFollowerCount = useCallback((change: number) => {
+    setFollowerCount((current) => Math.max(0, current + change));
+  }, []);
+  const value = useMemo(
+    () => ({ followerCount, adjustFollowerCount }),
+    [adjustFollowerCount, followerCount],
+  );
+
+  return <DancerFollowStateContext.Provider value={value}>{children}</DancerFollowStateContext.Provider>;
+}
+
+export function DancerFollowerCount() {
+  const { followerCount } = useDancerFollowState();
+  return <>{new Intl.NumberFormat("en-US").format(followerCount)}</>;
+}
+
 export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; shifts: ShiftAction[] }) {
+  const { adjustFollowerCount } = useDancerFollowState();
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState<SavedState>({
     following: false,
     notificationsEnabled: false,
     goingShiftIds: [],
   });
+  const [savedLoaded, setSavedLoaded] = useState(false);
+  const [followSaving, setFollowSaving] = useState(false);
   const [status, setStatus] = useState("");
   const nextShift = useMemo(() => shifts[0] || null, [shifts]);
 
   useEffect(() => {
+    let active = true;
+    setSavedLoaded(false);
+    setStatus("");
     const accessToken = readToken();
     setToken(accessToken);
-    if (!accessToken) return;
+    if (!accessToken) {
+      setSavedLoaded(true);
+      return () => {
+        active = false;
+      };
+    }
 
     fetch("/api/customer/saved", { headers: { authorization: `Bearer ${accessToken}` } })
       .then((response) => response.json())
       .then((data) => {
-        if (!data.ok) return;
+        if (!active) return;
+        if (!data.ok) throw new Error(data.error || "Unable to load saved profile actions.");
         const follows = data.saved?.follows || [];
         const goingSignals = data.saved?.goingSignals || [];
         const follow = follows.find((item: any) => item.dancerId === dancerId);
@@ -45,7 +93,16 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
           goingShiftIds: goingSignals.map((item: any) => item.shiftId).filter(Boolean),
         });
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setStatus("Unable to load saved profile actions.");
+      })
+      .finally(() => {
+        if (active) setSavedLoaded(true);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [dancerId]);
 
   if (!token) {
@@ -57,30 +114,74 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
   }
 
   async function updateFollow(notificationsEnabled = saved.notificationsEnabled) {
-    const following = !saved.following;
-    await postAction("/api/customer/follows", { dancerId, following, notificationsEnabled: following && notificationsEnabled });
-    setSaved((current) => ({
-      ...current,
-      following,
-      notificationsEnabled: following ? notificationsEnabled : false,
-    }));
+    if (!savedLoaded || followSaving) return;
+    const previousFollowing = saved.following;
+    const requestedFollowing = !previousFollowing;
+    setFollowSaving(true);
+
+    try {
+      const data = await postAction("/api/customer/follows", {
+        dancerId,
+        following: requestedFollowing,
+        notificationsEnabled: requestedFollowing && notificationsEnabled,
+      });
+      const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
+      const savedNotificationsEnabled = following && data.notificationsEnabled === true;
+
+      setSaved((current) => ({
+        ...current,
+        following,
+        notificationsEnabled: savedNotificationsEnabled,
+      }));
+      if (following !== previousFollowing) {
+        adjustFollowerCount(following ? 1 : -1);
+      }
+    } catch {
+      // postAction displays the production API error beside the controls.
+    } finally {
+      setFollowSaving(false);
+    }
   }
 
   async function updateNotifications() {
-    const notificationsEnabled = !saved.notificationsEnabled;
-    await postAction("/api/customer/follows", { dancerId, following: true, notificationsEnabled });
-    setSaved((current) => ({ ...current, following: true, notificationsEnabled }));
+    if (!savedLoaded || followSaving) return;
+    const previousFollowing = saved.following;
+    const requestedNotificationsEnabled = !saved.notificationsEnabled;
+    setFollowSaving(true);
+
+    try {
+      const data = await postAction("/api/customer/follows", {
+        dancerId,
+        following: true,
+        notificationsEnabled: requestedNotificationsEnabled,
+      });
+      const following = typeof data.following === "boolean" ? data.following : true;
+      const notificationsEnabled = following && data.notificationsEnabled === true;
+
+      setSaved((current) => ({ ...current, following, notificationsEnabled }));
+      if (following !== previousFollowing) {
+        adjustFollowerCount(following ? 1 : -1);
+      }
+    } catch {
+      // postAction displays the production API error beside the controls.
+    } finally {
+      setFollowSaving(false);
+    }
   }
 
   async function updateGoing(shiftId: string) {
     const going = !saved.goingShiftIds.includes(shiftId);
-    await postAction("/api/customer/going", { shiftId, going });
-    setSaved((current) => ({
-      ...current,
-      goingShiftIds: going
-        ? Array.from(new Set([...current.goingShiftIds, shiftId]))
-        : current.goingShiftIds.filter((id) => id !== shiftId),
-    }));
+    try {
+      await postAction("/api/customer/going", { shiftId, going });
+      setSaved((current) => ({
+        ...current,
+        goingShiftIds: going
+          ? Array.from(new Set([...current.goingShiftIds, shiftId]))
+          : current.goingShiftIds.filter((id) => id !== shiftId),
+      }));
+    } catch {
+      // postAction displays the production API error beside the controls.
+    }
   }
 
   async function postAction(path: string, body: Record<string, unknown>) {
@@ -97,14 +198,15 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
       throw new Error(message);
     }
     setStatus("Saved.");
+    return data;
   }
 
   return (
-    <div className="live-actions" aria-label="Customer actions">
-      <button type="button" onClick={() => updateFollow(false)}>
+    <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving}>
+      <button type="button" onClick={() => updateFollow(false)} disabled={!savedLoaded || followSaving}>
         {saved.following ? "Following" : "Follow"}
       </button>
-      <button type="button" onClick={updateNotifications}>
+      <button type="button" onClick={updateNotifications} disabled={!savedLoaded || followSaving}>
         {saved.notificationsEnabled ? "Notifications on" : "Notify me"}
       </button>
       {nextShift ? (
@@ -115,6 +217,14 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
       {status ? <span>{status}</span> : null}
     </div>
   );
+}
+
+function useDancerFollowState() {
+  const context = useContext(DancerFollowStateContext);
+  if (!context) {
+    throw new Error("Dancer follow controls must be rendered inside DancerFollowStateProvider.");
+  }
+  return context;
 }
 
 function readToken() {

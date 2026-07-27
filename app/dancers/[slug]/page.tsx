@@ -4,7 +4,11 @@ import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { DancerProfileActions } from "./DancerProfileActions";
+import {
+  DancerFollowerCount,
+  DancerFollowStateProvider,
+  DancerProfileActions,
+} from "./DancerProfileActions";
 import { ProfileViewTracker } from "./ProfileViewTracker";
 import { SocialLinks } from "./SocialLinks";
 
@@ -27,7 +31,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const activeDeal = activeShift?.venueId ? await getActiveClubDealForVenue(client, activeShift.venueId) : null;
 
   return (
-    <main className="public-profile-shell">
+    <DancerFollowStateProvider initialFollowerCount={profile.followerCount} key={profile.id}>
+      <main className="public-profile-shell">
       <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
       <nav className="public-nav">
@@ -91,7 +96,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </div>
             <div>
               <dt>Followers</dt>
-              <dd>{profile.followerCount.toLocaleString()}</dd>
+              <dd>
+                <DancerFollowerCount />
+              </dd>
             </div>
             <div>
               <dt>Going</dt>
@@ -112,7 +119,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
           ))}
         </section>
       ) : null}
-    </main>
+      </main>
+    </DancerFollowStateProvider>
   );
 }
 
