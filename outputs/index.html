@@ -29150,6 +29150,19 @@
         notifiedByCity[city] = [];
         followedVenuesByCity[city] = [];
       });
+      Object.keys(goingTonightSavedByProfile).forEach((profileName) => {
+        delete goingTonightSavedByProfile[profileName];
+      });
+    }
+
+    function clearLiveProfileActionCollections() {
+      Object.keys(markets).forEach((city) => {
+        followedByCity[city] = [];
+        notifiedByCity[city] = [];
+      });
+      Object.keys(goingTonightSavedByProfile).forEach((profileName) => {
+        delete goingTonightSavedByProfile[profileName];
+      });
     }
 
     function prepareRealCustomerDashboardState() {
@@ -29832,6 +29845,7 @@
           prepareRealCustomerDashboardState();
           loadLiveCustomerDashboardData();
         }
+        if (dashboardRole === "dancer") loadLiveProfileActionState();
         if (dashboardRole === "dancer") {
           prepareConfirmedDancerVerification(state);
         }
@@ -30975,8 +30989,8 @@
       return match ? { city, venue: match } : null;
     }
 
-    function applyLiveCustomerSaved(saved) {
-      if (authSession?.accessToken) clearCustomerSavedCollections();
+    function applyLiveProfileActions(saved) {
+      clearLiveProfileActionCollections();
       (saved?.follows || []).forEach((item) => {
         const match = findProfileBySavedDancer(item);
         if (!match) return;
@@ -30984,6 +30998,17 @@
         if (item.notificationsEnabled) enableProfileNotifications(match.city, match.profile.name);
         else disableProfileNotifications(match.city, match.profile.name);
       });
+      (saved?.goingSignals || []).forEach((item) => {
+        const match = findProfileBySavedShift(item);
+        if (!match) return;
+        goingTonightSavedByProfile[match.profile.name] = true;
+        goingTonightByProfile[match.profile.name] = tonightInterestCount(match.profile);
+      });
+    }
+
+    function applyLiveCustomerSaved(saved) {
+      if (authSession?.accessToken) clearCustomerSavedCollections();
+      applyLiveProfileActions(saved);
       (saved?.favorites || []).forEach((item) => {
         const match = findProfileBySavedDancer(item);
         if (!match) return;
@@ -30996,12 +31021,17 @@
         const followedVenues = followedVenuesByCity[match.city] || (followedVenuesByCity[match.city] = []);
         if (!followedVenues.includes(match.venue.name)) followedVenues.push(match.venue.name);
       });
-      (saved?.goingSignals || []).forEach((item) => {
-        const match = findProfileBySavedShift(item);
-        if (!match) return;
-        goingTonightSavedByProfile[match.profile.name] = true;
-        goingTonightByProfile[match.profile.name] = tonightInterestCount(match.profile);
-      });
+    }
+
+    async function loadLiveProfileActionState() {
+      if (!authSession?.accessToken) return;
+      try {
+        const data = await getAuthenticatedJson("/api/customer/saved");
+        applyLiveProfileActions(data.saved || {});
+        render();
+      } catch (error) {
+        showToast(error.message || "Could not load profile actions");
+      }
     }
 
     async function loadLiveCustomerProfile() {
@@ -32027,6 +32057,7 @@
         const applied = applyLiveMarket(city, allDancers.dancers || [], tonightDancers.dancers || [], venueList.venues || []);
         liveMarketState[city] = applied ? "ready" : "fallback";
         if (isCustomerSession()) await loadLiveCustomerSaved();
+        else if (authSession?.accessToken) await loadLiveProfileActionState();
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -32171,8 +32202,7 @@
     }
 
     function notificationNumber(profile, city = selectedCity()) {
-      const realNotifications = firstRealMetric(profile, ["notificationCount", "notificationsEnabled", "notificationSubscribers"]);
-      return realNotifications + (isNotificationOn(city, profile.name) ? 1 : 0);
+      return firstRealMetric(profile, ["notificationCount", "notificationsEnabled", "notificationSubscribers"]);
     }
 
     function notificationCount(profile, city = selectedCity()) {
@@ -32232,6 +32262,10 @@
 
     function followerMetricMarkup(profile, city = selectedCity()) {
       return metricPhraseMarkup(`${compactProfileMetric(followerNumber(profile, city))} Followers`);
+    }
+
+    function notificationMetricMarkup(profile, city = selectedCity()) {
+      return metricPhraseMarkup(`${compactProfileMetric(notificationNumber(profile, city))} Notifications`);
     }
 
     function profileViewsToday(profile, city = selectedCity()) {
@@ -36072,6 +36106,7 @@
             <strong>Followers</strong>
             <div class="meta profile-follower-metric">
               <span class="metric-value" id="modalFollowerCount" aria-live="polite">${followerMetricMarkup(profile, city)}</span>
+              <span class="metric-value" id="modalNotificationCount" aria-live="polite">${notificationMetricMarkup(profile, city)}</span>
               ${profileViewsTodayMarkup(profile, city)}
             </div>
           </div>
@@ -38084,6 +38119,8 @@
       const isHidden = dancerProfileIsHidden(profile);
       button.hidden = !approved;
       button.classList.toggle("is-incognito", isHidden);
+      button.setAttribute("aria-pressed", isHidden ? "true" : "false");
+      button.setAttribute("aria-label", isHidden ? "Reactivate public profile" : "Go incognito and hide public profile");
       const label = button.querySelector("strong");
       const helper = button.querySelector("span");
       if (label) label.textContent = isHidden ? "Reactivate profile" : "Go incognito";
@@ -40282,13 +40319,41 @@
       return count;
     }
 
-    function applyConfirmedProfileFollow(profile, city, data) {
-      const following = data?.following === true;
-      const notificationsEnabled = following && data?.notificationsEnabled === true;
-      profile.followerCount = confirmedFollowerCount(
-        data,
-        "The preference was saved, but the follower count could not be confirmed."
-      );
+    function confirmedNotificationCount(data, errorMessage) {
+      const count = Number(data?.notificationCount);
+      if (!Number.isSafeInteger(count) || count < 0) throw new Error(errorMessage);
+      return count;
+    }
+
+    function profileFollowSnapshot(profile, city) {
+      return {
+        following: isFollowingProfile(city, profile.name),
+        notificationsEnabled: isNotificationOn(city, profile.name),
+        followerCount: followerNumber(profile, city),
+        notificationCount: notificationNumber(profile, city)
+      };
+    }
+
+    function optimisticProfileFollowState(profile, city, following, notificationsEnabled) {
+      const snapshot = profileFollowSnapshot(profile, city);
+      const nextFollowing = following === true;
+      const nextNotifications = nextFollowing && notificationsEnabled === true;
+      return {
+        following: nextFollowing,
+        notificationsEnabled: nextNotifications,
+        followerCount: Math.max(0, snapshot.followerCount + Number(nextFollowing) - Number(snapshot.following)),
+        notificationCount: Math.max(
+          0,
+          snapshot.notificationCount + Number(nextNotifications) - Number(snapshot.notificationsEnabled)
+        )
+      };
+    }
+
+    function applyProfileFollowState(profile, city, state) {
+      const following = state?.following === true;
+      const notificationsEnabled = following && state?.notificationsEnabled === true;
+      profile.followerCount = Math.max(0, Number(state?.followerCount) || 0);
+      profile.notificationCount = Math.max(0, Number(state?.notificationCount) || 0);
       setProfileFollowed(city, profile.name, following);
       if (notificationsEnabled) enableProfileNotifications(city, profile.name);
       else disableProfileNotifications(city, profile.name);
@@ -40310,7 +40375,24 @@
 
       const followerCountEl = document.getElementById("modalFollowerCount");
       if (followerCountEl) followerCountEl.innerHTML = followerMetricMarkup(profile, city);
+      const notificationCountEl = document.getElementById("modalNotificationCount");
+      if (notificationCountEl) notificationCountEl.innerHTML = notificationMetricMarkup(profile, city);
       return { following, notificationsEnabled };
+    }
+
+    function applyConfirmedProfileFollow(profile, city, data) {
+      return applyProfileFollowState(profile, city, {
+        following: data?.following === true,
+        notificationsEnabled: data?.notificationsEnabled === true,
+        followerCount: confirmedFollowerCount(
+          data,
+          "The preference was saved, but the follower count could not be confirmed."
+        ),
+        notificationCount: confirmedNotificationCount(
+          data,
+          "The preference was saved, but the notification count could not be confirmed."
+        )
+      });
     }
 
     async function saveProfileFollow(actionButton) {
@@ -40324,13 +40406,22 @@
       }
 
       const notifyButton = document.getElementById("notifyBtn");
+      const snapshot = profileFollowSnapshot(profile, city);
+      const requestedFollowing = !snapshot.following;
+      const optimisticState = optimisticProfileFollowState(
+        profile,
+        city,
+        requestedFollowing,
+        requestedFollowing
+      );
       actionButton.disabled = true;
       if (notifyButton) notifyButton.disabled = true;
+      applyProfileFollowState(profile, city, optimisticState);
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
           dancerId: profile.id,
-          following: !isFollowingProfile(city, profileName),
-          notificationsEnabled: !isFollowingProfile(city, profileName)
+          following: requestedFollowing,
+          notificationsEnabled: requestedFollowing
         });
         if (!data) throw new Error("Sign in required.");
         const { following } = applyConfirmedProfileFollow(profile, city, data);
@@ -40341,6 +40432,7 @@
         showToast(following ? "Following profile. Notifications on." : "Unfollowed profile");
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
+        applyProfileFollowState(profile, city, snapshot);
         showToast(error.message || "Could not save follow");
       } finally {
         actionButton.disabled = false;
@@ -40359,13 +40451,22 @@
       }
 
       const followButton = document.getElementById("followBtn");
+      const snapshot = profileFollowSnapshot(profile, city);
+      const requestedNotifications = !snapshot.notificationsEnabled;
+      const optimisticState = optimisticProfileFollowState(
+        profile,
+        city,
+        true,
+        requestedNotifications
+      );
       actionButton.disabled = true;
       if (followButton) followButton.disabled = true;
+      applyProfileFollowState(profile, city, optimisticState);
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
           dancerId: profile.id,
           following: true,
-          notificationsEnabled: !actionButton.classList.contains("is-following")
+          notificationsEnabled: requestedNotifications
         });
         if (!data) throw new Error("Sign in required.");
         const { notificationsEnabled } = applyConfirmedProfileFollow(profile, city, data);
@@ -40376,6 +40477,7 @@
         showToast(notificationsEnabled ? "Notifications on" : "Notifications off");
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
+        applyProfileFollowState(profile, city, snapshot);
         showToast(error.message || "Could not save notifications");
       } finally {
         actionButton.disabled = false;
@@ -40424,28 +40526,56 @@
         const isTonightShift = shiftState === "tonight";
         const countEl = document.getElementById("tonightInterestCount");
         const wasGoing = actionButton.classList.contains("is-going");
+        const previousCount = tonightInterestCount(profile);
+        const requestedGoing = !wasGoing;
+        const optimisticCount = Math.max(0, previousCount + (requestedGoing ? 1 : -1));
+        const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
+        const activeLabel = isTonightShift ? "You're going now" : "You're going";
         actionButton.disabled = true;
+        goingTonightByProfile[profileName] = optimisticCount;
+        profile.goingCount = optimisticCount;
+        goingTonightSavedByProfile[profileName] = requestedGoing;
+        if (countEl) {
+          countEl.classList.remove("muted");
+          countEl.innerHTML = metricPhraseMarkup(`${optimisticCount.toLocaleString()} people going`);
+        }
+        actionButton.classList.toggle("is-going", requestedGoing);
+        actionButton.innerHTML = actionButtonLabel(
+          requestedGoing ? "check" : "clock",
+          requestedGoing ? activeLabel : idleLabel
+        );
         try {
           const data = await postAuthenticatedJson("/api/customer/going", {
             shiftId: profile.shiftId,
-            going: !wasGoing
+            going: requestedGoing
           });
+          if (!data) throw new Error("Sign in required.");
           const savedGoing = data.going === true;
-          const realCount = Math.max(0, Number(data.goingCount) || 0);
+          const realCount = Number(data.goingCount);
+          if (!Number.isSafeInteger(realCount) || realCount < 0) {
+            throw new Error("The status was saved, but the going count could not be confirmed.");
+          }
           goingTonightByProfile[profileName] = realCount;
           profile.goingCount = realCount;
           goingTonightSavedByProfile[profileName] = savedGoing;
           if (countEl) {
             countEl.classList.remove("muted");
-            countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} going`);
+            countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} people going`);
           }
           actionButton.classList.toggle("is-going", savedGoing);
-          const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
-          const activeLabel = isTonightShift ? "You're going now" : "You're going";
           actionButton.innerHTML = actionButtonLabel(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
           recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? (isTonightShift ? "going_tonight_added" : "going_upcoming_added") : "going_removed" });
           showToast(savedGoing ? (isTonightShift ? "Added to now" : "Added to upcoming shift") : "Removed");
         } catch (error) {
+          goingTonightByProfile[profileName] = previousCount;
+          profile.goingCount = previousCount;
+          goingTonightSavedByProfile[profileName] = wasGoing;
+          if (countEl) {
+            countEl.classList.remove("muted");
+            countEl.innerHTML = metricPhraseMarkup(`${previousCount.toLocaleString()} people going`);
+          }
+          actionButton.classList.toggle("is-going", wasGoing);
+          actionButton.innerHTML = actionButtonLabel(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel);
           showToast(error.message || "Could not save going status");
         } finally {
           actionButton.disabled = false;
@@ -41290,7 +41420,10 @@
           return;
         }
         const nextPublic = dancerProfileIsHidden(profile);
-        if (trigger) trigger.disabled = true;
+        if (trigger) {
+          trigger.disabled = true;
+          trigger.setAttribute("aria-busy", "true");
+        }
         setResult(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from public pages...");
         try {
           const data = await patchAuthenticatedJson("/api/dancer/profile/visibility", { isPublic: nextPublic });
@@ -41313,7 +41446,10 @@
           setResult(error.message || "Could not update profile visibility.");
           showToast(error.message || "Could not update profile visibility.");
         } finally {
-          if (trigger) trigger.disabled = false;
+          if (trigger) {
+            trigger.disabled = false;
+            trigger.removeAttribute("aria-busy");
+          }
         }
         return;
       }

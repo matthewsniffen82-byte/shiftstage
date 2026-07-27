@@ -27,12 +27,14 @@ test("the live profile never manufactures engagement or ranking values", () => {
   assert.match(legacySource, /metricPhraseMarkup\(`\$\{tonightInterestCount\(profile\)\.toLocaleString\(\)\} people going`\)/);
 });
 
-test("going actions update the visible number only from the persisted API count", () => {
+test("going actions update immediately, then reconcile to the persisted API count or roll back", () => {
   assert.match(goingRouteSource, /const goingCount = await countShiftGoingSignals\(shiftId\)/);
   assert.match(goingRouteSource, /NextResponse\.json\(\{ ok: true, going, goingCount \}\)/);
   assert.match(legacySource, /const data = await postAuthenticatedJson\("\/api\/customer\/going"/);
-  assert.match(legacySource, /const realCount = Math\.max\(0, Number\(data\.goingCount\) \|\| 0\)/);
-  assert.doesNotMatch(legacySource, /currentCount \+ \(wasGoing \? -1 : 1\)/);
+  assert.match(legacySource, /const optimisticCount = Math\.max\(0, previousCount \+ \(requestedGoing \? 1 : -1\)\)/);
+  assert.match(legacySource, /const realCount = Number\(data\.goingCount\)/);
+  assert.match(legacySource, /if \(!Number\.isSafeInteger\(realCount\) \|\| realCount < 0\)/);
+  assert.match(legacySource, /catch \(error\) \{[\s\S]*profile\.goingCount = previousCount/);
 });
 
 test("discovery begins empty and only production venue results populate it", () => {

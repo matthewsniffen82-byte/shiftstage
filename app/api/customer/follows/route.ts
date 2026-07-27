@@ -23,8 +23,13 @@ export async function POST(request: Request) {
 
     if (!following) {
       await unfollowDancer(client, user.id, dancerId);
-      const followerCount = await countDancerFollowers(dancerId);
-      return NextResponse.json({ ok: true, following: false, notificationsEnabled: false, followerCount });
+      const counts = await countDancerFollowPreferences(dancerId);
+      return NextResponse.json({
+        ok: true,
+        following: false,
+        notificationsEnabled: false,
+        ...counts,
+      });
     }
 
     if (notificationsEnabled) {
@@ -33,20 +38,31 @@ export async function POST(request: Request) {
       await setDancerNotifications(client, user.id, dancerId, false);
     }
 
-    const followerCount = await countDancerFollowers(dancerId);
-    return NextResponse.json({ ok: true, following: true, notificationsEnabled, followerCount });
+    const counts = await countDancerFollowPreferences(dancerId);
+    return NextResponse.json({ ok: true, following: true, notificationsEnabled, ...counts });
   } catch (error) {
     return apiError(error, "Unable to update dancer follow.");
   }
 }
 
-async function countDancerFollowers(dancerId: string) {
+async function countDancerFollowPreferences(dancerId: string) {
   const admin = createAdminSupabaseClient();
-  const { count, error } = await admin
-    .from("follows")
-    .select("customer_id", { count: "exact", head: true })
-    .eq("dancer_id", dancerId);
+  const [followers, notifications] = await Promise.all([
+    admin
+      .from("follows")
+      .select("customer_id", { count: "exact", head: true })
+      .eq("dancer_id", dancerId),
+    admin
+      .from("follows")
+      .select("customer_id", { count: "exact", head: true })
+      .eq("dancer_id", dancerId)
+      .eq("notifications_enabled", true),
+  ]);
 
-  if (error) throw error;
-  return count || 0;
+  if (followers.error) throw followers.error;
+  if (notifications.error) throw notifications.error;
+  return {
+    followerCount: followers.count || 0,
+    notificationCount: notifications.count || 0,
+  };
 }
