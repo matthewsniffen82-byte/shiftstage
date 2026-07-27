@@ -17,7 +17,7 @@ function sourceBetween(source, start, end) {
   return source.slice(startIndex, endIndex);
 }
 
-test("account-only live modal actions check for a customer profile while Going stays public", () => {
+test("account-only live modal actions check for a customer profile while Going and Report stay public", () => {
   const handler = sourceBetween(
     homeSource,
     'modalBody.addEventListener("click"',
@@ -27,7 +27,7 @@ test("account-only live modal actions check for a customer profile while Going s
   assert.match(handler, /#followBtn, #notifyBtn, #goingBtn, #reportBtn/);
   assert.match(
     handler,
-    /if \(actionButton\.id !== "goingBtn" && !requireCustomerAccountForProfileAction\(actionButton\)\) return/,
+    /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\) &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
   assert.ok(
     handler.indexOf("requireCustomerAccountForProfileAction(actionButton)") <
@@ -62,37 +62,54 @@ test("signed-out profile actions open a dismissible account prompt with working 
   assert.match(homeSource, /accountRequiredCreateLink\?\.addEventListener\("click"[\s\S]*openFreshCustomerSignup\(\)/);
 });
 
-test("public Next profiles keep all actions visible while signed out and gate only account-owned actions", () => {
+test("public Next profiles keep all actions visible while signed out and gate only Follow and Notify", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
-  for (const action of ["follow", "notify", "report"]) {
+  assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
+  assert.match(actionsSource, /profile-action-requirement">Sign in required/);
+  assert.match(actionsSource, /profile-action-requirement">No sign-in needed/);
+  for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
       new RegExp(`requireCustomerAccount\\("${action}"\\)`),
     );
   }
+  assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /onClick=\{\(\) => updateGoing\(nextShift\.id\)\}/);
+  assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);
   assert.match(actionsSource, /href="\/account\?role=customer"/);
   assert.match(profilePageSource, /\.profile-account-gate \{ position: fixed; inset: 0; z-index: 120/);
+  assert.match(profilePageSource, /\.live-actions \.profile-action-requirement/);
 });
 
-test("profile reports require authentication in both the client and API", () => {
+test("the live mobile profile labels protected actions before the tap and labels Going and Report as public", () => {
+  assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
+  assert.match(homeSource, /Sign in required/);
+  assert.match(homeSource, /No sign-in needed/);
+  assert.match(
+    homeSource,
+    /profileActionButtonMarkup\([^)]*"account"[^)]*\)/,
+  );
+  assert.match(
+    homeSource,
+    /id="reportBtn"[^>]*>\$\{profileActionButtonMarkup\("report", "Report", "public"\)\}/,
+  );
+});
+
+test("profile reports accept signed-out visitors and preserve optional signed-in attribution", () => {
   const reportHandler = sourceBetween(
     homeSource,
     'if (actionButton.id === "reportBtn")',
     "    });",
   );
 
-  assert.match(reportHandler, /await postAuthenticatedJson\("\/api\/reports"/);
-  assert.doesNotMatch(reportHandler, /postOptionalAuthJson/);
-  assert.match(
-    reportsRouteSource,
-    /if \(targetType !== "contact_message" && !reporterId\)/,
-  );
-  assert.match(reportsRouteSource, /Sign in to submit a report/);
-  assert.match(reportsRouteSource, /status: 401/);
+  assert.match(reportHandler, /await postOptionalAuthJson\("\/api\/reports"/);
+  assert.doesNotMatch(reportHandler, /postAuthenticatedJson\("\/api\/reports"/);
+  assert.match(actionsSource, /if \(token\) headers\.authorization = `Bearer \$\{token\}`/);
+  assert.doesNotMatch(reportsRouteSource, /Sign in to submit a report/);
+  assert.doesNotMatch(reportsRouteSource, /targetType !== "contact_message" && !reporterId/);
   assert.match(reportsRouteSource, /reporter_id: reporterId/);
 });

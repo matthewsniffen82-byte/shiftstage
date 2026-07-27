@@ -22,7 +22,7 @@ type SavedState = {
   goingShiftIds: string[];
 };
 
-type AccountAction = "follow" | "notify" | "report";
+type AccountAction = "follow" | "notify";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
@@ -96,6 +96,7 @@ export function DancerProfileActions({
   const [status, setStatus] = useState("");
   const nextShift = useMemo(() => shifts[0] || null, [shifts]);
   const nextShiftId = nextShift?.id || "";
+  const showSignedOutRequirements = savedLoaded && !token;
 
   useEffect(() => {
     let active = true;
@@ -278,19 +279,31 @@ export function DancerProfileActions({
   async function submitReport() {
     if (reportSaving || reportSubmitted) return;
     setReportSaving(true);
+    setStatus("");
     try {
-      const data = await postAction("/api/reports", {
-        targetType: "dancer_profile",
-        targetId: dancerId,
-        targetLabel: profileName,
-        reason: "Profile report",
-        details: "Reported from the public dancer profile.",
-      }, "report");
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      if (token) headers.authorization = `Bearer ${token}`;
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers,
+        credentials: "same-origin",
+        body: JSON.stringify({
+          targetType: "dancer_profile",
+          targetId: dancerId,
+          targetLabel: profileName,
+          reason: "Profile report",
+          details: "Reported from the public dancer profile.",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to submit report.");
+      }
       if (!data.report) throw new Error("The report could not be confirmed.");
       setReportSubmitted(true);
       setStatus("Report submitted for review.");
-    } catch {
-      // postAction displays the production API error beside the controls.
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to submit report.");
     } finally {
       setReportSaving(false);
     }
@@ -325,6 +338,7 @@ export function DancerProfileActions({
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
+          className={showSignedOutRequirements ? "profile-action-requires-account" : undefined}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("follow")) updateFollow(false);
@@ -332,8 +346,12 @@ export function DancerProfileActions({
           disabled={!savedLoaded || followSaving}
         >
           {saved.following ? "Following" : "Follow"}
+          {showSignedOutRequirements ? (
+            <small className="profile-action-requirement">Sign in required</small>
+          ) : null}
         </button>
         <button
+          className={showSignedOutRequirements ? "profile-action-requires-account" : undefined}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("notify")) updateNotifications();
@@ -341,24 +359,33 @@ export function DancerProfileActions({
           disabled={!savedLoaded || followSaving}
         >
           {saved.notificationsEnabled ? "Notifications on" : "Notify me"}
+          {showSignedOutRequirements ? (
+            <small className="profile-action-requirement">Sign in required</small>
+          ) : null}
         </button>
         {nextShift ? (
           <button
+            className={showSignedOutRequirements ? "profile-action-public" : undefined}
             type="button"
             onClick={() => updateGoing(nextShift.id)}
             disabled={!savedLoaded || goingSaving}
           >
             {saved.goingShiftIds.includes(nextShift.id) ? "Going" : `Going ${nextShift.label}`}
+            {showSignedOutRequirements ? (
+              <small className="profile-action-requirement">No sign-in needed</small>
+            ) : null}
           </button>
         ) : null}
         <button
+          className={showSignedOutRequirements ? "profile-action-public" : undefined}
           type="button"
-          onClick={() => {
-            if (requireCustomerAccount("report")) submitReport();
-          }}
+          onClick={submitReport}
           disabled={reportSaving || reportSubmitted}
         >
           {reportSubmitted ? "Reported" : reportSaving ? "Submitting" : "Report"}
+          {showSignedOutRequirements ? (
+            <small className="profile-action-requirement">No sign-in needed</small>
+          ) : null}
         </button>
         {status ? <span role="status">{status}</span> : null}
       </div>
@@ -436,6 +463,5 @@ function readToken() {
 
 function accountActionMessage(action: AccountAction) {
   if (action === "follow") return "Create a free customer account to follow this dancer and save the profile.";
-  if (action === "notify") return "Create a free customer account to turn on dancer notifications.";
-  return "Create a free customer account to report this profile for review.";
+  return "Create a free customer account to turn on dancer notifications.";
 }

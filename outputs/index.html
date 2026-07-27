@@ -27302,6 +27302,32 @@
       height: 15px !important;
     }
 
+    #profileModal .modal-actions .action-btn.has-requirement {
+      min-height: 52px !important;
+      flex-direction: column !important;
+      gap: 2px !important;
+      padding-block: 6px !important;
+    }
+
+    #profileModal .modal-actions .profile-action-main {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    #profileModal .modal-actions .profile-action-requirement {
+      color: #B9ACCD;
+      font-size: 0.62rem;
+      font-weight: 850;
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+    }
+
+    #profileModal .modal-actions .profile-action-requirement.is-public {
+      color: #7EEAFF;
+    }
+
     @media (max-width: 430px) {
       #profileModal .social-tile,
       .approved-visual-profile .profile-modal .social-tile {
@@ -29465,7 +29491,6 @@
     function profileActionAccountMessage(actionId) {
       if (actionId === "followBtn") return "Create a free customer account to follow this dancer and save the profile.";
       if (actionId === "notifyBtn") return "Create a free customer account to turn on dancer notifications.";
-      if (actionId === "reportBtn") return "Create a free customer account to report this profile for review.";
       return "Create a free customer account to use this profile action.";
     }
 
@@ -36279,6 +36304,16 @@
       `;
     }
 
+    function profileActionRequirementMarkup(requirement) {
+      if (isCustomerSession() || !requirement) return "";
+      const isPublic = requirement === "public";
+      return `<small class="profile-action-requirement ${isPublic ? "is-public" : ""}">${isPublic ? "No sign-in needed" : "Sign in required"}</small>`;
+    }
+
+    function profileActionButtonMarkup(icon, label, requirement = "") {
+      return `<span class="profile-action-main">${actionButtonLabel(icon, label)}</span>${profileActionRequirementMarkup(requirement)}`;
+    }
+
     function liveProfileModalActionsMarkup(profile, status) {
       const city = selectedCity();
       const isFollowed = isFollowingProfile(city, profile.name);
@@ -36289,14 +36324,15 @@
         ? { idle: "I'm Going Now", active: "You're going now" }
         : { idle: "I'm Going", active: "You're going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="${status.state === "active" ? "tonight" : "upcoming"}">${actionButtonLabel(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
+        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="${status.state === "active" ? "tonight" : "upcoming"}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" data-shift-state="none" disabled>${actionButtonLabel("clock", status.state === "ended" ? "Shift ended" : "No shift posted")}</button>`;
+      const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions">
-          <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
-          <button class="action-btn secondary ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me")}</button>
+          <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
+          <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
           ${goingButton}
-          <button class="action-btn secondary" id="reportBtn" data-profile="${profile.name}">${actionButtonLabel("report", "Report")}</button>
+          <button class="action-btn secondary ${accountRequirementClass}" id="reportBtn" data-profile="${profile.name}">${profileActionButtonMarkup("report", "Report", "public")}</button>
         </div>
       `;
     }
@@ -36333,7 +36369,7 @@
           countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} people going`);
         }
         actionButton.classList.toggle("is-going", savedGoing);
-        actionButton.innerHTML = actionButtonLabel(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
+        actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
       } catch {
         // Keep the server-rendered count visible if the latest status cannot be loaded.
       }
@@ -40605,15 +40641,16 @@
 
       const followButton = document.getElementById("followBtn");
       if (followButton) {
-        followButton.innerHTML = actionButtonLabel(following ? "check" : "heart", following ? "Following" : "Follow");
+        followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "heart", following ? "Following" : "Follow", "account");
         followButton.classList.toggle("is-following", following);
       }
 
       const notifyButton = document.getElementById("notifyBtn");
       if (notifyButton) {
-        notifyButton.innerHTML = actionButtonLabel(
+        notifyButton.innerHTML = profileActionButtonMarkup(
           notificationsEnabled ? "check" : "bell",
-          notificationsEnabled ? "Notifications On" : "Notify Me"
+          notificationsEnabled ? "Notifications On" : "Notify Me",
+          "account"
         );
         notifyButton.classList.toggle("is-following", notificationsEnabled);
       }
@@ -40751,7 +40788,10 @@
       }
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
-      if (actionButton.id !== "goingBtn" && !requireCustomerAccountForProfileAction(actionButton)) return;
+      if (
+        (actionButton.id === "followBtn" || actionButton.id === "notifyBtn") &&
+        !requireCustomerAccountForProfileAction(actionButton)
+      ) return;
       if (actionButton.id === "followBtn") {
         await saveProfileFollow(actionButton);
         return;
@@ -40786,9 +40826,10 @@
           countEl.innerHTML = metricPhraseMarkup(`${optimisticCount.toLocaleString()} people going`);
         }
         actionButton.classList.toggle("is-going", requestedGoing);
-        actionButton.innerHTML = actionButtonLabel(
+        actionButton.innerHTML = profileActionButtonMarkup(
           requestedGoing ? "check" : "clock",
-          requestedGoing ? activeLabel : idleLabel
+          requestedGoing ? activeLabel : idleLabel,
+          "public"
         );
         try {
           const data = await postOptionalAuthJson("/api/customer/going", {
@@ -40808,7 +40849,7 @@
             countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} people going`);
           }
           actionButton.classList.toggle("is-going", savedGoing);
-          actionButton.innerHTML = actionButtonLabel(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
+          actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
           recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? (isTonightShift ? "going_tonight_added" : "going_upcoming_added") : "going_removed" });
           showToast(savedGoing ? (isTonightShift ? "Added to now" : "Added to upcoming shift") : "Removed");
         } catch (error) {
@@ -40820,7 +40861,7 @@
             countEl.innerHTML = metricPhraseMarkup(`${previousCount.toLocaleString()} people going`);
           }
           actionButton.classList.toggle("is-going", wasGoing);
-          actionButton.innerHTML = actionButtonLabel(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel);
+          actionButton.innerHTML = profileActionButtonMarkup(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel, "public");
           showToast(error.message || "Could not save going status");
         } finally {
           actionButton.disabled = false;
@@ -40832,9 +40873,9 @@
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
         actionButton.disabled = true;
-        actionButton.innerHTML = actionButtonLabel("clock", "Submitting");
+        actionButton.innerHTML = profileActionButtonMarkup("clock", "Submitting", "public");
         try {
-          const data = await postAuthenticatedJson("/api/reports", {
+          const data = await postOptionalAuthJson("/api/reports", {
             targetType: "dancer_profile",
             targetId: profile?.id || null,
             targetLabel: profileName,
@@ -40842,12 +40883,12 @@
             details: `Reported from ${city} profile modal.`
           });
           if (!data?.report) throw new Error("The report could not be confirmed.");
-          actionButton.innerHTML = actionButtonLabel("check", "Reported");
+          actionButton.innerHTML = profileActionButtonMarkup("check", "Reported", "public");
           recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
           showToast("Report submitted for review");
         } catch (error) {
           actionButton.disabled = false;
-          actionButton.innerHTML = actionButtonLabel("report", "Report");
+          actionButton.innerHTML = profileActionButtonMarkup("report", "Report", "public");
           showToast(error.message || "Could not submit report");
         }
       }

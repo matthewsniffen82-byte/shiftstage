@@ -43,12 +43,6 @@ export async function POST(request: Request) {
 
     const client = createAdminSupabaseClient();
     const reporterId = await reporterIdForRequest(client, request);
-    if (targetType !== "contact_message" && !reporterId) {
-      return NextResponse.json(
-        { ok: false, error: "Sign in to submit a report." },
-        { status: 401 },
-      );
-    }
 
     const { data, error } = await (client as any)
       .from("content_reports")

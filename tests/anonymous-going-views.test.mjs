@@ -63,7 +63,7 @@ test("both production dancer profile surfaces let signed-out visitors use Going"
   assert.match(dancerPage, /<DancerGoingCount \/>/);
   assert.match(
     liveApp,
-    /actionButton\.id !== "goingBtn" && !requireCustomerAccountForProfileAction\(actionButton\)/,
+    /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\) &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
   assert.match(liveApp, /await postOptionalAuthJson\("\/api\/customer\/going"/);
 });

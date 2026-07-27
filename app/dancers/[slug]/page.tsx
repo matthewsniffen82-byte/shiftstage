@@ -215,6 +215,9 @@ function PublicProfileStyles() {
       .public-actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(139,92,246,.38), rgba(236,72,153,.18)); }
       .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
       .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
+      .live-actions button.profile-action-requires-account, .live-actions button.profile-action-public { min-height: 50px; flex-direction: column; gap: 1px; padding-block: 5px; }
+      .live-actions .profile-action-requirement { color: #b9accd; font-size: 10px; font-weight: 850; line-height: 1.1; letter-spacing: .02em; }
+      .live-actions .profile-action-public .profile-action-requirement { color: #7eeaff; }
       .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
       .profile-account-gate { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.76); backdrop-filter: blur(10px); }
       .profile-account-gate-dialog { position: relative; width: min(410px, 100%); display: grid; gap: 14px; padding: 24px; box-sizing: border-box; border: 1px solid rgba(53,216,255,.42); border-radius: 12px; background: radial-gradient(circle at 88% 8%, rgba(53,216,255,.12), transparent 12rem), linear-gradient(145deg, #0b0b13, #060609); box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 34px rgba(53,216,255,.1); }
