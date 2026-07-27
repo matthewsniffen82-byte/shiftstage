@@ -81,6 +81,52 @@ export type VenueSummary = {
   latitude?: number | null;
   longitude?: number | null;
   hoursLabel: string | null;
+  qrCodeUrl?: string | null;
+  qrCodeLabel?: string | null;
+};
+
+export type VenueOwnerProfile = {
+  id: string;
+  ownerUserId: string;
+  slug: string;
+  name: string;
+  city: string;
+  state: string | null;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  timezone: string;
+  opensAt: string | null;
+  closesAt: string | null;
+  isActive: boolean;
+  qrCodeStoragePath: string | null;
+  qrCodeUrl: string | null;
+  qrCodeLabel: string | null;
+  qrCodeUpdatedAt: string | null;
+};
+
+export type VenueDashboardAnalytics = {
+  totalFollowers: number;
+  followersGained30Days: number;
+  directions30Days: number;
+  pageViews30Days: number;
+  pageViewsToday: number;
+  qrImpressions30Days: number;
+  dancerProfileQrImpressions30Days: number;
+  upcomingShiftCount: number;
+  activeDancersNow: number;
+  goingSignals30Days: number;
+};
+
+export type VenueDashboardDancer = {
+  shiftId: string;
+  dancerId: string;
+  dancerSlug: string;
+  stageName: string;
+  startsAt: string;
+  endsAt: string;
+  checkedInAt: string | null;
+  locationStatus: string;
 };
 
 export type DancerCard = {
@@ -97,6 +143,8 @@ export type DancerCard = {
   venueName: string | null;
   venueSlug: string | null;
   venueId?: string | null;
+  venueQrCodeUrl?: string | null;
+  venueQrCodeLabel?: string | null;
   shiftId: string | null;
   shiftLabel: string | null;
   shiftStartsAt: string | null;
@@ -214,6 +262,8 @@ export type ShiftSummary = {
   locationStatus?: LocationStatus;
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
+  venueQrCodeUrl?: string | null;
+  venueQrCodeLabel?: string | null;
 };
 
 export type ClubDeal = {

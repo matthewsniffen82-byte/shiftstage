@@ -22,6 +22,7 @@ type LoadState = {
   supportThreads?: Array<Record<string, unknown>>;
   weeklyReport?: Record<string, unknown> | null;
   rankingEvents?: Array<Record<string, unknown>>;
+  workingNow?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -45,8 +46,16 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
       try {
         const authHeaders = { authorization: `Bearer ${session.accessToken}` };
         const account = await readJson("/api/account", authHeaders);
-        const profile = role === "venue" ? { profile: null } : await readOptionalJson(role === "dancer" ? "/api/dancer/profile" : "/api/customer/profile", authHeaders, { profile: null });
-        const secondary = role === "venue" ? {} : await readOptionalJson(role === "dancer" ? "/api/dancer/dashboard" : "/api/customer/saved", authHeaders, {});
+        const profile = await readOptionalJson(
+          role === "dancer" ? "/api/dancer/profile" : role === "venue" ? "/api/venue/profile" : "/api/customer/profile",
+          authHeaders,
+          { profile: null },
+        );
+        const secondary = await readOptionalJson(
+          role === "dancer" ? "/api/dancer/dashboard" : role === "venue" ? "/api/venue/dashboard" : "/api/customer/saved",
+          authHeaders,
+          {},
+        );
         const support = await readOptionalJson("/api/support", authHeaders, { threads: [] });
         const [reviews, weeklyReport, rankingEvents] =
           role === "dancer"
@@ -68,6 +77,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
             supportThreads: support.threads || [],
             weeklyReport: weeklyReport?.report || null,
             rankingEvents: rankingEvents?.events || [],
+            workingNow: secondary.workingNow || [],
           });
           setIsLoading(false);
         }
@@ -129,7 +139,7 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           </InfoPanel>
           <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
           <NotificationPanel />
-          <SupportInboxPanel initialThreads={state.supportThreads || []} />
+          {role !== "venue" ? <SupportInboxPanel initialThreads={state.supportThreads || []} /> : null}
 
           {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
           {role === "dancer" ? (
@@ -144,7 +154,14 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
               weeklyReport={state.weeklyReport}
             />
           ) : null}
-          {role === "venue" ? <VenuePanel /> : null}
+          {role === "venue" ? (
+            <VenuePanel
+              analytics={state.analytics}
+              profile={state.profile}
+              workingNow={state.workingNow || []}
+              onProfileChange={updateProfile}
+            />
+          ) : null}
         </section>
       ) : null}
     </main>
@@ -487,19 +504,199 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
   );
 }
 
-function VenuePanel() {
+function VenuePanel({
+  analytics,
+  profile,
+  workingNow,
+  onProfileChange,
+}: {
+  analytics?: LoadState["analytics"];
+  profile?: LoadState["profile"];
+  workingNow: Array<Record<string, unknown>>;
+  onProfileChange: (profile: Record<string, unknown>) => void;
+}) {
+  const [form, setForm] = useState({
+    name: "",
+    city: "",
+    state: "",
+    address: "",
+    phone: "",
+    website: "",
+  });
+  const [qrLabel, setQrLabel] = useState("");
+  const [qrFile, setQrFile] = useState<File | null>(null);
+  const [profileStatus, setProfileStatus] = useState("");
+  const [qrStatus, setQrStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const qrFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setForm({
+      name: String(profile?.name || ""),
+      city: String(profile?.city || ""),
+      state: String(profile?.state || ""),
+      address: String(profile?.address || ""),
+      phone: String(profile?.phone || ""),
+      website: String(profile?.website || ""),
+    });
+    setQrLabel(String(profile?.qrCodeLabel || ""));
+  }, [profile]);
+
+  async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) return setProfileStatus("Sign in required.");
+    setIsSaving(true);
+    setProfileStatus("");
+    try {
+      const response = await fetch("/api/venue/profile", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save venue profile.");
+      onProfileChange(data.profile);
+      setProfileStatus("Venue page details saved.");
+    } catch (error) {
+      setProfileStatus(error instanceof Error ? error.message : "Unable to save venue profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function uploadQr(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) return setQrStatus("Sign in required.");
+    if (!qrFile) return setQrStatus("Choose a QR image first.");
+    setIsUploading(true);
+    setQrStatus("Uploading and publishing QR code...");
+    try {
+      const body = new FormData();
+      body.set("file", qrFile);
+      body.set("label", qrLabel);
+      const response = await fetch("/api/venue/qr-code", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+        body,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload QR code.");
+      onProfileChange(data.profile);
+      setQrFile(null);
+      if (qrFileInputRef.current) qrFileInputRef.current.value = "";
+      setQrStatus(data.message || "QR code published.");
+    } catch (error) {
+      setQrStatus(error instanceof Error ? error.message : "Unable to upload QR code.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function removeQr() {
+    const session = readSession();
+    if (!session?.accessToken) return setQrStatus("Sign in required.");
+    setIsUploading(true);
+    setQrStatus("");
+    try {
+      const response = await fetch("/api/venue/qr-code", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove QR code.");
+      onProfileChange(data.profile);
+      setQrLabel("");
+      setQrFile(null);
+      if (qrFileInputRef.current) qrFileInputRef.current.value = "";
+      setQrStatus(data.message || "QR code removed.");
+    } catch (error) {
+      setQrStatus(error instanceof Error ? error.message : "Unable to remove QR code.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   return (
     <>
-      <InfoPanel title="Venue tools">
-        <Metric label="Public page" value="Active" />
-        <Metric label="Offer QR" value="Ready" />
-        <Metric label="Admin messages" value="Contact Admin" />
+      <InfoPanel title="Audience">
+        <Metric label="Page views today" value={String(analytics?.pageViewsToday || 0)} />
+        <Metric label="Page views · 30 days" value={String(analytics?.pageViews30Days || 0)} />
+        <Metric label="Venue followers" value={String(analytics?.totalFollowers || 0)} />
       </InfoPanel>
-      <InfoPanel title="Account visibility">
-        <p>Messages sent here go to the admin inbox with your venue account name, email, and role attached.</p>
+      <InfoPanel title="Customer intent">
+        <Metric label="Directions · 30 days" value={String(analytics?.directions30Days || 0)} />
+        <Metric label="Going signals · 30 days" value={String(analytics?.goingSignals30Days || 0)} />
+        <Metric label="New followers · 30 days" value={String(analytics?.followersGained30Days || 0)} />
       </InfoPanel>
+      <InfoPanel title="Live operations">
+        <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
+        <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
+        <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
+      </InfoPanel>
+      <article className="info-panel venue-profile-panel">
+        <h2>Public venue page</h2>
+        <form onSubmit={saveProfile}>
+          {Object.entries(form).map(([key, value]) => (
+            <label key={key}>
+              {venueFieldLabel(key)}
+              <input
+                required={key === "name" || key === "city"}
+                type={key === "website" ? "url" : "text"}
+                value={value}
+                onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+              />
+            </label>
+          ))}
+          <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button>
+          {profile?.slug ? <Link href={`/venues/${profile.slug}`}>Open live venue page</Link> : null}
+          {profileStatus ? <p role="status">{profileStatus}</p> : null}
+        </form>
+      </article>
+      <article className="info-panel venue-qr-panel">
+        <h2>Published venue QR</h2>
+        <p>This QR appears on your live venue page and only on dancer profiles while they are verified working at your venue.</p>
+        {profile?.qrCodeUrl ? <img src={String(profile.qrCodeUrl)} alt={`${String(profile.name || "Venue")} QR code`} /> : null}
+        <form onSubmit={uploadQr}>
+          <label>
+            QR image
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              ref={qrFileInputRef}
+              type="file"
+              onChange={(event) => setQrFile(event.target.files?.[0] || null)}
+            />
+          </label>
+          <label>
+            QR label
+            <input value={qrLabel} maxLength={100} onChange={(event) => setQrLabel(event.target.value)} />
+          </label>
+          <button type="submit" disabled={isUploading}>{isUploading ? "Publishing..." : profile?.qrCodeUrl ? "Replace QR code" : "Upload QR code"}</button>
+          {profile?.qrCodeUrl ? <button type="button" disabled={isUploading} onClick={removeQr}>Remove QR code</button> : null}
+        </form>
+        <Metric label="Dancer-profile QR impressions · 30 days" value={String(analytics?.dancerProfileQrImpressions30Days || 0)} />
+        {qrStatus ? <p role="status">{qrStatus}</p> : null}
+      </article>
+      <article className="info-panel venue-working-panel">
+        <h2>Working now</h2>
+        <div className="venue-working-list">
+          {workingNow.map((dancer) => (
+            <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
+              <strong>{String(dancer.stageName || "Dancer")}</strong>
+              <span>{String(dancer.locationStatus || "").replaceAll("_", " ")}</span>
+            </Link>
+          ))}
+          {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
+        </div>
+      </article>
     </>
   );
+}
+
+function venueFieldLabel(key: string) {
+  return ({ name: "Venue name", city: "City", state: "State", address: "Address", phone: "Phone", website: "Website" } as Record<string, string>)[key] || key;
 }
 
 function CustomerPreferencesPanel({ profile }: { profile?: LoadState["profile"] }) {
@@ -2276,7 +2473,7 @@ function DashboardStyles() {
       .visibility-panel button:disabled { opacity: .62; cursor: wait; }
       .visibility-panel.is-incognito { border-color: rgba(148,229,255,.34); box-shadow: inset 0 0 0 1px rgba(148,229,255,.08); }
       .visibility-copy { display: grid; gap: 10px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel { grid-column: span 3; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -2372,13 +2569,25 @@ function DashboardStyles() {
       .support-message p, .support-panel p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .customer-settings-panel .city-field { grid-column: span 2; }
+      .venue-profile-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+      .venue-profile-panel label, .venue-qr-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .venue-profile-panel input, .venue-qr-panel input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; box-sizing: border-box; }
+      .venue-profile-panel button, .venue-qr-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font: inherit; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .venue-profile-panel a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; border: 1px solid rgba(255,255,255,.14); text-decoration: none; font-weight: 900; }
+      .venue-qr-panel { grid-template-columns: minmax(0, 1fr) minmax(190px, 260px); align-items: start; }
+      .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric { grid-column: 1; }
+      .venue-qr-panel > img { grid-column: 2; grid-row: 1 / span 4; width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
+      .venue-qr-panel form { display: grid; gap: 10px; }
+      .venue-working-list { display: grid; gap: 9px; }
+      .venue-working-list a { display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
+      .venue-working-list span { color: #94e5ff; text-transform: capitalize; }
       .deal-panel { grid-column: span 2; }
       .deal-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .visibility-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4) { grid-column: auto; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-qr-panel { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-qr-panel > img { max-width: 260px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

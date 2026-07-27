@@ -286,6 +286,7 @@ export async function getDancerAccountProfile(client: DancrClient, userId: strin
 
 export function dashboardPathForRole(role: UserRole) {
   if (role === "dancer") return "/dashboard/dancer";
+  if (role === "venue") return "/dashboard/venue";
   if (role === "admin") return "/admin";
   return "/dashboard/customer";
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { ensureVenueForAccount } from "@/src/lib/dancr/venue";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
@@ -39,7 +40,16 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!data.user) throw new Error("Sign in required.");
 
-      return NextResponse.json(await authResponse(data.user.id, role, data.session, false));
+      return NextResponse.json(
+        await authResponse(data.user.id, role, data.session, false, {
+          name: readOptional(body.name),
+          city: readOptional(body.city),
+        }),
+      );
+    }
+
+    if (password.length < 8) {
+      throw new Error("Password must be at least 8 characters.");
     }
 
     if (role === "admin") {
@@ -69,7 +79,10 @@ export async function POST(request: Request) {
       return NextResponse.json(await authResponse(data.user.id, role, sessionData.session, false));
     }
 
-    const city = readOptional(body.city) || "Las Vegas";
+    const city =
+      role === "venue"
+        ? readRequired(body.city, "Venue city is required.")
+        : readOptional(body.city) || "Las Vegas";
     const displayName =
       role === "customer"
         ? customerDisplayName(email)
@@ -122,11 +135,21 @@ async function authResponse(
   expectedRole: AuthRole,
   session: { access_token?: string; refresh_token?: string; expires_at?: number } | null,
   requiresEmailConfirmation: boolean,
+  venueFallback?: { name?: string; city?: string },
 ) {
   const admin = createAdminSupabaseClient();
   const account = await getAccountByUserId(admin, userId);
   if (account?.role && account.role !== expectedRole) {
     throw new Error("Account role does not match this login.");
+  }
+  if (expectedRole === "venue" && account?.role === "venue") {
+    const venueName = venueFallback?.name || account.displayName;
+    if (!venueName) throw new Error("Venue name is required.");
+    await ensureVenueForAccount(admin, {
+      userId,
+      name: venueName,
+      city: venueFallback?.city || "",
+    });
   }
 
   return {
@@ -171,6 +194,11 @@ async function upsertAccount(
   }
 
   if (role === "venue") {
+    await ensureVenueForAccount(admin, {
+      userId,
+      name: displayName,
+      city,
+    });
     return;
   }
 

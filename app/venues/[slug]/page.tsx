@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { VenuePageView, VenueQrCode } from "@/app/components/VenueQrCode";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -33,7 +34,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
     .select("id, starts_at, ends_at, dancer_profiles(slug, stage_name, status, approved_at, verification_status, photo_review_status, is_public)")
     .eq("venue_id", venue.id)
     .eq("status", "posted")
-    .gte("starts_at", new Date().toISOString())
+    .gt("ends_at", new Date().toISOString())
     .order("starts_at", { ascending: true });
 
   if (error) throw error;
@@ -47,6 +48,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
 
   return (
     <main className="public-profile-shell">
+      <VenuePageView venueId={venue.id} />
       <VenueProfileStyles />
       <nav className="public-nav">
         <Link href="/">Dancr</Link>
@@ -55,7 +57,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
       <section className="venue-hero">
         <div className="venue-mark">{initials(venue.name)}</div>
         <div className="public-copy">
-          <span className="eyebrow">Verified venue</span>
+          <span className="eyebrow">Venue</span>
           <h1>{venue.name}</h1>
           <p>
             {venue.city}
@@ -73,9 +75,20 @@ export default async function VenuePublicPage({ params }: PageProps) {
           <VenueProfileActions venueId={venue.id} />
         </div>
       </section>
+      {venue.qrCodeUrl ? (
+        <section className="venue-qr-section">
+          <VenueQrCode
+            venueId={venue.id}
+            venueName={venue.name}
+            imageUrl={venue.qrCodeUrl}
+            label={venue.qrCodeLabel}
+            source="venue_page"
+          />
+        </section>
+      ) : null}
       <section className="public-grid">
         <article className="public-panel">
-          <h2>Upcoming shifts</h2>
+          <h2>Current and upcoming shifts</h2>
           {shifts.length ? (
             <div className="shift-list">
               {shifts.map((shift) => (
@@ -173,6 +186,10 @@ function VenueProfileStyles() {
       .club-deal-action button:disabled { opacity: .7; cursor: wait; }
       .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
       .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
+      .venue-qr-section { max-width: 1120px; margin: 22px auto 0; }
+      .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 22px; align-items: center; border: 1px solid rgba(34,199,255,.28); background: rgba(12,12,18,.88); border-radius: 8px; padding: 22px; }
+      .venue-published-qr h2 { margin: 7px 0; }
+      .venue-published-qr img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
       h2 { margin: 0 0 16px; font-size: 20px; }
@@ -184,7 +201,7 @@ function VenueProfileStyles() {
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
       .map-panel { max-width: 1120px; margin: 18px auto 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); min-height: 320px; }
       .map-panel iframe { display: block; width: 100%; min-height: 320px; border: 0; }
-      @media (max-width: 760px) { .venue-hero, .public-grid, .club-deal-card { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .shift-row, .fact-list div { flex-direction: column; } }
+      @media (max-width: 760px) { .venue-hero, .public-grid, .club-deal-card, .venue-published-qr { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .venue-published-qr img { max-width: 240px; justify-self: center; } .shift-row, .fact-list div { flex-direction: column; } }
     `}</style>
   );
 }
