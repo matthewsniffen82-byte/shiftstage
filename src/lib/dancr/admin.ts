@@ -700,6 +700,21 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (!input.targetId.startsWith(expectedPrefix)) {
       throw new Error("Verification file not found for this dancer.");
     }
+    const fileName = input.targetId.slice(expectedPrefix.length);
+    if (!fileName || fileName.includes("/")) {
+      throw new Error("Verification file not found for this dancer.");
+    }
+    const { data: storedFiles, error: storageError } = await client.storage
+      .from("verification-documents")
+      .list(`${dancer.user_id}/verification`, {
+        limit: 100,
+        offset: 0,
+        search: fileName,
+      });
+    if (storageError) throw storageError;
+    if (!(storedFiles || []).some((file: any) => file.name === fileName)) {
+      throw new Error("Verification file not found for this dancer.");
+    }
   } else {
     const { data: social, error: socialError } = await db
       .from("social_links")
@@ -712,45 +727,38 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (!social) throw new Error("Submitted social link not found.");
   }
 
-  const { data: pendingReview, error: pendingReviewError } = await db
+  const reviewUpdate = {
+    reviewer_id: input.reviewerId,
+    status: input.status,
+    notes,
+    reviewed_at: reviewedAt,
+  };
+  const { data: updatedReviews, error: updateReviewError } = await db
     .from("approval_reviews")
-    .select("id")
+    .update(reviewUpdate)
     .eq("dancer_id", input.dancerId)
     .eq("review_type", reviewType)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .select("id, status, reviewed_at");
 
-  if (pendingReviewError) throw pendingReviewError;
+  if (updateReviewError) throw updateReviewError;
 
-  if (pendingReview?.id) {
-    const { error: reviewError } = await db
+  let persistedReview = updatedReviews?.[0] || null;
+  if (!persistedReview) {
+    const { data: insertedReview, error: reviewError } = await db
       .from("approval_reviews")
-      .update({
-        reviewer_id: input.reviewerId,
-        status: input.status,
-        notes,
-        reviewed_at: reviewedAt,
+      .insert({
+        dancer_id: input.dancerId,
+        review_type: reviewType,
+        ...reviewUpdate,
       })
-      .eq("id", pendingReview.id);
+      .select("id, status, reviewed_at")
+      .single();
     if (reviewError) throw reviewError;
-  } else {
-    const { error: reviewError } = await db.from("approval_reviews").insert({
-      dancer_id: input.dancerId,
-      reviewer_id: input.reviewerId,
-      review_type: reviewType,
-      status: input.status,
-      notes,
-      reviewed_at: reviewedAt,
-    });
-    if (reviewError) throw reviewError;
+    persistedReview = insertedReview;
   }
 
   if (input.targetType === "verification_document") {
     await updateVerificationReviewSummary(client, dancer.user_id, input.dancerId);
-  } else if (input.targetType === "social_link") {
-    await updatePhotoReviewSummary(client, input.dancerId);
   }
 
   await logAdminAction(client, {
@@ -795,8 +803,8 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     dancerId: input.dancerId,
     targetType: input.targetType,
     targetId: input.targetId,
-    status: input.status,
-    reviewedAt,
+    status: persistedReview.status,
+    reviewedAt: persistedReview.reviewed_at || reviewedAt,
     notificationDelivery,
   };
 }
@@ -1258,13 +1266,16 @@ async function updateVerificationReviewSummary(client: DancrClient, userId: stri
   const status = aggregateReviewStatus(statuses);
   const accountIsActive = accountResult.data?.account_state === "active";
   const profileIsDisabled = Boolean(profileResult.data.disabled_at);
-  const profileUpdate: Record<string, string | null> = { verification_status: status };
+  const profileAlreadyApproved = profileResult.data.status === "approved" && status === "approved";
+  const profileUpdate: Record<string, string | null> = {
+    verification_status: profileAlreadyApproved ? "approved" : status === "rejected" ? "rejected" : "pending",
+  };
 
   if (!accountIsActive || profileIsDisabled) {
     profileUpdate.status = "disabled";
   } else if (status === "approved") {
-    profileUpdate.status = "approved";
-    profileUpdate.approved_at = profileResult.data.approved_at || new Date().toISOString();
+    profileUpdate.status = profileAlreadyApproved ? "approved" : "pending_review";
+    profileUpdate.approved_at = profileAlreadyApproved ? profileResult.data.approved_at : null;
   } else if (status === "rejected") {
     profileUpdate.status = "rejected";
     profileUpdate.approved_at = null;
@@ -1295,7 +1306,12 @@ function contentReviewType(targetType: ReviewSubmissionContentInput["targetType"
 function latestReviewFor(reviews: any[], reviewType: string) {
   return (reviews || [])
     .filter((review) => review.review_type === reviewType || review.reviewType === reviewType)
-    .sort((a, b) => Date.parse(b.reviewed_at || b.reviewedAt || b.created_at || b.createdAt || "") - Date.parse(a.reviewed_at || a.reviewedAt || a.created_at || a.createdAt || ""))[0];
+    .sort((a, b) => reviewTimestamp(b) - reviewTimestamp(a) || String(b.id || "").localeCompare(String(a.id || "")))[0];
+}
+
+function reviewTimestamp(review: any) {
+  const timestamp = Date.parse(review.reviewed_at || review.reviewedAt || review.created_at || review.createdAt || "");
+  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function verificationDocumentDisplay(name: string, index: number) {

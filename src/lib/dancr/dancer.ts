@@ -35,6 +35,7 @@ export type UploadVerificationDocumentInput = {
   file: Blob;
   fileName: string;
   contentType?: string;
+  documentType?: string;
 };
 
 export async function updateDancerProfile(client: DancrClient, input: DancerProfileInput) {
@@ -369,7 +370,9 @@ async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, 
 
 export async function uploadVerificationDocument(client: DancrClient, input: UploadVerificationDocumentInput) {
   const userId = await getCurrentUserId(client);
-  const storagePath = `${userId}/verification/${makeStorageFileName(input.fileName)}`;
+  const documentType = normalizeVerificationDocumentType(input.documentType);
+  const storageName = `${documentType ? `${documentType}-` : ""}${makeStorageFileName(input.fileName)}`;
+  const storagePath = `${userId}/verification/${storageName}`;
 
   const { error } = await client.storage.from("verification-documents").upload(storagePath, input.file, {
     contentType: input.contentType,
@@ -390,27 +393,47 @@ export async function uploadOwnVerificationDocument(
 }
 
 export async function listOwnVerificationDocuments(client: DancrClient, userId: string) {
-  await getOwnDancerProfile(client, userId);
+  const profile = await getOwnDancerProfile(client, userId);
 
-  const { data, error } = await client.storage
-    .from("verification-documents")
-    .list(`${userId}/verification`, {
-      limit: 50,
-      offset: 0,
-      sortBy: { column: "created_at", order: "desc" },
-    });
+  const [{ data, error }, { data: reviews, error: reviewsError }] = await Promise.all([
+    client.storage
+      .from("verification-documents")
+      .list(`${userId}/verification`, {
+        limit: 50,
+        offset: 0,
+        sortBy: { column: "created_at", order: "desc" },
+      }),
+    client
+      .from("approval_reviews")
+      .select("id, review_type, status, notes, created_at, reviewed_at")
+      .eq("dancer_id", profile.id),
+  ]);
 
   if (error) throw error;
+  if (reviewsError) throw reviewsError;
 
   return (data || [])
     .filter((document: any) => Boolean(document.name))
-    .map((document: any) => ({
-      name: document.name,
-      storagePath: `${userId}/verification/${document.name}`,
-      createdAt: document.created_at || document.updated_at || null,
-      updatedAt: document.updated_at || null,
-      status: "pending_review",
-    }));
+    .map((document: any, index: number) => {
+      const storagePath = `${userId}/verification/${document.name}`;
+      const review = latestApprovalReview(
+        reviews || [],
+        `verification_document:${storagePath}`,
+      );
+      const display = verificationDocumentDisplay(document.name, index);
+
+      return {
+        name: document.name,
+        documentType: display.documentType,
+        displayName: display.displayName,
+        storagePath,
+        createdAt: document.created_at || document.updated_at || null,
+        updatedAt: document.updated_at || null,
+        status: review?.status === "pending" ? "pending_review" : review?.status || "pending_review",
+        reviewNotes: review?.notes || null,
+        reviewedAt: review?.reviewed_at || null,
+      };
+    });
 }
 
 export function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
@@ -748,4 +771,36 @@ function makeStorageFileName(fileName: string) {
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   return `${id}-${safeName || "upload"}`;
+}
+
+function normalizeVerificationDocumentType(value: string | null | undefined) {
+  return value === "government_id" || value === "selfie" || value === "dance_proof" ? value : "";
+}
+
+function verificationDocumentDisplay(name: string, index: number) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("selfie")) return { documentType: "selfie", displayName: "Selfie verification" };
+  if (normalized.includes("proof") || normalized.includes("dance")) {
+    return { documentType: "dance_proof", displayName: "Proof that you dance" };
+  }
+  if (normalized.includes("government_id") || normalized.includes("license") || normalized.includes("passport")) {
+    return { documentType: "government_id", displayName: "Government ID" };
+  }
+
+  return [
+    { documentType: "government_id", displayName: "Government ID" },
+    { documentType: "selfie", displayName: "Selfie verification" },
+    { documentType: "dance_proof", displayName: "Proof that you dance" },
+  ][index] || { documentType: "verification_file", displayName: "Verification file" };
+}
+
+function latestApprovalReview(reviews: any[], reviewType: string) {
+  return reviews
+    .filter((review) => review.review_type === reviewType)
+    .sort((a, b) => reviewTimestamp(b) - reviewTimestamp(a) || String(b.id || "").localeCompare(String(a.id || "")))[0];
+}
+
+function reviewTimestamp(review: any) {
+  const timestamp = Date.parse(review.reviewed_at || review.created_at || "");
+  return Number.isFinite(timestamp) ? timestamp : 0;
 }

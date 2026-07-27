@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       file,
       fileName,
       contentType: file.type,
+      documentType,
     });
 
     return NextResponse.json({

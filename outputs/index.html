@@ -4285,6 +4285,26 @@
       overflow: visible;
     }
 
+    #adminDashboard .admin-submission-review.is-approved {
+      border-color: rgba(50,255,164,.42);
+      background: rgba(50,255,164,.075);
+    }
+
+    #adminDashboard .admin-submission-review.is-rejected {
+      border-color: rgba(255,104,124,.42);
+      background: rgba(255,104,124,.075);
+    }
+
+    #adminDashboard .admin-review-status.is-approved {
+      color: #8dffc4;
+      font-weight: 900;
+    }
+
+    #adminDashboard .admin-review-status.is-rejected {
+      color: #ffb3bf;
+      font-weight: 900;
+    }
+
     #adminDashboard .admin-submission-review textarea {
       width: 100%;
       min-height: 70px;
@@ -36970,15 +36990,19 @@
           || verificationDocumentLabels[index]
           || {};
         const fileName = document?.name || label.displayName || `Document ${index + 1}`;
-        return `<li><strong>${escapeHtml(label.displayName || document.displayName)}</strong><span class="meta">Attached securely · ${escapeHtml(fileName)}</span></li>`;
+        const status = normalizedReviewStatus(document?.status);
+        const statusLabel = status === "approved" ? "✓ Approved by admin" : status === "rejected" ? "Needs replacement" : "Pending admin approval";
+        return `<li><strong>${escapeHtml(label.displayName || document.displayName)}</strong><span class="meta">Attached securely · ${escapeHtml(fileName)} · ${escapeHtml(statusLabel)}</span></li>`;
       }).join("");
       const attachmentCount = Math.min(attachedDocuments.length, verificationDocumentLabels.length);
       const allFilesSaved = attachmentCount >= verificationDocumentLabels.length;
+      const approvedCount = attachedDocuments.filter((document) => normalizedReviewStatus(document?.status) === "approved").length;
+      const allFilesApproved = allFilesSaved && approvedCount === verificationDocumentLabels.length;
       return `
         <div class="info-tile verification-submission-list" role="status" aria-live="polite">
           <div class="verification-submission-status">
             <strong>${attachmentCount} of ${verificationDocumentLabels.length} verification files saved</strong>
-            <span>${allFilesSaved ? "Pending admin approval" : "Upload the remaining files"}</span>
+            <span>${allFilesApproved ? "All verification files approved" : allFilesSaved ? `${approvedCount} of ${verificationDocumentLabels.length} approved · Pending admin approval` : "Upload the remaining files"}</span>
           </div>
           <div class="meta">These files are saved to your account and remain attached after submission. The file pickers below look blank because browsers do not repopulate secure file fields.</div>
           <ul>${rows}</ul>
@@ -38621,18 +38645,22 @@
         const label = document.displayName || document.display_name || document.name || ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
         const targetId = document.storagePath || document.storage_path || document.name || href;
         const key = `verification_document:${targetId}`;
+        const status = normalizedReviewStatus(document.status || document.reviewStatus || document.review_status);
+        const isApproved = status === "approved";
+        const isRejected = status === "rejected";
+        const statusLabel = isApproved ? "✓ Approved" : isRejected ? "Disapproved" : "Pending review";
         return `
-          <div class="admin-submission-review">
+          <div class="admin-submission-review ${isApproved ? "is-approved" : isRejected ? "is-rejected" : ""}">
             <a class="lock-row" href="${displayText(href)}" data-admin-preview-kind="file" data-admin-preview-title="${displayText(label)}" data-admin-preview-url="${displayText(href)}">
               <strong>${displayText(label)}</strong>
-              <span>${displayText(document.status || "pending review")}</span>
+              <span class="admin-review-status ${isApproved ? "is-approved" : isRejected ? "is-rejected" : ""}">${displayText(statusLabel)}</span>
               <span>Submitted by ${displayText(profile.name || "dancer")}</span>
               ${document.reviewNotes || document.review_notes ? `<span>Reason: ${displayText(document.reviewNotes || document.review_notes)}</span>` : ""}
             </a>
             <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
             <span class="admin-review-hint">Type the reason, then press Save disapproval.</span>
             <div class="admin-review-actions">
-              <button class="action-btn" data-admin-content-review="approved" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Approve file</button>
+              <button class="action-btn" data-admin-content-review="approved" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}" ${isApproved ? "disabled" : ""}>${isApproved ? "Approved" : "Approve file"}</button>
               <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Save disapproval</button>
             </div>
           </div>
@@ -39322,15 +39350,11 @@
       const originalText = button.textContent;
       button.disabled = true;
       button.textContent = "Saving...";
-      applyLocalAdminContentReview(profileMatch.profile, targetType, targetId, status, notes);
-      markAdminReviewButton(button, status);
-      if (status === "rejected") {
-        addLocalDancerReviewNotification(profileMatch.profile, targetType, targetId, label, notes);
-      }
 
       try {
+        let savedStatus = status;
         if (isAdminSession() && profileMatch.profile.id && hasLiveTarget) {
-          await postAuthenticatedJson("/api/admin/approvals", {
+          const data = await postAuthenticatedJson("/api/admin/approvals", {
             action: "review_content",
             dancerId: profileMatch.profile.id,
             targetType,
@@ -39339,8 +39363,14 @@
             notes,
             label
           });
+          savedStatus = normalizedReviewStatus(data?.review?.status) || status;
         }
-        showToast(status === "approved" ? `${label} approved` : `${label} disapproved`);
+        applyLocalAdminContentReview(profileMatch.profile, targetType, targetId, savedStatus, notes);
+        markAdminReviewButton(button, savedStatus);
+        if (savedStatus === "rejected") {
+          addLocalDancerReviewNotification(profileMatch.profile, targetType, targetId, label, notes);
+        }
+        showToast(savedStatus === "approved" ? `${label} approved` : `${label} disapproved`);
         renderAdminDashboard();
       } catch (error) {
         button.textContent = originalText;

@@ -268,7 +268,8 @@ test("profile approval stays synchronized with account and core verification sta
   assert.match(accountAuthSource, /status: "disabled" as const,[\s\S]*?disabled_at: new Date/);
   assert.match(adminSource, /account\?\.account_state !== "active" \|\| dancer\.disabled_at/);
   assert.match(adminSource, /Reactivate the dancer account before approving this profile/);
-  assert.match(adminSource, /profileUpdate\.status = "approved"/);
+  assert.match(adminSource, /const statusUpdate = approved[\s\S]*?status: "approved"/);
+  assert.match(adminSource, /profileUpdate\.status = profileAlreadyApproved \? "approved" : "pending_review"/);
   assert.match(adminSource, /profileUpdate\.status = "disabled"/);
   assert.match(adminSource, /profileUpdate\.status = "rejected"/);
   assert.match(visibilityRouteSource, /isCoreVerificationApproved\(currentProfile\)/);
