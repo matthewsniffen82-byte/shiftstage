@@ -26,7 +26,7 @@ const SESSION_KEY = "dancrAuthSessionV1";
 
 type DancerFollowState = {
   followerCount: number;
-  adjustFollowerCount: (change: number) => void;
+  setFollowerCount: (count: number) => void;
 };
 
 const DancerFollowStateContext = createContext<DancerFollowState | null>(null);
@@ -36,12 +36,12 @@ export function DancerFollowStateProvider({
   children,
 }: PropsWithChildren<{ initialFollowerCount: number }>) {
   const [followerCount, setFollowerCount] = useState(Math.max(0, initialFollowerCount));
-  const adjustFollowerCount = useCallback((change: number) => {
-    setFollowerCount((current) => Math.max(0, current + change));
+  const setConfirmedFollowerCount = useCallback((count: number) => {
+    setFollowerCount(Math.max(0, count));
   }, []);
   const value = useMemo(
-    () => ({ followerCount, adjustFollowerCount }),
-    [adjustFollowerCount, followerCount],
+    () => ({ followerCount, setFollowerCount: setConfirmedFollowerCount }),
+    [followerCount, setConfirmedFollowerCount],
   );
 
   return <DancerFollowStateContext.Provider value={value}>{children}</DancerFollowStateContext.Provider>;
@@ -53,7 +53,7 @@ export function DancerFollowerCount() {
 }
 
 export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; shifts: ShiftAction[] }) {
-  const { adjustFollowerCount } = useDancerFollowState();
+  const { setFollowerCount } = useDancerFollowState();
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState<SavedState>({
     following: false,
@@ -127,15 +127,14 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
       });
       const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
       const savedNotificationsEnabled = following && data.notificationsEnabled === true;
+      const confirmedFollowerCount = readConfirmedFollowerCount(data);
 
       setSaved((current) => ({
         ...current,
         following,
         notificationsEnabled: savedNotificationsEnabled,
       }));
-      if (following !== previousFollowing) {
-        adjustFollowerCount(following ? 1 : -1);
-      }
+      setFollowerCount(confirmedFollowerCount);
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {
@@ -145,7 +144,6 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
 
   async function updateNotifications() {
     if (!savedLoaded || followSaving) return;
-    const previousFollowing = saved.following;
     const requestedNotificationsEnabled = !saved.notificationsEnabled;
     setFollowSaving(true);
 
@@ -157,11 +155,10 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
       });
       const following = typeof data.following === "boolean" ? data.following : true;
       const notificationsEnabled = following && data.notificationsEnabled === true;
+      const confirmedFollowerCount = readConfirmedFollowerCount(data);
 
       setSaved((current) => ({ ...current, following, notificationsEnabled }));
-      if (following !== previousFollowing) {
-        adjustFollowerCount(following ? 1 : -1);
-      }
+      setFollowerCount(confirmedFollowerCount);
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {
@@ -225,6 +222,14 @@ function useDancerFollowState() {
     throw new Error("Dancer follow controls must be rendered inside DancerFollowStateProvider.");
   }
   return context;
+}
+
+function readConfirmedFollowerCount(data: { followerCount?: unknown }) {
+  const count = Number(data.followerCount);
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error("The follow was saved, but the follower count could not be confirmed.");
+  }
+  return count;
 }
 
 function readToken() {

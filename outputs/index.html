@@ -26895,9 +26895,11 @@
       margin: 0 !important;
     }
 
+    /* Canonical social strip: live profile and edit preview must stay visually identical. */
     #profileModal .social-tile,
     .approved-visual-profile .profile-modal .social-tile {
-      grid-template-columns: auto minmax(0, 1fr) !important;
+      grid-template-columns: auto auto !important;
+      justify-content: center !important;
       align-items: center !important;
       column-gap: 10px !important;
       row-gap: 10px !important;
@@ -26925,33 +26927,59 @@
       grid-row: 2 !important;
       display: inline-flex !important;
       align-items: center !important;
-      justify-content: flex-start !important;
+      justify-content: flex-end !important;
+      align-self: center !important;
+      justify-self: end !important;
+      height: 44px !important;
+      min-height: 44px !important;
       gap: 8px !important;
       margin: 0 !important;
-      justify-self: start !important;
+      padding-right: 10px !important;
+      border-right: 1px solid rgba(53, 216, 255, 0.28) !important;
+      box-sizing: border-box !important;
     }
 
     #profileModal .social-tile .social-links,
     .approved-visual-profile .profile-modal .social-tile .social-links {
       grid-column: 2 !important;
       grid-row: 2 !important;
+      align-items: center !important;
       justify-content: flex-start !important;
+      justify-self: start !important;
+      flex-wrap: nowrap !important;
+      width: auto !important;
+      min-width: 0 !important;
       gap: 8px !important;
       margin: 0 !important;
+      padding: 0 !important;
+      line-height: 0 !important;
     }
 
     #profileModal .social-tile .profile-qr-trigger,
     #profileModal .social-tile .profile-share-trigger,
+    #profileModal .social-tile .social-link,
     .approved-visual-profile .profile-modal .approved-social-tools .profile-qr-trigger,
-    .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger {
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger,
+    .approved-visual-profile .profile-modal .social-tile .social-link,
+    .approved-visual-profile .profile-modal .social-edit-item {
       width: 44px !important;
       height: 44px !important;
       min-width: 44px !important;
       min-height: 44px !important;
       flex: 0 0 44px !important;
       padding: 0 !important;
+      align-self: center !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      line-height: 1 !important;
       display: inline-grid !important;
       place-items: center !important;
+    }
+
+    #profileModal .social-tile .profile-qr-trigger,
+    #profileModal .social-tile .profile-share-trigger,
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-qr-trigger,
+    .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger {
       border-radius: 999px !important;
       color: #dffbff !important;
       border: 1px solid rgba(53, 216, 255, 0.62) !important;
@@ -26970,6 +26998,24 @@
     .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger .icon {
       width: 19px !important;
       height: 19px !important;
+    }
+
+    #profileModal .social-tile .social-icon,
+    #profileModal .social-tile .action-icon,
+    .approved-visual-profile .profile-modal .social-tile .social-icon,
+    .approved-visual-profile .profile-modal .social-tile .action-icon {
+      display: grid !important;
+      place-items: center !important;
+      margin: 0 !important;
+      vertical-align: middle !important;
+    }
+
+    #profileModal .social-tile .social-icon svg,
+    #profileModal .social-tile .action-icon svg,
+    .approved-visual-profile .profile-modal .social-tile .social-icon svg,
+    .approved-visual-profile .profile-modal .social-tile .action-icon svg {
+      display: block !important;
+      margin: 0 !important;
     }
 
     #profileModal .social-tile .profile-qr-trigger:hover,
@@ -27003,26 +27049,47 @@
     @media (max-width: 430px) {
       #profileModal .social-tile,
       .approved-visual-profile .profile-modal .social-tile {
-        grid-template-columns: 1fr !important;
-      }
-
-      #profileModal .social-tile .profile-utility-actions,
-      .approved-visual-profile .profile-modal .approved-social-tools,
-      #profileModal .social-tile .social-links,
-      .approved-visual-profile .profile-modal .social-tile .social-links {
-        grid-column: 1 !important;
-        justify-self: center !important;
+        grid-template-columns: auto auto !important;
         justify-content: center !important;
+        column-gap: 8px !important;
+        padding: 10px 12px !important;
       }
 
       #profileModal .social-tile .profile-utility-actions,
       .approved-visual-profile .profile-modal .approved-social-tools {
+        grid-column: 1 !important;
         grid-row: 2 !important;
+        justify-self: end !important;
+        justify-content: flex-end !important;
+        height: clamp(34px, 9.5vw, 40px) !important;
+        min-height: clamp(34px, 9.5vw, 40px) !important;
+        gap: 6px !important;
+        padding-right: 8px !important;
       }
 
       #profileModal .social-tile .social-links,
       .approved-visual-profile .profile-modal .social-tile .social-links {
-        grid-row: 3 !important;
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        justify-self: start !important;
+        justify-content: flex-start !important;
+        flex-wrap: nowrap !important;
+        width: auto !important;
+        gap: 6px !important;
+      }
+
+      #profileModal .social-tile .profile-qr-trigger,
+      #profileModal .social-tile .profile-share-trigger,
+      #profileModal .social-tile .social-link,
+      .approved-visual-profile .profile-modal .approved-social-tools .profile-qr-trigger,
+      .approved-visual-profile .profile-modal .approved-social-tools .profile-share-trigger,
+      .approved-visual-profile .profile-modal .social-tile .social-link,
+      .approved-visual-profile .profile-modal .social-edit-item {
+        width: clamp(34px, 9.5vw, 40px) !important;
+        height: clamp(34px, 9.5vw, 40px) !important;
+        min-width: clamp(34px, 9.5vw, 40px) !important;
+        min-height: clamp(34px, 9.5vw, 40px) !important;
+        flex-basis: clamp(34px, 9.5vw, 40px) !important;
       }
     }
 
@@ -27326,6 +27393,7 @@
         backface-visibility: hidden;
       }
     }
+
   </style>
 </head>
 <body>
@@ -28731,54 +28799,24 @@
 
     const markets = {
       "Las Vegas": {
-        stats: { dancers: 0, shifts: 0, venues: 14 },
+        stats: { dancers: 0, shifts: 0, venues: 0 },
         dancers: [],
-        venues: [
-          { name: "Spearmint Rhino Las Vegas", area: "Highland Drive", address: "3340 S Highland Dr, Las Vegas, NV 89109", shifts: 8, latitude: 36.1295, longitude: -115.1786 },
-          { name: "Sapphire Las Vegas", area: "Sammy Davis Jr Drive", address: "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109", shifts: 11, latitude: 36.1352, longitude: -115.1716 },
-          { name: "Crazy Horse 3", area: "West Russell Road", address: "3525 W Russell Rd, Las Vegas, NV 89118", shifts: 7, latitude: 36.0855, longitude: -115.1858 },
-          { name: "Palomino Club", area: "North Las Vegas", address: "1848 Las Vegas Blvd N, North Las Vegas, NV 89030", shifts: 5, latitude: 36.1932, longitude: -115.132 },
-          { name: "HUSTLER Club Las Vegas", area: "Dean Martin Drive", address: "6007 Dean Martin Dr, Las Vegas, NV 89118", shifts: 6, latitude: 36.0799, longitude: -115.1822 },
-          { name: "Little Darlings Las Vegas", area: "Western Avenue", address: "1514 Western Ave, Las Vegas, NV 89102", shifts: 6, latitude: 36.1538, longitude: -115.1634 },
-          { name: "Treasures Las Vegas", area: "Westwood Drive", address: "2801 Westwood Dr, Las Vegas, NV 89109", shifts: 6, latitude: 36.139, longitude: -115.174 },
-          { name: "Chicas Bonitas", area: "Procyon Street", address: "3606 Procyon St, Las Vegas, NV 89103", shifts: 5, latitude: 36.1243, longitude: -115.1877 },
-          { name: "Peppermint Hippo Las Vegas", area: "Paradise Road", address: "4316 Paradise Rd, Las Vegas, NV 89169", shifts: 7, latitude: 36.111, longitude: -115.1539 },
-          { name: "Deja Vu Showgirls Las Vegas", area: "Sammy Davis Jr Drive", address: "3247 S Sammy Davis Jr Dr, Las Vegas, NV 89109", shifts: 5, latitude: 36.1309, longitude: -115.1748 },
-          { name: "Centerfolds Cabaret Las Vegas", area: "Paradise Road", address: "4416 Paradise Rd, Las Vegas, NV 89169", shifts: 4, latitude: 36.1086, longitude: -115.1535 },
-          { name: "Play It Again Sam's", area: "Spring Mountain Road", address: "4120 Spring Mountain Rd, Las Vegas, NV 89102", shifts: 4, latitude: 36.126, longitude: -115.1937 },
-          { name: "The Library Gentlemen's Club", area: "Western Avenue", address: "2112 Western Ave, Las Vegas, NV 89102", shifts: 4, latitude: 36.1489, longitude: -115.1649 },
-          { name: "Talk of the Town", area: "West Charleston Boulevard", address: "3925 W Charleston Blvd, Las Vegas, NV 89102", shifts: 3, latitude: 36.1587, longitude: -115.192 }
-        ]
+        venues: []
       },
       Miami: {
-        stats: { dancers: 0, shifts: 0, venues: 14 },
+        stats: { dancers: 0, shifts: 0, venues: 0 },
         dancers: [],
-        venues: [
-          { name: "Azure Room", area: "Brickell", shifts: 9, distance: "1.9 mi", latitude: 25.7617, longitude: -80.1918 },
-          { name: "Midnight Palm", area: "South Beach", shifts: 8, distance: "3.7 mi", latitude: 25.7907, longitude: -80.13 },
-          { name: "Biscayne Social", area: "Downtown", shifts: 5, distance: "4.6 mi", latitude: 25.7743, longitude: -80.1937 },
-          { name: "Coral Stage", area: "Coral Way", shifts: 4, distance: "7.5 mi", latitude: 25.7506, longitude: -80.2587 }
-        ]
+        venues: []
       },
       Atlanta: {
-        stats: { dancers: 0, shifts: 0, venues: 11 },
+        stats: { dancers: 0, shifts: 0, venues: 0 },
         dancers: [],
-        venues: [
-          { name: "Peachtree Room", area: "Midtown", shifts: 7, distance: "2.1 mi", latitude: 33.7833, longitude: -84.3831 },
-          { name: "Southline", area: "Castleberry Hill", shifts: 6, distance: "5.0 mi", latitude: 33.7489, longitude: -84.4008 },
-          { name: "Blue Hour", area: "Old Fourth Ward", shifts: 5, distance: "6.2 mi", latitude: 33.765, longitude: -84.3636 },
-          { name: "Signal", area: "Buckhead", shifts: 3, distance: "8.1 mi", latitude: 33.8484, longitude: -84.3733 }
-        ]
+        venues: []
       },
       "New York": {
-        stats: { dancers: 0, shifts: 0, venues: 16 },
+        stats: { dancers: 0, shifts: 0, venues: 0 },
         dancers: [],
-        venues: [
-          { name: "Mercer Night", area: "SoHo", shifts: 10, distance: "1.4 mi", latitude: 40.7233, longitude: -74.003 },
-          { name: "Chrome Room", area: "Chelsea", shifts: 9, distance: "3.3 mi", latitude: 40.7465, longitude: -74.0014 },
-          { name: "Hudson Glow", area: "Hell's Kitchen", shifts: 8, distance: "5.2 mi", latitude: 40.7638, longitude: -73.9918 },
-          { name: "Eastline", area: "Lower East Side", shifts: 5, distance: "7.8 mi", latitude: 40.715, longitude: -73.9843 }
-        ]
+        venues: []
       }
     };
 
@@ -30582,8 +30620,8 @@
         tonight: isTonight,
         liveTonight: isTonight,
         scheduled: Boolean(item.shiftLabel || item.shiftStartsAt || item.venueName),
-        trend: item.currentRank || index + 1,
-        trendRank: item.currentRank || index + 1,
+        trend: item.currentRank || null,
+        trendRank: item.currentRank || null,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
         galleryPhotoUrls,
@@ -30600,6 +30638,7 @@
         followerCount: item.followerCount ?? item.follower_count ?? 0,
         notificationCount: item.notificationCount ?? item.notification_count ?? 0,
         profileViewsToday: item.profileViewsToday ?? item.profile_views_today ?? 0,
+        goingCount: item.goingCount ?? item.going_count ?? 0,
         workingStatus: item.workingStatus || item.working_status || "self_reported",
         commissionTrackingStartedAt: item.commissionTrackingStartedAt || item.commission_tracking_started_at || "",
         commissionTrackingStoppedAt: item.commissionTrackingStoppedAt || item.commission_tracking_stopped_at || "",
@@ -30817,12 +30856,11 @@
     }
 
     function applyLiveCustomerSaved(saved) {
-      if (isCustomerSession()) clearCustomerSavedCollections();
+      if (authSession?.accessToken) clearCustomerSavedCollections();
       (saved?.follows || []).forEach((item) => {
         const match = findProfileBySavedDancer(item);
         if (!match) return;
-        const followed = followedByCity[match.city] || (followedByCity[match.city] = []);
-        if (!followed.includes(match.profile.name)) followed.push(match.profile.name);
+        setProfileFollowed(match.city, match.profile.name, true);
         if (item.notificationsEnabled) enableProfileNotifications(match.city, match.profile.name);
         else disableProfileNotifications(match.city, match.profile.name);
       });
@@ -30842,7 +30880,7 @@
         const match = findProfileBySavedShift(item);
         if (!match) return;
         goingTonightSavedByProfile[match.profile.name] = true;
-        goingTonightByProfile[match.profile.name] = Math.max(tonightInterestCount(match.profile), goingTonightByProfile[match.profile.name] || 0);
+        goingTonightByProfile[match.profile.name] = tonightInterestCount(match.profile);
       });
     }
 
@@ -30861,7 +30899,7 @@
     }
 
     async function loadLiveCustomerSaved() {
-      if (!isCustomerSession()) return;
+      if (!authSession?.accessToken) return;
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
         applyLiveCustomerSaved(data.saved || {});
@@ -31832,7 +31870,7 @@
       const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
 
       market.dancers = liveDancers;
-      if (liveVenues.length) market.venues = mergeLiveVenues(market.venues, liveVenues);
+      market.venues = liveVenues;
       market.stats = {
         dancers: market.dancers.filter(isApprovedPublicProfile).length,
         shifts: market.dancers.filter((profile) => profile.scheduled).length,
@@ -31868,6 +31906,7 @@
         ]);
         const applied = applyLiveMarket(city, allDancers.dancers || [], tonightDancers.dancers || [], venueList.venues || []);
         liveMarketState[city] = applied ? "ready" : "fallback";
+        if (authSession?.accessToken) await loadLiveCustomerSaved();
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -31943,10 +31982,6 @@
       return Math.abs(hash >>> 0);
     }
 
-    function seededRange(seed, min, max) {
-      return min + (stableHash(seed) % (max - min + 1));
-    }
-
     function recordUniqueTrendEvent(type, city, profileName) {
       if (!trendEventStore[type]) trendEventStore[type] = {};
       const key = trendKey(city, profileName);
@@ -31967,6 +32002,13 @@
 
     function isFollowingProfile(city, profileName) {
       return (followedByCity[city] || []).includes(profileName);
+    }
+
+    function setProfileFollowed(city, profileName, following) {
+      const followed = followedByCity[city] || (followedByCity[city] = []);
+      const index = followed.indexOf(profileName);
+      if (following && index < 0) followed.push(profileName);
+      if (!following && index >= 0) followed.splice(index, 1);
     }
 
     function isFavoritedProfile(city, profileName) {
@@ -32000,9 +32042,8 @@
       return fallback;
     }
 
-    function followerNumber(profile, city = selectedCity()) {
-      const realFollowers = firstRealMetric(profile, ["followerCount", "followers", "totalFollowers"]);
-      return realFollowers + (isFollowingProfile(city, profile.name) ? 1 : 0);
+    function followerNumber(profile) {
+      return firstRealMetric(profile, ["followerCount", "followers", "totalFollowers"]);
     }
 
     function followerCount(profile, city = selectedCity()) {
@@ -32792,7 +32833,7 @@
 
     function tonightInterestCount(profile) {
       if (goingTonightByProfile[profile.name] !== undefined) return goingTonightByProfile[profile.name];
-      return privateTrendingSignals(profile).goingTonight;
+      return firstRealMetric(profile, ["goingCount", "going_count"]);
     }
 
     function shiftStartMinutes(time) {
@@ -33315,55 +33356,21 @@
     }
 
     function privateTrendingSignals(profile, city = selectedCity()) {
-      const momentum = Math.max(1, 16 - Number(profile.trend || 12));
-      const uniqueViews = seededRange(`${city}|${profile.name}|views`, 420, 1900);
-      const followers = followerNumber(profile, city);
-      const followerCap = Math.max(40, Math.round(followers * 0.18));
-      const isActiveTonight = isWorkingTonight(profile, city);
-      const hasUpcoming = !isActiveTonight && profile.scheduled;
-      const profileViews = uniqueViews + uniqueTrendEventCount("profileViews", city, profile.name) * 8;
-      const scheduleViews = profile.scheduled
-        ? seededRange(`${profile.name}|schedule|${city}`, 90, 520) + uniqueTrendEventCount("scheduleViews", city, profile.name) * 5
-        : seededRange(`${profile.name}|schedule-empty|${city}`, 12, 80);
-      const goingBase = isActiveTonight
-        ? seededRange(`${profile.name}|going|${city}`, 18, 115)
-        : seededRange(`${profile.name}|past-going|${city}`, 0, 18);
-      const interestedBase = hasUpcoming
-        ? seededRange(`${profile.name}|interested|${city}`, 20, 140)
-        : seededRange(`${profile.name}|interested-low|${city}`, 2, 40);
-      const goingTonight = cappedSignal(goingTonightByProfile[profile.name] ?? goingBase, followerCap);
-      const favorites = cappedSignal(
-        seededRange(`${city}|${profile.name}|favorites`, 24, 220) + (isFavoritedProfile(city, profile.name) ? 1 : 0),
-        Math.round(followers * 0.22)
-      );
-      const interested = cappedSignal(interestedBase + uniqueTrendEventCount("interested", city, profile.name) * 6, followerCap);
-      const notificationOpens = seededRange(`${profile.name}|notifications|${city}`, 18, 260);
-      const clubPageClicks = profile.venue ? seededRange(`${profile.name}|club-clicks|${city}`, 18, 230) : 0;
-      const socialClicks = profile.socials
-        ? seededRange(`${profile.name}|social|${city}`, 4, 90) + uniqueTrendEventCount("socialClicks", city, profile.name) * 3
-        : 0;
-      const directionRequests = profile.venue
-        ? seededRange(`${profile.name}|directions|${city}`, 10, 180) + uniqueTrendEventCount("directionRequests", city, profile.name) * 4
-        : 0;
-      const meaningfulActions = favorites + goingTonight + interested + clubPageClicks + directionRequests + socialClicks;
-      const lowIntentRefreshes = seededRange(`${profile.name}|refreshes|${city}`, 0, 90);
-      const repeatedClickRate = Math.max(0, seededRange(`${profile.name}|repeat-rate|${city}`, 0, 16) - Math.round(meaningfulActions / 95));
-
       return {
-        uniqueProfileViews: profileViews,
-        followers,
-        favorites,
-        goingTonight,
-        interested,
-        scheduleViews,
-        notificationOpens,
-        clubPageClicks,
-        socialClicks,
-        directionRequests,
-        recentActivity: seededRange(`${profile.name}|recent|${city}`, 25, 100) + momentum * 4,
-        shiftBoost: isActiveTonight ? 85 : hasUpcoming ? 38 : 0,
-        lowIntentRefreshes,
-        repeatedClickRate
+        uniqueProfileViews: firstRealMetric(profile, ["profileViewsToday", "profile_views_today"]),
+        followers: firstRealMetric(profile, ["followerCount", "follower_count", "followers", "totalFollowers"]),
+        favorites: firstRealMetric(profile, ["favoritesAdded", "favoritesAdded30Days", "favoriteCount"]),
+        goingTonight: tonightInterestCount(profile),
+        interested: firstRealMetric(profile, ["interestedClicks", "notificationCount", "notification_count"]),
+        scheduleViews: firstRealMetric(profile, ["scheduleViews30", "scheduleViews30Days"]),
+        notificationOpens: firstRealMetric(profile, ["notificationOpens", "notificationsOpened30Days"]),
+        clubPageClicks: firstRealMetric(profile, ["clubPageClicks", "clubPageClicks30Days"]),
+        socialClicks: firstRealMetric(profile, ["socialClicks", "socialClicks30Days"]),
+        directionRequests: firstRealMetric(profile, ["directionRequests30", "directionRequests30Days"]),
+        recentActivity: firstRealMetric(profile, ["recentActivity"]),
+        shiftBoost: 0,
+        lowIntentRefreshes: firstRealMetric(profile, ["lowIntentRefreshes"]),
+        repeatedClickRate: firstRealMetric(profile, ["repeatedClickRate"])
       };
     }
 
@@ -33390,19 +33397,15 @@
     function rankedTrendingProfiles(city) {
       return [...markets[city].dancers]
         .filter(isApprovedPublicProfile)
+        .filter((profile) => Number.isInteger(Number(profile.trendRank)) && Number(profile.trendRank) > 0)
         .map((profile) => ({
           ...profile,
-          trendScore: privateTrendingScore(profile, city),
+          trendScore: firstRealMetric(profile, ["trendScore", "trendingScore"]),
           trendSignals: privateTrendingSignals(profile, city)
         }))
         .sort((a, b) => (
-          b.trendScore - a.trendScore ||
-          Number(isWorkingTonight(b, city)) - Number(isWorkingTonight(a, city)) ||
-          Number(b.scheduled) - Number(a.scheduled) ||
-          shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
-          dailyRotationScore(a, city) - dailyRotationScore(b, city)
-        ))
-        .map((profile, index) => ({ ...profile, trendRank: index + 1 }));
+          Number(a.trendRank) - Number(b.trendRank)
+        ));
     }
 
     function trendingProfiles(city) {
@@ -33411,9 +33414,7 @@
 
     function withTrendingRank(profile, city) {
       const ranked = rankedTrendingProfiles(city).find((item) => item.name === profile.name);
-      if (!ranked || ranked.trendRank > 10) {
-        return { ...profile, trendRank: null, trendScore: privateTrendingScore(profile, city), trendSignals: privateTrendingSignals(profile, city) };
-      }
+      if (!ranked || ranked.trendRank > 10) return { ...profile, trendRank: null, trendScore: 0, trendSignals: privateTrendingSignals(profile, city) };
       return { ...profile, trendRank: ranked.trendRank, trendScore: ranked.trendScore, trendSignals: ranked.trendSignals };
     }
 
@@ -33439,7 +33440,7 @@
     }
 
     function activeDancerName() {
-      return document.getElementById("dancerStageName").value.trim() || "Mira Nova";
+      return document.getElementById("dancerStageName").value.trim();
     }
 
     function displayText(value) {
@@ -34070,16 +34071,13 @@
       const start = profile.checkedInAt ? new Date(profile.checkedInAt) : window?.start || new Date();
       const end = profile.checkedOutAt || profile.endedAt ? new Date(profile.checkedOutAt || profile.endedAt) : new Date();
       const hours = Math.max(0, (end.getTime() - start.getTime()) / 3600000);
-      const views = seededRange(`${city}|${profile.name}|shift-summary-views`, 18, 190);
-      const scans = seededRange(`${city}|${profile.name}|shift-summary-scans`, 0, 16);
-      const followers = seededRange(`${city}|${profile.name}|shift-summary-followers`, 0, 9);
       return {
         reason,
         hoursWorked: `${hours.toFixed(hours >= 10 ? 0 : 1)}h`,
-        profileViews: views,
-        qrCodeScans: scans,
-        estimatedCommissions: `$${(scans * 4).toLocaleString()}`,
-        newFollowers: followers
+        profileViews: firstRealMetric(profile, ["shiftProfileViews"]),
+        qrCodeScans: firstRealMetric(profile, ["shiftQrCodeScans"]),
+        estimatedCommissions: moneyFromCents(firstRealMetric(profile, ["shiftCommissionCents"])),
+        newFollowers: firstRealMetric(profile, ["shiftNewFollowers"])
       };
     }
 
@@ -35881,7 +35879,7 @@
       const tileTitle = status.state === "active" ? "Who's going" : hasUpcomingShift ? "Upcoming interest" : "Interest";
       const mutedClass = status.state === "active" || hasUpcomingShift ? "" : "muted muted-value";
       const statusText = status.state === "active" || hasUpcomingShift
-        ? metricPhraseMarkup(`${status.state === "active" ? 36 : tonightInterestCount(profile).toLocaleString()} people going`)
+        ? metricPhraseMarkup(`${tonightInterestCount(profile).toLocaleString()} people going`)
         : status.label;
       return `
         <div class="info-tile interest-tile" id="tonightInterestTile">
@@ -35953,7 +35951,7 @@
           <div class="info-tile">
             <strong>Followers</strong>
             <div class="meta profile-follower-metric">
-              <span class="metric-value">${followerMetricMarkup(profile, city)}</span>
+              <span class="metric-value" id="modalFollowerCount" aria-live="polite">${followerMetricMarkup(profile, city)}</span>
               ${profileViewsTodayMarkup(profile, city)}
             </div>
           </div>
@@ -39961,7 +39959,114 @@
       openProfilePhotoViewer();
     });
 
-    modalBody.addEventListener("click", (event) => {
+    function confirmedFollowerCount(data, errorMessage) {
+      const count = Number(data?.followerCount);
+      if (!Number.isSafeInteger(count) || count < 0) throw new Error(errorMessage);
+      return count;
+    }
+
+    function applyConfirmedProfileFollow(profile, city, data) {
+      const following = data?.following === true;
+      const notificationsEnabled = following && data?.notificationsEnabled === true;
+      profile.followerCount = confirmedFollowerCount(
+        data,
+        "The preference was saved, but the follower count could not be confirmed."
+      );
+      setProfileFollowed(city, profile.name, following);
+      if (notificationsEnabled) enableProfileNotifications(city, profile.name);
+      else disableProfileNotifications(city, profile.name);
+
+      const followButton = document.getElementById("followBtn");
+      if (followButton) {
+        followButton.innerHTML = actionButtonLabel(following ? "check" : "heart", following ? "Following" : "Follow");
+        followButton.classList.toggle("is-following", following);
+      }
+
+      const notifyButton = document.getElementById("notifyBtn");
+      if (notifyButton) {
+        notifyButton.innerHTML = actionButtonLabel(
+          notificationsEnabled ? "check" : "bell",
+          notificationsEnabled ? "Notifications On" : "Notify Me"
+        );
+        notifyButton.classList.toggle("is-following", notificationsEnabled);
+      }
+
+      const followerCountEl = document.getElementById("modalFollowerCount");
+      if (followerCountEl) followerCountEl.innerHTML = followerMetricMarkup(profile, city);
+      return { following, notificationsEnabled };
+    }
+
+    async function saveProfileFollow(actionButton) {
+      if (actionButton.disabled) return;
+      const profileName = actionButton.dataset.profile;
+      const city = citySelect.value;
+      const profile = findProfile(profileName);
+      if (!profile?.id) {
+        showToast("This dancer profile is not available to follow.");
+        return;
+      }
+
+      const notifyButton = document.getElementById("notifyBtn");
+      actionButton.disabled = true;
+      if (notifyButton) notifyButton.disabled = true;
+      try {
+        const data = await postAuthenticatedJson("/api/customer/follows", {
+          dancerId: profile.id,
+          following: !isFollowingProfile(city, profileName),
+          notificationsEnabled: !isFollowingProfile(city, profileName)
+        });
+        if (!data) throw new Error("Sign in required.");
+        const { following } = applyConfirmedProfileFollow(profile, city, data);
+        recordLiveEvent("profile_action", {
+          dancerName: profileName,
+          source: following ? "follow_added" : "follow_removed"
+        });
+        showToast(following ? "Following profile. Notifications on." : "Unfollowed profile");
+        if (customerDashboard.classList.contains("show")) renderDashboard();
+      } catch (error) {
+        showToast(error.message || "Could not save follow");
+      } finally {
+        actionButton.disabled = false;
+        if (notifyButton) notifyButton.disabled = false;
+      }
+    }
+
+    async function saveProfileNotifications(actionButton) {
+      if (actionButton.disabled) return;
+      const city = citySelect.value;
+      const profileName = actionButton.dataset.profile;
+      const profile = findProfile(profileName);
+      if (!profile?.id) {
+        showToast("This dancer profile is not available for notifications.");
+        return;
+      }
+
+      const followButton = document.getElementById("followBtn");
+      actionButton.disabled = true;
+      if (followButton) followButton.disabled = true;
+      try {
+        const data = await postAuthenticatedJson("/api/customer/follows", {
+          dancerId: profile.id,
+          following: true,
+          notificationsEnabled: !actionButton.classList.contains("is-following")
+        });
+        if (!data) throw new Error("Sign in required.");
+        const { notificationsEnabled } = applyConfirmedProfileFollow(profile, city, data);
+        recordLiveEvent("profile_action", {
+          dancerName: profileName,
+          source: notificationsEnabled ? "notify_added" : "notify_removed"
+        });
+        showToast(notificationsEnabled ? "Notifications on" : "Notifications off");
+        if (customerDashboard.classList.contains("show")) renderDashboard();
+      } catch (error) {
+        showToast(error.message || "Could not save notifications");
+      } finally {
+        actionButton.disabled = false;
+        if (followButton) followButton.disabled = false;
+      }
+    }
+
+    modalBody.addEventListener("click", async (event) => {
       if (handleQrClick(event)) return;
       if (handleShareClick(event)) return;
       if (!event.target.closest("[data-qr-popover]")) closeQrPopovers();
@@ -39983,94 +40088,50 @@
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
       if (actionButton.id === "followBtn") {
-        const profileName = actionButton.dataset.profile;
-        const city = citySelect.value;
-        const followedList = followedByCity[city] || (followedByCity[city] = []);
-        const followIndex = followedList.indexOf(profileName);
-        const profile = findProfile(profileName);
-        if (followIndex >= 0) {
-          followedList.splice(followIndex, 1);
-          actionButton.innerHTML = actionButtonLabel("heart", "Follow");
-          actionButton.classList.remove("is-following");
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "follow_removed" });
-          showToast("Unfollowed profile");
-        } else {
-          followedList.push(profileName);
-          enableProfileNotifications(city, profileName);
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "follow_added" });
-          actionButton.innerHTML = actionButtonLabel("check", "Following");
-          actionButton.classList.add("is-following");
-          const notifyButton = document.getElementById("notifyBtn");
-          if (notifyButton) {
-            notifyButton.innerHTML = actionButtonLabel("check", "Notifications On");
-            notifyButton.classList.add("is-following");
-          }
-          showToast("Following profile. Notifications on.");
-        }
-        if (profile) {
-          const followerCountEl = document.getElementById("modalFollowerCount");
-          if (followerCountEl) followerCountEl.innerHTML = followerMetricMarkup(profile, city);
-          postAuthenticatedJson("/api/customer/follows", {
-            dancerId: profile.id,
-            following: followIndex < 0,
-            notificationsEnabled: followIndex < 0
-          }).catch((error) => showToast(error.message || "Could not save follow"));
-        }
-        if (customerDashboard.classList.contains("show")) renderDashboard();
+        await saveProfileFollow(actionButton);
+        return;
       }
       if (actionButton.id === "notifyBtn") {
-        const city = citySelect.value;
-        const profileName = actionButton.dataset.profile;
-        const profile = findProfile(profileName);
-        const willEnable = !actionButton.classList.contains("is-following");
-        if (actionButton.classList.contains("is-following")) {
-          disableProfileNotifications(city, profileName);
-          actionButton.innerHTML = actionButtonLabel("bell", "Notify Me");
-          actionButton.classList.remove("is-following");
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "notify_removed" });
-          showToast("Notifications off");
-        } else {
-          enableProfileNotifications(city, profileName);
-          actionButton.innerHTML = actionButtonLabel("check", "Notifications On");
-          actionButton.classList.add("is-following");
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "notify_added" });
-          showToast("Notifications on");
-        }
-        if (profile?.id) {
-          postAuthenticatedJson("/api/customer/follows", {
-            dancerId: profile.id,
-            following: true,
-            notificationsEnabled: willEnable
-          }).catch((error) => showToast(error.message || "Could not save notifications"));
-        }
-        if (customerDashboard.classList.contains("show")) renderDashboard();
+        await saveProfileNotifications(actionButton);
+        return;
       }
       if (actionButton.id === "goingBtn") {
         if (actionButton.disabled) return;
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
+        if (!profile?.shiftId) {
+          showToast("This shift is not available.");
+          return;
+        }
         const shiftState = actionButton.dataset.shiftState || "tonight";
         const isTonightShift = shiftState === "tonight";
         const countEl = document.getElementById("tonightInterestCount");
-        const currentCount = Number(countEl?.textContent.match(/[\d,]+/)?.[0].replace(/,/g, "")) || 0;
         const wasGoing = actionButton.classList.contains("is-going");
-        goingTonightByProfile[profileName] = Math.max(0, currentCount + (wasGoing ? -1 : 1));
-        goingTonightSavedByProfile[profileName] = !wasGoing;
-        if (countEl) {
-          countEl.classList.remove("muted");
-          countEl.innerHTML = metricPhraseMarkup(`${goingTonightByProfile[profileName].toLocaleString()} going`);
-        }
-        actionButton.classList.toggle("is-going", !wasGoing);
-        const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
-        const activeLabel = isTonightShift ? "You're going now" : "You're going";
-        actionButton.innerHTML = actionButtonLabel(wasGoing ? "clock" : "check", wasGoing ? idleLabel : activeLabel);
-        recordLiveEvent("schedule_action", { dancerName: profileName, source: wasGoing ? "going_removed" : isTonightShift ? "going_tonight_added" : "going_upcoming_added" });
-        showToast(wasGoing ? "Removed" : isTonightShift ? "Added to now" : "Added to upcoming shift");
-        if (profile?.shiftId) {
-          postAuthenticatedJson("/api/customer/going", {
+        actionButton.disabled = true;
+        try {
+          const data = await postAuthenticatedJson("/api/customer/going", {
             shiftId: profile.shiftId,
             going: !wasGoing
-          }).catch((error) => showToast(error.message || "Could not save going status"));
+          });
+          const savedGoing = data.going === true;
+          const realCount = Math.max(0, Number(data.goingCount) || 0);
+          goingTonightByProfile[profileName] = realCount;
+          profile.goingCount = realCount;
+          goingTonightSavedByProfile[profileName] = savedGoing;
+          if (countEl) {
+            countEl.classList.remove("muted");
+            countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} going`);
+          }
+          actionButton.classList.toggle("is-going", savedGoing);
+          const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
+          const activeLabel = isTonightShift ? "You're going now" : "You're going";
+          actionButton.innerHTML = actionButtonLabel(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
+          recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? (isTonightShift ? "going_tonight_added" : "going_upcoming_added") : "going_removed" });
+          showToast(savedGoing ? (isTonightShift ? "Added to now" : "Added to upcoming shift") : "Removed");
+        } catch (error) {
+          showToast(error.message || "Could not save going status");
+        } finally {
+          actionButton.disabled = false;
         }
       }
       if (actionButton.id === "reportBtn") {

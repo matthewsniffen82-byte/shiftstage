@@ -359,6 +359,18 @@ async function countDancerGoingSignals(client: DancrClient, dancerId: string): P
   return count || 0;
 }
 
+async function countShiftGoingSignals(client: DancrClient, shiftId: string | null): Promise<number> {
+  if (!shiftId) return 0;
+
+  const { count, error } = await client
+    .from("going_signals")
+    .select("*", { count: "exact", head: true })
+    .eq("shift_id", shiftId);
+
+  if (error) throw error;
+  return count || 0;
+}
+
 async function toDancerCard(client: DancrClient, row: any, options: { checkedInOnly?: boolean } = {}): Promise<DancerCard> {
   const shifts = Array.isArray(row.shifts) ? row.shifts : row.shifts ? [row.shifts] : [];
   const now = Date.now();
@@ -377,10 +389,11 @@ async function toDancerCard(client: DancrClient, row: any, options: { checkedInO
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
   const approvedPhotoUrls = approvedDancerPhotoUrls(client, row);
-  const [followerCount, notificationCount, profileViewsToday] = await Promise.all([
+  const [followerCount, notificationCount, profileViewsToday, goingCount] = await Promise.all([
     countDancerFollowers(client, row.id),
     countDancerNotificationSubscribers(client, row.id),
     countDancerProfileViewsToday(client, row.id),
+    countShiftGoingSignals(client, shift?.id || null),
   ]);
 
   return {
@@ -408,6 +421,7 @@ async function toDancerCard(client: DancrClient, row: any, options: { checkedInO
     followerCount,
     notificationCount,
     profileViewsToday,
+    goingCount,
   };
 }
 

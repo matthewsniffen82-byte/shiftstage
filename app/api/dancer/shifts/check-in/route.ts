@@ -85,7 +85,7 @@ export async function PATCH(request: Request) {
 
     if (action === "end" || action === "auto_end") {
       const endedReason = action === "auto_end" ? "automatic" : "manual";
-      return endShift(client as any, dancer.id, shiftId, endedReason);
+      return endShift(client as any, dancer.id, shift, endedReason);
     }
 
     return NextResponse.json({ ok: false, error: "Unknown shift action." }, { status: 400 });
@@ -115,14 +115,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
     }
 
-    return endShift(client as any, dancer.id, shiftId, "manual");
+    return endShift(client as any, dancer.id, shift, "manual");
   } catch (error) {
     return apiError(error, "Unable to check out.");
   }
 }
 
-async function endShift(client: any, dancerId: string, shiftId: string, reason: string) {
+async function endShift(client: any, dancerId: string, shift: any, reason: string) {
   const endedAt = new Date().toISOString();
+  const shiftSummary = await buildShiftSummary(client, dancerId, shift, endedAt, reason);
   const { data, error } = await client
     .from("shifts")
     .update({
@@ -132,14 +133,73 @@ async function endShift(client: any, dancerId: string, shiftId: string, reason: 
       commission_tracking_stopped_at: endedAt,
       ended_at: endedAt,
       ended_reason: reason,
+      shift_summary: shiftSummary,
     })
-    .eq("id", shiftId)
+    .eq("id", shift.id)
     .eq("dancer_id", dancerId)
     .select(shiftStateSelect())
     .single();
 
   if (error) throw error;
   return NextResponse.json({ ok: true, shift: data });
+}
+
+async function buildShiftSummary(client: any, dancerId: string, shift: any, endedAt: string, reason: string) {
+  const startedAt = shift.checked_in_at || shift.starts_at;
+  const [profileViews, qrCodeScans, newFollowers, commissionRows] = await Promise.all([
+    countMetricRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", startedAt, endedAt),
+    countMetricRows(client, "qr_redemptions", "dancer_id", dancerId, "created_at", startedAt, endedAt),
+    countMetricRows(client, "follows", "dancer_id", dancerId, "created_at", startedAt, endedAt),
+    getShiftCommissionRows(client, dancerId, startedAt, endedAt),
+  ]);
+  const hoursWorked = Math.max(0, (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 3_600_000);
+  const commissionCents = commissionRows.reduce((sum: number, row: any) => sum + Number(row.amount_cents || 0), 0);
+
+  return {
+    reason,
+    hoursWorked: `${hoursWorked.toFixed(hoursWorked >= 10 ? 0 : 1)}h`,
+    profileViews,
+    qrCodeScans,
+    estimatedCommissions: formatMoneyFromCents(commissionCents),
+    newFollowers,
+  };
+}
+
+async function countMetricRows(
+  client: any,
+  table: string,
+  ownerColumn: string,
+  ownerId: string,
+  timestampColumn: string,
+  startedAt: string,
+  endedAt: string,
+) {
+  const { count, error } = await client
+    .from(table)
+    .select("*", { count: "exact", head: true })
+    .eq(ownerColumn, ownerId)
+    .gte(timestampColumn, startedAt)
+    .lte(timestampColumn, endedAt);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+async function getShiftCommissionRows(client: any, dancerId: string, startedAt: string, endedAt: string) {
+  const { data, error } = await client
+    .from("commission_events")
+    .select("amount_cents")
+    .eq("dancer_id", dancerId)
+    .in("status", ["pending_club_payment", "payable", "paid"])
+    .gte("created_at", startedAt)
+    .lte("created_at", endedAt);
+
+  if (error) throw error;
+  return data || [];
+}
+
+function formatMoneyFromCents(value: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value / 100);
 }
 
 async function getOwnDancerProfile(client: any, userId: string) {

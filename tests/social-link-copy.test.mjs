@@ -37,14 +37,32 @@ test("live and edit social actions share one compact mobile row", () => {
   const socialLinksRule = mobileSocialStripSource.match(
     /#profileModal \.social-tile \.social-links,[\s\S]*?\n  }/,
   )?.[0] || "";
+  const canonicalInlineStart = mobileAppSource.indexOf(
+    "/* Canonical social strip: live profile and edit preview must stay visually identical. */",
+  );
+  const canonicalInlineEnd = mobileAppSource.indexOf(
+    ".approved-visual-profile .approved-photo-edit-frame",
+    canonicalInlineStart,
+  );
+  const canonicalInlineRules = mobileAppSource.slice(canonicalInlineStart, canonicalInlineEnd);
 
-  assert.match(rootRouteSource, /mobile-social-strip\.css\?v=2/);
+  assert.match(rootRouteSource, /mobile-social-strip\.css\?v=3/);
   assert.match(mobileSocialStripSource, /#profileModal \.social-tile,[\s\S]*?\.approved-visual-profile \.profile-modal \.social-tile/);
-  assert.match(mobileSocialStripSource, /grid-template-columns: auto minmax\(0, 1fr\) !important/);
+  assert.match(mobileSocialStripSource, /grid-template-columns: auto auto !important/);
+  assert.match(mobileSocialStripSource, /justify-content: center !important/);
+  assert.match(mobileSocialStripSource, /align-items: center !important/);
   assert.match(mobileSocialStripSource, /profile-utility-actions[\s\S]*?grid-row: 2 !important/);
   assert.match(socialLinksRule, /grid-row: 2 !important/);
   assert.match(mobileSocialStripSource, /border-right: 1px solid rgba\(53, 216, 255, 0\.28\) !important/);
+  assert.match(mobileSocialStripSource, /approved-social-tools[\s\S]*?justify-self: end !important/);
+  assert.match(mobileSocialStripSource, /social-edit-item[\s\S]*?align-self: center !important/);
+  assert.match(mobileSocialStripSource, /social-icon svg[\s\S]*?display: block !important/);
   assert.doesNotMatch(socialLinksRule, /grid-row: 3 !important/);
+  assert.ok(canonicalInlineStart >= 0);
+  assert.match(canonicalInlineRules, /grid-template-columns: auto auto !important/);
+  assert.match(canonicalInlineRules, /justify-content: center !important/);
+  assert.match(canonicalInlineRules, /social-edit-item[\s\S]*?place-items: center !important/);
+  assert.doesNotMatch(canonicalInlineRules, /grid-row: 3 !important/);
 });
 
 test("edit-profile social card keeps the live card structure and height", () => {

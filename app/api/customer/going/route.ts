@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { cancelGoing, markGoing } from "@/src/lib/dancr/customer";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -23,8 +24,20 @@ export async function POST(request: Request) {
       await cancelGoing(client, user.id, shiftId);
     }
 
-    return NextResponse.json({ ok: true, going });
+    const goingCount = await countShiftGoingSignals(shiftId);
+    return NextResponse.json({ ok: true, going, goingCount });
   } catch (error) {
     return apiError(error, "Unable to update going signal.");
   }
+}
+
+async function countShiftGoingSignals(shiftId: string) {
+  const admin = createAdminSupabaseClient();
+  const { count, error } = await admin
+    .from("going_signals")
+    .select("customer_id", { count: "exact", head: true })
+    .eq("shift_id", shiftId);
+
+  if (error) throw error;
+  return count || 0;
 }

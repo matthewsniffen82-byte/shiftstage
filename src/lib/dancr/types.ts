@@ -109,6 +109,7 @@ export type DancerCard = {
   followerCount?: number;
   notificationCount?: number;
   profileViewsToday?: number;
+  goingCount?: number;
 };
 
 export type DancerProfile = DancerCard & {
