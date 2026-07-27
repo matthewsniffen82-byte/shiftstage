@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
+import { getStripe } from "../stripe";
 
 type DancrClient = SupabaseClient;
 
@@ -19,7 +20,10 @@ const APPROVAL_QUEUE_SELECT = `
   is_public,
   verification_status,
   photo_review_status,
+  approved_at,
+  disabled_at,
   created_at,
+  updated_at,
   social_links(id, platform, handle, url, is_active),
   dancer_photos(id, storage_path, is_primary, review_status, sort_order, created_at),
   approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
@@ -31,6 +35,11 @@ export type ReviewDancerInput = {
   reviewerId: string;
   status: ReviewStatus;
   notes?: string | null;
+};
+
+export type DeleteAdminDancerProfileInput = {
+  dancerId: string;
+  adminId: string;
 };
 
 export type ReviewSubmissionContentInput = {
@@ -122,6 +131,184 @@ export async function getAdminDancerDirectory(client: DancrClient): Promise<Admi
   return Promise.all((data || []).map((row: any) => mapAdminApprovalDancer(client, row)));
 }
 
+export async function getAdminDancerDetail(
+  client: DancrClient,
+  dancerId: string,
+): Promise<AdminApprovalDancer | null> {
+  const db = client as any;
+  const rows = await selectApprovalRows(db, (query) => query.eq("id", dancerId).limit(1));
+  const row = rows?.[0];
+  if (!row) return null;
+
+  const [profile, accountResult, subscriptionResult] = await Promise.all([
+    mapAdminApprovalDancer(client, row),
+    db
+      .from("app_users")
+      .select("id, display_name, email, account_state, created_at, updated_at")
+      .eq("id", row.user_id)
+      .maybeSingle(),
+    db
+      .from("subscriptions")
+      .select("id, status, stripe_customer_id, stripe_subscription_id, current_period_end")
+      .eq("dancer_id", dancerId)
+      .maybeSingle(),
+  ]);
+
+  if (accountResult.error) throw accountResult.error;
+  if (subscriptionResult.error) throw subscriptionResult.error;
+
+  const account = accountResult.data;
+  const subscription = subscriptionResult.data;
+
+  return {
+    ...profile,
+    account: account
+      ? {
+          id: account.id,
+          displayName: account.display_name,
+          email: account.email,
+          accountState: account.account_state,
+          createdAt: account.created_at,
+          updatedAt: account.updated_at,
+        }
+      : null,
+    subscription: subscription
+      ? {
+          id: subscription.id,
+          status: subscription.status,
+          stripeCustomerId: subscription.stripe_customer_id,
+          stripeSubscriptionId: subscription.stripe_subscription_id,
+          currentPeriodEnd: subscription.current_period_end,
+        }
+      : null,
+  };
+}
+
+export async function deleteAdminDancerProfile(
+  client: DancrClient,
+  input: DeleteAdminDancerProfileInput,
+) {
+  const db = client as any;
+  const { data: dancer, error: dancerError } = await db
+    .from("dancer_profiles")
+    .select("id, user_id, stage_name, slug")
+    .eq("id", input.dancerId)
+    .maybeSingle();
+
+  if (dancerError) throw dancerError;
+  if (!dancer) return null;
+
+  const [photosResult, moderationResult, subscriptionResult, verificationListing] = await Promise.all([
+    db
+      .from("dancer_photos")
+      .select("id, storage_path")
+      .eq("dancer_id", dancer.id),
+    db
+      .from("image_moderation_records")
+      .select("id, temporary_storage_path, final_storage_path")
+      .eq("user_id", dancer.user_id),
+    db
+      .from("subscriptions")
+      .select("stripe_subscription_id, status")
+      .eq("dancer_id", dancer.id)
+      .maybeSingle(),
+    listBucketPaths(client, "verification-documents", `${dancer.user_id}/verification`),
+  ]);
+
+  if (photosResult.error) throw photosResult.error;
+  if (moderationResult.error) throw moderationResult.error;
+  if (subscriptionResult.error) throw subscriptionResult.error;
+
+  const subscription = subscriptionResult.data;
+  if (
+    subscription?.stripe_subscription_id &&
+    !["canceled", "incomplete_expired"].includes(String(subscription.status || "").toLowerCase())
+  ) {
+    try {
+      await getStripe().subscriptions.cancel(subscription.stripe_subscription_id);
+    } catch (error) {
+      console.error("ADMIN_DANCER_DELETE_SUBSCRIPTION_CANCEL_FAILED", {
+        dancerId: dancer.id,
+        message: error instanceof Error ? error.message : "Unknown Stripe error.",
+      });
+      throw new Error("Unable to cancel this dancer's active subscription. The profile was not deleted.");
+    }
+  }
+
+  const { data: deletedRows, error: deleteError } = await db
+    .from("dancer_profiles")
+    .delete()
+    .eq("id", dancer.id)
+    .select("id");
+
+  if (deleteError) throw deleteError;
+  if (!(deletedRows || []).some((row: any) => row.id === dancer.id)) {
+    throw new Error("Dancer profile was not deleted.");
+  }
+
+  const warnings: string[] = [];
+  const moderationRows = moderationResult.data || [];
+  const moderationIds = moderationRows.map((row: any) => row.id).filter(Boolean);
+  if (moderationIds.length) {
+    const { error } = await db
+      .from("image_moderation_records")
+      .delete()
+      .eq("user_id", dancer.user_id)
+      .in("id", moderationIds);
+    if (error) warnings.push(`Moderation history cleanup failed: ${error.message}`);
+  }
+
+  const approvedPhotoPaths = uniqueStoragePaths([
+    ...(photosResult.data || []).map((photo: any) => photo.storage_path),
+    ...moderationRows.map((row: any) => row.final_storage_path),
+  ]);
+  const moderationTemporaryPaths = uniqueStoragePaths(
+    moderationRows.map((row: any) => row.temporary_storage_path),
+  );
+
+  await removeBucketPaths(client, "dancer-photos", approvedPhotoPaths, warnings);
+  await removeBucketPaths(client, "dancr-image-moderation-temp", moderationTemporaryPaths, warnings);
+  await removeBucketPaths(client, "dancr-image-moderation-review", moderationTemporaryPaths, warnings);
+  if (verificationListing.error) {
+    warnings.push(`Verification file listing failed: ${verificationListing.error}`);
+  } else {
+    await removeBucketPaths(client, "verification-documents", verificationListing.paths, warnings);
+  }
+
+  try {
+    await logAdminAction(client, {
+      adminId: input.adminId,
+      targetType: "dancer_profile",
+      targetId: dancer.id,
+      action: "delete_dancer_profile",
+      notes: `${dancer.stage_name} (${dancer.slug}); login account retained`,
+    });
+  } catch (error) {
+    warnings.push(`Audit log failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+  }
+
+  if (warnings.length) {
+    console.warn("ADMIN_DANCER_DELETE_CLEANUP_WARNING", {
+      dancerId: dancer.id,
+      warningCount: warnings.length,
+      warnings,
+    });
+  } else {
+    console.info("ADMIN_DANCER_PROFILE_DELETED", {
+      dancerId: dancer.id,
+      adminId: input.adminId,
+    });
+  }
+
+  return {
+    id: dancer.id,
+    userId: dancer.user_id,
+    stageName: dancer.stage_name,
+    loginAccountRetained: true,
+    warnings,
+  };
+}
+
 async function selectApprovalRows(db: any, configure: (query: any) => any) {
   const { data, error } = await configure(db.from("dancer_profiles").select(APPROVAL_QUEUE_SELECT));
   if (!error) return data || [];
@@ -154,6 +341,9 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
     verificationStatus: row.verification_status,
     photoReviewStatus: row.photo_review_status,
     createdAt: row.created_at,
+    updatedAt: row.updated_at || null,
+    approvedAt: row.approved_at || null,
+    disabledAt: row.disabled_at || null,
     socialLinks: (row.social_links || [])
       .filter((social: any) => social.is_active !== false)
       .map((social: any) => {
@@ -960,6 +1150,57 @@ async function countTable(client: DancrClient, table: string) {
 
   if (error) return { ok: false, count: null, error: error.message };
   return { ok: true, count: count || 0 };
+}
+
+async function listBucketPaths(
+  client: DancrClient,
+  bucketName: string,
+  prefix: string,
+): Promise<{ paths: string[]; error: string | null }> {
+  const bucket = client.storage.from(bucketName);
+  const paths: string[] = [];
+  const pageSize = 100;
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await bucket.list(prefix, {
+      limit: pageSize,
+      offset,
+      sortBy: { column: "name", order: "asc" },
+    });
+    if (error) return { paths, error: error.message };
+
+    const rows = data || [];
+    for (const row of rows) {
+      if (row?.name && row?.id) paths.push(`${prefix}/${row.name}`);
+    }
+    if (rows.length < pageSize) break;
+  }
+
+  return { paths: uniqueStoragePaths(paths), error: null };
+}
+
+async function removeBucketPaths(
+  client: DancrClient,
+  bucketName: string,
+  paths: string[],
+  warnings: string[],
+) {
+  const uniquePaths = uniqueStoragePaths(paths);
+  for (let index = 0; index < uniquePaths.length; index += 100) {
+    const batch = uniquePaths.slice(index, index + 100);
+    const { error } = await client.storage.from(bucketName).remove(batch);
+    if (error) warnings.push(`${bucketName} cleanup failed: ${error.message}`);
+  }
+}
+
+function uniqueStoragePaths(paths: Array<string | null | undefined>) {
+  return [
+    ...new Set(
+      paths
+        .map((path) => String(path || "").trim().replace(/^\/+/, ""))
+        .filter(Boolean),
+    ),
+  ];
 }
 
 function integrationStatus(name: string, required: string[]) {

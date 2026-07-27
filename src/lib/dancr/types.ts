@@ -127,6 +127,8 @@ export type DancerPhoto = {
   isPrimary: boolean;
   sortOrder: number;
   reviewStatus?: ReviewStatus;
+  reviewNotes?: string | null;
+  reviewedAt?: string | null;
   createdAt?: string;
 };
 
@@ -141,11 +143,32 @@ export type ApprovalReview = {
 
 export type VerificationDocument = {
   name: string;
+  documentType?: string;
+  displayName?: string;
   storagePath: string;
   fileUrl: string;
-  status: "pending_review";
+  status: ReviewStatus | "pending_review";
+  reviewNotes?: string | null;
+  reviewedAt?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+export type AdminDancerAccount = {
+  id: string;
+  displayName: string | null;
+  email: string | null;
+  accountState: AccountState;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminDancerSubscription = {
+  id: string;
+  status: string;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  currentPeriodEnd: string | null;
 };
 
 export type AdminApprovalDancer = {
@@ -161,6 +184,11 @@ export type AdminApprovalDancer = {
   verificationStatus: ReviewStatus;
   photoReviewStatus: ReviewStatus;
   createdAt: string;
+  updatedAt?: string | null;
+  approvedAt?: string | null;
+  disabledAt?: string | null;
+  account?: AdminDancerAccount | null;
+  subscription?: AdminDancerSubscription | null;
   socialLinks: SocialLink[];
   photos: DancerPhoto[];
   verificationDocuments: VerificationDocument[];
