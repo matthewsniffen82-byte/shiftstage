@@ -358,7 +358,7 @@ export default function AdminClient() {
             />
           </Panel>
           <Panel title="Support Inbox">
-            <Metric label="Open conversations" value={String(state.supportThreads?.filter((thread) => String(thread.status || "open") !== "answered").length || 0)} />
+            <Metric label="Awaiting human review" value={String(state.supportThreads?.filter((thread) => String(thread.escalationStatus) === "escalated").length || 0)} />
             <AdminSupportInbox
               threads={state.supportThreads || []}
               onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
@@ -750,30 +750,45 @@ function AdminSupportInbox({
         const threadId = String(thread.id || "");
         const messages = asRecordArray(thread.messages);
         const userLabel = String(thread.userName || thread.userEmail || thread.userRole || "User");
+        const isEscalated = String(thread.escalationStatus) === "escalated";
+        const escalationPriority = String(thread.escalationPriority || "normal");
         return (
-          <details className="support-inbox-thread" key={threadId} open={threads.length === 1}>
+          <details className={`support-inbox-thread${isEscalated ? " is-escalated" : ""}`} key={threadId} open={isEscalated || threads.length === 1}>
             <summary>
               <span>
                 <strong>{String(thread.subject || "Support message")}</strong>
-                <small>{userLabel} / {String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
+                <small>{userLabel} / {String(thread.userRole || "user")} / {isEscalated ? `${escalationPriority} human review` : String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
               </span>
             </summary>
+            {isEscalated ? (
+              <div className={`support-escalation priority-${escalationPriority}`}>
+                <strong>{escalationPriority.toUpperCase()} · {String(thread.escalationCategory || "support review")}</strong>
+                <p>{String(thread.escalationReason || "This conversation requires a human response.")}</p>
+              </div>
+            ) : null}
             <div className="support-inbox-messages">
-              {messages.map((message) => (
+              {messages.map((message) => {
+                const senderLabel = String(message.senderKind) === "ai"
+                  ? "Dancr Support AI"
+                  : String(message.senderRole) === "admin"
+                    ? "Human Support"
+                    : userLabel;
+                return (
                 <div className={String(message.senderRole) === "admin" ? "support-inbox-message from-admin" : "support-inbox-message"} key={String(message.id)}>
-                  <strong>{String(message.senderRole) === "admin" ? "Admin" : userLabel}</strong>
+                  <strong>{senderLabel}</strong>
                   <p>{String(message.body || "")}</p>
                   <small>{formatDate(message.createdAt)}</small>
                 </div>
-              ))}
+                );
+              })}
             </div>
             <textarea
               value={replyByThread[threadId] || ""}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
-              placeholder="Reply to this customer or dancer"
+              placeholder="Reply as human support to this customer, dancer, or venue"
             />
             <button type="button" onClick={() => reply(threadId)}>
-              Reply
+              Reply as human
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
           </details>
@@ -2168,9 +2183,15 @@ function AdminStyles() {
       .support-admin-panel { grid-column: span 2; }
       .support-inbox-list, .support-inbox-thread, .support-inbox-messages { display: grid; gap: 10px; }
       .support-inbox-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .support-inbox-thread.is-escalated { border-color: rgba(255,180,84,.52); box-shadow: inset 3px 0 #ffb454; }
       .support-inbox-thread summary { cursor: pointer; color: #fff; font-weight: 900; }
       .support-inbox-thread summary span { display: grid; gap: 3px; }
       .support-inbox-thread small { color: #b9accd; font-size: 12px; }
+      .support-escalation { display: grid; gap: 5px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,180,84,.32); background: rgba(255,180,84,.09); }
+      .support-escalation strong { color: #ffd19a; font-size: 12px; letter-spacing: .05em; }
+      .support-escalation p { margin: 0; color: #ffe1bd; }
+      .support-escalation.priority-urgent { border-color: rgba(255,91,116,.55); background: rgba(255,91,116,.12); }
+      .support-escalation.priority-urgent strong { color: #ff9cac; }
       .support-inbox-message { display: grid; gap: 4px; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .support-inbox-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
       .support-inbox-message p, .support-inbox-thread p { color: #cfc5de; font-size: 14px; line-height: 1.45; }

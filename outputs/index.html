@@ -28131,15 +28131,15 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse support-inbox-card" data-support-panel="dancer">
-          <summary><span class="dashboard-collapse-title"><strong>Contact Admin</strong><span>Expand to send admin a message and read replies in your dancer inbox.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Dancr Support</strong><span>Get an AI answer using your live account data, with human review for sensitive or unresolved issues.</span></span></summary>
           <div class="dashboard-collapse-body">
             <form class="auth-form support-contact-form" data-support-form="dancer">
               <div class="field"><label for="dancerSupportSubject">Subject</label><input id="dancerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
-              <div class="field"><label for="dancerSupportMessage">Message</label><textarea id="dancerSupportMessage" rows="4" placeholder="Write your message to admin" required></textarea></div>
-              <button class="action-btn" type="submit">Send to admin</button>
-              <div class="rule-note" id="dancerSupportStatus">Messages and admin replies appear below.</div>
+              <div class="field"><label for="dancerSupportMessage">Message</label><textarea id="dancerSupportMessage" rows="4" placeholder="Ask Dancr Support about your account" required></textarea></div>
+              <button class="action-btn" type="submit">Ask Dancr Support</button>
+              <div class="rule-note" id="dancerSupportStatus">AI answers and human support replies appear below.</div>
             </form>
-            <div class="rank-notification-list support-thread-list" id="dancerSupportThreads">No admin messages yet.</div>
+            <div class="rank-notification-list support-thread-list" id="dancerSupportThreads">No support conversations yet.</div>
           </div>
         </details>
         <details class="auth-card dashboard-collapse post-shift-panel" id="approvedDancerPanel" hidden>
@@ -28484,14 +28484,14 @@
           <div class="stat"><strong id="venueShiftCount">7</strong><span>verified shifts</span></div>
         </div>
         <div class="auth-card support-inbox-card" data-support-panel="venue">
-          <h3 class="section-title">Contact Admin</h3>
+          <h3 class="section-title">Dancr Support</h3>
           <form class="auth-form support-contact-form" data-support-form="venue">
             <div class="field"><label for="venueSupportSubject">Subject</label><input id="venueSupportSubject" type="text" placeholder="What do you need help with?" required></div>
-            <div class="field"><label for="venueSupportMessage">Message</label><textarea id="venueSupportMessage" rows="4" placeholder="Write your message to admin" required></textarea></div>
-            <button class="action-btn" type="submit">Send to admin</button>
-            <div class="rule-note" id="venueSupportStatus">Messages and admin replies appear below.</div>
+            <div class="field"><label for="venueSupportMessage">Message</label><textarea id="venueSupportMessage" rows="4" placeholder="Ask Dancr Support about your account" required></textarea></div>
+            <button class="action-btn" type="submit">Ask Dancr Support</button>
+            <div class="rule-note" id="venueSupportStatus">AI answers and human support replies appear below. Sensitive or unresolved issues go to a person.</div>
           </form>
-          <div class="rank-notification-list support-thread-list" id="venueSupportThreads">No admin messages yet.</div>
+          <div class="rank-notification-list support-thread-list" id="venueSupportThreads">No support conversations yet.</div>
         </div>
         <div class="venue-dashboard-grid">
           <form class="auth-card auth-form" id="venueOfferForm">
@@ -28764,14 +28764,14 @@
           <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
         </div>
         <div class="auth-card customer-notification-card support-inbox-card" data-dashboard-section="support" data-support-panel="customer">
-          <h3 class="section-title">Contact Admin</h3>
+          <h3 class="section-title">Dancr Support</h3>
           <form class="auth-form support-contact-form" data-support-form="customer">
             <div class="field"><label for="customerSupportSubject">Subject</label><input id="customerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
-            <div class="field"><label for="customerSupportMessage">Message</label><textarea id="customerSupportMessage" rows="4" placeholder="Write your message to admin" required></textarea></div>
-            <button class="action-btn" type="submit">Send to admin</button>
-            <div class="rule-note" id="customerSupportStatus">Messages and admin replies appear below.</div>
+            <div class="field"><label for="customerSupportMessage">Message</label><textarea id="customerSupportMessage" rows="4" placeholder="Ask Dancr Support about your account" required></textarea></div>
+            <button class="action-btn" type="submit">Ask Dancr Support</button>
+            <div class="rule-note" id="customerSupportStatus">AI answers and human support replies appear below. Sensitive or unresolved issues go to a person.</div>
           </form>
-          <div class="rank-notification-list support-thread-list" id="customerSupportThreads">No admin messages yet.</div>
+          <div class="rank-notification-list support-thread-list" id="customerSupportThreads">No support conversations yet.</div>
         </div>
         <div class="auth-card account-control-card" data-account-panel="customer" data-dashboard-section="account">
           <div class="account-control-head">
@@ -31534,49 +31534,34 @@
       return true;
     }
 
-    function supportStorageKey() {
-      return "mydancr:support-threads:v1";
-    }
-
-    function readStoredSupportThreads() {
-      try {
-        const rows = JSON.parse(localStorage.getItem(supportStorageKey()) || "[]");
-        return Array.isArray(rows) ? rows : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function writeStoredSupportThreads(threads) {
-      try {
-        localStorage.setItem(supportStorageKey(), JSON.stringify(threads || []));
-      } catch {}
-    }
-
-    function supportUserKey(role) {
-      return authSession?.user?.id || authSession?.account?.email || authSession?.email || `${role}-local`;
-    }
-
     function ownSupportThreads(role) {
-      const userKey = supportUserKey(role);
-      const liveThreads = liveSupportThreads.length ? liveSupportThreads : readStoredSupportThreads().filter((thread) => thread.userKey === userKey && thread.userRole === role);
-      return liveThreads.slice().sort((a, b) => Date.parse(b.lastMessageAt || b.createdAt || "") - Date.parse(a.lastMessageAt || a.createdAt || ""));
+      return liveSupportThreads
+        .filter((thread) => thread.userRole === role)
+        .slice()
+        .sort((a, b) => Date.parse(b.lastMessageAt || b.createdAt || "") - Date.parse(a.lastMessageAt || a.createdAt || ""));
     }
 
     function supportThreadMarkup(thread, isAdmin = false) {
       const messages = Array.isArray(thread.messages) ? thread.messages : [];
       const userLabel = thread.userName || thread.userEmail || thread.userRole || "User";
       const roleLabel = thread.userRole ? `${thread.userRole} account` : "account";
+      const isEscalated = thread.escalationStatus === "escalated";
+      const escalationLabel = isEscalated
+        ? `${displayText(thread.escalationPriority || "normal")} human review`
+        : thread.status === "answered"
+          ? "AI answered"
+          : displayText(thread.status || "open");
       return `
-        <details class="support-thread" data-support-thread="${displayText(thread.id)}" ${isAdmin ? "" : messages.length <= 2 ? "open" : ""}>
+        <details class="support-thread ${isEscalated ? "is-escalated" : ""}" data-support-thread="${displayText(thread.id)}" ${isAdmin ? isEscalated ? "open" : "" : messages.length <= 2 ? "open" : ""}>
           <summary>
-            <strong>${displayText(thread.subject || "Admin conversation")}</strong>
-            <small>${isAdmin ? `${displayText(userLabel)} · ${displayText(roleLabel)} · ` : ""}${displayText(thread.status || "open")} · ${displayText(formatBillingDate(thread.lastMessageAt || thread.createdAt))}</small>
+            <strong>${displayText(thread.subject || "Support conversation")}</strong>
+            <small>${isAdmin ? `${displayText(userLabel)} · ${displayText(roleLabel)} · ` : ""}${escalationLabel} · ${displayText(formatBillingDate(thread.lastMessageAt || thread.createdAt))}</small>
           </summary>
+          ${isEscalated ? `<div class="rule-note"><strong>Human review:</strong> ${displayText(thread.escalationReason || "This conversation needs a support specialist.")}</div>` : ""}
           <div class="support-message-list">
             ${messages.map((message) => `
               <div class="support-message ${message.senderRole === "admin" ? "from-admin" : ""}">
-                <strong>${message.senderRole === "admin" ? "Admin" : isAdmin ? displayText(userLabel) : "You"}</strong>
+                <strong>${message.senderKind === "ai" ? "Dancr Support AI" : message.senderRole === "admin" ? "Human Support" : isAdmin ? displayText(userLabel) : "You"}</strong>
                 <p>${displayText(message.body || "")}</p>
                 <small>${displayText(formatBillingDate(message.createdAt))}</small>
               </div>
@@ -31592,49 +31577,14 @@
       const container = document.getElementById(`${role}SupportThreads`);
       if (!container) return;
       const threads = ownSupportThreads(role);
-      container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread)).join("") : "No admin messages yet.";
+      container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread)).join("") : "No support conversations yet.";
     }
 
     function renderAdminSupportInbox() {
       const container = document.getElementById("adminSupportInbox");
       if (!container) return;
-      const threads = liveAdminSupportThreads.length ? liveAdminSupportThreads : readStoredSupportThreads();
+      const threads = liveAdminSupportThreads;
       container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread, true)).join("") : '<div class="locked">No support messages yet.</div>';
-    }
-
-    function upsertStoredSupportThread(thread) {
-      const threads = readStoredSupportThreads();
-      const next = [thread, ...threads.filter((item) => item.id !== thread.id)];
-      writeStoredSupportThreads(next);
-    }
-
-    function localSupportThread(role, subject, body, threadId = "") {
-      const now = new Date().toISOString();
-      const userKey = supportUserKey(role);
-      const fallbackNameId = role === "dancer" ? "dancerStageName" : role === "venue" ? "venueLoginName" : "customerEmail";
-      const userName = authSession?.account?.displayName || document.getElementById(fallbackNameId)?.value || role;
-      const existing = readStoredSupportThreads().find((thread) => thread.id === threadId);
-      const thread = existing || {
-        id: `support-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        userKey,
-        userRole: role,
-        userName,
-        userEmail: authSession?.account?.email || authSession?.email || "",
-        subject: subject || "Message to admin",
-        status: "open",
-        createdAt: now,
-        messages: []
-      };
-      thread.lastMessageAt = now;
-      thread.status = role === "admin" ? "answered" : "open";
-      thread.messages = [...(thread.messages || []), {
-        id: `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        senderRole: role === "admin" ? "admin" : role,
-        body,
-        createdAt: now
-      }];
-      upsertStoredSupportThread(thread);
-      return thread;
     }
 
     async function loadLiveSupportThreads() {
@@ -31665,17 +31615,19 @@
         if (status) status.textContent = "Enter a message before sending.";
         return;
       }
+      if (!authSession?.accessToken) {
+        if (status) status.textContent = "Sign in to use Dancr Support.";
+        return;
+      }
       try {
-        if (authSession?.accessToken) {
-          const data = await postAuthenticatedJson("/api/support", { subject, message: body, threadId });
-          if (data?.thread) {
-            liveSupportThreads = [data.thread, ...liveSupportThreads.filter((thread) => thread.id !== data.thread.id)];
-          }
-        } else {
-          const thread = localSupportThread(role, subject, body, threadId);
-          liveSupportThreads = [thread, ...liveSupportThreads.filter((item) => item.id !== thread.id)];
+        if (status) status.textContent = "Dancr Support AI is reviewing your message...";
+        const data = await postAuthenticatedJson("/api/support", { subject, message: body, threadId });
+        if (data?.thread) {
+          liveSupportThreads = [data.thread, ...liveSupportThreads.filter((thread) => thread.id !== data.thread.id)];
         }
-        if (status) status.textContent = "Message sent to admin.";
+        if (status) status.textContent = data?.thread?.escalationStatus === "escalated"
+          ? "Your chat was sent to a human support specialist."
+          : "Dancr Support AI replied.";
         renderSupportInbox(role);
       } catch (error) {
         if (status) status.textContent = error.message || "Could not send message.";
@@ -31687,14 +31639,13 @@
         showToast("Enter a reply first");
         return;
       }
+      if (!isAdminSession()) {
+        showToast("Admin sign in required");
+        return;
+      }
       try {
-        if (isAdminSession()) {
-          const data = await postAuthenticatedJson("/api/admin/support", { threadId, message: body });
-          if (data?.thread) liveAdminSupportThreads = [data.thread, ...liveAdminSupportThreads.filter((thread) => thread.id !== data.thread.id)];
-        } else {
-          const thread = localSupportThread("admin", "", body, threadId);
-          liveAdminSupportThreads = [thread, ...liveAdminSupportThreads.filter((item) => item.id !== thread.id)];
-        }
+        const data = await postAuthenticatedJson("/api/admin/support", { threadId, message: body });
+        if (data?.thread) liveAdminSupportThreads = [data.thread, ...liveAdminSupportThreads.filter((thread) => thread.id !== data.thread.id)];
         renderAdminSupportInbox();
         showToast("Reply sent");
       } catch (error) {
@@ -36664,7 +36615,7 @@
       const status = document.getElementById(`${role}SupportStatus`);
       if (status) {
         const accountLabel = authSession?.account?.email || authSession?.account?.displayName || `${role} account`;
-        status.textContent = `Signed in as ${accountLabel}. Admin will see this account with your message.`;
+        status.textContent = `Signed in as ${accountLabel}. Dancr Support uses live account data and sends sensitive or unresolved chats to a human.`;
       }
       panel?.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(() => messageInput?.focus({ preventScroll: true }), 260);
@@ -36685,7 +36636,7 @@
       else if (role === "dancer") openDancerDashboard();
       else openDashboard();
       setTimeout(() => focusSupportPanel(role), 220);
-      showToast("Contact admin opened");
+      showToast("Dancr Support opened");
     }
 
     async function submitPublicContactForm(event) {

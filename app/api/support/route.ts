@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { createOwnSupportMessage, listOwnSupportThreads } from "@/src/lib/dancr/support";
+import { processAutomatedSupportMessage } from "@/src/lib/dancr/ai-support";
+import {
+  createOwnSupportMessage,
+  getSupportThreadForAutomation,
+  listOwnSupportThreads,
+} from "@/src/lib/dancr/support";
 import type { UserRole } from "@/src/lib/dancr/types";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -33,8 +39,15 @@ export async function POST(request: Request) {
       body: typeof body.message === "string" ? body.message : "",
       threadId: typeof body.threadId === "string" ? body.threadId : "",
     });
+    const adminClient = createAdminSupabaseClient();
+    await processAutomatedSupportMessage(adminClient, {
+      userId: user.id,
+      role: account.role,
+      thread,
+    });
+    const updatedThread = await getSupportThreadForAutomation(adminClient, user.id, thread.id);
 
-    return NextResponse.json({ ok: true, thread });
+    return NextResponse.json({ ok: true, thread: updatedThread });
   } catch (error) {
     return apiError(error, "Unable to send support message.");
   }
