@@ -32131,7 +32131,9 @@
         area: item.address || item.state || item.city || city,
         state: item.state || stateByCity[city] || "",
         address: item.address || "",
-        hours: item.hoursLabel || "Hours pending",
+        phone: item.phone || "",
+        website: item.website || "",
+        hours: item.hoursLabel || "",
         shifts: venueShiftCounts[item.name] || 0,
         distance: "",
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
@@ -35915,8 +35917,6 @@
     }
 
     function venueDetails(venue, city) {
-      const citySlug = slugify(`${venue.name}-${city}`);
-      const streetNumber = 100 + (venue.name.length * 17);
       const venueArea = venue.area || city;
       const state = venue.state || stateByCity[city] || "";
       return {
@@ -35924,11 +35924,11 @@
         city,
         state,
         distanceLabel: venueDistanceLabel(venue, city),
-        address: venue.address || `${streetNumber} ${venueArea} Ave, ${city}, ${state}`,
-        phone: `(555) ${String(streetNumber).padStart(3, "0")}-${String(venue.shifts * 137).slice(0, 4).padEnd(4, "0")}`,
-        website: `https://${citySlug}.example.com`,
-        hours: venue.hours || "8:00 PM - 4:00 AM",
-        description: `${venue.name} is a verified nightlife venue in ${venueArea} with posted stage schedules, venue-confirmed shifts, and directions for customers.`
+        address: venue.address || "",
+        phone: venue.phone || "",
+        website: venue.website || "",
+        hours: venue.hours || "",
+        description: `${venue.name} is a nightlife venue in ${venueArea} with posted stage schedules, venue-confirmed shifts, and directions for customers.`
       };
     }
 
@@ -36054,9 +36054,9 @@
               <div class="row">
                 <div>
                   <h2>${details.name}</h2>
-                  <div class="meta">${details.city}, ${details.state}</div>
+                  <div class="meta">${details.city}${details.state ? `, ${details.state}` : ""}</div>
                 </div>
-                <span class="venue-status-pill">Open today · ${displayShiftTime(details.hours)}</span>
+                <span class="venue-status-pill">${details.hours ? `Hours · ${displayShiftTime(details.hours)}` : "Hours not posted"}</span>
               </div>
               <p>${details.description}</p>
               <div class="venue-quick-stats">
@@ -36065,19 +36065,19 @@
               </div>
               ${venueOfferMarkup(venue)}
               <div class="venue-info">
-                <div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>
-                <div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>
-                <div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace("https://", "")}</div></div>
+                ${details.address ? `<div class="info-tile"><strong>Address</strong><div class="meta">${details.address}</div></div>` : ""}
+                ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
+                ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
                 <div class="info-tile"><strong>Distance</strong><div class="meta">${details.distanceLabel}</div></div>
-                <div class="info-tile"><strong>Hours</strong><div class="meta">${displayShiftTime(details.hours)}</div></div>
+                ${details.hours ? `<div class="info-tile"><strong>Hours</strong><div class="meta">${displayShiftTime(details.hours)}</div></div>` : ""}
               </div>
-              <div class="map-preview has-live-map" aria-label="${details.name} map preview">
+              ${details.address ? `<div class="map-preview has-live-map" aria-label="${details.name} map preview">
                 <iframe title="${details.name} map preview" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="/api/public/maps/embed?address=${encodeURIComponent(details.address)}"></iframe>
-              </div>
+              </div>` : ""}
               <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
-              <a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>
+              ${details.address ? `<a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>` : ""}
             </div>
           </article>
 

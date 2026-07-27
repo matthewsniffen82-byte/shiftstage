@@ -337,6 +337,7 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
 function requiredText(value: string, label: string, min: number, max: number) {
   const text = value.trim();
   if (text.length < min || text.length > max) throw new Error(`${label} must be ${min} to ${max} characters.`);
+  if (/[<>]/.test(text)) throw new Error(`${label} contains unsupported characters.`);
   return text;
 }
 
@@ -344,6 +345,7 @@ function optionalText(value: string | null | undefined, label: string, max: numb
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) return null;
   if (text.length > max) throw new Error(`${label} must be ${max} characters or fewer.`);
+  if (/[<>]/.test(text)) throw new Error(`${label} contains unsupported characters.`);
   return text;
 }
 

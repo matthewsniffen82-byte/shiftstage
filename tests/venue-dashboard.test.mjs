@@ -90,4 +90,5 @@ test("venue analytics are real database counts and the dashboard exposes useful 
   assert.match(liveApp, /id="venueFollowerCount"/);
   assert.match(liveApp, /id="venueWorkingNowList"/);
   assert.match(liveApp, /getAuthenticatedJson\("\/api\/venue\/dashboard"\)/);
+  assert.doesNotMatch(liveApp, /\.example\.com|\\(555\\)/);
 });

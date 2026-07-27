@@ -31,11 +31,11 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
 
       <header className="page-hero">
         <span className="eyebrow">{city}</span>
-        <h1>Verified venues</h1>
+        <h1>Venues</h1>
         <p>Active clubs with public venue pages, schedule details, maps, and directions.</p>
       </header>
 
-      <section className="venue-grid" aria-label="Verified venues">
+      <section className="venue-grid" aria-label="Venues">
         {venues.map((venue) => (
           <Link className="venue-card" href={`/venues/${venue.slug}`} key={venue.id}>
             <span className="venue-mark">{initials(venue.name)}</span>
