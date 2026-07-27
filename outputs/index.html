@@ -34490,12 +34490,39 @@
 
     function isReplacingApprovedPhotoTarget(profile, target) {
       const text = String(target || "");
-      if (text.startsWith("submitted:") || text.startsWith("gallery:")) return true;
+      if (text === "gallery" || text === "gallery-add" || text.startsWith("gallery-add:")) return false;
+      if (text.startsWith("submitted:")) {
+        const submittedIndex = Number(text.split(":")[1]);
+        return Number.isInteger(submittedIndex) && submittedIndex >= 0 && Boolean(profile?.submittedPhotos?.[submittedIndex]);
+      }
+      if (text.startsWith("gallery:")) {
+        return approvedVisualPhotoItems(profile).some((photo) => photo.target === text);
+      }
       if (text !== "main") return false;
       return Boolean(
         profile?.mainPhotoUrl ||
         (profile?.submittedPhotos || []).some((photo) => photo?.isPrimary || photo?.is_primary)
       );
+    }
+
+    function availableApprovedGallerySortOrders(profile) {
+      const used = new Set(
+        editableDancerPhotoRows(profile)
+          .filter((photo) => !(photo.is_primary || photo.isPrimary))
+          .map((photo) => Number(photo.sort_order ?? photo.sortOrder))
+          .filter((sortOrder) => Number.isInteger(sortOrder) && sortOrder > 0)
+      );
+      const highestUsed = Math.max(0, ...used);
+      const available = Array.from({ length: MAX_DANCER_PROFILE_PHOTOS }, (_, index) => index + 1)
+        .filter((sortOrder) => !used.has(sortOrder));
+      return [
+        ...available.filter((sortOrder) => sortOrder > highestUsed),
+        ...available.filter((sortOrder) => sortOrder <= highestUsed)
+      ];
+    }
+
+    function nextAvailableApprovedGallerySortOrder(profile) {
+      return availableApprovedGallerySortOrders(profile)[0] || MAX_DANCER_PROFILE_PHOTOS;
     }
 
     function assertDancerProfilePhotoLimit(profile, { adding = 1, replacing = false } = {}) {
@@ -34684,9 +34711,12 @@
       const mainPhoto = selectedPhoto || { imageUrl: "", label: "Main Photo", status: "", notes: "", target: "main" };
       const selectedPhotoIndex = Math.max(0, photos.indexOf(mainPhoto));
       const primaryPhoto = photos.find((photo) => photo.target === "main" || photo.isPrimary || photo.is_primary) || photos[0] || null;
+      const availableGallerySortOrders = availableApprovedGallerySortOrders(profile);
       const emptyPhotoSlots = Array.from({ length: Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length) }, (_, index) => {
         const slotNumber = photos.length + index + 1;
-        const target = slotNumber === 1 ? "main" : "gallery";
+        const target = slotNumber === 1
+          ? "main"
+          : `gallery-add:${availableGallerySortOrders[index] || nextAvailableApprovedGallerySortOrder(profile)}`;
         return `<button class="thumb approved-photo-empty-slot" type="button" data-approved-visual-photo-add="${target}" aria-label="Upload Photo ${slotNumber}" title="Upload Photo ${slotNumber}"><span aria-hidden="true">+</span><small>Photo ${slotNumber}</small></button>`;
       }).join("");
       console.log("PHOTO_NUMBERING_DEBUG", {
@@ -34801,7 +34831,7 @@
             <div class="modal-body">
               <div class="approved-visual-photo-actions">
                 <button type="button" data-approved-visual-photo-add="main">Add main photo</button>
-                <button type="button" data-approved-visual-photo-add="gallery">Add gallery photo</button>
+                <button type="button" data-approved-visual-photo-add="gallery-add">Add gallery photo</button>
               </div>
               <div class="meta" id="approvedPhotoUploadStatus" aria-live="polite">Choose a photo button to upload a new picture.</div>
               ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity(), socialMarkup: approvedEditableSocialMarkup })}
@@ -37025,6 +37055,9 @@
       const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;
       const galleryIndex = String(target || "").startsWith("gallery:") ? Number(String(target).split(":")[1]) : -1;
+      const requestedAddSortOrder = String(target || "").startsWith("gallery-add:")
+        ? Number(String(target).split(":")[1])
+        : -1;
       const replacingSubmitted = Number.isInteger(submittedIndex) && submittedIndex >= 0;
       const existingSubmitted = replacingSubmitted ? profile?.submittedPhotos?.[submittedIndex] : null;
       const isPrimary = target === "main" || Boolean(existingSubmitted?.isPrimary || existingSubmitted?.is_primary);
@@ -37036,11 +37069,15 @@
           ? 0
           : galleryIndex >= 0
             ? galleryIndex + 1
-            : (profile?.galleryPhotoUrls || []).length + 1;
+            : Number.isInteger(requestedAddSortOrder) && requestedAddSortOrder > 0
+              ? requestedAddSortOrder
+              : nextAvailableApprovedGallerySortOrder(profile);
       const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto });
       let uploadedPhotoTarget = target;
       if (profile) {
         const uploaded = data?.photo || data || {};
+        const serverSortOrder = Number(uploaded.sortOrder ?? uploaded.sort_order);
+        const resolvedSortOrder = Number.isInteger(serverSortOrder) && serverSortOrder >= 0 ? serverSortOrder : sortOrder;
         const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || URL.createObjectURL(file);
         const uploadReviewStatus = normalizedReviewStatus(uploaded.reviewStatus || uploaded.review_status || data?.decision || "pending");
         const approvedUpload = uploadReviewStatus === "approved";
@@ -37056,8 +37093,8 @@
           review_status: approvedUpload ? "approved" : rejectedUpload ? "rejected" : "pending",
           reviewNotes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Pending review. This slot stays occupied until approval or rejection.",
           review_notes: approvedUpload ? "" : rejectedUpload ? (data?.message || "Rejected by automatic moderation.") : "Pending review. This slot stays occupied until approval or rejection.",
-          sortOrder: Number(uploaded.sortOrder ?? uploaded.sort_order ?? sortOrder),
-          sort_order: Number(uploaded.sortOrder ?? uploaded.sort_order ?? sortOrder)
+          sortOrder: resolvedSortOrder,
+          sort_order: resolvedSortOrder
         };
         const submittedPhotos = [...(profile.submittedPhotos || [])];
         if (approvedUpload && imageUrl) {
@@ -37073,7 +37110,7 @@
           profile.dancer_photos = [
             ...existingRows.filter((item) => {
               const sameMain = isPrimary && Boolean(item.is_primary || item.isPrimary);
-              const sameGallery = !isPrimary && !(item.is_primary || item.isPrimary) && Number(item.sort_order ?? item.sortOrder ?? 0) === sortOrder;
+              const sameGallery = !isPrimary && !(item.is_primary || item.isPrimary) && Number(item.sort_order ?? item.sortOrder ?? 0) === resolvedSortOrder;
               return !sameMain && !sameGallery;
             }),
             {
@@ -37083,8 +37120,8 @@
               imageUrl,
               is_primary: isPrimary,
               isPrimary,
-              sort_order: sortOrder,
-              sortOrder,
+              sort_order: resolvedSortOrder,
+              sortOrder: resolvedSortOrder,
               review_status: "approved",
               reviewStatus: "approved",
               created_at: new Date().toISOString()
@@ -37100,9 +37137,9 @@
             if (galleryIndex >= 0) nextGallery[galleryIndex] = imageUrl;
             else nextGallery.push(imageUrl);
             profile.galleryPhotoUrls = [...new Set(nextGallery.filter(Boolean))].slice(0, MAX_DANCER_PROFILE_PHOTOS - 1);
-            const liveGalleryIndex = Math.max(0, profile.galleryPhotoUrls.indexOf(imageUrl));
-            uploadedPhotoTarget = `gallery:${liveGalleryIndex}`;
+            uploadedPhotoTarget = `gallery:${Math.max(0, resolvedSortOrder - 1)}`;
           }
+          normalizeLocalDancerPhotos(profile);
           profile.photoStatus = "Approved";
           profile.approvalChangesPending = false;
           profile.approvalChangesSubmitted = false;
@@ -40931,7 +40968,7 @@
       }
 
       if (action === "gallery-photo") {
-        pendingApprovedPhotoTarget = "gallery";
+        pendingApprovedPhotoTarget = "gallery-add";
         openApprovedPhotoUploadPicker("Choose a gallery photo. Approved photos go live automatically.");
         return;
       }
