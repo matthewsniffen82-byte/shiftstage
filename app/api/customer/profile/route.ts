@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const profile = await getCustomerProfile(client, user.id);
 
     if (!profile) {
       return NextResponse.json({ ok: false, error: "Customer profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile });
+    return NextResponse.json({ ok: true, profile, session });
   } catch (error) {
     return apiError(error, "Unable to load customer profile.");
   }
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const body = await request.json();
     const update: { city?: string; notificationSettings?: Record<string, Json> } = {};
 
@@ -48,7 +48,7 @@ export async function PATCH(request: Request) {
     }
 
     const profile = await updateCustomerProfile(client, user.id, update);
-    return NextResponse.json({ ok: true, profile });
+    return NextResponse.json({ ok: true, profile, session });
   } catch (error) {
     return apiError(error, "Unable to update customer profile.");
   }

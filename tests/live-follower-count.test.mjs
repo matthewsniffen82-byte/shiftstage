@@ -48,7 +48,7 @@ test("the signed-in live profile updates its visible follower metric from the sa
     mobileSource.match(/function applyConfirmedProfileFollow[\s\S]*?\r?\n    }\r?\n\r?\n    async function saveProfileFollow/)?.[0] || "";
 
   assert.match(mobileSource, /id="modalFollowerCount" aria-live="polite"/);
-  assert.match(mobileSource, /async function loadLiveCustomerSaved\(\) \{\s+if \(!authSession\?\.accessToken\) return/);
+  assert.match(mobileSource, /async function loadLiveCustomerSaved\(\) \{\s+if \(!isCustomerSession\(\)\) return/);
   assert.match(followHandler, /const data = await postAuthenticatedJson\("\/api\/customer\/follows"/);
   assert.match(followHandler, /applyConfirmedProfileFollow\(profile, city, data\)/);
   assert.match(followHandler, /actionButton\.disabled = true/);

@@ -30899,14 +30899,14 @@
     }
 
     async function loadLiveCustomerSaved() {
-      if (!authSession?.accessToken) return;
+      if (!isCustomerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
         applyLiveCustomerSaved(data.saved || {});
         render();
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
-        showToast(error.message || "Could not load saved items");
+        if (isCustomerSession()) showToast(error.message || "Could not load saved items");
       }
     }
 
@@ -31906,7 +31906,7 @@
         ]);
         const applied = applyLiveMarket(city, allDancers.dancers || [], tonightDancers.dancers || [], venueList.venues || []);
         liveMarketState[city] = applied ? "ready" : "fallback";
-        if (authSession?.accessToken) await loadLiveCustomerSaved();
+        if (isCustomerSession()) await loadLiveCustomerSaved();
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();

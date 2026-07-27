@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const saved = await getCustomerSavedItems(client, user.id);
 
-    return NextResponse.json({ ok: true, saved });
+    return NextResponse.json({ ok: true, saved, session });
   } catch (error) {
     return apiError(error, "Unable to load saved customer items.");
   }
