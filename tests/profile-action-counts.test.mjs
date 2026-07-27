@@ -14,7 +14,7 @@ function sourceBetween(start, end) {
   return match[0];
 }
 
-test("signed-in dancer sessions load their existing profile action state", () => {
+test("only customer sessions load persisted customer profile action state", () => {
   const discoveryLoader = sourceBetween(
     "async function loadLiveDiscovery",
     "async function refreshPublicDiscoveryAfterAdminReview",
@@ -24,9 +24,10 @@ test("signed-in dancer sessions load their existing profile action state", () =>
     "function restoreAuthConfirmationResume",
   );
 
-  assert.match(homeSource, /async function loadLiveProfileActionState\(\) \{\s+if \(!authSession\?\.accessToken\) return/);
-  assert.match(discoveryLoader, /else if \(authSession\?\.accessToken\) await loadLiveProfileActionState\(\)/);
-  assert.match(confirmedSession, /if \(dashboardRole === "dancer"\) loadLiveProfileActionState\(\)/);
+  assert.match(homeSource, /async function loadLiveProfileActionState\(\) \{\s+if \(!isCustomerSession\(\)\) return/);
+  assert.match(discoveryLoader, /if \(isCustomerSession\(\)\) await loadLiveCustomerSaved\(\)/);
+  assert.doesNotMatch(discoveryLoader, /authSession\?\.accessToken\) await loadLiveProfileActionState\(\)/);
+  assert.doesNotMatch(confirmedSession, /dashboardRole === "dancer"\) loadLiveProfileActionState\(\)/);
   assert.match(homeSource, /function applyLiveProfileActions\(saved\)[\s\S]*saved\?\.follows[\s\S]*saved\?\.goingSignals/);
 });
 

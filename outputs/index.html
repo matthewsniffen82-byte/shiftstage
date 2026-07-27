@@ -31149,15 +31149,15 @@
     }
 
     function isDancerSession() {
-      return authSession?.account?.role === "dancer";
+      return Boolean(authSession?.accessToken && authSession?.account?.role === "dancer");
     }
 
     function isCustomerSession() {
-      return authSession?.account?.role === "customer";
+      return Boolean(authSession?.accessToken && authSession?.account?.role === "customer");
     }
 
     function isVenueSession() {
-      return authSession?.account?.role === "venue";
+      return Boolean(authSession?.accessToken && authSession?.account?.role === "venue");
     }
 
     function findProfileBySavedDancer(savedDancer) {
