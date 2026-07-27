@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { processAutomatedSupportMessage } from "@/src/lib/dancr/ai-support";
 import {
   createOwnSupportMessage,
-  getSupportThreadForAutomation,
   listOwnSupportThreads,
 } from "@/src/lib/dancr/support";
 import type { UserRole } from "@/src/lib/dancr/types";
@@ -16,6 +14,10 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    const account = await getOwnAccount(client, user.id);
+    if (account.role !== "customer" && account.role !== "dancer") {
+      return NextResponse.json({ ok: false, error: "Support messaging is available for customer and dancer accounts." }, { status: 403 });
+    }
     const threads = await listOwnSupportThreads(client, user.id);
     return NextResponse.json({ ok: true, threads });
   } catch (error) {
@@ -27,27 +29,23 @@ export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     const account = await getOwnAccount(client, user.id);
-    if (account.role !== "customer" && account.role !== "dancer" && account.role !== "venue") {
-      return NextResponse.json({ ok: false, error: "Support inbox is available for customer, dancer, and venue accounts." }, { status: 403 });
+    if (account.role !== "customer" && account.role !== "dancer") {
+      return NextResponse.json({ ok: false, error: "Support messaging is available for customer and dancer accounts." }, { status: 403 });
     }
 
     const body = await request.json();
-    const thread = await createOwnSupportMessage(client, {
-      userId: user.id,
-      role: account.role,
-      subject: typeof body.subject === "string" ? body.subject : "",
-      body: typeof body.message === "string" ? body.message : "",
-      threadId: typeof body.threadId === "string" ? body.threadId : "",
-    });
-    const adminClient = createAdminSupabaseClient();
-    await processAutomatedSupportMessage(adminClient, {
-      userId: user.id,
-      role: account.role,
-      thread,
-    });
-    const updatedThread = await getSupportThreadForAutomation(adminClient, user.id, thread.id);
-
-    return NextResponse.json({ ok: true, thread: updatedThread });
+    const thread = await createOwnSupportMessage(
+      client,
+      {
+        userId: user.id,
+        role: account.role,
+        subject: typeof body.subject === "string" ? body.subject : "",
+        body: typeof body.message === "string" ? body.message : "",
+        threadId: typeof body.threadId === "string" ? body.threadId : "",
+      },
+      createAdminSupabaseClient(),
+    );
+    return NextResponse.json({ ok: true, thread });
   } catch (error) {
     return apiError(error, "Unable to send support message.");
   }

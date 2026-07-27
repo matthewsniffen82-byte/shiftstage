@@ -299,6 +299,17 @@ export default function AdminClient() {
                   ),
                 }))
               }
+              onProfileUpdated={(profile) =>
+                setState((current) => ({
+                  ...current,
+                  queue: (current.queue || []).map((item) =>
+                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
+                  ),
+                  dancers: (current.dancers || []).map((item) =>
+                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
+                  ),
+                }))
+              }
               onActionConfirmed={confirmAdminAction}
               onReviewed={(dancerId) => {
                 setState((current) => ({
@@ -314,6 +325,17 @@ export default function AdminClient() {
             <DancerDirectory
               items={state.dancers || []}
               onActionConfirmed={confirmAdminAction}
+              onProfileUpdated={(profile) => {
+                setState((current) => ({
+                  ...current,
+                  queue: (current.queue || []).map((item) =>
+                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
+                  ),
+                  dancers: (current.dancers || []).map((item) =>
+                    asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
+                  ),
+                }));
+              }}
               onDeleted={(dancerId) => {
                 setState((current) => ({
                   ...current,
@@ -358,7 +380,7 @@ export default function AdminClient() {
             />
           </Panel>
           <Panel title="Support Inbox">
-            <Metric label="Awaiting human review" value={String(state.supportThreads?.filter((thread) => String(thread.escalationStatus) === "escalated").length || 0)} />
+            <Metric label="Open conversations" value={String(state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0)} />
             <AdminSupportInbox
               threads={state.supportThreads || []}
               onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
@@ -750,29 +772,17 @@ function AdminSupportInbox({
         const threadId = String(thread.id || "");
         const messages = asRecordArray(thread.messages);
         const userLabel = String(thread.userName || thread.userEmail || thread.userRole || "User");
-        const isEscalated = String(thread.escalationStatus) === "escalated";
-        const escalationPriority = String(thread.escalationPriority || "normal");
         return (
-          <details className={`support-inbox-thread${isEscalated ? " is-escalated" : ""}`} key={threadId} open={isEscalated || threads.length === 1}>
+          <details className="support-inbox-thread" key={threadId} open={threads.length === 1}>
             <summary>
               <span>
                 <strong>{String(thread.subject || "Support message")}</strong>
-                <small>{userLabel} / {String(thread.userRole || "user")} / {isEscalated ? `${escalationPriority} human review` : String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
+                <small>{userLabel} / {String(thread.userRole || "user")} / {String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
               </span>
             </summary>
-            {isEscalated ? (
-              <div className={`support-escalation priority-${escalationPriority}`}>
-                <strong>{escalationPriority.toUpperCase()} · {String(thread.escalationCategory || "support review")}</strong>
-                <p>{String(thread.escalationReason || "This conversation requires a human response.")}</p>
-              </div>
-            ) : null}
             <div className="support-inbox-messages">
               {messages.map((message) => {
-                const senderLabel = String(message.senderKind) === "ai"
-                  ? "Dancr Support AI"
-                  : String(message.senderRole) === "admin"
-                    ? "Human Support"
-                    : userLabel;
+                const senderLabel = String(message.senderRole) === "admin" ? "Admin Support" : userLabel;
                 return (
                 <div className={String(message.senderRole) === "admin" ? "support-inbox-message from-admin" : "support-inbox-message"} key={String(message.id)}>
                   <strong>{senderLabel}</strong>
@@ -785,10 +795,10 @@ function AdminSupportInbox({
             <textarea
               value={replyByThread[threadId] || ""}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
-              placeholder="Reply as human support to this customer, dancer, or venue"
+              placeholder="Reply to this customer or dancer"
             />
             <button type="button" onClick={() => reply(threadId)}>
-              Reply as human
+              Reply to customer or dancer
             </button>
             {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
           </details>
@@ -974,6 +984,7 @@ function ApprovalQueue({
   onToggleOpen,
   onKeepOpen,
   onSocialReviewed,
+  onProfileUpdated,
   onReviewed,
   onActionConfirmed,
 }: {
@@ -982,13 +993,53 @@ function ApprovalQueue({
   onToggleOpen: (dancerId: string) => void;
   onKeepOpen: (dancerId: string) => void;
   onSocialReviewed: (dancerId: string, targetId: string, status: "approved" | "rejected", notes: string) => void;
+  onProfileUpdated: (profile: Record<string, unknown>) => void;
   onReviewed: (dancerId: string) => void;
   onActionConfirmed: (message: string) => void;
 }) {
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [statusById, setStatusById] = useState<Record<string, string>>({});
+  const [selectedProfile, setSelectedProfile] = useState<Record<string, unknown> | null>(null);
+  const [selectedProfileStatus, setSelectedProfileStatus] = useState("");
+  const [deletingContentKey, setDeletingContentKey] = useState("");
 
   if (!items.length) return <p className="empty">No real pending dancer applications.</p>;
+
+  async function openFullProfile(item: Record<string, unknown>) {
+    setSelectedProfile(item);
+    setSelectedProfileStatus("Loading full profile...");
+    try {
+      const detail = await requestAdminDancerProfile(asText(item.id));
+      setSelectedProfile(detail);
+      setSelectedProfileStatus("");
+    } catch (error) {
+      setSelectedProfileStatus(error instanceof Error ? error.message : "Unable to load dancer profile.");
+    }
+  }
+
+  async function deleteProfileContent(kind: "photo" | "social-link", targetId: string, label: string) {
+    if (!selectedProfile) return;
+    const dancerId = asText(selectedProfile.id);
+    const confirmed = window.confirm(
+      `Permanently delete ${label} from ${asText(selectedProfile.stageName || selectedProfile.stage_name) || "this dancer"}'s profile? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    const key = `${kind}:${targetId}`;
+    setDeletingContentKey(key);
+    setSelectedProfileStatus(`Deleting ${kind === "photo" ? "picture" : "social link"}...`);
+    try {
+      const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId);
+      setSelectedProfile(updated.profile);
+      onProfileUpdated(updated.profile);
+      setSelectedProfileStatus("");
+      onActionConfirmed(`${label} deleted from the dancer profile.`);
+    } catch (error) {
+      setSelectedProfileStatus(error instanceof Error ? error.message : `Unable to delete ${label}.`);
+    } finally {
+      setDeletingContentKey("");
+    }
+  }
 
   async function reviewProfile(dancerId: string, status: "approved" | "rejected") {
     const token = readToken();
@@ -1023,7 +1074,7 @@ function ApprovalQueue({
 
   return (
     <div className="approval-list">
-      {items.slice(0, 6).map((item) => {
+      {items.map((item) => {
         const dancerId = String(item.id || "");
         const stageName = asText(item.stageName || item.stage_name);
         const city = asText(item.city);
@@ -1037,7 +1088,9 @@ function ApprovalQueue({
           <div className="approval-row" key={dancerId}>
             <div className="approval-summary">
               <span>
-                <strong>{stageName || "Stage name not submitted"}</strong>
+                <button className="admin-profile-name-link" type="button" onClick={() => openFullProfile(item)}>
+                  {stageName || "Stage name not submitted"}
+                </button>
                 <small>{[city || "City not submitted", status || "pending"].join(" - ")}</small>
               </span>
               <button
@@ -1064,6 +1117,9 @@ function ApprovalQueue({
               onChange={(event) => setNotesById((current) => ({ ...current, [dancerId]: event.target.value }))}
             />
             <div className="approval-actions">
+              <button className="secondary-action" type="button" onClick={() => openFullProfile(item)}>
+                View full profile
+              </button>
               <button type="button" onClick={() => reviewProfile(dancerId, "approved")} disabled={hasPendingItems || isSaving}>
                 {isSaving ? "Saving..." : "Approve"}
               </button>
@@ -1075,6 +1131,33 @@ function ApprovalQueue({
           </div>
         );
       })}
+      {selectedProfile ? (
+        <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Full dancer profile" onClick={() => {
+          if (!deletingContentKey) setSelectedProfile(null);
+        }}>
+          <div className="admin-preview-modal admin-profile-modal" onClick={(event) => event.stopPropagation()}>
+            <button
+              className="admin-preview-close"
+              type="button"
+              onClick={() => setSelectedProfile(null)}
+              aria-label="Close full profile"
+              disabled={Boolean(deletingContentKey)}
+            >
+              ×
+            </button>
+            <h3>{`${asText(selectedProfile.stageName || selectedProfile.stage_name) || "Dancer"} — full profile`}</h3>
+            {selectedProfileStatus ? <p role={selectedProfileStatus.startsWith("Unable") ? "alert" : "status"}>{selectedProfileStatus}</p> : null}
+            {selectedProfileStatus !== "Loading full profile..." ? (
+              <AdminDancerFullProfile
+                profile={selectedProfile}
+                deletingContentKey={deletingContentKey}
+                onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
+                onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
+              />
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1581,19 +1664,59 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
     .filter((social) => social.platform && (social.handle || social.url));
 }
 
+async function requestAdminDancerProfile(dancerId: string) {
+  const token = readToken();
+  if (!dancerId || !token) throw new Error("Admin sign in required.");
+
+  const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const data = await response.json();
+  if (!response.ok || !data.ok || !data.profile) {
+    throw new Error(data.error || "Unable to load dancer profile.");
+  }
+  return data.profile as Record<string, unknown>;
+}
+
+async function requestAdminDancerContentDeletion(
+  dancerId: string,
+  kind: "photo" | "social-link",
+  targetId: string,
+) {
+  const token = readToken();
+  if (!dancerId || !targetId || !token) throw new Error("Admin sign in required.");
+
+  const resource = kind === "photo" ? "photos" : "social-links";
+  const response = await fetch(
+    `/api/admin/dancers/${encodeURIComponent(dancerId)}/${resource}/${encodeURIComponent(targetId)}`,
+    {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${token}` },
+    },
+  );
+  const data = await response.json();
+  if (!response.ok || !data.ok || !data.profile) {
+    throw new Error(data.error || `Unable to delete dancer ${kind}.`);
+  }
+  return data as { profile: Record<string, unknown>; deleted: Record<string, unknown> };
+}
+
 function DancerDirectory({
   items,
   onDeleted,
+  onProfileUpdated,
   onActionConfirmed,
 }: {
   items: Array<Record<string, unknown>>;
   onDeleted: (dancerId: string) => void;
+  onProfileUpdated: (profile: Record<string, unknown>) => void;
   onActionConfirmed: (message: string) => void;
 }) {
   const [selectedId, setSelectedId] = useState("");
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingContentKey, setDeletingContentKey] = useState("");
 
   async function openProfile(item: Record<string, unknown>) {
     const dancerId = asText(item.id);
@@ -1607,20 +1730,41 @@ function DancerDirectory({
     setProfile(null);
     setStatus("Loading full profile...");
     try {
-      const response = await fetch(`/api/admin/dancers/${encodeURIComponent(dancerId)}`, {
-        headers: { authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dancer profile.");
-      setProfile(data.profile || item);
+      const detail = await requestAdminDancerProfile(dancerId);
+      setProfile(detail);
       setStatus("");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load dancer profile.");
     }
   }
 
+  async function deleteProfileContent(kind: "photo" | "social-link", targetId: string, label: string) {
+    if (!profile) return;
+    const dancerId = asText(profile.id);
+    const stageName = asText(profile.stageName || profile.stage_name) || "this dancer";
+    const confirmed = window.confirm(
+      `Permanently delete ${label} from ${stageName}'s profile? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    const key = `${kind}:${targetId}`;
+    setDeletingContentKey(key);
+    setStatus(`Deleting ${kind === "photo" ? "picture" : "social link"}...`);
+    try {
+      const updated = await requestAdminDancerContentDeletion(dancerId, kind, targetId);
+      setProfile(updated.profile);
+      onProfileUpdated(updated.profile);
+      setStatus("");
+      onActionConfirmed(`${label} deleted from ${stageName}'s profile.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : `Unable to delete ${label}.`);
+    } finally {
+      setDeletingContentKey("");
+    }
+  }
+
   function closeProfile() {
-    if (isDeleting) return;
+    if (isDeleting || deletingContentKey) return;
     setSelectedId("");
     setProfile(null);
     setStatus("");
@@ -1676,12 +1820,12 @@ function DancerDirectory({
         const stageName = asText(item.stageName || item.stage_name) || "Stage name not submitted";
         return (
           <article className="dancer-directory-row" key={dancerId}>
-            <div>
+            <button className="dancer-directory-profile-link" type="button" onClick={() => openProfile(item)}>
               <strong>{stageName}</strong>
               <small>
                 {[asText(item.city) || "City not submitted", asText(item.status) || "draft"].join(" - ")}
               </small>
-            </div>
+            </button>
             <div className="dancer-directory-actions">
               <button className="secondary-action" type="button" onClick={() => openProfile(item)}>
                 View full profile
@@ -1696,12 +1840,25 @@ function DancerDirectory({
       {selectedId ? (
         <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Full dancer profile" onClick={closeProfile}>
           <div className="admin-preview-modal admin-profile-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="admin-preview-close" type="button" onClick={closeProfile} aria-label="Close full profile">
+            <button
+              className="admin-preview-close"
+              type="button"
+              onClick={closeProfile}
+              aria-label="Close full profile"
+              disabled={isDeleting || Boolean(deletingContentKey)}
+            >
               ×
             </button>
             <h3>{profile ? `${asText(profile.stageName || profile.stage_name) || "Dancer"} — full profile` : "Full dancer profile"}</h3>
             {status ? <p role={status.startsWith("Unable") ? "alert" : "status"}>{status}</p> : null}
-            {profile ? <AdminDancerFullProfile profile={profile} /> : null}
+            {profile ? (
+              <AdminDancerFullProfile
+                profile={profile}
+                deletingContentKey={deletingContentKey}
+                onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
+                onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
+              />
+            ) : null}
             {profile ? (
               <div className="admin-profile-delete-zone">
                 <strong>Delete dancer profile</strong>
@@ -1718,7 +1875,17 @@ function DancerDirectory({
   );
 }
 
-function AdminDancerFullProfile({ profile }: { profile: Record<string, unknown> }) {
+function AdminDancerFullProfile({
+  profile,
+  deletingContentKey,
+  onDeletePhoto,
+  onDeleteSocial,
+}: {
+  profile: Record<string, unknown>;
+  deletingContentKey: string;
+  onDeletePhoto: (targetId: string, label: string) => void;
+  onDeleteSocial: (targetId: string, label: string) => void;
+}) {
   const account = asRecordObject(profile.account);
   const subscription = asRecordObject(profile.subscription);
   const photos = labelSubmittedPhotos(asRecordArray(profile.photos));
@@ -1765,12 +1932,24 @@ function AdminDancerFullProfile({ profile }: { profile: Record<string, unknown> 
           <div className="submission-media-grid">
             {photos.map((photo, index) => {
               const imageUrl = asText(photo.imageUrl || photo.image_url);
+              const photoId = asText(photo.id);
+              const label = asText(photo.displayLabel) || `Photo ${index + 1}`;
               return (
-                <a className="submission-thumb" href={imageUrl || "#"} target="_blank" rel="noreferrer" key={asText(photo.id) || index}>
-                  {imageUrl ? <img src={imageUrl} alt={asText(photo.displayLabel) || `Photo ${index + 1}`} /> : <span>No image URL</span>}
-                  <strong>{asText(photo.displayLabel) || `Photo ${index + 1}`}</strong>
-                  <small>{asText(photo.reviewStatus || photo.review_status) || "pending"}</small>
-                </a>
+                <div className="submission-thumb admin-managed-content" key={photoId || index}>
+                  <a className="admin-managed-content-link" href={imageUrl || "#"} target="_blank" rel="noreferrer">
+                    {imageUrl ? <img src={imageUrl} alt={label} /> : <span>No image URL</span>}
+                    <strong>{label}</strong>
+                    <small>{asText(photo.reviewStatus || photo.review_status) || "pending"}</small>
+                  </a>
+                  <button
+                    className="danger-action"
+                    type="button"
+                    onClick={() => onDeletePhoto(photoId, label)}
+                    disabled={!photoId || deletingContentKey === `photo:${photoId}`}
+                  >
+                    {deletingContentKey === `photo:${photoId}` ? "Deleting picture..." : "Delete picture"}
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -1798,13 +1977,27 @@ function AdminDancerFullProfile({ profile }: { profile: Record<string, unknown> 
         <h3>Social links ({socials.length})</h3>
         {socials.length ? (
           <div className="submission-files">
-            {socials.map((social, index) => (
-              <a className="submission-link" href={asText(social.url) || "#"} target="_blank" rel="noreferrer" key={asText(social.id) || index}>
-                <strong>{asText(social.platform) || "Social link"}</strong>
-                <small>{asText(social.handle) || asText(social.url)}</small>
-                <small>{asText(social.reviewStatus || social.review_status) || "pending"}</small>
-              </a>
-            ))}
+            {socials.map((social, index) => {
+              const socialId = asText(social.id);
+              const label = asText(social.platform) || "Social link";
+              return (
+                <div className="submission-link admin-managed-content" key={socialId || index}>
+                  <a className="admin-managed-content-link" href={asText(social.url) || "#"} target="_blank" rel="noreferrer">
+                    <strong>{label}</strong>
+                    <small>{asText(social.handle) || asText(social.url)}</small>
+                    <small>{asText(social.reviewStatus || social.review_status) || "pending"}</small>
+                  </a>
+                  <button
+                    className="danger-action"
+                    type="button"
+                    onClick={() => onDeleteSocial(socialId, `${label} social link`)}
+                    disabled={!socialId || deletingContentKey === `social-link:${socialId}`}
+                  >
+                    {deletingContentKey === `social-link:${socialId}` ? "Deleting social..." : "Delete social link"}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         ) : <p className="submission-empty">No social links.</p>}
       </section>
@@ -2080,6 +2273,9 @@ function AdminStyles() {
       .approval-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .approval-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
       .approval-summary span { display: grid; gap: 2px; min-width: 0; }
+      .admin-profile-name-link, .dancer-directory-profile-link { appearance: none; width: fit-content; max-width: 100%; padding: 0; border: 0; color: #fff; background: transparent; font: inherit; text-align: left; text-decoration: underline; text-decoration-color: rgba(53,216,255,.46); text-underline-offset: 4px; cursor: pointer; }
+      .admin-profile-name-link { font-weight: 950; }
+      .admin-profile-name-link:hover, .admin-profile-name-link:focus-visible, .dancer-directory-profile-link:hover strong, .dancer-directory-profile-link:focus-visible strong { color: #8ceaff; text-decoration-color: #35d8ff; }
       .approval-summary small { color: #b9accd; font-size: 12px; font-weight: 850; overflow-wrap: anywhere; }
       .approval-row span { color: #b9accd; }
       .approval-row textarea { min-height: 72px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
@@ -2090,7 +2286,7 @@ function AdminStyles() {
       .approval-blocked { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,214,102,.22); background: rgba(255,214,102,.08); color: #ffd666 !important; font-size: 13px !important; }
       .dancer-directory-list { display: grid; gap: 10px; }
       .dancer-directory-row { display: grid; gap: 10px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
-      .dancer-directory-row > div:first-child { display: grid; gap: 3px; }
+      .dancer-directory-profile-link { display: grid; gap: 3px; width: 100%; }
       .dancer-directory-row strong { color: #fff; overflow-wrap: anywhere; }
       .dancer-directory-row small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
       .dancer-directory-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -2111,6 +2307,9 @@ function AdminStyles() {
       .submission-thumb { display: grid; gap: 6px; padding: 6px; }
       .submission-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #050507; }
       .submission-thumb small, .submission-link small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .admin-managed-content { display: grid; gap: 8px; }
+      .admin-managed-content-link { display: grid; gap: 6px; min-width: 0; color: inherit; text-decoration: none; }
+      .admin-managed-content > .danger-action { width: 100%; min-height: 38px; }
       .submission-files { display: grid; gap: 8px; }
       .submission-link { display: grid; gap: 3px; padding: 10px; }
       .submission-link strong { overflow-wrap: anywhere; }

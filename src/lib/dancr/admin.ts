@@ -42,6 +42,12 @@ export type DeleteAdminDancerProfileInput = {
   adminId: string;
 };
 
+export type DeleteAdminDancerContentInput = {
+  dancerId: string;
+  targetId: string;
+  adminId: string;
+};
+
 export type ReviewSubmissionContentInput = {
   dancerId: string;
   reviewerId: string;
@@ -305,6 +311,176 @@ export async function deleteAdminDancerProfile(
     userId: dancer.user_id,
     stageName: dancer.stage_name,
     loginAccountRetained: true,
+    warnings,
+  };
+}
+
+export async function deleteAdminDancerPhoto(
+  client: DancrClient,
+  input: DeleteAdminDancerContentInput,
+) {
+  const db = client as any;
+  const { data: photo, error: photoError } = await db
+    .from("dancer_photos")
+    .select("id, dancer_id, storage_path, is_primary, sort_order")
+    .eq("id", input.targetId)
+    .eq("dancer_id", input.dancerId)
+    .maybeSingle();
+
+  if (photoError) throw photoError;
+  if (!photo) return null;
+
+  const { data: deletedRows, error: deleteError } = await db
+    .from("dancer_photos")
+    .delete()
+    .eq("id", photo.id)
+    .eq("dancer_id", input.dancerId)
+    .select("id");
+
+  if (deleteError) throw deleteError;
+  if (!(deletedRows || []).some((row: any) => row.id === photo.id)) {
+    throw new Error("Dancer photo was not deleted.");
+  }
+
+  const warnings: string[] = [];
+  const reviewType = contentReviewType("photo", photo.id);
+  const [reviewCleanup, moderationRows] = await Promise.all([
+    db
+      .from("approval_reviews")
+      .delete()
+      .eq("dancer_id", input.dancerId)
+      .eq("review_type", reviewType),
+    db
+      .from("image_moderation_records")
+      .select("id, temporary_storage_path, final_storage_path")
+      .eq("final_storage_path", photo.storage_path),
+  ]);
+
+  if (reviewCleanup.error) warnings.push(`Photo review cleanup failed: ${reviewCleanup.error.message}`);
+  if (moderationRows.error) {
+    warnings.push(`Photo moderation cleanup lookup failed: ${moderationRows.error.message}`);
+  } else {
+    const moderationIds = (moderationRows.data || []).map((row: any) => row.id).filter(Boolean);
+    if (moderationIds.length) {
+      const { error } = await db
+        .from("image_moderation_records")
+        .delete()
+        .in("id", moderationIds);
+      if (error) warnings.push(`Photo moderation cleanup failed: ${error.message}`);
+    }
+    const temporaryPaths = (moderationRows.data || []).map((row: any) => row.temporary_storage_path);
+    await removeBucketPaths(client, "dancr-image-moderation-temp", temporaryPaths, warnings);
+    await removeBucketPaths(client, "dancr-image-moderation-review", temporaryPaths, warnings);
+  }
+
+  let promotedPhotoId: string | null = null;
+  if (photo.is_primary) {
+    const { data: replacement, error: replacementError } = await db
+      .from("dancer_photos")
+      .select("id")
+      .eq("dancer_id", input.dancerId)
+      .order("sort_order", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (replacementError) {
+      warnings.push(`Primary photo lookup failed: ${replacementError.message}`);
+    } else if (replacement?.id) {
+      const { error } = await db
+        .from("dancer_photos")
+        .update({ is_primary: true })
+        .eq("id", replacement.id)
+        .eq("dancer_id", input.dancerId);
+      if (error) warnings.push(`Primary photo promotion failed: ${error.message}`);
+      else promotedPhotoId = replacement.id;
+    }
+  }
+
+  await removeBucketPaths(client, "dancer-photos", [photo.storage_path], warnings);
+
+  try {
+    await logAdminAction(client, {
+      adminId: input.adminId,
+      targetType: "dancer_photo",
+      targetId: photo.id,
+      action: "delete_dancer_photo",
+      notes: `Dancer ${input.dancerId}; storage path ${photo.storage_path}`,
+    });
+  } catch (error) {
+    warnings.push(`Audit log failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+  }
+
+  console.info("ADMIN_DANCER_PHOTO_DELETED", {
+    dancerId: input.dancerId,
+    photoId: photo.id,
+    adminId: input.adminId,
+    warningCount: warnings.length,
+  });
+
+  return {
+    id: photo.id,
+    dancerId: input.dancerId,
+    promotedPhotoId,
+    warnings,
+  };
+}
+
+export async function deleteAdminDancerSocialLink(
+  client: DancrClient,
+  input: DeleteAdminDancerContentInput,
+) {
+  const db = client as any;
+  const { data: social, error: socialError } = await db
+    .from("social_links")
+    .select("id, dancer_id, platform, handle, url")
+    .eq("id", input.targetId)
+    .eq("dancer_id", input.dancerId)
+    .maybeSingle();
+
+  if (socialError) throw socialError;
+  if (!social) return null;
+
+  const { data: deletedRows, error: deleteError } = await db
+    .from("social_links")
+    .delete()
+    .eq("id", social.id)
+    .eq("dancer_id", input.dancerId)
+    .select("id");
+
+  if (deleteError) throw deleteError;
+  if (!(deletedRows || []).some((row: any) => row.id === social.id)) {
+    throw new Error("Dancer social link was not deleted.");
+  }
+
+  const warnings: string[] = [];
+  const { error: reviewCleanupError } = await db
+    .from("approval_reviews")
+    .delete()
+    .eq("dancer_id", input.dancerId)
+    .eq("review_type", contentReviewType("social_link", social.id));
+  if (reviewCleanupError) warnings.push(`Social review cleanup failed: ${reviewCleanupError.message}`);
+
+  try {
+    await logAdminAction(client, {
+      adminId: input.adminId,
+      targetType: "dancer_social_link",
+      targetId: social.id,
+      action: "delete_dancer_social_link",
+      notes: `Dancer ${input.dancerId}; ${social.platform} ${social.handle}`,
+    });
+  } catch (error) {
+    warnings.push(`Audit log failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+  }
+
+  console.info("ADMIN_DANCER_SOCIAL_LINK_DELETED", {
+    dancerId: input.dancerId,
+    socialLinkId: social.id,
+    adminId: input.adminId,
+    warningCount: warnings.length,
+  });
+
+  return {
+    id: social.id,
+    dancerId: input.dancerId,
     warnings,
   };
 }
