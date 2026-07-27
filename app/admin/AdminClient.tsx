@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, MouseEvent, useEffect, useState } from "react";
+import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type AdminState = {
@@ -22,6 +22,7 @@ type AdminActionNotice = {
 };
 
 const SESSION_KEY = "dancrAuthSessionV1";
+const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
 
 export default function AdminClient() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -35,9 +36,16 @@ export default function AdminClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
   const [openApprovalIds, setOpenApprovalIds] = useState<Record<string, boolean>>({});
+  const openApprovalIdsRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     loadAdmin();
+  }, []);
+
+  useEffect(() => {
+    const persistedOpenApprovals = readPersistedOpenApprovals();
+    openApprovalIdsRef.current = persistedOpenApprovals;
+    setOpenApprovalIds(persistedOpenApprovals);
   }, []);
 
   useEffect(() => {
@@ -50,6 +58,16 @@ export default function AdminClient() {
 
   function confirmAdminAction(message: string) {
     setActionNotice({ id: Date.now(), message });
+  }
+
+  function setApprovalOpen(dancerId: string, open: boolean) {
+    if (!dancerId || Boolean(openApprovalIdsRef.current[dancerId]) === open) return;
+    const next = { ...openApprovalIdsRef.current };
+    if (open) next[dancerId] = true;
+    else delete next[dancerId];
+    openApprovalIdsRef.current = next;
+    persistOpenApprovals(next);
+    setOpenApprovalIds(next);
   }
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
@@ -268,18 +286,16 @@ export default function AdminClient() {
               items={state.queue || []}
               openById={openApprovalIds}
               onToggleOpen={(dancerId) =>
-                setOpenApprovalIds((current) => ({ ...current, [dancerId]: !current[dancerId] }))
+                setApprovalOpen(dancerId, !Boolean(openApprovalIdsRef.current[dancerId]))
               }
-              onKeepOpen={(dancerId) =>
-                setOpenApprovalIds((current) => ({ ...current, [dancerId]: true }))
-              }
+              onKeepOpen={(dancerId) => setApprovalOpen(dancerId, true)}
               onActionConfirmed={confirmAdminAction}
               onReviewed={(dancerId) => {
                 setState((current) => ({
                   ...current,
                   queue: (current.queue || []).filter((item) => String(item.id) !== dancerId),
                 }));
-                setOpenApprovalIds((current) => ({ ...current, [dancerId]: false }));
+                setApprovalOpen(dancerId, false);
               }}
             />
           </Panel>
@@ -1064,11 +1080,14 @@ function SubmissionDetails({
   }
 
   async function reviewContent(
+    event: MouseEvent<HTMLButtonElement>,
     targetType: "photo" | "verification_document" | "social_link",
     targetId: string,
     status: "approved" | "rejected",
     label: string,
   ) {
+    event.preventDefault();
+    event.stopPropagation();
     onKeepOpen();
     const key = `${targetType}:${targetId}`;
     const notes = reasonByKey[key]?.trim() || "";
@@ -1124,12 +1143,14 @@ function SubmissionDetails({
         [key]: { tone: "success", message: confirmation },
       }));
       onActionConfirmed(confirmation);
+      onKeepOpen();
     } catch {
       setFeedbackByKey((current) => ({
         ...current,
         [key]: { tone: "error", message: "Unable to save this review. Check your connection and try again." },
       }));
     } finally {
+      onKeepOpen();
       setWorkingByKey((current) => ({ ...current, [key]: false }));
     }
   }
@@ -1188,10 +1209,10 @@ function SubmissionDetails({
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("photo", targetId, "approved", label)} disabled={!targetId || isWorking}>
+                    <button type="button" onClick={(event) => reviewContent(event, "photo", targetId, "approved", label)} disabled={!targetId || isWorking}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve picture"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("photo", targetId, "rejected", label)} disabled={!targetId || isWorking}>
+                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "photo", targetId, "rejected", label)} disabled={!targetId || isWorking}>
                       {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
@@ -1239,10 +1260,10 @@ function SubmissionDetails({
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("verification_document", targetId, "approved", label)} disabled={!targetId || isWorking}>
+                    <button type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "approved", label)} disabled={!targetId || isWorking}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve file"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("verification_document", targetId, "rejected", label)} disabled={!targetId || isWorking}>
+                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "rejected", label)} disabled={!targetId || isWorking}>
                       {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
@@ -1288,10 +1309,10 @@ function SubmissionDetails({
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
                   <div className="content-review-actions">
-                    <button type="button" onClick={() => reviewContent("social_link", targetId, "approved", social.label)} disabled={!targetId || isWorking}>
+                    <button type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "approved", social.label)} disabled={!targetId || isWorking}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve social"}
                     </button>
-                    <button className="secondary-action" type="button" onClick={() => reviewContent("social_link", targetId, "rejected", social.label)} disabled={!targetId || isWorking}>
+                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "rejected", social.label)} disabled={!targetId || isWorking}>
                       {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
                     </button>
                   </div>
@@ -1615,6 +1636,30 @@ function readFirst(value: unknown): Record<string, unknown> | null {
   if (Array.isArray(value)) return (value[0] as Record<string, unknown>) || null;
   if (value && typeof value === "object") return value as Record<string, unknown>;
   return null;
+}
+
+function readPersistedOpenApprovals(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(OPEN_APPROVALS_SESSION_KEY) || "{}");
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const restored: Record<string, boolean> = {};
+    for (const [dancerId, open] of Object.entries(parsed)) {
+      if (dancerId && open === true) restored[dancerId] = true;
+    }
+    return restored;
+  } catch {
+    return {};
+  }
+}
+
+function persistOpenApprovals(openApprovalIds: Record<string, boolean>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(OPEN_APPROVALS_SESSION_KEY, JSON.stringify(openApprovalIds));
+  } catch {
+    // The in-memory state still preserves expansion when session storage is unavailable.
+  }
 }
 
 function readToken() {

@@ -39,3 +39,21 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   assert.match(adminSource, /<ReviewFeedbackMessage feedback=\{feedback\} \/>/);
   assert.match(adminSource, /role=\{feedback\.tone === "error" \? "alert" : "status"\}/);
 });
+
+test("expanded dancer approvals survive remounts and approval button events cannot collapse them", () => {
+  const reviewContent =
+    adminSource.match(/async function reviewContent[\s\S]*?\r?\n  }\r?\n\r?\n  return \(/)?.[0] || "";
+  const keepOpenCalls = reviewContent.match(/onKeepOpen\(\)/g) || [];
+
+  assert.match(adminSource, /const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1"/);
+  assert.match(adminSource, /const persistedOpenApprovals = readPersistedOpenApprovals\(\)/);
+  assert.match(adminSource, /openApprovalIdsRef\.current = persistedOpenApprovals/);
+  assert.match(adminSource, /persistOpenApprovals\(next\)/);
+  assert.match(adminSource, /window\.sessionStorage\.setItem\(OPEN_APPROVALS_SESSION_KEY, JSON\.stringify\(openApprovalIds\)\)/);
+  assert.match(reviewContent, /event\.preventDefault\(\)/);
+  assert.match(reviewContent, /event\.stopPropagation\(\)/);
+  assert.ok(keepOpenCalls.length >= 3, "content review must reassert the open state before, after, and while settling");
+  assert.match(adminSource, /onClick=\{\(event\) => reviewContent\(event, "verification_document"/);
+  assert.match(adminSource, /onClick=\{\(event\) => reviewContent\(event, "social_link"/);
+  assert.match(adminSource, /onClick=\{\(event\) => reviewContent\(event, "photo"/);
+});
