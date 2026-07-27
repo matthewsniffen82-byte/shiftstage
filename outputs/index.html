@@ -29485,7 +29485,10 @@
 
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js").catch(() => {});
+        navigator.serviceWorker
+          .register("/sw.js?v=human-admin-support-v1", { updateViaCache: "none" })
+          .then((registration) => registration.update())
+          .catch(() => {});
       });
     }
 
@@ -31800,7 +31803,7 @@
         return;
       }
       if (!authSession?.accessToken) {
-        if (status) status.textContent = "Sign in to use Dancr Support.";
+        if (status) status.textContent = "Sign in to message the admin team.";
         return;
       }
       try {

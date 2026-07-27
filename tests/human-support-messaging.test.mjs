@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [supportSource, routeSource, adminSource, liveAppSource] = await Promise.all([
+const [supportSource, routeSource, adminSource, liveAppSource, serviceWorkerSource, liveRouteSource] = await Promise.all([
   readFile(new URL("../src/lib/dancr/support.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/support/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("support API is limited to authenticated customer and dancer accounts", () => {
@@ -44,4 +46,14 @@ test("live support interfaces use the production API without AI or venue support
   assert.match(liveAppSource, /postAuthenticatedJson\("\/api\/support"/);
   assert.doesNotMatch(liveAppSource, /Dancr Support AI|AI answers|AI replied|data-support-panel="venue"/);
   assert.doesNotMatch(liveAppSource, /supportStorageKey|readStoredSupportThreads|writeStoredSupportThreads|localSupportThread/);
+});
+
+test("existing installed sessions refresh onto the human-only support release", () => {
+  assert.match(liveAppSource, /register\("\/sw\.js\?v=human-admin-support-v1", \{ updateViaCache: "none" \}\)/);
+  assert.match(liveAppSource, /registration\.update\(\)/);
+  assert.match(serviceWorkerSource, /self\.skipWaiting\(\)/);
+  assert.match(serviceWorkerSource, /self\.clients\.claim\(\)/);
+  assert.match(serviceWorkerSource, /client\.navigate\(client\.url\)/);
+  assert.match(serviceWorkerSource, /caches\.delete\(cacheName\)/);
+  assert.match(liveRouteSource, /no-store, no-cache, must-revalidate, max-age=0/);
 });

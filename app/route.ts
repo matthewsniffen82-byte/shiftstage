@@ -18,7 +18,9 @@ export async function GET() {
   return new Response(withLiveProfileStyles, {
     headers: {
       "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "pragma": "no-cache",
+      "expires": "0",
       "x-dancr-live-shell-version": LIVE_SHELL_SHA256,
     },
   });
