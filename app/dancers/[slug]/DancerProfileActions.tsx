@@ -22,6 +22,8 @@ type SavedState = {
   goingShiftIds: string[];
 };
 
+type AccountAction = "follow" | "notify" | "going" | "report";
+
 const SESSION_KEY = "dancrAuthSessionV1";
 
 type DancerFollowState = {
@@ -52,7 +54,15 @@ export function DancerFollowerCount() {
   return <>{new Intl.NumberFormat("en-US").format(followerCount)}</>;
 }
 
-export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; shifts: ShiftAction[] }) {
+export function DancerProfileActions({
+  dancerId,
+  profileName,
+  shifts,
+}: {
+  dancerId: string;
+  profileName: string;
+  shifts: ShiftAction[];
+}) {
   const { setFollowerCount } = useDancerFollowState();
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState<SavedState>({
@@ -62,6 +72,9 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
   });
   const [savedLoaded, setSavedLoaded] = useState(false);
   const [followSaving, setFollowSaving] = useState(false);
+  const [reportSaving, setReportSaving] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
   const nextShift = useMemo(() => shifts[0] || null, [shifts]);
 
@@ -105,12 +118,24 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
     };
   }, [dancerId]);
 
-  if (!token) {
-    return (
-      <div className="live-actions">
-        <Link href="/account?role=customer">Sign in to save</Link>
-      </div>
-    );
+  useEffect(() => {
+    if (!accountRequiredAction) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountRequiredAction(null);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountRequiredAction]);
+
+  function requireCustomerAccount(action: AccountAction) {
+    if (token) return true;
+    setAccountRequiredAction(action);
+    return false;
   }
 
   async function updateFollow(notificationsEnabled = saved.notificationsEnabled) {
@@ -124,7 +149,7 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
         dancerId,
         following: requestedFollowing,
         notificationsEnabled: requestedFollowing && notificationsEnabled,
-      });
+      }, "follow");
       const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
       const savedNotificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
@@ -152,7 +177,7 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
         dancerId,
         following: true,
         notificationsEnabled: requestedNotificationsEnabled,
-      });
+      }, "notify");
       const following = typeof data.following === "boolean" ? data.following : true;
       const notificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
@@ -169,7 +194,7 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
   async function updateGoing(shiftId: string) {
     const going = !saved.goingShiftIds.includes(shiftId);
     try {
-      await postAction("/api/customer/going", { shiftId, going });
+      await postAction("/api/customer/going", { shiftId, going }, "going");
       setSaved((current) => ({
         ...current,
         goingShiftIds: going
@@ -181,7 +206,32 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
     }
   }
 
-  async function postAction(path: string, body: Record<string, unknown>) {
+  async function submitReport() {
+    if (reportSaving || reportSubmitted) return;
+    setReportSaving(true);
+    try {
+      const data = await postAction("/api/reports", {
+        targetType: "dancer_profile",
+        targetId: dancerId,
+        targetLabel: profileName,
+        reason: "Profile report",
+        details: "Reported from the public dancer profile.",
+      }, "report");
+      if (!data.report) throw new Error("The report could not be confirmed.");
+      setReportSubmitted(true);
+      setStatus("Report submitted for review.");
+    } catch {
+      // postAction displays the production API error beside the controls.
+    } finally {
+      setReportSaving(false);
+    }
+  }
+
+  async function postAction(
+    path: string,
+    body: Record<string, unknown>,
+    action: AccountAction,
+  ) {
     setStatus("");
     const response = await fetch(path, {
       method: "POST",
@@ -190,6 +240,10 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
     });
     const data = await response.json();
     if (!response.ok || !data.ok) {
+      if (response.status === 401) {
+        setToken("");
+        setAccountRequiredAction(action);
+      }
       const message = data.error || "Unable to update this profile.";
       setStatus(message);
       throw new Error(message);
@@ -199,20 +253,81 @@ export function DancerProfileActions({ dancerId, shifts }: { dancerId: string; s
   }
 
   return (
-    <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving}>
-      <button type="button" onClick={() => updateFollow(false)} disabled={!savedLoaded || followSaving}>
-        {saved.following ? "Following" : "Follow"}
-      </button>
-      <button type="button" onClick={updateNotifications} disabled={!savedLoaded || followSaving}>
-        {saved.notificationsEnabled ? "Notifications on" : "Notify me"}
-      </button>
-      {nextShift ? (
-        <button type="button" onClick={() => updateGoing(nextShift.id)}>
-          {saved.goingShiftIds.includes(nextShift.id) ? "Going" : `Going ${nextShift.label}`}
+    <>
+      <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || reportSaving}>
+        <button
+          type="button"
+          onClick={() => {
+            if (requireCustomerAccount("follow")) updateFollow(false);
+          }}
+          disabled={!savedLoaded || followSaving}
+        >
+          {saved.following ? "Following" : "Follow"}
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (requireCustomerAccount("notify")) updateNotifications();
+          }}
+          disabled={!savedLoaded || followSaving}
+        >
+          {saved.notificationsEnabled ? "Notifications on" : "Notify me"}
+        </button>
+        {nextShift ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (requireCustomerAccount("going")) updateGoing(nextShift.id);
+            }}
+          >
+            {saved.goingShiftIds.includes(nextShift.id) ? "Going" : `Going ${nextShift.label}`}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            if (requireCustomerAccount("report")) submitReport();
+          }}
+          disabled={reportSaving || reportSubmitted}
+        >
+          {reportSubmitted ? "Reported" : reportSaving ? "Submitting" : "Report"}
+        </button>
+        {status ? <span role="status">{status}</span> : null}
+      </div>
+      {accountRequiredAction ? (
+        <div
+          className="profile-account-gate"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setAccountRequiredAction(null);
+          }}
+        >
+          <section
+            className="profile-account-gate-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-account-gate-title"
+            aria-describedby="profile-account-gate-message"
+          >
+            <button
+              className="profile-account-gate-close"
+              type="button"
+              aria-label="Close account prompt"
+              autoFocus
+              onClick={() => setAccountRequiredAction(null)}
+            >
+              ×
+            </button>
+            <span>Free customer account</span>
+            <h2 id="profile-account-gate-title">Create an account to continue</h2>
+            <p id="profile-account-gate-message">{accountActionMessage(accountRequiredAction)}</p>
+            <div>
+              <Link href="/account?role=customer&mode=signup">Create a free account</Link>
+              <Link className="secondary" href="/account?role=customer">Already have an account? Sign in</Link>
+            </div>
+          </section>
+        </div>
       ) : null}
-      {status ? <span>{status}</span> : null}
-    </div>
+    </>
   );
 }
 
@@ -235,8 +350,17 @@ function readConfirmedFollowerCount(data: { followerCount?: unknown }) {
 function readToken() {
   try {
     const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
+    return session?.account?.role === "customer" && typeof session?.accessToken === "string"
+      ? session.accessToken
+      : "";
   } catch {
     return "";
   }
+}
+
+function accountActionMessage(action: AccountAction) {
+  if (action === "follow") return "Create a free customer account to follow this dancer and save the profile.";
+  if (action === "notify") return "Create a free customer account to turn on dancer notifications.";
+  if (action === "going") return "Create a free customer account to let the dancer know you’re going.";
+  return "Create a free customer account to report this profile for review.";
 }

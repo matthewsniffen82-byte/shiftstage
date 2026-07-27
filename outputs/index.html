@@ -25910,6 +25910,82 @@
       right: 10px;
     }
 
+    .account-required-popover {
+      z-index: 92;
+    }
+
+    .account-required-sheet {
+      width: min(440px, 100%);
+      gap: 14px;
+      padding: 22px;
+      border-color: rgba(53,216,255,.42);
+      background:
+        radial-gradient(circle at 88% 8%, rgba(53,216,255,.12), transparent 12rem),
+        linear-gradient(145deg, #0b0b13, #060609);
+      box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 34px rgba(53,216,255,.1);
+    }
+
+    .account-required-sheet .account-required-eyebrow {
+      margin: 0;
+      color: #7eeaff;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .account-required-sheet h3 {
+      margin: 0;
+      font-size: clamp(24px, 6vw, 32px);
+      line-height: 1.05;
+    }
+
+    .account-required-sheet .account-required-message {
+      margin: 0;
+      color: #cfc5de;
+      font-size: 15px;
+      font-weight: 750;
+      line-height: 1.5;
+    }
+
+    .account-required-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .account-required-actions a {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border: 1px solid rgba(53,216,255,.48);
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, #6d28d9, #0b94c9);
+      box-shadow: 0 12px 30px rgba(35,114,178,.24);
+      font-size: 15px;
+      font-weight: 950;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .account-required-actions a.secondary-link {
+      min-height: 42px;
+      border-color: rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      box-shadow: none;
+      color: #d9d0e8;
+    }
+
+    .account-required-actions a:hover,
+    .account-required-actions a:focus-visible {
+      border-color: #7eeaff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(53,216,255,.16), 0 14px 34px rgba(35,114,178,.28);
+    }
+
     .admin-preview-body {
       display: grid;
       gap: 10px;
@@ -28858,6 +28934,21 @@
       </div>
     </div>
 
+    <div class="admin-preview-popover account-required-popover" id="accountRequiredPopover" role="dialog" aria-modal="true" aria-labelledby="accountRequiredTitle" aria-describedby="accountRequiredMessage" hidden>
+      <section class="admin-preview-sheet account-required-sheet">
+        <button class="close-btn admin-preview-close" id="accountRequiredClose" type="button" aria-label="Close account prompt">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <p class="account-required-eyebrow">Free customer account</p>
+        <h3 id="accountRequiredTitle">Create an account to continue</h3>
+        <p class="account-required-message" id="accountRequiredMessage">Create a free customer account to use this profile action.</p>
+        <div class="account-required-actions">
+          <a id="accountRequiredCreateLink" href="/account?role=customer&amp;mode=signup">Create a free account</a>
+          <a class="secondary-link" id="accountRequiredSignInLink" href="/account?role=customer">Already have an account? Sign in</a>
+        </div>
+      </section>
+    </div>
+
     <div class="admin-preview-popover" id="adminPreviewPopover" role="dialog" aria-modal="true" aria-labelledby="adminPreviewTitle" hidden>
       <section class="admin-preview-sheet">
         <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" aria-label="Close preview">
@@ -28978,6 +29069,11 @@
     const publicContactClose = document.getElementById("publicContactClose");
     const publicContactForm = document.getElementById("publicContactForm");
     const publicContactStatus = document.getElementById("publicContactStatus");
+    const accountRequiredPopover = document.getElementById("accountRequiredPopover");
+    const accountRequiredClose = document.getElementById("accountRequiredClose");
+    const accountRequiredMessage = document.getElementById("accountRequiredMessage");
+    const accountRequiredCreateLink = document.getElementById("accountRequiredCreateLink");
+    const accountRequiredSignInLink = document.getElementById("accountRequiredSignInLink");
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
     const accountTooltip = document.getElementById("accountTooltip");
@@ -29291,6 +29387,44 @@
     function closePublicContactForm() {
       if (!publicContactPopover) return;
       publicContactPopover.hidden = true;
+    }
+
+    let accountRequiredReturnTarget = null;
+
+    function profileActionAccountMessage(actionId) {
+      if (actionId === "followBtn") return "Create a free customer account to follow this dancer and save the profile.";
+      if (actionId === "notifyBtn") return "Create a free customer account to turn on dancer notifications.";
+      if (actionId === "goingBtn") return "Create a free customer account to let the dancer know you’re going.";
+      if (actionId === "reportBtn") return "Create a free customer account to report this profile for review.";
+      return "Create a free customer account to use this profile action.";
+    }
+
+    function openAccountRequiredPrompt(actionButton) {
+      if (!accountRequiredPopover) return;
+      accountRequiredReturnTarget = actionButton || null;
+      if (accountRequiredMessage) {
+        accountRequiredMessage.textContent = profileActionAccountMessage(actionButton?.id);
+      }
+      accountRequiredPopover.hidden = false;
+      syncOverlayScrollLock();
+      setTimeout(() => accountRequiredClose?.focus({ preventScroll: true }), 40);
+    }
+
+    function closeAccountRequiredPrompt({ restoreFocus = true } = {}) {
+      if (!accountRequiredPopover) return;
+      accountRequiredPopover.hidden = true;
+      syncOverlayScrollLock();
+      const returnTarget = accountRequiredReturnTarget;
+      accountRequiredReturnTarget = null;
+      if (restoreFocus && returnTarget?.isConnected) {
+        setTimeout(() => returnTarget.focus({ preventScroll: true }), 40);
+      }
+    }
+
+    function requireCustomerAccountForProfileAction(actionButton) {
+      if (authSession?.accessToken && isCustomerSession()) return true;
+      openAccountRequiredPrompt(actionButton);
+      return false;
     }
 
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
@@ -36181,7 +36315,7 @@
     }
 
     function syncOverlayScrollLock() {
-      const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .deal-pass-overlay.show");
+      const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .deal-pass-overlay.show, .account-required-popover:not([hidden])");
       document.body.classList.toggle("overlay-open", overlayOpen);
     }
 
@@ -40457,6 +40591,7 @@
       }
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
+      if (!requireCustomerAccountForProfileAction(actionButton)) return;
       if (actionButton.id === "followBtn") {
         await saveProfileFollow(actionButton);
         return;
@@ -40538,20 +40673,24 @@
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
         actionButton.disabled = true;
-        actionButton.innerHTML = actionButtonLabel("check", "Reported");
-        recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
-        showToast("Report submitted for review");
-        postOptionalAuthJson("/api/reports", {
-          targetType: "dancer_profile",
-          targetId: profile?.id || null,
-          targetLabel: profileName,
-          reason: "Profile report",
-          details: `Reported from ${city} profile modal.`
-        }).catch((error) => {
+        actionButton.innerHTML = actionButtonLabel("clock", "Submitting");
+        try {
+          const data = await postAuthenticatedJson("/api/reports", {
+            targetType: "dancer_profile",
+            targetId: profile?.id || null,
+            targetLabel: profileName,
+            reason: "Profile report",
+            details: `Reported from ${city} profile modal.`
+          });
+          if (!data?.report) throw new Error("The report could not be confirmed.");
+          actionButton.innerHTML = actionButtonLabel("check", "Reported");
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
+          showToast("Report submitted for review");
+        } catch (error) {
           actionButton.disabled = false;
           actionButton.innerHTML = actionButtonLabel("report", "Report");
           showToast(error.message || "Could not submit report");
-        });
+        }
       }
     });
 
@@ -40626,6 +40765,22 @@
       if (event.target === publicContactPopover) closePublicContactForm();
     });
     publicContactForm?.addEventListener("submit", submitPublicContactForm);
+    accountRequiredClose?.addEventListener("click", () => closeAccountRequiredPrompt());
+    accountRequiredPopover?.addEventListener("click", (event) => {
+      if (event.target === accountRequiredPopover) closeAccountRequiredPrompt();
+    });
+    accountRequiredCreateLink?.addEventListener("click", (event) => {
+      event.preventDefault();
+      closeAccountRequiredPrompt({ restoreFocus: false });
+      closeProfileModal();
+      openFreshCustomerSignup();
+    });
+    accountRequiredSignInLink?.addEventListener("click", (event) => {
+      event.preventDefault();
+      closeAccountRequiredPrompt({ restoreFocus: false });
+      closeProfileModal();
+      openAuthRole("customer");
+    });
 
     document.querySelectorAll("[data-legal-page]").forEach((button) => {
       button.addEventListener("click", () => openLegalPage(button.dataset.legalPage));
@@ -41906,6 +42061,10 @@
         return;
       }
       if (event.key === "Escape") {
+        if (accountRequiredPopover && !accountRequiredPopover.hidden) {
+          closeAccountRequiredPrompt();
+          return;
+        }
         if (adminPreviewPopover && !adminPreviewPopover.hidden) {
           closeAdminPreview();
           return;

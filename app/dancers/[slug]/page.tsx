@@ -50,6 +50,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </div>
           <DancerProfileActions
             dancerId={profile.id}
+            profileName={profile.stageName}
             shifts={profile.upcomingShifts.map((shift) => ({ id: shift.id, label: shortShiftLabel(shift.startsAt) }))}
           />
         </div>
@@ -185,6 +186,17 @@ function PublicProfileStyles() {
       .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
       .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
       .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
+      .profile-account-gate { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.76); backdrop-filter: blur(10px); }
+      .profile-account-gate-dialog { position: relative; width: min(410px, 100%); display: grid; gap: 14px; padding: 24px; box-sizing: border-box; border: 1px solid rgba(53,216,255,.42); border-radius: 12px; background: radial-gradient(circle at 88% 8%, rgba(53,216,255,.12), transparent 12rem), linear-gradient(145deg, #0b0b13, #060609); box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 34px rgba(53,216,255,.1); }
+      .profile-account-gate-dialog > span { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .profile-account-gate-dialog h2 { margin: 0; padding-right: 40px; font-size: clamp(24px, 6vw, 32px); line-height: 1.05; }
+      .profile-account-gate-dialog p { color: #cfc5de; font-size: 15px; font-weight: 750; line-height: 1.5; }
+      .profile-account-gate-dialog > div { display: grid; gap: 10px; }
+      .profile-account-gate-dialog a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border: 1px solid rgba(53,216,255,.48); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); box-shadow: 0 12px 30px rgba(35,114,178,.24); font-size: 15px; font-weight: 950; text-align: center; text-decoration: none; }
+      .profile-account-gate-dialog a.secondary { min-height: 42px; border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.04); box-shadow: none; color: #d9d0e8; }
+      .profile-account-gate-dialog a:hover, .profile-account-gate-dialog a:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(53,216,255,.16), 0 14px 34px rgba(35,114,178,.28); }
+      .profile-account-gate-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(53,216,255,.42); border-radius: 50%; color: #fff; background: rgba(4,9,15,.88); font: inherit; font-size: 26px; line-height: 1; cursor: pointer; }
+      .profile-account-gate-close:hover, .profile-account-gate-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(53,216,255,.16); }
       .public-photo { border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); background-size: cover; background-position: center; min-height: 420px; display: grid; place-items: center; box-shadow: 0 30px 80px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.1); }
       .public-photo span { width: 118px; height: 118px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
