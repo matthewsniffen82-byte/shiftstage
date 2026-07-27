@@ -3387,6 +3387,30 @@
       line-height: 1.25;
     }
 
+    .dancer-incognito-status {
+      display: none;
+      margin: 10px 0 0;
+      padding: 11px 13px;
+      border: 1px solid rgba(53,216,255,.28);
+      border-radius: 12px;
+      color: rgba(218,214,230,.92);
+      background: rgba(53,216,255,.07);
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1.4;
+    }
+
+    .dancer-incognito-status.show {
+      display: block;
+    }
+
+    .dancer-incognito-status.is-incognito {
+      border-color: rgba(148,229,255,.62);
+      color: #e6fbff;
+      background: rgba(34,199,255,.13);
+      box-shadow: inset 3px 0 0 rgba(53,216,255,.82);
+    }
+
     .approved-tool-dropdown {
       display: none;
       gap: 12px;
@@ -28089,6 +28113,7 @@
                 <span>Hide profile from site</span>
               </button>
             </div>
+            <p class="dancer-incognito-status" id="dancerIncognitoStatus" role="status" aria-live="polite"></p>
             <div class="approved-tool-dropdown" id="approvedEditProfileDropdown" hidden>
               <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -38200,6 +38225,7 @@
 
     function syncDancerIncognitoToggle(profile = activeDancerProfile(), approved = false) {
       const button = document.getElementById("dancerIncognitoToggle");
+      const status = document.getElementById("dancerIncognitoStatus");
       if (!button) return;
       const isHidden = dancerProfileIsHidden(profile);
       button.hidden = !approved;
@@ -38208,8 +38234,15 @@
       button.setAttribute("aria-label", isHidden ? "Reactivate public profile" : "Go incognito and hide public profile");
       const label = button.querySelector("strong");
       const helper = button.querySelector("span");
-      if (label) label.textContent = isHidden ? "Reactivate profile" : "Go incognito";
-      if (helper) helper.textContent = isHidden ? "Show profile on Dancr" : "Hide profile from site";
+      if (label) label.textContent = isHidden ? "Turn profile back on" : "Go incognito";
+      if (helper) helper.textContent = isHidden ? "Incognito on · Profile hidden" : "Hide profile from customers";
+      if (status) {
+        status.classList.toggle("show", approved);
+        status.classList.toggle("is-incognito", isHidden);
+        status.textContent = isHidden
+          ? "Incognito is on. Your profile is hidden from customers. Press Turn profile back on whenever you want customers to see it again."
+          : "Your profile is live. Press Go incognito to hide it from customers.";
+      }
     }
 
     function renderDancerSetup() {
@@ -41539,6 +41572,9 @@
           if (savedPublic !== nextPublic) {
             throw new Error("Profile visibility did not save. Try again.");
           }
+          if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
+            throw new Error("Public profile visibility could not be verified. Try again.");
+          }
           const updatedProfile = activeDancerProfile(city) || profile;
           setDancerProfilePublic(updatedProfile, savedPublic);
           liveMarketState[city] = null;
@@ -41546,8 +41582,10 @@
           renderDancerSetup();
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
-          setResult(savedPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from the site.");
-          showToast(savedPublic ? "Profile reactivated" : "Incognito on");
+          setResult(savedPublic
+            ? "Your profile is back on and visible to customers."
+            : "Incognito is on. Your profile was verified hidden from customers. You can turn it back on at any time.");
+          showToast(savedPublic ? "Profile is back on" : "Profile hidden · Incognito on");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");
           showToast(error.message || "Could not update profile visibility.");

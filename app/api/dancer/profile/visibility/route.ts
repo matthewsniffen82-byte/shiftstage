@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
+import { getDancerProfile } from "@/src/lib/dancr/public";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,20 @@ function isVisibilityRequest(value: unknown): value is VisibilityRequest {
   return Object.keys(body).length === 1 && typeof body.isPublic === "boolean";
 }
 
+async function verifyPublicVisibility(db: ReturnType<typeof createAdminSupabaseClient>, slug: string, isPublic: boolean) {
+  const publicProfile = await getDancerProfile(db, slug);
+  const publicProfileVisible = Boolean(publicProfile);
+  if (publicProfileVisible !== isPublic) {
+    throw new Error("PUBLIC_PROFILE_VISIBILITY_VERIFICATION_FAILED");
+  }
+
+  return {
+    verified: true,
+    isPublic,
+    publicProfileVisible,
+  };
+}
+
 export async function PATCH(request: Request) {
   try {
     const body = await request.json().catch(() => null);
@@ -33,7 +48,7 @@ export async function PATCH(request: Request) {
     const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
-      .select("id, status, verification_status, disabled_at, is_public")
+      .select("id, slug, status, verification_status, disabled_at, is_public")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -54,6 +69,7 @@ export async function PATCH(request: Request) {
     }
 
     if (currentProfile.is_public === body.isPublic) {
+      const visibility = await verifyPublicVisibility(db, currentProfile.slug, body.isPublic);
       return json({
         ok: true,
         changed: false,
@@ -62,6 +78,7 @@ export async function PATCH(request: Request) {
           is_public: currentProfile.is_public,
           isPublic: currentProfile.is_public,
         },
+        visibility,
         session,
       });
     }
@@ -78,11 +95,13 @@ export async function PATCH(request: Request) {
     if (!updatedProfile || updatedProfile.is_public !== body.isPublic) {
       throw new Error("PROFILE_VISIBILITY_UPDATE_NOT_APPLIED");
     }
+    const visibility = await verifyPublicVisibility(db, currentProfile.slug, body.isPublic);
 
     console.info("DANCER_PROFILE_VISIBILITY_UPDATED", {
       dancerId: updatedProfile.id,
       userId: user.id,
       isPublic: updatedProfile.is_public,
+      publicProfileVisible: visibility.publicProfileVisible,
     });
 
     return json({
@@ -93,6 +112,7 @@ export async function PATCH(request: Request) {
         is_public: updatedProfile.is_public,
         isPublic: updatedProfile.is_public,
       },
+      visibility,
       session,
     });
   } catch (error: any) {

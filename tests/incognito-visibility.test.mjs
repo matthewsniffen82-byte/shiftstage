@@ -19,10 +19,14 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /coreApprovalComplete = isCoreVerificationApproved\(currentProfile\)/);
   assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
+  assert.match(routeSource, /getDancerProfile\(db, slug\)/);
+  assert.match(routeSource, /publicProfileVisible !== isPublic/);
+  assert.match(routeSource, /visibility,/);
   assert.match(routeSource, /session,/);
   assert.match(dashboardSource, /fetch\("\/api\/dancer\/profile\/visibility"/);
   assert.match(dashboardSource, /"x-dancr-refresh-token": session\.refreshToken/);
   assert.match(dashboardSource, /persistResponseSession\(data\)/);
+  assert.match(dashboardSource, /data\.visibility\?\.publicProfileVisible !== nextPublic/);
   assert.doesNotMatch(
     dashboardSource.match(/async function toggleVisibility\(\)[\s\S]*?\n  }/)?.[0] || "",
     /fetch\("\/api\/dancer\/profile"/,
@@ -37,8 +41,11 @@ test("the production mobile control cannot report a local-only incognito success
   assert.match(handler, /!isDancerSession\(\) \|\| !authSession\?\.accessToken/);
   assert.match(handler, /patchAuthenticatedJson\("\/api\/dancer\/profile\/visibility"/);
   assert.match(handler, /savedPublic !== nextPublic/);
+  assert.match(handler, /data\.visibility\?\.publicProfileVisible !== nextPublic/);
   assert.match(handler, /trigger\.setAttribute\("aria-busy", "true"\)/);
   assert.match(handler, /trigger\.removeAttribute\("aria-busy"\)/);
+  assert.match(mobileAppSource, /id="dancerIncognitoStatus"[\s\S]*?aria-live="polite"/);
+  assert.match(mobileAppSource, /Turn profile back on/);
   assert.doesNotMatch(handler, /if \(isDancerSession\(\)\) \{/);
 });
 

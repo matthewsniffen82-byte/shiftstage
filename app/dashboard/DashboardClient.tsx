@@ -708,9 +708,16 @@ function DancerVisibilityPanel({
       persistResponseSession(data);
       const savedPublic = data.profile?.is_public === true || data.profile?.isPublic === true;
       if (savedPublic !== nextPublic) throw new Error("Profile visibility did not save. Try again.");
+      if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
+        throw new Error("Public profile visibility could not be verified. Try again.");
+      }
       if (data.profile) onProfileChange?.({ ...(profile || {}), ...data.profile });
       setIsPublic(savedPublic);
-      setStatus(savedPublic ? "Profile reactivated and visible on Dancr." : "Incognito on. Your profile is hidden from public pages.");
+      setStatus(
+        savedPublic
+          ? "Your profile is back on and visible to customers."
+          : "Incognito is on. Your profile was verified hidden from customers. You can turn it back on at any time.",
+      );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update profile visibility.");
     } finally {
@@ -723,12 +730,16 @@ function DancerVisibilityPanel({
       <h2>Incognito</h2>
       <div className="visibility-copy">
         <Metric label="Public profile" value={isPublic ? "Visible" : "Hidden"} />
-        <p>{isPublic ? "Your approved profile can appear in search, venue pages, and your public link." : "Your profile is hidden from public pages. Your dashboard and approved tools stay available. Press Reactivate profile any time to show it again."}</p>
+        <p>{isPublic ? "Your approved profile can appear in search, venue pages, and your public link." : "Incognito is on. Your profile is hidden from customers while your dashboard and approved tools remain available."}</p>
       </div>
       <button type="button" onClick={toggleVisibility} disabled={isSaving}>
-        {isSaving ? "Saving..." : isPublic ? "Go incognito" : "Reactivate profile"}
+        {isSaving ? "Verifying..." : isPublic ? "Go incognito" : "Turn profile back on"}
       </button>
-      {status ? <p>{status}</p> : null}
+      <p className="visibility-status" role="status" aria-live="polite">
+        {status || (isPublic
+          ? "Profile is live. Press Go incognito to hide it from customers."
+          : "Profile hidden. Press Turn profile back on whenever you want customers to see it again.")}
+      </p>
     </article>
   );
 }
