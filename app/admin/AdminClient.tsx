@@ -289,6 +289,16 @@ export default function AdminClient() {
                 setApprovalOpen(dancerId, !Boolean(openApprovalIdsRef.current[dancerId]))
               }
               onKeepOpen={(dancerId) => setApprovalOpen(dancerId, true)}
+              onSocialReviewed={(dancerId, targetId, status, notes) =>
+                setState((current) => ({
+                  ...current,
+                  queue: (current.queue || []).map((item) =>
+                    asText(item.id) === dancerId
+                      ? withReviewedSocial(item, targetId, status, notes)
+                      : item
+                  ),
+                }))
+              }
               onActionConfirmed={confirmAdminAction}
               onReviewed={(dancerId) => {
                 setState((current) => ({
@@ -937,6 +947,7 @@ function ApprovalQueue({
   openById,
   onToggleOpen,
   onKeepOpen,
+  onSocialReviewed,
   onReviewed,
   onActionConfirmed,
 }: {
@@ -944,6 +955,7 @@ function ApprovalQueue({
   openById: Record<string, boolean>;
   onToggleOpen: (dancerId: string) => void;
   onKeepOpen: (dancerId: string) => void;
+  onSocialReviewed: (dancerId: string, targetId: string, status: "approved" | "rejected", notes: string) => void;
   onReviewed: (dancerId: string) => void;
   onActionConfirmed: (message: string) => void;
 }) {
@@ -1014,6 +1026,7 @@ function ApprovalQueue({
               <SubmissionDetails
                 item={item}
                 onKeepOpen={() => onKeepOpen(dancerId)}
+                onSocialReviewed={onSocialReviewed}
                 onActionConfirmed={onActionConfirmed}
               />
             ) : null}
@@ -1054,10 +1067,12 @@ type ReviewFeedback = {
 function SubmissionDetails({
   item,
   onKeepOpen,
+  onSocialReviewed,
   onActionConfirmed,
 }: {
   item: Record<string, unknown>;
   onKeepOpen: () => void;
+  onSocialReviewed: (dancerId: string, targetId: string, status: "approved" | "rejected", notes: string) => void;
   onActionConfirmed: (message: string) => void;
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
@@ -1136,8 +1151,13 @@ function SubmissionDetails({
         return;
       }
 
-      const confirmation = `${label} ${status === "approved" ? "approved" : "rejected"} successfully.`;
-      setStatusByKey((current) => ({ ...current, [key]: status }));
+      const responseStatus = asText(data.review?.status);
+      const savedStatus = responseStatus === "approved" || responseStatus === "rejected" ? responseStatus : status;
+      const confirmation = `${label} ${savedStatus === "approved" ? "approved" : "rejected"} successfully.`;
+      setStatusByKey((current) => ({ ...current, [key]: savedStatus }));
+      if (targetType === "social_link") {
+        onSocialReviewed(dancerId, targetId, savedStatus, notes);
+      }
       setFeedbackByKey((current) => ({
         ...current,
         [key]: { tone: "success", message: confirmation },
@@ -1242,14 +1262,16 @@ function SubmissionDetails({
               const isApproved = status === "approved";
               const isDisapproved = status === "rejected";
               return (
-                <div className="submission-review-card" key={targetId || index}>
+                <div className={`submission-review-card ${isApproved ? "is-approved" : isDisapproved ? "is-rejected" : ""}`} key={targetId || index}>
                   <a
                     className="submission-link"
                     href={fileUrl || "#"}
                     onClick={(event) => openPreview(event, { kind: "file", title: label, url: fileUrl })}
                   >
                     <strong>{label}</strong>
-                    <small>{status}</small>
+                    <small className={`submission-review-status ${isApproved ? "is-approved" : isDisapproved ? "is-rejected" : ""}`}>
+                      {isApproved ? "✓ Approved" : isDisapproved ? "Disapproved" : "Pending review"}
+                    </small>
                   </a>
                   <small>Submitted by {submittedBy}</small>
                   {reason ? <small>Reason: {reason}</small> : null}
@@ -1260,7 +1282,7 @@ function SubmissionDetails({
                   />
                   <small>Type the reason, then press Save disapproval.</small>
                   <div className="content-review-actions">
-                    <button type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "approved", label)} disabled={!targetId || isWorking}>
+                    <button type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "approved", label)} disabled={!targetId || isWorking || isApproved}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve file"}
                     </button>
                     <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "rejected", label)} disabled={!targetId || isWorking}>
@@ -1291,7 +1313,10 @@ function SubmissionDetails({
               const isApproved = status === "approved";
               const isDisapproved = status === "rejected";
               return (
-                <div className="submitted-social-review" key={targetId || `${social.platform}-${index}`}>
+                <div
+                  className={`submitted-social-review ${isApproved ? "is-approved" : isDisapproved ? "is-rejected" : ""}`}
+                  key={targetId || `${social.platform}-${index}`}
+                >
                   <a
                     className={`submitted-social-icon social-${social.platform}`}
                     href={social.url || "#"}
@@ -1301,7 +1326,9 @@ function SubmissionDetails({
                   >
                     <SubmittedSocialIcon platform={social.platform} />
                   </a>
-                  <small>{social.label} / {status}</small>
+                  <small className={`submitted-social-review-status ${isApproved ? "is-approved" : isDisapproved ? "is-rejected" : ""}`}>
+                    {social.label} / {isApproved ? "✓ Approved" : isDisapproved ? "Disapproved" : "Pending review"}
+                  </small>
                   {reason ? <small>Reason: {reason}</small> : null}
                   <textarea
                     placeholder="Reason for disapproval"
@@ -1309,7 +1336,7 @@ function SubmissionDetails({
                     onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
                   />
                   <div className="content-review-actions">
-                    <button type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "approved", social.label)} disabled={!targetId || isWorking}>
+                    <button type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "approved", social.label)} disabled={!targetId || isWorking || isApproved}>
                       {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve social"}
                     </button>
                     <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "social_link", targetId, "rejected", social.label)} disabled={!targetId || isWorking}>
@@ -1526,6 +1553,28 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
       };
     })
     .filter((social) => social.platform && (social.handle || social.url));
+}
+
+function withReviewedSocial(
+  item: Record<string, unknown>,
+  targetId: string,
+  status: "approved" | "rejected",
+  notes: string,
+) {
+  const socialLinks = asRecordArray(item.socialLinks || item.social_links).map((social) =>
+    asText(social.id) === targetId
+      ? {
+          ...social,
+          reviewStatus: status,
+          reviewNotes: notes || null,
+        }
+      : social
+  );
+
+  return {
+    ...item,
+    socialLinks,
+  };
 }
 
 function socialPlatformLabel(platform: string) {
@@ -1767,7 +1816,11 @@ function AdminStyles() {
       .submission-link { display: grid; gap: 3px; padding: 10px; }
       .submission-link strong { overflow-wrap: anywhere; }
       .submission-review-card { display: grid; gap: 8px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
+      .submission-review-card.is-approved { border-color: rgba(50,255,164,.38); background: rgba(50,255,164,.075); }
+      .submission-review-card.is-rejected { border-color: rgba(255,104,124,.38); background: rgba(255,104,124,.075); }
       .submission-review-card > small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .submission-review-status.is-approved { color: #8dffc4 !important; font-weight: 900; }
+      .submission-review-status.is-rejected { color: #ffb3bf !important; font-weight: 900; }
       .submission-review-card textarea { width: 100%; min-height: 68px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
       .content-review-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .content-review-actions button { min-height: 38px; padding: 0 10px; font-size: 12px; white-space: normal; line-height: 1.15; }
@@ -1777,8 +1830,12 @@ function AdminStyles() {
       .review-feedback.error { color: #ffb3bf !important; border: 1px solid rgba(255,104,124,.38); background: rgba(255,104,124,.1); }
       .submitted-social-icons, .submitted-social-review-list { display: grid; gap: 8px; }
       .submitted-social-review { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
+      .submitted-social-review.is-approved { border-color: rgba(50,255,164,.38); background: rgba(50,255,164,.075); }
+      .submitted-social-review.is-rejected { border-color: rgba(255,104,124,.38); background: rgba(255,104,124,.075); }
       .submitted-social-review small, .submitted-social-review textarea, .submitted-social-review .content-review-actions, .submitted-social-review .review-feedback { grid-column: 2; }
       .submitted-social-review small { color: #b9accd; font-size: 12px; overflow-wrap: anywhere; }
+      .submitted-social-review-status.is-approved { color: #8dffc4 !important; font-weight: 900; }
+      .submitted-social-review-status.is-rejected { color: #ffb3bf !important; font-weight: 900; }
       .submitted-social-review textarea { width: 100%; min-height: 58px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 8px 10px; font: inherit; }
       .submitted-social-icon { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; padding: 0; line-height: 1; border-radius: 999px; color: #f7f2ff; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.055); text-decoration: none; }
       .submitted-social-icon:hover { color: #fff; border-color: rgba(34,199,255,.48); background: rgba(34,199,255,.12); }
