@@ -75,7 +75,7 @@ test("I'm Going changes the visible count before the request and reconciles or r
 
   assert.ok(
     goingHandler.indexOf("profile.goingCount = optimisticCount") <
-      goingHandler.indexOf('await postAuthenticatedJson("/api/customer/going"'),
+      goingHandler.indexOf('await postOptionalAuthJson("/api/customer/going"'),
     "Going must render its optimistic count before waiting for the API",
   );
   assert.match(goingHandler, /profile\.goingCount = realCount/);

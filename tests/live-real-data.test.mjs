@@ -28,9 +28,9 @@ test("the live profile never manufactures engagement or ranking values", () => {
 });
 
 test("going actions update immediately, then reconcile to the persisted API count or roll back", () => {
-  assert.match(goingRouteSource, /const goingCount = await countShiftGoingSignals\(shiftId\)/);
-  assert.match(goingRouteSource, /NextResponse\.json\(\{ ok: true, going, goingCount \}\)/);
-  assert.match(legacySource, /const data = await postAuthenticatedJson\("\/api\/customer\/going"/);
+  assert.match(goingRouteSource, /const goingCount = await countShiftGoingSignals\(admin, shiftId\)/);
+  assert.match(goingRouteSource, /\{ ok: true, going, goingCount, anonymous: !identity\.customerId \}/);
+  assert.match(legacySource, /const data = await postOptionalAuthJson\("\/api\/customer\/going"/);
   assert.match(legacySource, /const optimisticCount = Math\.max\(0, previousCount \+ \(requestedGoing \? 1 : -1\)\)/);
   assert.match(legacySource, /const realCount = Number\(data\.goingCount\)/);
   assert.match(legacySource, /if \(!Number\.isSafeInteger\(realCount\) \|\| realCount < 0\)/);

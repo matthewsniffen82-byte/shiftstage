@@ -8,6 +8,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   DancerFollowerCount,
   DancerFollowStateProvider,
+  DancerGoingCount,
   DancerProfileActions,
 } from "./DancerProfileActions";
 import { ProfileViewTracker } from "./ProfileViewTracker";
@@ -32,7 +33,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const activeDeal = activeShift?.venueId ? await getActiveClubDealForVenue(client, activeShift.venueId) : null;
 
   return (
-    <DancerFollowStateProvider initialFollowerCount={profile.followerCount} key={profile.id}>
+    <DancerFollowStateProvider
+      initialFollowerCount={profile.followerCount}
+      initialGoingCount={profile.goingCount}
+      key={profile.id}
+    >
       <main className="public-profile-shell">
       <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
@@ -117,7 +122,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </div>
             <div>
               <dt>Going</dt>
-              <dd>{profile.goingCount.toLocaleString()}</dd>
+              <dd>
+                <DancerGoingCount />
+              </dd>
             </div>
             <div>
               <dt>Rank</dt>

@@ -73,7 +73,16 @@ export async function unfollowVenue(client: DancrClient, customerId: string, ven
 }
 
 export async function markGoing(client: DancrClient, customerId: string, shiftId: string) {
-  const { error } = await client.from("going_signals").upsert({
+  const { error } = await client.from("going_signals").insert({
+    customer_id: customerId,
+    shift_id: shiftId,
+  });
+
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function cancelGoing(client: DancrClient, customerId: string, shiftId: string) {
+  const { error } = await client.from("going_signals").delete().match({
     customer_id: customerId,
     shift_id: shiftId,
   });
@@ -81,9 +90,18 @@ export async function markGoing(client: DancrClient, customerId: string, shiftId
   if (error) throw error;
 }
 
-export async function cancelGoing(client: DancrClient, customerId: string, shiftId: string) {
+export async function markAnonymousGoing(client: DancrClient, visitorTokenHash: string, shiftId: string) {
+  const { error } = await client.from("going_signals").insert({
+    visitor_token_hash: visitorTokenHash,
+    shift_id: shiftId,
+  });
+
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function cancelAnonymousGoing(client: DancrClient, visitorTokenHash: string, shiftId: string) {
   const { error } = await client.from("going_signals").delete().match({
-    customer_id: customerId,
+    visitor_token_hash: visitorTokenHash,
     shift_id: shiftId,
   });
 

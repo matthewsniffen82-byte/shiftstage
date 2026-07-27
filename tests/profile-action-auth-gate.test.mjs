@@ -17,7 +17,7 @@ function sourceBetween(source, start, end) {
   return source.slice(startIndex, endIndex);
 }
 
-test("every live modal profile action checks for a customer account before changing state", () => {
+test("account-only live modal actions check for a customer profile while Going stays public", () => {
   const handler = sourceBetween(
     homeSource,
     'modalBody.addEventListener("click"',
@@ -25,11 +25,14 @@ test("every live modal profile action checks for a customer account before chang
   );
 
   assert.match(handler, /#followBtn, #notifyBtn, #goingBtn, #reportBtn/);
-  assert.match(handler, /if \(!requireCustomerAccountForProfileAction\(actionButton\)\) return/);
+  assert.match(
+    handler,
+    /if \(actionButton\.id !== "goingBtn" && !requireCustomerAccountForProfileAction\(actionButton\)\) return/,
+  );
   assert.ok(
     handler.indexOf("requireCustomerAccountForProfileAction(actionButton)") <
       handler.indexOf('if (actionButton.id === "followBtn")'),
-    "The account gate must run before any action-specific optimistic update.",
+    "The account gate must run before any account-only optimistic update.",
   );
 });
 
@@ -59,14 +62,16 @@ test("signed-out profile actions open a dismissible account prompt with working 
   assert.match(homeSource, /accountRequiredCreateLink\?\.addEventListener\("click"[\s\S]*openFreshCustomerSignup\(\)/);
 });
 
-test("public Next profiles keep all actions visible while signed out and use the same account gate", () => {
+test("public Next profiles keep all actions visible while signed out and gate only account-owned actions", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
-  for (const action of ["follow", "notify", "going", "report"]) {
+  for (const action of ["follow", "notify", "report"]) {
     assert.match(
       actionsSource,
       new RegExp(`requireCustomerAccount\\("${action}"\\)`),
     );
   }
+  assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
+  assert.match(actionsSource, /onClick=\{\(\) => updateGoing\(nextShift\.id\)\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);

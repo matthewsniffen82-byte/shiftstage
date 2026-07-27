@@ -29465,7 +29465,6 @@
     function profileActionAccountMessage(actionId) {
       if (actionId === "followBtn") return "Create a free customer account to follow this dancer and save the profile.";
       if (actionId === "notifyBtn") return "Create a free customer account to turn on dancer notifications.";
-      if (actionId === "goingBtn") return "Create a free customer account to let the dancer know you’re going.";
       if (actionId === "reportBtn") return "Create a free customer account to report this profile for review.";
       return "Create a free customer account to use this profile action.";
     }
@@ -30054,7 +30053,6 @@
           prepareRealCustomerDashboardState();
           loadLiveCustomerDashboardData();
         }
-        if (dashboardRole === "dancer") loadLiveProfileActionState();
         if (dashboardRole === "dancer") {
           prepareConfirmedDancerVerification(state);
         }
@@ -31237,7 +31235,7 @@
     }
 
     async function loadLiveProfileActionState() {
-      if (!authSession?.accessToken) return;
+      if (!isCustomerSession()) return;
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
         applyLiveProfileActions(data.saved || {});
@@ -32215,7 +32213,6 @@
         const applied = applyLiveMarket(city, allDancers.dancers || [], tonightDancers.dancers || [], venueList.venues || []);
         liveMarketState[city] = applied ? "ready" : "fallback";
         if (isCustomerSession()) await loadLiveCustomerSaved();
-        else if (authSession?.accessToken) await loadLiveProfileActionState();
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -36304,6 +36301,44 @@
       `;
     }
 
+    async function refreshProfileGoingState(profile) {
+      if (!profile?.shiftId || window.location.protocol === "file:") return;
+      try {
+        const headers = { Accept: "application/json" };
+        if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
+        if (authSession?.refreshToken) headers["X-Dancr-Refresh-Token"] = authSession.refreshToken;
+        const response = await fetch(`/api/customer/going?shiftId=${encodeURIComponent(profile.shiftId)}`, {
+          method: "GET",
+          headers,
+          cache: "no-store"
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) throw new Error(apiErrorMessage(data));
+        const realCount = Number(data.goingCount);
+        if (!Number.isSafeInteger(realCount) || realCount < 0) return;
+
+        const savedGoing = data.going === true;
+        goingTonightByProfile[profile.name] = realCount;
+        goingTonightSavedByProfile[profile.name] = savedGoing;
+        profile.goingCount = realCount;
+
+        const actionButton = document.getElementById("goingBtn");
+        if (!actionButton || actionButton.dataset.profile !== profile.name) return;
+        const isTonightShift = actionButton.dataset.shiftState === "tonight";
+        const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
+        const activeLabel = isTonightShift ? "You're going now" : "You're going";
+        const countEl = document.getElementById("tonightInterestCount");
+        if (countEl) {
+          countEl.classList.remove("muted");
+          countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} people going`);
+        }
+        actionButton.classList.toggle("is-going", savedGoing);
+        actionButton.innerHTML = actionButtonLabel(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel);
+      } catch {
+        // Keep the server-rendered count visible if the latest status cannot be loaded.
+      }
+    }
+
     function openProfileModal(profileName, options = {}) {
       const city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
@@ -36371,6 +36406,9 @@
       profileBackdrop.setAttribute("aria-hidden", "false");
       profileModal?.scrollTo({ top: 0, behavior: "auto" });
       syncOverlayScrollLock();
+      if (!isPending && !isPrivatePreview && profile.shiftId) {
+        void refreshProfileGoingState(profile);
+      }
     }
 
     function closeProfileModal() {
@@ -40713,7 +40751,7 @@
       }
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
-      if (!requireCustomerAccountForProfileAction(actionButton)) return;
+      if (actionButton.id !== "goingBtn" && !requireCustomerAccountForProfileAction(actionButton)) return;
       if (actionButton.id === "followBtn") {
         await saveProfileFollow(actionButton);
         return;
@@ -40753,11 +40791,10 @@
           requestedGoing ? activeLabel : idleLabel
         );
         try {
-          const data = await postAuthenticatedJson("/api/customer/going", {
+          const data = await postOptionalAuthJson("/api/customer/going", {
             shiftId: profile.shiftId,
             going: requestedGoing
           });
-          if (!data) throw new Error("Sign in required.");
           const savedGoing = data.going === true;
           const realCount = Number(data.goingCount);
           if (!Number.isSafeInteger(realCount) || realCount < 0) {

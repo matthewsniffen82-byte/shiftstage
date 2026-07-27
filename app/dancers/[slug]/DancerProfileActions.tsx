@@ -22,28 +22,40 @@ type SavedState = {
   goingShiftIds: string[];
 };
 
-type AccountAction = "follow" | "notify" | "going" | "report";
+type AccountAction = "follow" | "notify" | "report";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
 type DancerFollowState = {
   followerCount: number;
   setFollowerCount: (count: number) => void;
+  goingCount: number;
+  setGoingCount: (count: number) => void;
 };
 
 const DancerFollowStateContext = createContext<DancerFollowState | null>(null);
 
 export function DancerFollowStateProvider({
   initialFollowerCount,
+  initialGoingCount,
   children,
-}: PropsWithChildren<{ initialFollowerCount: number }>) {
+}: PropsWithChildren<{ initialFollowerCount: number; initialGoingCount: number }>) {
   const [followerCount, setFollowerCount] = useState(Math.max(0, initialFollowerCount));
+  const [goingCount, setGoingCount] = useState(Math.max(0, initialGoingCount));
   const setConfirmedFollowerCount = useCallback((count: number) => {
     setFollowerCount(Math.max(0, count));
   }, []);
+  const setConfirmedGoingCount = useCallback((count: number) => {
+    setGoingCount(Math.max(0, count));
+  }, []);
   const value = useMemo(
-    () => ({ followerCount, setFollowerCount: setConfirmedFollowerCount }),
-    [followerCount, setConfirmedFollowerCount],
+    () => ({
+      followerCount,
+      setFollowerCount: setConfirmedFollowerCount,
+      goingCount,
+      setGoingCount: setConfirmedGoingCount,
+    }),
+    [followerCount, setConfirmedFollowerCount, goingCount, setConfirmedGoingCount],
   );
 
   return <DancerFollowStateContext.Provider value={value}>{children}</DancerFollowStateContext.Provider>;
@@ -52,6 +64,11 @@ export function DancerFollowStateProvider({
 export function DancerFollowerCount() {
   const { followerCount } = useDancerFollowState();
   return <>{new Intl.NumberFormat("en-US").format(followerCount)}</>;
+}
+
+export function DancerGoingCount() {
+  const { goingCount } = useDancerFollowState();
+  return <>{new Intl.NumberFormat("en-US").format(goingCount)}</>;
 }
 
 export function DancerProfileActions({
@@ -63,7 +80,7 @@ export function DancerProfileActions({
   profileName: string;
   shifts: ShiftAction[];
 }) {
-  const { setFollowerCount } = useDancerFollowState();
+  const { setFollowerCount, setGoingCount } = useDancerFollowState();
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState<SavedState>({
     following: false,
@@ -72,11 +89,13 @@ export function DancerProfileActions({
   });
   const [savedLoaded, setSavedLoaded] = useState(false);
   const [followSaving, setFollowSaving] = useState(false);
+  const [goingSaving, setGoingSaving] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
   const nextShift = useMemo(() => shifts[0] || null, [shifts]);
+  const nextShiftId = nextShift?.id || "";
 
   useEffect(() => {
     let active = true;
@@ -85,7 +104,32 @@ export function DancerProfileActions({
     const accessToken = readToken();
     setToken(accessToken);
     if (!accessToken) {
-      setSavedLoaded(true);
+      if (!nextShiftId) {
+        setSavedLoaded(true);
+        return () => {
+          active = false;
+        };
+      }
+      fetch(`/api/customer/going?shiftId=${encodeURIComponent(nextShiftId)}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!active) return;
+          if (!data.ok) throw new Error(data.error || "Unable to load going status.");
+          setSaved((current) => ({
+            ...current,
+            goingShiftIds: data.going === true ? [nextShiftId] : [],
+          }));
+          setGoingCount(readConfirmedGoingCount(data));
+        })
+        .catch(() => {
+          if (active) setStatus("Unable to load going status.");
+        })
+        .finally(() => {
+          if (active) setSavedLoaded(true);
+        });
       return () => {
         active = false;
       };
@@ -116,7 +160,7 @@ export function DancerProfileActions({
     return () => {
       active = false;
     };
-  }, [dancerId]);
+  }, [dancerId, nextShiftId, setGoingCount]);
 
   useEffect(() => {
     if (!accountRequiredAction) return;
@@ -192,18 +236,43 @@ export function DancerProfileActions({
   }
 
   async function updateGoing(shiftId: string) {
+    if (!savedLoaded || goingSaving) return;
     const going = !saved.goingShiftIds.includes(shiftId);
+    setGoingSaving(true);
     try {
-      await postAction("/api/customer/going", { shiftId, going }, "going");
+      const data = await postGoingAction(shiftId, going);
       setSaved((current) => ({
         ...current,
-        goingShiftIds: going
+        goingShiftIds: data.going === true
           ? Array.from(new Set([...current.goingShiftIds, shiftId]))
           : current.goingShiftIds.filter((id) => id !== shiftId),
       }));
+      setGoingCount(readConfirmedGoingCount(data));
+      setStatus(data.going === true ? "You’re going." : "Removed.");
     } catch {
-      // postAction displays the production API error beside the controls.
+      // postGoingAction displays the production API error beside the controls.
+    } finally {
+      setGoingSaving(false);
     }
+  }
+
+  async function postGoingAction(shiftId: string, going: boolean) {
+    setStatus("");
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (token) headers.authorization = `Bearer ${token}`;
+    const response = await fetch("/api/customer/going", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ shiftId, going }),
+      credentials: "same-origin",
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      const message = data.error || "Unable to update going status.";
+      setStatus(message);
+      throw new Error(message);
+    }
+    return data;
   }
 
   async function submitReport() {
@@ -254,7 +323,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || reportSaving}>
+      <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
           type="button"
           onClick={() => {
@@ -276,9 +345,8 @@ export function DancerProfileActions({
         {nextShift ? (
           <button
             type="button"
-            onClick={() => {
-              if (requireCustomerAccount("going")) updateGoing(nextShift.id);
-            }}
+            onClick={() => updateGoing(nextShift.id)}
+            disabled={!savedLoaded || goingSaving}
           >
             {saved.goingShiftIds.includes(nextShift.id) ? "Going" : `Going ${nextShift.label}`}
           </button>
@@ -347,6 +415,14 @@ function readConfirmedFollowerCount(data: { followerCount?: unknown }) {
   return count;
 }
 
+function readConfirmedGoingCount(data: { goingCount?: unknown }) {
+  const count = Number(data.goingCount);
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error("The going status was saved, but the count could not be confirmed.");
+  }
+  return count;
+}
+
 function readToken() {
   try {
     const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
@@ -361,6 +437,5 @@ function readToken() {
 function accountActionMessage(action: AccountAction) {
   if (action === "follow") return "Create a free customer account to follow this dancer and save the profile.";
   if (action === "notify") return "Create a free customer account to turn on dancer notifications.";
-  if (action === "going") return "Create a free customer account to let the dancer know you’re going.";
   return "Create a free customer account to report this profile for review.";
 }

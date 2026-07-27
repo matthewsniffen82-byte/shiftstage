@@ -12,7 +12,10 @@ const [actionsSource, profileSource, followRouteSource, mobileSource] = await Pr
 test("the public follower count is shared with the live follow controls", () => {
   assert.match(actionsSource, /export function DancerFollowStateProvider/);
   assert.match(actionsSource, /export function DancerFollowerCount/);
-  assert.match(profileSource, /<DancerFollowStateProvider initialFollowerCount=\{profile\.followerCount\} key=\{profile\.id\}>/);
+  assert.match(
+    profileSource,
+    /<DancerFollowStateProvider[\s\S]*?initialFollowerCount=\{profile\.followerCount\}[\s\S]*?key=\{profile\.id\}/,
+  );
   assert.match(profileSource, /<dt>Followers<\/dt>[\s\S]*?<DancerFollowerCount \/>/);
 });
 
