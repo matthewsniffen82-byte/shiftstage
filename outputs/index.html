@@ -28915,7 +28915,8 @@
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";
     let adminDisapprovedDancerSearch = "";
-    const adminOpenDancerApprovalCards = new Set();
+    const ADMIN_CLOSED_DANCER_APPROVAL_CARDS_KEY = "dancrAdminClosedApprovalCardsV1";
+    const adminClosedDancerApprovalCards = loadClosedAdminApprovalCards();
     let authSession = loadAuthSession();
     let dancerSignupStarted = false;
     let stripeConfirmed = false;
@@ -38782,13 +38783,41 @@
       return `${city || ""}::${profile?.id || profile?.slug || profile?.name || ""}`;
     }
 
+    function loadClosedAdminApprovalCards() {
+      try {
+        const storedKeys = JSON.parse(sessionStorage.getItem(ADMIN_CLOSED_DANCER_APPROVAL_CARDS_KEY) || "[]");
+        return new Set(Array.isArray(storedKeys) ? storedKeys.filter((key) => typeof key === "string" && key) : []);
+      } catch {
+        return new Set();
+      }
+    }
+
+    function persistClosedAdminApprovalCards() {
+      try {
+        sessionStorage.setItem(
+          ADMIN_CLOSED_DANCER_APPROVAL_CARDS_KEY,
+          JSON.stringify([...adminClosedDancerApprovalCards])
+        );
+      } catch {}
+    }
+
+    function keepAdminApprovalCardOpen(card) {
+      if (!card) return;
+      const key = card.dataset.adminApprovalKey;
+      if (!key) return;
+      adminClosedDancerApprovalCards.delete(key);
+      card.open = true;
+      persistClosedAdminApprovalCards();
+    }
+
     function rememberOpenAdminApprovalCards() {
       document.querySelectorAll("#adminDancers details[data-admin-approval-key]").forEach((card) => {
         const key = card.dataset.adminApprovalKey;
         if (!key) return;
-        if (card.open) adminOpenDancerApprovalCards.add(key);
-        else adminOpenDancerApprovalCards.delete(key);
+        if (card.open) adminClosedDancerApprovalCards.delete(key);
+        else adminClosedDancerApprovalCards.add(key);
       });
+      persistClosedAdminApprovalCards();
     }
 
     function adminDancerApprovalCard(city, profile, index) {
@@ -38803,7 +38832,7 @@
       const submittedLabel = profile.approvalChangesSubmitted ? "Profile changes submitted" : "Submitted for review";
       const pendingLabel = profile.approvalChangesPending ? "Profile changes pending submission" : "Pending submission";
       return `
-        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" data-admin-approval-key="${displayText(approvalKey)}" ${adminOpenDancerApprovalCards.has(approvalKey) ? "open" : ""}>
+        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" data-admin-approval-key="${displayText(approvalKey)}" ${adminClosedDancerApprovalCards.has(approvalKey) ? "" : "open"}>
           <summary class="row">
             <div>
               <h3>${displayText(profile.name || "Stage name missing")}</h3>
@@ -39332,6 +39361,8 @@
       const host = button.closest("[data-admin-profile]");
       const profileMatch = adminProfileFromNode(host);
       if (!profileMatch) return;
+      const approvalCard = host.closest("details[data-admin-approval-key]");
+      keepAdminApprovalCardOpen(approvalCard);
 
       const status = button.dataset.adminContentReview;
       const targetType = button.dataset.reviewType;
@@ -39371,6 +39402,7 @@
           addLocalDancerReviewNotification(profileMatch.profile, targetType, targetId, label, notes);
         }
         showToast(savedStatus === "approved" ? `${label} approved` : `${label} disapproved`);
+        keepAdminApprovalCardOpen(approvalCard);
         renderAdminDashboard();
       } catch (error) {
         button.textContent = originalText;
@@ -40344,8 +40376,9 @@
       if (!card) return;
       const key = card.dataset.adminApprovalKey;
       if (!key) return;
-      if (card.open) adminOpenDancerApprovalCards.add(key);
-      else adminOpenDancerApprovalCards.delete(key);
+      if (card.open) adminClosedDancerApprovalCards.delete(key);
+      else adminClosedDancerApprovalCards.add(key);
+      persistClosedAdminApprovalCards();
     }, true);
 
     adminDashboard.addEventListener("input", (event) => {
