@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { isCoreVerificationApproved } from "@/src/lib/dancr/profile-approval";
-import { getDancerProfile } from "@/src/lib/dancr/public";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,9 +22,29 @@ function isVisibilityRequest(value: unknown): value is VisibilityRequest {
   return Object.keys(body).length === 1 && typeof body.isPublic === "boolean";
 }
 
-async function verifyPublicVisibility(db: ReturnType<typeof createAdminSupabaseClient>, slug: string, isPublic: boolean) {
-  const publicProfile = await getDancerProfile(db, slug);
-  const publicProfileVisible = Boolean(publicProfile);
+async function verifyPublicVisibility(
+  db: ReturnType<typeof createAdminSupabaseClient>,
+  dancerId: string,
+  isPublic: boolean,
+) {
+  const { data: profile, error } = await db
+    .from("dancer_profiles")
+    .select("id, status, verification_status, disabled_at, is_public")
+    .eq("id", dancerId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const status = String(profile?.status || "").toLowerCase();
+  const publicProfileVisible = Boolean(
+    profile &&
+    profile.is_public === true &&
+    !profile.disabled_at &&
+    status !== "rejected" &&
+    status !== "disabled" &&
+    isCoreVerificationApproved(profile),
+  );
+
   if (publicProfileVisible !== isPublic) {
     throw new Error("PUBLIC_PROFILE_VISIBILITY_VERIFICATION_FAILED");
   }
@@ -48,7 +67,7 @@ export async function PATCH(request: Request) {
     const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
-      .select("id, slug, status, verification_status, disabled_at, is_public")
+      .select("id, status, verification_status, disabled_at, is_public")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -69,7 +88,7 @@ export async function PATCH(request: Request) {
     }
 
     if (currentProfile.is_public === body.isPublic) {
-      const visibility = await verifyPublicVisibility(db, currentProfile.slug, body.isPublic);
+      const visibility = await verifyPublicVisibility(db, currentProfile.id, body.isPublic);
       return json({
         ok: true,
         changed: false,
@@ -95,7 +114,7 @@ export async function PATCH(request: Request) {
     if (!updatedProfile || updatedProfile.is_public !== body.isPublic) {
       throw new Error("PROFILE_VISIBILITY_UPDATE_NOT_APPLIED");
     }
-    const visibility = await verifyPublicVisibility(db, currentProfile.slug, body.isPublic);
+    const visibility = await verifyPublicVisibility(db, currentProfile.id, body.isPublic);
 
     console.info("DANCER_PROFILE_VISIBILITY_UPDATED", {
       dancerId: updatedProfile.id,

@@ -2,18 +2,22 @@ import { NextResponse } from "next/server";
 import { getPublicEnv, getServerEnv } from "../../../../src/lib/env";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const env = getPublicEnv();
     const serviceRoleKey = getServerEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const response = await fetch(`${env.supabaseUrl.replace(/\/$/, "")}/rest/v1/venues?select=id&limit=1`, {
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
+    const response = await fetch(
+      `${env.supabaseUrl.replace(/\/$/, "")}/rest/v1/dancer_profiles?select=id,is_public&limit=1`,
+      {
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+    );
 
     if (!response.ok) {
       return NextResponse.json(

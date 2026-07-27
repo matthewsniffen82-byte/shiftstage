@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [routeSource, dashboardSource, mobileAppSource, migrationSource] = await Promise.all([
+const [routeSource, dashboardSource, mobileAppSource, migrationSource, supabaseHealthSource] = await Promise.all([
   readFile(new URL("../app/api/dancer/profile/visibility/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607220001_incognito_visibility_hardening.sql", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/health/supabase/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("incognito uses a dedicated authenticated database operation", () => {
@@ -19,10 +20,15 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /coreApprovalComplete = isCoreVerificationApproved\(currentProfile\)/);
   assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
-  assert.match(routeSource, /getDancerProfile\(db, slug\)/);
+  assert.doesNotMatch(routeSource, /getDancerProfile/);
+  assert.match(routeSource, /\.select\("id, status, verification_status, disabled_at, is_public"\)/);
+  assert.match(routeSource, /\.eq\("id", dancerId\)/);
+  assert.match(routeSource, /profile\.is_public === true/);
+  assert.match(routeSource, /isCoreVerificationApproved\(profile\)/);
   assert.match(routeSource, /publicProfileVisible !== isPublic/);
   assert.match(routeSource, /visibility,/);
   assert.match(routeSource, /session,/);
+  assert.match(supabaseHealthSource, /dancer_profiles\?select=id,is_public&limit=1/);
   assert.match(dashboardSource, /fetch\("\/api\/dancer\/profile\/visibility"/);
   assert.match(dashboardSource, /"x-dancr-refresh-token": session\.refreshToken/);
   assert.match(dashboardSource, /persistResponseSession\(data\)/);
