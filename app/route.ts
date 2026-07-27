@@ -11,7 +11,7 @@ export async function GET() {
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileStyles = withBase.replace(
     "</head>",
-    '<link rel="stylesheet" href="/mobile-social-strip.css?v=1"></head>',
+    '<link rel="stylesheet" href="/mobile-social-strip.css?v=2"></head>',
   );
 
   return new Response(withLiveProfileStyles, {

@@ -42,8 +42,4 @@
     min-height: clamp(34px, 9.5vw, 40px) !important;
     flex: 0 0 clamp(34px, 9.5vw, 40px) !important;
   }
-
-  .approved-visual-profile .profile-modal .approved-social-edit-row {
-    grid-row: 3 !important;
-  }
 }
