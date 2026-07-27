@@ -41,13 +41,13 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
             <span className="venue-mark">{initials(venue.name)}</span>
             <strong>{venue.name}</strong>
             <small>{venue.address || `${venue.city}${venue.state ? `, ${venue.state}` : ""}`}</small>
-            <em>{venue.hoursLabel || "Hours pending"}</em>
+            {venue.hoursLabel ? <em>{venue.hoursLabel}</em> : null}
           </Link>
         ))}
         {!venues.length ? (
           <div className="empty-state">
             <strong>No active venues yet.</strong>
-            <span>Admin-created active venues will appear here automatically.</span>
+            <span>Active venue accounts will appear here automatically.</span>
           </div>
         ) : null}
       </section>

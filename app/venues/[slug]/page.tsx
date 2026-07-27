@@ -109,18 +109,24 @@ export default async function VenuePublicPage({ params }: PageProps) {
               <dt>City</dt>
               <dd>{venue.city}</dd>
             </div>
-            <div>
-              <dt>State</dt>
-              <dd>{venue.state || "Pending"}</dd>
-            </div>
-            <div>
-              <dt>Address</dt>
-              <dd>{venue.address || "Address pending"}</dd>
-            </div>
-            <div>
-              <dt>Hours</dt>
-              <dd>{venue.hoursLabel || "Hours pending"}</dd>
-            </div>
+            {venue.state ? (
+              <div>
+                <dt>State</dt>
+                <dd>{venue.state}</dd>
+              </div>
+            ) : null}
+            {venue.address ? (
+              <div>
+                <dt>Address</dt>
+                <dd>{venue.address}</dd>
+              </div>
+            ) : null}
+            {venue.hoursLabel ? (
+              <div>
+                <dt>Hours</dt>
+                <dd>{venue.hoursLabel}</dd>
+              </div>
+            ) : null}
           </dl>
         </article>
       </section>
