@@ -2,6 +2,7 @@
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminTvPanel from "./AdminTvPanel";
 
 type AdminState = {
@@ -463,6 +464,9 @@ export default function AdminClient() {
           </Panel>
           <Panel title="MyDancr TV">
             <AdminTvPanel />
+          </Panel>
+          <Panel title="Copyright / DMCA">
+            <AdminDmcaPanel />
           </Panel>
           <Panel title="Deal QR Attribution">
             <Metric label="Tracked redemptions" value={String(state.deals?.length || 0)} />
@@ -2490,6 +2494,31 @@ function AdminStyles() {
       .report-row p { color: #94e5ff; font-size: 14px; }
       .report-row div { display: flex; gap: 8px; flex-wrap: wrap; }
       .report-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .dmca-admin, .dmca-case-list, .dmca-case-detail, .dmca-agent-settings form { display: grid; gap: 10px; }
+      .dmca-admin-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .dmca-admin-summary a { color: #94e5ff; font-size: 12px; font-weight: 850; }
+      .dmca-agent-warning { margin: 0; padding: 10px 12px; border: 1px solid rgba(255,180,84,.34); border-radius: 8px; color: #ffd19a !important; background: rgba(255,180,84,.09); font-size: 12px !important; }
+      .dmca-agent-settings, .dmca-case-row { padding: 11px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: rgba(255,255,255,.035); }
+      .dmca-agent-settings summary, .dmca-case-row summary { cursor: pointer; color: #fff; font-weight: 900; }
+      .dmca-agent-settings form { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
+      .dmca-agent-settings label, .dmca-case-detail label { display: grid; gap: 6px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
+      .dmca-agent-settings input, .dmca-case-detail textarea { width: 100%; min-height: 40px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: rgba(255,255,255,.055); }
+      .dmca-agent-settings button { justify-self: start; color: #090911; background: #f7f2ff; }
+      .dmca-agent-check { grid-template-columns: 20px minmax(0, 1fr); align-items: center; }
+      .dmca-agent-check input { width: 18px; min-height: 18px; }
+      .dmca-admin-status { margin: 0; padding: 9px 11px; border: 1px solid rgba(140,234,255,.26); border-radius: 8px; color: #bff7ff !important; background: rgba(53,216,255,.08); font-size: 12px !important; }
+      .dmca-case-row summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+      .dmca-case-row summary span { display: grid; gap: 3px; min-width: 0; }
+      .dmca-case-row summary small { color: #958aa8; overflow-wrap: anywhere; }
+      .dmca-case-row summary em { color: #94e5ff; font-size: 11px; font-style: normal; }
+      .dmca-case-detail { margin-top: 12px; }
+      .dmca-case-detail p { margin: 0; color: #cfc5de; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+      .dmca-case-detail a { color: #94e5ff; font-size: 12px; font-weight: 850; overflow-wrap: anywhere; }
+      .dmca-case-detail > small { color: #958aa8; overflow-wrap: anywhere; }
+      .dmca-case-detail textarea { min-height: 78px; resize: vertical; }
+      .dmca-counter-summary { display: grid; gap: 5px; padding: 10px; border: 1px solid rgba(50,255,164,.28); border-radius: 8px; background: rgba(50,255,164,.07); }
+      .dmca-case-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .dmca-case-actions button { min-height: 38px; padding: 8px 10px; }
       .support-admin-panel { grid-column: span 2; }
       .support-inbox-list, .support-inbox-thread, .support-inbox-messages { display: grid; gap: 10px; }
       .support-inbox-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -2537,7 +2566,7 @@ function AdminStyles() {
       .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) {
-        .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters { grid-template-columns: 1fr; }
+        .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters, .dmca-agent-settings form, .dmca-case-actions { grid-template-columns: 1fr; }
         .support-admin-panel { grid-column: auto; }
         .top-nav, .admin-warning { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }

@@ -672,6 +672,9 @@
     }
 
     .legal-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 32px;
       padding: 0 11px;
       border: 1px solid rgba(150,139,173,.2);
@@ -681,6 +684,7 @@
       box-shadow: inset 0 0 12px rgba(255,255,255,.025);
       font-size: 12px;
       font-weight: 800;
+      text-decoration: none;
     }
 
     .legal-link.admin-legal-link {
@@ -27864,6 +27868,7 @@
         <button class="legal-link" data-legal-page="termsPage">Terms</button>
         <button class="legal-link" data-legal-page="privacyPage">Privacy</button>
         <button class="legal-link" data-legal-page="guidelinesPage">Guidelines</button>
+        <a class="legal-link" href="/dmca">Copyright / DMCA</a>
         <button class="legal-link" id="contactAdminBtn" type="button">Contact</button>
         <button class="legal-link admin-legal-link" id="adminBtn" type="button">Platform admin</button>
       </nav>
@@ -27889,6 +27894,7 @@
             <li>No direct sexual solicitation.</li>
             <li>No fake profiles or impersonation.</li>
             <li>No harassment, threats, or abuse.</li>
+            <li>Only upload content and music you own or are authorized to use. Repeat copyright infringement may suspend or terminate an account.</li>
             <li>No private messaging.</li>
             <li>Schedule discovery only.</li>
           </ul>
@@ -27913,7 +27919,7 @@
         </div>
         <div class="auth-card">
           <h3>Data we use</h3>
-          <p>We use account details, city settings, follows, notifications, profile submissions, shift posts, venue details, and safety reports to operate the app.</p>
+          <p>We use account details, city settings, follows, notifications, profile submissions, shift posts, venue details, safety reports, and information submitted in copyright notices or counter-notices to operate the app.</p>
         </div>
         <div class="auth-card">
           <h3>Why we use it</h3>
@@ -27922,6 +27928,7 @@
             <li>Send notifications about followed dancers and posted shifts.</li>
             <li>Review dancer verification, photos, venues, and reports.</li>
             <li>Protect against fake profiles, harassment, illegal services, and rule-breaking content.</li>
+            <li>Process copyright notices, notify uploaders, forward legally required counter-notice information, and respond to court filings.</li>
           </ul>
         </div>
         <div class="auth-card">

@@ -26,6 +26,39 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
   return { push, email };
 }
 
+export async function sendTransactionalEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  if (!apiKey || !from) return { delivered: false, reason: "email_not_configured" as const };
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      ...(input.html ? { html: input.html } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    console.warn("Resend transactional delivery failed", await response.text().catch(() => response.statusText));
+    return { delivered: false, reason: "provider_rejected" as const };
+  }
+
+  return { delivered: true as const };
+}
+
 async function getRecipients(client: DancrClient, recipientIds: string[]): Promise<Recipient[]> {
   const ids = Array.from(new Set(recipientIds));
   if (!ids.length) return [];
@@ -116,9 +149,13 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
 
 function notificationActionUrl(row: NotificationDeliveryRow) {
   const payload = (row.payload || {}) as Record<string, unknown>;
-  if (row.notification_type !== "approval_status") return "";
   const baseUrl = appBaseUrl();
   if (!baseUrl) return "";
+
+  if (row.notification_type === "dmca_status" && payload.caseId) {
+    return `${baseUrl}/dmca/counter/${encodeURIComponent(String(payload.caseId))}`;
+  }
+  if (row.notification_type !== "approval_status") return "";
 
   const params = new URLSearchParams({
     dancr_dashboard: "dancer",

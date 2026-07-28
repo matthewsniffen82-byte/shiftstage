@@ -24,6 +24,7 @@ export type NotificationType =
   | "ranking_milestone"
   | "approval_status"
   | "tv_video_status"
+  | "dmca_status"
   | "support_message"
   | "weekly_summary";
 

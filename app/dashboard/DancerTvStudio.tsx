@@ -287,7 +287,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           </label>
           <label className="tv-check">
             <input checked={rightsConfirmed} type="checkbox" onChange={(event) => setRightsConfirmed(event.target.checked)} />
-            <span>I own this video or have the rights to publish its video and audio.</span>
+            <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
           </label>
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Uploading and submitting…" : "Submit for MyDancr TV review"}
