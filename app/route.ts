@@ -3,7 +3,8 @@ import path from "node:path";
 import { LIVE_SHELL_SHA256 } from "@/src/generated/live-shell-version";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export const revalidate = false;
 
 export async function GET() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
@@ -18,9 +19,7 @@ export async function GET() {
   return new Response(withLiveProfileStyles, {
     headers: {
       "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
-      "pragma": "no-cache",
-      "expires": "0",
+      "cache-control": "public, max-age=0, s-maxage=31536000, stale-while-revalidate=86400",
       "x-dancr-live-shell-version": LIVE_SHELL_SHA256,
     },
   });

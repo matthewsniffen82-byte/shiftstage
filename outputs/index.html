@@ -14,7 +14,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/mydancr-icon.svg">
-  <link rel="preload" as="image" href="./dancr-hero.png" fetchpriority="high">
+  <link rel="preload" as="image" href="./dancr-hero.webp" type="image/webp" fetchpriority="high">
   <meta property="og:title" content="mydancr">
   <meta property="og:site_name" content="mydancr">
   <meta property="og:description" content="Choose your city. See who's working now.">
@@ -18822,7 +18822,7 @@
       padding: 0 !important;
       overflow: hidden !important;
       background-color: #050507 !important;
-      background-image: url("./dancr-hero.png") !important;
+      background-image: url("./dancr-hero.webp") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: cover !important;
@@ -18853,7 +18853,7 @@
       height: auto !important;
       display: block !important;
       padding: 0 !important;
-      background-image: url("./dancr-hero.png") !important;
+      background-image: url("./dancr-hero.webp") !important;
       background-repeat: no-repeat !important;
       background-position: center center !important;
       background-size: cover !important;
@@ -20380,7 +20380,7 @@
       height: auto !important;
       padding: 0 !important;
       overflow: hidden !important;
-      background-image: url("./dancr-hero.png") !important;
+      background-image: url("./dancr-hero.webp") !important;
       background-size: contain !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
@@ -22397,7 +22397,7 @@
         overflow: hidden !important;
         background-image:
           linear-gradient(90deg, rgba(3,3,5,.18), rgba(3,3,5,.02)),
-          url("./dancr-hero.png") !important;
+          url("./dancr-hero.webp") !important;
         background-size: cover !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
@@ -22821,7 +22821,7 @@
       min-height: 0 !important;
       height: auto !important;
       padding: 0 !important;
-      background-image: url("./dancr-hero.png") !important;
+      background-image: url("./dancr-hero.webp") !important;
       background-size: contain !important;
       background-position: center center !important;
       background-repeat: no-repeat !important;
@@ -32232,12 +32232,13 @@
       if (force) params.set("refresh", String(Date.now()));
       const query = params.toString();
       try {
-        const [allDancers, tonightDancers, venueList] = await Promise.all([
-          fetchJson(`/api/public/dancers?${query}`),
-          fetchJson(`/api/public/dancers?${query}&scope=tonight`),
-          fetchJson(`/api/public/venues?${query}`)
-        ]);
-        const applied = applyLiveMarket(city, allDancers.dancers || [], tonightDancers.dancers || [], venueList.venues || []);
+        const discovery = await fetchJson(`/api/public/discovery?${query}`);
+        const applied = applyLiveMarket(
+          city,
+          discovery.dancers || [],
+          discovery.tonightDancers || [],
+          discovery.venues || []
+        );
         liveMarketState[city] = applied ? "ready" : "fallback";
         if (isCustomerSession()) await loadLiveCustomerSaved();
         if (citySelect.value === city) {
