@@ -423,22 +423,25 @@ export default function TvFeedClient({
             key={video.id}
           >
             <div className="tv-player">
-              <Link
-                className="tv-profile-card"
-                href={dancerLiveProfileHref(video)}
-                aria-label={`Open ${video.dancer.stageName}'s live profile`}
-                onClick={() => trackEvent(video.id, "profile_click")}
-              >
+              <div className="tv-profile-card">
                 <video
                   ref={(element) => {
                     videoElements.current[video.id] = element;
                   }}
-                  aria-label={`${video.dancer.stageName} MyDancr TV video`}
+                  aria-label={`${video.dancer.stageName} MyDancr TV video. Play or pause.`}
+                  role="button"
+                  tabIndex={0}
                   loop
                   muted={muted}
                   playsInline
                   preload={video.id === activeVideoId ? "auto" : "metadata"}
                   src={video.videoUrl}
+                  onClick={(event) => toggleVideoPlayback(event.currentTarget)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
+                    toggleVideoPlayback(event.currentTarget);
+                  }}
                   onTimeUpdate={(event) => {
                     const element = event.currentTarget;
                     if (
@@ -465,17 +468,29 @@ export default function TvFeedClient({
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">
                       <h2>
-                        <span className="tv-card-stage-name">{video.dancer.stageName}</span>
-                        <span className="tv-verified-mark" aria-label="Verified">✓</span>
+                        <Link
+                          className="tv-card-stage-link"
+                          href={dancerLiveProfileHref(video)}
+                          aria-label={`Open ${video.dancer.stageName}'s live profile`}
+                          onClick={() => trackEvent(video.id, "profile_click")}
+                        >
+                          <span className="tv-card-stage-name">{video.dancer.stageName}</span>
+                          <span className="tv-verified-mark" aria-label="Verified">✓</span>
+                        </Link>
                       </h2>
                       {video.venue ? (
-                        <div className="tv-card-venue-line">
+                        <Link
+                          className="tv-card-venue-line"
+                          href={`/venues/${encodeURIComponent(video.venue.slug)}`}
+                          aria-label={`Open ${video.venue.name} venue profile`}
+                          onClick={() => trackEvent(video.id, "venue_click")}
+                        >
                           <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
                             <circle cx="12" cy="10" r="2.5" />
                           </svg>
                           <span className="tv-card-venue-name">{video.venue.name}</span>
-                        </div>
+                        </Link>
                       ) : null}
                     </div>
                     {video.shift ? (
@@ -500,7 +515,7 @@ export default function TvFeedClient({
                     )}
                   </div>
                 </div>
-              </Link>
+              </div>
               <button
                 className="tv-sound"
                 type="button"
@@ -609,6 +624,11 @@ function dancerInitials(value: string) {
     .join("") || "D";
 }
 
+function toggleVideoPlayback(video: HTMLVideoElement) {
+  if (video.paused) video.play().catch(() => null);
+  else video.pause();
+}
+
 function readCustomerToken() {
   const session = readSession();
   return session?.account?.role === "customer" && typeof session?.accessToken === "string"
@@ -691,8 +711,8 @@ function TvStyles() {
       .tv-slide { height: 100%; min-height: 100%; max-height: 100%; padding: 8px 0; display: grid; place-items: center; overflow: hidden; contain: layout paint; scroll-snap-align: start; scroll-snap-stop: always; }
       .tv-player { position: relative; width: min(100%, 620px); height: 100%; min-height: 0; max-height: none; overflow: hidden; border: 1px solid rgba(139,92,246,.34); border-radius: 20px; background: #08080b; box-shadow: 0 26px 80px rgba(0,0,0,.56), 0 0 28px rgba(109,40,217,.12); }
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
-      .tv-profile-card:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
+      .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 12px; font-weight: 900; cursor: pointer; }
       .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: end; gap: 14px; padding: 86px 20px 22px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
@@ -701,9 +721,11 @@ function TvStyles() {
       .tv-profile-details { min-width: 0; display: grid; gap: 5px; }
       .tv-card-info-stack { min-width: 0; display: grid; gap: 3px; }
       .tv-profile-body h2 { min-width: 0; margin: 0 0 2px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: clamp(20px, 3vw, 26px); font-weight: 900; line-height: 1.04; text-shadow: 0 2px 12px rgba(0,0,0,.72); }
+      .tv-card-stage-link { min-width: 0; max-width: 100%; display: flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
       .tv-card-stage-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .tv-verified-mark { width: 17px; height: 17px; flex: 0 0 17px; display: inline-grid; place-items: center; border-radius: 999px; color: #041014; background: #67e8f9; box-shadow: 0 0 10px rgba(34,211,238,.36); font-size: 11px; font-weight: 950; line-height: 1; }
-      .tv-card-venue-line { min-width: 0; display: flex; align-items: center; gap: 5px; color: #bdb4cc; font-size: 13px; font-weight: 760; line-height: 1.15; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+      .tv-card-venue-line { width: fit-content; min-width: 0; max-width: 100%; display: flex; align-items: center; gap: 5px; color: #bdb4cc; font-size: 13px; font-weight: 760; line-height: 1.15; text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+      .tv-card-stage-link:focus-visible, .tv-card-venue-line:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; border-radius: 4px; }
       .tv-card-venue-line svg, .tv-schedule-row svg, .tv-no-shifts-state svg { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .tv-card-venue-line svg { color: #a78bfa; }
       .tv-card-venue-name { min-width: 0; overflow: hidden; color: #e7d8ff; font-weight: 860; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 0 12px rgba(168,85,247,.2), 0 2px 10px rgba(0,0,0,.72); }

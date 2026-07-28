@@ -1,0 +1,28 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import test from "node:test";
+
+const feedClient = fs.readFileSync("app/tv/TvFeedClient.tsx", "utf8");
+
+test("MyDancr TV separates video playback from profile navigation", () => {
+  assert.doesNotMatch(
+    feedClient,
+    /<Link[\s\r\n]+className="tv-profile-card"/,
+  );
+  assert.match(
+    feedClient,
+    /<div className="tv-profile-card">[\s\S]*?<video[\s\S]*?role="button"[\s\S]*?tabIndex=\{0\}[\s\S]*?onClick=\{\(event\) => toggleVideoPlayback\(event\.currentTarget\)\}/,
+  );
+  assert.match(
+    feedClient,
+    /function toggleVideoPlayback\(video: HTMLVideoElement\) \{[\s\S]*?video\.paused[\s\S]*?video\.play\(\)\.catch\(\(\) => null\)[\s\S]*?video\.pause\(\)/,
+  );
+  assert.match(
+    feedClient,
+    /className="tv-card-stage-link"[\s\S]*?href=\{dancerLiveProfileHref\(video\)\}[\s\S]*?video\.dancer\.stageName/,
+  );
+  assert.match(
+    feedClient,
+    /className="tv-card-venue-line"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(video\.venue\.slug\)\}`\}[\s\S]*?video\.venue\.name/,
+  );
+});
