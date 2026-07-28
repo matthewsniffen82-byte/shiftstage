@@ -19,6 +19,20 @@ const FILTERS = [
 ] as const;
 
 type TvSource = "tv_feed" | "shared_link";
+type SessionRole = "customer" | "dancer" | "venue" | "admin";
+type TvAuthSession = {
+  accessToken?: string;
+  account?: {
+    role?: SessionRole;
+  } | null;
+};
+type TvNotification = {
+  id: string;
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+};
 
 export default function TvFeedClient({
   initialCity,
@@ -42,8 +56,13 @@ export default function TvFeedClient({
   const [muted, setMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [accountLabel, setAccountLabel] = useState("Login / Join");
+  const [session, setSession] = useState<TvAuthSession | null>(null);
+  const [notifications, setNotifications] = useState<TvNotification[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState("");
   const feedElement = useRef<HTMLElement | null>(null);
+  const headerActionsElement = useRef<HTMLDivElement | null>(null);
   const videoElements = useRef<Record<string, HTMLVideoElement | null>>({});
   const engagedTimers = useRef<Record<string, number>>({});
   const completedVideos = useRef(new Set<string>());
@@ -102,9 +121,60 @@ export default function TvFeedClient({
   }, []);
 
   useEffect(() => {
-    const session = readSession();
-    if (session?.account?.role) setAccountLabel("Account");
+    const nextSession = readSession();
+    setSession(nextSession);
+    const role = nextSession?.account?.role;
+    if (
+      !nextSession?.accessToken ||
+      (role !== "customer" && role !== "dancer")
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setNotificationsLoading(true);
+    fetch("/api/notifications", {
+      headers: { authorization: `Bearer ${nextSession.accessToken}` },
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Unable to load notifications.");
+        }
+        setNotifications(normalizeNotifications(data.notifications));
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setNotificationStatus(
+          error instanceof Error ? error.message : "Unable to load notifications.",
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setNotificationsLoading(false);
+      });
+
+    return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (!headerActionsElement.current?.contains(event.target as Node)) {
+        setNotificationsOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setNotificationsOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [notificationsOpen]);
 
   useEffect(() => {
     if (initialFilter !== "following" || loadedAuthenticatedFeed.current) return;
@@ -159,6 +229,64 @@ export default function TvFeedClient({
     loadFeed(nextFilter, city);
   }
 
+  async function markNotificationRead(notificationId: string) {
+    if (!session?.accessToken) return;
+    setNotificationStatus("");
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${session.accessToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ notificationId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to update notification.");
+      }
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, readAt: data.notification?.readAt || new Date().toISOString() }
+            : notification,
+        ),
+      );
+    } catch (error) {
+      setNotificationStatus(
+        error instanceof Error ? error.message : "Unable to update notification.",
+      );
+    }
+  }
+
+  async function clearNotifications() {
+    if (!session?.accessToken) return;
+    setNotificationStatus("");
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to clear notifications.");
+      }
+      setNotifications([]);
+      setNotificationStatus("Notifications cleared.");
+    } catch (error) {
+      setNotificationStatus(
+        error instanceof Error ? error.message : "Unable to clear notifications.",
+      );
+    }
+  }
+
+  const role = session?.account?.role;
+  const showNotifications =
+    Boolean(session?.accessToken) && (role === "customer" || role === "dancer");
+  const unreadNotificationCount = notifications.filter(
+    (notification) => !notification.readAt,
+  ).length;
+
   return (
     <main className="tv-shell">
       <TvStyles />
@@ -167,30 +295,74 @@ export default function TvFeedClient({
           <Link className="tv-global-logo" href="/" aria-label="Go to Mydancr home">
             <span aria-hidden="true">mydanc<em>r</em></span>
           </Link>
-          <Link className="tv-global-search" href="/#discoveryTabs" aria-label="Search dancers, clubs, and cities">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <span>Search dancers, clubs, cities...</span>
-          </Link>
-          <Link className="tv-global-account" href="/account">{accountLabel}</Link>
-          <Link
-            className="tv-close"
-            href="/"
-            aria-label="Close MyDancr TV and return to homepage"
-          >
-            ×
-          </Link>
+          <div className="tv-header-actions" ref={headerActionsElement}>
+            {showNotifications ? (
+              <button
+                className={notificationsOpen ? "tv-notification-button active" : "tv-notification-button"}
+                type="button"
+                aria-label="Open notifications"
+                aria-expanded={notificationsOpen}
+                aria-controls="tv-notification-panel"
+                onClick={() => setNotificationsOpen((open) => !open)}
+              >
+                {unreadNotificationCount ? (
+                  <span className="tv-notification-count">
+                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                  </span>
+                ) : null}
+                <BellIcon />
+              </button>
+            ) : null}
+            {role ? (
+              <Link
+                className="tv-global-account tv-account-icon"
+                href={dashboardHref(role)}
+                aria-label={`Open ${role} dashboard`}
+                title={`${capitalize(role)} dashboard`}
+              >
+                <AccountIcon />
+              </Link>
+            ) : (
+              <Link className="tv-global-account" href="/account">Login / Join</Link>
+            )}
+            {showNotifications && notificationsOpen ? (
+              <section
+                className="tv-notification-panel"
+                id="tv-notification-panel"
+                aria-label="Notifications"
+              >
+                <div className="tv-notification-head">
+                  <div>
+                    <strong>Notifications</strong>
+                    <span>{unreadNotificationCount} unread</span>
+                  </div>
+                  <Link href={dashboardHref(role)}>Open dashboard</Link>
+                </div>
+                <div className="tv-notification-list">
+                  {notificationsLoading ? <p>Loading notifications…</p> : null}
+                  {!notificationsLoading && !notifications.length ? <p>No notifications yet.</p> : null}
+                  {notifications.slice(0, 8).map((notification) => (
+                    <button
+                      className={notification.readAt ? "read" : ""}
+                      type="button"
+                      key={notification.id}
+                      onClick={() => markNotificationRead(notification.id)}
+                    >
+                      <strong>{notification.title}</strong>
+                      <span>{notification.body}</span>
+                    </button>
+                  ))}
+                </div>
+                {notifications.length ? (
+                  <button className="tv-notification-clear" type="button" onClick={clearNotifications}>
+                    Clear notifications
+                  </button>
+                ) : null}
+                {notificationStatus ? <p className="tv-notification-status" role="status">{notificationStatus}</p> : null}
+              </section>
+            ) : null}
+          </div>
         </div>
-        <nav className="tv-site-nav" aria-label="Primary">
-          <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Now</Link>
-          <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link>
-          <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
-          <Link href={`/trending?city=${encodeURIComponent(city)}`}>Trending</Link>
-          <Link className="active" href={`/tv?city=${encodeURIComponent(city)}`}>MyDancr TV</Link>
-          <Link href="/account">Account</Link>
-        </nav>
       </header>
 
       <header className="tv-header">
@@ -198,6 +370,13 @@ export default function TvFeedClient({
           <span>Watch. Discover. Go.</span>
           <h1>MyDancr TV {myDancrTvCityLabel(city)}</h1>
         </div>
+          <Link
+            className="tv-close"
+            href="/"
+            aria-label="Close MyDancr TV and return to homepage"
+          >
+            ×
+          </Link>
       </header>
 
       <nav className="tv-filters" aria-label="MyDancr TV feeds">
@@ -274,41 +453,52 @@ export default function TvFeedClient({
                 />
                 <div className="tv-player-shade" />
                 <div className="tv-profile-body">
-                  <div className="tv-card-info-stack">
-                    <h2>
-                      <span className="tv-card-stage-name">{video.dancer.stageName}</span>
-                      <span className="tv-verified-mark" aria-label="Verified">✓</span>
-                    </h2>
-                    {video.venue ? (
-                      <div className="tv-card-venue-line">
+                  <span
+                    className={`tv-profile-photo${video.dancer.primaryPhotoUrl ? " has-photo" : ""}`}
+                    style={video.dancer.primaryPhotoUrl
+                      ? { backgroundImage: `url(${JSON.stringify(video.dancer.primaryPhotoUrl)})` }
+                      : undefined}
+                    aria-hidden="true"
+                  >
+                    {video.dancer.primaryPhotoUrl ? null : dancerInitials(video.dancer.stageName)}
+                  </span>
+                  <div className="tv-profile-details">
+                    <div className="tv-card-info-stack">
+                      <h2>
+                        <span className="tv-card-stage-name">{video.dancer.stageName}</span>
+                        <span className="tv-verified-mark" aria-label="Verified">✓</span>
+                      </h2>
+                      {video.venue ? (
+                        <div className="tv-card-venue-line">
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+                            <circle cx="12" cy="10" r="2.5" />
+                          </svg>
+                          <span className="tv-card-venue-name">{video.venue.name}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                    {video.shift ? (
+                      <div className={video.shift.isActive ? "tv-schedule-row is-tonight" : "tv-schedule-row is-upcoming"}>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
-                          <circle cx="12" cy="10" r="2.5" />
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 7v5l3 2" />
                         </svg>
-                        <span className="tv-card-venue-name">{video.venue.name}</span>
+                        <span className={video.shift.isActive ? "tv-card-schedule-text tonight" : "tv-card-schedule-text upcoming"}>
+                          {video.shift.isActive
+                            ? "Working now"
+                            : `Upcoming ${formatShift(video.shift.startsAt, video.shift.timezone)}`}
+                        </span>
                       </div>
-                    ) : null}
+                    ) : (
+                      <div className="tv-no-shifts-state">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+                        </svg>
+                        <span>No upcoming shifts</span>
+                      </div>
+                    )}
                   </div>
-                  {video.shift ? (
-                    <div className={video.shift.isActive ? "tv-schedule-row is-tonight" : "tv-schedule-row is-upcoming"}>
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 7v5l3 2" />
-                      </svg>
-                      <span className={video.shift.isActive ? "tv-card-schedule-text tonight" : "tv-card-schedule-text upcoming"}>
-                        {video.shift.isActive
-                          ? "Working now"
-                          : `Upcoming ${formatShift(video.shift.startsAt, video.shift.timezone)}`}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="tv-no-shifts-state">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
-                      </svg>
-                      <span>No upcoming shifts</span>
-                    </div>
-                  )}
                 </div>
               </Link>
               <button
@@ -335,13 +525,61 @@ export default function TvFeedClient({
   );
 }
 
-function readSession() {
+function readSession(): TvAuthSession | null {
   if (typeof window === "undefined") return null;
   try {
     return JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
   } catch {
     return null;
   }
+}
+
+function normalizeNotifications(value: unknown): TvNotification[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const notification = item as Record<string, unknown>;
+    const id = typeof notification.id === "string" ? notification.id : "";
+    if (!id) return [];
+    return [{
+      id,
+      title: typeof notification.title === "string" && notification.title.trim()
+        ? notification.title.trim()
+        : "Notification",
+      body: typeof notification.body === "string" ? notification.body.trim() : "",
+      readAt: typeof notification.readAt === "string" ? notification.readAt : null,
+      createdAt: typeof notification.createdAt === "string" ? notification.createdAt : "",
+    }];
+  });
+}
+
+function dashboardHref(role: SessionRole | undefined) {
+  if (role === "dancer") return "/dashboard/dancer";
+  if (role === "venue") return "/dashboard/venue";
+  if (role === "admin") return "/admin";
+  return "/dashboard/customer";
+}
+
+function capitalize(value: string) {
+  return value ? `${value[0].toUpperCase()}${value.slice(1)}` : "";
+}
+
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" />
+      <path d="M10 20a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
+function AccountIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
 }
 
 function myDancrTvCityLabel(city: string) {
@@ -360,6 +598,15 @@ function dancerLiveProfileHref(video: MyDancrTvVideo) {
 
 function slugifyLiveProfileName(value: string) {
   return value.toLowerCase().replaceAll(" ", "-").replace(/[^a-z0-9-]/g, "");
+}
+
+function dancerInitials(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "D";
 }
 
 function readCustomerToken() {
@@ -403,23 +650,38 @@ function TvStyles() {
       button, input { font: inherit; }
       .tv-shell { width: min(100%, 1440px); height: 100svh; height: 100dvh; min-height: 0; margin: 0 auto; padding: 0 clamp(14px, 3vw, 44px) max(12px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; overflow: hidden; border-inline: 1px solid rgba(53,216,255,.1); background: radial-gradient(circle at 12% 0%, rgba(139,92,246,.22), transparent 25rem), radial-gradient(circle at 92% 6%, rgba(34,199,255,.12), transparent 25rem), #030305; box-shadow: 0 40px 120px rgba(0,0,0,.7); }
       .tv-global-header { position: relative; flex: 0 0 auto; z-index: 40; margin: 0 calc(-1 * clamp(14px, 3vw, 44px)) 14px; padding: 16px clamp(14px, 3vw, 44px) 12px; border-bottom: 1px solid rgba(53,216,255,.12); background: rgba(3,3,4,.88); box-shadow: 0 12px 34px rgba(0,0,0,.58); backdrop-filter: blur(22px); }
-      .tv-global-topbar { display: flex; align-items: center; gap: 18px; }
+      .tv-global-topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
       .tv-global-logo { width: min(34vw, 236px); min-width: 196px; aspect-ratio: 331 / 103; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(148,68,255,.72); border-radius: 15px; color: #fff; background: #050507; box-shadow: 0 0 18px rgba(132,50,255,.24), inset 0 0 16px rgba(132,50,255,.08); text-decoration: none; }
       .tv-global-logo span { color: #fff; font-size: clamp(38px, 5.7vw, 50px); font-weight: 950; letter-spacing: -.065em; line-height: .9; text-transform: lowercase; text-shadow: 0 0 12px rgba(255,255,255,.7), 0 0 22px rgba(255,255,255,.28); transform: translateY(-1px); }
       .tv-global-logo em { color: #a855ff; font-style: normal; text-shadow: 0 0 10px rgba(168,85,255,.96), 0 0 24px rgba(139,92,246,.78), 0 0 42px rgba(124,58,237,.52); }
-      .tv-global-search { width: min(520px, 34vw); min-height: 56px; display: flex; align-items: center; gap: 13px; padding: 0 18px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #7f758c; background: rgba(12,12,15,.84); box-shadow: inset 0 0 18px rgba(255,255,255,.025), 0 10px 30px rgba(0,0,0,.32); text-decoration: none; }
-      .tv-global-search svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; flex: 0 0 auto; }
-      .tv-global-search span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-      .tv-global-account { min-width: 108px; min-height: 46px; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; padding: 0 17px; border: 1px solid rgba(236,72,153,.42); border-radius: 999px; color: #fff; background: rgba(9,9,15,.88); box-shadow: 0 0 22px rgba(124,58,237,.18), inset 0 1px 0 rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; white-space: nowrap; }
+      .tv-header-actions { position: relative; display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+      .tv-global-account { min-width: 108px; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 17px; border: 1px solid rgba(236,72,153,.42); border-radius: 999px; color: #fff; background: rgba(9,9,15,.88); box-shadow: 0 0 22px rgba(124,58,237,.18), inset 0 1px 0 rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; white-space: nowrap; }
+      .tv-global-account.tv-account-icon, .tv-notification-button { position: relative; width: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid rgba(139,92,246,.52); border-radius: 999px; color: #fff; background: rgba(10,10,14,.88); box-shadow: 0 0 20px rgba(124,58,237,.18), inset 0 0 16px rgba(255,255,255,.035); cursor: pointer; }
+      .tv-global-account.tv-account-icon { display: grid; place-items: center; }
+      .tv-global-account.tv-account-icon svg, .tv-notification-button svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-notification-button { display: grid; place-items: center; color: #22c7ff; }
+      .tv-notification-button:hover, .tv-notification-button:focus-visible, .tv-notification-button.active, .tv-global-account:hover, .tv-global-account:focus-visible { border-color: rgba(34,199,255,.68); box-shadow: 0 0 22px rgba(34,199,255,.2), 0 0 18px rgba(139,92,246,.18); }
+      .tv-notification-count { position: absolute; z-index: 2; top: -7px; left: -8px; min-width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border-radius: 999px; color: #050507; background: #22c7ff; box-shadow: 0 0 14px rgba(34,199,255,.42); font-size: 10px; font-weight: 950; }
+      .tv-notification-panel { position: absolute; z-index: 80; top: calc(100% + 12px); right: 0; width: min(340px, calc(100vw - 28px)); max-height: min(520px, 70dvh); display: grid; gap: 10px; padding: 14px; overflow: auto; border: 1px solid rgba(139,92,246,.42); border-radius: 14px; color: #f7f4ff; background: rgba(5,5,9,.98); box-shadow: 0 22px 60px rgba(0,0,0,.68), 0 0 28px rgba(109,40,217,.2); }
+      .tv-notification-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .tv-notification-head > div { display: grid; gap: 2px; }
+      .tv-notification-head strong { font-size: 16px; }
+      .tv-notification-head span { color: #a99fba; font-size: 11px; font-weight: 800; }
+      .tv-notification-head a { color: #7eeaff; font-size: 11px; font-weight: 900; text-decoration: none; }
+      .tv-notification-list { display: grid; gap: 7px; }
+      .tv-notification-list p { margin: 0; padding: 12px; color: #aaa0b8; text-align: center; }
+      .tv-notification-list button { display: grid; gap: 3px; padding: 10px 11px; border: 1px solid rgba(34,199,255,.2); border-radius: 10px; color: #f6f3fb; background: rgba(34,199,255,.07); text-align: left; cursor: pointer; }
+      .tv-notification-list button.read { border-color: rgba(255,255,255,.08); background: rgba(255,255,255,.025); }
+      .tv-notification-list button strong { font-size: 12px; }
+      .tv-notification-list button span { color: #bdb4ca; font-size: 11px; line-height: 1.35; }
+      .tv-notification-clear { min-height: 38px; border: 1px solid rgba(139,92,246,.32); border-radius: 999px; color: #fff; background: rgba(109,40,217,.16); font-weight: 900; cursor: pointer; }
+      .tv-notification-status { margin: 0; color: #9fefff; font-size: 11px; font-weight: 800; }
       .tv-close { width: 46px; height: 46px; flex: 0 0 46px; display: grid; place-items: center; border: 1px solid rgba(53,216,255,.46); border-radius: 50%; color: #fff; background: rgba(5,5,9,.9); box-shadow: 0 0 22px rgba(53,216,255,.14); font-size: 28px; line-height: 1; text-decoration: none; }
-      .tv-global-logo:focus-visible, .tv-global-search:focus-visible, .tv-global-account:focus-visible, .tv-close:focus-visible { outline: 2px solid rgba(192,132,255,.72); outline-offset: 3px; }
-      .tv-site-nav { max-width: 1180px; min-height: 40px; margin: 12px auto 0; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
-      .tv-site-nav a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; color: #d8d0e8; background: rgba(255,255,255,.035); font-size: 13px; font-weight: 850; text-decoration: none; }
-      .tv-site-nav a.active { color: #fff; border-color: rgba(34,199,255,.5); background: linear-gradient(135deg, rgba(109,40,217,.35), rgba(34,199,255,.14)); box-shadow: 0 0 20px rgba(34,199,255,.1); }
-      .tv-header { width: 100%; max-width: 1000px; flex: 0 0 auto; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: end; gap: 18px; }
+      .tv-global-logo:focus-visible, .tv-global-account:focus-visible, .tv-close:focus-visible { outline: 2px solid rgba(192,132,255,.72); outline-offset: 3px; }
+      .tv-header { width: 100%; max-width: 1000px; flex: 0 0 auto; margin: 0 auto 12px; padding: 13px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid rgba(139,92,246,.28); border-radius: 14px; background: rgba(7,7,11,.84); box-shadow: inset 0 0 20px rgba(109,40,217,.06); }
       .tv-header > div { display: grid; gap: 2px; }
       .tv-header span, .tv-kicker { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .18em; text-transform: uppercase; }
-      .tv-header h1 { margin: 0; font-size: clamp(34px, 6vw, 62px); line-height: 1; }
+      .tv-header h1 { margin: 0; font-size: clamp(30px, 4.2vw, 48px); line-height: 1; }
       .tv-filters { position: relative; flex: 0 0 auto; z-index: 20; width: 100%; max-width: 1000px; margin: 0 auto 12px; padding: 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(5,5,8,.9); backdrop-filter: blur(16px); }
       .tv-filters button { min-height: 42px; border: 1px solid transparent; border-radius: 8px; color: #a99ebc; background: transparent; font-weight: 900; cursor: pointer; }
       .tv-filters button.active { color: #fff; border-color: rgba(139,92,246,.44); background: linear-gradient(135deg, rgba(109,40,217,.34), rgba(34,199,255,.12)); }
@@ -433,7 +695,10 @@ function TvStyles() {
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 12px; font-weight: 900; cursor: pointer; }
-      .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; gap: 5px; padding: 86px 20px 22px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
+      .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: end; gap: 14px; padding: 86px 20px 22px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
+      .tv-profile-photo { width: 58px; height: 58px; display: grid; place-items: center; overflow: hidden; border: 2px solid rgba(126,234,255,.92); border-radius: 50%; color: #fff; background-color: #24113c; background-position: center; background-repeat: no-repeat; background-size: cover; box-shadow: 0 0 0 3px rgba(139,92,246,.34), 0 10px 28px rgba(0,0,0,.56), 0 0 24px rgba(34,199,255,.28); font-size: 18px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+      .tv-profile-photo.has-photo { background-color: #08080b; }
+      .tv-profile-details { min-width: 0; display: grid; gap: 5px; }
       .tv-card-info-stack { min-width: 0; display: grid; gap: 3px; }
       .tv-profile-body h2 { min-width: 0; margin: 0 0 2px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: clamp(20px, 3vw, 26px); font-weight: 900; line-height: 1.04; text-shadow: 0 2px 12px rgba(0,0,0,.72); }
       .tv-card-stage-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -456,15 +721,18 @@ function TvStyles() {
       .tv-mobile-nav { display: none; }
       @media (max-width: 760px) {
         .tv-shell { height: 100svh; height: 100dvh; min-height: 0; padding: 0 8px calc(62px + env(safe-area-inset-bottom)); border-inline: 0; }
-        .tv-global-header { position: relative; flex: 0 0 auto; margin: 0 -8px 10px; padding: 9px 10px; }
+        .tv-global-header { position: relative; flex: 0 0 auto; margin: 0 -8px 10px; padding: calc(9px + env(safe-area-inset-top, 0px)) 10px 9px; }
         .tv-global-topbar { gap: 8px; }
-        .tv-global-logo { width: clamp(150px, 48vw, 198px); min-width: 0; }
-        .tv-global-logo span { font-size: clamp(31px, 9vw, 42px); white-space: nowrap; }
-        .tv-global-search, .tv-site-nav { display: none; }
-        .tv-global-account { min-width: 82px; min-height: 42px; padding: 0 9px; font-size: 11px; }
+        .tv-global-logo { width: clamp(148px, 49vw, 198px); min-width: 0; }
+        .tv-global-logo span { font-size: clamp(30px, 8.5vw, 40px); white-space: nowrap; }
+        .tv-header-actions { gap: 6px; }
+        .tv-global-account { min-width: 100px; min-height: 46px; padding: 0 12px; font-size: 12px; }
+        .tv-global-account.tv-account-icon, .tv-notification-button { width: 38px; min-width: 38px; min-height: 38px; }
+        .tv-global-account.tv-account-icon svg, .tv-notification-button svg { width: 18px; height: 18px; }
+        .tv-notification-panel { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 76px); left: 10px; right: 10px; width: auto; max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 96px); }
         .tv-close { width: 42px; height: 42px; flex-basis: 42px; font-size: 26px; }
-        .tv-header { flex: 0 0 auto; padding: 0 6px; align-items: center; }
-        .tv-header h1 { font-size: 31px; }
+        .tv-header { flex: 0 0 auto; margin-bottom: 8px; padding: 10px 11px; align-items: center; border-radius: 11px; }
+        .tv-header h1 { font-size: clamp(23px, 6.5vw, 29px); white-space: nowrap; }
         .tv-header > div > span { display: none; }
         .tv-filters { position: relative; flex: 0 0 auto; top: auto; margin-bottom: 4px; padding: 5px; gap: 3px; border-radius: 9px; }
         .tv-filters button { min-height: 38px; padding: 0 4px; font-size: 12px; }
@@ -474,7 +742,8 @@ function TvStyles() {
         .tv-slide { height: 100%; min-height: 100%; padding: 3px 0; }
         .tv-player { width: 100%; height: 100%; min-height: 0; max-height: none; border-radius: 16px; }
         .tv-player video { object-fit: contain; }
-        .tv-profile-body { padding: 74px 14px 16px; }
+        .tv-profile-body { grid-template-columns: 50px minmax(0, 1fr); gap: 11px; padding: 74px 14px 16px; }
+        .tv-profile-photo { width: 50px; height: 50px; font-size: 16px; }
         .tv-profile-body h2 { font-size: clamp(18px, 5.2vw, 22px); }
         .tv-card-venue-line { font-size: clamp(11px, 3.2vw, 13px); }
         .tv-card-schedule-text, .tv-no-shifts-state { font-size: clamp(11px, 3.1vw, 13px); }
