@@ -21,7 +21,7 @@ type AdminTvVideo = {
 
 export default function AdminTvPanel() {
   const [videos, setVideos] = useState<AdminTvVideo[]>([]);
-  const [filter, setFilter] = useState("submitted");
+  const [filter, setFilter] = useState("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +47,7 @@ export default function AdminTvPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load video moderation.");
-      setVideos(data.videos || []);
+      setVideos(Array.isArray(data.videos) ? data.videos : []);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to load video moderation.");
     } finally {
@@ -79,7 +79,16 @@ export default function AdminTvPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to review video.");
-      setVideos((current) => current.filter((item) => item.id !== video.id));
+      setVideos((current) => filter === "submitted"
+        ? current.filter((item) => item.id !== video.id)
+        : current.map((item) => item.id === video.id
+          ? {
+              ...item,
+              status: decision,
+              reviewNotes: reviewNotes || null,
+              publishedAt: decision === "approved" ? new Date().toISOString() : item.publishedAt,
+            }
+          : item));
       setNotes((current) => {
         const next = { ...current };
         delete next[video.id];
@@ -93,21 +102,29 @@ export default function AdminTvPanel() {
     }
   }
 
+  const pendingCount = videos.filter((video) => video.status === "submitted").length;
+
   return (
     <div className="admin-tv-panel">
       <AdminTvPanelStyles />
       <div className="admin-tv-head">
         <div>
           <strong>MyDancr TV moderation</strong>
-          <span>{filter === "submitted" ? `${videos.length} videos need review` : `${videos.length} videos loaded`}</span>
+          <span>
+            {filter === "all"
+              ? `${pendingCount} need review · ${videos.length} total`
+              : filter === "submitted"
+                ? `${videos.length} videos need review`
+                : `${videos.length} ${filter} videos`}
+          </span>
         </div>
         <label>
           Queue
           <select value={filter} onChange={(event) => setFilter(event.target.value)}>
+            <option value="all">All videos</option>
             <option value="submitted">Needs review</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
-            <option value="all">All videos</option>
           </select>
         </label>
       </div>
@@ -128,7 +145,7 @@ export default function AdminTvPanel() {
               </small>
               {video.dancer ? <Link href={`/dancers/${video.dancer.slug}`}>Open dancer profile</Link> : null}
               {video.venue ? <Link href={`/venues/${video.venue.slug}`}>Open venue page</Link> : null}
-              {filter === "submitted" ? (
+              {video.status === "submitted" ? (
                 <>
                   <label>
                     Review notes
@@ -150,14 +167,21 @@ export default function AdminTvPanel() {
                   </div>
                 </>
               ) : (
-                <small>{video.reviewNotes || "No review notes."}</small>
+                <small>
+                  {video.status === "approved" ? "Approved and published." : video.status === "rejected" ? "Rejected." : "Not awaiting review."}
+                  {video.reviewNotes ? ` ${video.reviewNotes}` : ""}
+                </small>
               )}
             </div>
           </article>
         ))}
         {!isLoading && !videos.length ? (
           <div className="admin-tv-empty">
-            {filter === "submitted" ? "No MyDancr TV videos currently need review." : "No videos match this filter."}
+            {filter === "submitted"
+              ? "No MyDancr TV videos currently need review."
+              : filter === "all"
+                ? "No MyDancr TV videos have been submitted yet."
+                : "No videos match this filter."}
           </div>
         ) : null}
       </div>

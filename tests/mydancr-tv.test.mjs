@@ -120,6 +120,11 @@ test("administrator and venue controls persist confirmed decisions", () => {
   assert.match(tvSource, /event: "mydancr_tv\.admin_decision"/);
   assert.match(adminPanel, /Approve and publish/);
   assert.match(adminPanel, /Reject video/);
+  assert.match(adminPanel, /useState\("all"\)/);
+  assert.match(adminPanel, /video\.status === "submitted"/);
+  assert.match(adminPanel, /item\.id === video\.id[\s\S]*?status: decision/);
+  assert.match(adminPanel, /Approved and published\./);
+  assert.match(adminPanel, /pendingCount[\s\S]*?videos\.length[\s\S]*?total/);
   assert.match(adminPanel, /window\.confirm/);
   assert.match(venueApi, /requireActiveVenue/);
   assert.match(venueApi, /updateVenueMyDancrTvVideo/);
