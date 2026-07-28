@@ -7,7 +7,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
 } from "react";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
@@ -17,20 +16,17 @@ const FILTERS = [
   { value: "for-you", label: "For You" },
   { value: "following", label: "Following" },
   { value: "tonight", label: "Tonight" },
-  { value: "new", label: "New" },
 ] as const;
 
 type TvSource = "tv_feed" | "shared_link";
 
 export default function TvFeedClient({
-  availableCities,
   initialCity,
   initialFilter,
   initialSelectedVideoId,
   initialVideos,
   source,
 }: {
-  availableCities: readonly string[];
   initialCity: string;
   initialFilter: string;
   initialSelectedVideoId: string;
@@ -38,13 +34,7 @@ export default function TvFeedClient({
   source: TvSource;
 }) {
   const [videos, setVideos] = useState(initialVideos);
-  const cityOptions = useMemo(
-    () =>
-      [...new Set([...availableCities, initialCity].map((value) => value.trim()).filter(Boolean))],
-    [availableCities, initialCity],
-  );
-  const [city, setCity] = useState(initialCity);
-  const [cityDraft, setCityDraft] = useState(initialCity);
+  const city = initialCity;
   const [filter, setFilter] = useState(
     FILTERS.some((item) => item.value === initialFilter) ? initialFilter : "for-you",
   );
@@ -58,6 +48,7 @@ export default function TvFeedClient({
   const [notifications, setNotifications] = useState<Record<string, boolean>>({});
   const [going, setGoing] = useState<Record<string, boolean>>({});
   const [reporting, setReporting] = useState<Record<string, boolean>>({});
+  const feedElement = useRef<HTMLElement | null>(null);
   const videoElements = useRef<Record<string, HTMLVideoElement | null>>({});
   const engagedTimers = useRef<Record<string, number>>({});
   const completedVideos = useRef(new Set<string>());
@@ -127,18 +118,21 @@ export default function TvFeedClient({
   }, [initialCity, initialFilter, initialSelectedVideoId, loadFeed]);
 
   useEffect(() => {
+    const feed = feedElement.current;
+    if (!feed) return;
+    feed.scrollTop = 0;
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-        if (!visible || visible.intersectionRatio < 0.6) return;
+        if (!visible || visible.intersectionRatio < 0.75) return;
         const videoId = (visible.target as HTMLElement).dataset.videoId || "";
         if (videoId) setActiveVideoId(videoId);
       },
-      { threshold: [0.6, 0.8] },
+      { root: feed, threshold: [0.75, 0.9] },
     );
-    document.querySelectorAll<HTMLElement>("[data-tv-slide]").forEach((element) => observer.observe(element));
+    feed.querySelectorAll<HTMLElement>("[data-tv-slide]").forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, [videos]);
 
@@ -284,17 +278,6 @@ export default function TvFeedClient({
     loadFeed(nextFilter, city);
   }
 
-  function submitCity(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextCity = cityOptions.find(
-      (option) => option.toLocaleLowerCase() === cityDraft.trim().toLocaleLowerCase(),
-    );
-    if (!nextCity) return;
-    setCity(nextCity);
-    setCityDraft(nextCity);
-    loadFeed(filter, nextCity);
-  }
-
   return (
     <main className="tv-shell">
       <TvStyles />
@@ -311,6 +294,13 @@ export default function TvFeedClient({
             <span>Search dancers, clubs, cities...</span>
           </Link>
           <Link className="tv-global-account" href="/account">{accountLabel}</Link>
+          <Link
+            className="tv-close"
+            href="/"
+            aria-label="Close MyDancr TV and return to homepage"
+          >
+            ×
+          </Link>
         </div>
         <nav className="tv-site-nav" aria-label="Primary">
           <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Now</Link>
@@ -327,20 +317,6 @@ export default function TvFeedClient({
           <span>Watch. Discover. Go.</span>
           <h1>MyDancr TV {myDancrTvCityLabel(city)}</h1>
         </div>
-        <form className="tv-city" onSubmit={submitCity}>
-          <label htmlFor="tv-city">City</label>
-          <select
-            id="tv-city"
-            value={cityDraft}
-            onChange={(event) => setCityDraft(event.target.value)}
-            disabled={isLoading}
-          >
-            {cityOptions.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-          <button type="submit" disabled={isLoading}>Go</button>
-        </form>
       </header>
 
       <nav className="tv-filters" aria-label="MyDancr TV feeds">
@@ -357,8 +333,10 @@ export default function TvFeedClient({
         ))}
       </nav>
 
-      {status ? <div className="tv-status" role="status">{status}</div> : null}
-      {isLoading ? <div className="tv-loading" role="status">Loading real MyDancr TV videos…</div> : null}
+      <div className="tv-feedback" aria-live="polite">
+        {status ? <div className="tv-status" role="status">{status}</div> : null}
+        {isLoading ? <div className="tv-loading" role="status">Loading real MyDancr TV videos…</div> : null}
+      </div>
 
       {!isLoading && !videos.length ? (
         <section className="tv-empty">
@@ -375,7 +353,7 @@ export default function TvFeedClient({
         </section>
       ) : null}
 
-      <section className="tv-feed" aria-label="MyDancr TV videos">
+      <section ref={feedElement} className="tv-feed" aria-label="MyDancr TV videos">
         {videos.map((video) => (
           <article
             className="tv-slide"
@@ -422,18 +400,33 @@ export default function TvFeedClient({
                 {muted ? "Sound off" : "Sound on"}
               </button>
               <div className="tv-video-copy">
-                <Link href={`/dancers/${video.dancer.slug}`} onClick={() => trackEvent(video.id, "profile_click")}>
+                <Link
+                  className="tv-dancer-link"
+                  href={dancerProfileHref(video)}
+                  aria-label={`Open ${video.dancer.stageName}'s real profile`}
+                  onClick={() => trackEvent(video.id, "profile_click")}
+                >
                   <span className="tv-avatar" style={video.dancer.primaryPhotoUrl ? { backgroundImage: `url(${video.dancer.primaryPhotoUrl})` } : undefined}>
                     {!video.dancer.primaryPhotoUrl ? initials(video.dancer.stageName) : null}
                   </span>
                   <strong>{video.dancer.stageName} <em>✓</em></strong>
                 </Link>
-                <p>{video.caption}</p>
+                {video.venue ? (
+                  <Link
+                    className="tv-video-venue"
+                    href={`/venues/${encodeURIComponent(video.venue.slug)}`}
+                    onClick={() => trackEvent(video.id, "venue_click")}
+                  >
+                    <span>{video.shift?.isActive ? "Working now at" : video.shift ? "Upcoming at" : "Featured venue"}</span>
+                    <strong>{video.venue.name}</strong>
+                  </Link>
+                ) : null}
                 {video.shift ? (
-                  <span className={video.shift.isActive ? "tv-shift live" : "tv-shift"}>
-                    {video.shift.isActive ? "Working now" : video.shift.isStartingSoon ? "Starting soon" : formatShift(video.shift.startsAt)}
+                  <span className={video.shift.isActive ? "tv-shift live" : "tv-shift upcoming"}>
+                    {video.shift.isActive ? "Working now" : `Upcoming ${formatShift(video.shift.startsAt)}`}
                   </span>
                 ) : null}
+                <p>{video.caption}</p>
               </div>
               <div className="tv-mobile-actions" aria-label="Video actions">
                 <button type="button" onClick={() => updateFollow(video, false)}>
@@ -450,7 +443,7 @@ export default function TvFeedClient({
                     {going[video.shift.id] ? "Going" : "Going"}
                   </button>
                 ) : null}
-                <Link href={`/dancers/${video.dancer.slug}`} onClick={() => trackEvent(video.id, "profile_click")}>
+                <Link href={dancerProfileHref(video)} onClick={() => trackEvent(video.id, "profile_click")}>
                   <span aria-hidden="true">♙</span>
                   Profile
                 </Link>
@@ -473,7 +466,11 @@ export default function TvFeedClient({
 
             <aside className="tv-details">
               <span className="tv-kicker">{video.dancer.city}</span>
-              <h2>{video.dancer.stageName}</h2>
+              <h2>
+                <Link href={dancerProfileHref(video)} onClick={() => trackEvent(video.id, "profile_click")}>
+                  {video.dancer.stageName}
+                </Link>
+              </h2>
               {video.venue ? (
                 <Link className="tv-venue" href={`/venues/${video.venue.slug}`} onClick={() => trackEvent(video.id, "venue_click")}>
                   <small>{video.shift?.isActive ? "Appearing now at" : "Connected venue"}</small>
@@ -497,7 +494,7 @@ export default function TvFeedClient({
                     {!readCustomerToken() ? <small>No sign-in needed</small> : null}
                   </button>
                 ) : null}
-                <Link href={`/dancers/${video.dancer.slug}`} onClick={() => trackEvent(video.id, "profile_click")}>View profile</Link>
+                <Link href={dancerProfileHref(video)} onClick={() => trackEvent(video.id, "profile_click")}>View profile</Link>
                 {video.venue ? (
                   <Link href={`/venues/${video.venue.slug}`} onClick={() => trackEvent(video.id, "venue_click")}>View venue</Link>
                 ) : null}
@@ -516,7 +513,6 @@ export default function TvFeedClient({
         <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link>
         <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
         <Link href={`/trending?city=${encodeURIComponent(city)}`}>Trending</Link>
-        <Link className="active" href={`/tv?city=${encodeURIComponent(city)}`}>TV</Link>
       </nav>
 
       {accountPrompt ? (
@@ -553,6 +549,10 @@ function myDancrTvCityLabel(city: string) {
 
 function tvCitiesMatch(left: string, right: string) {
   return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
+function dancerProfileHref(video: MyDancrTvVideo) {
+  return `/dancers/${encodeURIComponent(video.dancer.slug)}`;
 }
 
 function readCustomerToken() {
@@ -597,10 +597,11 @@ function TvStyles() {
   return (
     <style>{`
       * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
       body { margin: 0; background: radial-gradient(circle at 78% 0%, rgba(155,92,255,.16), transparent 32rem), radial-gradient(circle at 14% 10%, rgba(139,61,255,.1), transparent 24rem), #030304; color: #f8f5ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      button, input, select { font: inherit; }
-      .tv-shell { width: min(100%, 1440px); min-height: 100vh; margin: 0 auto; padding: 0 clamp(14px, 3vw, 44px) 48px; border-inline: 1px solid rgba(53,216,255,.1); background: radial-gradient(circle at 12% 0%, rgba(139,92,246,.22), transparent 25rem), radial-gradient(circle at 92% 6%, rgba(34,199,255,.12), transparent 25rem), #030305; box-shadow: 0 40px 120px rgba(0,0,0,.7); }
-      .tv-global-header { position: sticky; top: 0; z-index: 40; margin: 0 calc(-1 * clamp(14px, 3vw, 44px)) 22px; padding: 16px clamp(14px, 3vw, 44px) 12px; border-bottom: 1px solid rgba(53,216,255,.12); background: rgba(3,3,4,.88); box-shadow: 0 12px 34px rgba(0,0,0,.58); backdrop-filter: blur(22px); }
+      button, input { font: inherit; }
+      .tv-shell { width: min(100%, 1440px); height: 100svh; height: 100dvh; min-height: 0; margin: 0 auto; padding: 0 clamp(14px, 3vw, 44px) max(12px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; overflow: hidden; border-inline: 1px solid rgba(53,216,255,.1); background: radial-gradient(circle at 12% 0%, rgba(139,92,246,.22), transparent 25rem), radial-gradient(circle at 92% 6%, rgba(34,199,255,.12), transparent 25rem), #030305; box-shadow: 0 40px 120px rgba(0,0,0,.7); }
+      .tv-global-header { position: relative; flex: 0 0 auto; z-index: 40; margin: 0 calc(-1 * clamp(14px, 3vw, 44px)) 14px; padding: 16px clamp(14px, 3vw, 44px) 12px; border-bottom: 1px solid rgba(53,216,255,.12); background: rgba(3,3,4,.88); box-shadow: 0 12px 34px rgba(0,0,0,.58); backdrop-filter: blur(22px); }
       .tv-global-topbar { display: flex; align-items: center; gap: 18px; }
       .tv-global-logo { width: min(34vw, 236px); min-width: 196px; aspect-ratio: 331 / 103; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(148,68,255,.72); border-radius: 15px; color: #fff; background: #050507; box-shadow: 0 0 18px rgba(132,50,255,.24), inset 0 0 16px rgba(132,50,255,.08); text-decoration: none; }
       .tv-global-logo span { color: #fff; font-size: clamp(38px, 5.7vw, 50px); font-weight: 950; letter-spacing: -.065em; line-height: .9; text-transform: lowercase; text-shadow: 0 0 12px rgba(255,255,255,.7), 0 0 22px rgba(255,255,255,.28); transform: translateY(-1px); }
@@ -609,40 +610,43 @@ function TvStyles() {
       .tv-global-search svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; flex: 0 0 auto; }
       .tv-global-search span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
       .tv-global-account { min-width: 108px; min-height: 46px; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; padding: 0 17px; border: 1px solid rgba(236,72,153,.42); border-radius: 999px; color: #fff; background: rgba(9,9,15,.88); box-shadow: 0 0 22px rgba(124,58,237,.18), inset 0 1px 0 rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; white-space: nowrap; }
-      .tv-global-logo:focus-visible, .tv-global-search:focus-visible, .tv-global-account:focus-visible { outline: 2px solid rgba(192,132,255,.72); outline-offset: 3px; }
+      .tv-close { width: 46px; height: 46px; flex: 0 0 46px; display: grid; place-items: center; border: 1px solid rgba(53,216,255,.46); border-radius: 50%; color: #fff; background: rgba(5,5,9,.9); box-shadow: 0 0 22px rgba(53,216,255,.14); font-size: 28px; line-height: 1; text-decoration: none; }
+      .tv-global-logo:focus-visible, .tv-global-search:focus-visible, .tv-global-account:focus-visible, .tv-close:focus-visible { outline: 2px solid rgba(192,132,255,.72); outline-offset: 3px; }
       .tv-site-nav { max-width: 1180px; min-height: 40px; margin: 12px auto 0; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
       .tv-site-nav a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; color: #d8d0e8; background: rgba(255,255,255,.035); font-size: 13px; font-weight: 850; text-decoration: none; }
       .tv-site-nav a.active { color: #fff; border-color: rgba(34,199,255,.5); background: linear-gradient(135deg, rgba(109,40,217,.35), rgba(34,199,255,.14)); box-shadow: 0 0 20px rgba(34,199,255,.1); }
-      .tv-header { max-width: 1000px; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: end; gap: 18px; }
+      .tv-header { width: 100%; max-width: 1000px; flex: 0 0 auto; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: end; gap: 18px; }
       .tv-header > div { display: grid; gap: 2px; }
       .tv-header span, .tv-kicker { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .18em; text-transform: uppercase; }
       .tv-header h1 { margin: 0; font-size: clamp(34px, 6vw, 62px); line-height: 1; }
-      .tv-city { display: flex; align-items: end; gap: 6px; }
-      .tv-city label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-      .tv-city select { width: 158px; min-height: 40px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: #111117; color: #fff; padding: 0 34px 0 14px; cursor: pointer; }
-      .tv-city select:disabled, .tv-city button:disabled { opacity: .62; cursor: wait; }
-      .tv-city button { min-height: 40px; padding: 0 14px; border: 1px solid rgba(34,199,255,.4); border-radius: 999px; background: rgba(34,199,255,.1); color: #fff; font-weight: 900; cursor: pointer; }
-      .tv-filters { position: sticky; top: 0; z-index: 20; max-width: 1000px; margin: 0 auto 12px; padding: 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(5,5,8,.9); backdrop-filter: blur(16px); }
+      .tv-filters { position: relative; flex: 0 0 auto; z-index: 20; width: 100%; max-width: 1000px; margin: 0 auto 12px; padding: 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(5,5,8,.9); backdrop-filter: blur(16px); }
       .tv-filters button { min-height: 42px; border: 1px solid transparent; border-radius: 8px; color: #a99ebc; background: transparent; font-weight: 900; cursor: pointer; }
       .tv-filters button.active { color: #fff; border-color: rgba(139,92,246,.44); background: linear-gradient(135deg, rgba(109,40,217,.34), rgba(34,199,255,.12)); }
-      .tv-status, .tv-loading { max-width: 1000px; margin: 0 auto 10px; padding: 10px 14px; border: 1px solid rgba(34,199,255,.2); border-radius: 8px; background: rgba(34,199,255,.07); color: #a9efff; font-size: 13px; font-weight: 800; }
-      .tv-feed { max-width: 1000px; height: calc(100svh - 210px); min-height: 520px; margin: 0 auto; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: thin; scrollbar-color: rgba(139,92,246,.48) transparent; }
-      .tv-slide { min-height: 100%; padding: 8px 0; display: grid; grid-template-columns: minmax(320px, 520px) minmax(260px, 1fr); justify-content: center; gap: 14px; scroll-snap-align: start; scroll-snap-stop: always; }
-      .tv-player { position: relative; height: calc(100svh - 226px); min-height: 500px; max-height: 820px; overflow: hidden; border: 1px solid rgba(139,92,246,.34); border-radius: 14px; background: #08080b; box-shadow: 0 26px 80px rgba(0,0,0,.56), 0 0 28px rgba(109,40,217,.12); }
+      .tv-feedback { position: relative; z-index: 30; width: 100%; max-width: 1000px; height: 0; flex: 0 0 0; margin: 0 auto; pointer-events: none; }
+      .tv-status, .tv-loading { position: absolute; top: 6px; left: 0; right: 0; margin: 0; padding: 10px 14px; border: 1px solid rgba(34,199,255,.2); border-radius: 8px; background: rgba(5,17,22,.94); box-shadow: 0 10px 28px rgba(0,0,0,.48); color: #a9efff; font-size: 13px; font-weight: 800; }
+      .tv-feed { width: 100%; max-width: 1000px; height: auto; min-height: 0; flex: 1 1 0; margin: 0 auto; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; overflow-anchor: none; touch-action: pan-y; scroll-snap-type: y mandatory; scroll-padding-block: 0; scroll-behavior: smooth; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(139,92,246,.48) transparent; }
+      .tv-slide { height: 100%; min-height: 100%; max-height: 100%; padding: 8px 0; display: grid; grid-template-columns: minmax(320px, 520px) minmax(260px, 1fr); justify-content: center; gap: 14px; overflow: hidden; contain: layout paint; scroll-snap-align: start; scroll-snap-stop: always; }
+      .tv-player { position: relative; height: 100%; min-height: 0; max-height: none; overflow: hidden; border: 1px solid rgba(139,92,246,.34); border-radius: 14px; background: #08080b; box-shadow: 0 26px 80px rgba(0,0,0,.56), 0 0 28px rgba(109,40,217,.12); }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 42% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.86)); }
       .tv-sound { position: absolute; top: 12px; right: 12px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.58); font-size: 12px; font-weight: 900; cursor: pointer; }
       .tv-video-copy { position: absolute; left: 16px; right: 16px; bottom: 16px; display: grid; gap: 9px; }
       .tv-mobile-actions { display: none; }
-      .tv-video-copy > a { width: fit-content; display: flex; align-items: center; gap: 9px; color: #fff; text-decoration: none; }
+      .tv-video-copy > a { width: fit-content; color: #fff; text-decoration: none; }
+      .tv-dancer-link { display: flex; align-items: center; gap: 9px; }
       .tv-video-copy strong { font-size: 18px; }
       .tv-video-copy em { color: #7eeaff; font-style: normal; }
       .tv-avatar { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.65); border-radius: 50%; background: linear-gradient(135deg, #6d28d9, #0b94c9); background-position: center; background-size: cover; font-size: 11px; font-weight: 950; }
       .tv-video-copy p { margin: 0; max-width: 44ch; color: #f6f1ff; font-size: 14px; font-weight: 750; line-height: 1.4; text-shadow: 0 2px 8px #000; }
+      .tv-video-venue { display: grid; gap: 1px; text-shadow: 0 2px 8px #000; }
+      .tv-video-venue span { color: #bdefff; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+      .tv-video-venue strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
       .tv-shift { width: fit-content; padding: 5px 9px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #fff; background: rgba(0,0,0,.55); font-size: 11px; font-weight: 950; letter-spacing: .06em; text-transform: uppercase; }
       .tv-shift.live { color: #7effba; border-color: rgba(58,255,164,.4); background: rgba(14,106,66,.38); }
-      .tv-details { align-self: center; display: grid; gap: 13px; padding: 20px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(11,11,16,.82); }
+      .tv-shift.upcoming { color: #cdefff; border-color: rgba(53,216,255,.36); background: rgba(11,98,131,.4); }
+      .tv-details { max-height: calc(100% - 16px); align-self: center; display: grid; gap: 13px; padding: 20px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(11,11,16,.82); }
       .tv-details h2 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: .95; overflow-wrap: anywhere; }
+      .tv-details h2 a { color: inherit; text-decoration-color: rgba(126,234,255,.55); text-underline-offset: 5px; }
       .tv-venue { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(34,199,255,.2); border-radius: 8px; color: #fff; background: rgba(34,199,255,.07); text-decoration: none; }
       .tv-venue small, .tv-unlinked { margin: 0; color: #a99ebc; font-size: 12px; }
       .tv-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
@@ -666,33 +670,35 @@ function TvStyles() {
       .tv-account-gate a.secondary { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.04); }
       .tv-account-close { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: #fff; background: rgba(255,255,255,.04); font-size: 24px; cursor: pointer; }
       @media (max-width: 760px) {
-        .tv-shell { padding: 0 8px 72px; border-inline: 0; }
-        .tv-global-header { margin: 0 -8px 10px; padding: 9px 10px; }
+        .tv-shell { height: 100svh; height: 100dvh; min-height: 0; padding: 0 8px calc(62px + env(safe-area-inset-bottom)); border-inline: 0; }
+        .tv-global-header { position: relative; flex: 0 0 auto; margin: 0 -8px 10px; padding: 9px 10px; }
         .tv-global-topbar { gap: 8px; }
         .tv-global-logo { width: clamp(150px, 48vw, 198px); min-width: 0; }
         .tv-global-logo span { font-size: clamp(31px, 9vw, 42px); white-space: nowrap; }
         .tv-global-search, .tv-site-nav { display: none; }
-        .tv-global-account { min-width: 92px; min-height: 42px; padding: 0 11px; font-size: 12px; }
-        .tv-header { padding: 0 6px; align-items: center; }
+        .tv-global-account { min-width: 82px; min-height: 42px; padding: 0 9px; font-size: 11px; }
+        .tv-close { width: 42px; height: 42px; flex-basis: 42px; font-size: 26px; }
+        .tv-header { flex: 0 0 auto; padding: 0 6px; align-items: center; }
         .tv-header h1 { font-size: 31px; }
         .tv-header > div > span { display: none; }
-        .tv-city select { width: 132px; }
-        .tv-filters { top: 0; margin-bottom: 4px; padding: 5px; gap: 3px; border-radius: 9px; }
+        .tv-filters { position: relative; flex: 0 0 auto; top: auto; margin-bottom: 4px; padding: 5px; gap: 3px; border-radius: 9px; }
         .tv-filters button { min-height: 38px; padding: 0 4px; font-size: 12px; }
-        .tv-feed { height: calc(100svh - 142px); min-height: 430px; }
-        .tv-slide { min-height: 100%; padding: 3px 0; grid-template-columns: 1fr; }
-        .tv-player { height: calc(100svh - 150px); min-height: 430px; max-height: none; border-radius: 10px; }
+        .tv-empty { flex: 1 1 auto; min-height: 0; margin: 4px 0; }
+        .tv-feed { height: auto; min-height: 0; flex: 1 1 0; scrollbar-gutter: auto; }
+        .tv-feed:empty { display: none; }
+        .tv-slide { height: 100%; min-height: 100%; padding: 3px 0; grid-template-columns: 1fr; }
+        .tv-player { height: 100%; min-height: 0; max-height: none; border-radius: 10px; }
         .tv-details { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
         .tv-player video { object-fit: contain; }
-        .tv-video-copy { right: 76px; bottom: 20px; }
-        .tv-video-copy p { font-size: 13px; }
+        .tv-video-copy { right: 70px; bottom: 12px; gap: 6px; }
+        .tv-video-copy p { max-height: 2.8em; overflow: hidden; font-size: 12px; }
+        .tv-video-venue strong { max-width: min(60vw, 260px); }
         .tv-mobile-actions { position: absolute; z-index: 4; right: 8px; bottom: 16px; display: grid; gap: 5px; }
         .tv-mobile-actions button, .tv-mobile-actions a { width: 58px; min-height: 46px; display: grid; place-items: center; align-content: center; gap: 1px; padding: 2px; border: 0; border-radius: 8px; color: #fff; background: rgba(0,0,0,.58); font-size: 9px; font-weight: 900; text-decoration: none; text-shadow: 0 1px 5px #000; cursor: pointer; }
         .tv-mobile-actions span { font-size: 18px; line-height: 1; }
-        .tv-mobile-nav { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; min-height: calc(58px + env(safe-area-inset-bottom)); padding: 5px 7px env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; border-top: 1px solid rgba(255,255,255,.1); background: rgba(3,3,5,.94); backdrop-filter: blur(16px); }
+        .tv-mobile-nav { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; min-height: calc(58px + env(safe-area-inset-bottom)); padding: 5px 7px env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-top: 1px solid rgba(255,255,255,.1); background: rgba(3,3,5,.96); backdrop-filter: blur(16px); }
         .tv-mobile-nav a { display: grid; place-items: center; border-radius: 8px; color: #9f95b1; font-size: 10px; font-weight: 900; text-decoration: none; }
         .tv-mobile-nav a.active { color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(34,199,255,.16)); }
-        .tv-status, .tv-loading { margin: 0 0 5px; }
       }
       @media (prefers-reduced-motion: reduce) {
         .tv-feed { scroll-behavior: auto; }

@@ -40518,7 +40518,8 @@
         const normalizedCity = String(city).trim().toLowerCase();
         const videos = Array.isArray(payload.videos)
           ? payload.videos.filter((item) => (
-              String(item.dancer?.city || "").trim().toLowerCase() === normalizedCity
+              String(item.dancer?.city || "").trim().toLowerCase() === normalizedCity &&
+              String(item.dancer?.slug || "").trim()
             ))
           : [];
         teaser.setAttribute("aria-busy", "false");
@@ -40536,8 +40537,8 @@
         videos.forEach((item) => {
           const card = document.createElement("a");
           card.className = "home-tv-teaser-card";
-          card.href = `/tv?city=${encodeURIComponent(city)}&video=${encodeURIComponent(item.id)}`;
-          card.setAttribute("aria-label", `Watch ${item.dancer?.stageName || "dancer"} on MyDancr TV`);
+          card.href = `/dancers/${encodeURIComponent(String(item.dancer.slug).trim())}`;
+          card.setAttribute("aria-label", `Open ${item.dancer?.stageName || "dancer"} live profile`);
 
           const video = document.createElement("video");
           video.src = item.videoUrl;

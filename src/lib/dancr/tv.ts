@@ -30,7 +30,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 ]);
 
 const PUBLIC_TV_SELECT =
-  "id, caption, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, status, location_status)";
+  "id, caption, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at)";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -127,9 +127,17 @@ export async function getPublicMyDancrTvFeed(
 
   const following = new Set(options.followingDancerIds || []);
   const tonightEndsAt = now.getTime() + 24 * 60 * 60 * 1000;
-  let rows = (data || [])
+  const selectedRowCandidate = normalizeFeedRow(selectedResult.data, now.getTime());
+  const normalizedRows = (data || [])
     .map((row: any) => normalizeFeedRow(row, now.getTime()))
-    .filter((row: NormalizedFeedRow | null): row is NormalizedFeedRow => Boolean(row))
+    .filter((row: NormalizedFeedRow | null): row is NormalizedFeedRow => Boolean(row));
+  const shiftContexts = await getPublicTvShiftContexts(
+    admin,
+    [...normalizedRows, ...(selectedRowCandidate ? [selectedRowCandidate] : [])].map((row) => row.dancer.id),
+    now.getTime(),
+  );
+  let rows = normalizedRows
+    .map((row) => applyPublicTvShiftContext(row, shiftContexts))
     .filter((row) => !city || tvCitiesMatch(row.dancer.city, city))
     .filter((row) => {
       if (filter === "following") return following.has(row.dancer.id);
@@ -154,9 +162,11 @@ export async function getPublicMyDancrTvFeed(
     });
   }
 
-  const selectedRowCandidate = normalizeFeedRow(selectedResult.data, now.getTime());
-  const selectedRow = selectedRowCandidate && (!city || tvCitiesMatch(selectedRowCandidate.dancer.city, city))
-    ? selectedRowCandidate
+  const selectedRowWithShift = selectedRowCandidate
+    ? applyPublicTvShiftContext(selectedRowCandidate, shiftContexts)
+    : null;
+  const selectedRow = selectedRowWithShift && (!city || tvCitiesMatch(selectedRowWithShift.dancer.city, city))
+    ? selectedRowWithShift
     : null;
   if (selectedRow && !rows.some((row) => row.id === selectedRow.id)) {
     rows.unshift(selectedRow);
@@ -193,6 +203,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
   const start = shift?.starts_at ? new Date(shift.starts_at).getTime() : Number.NaN;
   const end = shift?.ends_at ? new Date(shift.ends_at).getTime() : Number.NaN;
   const venueConfirmed = row.venue_tag_status === "confirmed" && venue?.is_active !== false;
+  const shiftIsActive = isConfirmedActiveTvShift(shift, now);
 
   return {
     id: row.id,
@@ -226,11 +237,86 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
           startsAt: shift.starts_at,
           endsAt: shift.ends_at,
           status: shift.status,
-          isActive: Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now,
+          isActive: shiftIsActive,
           isStartingSoon: Number.isFinite(start) && start > now && start <= now + 2 * 60 * 60 * 1000,
         }
       : null,
   };
+}
+
+type PublicTvShiftContext = Pick<NormalizedFeedRow, "venue" | "shift">;
+
+async function getPublicTvShiftContexts(
+  admin: AdminClient,
+  dancerIds: string[],
+  now: number,
+): Promise<Map<string, PublicTvShiftContext>> {
+  const uniqueDancerIds = [...new Set(dancerIds.filter(Boolean))];
+  if (!uniqueDancerIds.length) return new Map();
+
+  const { data, error } = await admin
+    .from("shifts")
+    .select(
+      "id, dancer_id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, venues!inner(id, slug, name, city, is_active)",
+    )
+    .in("dancer_id", uniqueDancerIds)
+    .eq("status", "posted")
+    .eq("venues.is_active", true)
+    .is("checked_out_at", null)
+    .gte("ends_at", new Date(now).toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(Math.min(240, uniqueDancerIds.length * 12));
+
+  if (error) throw error;
+
+  const contexts = new Map<string, PublicTvShiftContext>();
+  for (const row of data || []) {
+    const venue = one(row.venues);
+    const start = new Date(row.starts_at).getTime();
+    const end = new Date(row.ends_at).getTime();
+    const isActive = isConfirmedActiveTvShift(row, now);
+    const isUpcoming = Number.isFinite(start) && start > now && Number.isFinite(end) && end >= now;
+    if (!venue || (!isActive && !isUpcoming)) continue;
+
+    const candidate: PublicTvShiftContext = {
+      venue: {
+        id: venue.id,
+        slug: venue.slug,
+        name: venue.name,
+        city: venue.city,
+      },
+      shift: {
+        id: row.id,
+        startsAt: row.starts_at,
+        endsAt: row.ends_at,
+        status: row.status,
+        isActive,
+        isStartingSoon: isUpcoming && start <= now + 2 * 60 * 60 * 1000,
+      },
+    };
+    const current = contexts.get(row.dancer_id);
+    if (!current || (!current.shift?.isActive && candidate.shift?.isActive)) {
+      contexts.set(row.dancer_id, candidate);
+    }
+  }
+
+  return contexts;
+}
+
+function applyPublicTvShiftContext(
+  row: NormalizedFeedRow,
+  contexts: Map<string, PublicTvShiftContext>,
+): NormalizedFeedRow {
+  const context = contexts.get(row.dancer.id);
+  return context ? { ...row, venue: context.venue, shift: context.shift } : row;
+}
+
+function isConfirmedActiveTvShift(shift: any, now: number) {
+  if (!shift?.checked_in_at || shift.checked_out_at) return false;
+  if (shift.location_status !== "location_confirmed" && shift.location_status !== "club_confirmed") return false;
+  const start = new Date(shift.starts_at).getTime();
+  const end = new Date(shift.ends_at).getTime();
+  return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
 }
 
 async function signPublicVideos(

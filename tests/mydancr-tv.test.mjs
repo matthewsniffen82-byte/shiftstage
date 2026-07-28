@@ -74,11 +74,15 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(publicRoute, /const requestedCity = \(url\.searchParams\.get\("city"\) \|\| ""\)\.trim\(\)\.slice\(0, 80\)/);
   assert.match(publicRoute, /const city = requestedCity \|\| "Las Vegas"/);
   assert.match(tvSource, /\.filter\(\(row\) => !city \|\| tvCitiesMatch\(row\.dancer\.city, city\)\)/);
-  assert.match(tvSource, /selectedRowCandidate && \(!city \|\| tvCitiesMatch\(selectedRowCandidate\.dancer\.city, city\)\)/);
+  assert.match(tvSource, /selectedRowWithShift && \(!city \|\| tvCitiesMatch\(selectedRowWithShift\.dancer\.city, city\)\)/);
   assert.match(feedClient, /For You/);
   assert.match(feedClient, /Following/);
   assert.match(feedClient, /Tonight/);
-  assert.match(feedClient, /New/);
+  assert.doesNotMatch(feedClient, /\{ value: "new", label: "New" \}/);
+  assert.doesNotMatch(feedClient, /className="tv-city"/);
+  assert.doesNotMatch(feedClient, /id="tv-city"/);
+  assert.match(feedClient, /className="tv-close"[\s\S]*?href="\/"[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
+  assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(feedClient, /href=\{`\/tonight\?city=/);
   assert.match(feedClient, /href=\{`\/dancers\?city=/);
   assert.match(feedClient, /href=\{`\/venues\?city=/);
@@ -104,7 +108,19 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /renderHomeTvTeaser\(city\)/);
   assert.match(liveApp, /title\.textContent = `MyDancr TV \$\{tvCityLabel\}`/);
   assert.match(liveApp, /payload\.videos\.filter\([\s\S]*?item\.dancer\?\.city[\s\S]*?=== normalizedCity/);
-  assert.match(liveApp, /card\.href = `\/tv\?city=\$\{encodeURIComponent\(city\)\}&video=\$\{encodeURIComponent\(item\.id\)\}`/);
+  assert.match(liveApp, /String\(item\.dancer\?\.slug \|\| ""\)\.trim\(\)/);
+  assert.match(liveApp, /card\.href = `\/dancers\/\$\{encodeURIComponent\(String\(item\.dancer\.slug\)\.trim\(\)\)\}`/);
+  assert.match(liveApp, /card\.setAttribute\("aria-label", `Open \$\{item\.dancer\?\.stageName \|\| "dancer"\} live profile`\)/);
+  assert.match(feedClient, /className="tv-dancer-link"[\s\S]*?href=\{dancerProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s real profile`\}/);
+  assert.match(feedClient, /function dancerProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?encodeURIComponent\(video\.dancer\.slug\)/);
+  assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
+  assert.match(feedClient, /className="tv-mobile-nav"[\s\S]*?>Now<[\s\S]*?>Dancers<[\s\S]*?>Venues<[\s\S]*?>Trending</);
+  assert.match(feedClient, /\.tv-mobile-nav \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(feedClient, /className="tv-video-venue"[\s\S]*?video\.venue\.name/);
+  assert.match(feedClient, /video\.shift\.isActive \? "Working now" : `Upcoming \$\{formatShift\(video\.shift\.startsAt\)\}`/);
+  assert.match(tvSource, /async function getPublicTvShiftContexts/);
+  assert.match(tvSource, /\.from\("shifts"\)[\s\S]*?\.in\("dancer_id", uniqueDancerIds\)/);
+  assert.match(tvSource, /shift\.location_status !== "location_confirmed" && shift\.location_status !== "club_confirmed"/);
   assert.match(liveApp, /filter=for-you&limit=8/);
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);
   assert.match(liveApp, /home-tv-teaser-list \{[\s\S]*?grid-auto-columns: minmax\(150px, 180px\)/);
@@ -117,6 +133,18 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /video\.autoplay = true/);
   assert.doesNotMatch(liveApp, /id="homeTvPreviewList"/);
   assert.match(liveApp, /loadProfileMyDancrTv/);
+});
+
+test("the vertical TV feed locks exactly one stable video into the available viewport", () => {
+  assert.match(feedClient, /const feedElement = useRef<HTMLElement \| null>\(null\)/);
+  assert.match(feedClient, /\{ root: feed, threshold: \[0\.75, 0\.9\] \}/);
+  assert.match(feedClient, /<section ref=\{feedElement\} className="tv-feed"/);
+  assert.match(feedClient, /className="tv-feedback" aria-live="polite"/);
+  assert.match(feedClient, /html, body \{[^}]*height: 100%[^}]*overflow: hidden[^}]*overscroll-behavior: none/);
+  assert.match(feedClient, /\.tv-shell \{[^}]*height: 100dvh[^}]*display: flex[^}]*flex-direction: column[^}]*overflow: hidden/);
+  assert.match(feedClient, /\.tv-feed \{[^}]*flex: 1 1 0[^}]*overflow-y: auto[^}]*overscroll-behavior-y: contain[^}]*overflow-anchor: none[^}]*scroll-snap-type: y mandatory/);
+  assert.match(feedClient, /\.tv-slide \{[^}]*height: 100%[^}]*min-height: 100%[^}]*max-height: 100%[^}]*overflow: hidden[^}]*scroll-snap-align: start[^}]*scroll-snap-stop: always/);
+  assert.match(feedClient, /\.tv-player \{[^}]*height: 100%[^}]*min-height: 0[^}]*max-height: none/);
 });
 
 test("administrator and venue controls persist confirmed decisions", () => {

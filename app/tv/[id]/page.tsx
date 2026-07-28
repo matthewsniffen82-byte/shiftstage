@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MYDANCR_AVAILABLE_CITIES } from "@/src/lib/dancr/markets";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import TvFeedClient from "../TvFeedClient";
@@ -37,7 +36,6 @@ export default async function SharedMyDancrTvPage({ params }: PageProps) {
 
   return (
     <TvFeedClient
-      availableCities={MYDANCR_AVAILABLE_CITIES}
       initialCity={selected.dancer.city}
       initialFilter="for-you"
       initialSelectedVideoId={id}
