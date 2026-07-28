@@ -16,21 +16,53 @@ export function TvVideoStrip({
   const [viewerStatus, setViewerStatus] = useState("");
   const viewerShell = useRef<HTMLDivElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
+  const swipeStartX = useRef<number | null>(null);
+  const activeIndex = activeVideo
+    ? videos.findIndex((video) => video.id === activeVideo.id)
+    : -1;
 
   useEffect(() => {
     if (!activeVideo) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeButton.current?.focus();
+    const showKeyboardVideo = (direction: -1 | 1) => {
+      setActiveVideo((current) => {
+        if (!current) return current;
+        const currentIndex = videos.findIndex((video) => video.id === current.id);
+        return videos[currentIndex + direction] || current;
+      });
+      setViewerStatus("");
+    };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !document.fullscreenElement) setActiveVideo(null);
+      if (event.key === "ArrowLeft") showKeyboardVideo(-1);
+      if (event.key === "ArrowRight") showKeyboardVideo(1);
     };
     document.addEventListener("keydown", closeOnEscape);
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [activeVideo]);
+  }, [activeVideo, videos]);
+
+  function showRelativeVideo(direction: -1 | 1) {
+    setActiveVideo((current) => {
+      if (!current) return current;
+      const currentIndex = videos.findIndex((video) => video.id === current.id);
+      const nextIndex = currentIndex + direction;
+      return videos[nextIndex] || current;
+    });
+    setViewerStatus("");
+  }
+
+  function finishVideoSwipe(clientX: number) {
+    if (swipeStartX.current === null) return;
+    const distance = clientX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (Math.abs(distance) < 50) return;
+    showRelativeVideo(distance < 0 ? 1 : -1);
+  }
 
   async function shareVideo(video: MyDancrTvVideo) {
     const url = new URL(`/tv/${encodeURIComponent(video.id)}`, window.location.origin).toString();
@@ -120,24 +152,71 @@ export function TvVideoStrip({
             >
               ×
             </button>
-            <video
-              autoPlay
-              controls
-              loop
-              playsInline
-              preload="auto"
-              src={activeVideo.videoUrl}
-            />
+            <div
+              className="tv-video-viewer-stage"
+              onTouchStart={(event) => {
+                swipeStartX.current = event.changedTouches[0]?.clientX ?? null;
+              }}
+              onTouchEnd={(event) => {
+                finishVideoSwipe(event.changedTouches[0]?.clientX ?? 0);
+              }}
+            >
+              <video
+                key={activeVideo.id}
+                autoPlay
+                controls
+                loop
+                playsInline
+                preload="auto"
+                src={activeVideo.videoUrl}
+              />
+              <button
+                className="tv-video-viewer-previous"
+                type="button"
+                aria-label="Previous dancer video"
+                disabled={activeIndex <= 0}
+                onClick={() => showRelativeVideo(-1)}
+              >
+                ‹
+              </button>
+              <button
+                className="tv-video-viewer-next"
+                type="button"
+                aria-label="Next dancer video"
+                disabled={activeIndex >= videos.length - 1}
+                onClick={() => showRelativeVideo(1)}
+              >
+                ›
+              </button>
+            </div>
             <div className="tv-video-viewer-footer">
               <div>
                 <strong>{activeVideo.dancer.stageName}</strong>
-                <span>{tvProfileShiftLabel(activeVideo).label}</span>
+                <span>{tvProfileShiftLabel(activeVideo).label} · Video {activeIndex + 1} of {videos.length}</span>
               </div>
               <div className="tv-video-viewer-actions">
                 <button type="button" onClick={enterDeviceFullscreen}>Full screen</button>
                 <button type="button" onClick={() => shareVideo(activeVideo)}>Share</button>
               </div>
               <p aria-live="polite">{viewerStatus}</p>
+              <div className="tv-video-viewer-gallery" aria-label={`${activeVideo.dancer.stageName} videos`}>
+                {videos.map((video, index) => (
+                  <button
+                    className={video.id === activeVideo.id ? "active" : ""}
+                    type="button"
+                    key={video.id}
+                    aria-current={video.id === activeVideo.id ? "true" : undefined}
+                    aria-label={`Open video ${index + 1} of ${videos.length}`}
+                    onClick={() => {
+                      setViewerStatus("");
+                      setActiveVideo(video);
+                    }}
+                  >
+                    <video aria-hidden="true" muted playsInline preload="metadata" src={video.videoUrl} />
+                    <span>{index + 1}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -204,8 +283,13 @@ function TvVideoStripStyles() {
       .tv-video-viewer { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
       .tv-video-viewer-shell { position: relative; width: min(100%, 720px); height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 1px solid rgba(139,92,246,.48); border-radius: 16px; background: #000; box-shadow: 0 30px 100px rgba(0,0,0,.8), 0 0 40px rgba(109,40,217,.2); }
       .tv-video-viewer-shell:fullscreen { width: 100%; max-width: none; height: 100%; border: 0; border-radius: 0; }
-      .tv-video-viewer-shell > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; }
+      .tv-video-viewer-stage { position: relative; min-height: 0; overflow: hidden; touch-action: pan-y; }
+      .tv-video-viewer-stage > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; }
       .tv-video-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
+      .tv-video-viewer-previous, .tv-video-viewer-next { position: absolute; z-index: 2; top: 50%; width: 46px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.62); font-size: 34px; line-height: 1; transform: translateY(-50%); cursor: pointer; }
+      .tv-video-viewer-previous { left: 12px; }
+      .tv-video-viewer-next { right: 12px; }
+      .tv-video-viewer-previous:disabled, .tv-video-viewer-next:disabled { opacity: .28; cursor: default; }
       .tv-video-viewer-footer { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 13px 14px calc(13px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,.1); background: #09090d; }
       .tv-video-viewer-footer > div:first-child { min-width: 0; display: grid; gap: 3px; }
       .tv-video-viewer-footer strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
@@ -213,6 +297,11 @@ function TvVideoStripStyles() {
       .tv-video-viewer-actions { display: flex; gap: 8px; }
       .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.12); font-weight: 900; cursor: pointer; }
       .tv-video-viewer-footer p { min-height: 16px; grid-column: 1 / -1; margin: 0; color: #a7f3d0; font-size: 11px; font-weight: 800; }
+      .tv-video-viewer-gallery { grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: 72px; gap: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
+      .tv-video-viewer-gallery button { position: relative; width: 72px; height: 78px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 9px; background: #000; scroll-snap-align: center; cursor: pointer; }
+      .tv-video-viewer-gallery button.active { border-color: #7eeaff; box-shadow: 0 0 14px rgba(126,234,255,.28); }
+      .tv-video-viewer-gallery video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
+      .tv-video-viewer-gallery span { position: absolute; right: 4px; bottom: 4px; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 10px; font-weight: 950; }
       @media (max-width: 620px) {
         .tv-strip-list { grid-auto-columns: minmax(150px, 42vw); }
         .tv-strip-card, .tv-strip-card video { min-height: 270px; }

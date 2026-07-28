@@ -27894,8 +27894,13 @@
         .profile-tv-viewer[hidden] { display: none; }
         .profile-tv-viewer-shell { position: relative; width: min(100%, 720px); height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 1px solid rgba(139,92,246,.48); border-radius: 16px; background: #000; box-shadow: 0 30px 100px rgba(0,0,0,.8), 0 0 40px rgba(109,40,217,.2); }
         .profile-tv-viewer-shell:fullscreen { width: 100%; max-width: none; height: 100%; border: 0; border-radius: 0; }
+        .profile-tv-viewer-stage { position: relative; min-height: 0; overflow: hidden; touch-action: pan-y; }
         .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; }
         .profile-tv-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
+        .profile-tv-viewer-previous, .profile-tv-viewer-next { position: absolute; z-index: 2; top: 50%; width: 46px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.62); font-size: 34px; line-height: 1; transform: translateY(-50%); cursor: pointer; }
+        .profile-tv-viewer-previous { left: 12px; }
+        .profile-tv-viewer-next { right: 12px; }
+        .profile-tv-viewer-previous:disabled, .profile-tv-viewer-next:disabled { opacity: .28; cursor: default; }
         .profile-tv-viewer-footer { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 13px 14px calc(13px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,.1); background: #09090d; }
         .profile-tv-viewer-copy { min-width: 0; display: grid; gap: 3px; }
         .profile-tv-viewer-copy strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
@@ -27903,6 +27908,11 @@
         .profile-tv-viewer-actions { display: flex; gap: 8px; }
         .profile-tv-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.12); font-weight: 900; cursor: pointer; }
         .profile-tv-viewer-status { min-height: 16px; grid-column: 1 / -1; margin: 0; color: #a7f3d0; font-size: 11px; font-weight: 800; }
+        .profile-tv-viewer-gallery { grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: 72px; gap: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
+        .profile-tv-viewer-gallery button { position: relative; width: 72px; height: 78px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 9px; background: #000; scroll-snap-align: center; cursor: pointer; }
+        .profile-tv-viewer-gallery button.active { border-color: #7eeaff; box-shadow: 0 0 14px rgba(126,234,255,.28); }
+        .profile-tv-viewer-gallery video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
+        .profile-tv-viewer-gallery span { position: absolute; right: 4px; bottom: 4px; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 10px; font-weight: 950; }
         .profile-modal .modal-image,
         .profile-photo-viewer-image { touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; -webkit-user-select: none; }
         .profile-modal .modal-image { cursor: zoom-in; }
@@ -36246,7 +36256,7 @@
         <button class="venue-shift-row" data-profile="${profile.name}" aria-label="${profile.name} upcoming shift">
           <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}"></div>
           <div class="venue-shift-copy">
-            <strong>${profile.name}${profile.status === "Verified" ? verifiedCheckMarkup() : ""}</strong>
+            <strong>${profile.name}${profile.status === "Verified" ? '<span class="verified-mark" aria-label="Verified">✓</span>' : ""}</strong>
             <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
           </div>
         </button>
@@ -36771,7 +36781,11 @@
         <div class="profile-tv-viewer" id="profileTvViewer" role="dialog" aria-modal="true" aria-label="MyDancr TV video" aria-hidden="true" hidden>
           <div class="profile-tv-viewer-shell">
             <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close full-screen video">×</button>
-            <video class="profile-tv-viewer-video" id="profileTvViewerVideo" controls loop playsinline preload="auto"></video>
+            <div class="profile-tv-viewer-stage" id="profileTvViewerStage">
+              <video class="profile-tv-viewer-video" id="profileTvViewerVideo" controls loop playsinline preload="auto"></video>
+              <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">‹</button>
+              <button class="profile-tv-viewer-next" type="button" data-next-profile-tv aria-label="Next dancer video">›</button>
+            </div>
             <div class="profile-tv-viewer-footer">
               <div class="profile-tv-viewer-copy">
                 <strong id="profileTvViewerName"></strong>
@@ -36782,6 +36796,7 @@
                 <button type="button" data-share-profile-tv>Share</button>
               </div>
               <p class="profile-tv-viewer-status" id="profileTvViewerStatus" aria-live="polite"></p>
+              <div class="profile-tv-viewer-gallery" id="profileTvViewerGallery" aria-label="Dancer videos"></div>
             </div>
           </div>
         </div>
@@ -36796,29 +36811,108 @@
           enterProfileTvFullscreen();
           return;
         }
+        if (event.target.closest("[data-previous-profile-tv]")) {
+          showRelativeProfileTvVideo(-1);
+          return;
+        }
+        if (event.target.closest("[data-next-profile-tv]")) {
+          showRelativeProfileTvVideo(1);
+          return;
+        }
+        const galleryButton = event.target.closest("[data-profile-tv-index]");
+        if (galleryButton) {
+          renderProfileTvViewerItem(Number(galleryButton.dataset.profileTvIndex));
+          return;
+        }
         if (event.target.closest("[data-share-profile-tv]")) {
           shareProfileTvVideo();
         }
       });
+      const stage = document.getElementById("profileTvViewerStage");
+      let swipeStartX = null;
+      stage.addEventListener("touchstart", (event) => {
+        swipeStartX = event.changedTouches[0]?.clientX ?? null;
+      }, { passive: true });
+      stage.addEventListener("touchend", (event) => {
+        if (swipeStartX === null) return;
+        const distance = (event.changedTouches[0]?.clientX ?? 0) - swipeStartX;
+        swipeStartX = null;
+        if (Math.abs(distance) >= 50) showRelativeProfileTvVideo(distance < 0 ? 1 : -1);
+      }, { passive: true });
       return overlay;
     }
 
-    function openProfileTvViewer(item, profileName, scheduleLabel) {
-      const overlay = profileTvViewer();
+    function profileTvScheduleLabel(item) {
+      return item.shift?.isActive
+        ? "Working now"
+        : item.shift
+          ? formatProfileTvShift(item.shift.startsAt, item.shift.timezone)
+          : "No shift posted";
+    }
+
+    function renderProfileTvViewerItem(index) {
+      const overlay = document.getElementById("profileTvViewer");
+      const videos = overlay?.profileTvVideos || [];
+      const item = videos[index];
+      if (!overlay || !item) return;
       const video = document.getElementById("profileTvViewerVideo");
+      const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
-      overlay.dataset.profileName = String(profileName || "Dancer");
-      document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
-      document.getElementById("profileTvViewerSchedule").textContent = scheduleLabel || "No shift posted";
+      overlay.dataset.videoIndex = String(index);
+      document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Video ${index + 1} of ${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
       video.src = item.videoUrl;
       video.muted = false;
+      document.querySelector("[data-previous-profile-tv]").disabled = index <= 0;
+      document.querySelector("[data-next-profile-tv]").disabled = index >= videos.length - 1;
+      document.querySelectorAll("[data-profile-tv-index]").forEach((button) => {
+        const isActive = Number(button.dataset.profileTvIndex) === index;
+        button.classList.toggle("active", isActive);
+        if (isActive) {
+          button.setAttribute("aria-current", "true");
+          button.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+        } else {
+          button.removeAttribute("aria-current");
+        }
+      });
+      void video.play().catch(() => undefined);
+    }
+
+    function showRelativeProfileTvVideo(direction) {
+      const overlay = document.getElementById("profileTvViewer");
+      const currentIndex = Number(overlay?.dataset.videoIndex || 0);
+      renderProfileTvViewerItem(currentIndex + direction);
+    }
+
+    function openProfileTvViewer(item, profileName, videos) {
+      const overlay = profileTvViewer();
+      overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];
+      overlay.dataset.profileName = String(profileName || "Dancer");
+      document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
+      const gallery = document.getElementById("profileTvViewerGallery");
+      gallery.innerHTML = "";
+      overlay.profileTvVideos.forEach((galleryVideo, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.profileTvIndex = String(index);
+        button.setAttribute("aria-label", `Open video ${index + 1} of ${overlay.profileTvVideos.length}`);
+        const preview = document.createElement("video");
+        preview.src = galleryVideo.videoUrl;
+        preview.muted = true;
+        preview.playsInline = true;
+        preview.preload = "metadata";
+        preview.setAttribute("aria-hidden", "true");
+        const number = document.createElement("span");
+        number.textContent = String(index + 1);
+        button.append(preview, number);
+        gallery.appendChild(button);
+      });
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
+      renderProfileTvViewerItem(Math.max(0, overlay.profileTvVideos.findIndex((video) => video.id === item.id)));
       overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
       syncOverlayScrollLock();
-      void video.play().catch(() => undefined);
     }
 
     function closeProfileTvViewer() {
@@ -36830,6 +36924,7 @@
       overlay.classList.remove("show");
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
+      overlay.profileTvVideos = [];
       if (video) {
         video.removeAttribute("src");
         video.load();
@@ -36897,11 +36992,7 @@
           const card = document.createElement("button");
           card.type = "button";
           card.className = "profile-tv-strip-card";
-          const scheduleLabel = item.shift?.isActive
-            ? "Working now"
-            : item.shift
-              ? formatProfileTvShift(item.shift.startsAt, item.shift.timezone)
-              : "No shift posted";
+          const scheduleLabel = profileTvScheduleLabel(item);
           card.setAttribute("aria-label", `Open ${profile.name} MyDancr TV video full screen, ${scheduleLabel}`);
           const video = document.createElement("video");
           video.src = item.videoUrl;
@@ -36919,7 +37010,7 @@
               : "profile-tv-strip-schedule is-no-shift";
           schedule.textContent = scheduleLabel;
           card.append(video, schedule);
-          card.addEventListener("click", () => openProfileTvViewer(item, profile.name, scheduleLabel));
+          card.addEventListener("click", () => openProfileTvViewer(item, profile.name, payload.videos));
           list.appendChild(card);
           void video.play().catch(() => undefined);
         });
@@ -42987,9 +43078,17 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      const openTvViewer = document.getElementById("profileTvViewer");
+      if (openTvViewer && !openTvViewer.hidden && event.key === "ArrowLeft") {
+        showRelativeProfileTvVideo(-1);
+        return;
+      }
+      if (openTvViewer && !openTvViewer.hidden && event.key === "ArrowRight") {
+        showRelativeProfileTvVideo(1);
+        return;
+      }
       if (event.key === "Escape") {
-        const tvViewer = document.getElementById("profileTvViewer");
-        if (tvViewer && !tvViewer.hidden) {
+        if (openTvViewer && !openTvViewer.hidden) {
           closeProfileTvViewer();
           return;
         }
