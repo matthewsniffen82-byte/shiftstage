@@ -680,10 +680,13 @@ function TvStyles() {
       .tv-global-logo span { color: #fff; font-size: clamp(38px, 5.7vw, 50px); font-weight: 950; letter-spacing: -.065em; line-height: .9; text-transform: lowercase; text-shadow: 0 0 12px rgba(255,255,255,.7), 0 0 22px rgba(255,255,255,.28); transform: translateY(-1px); }
       .tv-global-logo em { color: #a855ff; font-style: normal; text-shadow: 0 0 10px rgba(168,85,255,.96), 0 0 24px rgba(139,92,246,.78), 0 0 42px rgba(124,58,237,.52); }
       .tv-header-actions { position: relative; display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
-      .tv-global-account { min-width: 108px; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 17px; border: 1px solid rgba(236,72,153,.42); border-radius: 999px; color: #fff; background: rgba(9,9,15,.88); box-shadow: 0 0 22px rgba(124,58,237,.18), inset 0 1px 0 rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; white-space: nowrap; }
-      .tv-global-account.tv-account-icon, .tv-notification-button { position: relative; width: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid rgba(139,92,246,.52); border-radius: 999px; color: #fff; background: rgba(10,10,14,.88); box-shadow: 0 0 20px rgba(124,58,237,.18), inset 0 0 16px rgba(255,255,255,.035); cursor: pointer; }
+      .tv-global-account { min-width: 92px; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 22px; border: 1px solid rgba(236,72,153,.42); border-radius: 999px; color: #fff; background: rgba(9,9,15,.88); box-shadow: 0 0 22px rgba(124,58,237,.18), inset 0 1px 0 rgba(255,255,255,.04); font-size: 12px; font-weight: 850; text-decoration: none; white-space: nowrap; }
+      .tv-global-account.tv-account-icon, .tv-notification-button { position: relative; padding: 0; border: 1px solid rgba(139,92,246,.52); border-radius: 999px; color: #fff; background: rgba(10,10,14,.88); box-shadow: 0 0 20px rgba(124,58,237,.18), inset 0 0 16px rgba(255,255,255,.035); cursor: pointer; }
+      .tv-global-account.tv-account-icon { width: 44px; min-width: 44px; min-height: 44px; }
+      .tv-notification-button { width: 42px; min-width: 42px; min-height: 42px; }
       .tv-global-account.tv-account-icon { display: grid; place-items: center; }
-      .tv-global-account.tv-account-icon svg, .tv-notification-button svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-global-account.tv-account-icon svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-notification-button svg { width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
       .tv-notification-button { display: grid; place-items: center; color: #22c7ff; }
       .tv-notification-button:hover, .tv-notification-button:focus-visible, .tv-notification-button.active, .tv-global-account:hover, .tv-global-account:focus-visible { border-color: rgba(34,199,255,.68); box-shadow: 0 0 22px rgba(34,199,255,.2), 0 0 18px rgba(139,92,246,.18); }
       .tv-notification-count { position: absolute; z-index: 2; top: -7px; left: -8px; min-width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border-radius: 999px; color: #050507; background: #22c7ff; box-shadow: 0 0 14px rgba(34,199,255,.42); font-size: 10px; font-weight: 950; }
@@ -750,12 +753,14 @@ function TvStyles() {
         .tv-shell { height: 100svh; height: 100dvh; min-height: 0; padding: 0 8px calc(62px + env(safe-area-inset-bottom)); border-inline: 0; }
         .tv-global-header { position: relative; flex: 0 0 auto; margin: 0 -8px 10px; padding: calc(9px + env(safe-area-inset-top, 0px)) 10px 9px; }
         .tv-global-topbar { gap: 8px; }
-        .tv-global-logo { width: clamp(148px, 49vw, 198px); min-width: 0; }
+        .tv-global-logo { width: clamp(150px, 48vw, 198px); min-width: 0; }
         .tv-global-logo span { font-size: clamp(30px, 8.5vw, 40px); white-space: nowrap; }
         .tv-header-actions { gap: 6px; }
-        .tv-global-account { min-width: 100px; min-height: 46px; padding: 0 12px; font-size: 12px; }
-        .tv-global-account.tv-account-icon, .tv-notification-button { width: 38px; min-width: 38px; min-height: 38px; }
-        .tv-global-account.tv-account-icon svg, .tv-notification-button svg { width: 18px; height: 18px; }
+        .tv-global-account { min-width: 86px; max-width: 108px; min-height: 42px; padding: 0 11px; font-size: clamp(12px, 3.3vw, 14px); }
+        .tv-global-account.tv-account-icon { width: 38px; min-width: 38px; min-height: 38px; }
+        .tv-notification-button { width: 34px; min-width: 34px; min-height: 34px; }
+        .tv-global-account.tv-account-icon svg { width: 18px; height: 18px; }
+        .tv-notification-button svg { width: 16px; height: 16px; }
         .tv-notification-panel { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 76px); left: 10px; right: 10px; width: auto; max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 96px); }
         .tv-close { width: 42px; height: 42px; flex-basis: 42px; font-size: 26px; }
         .tv-header { flex: 0 0 auto; margin-bottom: 8px; padding: 10px 11px; align-items: center; border-radius: 11px; }
@@ -777,6 +782,10 @@ function TvStyles() {
         .tv-mobile-nav { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; min-height: calc(58px + env(safe-area-inset-bottom)); padding: 5px 7px env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-top: 1px solid rgba(255,255,255,.1); background: rgba(3,3,5,.96); backdrop-filter: blur(16px); }
         .tv-mobile-nav a { display: grid; place-items: center; border-radius: 8px; color: #9f95b1; font-size: 10px; font-weight: 900; text-decoration: none; }
         .tv-mobile-nav a.active { color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(34,199,255,.16)); }
+      }
+      @media (max-width: 374px) {
+        .tv-global-logo { width: clamp(136px, 44vw, 164px); max-width: clamp(136px, 44vw, 164px); }
+        .tv-global-account { min-width: 78px; max-width: 94px; padding-inline: 9px; }
       }
       @media (prefers-reduced-motion: reduce) {
         .tv-feed { scroll-behavior: auto; }
