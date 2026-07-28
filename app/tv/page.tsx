@@ -17,7 +17,7 @@ type PageProps = {
 
 export default async function MyDancrTvPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const city = (params.city || "Las Vegas").trim();
+  const city = (params.city || "").trim().slice(0, 80) || "Las Vegas";
   const filter = params.filter || "for-you";
   const initialVideos = filter === "following"
     ? []

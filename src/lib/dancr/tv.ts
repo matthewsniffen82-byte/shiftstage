@@ -85,6 +85,7 @@ export async function getPublicMyDancrTvFeed(
 ): Promise<MyDancrTvVideo[]> {
   const now = new Date();
   const nowIso = now.toISOString();
+  const city = normalizeTvCity(options.city);
   const filter = MYDANCR_TV_FILTERS.has(options.filter || "") ? options.filter || "for-you" : "for-you";
   const queryLimit = Math.min(120, Math.max(20, (options.limit || 12) * 5));
   const selectedVideoId = options.selectedVideoId && UUID_PATTERN.test(options.selectedVideoId)
@@ -101,7 +102,7 @@ export async function getPublicMyDancrTvFeed(
     .order("published_at", { ascending: false })
     .limit(queryLimit);
 
-  if (options.city) query = query.ilike("dancer_profiles.city", options.city.trim());
+  if (city) query = query.ilike("dancer_profiles.city", city);
   if (options.dancerId) query = query.eq("dancer_id", options.dancerId);
   if (options.venueId) {
     query = query
@@ -129,6 +130,7 @@ export async function getPublicMyDancrTvFeed(
   let rows = (data || [])
     .map((row: any) => normalizeFeedRow(row, now.getTime()))
     .filter((row: NormalizedFeedRow | null): row is NormalizedFeedRow => Boolean(row))
+    .filter((row) => !city || tvCitiesMatch(row.dancer.city, city))
     .filter((row) => {
       if (filter === "following") return following.has(row.dancer.id);
       if (filter === "tonight") {
@@ -152,7 +154,10 @@ export async function getPublicMyDancrTvFeed(
     });
   }
 
-  const selectedRow = normalizeFeedRow(selectedResult.data, now.getTime());
+  const selectedRowCandidate = normalizeFeedRow(selectedResult.data, now.getTime());
+  const selectedRow = selectedRowCandidate && (!city || tvCitiesMatch(selectedRowCandidate.dancer.city, city))
+    ? selectedRowCandidate
+    : null;
   if (selectedRow && !rows.some((row) => row.id === selectedRow.id)) {
     rows.unshift(selectedRow);
   } else if (selectedVideoId) {
@@ -163,6 +168,14 @@ export async function getPublicMyDancrTvFeed(
 
   const deduped = diversifyFeed(rows).slice(0, Math.min(24, Math.max(1, options.limit || 12)));
   return signPublicVideos(admin, deduped);
+}
+
+function normalizeTvCity(value: string | undefined) {
+  return String(value || "").trim().slice(0, 80);
+}
+
+function tvCitiesMatch(left: string, right: string) {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
 type NormalizedFeedRow = Omit<MyDancrTvVideo, "videoUrl"> & {

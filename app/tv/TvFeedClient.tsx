@@ -56,6 +56,19 @@ export default function TvFeedClient({
   const loadedAuthenticatedFeed = useRef(false);
   const viewerSessionId = useMemo(readViewerSessionId, []);
 
+  const trackEvent = useCallback((videoId: string, eventType: string) => {
+    const token = readAnyToken();
+    fetch(`/api/public/tv/${videoId}/events`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ eventType, sessionId: viewerSessionId, source }),
+      keepalive: true,
+    }).catch(() => null);
+  }, [source, viewerSessionId]);
+
   const loadFeed = useCallback(async (nextFilter: string, nextCity: string, selectedVideoId = "") => {
     setIsLoading(true);
     setStatus("");
@@ -73,8 +86,13 @@ export default function TvFeedClient({
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load MyDancr TV.");
-      setVideos(data.videos || []);
-      setActiveVideoId(data.videos?.[0]?.id || "");
+      const cityVideos = Array.isArray(data.videos)
+        ? data.videos.filter(
+            (video: MyDancrTvVideo) => tvCitiesMatch(video.dancer.city, nextCity),
+          )
+        : [];
+      setVideos(cityVideos);
+      setActiveVideoId(cityVideos[0]?.id || "");
       if (data.requiresAccount) setStatus("Sign in to see videos from dancers you follow.");
       const url = new URL(window.location.href);
       url.pathname = "/tv";
@@ -127,24 +145,11 @@ export default function TvFeedClient({
         window.clearTimeout(engagedTimers.current[videoId]);
       }
     });
-  }, [activeVideoId, muted]);
+  }, [activeVideoId, muted, trackEvent]);
 
   useEffect(() => () => {
     Object.values(engagedTimers.current).forEach((timer) => window.clearTimeout(timer));
   }, []);
-
-  function trackEvent(videoId: string, eventType: string) {
-    const token = readAnyToken();
-    fetch(`/api/public/tv/${videoId}/events`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ eventType, sessionId: viewerSessionId, source }),
-      keepalive: true,
-    }).catch(() => null);
-  }
 
   async function updateFollow(video: MyDancrTvVideo, enableNotifications: boolean) {
     const token = readCustomerToken();
@@ -292,7 +297,7 @@ export default function TvFeedClient({
       <header className="tv-header">
         <div>
           <span>Watch. Discover. Go.</span>
-          <h1>MyDancr TV</h1>
+          <h1>MyDancr TV {myDancrTvCityLabel(city)}</h1>
         </div>
         <form className="tv-city" onSubmit={(event) => event.preventDefault()}>
           <label htmlFor="tv-city">City</label>
@@ -502,6 +507,15 @@ function readSession() {
   } catch {
     return null;
   }
+}
+
+function myDancrTvCityLabel(city: string) {
+  const normalized = city.trim() || "Las Vegas";
+  return normalized.toLowerCase() === "las vegas" ? "Vegas" : normalized;
+}
+
+function tvCitiesMatch(left: string, right: string) {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
 function readCustomerToken() {

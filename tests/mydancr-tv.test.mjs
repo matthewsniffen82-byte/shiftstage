@@ -71,6 +71,10 @@ test("dancer uploads are direct, validated, persistent, and submitted for review
 
 test("public feed is real, navigable, measurable, and preserves existing discovery sections", () => {
   assert.match(publicRoute, /getPublicMyDancrTvFeed/);
+  assert.match(publicRoute, /const requestedCity = \(url\.searchParams\.get\("city"\) \|\| ""\)\.trim\(\)\.slice\(0, 80\)/);
+  assert.match(publicRoute, /const city = requestedCity \|\| "Las Vegas"/);
+  assert.match(tvSource, /\.filter\(\(row\) => !city \|\| tvCitiesMatch\(row\.dancer\.city, city\)\)/);
+  assert.match(tvSource, /selectedRowCandidate && \(!city \|\| tvCitiesMatch\(selectedRowCandidate\.dancer\.city, city\)\)/);
   assert.match(feedClient, /For You/);
   assert.match(feedClient, /Following/);
   assert.match(feedClient, /Tonight/);
@@ -83,11 +87,16 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /Sign in required/);
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
   assert.match(feedClient, /\/api\/reports/);
+  assert.match(feedClient, /<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>/);
+  assert.match(feedClient, /data\.videos\.filter\([\s\S]*?tvCitiesMatch\(video\.dancer\.city, nextCity\)/);
   assert.doesNotMatch(liveApp, /data-tab="tv"/);
   assert.doesNotMatch(liveApp, /renderHomeTvTab/);
   assert.match(liveApp, /id="locationBtn"[\s\S]*?<\/section>\s*<section class="home-tv-teaser"[\s\S]*?<nav class="tabs"/);
   assert.doesNotMatch(liveApp, /id="homeTvTeaser"[^>]*\shidden(?:\s|>)/);
   assert.match(liveApp, /renderHomeTvTeaser\(city\)/);
+  assert.match(liveApp, /title\.textContent = `MyDancr TV \$\{tvCityLabel\}`/);
+  assert.match(liveApp, /payload\.videos\.filter\([\s\S]*?item\.dancer\?\.city[\s\S]*?=== normalizedCity/);
+  assert.match(liveApp, /card\.href = `\/tv\?city=\$\{encodeURIComponent\(city\)\}&video=\$\{encodeURIComponent\(item\.id\)\}`/);
   assert.match(liveApp, /filter=for-you&limit=8/);
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);
   assert.match(liveApp, /home-tv-teaser-list \{[\s\S]*?grid-auto-columns: minmax\(150px, 180px\)/);

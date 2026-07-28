@@ -167,7 +167,7 @@ export async function GET(request: Request) {
 
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    let { data, error } = await loadDancerProfile(client, user.id);
+    const { data, error } = await loadDancerProfile(client, user.id);
 
     if (error) throw error;
     if (!data) {

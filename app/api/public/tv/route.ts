@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const city = (url.searchParams.get("city") || "Las Vegas").trim().slice(0, 80);
+    const requestedCity = (url.searchParams.get("city") || "").trim().slice(0, 80);
+    const city = requestedCity || "Las Vegas";
     const requestedFilter = url.searchParams.get("filter") || "for-you";
     const filter = MYDANCR_TV_FILTERS.has(requestedFilter) ? requestedFilter : "for-you";
     const selectedVideoId = cleanUuid(url.searchParams.get("video"));

@@ -40470,11 +40470,14 @@
 
     async function renderHomeTvTeaser(city) {
       const teaser = document.getElementById("homeTvTeaser");
+      const title = document.getElementById("homeTvTeaserTitle");
       const mount = document.getElementById("homeTvTeaserList");
       const fullFeedLink = document.getElementById("homeTvTeaserLink");
-      if (!teaser || !mount || !fullFeedLink) return;
+      if (!teaser || !title || !mount || !fullFeedLink) return;
 
       const requestId = ++homeTvTeaserRequest;
+      const tvCityLabel = String(city).trim().toLowerCase() === "las vegas" ? "Vegas" : city;
+      title.textContent = `MyDancr TV ${tvCityLabel}`;
       teaser.setAttribute("aria-busy", "true");
       renderHomeTvTeaserState(
         mount,
@@ -40489,7 +40492,12 @@
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (requestId !== homeTvTeaserRequest || citySelect.value !== city) return;
 
-        const videos = Array.isArray(payload.videos) ? payload.videos : [];
+        const normalizedCity = String(city).trim().toLowerCase();
+        const videos = Array.isArray(payload.videos)
+          ? payload.videos.filter((item) => (
+              String(item.dancer?.city || "").trim().toLowerCase() === normalizedCity
+            ))
+          : [];
         teaser.setAttribute("aria-busy", "false");
         if (!videos.length) {
           renderHomeTvTeaserState(
@@ -40505,7 +40513,7 @@
         videos.forEach((item) => {
           const card = document.createElement("a");
           card.className = "home-tv-teaser-card";
-          card.href = `/tv/${encodeURIComponent(item.id)}`;
+          card.href = `/tv?city=${encodeURIComponent(city)}&video=${encodeURIComponent(item.id)}`;
           card.setAttribute("aria-label", `Watch ${item.dancer?.stageName || "dancer"} on MyDancr TV`);
 
           const video = document.createElement("video");
