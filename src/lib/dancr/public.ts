@@ -26,9 +26,21 @@ export async function getLiveDancerDiscovery(
 ): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[] }> {
   const rows = await getApprovedDancerRowsByCity(client, city);
   const dancers = rows.map((row) => buildDancerCard(client, row).card);
+  const now = Date.now();
   const tonightDancers = rows
     .map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card)
-    .filter((card) => card.shiftId && card.locationStatus !== "self_reported");
+    .filter((card) => {
+      const startsAt = new Date(card.shiftStartsAt || "").getTime();
+      const endsAt = new Date(card.shiftEndsAt || "").getTime();
+      return Boolean(
+        card.shiftId &&
+        card.locationStatus !== "self_reported" &&
+        Number.isFinite(startsAt) &&
+        Number.isFinite(endsAt) &&
+        startsAt <= now &&
+        endsAt >= now
+      );
+    });
   const hydratedCards = await hydrateDancerCardMetrics(client, [...dancers, ...tonightDancers]);
 
   return {

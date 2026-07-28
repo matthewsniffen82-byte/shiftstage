@@ -36,6 +36,9 @@ test("the consolidated tonight list still requires a confirmed active check-in",
   assert.match(publicServiceSource, /Boolean\(item\.checked_in_at\)/);
   assert.match(publicServiceSource, /!item\.checked_out_at/);
   assert.match(publicServiceSource, /publicLocationStatus\(item\) !== "self_reported"/);
+  assert.match(publicServiceSource, /card\.locationStatus !== "self_reported"/);
+  assert.match(publicServiceSource, /startsAt <= now/);
+  assert.match(publicServiceSource, /endsAt >= now/);
 });
 
 test("the home hero is preloaded and rendered as a resilient high-priority image", () => {
