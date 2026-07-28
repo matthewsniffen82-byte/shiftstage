@@ -158,8 +158,15 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     tvSource,
     /function tvSchedulePriority\(video: NormalizedFeedRow\) \{[\s\S]*?video\.shift\?\.isActive[\s\S]*?return 0[\s\S]*?video\.shift[\s\S]*?return 1[\s\S]*?return 2/,
   );
-  assert.match(tvSource, /rows = rows\.sort\(\(left, right\) =>[\s\S]*?comparePublicTvFeedRows/);
-  assert.match(tvSource, /const scheduleOrdered = \[0, 1, 2\]\.flatMap/);
+  assert.doesNotMatch(tvSource, /comparePublicTvFeedRows|upcomingDifference|scoreDifference/);
+  assert.match(
+    tvSource,
+    /const scheduleOrdered = \[0, 1, 2\]\.flatMap\(\(priority\) =>[\s\S]*?shuffleVideos\(remaining\.filter\(\(video\) => tvSchedulePriority\(video\) === priority\)\)/,
+  );
+  assert.match(
+    tvSource,
+    /function shuffleVideos\(rows: NormalizedFeedRow\[\]\) \{[\s\S]*?for \(let index = shuffled\.length - 1; index > 0; index -= 1\)[\s\S]*?Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)[\s\S]*?return shuffled/,
+  );
   assert.match(tvSource, /shift\?\.status === "posted"[\s\S]*?!shift\.checked_out_at[\s\S]*?start > now/);
   assert.match(liveApp, /filter=for-you&limit=8/);
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);

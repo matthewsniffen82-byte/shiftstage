@@ -151,13 +151,6 @@ export async function getPublicMyDancrTvFeed(
       return true;
     });
 
-  rows = rows.sort((left, right) =>
-    comparePublicTvFeedRows(left, right, {
-      prioritizePersonalization: filter === "for-you",
-      following,
-    }),
-  );
-
   const selectedRowWithShift = selectedRowCandidate
     ? applyPublicTvShiftContext(selectedRowCandidate, shiftContexts)
     : null;
@@ -328,34 +321,6 @@ function isConfirmedActiveTvShift(shift: any, now: number) {
   return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
 }
 
-function comparePublicTvFeedRows(
-  left: NormalizedFeedRow,
-  right: NormalizedFeedRow,
-  options: {
-    prioritizePersonalization: boolean;
-    following: Set<string>;
-  },
-) {
-  const scheduleDifference = tvSchedulePriority(left) - tvSchedulePriority(right);
-  if (scheduleDifference) return scheduleDifference;
-
-  if (left.shift && right.shift && !left.shift.isActive && !right.shift.isActive) {
-    const upcomingDifference =
-      new Date(left.shift.startsAt).getTime() - new Date(right.shift.startsAt).getTime();
-    if (upcomingDifference) return upcomingDifference;
-  }
-
-  if (options.prioritizePersonalization) {
-    const score = (video: NormalizedFeedRow) =>
-      (options.following.has(video.dancer.id) ? 40 : 0) +
-      (video.venueFeatured ? 15 : 0);
-    const scoreDifference = score(right) - score(left);
-    if (scoreDifference) return scoreDifference;
-  }
-
-  return new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
-}
-
 function tvSchedulePriority(video: NormalizedFeedRow) {
   if (video.shift?.isActive) return 0;
   if (video.shift) return 1;
@@ -411,9 +376,20 @@ function diversifyFeed(rows: NormalizedFeedRow[], selectedVideoId = "") {
     : null;
   const remaining = selected ? rows.filter((video) => video.id !== selected.id) : rows;
   const scheduleOrdered = [0, 1, 2].flatMap((priority) =>
-    diversifyDancers(remaining.filter((video) => tvSchedulePriority(video) === priority)),
+    diversifyDancers(
+      shuffleVideos(remaining.filter((video) => tvSchedulePriority(video) === priority)),
+    ),
   );
   return selected ? [selected, ...scheduleOrdered] : scheduleOrdered;
+}
+
+function shuffleVideos(rows: NormalizedFeedRow[]) {
+  const shuffled = [...rows];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
 function diversifyDancers(rows: NormalizedFeedRow[]) {
