@@ -23,7 +23,7 @@ export function TvVideoStrip({
       <div className="tv-strip-list">
         {videos.map((video) => (
           <Link className="tv-strip-card" href={`/tv/${video.id}`} key={video.id}>
-            <video muted playsInline preload="metadata" src={video.videoUrl} />
+            <video autoPlay loop muted playsInline preload="metadata" src={video.videoUrl} />
             <span className="tv-strip-play" aria-hidden="true">▶</span>
             <div>
               <strong>{video.dancer.stageName}</strong>

@@ -31,7 +31,7 @@ create table if not exists public.mydancr_tv_videos (
   constraint mydancr_tv_caption_check check (length(trim(caption)) between 1 and 500),
   constraint mydancr_tv_storage_mime_check check (storage_mime in ('video/mp4', 'video/webm')),
   constraint mydancr_tv_file_size_check check (file_size_bytes between 1 and 78643200),
-  constraint mydancr_tv_duration_check check (duration_seconds between 1 and 90),
+  constraint mydancr_tv_duration_check check (duration_seconds between 1 and 10),
   constraint mydancr_tv_dimensions_check check (width between 240 and 4320 and height between width and 7680),
   constraint mydancr_tv_status_check check (
     status in ('uploading', 'submitted', 'approved', 'rejected', 'hidden', 'expired')
@@ -211,6 +211,7 @@ create policy "public reads approved MyDancr TV videos"
   for select
   using (
     status = 'approved'
+    and duration_seconds between 1 and 10
     and published_at is not null
     and published_at <= now()
     and (expires_at is null or expires_at > now())

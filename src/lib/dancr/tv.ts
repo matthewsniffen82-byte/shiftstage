@@ -3,7 +3,7 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
-export const MYDANCR_TV_MAX_DURATION_SECONDS = 90;
+export const MYDANCR_TV_MAX_DURATION_SECONDS = 10;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
 export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm"]);
 
@@ -95,6 +95,7 @@ export async function getPublicMyDancrTvFeed(
     .from("mydancr_tv_videos")
     .select(PUBLIC_TV_SELECT)
     .eq("status", "approved")
+    .lte("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS)
     .lte("published_at", nowIso)
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
     .order("published_at", { ascending: false })
@@ -114,6 +115,7 @@ export async function getPublicMyDancrTvFeed(
         .select(PUBLIC_TV_SELECT)
         .eq("id", selectedVideoId)
         .eq("status", "approved")
+        .lte("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS)
         .lte("published_at", nowIso)
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
         .maybeSingle()
@@ -368,7 +370,7 @@ export async function createMyDancrTvUpload(
     throw new Error("Video files must be 75 MB or smaller.");
   }
   if (!Number.isFinite(input.durationSeconds) || input.durationSeconds < 1 || input.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-    throw new Error("Videos must be between 1 and 90 seconds.");
+    throw new Error("Videos must be between 1 and 10 seconds.");
   }
   if (
     !Number.isSafeInteger(input.width) ||
@@ -518,7 +520,7 @@ export async function reviewMyDancrTvVideo(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select("id, status, shift_id, duration_seconds, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -527,6 +529,9 @@ export async function reviewMyDancrTvVideo(
 
   if (decision === "approved" && !isPublicDancerProfileEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not currently eligible for public video.");
+  }
+  if (decision === "approved" && Number(video.duration_seconds) > MYDANCR_TV_MAX_DURATION_SECONDS) {
+    throw new Error("Only videos that are 10 seconds or shorter can be approved.");
   }
   if (decision === "rejected" && notes.trim().length < 3) {
     throw new Error("Add a clear rejection reason for the dancer.");
