@@ -36,6 +36,26 @@ test("account-only live modal actions check for a customer profile while Going a
   );
 });
 
+test("the live dancer profile close control exits shared links and remains touchable", () => {
+  assert.match(
+    homeSource,
+    /id="modalClose" type="button" aria-label="Close profile"/,
+  );
+  assert.match(
+    homeSource,
+    /#modalClose \{[\s\S]*?width: 48px !important;[\s\S]*?min-height: 48px !important;[\s\S]*?pointer-events: auto !important;[\s\S]*?touch-action: manipulation !important;/,
+  );
+  assert.match(
+    homeSource,
+    /function clearProfileDeepLink\(\) \{[\s\S]*?url\.searchParams\.delete\("profile"\)[\s\S]*?window\.history\.replaceState/,
+  );
+  assert.match(
+    homeSource,
+    /function closeProfileModal\(\) \{[\s\S]*?profileBackdrop\.classList\.remove\("show"\)[\s\S]*?clearProfileDeepLink\(\)/,
+  );
+  assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
+});
+
 test("signed-out profile actions open a dismissible account prompt with working signup and sign-in links", () => {
   assert.match(
     homeSource,

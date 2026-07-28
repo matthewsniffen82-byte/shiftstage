@@ -24540,6 +24540,8 @@
       top: calc(12px + env(safe-area-inset-top)) !important;
       right: 12px !important;
       z-index: 1001 !important;
+      width: 48px !important;
+      min-height: 48px !important;
       pointer-events: auto !important;
       touch-action: manipulation !important;
     }
@@ -29086,7 +29088,7 @@
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
       <section class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
         <div class="modal-top">
-          <button class="close-btn" id="modalClose" aria-label="Close profile">
+          <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
@@ -36582,6 +36584,18 @@
       }
     }
 
+    function clearProfileDeepLink() {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("profile")) return;
+      url.searchParams.delete("profile");
+      const search = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${search ? `?${search}` : ""}${url.hash}`
+      );
+    }
+
     function closeProfileModal() {
       closeProfilePhotoViewer();
       closeDealPassOverlay();
@@ -36602,6 +36616,7 @@
         dancerDashboard.setAttribute("aria-hidden", "false");
       }
       syncOverlayScrollLock();
+      clearProfileDeepLink();
       if (returnTarget !== "dancer-dashboard") window.scrollTo(0, savedScrollY);
     }
 
