@@ -453,6 +453,10 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
   );
 
   return {
+    profile: {
+      stageName: dancer.stage_name,
+      slug: dancer.slug,
+    },
     profileEligible: isPublicDancerProfileEligible(dancer),
     profileVisible: dancer.is_public !== false,
     videos: signedVideos,

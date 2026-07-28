@@ -7,6 +7,10 @@ import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 const SESSION_KEY = "dancrAuthSessionV1";
 
 type Workspace = {
+  profile: {
+    stageName: string;
+    slug: string;
+  };
   profileEligible: boolean;
   profileVisible: boolean;
   videos: ManagedVideo[];
@@ -198,7 +202,22 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       <div className="tv-studio-head">
         <div>
           <span>Creator tools</span>
-          <h2>MyDancr TV Studio</h2>
+          <h2>
+            MyDancr TV
+            {workspace?.profile ? (
+              <>
+                {" — "}
+                <Link href={`/dancers/${encodeURIComponent(workspace.profile.slug)}`}>
+                  {workspace.profile.stageName}
+                </Link>
+              </>
+            ) : " Studio"}
+          </h2>
+          {workspace?.profile ? (
+            <p className="tv-profile-connection">
+              Videos published here appear on your public {workspace.profile.stageName} profile.
+            </p>
+          ) : null}
           <p>Post vertical videos tied to your real profile, venue, or shift. Automated safety review checks the complete video before it can go live.</p>
         </div>
         <Link href="/tv">Watch MyDancr TV</Link>
@@ -419,7 +438,10 @@ function DancerTvStudioStyles() {
       .tv-studio-head > div { display: grid; gap: 7px; }
       .tv-studio-head span { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .tv-studio-head h2 { margin: 0; font-size: clamp(30px, 5vw, 50px); line-height: 1; }
+      .tv-studio-head h2 a { color: #7eeaff; text-decoration-thickness: 2px; text-underline-offset: .12em; }
+      .tv-studio-head h2 a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 4px; border-radius: 4px; }
       .tv-studio-head p { margin: 0; max-width: 58ch; color: #b9accd; line-height: 1.5; }
+      .tv-studio-head .tv-profile-connection { color: #e2d9ef; font-weight: 800; }
       .tv-studio-head > a, .tv-managed-video a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(34,199,255,.38); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-weight: 900; text-decoration: none; white-space: nowrap; }
       .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; border: 1px solid rgba(139,92,246,.3); border-radius: 12px; background: rgba(11,11,16,.84); }
       .tv-upload-form > label { display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
