@@ -487,7 +487,7 @@ export default function TvFeedClient({
                       {video.venue ? (
                         <Link
                           className="tv-card-venue-line"
-                          href={`/venues/${encodeURIComponent(video.venue.slug)}`}
+                          href={venueLiveProfileHref(video)}
                           aria-label={`Open ${video.venue.name} venue profile`}
                           onClick={() => trackEvent(video.id, "venue_click")}
                         >
@@ -615,6 +615,13 @@ function dancerLiveProfileHref(video: MyDancrTvVideo) {
   const city = video.dancer.city.trim() || "Las Vegas";
   const profile = slugifyLiveProfileName(video.dancer.stageName);
   return `/?city=${encodeURIComponent(city)}&profile=${encodeURIComponent(profile)}`;
+}
+
+function venueLiveProfileHref(video: MyDancrTvVideo) {
+  if (!video.venue) return "/";
+  const city = video.venue.city.trim() || video.dancer.city.trim() || "Las Vegas";
+  const venue = video.venue.slug.trim() || slugifyLiveProfileName(video.venue.name);
+  return `/?city=${encodeURIComponent(city)}&venue=${encodeURIComponent(venue)}`;
 }
 
 function slugifyLiveProfileName(value: string) {

@@ -43216,11 +43216,19 @@
       const params = new URLSearchParams(window.location.search);
       const city = params.get("city");
       const profileSlug = params.get("profile");
-      if (!city || !profileSlug || !markets[city]) return;
+      const venueSlug = params.get("venue");
+      if (!city || (!profileSlug && !venueSlug) || !markets[city]) return;
       citySelect.value = city;
-      activeTab = "dancers";
-      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
+      activeTab = venueSlug ? "venues" : "dancers";
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
       render();
+      if (venueSlug) {
+        const venue = resolveVenueByName(venueSlug, city);
+        if (venue) {
+          setTimeout(() => openVenueFromName(venue.slug || venue.name), 120);
+        }
+        return;
+      }
       const profile = markets[city].dancers.find((item) => slugify(item.name) === profileSlug && isApprovedPublicProfile(item));
       if (profile) {
         setTimeout(() => openProfileModal(profile.name), 120);
