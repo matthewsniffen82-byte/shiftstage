@@ -40512,7 +40512,7 @@
         const videos = Array.isArray(payload.videos)
           ? payload.videos.filter((item) => (
               String(item.dancer?.city || "").trim().toLowerCase() === normalizedCity &&
-              String(item.dancer?.slug || "").trim()
+              String(item.dancer?.stageName || "").trim()
             ))
           : [];
         teaser.setAttribute("aria-busy", "false");
@@ -40529,9 +40529,17 @@
         mount.replaceChildren();
         videos.forEach((item) => {
           const card = document.createElement("a");
+          const profileName = String(item.dancer.stageName).trim();
           card.className = "home-tv-teaser-card";
-          card.href = `/dancers/${encodeURIComponent(String(item.dancer.slug).trim())}`;
-          card.setAttribute("aria-label", `Open ${item.dancer?.stageName || "dancer"} live profile`);
+          card.href = profileShareUrl(profileName, city);
+          card.setAttribute("aria-label", `Open ${profileName} live profile`);
+          card.addEventListener("click", (event) => {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const liveProfile = findProfile(profileName);
+            if (!liveProfile || !isApprovedPublicProfile(liveProfile)) return;
+            event.preventDefault();
+            openProfileModal(liveProfile.name);
+          });
 
           const video = document.createElement("video");
           video.src = item.videoUrl;
@@ -42889,7 +42897,12 @@
     installReferenceHomeShell();
     restoreLoggedInSessionState();
     updateAccountHeader();
-    loadLiveDiscovery(citySelect.value);
+    const initialProfileParams = new URLSearchParams(window.location.search);
+    const initialProfileCity = initialProfileParams.get("city");
+    if (initialProfileParams.get("profile") && initialProfileCity && markets[initialProfileCity]) {
+      citySelect.value = initialProfileCity;
+    }
+    const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
     if (isCustomerSession()) loadLiveCustomerDashboardData();
     if (isDancerSession()) {
@@ -42902,7 +42915,9 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleAdminDashboardDeepLink() && !handleDancerDashboardDeepLink()) openSharedProfileFromUrl();
+    if (!restoredAuthResume && !handleAdminDashboardDeepLink() && !handleDancerDashboardDeepLink()) {
+      void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
+    }
   </script>
 </body>
 </html>
