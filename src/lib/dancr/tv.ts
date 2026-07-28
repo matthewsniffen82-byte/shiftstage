@@ -84,6 +84,30 @@ export type MyDancrTvVideo = {
   } | null;
 };
 
+export async function getPublicMyDancrTvVideoCount(
+  admin: AdminClient,
+  options: Pick<FeedOptions, "city"> = {},
+): Promise<number> {
+  const nowIso = new Date().toISOString();
+  const city = normalizeTvCity(options.city);
+  let query = admin
+    .from("mydancr_tv_videos")
+    .select("id, dancer_profiles!inner(id)", { count: "exact", head: true })
+    .eq("status", "approved")
+    .lte("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS)
+    .lte("published_at", nowIso)
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .eq("dancer_profiles.status", "approved")
+    .eq("dancer_profiles.verification_status", "approved")
+    .is("dancer_profiles.disabled_at", null)
+    .eq("dancer_profiles.is_public", true);
+
+  if (city) query = query.ilike("dancer_profiles.city", city);
+  const { count, error } = await query;
+  if (error) throw error;
+  return Math.max(0, Number(count || 0));
+}
+
 export async function getPublicMyDancrTvFeed(
   admin: AdminClient,
   options: FeedOptions = {},

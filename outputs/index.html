@@ -27807,18 +27807,21 @@
         <strong id="homeLiveWorking">0 working now</strong>
       </div>
 
-      <section class="home-tv-teaser" id="homeTvTeaser" aria-labelledby="homeTvTeaserTitle" aria-busy="true">
-        <div class="home-tv-teaser-head">
-          <strong id="homeTvTeaserTitle">MyDancr TV</strong>
-          <a id="homeTvTeaserLink" href="/tv">Open full feed</a>
-        </div>
-        <div class="home-tv-teaser-list is-state" id="homeTvTeaserList" aria-live="polite">
-          <div class="home-tv-teaser-state">
-            <strong>Loading approved videos…</strong>
-            <span>Videos for the selected city will appear here automatically.</span>
-          </div>
-        </div>
-      </section>
+      <a
+        class="home-tv-launch"
+        id="homeTvLaunch"
+        href="/tv?city=Las%20Vegas"
+        aria-label="Open MyDancr TV Las Vegas vertical video feed"
+        aria-busy="true"
+      >
+        <span class="home-tv-launch-icon" aria-hidden="true">▶</span>
+        <span class="home-tv-launch-copy">
+          <strong id="homeTvLaunchTitle">MyDancr TV Las Vegas</strong>
+          <small>Open full-screen vertical feed</small>
+        </span>
+        <span class="home-tv-launch-count" id="homeTvLaunchCount" aria-live="polite">Loading</span>
+        <span class="home-tv-launch-arrow" aria-hidden="true">›</span>
+      </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
@@ -27847,29 +27850,16 @@
           .stack > .hero.reference-hero.uploaded-hero-ready,
           .stack > .hero.reference-hero:not(.uploaded-hero-ready) { width: min(100%, 640px) !important; max-width: 640px !important; margin-inline: auto !important; }
         }
-        .home-tv-teaser { width: 100%; min-width: 0; max-width: 100%; display: grid; gap: 12px; margin: 14px 0 10px; padding: 14px; overflow: hidden; border: 1px solid rgba(139,92,246,.38); border-radius: 14px; background: linear-gradient(145deg, rgba(14,14,21,.97), rgba(7,7,11,.97)); box-shadow: 0 16px 38px rgba(0,0,0,.3); }
-        .home-tv-teaser-head { min-width: 0; max-width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .home-tv-teaser-head strong { min-width: 0; flex: 1 1 auto; overflow: hidden; color: #fff; font-size: 14px; font-weight: 950; letter-spacing: .14em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-        .home-tv-teaser-head a { min-width: 0; max-width: 44%; min-height: 34px; flex: 0 1 auto; display: inline-flex; align-items: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.25); border-radius: 999px; color: #7eeaff; font-size: 12px; font-weight: 900; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
-        .home-tv-teaser-list { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 180px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; padding: 1px 1px 6px; scrollbar-width: thin; }
-        .home-tv-teaser-list.is-state { grid-auto-flow: row; grid-auto-columns: minmax(0, 1fr); overflow-x: hidden; scroll-snap-type: none; }
-        .home-tv-teaser-state { width: 100%; min-height: 112px; display: grid; align-content: center; gap: 6px; padding: 16px; border: 1px dashed rgba(255,255,255,.14); border-radius: 10px; color: #a99ebc; background: rgba(0,0,0,.2); }
-        .home-tv-teaser-state strong { color: #fff; font-size: 14px; }
-        .home-tv-teaser-state span { font-size: 12px; line-height: 1.45; }
-        .home-tv-teaser-state button { width: fit-content; min-height: 36px; margin-top: 3px; padding: 0 12px; border: 1px solid rgba(34,199,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
-        .home-tv-teaser-card { position: relative; height: 196px; overflow: hidden; border: 1px solid rgba(139,92,246,.4); border-radius: 11px; color: #fff; background: #050507; text-decoration: none; scroll-snap-align: start; box-shadow: 0 12px 28px rgba(0,0,0,.34); }
-        .home-tv-teaser-card video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; }
-        .home-tv-teaser-card::after { content: ""; position: absolute; inset: 48% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); pointer-events: none; }
-        .home-tv-teaser-card .home-tv-card-profile { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 10px; display: grid; gap: 4px; font-size: 11px; font-weight: 900; }
-        .home-tv-card-name { display: flex; align-items: center; gap: 5px; min-width: 0; }
-        .home-tv-card-name strong { overflow: hidden; color: #fff; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
-        .home-tv-card-verified { width: 15px; height: 15px; flex: 0 0 15px; display: inline-grid; place-items: center; border-radius: 999px; color: #071118; background: #7eeaff; font-size: 9px; font-weight: 1000; box-shadow: 0 0 12px rgba(126,234,255,.45); }
-        .home-tv-teaser-card .home-tv-card-venue { overflow: hidden; color: #d5c4ff; text-overflow: ellipsis; white-space: nowrap; }
-        .home-tv-card-venue::before { content: "⌖"; margin-right: 4px; color: #a87cff; }
-        .home-tv-teaser-card .home-tv-card-schedule { width: fit-content; max-width: 100%; padding: 3px 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; text-overflow: ellipsis; white-space: nowrap; background: rgba(7,7,12,.72); }
-        .home-tv-card-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.2); }
-        .home-tv-card-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.12); }
-        .home-tv-card-schedule.is-no-shift { color: #b8b2c4; }
+        .home-tv-launch { width: 100%; min-width: 0; max-width: 100%; min-height: 76px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; margin: 14px 0 10px; padding: 12px 14px; overflow: hidden; border: 1px solid #7c3aed; border-radius: 16px; color: #fff; background: #2d106f; box-shadow: 0 16px 38px rgba(0,0,0,.34), 0 0 24px rgba(124,58,237,.2), inset 0 1px 0 rgba(255,255,255,.12); text-decoration: none; }
+        .home-tv-launch:hover,
+        .home-tv-launch:focus-visible { border-color: #a78bfa; background: #371386; box-shadow: 0 18px 42px rgba(0,0,0,.38), 0 0 30px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.15); }
+        .home-tv-launch:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+        .home-tv-launch-icon { width: 46px; height: 46px; display: inline-grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: #160638; font-size: 16px; line-height: 1; box-shadow: 0 0 18px rgba(126,234,255,.18); }
+        .home-tv-launch-copy { min-width: 0; display: grid; gap: 4px; }
+        .home-tv-launch-copy strong { overflow: hidden; color: #fff; font-size: clamp(15px, 2.1vw, 18px); font-weight: 950; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+        .home-tv-launch-copy small { overflow: hidden; color: #c9c2dc; font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-launch-count { min-width: 58px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #baf5ff; background: #12062f; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
         #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
         .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
@@ -27888,9 +27878,11 @@
           .home-discovery-controls select,
           .home-discovery-controls .location-btn { min-height: 44px !important; font-size: clamp(15px, 4vw, 17px) !important; }
           .home-live-summary { grid-template-columns: max-content minmax(0, 1fr) max-content; }
-          .home-tv-teaser { gap: 9px; margin-top: 8px; padding: 10px; }
-          .home-tv-teaser-list { grid-auto-columns: minmax(132px, 42vw); }
-          .home-tv-teaser-card { height: 174px; }
+          .home-tv-launch { min-height: 70px; gap: 9px; margin-top: 8px; padding: 10px 11px; border-radius: 14px; }
+          .home-tv-launch-icon { width: 40px; height: 40px; font-size: 14px; }
+          .home-tv-launch-copy strong { font-size: clamp(13px, 3.8vw, 16px); }
+          .home-tv-launch-count { min-width: 52px; min-height: 30px; padding-inline: 8px; font-size: 10px; }
+          .home-tv-launch-arrow { font-size: 27px; }
         }
       </style>
 
@@ -29335,8 +29327,8 @@
     const customerBrowseTonight = document.getElementById("customerBrowseTonight");
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     let activeTab = "tonight";
-    let homeTvTeaserRequest = 0;
-    let homeTvTeaserCity = "";
+    let homeTvLaunchRequest = 0;
+    let homeTvLaunchCity = "";
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
     let tonightExpanded = false;
@@ -36652,9 +36644,26 @@
     }
 
     function formatProfileTvShift(startsAt, timeZone) {
-      return formatHomeTvShift(startsAt, timeZone)
-        .replace(",", "")
-        .replace(", ", " · ");
+      const date = new Date(startsAt);
+      if (!Number.isFinite(date.getTime())) return "Soon";
+      const options = {
+        weekday: "short",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        ...(timeZone ? { timeZone } : {})
+      };
+      try {
+        return new Intl.DateTimeFormat(undefined, options).format(date)
+          .replace(",", "")
+          .replace(", ", " · ");
+      } catch {
+        delete options.timeZone;
+        return new Intl.DateTimeFormat(undefined, options).format(date)
+          .replace(",", "")
+          .replace(", ", " · ");
+      }
     }
 
     function clearProfileDeepLink() {
@@ -40531,9 +40540,9 @@
 
     function render() {
       const city = citySelect.value;
-      if (homeTvTeaserCity !== city) {
-        homeTvTeaserCity = city;
-        void renderHomeTvTeaser(city);
+      if (homeTvLaunchCity !== city) {
+        homeTvLaunchCity = city;
+        void renderHomeTvLaunch(city);
       }
       populateVenueSelect(city);
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
@@ -40595,162 +40604,41 @@
       )).join("");
     }
 
-    function renderHomeTvTeaserState(mount, title, description, retry = false) {
-      mount.classList.add("is-state");
-      const state = document.createElement("div");
-      state.className = "home-tv-teaser-state";
-      const heading = document.createElement("strong");
-      heading.textContent = title;
-      const copy = document.createElement("span");
-      copy.textContent = description;
-      state.append(heading, copy);
-      if (retry) {
-        const retryButton = document.createElement("button");
-        retryButton.type = "button";
-        retryButton.textContent = "Try again";
-        retryButton.addEventListener("click", () => {
-          homeTvTeaserCity = "";
-          render();
-        });
-        state.appendChild(retryButton);
-      }
-      mount.replaceChildren(state);
-    }
+    async function renderHomeTvLaunch(city) {
+      const launch = document.getElementById("homeTvLaunch");
+      const title = document.getElementById("homeTvLaunchTitle");
+      const count = document.getElementById("homeTvLaunchCount");
+      if (!launch || !title || !count) return;
 
-    async function renderHomeTvTeaser(city) {
-      const teaser = document.getElementById("homeTvTeaser");
-      const title = document.getElementById("homeTvTeaserTitle");
-      const mount = document.getElementById("homeTvTeaserList");
-      const fullFeedLink = document.getElementById("homeTvTeaserLink");
-      if (!teaser || !title || !mount || !fullFeedLink) return;
-
-      const requestId = ++homeTvTeaserRequest;
+      const requestId = ++homeTvLaunchRequest;
       const tvCityLabel = String(city).trim() || "Las Vegas";
+      launch.href = `/tv?city=${encodeURIComponent(tvCityLabel)}`;
+      launch.setAttribute("aria-label", `Open MyDancr TV ${tvCityLabel} vertical video feed`);
+      launch.setAttribute("aria-busy", "true");
       title.textContent = `MyDancr TV ${tvCityLabel}`;
-      teaser.setAttribute("aria-busy", "true");
-      renderHomeTvTeaserState(
-        mount,
-        `Loading MyDancr TV in ${city}…`,
-        "Approved dancer videos will appear here automatically."
-      );
-      fullFeedLink.href = `/tv?city=${encodeURIComponent(city)}`;
+      count.textContent = "Loading";
+      count.removeAttribute("title");
 
       try {
-        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(city)}&filter=for-you&limit=8`, { cache: "no-store" });
+        const response = await fetch(`/api/public/tv/count?city=${encodeURIComponent(tvCityLabel)}`, { cache: "no-store" });
         const payload = await response.json();
-        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
-        if (requestId !== homeTvTeaserRequest || citySelect.value !== city) return;
-
-        const normalizedCity = String(city).trim().toLowerCase();
-        const videos = Array.isArray(payload.videos)
-          ? payload.videos.filter((item) => (
-              String(item.dancer?.city || "").trim().toLowerCase() === normalizedCity &&
-              String(item.dancer?.stageName || "").trim()
-            ))
-          : [];
-        teaser.setAttribute("aria-busy", "false");
-        if (!videos.length) {
-          renderHomeTvTeaserState(
-            mount,
-            `No approved videos in ${city} yet.`,
-            "Approved dancer videos will appear here automatically when they are published."
-          );
-          return;
+        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load the MyDancr TV video count.");
+        if (requestId !== homeTvLaunchRequest || citySelect.value !== city) return;
+        const approvedVideoCount = Number(payload.approvedVideoCount);
+        if (!Number.isSafeInteger(approvedVideoCount) || approvedVideoCount < 0) {
+          throw new Error("MyDancr TV returned an invalid video count.");
         }
-
-        mount.classList.remove("is-state");
-        mount.replaceChildren();
-        videos.forEach((item) => {
-          const card = document.createElement("a");
-          const profileName = String(item.dancer.stageName).trim();
-          card.className = "home-tv-teaser-card";
-          card.href = profileShareUrl(profileName, city);
-          card.setAttribute("aria-label", `Open ${profileName} live profile`);
-          card.addEventListener("click", (event) => {
-            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-            const liveProfile = findProfile(profileName);
-            if (!liveProfile || !isApprovedPublicProfile(liveProfile)) return;
-            event.preventDefault();
-            openProfileModal(liveProfile.name);
-          });
-
-          const video = document.createElement("video");
-          video.src = item.videoUrl;
-          video.autoplay = true;
-          video.loop = true;
-          video.muted = true;
-          video.defaultMuted = true;
-          video.playsInline = true;
-          video.preload = "metadata";
-
-          const copy = document.createElement("span");
-          copy.className = "home-tv-card-profile";
-          const name = document.createElement("span");
-          name.className = "home-tv-card-name";
-          const dancer = document.createElement("strong");
-          dancer.textContent = item.dancer?.stageName || "Dancer";
-          const verified = document.createElement("span");
-          verified.className = "home-tv-card-verified";
-          verified.setAttribute("aria-label", "Verified");
-          verified.textContent = "✓";
-          name.append(dancer, verified);
-          copy.appendChild(name);
-
-          if (item.venue?.name) {
-            const venue = document.createElement("small");
-            venue.className = "home-tv-card-venue";
-            venue.textContent = item.venue.name;
-            copy.appendChild(venue);
-          }
-
-          const schedule = document.createElement("small");
-          schedule.className = item.shift?.isActive
-            ? "home-tv-card-schedule is-now"
-            : item.shift
-              ? "home-tv-card-schedule is-upcoming"
-              : "home-tv-card-schedule is-no-shift";
-          schedule.textContent = item.shift?.isActive
-            ? "Working now"
-            : item.shift
-              ? `Upcoming ${formatHomeTvShift(item.shift.startsAt, item.shift.timezone)}`
-              : "No shift posted";
-          copy.appendChild(schedule);
-          card.append(video, copy);
-          mount.appendChild(card);
-          void video.play().catch(() => undefined);
-        });
-      } catch (error) {
-        if (requestId !== homeTvTeaserRequest || citySelect.value !== city) return;
-        teaser.setAttribute("aria-busy", "false");
-        renderHomeTvTeaserState(
-          mount,
-          "MyDancr TV is temporarily unavailable.",
-          error instanceof Error ? error.message : "Please try again.",
-          true
-        );
-      }
-    }
-
-    function formatHomeTvShift(startsAt, timeZone) {
-      const date = new Date(startsAt);
-      if (!Number.isFinite(date.getTime())) return "soon";
-      try {
-        return new Intl.DateTimeFormat(undefined, {
-          weekday: "short",
-          month: "numeric",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          timeZone: timeZone || "UTC"
-        }).format(date);
+        count.textContent = `${approvedVideoCount} video${approvedVideoCount === 1 ? "" : "s"}`;
+        count.title = `${approvedVideoCount} approved ${tvCityLabel} MyDancr TV video${approvedVideoCount === 1 ? "" : "s"}`;
       } catch {
-        return new Intl.DateTimeFormat(undefined, {
-          weekday: "short",
-          month: "numeric",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit"
-        }).format(date);
+        if (requestId !== homeTvLaunchRequest || citySelect.value !== city) return;
+        count.textContent = "Count unavailable";
+        count.title = "The vertical video feed is still available.";
+        homeTvLaunchCity = "";
+      } finally {
+        if (requestId === homeTvLaunchRequest && citySelect.value === city) {
+          launch.setAttribute("aria-busy", "false");
+        }
       }
     }
 
@@ -43049,7 +42937,7 @@
     updateAccountHeader();
     const initialProfileParams = new URLSearchParams(window.location.search);
     const initialProfileCity = initialProfileParams.get("city");
-    if (initialProfileParams.get("profile") && initialProfileCity && markets[initialProfileCity]) {
+    if (initialProfileCity && markets[initialProfileCity]) {
       citySelect.value = initialProfileCity;
     }
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);

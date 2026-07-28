@@ -13,10 +13,14 @@ test("MyDancr TV keeps the homepage-selected city without another city control",
   assert.match(client, /const city = initialCity/);
 });
 
-test("the TV exit always returns directly to the homepage", () => {
+test("the TV exit returns to the homepage with the selected city", () => {
   assert.match(
     client,
-    /className="tv-close"[\s\S]*?href="\/"[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/,
+    /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}`/,
+  );
+  assert.match(
+    client,
+    /className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/,
   );
   assert.doesNotMatch(client, /window\.history\.back/);
 });

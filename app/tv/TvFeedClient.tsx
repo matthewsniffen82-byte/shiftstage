@@ -291,13 +291,14 @@ export default function TvFeedClient({
   const unreadNotificationCount = notifications.filter(
     (notification) => !notification.readAt,
   ).length;
+  const homepageHref = `/?city=${encodeURIComponent(city)}`;
 
   return (
     <main className="tv-shell">
       <TvStyles />
       <header className="tv-global-header">
         <div className="tv-global-topbar">
-          <Link className="tv-global-logo" href="/" aria-label="Go to Mydancr home">
+          <Link className="tv-global-logo" href={homepageHref} aria-label="Go to Mydancr home">
             <span aria-hidden="true">mydanc<em>r</em></span>
           </Link>
           <div className="tv-header-actions" ref={headerActionsElement}>
@@ -377,7 +378,7 @@ export default function TvFeedClient({
         </div>
           <Link
             className="tv-close"
-            href="/"
+            href={homepageHref}
             aria-label="Close MyDancr TV and return to homepage"
           >
             ×
