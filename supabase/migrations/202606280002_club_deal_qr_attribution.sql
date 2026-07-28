@@ -78,15 +78,15 @@ drop policy if exists "Admins manage club deals" on public.club_deals;
 create policy "Admins manage club deals"
   on public.club_deals
   for all
-  using (public.is_admin(auth.uid()))
-  with check (public.is_admin(auth.uid()));
+  using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists "Admins manage qr redemptions" on public.qr_redemptions;
 create policy "Admins manage qr redemptions"
   on public.qr_redemptions
   for all
-  using (public.is_admin(auth.uid()))
-  with check (public.is_admin(auth.uid()));
+  using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists "Dancers view own attributed redemptions" on public.qr_redemptions;
 create policy "Dancers view own attributed redemptions"
@@ -102,8 +102,8 @@ drop policy if exists "Admins manage commission events" on public.commission_eve
 create policy "Admins manage commission events"
   on public.commission_events
   for all
-  using (public.is_admin(auth.uid()))
-  with check (public.is_admin(auth.uid()));
+  using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists "Dancers view own commission events" on public.commission_events;
 create policy "Dancers view own commission events"

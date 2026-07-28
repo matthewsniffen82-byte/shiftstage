@@ -14,6 +14,8 @@ type AdminState = {
   deals?: Array<Record<string, unknown>>;
   supportThreads?: Array<Record<string, unknown>>;
   imageModeration?: Array<Record<string, unknown>>;
+  authRequired?: boolean;
+  warnings?: string[];
   error?: string;
 };
 
@@ -97,7 +99,10 @@ export default function AdminClient() {
       );
       await loadAdmin();
     } catch (error) {
-      setState({ error: error instanceof Error ? error.message : "Unable to sign in." });
+      setState({
+        authRequired: true,
+        error: error instanceof Error ? error.message : "Unable to sign in.",
+      });
     } finally {
       setIsSigningIn(false);
     }
@@ -105,7 +110,7 @@ export default function AdminClient() {
 
   async function sendPasswordReset() {
     if (!username.trim()) {
-      setState({ error: "Enter your admin username first, then tap Forgot password." });
+      setState({ authRequired: true, error: "Enter your admin username first, then tap Forgot password." });
       return;
     }
 
@@ -128,9 +133,15 @@ export default function AdminClient() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send reset email.");
-      setState({ error: "Password reset email sent. Open the newest Mydancr email to continue." });
+      setState({
+        authRequired: true,
+        error: "Password reset email sent. Open the newest Mydancr email to continue.",
+      });
     } catch (error) {
-      setState({ error: error instanceof Error ? error.message : "Unable to send reset email." });
+      setState({
+        authRequired: true,
+        error: error instanceof Error ? error.message : "Unable to send reset email.",
+      });
     } finally {
       setIsResettingPassword(false);
     }
@@ -140,43 +151,98 @@ export default function AdminClient() {
     setIsLoading(true);
     const token = readToken();
     if (!token) {
-      setState({ error: "Admin sign in required." });
+      setState({ authRequired: true, error: "Admin sign in required." });
       setIsLoading(false);
       return;
     }
 
     try {
       const headers = { authorization: `Bearer ${token}` };
-      const [monitoring, approvals, venues, subscriptions, deals, support, imageModeration] = await Promise.all([
-        readJson("/api/admin/monitoring", headers),
-        readJson("/api/admin/approvals", headers),
-        readJson("/api/admin/venues", headers),
-        readJson("/api/admin/subscriptions", headers),
-        readJson("/api/admin/deals", headers),
-        readJson("/api/admin/support", headers),
-        readJson("/api/admin/image-moderation?decision=review", headers),
-      ]);
-      const reports = await readJson("/api/admin/reports", headers);
+      const sections: Array<{
+        label: string;
+        path: string;
+        apply: (data: any) => Partial<AdminState>;
+      }> = [
+        { label: "Monitoring", path: "/api/admin/monitoring", apply: (data) => ({ monitoring: data.monitoring }) },
+        {
+          label: "Dancer approvals",
+          path: "/api/admin/approvals",
+          apply: (data) => ({ queue: data.queue || [], dancers: data.dancers || [] }),
+        },
+        { label: "Venues", path: "/api/admin/venues", apply: (data) => ({ venues: data.venues || [] }) },
+        {
+          label: "Subscriptions",
+          path: "/api/admin/subscriptions",
+          apply: (data) => ({ subscriptions: data.subscriptions || [] }),
+        },
+        { label: "Deal activity", path: "/api/admin/deals", apply: (data) => ({ deals: data.activity || [] }) },
+        { label: "Support inbox", path: "/api/admin/support", apply: (data) => ({ supportThreads: data.threads || [] }) },
+        {
+          label: "Image moderation",
+          path: "/api/admin/image-moderation?decision=review",
+          apply: (data) => ({ imageModeration: data.records || [] }),
+        },
+        { label: "Reports", path: "/api/admin/reports", apply: (data) => ({ reports: data.reports || [] }) },
+      ];
+      const results = await Promise.allSettled(
+        sections.map((section) => readJson(section.path, headers)),
+      );
+      const authenticationFailure = results.find(
+        (result) => result.status === "rejected" && isAdminAuthenticationError(result.reason),
+      );
 
-      setState({
-        monitoring: monitoring.monitoring,
-        queue: approvals.queue || [],
-        dancers: approvals.dancers || [],
-        venues: venues.venues || [],
-        subscriptions: subscriptions.subscriptions || [],
-        deals: deals.activity || [],
-        supportThreads: support.threads || [],
-        imageModeration: imageModeration.records || [],
-        reports: reports.reports || [],
+      if (authenticationFailure?.status === "rejected") {
+        window.localStorage.removeItem(SESSION_KEY);
+        setState({
+          authRequired: true,
+          error: authenticationFailure.reason instanceof Error
+            ? authenticationFailure.reason.message
+            : "Admin sign in required.",
+        });
+        return;
+      }
+
+      const nextState: AdminState = {
+        authRequired: false,
+        monitoring: null,
+        queue: [],
+        dancers: [],
+        venues: [],
+        subscriptions: [],
+        deals: [],
+        supportThreads: [],
+        imageModeration: [],
+        reports: [],
+      };
+      const warnings: string[] = [];
+
+      results.forEach((result, index) => {
+        const section = sections[index];
+        if (result.status === "fulfilled") {
+          Object.assign(nextState, section.apply(result.value));
+          return;
+        }
+
+        const message = result.reason instanceof Error
+          ? result.reason.message
+          : "This section could not be loaded.";
+        warnings.push(`${section.label}: ${message}`);
       });
+
+      nextState.warnings = warnings;
+      setState(nextState);
     } catch (error) {
-      setState({ error: error instanceof Error ? error.message : "Unable to load admin dashboard." });
+      setState({
+        authRequired: false,
+        warnings: [error instanceof Error ? error.message : "Unable to load admin dashboard."],
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
-  const needsSignIn = Boolean(state.error);
+  const needsSignIn = state.authRequired === true;
+  const dashboardWarnings = state.warnings || [];
   const pendingDancerApprovalCount = state.queue?.length || 0;
 
   return (
@@ -205,7 +271,15 @@ export default function AdminClient() {
       <section className="admin-head">
         <span className="eyebrow">Operations</span>
         <h1>Admin dashboard</h1>
-        <p>{isLoading ? "Loading live operations..." : needsSignIn ? state.error : "Live queue, venue, and subscription health."}</p>
+        <p>
+          {isLoading
+            ? "Loading live operations..."
+            : needsSignIn
+              ? state.error || "Admin sign in required."
+              : dashboardWarnings.length
+                ? `${dashboardWarnings.length} dashboard ${dashboardWarnings.length === 1 ? "section is" : "sections are"} temporarily unavailable. All other admin tools are ready.`
+                : "Live queue, venue, and subscription health."}
+        </p>
       </section>
 
       {isLoading ? (
@@ -272,7 +346,19 @@ export default function AdminClient() {
           </button>
         </form>
       ) : (
-        <section className="admin-grid">
+        <>
+          {dashboardWarnings.length ? (
+            <aside className="admin-warning" role="status" aria-live="polite">
+              <div>
+                <strong>Some admin data needs attention.</strong>
+                <ul>
+                  {dashboardWarnings.map((warning) => <li key={warning}>{warning}</li>)}
+                </ul>
+              </div>
+              <button type="button" onClick={() => loadAdmin()}>Retry unavailable sections</button>
+            </aside>
+          ) : null}
+          <section className="admin-grid">
           <Panel title="Monitoring">
             {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
               <Metric key={key} label={labelize(key)} value={formatValue(value)} />
@@ -395,7 +481,8 @@ export default function AdminClient() {
           <Panel title="Rankings">
             <RankingManager />
           </Panel>
-        </section>
+          </section>
+        </>
       )}
     </main>
   );
@@ -2211,9 +2298,22 @@ function readToken() {
 
 async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers });
-  const data = await response.json();
-  if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load admin data.");
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data?.ok) {
+    throw new AdminDataRequestError(data?.error || "Unable to load admin data.", response.status);
+  }
   return data;
+}
+
+class AdminDataRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "AdminDataRequestError";
+  }
+}
+
+function isAdminAuthenticationError(error: unknown) {
+  return error instanceof AdminDataRequestError && (error.status === 401 || error.status === 403);
 }
 
 function labelize(value: string) {
@@ -2235,7 +2335,7 @@ function AdminStyles() {
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       * { box-sizing: border-box; min-width: 0; }
       .admin-shell { min-height: 100vh; padding: 22px clamp(12px, 4vw, 56px) 56px; background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); overflow-x: hidden; }
-      .top-nav, .admin-head, .admin-grid, .sign-in { max-width: 1120px; margin-left: auto; margin-right: auto; }
+      .top-nav, .admin-head, .admin-grid, .admin-warning, .sign-in { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .top-nav { margin-bottom: 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #cfc5de; }
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
@@ -2250,6 +2350,11 @@ function AdminStyles() {
       .admin-panel > div { display: grid; gap: 10px; }
       .admin-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .admin-panel-badge { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; color: #090911; background: #94e5ff; font-size: 12px; font-weight: 950; white-space: nowrap; }
+      .admin-warning { margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 14px; border: 1px solid rgba(255,193,92,.38); border-radius: 8px; color: #fff4d8; background: rgba(99,63,13,.34); }
+      .admin-warning > div { display: grid; gap: 7px; }
+      .admin-warning ul { gap: 4px; }
+      .admin-warning li { color: #f4ddb1; font-size: 13px; }
+      .admin-warning button { flex: 0 0 auto; padding: 0 14px; color: #211506; background: #ffd98f; }
       .admin-action-toast { position: fixed; z-index: 120; top: 16px; left: 50%; width: min(520px, calc(100vw - 24px)); min-height: 56px; transform: translateX(-50%); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(50,255,164,.48); border-radius: 10px; color: #eafff4; background: #102b1c; box-shadow: 0 18px 56px rgba(0,0,0,.55); }
       .admin-action-toast > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; color: #07140d; background: #32ffa4; font-weight: 950; }
       .admin-action-toast strong { overflow-wrap: anywhere; }
@@ -2434,7 +2539,7 @@ function AdminStyles() {
       @media (max-width: 680px) {
         .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters { grid-template-columns: 1fr; }
         .support-admin-panel { grid-column: auto; }
-        .top-nav { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
+        .top-nav, .admin-warning { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }
         .approval-summary { display: grid; grid-template-columns: 1fr; }
         .approval-actions, .report-row div, .content-review-actions { display: grid; grid-template-columns: 1fr; }
