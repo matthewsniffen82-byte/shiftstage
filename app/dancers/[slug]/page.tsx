@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
-import { VenueQrCode } from "@/app/components/VenueQrCode";
+import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { TvVideoStrip } from "@/app/components/TvVideoStrip";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getDancerProfile } from "@/src/lib/dancr/public";
@@ -13,6 +13,7 @@ import {
   DancerGoingCount,
   DancerProfileActions,
 } from "./DancerProfileActions";
+import { DancerPhotoCarousel } from "./DancerPhotoCarousel";
 import { ProfileViewTracker } from "./ProfileViewTracker";
 import { SocialLinks } from "./SocialLinks";
 
@@ -67,21 +68,29 @@ export default async function DancerPublicPage({ params }: PageProps) {
             shifts={profile.upcomingShifts.map((shift) => ({ id: shift.id, label: shortShiftLabel(shift.startsAt) }))}
           />
         </div>
-        <div className="public-photo" style={heroPhoto ? { backgroundImage: `url(${heroPhoto})` } : undefined}>
-          {!heroPhoto ? <span>{initials(profile.stageName)}</span> : null}
-        </div>
+        <DancerPhotoCarousel
+          photos={gallery.map((photo) => ({
+            id: photo.id,
+            imageUrl: photo.imageUrl,
+          }))}
+          stageName={profile.stageName}
+        />
       </section>
-      {activeShift?.venueQrCodeUrl ? (
+      {activeShift ? (
         <section className="venue-qr-section">
-          <VenueQrCode
-            compact
-            venueId={activeShift.venueId}
-            venueName={activeShift.venueName}
-            imageUrl={activeShift.venueQrCodeUrl}
-            label={activeShift.venueQrCodeLabel}
-            source="dancer_profile"
-            dancerId={profile.id}
-          />
+          {activeShift.venueQrCodeUrl ? (
+            <VenueQrCode
+              compact
+              venueId={activeShift.venueId}
+              venueName={activeShift.venueName}
+              imageUrl={activeShift.venueQrCodeUrl}
+              label={activeShift.venueQrCodeLabel}
+              source="dancer_profile"
+              dancerId={profile.id}
+            />
+          ) : (
+            <VenueQrUnavailable venueName={activeShift.venueName} />
+          )}
         </section>
       ) : null}
       <TvVideoStrip
@@ -148,8 +157,14 @@ export default async function DancerPublicPage({ params }: PageProps) {
       </section>
       {gallery.length ? (
         <section className="public-gallery" aria-label={`${profile.stageName} photo gallery`}>
-          {gallery.map((photo) => (
-            <div className="gallery-photo" key={photo.id} style={{ backgroundImage: `url(${photo.imageUrl})` }} />
+          {gallery.map((photo, index) => (
+            <div
+              aria-label={`${profile.stageName} profile photo ${index + 1} of ${gallery.length}`}
+              className="gallery-photo"
+              key={photo.id}
+              role="img"
+              style={{ backgroundImage: `url(${photo.imageUrl})` }}
+            />
           ))}
         </section>
       ) : null}
@@ -162,15 +177,6 @@ function locationStatusLabel(status?: string | null) {
   if (status === "club_confirmed") return "Club Confirmed";
   if (status === "location_confirmed") return "Checked in";
   return "Not checked in";
-}
-
-function initials(value: string) {
-  return value
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
 }
 
 function formatShift(shift: { startsAt: string; locationStatus?: string | null; checkedInAt?: string | null }) {
@@ -242,13 +248,26 @@ function PublicProfileStyles() {
       .profile-account-gate-dialog a:hover, .profile-account-gate-dialog a:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(53,216,255,.16), 0 14px 34px rgba(35,114,178,.28); }
       .profile-account-gate-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(53,216,255,.42); border-radius: 50%; color: #fff; background: rgba(4,9,15,.88); font: inherit; font-size: 26px; line-height: 1; cursor: pointer; }
       .profile-account-gate-close:hover, .profile-account-gate-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(53,216,255,.16); }
-      .public-photo { border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); background-size: cover; background-position: center; min-height: 420px; display: grid; place-items: center; box-shadow: 0 30px 80px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.1); }
+      .public-photo { position: relative; overflow: hidden; border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); min-height: 420px; display: grid; place-items: center; box-shadow: 0 30px 80px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.1); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; cursor: grab; }
+      .public-photo:active { cursor: grabbing; }
+      .public-photo:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .public-photo-image { position: absolute; inset: 0; background-position: center; background-repeat: no-repeat; background-size: cover; }
       .public-photo span { width: 118px; height: 118px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
+      .public-photo-nav { position: absolute; top: 50%; z-index: 2; width: 44px; height: 54px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: rgba(5,5,8,.62); box-shadow: 0 10px 28px rgba(0,0,0,.32); font: inherit; font-size: 34px; line-height: 1; cursor: pointer; transform: translateY(-50%); backdrop-filter: blur(8px); }
+      .public-photo-nav:hover, .public-photo-nav:focus-visible { border-color: #7eeaff; outline: none; background: rgba(45,16,111,.88); }
+      .public-photo-nav.previous { left: 12px; }
+      .public-photo-nav.next { right: 12px; }
+      .public-photo-dots { position: absolute; left: 50%; bottom: 14px; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 9px; border-radius: 999px; background: rgba(5,5,8,.66); transform: translateX(-50%); backdrop-filter: blur(8px); }
+      .public-photo-dots button { width: 9px; height: 9px; padding: 0; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; background: rgba(255,255,255,.2); cursor: pointer; }
+      .public-photo-dots button[aria-pressed="true"] { border-color: #7eeaff; background: #7eeaff; box-shadow: 0 0 12px rgba(126,234,255,.6); }
+      .public-photo-status { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .venue-qr-section { max-width: 1120px; margin: 22px auto 0; }
       .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: center; border: 1px solid rgba(34,199,255,.28); background: rgba(12,12,18,.88); border-radius: 8px; padding: 20px; }
       .venue-published-qr h2 { margin: 7px 0; }
       .venue-published-qr img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
+      .venue-qr-unavailable { display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,.1); background: rgba(12,12,18,.72); border-radius: 8px; padding: 14px 18px; }
+      .venue-qr-unavailable p { color: #b9accd; font-size: 14px; line-height: 1.4; }
       .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
       .club-deal-card { border: 1px solid rgba(139,92,246,.28); background: rgba(8,8,13,.9); border-radius: 8px; padding: 18px; display: grid; gap: 16px; box-shadow: 0 22px 70px rgba(0,0,0,.38); }
       .club-deal-copy { display: grid; gap: 9px; }
@@ -280,8 +299,8 @@ function PublicProfileStyles() {
       .social-list span { color: #b9accd; }
       .social-list strong { overflow-wrap: anywhere; text-align: right; }
       .public-gallery { max-width: 1120px; margin: 18px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-      .gallery-photo { min-height: 220px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.1); }
-      @media (max-width: 760px) { .public-hero, .public-grid, .shift-row-shell, .venue-published-qr { grid-template-columns: 1fr; } .venue-published-qr img { max-width: 230px; justify-self: center; } .public-photo { min-height: 340px; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } .club-deal-card.compact .deal-qr-frame img { width: min(170px, 100%); } }
+      .gallery-photo { min-height: 220px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.1); scroll-snap-align: center; }
+      @media (max-width: 760px) { .public-hero, .public-grid, .shift-row-shell, .venue-published-qr { grid-template-columns: 1fr; } .venue-published-qr img { max-width: 230px; justify-self: center; } .public-photo { min-height: 340px; } .public-photo-nav { width: 40px; height: 48px; font-size: 30px; } .public-gallery { width: 100%; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(82%, 1fr); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; scrollbar-width: thin; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } .club-deal-card.compact .deal-qr-frame img { width: min(170px, 100%); } }
     `}</style>
   );
 }
