@@ -27783,6 +27783,12 @@
         </button>
       </section>
 
+      <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
+        <span id="homeLiveCity">Las Vegas</span>
+        <span id="homeLiveRadius">25 mi radius · All venues</span>
+        <strong id="homeLiveWorking">0 working now</strong>
+      </div>
+
       <section class="home-tv-teaser" id="homeTvTeaser" aria-labelledby="homeTvTeaserTitle" aria-busy="true">
         <div class="home-tv-teaser-head">
           <strong id="homeTvTeaserTitle">MyDancr TV</strong>
@@ -27795,12 +27801,6 @@
           </div>
         </div>
       </section>
-
-      <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
-        <span id="homeLiveCity">Las Vegas</span>
-        <span id="homeLiveRadius">25 mi radius · All venues</span>
-        <strong id="homeLiveWorking">0 working now</strong>
-      </div>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
@@ -40484,7 +40484,7 @@
       if (!teaser || !title || !mount || !fullFeedLink) return;
 
       const requestId = ++homeTvTeaserRequest;
-      const tvCityLabel = String(city).trim().toLowerCase() === "las vegas" ? "Vegas" : city;
+      const tvCityLabel = String(city).trim() || "Las Vegas";
       title.textContent = `MyDancr TV ${tvCityLabel}`;
       teaser.setAttribute("aria-busy", "true");
       renderHomeTvTeaserState(

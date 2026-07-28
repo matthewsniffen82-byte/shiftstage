@@ -345,8 +345,7 @@ function readSession() {
 }
 
 function myDancrTvCityLabel(city: string) {
-  const normalized = city.trim() || "Las Vegas";
-  return normalized.toLowerCase() === "las vegas" ? "Vegas" : normalized;
+  return city.trim() || "Las Vegas";
 }
 
 function tvCitiesMatch(left: string, right: string) {

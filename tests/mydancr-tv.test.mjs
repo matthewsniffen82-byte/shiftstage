@@ -98,13 +98,20 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
   assert.doesNotMatch(feedClient, /\/api\/reports/);
   assert.match(feedClient, /<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>/);
+  assert.match(feedClient, /function myDancrTvCityLabel\(city: string\) \{\s*return city\.trim\(\) \|\| "Las Vegas";\s*\}/);
+  assert.doesNotMatch(feedClient, /normalized\.toLowerCase\(\) === "las vegas" \? "Vegas"/);
   assert.match(feedClient, /data\.videos\.filter\([\s\S]*?tvCitiesMatch\(video\.dancer\.city, nextCity\)/);
   assert.doesNotMatch(liveApp, /data-tab="tv"/);
   assert.doesNotMatch(liveApp, /renderHomeTvTab/);
-  assert.match(liveApp, /id="locationBtn"[\s\S]*?<\/section>\s*<section class="home-tv-teaser"[\s\S]*?<nav class="tabs"/);
+  assert.match(
+    liveApp,
+    /id="locationBtn"[\s\S]*?<\/section>\s*<div class="home-live-summary"[\s\S]*?<\/div>\s*<section class="home-tv-teaser"[\s\S]*?<nav class="tabs"/,
+  );
   assert.doesNotMatch(liveApp, /id="homeTvTeaser"[^>]*\shidden(?:\s|>)/);
   assert.match(liveApp, /renderHomeTvTeaser\(city\)/);
   assert.match(liveApp, /title\.textContent = `MyDancr TV \$\{tvCityLabel\}`/);
+  assert.match(liveApp, /const tvCityLabel = String\(city\)\.trim\(\) \|\| "Las Vegas"/);
+  assert.doesNotMatch(liveApp, /toLowerCase\(\) === "las vegas" \? "Vegas"/);
   assert.match(liveApp, /payload\.videos\.filter\([\s\S]*?item\.dancer\?\.city[\s\S]*?=== normalizedCity/);
   assert.match(liveApp, /String\(item\.dancer\?\.slug \|\| ""\)\.trim\(\)/);
   assert.match(liveApp, /card\.href = `\/dancers\/\$\{encodeURIComponent\(String\(item\.dancer\.slug\)\.trim\(\)\)\}`/);
