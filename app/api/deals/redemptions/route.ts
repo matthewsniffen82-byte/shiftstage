@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { apiError } from "@/src/lib/api";
-import { createDealRedemption, dancerHasActiveShiftAtVenue, getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
+import {
+  createDealRedemption,
+  dancerHasVerifiedActiveCheckInAtVenue,
+  getActiveClubDealForVenue,
+} from "@/src/lib/dancr/deals";
 import type { DealSourceType } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { createRequestSupabaseContext, getBearerToken } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const SOURCES = new Set(["club_page", "dancer_profile"]);
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request) {
   try {
@@ -17,9 +24,11 @@ export async function POST(request: Request) {
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
     const sourceType = typeof body?.sourceType === "string" ? body.sourceType.trim() : "";
     const dancerId = typeof body?.dancerId === "string" ? body.dancerId.trim() : null;
-    const sessionId = typeof body?.sessionId === "string" ? body.sessionId.trim() : null;
+    const sessionId = typeof body?.sessionId === "string" && UUID_PATTERN.test(body.sessionId.trim())
+      ? body.sessionId.trim()
+      : null;
 
-    if (!clubDealId || !venueId || !SOURCES.has(sourceType)) {
+    if (!UUID_PATTERN.test(clubDealId) || !UUID_PATTERN.test(venueId) || !SOURCES.has(sourceType)) {
       return NextResponse.json({ ok: false, error: "Missing deal, venue, or source." }, { status: 400 });
     }
 
@@ -36,17 +45,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "Missing dancer attribution." }, { status: 400 });
       }
 
-      const hasActiveShift = await dancerHasActiveShiftAtVenue(admin, dancerId, venueId);
-      if (!hasActiveShift) {
-        return NextResponse.json({ ok: false, error: "This dancer does not have an active shift at this venue." }, { status: 400 });
+      if (!UUID_PATTERN.test(dancerId)) {
+        return NextResponse.json({ ok: false, error: "Invalid dancer attribution." }, { status: 400 });
+      }
+
+      const hasVerifiedCheckIn = await dancerHasVerifiedActiveCheckInAtVenue(admin, dancerId, venueId);
+      if (!hasVerifiedCheckIn) {
+        return NextResponse.json(
+          { ok: false, error: "This Club Deal is available from the dancer profile only during a verified check-in." },
+          { status: 400 },
+        );
       }
     }
 
+    const customerId = await optionalCustomerId(request, admin);
     const redemption = await createDealRedemption(admin, {
       clubDealId,
       venueId,
       sourceType: sourceType as DealSourceType,
       dancerId,
+      customerId,
       sessionId,
       request,
     });
@@ -62,6 +80,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, deal, redemption, qrDataUrl });
   } catch (error) {
     return apiError(error, "Unable to create deal QR.");
+  }
+}
+
+async function optionalCustomerId(
+  request: Request,
+  admin: ReturnType<typeof createAdminSupabaseClient>,
+) {
+  if (!getBearerToken(request)) return null;
+  try {
+    const { user } = await createRequestSupabaseContext(request);
+    const { data, error } = await admin
+      .from("app_users")
+      .select("role, account_state")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.role === "customer" && data?.account_state === "active" ? user.id : null;
+  } catch {
+    return null;
   }
 }
 

@@ -17,6 +17,17 @@ type LoadState = {
     favorites?: unknown[];
     venueFollows?: unknown[];
     goingSignals?: unknown[];
+    dealRedemptions?: Array<{
+      id: string;
+      redemptionToken: string;
+      sourceType: string;
+      status: string;
+      generatedAt: string;
+      expiresAt: string;
+      redeemedAt?: string | null;
+      venue?: { name?: string; slug?: string } | null;
+      deal?: { title?: string; terms?: string | null } | null;
+    }>;
   } | null;
   analytics?: Record<string, unknown> | null;
   deals?: Record<string, unknown> | null;
@@ -503,9 +514,57 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
         />
         <Metric label="Going" value={String(saved?.goingSignals?.length || 0)} />
       </InfoPanel>
+      <CustomerDealPassPanel deals={saved?.dealRedemptions || []} />
       <CustomerPreferencesPanel profile={profile} />
     </>
   );
+}
+
+function CustomerDealPassPanel({
+  deals,
+}: {
+  deals: NonNullable<NonNullable<LoadState["saved"]>["dealRedemptions"]>;
+}) {
+  return (
+    <article className="info-panel saved-deal-panel">
+      <div className="saved-deal-head">
+        <div>
+          <span>Saved QR wallet</span>
+          <h2>Club Deals</h2>
+        </div>
+        <strong>{deals.length}</strong>
+      </div>
+      <div className="saved-deal-list">
+        {deals.map((item) => {
+          const expired = new Date(item.expiresAt).getTime() <= Date.now();
+          const available = item.status === "generated" && !expired;
+          return (
+            <Link
+              className={available ? "saved-deal-item" : "saved-deal-item unavailable"}
+              href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}
+              key={item.id}
+            >
+              <span>
+                <strong>{item.deal?.title || "Club Deal"}</strong>
+                <small>{item.venue?.name || "Venue"} · {dealPassStatus(item.status, expired)}</small>
+              </span>
+              <em>{available ? "Open QR" : "View"}</em>
+            </Link>
+          );
+        })}
+        {!deals.length ? (
+          <p>Get a Club Deal from a venue page or a verified Working Now dancer to save its QR here.</p>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function dealPassStatus(status: string, expired: boolean) {
+  if (status === "redeemed") return "Redeemed";
+  if (status === "voided") return "Ended";
+  if (status === "expired" || expired) return "Expired";
+  return "Ready";
 }
 
 function VenuePanel({
@@ -2574,6 +2633,20 @@ function DashboardStyles() {
       .support-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
       .support-message p, .support-panel p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+      .saved-deal-panel { grid-column: span 2; }
+      .saved-deal-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+      .saved-deal-head > div { display: grid; gap: 4px; }
+      .saved-deal-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .saved-deal-head h2 { margin: 0; }
+      .saved-deal-head > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .saved-deal-list { display: grid; gap: 9px; margin-top: 14px; }
+      .saved-deal-list > p { margin: 0; color: #b9accd; font-size: 14px; line-height: 1.45; }
+      .saved-deal-item { min-height: 62px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid rgba(126,234,255,.3); border-radius: 10px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.2), rgba(34,199,255,.08)); text-decoration: none; }
+      .saved-deal-item > span { min-width: 0; display: grid; gap: 4px; }
+      .saved-deal-item > span > strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+      .saved-deal-item small { color: #b9accd; font-size: 12px; }
+      .saved-deal-item em { color: #7eeaff; font-size: 12px; font-style: normal; font-weight: 950; }
+      .saved-deal-item.unavailable { opacity: .62; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .venue-profile-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .venue-profile-panel label, .venue-qr-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
@@ -2593,7 +2666,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-qr-panel { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-qr-panel > img { max-width: 260px; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-qr-panel { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-qr-panel > img { max-width: 260px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

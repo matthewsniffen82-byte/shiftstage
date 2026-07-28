@@ -72,7 +72,14 @@ export default async function VenuePublicPage({ params }: PageProps) {
           </p>
           {activeDeal ? (
             <section className="deal-section">
-              <ClubDealCard deal={activeDeal} venueId={venue.id} sourceType="club_page" />
+              <ClubDealCard
+                deal={activeDeal}
+                venueId={venue.id}
+                venueName={venue.name}
+                sourceType="club_page"
+                sectionId="club-deal"
+                stickyCta
+              />
             </section>
           ) : null}
           <div className="public-actions">
@@ -198,6 +205,7 @@ function VenueProfileStyles() {
       .club-deal-action { display: grid; gap: 10px; justify-items: stretch; }
       .club-deal-action button { min-height: 46px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
       .club-deal-action button:disabled { opacity: .7; cursor: wait; }
+      .club-deal-pass-actions button, .club-deal-pass-actions a { min-height: 40px; border: 1px solid rgba(148,229,255,.28); color: #fff; background: rgba(148,229,255,.08); }
       .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
       .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
       .venue-qr-section { max-width: 1120px; margin: 22px auto 0; }
@@ -215,7 +223,7 @@ function VenueProfileStyles() {
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
       .map-panel { max-width: 1120px; margin: 18px auto 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); min-height: 320px; }
       .map-panel iframe { display: block; width: 100%; min-height: 320px; border: 0; }
-      @media (max-width: 760px) { .venue-hero, .public-grid, .club-deal-card, .venue-published-qr { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .venue-published-qr img { max-width: 240px; justify-self: center; } .shift-row, .fact-list div { flex-direction: column; } }
+      @media (max-width: 760px) { .public-profile-shell { padding-bottom: 92px; } .venue-hero, .public-grid, .club-deal-card, .venue-published-qr { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .venue-published-qr img { max-width: 240px; justify-self: center; } .shift-row, .fact-list div { flex-direction: column; } }
     `}</style>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { getActiveClubDealsForVenues } from "@/src/lib/dancr/deals";
 import { formatVenueHours } from "@/src/lib/dancr/public";
-import type { VenueSummary } from "@/src/lib/dancr/types";
+import type { ClubDeal, VenueSummary } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -39,12 +40,20 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
 
       <section className="venue-grid" aria-label="Venues">
         {venues.map((venue) => (
-          <Link className="venue-card" href={`/venues/${venue.slug}`} key={venue.id}>
-            <span className="venue-mark">{initials(venue.name)}</span>
-            <strong>{venue.name}</strong>
-            <small>{venue.address || `${venue.city}${venue.state ? `, ${venue.state}` : ""}`}</small>
-            {venue.hoursLabel ? <em>{venue.hoursLabel}</em> : null}
-          </Link>
+          <article className="venue-card" key={venue.id}>
+            <Link className="venue-card-main" href={`/venues/${venue.slug}`}>
+              <span className="venue-mark">{initials(venue.name)}</span>
+              <strong>{venue.name}</strong>
+              <small>{venue.address || `${venue.city}${venue.state ? `, ${venue.state}` : ""}`}</small>
+              {venue.hoursLabel ? <em>{venue.hoursLabel}</em> : null}
+            </Link>
+            {venue.activeDeal ? (
+              <Link className="venue-card-deal" href={`/venues/${venue.slug}#club-deal`}>
+                <span>Club Deal</span>
+                <strong>Get {venue.activeDeal.dealTitle}</strong>
+              </Link>
+            ) : null}
+          </article>
         ))}
         {!venues.length ? (
           <div className="empty-state">
@@ -57,8 +66,9 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
   );
 }
 
-async function getActiveVenues(city: string): Promise<VenueSummary[]> {
-  const { data, error } = await createAdminSupabaseClient()
+async function getActiveVenues(city: string): Promise<Array<VenueSummary & { activeDeal: ClubDeal | null }>> {
+  const client = createAdminSupabaseClient();
+  const { data, error } = await client
     .from("venues")
     .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at")
     .eq("is_active", true)
@@ -66,6 +76,7 @@ async function getActiveVenues(city: string): Promise<VenueSummary[]> {
     .order("name", { ascending: true });
 
   if (error) throw error;
+  const deals = await getActiveClubDealsForVenues(client, (data || []).map((venue) => venue.id));
 
   return (data || []).map((venue) => ({
     id: venue.id,
@@ -77,6 +88,7 @@ async function getActiveVenues(city: string): Promise<VenueSummary[]> {
     latitude: venue.latitude,
     longitude: venue.longitude,
     hoursLabel: formatVenueHours(venue.opens_at, venue.closes_at),
+    activeDeal: deals.get(venue.id) || null,
   }));
 }
 
@@ -103,11 +115,15 @@ function VenuesStyles() {
       h1 { margin: 0; font-size: clamp(46px, 8vw, 90px); line-height: .92; letter-spacing: 0; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .venue-grid { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-      .venue-card { min-height: 260px; display: grid; align-content: end; gap: 10px; padding: 18px; color: #f7f2ff; text-decoration: none; border: 1px solid rgba(139,92,246,.24); background: radial-gradient(circle at 50% 30%, rgba(34,199,255,.18), transparent 36%), linear-gradient(135deg, rgba(139,92,246,.26), rgba(12,12,18,.88)); border-radius: 8px; }
+      .venue-card { min-height: 260px; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; color: #f7f2ff; border: 1px solid rgba(139,92,246,.24); background: radial-gradient(circle at 50% 30%, rgba(34,199,255,.18), transparent 36%), linear-gradient(135deg, rgba(139,92,246,.26), rgba(12,12,18,.88)); border-radius: 8px; }
+      .venue-card-main { min-height: 220px; display: grid; align-content: end; gap: 10px; padding: 18px; color: #f7f2ff; text-decoration: none; }
       .venue-mark { width: 70px; height: 70px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,.08); color: #94e5ff; font-size: 24px; font-weight: 950; }
-      .venue-card strong { font-size: 26px; line-height: 1; overflow-wrap: anywhere; }
-      .venue-card small, .empty-state span { color: #b9accd; line-height: 1.4; }
-      .venue-card em { color: #94e5ff; font-style: normal; font-weight: 900; }
+      .venue-card-main > strong { font-size: 26px; line-height: 1; overflow-wrap: anywhere; }
+      .venue-card-main small, .empty-state span { color: #b9accd; line-height: 1.4; }
+      .venue-card-main em { color: #94e5ff; font-style: normal; font-weight: 900; }
+      .venue-card-deal { display: grid; gap: 3px; padding: 13px 18px; border-top: 1px solid rgba(126,234,255,.3); color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.62)); text-decoration: none; }
+      .venue-card-deal span { color: #d8f7ff; font-size: 9px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .venue-card-deal strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
       .empty-state { grid-column: 1 / -1; min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 24px; }
       .empty-state strong { font-size: 24px; }
       @media (max-width: 860px) { .venue-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

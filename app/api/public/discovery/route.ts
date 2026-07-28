@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getActiveClubDealsForVenues } from "@/src/lib/dancr/deals";
 import { formatVenueHours, getLiveDancerDiscovery } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -35,6 +36,10 @@ export async function GET(request: Request) {
     ]);
 
     if (venueResult.error) throw venueResult.error;
+    const activeDeals = await getActiveClubDealsForVenues(
+      client,
+      (venueResult.data || []).map((venue) => venue.id),
+    );
 
     const venues = (venueResult.data || []).map((venue) => ({
       id: venue.id,
@@ -52,14 +57,19 @@ export async function GET(request: Request) {
         ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
         : null,
       qrCodeLabel: venue.qr_code_label || null,
+      activeDeal: activeDeals.get(venue.id) || null,
     }));
+    const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => ({
+      ...dancer,
+      activeDeal: dancer.venueId ? activeDeals.get(dancer.venueId) || null : null,
+    });
 
     return NextResponse.json(
       {
         ok: true,
         city,
-        dancers: discovery.dancers,
-        tonightDancers: discovery.tonightDancers,
+        dancers: discovery.dancers.map(withActiveDeal),
+        tonightDancers: discovery.tonightDancers.map(withActiveDeal),
         venues,
       },
       {

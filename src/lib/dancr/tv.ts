@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getActiveClubDealsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
+import type { ClubDeal } from "./types";
 import {
   moderateStoredMyDancrTvVideo,
   type MyDancrTvModerationResult,
@@ -82,6 +84,7 @@ export type MyDancrTvVideo = {
     isActive: boolean;
     isStartingSoon: boolean;
   } | null;
+  deal: ClubDeal | null;
 };
 
 export async function getPublicMyDancrTvVideoCount(
@@ -197,7 +200,17 @@ export async function getPublicMyDancrTvFeed(
     0,
     Math.min(24, Math.max(1, options.limit || 12)),
   );
-  return signPublicVideos(admin, deduped);
+  const signedVideos = await signPublicVideos(admin, deduped);
+  const deals = await getActiveClubDealsForVenues(
+    admin,
+    signedVideos
+      .filter((video) => video.shift?.isActive && video.venue)
+      .map((video) => video.venue?.id || ""),
+  );
+  return signedVideos.map((video) => ({
+    ...video,
+    deal: video.shift?.isActive && video.venue ? deals.get(video.venue.id) || null : null,
+  }));
 }
 
 function normalizeTvCity(value: string | undefined) {
@@ -270,6 +283,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
           isStartingSoon: Number.isFinite(start) && start > now && start <= now + 2 * 60 * 60 * 1000,
         }
       : null,
+    deal: null,
   };
 }
 

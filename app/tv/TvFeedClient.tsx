@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { ClubDealCard } from "@/app/components/ClubDealCard";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
 const SESSION_KEY = "dancrAuthSessionV1";
@@ -519,6 +520,16 @@ export default function TvFeedClient({
                         <span>No upcoming shifts</span>
                       </div>
                     )}
+                    {video.shift?.isActive && video.venue && video.deal ? (
+                      <ClubDealCard
+                        deal={video.deal}
+                        venueId={video.venue.id}
+                        venueName={video.venue.name}
+                        sourceType="dancer_profile"
+                        dancerId={video.dancer.id}
+                        presentation="launcher"
+                      />
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -751,6 +762,7 @@ function TvStyles() {
       .tv-card-schedule-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(12px, 2.3vw, 14px); font-weight: 950; line-height: 1.15; text-shadow: 0 0 14px currentColor, 0 2px 12px rgba(0,0,0,.72); }
       .tv-no-shifts-state { color: rgba(184,184,197,.82); font-size: 13px; font-weight: 780; text-shadow: 0 2px 10px rgba(0,0,0,.72); }
       .tv-no-shifts-state svg { color: rgba(167,139,250,.86); }
+      .tv-profile-details > .club-deal-launcher { margin-top: 5px; }
       .tv-empty button, .tv-empty a { min-height: 44px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 7px 10px; border: 1px solid rgba(139,92,246,.28); border-radius: 8px; color: #fff; background: rgba(139,92,246,.1); font-weight: 900; text-align: center; text-decoration: none; cursor: pointer; }
       .tv-empty { max-width: 760px; min-height: 360px; margin: 20px auto; display: grid; place-items: center; align-content: center; gap: 12px; padding: 26px; border: 1px solid rgba(139,92,246,.24); border-radius: 14px; background: rgba(11,11,16,.74); text-align: center; }
       .tv-empty strong { font-size: 24px; }

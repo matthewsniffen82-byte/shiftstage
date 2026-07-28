@@ -24001,6 +24001,89 @@
       transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
 
+    .club-deal-primary-cta {
+      width: min(100%, 230px);
+      min-height: 62px;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 2px;
+      padding: 9px 15px;
+      border: 1px solid rgba(126, 234, 255, .58);
+      border-radius: 18px;
+      color: #ffffff;
+      background: linear-gradient(135deg, #6d28d9, #0b94c9);
+      box-shadow: 0 14px 36px rgba(35, 114, 178, .28), 0 0 22px rgba(126, 234, 255, .12);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .club-deal-primary-cta > span {
+      color: #d8f7ff;
+      font-size: .62rem;
+      font-weight: 950;
+      letter-spacing: .14em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .club-deal-primary-cta > strong {
+      width: 100%;
+      overflow: hidden;
+      font-size: .9rem;
+      line-height: 1.12;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .club-deal-primary-cta > small {
+      color: rgba(255, 255, 255, .74);
+      font-size: .66rem;
+      font-weight: 800;
+    }
+
+    .club-deal-primary-cta:hover,
+    .club-deal-primary-cta:focus-visible {
+      border-color: #7eeaff;
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 16px 40px rgba(35, 114, 178, .34), 0 0 0 3px rgba(126, 234, 255, .14);
+    }
+
+    .club-deal-primary-cta.is-loading,
+    .club-deal-primary-cta:disabled {
+      opacity: .72;
+      cursor: wait;
+    }
+
+    .profile-club-deal-tile {
+      border-color: rgba(126, 234, 255, .34) !important;
+      background: linear-gradient(135deg, rgba(109, 40, 217, .2), rgba(34, 199, 255, .08)) !important;
+    }
+
+    .profile-club-deal-cta {
+      min-width: 152px;
+    }
+
+    @media (max-width: 520px) {
+      .profile-club-deal-cta {
+        min-width: 136px;
+        max-width: 148px;
+        min-height: 58px;
+        padding-inline: 11px;
+      }
+
+      .profile-club-deal-cta > strong {
+        font-size: .76rem;
+      }
+
+      .venue-club-deal-cta {
+        width: 100%;
+        max-width: none;
+      }
+    }
+
     .deal-qr-trigger:hover,
     .deal-qr-trigger:focus-visible {
       transform: translateY(-1px);
@@ -31559,6 +31642,7 @@
       return liveNotifications.filter(isVisibleAfterNotificationClear);
     }
 
+        activeDeal: item.activeDeal || null,
     function notificationCenterMarkup() {
       const notifications = visibleLiveNotifications();
       if (!notifications.length) {
@@ -32360,7 +32444,8 @@
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
         longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : null,
         qrCodeUrl: item.qrCodeUrl || "",
-        qrCodeLabel: item.qrCodeLabel || ""
+        qrCodeLabel: item.qrCodeLabel || "",
+        activeDeal: item.activeDeal || null
       };
     }
 
@@ -34324,7 +34409,9 @@
       document.getElementById("dealPassCopy").textContent = `${pass.venueName} · ${pass.details}`;
       document.getElementById("dealPassImage").src = pass.qrImageUrl;
       document.getElementById("dealPassImage").alt = `${pass.venueName} deal QR code`;
-      document.getElementById("dealPassHow").textContent = `This QR was uploaded by ${pass.venueName}. No Dancr account is required to view or save it.`;
+      document.getElementById("dealPassHow").textContent = pass.serverGenerated
+        ? `This unique Club Deal QR is tracked for redemption${pass.sourceType === "dancer_profile" ? " and remains dancer-attributed only during the verified check-in" : ""}.`
+        : `This QR was uploaded by ${pass.venueName}. No Dancr account is required to view or save it.`;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
@@ -34344,7 +34431,30 @@
       syncOverlayScrollLock();
     }
 
-    function handleDealPassClick(event) {
+    async function handleDealPassClick(event) {
+      const revenueTrigger = event.target.closest("[data-club-deal-cta]");
+      if (revenueTrigger) {
+        event.preventDefault();
+        event.stopPropagation();
+        const config = decodeDealPass(revenueTrigger.dataset.clubDealCta || "");
+        if (!config) {
+          showToast("Club Deal unavailable");
+          return true;
+        }
+        revenueTrigger.disabled = true;
+        revenueTrigger.classList.add("is-loading");
+        try {
+          const pass = await createRevenueDealPass(config);
+          saveCustomerDealPass(pass, "Club Deal QR saved");
+          openDealPassOverlay(pass);
+        } catch (error) {
+          showToast(error.message || "Unable to create the Club Deal QR");
+        } finally {
+          revenueTrigger.disabled = false;
+          revenueTrigger.classList.remove("is-loading");
+        }
+        return true;
+      }
       const trigger = event.target.closest("[data-deal-pass]");
       if (!trigger) return false;
       event.preventDefault();
@@ -34535,6 +34645,69 @@
           </div>
         `;
       }
+    function liveDealSessionId() {
+      const key = "mydancrDealSessionV1";
+      try {
+        const existing = localStorage.getItem(key) || "";
+        if (/^[0-9a-f-]{36}$/i.test(existing)) return existing;
+        const next = crypto.randomUUID();
+        localStorage.setItem(key, next);
+        return next;
+      } catch {
+        return crypto.randomUUID();
+      }
+    }
+
+    async function createRevenueDealPass({
+      deal,
+      venueId,
+      venueSlug,
+      venueName,
+      sourceType = "club_page",
+      dancerId = "",
+      dancerName = ""
+    }) {
+      if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
+      const data = await postOptionalAuthJson("/api/deals/redemptions", {
+        clubDealId: deal.id,
+        venueId,
+        sourceType,
+        dancerId: sourceType === "dancer_profile" ? dancerId : null,
+        sessionId: liveDealSessionId()
+      });
+      const redemption = data?.redemption;
+      if (!data?.qrDataUrl || !redemption?.redemptionToken) {
+        throw new Error("The Club Deal QR could not be confirmed.");
+      }
+      return {
+        id: redemption.id,
+        venueId,
+        venueSlug,
+        venueName,
+        dancerId,
+        dancerName,
+        sourceType,
+        title: deal.dealTitle || "Club Deal",
+        details: sourceType === "dancer_profile"
+          ? `Attributed to ${dancerName} while the verified check-in remains active.`
+          : `Active Club Deal from ${venueName}.`,
+        url: `${window.location.origin}/deals/pass/${encodeURIComponent(redemption.redemptionToken)}`,
+        qrImageUrl: data.qrDataUrl,
+        expiresAt: redemption.expiresAt || "",
+        serverGenerated: true
+      };
+    }
+
+    function clubDealCtaMarkup(config, className = "") {
+      return `
+        <button class="club-deal-primary-cta ${className}" type="button" data-club-deal-cta="${encodeDealPass(config)}">
+          <span>Get Club Deal</span>
+          <strong>${escapeHtml(config.deal?.dealTitle || "Open QR")}</strong>
+          <small>No sign-in required</small>
+        </button>
+      `;
+    }
+
       return `
         <div class="info-tile social-tile">
           <div class="social-tile-head">
@@ -34744,6 +34917,27 @@
       `;
     }
 
+      if (venue?.activeDeal && venue?.id) {
+        const config = {
+          deal: venue.activeDeal,
+          venueId: venue.id,
+          venueSlug: venue.slug,
+          venueName: venue.name,
+          sourceType: "club_page"
+        };
+        return `
+          <article class="venue-offer-card revenue-offer-card">
+            <div class="venue-offer-grid">
+              <div>
+                <span class="eyebrow">Club Deal</span>
+                <h3>${escapeHtml(venue.activeDeal.dealTitle)}</h3>
+                <p>${escapeHtml(venue.activeDeal.dealDescription || "Get a unique QR and show it at the venue.")}</p>
+              </div>
+              ${clubDealCtaMarkup(config, "venue-club-deal-cta")}
+            </div>
+          </article>
+        `;
+      }
     async function handleShiftVerificationAction(action, trigger = null) {
       const profile = activeDancerProfile();
       if (!profile) return;
@@ -34770,6 +34964,29 @@
             const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
             if (data?.shift) applyShiftState(profile, data.shift);
           }
+      if (profile.activeDeal && profile.venueId) {
+        const config = {
+          deal: profile.activeDeal,
+          venueId: profile.venueId,
+          venueSlug: profile.venueSlug,
+          venueName: profile.venue,
+          sourceType: "dancer_profile",
+          dancerId: profile.id,
+          dancerName: profile.name
+        };
+        return `
+          <div class="info-tile profile-qr-tile profile-club-deal-tile">
+            <div class="profile-deal-copy">
+              <strong>Working Now Club Deal</strong>
+              <div class="meta profile-deal-meta">
+                <span class="profile-deal-main">${escapeHtml(profile.activeDeal.dealTitle)}</span>
+                <span class="profile-deal-note">Supports ${escapeHtml(profile.name)} only while checked in.</span>
+              </div>
+            </div>
+            ${clubDealCtaMarkup(config, "profile-club-deal-cta")}
+          </div>
+        `;
+      }
           setCheckInStatus("Shift ended. QR commission tracking is stopped.");
           showToast("Shift ended");
         } else if (action === "check-in") {

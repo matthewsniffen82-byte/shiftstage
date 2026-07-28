@@ -77,7 +77,19 @@ export default async function DancerPublicPage({ params }: PageProps) {
         />
       </section>
       {activeShift ? (
-        <section className="venue-qr-section">
+        <section className="venue-qr-section live-deal-section">
+          {activeDeal ? (
+            <ClubDealCard
+              deal={activeDeal}
+              venueId={activeShift.venueId}
+              venueName={activeShift.venueName}
+              sourceType="dancer_profile"
+              dancerId={profile.id}
+              dancerNote
+              sectionId="club-deal"
+              stickyCta
+            />
+          ) : null}
           {activeShift.venueQrCodeUrl ? (
             <VenueQrCode
               compact
@@ -110,17 +122,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
                     <span>{formatShift(shift)}</span>
                     <em>{locationStatusLabel(shift.locationStatus)}</em>
                   </Link>
-                  {activeDeal && activeShift?.id === shift.id ? (
-                    <ClubDealCard
-                      deal={activeDeal}
-                      venueId={shift.venueId}
-                      sourceType="dancer_profile"
-                      dancerId={profile.id}
-                      dancerNote
-                      autoGenerate
-                      compact
-                    />
-                  ) : null}
                 </div>
               ))}
             </div>
@@ -263,6 +264,7 @@ function PublicProfileStyles() {
       .public-photo-status { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
       .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
       .venue-qr-section { max-width: 1120px; margin: 22px auto 0; }
+      .live-deal-section { display: grid; gap: 14px; }
       .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: center; border: 1px solid rgba(34,199,255,.28); background: rgba(12,12,18,.88); border-radius: 8px; padding: 20px; }
       .venue-published-qr h2 { margin: 7px 0; }
       .venue-published-qr img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
@@ -276,6 +278,7 @@ function PublicProfileStyles() {
       .club-deal-action { display: grid; gap: 10px; justify-items: stretch; }
       .club-deal-action button { min-height: 46px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
       .club-deal-action button:disabled { opacity: .7; cursor: wait; }
+      .club-deal-pass-actions button, .club-deal-pass-actions a { min-height: 40px; border: 1px solid rgba(148,229,255,.28); color: #fff; background: rgba(148,229,255,.08); }
       .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
       .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
       h2 { margin: 0 0 16px; font-size: 20px; }
@@ -300,7 +303,7 @@ function PublicProfileStyles() {
       .social-list strong { overflow-wrap: anywhere; text-align: right; }
       .public-gallery { max-width: 1120px; margin: 18px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
       .gallery-photo { min-height: 220px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.1); scroll-snap-align: center; }
-      @media (max-width: 760px) { .public-hero, .public-grid, .shift-row-shell, .venue-published-qr { grid-template-columns: 1fr; } .venue-published-qr img { max-width: 230px; justify-self: center; } .public-photo { min-height: 340px; } .public-photo-nav { width: 40px; height: 48px; font-size: 30px; } .public-gallery { width: 100%; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(82%, 1fr); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; scrollbar-width: thin; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } .club-deal-card.compact .deal-qr-frame img { width: min(170px, 100%); } }
+      @media (max-width: 760px) { .public-profile-shell { padding-bottom: 92px; } .public-hero, .public-grid, .shift-row-shell, .venue-published-qr { grid-template-columns: 1fr; } .venue-published-qr img { max-width: 230px; justify-self: center; } .public-photo { min-height: 340px; } .public-photo-nav { width: 40px; height: 48px; font-size: 30px; } .public-gallery { width: 100%; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(82%, 1fr); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; scrollbar-width: thin; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } .club-deal-card.compact .deal-qr-frame img { width: min(170px, 100%); } }
     `}</style>
   );
 }

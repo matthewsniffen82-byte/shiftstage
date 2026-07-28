@@ -37,7 +37,34 @@ export async function getActiveClubDealForVenue(client: DancrClient, venueId: st
   return data ? toClubDeal(data) : null;
 }
 
-export async function dancerHasActiveShiftAtVenue(client: DancrClient, dancerId: string, venueId: string, now = new Date()) {
+export async function getActiveClubDealsForVenues(client: DancrClient, venueIds: string[]): Promise<Map<string, ClubDeal>> {
+  const uniqueVenueIds = [...new Set(venueIds.filter(Boolean))];
+  if (!uniqueVenueIds.length) return new Map();
+
+  const { data, error } = await (client as any)
+    .from("club_deals")
+    .select(
+      "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, created_at",
+    )
+    .in("venue_id", uniqueVenueIds)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  const deals = new Map<string, ClubDeal>();
+  for (const row of data || []) {
+    if (!deals.has(row.venue_id)) deals.set(row.venue_id, toClubDeal(row));
+  }
+  return deals;
+}
+
+export async function dancerHasVerifiedActiveCheckInAtVenue(
+  client: DancrClient,
+  dancerId: string,
+  venueId: string,
+  now = new Date(),
+) {
   const nowIso = now.toISOString();
   const { data, error } = await (client as any)
     .from("shifts")
@@ -47,6 +74,9 @@ export async function dancerHasActiveShiftAtVenue(client: DancrClient, dancerId:
     .eq("status", "posted")
     .lte("starts_at", nowIso)
     .gte("ends_at", nowIso)
+    .not("checked_in_at", "is", null)
+    .is("checked_out_at", null)
+    .in("location_status", ["location_confirmed", "club_confirmed"])
     .limit(1)
     .maybeSingle();
 
@@ -100,6 +130,7 @@ export async function getRedemptionForScanner(client: DancrClient, token: string
       status,
       source_type,
       dancer_id,
+      venue_id,
       generated_at,
       expires_at,
       redeemed_at,
@@ -125,6 +156,19 @@ export async function redeemDealToken(client: DancrClient, token: string, reques
   if (new Date(redemption.expiresAt).getTime() <= Date.now()) {
     await db.from("qr_redemptions").update({ status: "expired" }).eq("id", redemption.id).eq("status", "generated");
     return { ok: false, status: 400, error: "This QR code has expired." };
+  }
+
+  if (
+    redemption.sourceType === "dancer_profile" &&
+    redemption.dancerId &&
+    !(await dancerHasVerifiedActiveCheckInAtVenue(client, redemption.dancerId, redemption.venueId))
+  ) {
+    await db.from("qr_redemptions").update({ status: "voided" }).eq("id", redemption.id).eq("status", "generated");
+    return {
+      ok: false,
+      status: 400,
+      error: "This dancer-attributed Club Deal ended when the verified check-in ended.",
+    };
   }
 
   const audit = readRequestAudit(request);
@@ -225,6 +269,39 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
     recentRedemptions: redemptions || [],
     recentCommissions: commissions || [],
   };
+}
+
+export async function getCustomerDealRedemptions(client: DancrClient, customerId: string) {
+  const { data, error } = await (client as any)
+    .from("qr_redemptions")
+    .select(
+      "id, redemption_token, source_type, status, generated_at, expires_at, redeemed_at, venues(name, slug), club_deals(deal_title, deal_terms)",
+    )
+    .eq("customer_id", customerId)
+    .order("generated_at", { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+
+  return (data || []).map((row: any) => {
+    const venue = readJoinedFirst(row.venues);
+    const deal = readJoinedFirst(row.club_deals);
+    return {
+      id: row.id,
+      redemptionToken: row.redemption_token,
+      sourceType: row.source_type,
+      status: row.status,
+      generatedAt: row.generated_at,
+      expiresAt: row.expires_at,
+      redeemedAt: row.redeemed_at,
+      venue: venue
+        ? { name: String(venue.name || "Venue"), slug: String(venue.slug || "") }
+        : null,
+      deal: deal
+        ? { title: String(deal.deal_title || "Club Deal"), terms: deal.deal_terms ? String(deal.deal_terms) : null }
+        : null,
+    };
+  }).filter((item: any) => item.venue && item.deal);
 }
 
 export async function getAdminDealActivity(client: DancrClient, filters: Record<string, string | null>) {
@@ -330,6 +407,7 @@ function normalizeScannerRedemption(row: any) {
     status: row.status,
     sourceType: row.source_type,
     dancerId: row.dancer_id,
+    venueId: row.venue_id,
     generatedAt: row.generated_at,
     expiresAt: row.expires_at,
     redeemedAt: row.redeemed_at,
