@@ -46,6 +46,7 @@ export default function TvFeedClient({
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [accountPrompt, setAccountPrompt] = useState("");
+  const [accountLabel, setAccountLabel] = useState("Login / Join");
   const [following, setFollowing] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<Record<string, boolean>>({});
   const [going, setGoing] = useState<Record<string, boolean>>({});
@@ -105,6 +106,11 @@ export default function TvFeedClient({
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const session = readSession();
+    if (session?.account?.role) setAccountLabel("Account");
   }, []);
 
   useEffect(() => {
@@ -282,17 +288,29 @@ export default function TvFeedClient({
   return (
     <main className="tv-shell">
       <TvStyles />
-      <nav className="tv-site-nav" aria-label="Primary">
-        <Link className="tv-brand" href="/">mydancr</Link>
-        <div>
+      <header className="tv-global-header">
+        <div className="tv-global-topbar">
+          <Link className="tv-global-logo" href="/" aria-label="Go to Mydancr home">
+            <span aria-hidden="true">mydanc<em>r</em></span>
+          </Link>
+          <Link className="tv-global-search" href="/#discoveryTabs" aria-label="Search dancers, clubs, and cities">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <span>Search dancers, clubs, cities...</span>
+          </Link>
+          <Link className="tv-global-account" href="/account">{accountLabel}</Link>
+        </div>
+        <nav className="tv-site-nav" aria-label="Primary">
           <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Now</Link>
           <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link>
           <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
           <Link href={`/trending?city=${encodeURIComponent(city)}`}>Trending</Link>
           <Link className="active" href={`/tv?city=${encodeURIComponent(city)}`}>MyDancr TV</Link>
           <Link href="/account">Account</Link>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       <header className="tv-header">
         <div>
@@ -560,14 +578,22 @@ function TvStyles() {
   return (
     <style>{`
       * { box-sizing: border-box; }
-      body { margin: 0; background: #030305; color: #f8f5ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body { margin: 0; background: radial-gradient(circle at 78% 0%, rgba(155,92,255,.16), transparent 32rem), radial-gradient(circle at 14% 10%, rgba(139,61,255,.1), transparent 24rem), #030304; color: #f8f5ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       button, input { font: inherit; }
-      .tv-shell { min-height: 100vh; padding: 18px clamp(14px, 3vw, 44px) 48px; background: radial-gradient(circle at 12% 0%, rgba(139,92,246,.22), transparent 25rem), radial-gradient(circle at 92% 6%, rgba(34,199,255,.12), transparent 25rem), #030305; }
-      .tv-site-nav { max-width: 1180px; min-height: 46px; margin: 0 auto 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-      .tv-site-nav > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+      .tv-shell { width: min(100%, 1440px); min-height: 100vh; margin: 0 auto; padding: 0 clamp(14px, 3vw, 44px) 48px; border-inline: 1px solid rgba(53,216,255,.1); background: radial-gradient(circle at 12% 0%, rgba(139,92,246,.22), transparent 25rem), radial-gradient(circle at 92% 6%, rgba(34,199,255,.12), transparent 25rem), #030305; box-shadow: 0 40px 120px rgba(0,0,0,.7); }
+      .tv-global-header { position: sticky; top: 0; z-index: 40; margin: 0 calc(-1 * clamp(14px, 3vw, 44px)) 22px; padding: 16px clamp(14px, 3vw, 44px) 12px; border-bottom: 1px solid rgba(53,216,255,.12); background: rgba(3,3,4,.88); box-shadow: 0 12px 34px rgba(0,0,0,.58); backdrop-filter: blur(22px); }
+      .tv-global-topbar { display: flex; align-items: center; gap: 18px; }
+      .tv-global-logo { width: min(34vw, 236px); min-width: 196px; aspect-ratio: 331 / 103; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(148,68,255,.72); border-radius: 15px; color: #fff; background: #050507; box-shadow: 0 0 18px rgba(132,50,255,.24), inset 0 0 16px rgba(132,50,255,.08); text-decoration: none; }
+      .tv-global-logo span { color: #fff; font-size: clamp(38px, 5.7vw, 50px); font-weight: 950; letter-spacing: -.065em; line-height: .9; text-transform: lowercase; text-shadow: 0 0 12px rgba(255,255,255,.7), 0 0 22px rgba(255,255,255,.28); transform: translateY(-1px); }
+      .tv-global-logo em { color: #a855ff; font-style: normal; text-shadow: 0 0 10px rgba(168,85,255,.96), 0 0 24px rgba(139,92,246,.78), 0 0 42px rgba(124,58,237,.52); }
+      .tv-global-search { width: min(520px, 34vw); min-height: 56px; display: flex; align-items: center; gap: 13px; padding: 0 18px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #7f758c; background: rgba(12,12,15,.84); box-shadow: inset 0 0 18px rgba(255,255,255,.025), 0 10px 30px rgba(0,0,0,.32); text-decoration: none; }
+      .tv-global-search svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; flex: 0 0 auto; }
+      .tv-global-search span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+      .tv-global-account { min-width: 108px; min-height: 46px; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; padding: 0 17px; border: 1px solid rgba(236,72,153,.42); border-radius: 999px; color: #fff; background: rgba(9,9,15,.88); box-shadow: 0 0 22px rgba(124,58,237,.18), inset 0 1px 0 rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; white-space: nowrap; }
+      .tv-global-logo:focus-visible, .tv-global-search:focus-visible, .tv-global-account:focus-visible { outline: 2px solid rgba(192,132,255,.72); outline-offset: 3px; }
+      .tv-site-nav { max-width: 1180px; min-height: 40px; margin: 12px auto 0; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
       .tv-site-nav a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; color: #d8d0e8; background: rgba(255,255,255,.035); font-size: 13px; font-weight: 850; text-decoration: none; }
       .tv-site-nav a.active { color: #fff; border-color: rgba(34,199,255,.5); background: linear-gradient(135deg, rgba(109,40,217,.35), rgba(34,199,255,.14)); box-shadow: 0 0 20px rgba(34,199,255,.1); }
-      .tv-site-nav .tv-brand { min-height: auto; padding: 0; border: 0; border-radius: 0; background: none; color: #fff; font-size: 18px; font-weight: 950; letter-spacing: .04em; }
       .tv-header { max-width: 1000px; margin: 0 auto 12px; display: flex; justify-content: space-between; align-items: end; gap: 18px; }
       .tv-header > div { display: grid; gap: 2px; }
       .tv-header span, .tv-kicker { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .18em; text-transform: uppercase; }
@@ -620,8 +646,13 @@ function TvStyles() {
       .tv-account-gate a.secondary { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.04); }
       .tv-account-close { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: #fff; background: rgba(255,255,255,.04); font-size: 24px; cursor: pointer; }
       @media (max-width: 760px) {
-        .tv-shell { padding: 10px 8px 72px; }
-        .tv-site-nav { display: none; }
+        .tv-shell { padding: 0 8px 72px; border-inline: 0; }
+        .tv-global-header { margin: 0 -8px 10px; padding: 9px 10px; }
+        .tv-global-topbar { gap: 8px; }
+        .tv-global-logo { width: clamp(150px, 48vw, 198px); min-width: 0; }
+        .tv-global-logo span { font-size: clamp(31px, 9vw, 42px); white-space: nowrap; }
+        .tv-global-search, .tv-site-nav { display: none; }
+        .tv-global-account { min-width: 92px; min-height: 42px; padding: 0 11px; font-size: 12px; }
         .tv-header { padding: 0 6px; align-items: center; }
         .tv-header h1 { font-size: 31px; }
         .tv-header > div > span { display: none; }

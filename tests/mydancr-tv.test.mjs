@@ -83,6 +83,14 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /href=\{`\/dancers\?city=/);
   assert.match(feedClient, /href=\{`\/venues\?city=/);
   assert.match(feedClient, /href=\{`\/trending\?city=/);
+  assert.match(feedClient, /className="tv-global-header"/);
+  assert.match(feedClient, /className="tv-global-logo" href="\/" aria-label="Go to Mydancr home"/);
+  assert.match(feedClient, /className="tv-global-search" href="\/#discoveryTabs"/);
+  assert.match(feedClient, /Search dancers, clubs, cities\.\.\./);
+  assert.match(feedClient, /className="tv-global-account" href="\/account"/);
+  assert.match(feedClient, /setAccountLabel\("Account"\)/);
+  assert.match(feedClient, /\.tv-global-logo \{[\s\S]*?aspect-ratio: 331 \/ 103/);
+  assert.match(feedClient, /\.tv-global-search \{[\s\S]*?width: min\(520px, 34vw\)/);
   assert.match(feedClient, /No sign-in needed/);
   assert.match(feedClient, /Sign in required/);
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
