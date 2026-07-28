@@ -27823,8 +27823,16 @@
         .home-tv-teaser-card { position: relative; height: 224px; overflow: hidden; border: 1px solid rgba(139,92,246,.4); border-radius: 11px; color: #fff; background: #050507; text-decoration: none; scroll-snap-align: start; box-shadow: 0 12px 28px rgba(0,0,0,.34); }
         .home-tv-teaser-card video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; }
         .home-tv-teaser-card::after { content: ""; position: absolute; inset: 48% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); pointer-events: none; }
-        .home-tv-teaser-card span { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 10px; display: grid; gap: 3px; font-size: 11px; font-weight: 900; }
-        .home-tv-teaser-card small { color: #9fefff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-teaser-card .home-tv-card-profile { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 10px; display: grid; gap: 4px; font-size: 11px; font-weight: 900; }
+        .home-tv-card-name { display: flex; align-items: center; gap: 5px; min-width: 0; }
+        .home-tv-card-name strong { overflow: hidden; color: #fff; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
+        .home-tv-card-verified { width: 15px; height: 15px; flex: 0 0 15px; display: inline-grid; place-items: center; border-radius: 999px; color: #071118; background: #7eeaff; font-size: 9px; font-weight: 1000; box-shadow: 0 0 12px rgba(126,234,255,.45); }
+        .home-tv-teaser-card .home-tv-card-venue { overflow: hidden; color: #d5c4ff; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-card-venue::before { content: "⌖"; margin-right: 4px; color: #a87cff; }
+        .home-tv-teaser-card .home-tv-card-schedule { width: fit-content; max-width: 100%; padding: 3px 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; text-overflow: ellipsis; white-space: nowrap; background: rgba(7,7,12,.72); }
+        .home-tv-card-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.2); }
+        .home-tv-card-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.12); }
+        .home-tv-card-schedule.is-no-shift { color: #b8b2c4; }
         #discoveryTabs { scroll-margin-top: 86px; }
         .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
@@ -40535,11 +40543,37 @@
           video.preload = "metadata";
 
           const copy = document.createElement("span");
+          copy.className = "home-tv-card-profile";
+          const name = document.createElement("span");
+          name.className = "home-tv-card-name";
           const dancer = document.createElement("strong");
           dancer.textContent = item.dancer?.stageName || "Dancer";
-          const context = document.createElement("small");
-          context.textContent = item.shift?.isActive ? "Working now" : item.venue?.name || city;
-          copy.append(dancer, context);
+          const verified = document.createElement("span");
+          verified.className = "home-tv-card-verified";
+          verified.setAttribute("aria-label", "Verified");
+          verified.textContent = "✓";
+          name.append(dancer, verified);
+          copy.appendChild(name);
+
+          if (item.venue?.name) {
+            const venue = document.createElement("small");
+            venue.className = "home-tv-card-venue";
+            venue.textContent = item.venue.name;
+            copy.appendChild(venue);
+          }
+
+          const schedule = document.createElement("small");
+          schedule.className = item.shift?.isActive
+            ? "home-tv-card-schedule is-now"
+            : item.shift
+              ? "home-tv-card-schedule is-upcoming"
+              : "home-tv-card-schedule is-no-shift";
+          schedule.textContent = item.shift?.isActive
+            ? "Working now"
+            : item.shift
+              ? `Upcoming ${formatHomeTvShift(item.shift.startsAt, item.shift.timezone)}`
+              : "No shift posted";
+          copy.appendChild(schedule);
           card.append(video, copy);
           mount.appendChild(card);
           void video.play().catch(() => undefined);
@@ -40553,6 +40587,29 @@
           error instanceof Error ? error.message : "Please try again.",
           true
         );
+      }
+    }
+
+    function formatHomeTvShift(startsAt, timeZone) {
+      const date = new Date(startsAt);
+      if (!Number.isFinite(date.getTime())) return "soon";
+      try {
+        return new Intl.DateTimeFormat(undefined, {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZone: timeZone || "UTC"
+        }).format(date);
+      } catch {
+        return new Intl.DateTimeFormat(undefined, {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        }).format(date);
       }
     }
 

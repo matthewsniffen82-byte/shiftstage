@@ -137,10 +137,24 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(tvSource, /timezone: row\.timezone \|\| "UTC"/);
   assert.match(feedClient, /formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)/);
   assert.match(feedClient, /function formatShift\(value: string, timeZone: string\)[\s\S]*?timeZone,/);
+  assert.match(
+    tvSource,
+    /function tvSchedulePriority\(video: NormalizedFeedRow\) \{[\s\S]*?video\.shift\?\.isActive[\s\S]*?return 0[\s\S]*?video\.shift[\s\S]*?return 1[\s\S]*?return 2/,
+  );
+  assert.match(tvSource, /rows = rows\.sort\(\(left, right\) =>[\s\S]*?comparePublicTvFeedRows/);
+  assert.match(tvSource, /const scheduleOrdered = \[0, 1, 2\]\.flatMap/);
+  assert.match(tvSource, /shift\?\.status === "posted"[\s\S]*?!shift\.checked_out_at[\s\S]*?start > now/);
   assert.match(liveApp, /filter=for-you&limit=8/);
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);
   assert.match(liveApp, /home-tv-teaser-list \{[\s\S]*?grid-auto-columns: minmax\(150px, 180px\)/);
   assert.match(liveApp, /home-tv-teaser-card \{[\s\S]*?height: 224px/);
+  assert.match(liveApp, /className = "home-tv-card-verified"[\s\S]*?aria-label", "Verified"/);
+  assert.match(liveApp, /className = "home-tv-card-venue"[\s\S]*?item\.venue\.name/);
+  assert.match(
+    liveApp,
+    /item\.shift\?\.isActive[\s\S]*?"Working now"[\s\S]*?`Upcoming \$\{formatHomeTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)\}`[\s\S]*?"No shift posted"/,
+  );
+  assert.match(liveApp, /function formatHomeTvShift\(startsAt, timeZone\)[\s\S]*?timeZone: timeZone \|\| "UTC"/);
   assert.doesNotMatch(liveApp, /home-tv-discovery-cue/);
   assert.doesNotMatch(liveApp, /Live discovery below/);
   assert.match(liveApp, /id="discoveryTabs" aria-label="Discovery tabs"/);

@@ -151,17 +151,12 @@ export async function getPublicMyDancrTvFeed(
       return true;
     });
 
-  if (filter === "for-you") {
-    rows = rows.sort((left, right) => {
-      const score = (video: NormalizedFeedRow) =>
-        (video.shift?.isActive ? 100 : 0) +
-        (video.shift?.isStartingSoon ? 60 : 0) +
-        (following.has(video.dancer.id) ? 40 : 0) +
-        (video.venueFeatured ? 15 : 0);
-      return score(right) - score(left) ||
-        new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
-    });
-  }
+  rows = rows.sort((left, right) =>
+    comparePublicTvFeedRows(left, right, {
+      prioritizePersonalization: filter === "for-you",
+      following,
+    }),
+  );
 
   const selectedRowWithShift = selectedRowCandidate
     ? applyPublicTvShiftContext(selectedRowCandidate, shiftContexts)
@@ -177,7 +172,10 @@ export async function getPublicMyDancrTvFeed(
     );
   }
 
-  const deduped = diversifyFeed(rows).slice(0, Math.min(24, Math.max(1, options.limit || 12)));
+  const deduped = diversifyFeed(rows, selectedVideoId).slice(
+    0,
+    Math.min(24, Math.max(1, options.limit || 12)),
+  );
   return signPublicVideos(admin, deduped);
 }
 
@@ -205,6 +203,14 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
   const end = shift?.ends_at ? new Date(shift.ends_at).getTime() : Number.NaN;
   const venueConfirmed = row.venue_tag_status === "confirmed" && venue?.is_active !== false;
   const shiftIsActive = isConfirmedActiveTvShift(shift, now);
+  const shiftIsUpcoming =
+    shift?.status === "posted" &&
+    !shift.checked_out_at &&
+    Number.isFinite(start) &&
+    Number.isFinite(end) &&
+    start > now &&
+    end >= now;
+  const hasPublicShift = venueConfirmed && shift && (shiftIsActive || shiftIsUpcoming);
 
   return {
     id: row.id,
@@ -232,7 +238,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
           city: venue.city,
         }
       : null,
-    shift: shift && venueConfirmed
+    shift: hasPublicShift
       ? {
           id: shift.id,
           startsAt: shift.starts_at,
@@ -322,6 +328,40 @@ function isConfirmedActiveTvShift(shift: any, now: number) {
   return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
 }
 
+function comparePublicTvFeedRows(
+  left: NormalizedFeedRow,
+  right: NormalizedFeedRow,
+  options: {
+    prioritizePersonalization: boolean;
+    following: Set<string>;
+  },
+) {
+  const scheduleDifference = tvSchedulePriority(left) - tvSchedulePriority(right);
+  if (scheduleDifference) return scheduleDifference;
+
+  if (left.shift && right.shift && !left.shift.isActive && !right.shift.isActive) {
+    const upcomingDifference =
+      new Date(left.shift.startsAt).getTime() - new Date(right.shift.startsAt).getTime();
+    if (upcomingDifference) return upcomingDifference;
+  }
+
+  if (options.prioritizePersonalization) {
+    const score = (video: NormalizedFeedRow) =>
+      (options.following.has(video.dancer.id) ? 40 : 0) +
+      (video.venueFeatured ? 15 : 0);
+    const scoreDifference = score(right) - score(left);
+    if (scoreDifference) return scoreDifference;
+  }
+
+  return new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
+}
+
+function tvSchedulePriority(video: NormalizedFeedRow) {
+  if (video.shift?.isActive) return 0;
+  if (video.shift) return 1;
+  return 2;
+}
+
 async function signPublicVideos(
   admin: AdminClient,
   rows: NormalizedFeedRow[],
@@ -365,7 +405,18 @@ async function signPublicVideos(
   });
 }
 
-function diversifyFeed(rows: NormalizedFeedRow[]) {
+function diversifyFeed(rows: NormalizedFeedRow[], selectedVideoId = "") {
+  const selected = selectedVideoId
+    ? rows.find((video) => video.id === selectedVideoId) || null
+    : null;
+  const remaining = selected ? rows.filter((video) => video.id !== selected.id) : rows;
+  const scheduleOrdered = [0, 1, 2].flatMap((priority) =>
+    diversifyDancers(remaining.filter((video) => tvSchedulePriority(video) === priority)),
+  );
+  return selected ? [selected, ...scheduleOrdered] : scheduleOrdered;
+}
+
+function diversifyDancers(rows: NormalizedFeedRow[]) {
   const remaining = [...rows];
   const result: NormalizedFeedRow[] = [];
   while (remaining.length) {
