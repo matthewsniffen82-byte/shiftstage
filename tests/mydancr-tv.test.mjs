@@ -131,8 +131,8 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);
   assert.match(liveApp, /home-tv-teaser-list \{[\s\S]*?grid-auto-columns: minmax\(150px, 180px\)/);
   assert.match(liveApp, /home-tv-teaser-card \{[\s\S]*?height: 224px/);
-  assert.match(liveApp, /class="home-tv-discovery-cue" href="#discoveryTabs"/);
-  assert.match(liveApp, /Live discovery below[\s\S]*?Now · Dancers · Venues · Trending/);
+  assert.doesNotMatch(liveApp, /home-tv-discovery-cue/);
+  assert.doesNotMatch(liveApp, /Live discovery below/);
   assert.match(liveApp, /id="discoveryTabs" aria-label="Discovery tabs"/);
   assert.match(liveApp, /No approved videos in \$\{city\} yet\./);
   assert.match(liveApp, /MyDancr TV is temporarily unavailable\./);
