@@ -54,7 +54,7 @@ function tvProfileShiftLabel(video: MyDancrTvVideo) {
   if (video.shift) {
     return {
       className: "is-upcoming",
-      label: `Upcoming ${formatTvProfileShift(video.shift.startsAt, video.shift.timezone)}`,
+      label: formatTvProfileShift(video.shift.startsAt, video.shift.timezone),
     };
   }
   return { className: "is-no-shift", label: "No shift posted" };
@@ -71,7 +71,7 @@ function formatTvProfileShift(startsAt: string, timeZone: string) {
       hour: "numeric",
       minute: "2-digit",
       timeZone: timeZone || "UTC",
-    }).format(date);
+    }).format(date).replace(",", "").replace(", ", " · ");
   } catch {
     return new Intl.DateTimeFormat("en-US", {
       weekday: "short",
@@ -79,7 +79,7 @@ function formatTvProfileShift(startsAt: string, timeZone: string) {
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
-    }).format(date);
+    }).format(date).replace(",", "").replace(", ", " · ");
   }
 }
 

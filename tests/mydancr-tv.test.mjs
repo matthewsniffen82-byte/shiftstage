@@ -240,12 +240,16 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(dancerPage, /watchAllHref=\{`\/tv\?city=\$\{encodeURIComponent\(profile\.city\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}`\}/);
   assert.match(videoStrip, /<video autoPlay loop muted playsInline/);
   assert.match(videoStrip, /tvProfileShiftLabel\(video\)/);
-  assert.match(videoStrip, /"Working now"[\s\S]*?`Upcoming \$\{formatTvProfileShift[\s\S]*?"No shift posted"/);
+  assert.match(videoStrip, /"Working now"[\s\S]*?label: formatTvProfileShift[\s\S]*?"No shift posted"/);
+  assert.doesNotMatch(videoStrip, /label: `Upcoming \$\{formatTvProfileShift/);
   assert.match(videoStrip, /className=\{`tv-strip-schedule \$\{schedule\.className\}`\}/);
   assert.doesNotMatch(videoStrip, /video\.caption|tv-strip-play/);
   assert.match(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
   assert.match(liveApp, /all\.href = `\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}`/);
   assert.match(liveApp, /profile-tv-strip-schedule is-now[\s\S]*?profile-tv-strip-schedule is-upcoming[\s\S]*?profile-tv-strip-schedule is-no-shift/);
+  assert.match(liveApp, /formatProfileTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)/);
+  assert.match(liveApp, /<strong>Next shift<\/strong>/);
+  assert.doesNotMatch(liveApp, /Upcoming interest/);
   assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);
   assert.match(tvPage, /const dancerId = cleanUuid\(params\.dancer\)/);
   assert.match(tvPage, /dancerId,[\s\S]*?initialDancerId=\{dancerId \|\| ""\}/);

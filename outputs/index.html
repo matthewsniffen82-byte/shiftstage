@@ -36350,7 +36350,7 @@
 
     function shiftInterestTileMarkup(profile, status) {
       const hasUpcomingShift = profile.scheduled && status.state !== "active" && status.state !== "ended";
-      const tileTitle = status.state === "active" ? "Who's going" : hasUpcomingShift ? "Upcoming interest" : "Interest";
+      const tileTitle = status.state === "active" ? "Who's going" : "Interest";
       const mutedClass = status.state === "active" || hasUpcomingShift ? "" : "muted muted-value";
       const statusText = status.state === "active" || hasUpcomingShift
         ? metricPhraseMarkup(`${tonightInterestCount(profile).toLocaleString()} people going`)
@@ -36376,7 +36376,7 @@
           </div>
           ${profileDealTileMarkup(profile)}
           <div class="info-tile">
-            <strong>Upcoming shifts</strong>
+            <strong>Next shift</strong>
             <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
           </div>
           ${shiftInterestTileMarkup(profile, status)}
@@ -36391,7 +36391,7 @@
             <div class="meta"><span class="muted-value">Not scheduled now</span></div>
           </div>
           <div class="info-tile">
-            <strong>Upcoming shifts</strong>
+            <strong>Next shift</strong>
             <div class="schedule-stack">
                 <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${displayPublicShiftTime(profile.time, profile)}</span></div>
@@ -36407,8 +36407,8 @@
           <div class="meta"><span class="muted-value">Not scheduled now</span></div>
         </div>
           <div class="info-tile">
-            <strong>Upcoming shifts</strong>
-            <div class="meta"><span class="muted-value">No upcoming shifts</span></div>
+            <strong>Next shift</strong>
+            <div class="meta"><span class="muted-value">No shift posted</span></div>
           </div>
         ${shiftInterestTileMarkup(profile, status)}
       `;
@@ -36606,7 +36606,7 @@
           const scheduleLabel = item.shift?.isActive
             ? "Working now"
             : item.shift
-              ? `Upcoming ${formatHomeTvShift(item.shift.startsAt, item.shift.timezone)}`
+              ? formatProfileTvShift(item.shift.startsAt, item.shift.timezone)
               : "No shift posted";
           link.setAttribute("aria-label", `Watch ${profile.name} on MyDancr TV, ${scheduleLabel}`);
           const video = document.createElement("video");
@@ -36633,6 +36633,12 @@
       } catch {
         // The live profile remains fully usable if its optional video strip cannot load.
       }
+    }
+
+    function formatProfileTvShift(startsAt, timeZone) {
+      return formatHomeTvShift(startsAt, timeZone)
+        .replace(",", "")
+        .replace(", ", " · ");
     }
 
     function clearProfileDeepLink() {
