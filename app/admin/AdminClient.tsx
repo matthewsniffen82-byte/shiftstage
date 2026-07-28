@@ -128,7 +128,7 @@ export default function AdminClient() {
           emailRedirectTo:
             typeof window === "undefined"
               ? undefined
-              : `${window.location.origin}/auth/callback?dancr_reset=1&role=admin&return_to=${encodeURIComponent("/admin")}`,
+              : `${window.location.origin}/auth/callback?dancr_reset=1&role=admin&return_to=${encodeURIComponent("/admin/operations")}`,
         }),
       });
       const data = await response.json();

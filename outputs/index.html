@@ -28828,7 +28828,7 @@
         <div class="auth-card">
           <h3>MyDancr TV moderation</h3>
           <p>Review real dancer video submissions, approve publication, reject with feedback, and confirm what is live.</p>
-          <a class="action-btn" href="/admin" style="text-decoration:none">Open MyDancr TV moderation</a>
+          <a class="action-btn" href="/admin/operations" style="text-decoration:none">Open MyDancr TV moderation</a>
         </div>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
           <summary><span class="dashboard-collapse-title"><strong>Platform monitoring</strong><span>Expand to view live system checks, approval queue health, reports, billing, and support activity.</span></span></summary>
@@ -42812,6 +42812,14 @@
       return true;
     }
 
+    function handleAdminDashboardDeepLink() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("dancr_dashboard") !== "admin") return false;
+      window.history.replaceState({}, document.title, "/");
+      openAdminDashboard();
+      return true;
+    }
+
     installReferenceHomeShell();
     restoreLoggedInSessionState();
     updateAccountHeader();
@@ -42828,7 +42836,7 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleDancerDashboardDeepLink()) openSharedProfileFromUrl();
+    if (!restoredAuthResume && !handleAdminDashboardDeepLink() && !handleDancerDashboardDeepLink()) openSharedProfileFromUrl();
   </script>
 </body>
 </html>

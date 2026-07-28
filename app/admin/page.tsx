@@ -1,8 +1,8 @@
-import AdminClient from "./AdminClient";
+import { redirect } from "next/navigation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default function AdminPage() {
-  return <AdminClient />;
+  redirect("/?dancr_dashboard=admin");
 }
