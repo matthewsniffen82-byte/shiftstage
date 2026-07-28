@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
 export function TvVideoStrip({
@@ -9,6 +12,59 @@ export function TvVideoStrip({
   videos: MyDancrTvVideo[];
   showDancerName?: boolean;
 }) {
+  const [activeVideo, setActiveVideo] = useState<MyDancrTvVideo | null>(null);
+  const [viewerStatus, setViewerStatus] = useState("");
+  const viewerShell = useRef<HTMLDivElement | null>(null);
+  const closeButton = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!activeVideo) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !document.fullscreenElement) setActiveVideo(null);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [activeVideo]);
+
+  async function shareVideo(video: MyDancrTvVideo) {
+    const url = new URL(`/tv/${encodeURIComponent(video.id)}`, window.location.origin).toString();
+    setViewerStatus("");
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${video.dancer.stageName} on MyDancr TV`,
+          text: `Watch ${video.dancer.stageName} on MyDancr TV.`,
+          url,
+        });
+        setViewerStatus("Video shared.");
+      } else {
+        await navigator.clipboard.writeText(url);
+        setViewerStatus("Video link copied.");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setViewerStatus("Unable to share this video.");
+    }
+  }
+
+  async function enterDeviceFullscreen() {
+    if (!viewerShell.current?.requestFullscreen) {
+      setViewerStatus("This device does not support browser full screen.");
+      return;
+    }
+    try {
+      await viewerShell.current.requestFullscreen();
+    } catch {
+      setViewerStatus("Unable to enter browser full screen.");
+    }
+  }
+
   if (!videos.length) return null;
 
   return (
@@ -24,20 +80,68 @@ export function TvVideoStrip({
         {videos.map((video) => {
           const schedule = tvProfileShiftLabel(video);
           return (
-            <article
-              aria-label={`${video.dancer.stageName} MyDancr TV video, ${schedule.label}`}
+            <button
+              aria-label={`Open ${video.dancer.stageName} MyDancr TV video full screen, ${schedule.label}`}
               className="tv-strip-card"
               key={video.id}
+              type="button"
+              onClick={() => {
+                setViewerStatus("");
+                setActiveVideo(video);
+              }}
             >
-              <video autoPlay loop muted playsInline preload="metadata" src={video.videoUrl} />
+              <video aria-hidden="true" autoPlay loop muted playsInline preload="metadata" src={video.videoUrl} />
               <div>
                 {showDancerName ? <strong>{video.dancer.stageName}</strong> : null}
                 <span className={`tv-strip-schedule ${schedule.className}`}>{schedule.label}</span>
+                <span className="tv-strip-open">Open full screen</span>
               </div>
-            </article>
+            </button>
           );
         })}
       </div>
+      {activeVideo ? (
+        <div
+          className="tv-video-viewer"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeVideo.dancer.stageName} MyDancr TV video`}
+          onClick={(event) => {
+            if (event.currentTarget === event.target) setActiveVideo(null);
+          }}
+        >
+          <div className="tv-video-viewer-shell" ref={viewerShell}>
+            <button
+              className="tv-video-viewer-close"
+              type="button"
+              aria-label="Close full-screen video"
+              ref={closeButton}
+              onClick={() => setActiveVideo(null)}
+            >
+              ×
+            </button>
+            <video
+              autoPlay
+              controls
+              loop
+              playsInline
+              preload="auto"
+              src={activeVideo.videoUrl}
+            />
+            <div className="tv-video-viewer-footer">
+              <div>
+                <strong>{activeVideo.dancer.stageName}</strong>
+                <span>{tvProfileShiftLabel(activeVideo).label}</span>
+              </div>
+              <div className="tv-video-viewer-actions">
+                <button type="button" onClick={enterDeviceFullscreen}>Full screen</button>
+                <button type="button" onClick={() => shareVideo(activeVideo)}>Share</button>
+              </div>
+              <p aria-live="polite">{viewerStatus}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -87,7 +191,8 @@ function TvVideoStripStyles() {
       .tv-strip-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .tv-strip-head h2 { margin: 0; font-size: clamp(22px, 4vw, 34px); }
       .tv-strip-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 240px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; padding-bottom: 4px; }
-      .tv-strip-card { position: relative; min-height: 330px; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 10px; color: #fff; background: #08080b; text-decoration: none; scroll-snap-align: start; }
+      .tv-strip-card { position: relative; min-height: 330px; padding: 0; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 10px; color: #fff; background: #08080b; font: inherit; text-align: left; scroll-snap-align: start; cursor: pointer; }
+      .tv-strip-card:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
       .tv-strip-card video { width: 100%; height: 100%; min-height: 330px; display: block; object-fit: cover; background: #000; }
       .tv-strip-card::after { content: ""; position: absolute; inset: 42% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); }
       .tv-strip-card > div { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 12px; display: grid; gap: 5px; }
@@ -95,9 +200,26 @@ function TvVideoStripStyles() {
       .tv-strip-schedule { width: fit-content; max-width: 100%; padding: 4px 7px; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b8b2c4; background: rgba(7,7,12,.76); font-size: 10px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
       .tv-strip-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.24); }
       .tv-strip-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.16); }
+      .tv-strip-open { width: fit-content; color: #fff; font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+      .tv-video-viewer { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
+      .tv-video-viewer-shell { position: relative; width: min(100%, 720px); height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 1px solid rgba(139,92,246,.48); border-radius: 16px; background: #000; box-shadow: 0 30px 100px rgba(0,0,0,.8), 0 0 40px rgba(109,40,217,.2); }
+      .tv-video-viewer-shell:fullscreen { width: 100%; max-width: none; height: 100%; border: 0; border-radius: 0; }
+      .tv-video-viewer-shell > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; }
+      .tv-video-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
+      .tv-video-viewer-footer { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 13px 14px calc(13px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255,255,255,.1); background: #09090d; }
+      .tv-video-viewer-footer > div:first-child { min-width: 0; display: grid; gap: 3px; }
+      .tv-video-viewer-footer strong { overflow: hidden; color: #fff; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+      .tv-video-viewer-footer span { color: #9fefff; font-size: 11px; font-weight: 850; }
+      .tv-video-viewer-actions { display: flex; gap: 8px; }
+      .tv-video-viewer-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.12); font-weight: 900; cursor: pointer; }
+      .tv-video-viewer-footer p { min-height: 16px; grid-column: 1 / -1; margin: 0; color: #a7f3d0; font-size: 11px; font-weight: 800; }
       @media (max-width: 620px) {
         .tv-strip-list { grid-auto-columns: minmax(150px, 42vw); }
         .tv-strip-card, .tv-strip-card video { min-height: 270px; }
+        .tv-video-viewer { padding: 0; }
+        .tv-video-viewer-shell { width: 100%; height: 100%; border: 0; border-radius: 0; }
+        .tv-video-viewer-footer { grid-template-columns: minmax(0, 1fr); }
+        .tv-video-viewer-actions { display: grid; grid-template-columns: 1fr 1fr; }
       }
     `}</style>
   );
