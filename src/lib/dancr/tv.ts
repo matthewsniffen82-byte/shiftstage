@@ -30,7 +30,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 ]);
 
 const PUBLIC_TV_SELECT =
-  "id, caption, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at)";
+  "id, caption, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at)";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -73,6 +73,7 @@ export type MyDancrTvVideo = {
     id: string;
     startsAt: string;
     endsAt: string;
+    timezone: string;
     status: string;
     isActive: boolean;
     isStartingSoon: boolean;
@@ -236,6 +237,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
           id: shift.id,
           startsAt: shift.starts_at,
           endsAt: shift.ends_at,
+          timezone: shift.timezone || "UTC",
           status: shift.status,
           isActive: shiftIsActive,
           isStartingSoon: Number.isFinite(start) && start > now && start <= now + 2 * 60 * 60 * 1000,
@@ -257,7 +259,7 @@ async function getPublicTvShiftContexts(
   const { data, error } = await admin
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, venues!inner(id, slug, name, city, is_active)",
+      "id, dancer_id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, venues!inner(id, slug, name, city, is_active)",
     )
     .in("dancer_id", uniqueDancerIds)
     .eq("status", "posted")
@@ -289,6 +291,7 @@ async function getPublicTvShiftContexts(
         id: row.id,
         startsAt: row.starts_at,
         endsAt: row.ends_at,
+        timezone: row.timezone || "UTC",
         status: row.status,
         isActive,
         isStartingSoon: isUpcoming && start <= now + 2 * 60 * 60 * 1000,

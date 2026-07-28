@@ -117,10 +117,16 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /className="tv-mobile-nav"[\s\S]*?>Now<[\s\S]*?>Dancers<[\s\S]*?>Venues<[\s\S]*?>Trending</);
   assert.match(feedClient, /\.tv-mobile-nav \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(feedClient, /className="tv-video-venue"[\s\S]*?video\.venue\.name/);
-  assert.match(feedClient, /video\.shift\.isActive \? "Working now" : `Upcoming \$\{formatShift\(video\.shift\.startsAt\)\}`/);
+  assert.match(
+    feedClient,
+    /video\.shift\.isActive[\s\S]*?\? "Working now"[\s\S]*?: `Upcoming \$\{formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)\}`/,
+  );
   assert.match(tvSource, /async function getPublicTvShiftContexts/);
   assert.match(tvSource, /\.from\("shifts"\)[\s\S]*?\.in\("dancer_id", uniqueDancerIds\)/);
   assert.match(tvSource, /shift\.location_status !== "location_confirmed" && shift\.location_status !== "club_confirmed"/);
+  assert.match(tvSource, /timezone: row\.timezone \|\| "UTC"/);
+  assert.match(feedClient, /formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)/);
+  assert.match(feedClient, /function formatShift\(value: string, timeZone: string\)[\s\S]*?timeZone,/);
   assert.match(liveApp, /filter=for-you&limit=8/);
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);
   assert.match(liveApp, /home-tv-teaser-list \{[\s\S]*?grid-auto-columns: minmax\(150px, 180px\)/);

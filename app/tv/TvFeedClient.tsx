@@ -423,7 +423,9 @@ export default function TvFeedClient({
                 ) : null}
                 {video.shift ? (
                   <span className={video.shift.isActive ? "tv-shift live" : "tv-shift upcoming"}>
-                    {video.shift.isActive ? "Working now" : `Upcoming ${formatShift(video.shift.startsAt)}`}
+                    {video.shift.isActive
+                      ? "Working now"
+                      : `Upcoming ${formatShift(video.shift.startsAt, video.shift.timezone)}`}
                   </span>
                 ) : null}
                 <p>{video.caption}</p>
@@ -576,11 +578,12 @@ function readViewerSessionId() {
   return id;
 }
 
-function formatShift(value: string) {
+function formatShift(value: string, timeZone: string) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "numeric",
     day: "numeric",
+    timeZone,
   }).format(new Date(value));
 }
 
