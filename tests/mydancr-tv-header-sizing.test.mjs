@@ -42,7 +42,7 @@ test("MyDancr TV matches the homepage header control sizing", () => {
   );
   assert.match(
     tvFeed,
-    /\.tv-global-account \{ width: auto; min-width: 86px; max-width: 108px; min-height: 42px; padding: 0 11px; font-size: clamp\(12px, 3\.3vw, 14px\); \}/,
+    /\.tv-global-account \{ width: 92px; min-width: 86px; max-width: 108px; min-height: 42px; padding: 0 11px; font-size: clamp\(12px, 3\.3vw, 14px\); \}/,
   );
   assert.match(
     tvFeed,
@@ -50,6 +50,6 @@ test("MyDancr TV matches the homepage header control sizing", () => {
   );
   assert.match(
     tvFeed,
-    /@media \(max-width: 374px\) \{[\s\S]*?\.tv-global-logo \{ width: clamp\(136px, 44vw, 164px\); max-width: clamp\(136px, 44vw, 164px\); \}[\s\S]*?\.tv-global-account \{ min-width: 78px; max-width: 94px; padding-inline: 9px; \}/,
+    /@media \(max-width: 374px\) \{[\s\S]*?\.tv-global-logo \{ width: clamp\(136px, 44vw, 164px\); max-width: clamp\(136px, 44vw, 164px\); \}[\s\S]*?\.tv-global-account \{ width: 88px; min-width: 78px; max-width: 94px; padding-inline: 9px; \}/,
   );
 });
