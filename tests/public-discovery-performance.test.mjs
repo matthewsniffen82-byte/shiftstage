@@ -38,7 +38,14 @@ test("the consolidated tonight list still requires a confirmed active check-in",
   assert.match(publicServiceSource, /publicLocationStatus\(item\) !== "self_reported"/);
 });
 
-test("the home hero is preloaded in the smaller production format", () => {
-  assert.match(homeSource, /href="\.\/dancr-hero\.webp" type="image\/webp"/);
+test("the home hero is preloaded and rendered as a resilient high-priority image", () => {
+  assert.match(homeSource, /href="\/outputs\/dancr-hero\.webp" type="image\/webp" fetchpriority="high"/);
+  assert.match(
+    homeSource,
+    /class="hero-art"[\s\S]*?src="\/outputs\/dancr-hero\.webp"[\s\S]*?width="1672"[\s\S]*?height="941"[\s\S]*?loading="eager"[\s\S]*?fetchpriority="high"/
+  );
+  assert.match(homeSource, /onerror="this\.onerror=null;this\.src='\/outputs\/dancr-hero\.png';"/);
+  assert.match(homeSource, /background-image: url\("\/outputs\/dancr-hero\.webp"\) !important/);
+  assert.doesNotMatch(homeSource, /url\("\.\/dancr-hero\.webp"\)/);
   assert.doesNotMatch(homeSource, /href="\.\/dancr-hero\.png"/);
 });
