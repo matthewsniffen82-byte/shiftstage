@@ -95,10 +95,8 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /setAccountLabel\("Account"\)/);
   assert.match(feedClient, /\.tv-global-logo \{[\s\S]*?aspect-ratio: 331 \/ 103/);
   assert.match(feedClient, /\.tv-global-search \{[\s\S]*?width: min\(520px, 34vw\)/);
-  assert.match(feedClient, /No sign-in needed/);
-  assert.match(feedClient, /Sign in required/);
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
-  assert.match(feedClient, /\/api\/reports/);
+  assert.doesNotMatch(feedClient, /\/api\/reports/);
   assert.match(feedClient, /<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>/);
   assert.match(feedClient, /data\.videos\.filter\([\s\S]*?tvCitiesMatch\(video\.dancer\.city, nextCity\)/);
   assert.doesNotMatch(liveApp, /data-tab="tv"/);
@@ -111,13 +109,17 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /String\(item\.dancer\?\.slug \|\| ""\)\.trim\(\)/);
   assert.match(liveApp, /card\.href = `\/dancers\/\$\{encodeURIComponent\(String\(item\.dancer\.slug\)\.trim\(\)\)\}`/);
   assert.match(liveApp, /card\.setAttribute\("aria-label", `Open \$\{item\.dancer\?\.stageName \|\| "dancer"\} live profile`\)/);
-  assert.match(feedClient, /className="tv-video-profile-link"[\s\S]*?href=\{dancerProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}/);
-  assert.match(feedClient, /className="tv-dancer-link"[\s\S]*?href=\{dancerProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s real profile`\}/);
+  assert.match(feedClient, /className="tv-profile-card"[\s\S]*?href=\{dancerProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}[\s\S]*?<video/);
   assert.match(feedClient, /function dancerProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?encodeURIComponent\(video\.dancer\.slug\)/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /className="tv-mobile-nav"[\s\S]*?>Now<[\s\S]*?>Dancers<[\s\S]*?>Venues<[\s\S]*?>Trending</);
   assert.match(feedClient, /\.tv-mobile-nav \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
-  assert.match(feedClient, /className="tv-video-venue"[\s\S]*?video\.venue\.name/);
+  assert.match(feedClient, /className="tv-card-venue-line"[\s\S]*?className="tv-card-venue-name"[\s\S]*?video\.venue\.name/);
+  assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
+  assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);
+  assert.match(feedClient, /className=\{video\.shift\.isActive \? "tv-schedule-row is-tonight" : "tv-schedule-row is-upcoming"\}/);
+  assert.doesNotMatch(feedClient, /className="tv-details"|className="tv-mobile-actions"|<p>\{video\.caption\}<\/p>/);
+  assert.doesNotMatch(feedClient, /function updateFollow|function updateGoing|function shareVideo|function reportVideo/);
   assert.match(
     feedClient,
     /video\.shift\.isActive[\s\S]*?\? "Working now"[\s\S]*?: `Upcoming \$\{formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)\}`/,
