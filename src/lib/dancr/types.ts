@@ -23,6 +23,7 @@ export type NotificationType =
   | "shift_cancelled"
   | "ranking_milestone"
   | "approval_status"
+  | "tv_video_status"
   | "support_message"
   | "weekly_summary";
 

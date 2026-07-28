@@ -241,6 +241,8 @@ export default function AccountClient() {
           <Link href="/tonight">Now</Link>
           <Link href="/dancers">Dancers</Link>
           <Link href="/venues">Venues</Link>
+          <Link href="/trending">Trending</Link>
+          <Link href="/tv">MyDancr TV</Link>
         </div>
       </nav>
 

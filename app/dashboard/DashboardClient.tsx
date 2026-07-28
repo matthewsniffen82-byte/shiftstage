@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
+import DancerTvStudio from "./DancerTvStudio";
+import VenueTvPanel from "./VenueTvPanel";
 
 type DashboardRole = "customer" | "dancer" | "venue";
 
@@ -119,6 +121,8 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
           <Link href="/tonight">Now</Link>
           <Link href="/dancers">Dancers</Link>
           <Link href="/venues">Venues</Link>
+          <Link href="/trending">Trending</Link>
+          <Link href="/tv">MyDancr TV</Link>
           <Link href="/account">Account</Link>
         </div>
       </nav>
@@ -691,6 +695,7 @@ function VenuePanel({
           {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
         </div>
       </article>
+      <VenueTvPanel />
     </>
   );
 }
@@ -824,6 +829,7 @@ function DancerPanel({
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
       {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
+      {isApproved ? <DancerTvStudio embedded /> : null}
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       {isApproved ? (
         <>

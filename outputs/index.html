@@ -27771,7 +27771,45 @@
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
         <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
+        <a class="tab" data-tv-link="true" href="/tv" aria-label="Open MyDancr TV" style="text-decoration:none">MyDancr TV</a>
       </nav>
+
+      <section class="home-tv-preview" aria-labelledby="homeTvTitle">
+        <style>
+          .home-tv-preview { margin: 16px 0 22px; display: grid; gap: 11px; }
+          .home-tv-preview-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+          .home-tv-preview-head > div { display: grid; gap: 3px; }
+          .home-tv-preview-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
+          .home-tv-preview-head h2 { margin: 0; font-size: 23px; }
+          .home-tv-preview-head a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 13px; border: 1px solid rgba(34,199,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-size: 12px; font-weight: 900; text-decoration: none; }
+          .home-tv-preview-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(145px, 190px); gap: 9px; overflow-x: auto; scroll-snap-type: x proximity; }
+          .home-tv-preview-card { position: relative; min-height: 245px; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 8px; color: #fff; background: #07070a; text-decoration: none; scroll-snap-align: start; }
+          .home-tv-preview-card video { width: 100%; height: 245px; display: block; object-fit: cover; background: #000; }
+          .home-tv-preview-card::after { content: ""; position: absolute; inset: 44% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.93)); }
+          .home-tv-preview-copy { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 10px; display: grid; gap: 3px; }
+          .home-tv-preview-copy strong { font-size: 13px; }
+          .home-tv-preview-copy small { color: #9fefff; }
+          .home-tv-preview-empty { grid-auto-flow: row; grid-auto-columns: auto; padding: 14px; border: 1px dashed rgba(255,255,255,.13); border-radius: 8px; color: #a99ebc; }
+          .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
+          .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+          .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+          .profile-tv-strip-head a { color: #7eeaff; font-size: 11px; font-weight: 900; text-decoration: none; }
+          .profile-tv-strip-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(105px, 130px); gap: 7px; overflow-x: auto; }
+          .profile-tv-strip-card { position: relative; min-height: 180px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 7px; background: #000; }
+          .profile-tv-strip-card video { width: 100%; height: 180px; display: block; object-fit: cover; }
+          .profile-tv-strip-card span { position: absolute; left: 7px; right: 7px; bottom: 7px; color: #fff; font-size: 10px; font-weight: 900; text-shadow: 0 2px 7px #000; }
+        </style>
+        <div class="home-tv-preview-head">
+          <div>
+            <span>Watch. Discover. Go.</span>
+            <h2 id="homeTvTitle">Happening on MyDancr TV</h2>
+          </div>
+          <a href="/tv">Watch MyDancr TV</a>
+        </div>
+        <div class="home-tv-preview-list" id="homeTvPreviewList" aria-live="polite">
+          <div class="home-tv-preview-empty">Loading approved videos…</div>
+        </div>
+      </section>
 
       <section class="stack" aria-live="polite">
         <div class="content-head">
@@ -28183,6 +28221,10 @@
               <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
                 <strong>Go incognito</strong>
                 <span>Hide profile from site</span>
+              </button>
+              <button type="button" onclick="window.location.href='/dashboard/dancer/tv'">
+                <strong>MyDancr TV</strong>
+                <span>Post and manage videos</span>
               </button>
             </div>
             <p class="dancer-incognito-status" id="dancerIncognitoStatus" role="status" aria-live="polite"></p>
@@ -28648,6 +28690,7 @@
           </div>
           <div class="customer-summary-actions">
             <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
+            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Manage MyDancr TV</button>
           </div>
         </div>
         <div class="dashboard-stats">
@@ -28759,6 +28802,11 @@
           <div class="stat"><strong id="adminPendingCount">0</strong><span>Pending dancers</span></div>
           <div class="stat"><strong id="adminSubscriptionCount">0</strong><span>Subscriptions</span></div>
           <div class="stat"><strong id="adminActiveSubscriptionCount">0</strong><span>Active billing</span></div>
+        </div>
+        <div class="auth-card">
+          <h3>MyDancr TV moderation</h3>
+          <p>Review real dancer video submissions, approve publication, reject with feedback, and confirm what is live.</p>
+          <a class="action-btn" href="/admin" style="text-decoration:none">Open MyDancr TV moderation</a>
         </div>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
           <summary><span class="dashboard-collapse-title"><strong>Platform monitoring</strong><span>Expand to view live system checks, approval queue health, reports, billing, and support activity.</span></span></summary>
@@ -36437,6 +36485,7 @@
           ${profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city })}
           ${liveProfileModalActionsMarkup(profile, status)}
         `;
+        void loadProfileMyDancrTv(profile);
       }
 
       profileBackdrop.classList.add("show");
@@ -36445,6 +36494,47 @@
       syncOverlayScrollLock();
       if (!isPending && !isPrivatePreview && profile.shiftId) {
         void refreshProfileGoingState(profile);
+      }
+    }
+
+    async function loadProfileMyDancrTv(profile) {
+      if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return;
+      const existing = modalBody.querySelector(".profile-tv-strip");
+      if (existing) existing.remove();
+      try {
+        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}&limit=4`, { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok || !payload.videos?.length) return;
+        const section = document.createElement("section");
+        section.className = "profile-tv-strip";
+        const head = document.createElement("div");
+        head.className = "profile-tv-strip-head";
+        const heading = document.createElement("strong");
+        heading.textContent = "MyDancr TV";
+        const all = document.createElement("a");
+        all.href = `/tv/${encodeURIComponent(payload.videos[0].id)}`;
+        all.textContent = "Watch all";
+        head.append(heading, all);
+        const list = document.createElement("div");
+        list.className = "profile-tv-strip-list";
+        payload.videos.forEach((item) => {
+          const link = document.createElement("a");
+          link.className = "profile-tv-strip-card";
+          link.href = `/tv/${encodeURIComponent(item.id)}`;
+          const video = document.createElement("video");
+          video.src = item.videoUrl;
+          video.muted = true;
+          video.playsInline = true;
+          video.preload = "metadata";
+          const caption = document.createElement("span");
+          caption.textContent = item.caption || "Watch video";
+          link.append(video, caption);
+          list.appendChild(link);
+        });
+        section.append(head, list);
+        modalBody.prepend(section);
+      } catch {
+        // The live profile remains fully usable if its optional video strip cannot load.
       }
     }
 
@@ -42408,6 +42498,7 @@
 
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => {
+        if (tab.dataset.tvLink === "true") return;
         const nextTab = tab.dataset.tab;
         if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
           selectedVenueName = null;
@@ -42606,6 +42697,57 @@
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume && !handleDancerDashboardDeepLink()) openSharedProfileFromUrl();
+  </script>
+  <script>
+    (() => {
+      const mount = document.getElementById("homeTvPreviewList");
+      if (!mount) return;
+
+      const renderHomeTv = async () => {
+        const city = document.getElementById("citySelect")?.value || "Las Vegas";
+        try {
+          const response = await fetch(`/api/public/tv?city=${encodeURIComponent(city)}&filter=tonight&limit=4`, { cache: "no-store" });
+          const payload = await response.json();
+          if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
+          mount.replaceChildren();
+          if (!payload.videos?.length) {
+            const empty = document.createElement("div");
+            empty.className = "home-tv-preview-empty";
+            empty.textContent = `No approved MyDancr TV videos are live in ${city} yet.`;
+            mount.appendChild(empty);
+            return;
+          }
+          payload.videos.forEach((item) => {
+            const link = document.createElement("a");
+            link.className = "home-tv-preview-card";
+            link.href = `/tv/${encodeURIComponent(item.id)}`;
+            const video = document.createElement("video");
+            video.muted = true;
+            video.playsInline = true;
+            video.preload = "metadata";
+            video.src = item.videoUrl;
+            const copy = document.createElement("span");
+            copy.className = "home-tv-preview-copy";
+            const name = document.createElement("strong");
+            name.textContent = item.dancer?.stageName || "Dancer";
+            const venue = document.createElement("small");
+            venue.textContent = item.shift?.isActive ? "Working now" : item.venue?.name || "MyDancr TV";
+            copy.append(name, venue);
+            link.append(video, copy);
+            mount.appendChild(link);
+          });
+        } catch (error) {
+          mount.replaceChildren();
+          const empty = document.createElement("div");
+          empty.className = "home-tv-preview-empty";
+          empty.textContent = error instanceof Error ? error.message : "Unable to load MyDancr TV.";
+          mount.appendChild(empty);
+        }
+      };
+
+      renderHomeTv();
+      document.getElementById("citySelect")?.addEventListener("change", renderHomeTv);
+    })();
   </script>
 </body>
 </html>

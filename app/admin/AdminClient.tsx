@@ -2,6 +2,7 @@
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import AdminTvPanel from "./AdminTvPanel";
 
 type AdminState = {
   monitoring?: Record<string, unknown> | null;
@@ -196,6 +197,8 @@ export default function AdminClient() {
           <Link href="/tonight">Now</Link>
           <Link href="/dancers">Dancers</Link>
           <Link href="/venues">Venues</Link>
+          <Link href="/trending">Trending</Link>
+          <Link href="/tv">MyDancr TV</Link>
         </div>
       </nav>
 
@@ -371,6 +374,9 @@ export default function AdminClient() {
               onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
               onActionConfirmed={confirmAdminAction}
             />
+          </Panel>
+          <Panel title="MyDancr TV">
+            <AdminTvPanel />
           </Panel>
           <Panel title="Deal QR Attribution">
             <Metric label="Tracked redemptions" value={String(state.deals?.length || 0)} />

@@ -25,6 +25,8 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
         <div className="nav-links">
           <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Now</Link>
           <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link>
+          <Link href={`/trending?city=${encodeURIComponent(city)}`}>Trending</Link>
+          <Link href={`/tv?city=${encodeURIComponent(city)}`}>MyDancr TV</Link>
           <Link href="/account">Account</Link>
         </div>
       </nav>

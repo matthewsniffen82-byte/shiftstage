@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { VenueQrCode } from "@/app/components/VenueQrCode";
+import { TvVideoStrip } from "@/app/components/TvVideoStrip";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getDancerProfile } from "@/src/lib/dancr/public";
+import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   DancerFollowerCount,
@@ -31,6 +33,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const gallery = profile.photos.length ? profile.photos : heroPhoto ? [{ id: "primary", imageUrl: heroPhoto, isPrimary: true, sortOrder: 0 }] : [];
   const activeShift = profile.upcomingShifts.find((shift) => isActiveNow(shift));
   const activeDeal = activeShift?.venueId ? await getActiveClubDealForVenue(client, activeShift.venueId) : null;
+  const tvVideos = await getPublicMyDancrTvFeed(client, {
+    city: profile.city,
+    dancerId: profile.id,
+    limit: 4,
+  });
 
   return (
     <DancerFollowStateProvider
@@ -43,6 +50,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
       <PublicProfileStyles />
       <nav className="public-nav">
         <Link href="/">Dancr</Link>
+        <Link href={`/tv?city=${encodeURIComponent(profile.city)}`}>MyDancr TV</Link>
         <span>{profile.city}</span>
       </nav>
       <section className="public-hero dancer-hero">
@@ -77,6 +85,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           />
         </section>
       ) : null}
+      <TvVideoStrip title={`${profile.stageName} on MyDancr TV`} videos={tvVideos} />
       <section className="public-grid">
         <article className="public-panel">
           <h2>Schedule</h2>

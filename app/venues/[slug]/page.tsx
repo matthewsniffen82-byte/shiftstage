@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { VenuePageView, VenueQrCode } from "@/app/components/VenueQrCode";
+import { TvVideoStrip } from "@/app/components/TvVideoStrip";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
+import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DirectionsLink } from "./DirectionsLink";
 import { VenueProfileActions } from "./VenueProfileActions";
@@ -28,6 +30,11 @@ export default async function VenuePublicPage({ params }: PageProps) {
   const venue = await getVenueProfile(client, slug);
   if (!venue) notFound();
   const activeDeal = await getActiveClubDealForVenue(client, venue.id);
+  const tvVideos = await getPublicMyDancrTvFeed(client, {
+    city: venue.city,
+    venueId: venue.id,
+    limit: 6,
+  });
 
   const { data, error } = await client
     .from("shifts")
@@ -52,6 +59,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
       <VenueProfileStyles />
       <nav className="public-nav">
         <Link href="/">Dancr</Link>
+        <Link href={`/tv?city=${encodeURIComponent(venue.city)}`}>MyDancr TV</Link>
         <span>{venue.city}</span>
       </nav>
       <section className="venue-hero">
@@ -86,6 +94,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
           />
         </section>
       ) : null}
+      <TvVideoStrip title={`Tonight at ${venue.name}`} videos={tvVideos} />
       <section className="public-grid">
         <article className="public-panel">
           <h2>Current and upcoming shifts</h2>
