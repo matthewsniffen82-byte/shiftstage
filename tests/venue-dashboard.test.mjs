@@ -67,11 +67,23 @@ test("uploaded venue QR images are validated, safely stored, and published on el
   assert.match(migration, /image\/jpeg.*image\/png.*image\/webp/s);
   assert.match(publicVenueSource, /qr_code_storage_path/);
   assert.match(publicVenuePage, /<VenueQrCode/);
-  assert.match(dancerPage, /activeShift\?\.venueQrCodeUrl/);
+  assert.match(dancerPage, /activeShift\.venueQrCodeUrl/);
   assert.match(dancerPage, /Boolean\(shift\.checkedInAt\)/);
   assert.match(dancerPage, /!shift\.checkedOutAt/);
   assert.match(dancerPage, /source="dancer_profile"/);
+  assert.match(dancerPage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\}/);
+  assert.match(trackingComponent, /Club Scan unavailable at this venue\./);
   assert.match(trackingComponent, /eventType: "qr_impression"/);
+});
+
+test("checked-in dancer profiles show a Club Scan or an explicit unavailable state without exposing it on future shifts", () => {
+  assert.match(liveApp, /if \(!profile\?\.venue \|\| !isWorkingTonight\(profile\)\) return ""/);
+  assert.match(liveApp, /if \(!profile\.venueId \|\| !profile\.venueQrCodeUrl\)/);
+  assert.match(liveApp, /Club Scan unavailable at this venue\./);
+  assert.match(liveApp, /<strong>Club Scan<\/strong>/);
+  assert.match(liveApp, /id="venueQrPlaceholder"/);
+  assert.match(liveApp, /qrPlaceholder\.hidden = Boolean\(profile\.qrCodeUrl\)/);
+  assert.match(liveApp, /A venue-uploaded QR appears on your live profile only while this shift is actively checked in/);
 });
 
 test("venue analytics are real database counts and the dashboard exposes useful operating metrics", () => {
