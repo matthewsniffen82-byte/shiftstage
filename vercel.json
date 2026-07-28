@@ -8,7 +8,7 @@
     },
     {
       "path": "/api/cron/video-moderation",
-      "schedule": "*/10 * * * *"
+      "schedule": "15 9 * * *"
     }
   ]
 }

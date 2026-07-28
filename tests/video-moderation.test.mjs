@@ -102,7 +102,7 @@ test("video moderation decisions are durable, recoverable, and visible to dancer
   assert.match(retryRoute, /authorizeCronRequest/);
   assert.match(retryRoute, /\.eq\("status", "moderating"\)/);
   assert.match(retryRoute, /retryMyDancrTvAutomatedModeration/);
-  assert.match(vercelConfig, /"path": "\/api\/cron\/video-moderation"[\s\S]*?"schedule": "\*\/10 \* \* \* \*"/);
+  assert.match(vercelConfig, /"path": "\/api\/cron\/video-moderation"[\s\S]*?"schedule": "15 9 \* \* \*"/);
   assert.match(studio, /Automated review:/);
   assert.match(studio, /video frames checked/);
   assert.match(adminPanel, /Automated safety review:/);
