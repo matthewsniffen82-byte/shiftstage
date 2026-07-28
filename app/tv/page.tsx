@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
+import {
+  MYDANCR_AVAILABLE_CITIES,
+  resolveMyDancrCity,
+} from "@/src/lib/dancr/markets";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import TvFeedClient from "./TvFeedClient";
 
@@ -17,7 +21,7 @@ type PageProps = {
 
 export default async function MyDancrTvPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const city = (params.city || "").trim().slice(0, 80) || "Las Vegas";
+  const city = resolveMyDancrCity(params.city);
   const filter = params.filter || "for-you";
   const initialVideos = filter === "following"
     ? []
@@ -30,6 +34,7 @@ export default async function MyDancrTvPage({ searchParams }: PageProps) {
 
   return (
     <TvFeedClient
+      availableCities={MYDANCR_AVAILABLE_CITIES}
       initialCity={city}
       initialFilter={filter}
       initialSelectedVideoId={params.video || ""}

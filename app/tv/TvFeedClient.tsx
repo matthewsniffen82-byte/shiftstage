@@ -7,7 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent,
+  type FormEvent,
 } from "react";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
@@ -23,12 +23,14 @@ const FILTERS = [
 type TvSource = "tv_feed" | "shared_link";
 
 export default function TvFeedClient({
+  availableCities,
   initialCity,
   initialFilter,
   initialSelectedVideoId,
   initialVideos,
   source,
 }: {
+  availableCities: readonly string[];
   initialCity: string;
   initialFilter: string;
   initialSelectedVideoId: string;
@@ -36,6 +38,11 @@ export default function TvFeedClient({
   source: TvSource;
 }) {
   const [videos, setVideos] = useState(initialVideos);
+  const cityOptions = useMemo(
+    () =>
+      [...new Set([...availableCities, initialCity].map((value) => value.trim()).filter(Boolean))],
+    [availableCities, initialCity],
+  );
   const [city, setCity] = useState(initialCity);
   const [cityDraft, setCityDraft] = useState(initialCity);
   const [filter, setFilter] = useState(
@@ -277,11 +284,14 @@ export default function TvFeedClient({
     loadFeed(nextFilter, city);
   }
 
-  function submitCity(event: MouseEvent<HTMLButtonElement>) {
+  function submitCity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextCity = cityDraft.trim();
+    const nextCity = cityOptions.find(
+      (option) => option.toLocaleLowerCase() === cityDraft.trim().toLocaleLowerCase(),
+    );
     if (!nextCity) return;
     setCity(nextCity);
+    setCityDraft(nextCity);
     loadFeed(filter, nextCity);
   }
 
@@ -317,10 +327,19 @@ export default function TvFeedClient({
           <span>Watch. Discover. Go.</span>
           <h1>MyDancr TV {myDancrTvCityLabel(city)}</h1>
         </div>
-        <form className="tv-city" onSubmit={(event) => event.preventDefault()}>
+        <form className="tv-city" onSubmit={submitCity}>
           <label htmlFor="tv-city">City</label>
-          <input id="tv-city" value={cityDraft} maxLength={80} onChange={(event) => setCityDraft(event.target.value)} />
-          <button type="button" onClick={submitCity}>Go</button>
+          <select
+            id="tv-city"
+            value={cityDraft}
+            onChange={(event) => setCityDraft(event.target.value)}
+            disabled={isLoading}
+          >
+            {cityOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <button type="submit" disabled={isLoading}>Go</button>
         </form>
       </header>
 
@@ -579,7 +598,7 @@ function TvStyles() {
     <style>{`
       * { box-sizing: border-box; }
       body { margin: 0; background: radial-gradient(circle at 78% 0%, rgba(155,92,255,.16), transparent 32rem), radial-gradient(circle at 14% 10%, rgba(139,61,255,.1), transparent 24rem), #030304; color: #f8f5ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      button, input { font: inherit; }
+      button, input, select { font: inherit; }
       .tv-shell { width: min(100%, 1440px); min-height: 100vh; margin: 0 auto; padding: 0 clamp(14px, 3vw, 44px) 48px; border-inline: 1px solid rgba(53,216,255,.1); background: radial-gradient(circle at 12% 0%, rgba(139,92,246,.22), transparent 25rem), radial-gradient(circle at 92% 6%, rgba(34,199,255,.12), transparent 25rem), #030305; box-shadow: 0 40px 120px rgba(0,0,0,.7); }
       .tv-global-header { position: sticky; top: 0; z-index: 40; margin: 0 calc(-1 * clamp(14px, 3vw, 44px)) 22px; padding: 16px clamp(14px, 3vw, 44px) 12px; border-bottom: 1px solid rgba(53,216,255,.12); background: rgba(3,3,4,.88); box-shadow: 0 12px 34px rgba(0,0,0,.58); backdrop-filter: blur(22px); }
       .tv-global-topbar { display: flex; align-items: center; gap: 18px; }
@@ -600,7 +619,8 @@ function TvStyles() {
       .tv-header h1 { margin: 0; font-size: clamp(34px, 6vw, 62px); line-height: 1; }
       .tv-city { display: flex; align-items: end; gap: 6px; }
       .tv-city label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-      .tv-city input { width: 150px; min-height: 40px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: rgba(255,255,255,.05); color: #fff; padding: 0 14px; }
+      .tv-city select { width: 158px; min-height: 40px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: #111117; color: #fff; padding: 0 34px 0 14px; cursor: pointer; }
+      .tv-city select:disabled, .tv-city button:disabled { opacity: .62; cursor: wait; }
       .tv-city button { min-height: 40px; padding: 0 14px; border: 1px solid rgba(34,199,255,.4); border-radius: 999px; background: rgba(34,199,255,.1); color: #fff; font-weight: 900; cursor: pointer; }
       .tv-filters { position: sticky; top: 0; z-index: 20; max-width: 1000px; margin: 0 auto 12px; padding: 8px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(5,5,8,.9); backdrop-filter: blur(16px); }
       .tv-filters button { min-height: 42px; border: 1px solid transparent; border-radius: 8px; color: #a99ebc; background: transparent; font-weight: 900; cursor: pointer; }
@@ -656,7 +676,7 @@ function TvStyles() {
         .tv-header { padding: 0 6px; align-items: center; }
         .tv-header h1 { font-size: 31px; }
         .tv-header > div > span { display: none; }
-        .tv-city input { width: 118px; }
+        .tv-city select { width: 132px; }
         .tv-filters { top: 0; margin-bottom: 4px; padding: 5px; gap: 3px; border-radius: 9px; }
         .tv-filters button { min-height: 38px; padding: 0 4px; font-size: 12px; }
         .tv-feed { height: calc(100svh - 142px); min-height: 430px; }
