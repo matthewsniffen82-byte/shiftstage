@@ -27870,7 +27870,9 @@
         .profile-tv-strip-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(105px, 130px); gap: 7px; overflow-x: auto; }
         .profile-tv-strip-card { position: relative; min-height: 180px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 7px; background: #000; }
         .profile-tv-strip-card video { width: 100%; height: 180px; display: block; object-fit: cover; }
-        .profile-tv-strip-card span { position: absolute; left: 7px; right: 7px; bottom: 7px; color: #fff; font-size: 10px; font-weight: 900; text-shadow: 0 2px 7px #000; }
+        .profile-tv-strip-schedule { position: absolute; left: 7px; bottom: 7px; z-index: 2; width: fit-content; max-width: calc(100% - 14px); padding: 4px 7px; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b8b2c4; background: rgba(7,7,12,.76); font-size: 9px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-tv-strip-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.24); }
+        .profile-tv-strip-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.16); }
         @media (max-width: 640px) {
           .home-discovery-controls { grid-template-columns: minmax(0, 1fr) auto !important; align-items: end; gap: 8px !important; padding: 10px !important; }
           .home-filter-toggle { display: inline-flex; }
@@ -36592,7 +36594,7 @@
         const heading = document.createElement("strong");
         heading.textContent = "MyDancr TV";
         const all = document.createElement("a");
-        all.href = `/tv/${encodeURIComponent(payload.videos[0].id)}`;
+        all.href = `/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}`;
         all.textContent = "Watch all";
         head.append(heading, all);
         const list = document.createElement("div");
@@ -36601,6 +36603,12 @@
           const link = document.createElement("a");
           link.className = "profile-tv-strip-card";
           link.href = `/tv/${encodeURIComponent(item.id)}`;
+          const scheduleLabel = item.shift?.isActive
+            ? "Working now"
+            : item.shift
+              ? `Upcoming ${formatHomeTvShift(item.shift.startsAt, item.shift.timezone)}`
+              : "No shift posted";
+          link.setAttribute("aria-label", `Watch ${profile.name} on MyDancr TV, ${scheduleLabel}`);
           const video = document.createElement("video");
           video.src = item.videoUrl;
           video.autoplay = true;
@@ -36609,9 +36617,14 @@
           video.defaultMuted = true;
           video.playsInline = true;
           video.preload = "metadata";
-          const caption = document.createElement("span");
-          caption.textContent = item.caption || "Watch video";
-          link.append(video, caption);
+          const schedule = document.createElement("span");
+          schedule.className = item.shift?.isActive
+            ? "profile-tv-strip-schedule is-now"
+            : item.shift
+              ? "profile-tv-strip-schedule is-upcoming"
+              : "profile-tv-strip-schedule is-no-shift";
+          schedule.textContent = scheduleLabel;
+          link.append(video, schedule);
           list.appendChild(link);
           void video.play().catch(() => undefined);
         });

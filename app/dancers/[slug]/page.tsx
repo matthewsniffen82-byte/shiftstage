@@ -85,7 +85,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
           />
         </section>
       ) : null}
-      <TvVideoStrip title={`${profile.stageName} on MyDancr TV`} videos={tvVideos} />
+      <TvVideoStrip
+        showDancerName={false}
+        title={`${profile.stageName} on MyDancr TV`}
+        videos={tvVideos}
+        watchAllHref={`/tv?city=${encodeURIComponent(profile.city)}&dancer=${encodeURIComponent(profile.id)}`}
+      />
       <section className="public-grid">
         <article className="public-panel">
           <h2>Schedule</h2>

@@ -7,6 +7,7 @@ const [
   tenSecondMigration,
   tvSource,
   publicRoute,
+  tvPage,
   feedClient,
   dancerApi,
   dancerStudio,
@@ -23,6 +24,7 @@ const [
   readFile(new URL("../supabase/migrations/202607270002_mydancr_tv_ten_second_limit.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/tv/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/tv/videos/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
@@ -234,8 +236,21 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(dancerPage, /getPublicMyDancrTvFeed/);
   assert.match(dancerPage, /dancerId: profile\.id/);
   assert.match(dancerPage, /<TvVideoStrip/);
+  assert.match(dancerPage, /showDancerName=\{false\}/);
+  assert.match(dancerPage, /watchAllHref=\{`\/tv\?city=\$\{encodeURIComponent\(profile\.city\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}`\}/);
   assert.match(videoStrip, /<video autoPlay loop muted playsInline/);
+  assert.match(videoStrip, /tvProfileShiftLabel\(video\)/);
+  assert.match(videoStrip, /"Working now"[\s\S]*?`Upcoming \$\{formatTvProfileShift[\s\S]*?"No shift posted"/);
+  assert.match(videoStrip, /className=\{`tv-strip-schedule \$\{schedule\.className\}`\}/);
+  assert.doesNotMatch(videoStrip, /video\.caption|tv-strip-play/);
   assert.match(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
+  assert.match(liveApp, /all\.href = `\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}`/);
+  assert.match(liveApp, /profile-tv-strip-schedule is-now[\s\S]*?profile-tv-strip-schedule is-upcoming[\s\S]*?profile-tv-strip-schedule is-no-shift/);
+  assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);
+  assert.match(tvPage, /const dancerId = cleanUuid\(params\.dancer\)/);
+  assert.match(tvPage, /dancerId,[\s\S]*?initialDancerId=\{dancerId \|\| ""\}/);
+  assert.match(feedClient, /if \(initialDancerId\) params\.set\("dancer", initialDancerId\)/);
+  assert.match(feedClient, /if \(initialDancerId\) url\.searchParams\.set\("dancer", initialDancerId\)/);
   assert.match(venuePage, /getPublicMyDancrTvFeed/);
   assert.match(venuePage, /venueId: venue\.id/);
   assert.match(venuePage, /<TvVideoStrip/);

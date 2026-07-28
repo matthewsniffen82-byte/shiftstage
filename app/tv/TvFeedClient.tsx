@@ -36,12 +36,14 @@ type TvNotification = {
 
 export default function TvFeedClient({
   initialCity,
+  initialDancerId = "",
   initialFilter,
   initialSelectedVideoId,
   initialVideos,
   source,
 }: {
   initialCity: string;
+  initialDancerId?: string;
   initialFilter: string;
   initialSelectedVideoId: string;
   initialVideos: MyDancrTvVideo[];
@@ -93,6 +95,7 @@ export default function TvFeedClient({
         limit: "18",
       });
       if (selectedVideoId) params.set("video", selectedVideoId);
+      if (initialDancerId) params.set("dancer", initialDancerId);
       const response = await fetch(`/api/public/tv?${params.toString()}`, {
         headers: token ? { authorization: `Bearer ${token}` } : undefined,
         cache: "no-store",
@@ -111,6 +114,8 @@ export default function TvFeedClient({
       url.pathname = "/tv";
       url.searchParams.set("city", nextCity);
       url.searchParams.set("filter", nextFilter);
+      if (initialDancerId) url.searchParams.set("dancer", initialDancerId);
+      else url.searchParams.delete("dancer");
       url.searchParams.delete("video");
       window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
     } catch (error) {
@@ -118,7 +123,7 @@ export default function TvFeedClient({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [initialDancerId]);
 
   useEffect(() => {
     const nextSession = readSession();

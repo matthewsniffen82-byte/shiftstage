@@ -13,12 +13,13 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ city?: string; filter?: string; video?: string }>;
+  searchParams: Promise<{ city?: string; dancer?: string; filter?: string; video?: string }>;
 };
 
 export default async function MyDancrTvPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const city = resolveMyDancrCity(params.city);
+  const dancerId = cleanUuid(params.dancer);
   const filter = params.filter === "following" || params.filter === "tonight"
     ? params.filter
     : "for-you";
@@ -26,6 +27,7 @@ export default async function MyDancrTvPage({ searchParams }: PageProps) {
     ? []
     : await getPublicMyDancrTvFeed(createAdminSupabaseClient(), {
         city,
+        dancerId,
         filter,
         selectedVideoId: params.video,
         limit: 12,
@@ -34,6 +36,7 @@ export default async function MyDancrTvPage({ searchParams }: PageProps) {
   return (
     <TvFeedClient
       initialCity={city}
+      initialDancerId={dancerId || ""}
       initialFilter={filter}
       initialSelectedVideoId={params.video || ""}
       initialVideos={initialVideos}
@@ -41,3 +44,10 @@ export default async function MyDancrTvPage({ searchParams }: PageProps) {
     />
   );
 }
+
+function cleanUuid(value: string | undefined) {
+  return value && UUID_PATTERN.test(value) ? value : undefined;
+}
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
