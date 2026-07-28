@@ -27760,54 +27760,48 @@
         </button>
       </section>
 
+      <section class="home-tv-teaser" id="homeTvTeaser" aria-labelledby="homeTvTeaserTitle" aria-busy="true">
+        <div class="home-tv-teaser-head">
+          <strong id="homeTvTeaserTitle">MyDancr TV</strong>
+          <a id="homeTvTeaserLink" href="/tv">Open full feed</a>
+        </div>
+        <div class="home-tv-teaser-list is-state" id="homeTvTeaserList" aria-live="polite">
+          <div class="home-tv-teaser-state">
+            <strong>Loading approved videos…</strong>
+            <span>Videos for the selected city will appear here automatically.</span>
+          </div>
+        </div>
+      </section>
+
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
         <span id="homeLiveCity">Las Vegas</span>
         <span id="homeLiveRadius">25 mi radius · All venues</span>
         <strong id="homeLiveWorking">0 working now</strong>
       </div>
 
-      <section class="home-tv-teaser" id="homeTvTeaser" aria-labelledby="homeTvTeaserTitle" hidden>
-        <div class="home-tv-teaser-head">
-          <strong id="homeTvTeaserTitle">MyDancr TV</strong>
-          <a id="homeTvTeaserLink" href="/tv">Open full feed</a>
-        </div>
-        <div class="home-tv-teaser-list" id="homeTvTeaserList" aria-live="polite"></div>
-      </section>
-
       <nav class="tabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
         <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
-        <button class="tab" data-tab="tv" data-tab-label="MyDancr TV" type="button">MyDancr TV</button>
       </nav>
 
       <style>
-        .home-tv-teaser { display: grid; gap: 8px; margin: 10px 0 12px; }
-        .home-tv-teaser[hidden] { display: none; }
+        .home-tv-teaser { display: grid; gap: 9px; margin: 10px 0 12px; padding: 10px; overflow: hidden; border: 1px solid rgba(139,92,246,.32); border-radius: 11px; background: linear-gradient(145deg, rgba(14,14,21,.96), rgba(7,7,11,.96)); box-shadow: 0 12px 30px rgba(0,0,0,.24); }
         .home-tv-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .home-tv-teaser-head strong { color: #fff; font-size: 12px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
         .home-tv-teaser-head a { color: #7eeaff; font-size: 11px; font-weight: 900; text-decoration: none; }
         .home-tv-teaser-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(112px, 132px); gap: 8px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; padding: 1px 1px 4px; scrollbar-width: thin; }
+        .home-tv-teaser-list.is-state { grid-auto-flow: row; grid-auto-columns: minmax(0, 1fr); overflow-x: hidden; scroll-snap-type: none; }
+        .home-tv-teaser-state { width: 100%; min-height: 82px; display: grid; align-content: center; gap: 5px; padding: 12px; border: 1px dashed rgba(255,255,255,.14); border-radius: 8px; color: #a99ebc; background: rgba(0,0,0,.2); }
+        .home-tv-teaser-state strong { color: #fff; font-size: 13px; }
+        .home-tv-teaser-state span { font-size: 11px; line-height: 1.45; }
+        .home-tv-teaser-state button { width: fit-content; min-height: 36px; margin-top: 3px; padding: 0 12px; border: 1px solid rgba(34,199,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
         .home-tv-teaser-card { position: relative; height: 176px; overflow: hidden; border: 1px solid rgba(139,92,246,.34); border-radius: 9px; color: #fff; background: #050507; text-decoration: none; scroll-snap-align: start; box-shadow: 0 10px 24px rgba(0,0,0,.3); }
         .home-tv-teaser-card video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; }
         .home-tv-teaser-card::after { content: ""; position: absolute; inset: 48% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); pointer-events: none; }
         .home-tv-teaser-card span { position: absolute; z-index: 2; left: 8px; right: 8px; bottom: 8px; display: grid; gap: 2px; font-size: 10px; font-weight: 900; }
         .home-tv-teaser-card small { color: #9fefff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .home-tv-tab-feed { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 12px; width: 100%; }
-        .home-tv-tab-card { position: relative; min-height: 330px; overflow: hidden; border: 1px solid rgba(139,92,246,.34); border-radius: 10px; color: #fff; background: #07070a; text-decoration: none; box-shadow: 0 18px 38px rgba(0,0,0,.28); }
-        .home-tv-tab-card video { width: 100%; height: 330px; display: block; object-fit: cover; background: #000; }
-        .home-tv-tab-card::after { content: ""; position: absolute; inset: 38% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.94)); pointer-events: none; }
-        .home-tv-tab-copy { position: absolute; z-index: 2; left: 13px; right: 13px; bottom: 13px; display: grid; gap: 4px; }
-        .home-tv-tab-copy strong { font-size: 15px; }
-        .home-tv-tab-copy span { color: #fff; font-size: 12px; line-height: 1.35; }
-        .home-tv-tab-copy small { color: #9fefff; font-weight: 850; }
-        .home-tv-tab-play { position: absolute; z-index: 2; top: 14px; right: 14px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; background: rgba(0,0,0,.62); font-size: 17px; box-shadow: 0 0 22px rgba(34,199,255,.18); }
-        .home-tv-tab-empty { display: grid; justify-items: start; gap: 7px; padding: 18px; border: 1px dashed rgba(255,255,255,.15); border-radius: 10px; color: #a99ebc; }
-        .home-tv-tab-empty strong { color: #fff; font-size: 16px; }
-        .home-tv-tab-empty p { margin: 0; }
-        .home-tv-tab-empty a, .home-tv-full-link { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(34,199,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-size: 12px; font-weight: 900; text-decoration: none; }
-        .home-tv-full-link { margin-top: 12px; }
         .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
         .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
@@ -27820,8 +27814,6 @@
           .home-tv-teaser { margin-top: 8px; }
           .home-tv-teaser-list { grid-auto-columns: minmax(104px, 29vw); }
           .home-tv-teaser-card { height: 158px; }
-          .home-tv-tab-feed { grid-auto-flow: column; grid-auto-columns: minmax(76vw, 270px); grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
-          .home-tv-tab-card { scroll-snap-align: start; }
         }
       </style>
 
@@ -29261,7 +29253,6 @@
     const customerBrowseTonight = document.getElementById("customerBrowseTonight");
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     let activeTab = "tonight";
-    let homeTvRenderRequest = 0;
     let homeTvTeaserRequest = 0;
     let homeTvTeaserCity = "";
     let savedScrollY = 0;
@@ -40329,7 +40320,6 @@
 
     function getItems(city, tab) {
       const market = markets[city];
-      if (tab === "tv") return [];
       if (["tonight", "dancers", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
         return [];
       }
@@ -40364,10 +40354,6 @@
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const label = tab.dataset.tabLabel || tab.textContent.trim();
         const tabName = tab.dataset.tab;
-        if (tabName === "tv") {
-          tab.innerHTML = `<span>${label}</span>`;
-          return;
-        }
         const count = loading && ["tonight", "dancers", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
         tab.innerHTML = `<span>${label}</span><span class="tab-count">${count}</span>`;
       });
@@ -40388,8 +40374,6 @@
 
     function render() {
       const city = citySelect.value;
-      const market = markets[city];
-      const tvRequestId = ++homeTvRenderRequest;
       if (homeTvTeaserCity !== city) {
         homeTvTeaserCity = city;
         void renderHomeTvTeaser(city);
@@ -40398,12 +40382,6 @@
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
       updateTabCounts(city);
       updateHomeLiveSummary(city);
-      results.classList.remove("home-tv-tab-results");
-
-      if (activeTab === "tv") {
-        renderHomeTvTab(city, tvRequestId);
-        return;
-      }
 
       const allItems = getItems(city, activeTab);
       const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
@@ -40452,6 +40430,28 @@
       )).join("");
     }
 
+    function renderHomeTvTeaserState(mount, title, description, retry = false) {
+      mount.classList.add("is-state");
+      const state = document.createElement("div");
+      state.className = "home-tv-teaser-state";
+      const heading = document.createElement("strong");
+      heading.textContent = title;
+      const copy = document.createElement("span");
+      copy.textContent = description;
+      state.append(heading, copy);
+      if (retry) {
+        const retryButton = document.createElement("button");
+        retryButton.type = "button";
+        retryButton.textContent = "Try again";
+        retryButton.addEventListener("click", () => {
+          homeTvTeaserCity = "";
+          render();
+        });
+        state.appendChild(retryButton);
+      }
+      mount.replaceChildren(state);
+    }
+
     async function renderHomeTvTeaser(city) {
       const teaser = document.getElementById("homeTvTeaser");
       const mount = document.getElementById("homeTvTeaserList");
@@ -40459,8 +40459,12 @@
       if (!teaser || !mount || !fullFeedLink) return;
 
       const requestId = ++homeTvTeaserRequest;
-      teaser.hidden = true;
-      mount.replaceChildren();
+      teaser.setAttribute("aria-busy", "true");
+      renderHomeTvTeaserState(
+        mount,
+        `Loading MyDancr TV in ${city}…`,
+        "Approved dancer videos will appear here automatically."
+      );
       fullFeedLink.href = `/tv?city=${encodeURIComponent(city)}`;
 
       try {
@@ -40470,8 +40474,18 @@
         if (requestId !== homeTvTeaserRequest || citySelect.value !== city) return;
 
         const videos = Array.isArray(payload.videos) ? payload.videos : [];
-        if (!videos.length) return;
+        teaser.setAttribute("aria-busy", "false");
+        if (!videos.length) {
+          renderHomeTvTeaserState(
+            mount,
+            `No approved videos in ${city} yet.`,
+            "Approved dancer videos will appear here automatically when they are published."
+          );
+          return;
+        }
 
+        mount.classList.remove("is-state");
+        mount.replaceChildren();
         videos.forEach((item) => {
           const card = document.createElement("a");
           card.className = "home-tv-teaser-card";
@@ -40497,106 +40511,15 @@
           mount.appendChild(card);
           void video.play().catch(() => undefined);
         });
-        teaser.hidden = false;
-      } catch {
-        if (requestId === homeTvTeaserRequest) teaser.hidden = true;
-      }
-    }
-
-    async function renderHomeTvTab(city, requestId) {
-      tabTitle.textContent = `MyDancr TV in ${city}`;
-      tabCount.textContent = "Loading videos...";
-      viewAllBtn.hidden = true;
-      results.classList.remove("card-grid");
-      results.classList.add("home-tv-tab-results");
-      results.innerHTML = '<div class="locked">Loading approved MyDancr TV videos...</div>';
-
-      try {
-        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(city)}&filter=for-you&limit=12`, { cache: "no-store" });
-        const payload = await response.json();
-        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
-        if (requestId !== homeTvRenderRequest || activeTab !== "tv" || citySelect.value !== city) return;
-
-        const videos = Array.isArray(payload.videos) ? payload.videos : [];
-        tabCount.textContent = `${videos.length} video${videos.length === 1 ? "" : "s"}`;
-        results.replaceChildren();
-
-        if (!videos.length) {
-          const empty = document.createElement("div");
-          empty.className = "home-tv-tab-empty";
-          const heading = document.createElement("strong");
-          heading.textContent = `No approved videos in ${city} yet.`;
-          const copy = document.createElement("p");
-          copy.textContent = "Dancer videos appear here only after dancer submission and administrator approval.";
-          const openFeed = document.createElement("a");
-          openFeed.href = `/tv?city=${encodeURIComponent(city)}`;
-          openFeed.textContent = "Open MyDancr TV";
-          empty.append(heading, copy, openFeed);
-          results.appendChild(empty);
-          return;
-        }
-
-        const feed = document.createElement("div");
-        feed.className = "home-tv-tab-feed";
-        videos.forEach((item) => {
-          const card = document.createElement("a");
-          card.className = "home-tv-tab-card";
-          card.href = `/tv/${encodeURIComponent(item.id)}`;
-          card.setAttribute("aria-label", `Watch ${item.dancer?.stageName || "dancer"} on MyDancr TV`);
-
-          const video = document.createElement("video");
-          video.autoplay = true;
-          video.loop = true;
-          video.muted = true;
-          video.defaultMuted = true;
-          video.playsInline = true;
-          video.preload = "metadata";
-          video.src = item.videoUrl;
-
-          const play = document.createElement("span");
-          play.className = "home-tv-tab-play";
-          play.setAttribute("aria-hidden", "true");
-          play.textContent = "▶";
-
-          const details = document.createElement("span");
-          details.className = "home-tv-tab-copy";
-          const dancer = document.createElement("strong");
-          dancer.textContent = item.dancer?.stageName || "Dancer";
-          details.appendChild(dancer);
-          if (item.caption) {
-            const caption = document.createElement("span");
-            caption.textContent = item.caption;
-            details.appendChild(caption);
-          }
-          const context = document.createElement("small");
-          context.textContent = item.shift?.isActive ? "Working now" : item.venue?.name || city;
-          details.appendChild(context);
-          card.append(video, play, details);
-          feed.appendChild(card);
-          void video.play().catch(() => undefined);
-        });
-
-        const openFullFeed = document.createElement("a");
-        openFullFeed.className = "home-tv-full-link";
-        openFullFeed.href = `/tv?city=${encodeURIComponent(city)}`;
-        openFullFeed.textContent = "Open full MyDancr TV feed";
-        results.append(feed, openFullFeed);
       } catch (error) {
-        if (requestId !== homeTvRenderRequest || activeTab !== "tv") return;
-        tabCount.textContent = "Unavailable";
-        const empty = document.createElement("div");
-        empty.className = "home-tv-tab-empty";
-        const heading = document.createElement("strong");
-        heading.textContent = "MyDancr TV could not load.";
-        const copy = document.createElement("p");
-        copy.textContent = error instanceof Error ? error.message : "Please try again.";
-        const retry = document.createElement("button");
-        retry.className = "action-btn";
-        retry.type = "button";
-        retry.textContent = "Try again";
-        retry.addEventListener("click", render);
-        empty.append(heading, copy, retry);
-        results.replaceChildren(empty);
+        if (requestId !== homeTvTeaserRequest || citySelect.value !== city) return;
+        teaser.setAttribute("aria-busy", "false");
+        renderHomeTvTeaserState(
+          mount,
+          "MyDancr TV is temporarily unavailable.",
+          error instanceof Error ? error.message : "Please try again.",
+          true
+        );
       }
     }
 
