@@ -5,6 +5,10 @@
     {
       "path": "/api/cron/image-moderation",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/video-moderation",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

@@ -29,6 +29,8 @@ type ManagedVideo = {
   venueTagStatus: string;
   venueFeatured: boolean;
   reviewNotes?: string | null;
+  moderationDecision?: "approved" | "review" | "rejected" | null;
+  moderationFrameCount?: number;
   submittedAt?: string | null;
   publishedAt?: string | null;
   expiresAt?: string | null;
@@ -137,7 +139,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         });
       if (uploadError) throw uploadError;
 
-      setStatus("Submitting for administrator review…");
+      setStatus("Running automated video safety review…");
       const submitResponse = await fetch(`/api/dancer/tv/videos/${data.upload.videoId}`, {
         method: "PATCH",
         headers: { ...authHeaders(session), "content-type": "application/json" },
@@ -148,7 +150,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         throw new Error(submitted.error || "Unable to submit video for review.");
       }
 
-      setStatus(submitted.message || "Your video was submitted for MyDancr TV review.");
+      setStatus(submitted.message || "Your video completed automated safety review.");
       setFile(null);
       setCaption("");
       setShiftId("");
@@ -197,7 +199,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         <div>
           <span>Creator tools</span>
           <h2>MyDancr TV Studio</h2>
-          <p>Post vertical videos tied to your real profile, venue, or shift. Every video is reviewed before it goes live.</p>
+          <p>Post vertical videos tied to your real profile, venue, or shift. Automated safety review checks the complete video before it can go live.</p>
         </div>
         <Link href="/tv">Watch MyDancr TV</Link>
       </div>
@@ -308,6 +310,12 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
                 <strong>{video.caption}</strong>
                 {video.venue ? <small>{video.venue.name} · venue tag {video.venueTagStatus}</small> : null}
+                {video.moderationDecision ? (
+                  <small className="tv-moderation-summary">
+                    Automated review: {video.moderationDecision === "review" ? "sent to a person" : video.moderationDecision}
+                    {video.moderationFrameCount ? ` · ${video.moderationFrameCount} video frames checked` : ""}
+                  </small>
+                ) : null}
                 {video.reviewNotes ? <p>{video.reviewNotes}</p> : null}
                 {video.metrics ? (
                   <dl>
@@ -382,6 +390,7 @@ async function readVideoMetadata(file: File) {
 function statusLabel(status: string) {
   return ({
     uploading: "Upload incomplete",
+    moderating: "Safety check",
     submitted: "Under review",
     approved: "Live",
     rejected: "Not approved",
@@ -443,8 +452,10 @@ function DancerTvStudioStyles() {
       .tv-managed-video p { margin: 0; padding: 9px; border: 1px solid rgba(255,91,116,.22); border-radius: 8px; color: #ffc2cc; background: rgba(255,91,116,.06); }
       .tv-video-status { width: fit-content; padding: 5px 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #d8d0e8; font-size: 10px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .tv-video-status.status-approved { color: #85ffc1; border-color: rgba(58,255,164,.32); background: rgba(58,255,164,.07); }
+      .tv-video-status.status-moderating { color: #94e5ff; border-color: rgba(34,199,255,.34); background: rgba(34,199,255,.08); }
       .tv-video-status.status-submitted { color: #ffe19d; border-color: rgba(255,200,90,.3); background: rgba(255,200,90,.07); }
       .tv-video-status.status-rejected { color: #ffb5c1; border-color: rgba(255,91,116,.3); background: rgba(255,91,116,.07); }
+      .tv-moderation-summary { color: #bcd4ff !important; }
       .tv-managed-video dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .tv-managed-video dl div { display: grid; gap: 3px; padding: 8px; border-radius: 7px; background: rgba(255,255,255,.04); }
       .tv-managed-video dt { color: #9f94b3; font-size: 10px; }

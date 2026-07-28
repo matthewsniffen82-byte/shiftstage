@@ -49,7 +49,7 @@ test("MyDancr TV stores private reviewed videos and enforces profile visibility"
   assert.doesNotMatch(migration, /create policy "dancers create own MyDancr TV videos"/);
 });
 
-test("dancer uploads are direct, validated, persistent, and submitted for review", () => {
+test("dancer uploads are direct, validated, persistent, and submitted for automated review", () => {
   assert.match(dancerApi, /createRequestSupabaseContext\(request\)/);
   assert.match(dancerApi, /createMyDancrTvUpload/);
   assert.match(tvSource, /createSignedUploadUrl\(storagePath\)/);
@@ -63,7 +63,7 @@ test("dancer uploads are direct, validated, persistent, and submitted for review
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);
   assert.match(tvSource, /status: "submitted"/);
   assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, file/);
-  assert.match(dancerStudio, /Your video was submitted for MyDancr TV review/);
+  assert.match(dancerStudio, /Your video completed automated safety review/);
   assert.match(dancerStudio, /Under review/);
   assert.match(dancerStudio, /Incognito is on/);
   assert.doesNotMatch(dancerStudio, /sample video|placeholder video|mock/i);
@@ -123,7 +123,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /card\.href = profileShareUrl\(profileName, city\)/);
   assert.match(liveApp, /card\.setAttribute\("aria-label", `Open \$\{profileName\} live profile`\)/);
   assert.match(liveApp, /card\.addEventListener\("click",[\s\S]*?findProfile\(profileName\)[\s\S]*?openProfileModal\(liveProfile\.name\)/);
-  assert.match(feedClient, /className="tv-profile-card"[\s\S]*?href=\{dancerLiveProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}[\s\S]*?<video/);
+  assert.match(feedClient, /className="tv-profile-card"[\s\S]*?<video[\s\S]*?href=\{dancerLiveProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}/);
   assert.match(feedClient, /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}/);
   assert.match(feedClient, /function slugifyLiveProfileName\(value: string\) \{[\s\S]*?replaceAll\(" ", "-"\)[\s\S]*?replace\(\/\[\^a-z0-9-\]\/g, ""\)/);
   assert.doesNotMatch(feedClient, /function dancerLiveProfileHref[\s\S]*?video\.dancer\.slug[\s\S]*?\n\}/);

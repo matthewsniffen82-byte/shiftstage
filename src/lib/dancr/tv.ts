@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isPublicDancerProfileEligible } from "./profile-approval";
+import {
+  moderateStoredMyDancrTvVideo,
+  type MyDancrTvModerationResult,
+} from "./video-moderation";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -416,7 +420,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     await Promise.all([
       admin
         .from("mydancr_tv_videos")
-        .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, submitted_at, reviewed_at, published_at, expires_at, created_at, venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
+        .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
         .eq("dancer_id", dancer.id)
         .order("created_at", { ascending: false }),
       admin
@@ -558,7 +562,7 @@ export async function createMyDancrTvUpload(
 export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, submitted_by, storage_path, storage_mime, file_size_bytes, status")
+    .select("id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -585,16 +589,174 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
   }
 
   const submittedAt = new Date().toISOString();
-  const { data: submitted, error: updateError } = await admin
+  const { data: moderating, error: updateError } = await admin
     .from("mydancr_tv_videos")
-    .update({ status: "submitted", submitted_at: submittedAt, review_notes: null })
+    .update({
+      status: "moderating",
+      submitted_at: submittedAt,
+      review_notes: null,
+      moderation_decision: null,
+      moderation_reason_codes: [],
+      moderation_category_scores: {},
+      moderation_provider_flagged: false,
+      moderation_frame_count: 0,
+      moderation_model: null,
+      moderation_details: {},
+      moderation_attempt_count: 1,
+      moderation_started_at: submittedAt,
+      moderation_completed_at: null,
+    })
     .eq("id", video.id)
     .eq("status", "uploading")
-    .select("id, status, submitted_at")
+    .select("id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
     .single();
   if (updateError) throw updateError;
-  console.info(JSON.stringify({ event: "mydancr_tv.video_submitted", videoId: video.id, userId }));
-  return submitted;
+  console.info(JSON.stringify({ event: "mydancr_tv.video_moderation_started", videoId: video.id, userId }));
+  return finalizeMyDancrTvAutomatedModeration(admin, moderating);
+}
+
+export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
+  const { data: video, error } = await admin
+    .from("mydancr_tv_videos")
+    .select("id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .eq("id", videoId)
+    .eq("status", "moderating")
+    .maybeSingle();
+  if (error) throw error;
+  if (!video) return null;
+
+  const startedAt = new Date().toISOString();
+  const { data: claimed, error: claimError } = await admin
+    .from("mydancr_tv_videos")
+    .update({
+      moderation_attempt_count: Number(video.moderation_attempt_count || 0) + 1,
+      moderation_started_at: startedAt,
+    })
+    .eq("id", video.id)
+    .eq("status", "moderating")
+    .select("id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .maybeSingle();
+  if (claimError) throw claimError;
+  return claimed ? finalizeMyDancrTvAutomatedModeration(admin, claimed) : null;
+}
+
+async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {
+  let moderation: MyDancrTvModerationResult;
+  try {
+    moderation = await moderateStoredMyDancrTvVideo(admin, {
+      videoId: video.id,
+      storagePath: video.storage_path,
+      storageMime: video.storage_mime,
+      caption: video.caption,
+    });
+  } catch (error) {
+    const completedAt = new Date().toISOString();
+    const errorCode = videoModerationErrorCode(error);
+    console.error(JSON.stringify({
+      event: "mydancr_tv.ai_moderation_failed",
+      videoId: video.id,
+      errorCode,
+      message: error instanceof Error ? error.message.slice(0, 500) : "Unknown moderation failure",
+    }));
+    const { data, error: updateError } = await admin
+      .from("mydancr_tv_videos")
+      .update({
+        status: "submitted",
+        moderation_decision: "review",
+        moderation_reason_codes: [errorCode],
+        moderation_provider_flagged: false,
+        moderation_details: { errorCode },
+        moderation_completed_at: completedAt,
+        review_notes: "Automated safety review was unavailable. Human review is required.",
+      })
+      .eq("id", video.id)
+      .eq("status", "moderating")
+      .select("id, status, submitted_at, moderation_decision, moderation_reason_codes")
+      .single();
+    if (updateError) throw updateError;
+    return data;
+  }
+
+  const profileEligible = isPublicDancerProfileEligible(one(video.dancer_profiles));
+  const decision = moderation.decision === "approved" && !profileEligible
+    ? "review"
+    : moderation.decision;
+  const reasonCodes = moderation.decision === "approved" && !profileEligible
+    ? [...moderation.reasonCodes, "profile_not_eligible_for_auto_publish"]
+    : moderation.reasonCodes;
+  const completedAt = new Date().toISOString();
+  const expiresAt = myDancrTvExpiry(one(video.shifts)?.ends_at);
+  const update = {
+    moderation_decision: decision,
+    moderation_reason_codes: reasonCodes,
+    moderation_category_scores: moderation.categoryScores,
+    moderation_provider_flagged: moderation.providerFlagged,
+    moderation_frame_count: moderation.frameCount,
+    moderation_model: moderation.moderationModel,
+    moderation_details: moderation.details,
+    moderation_completed_at: completedAt,
+    ...(decision === "approved"
+      ? {
+          status: "approved",
+          review_notes: "Automatically approved by MyDancr TV safety review.",
+          reviewed_by: null,
+          reviewed_at: completedAt,
+          published_at: completedAt,
+          expires_at: expiresAt,
+        }
+      : decision === "rejected"
+        ? {
+            status: "rejected",
+            review_notes: "This video did not meet MyDancr TV safety guidelines.",
+            reviewed_by: null,
+            reviewed_at: completedAt,
+            published_at: null,
+            expires_at: null,
+            venue_featured: false,
+          }
+        : {
+            status: "submitted",
+            review_notes: "Automated safety review requested human review.",
+            reviewed_by: null,
+            reviewed_at: null,
+            published_at: null,
+            expires_at: null,
+            venue_featured: false,
+          }),
+  };
+  const { data, error } = await admin
+    .from("mydancr_tv_videos")
+    .update(update)
+    .eq("id", video.id)
+    .eq("status", "moderating")
+    .select("id, status, submitted_at, reviewed_at, published_at, moderation_decision, moderation_reason_codes")
+    .single();
+  if (error) throw error;
+  console.info(JSON.stringify({
+    event: "mydancr_tv.ai_moderation_persisted",
+    videoId: video.id,
+    decision,
+    status: data.status,
+    frameCount: moderation.frameCount,
+    reasonCodes,
+  }));
+  return data;
+}
+
+function myDancrTvExpiry(shiftEndsAt?: string | null) {
+  const shiftExpiry = shiftEndsAt ? new Date(shiftEndsAt).getTime() + 24 * 60 * 60 * 1000 : 0;
+  return shiftExpiry > Date.now()
+    ? new Date(shiftExpiry).toISOString()
+    : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function videoModerationErrorCode(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  if (message.includes("openai_api_key")) return "video_moderation_not_configured";
+  if (message.includes("timed out")) return "video_moderation_timeout";
+  if (message.includes("decode") || message.includes("ffmpeg")) return "video_decode_failed";
+  if (message.includes("incomplete")) return "video_moderation_incomplete";
+  return "video_moderation_provider_error";
 }
 
 export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
@@ -623,7 +785,7 @@ export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "subm
   const normalized = allowedStatuses.has(status) ? status : "submitted";
   let query = admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public), venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
+    .select("id, caption, storage_path, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public), venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
     .order("submitted_at", { ascending: true, nullsFirst: false })
     .limit(100);
   if (normalized !== "all") query = query.eq("status", normalized);
@@ -668,10 +830,7 @@ export async function reviewMyDancrTvVideo(
 
   const reviewedAt = new Date().toISOString();
   const shift = one(video.shifts);
-  const shiftExpiry = shift?.ends_at ? new Date(shift.ends_at).getTime() + 24 * 60 * 60 * 1000 : 0;
-  const expiresAt = shiftExpiry > Date.now()
-    ? new Date(shiftExpiry).toISOString()
-    : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = myDancrTvExpiry(shift?.ends_at);
   const update = decision === "approved"
     ? {
         status: "approved",
@@ -864,6 +1023,16 @@ function mapManagedVideo(video: any, videoUrl: string, metrics: Record<string, n
     venueTagStatus: video.venue_tag_status,
     venueFeatured: video.venue_featured === true,
     reviewNotes: video.review_notes || null,
+    moderationDecision: video.moderation_decision || null,
+    moderationReasonCodes: Array.isArray(video.moderation_reason_codes) ? video.moderation_reason_codes : [],
+    moderationCategoryScores: video.moderation_category_scores || {},
+    moderationProviderFlagged: video.moderation_provider_flagged === true,
+    moderationFrameCount: Number(video.moderation_frame_count || 0),
+    moderationModel: video.moderation_model || null,
+    moderationDetails: video.moderation_details || {},
+    moderationAttemptCount: Number(video.moderation_attempt_count || 0),
+    moderationStartedAt: video.moderation_started_at || null,
+    moderationCompletedAt: video.moderation_completed_at || null,
     submittedAt: video.submitted_at || null,
     reviewedAt: video.reviewed_at || null,
     publishedAt: video.published_at || null,

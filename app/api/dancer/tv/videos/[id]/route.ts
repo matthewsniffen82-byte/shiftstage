@@ -9,6 +9,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 type RouteProps = {
   params: Promise<{ id: string }>;
@@ -29,7 +30,7 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     return NextResponse.json({
       ok: true,
       video,
-      message: "Your video was submitted for MyDancr TV review.",
+      message: moderationMessage(video),
     });
   } catch (error) {
     return apiError(error, "Unable to submit your MyDancr TV video.", 400);
@@ -52,3 +53,13 @@ export async function DELETE(request: Request, { params }: RouteProps) {
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function moderationMessage(video: any) {
+  if (video?.status === "approved") {
+    return "Your video passed automated safety review and is now live on MyDancr TV.";
+  }
+  if (video?.status === "rejected") {
+    return "Your video did not pass MyDancr TV safety review. Review the status below before uploading another video.";
+  }
+  return "Your video was checked automatically and sent to an administrator for human review.";
+}

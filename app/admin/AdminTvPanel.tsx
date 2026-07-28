@@ -12,6 +12,15 @@ type AdminTvVideo = {
   status: string;
   venueTagStatus: string;
   reviewNotes?: string | null;
+  moderationDecision?: string | null;
+  moderationReasonCodes?: string[];
+  moderationProviderFlagged?: boolean;
+  moderationFrameCount?: number;
+  moderationModel?: string | null;
+  moderationDetails?: {
+    audioChecked?: boolean;
+    policyConfidence?: number;
+  };
   submittedAt?: string | null;
   publishedAt?: string | null;
   dancer?: { id: string; stageName: string; slug: string; city: string } | null;
@@ -143,6 +152,26 @@ export default function AdminTvPanel() {
                 {video.venue ? ` · ${video.venue.name}` : " · No venue attached"}
                 {video.shift ? ` · ${formatDate(video.shift.startsAt)}` : ""}
               </small>
+              {video.moderationDecision ? (
+                <div className={`admin-tv-ai-decision decision-${video.moderationDecision}`}>
+                  <strong>Automated safety review: {video.moderationDecision}</strong>
+                  <small>
+                    {video.moderationFrameCount || 0} frames checked
+                    {video.moderationDetails?.audioChecked ? " · audio checked" : " · no audio detected"}
+                    {typeof video.moderationDetails?.policyConfidence === "number"
+                      ? ` · ${Math.round(video.moderationDetails.policyConfidence * 100)}% policy confidence`
+                      : ""}
+                  </small>
+                  {video.moderationReasonCodes?.length ? (
+                    <ul>
+                      {video.moderationReasonCodes.map((reason) => (
+                        <li key={reason}>{readableReason(reason)}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {video.moderationModel ? <small>Models: {video.moderationModel}</small> : null}
+                </div>
+              ) : null}
               {video.dancer ? <Link href={`/dancers/${video.dancer.slug}`}>Open dancer profile</Link> : null}
               {video.venue ? <Link href={`/venues/${video.venue.slug}`}>Open venue page</Link> : null}
               {video.status === "submitted" ? (
@@ -209,6 +238,10 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function readableReason(value: string) {
+  return value.replace(/^frame_\d+_/, "Frame: ").replace(/^text_/, "Text/audio: ").replace(/^policy_/, "Policy: ").replaceAll("_", " ");
+}
+
 function AdminTvPanelStyles() {
   return (
     <style>{`
@@ -226,6 +259,12 @@ function AdminTvPanelStyles() {
       .admin-tv-copy p { color: #ddd4ed; line-height: 1.4; }
       .admin-tv-copy small { color: #a99ebc; line-height: 1.4; }
       .admin-tv-copy > a { width: fit-content; color: #94e5ff; font-size: 12px; font-weight: 850; }
+      .admin-tv-ai-decision { display: grid; gap: 5px; padding: 9px; border: 1px solid rgba(255,200,90,.24); border-radius: 8px; background: rgba(255,200,90,.05); }
+      .admin-tv-ai-decision.decision-approved { border-color: rgba(58,255,164,.3); background: rgba(58,255,164,.06); }
+      .admin-tv-ai-decision.decision-rejected { border-color: rgba(255,91,116,.32); background: rgba(255,91,116,.06); }
+      .admin-tv-ai-decision strong { color: #fff; text-transform: capitalize; }
+      .admin-tv-ai-decision ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
+      .admin-tv-ai-decision li { padding: 3px 6px; border-radius: 999px; color: #d8cfeb; background: rgba(255,255,255,.07); font-size: 10px; text-transform: capitalize; }
       .admin-tv-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
       .admin-tv-actions button { min-height: 40px; border: 1px solid rgba(58,255,164,.34); border-radius: 8px; color: #0a1b12; background: #85ffc1; font-weight: 950; cursor: pointer; }
       .admin-tv-actions button.reject { color: #fff; border-color: rgba(255,91,116,.4); background: #bc3048; }
