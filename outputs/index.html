@@ -27758,8 +27758,8 @@
         </div>
       </section>
 
-      <section class="controls" aria-label="Discovery filters">
-        <div class="field">
+      <section class="controls home-discovery-controls" aria-label="Discovery filters">
+        <div class="field home-city-filter">
           <label for="citySelect">City</label>
           <select id="citySelect">
             <option>Las Vegas</option>
@@ -27768,25 +27768,37 @@
             <option>New York</option>
           </select>
         </div>
-        <div class="field">
-          <label for="distanceSelect">Distance</label>
-          <select id="distanceSelect">
-            <option>5 mi</option>
-            <option>10 mi</option>
-            <option selected>25 mi</option>
-            <option>50 mi</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="venueSelect">Venue</label>
-          <select id="venueSelect">
-            <option value="all">All venues</option>
-          </select>
-        </div>
-        <button class="location-btn" id="locationBtn">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
-          <span class="location-btn-label">Use my location</span>
+        <button
+          class="home-filter-toggle"
+          id="homeFilterToggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="homeAdvancedFilters"
+        >
+          <span>Filters</span>
+          <span class="home-filter-toggle-symbol" aria-hidden="true">+</span>
         </button>
+        <div class="home-advanced-filters" id="homeAdvancedFilters">
+          <div class="field">
+            <label for="distanceSelect">Distance</label>
+            <select id="distanceSelect">
+              <option>5 mi</option>
+              <option>10 mi</option>
+              <option selected>25 mi</option>
+              <option>50 mi</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="venueSelect">Venue</label>
+            <select id="venueSelect">
+              <option value="all">All venues</option>
+            </select>
+          </div>
+          <button class="location-btn" id="locationBtn" type="button">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
+            <span class="location-btn-label">Use my location</span>
+          </button>
+        </div>
       </section>
 
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
@@ -27816,17 +27828,28 @@
       </nav>
 
       <style>
+        .home-discovery-controls { grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr) !important; align-items: end; gap: 10px !important; padding: 10px !important; }
+        .home-advanced-filters { display: grid; grid-template-columns: minmax(120px, .75fr) minmax(170px, 1fr) minmax(190px, .9fr); align-items: end; gap: 10px; min-width: 0; }
+        .home-filter-toggle { display: none; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 0 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(88,48,173,.36), rgba(17,94,117,.3)); font: inherit; font-weight: 950; cursor: pointer; }
+        .home-filter-toggle-symbol { width: 20px; height: 20px; display: inline-grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #7eeaff; font-size: 18px; line-height: 1; }
+        .home-discovery-controls select,
+        .home-discovery-controls .location-btn { min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
+        @media (min-width: 721px) {
+          .stack > .hero.reference-hero,
+          .stack > .hero.reference-hero.uploaded-hero-ready,
+          .stack > .hero.reference-hero:not(.uploaded-hero-ready) { width: min(100%, 640px) !important; max-width: 640px !important; margin-inline: auto !important; }
+        }
         .home-tv-teaser { display: grid; gap: 12px; margin: 14px 0 10px; padding: 14px; overflow: hidden; border: 1px solid rgba(139,92,246,.38); border-radius: 14px; background: linear-gradient(145deg, rgba(14,14,21,.97), rgba(7,7,11,.97)); box-shadow: 0 16px 38px rgba(0,0,0,.3); }
         .home-tv-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .home-tv-teaser-head strong { color: #fff; font-size: 14px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
         .home-tv-teaser-head a { min-height: 34px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(126,234,255,.25); border-radius: 999px; color: #7eeaff; font-size: 12px; font-weight: 900; text-decoration: none; }
         .home-tv-teaser-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 180px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; padding: 1px 1px 6px; scrollbar-width: thin; }
         .home-tv-teaser-list.is-state { grid-auto-flow: row; grid-auto-columns: minmax(0, 1fr); overflow-x: hidden; scroll-snap-type: none; }
-        .home-tv-teaser-state { width: 100%; min-height: 128px; display: grid; align-content: center; gap: 6px; padding: 16px; border: 1px dashed rgba(255,255,255,.14); border-radius: 10px; color: #a99ebc; background: rgba(0,0,0,.2); }
+        .home-tv-teaser-state { width: 100%; min-height: 112px; display: grid; align-content: center; gap: 6px; padding: 16px; border: 1px dashed rgba(255,255,255,.14); border-radius: 10px; color: #a99ebc; background: rgba(0,0,0,.2); }
         .home-tv-teaser-state strong { color: #fff; font-size: 14px; }
         .home-tv-teaser-state span { font-size: 12px; line-height: 1.45; }
         .home-tv-teaser-state button { width: fit-content; min-height: 36px; margin-top: 3px; padding: 0 12px; border: 1px solid rgba(34,199,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
-        .home-tv-teaser-card { position: relative; height: 224px; overflow: hidden; border: 1px solid rgba(139,92,246,.4); border-radius: 11px; color: #fff; background: #050507; text-decoration: none; scroll-snap-align: start; box-shadow: 0 12px 28px rgba(0,0,0,.34); }
+        .home-tv-teaser-card { position: relative; height: 196px; overflow: hidden; border: 1px solid rgba(139,92,246,.4); border-radius: 11px; color: #fff; background: #050507; text-decoration: none; scroll-snap-align: start; box-shadow: 0 12px 28px rgba(0,0,0,.34); }
         .home-tv-teaser-card video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; }
         .home-tv-teaser-card::after { content: ""; position: absolute; inset: 48% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); pointer-events: none; }
         .home-tv-teaser-card .home-tv-card-profile { position: absolute; z-index: 2; left: 10px; right: 10px; bottom: 10px; display: grid; gap: 4px; font-size: 11px; font-weight: 900; }
@@ -27849,9 +27872,15 @@
         .profile-tv-strip-card video { width: 100%; height: 180px; display: block; object-fit: cover; }
         .profile-tv-strip-card span { position: absolute; left: 7px; right: 7px; bottom: 7px; color: #fff; font-size: 10px; font-weight: 900; text-shadow: 0 2px 7px #000; }
         @media (max-width: 640px) {
-          .home-tv-teaser { margin-top: 10px; padding: 12px; }
+          .home-discovery-controls { grid-template-columns: minmax(0, 1fr) auto !important; align-items: end; gap: 8px !important; padding: 10px !important; }
+          .home-filter-toggle { display: inline-flex; }
+          .home-advanced-filters { grid-column: 1 / -1; display: none; grid-template-columns: minmax(0, 1fr); gap: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+          .home-advanced-filters.is-open { display: grid; }
+          .home-discovery-controls select,
+          .home-discovery-controls .location-btn { min-height: 44px !important; font-size: clamp(15px, 4vw, 17px) !important; }
+          .home-tv-teaser { gap: 9px; margin-top: 8px; padding: 10px; }
           .home-tv-teaser-list { grid-auto-columns: minmax(132px, 42vw); }
-          .home-tv-teaser-card { height: 198px; }
+          .home-tv-teaser-card { height: 174px; }
         }
       </style>
 
@@ -29220,6 +29249,8 @@
     const citySelect = document.getElementById("citySelect");
     const distanceSelect = document.getElementById("distanceSelect");
     const venueSelect = document.getElementById("venueSelect");
+    const homeFilterToggle = document.getElementById("homeFilterToggle");
+    const homeAdvancedFilters = document.getElementById("homeAdvancedFilters");
     const results = document.getElementById("results");
     const tabTitle = document.getElementById("tabTitle");
     const tabCount = document.getElementById("tabCount");
@@ -42748,6 +42779,23 @@
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    homeFilterToggle?.addEventListener("click", () => {
+      const expanded = homeFilterToggle.getAttribute("aria-expanded") === "true";
+      homeFilterToggle.setAttribute("aria-expanded", String(!expanded));
+      homeAdvancedFilters?.classList.toggle("is-open", !expanded);
+      const symbol = homeFilterToggle.querySelector(".home-filter-toggle-symbol");
+      if (symbol) symbol.textContent = expanded ? "+" : "−";
+    });
+
+    homeAdvancedFilters?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || homeFilterToggle?.getAttribute("aria-expanded") !== "true") return;
+      homeFilterToggle.setAttribute("aria-expanded", "false");
+      homeAdvancedFilters.classList.remove("is-open");
+      const symbol = homeFilterToggle.querySelector(".home-filter-toggle-symbol");
+      if (symbol) symbol.textContent = "+";
+      homeFilterToggle.focus();
     });
 
     citySelect.addEventListener("change", () => {

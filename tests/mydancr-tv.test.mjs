@@ -169,9 +169,15 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   );
   assert.match(tvSource, /shift\?\.status === "posted"[\s\S]*?!shift\.checked_out_at[\s\S]*?start > now/);
   assert.match(liveApp, /filter=for-you&limit=8/);
+  assert.match(liveApp, /class="controls home-discovery-controls"[\s\S]*?class="field home-city-filter"[\s\S]*?id="homeFilterToggle"[\s\S]*?aria-controls="homeAdvancedFilters"/);
+  assert.match(liveApp, /class="home-advanced-filters" id="homeAdvancedFilters"[\s\S]*?id="distanceSelect"[\s\S]*?id="venueSelect"[\s\S]*?id="locationBtn"/);
+  assert.match(liveApp, /homeFilterToggle\?\.addEventListener\("click"[\s\S]*?aria-expanded[\s\S]*?classList\.toggle\("is-open"/);
+  assert.match(liveApp, /@media \(max-width: 640px\)[\s\S]*?\.home-advanced-filters \{[\s\S]*?display: none[\s\S]*?\.home-advanced-filters\.is-open \{ display: grid/);
+  assert.match(liveApp, /@media \(min-width: 721px\)[\s\S]*?\.stack > \.hero\.reference-hero[\s\S]*?max-width: 640px/);
   assert.match(liveApp, /home-tv-teaser-list[\s\S]*?overflow-x: auto/);
   assert.match(liveApp, /home-tv-teaser-list \{[\s\S]*?grid-auto-columns: minmax\(150px, 180px\)/);
-  assert.match(liveApp, /home-tv-teaser-card \{[\s\S]*?height: 224px/);
+  assert.match(liveApp, /home-tv-teaser-card \{[\s\S]*?height: 196px/);
+  assert.match(liveApp, /@media \(max-width: 640px\)[\s\S]*?\.home-tv-teaser-card \{ height: 174px/);
   assert.match(liveApp, /className = "home-tv-card-verified"[\s\S]*?aria-label", "Verified"/);
   assert.match(liveApp, /className = "home-tv-card-venue"[\s\S]*?item\.venue\.name/);
   assert.match(
