@@ -27804,6 +27804,15 @@
         <button class="brand brand-home dancr-home-logo logo-image-button" id="brandHome" type="button" aria-label="Go to Mydancr home">
           <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
         </button>
+        <div class="home-header-discovery" aria-label="Homepage discovery controls">
+          <button class="home-header-city" id="homeHeaderCity" type="button" aria-label="Change city">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>
+            <span data-city-label>Las Vegas</span>
+          </button>
+          <button class="home-header-search-toggle" id="homeHeaderSearchToggle" type="button" aria-label="Search dancers and venues" aria-expanded="false" aria-controls="homeHeaderSearchPanel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          </button>
+        </div>
         <div class="menu" aria-label="Menu">
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
             <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
@@ -27838,6 +27847,11 @@
           </div>
         </div>
       </div>
+      <form class="home-header-search-panel" id="homeHeaderSearchPanel" role="search" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input id="homeHeaderSearchInput" type="search" autocomplete="off" placeholder="Search dancers or venues" aria-label="Search dancers or venues">
+        <button id="homeHeaderSearchClear" type="button" aria-label="Clear and close search">×</button>
+      </form>
     </header>
 
     <main class="stack">
@@ -27927,6 +27941,12 @@
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
+        <a class="home-bottom-tv" id="homeBottomTv" href="/tv?city=Las%20Vegas" aria-label="Open MyDancr TV Las Vegas vertical video feed">
+          <span class="home-bottom-tv-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z"></path></svg>
+          </span>
+          <span>TV</span>
+        </a>
         <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
         <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
       </nav>
@@ -28005,6 +28025,21 @@
         .profile-photo-viewer-image:focus-visible { outline: 2px solid #7eeaff; outline-offset: -3px; }
         .profile-modal .gallery { overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; }
         .profile-modal .gallery .thumb { scroll-snap-align: center; }
+        .home-header-discovery,
+        .home-header-search-panel,
+        .home-bottom-tv,
+        .feed-card-actions,
+        .home-nav-icon { display: none; }
+        .home-feed-card .dancer-card-link {
+          position: absolute;
+          inset: 0;
+          color: inherit;
+          text-decoration: none;
+        }
+        .home-feed-card .dancer-card-link:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: -3px;
+        }
         @media (max-width: 640px) {
           .home-discovery-controls { grid-template-columns: minmax(0, 1fr) auto !important; align-items: end; gap: 8px !important; padding: 10px !important; }
           .home-filter-toggle { display: inline-flex; }
@@ -28022,6 +28057,353 @@
           .profile-tv-viewer-shell { width: 100%; height: 100%; border: 0; border-radius: 0; }
           .profile-tv-viewer-footer { grid-template-columns: minmax(0, 1fr); }
           .profile-tv-viewer-actions { display: grid; grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 720px) {
+          body {
+            padding-bottom: calc(78px + env(safe-area-inset-bottom));
+          }
+          header {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: calc(8px + env(safe-area-inset-top)) 12px 8px !important;
+            border-radius: 0 !important;
+            background: rgba(5,5,8,.96) !important;
+            backdrop-filter: blur(20px) saturate(1.25);
+          }
+          header .topbar {
+            min-height: 48px;
+            display: flex !important;
+            grid-template-columns: none !important;
+            flex-wrap: nowrap !important;
+            gap: 7px !important;
+          }
+          header #brandHome.brand {
+            display: flex !important;
+            width: 96px !important;
+            max-width: 96px !important;
+            flex: 0 0 96px !important;
+            min-height: 40px !important;
+            padding-inline: 5px !important;
+            order: 1;
+          }
+          header #brandHome .mydancr-live-logo {
+            font-size: clamp(17px, 4.8vw, 20px) !important;
+          }
+          .home-header-discovery {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            min-width: 0;
+            margin-left: auto;
+            order: 2;
+          }
+          .home-header-city,
+          .home-header-search-toggle {
+            min-height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 0 9px;
+            border: 1px solid rgba(139,92,246,.34);
+            border-radius: 999px;
+            color: #f8f7fb;
+            background: rgba(17,17,24,.9);
+            font: inherit;
+            font-size: 12px;
+            font-weight: 900;
+          }
+          .home-header-city {
+            max-width: 90px;
+            padding-inline: 7px;
+            font-size: 11px;
+          }
+          .home-header-city span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .home-header-city svg,
+          .home-header-search-toggle svg,
+          .home-header-search-panel > svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 auto;
+            fill: none;
+            stroke: #7eeaff;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+          }
+          .home-header-search-toggle {
+            width: 40px;
+            padding: 0;
+          }
+          header .menu {
+            flex: 0 0 auto;
+            order: 3;
+          }
+          header #accountBtn {
+            width: 72px !important;
+            max-width: 72px;
+            min-width: 72px !important;
+            min-height: 40px !important;
+            padding-inline: 7px !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px !important;
+          }
+          .home-header-search-panel {
+            width: 100%;
+            min-height: 46px;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 9px;
+            margin-top: 8px;
+            padding: 6px 7px 6px 12px;
+            border: 1px solid rgba(139,92,246,.42);
+            border-radius: 14px;
+            background: rgba(10,10,15,.98);
+            box-shadow: 0 12px 30px rgba(0,0,0,.34);
+          }
+          .home-header-search-panel:not([hidden]) {
+            display: grid;
+          }
+          .home-header-search-panel input {
+            width: 100%;
+            min-height: 34px;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            color: #fff;
+            background: transparent;
+            box-shadow: none;
+            font-size: 16px;
+          }
+          .home-header-search-panel button {
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 999px;
+            color: #d7cfdf;
+            background: rgba(255,255,255,.08);
+            font-size: 22px;
+            line-height: 1;
+          }
+          main.stack {
+            gap: 12px !important;
+            padding: 10px 0 24px !important;
+          }
+          main.stack > * {
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0;
+            margin-inline: 12px !important;
+          }
+          main.stack > .hero.reference-hero,
+          main.stack > .hero.reference-hero.uploaded-hero-ready {
+            min-height: clamp(150px, 43vw, 188px) !important;
+            border-radius: 16px !important;
+          }
+          .hero-copy {
+            padding: 15px !important;
+          }
+          .hero-copy h2 {
+            font-size: clamp(25px, 8vw, 38px) !important;
+          }
+          .hero-copy p {
+            font-size: clamp(13px, 3.8vw, 16px) !important;
+          }
+          .home-live-summary {
+            min-height: 38px;
+            border-radius: 999px !important;
+          }
+          .home-tv-launch {
+            display: none !important;
+          }
+          #discoveryTabs {
+            position: fixed !important;
+            z-index: 90;
+            left: 50%;
+            bottom: 0;
+            width: min(100%, 720px) !important;
+            min-height: calc(68px + env(safe-area-inset-bottom));
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            align-items: start;
+            gap: 0 !important;
+            margin: 0 !important;
+            padding: 7px 5px calc(6px + env(safe-area-inset-bottom)) !important;
+            overflow: visible !important;
+            border-top: 1px solid rgba(139,92,246,.3);
+            background: rgba(6,6,10,.97) !important;
+            box-shadow: 0 -12px 32px rgba(0,0,0,.42);
+            backdrop-filter: blur(22px) saturate(1.3);
+            transform: translateX(-50%);
+          }
+          #discoveryTabs .tab,
+          #discoveryTabs .home-bottom-tv {
+            min-width: 0 !important;
+            min-height: 54px !important;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            margin: 0 !important;
+            padding: 3px 2px !important;
+            overflow: visible !important;
+            border: 0 !important;
+            border-radius: 12px !important;
+            color: #aaa2b4 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            font-size: 10px !important;
+            font-weight: 850;
+            line-height: 1;
+            text-decoration: none;
+            transform: none !important;
+          }
+          #discoveryTabs .tab.active {
+            color: #fff !important;
+            background: rgba(124,58,237,.22) !important;
+          }
+          #discoveryTabs .home-nav-icon {
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+          }
+          #discoveryTabs .home-nav-icon svg,
+          #discoveryTabs .home-bottom-tv svg {
+            width: 21px;
+            height: 21px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+          }
+          #discoveryTabs .tab-count {
+            position: absolute;
+            top: 1px;
+            left: calc(50% + 8px);
+            min-width: 16px !important;
+            min-height: 16px !important;
+            display: grid;
+            place-items: center;
+            padding: 1px 4px !important;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 999px;
+            color: #fff;
+            background: #6d28d9 !important;
+            font-size: 9px !important;
+            line-height: 1;
+          }
+          #discoveryTabs .home-bottom-tv {
+            color: #fff !important;
+          }
+          .home-bottom-tv-icon {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            margin-top: -16px;
+            border: 2px solid rgba(255,255,255,.84);
+            border-radius: 14px;
+            background: linear-gradient(135deg,#7c3aed,#ec4899);
+            box-shadow: 0 0 20px rgba(124,58,237,.42);
+          }
+          #discoveryTabs .home-bottom-tv-icon svg {
+            width: 23px;
+            height: 23px;
+            fill: #fff;
+            stroke: #fff;
+          }
+          #results.card-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+            align-items: start !important;
+            gap: 18px !important;
+          }
+          #results .home-feed-card.dancer-card {
+            width: 100% !important;
+            max-width: 560px;
+            min-height: 0 !important;
+            aspect-ratio: auto !important;
+            margin-inline: auto;
+            overflow: hidden;
+            border-radius: 17px !important;
+            background: #0a0a0e !important;
+            transform: none !important;
+          }
+          #results .home-feed-card .dancer-card-link {
+            position: relative;
+            inset: auto;
+            display: block;
+          }
+          #results .home-feed-card .portrait {
+            position: relative !important;
+            inset: auto !important;
+            width: 100%;
+            min-height: 0 !important;
+            aspect-ratio: 4 / 5;
+            background-position: center, center top, center !important;
+          }
+          #results .home-feed-card .profile-body {
+            position: relative !important;
+            inset: auto !important;
+            display: grid !important;
+            gap: 7px !important;
+            padding: 13px 14px 12px !important;
+            background: #0a0a0e !important;
+          }
+          #results .home-feed-card .profile-body h3 {
+            font-size: 20px !important;
+            text-shadow: none !important;
+          }
+          #results .home-feed-card .meta {
+            text-shadow: none !important;
+          }
+          #results .home-feed-card .feed-card-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 7px;
+            padding: 0 12px 12px;
+          }
+          .feed-card-action {
+            min-width: 0;
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 5px;
+            border: 1px solid rgba(139,92,246,.34);
+            border-radius: 11px;
+            color: #f5f2ff;
+            background: rgba(17,17,24,.96);
+            font: inherit;
+            font-size: 11px;
+            font-weight: 900;
+          }
+          .feed-card-action .action-icon {
+            width: 16px;
+            height: 16px;
+          }
+          .feed-card-action.is-active {
+            border-color: rgba(126,234,255,.52);
+            color: #fff;
+            background: linear-gradient(135deg,rgba(124,58,237,.7),rgba(236,72,153,.58));
+          }
+          .feed-card-action:disabled {
+            opacity: .48;
+          }
+          .legal-links {
+            padding-bottom: 8px;
+          }
         }
       </style>
 
@@ -29475,6 +29857,7 @@
     let activeTab = "tonight";
     let homeTvLaunchRequest = 0;
     let homeTvLaunchCity = "";
+    let homeSearchQuery = "";
     let profilePhotoSwipeBlockClickUntil = 0;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
@@ -31257,6 +31640,7 @@
         venueId: item.venueId || "",
         venueQrCodeUrl: item.venueQrCodeUrl || "",
         venueQrCodeLabel: item.venueQrCodeLabel || "",
+        activeDeal: item.activeDeal || null,
         shiftId: item.shiftId || "",
         status: item.verified ? "Verified" : "Pending",
         venue: item.venueName || "Venue pending",
@@ -31642,7 +32026,6 @@
       return liveNotifications.filter(isVisibleAfterNotificationClear);
     }
 
-        activeDeal: item.activeDeal || null,
     function notificationCenterMarkup() {
       const notifications = visibleLiveNotifications();
       if (!notifications.length) {
@@ -34235,6 +34618,69 @@
       };
     }
 
+    function liveDealSessionId() {
+      const key = "mydancrDealSessionV1";
+      try {
+        const existing = localStorage.getItem(key) || "";
+        if (/^[0-9a-f-]{36}$/i.test(existing)) return existing;
+        const next = crypto.randomUUID();
+        localStorage.setItem(key, next);
+        return next;
+      } catch {
+        return crypto.randomUUID();
+      }
+    }
+
+    async function createRevenueDealPass({
+      deal,
+      venueId,
+      venueSlug,
+      venueName,
+      sourceType = "club_page",
+      dancerId = "",
+      dancerName = ""
+    }) {
+      if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
+      const data = await postOptionalAuthJson("/api/deals/redemptions", {
+        clubDealId: deal.id,
+        venueId,
+        sourceType,
+        dancerId: sourceType === "dancer_profile" ? dancerId : null,
+        sessionId: liveDealSessionId()
+      });
+      const redemption = data?.redemption;
+      if (!data?.qrDataUrl || !redemption?.redemptionToken) {
+        throw new Error("The Club Deal QR could not be confirmed.");
+      }
+      return {
+        id: redemption.id,
+        venueId,
+        venueSlug,
+        venueName,
+        dancerId,
+        dancerName,
+        sourceType,
+        title: deal.dealTitle || "Club Deal",
+        details: sourceType === "dancer_profile"
+          ? `Attributed to ${dancerName} while the verified check-in remains active.`
+          : `Active Club Deal from ${venueName}.`,
+        url: `${window.location.origin}/deals/pass/${encodeURIComponent(redemption.redemptionToken)}`,
+        qrImageUrl: data.qrDataUrl,
+        expiresAt: redemption.expiresAt || "",
+        serverGenerated: true
+      };
+    }
+
+    function clubDealCtaMarkup(config, className = "") {
+      return `
+        <button class="club-deal-primary-cta ${className}" type="button" data-club-deal-cta="${encodeDealPass(config)}">
+          <span>Get Club Deal</span>
+          <strong>${escapeHtml(config.deal?.dealTitle || "Open QR")}</strong>
+          <small>No sign-in required</small>
+        </button>
+      `;
+    }
+
     function recordVenuePageEvent({ venueId, dancerId = null, eventType, source }) {
       if (!venueId) return;
       fetch("/api/public/venue-events", {
@@ -34469,6 +34915,27 @@
     }
 
     function venueOfferMarkup(venue) {
+      if (venue?.activeDeal && venue?.id) {
+        const config = {
+          deal: venue.activeDeal,
+          venueId: venue.id,
+          venueSlug: venue.slug,
+          venueName: venue.name,
+          sourceType: "club_page"
+        };
+        return `
+          <article class="venue-offer-card revenue-offer-card">
+            <div class="venue-offer-grid">
+              <div>
+                <span class="eyebrow">Club Deal</span>
+                <h3>${escapeHtml(venue.activeDeal.dealTitle)}</h3>
+                <p>${escapeHtml(venue.activeDeal.dealDescription || "Get a unique QR and show it at the venue.")}</p>
+              </div>
+              ${clubDealCtaMarkup(config, "venue-club-deal-cta")}
+            </div>
+          </article>
+        `;
+      }
       if (!venue?.qrCodeUrl || !venue?.id) return "";
       const pass = publishedVenueQrPass({
         venueId: venue.id,
@@ -34495,6 +34962,29 @@
 
     function profileDealTileMarkup(profile) {
       if (!profile?.venue || !isWorkingTonight(profile)) return "";
+      if (profile.activeDeal && profile.venueId) {
+        const config = {
+          deal: profile.activeDeal,
+          venueId: profile.venueId,
+          venueSlug: profile.venueSlug,
+          venueName: profile.venue,
+          sourceType: "dancer_profile",
+          dancerId: profile.id,
+          dancerName: profile.name
+        };
+        return `
+          <div class="info-tile profile-qr-tile profile-club-deal-tile">
+            <div class="profile-deal-copy">
+              <strong>Working Now Club Deal</strong>
+              <div class="meta profile-deal-meta">
+                <span class="profile-deal-main">${escapeHtml(profile.activeDeal.dealTitle)}</span>
+                <span class="profile-deal-note">Supports ${escapeHtml(profile.name)} only while checked in.</span>
+              </div>
+            </div>
+            ${clubDealCtaMarkup(config, "profile-club-deal-cta")}
+          </div>
+        `;
+      }
       if (!profile.venueId || !profile.venueQrCodeUrl) {
         return `
           <div class="info-tile profile-qr-unavailable" aria-label="Club Scan unavailable at ${escapeHtml(profile.venue)}">
@@ -34645,69 +35135,6 @@
           </div>
         `;
       }
-    function liveDealSessionId() {
-      const key = "mydancrDealSessionV1";
-      try {
-        const existing = localStorage.getItem(key) || "";
-        if (/^[0-9a-f-]{36}$/i.test(existing)) return existing;
-        const next = crypto.randomUUID();
-        localStorage.setItem(key, next);
-        return next;
-      } catch {
-        return crypto.randomUUID();
-      }
-    }
-
-    async function createRevenueDealPass({
-      deal,
-      venueId,
-      venueSlug,
-      venueName,
-      sourceType = "club_page",
-      dancerId = "",
-      dancerName = ""
-    }) {
-      if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
-      const data = await postOptionalAuthJson("/api/deals/redemptions", {
-        clubDealId: deal.id,
-        venueId,
-        sourceType,
-        dancerId: sourceType === "dancer_profile" ? dancerId : null,
-        sessionId: liveDealSessionId()
-      });
-      const redemption = data?.redemption;
-      if (!data?.qrDataUrl || !redemption?.redemptionToken) {
-        throw new Error("The Club Deal QR could not be confirmed.");
-      }
-      return {
-        id: redemption.id,
-        venueId,
-        venueSlug,
-        venueName,
-        dancerId,
-        dancerName,
-        sourceType,
-        title: deal.dealTitle || "Club Deal",
-        details: sourceType === "dancer_profile"
-          ? `Attributed to ${dancerName} while the verified check-in remains active.`
-          : `Active Club Deal from ${venueName}.`,
-        url: `${window.location.origin}/deals/pass/${encodeURIComponent(redemption.redemptionToken)}`,
-        qrImageUrl: data.qrDataUrl,
-        expiresAt: redemption.expiresAt || "",
-        serverGenerated: true
-      };
-    }
-
-    function clubDealCtaMarkup(config, className = "") {
-      return `
-        <button class="club-deal-primary-cta ${className}" type="button" data-club-deal-cta="${encodeDealPass(config)}">
-          <span>Get Club Deal</span>
-          <strong>${escapeHtml(config.deal?.dealTitle || "Open QR")}</strong>
-          <small>No sign-in required</small>
-        </button>
-      `;
-    }
-
       return `
         <div class="info-tile social-tile">
           <div class="social-tile-head">
@@ -34917,27 +35344,6 @@
       `;
     }
 
-      if (venue?.activeDeal && venue?.id) {
-        const config = {
-          deal: venue.activeDeal,
-          venueId: venue.id,
-          venueSlug: venue.slug,
-          venueName: venue.name,
-          sourceType: "club_page"
-        };
-        return `
-          <article class="venue-offer-card revenue-offer-card">
-            <div class="venue-offer-grid">
-              <div>
-                <span class="eyebrow">Club Deal</span>
-                <h3>${escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${escapeHtml(venue.activeDeal.dealDescription || "Get a unique QR and show it at the venue.")}</p>
-              </div>
-              ${clubDealCtaMarkup(config, "venue-club-deal-cta")}
-            </div>
-          </article>
-        `;
-      }
     async function handleShiftVerificationAction(action, trigger = null) {
       const profile = activeDancerProfile();
       if (!profile) return;
@@ -34964,29 +35370,6 @@
             const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
             if (data?.shift) applyShiftState(profile, data.shift);
           }
-      if (profile.activeDeal && profile.venueId) {
-        const config = {
-          deal: profile.activeDeal,
-          venueId: profile.venueId,
-          venueSlug: profile.venueSlug,
-          venueName: profile.venue,
-          sourceType: "dancer_profile",
-          dancerId: profile.id,
-          dancerName: profile.name
-        };
-        return `
-          <div class="info-tile profile-qr-tile profile-club-deal-tile">
-            <div class="profile-deal-copy">
-              <strong>Working Now Club Deal</strong>
-              <div class="meta profile-deal-meta">
-                <span class="profile-deal-main">${escapeHtml(profile.activeDeal.dealTitle)}</span>
-                <span class="profile-deal-note">Supports ${escapeHtml(profile.name)} only while checked in.</span>
-              </div>
-            </div>
-            ${clubDealCtaMarkup(config, "profile-club-deal-cta")}
-          </div>
-        `;
-      }
           setCheckInStatus("Shift ended. QR commission tracking is stopped.");
           showToast("Shift ended");
         } else if (action === "check-in") {
@@ -36416,23 +36799,44 @@
         : "";
       const portraitPhotoAttrs = customPhotoAttrs(isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile));
       const profileHref = profile.slug ? `/dancers/${profile.slug}` : `#profile-${slugify(profile.name)}`;
+      const profileCardBody = `
+        <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
+          <div class="card-badges">
+            ${statusBadge}
+            ${trendBadge}
+            ${trendMarker}
+          </div>
+        </div>
+        <div class="profile-body">
+          <div class="card-info-stack">
+            <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
+            ${locationBadge}
+            ${clubMarkup}
+          </div>
+          ${scheduleMarkup}
+        </div>
+      `;
+      if (options.feedActions && !isPending) {
+        const isFollowed = isFollowingProfile(citySelect.value, profile.name);
+        const isNotified = isNotificationOn(citySelect.value, profile.name);
+        const isGoing = !!goingTonightSavedByProfile[profile.name];
+        const canMarkGoing = Boolean(profile.shiftId && profile.scheduled);
+        return `
+          <article class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${profile.name}">
+            <a class="dancer-card-link" href="${profileHref}" aria-label="Open ${profile.name} profile">
+              ${profileCardBody}
+            </a>
+            <div class="feed-card-actions" aria-label="${profile.name} actions">
+              <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+              <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
+              <button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="${workingTonight ? "tonight" : "upcoming"}" aria-pressed="${isGoing}" ${canMarkGoing ? "" : "disabled"}>${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>
+            </div>
+          </article>
+        `;
+      }
       return `
         <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${profileHref}" data-profile="${profile.name}" aria-label="${profile.name} profile">
-          <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
-            <div class="card-badges">
-              ${statusBadge}
-              ${trendBadge}
-              ${trendMarker}
-            </div>
-          </div>
-          <div class="profile-body">
-            <div class="card-info-stack">
-              <h3><span class="card-stage-name">${profile.name}${verifiedMark}</span></h3>
-              ${locationBadge}
-              ${clubMarkup}
-            </div>
-            ${scheduleMarkup}
-          </div>
+          ${profileCardBody}
         </a>
       `;
     }
@@ -41101,6 +41505,16 @@
       return trendingProfiles(city);
     }
 
+    function homeNavigationIconMarkup(tabName) {
+      const icons = {
+        tonight: '<svg viewBox="0 0 24 24"><path d="M4 11.2 12 4l8 7.2"></path><path d="M6.5 10.5V20h11v-9.5"></path><path d="M9.5 20v-5.5h5V20"></path></svg>',
+        dancers: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"></path></svg>',
+        venues: '<svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>',
+        trending: '<svg viewBox="0 0 24 24"><path d="m4 17 5-5 3.5 3.5L20 8"></path><path d="M15 8h5v5"></path></svg>'
+      };
+      return `<span class="home-nav-icon" aria-hidden="true">${icons[tabName] || icons.tonight}</span>`;
+    }
+
     function updateTabCounts(city) {
       const loading = liveDiscoveryIsLoading(city);
       const tonightDiscovery = homeTonightDiscovery(city);
@@ -41116,7 +41530,7 @@
           ? (tonightDiscovery.mode === "now" ? "Now" : "Up Next")
           : (tab.dataset.tabLabel || tab.textContent.trim());
         const count = loading && ["tonight", "dancers", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
-        tab.innerHTML = `<span>${label}</span><span class="tab-count">${count}</span>`;
+        tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
     }
 
@@ -41150,7 +41564,15 @@
 
       const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
       const tonightDiscovery = homeTonightDiscovery(city);
-      const allItems = getItems(city, activeTab);
+      const unfilteredItems = getItems(city, activeTab);
+      const normalizedSearchQuery = homeSearchQuery.trim().toLowerCase();
+      const allItems = normalizedSearchQuery
+        ? unfilteredItems.filter((item) => (
+            [item.name, item.venue, item.city, item.area, item.stageName]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(normalizedSearchQuery))
+          ))
+        : unfilteredItems;
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
       const venueFilter = selectedVenueFilter();
@@ -41192,6 +41614,10 @@
         results.innerHTML = '<div class="locked">Loading live profiles from Dancr...</div>';
         return;
       }
+      if (normalizedSearchQuery && !items.length) {
+        results.innerHTML = `<div class="locked">No ${activeTab === "venues" ? "venues" : "dancers"} match “${escapeHtml(homeSearchQuery.trim())}” in ${escapeHtml(city)}.</div>`;
+        return;
+      }
       if (activeTab === "tonight" && !items.length) {
         results.innerHTML = `<div class="locked">No upcoming shifts are posted for tonight in ${city} yet.</div>`;
         return;
@@ -41199,7 +41625,7 @@
       results.innerHTML = items.map((item, index) => (
         activeTab === "venues"
           ? venueCard(item)
-          : profileCard(item, index, { tonight: activeTab === "tonight", trendingContext: activeTab === "trending" })
+          : profileCard(item, index, { tonight: activeTab === "tonight", trendingContext: activeTab === "trending", feedActions: true })
       )).join("");
     }
 
@@ -41207,12 +41633,17 @@
       const launch = document.getElementById("homeTvLaunch");
       const title = document.getElementById("homeTvLaunchTitle");
       const count = document.getElementById("homeTvLaunchCount");
+      const bottomTv = document.getElementById("homeBottomTv");
       if (!launch || !title || !count) return;
 
       const requestId = ++homeTvLaunchRequest;
       const tvCityLabel = String(city).trim() || "Las Vegas";
       launch.href = `/tv?city=${encodeURIComponent(tvCityLabel)}`;
       launch.setAttribute("aria-label", `Open MyDancr TV ${tvCityLabel} vertical video feed`);
+      if (bottomTv) {
+        bottomTv.href = launch.href;
+        bottomTv.setAttribute("aria-label", `Open MyDancr TV ${tvCityLabel} vertical video feed`);
+      }
       launch.setAttribute("aria-busy", "true");
       title.textContent = `MyDancr TV ${tvCityLabel}`;
       count.textContent = "Loading";
@@ -41276,7 +41707,29 @@
       });
     }
 
-    results.addEventListener("click", (event) => {
+    results.addEventListener("click", async (event) => {
+      const feedActionButton = event.target.closest("[data-feed-action]");
+      if (feedActionButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const action = feedActionButton.dataset.feedAction;
+        if (
+          (action === "follow" || action === "notify") &&
+          !requireCustomerAccountForProfileAction(feedActionButton)
+        ) return;
+        if (action === "follow") {
+          await saveProfileFollow(feedActionButton);
+          return;
+        }
+        if (action === "notify") {
+          await saveProfileNotifications(feedActionButton);
+          return;
+        }
+        if (action === "going") {
+          await saveProfileGoing(feedActionButton);
+          return;
+        }
+      }
       const cardVenueLink = event.target.closest("[data-card-venue]");
       if (cardVenueLink) {
         event.preventDefault();
@@ -41568,6 +42021,33 @@
       };
     }
 
+    function syncHomeFeedActionButtons(profile, city) {
+      document.querySelectorAll(".feed-card-action[data-profile]").forEach((button) => {
+        if (button.dataset.profile !== profile.name) return;
+        const action = button.dataset.feedAction;
+        if (action === "follow") {
+          const active = isFollowingProfile(city, profile.name);
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+          button.innerHTML = actionButtonLabel(active ? "check" : "heart", active ? "Following" : "Follow");
+          return;
+        }
+        if (action === "notify") {
+          const active = isNotificationOn(city, profile.name);
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+          button.innerHTML = actionButtonLabel(active ? "check" : "bell", active ? "On" : "Notify");
+          return;
+        }
+        if (action === "going") {
+          const active = !!goingTonightSavedByProfile[profile.name];
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+          button.innerHTML = actionButtonLabel(active ? "check" : "clock", active ? "Going" : "I'm Going");
+        }
+      });
+    }
+
     function applyProfileFollowState(profile, city, state) {
       const following = state?.following === true;
       const notificationsEnabled = following && state?.notificationsEnabled === true;
@@ -41597,6 +42077,7 @@
       if (followerCountEl) followerCountEl.innerHTML = followerMetricMarkup(profile, city);
       const notificationCountEl = document.getElementById("modalNotificationCount");
       if (notificationCountEl) notificationCountEl.innerHTML = notificationMetricMarkup(profile, city);
+      syncHomeFeedActionButtons(profile, city);
       return { following, notificationsEnabled };
     }
 
@@ -41705,6 +42186,77 @@
       }
     }
 
+    async function saveProfileGoing(actionButton) {
+      if (actionButton.disabled) return;
+      const profileName = actionButton.dataset.profile;
+      const profile = findProfile(profileName);
+      if (!profile?.shiftId) {
+        showToast("This shift is not available.");
+        return;
+      }
+      const shiftState = actionButton.dataset.shiftState || "tonight";
+      const isTonightShift = shiftState === "tonight";
+      const countEl = document.getElementById("tonightInterestCount");
+      const wasGoing = goingTonightSavedByProfile[profileName] === true;
+      const previousCount = tonightInterestCount(profile);
+      const requestedGoing = !wasGoing;
+      const optimisticCount = Math.max(0, previousCount + (requestedGoing ? 1 : -1));
+      const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
+      const activeLabel = isTonightShift ? "You're going now" : "You're going";
+      actionButton.disabled = true;
+      goingTonightByProfile[profileName] = optimisticCount;
+      profile.goingCount = optimisticCount;
+      goingTonightSavedByProfile[profileName] = requestedGoing;
+      if (countEl) {
+        countEl.classList.remove("muted");
+        countEl.innerHTML = metricPhraseMarkup(`${optimisticCount.toLocaleString()} people going`);
+      }
+      actionButton.classList.toggle("is-going", requestedGoing);
+      actionButton.innerHTML = profileActionButtonMarkup(
+        requestedGoing ? "check" : "clock",
+        requestedGoing ? activeLabel : idleLabel,
+        "public"
+      );
+      syncHomeFeedActionButtons(profile, citySelect.value);
+      try {
+        const data = await postOptionalAuthJson("/api/customer/going", {
+          shiftId: profile.shiftId,
+          going: requestedGoing
+        });
+        const savedGoing = data.going === true;
+        const realCount = Number(data.goingCount);
+        if (!Number.isSafeInteger(realCount) || realCount < 0) {
+          throw new Error("The status was saved, but the going count could not be confirmed.");
+        }
+        goingTonightByProfile[profileName] = realCount;
+        profile.goingCount = realCount;
+        goingTonightSavedByProfile[profileName] = savedGoing;
+        if (countEl) {
+          countEl.classList.remove("muted");
+          countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} people going`);
+        }
+        actionButton.classList.toggle("is-going", savedGoing);
+        actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
+        syncHomeFeedActionButtons(profile, citySelect.value);
+        recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? (isTonightShift ? "going_tonight_added" : "going_upcoming_added") : "going_removed" });
+        showToast(savedGoing ? (isTonightShift ? "Added to now" : "Added to upcoming shift") : "Removed");
+      } catch (error) {
+        goingTonightByProfile[profileName] = previousCount;
+        profile.goingCount = previousCount;
+        goingTonightSavedByProfile[profileName] = wasGoing;
+        if (countEl) {
+          countEl.classList.remove("muted");
+          countEl.innerHTML = metricPhraseMarkup(`${previousCount.toLocaleString()} people going`);
+        }
+        actionButton.classList.toggle("is-going", wasGoing);
+        actionButton.innerHTML = profileActionButtonMarkup(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel, "public");
+        syncHomeFeedActionButtons(profile, citySelect.value);
+        showToast(error.message || "Could not save going status");
+      } finally {
+        actionButton.disabled = false;
+      }
+    }
+
     modalBody.addEventListener("click", async (event) => {
       if (handleQrClick(event)) return;
       if (handleShareClick(event)) return;
@@ -41739,71 +42291,8 @@
         return;
       }
       if (actionButton.id === "goingBtn") {
-        if (actionButton.disabled) return;
-        const profileName = actionButton.dataset.profile;
-        const profile = findProfile(profileName);
-        if (!profile?.shiftId) {
-          showToast("This shift is not available.");
-          return;
-        }
-        const shiftState = actionButton.dataset.shiftState || "tonight";
-        const isTonightShift = shiftState === "tonight";
-        const countEl = document.getElementById("tonightInterestCount");
-        const wasGoing = actionButton.classList.contains("is-going");
-        const previousCount = tonightInterestCount(profile);
-        const requestedGoing = !wasGoing;
-        const optimisticCount = Math.max(0, previousCount + (requestedGoing ? 1 : -1));
-        const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
-        const activeLabel = isTonightShift ? "You're going now" : "You're going";
-        actionButton.disabled = true;
-        goingTonightByProfile[profileName] = optimisticCount;
-        profile.goingCount = optimisticCount;
-        goingTonightSavedByProfile[profileName] = requestedGoing;
-        if (countEl) {
-          countEl.classList.remove("muted");
-          countEl.innerHTML = metricPhraseMarkup(`${optimisticCount.toLocaleString()} people going`);
-        }
-        actionButton.classList.toggle("is-going", requestedGoing);
-        actionButton.innerHTML = profileActionButtonMarkup(
-          requestedGoing ? "check" : "clock",
-          requestedGoing ? activeLabel : idleLabel,
-          "public"
-        );
-        try {
-          const data = await postOptionalAuthJson("/api/customer/going", {
-            shiftId: profile.shiftId,
-            going: requestedGoing
-          });
-          const savedGoing = data.going === true;
-          const realCount = Number(data.goingCount);
-          if (!Number.isSafeInteger(realCount) || realCount < 0) {
-            throw new Error("The status was saved, but the going count could not be confirmed.");
-          }
-          goingTonightByProfile[profileName] = realCount;
-          profile.goingCount = realCount;
-          goingTonightSavedByProfile[profileName] = savedGoing;
-          if (countEl) {
-            countEl.classList.remove("muted");
-            countEl.innerHTML = metricPhraseMarkup(`${realCount.toLocaleString()} people going`);
-          }
-          actionButton.classList.toggle("is-going", savedGoing);
-          actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
-          recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? (isTonightShift ? "going_tonight_added" : "going_upcoming_added") : "going_removed" });
-          showToast(savedGoing ? (isTonightShift ? "Added to now" : "Added to upcoming shift") : "Removed");
-        } catch (error) {
-          goingTonightByProfile[profileName] = previousCount;
-          profile.goingCount = previousCount;
-          goingTonightSavedByProfile[profileName] = wasGoing;
-          if (countEl) {
-            countEl.classList.remove("muted");
-            countEl.innerHTML = metricPhraseMarkup(`${previousCount.toLocaleString()} people going`);
-          }
-          actionButton.classList.toggle("is-going", wasGoing);
-          actionButton.innerHTML = profileActionButtonMarkup(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel, "public");
-          showToast(error.message || "Could not save going status");
-        } finally {
-          actionButton.disabled = false;
-        }
+        await saveProfileGoing(actionButton);
+        return;
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
@@ -43483,10 +43972,45 @@
         topbar.insertAdjacentHTML("afterbegin", `
           <label class="desktop-search" aria-label="Search Dancr">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-            <input type="search" placeholder="Search dancers, clubs, cities..." aria-label="Search dancers, clubs, cities">
+            <input type="search" autocomplete="off" placeholder="Search dancers or venues" aria-label="Search dancers or venues">
           </label>
         `);
       }
+
+      const mobileSearchPanel = document.getElementById("homeHeaderSearchPanel");
+      const mobileSearchToggle = document.getElementById("homeHeaderSearchToggle");
+      const mobileSearchInput = document.getElementById("homeHeaderSearchInput");
+      const desktopSearchInput = document.querySelector(".desktop-search input");
+      const searchInputs = [mobileSearchInput, desktopSearchInput].filter(Boolean);
+      const applySearchValue = (value, source) => {
+        homeSearchQuery = String(value || "");
+        searchInputs.forEach((input) => {
+          if (input !== source && input.value !== homeSearchQuery) input.value = homeSearchQuery;
+        });
+        render();
+      };
+      searchInputs.forEach((input) => {
+        input.addEventListener("input", () => applySearchValue(input.value, input));
+      });
+      mobileSearchToggle?.addEventListener("click", () => {
+        const willOpen = mobileSearchPanel?.hidden !== false;
+        if (!mobileSearchPanel) return;
+        mobileSearchPanel.hidden = !willOpen;
+        mobileSearchToggle.setAttribute("aria-expanded", String(willOpen));
+        if (willOpen) requestAnimationFrame(() => mobileSearchInput?.focus());
+      });
+      document.getElementById("homeHeaderSearchClear")?.addEventListener("click", () => {
+        applySearchValue("", mobileSearchInput);
+        if (mobileSearchInput) mobileSearchInput.value = "";
+        if (mobileSearchPanel) mobileSearchPanel.hidden = true;
+        mobileSearchToggle?.setAttribute("aria-expanded", "false");
+        mobileSearchToggle?.focus();
+      });
+      mobileSearchPanel?.addEventListener("submit", (event) => event.preventDefault());
+      document.getElementById("homeHeaderCity")?.addEventListener("click", () => {
+        document.querySelector(".home-city-filter")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        requestAnimationFrame(() => citySelect.focus({ preventScroll: true }));
+      });
 
       const hero = document.querySelector(".hero");
       if (hero) {

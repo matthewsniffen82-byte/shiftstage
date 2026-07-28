@@ -70,8 +70,8 @@ test("follow API returns authoritative follower and notification subscriber coun
 
 test("I'm Going changes the visible count before the request and reconciles or rolls back", () => {
   const goingHandler = sourceBetween(
-    'if \\(actionButton\\.id === "goingBtn"\\)',
-    'if \\(actionButton\\.id === "reportBtn"\\)',
+    "async function saveProfileGoing",
+    "modalBody\\.addEventListener",
   );
 
   assert.ok(
@@ -82,4 +82,8 @@ test("I'm Going changes the visible count before the request and reconciles or r
   assert.match(goingHandler, /profile\.goingCount = realCount/);
   assert.match(goingHandler, /if \(!Number\.isSafeInteger\(realCount\) \|\| realCount < 0\)/);
   assert.match(goingHandler, /catch \(error\) \{[\s\S]*profile\.goingCount = previousCount/);
+  assert.match(
+    homeSource,
+    /if \(actionButton\.id === "goingBtn"\) \{\s+await saveProfileGoing\(actionButton\)/,
+  );
 });
