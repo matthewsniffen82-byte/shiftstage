@@ -59,7 +59,6 @@ export default async function VenuePublicPage({ params }: PageProps) {
       <VenueProfileStyles />
       <nav className="public-nav">
         <Link href="/">Dancr</Link>
-        <Link href={`/tv?city=${encodeURIComponent(venue.city)}`}>MyDancr TV</Link>
         <span>{venue.city}</span>
       </nav>
       <section className="venue-hero">

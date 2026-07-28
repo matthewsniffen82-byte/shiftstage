@@ -237,15 +237,19 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(dancerPage, /dancerId: profile\.id/);
   assert.match(dancerPage, /<TvVideoStrip/);
   assert.match(dancerPage, /showDancerName=\{false\}/);
-  assert.match(dancerPage, /watchAllHref=\{`\/tv\?city=\$\{encodeURIComponent\(profile\.city\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}`\}/);
+  assert.doesNotMatch(dancerPage, /watchAllHref|href=\{`\/tv/);
   assert.match(videoStrip, /<video autoPlay loop muted playsInline/);
+  assert.match(videoStrip, /<article[\s\S]*?className="tv-strip-card"/);
+  assert.doesNotMatch(videoStrip, /Watch all|href=\{`\/tv|from "next\/link"/);
   assert.match(videoStrip, /tvProfileShiftLabel\(video\)/);
   assert.match(videoStrip, /"Working now"[\s\S]*?label: formatTvProfileShift[\s\S]*?"No shift posted"/);
   assert.doesNotMatch(videoStrip, /label: `Upcoming \$\{formatTvProfileShift/);
   assert.match(videoStrip, /className=\{`tv-strip-schedule \$\{schedule\.className\}`\}/);
   assert.doesNotMatch(videoStrip, /video\.caption|tv-strip-play/);
   assert.match(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
-  assert.match(liveApp, /all\.href = `\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}`/);
+  assert.match(liveApp, /const card = document\.createElement\("article"\)[\s\S]*?card\.className = "profile-tv-strip-card"/);
+  assert.doesNotMatch(liveApp, /all\.href = `\/tv\?|link\.href = `\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/);
+  assert.match(liveApp, /id="homeTvTeaserLink" href="\/tv">Open full feed<\/a>/);
   assert.match(liveApp, /profile-tv-strip-schedule is-now[\s\S]*?profile-tv-strip-schedule is-upcoming[\s\S]*?profile-tv-strip-schedule is-no-shift/);
   assert.match(liveApp, /formatProfileTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)/);
   assert.match(liveApp, /<strong>Next shift<\/strong>/);
@@ -258,4 +262,5 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(venuePage, /getPublicMyDancrTvFeed/);
   assert.match(venuePage, /venueId: venue\.id/);
   assert.match(venuePage, /<TvVideoStrip/);
+  assert.doesNotMatch(venuePage, /watchAllHref|href=\{`\/tv/);
 });

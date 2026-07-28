@@ -1,15 +1,12 @@
-import Link from "next/link";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
 export function TvVideoStrip({
   title,
   videos,
-  watchAllHref,
   showDancerName = true,
 }: {
   title: string;
   videos: MyDancrTvVideo[];
-  watchAllHref?: string;
   showDancerName?: boolean;
 }) {
   if (!videos.length) return null;
@@ -22,16 +19,14 @@ export function TvVideoStrip({
           <span>MyDancr TV</span>
           <h2>{title}</h2>
         </div>
-        <Link href={watchAllHref || `/tv/${videos[0].id}`}>Watch all</Link>
       </div>
       <div className="tv-strip-list">
         {videos.map((video) => {
           const schedule = tvProfileShiftLabel(video);
           return (
-            <Link
-              aria-label={`Watch ${video.dancer.stageName} on MyDancr TV, ${schedule.label}`}
+            <article
+              aria-label={`${video.dancer.stageName} MyDancr TV video, ${schedule.label}`}
               className="tv-strip-card"
-              href={`/tv/${video.id}`}
               key={video.id}
             >
               <video autoPlay loop muted playsInline preload="metadata" src={video.videoUrl} />
@@ -39,7 +34,7 @@ export function TvVideoStrip({
                 {showDancerName ? <strong>{video.dancer.stageName}</strong> : null}
                 <span className={`tv-strip-schedule ${schedule.className}`}>{schedule.label}</span>
               </div>
-            </Link>
+            </article>
           );
         })}
       </div>
@@ -91,7 +86,6 @@ function TvVideoStripStyles() {
       .tv-strip-head > div { display: grid; gap: 5px; }
       .tv-strip-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .tv-strip-head h2 { margin: 0; font-size: clamp(22px, 4vw, 34px); }
-      .tv-strip-head > a { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid rgba(34,199,255,.32); border-radius: 999px; color: #fff; background: rgba(34,199,255,.07); font-size: 12px; font-weight: 900; text-decoration: none; white-space: nowrap; }
       .tv-strip-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 240px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; padding-bottom: 4px; }
       .tv-strip-card { position: relative; min-height: 330px; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 10px; color: #fff; background: #08080b; text-decoration: none; scroll-snap-align: start; }
       .tv-strip-card video { width: 100%; height: 100%; min-height: 330px; display: block; object-fit: cover; background: #000; }

@@ -50,7 +50,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
       <PublicProfileStyles />
       <nav className="public-nav">
         <Link href="/">Dancr</Link>
-        <Link href={`/tv?city=${encodeURIComponent(profile.city)}`}>MyDancr TV</Link>
         <span>{profile.city}</span>
       </nav>
       <section className="public-hero dancer-hero">
@@ -89,7 +88,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
         showDancerName={false}
         title={`${profile.stageName} on MyDancr TV`}
         videos={tvVideos}
-        watchAllHref={`/tv?city=${encodeURIComponent(profile.city)}&dancer=${encodeURIComponent(profile.id)}`}
       />
       <section className="public-grid">
         <article className="public-panel">
