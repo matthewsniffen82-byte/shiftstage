@@ -27828,22 +27828,30 @@
       </nav>
 
       <style>
-        .home-discovery-controls { grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr) !important; align-items: end; gap: 10px !important; padding: 10px !important; }
-        .home-advanced-filters { display: grid; grid-template-columns: minmax(120px, .75fr) minmax(170px, 1fr) minmax(190px, .9fr); align-items: end; gap: 10px; min-width: 0; }
+        main.stack,
+        main.stack > * { min-width: 0; max-width: 100%; }
+        .home-discovery-controls { width: 100%; min-width: 0; max-width: 100%; grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr) !important; align-items: end; gap: 10px !important; padding: 10px !important; overflow: hidden; }
+        .home-discovery-controls > *,
+        .home-advanced-filters > * { min-width: 0; max-width: 100%; }
+        .home-advanced-filters { width: 100%; max-width: 100%; display: grid; grid-template-columns: minmax(120px, .75fr) minmax(170px, 1fr) minmax(190px, .9fr); align-items: end; gap: 10px; min-width: 0; overflow: hidden; }
         .home-filter-toggle { display: none; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 0 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(88,48,173,.36), rgba(17,94,117,.3)); font: inherit; font-weight: 950; cursor: pointer; }
         .home-filter-toggle-symbol { width: 20px; height: 20px; display: inline-grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #7eeaff; font-size: 18px; line-height: 1; }
         .home-discovery-controls select,
-        .home-discovery-controls .location-btn { min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
+        .home-discovery-controls .location-btn { width: 100% !important; min-width: 0 !important; max-width: 100% !important; min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
+        .home-live-summary { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; overflow: hidden; }
+        .home-live-summary span,
+        .home-live-summary strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        #homeLiveRadius { min-width: 0; }
         @media (min-width: 721px) {
           .stack > .hero.reference-hero,
           .stack > .hero.reference-hero.uploaded-hero-ready,
           .stack > .hero.reference-hero:not(.uploaded-hero-ready) { width: min(100%, 640px) !important; max-width: 640px !important; margin-inline: auto !important; }
         }
-        .home-tv-teaser { display: grid; gap: 12px; margin: 14px 0 10px; padding: 14px; overflow: hidden; border: 1px solid rgba(139,92,246,.38); border-radius: 14px; background: linear-gradient(145deg, rgba(14,14,21,.97), rgba(7,7,11,.97)); box-shadow: 0 16px 38px rgba(0,0,0,.3); }
-        .home-tv-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .home-tv-teaser-head strong { color: #fff; font-size: 14px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
-        .home-tv-teaser-head a { min-height: 34px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(126,234,255,.25); border-radius: 999px; color: #7eeaff; font-size: 12px; font-weight: 900; text-decoration: none; }
-        .home-tv-teaser-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 180px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; padding: 1px 1px 6px; scrollbar-width: thin; }
+        .home-tv-teaser { width: 100%; min-width: 0; max-width: 100%; display: grid; gap: 12px; margin: 14px 0 10px; padding: 14px; overflow: hidden; border: 1px solid rgba(139,92,246,.38); border-radius: 14px; background: linear-gradient(145deg, rgba(14,14,21,.97), rgba(7,7,11,.97)); box-shadow: 0 16px 38px rgba(0,0,0,.3); }
+        .home-tv-teaser-head { min-width: 0; max-width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .home-tv-teaser-head strong { min-width: 0; flex: 1 1 auto; overflow: hidden; color: #fff; font-size: 14px; font-weight: 950; letter-spacing: .14em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+        .home-tv-teaser-head a { min-width: 0; max-width: 44%; min-height: 34px; flex: 0 1 auto; display: inline-flex; align-items: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.25); border-radius: 999px; color: #7eeaff; font-size: 12px; font-weight: 900; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-teaser-list { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 180px); gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; padding: 1px 1px 6px; scrollbar-width: thin; }
         .home-tv-teaser-list.is-state { grid-auto-flow: row; grid-auto-columns: minmax(0, 1fr); overflow-x: hidden; scroll-snap-type: none; }
         .home-tv-teaser-state { width: 100%; min-height: 112px; display: grid; align-content: center; gap: 6px; padding: 16px; border: 1px dashed rgba(255,255,255,.14); border-radius: 10px; color: #a99ebc; background: rgba(0,0,0,.2); }
         .home-tv-teaser-state strong { color: #fff; font-size: 14px; }
@@ -27862,7 +27870,7 @@
         .home-tv-card-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.2); }
         .home-tv-card-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.12); }
         .home-tv-card-schedule.is-no-shift { color: #b8b2c4; }
-        #discoveryTabs { scroll-margin-top: 86px; }
+        #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
         .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
         .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
@@ -27879,6 +27887,7 @@
           .home-advanced-filters.is-open { display: grid; }
           .home-discovery-controls select,
           .home-discovery-controls .location-btn { min-height: 44px !important; font-size: clamp(15px, 4vw, 17px) !important; }
+          .home-live-summary { grid-template-columns: max-content minmax(0, 1fr) max-content; }
           .home-tv-teaser { gap: 9px; margin-top: 8px; padding: 10px; }
           .home-tv-teaser-list { grid-auto-columns: minmax(132px, 42vw); }
           .home-tv-teaser-card { height: 174px; }

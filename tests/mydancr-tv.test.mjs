@@ -209,6 +209,32 @@ test("the vertical TV feed locks exactly one stable video into the available vie
   assert.match(feedClient, /\.tv-player \{[^}]*height: 100%[^}]*min-height: 0[^}]*max-height: none/);
 });
 
+test("long selected venue names cannot widen the mobile homepage", () => {
+  assert.match(liveApp, /main\.stack,\s*main\.stack > \* \{ min-width: 0; max-width: 100%; \}/);
+  assert.match(
+    liveApp,
+    /\.home-discovery-controls \{[^}]*width: 100%[^}]*min-width: 0[^}]*max-width: 100%[^}]*overflow: hidden/,
+  );
+  assert.match(
+    liveApp,
+    /\.home-discovery-controls select,[\s\S]*?width: 100% !important[^}]*min-width: 0 !important[^}]*max-width: 100% !important/,
+  );
+  assert.match(
+    liveApp,
+    /\.home-live-summary \{[^}]*width: 100%[^}]*min-width: 0[^}]*max-width: 100%[^}]*grid-template-columns: max-content minmax\(0, 1fr\) max-content[^}]*overflow: hidden/,
+  );
+  assert.match(liveApp, /#homeLiveRadius \{ min-width: 0; \}/);
+  assert.match(
+    liveApp,
+    /\.home-tv-teaser \{[^}]*width: 100%[^}]*min-width: 0[^}]*max-width: 100%[^}]*overflow: hidden/,
+  );
+  assert.match(
+    liveApp,
+    /\.home-tv-teaser-list \{[^}]*width: 100%[^}]*min-width: 0[^}]*max-width: 100%[^}]*overflow-x: auto/,
+  );
+  assert.match(liveApp, /#discoveryTabs \{ width: 100%; min-width: 0; max-width: 100%/);
+});
+
 test("administrator and venue controls persist confirmed decisions", () => {
   assert.match(adminApi, /requireAdmin\(client, user\.id\)/);
   assert.match(adminApi, /reviewMyDancrTvVideo/);
