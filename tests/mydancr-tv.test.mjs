@@ -111,6 +111,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /String\(item\.dancer\?\.slug \|\| ""\)\.trim\(\)/);
   assert.match(liveApp, /card\.href = `\/dancers\/\$\{encodeURIComponent\(String\(item\.dancer\.slug\)\.trim\(\)\)\}`/);
   assert.match(liveApp, /card\.setAttribute\("aria-label", `Open \$\{item\.dancer\?\.stageName \|\| "dancer"\} live profile`\)/);
+  assert.match(feedClient, /className="tv-video-profile-link"[\s\S]*?href=\{dancerProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}/);
   assert.match(feedClient, /className="tv-dancer-link"[\s\S]*?href=\{dancerProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s real profile`\}/);
   assert.match(feedClient, /function dancerProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?encodeURIComponent\(video\.dancer\.slug\)/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);

@@ -363,33 +363,35 @@ export default function TvFeedClient({
             key={video.id}
           >
             <div className="tv-player">
-              <video
-                ref={(element) => {
-                  videoElements.current[video.id] = element;
-                }}
-                aria-label={`${video.dancer.stageName} MyDancr TV video`}
-                loop
-                muted={muted}
-                playsInline
-                preload={video.id === activeVideoId ? "auto" : "metadata"}
-                src={video.videoUrl}
-                onClick={(event) => {
-                  const element = event.currentTarget;
-                  if (element.paused) element.play().catch(() => null);
-                  else element.pause();
-                }}
-                onTimeUpdate={(event) => {
-                  const element = event.currentTarget;
-                  if (
-                    element.duration > 0 &&
-                    element.currentTime / element.duration >= 0.95 &&
-                    !completedVideos.current.has(video.id)
-                  ) {
-                    completedVideos.current.add(video.id);
-                    trackEvent(video.id, "completed");
-                  }
-                }}
-              />
+              <Link
+                className="tv-video-profile-link"
+                href={dancerProfileHref(video)}
+                aria-label={`Open ${video.dancer.stageName}'s live profile`}
+                onClick={() => trackEvent(video.id, "profile_click")}
+              >
+                <video
+                  ref={(element) => {
+                    videoElements.current[video.id] = element;
+                  }}
+                  aria-label={`${video.dancer.stageName} MyDancr TV video`}
+                  loop
+                  muted={muted}
+                  playsInline
+                  preload={video.id === activeVideoId ? "auto" : "metadata"}
+                  src={video.videoUrl}
+                  onTimeUpdate={(event) => {
+                    const element = event.currentTarget;
+                    if (
+                      element.duration > 0 &&
+                      element.currentTime / element.duration >= 0.95 &&
+                      !completedVideos.current.has(video.id)
+                    ) {
+                      completedVideos.current.add(video.id);
+                      trackEvent(video.id, "completed");
+                    }
+                  }}
+                />
+              </Link>
               <div className="tv-player-shade" />
               <button
                 className="tv-sound"
@@ -630,6 +632,7 @@ function TvStyles() {
       .tv-feed { width: 100%; max-width: 1000px; height: auto; min-height: 0; flex: 1 1 0; margin: 0 auto; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; overflow-anchor: none; touch-action: pan-y; scroll-snap-type: y mandatory; scroll-padding-block: 0; scroll-behavior: smooth; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(139,92,246,.48) transparent; }
       .tv-slide { height: 100%; min-height: 100%; max-height: 100%; padding: 8px 0; display: grid; grid-template-columns: minmax(320px, 520px) minmax(260px, 1fr); justify-content: center; gap: 14px; overflow: hidden; contain: layout paint; scroll-snap-align: start; scroll-snap-stop: always; }
       .tv-player { position: relative; height: 100%; min-height: 0; max-height: none; overflow: hidden; border: 1px solid rgba(139,92,246,.34); border-radius: 14px; background: #08080b; box-shadow: 0 26px 80px rgba(0,0,0,.56), 0 0 28px rgba(109,40,217,.12); }
+      .tv-video-profile-link { width: 100%; height: 100%; display: block; color: inherit; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 42% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.86)); }
       .tv-sound { position: absolute; top: 12px; right: 12px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.58); font-size: 12px; font-weight: 900; cursor: pointer; }
