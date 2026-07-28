@@ -72,8 +72,10 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /Sign in required/);
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
   assert.match(feedClient, /\/api\/reports/);
-  assert.match(liveApp, /data-tv-link="true" href="\/tv"/);
-  assert.match(liveApp, /id="homeTvPreviewList"/);
+  assert.match(liveApp, /data-tab="tv" data-tab-label="MyDancr TV"/);
+  assert.match(liveApp, /if \(activeTab === "tv"\)[\s\S]*?renderHomeTvTab\(city, tvRequestId\)/);
+  assert.match(liveApp, /\/api\/public\/tv\?city=\$\{encodeURIComponent\(city\)\}&filter=for-you&limit=12/);
+  assert.doesNotMatch(liveApp, /id="homeTvPreviewList"/);
   assert.match(liveApp, /loadProfileMyDancrTv/);
 });
 
