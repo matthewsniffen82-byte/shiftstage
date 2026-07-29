@@ -16,6 +16,10 @@ import {
   DancerProfileActions,
 } from "./DancerProfileActions";
 import { DancerPhotoCarousel } from "./DancerPhotoCarousel";
+import {
+  ProfileCloseButton,
+  ProfileShareButton,
+} from "./ProfileNavigationActions";
 import { ProfileViewTracker } from "./ProfileViewTracker";
 import { SocialLinks } from "./SocialLinks";
 
@@ -47,6 +51,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
     }),
   ]);
   const profileStatus = buildProfileStatus(profile.city, primaryShift, Boolean(activeShift));
+  const additionalShifts = primaryShift
+    ? profile.upcomingShifts.filter((shift) => shift.id !== primaryShift.id)
+    : [];
 
   return (
     <DancerFollowStateProvider
@@ -60,13 +67,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
       <PublicProfileHeader
         city={profile.city}
         closeControl={
-          <Link
-            className="public-profile-close"
-            href={`/?city=${encodeURIComponent(profile.city)}`}
-            aria-label="Close full dancer profile and return to the homepage"
-          >
-            ×
-          </Link>
+          <ProfileCloseButton
+            fallbackHref={`/?city=${encodeURIComponent(profile.city)}`}
+          />
         }
       />
       <section className="public-hero dancer-hero">
@@ -84,6 +87,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           <div className="profile-identity">
             <span className="eyebrow">Verified dancer</span>
             <h1>{profile.stageName}</h1>
+            <ProfileShareButton stageName={profile.stageName} />
           </div>
           <section className="profile-status-card" aria-label="Current schedule status">
             <strong>{profileStatus.headline}</strong>
@@ -139,17 +143,17 @@ export default async function DancerPublicPage({ params }: PageProps) {
           )}
         </section>
       ) : null}
-      <section className="profile-schedule-section" aria-labelledby="profile-schedule-title">
-        <div className="profile-section-heading">
-          <div>
-            <span className="eyebrow">Plan your visit</span>
-            <h2 id="profile-schedule-title">Schedule</h2>
+      {additionalShifts.length ? (
+        <section className="profile-schedule-section" aria-labelledby="profile-schedule-title">
+          <div className="profile-section-heading">
+            <div>
+              <span className="eyebrow">Plan another visit</span>
+              <h2 id="profile-schedule-title">More shifts</h2>
+            </div>
+            <span>{additionalShifts.length} more posted</span>
           </div>
-          <span>{profile.upcomingShifts.length} posted</span>
-        </div>
-        {profile.upcomingShifts.length ? (
           <div className="shift-list">
-            {profile.upcomingShifts.map((shift) => {
+            {additionalShifts.map((shift) => {
               const workingNow = isActiveNow(shift);
               return (
                 <Link
@@ -171,10 +175,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
               );
             })}
           </div>
-        ) : (
-          <p className="muted">No posted shifts right now.</p>
-        )}
-      </section>
+        </section>
+      ) : null}
       <TvVideoStrip
         showDancerName={false}
         title={`${profile.stageName} on MyDancr TV`}
@@ -341,7 +343,7 @@ function PublicProfileStyles() {
       .profile-global-logo span { color: #b976ff; }
       .profile-global-city { min-width: 0; overflow: hidden; color: #b9accd; font-size: 13px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
       .profile-global-actions { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-      .profile-global-account, .profile-notification-button, .public-profile-close { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(139,92,246,.48); border-radius: 999px; color: #fff; background: rgba(10,10,14,.9); box-shadow: 0 0 18px rgba(124,58,237,.16); text-decoration: none; }
+      .profile-global-account, .profile-notification-button, .public-profile-close { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(139,92,246,.48); border-radius: 999px; color: #fff; background: rgba(10,10,14,.9); box-shadow: 0 0 18px rgba(124,58,237,.16); text-decoration: none; cursor: pointer; }
       .profile-global-account { padding: 0 15px; font-size: 12px; font-weight: 950; }
       .profile-global-account.profile-account-icon, .profile-notification-button { width: 42px; padding: 0; }
       .profile-global-account svg, .profile-notification-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
@@ -365,6 +367,11 @@ function PublicProfileStyles() {
       .public-hero { max-width: 1120px; display: grid; grid-template-areas: "copy photo"; grid-template-columns: minmax(0, 1fr) minmax(300px, 440px); gap: clamp(24px, 5vw, 58px); align-items: center; margin: 0 auto; }
       .public-copy { grid-area: copy; display: grid; align-content: center; gap: 14px; }
       .profile-identity { display: grid; gap: 8px; }
+      .profile-share { min-height: 38px; display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+      .profile-share button { min-height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.1); font-size: 12px; font-weight: 900; cursor: pointer; }
+      .profile-share button:hover, .profile-share button:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.12); }
+      .profile-share svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-share > span { color: #9fefff; font-size: 11px; font-weight: 800; }
       .eyebrow, .profile-live-state { color: #94e5ff; font-size: 11px; font-weight: 950; letter-spacing: .17em; text-transform: uppercase; }
       .profile-live-state { width: fit-content; padding: 7px 11px; border: 1px solid rgba(148,229,255,.28); border-radius: 999px; background: rgba(148,229,255,.08); }
       .profile-live-state.is-working { border-color: rgba(126,234,255,.58); color: #dffbff; background: linear-gradient(135deg, rgba(109,40,217,.62), rgba(11,148,201,.42)); box-shadow: 0 0 22px rgba(34,199,255,.14); }
@@ -446,10 +453,12 @@ function PublicProfileStyles() {
       .fact-list { display: grid; gap: 12px; margin: 0; }
       .fact-list div { display: flex; justify-content: space-between; gap: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
-      .social-list { display: grid; gap: 9px; }
+      .social-links-control { display: grid; gap: 10px; }
+      .social-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
       .social-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #f7f2ff; background: rgba(255,255,255,.04); text-decoration: none; }
       .social-list span { color: #b9accd; }
       .social-list strong { overflow-wrap: anywhere; text-align: right; }
+      .social-list-toggle { min-height: 40px; justify-self: start; padding: 0 14px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #9fefff; background: rgba(34,199,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; }
       .club-deal-card { border-radius: 16px; }
       @media (max-width: 760px) {
         .public-gallery { overflow-x: auto; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; }
@@ -475,6 +484,7 @@ function PublicProfileStyles() {
         .profile-schedule-section { padding: 16px; }
         .shift-list { grid-template-columns: 1fr; }
         .shift-row strong { white-space: normal; }
+        .social-list { grid-template-columns: 1fr; }
         .fact-list div, .social-list a { align-items: flex-start; }
         .social-list a { flex-direction: column; }
         .social-list strong { text-align: left; }

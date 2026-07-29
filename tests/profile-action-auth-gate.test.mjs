@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, actionsSource, profilePageSource, reportsRouteSource] = await Promise.all([
+const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dancers/[slug]/ProfileNavigationActions.tsx", import.meta.url), "utf8"),
 ]);
 
 function sourceBetween(source, start, end) {
@@ -62,11 +63,11 @@ test("the live dancer profile close control exits shared links and remains touch
     /\.modal-top \{[\s\S]*?z-index: 30;[\s\S]*?\.close-btn \{[\s\S]*?pointer-events: auto;[\s\S]*?touch-action: manipulation;/,
   );
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
-  assert.match(
-    profilePageSource,
-    /className="public-profile-close"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}[\s\S]*?aria-label="Close full dancer profile and return to the homepage"/,
-  );
-  assert.match(profilePageSource, />\s*×\s*<\/Link>/);
+  assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/);
+  assert.match(profileNavigationSource, /className="public-profile-close"/);
+  assert.match(profileNavigationSource, /aria-label="Close full dancer profile and return to the previous page"/);
+  assert.match(profileNavigationSource, /window\.history\.back\(\)/);
+  assert.match(profileNavigationSource, />\s*×\s*<\/button>/);
   assert.match(
     homeSource,
     /<div class="card-badges">[\s\S]*?class="card-profile-destination">View Profile <span aria-hidden="true">→<\/span>[\s\S]*?<\/div>\s*<\/div>\s*<div class="profile-body">/,

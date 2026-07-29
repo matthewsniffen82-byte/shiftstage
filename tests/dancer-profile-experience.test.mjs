@@ -8,6 +8,9 @@ const [
   profileHeader,
   tvFeed,
   reportsRoute,
+  navigationActions,
+  socialLinks,
+  tvStrip,
 ] = await Promise.all([
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(
@@ -20,11 +23,21 @@ const [
   ),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8"),
+  readFile(
+    new URL("../app/dancers/[slug]/ProfileNavigationActions.tsx", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../app/dancers/[slug]/SocialLinks.tsx", import.meta.url),
+    "utf8",
+  ),
+  readFile(new URL("../app/components/TvVideoStrip.tsx", import.meta.url), "utf8"),
 ]);
 
 test("the public dancer profile uses the full authenticated global header", () => {
   assert.match(profilePage, /<PublicProfileHeader/);
-  assert.match(profilePage, /className="public-profile-close"/);
+  assert.match(profilePage, /<ProfileCloseButton/);
+  assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profileHeader, /className="profile-global-logo"/);
   assert.match(profileHeader, /Open notifications/);
   assert.match(profileHeader, /fetch\("\/api\/notifications"/);
@@ -84,6 +97,35 @@ test("the profile removes repeated galleries and hides empty ranking language", 
   assert.doesNotMatch(profilePage, /Not ranked yet/);
   assert.match(profilePage, /\{profile\.bio \? <p className="profile-bio">/);
   assert.match(profilePage, /\{profile\.currentRank \? \(/);
+});
+
+test("the primary shift is not repeated and empty profile sections stay hidden", () => {
+  assert.match(
+    profilePage,
+    /const additionalShifts = primaryShift[\s\S]*?shift\.id !== primaryShift\.id/,
+  );
+  assert.match(profilePage, /\{additionalShifts\.length \? \(/);
+  assert.match(profilePage, /<h2 id="profile-schedule-title">More shifts<\/h2>/);
+  assert.match(profilePage, /\{additionalShifts\.map\(\(shift\) =>/);
+  assert.doesNotMatch(profilePage, /<p className="muted">No posted shifts right now\.<\/p>/);
+});
+
+test("profiles can be shared and close back to the referring site page", () => {
+  assert.match(profilePage, /<ProfileShareButton stageName=\{profile\.stageName\} \/>/);
+  assert.match(profilePage, /<ProfileCloseButton/);
+  assert.match(navigationActions, /navigator\.share/);
+  assert.match(navigationActions, /navigator\.clipboard\.writeText\(url\)/);
+  assert.match(navigationActions, /previousUrl\.origin === window\.location\.origin/);
+  assert.match(navigationActions, /window\.history\.back\(\)/);
+  assert.match(navigationActions, /window\.location\.assign\(fallbackHref\)/);
+});
+
+test("official links stay compact and real videos have distinct metadata", () => {
+  assert.match(socialLinks, /const visibleLinks = expanded \? links : links\.slice\(0, 3\)/);
+  assert.match(socialLinks, /Show \$\{links\.length - 3\} more links/);
+  assert.match(tvStrip, /Video \$\{index \+ 1\} of \$\{videos\.length\}/);
+  assert.match(tvStrip, /formatVideoDuration\(video\.durationSeconds\)/);
+  assert.match(tvStrip, /formatVideoDate\(video\.publishedAt\)/);
 });
 
 test("every MyDancr TV dancer destination uses the canonical database slug", () => {

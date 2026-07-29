@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 
 type PublicSocialLink = {
@@ -23,7 +24,9 @@ const platformLabels: Record<SocialPlatform, string> = {
 };
 
 export function SocialLinks({ dancerId, links }: SocialLinksProps) {
+  const [expanded, setExpanded] = useState(false);
   if (!links.length) return null;
+  const visibleLinks = expanded ? links : links.slice(0, 3);
 
   function recordClick(platform: SocialPlatform) {
     const body = JSON.stringify({
@@ -47,13 +50,25 @@ export function SocialLinks({ dancerId, links }: SocialLinksProps) {
   }
 
   return (
-    <div className="social-list" aria-label="Social links">
-      {links.map((link) => (
-        <a href={link.url} key={link.id} onClick={() => recordClick(link.platform)} rel="noreferrer" target="_blank">
-          <span>{platformLabels[link.platform]}</span>
-          <strong>{link.handle}</strong>
-        </a>
-      ))}
+    <div className="social-links-control">
+      <div className="social-list" aria-label="Social links">
+        {visibleLinks.map((link) => (
+          <a href={link.url} key={link.id} onClick={() => recordClick(link.platform)} rel="noreferrer" target="_blank">
+            <span>{platformLabels[link.platform]}</span>
+            <strong>{link.handle}</strong>
+          </a>
+        ))}
+      </div>
+      {links.length > 3 ? (
+        <button
+          aria-expanded={expanded}
+          className="social-list-toggle"
+          onClick={() => setExpanded((current) => !current)}
+          type="button"
+        >
+          {expanded ? "Show fewer links" : `Show ${links.length - 3} more links`}
+        </button>
+      ) : null}
     </div>
   );
 }
