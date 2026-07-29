@@ -116,8 +116,7 @@
       overflow: hidden;
     }
 
-    body.profile-tv-viewer-open #discoveryTabs,
-    body.profile-tv-viewer-open #homeTvDrawer {
+    body.profile-tv-viewer-open #discoveryTabs {
       visibility: hidden !important;
       pointer-events: none !important;
     }
@@ -27935,19 +27934,10 @@
         <span class="home-tv-launch-arrow" aria-hidden="true">›</span>
       </a>
 
-      <section class="home-tv-drawer" id="homeTvDrawer" aria-label="MyDancr TV videos" hidden>
-        <div class="home-tv-drawer-head">
-          <strong id="homeTvDrawerTitle">MyDancr TV</strong>
-          <button class="home-tv-drawer-close" type="button" data-close-home-tv aria-label="Close MyDancr TV videos">×</button>
-        </div>
-        <p class="home-tv-drawer-status" id="homeTvDrawerStatus" aria-live="polite"></p>
-        <div class="home-tv-drawer-list" id="homeTvDrawerList" role="region" aria-label="Swipe through MyDancr TV videos"></div>
-      </section>
-
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
         <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
-        <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos on Home" aria-controls="homeTvDrawer" aria-expanded="false">
+        <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z"></path></svg>
           </span>
@@ -27988,7 +27978,236 @@
         .home-tv-launch-count { min-width: 58px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #baf5ff; background: #12062f; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
         .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
         #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
-        .home-tv-drawer { display: none; }
+        #results.home-tv-feed {
+          width: 100%;
+          max-width: 640px;
+          height: min(760px, calc(100dvh - 150px));
+          min-height: 520px;
+          margin-inline: auto;
+          display: block;
+          overflow-x: hidden;
+          overflow-y: auto;
+          overscroll-behavior-y: contain;
+          overflow-anchor: none;
+          scroll-snap-type: y mandatory;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(139,92,246,.76) transparent;
+          border: 1px solid rgba(139,92,246,.34);
+          border-radius: 18px;
+          background: #000;
+          box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
+        }
+        .home-tv-feed-slide {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: 100%;
+          max-height: 100%;
+          overflow: hidden;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+          background: #000;
+          isolation: isolate;
+        }
+        .home-tv-feed-slide + .home-tv-feed-slide {
+          border-top: 1px solid rgba(255,255,255,.1);
+        }
+        .home-tv-feed-video {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          border: 0;
+          object-fit: cover;
+          background: #000;
+          cursor: pointer;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .home-tv-feed-video:focus-visible {
+          outline: 3px solid #7eeaff;
+          outline-offset: -4px;
+        }
+        .home-tv-feed-shade {
+          position: absolute;
+          z-index: 1;
+          inset: 0;
+          pointer-events: none;
+          background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, transparent 34%, transparent 54%, rgba(0,0,0,.9) 100%);
+        }
+        .home-tv-feed-copy {
+          position: absolute;
+          z-index: 2;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          gap: 8px;
+          padding: 54px 18px 18px;
+          pointer-events: none;
+        }
+        .home-tv-feed-copy a,
+        .home-tv-feed-sound {
+          pointer-events: auto;
+        }
+        .home-tv-feed-dancer {
+          width: fit-content;
+          max-width: 100%;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #fff;
+          font-size: clamp(22px, 5.8vw, 34px);
+          font-weight: 950;
+          line-height: 1.05;
+          text-shadow: 0 3px 16px rgba(0,0,0,.88);
+        }
+        .home-tv-feed-dancer:hover,
+        .home-tv-feed-dancer:focus-visible,
+        .home-tv-feed-venue:hover,
+        .home-tv-feed-venue:focus-visible {
+          color: #9fefff;
+          text-decoration: underline;
+          text-underline-offset: 4px;
+        }
+        .home-tv-feed-verified {
+          width: 22px;
+          height: 22px;
+          flex: 0 0 auto;
+          display: inline-grid;
+          place-items: center;
+          border-radius: 999px;
+          color: #fff;
+          background: linear-gradient(135deg,#22c7ff,#2563eb);
+          box-shadow: 0 0 16px rgba(34,199,255,.48);
+          font-size: 13px;
+        }
+        .home-tv-feed-profile-cue {
+          padding: 5px 8px;
+          border: 1px solid rgba(126,234,255,.4);
+          border-radius: 999px;
+          color: #c8f8ff;
+          background: rgba(0,0,0,.62);
+          font-size: 9px;
+          letter-spacing: .07em;
+          text-transform: uppercase;
+        }
+        .home-tv-feed-venue {
+          width: fit-content;
+          max-width: 100%;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          overflow: hidden;
+          color: #fff;
+          font-size: 14px;
+          font-weight: 900;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+        }
+        .home-tv-feed-venue svg {
+          width: 17px;
+          height: 17px;
+          flex: 0 0 auto;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+        }
+        .home-tv-feed-venue span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-tv-feed-schedule {
+          width: fit-content;
+          max-width: 100%;
+          min-height: 30px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 10px;
+          border: 1px solid rgba(255,255,255,.24);
+          border-radius: 999px;
+          color: #d7d3df;
+          background: rgba(0,0,0,.62);
+          font-size: 11px;
+          font-weight: 900;
+        }
+        .home-tv-feed-schedule.is-now {
+          border-color: rgba(77,236,157,.5);
+          color: #8af4bb;
+          background: rgba(17,107,62,.48);
+        }
+        .home-tv-feed-schedule.is-upcoming {
+          border-color: rgba(126,234,255,.42);
+          color: #aaf2ff;
+          background: rgba(11,87,110,.48);
+        }
+        .home-tv-feed-caption {
+          max-width: 92%;
+          overflow: hidden;
+          color: #e9e6ef;
+          font-size: 12px;
+          line-height: 1.35;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          text-shadow: 0 2px 10px rgba(0,0,0,.9);
+        }
+        .home-tv-feed-sound {
+          position: absolute;
+          z-index: 3;
+          top: 14px;
+          right: 14px;
+          min-width: 82px;
+          min-height: 40px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 12px;
+          border: 1px solid rgba(255,255,255,.32);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.7);
+          font-size: 11px;
+          font-weight: 900;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-playback {
+          position: absolute;
+          z-index: 2;
+          top: 50%;
+          left: 50%;
+          width: 68px;
+          height: 68px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.32);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.56);
+          box-shadow: 0 10px 30px rgba(0,0,0,.42);
+          font-size: 25px;
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(.88);
+          transition: opacity .18s ease, transform .18s ease;
+        }
+        .home-tv-feed-slide.is-paused .home-tv-feed-playback {
+          opacity: 1;
+          transform: translate(-50%,-50%) scale(1);
+        }
+        .home-tv-feed-position {
+          position: absolute;
+          z-index: 3;
+          top: 17px;
+          left: 15px;
+          padding: 5px 9px;
+          border: 1px solid rgba(255,255,255,.2);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.64);
+          font-size: 10px;
+          font-weight: 900;
+        }
         .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
         .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
@@ -28164,127 +28383,17 @@
           .home-tv-launch {
             display: none !important;
           }
-          main.stack > .home-tv-drawer {
-            position: fixed;
-            z-index: 89;
-            left: 50vw;
-            bottom: calc(70px + env(safe-area-inset-bottom));
-            width: min(calc(100vw - 16px), 704px) !important;
-            max-width: 704px !important;
-            max-height: min(292px, calc(100dvh - 170px));
-            display: grid;
-            gap: 8px;
-            margin: 0 !important;
-            padding: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(139,92,246,.5);
-            border-radius: 16px 16px 0 0;
-            color: #fff;
-            background: rgba(7,6,12,.98);
-            box-shadow: 0 -18px 48px rgba(0,0,0,.64), 0 0 28px rgba(124,58,237,.2);
-            backdrop-filter: blur(22px) saturate(1.25);
-            transform: translateX(-50%);
+          #results.home-tv-feed {
+            height: calc(100dvh - 150px);
+            min-height: 500px;
+            max-height: 760px;
+            border-radius: 15px;
           }
-          .home-tv-drawer-head {
-            min-height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
+          .home-tv-feed-copy {
+            padding: 54px 14px 16px;
           }
-          .home-tv-drawer-head strong {
-            min-width: 0;
-            overflow: hidden;
-            font-size: 12px;
-            font-weight: 950;
-            letter-spacing: .1em;
-            text-overflow: ellipsis;
-            text-transform: uppercase;
-            white-space: nowrap;
-          }
-          .home-tv-drawer-close {
-            width: 32px;
-            height: 32px;
-            flex: 0 0 auto;
-            display: grid;
-            place-items: center;
-            padding: 0;
-            border: 1px solid rgba(126,234,255,.34);
-            border-radius: 999px;
-            color: #fff;
-            background: rgba(17,17,24,.92);
-            font-size: 22px;
-            line-height: 1;
-          }
-          .home-tv-drawer-status {
-            min-height: 15px;
-            color: #b8b2c4;
-            font-size: 10px;
-            font-weight: 800;
-          }
-          .home-tv-drawer-list {
-            min-height: 180px;
-            display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: minmax(150px, 56vw);
-            gap: 8px;
-            padding: 1px 1px 5px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            overscroll-behavior-x: contain;
-            scroll-snap-type: x mandatory;
-            touch-action: pan-x pan-y;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(139,92,246,.72) transparent;
-          }
-          .home-tv-drawer-card {
-            position: relative;
-            min-height: 180px;
-            padding: 0;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,.14);
-            border-radius: 12px;
-            color: #fff;
-            background: #000;
-            scroll-snap-align: start;
-            text-align: left;
-          }
-          .home-tv-drawer-card:focus-visible {
-            outline: 2px solid #7eeaff;
-            outline-offset: -2px;
-          }
-          .home-tv-drawer-card video {
-            width: 100%;
-            height: 180px;
-            display: block;
-            object-fit: cover;
-            pointer-events: none;
-          }
-          .home-tv-drawer-card-copy {
-            position: absolute;
-            z-index: 2;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            display: grid;
-            gap: 2px;
-            padding: 24px 8px 8px;
-            background: linear-gradient(180deg,transparent,rgba(0,0,0,.94));
-          }
-          .home-tv-drawer-card-copy strong,
-          .home-tv-drawer-card-copy span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-          .home-tv-drawer-card-copy strong {
-            font-size: 11px;
-            font-weight: 950;
-          }
-          .home-tv-drawer-card-copy span {
-            color: #9fefff;
-            font-size: 9px;
-            font-weight: 850;
+          .home-tv-feed-dancer {
+            font-size: clamp(22px, 7vw, 31px);
           }
           #discoveryTabs {
             position: fixed !important;
@@ -30009,9 +30118,17 @@
     let activeTab = "tonight";
     let homeTvLaunchRequest = 0;
     let homeTvLaunchCity = "";
-    let homeTvDrawerRequest = 0;
-    let homeTvDrawerCity = "";
-    let homeTvDrawerVideos = [];
+    let homeTvFeedRequest = 0;
+    let homeTvFeedCity = "";
+    let homeTvFeedStatus = "idle";
+    let homeTvFeedVideos = [];
+    let homeTvFeedObserver = null;
+    let homeTvFeedActiveVideoId = "";
+    let homeTvFeedMuted = true;
+    const homeTvFeedImpressions = new Set();
+    const homeTvFeedEngagedViews = new Set();
+    const homeTvFeedCompletedViews = new Set();
+    const homeTvFeedEngagedTimers = new Map();
     let profilePhotoSwipeBlockClickUntil = 0;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
@@ -41779,6 +41896,11 @@
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
       updateTabCounts(city);
       updateHomeLiveSummary(city);
+      if (activeTab === "tv") {
+        renderHomeTvFeed(city);
+        return;
+      }
+      deactivateHomeTvFeed();
 
       const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
       const tonightDiscovery = homeTonightDiscovery(city);
@@ -41847,7 +41969,7 @@
       launch.href = `/tv?city=${encodeURIComponent(tvCityLabel)}`;
       launch.setAttribute("aria-label", `Open MyDancr TV ${tvCityLabel} vertical video feed`);
       if (bottomTv) {
-        bottomTv.setAttribute("aria-label", `Show MyDancr TV ${tvCityLabel} videos on Home`);
+        bottomTv.setAttribute("aria-label", `Show MyDancr TV ${tvCityLabel} videos in the Home feed`);
       }
       launch.setAttribute("aria-busy", "true");
       title.textContent = `MyDancr TV ${tvCityLabel}`;
@@ -41877,98 +41999,341 @@
       }
     }
 
-    function closeHomeTvDrawer(restoreFocus = true) {
-      const drawer = document.getElementById("homeTvDrawer");
-      const bottomTv = document.getElementById("homeBottomTv");
-      if (!drawer || drawer.hidden) return;
-      homeTvDrawerRequest += 1;
-      drawer.querySelectorAll("video").forEach((video) => video.pause());
-      drawer.hidden = true;
-      drawer.setAttribute("aria-busy", "false");
-      bottomTv?.classList.remove("active");
-      bottomTv?.setAttribute("aria-expanded", "false");
-      if (restoreFocus) bottomTv?.focus({ preventScroll: true });
+    function trackHomeTvFeedEvent(videoId, eventType) {
+      if (!videoId || window.location.protocol === "file:") return;
+      const headers = { "Content-Type": "application/json", Accept: "application/json" };
+      if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
+      fetch(`/api/public/tv/${encodeURIComponent(videoId)}/events`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          eventType,
+          sessionId: dancrLiveSessionId(),
+          source: "home"
+        }),
+        keepalive: true
+      }).catch(() => undefined);
     }
 
-    function renderHomeTvDrawerVideos(videos) {
-      const list = document.getElementById("homeTvDrawerList");
-      if (!list) return;
-      list.replaceChildren();
-      videos.forEach((item) => {
-        const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
-        const scheduleLabel = profileTvScheduleLabel(item);
-        const card = document.createElement("button");
-        card.type = "button";
-        card.className = "home-tv-drawer-card";
-        card.setAttribute("aria-label", `Open ${dancerName} MyDancr TV video full screen, ${scheduleLabel}`);
+    function clearHomeTvFeedEngagedTimer(videoId) {
+      const timer = homeTvFeedEngagedTimers.get(videoId);
+      if (timer) window.clearTimeout(timer);
+      homeTvFeedEngagedTimers.delete(videoId);
+    }
 
-        const video = document.createElement("video");
-        video.src = item.videoUrl;
-        video.autoplay = true;
-        video.loop = true;
-        video.muted = true;
-        video.defaultMuted = true;
-        video.playsInline = true;
-        video.preload = "metadata";
-        video.setAttribute("aria-hidden", "true");
+    function scheduleHomeTvFeedEngagedView(videoId, video) {
+      clearHomeTvFeedEngagedTimer(videoId);
+      if (homeTvFeedEngagedViews.has(videoId)) return;
+      const timer = window.setTimeout(() => {
+        homeTvFeedEngagedTimers.delete(videoId);
+        if (homeTvFeedActiveVideoId !== videoId || video.paused) return;
+        homeTvFeedEngagedViews.add(videoId);
+        trackHomeTvFeedEvent(videoId, "engaged_view");
+      }, 3000);
+      homeTvFeedEngagedTimers.set(videoId, timer);
+    }
 
-        const copy = document.createElement("span");
-        copy.className = "home-tv-drawer-card-copy";
-        const name = document.createElement("strong");
-        name.textContent = dancerName;
-        const schedule = document.createElement("span");
-        schedule.textContent = scheduleLabel;
-        copy.append(name, schedule);
-        card.append(video, copy);
-        card.addEventListener("click", () => openProfileTvViewer(item, dancerName, homeTvDrawerVideos));
-        list.appendChild(card);
-        void video.play().catch(() => undefined);
+    function syncHomeTvFeedSoundButtons() {
+      document.querySelectorAll("[data-home-tv-sound]").forEach((button) => {
+        button.textContent = homeTvFeedMuted ? "Sound off" : "Sound on";
+        button.setAttribute("aria-label", homeTvFeedMuted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV");
+        button.setAttribute("aria-pressed", String(!homeTvFeedMuted));
       });
     }
 
-    async function openHomeTvDrawer() {
-      const drawer = document.getElementById("homeTvDrawer");
-      const title = document.getElementById("homeTvDrawerTitle");
-      const status = document.getElementById("homeTvDrawerStatus");
-      const list = document.getElementById("homeTvDrawerList");
+    function activateHomeTvFeedVideo(videoId) {
+      if (activeTab !== "tv" || !videoId) return;
+      homeTvFeedActiveVideoId = videoId;
+      results.querySelectorAll(".home-tv-feed-slide").forEach((slide) => {
+        const slideVideoId = String(slide.dataset.videoId || "");
+        const video = slide.querySelector("video");
+        const isActive = slideVideoId === videoId;
+        slide.classList.toggle("is-active", isActive);
+        if (isActive) {
+          slide.setAttribute("aria-current", "true");
+          video.muted = homeTvFeedMuted;
+          if (!homeTvFeedImpressions.has(videoId)) {
+            homeTvFeedImpressions.add(videoId);
+            trackHomeTvFeedEvent(videoId, "impression");
+          }
+          void video.play().then(() => {
+            slide.classList.remove("is-paused");
+            scheduleHomeTvFeedEngagedView(videoId, video);
+          }).catch(() => {
+            slide.classList.add("is-paused");
+          });
+        } else {
+          slide.removeAttribute("aria-current");
+          clearHomeTvFeedEngagedTimer(slideVideoId);
+          video.pause();
+          slide.classList.add("is-paused");
+        }
+      });
+      syncHomeTvFeedSoundButtons();
+    }
+
+    function toggleHomeTvFeedPlayback(video) {
+      const slide = video.closest(".home-tv-feed-slide");
+      const videoId = String(slide?.dataset.videoId || "");
+      if (!videoId) return;
+      if (video.paused) {
+        activateHomeTvFeedVideo(videoId);
+        return;
+      }
+      clearHomeTvFeedEngagedTimer(videoId);
+      video.pause();
+      slide.classList.add("is-paused");
+    }
+
+    function setupHomeTvFeedObserver() {
+      homeTvFeedObserver?.disconnect();
+      homeTvFeedObserver = null;
+      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      if (!slides.length) return;
+      if (!("IntersectionObserver" in window)) {
+        activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
+        return;
+      }
+      homeTvFeedObserver = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
+          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+        if (visible) activateHomeTvFeedVideo(String(visible.target.dataset.videoId || ""));
+      }, { root: results, threshold: [.25, .72, .9] });
+      slides.forEach((slide) => homeTvFeedObserver.observe(slide));
+      activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
+    }
+
+    function deactivateHomeTvFeed() {
+      homeTvFeedObserver?.disconnect();
+      homeTvFeedObserver = null;
+      homeTvFeedActiveVideoId = "";
+      homeTvFeedEngagedTimers.forEach((timer) => window.clearTimeout(timer));
+      homeTvFeedEngagedTimers.clear();
+      results.querySelectorAll(".home-tv-feed-video").forEach((video) => video.pause());
+      results.classList.remove("home-tv-feed");
+      delete results.dataset.homeTvFeedKey;
       const bottomTv = document.getElementById("homeBottomTv");
-      if (!drawer || !title || !status || !list || !bottomTv) return;
+      bottomTv?.classList.remove("active");
+      bottomTv?.setAttribute("aria-current", "false");
+    }
 
-      const city = String(citySelect.value || "Las Vegas").trim() || "Las Vegas";
-      const requestId = ++homeTvDrawerRequest;
-      homeTvDrawerCity = city;
-      homeTvDrawerVideos = [];
-      list.replaceChildren();
-      drawer.hidden = false;
-      drawer.setAttribute("aria-busy", "true");
-      title.textContent = `MyDancr TV · ${city}`;
-      status.textContent = `Loading approved ${city} videos…`;
-      bottomTv.classList.add("active");
-      bottomTv.setAttribute("aria-expanded", "true");
+    function homeTvFeedSchedule(item) {
+      if (item.shift?.isActive) return { label: "Working now", className: "is-now" };
+      if (item.shift) {
+        return {
+          label: `Upcoming ${formatProfileTvShift(item.shift.startsAt, item.shift.timezone)}`,
+          className: "is-upcoming"
+        };
+      }
+      return { label: "No shift posted", className: "is-no-shift" };
+    }
 
+    function createHomeTvFeedVideo(item, index, slide) {
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      const videoId = String(item.id);
+      const video = document.createElement("video");
+      video.className = "home-tv-feed-video";
+      video.src = item.videoUrl;
+      video.loop = true;
+      video.muted = homeTvFeedMuted;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.preload = index === 0 ? "auto" : "metadata";
+      video.tabIndex = 0;
+      video.setAttribute("role", "button");
+      video.setAttribute("aria-label", `${dancerName} MyDancr TV video. Play or pause.`);
+      video.addEventListener("click", () => toggleHomeTvFeedPlayback(video));
+      video.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggleHomeTvFeedPlayback(video);
+      });
+      video.addEventListener("play", () => {
+        slide.classList.remove("is-paused");
+        scheduleHomeTvFeedEngagedView(videoId, video);
+      });
+      video.addEventListener("pause", () => {
+        slide.classList.add("is-paused");
+        clearHomeTvFeedEngagedTimer(videoId);
+      });
+      video.addEventListener("timeupdate", () => {
+        if (
+          video.duration > 0 &&
+          video.currentTime / video.duration >= .95 &&
+          !homeTvFeedCompletedViews.has(videoId)
+        ) {
+          homeTvFeedCompletedViews.add(videoId);
+          trackHomeTvFeedEvent(videoId, "completed");
+        }
+      });
+      return video;
+    }
+
+    function createHomeTvFeedCopy(item, scheduleContext) {
+      const videoId = String(item.id);
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      const dancerSlug = String(item?.dancer?.slug || "").trim();
+      const venueName = String(item?.venue?.name || "").trim();
+      const venueSlug = String(item?.venue?.slug || "").trim();
+      const copy = document.createElement("div");
+      copy.className = "home-tv-feed-copy";
+
+      const dancer = document.createElement("a");
+      dancer.className = "home-tv-feed-dancer";
+      dancer.href = dancerSlug ? `/dancers/${encodeURIComponent(dancerSlug)}` : "#";
+      dancer.setAttribute("aria-label", `Open ${dancerName}'s full profile`);
+      dancer.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "profile_click"));
+      const dancerLabel = document.createElement("span");
+      dancerLabel.textContent = dancerName;
+      const verified = document.createElement("span");
+      verified.className = "home-tv-feed-verified";
+      verified.textContent = "✓";
+      verified.setAttribute("aria-label", "Verified");
+      const profileCue = document.createElement("span");
+      profileCue.className = "home-tv-feed-profile-cue";
+      profileCue.textContent = "View profile";
+      dancer.append(dancerLabel, verified, profileCue);
+      copy.appendChild(dancer);
+
+      if (venueName && venueSlug) {
+        const venue = document.createElement("a");
+        venue.className = "home-tv-feed-venue";
+        venue.href = `/venues/${encodeURIComponent(venueSlug)}`;
+        venue.setAttribute("aria-label", `Open ${venueName} venue profile`);
+        venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
+        venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
+        const venueLabel = document.createElement("span");
+        venueLabel.textContent = venueName;
+        venue.appendChild(venueLabel);
+        copy.appendChild(venue);
+      }
+
+      const schedule = document.createElement("span");
+      schedule.className = `home-tv-feed-schedule ${scheduleContext.className}`;
+      schedule.textContent = scheduleContext.label;
+      copy.appendChild(schedule);
+      const captionText = String(item?.caption || "").trim();
+      if (captionText) {
+        const caption = document.createElement("p");
+        caption.className = "home-tv-feed-caption";
+        caption.textContent = captionText;
+        copy.appendChild(caption);
+      }
+      return copy;
+    }
+
+    function createHomeTvFeedSlide(item, index, total) {
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      const scheduleContext = homeTvFeedSchedule(item);
+      const slide = document.createElement("article");
+      slide.className = "home-tv-feed-slide is-paused";
+      slide.dataset.videoId = String(item.id);
+      slide.setAttribute("aria-label", `${dancerName} MyDancr TV video, ${scheduleContext.label}`);
+      const video = createHomeTvFeedVideo(item, index, slide);
+      const shade = document.createElement("div");
+      shade.className = "home-tv-feed-shade";
+      shade.setAttribute("aria-hidden", "true");
+      const playback = document.createElement("span");
+      playback.className = "home-tv-feed-playback";
+      playback.textContent = "▶";
+      playback.setAttribute("aria-hidden", "true");
+      const position = document.createElement("span");
+      position.className = "home-tv-feed-position";
+      position.textContent = `${index + 1} / ${total}`;
+      const sound = document.createElement("button");
+      sound.className = "home-tv-feed-sound";
+      sound.type = "button";
+      sound.dataset.homeTvSound = "true";
+      sound.addEventListener("click", () => {
+        homeTvFeedMuted = !homeTvFeedMuted;
+        results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
+          feedVideo.muted = homeTvFeedMuted;
+        });
+        syncHomeTvFeedSoundButtons();
+      });
+      slide.append(video, shade, playback, position, sound, createHomeTvFeedCopy(item, scheduleContext));
+      return slide;
+    }
+
+    function renderHomeTvFeedMessage(message, retryCity = "") {
+      results.innerHTML = `<div class="locked">${escapeHtml(message)}</div>`;
+      if (!retryCity) return;
+      const retry = document.createElement("button");
+      retry.className = "view-all";
+      retry.type = "button";
+      retry.textContent = "Retry MyDancr TV";
+      retry.addEventListener("click", () => {
+        homeTvFeedStatus = "loading";
+        renderHomeTvFeed(retryCity);
+        void loadHomeTvFeed(retryCity);
+      });
+      results.appendChild(retry);
+    }
+
+    function renderHomeTvFeed(city) {
+      const bottomTv = document.getElementById("homeBottomTv");
+      bottomTv?.classList.add("active");
+      bottomTv?.setAttribute("aria-current", "page");
+      tabTitle.textContent = `MyDancr TV · ${city}`;
+      viewAllBtn.hidden = true;
+      results.classList.remove("card-grid");
+      results.classList.add("home-tv-feed");
+
+      if (homeTvFeedCity !== city) {
+        homeTvFeedCity = city;
+        homeTvFeedStatus = "loading";
+        homeTvFeedVideos = [];
+        void loadHomeTvFeed(city);
+      }
+      if (homeTvFeedStatus === "loading") {
+        tabCount.textContent = "Loading videos…";
+        results.removeAttribute("aria-label");
+        renderHomeTvFeedMessage(`Loading approved MyDancr TV videos from ${city}…`);
+        return;
+      }
+      if (homeTvFeedStatus === "error") {
+        tabCount.textContent = "Unavailable";
+        renderHomeTvFeedMessage("MyDancr TV videos are temporarily unavailable.", city);
+        return;
+      }
+      if (!homeTvFeedVideos.length) {
+        tabCount.textContent = "0 videos";
+        renderHomeTvFeedMessage(`No approved MyDancr TV videos are available in ${city} yet.`);
+        return;
+      }
+
+      tabCount.textContent = `${homeTvFeedVideos.length} video${homeTvFeedVideos.length === 1 ? "" : "s"}`;
+      results.setAttribute("aria-label", `Snap-scroll through MyDancr TV videos in ${city}`);
+      const feedKey = `${city}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
+      if (results.dataset.homeTvFeedKey === feedKey) return;
+      homeTvFeedObserver?.disconnect();
+      results.replaceChildren(...homeTvFeedVideos.map((item, index) => (
+        createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
+      )));
+      results.dataset.homeTvFeedKey = feedKey;
+      results.scrollTop = 0;
+      syncHomeTvFeedSoundButtons();
+      window.requestAnimationFrame(setupHomeTvFeedObserver);
+    }
+
+    async function loadHomeTvFeed(city) {
+      const requestId = ++homeTvFeedRequest;
       try {
-        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(city)}&limit=8`, { cache: "no-store" });
+        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(city)}&limit=24`, { cache: "no-store" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
-        if (requestId !== homeTvDrawerRequest || drawer.hidden || homeTvDrawerCity !== city) return;
-        const videos = Array.isArray(payload.videos)
-          ? payload.videos.filter((item) => item?.id && item?.videoUrl)
+        if (requestId !== homeTvFeedRequest || homeTvFeedCity !== city) return;
+        homeTvFeedVideos = Array.isArray(payload.videos)
+          ? payload.videos.filter((item) => item?.id && item?.videoUrl && item?.dancer?.stageName)
           : [];
-        homeTvDrawerVideos = videos;
-        if (!videos.length) {
-          status.textContent = `No approved MyDancr TV videos are available in ${city} yet.`;
-          return;
-        }
-        renderHomeTvDrawerVideos(videos);
-        status.textContent = `${videos.length} video${videos.length === 1 ? "" : "s"} · Swipe to browse`;
+        homeTvFeedStatus = "ready";
       } catch {
-        if (requestId !== homeTvDrawerRequest || drawer.hidden) return;
-        status.textContent = "MyDancr TV videos are temporarily unavailable.";
-      } finally {
-        if (requestId === homeTvDrawerRequest && !drawer.hidden) {
-          drawer.setAttribute("aria-busy", "false");
-        }
+        if (requestId !== homeTvFeedRequest || homeTvFeedCity !== city) return;
+        homeTvFeedVideos = [];
+        homeTvFeedStatus = "error";
       }
+      if (activeTab === "tv" && citySelect.value === city) renderHomeTvFeed(city);
     }
 
     function resolveVenueByName(venueName, city = citySelect.value) {
@@ -44129,13 +44494,6 @@
         }
       }
       if (event.key === "Escape") {
-        const homeTvDrawer = document.getElementById("homeTvDrawer");
-        if (homeTvDrawer && !homeTvDrawer.hidden) {
-          closeHomeTvDrawer();
-          return;
-        }
-      }
-      if (event.key === "Escape") {
         const qrOverlay = document.getElementById("profileQrOverlay");
         if (qrOverlay?.classList.contains("show")) {
           closeQrPopovers();
@@ -44156,21 +44514,26 @@
     const homeBottomTv = document.getElementById("homeBottomTv");
     homeBottomTv?.addEventListener("click", (event) => {
       event.preventDefault();
-      const drawer = document.getElementById("homeTvDrawer");
-      if (drawer && !drawer.hidden) {
-        closeHomeTvDrawer();
-        return;
-      }
-      void openHomeTvDrawer();
+      if (profileBackdrop.classList.contains("show")) closeProfileModal();
+      activeTab = "tv";
+      tonightExpanded = false;
+      dancersExpanded = false;
+      selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
+      homeBottomTv.classList.add("active");
+      homeBottomTv.setAttribute("aria-current", "page");
+      render();
+      window.requestAnimationFrame(() => {
+        const top = tabTitle.getBoundingClientRect().top + window.scrollY - 78;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      });
     });
-
-    document.querySelector("[data-close-home-tv]")?.addEventListener("click", () => closeHomeTvDrawer());
 
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => {
         const nextTab = tab.dataset.tab;
         if (!nextTab) return;
-        closeHomeTvDrawer(false);
+        deactivateHomeTvFeed();
         if (profileBackdrop.classList.contains("show")) closeProfileModal();
         if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
           selectedVenueName = null;
@@ -44185,7 +44548,7 @@
     });
 
     brandHome.addEventListener("click", () => {
-      closeHomeTvDrawer(false);
+      deactivateHomeTvFeed();
       activeTab = "tonight";
       tonightExpanded = false;
       dancersExpanded = false;
@@ -44213,7 +44576,7 @@
     });
 
     citySelect.addEventListener("change", () => {
-      closeHomeTvDrawer(false);
+      deactivateHomeTvFeed();
       tonightExpanded = false;
       dancersExpanded = false;
       dashboardTonightExpanded = false;

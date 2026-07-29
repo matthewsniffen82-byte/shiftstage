@@ -12,38 +12,41 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
     navigation,
     /data-tab="tonight"[\s\S]*data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"[\s\S]*data-tab="trending"/,
   );
-  assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="homeTvDrawer"[^>]*aria-expanded="false"/);
+  assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="results"[^>]*aria-current="false"/);
   assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
   assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
   assert.match(homeSource, /\.home-bottom-tv-icon \{[\s\S]*linear-gradient\(135deg,#7c3aed,#ec4899\)/);
   assert.match(homeSource, /@media \(max-width: 720px\)[\s\S]*?\.home-tv-launch \{\s*display: none !important/);
   assert.match(
     homeSource,
-    /bottomTv\.setAttribute\("aria-label", `Show MyDancr TV \$\{tvCityLabel\} videos on Home`\)/,
+    /bottomTv\.setAttribute\("aria-label", `Show MyDancr TV \$\{tvCityLabel\} videos in the Home feed`\)/,
   );
 });
 
-test("the Home TV button opens a real horizontally swipeable video tray", () => {
+test("the Home TV button renders a real snap-scroll video feed without leaving Home", () => {
   assert.match(
     homeSource,
-    /id="homeTvDrawer"[\s\S]*?id="homeTvDrawerStatus"[\s\S]*?id="homeTvDrawerList"[^>]*aria-label="Swipe through MyDancr TV videos"/,
+    /#results\.home-tv-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
   );
   assert.match(
     homeSource,
-    /main\.stack > \.home-tv-drawer \{[\s\S]*?position: fixed[\s\S]*?width: min\(calc\(100vw - 16px\), 704px\) !important[\s\S]*?margin: 0 !important[\s\S]*?\.home-tv-drawer-list \{[\s\S]*?overflow-x: auto[\s\S]*?scroll-snap-type: x mandatory/,
+    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?activeTab = "tv"[\s\S]*?render\(\)[\s\S]*?window\.scrollTo/,
   );
   assert.match(
     homeSource,
-    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?openHomeTvDrawer\(\)/,
+    /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(city\)\}&limit=24`[^]*?payload\.videos\.filter\(\(item\) => item\?\.id && item\?\.videoUrl && item\?\.dancer\?\.stageName\)/,
   );
   assert.match(
     homeSource,
-    /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(city\)\}&limit=8`[^]*?payload\.videos\.filter\(\(item\) => item\?\.id && item\?\.videoUrl\)/,
+    /dancer\.href = dancerSlug \? `\/dancers\/\$\{encodeURIComponent\(dancerSlug\)\}` : "#"/,
   );
+  assert.match(homeSource, /venue\.href = `\/venues\/\$\{encodeURIComponent\(venueSlug\)\}`/);
+  assert.match(homeSource, /"Working now"[\s\S]*?`Upcoming \$\{formatProfileTvShift/);
   assert.match(
     homeSource,
-    /card\.className = "home-tv-drawer-card"[^]*?video\.autoplay = true[^]*?card\.addEventListener\("click", \(\) => openProfileTvViewer\(item, dancerName, homeTvDrawerVideos\)\)/,
+    /new IntersectionObserver\([\s\S]*?activateHomeTvFeedVideo/,
   );
+  assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
 test("bottom navigation keeps every destination on one uniform baseline", () => {
