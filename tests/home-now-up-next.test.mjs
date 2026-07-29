@@ -20,8 +20,18 @@ test("the homepage falls back from confirmed working dancers to tonight's next s
   assert.match(homeSource, /if \(tab === "tonight"\) return homeTonightDiscovery\(city\)\.items/);
 });
 
-test("the homepage labels and empty state match the authoritative schedule mode", () => {
-  assert.match(homeSource, /tonightDiscovery\.mode === "now" \? "Now" : "Up Next"/);
+test("the homepage keeps a stable Now & Next destination while results match the schedule mode", () => {
+  assert.match(
+    homeSource,
+    /data-tab="tonight" data-tab-label="Now &amp; Next">Now &amp; Next<\/button>/,
+  );
+  assert.match(
+    homeSource,
+    /tonight: '<svg viewBox="0 0 24 24"><rect x="3\.5" y="5\.5" width="17" height="15" rx="2"><\/rect>[\s\S]*?<circle cx="15\.5" cy="15\.5" r="3"><\/circle>/,
+  );
+  assert.match(homeSource, /const label = tab\.dataset\.tabLabel \|\| tab\.textContent\.trim\(\)/);
+  assert.doesNotMatch(homeSource, /tonightDiscovery\.mode === "now" \? "Now" : "Up Next"/);
+  assert.doesNotMatch(homeSource, /M4 11\.2 12 4l8 7\.2/);
   assert.match(homeSource, /`\$\{tonightDiscovery\.items\.length\} working now`/);
   assert.match(homeSource, /`\$\{tonightDiscovery\.items\.length\} up next tonight`/);
   assert.match(homeSource, /`Up Next Tonight in \$\{city\}`/);

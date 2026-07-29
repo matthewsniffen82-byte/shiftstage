@@ -27894,7 +27894,7 @@
       </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
+        <button class="tab active" data-tab="tonight" data-tab-label="Now &amp; Next">Now &amp; Next</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
@@ -41931,7 +41931,7 @@
 
     function homeNavigationIconMarkup(tabName) {
       const icons = {
-        tonight: '<svg viewBox="0 0 24 24"><path d="M4 11.2 12 4l8 7.2"></path><path d="M6.5 10.5V20h11v-9.5"></path><path d="M9.5 20v-5.5h5V20"></path></svg>',
+        tonight: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M8 3.5v4M16 3.5v4M3.5 10h17"></path><circle cx="15.5" cy="15.5" r="3"></circle><path d="M15.5 14v1.7l1.2.8"></path></svg>',
         dancers: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"></path></svg>',
         venues: '<svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>',
         trending: '<svg viewBox="0 0 24 24"><path d="m4 17 5-5 3.5 3.5L20 8"></path><path d="M15 8h5v5"></path></svg>'
@@ -41950,9 +41950,7 @@
       };
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
-        const label = tabName === "tonight" && !loading
-          ? (tonightDiscovery.mode === "now" ? "Now" : "Up Next")
-          : (tab.dataset.tabLabel || tab.textContent.trim());
+        const label = tab.dataset.tabLabel || tab.textContent.trim();
         const count = loading && ["tonight", "dancers", "trending"].includes(tabName) ? "..." : (counts[tabName] ?? 0);
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
