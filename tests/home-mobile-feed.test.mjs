@@ -42,6 +42,25 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
     homeSource,
     /#discoveryTabs \.tab::before,[\s\S]*?#discoveryTabs \.home-bottom-tv::after \{[\s\S]*?content: none !important/,
   );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?background: rgba\(28,27,36,.96\)/,
+  );
+});
+
+test("mobile legal actions form a complete equal two-row grid above navigation", () => {
+  assert.match(
+    homeSource,
+    /main\.stack > \.legal-links \{[\s\S]*?display: grid !important[\s\S]*?grid-template-columns: repeat\(3,minmax\(0,1fr\)\) !important/,
+  );
+  assert.match(
+    homeSource,
+    /main\.stack > \.legal-links \.legal-link \{[\s\S]*?width: 100% !important[\s\S]*?min-height: 44px !important[\s\S]*?margin: 0 !important/,
+  );
+  assert.match(
+    homeSource,
+    /main\.stack > \.legal-links \.admin-legal-link \{[\s\S]*?grid-column: auto !important[\s\S]*?justify-self: stretch !important[\s\S]*?margin: 0 !important/,
+  );
 });
 
 test("mobile homepage cards form a single-column production action feed", () => {
