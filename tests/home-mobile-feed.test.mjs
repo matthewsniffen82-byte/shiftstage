@@ -70,6 +70,10 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
     homeSource,
     /new IntersectionObserver\([\s\S]*?activateHomeTvFeedVideo/,
   );
+  assert.match(
+    homeSource,
+    /close\.className = "home-tv-feed-close"[\s\S]*?close\.setAttribute\("aria-label", "Close MyDancr TV"\)[\s\S]*?close\.addEventListener\("click", closeHomeTvFeed\)/,
+  );
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 

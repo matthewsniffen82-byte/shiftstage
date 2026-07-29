@@ -28011,7 +28011,8 @@
           pointer-events: none;
         }
         .home-tv-feed-copy a,
-        .home-tv-feed-sound {
+        .home-tv-feed-sound,
+        .home-tv-feed-close {
           pointer-events: auto;
         }
         .home-tv-feed-dancer {
@@ -28133,6 +28134,29 @@
           font-size: 11px;
           font-weight: 900;
           backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-close {
+          position: absolute;
+          z-index: 4;
+          top: 14px;
+          right: 14px;
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(126,234,255,.46);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.72);
+          box-shadow: 0 8px 24px rgba(0,0,0,.38);
+          font-size: 25px;
+          line-height: 1;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-close:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
         }
         .home-tv-feed-playback {
           position: absolute;
@@ -42273,6 +42297,18 @@
       bottomTv?.setAttribute("aria-current", "false");
     }
 
+    function closeHomeTvFeed() {
+      activeTab = "tonight";
+      tonightExpanded = false;
+      dancersExpanded = false;
+      selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.tab === "tonight");
+      });
+      render();
+      document.getElementById("homeBottomTv")?.focus({ preventScroll: true });
+    }
+
     function homeTvFeedSchedule(item) {
       if (item.shift?.isActive) return { label: "Working now", className: "is-now" };
       if (item.shift) {
@@ -42407,7 +42443,13 @@
         });
         syncHomeTvFeedSoundButtons();
       });
-      slide.append(video, shade, playback, position, sound, createHomeTvFeedCopy(item, scheduleContext));
+      const close = document.createElement("button");
+      close.className = "home-tv-feed-close";
+      close.type = "button";
+      close.textContent = "×";
+      close.setAttribute("aria-label", "Close MyDancr TV");
+      close.addEventListener("click", closeHomeTvFeed);
+      slide.append(video, shade, playback, position, sound, close, createHomeTvFeedCopy(item, scheduleContext));
       return slide;
     }
 
