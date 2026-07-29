@@ -57,5 +57,5 @@ test("existing installed sessions refresh onto the human-only support release", 
   assert.match(serviceWorkerSource, /caches\.delete\(cacheName\)/);
   assert.match(serviceWorkerSource, /event\.request\.mode === "navigate" \? "no-store"/);
   assert.match(liveRouteSource, /export const dynamic = "force-static"/);
-  assert.match(liveRouteSource, /public, max-age=0, s-maxage=31536000/);
+  assert.match(liveRouteSource, /public, max-age=0, s-maxage=60, stale-while-revalidate=60/);
 });

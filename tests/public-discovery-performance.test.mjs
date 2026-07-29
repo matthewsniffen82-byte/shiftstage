@@ -9,10 +9,11 @@ const [homeSource, rootRouteSource, discoveryRouteSource, publicServiceSource] =
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
 ]);
 
-test("the production home shell is statically generated and CDN cached", () => {
+test("the production home shell is statically generated without a release-stale CDN lifetime", () => {
   assert.match(rootRouteSource, /export const dynamic = "force-static"/);
   assert.match(rootRouteSource, /export const revalidate = false/);
-  assert.match(rootRouteSource, /s-maxage=31536000/);
+  assert.match(rootRouteSource, /s-maxage=60, stale-while-revalidate=60/);
+  assert.doesNotMatch(rootRouteSource, /s-maxage=31536000/);
   assert.doesNotMatch(rootRouteSource, /no-store, no-cache/);
 });
 

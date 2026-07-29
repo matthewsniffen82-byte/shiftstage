@@ -19,7 +19,7 @@ export async function GET() {
   return new Response(withLiveProfileStyles, {
     headers: {
       "content-type": "text/html; charset=utf-8",
-      "cache-control": "public, max-age=0, s-maxage=31536000, stale-while-revalidate=86400",
+      "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
       "x-dancr-live-shell-version": LIVE_SHELL_SHA256,
     },
   });
