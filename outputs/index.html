@@ -28464,6 +28464,11 @@
           border-color: rgba(126,234,255,.62);
           background: linear-gradient(135deg,rgba(124,58,237,.86),rgba(236,72,153,.72));
         }
+        .home-discovery-feed-actions .home-discovery-feed-live-qr {
+          border-color: rgba(77,236,157,.72);
+          background: linear-gradient(135deg,rgba(16,128,74,.94),rgba(7,92,77,.94));
+          box-shadow: 0 8px 24px rgba(10,116,78,.38), inset 0 1px 0 rgba(255,255,255,.18);
+        }
         .home-discovery-feed-actions .feed-card-action:disabled {
           opacity: .42;
           cursor: default;
@@ -35728,6 +35733,14 @@
           const pass = await createRevenueDealPass(config);
           saveCustomerDealPass(pass, "Club Deal QR saved");
           openDealPassOverlay(pass);
+          if (revenueTrigger.hasAttribute("data-feed-live-qr")) {
+            recordVenuePageEvent({
+              venueId: pass.venueId,
+              dancerId: pass.dancerId,
+              eventType: "qr_impression",
+              source: "dancer_profile"
+            });
+          }
         } catch (error) {
           showToast(error.message || "Unable to create the Club Deal QR");
         } finally {
@@ -35746,6 +35759,14 @@
         return true;
       }
       openDealPassOverlay(pass);
+      if (trigger.hasAttribute("data-feed-live-qr")) {
+        recordVenuePageEvent({
+          venueId: pass.venueId,
+          dancerId: pass.dancerId,
+          eventType: "qr_impression",
+          source: "dancer_profile"
+        });
+      }
       return true;
     }
 
@@ -42607,6 +42628,34 @@
       };
     }
 
+    function homeDiscoveryFeedLiveQrMarkup(profile) {
+      if (!isWorkingTonight(profile) || !profile.venueId) return "";
+      if (profile.activeDeal?.id) {
+        const config = {
+          deal: profile.activeDeal,
+          venueId: profile.venueId,
+          venueSlug: profile.venueSlug,
+          venueName: profile.venue,
+          sourceType: "dancer_profile",
+          dancerId: profile.id,
+          dancerName: profile.name
+        };
+        return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-live-qr aria-label="Open the live Club Deal QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+      }
+      if (!profile.venueQrCodeUrl) return "";
+      const pass = publishedVenueQrPass({
+        venueId: profile.venueId,
+        venueSlug: profile.venueSlug,
+        venueName: profile.venue,
+        qrCodeUrl: profile.venueQrCodeUrl,
+        qrCodeLabel: profile.venueQrCodeLabel,
+        sourceType: "dancer_profile",
+        dancerId: profile.id,
+        dancerName: profile.name
+      });
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-live-qr aria-label="Open the live venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+    }
+
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
       const city = citySelect.value;
       const safeName = escapeHtml(profile.name);
@@ -42626,21 +42675,23 @@
       const verifiedMark = profile.status === "Verified"
         ? '<span class="verified-mark" aria-label="Verified">✓</span>'
         : "";
+      const isLive = isWorkingTonight(profile);
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
       const isGoing = !!goingTonightSavedByProfile[profile.name];
-      const canMarkGoing = Boolean(profile.shiftId && profile.scheduled);
+      const canMarkGoing = Boolean(isLive && profile.shiftId);
       const venue = resolveVenueByName(venueName, city);
       const directionsMarkup = tab === "tonight" && venue?.address
         ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeVenueName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
       const goingMarkup = canMarkGoing
-        ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="${isWorkingTonight(profile) ? "tonight" : "upcoming"}" aria-pressed="${isGoing}">${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>`
+        ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>`
         : "";
+      const liveQrMarkup = homeDiscoveryFeedLiveQrMarkup(profile);
       const venueMarkup = venueName
         ? `<button class="home-discovery-feed-venue" type="button" data-card-venue="${venueValue}" aria-label="Open ${safeVenueName} venue page">${venueIconMarkup()}<span class="home-discovery-feed-venue-label">${safeVenueName}${distanceLabel ? ` · ${escapeHtml(distanceLabel)}` : ""}</span></button>`
         : "";
-      const goingCountMarkup = profile.scheduled
+      const goingCountMarkup = isLive
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
         : "";
       return `
@@ -42657,6 +42708,7 @@
             ${goingCountMarkup}
           </div>
           <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
+            ${liveQrMarkup}
             <button class="home-discovery-feed-profile-button" type="button" data-profile="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
