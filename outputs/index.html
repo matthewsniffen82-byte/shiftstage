@@ -28114,6 +28114,9 @@
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;
         }
+        .profile-modal > .modal-image > .modal-identity-stack {
+          display: none !important;
+        }
         @media (max-width: 640px) {
           .home-discovery-controls { grid-template-columns: minmax(0, 1fr) auto !important; align-items: end; gap: 8px !important; padding: 10px !important; }
           .home-filter-toggle { display: inline-flex; }
@@ -36960,7 +36963,7 @@
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
           <div class="card-badges">
             ${statusBadge}
-            ${options.feedActions && !isPending ? `<span class="card-profile-destination">View Profile <span aria-hidden="true">→</span></span>` : ""}
+            ${options.feedActions && !isPending ? `<span class="card-profile-destination">View full profile <span aria-hidden="true">→</span></span>` : ""}
             ${trendBadge}
             ${trendMarker}
           </div>

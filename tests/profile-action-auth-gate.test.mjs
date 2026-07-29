@@ -70,11 +70,15 @@ test("the live dancer profile close control exits shared links and remains touch
   assert.match(profileNavigationSource, />\s*×\s*<\/button>/);
   assert.match(
     homeSource,
-    /<div class="card-badges">[\s\S]*?class="card-profile-destination">View Profile <span aria-hidden="true">→<\/span>[\s\S]*?<\/div>\s*<\/div>\s*<div class="profile-body">/,
+    /<div class="card-badges">[\s\S]*?class="card-profile-destination">View full profile <span aria-hidden="true">→<\/span>[\s\S]*?<\/div>\s*<\/div>\s*<div class="profile-body">/,
   );
   assert.match(
     homeSource,
     /body\.overlay-open \.home-feed-card \.card-profile-destination \{\s+display: none !important;\s+\}/,
+  );
+  assert.match(
+    homeSource,
+    /\.profile-modal > \.modal-image > \.modal-identity-stack \{\s+display: none !important;\s+\}/,
   );
   assert.doesNotMatch(
     homeSource,
