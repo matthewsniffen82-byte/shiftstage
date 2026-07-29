@@ -27941,6 +27941,7 @@
         .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
         #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
         #results.home-tv-feed {
+          position: relative;
           width: 100%;
           max-width: 640px;
           height: min(760px, calc(100dvh - 150px));
@@ -28135,29 +28136,6 @@
           font-weight: 900;
           backdrop-filter: blur(12px);
         }
-        .home-tv-feed-close {
-          position: absolute;
-          z-index: 4;
-          top: 14px;
-          right: 14px;
-          width: 40px;
-          height: 40px;
-          display: grid;
-          place-items: center;
-          padding: 0;
-          border: 1px solid rgba(126,234,255,.46);
-          border-radius: 999px;
-          color: #fff;
-          background: rgba(0,0,0,.72);
-          box-shadow: 0 8px 24px rgba(0,0,0,.38);
-          font-size: 25px;
-          line-height: 1;
-          backdrop-filter: blur(12px);
-        }
-        .home-tv-feed-close:focus-visible {
-          outline: 2px solid #7eeaff;
-          outline-offset: 3px;
-        }
         .home-tv-feed-playback {
           position: absolute;
           z-index: 2;
@@ -28194,6 +28172,35 @@
           background: rgba(0,0,0,.64);
           font-size: 10px;
           font-weight: 900;
+        }
+        .home-tv-feed-close {
+          position: absolute;
+          z-index: 4;
+          top: calc(14px + env(safe-area-inset-top));
+          left: 14px;
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.34);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.72);
+          box-shadow: 0 8px 24px rgba(0,0,0,.38);
+          font-size: 28px;
+          font-weight: 500;
+          line-height: 1;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-close:hover,
+        .home-tv-feed-close:focus-visible {
+          border-color: rgba(255,255,255,.72);
+          background: rgba(20,20,26,.94);
+        }
+        .home-tv-feed-close:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
         }
         .profile-tv-strip { width: fit-content; max-width: 100%; display: grid; gap: 10px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 10px; background: rgba(10,10,15,.86); box-shadow: 0 16px 44px rgba(0,0,0,.22); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
@@ -28379,10 +28386,18 @@
             display: none !important;
           }
           #results.home-tv-feed {
-            height: var(--home-tv-feed-height, calc(100dvh - 150px));
+            position: fixed !important;
+            z-index: 80;
+            inset: 0 !important;
+            width: 100vw !important;
+            max-width: none !important;
+            height: var(--home-tv-feed-height, 100dvh) !important;
             min-height: 0;
             max-height: none;
-            border-radius: 15px;
+            margin: 0 !important;
+            border: 0 !important;
+            border-radius: 0;
+            box-shadow: none;
           }
           html.home-tv-feed-locked,
           body.home-tv-feed-locked {
@@ -28402,10 +28417,13 @@
             pointer-events: none !important;
           }
           .home-tv-feed-copy {
-            padding: 54px 14px 16px;
+            padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
           }
           .home-tv-feed-dancer {
             font-size: clamp(22px, 7vw, 31px);
+          }
+          .home-tv-feed-position {
+            top: calc(70px + env(safe-area-inset-top));
           }
           #discoveryTabs {
             position: fixed !important;
@@ -42222,17 +42240,10 @@
     function syncHomeTvFeedViewport() {
       homeTvFeedViewportFrame = 0;
       if (activeTab !== "tv" || !homeTvFeedUsesLockedViewport()) return;
-      const navigation = document.getElementById("discoveryTabs");
-      if (!navigation || !results.classList.contains("home-tv-feed")) return;
-      const feedTop = results.getBoundingClientRect().top;
-      const navigationTop = navigation.getBoundingClientRect().top;
-      const visualViewportBottom = window.visualViewport
-        ? window.visualViewport.offsetTop + window.visualViewport.height
-        : window.innerHeight;
-      const availableBottom = Math.min(navigationTop, visualViewportBottom);
-      const availableHeight = Math.floor(availableBottom - feedTop - 8);
-      if (availableHeight > 0) {
-        results.style.setProperty("--home-tv-feed-height", `${availableHeight}px`);
+      if (!results.classList.contains("home-tv-feed")) return;
+      const viewportHeight = Math.floor(window.visualViewport?.height || window.innerHeight);
+      if (viewportHeight > 0) {
+        results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
       }
     }
 
@@ -42268,8 +42279,6 @@
     }
 
     function focusAndLockHomeTvFeed() {
-      const top = tabTitle.getBoundingClientRect().top + window.scrollY - 78;
-      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: "auto" });
       lockHomeTvFeedViewport();
     }
 
@@ -42443,18 +42452,25 @@
         });
         syncHomeTvFeedSoundButtons();
       });
-      const close = document.createElement("button");
-      close.className = "home-tv-feed-close";
-      close.type = "button";
-      close.textContent = "×";
-      close.setAttribute("aria-label", "Close MyDancr TV");
-      close.addEventListener("click", closeHomeTvFeed);
-      slide.append(video, shade, playback, position, sound, close, createHomeTvFeedCopy(item, scheduleContext));
+      slide.append(video, shade, playback, position, sound, createHomeTvFeedCopy(item, scheduleContext));
       return slide;
     }
 
+    function createHomeTvFeedCloseButton() {
+      const close = document.createElement("button");
+      close.className = "home-tv-feed-close";
+      close.type = "button";
+      close.setAttribute("aria-label", "Close MyDancr TV");
+      close.textContent = "×";
+      close.addEventListener("click", closeHomeTvFeed);
+      return close;
+    }
+
     function renderHomeTvFeedMessage(message, retryCity = "") {
-      results.innerHTML = `<div class="locked">${escapeHtml(message)}</div>`;
+      const state = document.createElement("div");
+      state.className = "locked";
+      state.textContent = message;
+      results.replaceChildren(createHomeTvFeedCloseButton(), state);
       if (!retryCity) return;
       const retry = document.createElement("button");
       retry.className = "view-all";
@@ -42506,9 +42522,12 @@
       const feedKey = `${city}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
       if (results.dataset.homeTvFeedKey === feedKey) return;
       homeTvFeedObserver?.disconnect();
-      results.replaceChildren(...homeTvFeedVideos.map((item, index) => (
-        createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
-      )));
+      results.replaceChildren(
+        createHomeTvFeedCloseButton(),
+        ...homeTvFeedVideos.map((item, index) => (
+          createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
+        ))
+      );
       results.dataset.homeTvFeedKey = feedKey;
       results.scrollTop = 0;
       syncHomeTvFeedSoundButtons();

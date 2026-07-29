@@ -38,7 +38,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /height: var\(--home-tv-feed-height, calc\(100dvh - 150px\)\)[\s\S]*?min-height: 0[\s\S]*?max-height: none/,
+    /#results\.home-tv-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-tv-feed-height, 100dvh\) !important[\s\S]*?border-radius: 0/,
   );
   assert.match(
     homeSource,
@@ -46,11 +46,11 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedViewport\(\)[\s\S]*?availableBottom - feedTop - 8[\s\S]*?--home-tv-feed-height/,
+    /function syncHomeTvFeedViewport\(\)[\s\S]*?window\.visualViewport\?\.height \|\| window\.innerHeight[\s\S]*?--home-tv-feed-height/,
   );
   assert.match(
     homeSource,
-    /function focusAndLockHomeTvFeed\(\)[\s\S]*?behavior: "auto"[\s\S]*?lockHomeTvFeedViewport\(\)/,
+    /function focusAndLockHomeTvFeed\(\) \{\s*lockHomeTvFeedViewport\(\);\s*\}/,
   );
   assert.match(
     homeSource,
@@ -72,7 +72,11 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /close\.className = "home-tv-feed-close"[\s\S]*?close\.setAttribute\("aria-label", "Close MyDancr TV"\)[\s\S]*?close\.addEventListener\("click", closeHomeTvFeed\)/,
+    /function createHomeTvFeedCloseButton\(\)[\s\S]*?close\.className = "home-tv-feed-close"[\s\S]*?close\.setAttribute\("aria-label", "Close MyDancr TV"\)[\s\S]*?close\.addEventListener\("click", closeHomeTvFeed\)/,
+  );
+  assert.match(
+    homeSource,
+    /results\.replaceChildren\(\s*createHomeTvFeedCloseButton\(\),[\s\S]*?createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
