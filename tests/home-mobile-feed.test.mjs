@@ -94,7 +94,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("Now & Next and Dancers open as full-screen mobile swipe feeds", () => {
+test("Now and Dancers open as full-screen mobile swipe feeds", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
