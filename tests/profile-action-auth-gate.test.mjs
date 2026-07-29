@@ -68,7 +68,11 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /#profileBackdrop \.modal-body \{[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;/,
+    /#profileBackdrop \.profile-modal \{[\s\S]*?overflow-x: hidden !important;[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?touch-action: pan-y !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#profileBackdrop \.modal-body \{[\s\S]*?flex: 0 0 auto !important;[\s\S]*?overflow: visible !important;[\s\S]*?padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;/,
   );
   assert.match(
     homeSource,

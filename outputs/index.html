@@ -28667,7 +28667,12 @@
           display: flex !important;
           flex-direction: column;
           max-height: calc(100dvh - env(safe-area-inset-top, 0px)) !important;
-          overflow: hidden !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior-y: contain;
+          scroll-padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+          touch-action: pan-y !important;
+          -webkit-overflow-scrolling: touch;
         }
         #profileBackdrop .modal-top {
           z-index: 220 !important;
@@ -28690,14 +28695,10 @@
           flex: 0 0 auto;
         }
         #profileBackdrop .modal-body {
+          flex: 0 0 auto !important;
           min-height: 0 !important;
-          overflow-x: hidden !important;
-          overflow-y: auto !important;
-          overscroll-behavior-y: contain;
-          scroll-padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+          overflow: visible !important;
           padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
-          touch-action: pan-y !important;
-          -webkit-overflow-scrolling: touch;
         }
         #profileBackdrop .modal-actions {
           position: static !important;
