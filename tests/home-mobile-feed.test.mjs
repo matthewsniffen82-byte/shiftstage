@@ -107,16 +107,11 @@ test("mobile homepage cards form a single-column production action feed", () => 
   assert.match(homeSource, /postOptionalAuthJson\("\/api\/customer\/going"/);
 });
 
-test("homepage search filters real loaded dancers and venues on desktop and mobile", () => {
-  assert.match(homeSource, /id="homeHeaderSearchInput"[\s\S]*Search dancers or venues/);
-  assert.match(homeSource, /class="desktop-search"[\s\S]*Search dancers or venues/);
-  assert.match(
-    homeSource,
-    /const applySearchValue = \(value, source\) => \{[\s\S]*homeSearchQuery = String\(value \|\| ""\)[\s\S]*render\(\)/,
-  );
-  assert.match(
-    homeSource,
-    /const unfilteredItems = getItems\(city, activeTab\)[\s\S]*unfilteredItems\.filter[\s\S]*item\.name, item\.venue, item\.city, item\.area, item\.stageName/,
-  );
-  assert.match(homeSource, /No \$\{activeTab === "venues" \? "venues" : "dancers"\} match/);
+test("homepage omits the top search feature and keeps city discovery controls", () => {
+  assert.doesNotMatch(homeSource, /homeHeaderSearch(?:Toggle|Panel|Input|Clear)/);
+  assert.doesNotMatch(homeSource, /class="desktop-search"/);
+  assert.doesNotMatch(homeSource, /homeSearchQuery|applySearchValue|Search dancers or venues/);
+  assert.match(homeSource, /id="homeHeaderCity"[\s\S]*aria-label="Change city"/);
+  assert.match(homeSource, /const allItems = getItems\(city, activeTab\)/);
+  assert.doesNotMatch(homeSource, /\.brand \{\s*display: none;\s*\}/);
 });
