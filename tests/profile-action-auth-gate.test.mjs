@@ -75,6 +75,14 @@ test("the live dancer profile close control exits shared links and remains touch
     /#profileBackdrop \.modal-actions \{[\s\S]*?position: static !important;[\s\S]*?scroll-margin-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
+  assert.match(
+    homeSource,
+    /modalCloseButton\.addEventListener\("pointerdown", \(event\) => \{\s+event\.stopPropagation\(\);\s+\}, \{ passive: true \}\);/,
+  );
+  assert.match(
+    homeSource,
+    /document\.addEventListener\("click", \(event\) => \{[\s\S]*?event\.target\.closest\?\.\("#modalClose"\)[\s\S]*?closeProfileModal\(\);\s+\}, \{ capture: true \}\);/,
+  );
   assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/);
   assert.match(profileNavigationSource, /className="public-profile-close"/);
   assert.match(profileNavigationSource, /aria-label="Close full dancer profile and return to the previous page"/);

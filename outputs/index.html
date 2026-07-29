@@ -43048,10 +43048,8 @@
 
     const modalCloseButton = document.getElementById("modalClose");
     modalCloseButton.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
       event.stopPropagation();
-      closeProfileModal();
-    }, { passive: false });
+    }, { passive: true });
     modalCloseButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -43086,13 +43084,13 @@
       event.preventDefault();
       event.stopPropagation();
     });
-    document.addEventListener("pointerdown", (event) => {
+    document.addEventListener("click", (event) => {
       const closeButton = event.target.closest?.("#modalClose");
       if (!closeButton) return;
       event.preventDefault();
       event.stopPropagation();
       closeProfileModal();
-    }, { capture: true, passive: false });
+    }, { capture: true });
 
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target.closest?.("#profilePhotoViewer")) return;
