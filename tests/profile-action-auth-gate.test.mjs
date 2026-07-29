@@ -68,11 +68,11 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /#profileBackdrop \.modal-body \{[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-padding-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\) !important;/,
+    /#profileBackdrop \.modal-body \{[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;/,
   );
   assert.match(
     homeSource,
-    /#profileBackdrop \.modal-actions \{[\s\S]*?position: static !important;[\s\S]*?scroll-margin-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /#profileBackdrop \.modal-actions \{[\s\S]*?position: static !important;[\s\S]*?scroll-margin-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
   assert.match(

@@ -28717,14 +28717,14 @@
           overflow-x: hidden !important;
           overflow-y: auto !important;
           overscroll-behavior-y: contain;
-          scroll-padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
-          padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+          scroll-padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+          padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
           touch-action: pan-y !important;
           -webkit-overflow-scrolling: touch;
         }
         #profileBackdrop .modal-actions {
           position: static !important;
-          scroll-margin-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+          scroll-margin-bottom: max(16px, env(safe-area-inset-bottom, 0px));
           padding-bottom: 0 !important;
         }
       </style>
