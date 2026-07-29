@@ -27908,7 +27908,7 @@
       </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
+        <button class="tab active" data-tab="tonight" data-tab-label="Now &amp; Next">Now &amp; Next</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
@@ -42066,12 +42066,44 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
+    function upNextTonightItems(city) {
+      const market = markets[city];
+      const now = new Date();
+      const cityNow = cityWallClock(now, city);
+      const tonightEnds = new Date(cityNow);
+      tonightEnds.setUTCDate(tonightEnds.getUTCDate() + 1);
+      tonightEnds.setUTCHours(6, 0, 0, 0);
+
+      return market.dancers
+        .filter((profile) => {
+          if (!isApprovedPublicProfile(profile) || !profile.scheduled || isWorkingTonight(profile, city) || !profileMatchesVenueFilter(profile)) {
+            return false;
+          }
+          const startsAt = new Date(profile.shiftStartsAt || "");
+          if (!Number.isFinite(startsAt.getTime()) || startsAt <= now) return false;
+          return cityWallClock(startsAt, city) <= tonightEnds;
+        })
+        .sort((a, b) => new Date(a.shiftStartsAt).getTime() - new Date(b.shiftStartsAt).getTime())
+        .map((profile) => withTrendingRank(profile, city));
+    }
+
+    function homeTonightDiscovery(city) {
+      const working = workingNowItems(city);
+      const upcoming = upNextTonightItems(city);
+      return {
+        mode: working.length ? (upcoming.length ? "combined" : "now") : "upcoming",
+        working,
+        upcoming,
+        items: [...working, ...upcoming]
+      };
+    }
+
     function getItems(city, tab) {
       const market = markets[city];
       if (["tonight", "dancers", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
         return [];
       }
-      if (tab === "tonight") return workingNowItems(city);
+      if (tab === "tonight") return homeTonightDiscovery(city).items;
       if (tab === "dancers") {
         const profiles = market.dancers
           .filter((profile) => isApprovedPublicProfile(profile) && profileMatchesVenueFilter(profile))
@@ -42117,14 +42149,18 @@
       if (!summary || !markets[city]) return;
 
       const venueName = selectedVenueFilter();
-      const workingNowCount = getItems(city, "tonight").length;
+      const tonightDiscovery = homeTonightDiscovery(city);
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All venues" : venueName;
       document.getElementById("homeLiveCity").textContent = city;
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
       document.getElementById("homeLiveWorking").textContent = liveDiscoveryIsLoading(city)
         ? "Loading live schedule…"
-        : `${workingNowCount} working now`;
+        : tonightDiscovery.mode === "combined"
+          ? `${tonightDiscovery.working.length} now · ${tonightDiscovery.upcoming.length} next`
+          : tonightDiscovery.mode === "now"
+            ? `${tonightDiscovery.working.length} working now`
+            : `${tonightDiscovery.upcoming.length} up next tonight`;
     }
 
     function render() {
@@ -42144,12 +42180,18 @@
       deactivateHomeTvFeed();
 
       const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
+      const tonightDiscovery = homeTonightDiscovery(city);
       const allItems = getItems(city, activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
       const venueFilter = selectedVenueFilter();
+      const tonightMode = loadingLiveProfiles ? "now" : tonightDiscovery.mode;
       const titles = {
-        tonight: venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`,
+        tonight: tonightMode === "combined"
+          ? (venueFilter === "all" ? `Now & Next in ${city}` : `Now & Next at ${venueFilter}`)
+          : tonightMode === "now"
+            ? (venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`)
+            : (venueFilter === "all" ? `Up Next Tonight in ${city}` : `Up Next Tonight at ${venueFilter}`),
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
         venues: `Venues in ${city}`,
         trending: `Trending in ${city}`
@@ -42197,9 +42239,9 @@
         const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
         results.innerHTML = `
           <section class="home-discovery-empty" aria-labelledby="homeNowEmptyTitle">
-            <strong id="homeNowEmptyTitle">No dancers are working now ${scope}.</strong>
-            <p>See approved dancers with upcoming shifts first, followed by dancers with no schedule posted.</p>
-            <button class="home-discovery-empty-action" type="button" data-show-dancers>See Upcoming Dancers</button>
+            <strong id="homeNowEmptyTitle">No dancers are working or scheduled next tonight ${scope}.</strong>
+            <p>See all approved dancers with upcoming shifts first, followed by dancers with no schedule posted.</p>
+            <button class="home-discovery-empty-action" type="button" data-show-dancers>See All Dancers</button>
           </section>
         `;
         return;
@@ -42209,7 +42251,7 @@
         results.innerHTML = `
           <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
             <strong id="homeDancersEmptyTitle">No upcoming or open-schedule dancers ${scope}.</strong>
-            <p>Approved dancers actively working right now remain available in the Now tab.</p>
+            <p>Approved dancers actively working right now remain available in the Now &amp; Next tab.</p>
           </section>
         `;
         return;

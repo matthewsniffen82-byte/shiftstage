@@ -4,19 +4,24 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("the Now destination contains only approved dancers with confirmed active check-ins", () => {
+test("the Now & Next destination combines confirmed workers with tonight's upcoming shifts", () => {
   assert.match(
     homeSource,
     /function workingNowItems\(city\)[\s\S]*isApprovedPublicProfile\(profile\)[\s\S]*isWorkingTonight\(profile, city\)[\s\S]*profileMatchesVenueFilter\(profile\)/,
   );
   assert.match(
     homeSource,
-    /if \(tab === "tonight"\) return workingNowItems\(city\)/,
+    /function upNextTonightItems\(city\)[\s\S]*tonightEnds\.setUTCDate\(tonightEnds\.getUTCDate\(\) \+ 1\)[\s\S]*tonightEnds\.setUTCHours\(6, 0, 0, 0\)[\s\S]*profile\.scheduled[\s\S]*startsAt <= now[\s\S]*cityWallClock\(startsAt, city\) <= tonightEnds/,
   );
   assert.doesNotMatch(
     homeSource,
-    /function upNextTonightItems\(|function homeTonightDiscovery\(/,
+    /if \(cityNow >= tonightEnds\) tonightEnds\.setUTCDate/,
   );
+  assert.match(
+    homeSource,
+    /function homeTonightDiscovery\(city\) \{[\s\S]*const working = workingNowItems\(city\);[\s\S]*const upcoming = upNextTonightItems\(city\);[\s\S]*mode: working\.length \? \(upcoming\.length \? "combined" : "now"\) : "upcoming"[\s\S]*items: \[\.\.\.working, \.\.\.upcoming\]/,
+  );
+  assert.match(homeSource, /if \(tab === "tonight"\) return homeTonightDiscovery\(city\)\.items/);
 });
 
 test("the Dancers directory lists upcoming shifts before no-schedule profiles and excludes active workers", () => {
@@ -31,22 +36,27 @@ test("the Dancers directory lists upcoming shifts before no-schedule profiles an
   assert.match(homeSource, /<span>No schedule posted<\/span>/);
 });
 
-test("the homepage exposes an honest Now empty state that opens the Dancers directory", () => {
+test("the homepage labels Now & Next honestly and retains a useful empty-state path", () => {
   assert.match(
     homeSource,
-    /data-tab="tonight" data-tab-label="Now">Now<\/button>/,
+    /data-tab="tonight" data-tab-label="Now &amp; Next">Now &amp; Next<\/button>/,
   );
   assert.match(
     homeSource,
     /tonight: '<svg viewBox="0 0 24 24"><rect x="3\.5" y="5\.5" width="17" height="15" rx="2"><\/rect>[\s\S]*?<circle cx="15\.5" cy="15\.5" r="3"><\/circle>/,
   );
   assert.match(homeSource, /const label = tab\.dataset\.tabLabel \|\| tab\.textContent\.trim\(\)/);
-  assert.doesNotMatch(homeSource, /Now &amp; Next|Now & Next in|Up Next Tonight in/);
   assert.doesNotMatch(homeSource, /M4 11\.2 12 4l8 7\.2/);
-  assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
-  assert.match(homeSource, /tonight: venueFilter === "all" \? `Now in \$\{city\}` : `Now at \$\{venueFilter\}`/);
-  assert.match(homeSource, /No dancers are working now \$\{scope\}\./);
-  assert.match(homeSource, /data-show-dancers>See Upcoming Dancers<\/button>/);
+  assert.match(homeSource, /`\$\{tonightDiscovery\.working\.length\} working now`/);
+  assert.match(homeSource, /`\$\{tonightDiscovery\.upcoming\.length\} up next tonight`/);
+  assert.match(
+    homeSource,
+    /`\$\{tonightDiscovery\.working\.length\} now · \$\{tonightDiscovery\.upcoming\.length\} next`/,
+  );
+  assert.match(homeSource, /`Now & Next in \$\{city\}`/);
+  assert.match(homeSource, /`Up Next Tonight in \$\{city\}`/);
+  assert.match(homeSource, /No dancers are working or scheduled next tonight \$\{scope\}\./);
+  assert.match(homeSource, /data-show-dancers>See All Dancers<\/button>/);
   assert.match(
     homeSource,
     /const showDancersButton = event\.target\.closest\("\[data-show-dancers\]"\)[\s\S]*activeTab = "dancers"[\s\S]*tab\.dataset\.tab === "dancers"[\s\S]*render\(\)/,
