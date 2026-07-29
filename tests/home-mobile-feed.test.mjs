@@ -21,6 +21,29 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
   );
 });
 
+test("bottom navigation keeps every destination on one uniform baseline", () => {
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?height: 57px !important[\s\S]*?grid-template-rows: 30px 14px !important[\s\S]*?background: transparent !important/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab\.active \{[\s\S]*?background: transparent !important[\s\S]*?box-shadow: none !important/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab-count \{[\s\S]*?top: 0 !important[\s\S]*?max-width: 27px !important[\s\S]*?height: 17px !important/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-bottom-tv-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?margin: 0 !important/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab::before,[\s\S]*?#discoveryTabs \.home-bottom-tv::after \{[\s\S]*?content: none !important/,
+  );
+});
+
 test("mobile homepage cards form a single-column production action feed", () => {
   assert.match(homeSource, /#results\.card-grid \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) !important/);
   assert.match(homeSource, /#results \.home-feed-card \.portrait \{[\s\S]*aspect-ratio: 4 \/ 5/);
