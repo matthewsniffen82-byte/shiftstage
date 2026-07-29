@@ -19,12 +19,16 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
     assert.match(source, /stroke:\s*#f9a8d4/);
     assert.match(source, /stroke-width:\s*1\.8/);
     assert.match(source, /M17\.05 8\.35V4\.35m0 1\.45c\.72-.95 1\.62-1\.25 2\.7-.91/);
-    assert.match(source, /border-radius:\s*8px/);
-    assert.match(
-      source,
-      /0 0 8px rgba\(236,\s*72,\s*153,\s*(?:0\.2|\.2)\)/,
-    );
   }
+  assert.match(globalNavigation, /border-radius:\s*8px/);
+  assert.match(
+    globalNavigation,
+    /0 0 8px rgba\(236,\s*72,\s*153,\s*(?:0\.2|\.2)\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-bottom-tv-icon \{[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
+  );
 });
 
 test("homepage active TV state keeps its emphasis controlled", () => {
@@ -33,6 +37,6 @@ test("homepage active TV state keeps its emphasis controlled", () => {
       /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?\}/,
     )?.[0] || "";
 
-  assert.match(activeTvRule, /0 0 10px rgba\(236,72,153,\.24\)/);
+  assert.match(activeTvRule, /drop-shadow\(0 0 7px rgba\(236,72,153,\.62\)\)/);
   assert.doesNotMatch(activeTvRule, /0 0 (?:20|28)px/);
 });

@@ -15,7 +15,10 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
   assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="results"[^>]*aria-current="false"/);
   assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
   assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
-  assert.match(homeSource, /\.home-bottom-tv-icon \{[\s\S]*linear-gradient\(135deg,#7c3aed,#ec4899\)/);
+  assert.match(
+    homeSource,
+    /\.home-bottom-tv-icon \{[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
+  );
   assert.match(homeSource, /@media \(max-width: 720px\)[\s\S]*?\.home-tv-launch \{\s*display: none !important/);
   assert.match(
     homeSource,
@@ -191,11 +194,11 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab-count \{[\s\S]*?top: 0 !important[\s\S]*?left: calc\(50% \+ 16px\) !important[\s\S]*?max-width: 27px !important[\s\S]*?height: 17px !important/,
+    /#discoveryTabs \.tab-count \{[\s\S]*?top: 4px !important[\s\S]*?left: calc\(50% \+ 12px\) !important[\s\S]*?max-width: none !important[\s\S]*?overflow: visible !important/,
   );
   assert.match(
     homeSource,
-    /\.home-bottom-tv-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?margin: 0 !important/,
+    /\.home-bottom-tv-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
   );
   assert.match(
     homeSource,
@@ -203,7 +206,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?background: rgba\(28,27,36,.96\)/,
+    /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
   );
 });
 
