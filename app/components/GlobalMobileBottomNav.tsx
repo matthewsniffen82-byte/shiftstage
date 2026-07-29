@@ -35,8 +35,9 @@ const destinations = [
     label: "TV",
     path: "/tv",
     icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m9 7 8 5-8 5V7Z" />
+      <svg className="mydancr-tv-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <path className="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z" />
+        <path className="mydancr-tv-r" d="M17.3 8V4.7m0 1.3c.65-.85 1.45-1.12 2.4-.82" />
       </svg>
     ),
   },
@@ -187,9 +188,12 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a.tv-destination .global-mobile-nav-icon {
-            border-color: rgba(255, 255, 255, 0.84);
+            border-color: rgba(255, 255, 255, 0.62);
+            border-radius: 8px;
             background: linear-gradient(135deg, #7c3aed, #ec4899);
-            box-shadow: 0 0 14px rgba(124, 58, 237, 0.36);
+            box-shadow:
+              0 0 8px rgba(236, 72, 153, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.16);
           }
 
           .global-mobile-bottom-nav svg {
@@ -202,11 +206,24 @@ export function GlobalMobileBottomNav() {
             stroke-linejoin: round;
           }
 
-          .global-mobile-bottom-nav a.tv-destination svg {
-            width: 19px;
-            height: 19px;
+          .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {
+            width: 20px;
+            height: 20px;
+            overflow: visible;
+            fill: none;
+            stroke: none;
+          }
+
+          .global-mobile-bottom-nav .mydancr-tv-play {
             fill: #fff;
-            stroke: #fff;
+          }
+
+          .global-mobile-bottom-nav .mydancr-tv-r {
+            fill: none;
+            stroke: #f9a8d4;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 1.5px rgba(236, 72, 153, 0.6));
           }
         }
       `}</style>

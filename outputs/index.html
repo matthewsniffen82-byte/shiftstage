@@ -27939,7 +27939,10 @@
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z"></path></svg>
+            <svg class="mydancr-tv-mark" viewBox="0 0 24 24">
+              <path class="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z"></path>
+              <path class="mydancr-tv-r" d="M17.3 8V4.7m0 1.3c.65-.85 1.45-1.12 2.4-.82"></path>
+            </svg>
           </span>
           <span>TV</span>
         </button>
@@ -28481,8 +28484,8 @@
             box-shadow: 0 0 16px rgba(124,58,237,.34);
           }
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon {
-            border-color: rgba(255,255,255,.94);
-            box-shadow: 0 0 20px rgba(236,72,153,.4), 0 0 28px rgba(124,58,237,.3);
+            border-color: rgba(255,255,255,.72);
+            box-shadow: 0 0 10px rgba(236,72,153,.24), inset 0 1px 0 rgba(255,255,255,.18);
           }
           #discoveryTabs .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv svg {
@@ -28539,16 +28542,27 @@
             display: grid;
             place-items: center;
             margin: 0 !important;
-            border: 1px solid rgba(255,255,255,.84);
-            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,.62);
+            border-radius: 8px;
             background: linear-gradient(135deg,#7c3aed,#ec4899);
-            box-shadow: 0 0 14px rgba(124,58,237,.36);
+            box-shadow: 0 0 8px rgba(236,72,153,.2), inset 0 1px 0 rgba(255,255,255,.16);
           }
-          #discoveryTabs .home-bottom-tv-icon svg {
-            width: 19px !important;
-            height: 19px !important;
+          #discoveryTabs .home-bottom-tv-icon .mydancr-tv-mark {
+            width: 20px !important;
+            height: 20px !important;
+            overflow: visible;
+            fill: none;
+            stroke: none;
+          }
+          #discoveryTabs .home-bottom-tv-icon .mydancr-tv-play {
             fill: #fff;
-            stroke: #fff;
+          }
+          #discoveryTabs .home-bottom-tv-icon .mydancr-tv-r {
+            fill: none;
+            stroke: #f9a8d4;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 1.5px rgba(236,72,153,.6));
           }
           #results.card-grid {
             grid-template-columns: minmax(0, 1fr) !important;
