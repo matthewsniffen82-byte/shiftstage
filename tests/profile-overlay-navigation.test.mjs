@@ -7,7 +7,7 @@ const homeSource = fs.readFileSync("outputs/index.html", "utf8");
 test("mobile navigation cannot cover the fixed profile video viewer", () => {
   assert.match(
     homeSource,
-    /body\.profile-tv-viewer-open #discoveryTabs \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
+    /body\.profile-tv-viewer-open #discoveryTabs(?:,\s+body\.profile-tv-viewer-open #homeTvDrawer)? \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
   );
   assert.match(
     homeSource,

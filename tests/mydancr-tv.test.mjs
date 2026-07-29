@@ -278,6 +278,7 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.doesNotMatch(videoStrip, /requestFullscreen\(\)|:fullscreen|<video[\s\S]*?\scontrols(?:\s|>)/);
   assert.match(videoStrip, /`\/tv\/\$\{encodeURIComponent\(video\.id\)\}`[\s\S]*?navigator\.share[\s\S]*?navigator\.clipboard\.writeText/);
   assert.match(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
+  assert.match(liveApp, /heading\.textContent = `\$\{profile\.name\} on MyDancr TV`/);
   assert.match(liveApp, /const card = document\.createElement\("button"\)[\s\S]*?card\.className = "profile-tv-strip-card"/);
   assert.match(liveApp, /card\.addEventListener\("click", \(\) => openProfileTvViewer\(item, profile\.name, payload\.videos\)\)/);
   assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?profile-tv-viewer-video[\s\S]*?controlslist="nofullscreen noremoteplayback nodownload"[\s\S]*?loop playsinline/);
