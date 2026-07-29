@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type FormEvent,
   type PropsWithChildren,
 } from "react";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import Link from "next/link";
 type ShiftAction = {
   id: string;
   label: string;
+  isActive?: boolean;
 };
 
 type SavedState = {
@@ -23,6 +25,15 @@ type SavedState = {
 };
 
 type AccountAction = "follow" | "notify";
+
+const REPORT_REASONS = [
+  "Misleading or inaccurate profile",
+  "Impersonation",
+  "Harassment or unsafe content",
+  "Underage concern",
+  "Spam or prohibited promotion",
+  "Other safety concern",
+] as const;
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
@@ -92,6 +103,10 @@ export function DancerProfileActions({
   const [goingSaving, setGoingSaving] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportError, setReportError] = useState("");
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
   const nextShift = useMemo(() => shifts[0] || null, [shifts]);
@@ -164,10 +179,12 @@ export function DancerProfileActions({
   }, [dancerId, nextShiftId, setGoingCount]);
 
   useEffect(() => {
-    if (!accountRequiredAction) return;
+    if (!accountRequiredAction && !reportDialogOpen) return;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAccountRequiredAction(null);
+      if (event.key !== "Escape") return;
+      setAccountRequiredAction(null);
+      setReportDialogOpen(false);
     };
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
@@ -175,7 +192,7 @@ export function DancerProfileActions({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [accountRequiredAction]);
+  }, [accountRequiredAction, reportDialogOpen]);
 
   function requireCustomerAccount(action: AccountAction) {
     if (token) return true;
@@ -276,9 +293,21 @@ export function DancerProfileActions({
     return data;
   }
 
-  async function submitReport() {
+  function submitReport() {
     if (reportSaving || reportSubmitted) return;
+    setReportError("");
+    setReportDialogOpen(true);
+  }
+
+  async function submitReportForm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (reportSaving || reportSubmitted) return;
+    if (!reportReason) {
+      setReportError("Choose a reason for the report.");
+      return;
+    }
     setReportSaving(true);
+    setReportError("");
     setStatus("");
     try {
       const headers: Record<string, string> = { "content-type": "application/json" };
@@ -291,8 +320,8 @@ export function DancerProfileActions({
           targetType: "dancer_profile",
           targetId: dancerId,
           targetLabel: profileName,
-          reason: "Profile report",
-          details: "Reported from the public dancer profile.",
+          reason: reportReason,
+          details: reportDetails.trim() || null,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -301,9 +330,12 @@ export function DancerProfileActions({
       }
       if (!data.report) throw new Error("The report could not be confirmed.");
       setReportSubmitted(true);
+      setReportDialogOpen(false);
       setStatus("Report submitted for review.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to submit report.");
+      setReportError(
+        error instanceof Error ? error.message : "Unable to submit report.",
+      );
     } finally {
       setReportSaving(false);
     }
@@ -337,8 +369,27 @@ export function DancerProfileActions({
   return (
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
+        {nextShift ? (
+          <button
+            className="profile-action-primary profile-action-public"
+            type="button"
+            onClick={() => updateGoing(nextShift.id)}
+            disabled={!savedLoaded || goingSaving}
+          >
+            {saved.goingShiftIds.includes(nextShift.id)
+              ? nextShift.isActive
+                ? "You’re going now"
+                : "You’re going"
+              : nextShift.isActive
+                ? "I’m Going Now"
+                : `I’m Going ${nextShift.label}`}
+            {showSignedOutRequirements ? (
+              <small className="profile-action-requirement">No sign-in needed</small>
+            ) : null}
+          </button>
+        ) : null}
         <button
-          className={showSignedOutRequirements ? "profile-action-requires-account" : undefined}
+          className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("follow")) updateFollow(false);
@@ -351,7 +402,7 @@ export function DancerProfileActions({
           ) : null}
         </button>
         <button
-          className={showSignedOutRequirements ? "profile-action-requires-account" : undefined}
+          className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
           onClick={() => {
             if (requireCustomerAccount("notify")) updateNotifications();
@@ -363,31 +414,15 @@ export function DancerProfileActions({
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
-        {nextShift ? (
-          <button
-            className={showSignedOutRequirements ? "profile-action-public" : undefined}
-            type="button"
-            onClick={() => updateGoing(nextShift.id)}
-            disabled={!savedLoaded || goingSaving}
-          >
-            {saved.goingShiftIds.includes(nextShift.id) ? "Going" : `Going ${nextShift.label}`}
-            {showSignedOutRequirements ? (
-              <small className="profile-action-requirement">No sign-in needed</small>
-            ) : null}
-          </button>
-        ) : null}
         <button
-          className={showSignedOutRequirements ? "profile-action-public" : undefined}
+          className="profile-action-report"
           type="button"
           onClick={submitReport}
           disabled={reportSaving || reportSubmitted}
         >
           {reportSubmitted ? "Reported" : reportSaving ? "Submitting" : "Report"}
-          {showSignedOutRequirements ? (
-            <small className="profile-action-requirement">No sign-in needed</small>
-          ) : null}
         </button>
-        {status ? <span role="status">{status}</span> : null}
+        {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>
       {accountRequiredAction ? (
         <div
@@ -419,6 +454,71 @@ export function DancerProfileActions({
               <Link href="/account?role=customer&mode=signup">Create a free account</Link>
               <Link className="secondary" href="/account?role=customer">Already have an account? Sign in</Link>
             </div>
+          </section>
+        </div>
+      ) : null}
+      {reportDialogOpen ? (
+        <div
+          className="profile-report-gate"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !reportSaving) {
+              setReportDialogOpen(false);
+            }
+          }}
+        >
+          <section
+            aria-describedby="profile-report-message"
+            aria-labelledby="profile-report-title"
+            aria-modal="true"
+            className="profile-report-dialog"
+            role="dialog"
+          >
+            <button
+              aria-label="Close report form"
+              className="profile-report-close"
+              disabled={reportSaving}
+              onClick={() => setReportDialogOpen(false)}
+              type="button"
+            >
+              ×
+            </button>
+            <span>Safety report</span>
+            <h2 id="profile-report-title">Report {profileName}</h2>
+            <p id="profile-report-message">
+              Tell the moderation team what is wrong. Reports can be submitted without signing in.
+            </p>
+            <form onSubmit={submitReportForm}>
+              <label>
+                Reason
+                <select
+                  autoFocus
+                  onChange={(event) => setReportReason(event.target.value)}
+                  required
+                  value={reportReason}
+                >
+                  <option value="">Choose a reason</option>
+                  {REPORT_REASONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Details <small>Optional</small>
+                <textarea
+                  maxLength={1200}
+                  onChange={(event) => setReportDetails(event.target.value)}
+                  placeholder="Add information that will help the moderation team review this profile."
+                  rows={4}
+                  value={reportDetails}
+                />
+              </label>
+              {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
+              <button disabled={reportSaving} type="submit">
+                {reportSaving ? "Submitting report…" : "Submit report"}
+              </button>
+            </form>
           </section>
         </div>
       ) : null}

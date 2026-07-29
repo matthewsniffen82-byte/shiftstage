@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
 import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { TvVideoStrip } from "@/app/components/TvVideoStrip";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
+import type { ShiftSummary } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   DancerFollowerCount,
@@ -33,12 +35,18 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const heroPhoto = profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const gallery = profile.photos.length ? profile.photos : heroPhoto ? [{ id: "primary", imageUrl: heroPhoto, isPrimary: true, sortOrder: 0 }] : [];
   const activeShift = profile.upcomingShifts.find((shift) => isActiveNow(shift));
-  const activeDeal = activeShift?.venueId ? await getActiveClubDealForVenue(client, activeShift.venueId) : null;
-  const tvVideos = await getPublicMyDancrTvFeed(client, {
-    city: profile.city,
-    dancerId: profile.id,
-    limit: 4,
-  });
+  const primaryShift = activeShift || profile.upcomingShifts[0] || null;
+  const [activeDeal, tvVideos] = await Promise.all([
+    activeShift?.venueId
+      ? getActiveClubDealForVenue(client, activeShift.venueId)
+      : Promise.resolve(null),
+    getPublicMyDancrTvFeed(client, {
+      city: profile.city,
+      dancerId: profile.id,
+      limit: 4,
+    }),
+  ]);
+  const profileStatus = buildProfileStatus(profile.city, primaryShift, Boolean(activeShift));
 
   return (
     <DancerFollowStateProvider
@@ -49,10 +57,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
       <main className="public-profile-shell">
       <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
-      <nav className="public-nav">
-        <Link href="/">Dancr</Link>
-        <div className="public-nav-meta">
-          <span>{profile.city}</span>
+      <PublicProfileHeader
+        city={profile.city}
+        closeControl={
           <Link
             className="public-profile-close"
             href={`/?city=${encodeURIComponent(profile.city)}`}
@@ -60,23 +67,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
           >
             ×
           </Link>
-        </div>
-      </nav>
+        }
+      />
       <section className="public-hero dancer-hero">
-        <div className="public-copy">
-          <span className="eyebrow">Verified dancer</span>
-          <h1>{profile.stageName}</h1>
-          <p>{profile.bio || "Approved public profile with venue-confirmed schedule details."}</p>
-          <div className="public-actions">
-            <Link href={`/tonight?city=${encodeURIComponent(profile.city)}`}>Now in {profile.city}</Link>
-            {profile.venueSlug ? <Link href={`/venues/${profile.venueSlug}`}>{profile.venueName || "Venue"}</Link> : null}
-          </div>
-          <DancerProfileActions
-            dancerId={profile.id}
-            profileName={profile.stageName}
-            shifts={profile.upcomingShifts.map((shift) => ({ id: shift.id, label: shortShiftLabel(shift.startsAt) }))}
-          />
-        </div>
         <DancerPhotoCarousel
           photos={gallery.map((photo) => ({
             id: photo.id,
@@ -84,6 +77,38 @@ export default async function DancerPublicPage({ params }: PageProps) {
           }))}
           stageName={profile.stageName}
         />
+        <div className="public-copy">
+          <span className={`profile-live-state${activeShift ? " is-working" : ""}`}>
+            {profileStatus.eyebrow}
+          </span>
+          <div className="profile-identity">
+            <span className="eyebrow">Verified dancer</span>
+            <h1>{profile.stageName}</h1>
+          </div>
+          <section className="profile-status-card" aria-label="Current schedule status">
+            <strong>{profileStatus.headline}</strong>
+            <span>{profileStatus.detail}</span>
+            <div className="profile-status-links">
+              <Link href={`/tonight?city=${encodeURIComponent(profile.city)}`}>
+                Browse {profile.city}
+              </Link>
+              {primaryShift?.venueSlug ? (
+                <Link href={`/venues/${primaryShift.venueSlug}`}>
+                  {primaryShift.venueName}
+                </Link>
+              ) : null}
+            </div>
+          </section>
+          <DancerProfileActions
+            dancerId={profile.id}
+            profileName={profile.stageName}
+            shifts={profile.upcomingShifts.map((shift) => ({
+              id: shift.id,
+              label: shortShiftLabel(shift.startsAt, shift.timezone),
+              isActive: isActiveNow(shift),
+            }))}
+          />
+        </div>
       </section>
       {activeShift ? (
         <section className="venue-qr-section live-deal-section">
@@ -114,32 +139,52 @@ export default async function DancerPublicPage({ params }: PageProps) {
           )}
         </section>
       ) : null}
+      <section className="profile-schedule-section" aria-labelledby="profile-schedule-title">
+        <div className="profile-section-heading">
+          <div>
+            <span className="eyebrow">Plan your visit</span>
+            <h2 id="profile-schedule-title">Schedule</h2>
+          </div>
+          <span>{profile.upcomingShifts.length} posted</span>
+        </div>
+        {profile.upcomingShifts.length ? (
+          <div className="shift-list">
+            {profile.upcomingShifts.map((shift) => {
+              const workingNow = isActiveNow(shift);
+              return (
+                <Link
+                  className={`shift-row${workingNow ? " is-working" : ""}`}
+                  href={`/venues/${shift.venueSlug}`}
+                  key={shift.id}
+                >
+                  <span className="shift-date">
+                    {workingNow ? "Working now" : formatShiftDate(shift.startsAt, shift.timezone)}
+                  </span>
+                  <strong>{shift.venueName}</strong>
+                  <span className="shift-time">
+                    {workingNow
+                      ? `Verified check-in · until ${formatShiftTime(shift.endsAt, shift.timezone)}`
+                      : `${formatShiftTime(shift.startsAt, shift.timezone)} · ${locationStatusLabel(shift, false)}`}
+                  </span>
+                  <em>{workingNow ? "Verified live" : "View venue"}</em>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="muted">No posted shifts right now.</p>
+        )}
+      </section>
       <TvVideoStrip
         showDancerName={false}
         title={`${profile.stageName} on MyDancr TV`}
         videos={tvVideos}
       />
-      <section className="public-grid">
-        <article className="public-panel">
-          <h2>Schedule</h2>
-          {profile.upcomingShifts.length ? (
-            <div className="shift-list">
-              {profile.upcomingShifts.map((shift) => (
-                <div className="shift-row-shell" key={shift.id}>
-                  <Link className="shift-row" href={`/venues/${shift.venueSlug}`}>
-                    <strong>{shift.venueName}</strong>
-                    <span>{formatShift(shift)}</span>
-                    <em>{locationStatusLabel(shift.locationStatus)}</em>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="muted">No upcoming posted shifts.</p>
-          )}
-        </article>
-        <article className="public-panel">
-          <h2>Profile</h2>
+      <section className="public-grid" aria-label="Profile details">
+        <article className="public-panel profile-about-panel">
+          <span className="eyebrow">Profile</span>
+          <h2>About {profile.stageName}</h2>
+          {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
           <dl className="fact-list">
             <div>
               <dt>City</dt>
@@ -157,59 +202,115 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 <DancerGoingCount />
               </dd>
             </div>
-            <div>
-              <dt>Rank</dt>
-              <dd>{profile.currentRank ? `#${profile.currentRank}` : "Not ranked yet"}</dd>
-            </div>
+            {profile.currentRank ? (
+              <div>
+                <dt>Rank</dt>
+                <dd>#{profile.currentRank}</dd>
+              </div>
+            ) : null}
           </dl>
-          <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
         </article>
+        {profile.socialLinks.length ? (
+          <article className="public-panel profile-connect-panel">
+            <span className="eyebrow">Official links</span>
+            <h2>Connect with {profile.stageName}</h2>
+          <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
+          </article>
+        ) : null}
       </section>
-      {gallery.length ? (
-        <section className="public-gallery" aria-label={`${profile.stageName} photo gallery`}>
-          {gallery.map((photo, index) => (
-            <div
-              aria-label={`${profile.stageName} profile photo ${index + 1} of ${gallery.length}`}
-              className="gallery-photo"
-              key={photo.id}
-              role="img"
-              style={{ backgroundImage: `url(${photo.imageUrl})` }}
-            />
-          ))}
-        </section>
-      ) : null}
       </main>
     </DancerFollowStateProvider>
   );
 }
 
-function locationStatusLabel(status?: string | null) {
-  if (status === "club_confirmed") return "Club Confirmed";
-  if (status === "location_confirmed") return "Checked in";
-  return "Not checked in";
-}
-
-function formatShift(shift: { startsAt: string; locationStatus?: string | null; checkedInAt?: string | null }) {
-  if (shift.locationStatus === "location_confirmed" || shift.locationStatus === "club_confirmed") {
-    return "Working Now";
+function buildProfileStatus(
+  city: string,
+  shift: ShiftSummary | null,
+  workingNow: boolean,
+) {
+  if (shift && workingNow) {
+    return {
+      eyebrow: "Working now",
+      headline: `Working now at ${shift.venueName}`,
+      detail: `Verified check-in · until ${formatShiftTime(shift.endsAt, shift.timezone)}`,
+    };
   }
-  if (new Date(shift.startsAt).getTime() <= Date.now()) return "Scheduled";
-  return `Starts ${formatShiftStartDate(shift.startsAt)}`;
+  if (shift) {
+    return {
+      eyebrow: "Up next",
+      headline: `Up next at ${shift.venueName}`,
+      detail: `${formatShiftDate(shift.startsAt, shift.timezone)} at ${formatShiftTime(shift.startsAt, shift.timezone)} · posted schedule`,
+    };
+  }
+  return {
+    eyebrow: "Verified profile",
+    headline: `Based in ${city}`,
+    detail: "No posted shift right now. Follow for schedule updates.",
+  };
 }
 
-function formatShiftStartDate(startsAt: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(startsAt));
+function locationStatusLabel(shift: ShiftSummary, workingNow: boolean) {
+  if (workingNow) return "Verified check-in";
+  if (
+    shift.checkedInAt &&
+    !shift.checkedOutAt &&
+    (shift.locationStatus === "location_confirmed" ||
+      shift.locationStatus === "club_confirmed")
+  ) {
+    return "Check-in confirmed";
+  }
+  return "Posted shift";
 }
 
-function shortShiftLabel(startsAt: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(startsAt));
+function formatShiftDate(startsAt: string, timeZone?: string | null) {
+  return formatDateValue(
+    startsAt,
+    {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    },
+    timeZone,
+  );
+}
+
+function formatShiftTime(startsAt: string, timeZone?: string | null) {
+  return formatDateValue(
+    startsAt,
+    {
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    timeZone,
+  );
+}
+
+function shortShiftLabel(startsAt: string, timeZone?: string | null) {
+  return formatDateValue(
+    startsAt,
+    {
+      weekday: "short",
+      month: "numeric",
+      day: "numeric",
+    },
+    timeZone,
+  );
+}
+
+function formatDateValue(
+  value: string,
+  options: Intl.DateTimeFormatOptions,
+  timeZone?: string | null,
+) {
+  const date = new Date(value);
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      ...options,
+      ...(timeZone ? { timeZone } : {}),
+    }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("en-US", options).format(date);
+  }
 }
 
 function isActiveNow(shift: {
@@ -230,92 +331,152 @@ function isActiveNow(shift: {
 function PublicProfileStyles() {
   return (
     <style>{`
+      * { box-sizing: border-box; }
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .public-profile-shell { min-height: 100vh; padding: 22px clamp(18px, 4vw, 56px) 56px; background: radial-gradient(circle at 78% 8%, rgba(139,92,246,.28), transparent 28rem), linear-gradient(180deg, #090911, #050507 62%); }
-      .public-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1120px; margin: 0 auto 28px; color: #b9accd; font-size: 14px; }
-      .public-nav a { color: #fff; text-decoration: none; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-      .public-nav-meta { display: flex; align-items: center; gap: 12px; }
-      .public-nav .public-profile-close { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; background: rgba(8,8,13,.88); box-shadow: 0 0 20px rgba(34,199,255,.14); font-size: 28px; font-weight: 500; letter-spacing: 0; line-height: 1; text-transform: none; }
-      .public-profile-close:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
-      .public-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 420px); gap: clamp(24px, 5vw, 56px); align-items: stretch; max-width: 1120px; margin: 0 auto; min-height: min(68vh, 620px); }
-      .public-copy { display: grid; align-content: center; gap: 18px; }
-      .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
-      h1 { margin: 0; font-size: clamp(46px, 8vw, 96px); line-height: .92; letter-spacing: 0; }
-      p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
-      .public-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-      .public-actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(139,92,246,.38), rgba(236,72,153,.18)); }
-      .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
-      .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
-      .live-actions button.profile-action-requires-account, .live-actions button.profile-action-public { min-height: 50px; flex-direction: column; gap: 1px; padding-block: 5px; }
-      .live-actions .profile-action-requirement { color: #b9accd; font-size: 10px; font-weight: 850; line-height: 1.1; letter-spacing: .02em; }
-      .live-actions .profile-action-public .profile-action-requirement { color: #7eeaff; }
-      .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
-      .profile-account-gate { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.76); backdrop-filter: blur(10px); }
-      .profile-account-gate-dialog { position: relative; width: min(410px, 100%); display: grid; gap: 14px; padding: 24px; box-sizing: border-box; border: 1px solid rgba(53,216,255,.42); border-radius: 12px; background: radial-gradient(circle at 88% 8%, rgba(53,216,255,.12), transparent 12rem), linear-gradient(145deg, #0b0b13, #060609); box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 34px rgba(53,216,255,.1); }
-      .profile-account-gate-dialog > span { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
-      .profile-account-gate-dialog h2 { margin: 0; padding-right: 40px; font-size: clamp(24px, 6vw, 32px); line-height: 1.05; }
-      .profile-account-gate-dialog p { color: #cfc5de; font-size: 15px; font-weight: 750; line-height: 1.5; }
+      button, input, select, textarea { font: inherit; }
+      .public-profile-shell { min-height: 100vh; padding: 0 clamp(18px, 4vw, 56px) 64px; background: radial-gradient(circle at 78% 8%, rgba(139,92,246,.26), transparent 28rem), linear-gradient(180deg, #090911, #050507 62%); }
+      .profile-global-header { position: sticky; z-index: 90; top: 0; max-width: 1180px; margin: 0 auto 22px; padding: max(10px, env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid rgba(126,234,255,.12); background: linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.9)); backdrop-filter: blur(22px); }
+      .profile-global-topbar { min-height: 50px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+      .profile-global-logo { width: fit-content; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(139,92,246,.72); border-radius: 15px; color: #fff; background: #050507; box-shadow: 0 0 18px rgba(132,50,255,.24), inset 0 0 16px rgba(132,50,255,.08); font-size: 27px; font-weight: 950; letter-spacing: -.07em; line-height: 1; text-decoration: none; }
+      .profile-global-logo span { color: #b976ff; }
+      .profile-global-city { min-width: 0; overflow: hidden; color: #b9accd; font-size: 13px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-global-actions { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+      .profile-global-account, .profile-notification-button, .public-profile-close { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(139,92,246,.48); border-radius: 999px; color: #fff; background: rgba(10,10,14,.9); box-shadow: 0 0 18px rgba(124,58,237,.16); text-decoration: none; }
+      .profile-global-account { padding: 0 15px; font-size: 12px; font-weight: 950; }
+      .profile-global-account.profile-account-icon, .profile-notification-button { width: 42px; padding: 0; }
+      .profile-global-account svg, .profile-notification-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-notification-button { position: relative; color: #22c7ff; cursor: pointer; }
+      .profile-notification-count { position: absolute; top: -6px; left: -7px; min-width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border-radius: 999px; color: #050507; background: #22c7ff; font-size: 10px; font-weight: 950; }
+      .public-profile-close { width: 42px; padding: 0; font-size: 27px; line-height: 1; }
+      .profile-global-account:hover, .profile-global-account:focus-visible, .profile-notification-button:hover, .profile-notification-button:focus-visible, .profile-notification-button.active, .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
+      .profile-notification-panel { position: absolute; z-index: 100; top: calc(100% + 12px); right: 0; width: min(340px, calc(100vw - 28px)); max-height: min(520px, 70dvh); display: grid; gap: 10px; padding: 14px; overflow: auto; border: 1px solid rgba(139,92,246,.42); border-radius: 14px; color: #f7f4ff; background: rgba(5,5,9,.99); box-shadow: 0 22px 60px rgba(0,0,0,.68), 0 0 28px rgba(109,40,217,.2); }
+      .profile-notification-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .profile-notification-head > div { display: grid; gap: 2px; }
+      .profile-notification-head strong { font-size: 16px; }
+      .profile-notification-head span { color: #a99fba; font-size: 11px; font-weight: 800; }
+      .profile-notification-head a { color: #7eeaff; font-size: 11px; font-weight: 900; text-decoration: none; }
+      .profile-notification-list { display: grid; gap: 7px; }
+      .profile-notification-list p { margin: 0; padding: 12px; color: #aaa0b8; text-align: center; }
+      .profile-notification-list button { display: grid; gap: 3px; padding: 10px 11px; border: 1px solid rgba(34,199,255,.2); border-radius: 10px; color: #f6f3fb; background: rgba(34,199,255,.07); text-align: left; cursor: pointer; }
+      .profile-notification-list button.read { border-color: rgba(255,255,255,.08); background: rgba(255,255,255,.025); }
+      .profile-notification-list button span { color: #bdb4ca; font-size: 11px; line-height: 1.35; }
+      .profile-notification-clear { min-height: 38px; border: 1px solid rgba(139,92,246,.32); border-radius: 999px; color: #fff; background: rgba(109,40,217,.16); font-weight: 900; cursor: pointer; }
+      .profile-notification-status { margin: 0; color: #9fefff; font-size: 11px; font-weight: 800; }
+      .public-hero { max-width: 1120px; display: grid; grid-template-areas: "copy photo"; grid-template-columns: minmax(0, 1fr) minmax(300px, 440px); gap: clamp(24px, 5vw, 58px); align-items: center; margin: 0 auto; }
+      .public-copy { grid-area: copy; display: grid; align-content: center; gap: 14px; }
+      .profile-identity { display: grid; gap: 8px; }
+      .eyebrow, .profile-live-state { color: #94e5ff; font-size: 11px; font-weight: 950; letter-spacing: .17em; text-transform: uppercase; }
+      .profile-live-state { width: fit-content; padding: 7px 11px; border: 1px solid rgba(148,229,255,.28); border-radius: 999px; background: rgba(148,229,255,.08); }
+      .profile-live-state.is-working { border-color: rgba(126,234,255,.58); color: #dffbff; background: linear-gradient(135deg, rgba(109,40,217,.62), rgba(11,148,201,.42)); box-shadow: 0 0 22px rgba(34,199,255,.14); }
+      h1 { margin: 0; font-size: clamp(46px, 7vw, 82px); line-height: .94; letter-spacing: -.045em; overflow-wrap: anywhere; }
+      h2 { margin: 0; font-size: 22px; line-height: 1.1; }
+      p { margin: 0; color: #cfc5de; font-size: 16px; line-height: 1.55; max-width: 58ch; }
+      .profile-status-card { display: grid; gap: 7px; padding: 16px; border: 1px solid rgba(139,92,246,.28); border-radius: 15px; background: linear-gradient(135deg, rgba(109,40,217,.17), rgba(34,199,255,.055)); }
+      .profile-status-card > strong { font-size: clamp(18px, 2.2vw, 24px); line-height: 1.15; }
+      .profile-status-card > span { color: #b9accd; font-size: 13px; font-weight: 750; }
+      .profile-status-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; }
+      .profile-status-links a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 13px; border: 1px solid rgba(255,255,255,.11); border-radius: 999px; color: #fff; background: rgba(255,255,255,.045); font-size: 12px; font-weight: 900; text-decoration: none; }
+      .live-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; align-items: stretch; }
+      .live-actions button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 13px; border: 1px solid rgba(148,229,255,.24); border-radius: 13px; color: #fff; background: rgba(148,229,255,.075); cursor: pointer; font: inherit; font-size: 13px; font-weight: 900; }
+      .live-actions button:disabled { opacity: .66; cursor: wait; }
+      .live-actions .profile-action-primary { grid-column: 1 / -1; min-height: 58px; flex-direction: column; gap: 2px; border-color: rgba(126,234,255,.58); background: linear-gradient(135deg, #6d28d9, #0b94c9); box-shadow: 0 14px 32px rgba(35,114,178,.24); font-size: 16px; }
+      .live-actions .profile-action-secondary.profile-action-requires-account { flex-direction: column; gap: 1px; }
+      .live-actions .profile-action-requirement { color: #c7bbd8; font-size: 9px; font-weight: 850; line-height: 1.1; }
+      .live-actions .profile-action-public .profile-action-requirement { color: #d8f7ff; }
+      .live-actions .profile-action-report { grid-column: 1 / -1; min-height: 32px; justify-self: end; padding: 0 4px; border: 0; color: #958aa4; background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+      .live-actions .profile-action-status { grid-column: 1 / -1; color: #94e5ff; font-size: 12px; font-weight: 850; }
+      .profile-account-gate { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.78); backdrop-filter: blur(11px); }
+      .profile-report-gate { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.78); backdrop-filter: blur(11px); }
+      .profile-account-gate-dialog, .profile-report-dialog { position: relative; width: min(430px, 100%); display: grid; gap: 14px; padding: 24px; border: 1px solid rgba(53,216,255,.42); border-radius: 16px; background: radial-gradient(circle at 88% 8%, rgba(53,216,255,.12), transparent 12rem), linear-gradient(145deg, #0b0b13, #060609); box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 34px rgba(53,216,255,.1); }
+      .profile-account-gate-dialog > span, .profile-report-dialog > span { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .profile-account-gate-dialog h2, .profile-report-dialog h2 { padding-right: 40px; font-size: clamp(24px, 6vw, 32px); }
+      .profile-account-gate-dialog p, .profile-report-dialog p { color: #cfc5de; font-size: 14px; font-weight: 700; line-height: 1.5; }
       .profile-account-gate-dialog > div { display: grid; gap: 10px; }
-      .profile-account-gate-dialog a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border: 1px solid rgba(53,216,255,.48); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); box-shadow: 0 12px 30px rgba(35,114,178,.24); font-size: 15px; font-weight: 950; text-align: center; text-decoration: none; }
-      .profile-account-gate-dialog a.secondary { min-height: 42px; border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.04); box-shadow: none; color: #d9d0e8; }
-      .profile-account-gate-dialog a:hover, .profile-account-gate-dialog a:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(53,216,255,.16), 0 14px 34px rgba(35,114,178,.28); }
-      .profile-account-gate-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(53,216,255,.42); border-radius: 50%; color: #fff; background: rgba(4,9,15,.88); font: inherit; font-size: 26px; line-height: 1; cursor: pointer; }
-      .profile-account-gate-close:hover, .profile-account-gate-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(53,216,255,.16); }
-      .public-photo { position: relative; overflow: hidden; border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); min-height: 420px; display: grid; place-items: center; box-shadow: 0 30px 80px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.1); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; cursor: grab; }
+      .profile-account-gate-dialog a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border: 1px solid rgba(53,216,255,.48); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-size: 15px; font-weight: 950; text-align: center; text-decoration: none; }
+      .profile-account-gate-dialog a.secondary { min-height: 42px; border-color: rgba(255,255,255,.14); color: #d9d0e8; background: rgba(255,255,255,.04); }
+      .profile-account-gate-close, .profile-report-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(53,216,255,.42); border-radius: 50%; color: #fff; background: rgba(4,9,15,.9); font-size: 26px; line-height: 1; cursor: pointer; }
+      .profile-report-dialog form { display: grid; gap: 13px; }
+      .profile-report-dialog label { display: grid; gap: 7px; color: #e9e2f4; font-size: 13px; font-weight: 900; }
+      .profile-report-dialog label small { color: #9387a3; font-weight: 750; }
+      .profile-report-dialog select, .profile-report-dialog textarea { width: 100%; border: 1px solid rgba(139,92,246,.35); border-radius: 11px; color: #fff; background: rgba(255,255,255,.055); outline: none; }
+      .profile-report-dialog select { min-height: 48px; padding: 0 12px; }
+      .profile-report-dialog option { color: #111; }
+      .profile-report-dialog textarea { min-height: 110px; padding: 12px; resize: vertical; }
+      .profile-report-dialog select:focus, .profile-report-dialog textarea:focus { border-color: #7eeaff; box-shadow: 0 0 0 3px rgba(126,234,255,.13); }
+      .profile-report-dialog form > button { min-height: 48px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
+      .profile-report-error { color: #ffb4c8 !important; font-size: 13px !important; font-weight: 850 !important; }
+      .public-photo { grid-area: photo; position: relative; min-height: 520px; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); box-shadow: 0 30px 80px rgba(0,0,0,.45); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; cursor: grab; }
       .public-photo:active { cursor: grabbing; }
       .public-photo:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
-      .public-photo-image { position: absolute; inset: 0; background-position: center; background-repeat: no-repeat; background-size: cover; }
-      .public-photo span { width: 118px; height: 118px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
-      .public-photo-nav { position: absolute; top: 50%; z-index: 2; width: 44px; height: 54px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: rgba(5,5,8,.62); box-shadow: 0 10px 28px rgba(0,0,0,.32); font: inherit; font-size: 34px; line-height: 1; cursor: pointer; transform: translateY(-50%); backdrop-filter: blur(8px); }
-      .public-photo-nav:hover, .public-photo-nav:focus-visible { border-color: #7eeaff; outline: none; background: rgba(45,16,111,.88); }
+      .public-photo-image { position: absolute; inset: 0; background-position: center top; background-repeat: no-repeat; background-size: cover; }
+      .public-photo > span:not(.public-photo-status) { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
+      .public-photo-nav { position: absolute; z-index: 2; top: 50%; width: 44px; height: 54px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: rgba(5,5,8,.62); box-shadow: 0 10px 28px rgba(0,0,0,.32); font-size: 34px; line-height: 1; cursor: pointer; transform: translateY(-50%); backdrop-filter: blur(8px); }
       .public-photo-nav.previous { left: 12px; }
       .public-photo-nav.next { right: 12px; }
-      .public-photo-dots { position: absolute; left: 50%; bottom: 14px; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 9px; border-radius: 999px; background: rgba(5,5,8,.66); transform: translateX(-50%); backdrop-filter: blur(8px); }
+      .public-photo-nav:hover, .public-photo-nav:focus-visible { border-color: #7eeaff; outline: none; background: rgba(45,16,111,.88); }
+      .public-photo-dots { position: absolute; z-index: 2; left: 50%; bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 9px; border-radius: 999px; background: rgba(5,5,8,.66); transform: translateX(-50%); backdrop-filter: blur(8px); }
       .public-photo-dots button { width: 9px; height: 9px; padding: 0; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; background: rgba(255,255,255,.2); cursor: pointer; }
       .public-photo-dots button[aria-pressed="true"] { border-color: #7eeaff; background: #7eeaff; box-shadow: 0 0 12px rgba(126,234,255,.6); }
       .public-photo-status { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
-      .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
-      .venue-qr-section { max-width: 1120px; margin: 22px auto 0; }
+      .venue-qr-section, .profile-schedule-section, .public-grid { max-width: 1120px; margin: 24px auto 0; }
       .live-deal-section { display: grid; gap: 14px; }
-      .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: center; border: 1px solid rgba(34,199,255,.28); background: rgba(12,12,18,.88); border-radius: 8px; padding: 20px; }
+      .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: center; padding: 20px; border: 1px solid rgba(34,199,255,.28); border-radius: 16px; background: rgba(12,12,18,.88); }
       .venue-published-qr h2 { margin: 7px 0; }
-      .venue-published-qr img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
-      .venue-qr-unavailable { display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,.1); background: rgba(12,12,18,.72); border-radius: 8px; padding: 14px 18px; }
+      .venue-published-qr img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 10px; background: #fff; }
+      .venue-qr-unavailable { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(12,12,18,.72); }
       .venue-qr-unavailable p { color: #b9accd; font-size: 14px; line-height: 1.4; }
-      .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
-      .club-deal-card { border: 1px solid rgba(139,92,246,.28); background: rgba(8,8,13,.9); border-radius: 8px; padding: 18px; display: grid; gap: 16px; box-shadow: 0 22px 70px rgba(0,0,0,.38); }
-      .club-deal-copy { display: grid; gap: 9px; }
-      .club-deal-copy h2 { margin: 0; font-size: 24px; }
-      .club-deal-copy small, .club-deal-action em, .deal-qr-frame span { color: #b9accd; font-size: 13px; line-height: 1.45; font-style: normal; font-weight: 800; }
-      .club-deal-action { display: grid; gap: 10px; justify-items: stretch; }
-      .club-deal-action button { min-height: 46px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
-      .club-deal-action button:disabled { opacity: .7; cursor: wait; }
-      .club-deal-pass-actions button, .club-deal-pass-actions a { min-height: 40px; border: 1px solid rgba(148,229,255,.28); color: #fff; background: rgba(148,229,255,.08); }
-      .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
-      .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
-      h2 { margin: 0 0 16px; font-size: 20px; }
-      .shift-list { display: grid; gap: 10px; }
-      .shift-row-shell { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); gap: 10px; align-items: stretch; }
-      .shift-row { display: flex; justify-content: space-between; gap: 14px; color: #f7f2ff; text-decoration: none; padding: 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
-      .shift-row span, .muted { color: #b9accd; }
-      .shift-row em { width: fit-content; padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(148,229,255,.22); background: rgba(148,229,255,.08); color: #94e5ff; font-size: 11px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
-      .club-deal-card.compact { padding: 12px; gap: 10px; align-content: start; }
-      .club-deal-card.compact .club-deal-copy { gap: 4px; }
-      .club-deal-card.compact .club-deal-copy h2 { font-size: 15px; line-height: 1.15; }
-      .club-deal-card.compact .club-deal-copy small { font-size: 11px; }
-      .club-deal-card.compact .deal-qr-frame { padding: 8px; }
-      .club-deal-card.compact .deal-qr-frame img { width: min(118px, 100%); }
-      .club-deal-card.compact .club-deal-action em, .club-deal-card.compact .deal-qr-frame span { font-size: 11px; text-align: center; }
+      .profile-schedule-section { display: grid; gap: 14px; padding: 20px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); box-shadow: 0 20px 60px rgba(0,0,0,.28); }
+      .profile-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; }
+      .profile-section-heading > div { display: grid; gap: 6px; }
+      .profile-section-heading > span { color: #9487a5; font-size: 12px; font-weight: 850; }
+      .shift-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+      .shift-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; color: #f7f2ff; background: rgba(255,255,255,.035); text-decoration: none; }
+      .shift-row.is-working { border-color: rgba(126,234,255,.45); background: linear-gradient(135deg, rgba(109,40,217,.2), rgba(34,199,255,.07)); }
+      .shift-row .shift-date { grid-column: 1 / -1; color: #94e5ff; font-size: 11px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
+      .shift-row strong { min-width: 0; overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+      .shift-row .shift-time { grid-column: 1; color: #b9accd; font-size: 12px; line-height: 1.35; }
+      .shift-row em { grid-column: 2; grid-row: 2 / span 2; align-self: center; width: fit-content; padding: 6px 9px; border: 1px solid rgba(148,229,255,.22); border-radius: 999px; color: #94e5ff; background: rgba(148,229,255,.08); font-size: 9px; font-style: normal; font-weight: 950; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+      .muted { color: #b9accd; }
+      .public-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+      .public-panel { display: grid; align-content: start; gap: 14px; padding: 22px; border: 1px solid rgba(139,92,246,.24); border-radius: 16px; background: rgba(12,12,18,.82); }
+      .profile-bio { color: #d5cbdf; font-size: 16px; line-height: 1.55; }
       .fact-list { display: grid; gap: 12px; margin: 0; }
-      .fact-list div { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
+      .fact-list div { display: flex; justify-content: space-between; gap: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
       dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
-      .social-list { display: grid; gap: 10px; margin-top: 18px; }
-      .social-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #f7f2ff; text-decoration: none; padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+      .social-list { display: grid; gap: 9px; }
+      .social-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #f7f2ff; background: rgba(255,255,255,.04); text-decoration: none; }
       .social-list span { color: #b9accd; }
       .social-list strong { overflow-wrap: anywhere; text-align: right; }
-      .public-gallery { max-width: 1120px; margin: 18px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-      .gallery-photo { min-height: 220px; border-radius: 8px; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,.1); scroll-snap-align: center; }
-      @media (max-width: 760px) { .public-profile-shell { padding-bottom: 92px; } .public-hero, .public-grid, .shift-row-shell, .venue-published-qr { grid-template-columns: 1fr; } .venue-published-qr img { max-width: 230px; justify-self: center; } .public-photo { min-height: 340px; } .public-photo-nav { width: 40px; height: 48px; font-size: 30px; } .public-gallery { width: 100%; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(82%, 1fr); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; scrollbar-width: thin; } .shift-row, .fact-list div, .social-list a { flex-direction: column; align-items: flex-start; } .social-list strong { text-align: left; } .club-deal-card.compact .deal-qr-frame img { width: min(170px, 100%); } }
+      .club-deal-card { border-radius: 16px; }
+      @media (max-width: 760px) {
+        .public-gallery { overflow-x: auto; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; }
+        .public-profile-shell { padding: 0 12px 98px; }
+        .profile-global-header { margin: 0 -2px 12px; padding-inline: 2px; }
+        .profile-global-topbar { gap: 7px; }
+        .profile-global-logo { min-height: 40px; padding-inline: 11px; font-size: 23px; }
+        .profile-global-city { display: none; }
+        .profile-global-actions { grid-column: 2 / 4; gap: 6px; }
+        .profile-global-account { min-height: 40px; padding-inline: 11px; }
+        .profile-global-account.profile-account-icon, .profile-notification-button, .public-profile-close { width: 40px; min-height: 40px; }
+        .profile-notification-panel { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 68px); left: 10px; right: 10px; width: auto; max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 88px); }
+        .public-hero { grid-template-areas: "photo" "copy"; grid-template-columns: 1fr; gap: 15px; align-items: start; }
+        .public-photo { min-height: 0; aspect-ratio: 4 / 5; border-radius: 18px; }
+        .public-copy { gap: 12px; }
+        h1 { font-size: clamp(38px, 12vw, 52px); }
+        .profile-status-card { padding: 14px; }
+        .profile-status-card > strong { font-size: 18px; }
+        .profile-status-links a { min-height: 36px; padding-inline: 11px; font-size: 11px; }
+        .public-photo-nav { width: 40px; height: 48px; font-size: 30px; }
+        .venue-published-qr, .public-grid { grid-template-columns: 1fr; }
+        .venue-published-qr img { max-width: 230px; justify-self: center; }
+        .profile-schedule-section { padding: 16px; }
+        .shift-list { grid-template-columns: 1fr; }
+        .shift-row strong { white-space: normal; }
+        .fact-list div, .social-list a { align-items: flex-start; }
+        .social-list a { flex-direction: column; }
+        .social-list strong { text-align: left; }
+        .profile-account-gate-dialog, .profile-report-dialog { max-height: calc(100dvh - 24px); overflow-y: auto; padding: 21px; }
+      }
     `}</style>
   );
 }

@@ -134,10 +134,10 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(tvSource, /\.select\("id, dancer_profiles!inner\(id\)", \{ count: "exact", head: true \}\)/);
   assert.match(tvSource, /\.eq\("dancer_profiles\.status", "approved"\)[\s\S]*?\.eq\("dancer_profiles\.verification_status", "approved"\)[\s\S]*?\.is\("dancer_profiles\.disabled_at", null\)[\s\S]*?\.eq\("dancer_profiles\.is_public", true\)/);
   assert.match(feedClient, /className="tv-profile-card"[\s\S]*?<video[\s\S]*?href=\{dancerLiveProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}/);
-  assert.match(feedClient, /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}/);
+  assert.match(feedClient, /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+return `\/dancers\/\$\{encodeURIComponent\(video\.dancer\.slug\)\}`;\s+\}/);
   assert.match(feedClient, /function venueLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\)\}/);
   assert.match(feedClient, /function slugifyLiveProfileName\(value: string\) \{[\s\S]*?replaceAll\(" ", "-"\)[\s\S]*?replace\(\/\[\^a-z0-9-\]\/g, ""\)/);
-  assert.doesNotMatch(feedClient, /function dancerLiveProfileHref[\s\S]*?video\.dancer\.slug[\s\S]*?\n\}/);
+  assert.doesNotMatch(feedClient, /function dancerLiveProfileHref[\s\S]*?&profile=/);
   assert.match(liveApp, /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value\)/);
   assert.match(liveApp, /initialDiscoveryRequest\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
   assert.match(liveApp, /const venueSlug = params\.get\("venue"\);[\s\S]*?activeTab = venueSlug \? "venues" : "dancers";[\s\S]*?resolveVenueByName\(venueSlug, city\)[\s\S]*?openVenueFromName\(venue\.slug \|\| venue\.name\)/);

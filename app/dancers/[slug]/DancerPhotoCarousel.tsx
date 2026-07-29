@@ -163,7 +163,7 @@ export function DancerPhotoCarousel({
     <div
       aria-label={`${stageName} profile pictures`}
       aria-roledescription="carousel"
-      className="public-photo"
+      className="public-photo public-gallery"
       data-active-photo-index={safeActiveIndex}
       data-dancer-photo-carousel
       onKeyDown={handleKeyDown}
