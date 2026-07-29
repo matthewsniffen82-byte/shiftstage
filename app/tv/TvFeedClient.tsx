@@ -553,13 +553,6 @@ export default function TvFeedClient({
         ))}
       </section>
 
-      <nav className="tv-mobile-nav" aria-label="Mobile primary navigation">
-        <Link href={`/tonight?city=${encodeURIComponent(city)}`}>Now</Link>
-        <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Dancers</Link>
-        <Link href={`/venues?city=${encodeURIComponent(city)}`}>Venues</Link>
-        <Link href={`/trending?city=${encodeURIComponent(city)}`}>Trending</Link>
-      </nav>
-
     </main>
   );
 }
@@ -776,7 +769,6 @@ function TvStyles() {
       .tv-empty strong { font-size: 24px; }
       .tv-empty p { margin: 0; color: #b9accd; line-height: 1.5; }
       .tv-empty > div { display: flex; gap: 8px; }
-      .tv-mobile-nav { display: none; }
       @media (max-width: 760px) {
         .tv-shell { height: 100svh; height: 100dvh; min-height: 0; padding: 0 8px calc(62px + env(safe-area-inset-bottom)); border-inline: 0; }
         .tv-global-header { position: relative; flex: 0 0 auto; margin: 0 -8px 10px; padding: calc(9px + env(safe-area-inset-top, 0px)) 10px 9px; }
@@ -807,9 +799,6 @@ function TvStyles() {
         .tv-profile-body h2 { font-size: clamp(18px, 5.2vw, 22px); }
         .tv-card-venue-line { font-size: clamp(11px, 3.2vw, 13px); }
         .tv-card-schedule-text, .tv-no-shifts-state { font-size: clamp(11px, 3.1vw, 13px); }
-        .tv-mobile-nav { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; min-height: calc(58px + env(safe-area-inset-bottom)); padding: 5px 7px env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-top: 1px solid rgba(255,255,255,.1); background: rgba(3,3,5,.96); backdrop-filter: blur(16px); }
-        .tv-mobile-nav a { display: grid; place-items: center; border-radius: 8px; color: #9f95b1; font-size: 10px; font-weight: 900; text-decoration: none; }
-        .tv-mobile-nav a.active { color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(34,199,255,.16)); }
       }
       @media (max-width: 374px) {
         .tv-global-logo { width: clamp(136px, 44vw, 164px); max-width: clamp(136px, 44vw, 164px); }

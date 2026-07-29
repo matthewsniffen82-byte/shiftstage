@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 
 export const metadata: Metadata = {
   title: "mydancr",
@@ -38,7 +39,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <GlobalMobileBottomNav />
+      </body>
     </html>
   );
 }

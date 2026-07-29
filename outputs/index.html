@@ -28317,10 +28317,6 @@
             text-size-adjust: 100%;
             transform: translateX(-50%);
           }
-          body.overlay-open #discoveryTabs {
-            visibility: hidden !important;
-            pointer-events: none !important;
-          }
           #discoveryTabs *,
           #discoveryTabs *::before,
           #discoveryTabs *::after {
@@ -44023,6 +44019,7 @@
       tab.addEventListener("click", () => {
         const nextTab = tab.dataset.tab;
         if (!nextTab) return;
+        if (profileBackdrop.classList.contains("show")) closeProfileModal();
         if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
           selectedVenueName = null;
         }

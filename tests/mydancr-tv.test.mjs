@@ -20,6 +20,7 @@ const [
   venuePage,
   videoStrip,
   liveApp,
+  globalNavigation,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202607270001_mydancr_tv.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607270002_mydancr_tv_ten_second_limit.sql", import.meta.url), "utf8"),
@@ -38,6 +39,7 @@ const [
   readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/TvVideoStrip.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/components/GlobalMobileBottomNav.tsx", import.meta.url), "utf8"),
 ]);
 
 test("MyDancr TV stores private reviewed videos and enforces profile visibility", () => {
@@ -88,10 +90,11 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}`/);
   assert.match(feedClient, /className="tv-header"[\s\S]*?<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(feedClient, /href=\{`\/tonight\?city=/);
-  assert.match(feedClient, /href=\{`\/dancers\?city=/);
-  assert.match(feedClient, /href=\{`\/venues\?city=/);
-  assert.match(feedClient, /href=\{`\/trending\?city=/);
+  assert.match(globalNavigation, /path: "\/tonight"/);
+  assert.match(globalNavigation, /path: "\/dancers"/);
+  assert.match(globalNavigation, /path: "\/tv"/);
+  assert.match(globalNavigation, /path: "\/venues"/);
+  assert.match(globalNavigation, /path: "\/trending"/);
   assert.match(feedClient, /className="tv-global-header"/);
   assert.match(feedClient, /className="tv-global-logo" href=\{homepageHref\} aria-label="Go to Mydancr home"/);
   assert.doesNotMatch(feedClient, /className="tv-global-search"|className="tv-site-nav"/);
@@ -145,8 +148,8 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(liveApp, /verifiedCheckMarkup/);
   assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && markets\[initialProfileCity\]\)[\s\S]*?citySelect\.value = initialProfileCity/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
-  assert.match(feedClient, /className="tv-mobile-nav"[\s\S]*?>Now<[\s\S]*?>Dancers<[\s\S]*?>Venues<[\s\S]*?>Trending</);
-  assert.match(feedClient, /\.tv-mobile-nav \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(globalNavigation, /label: "Now"[\s\S]*?label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Venues"[\s\S]*?label: "Trending"/);
+  assert.match(globalNavigation, /\.global-mobile-bottom-nav \{[\s\S]*?grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(feedClient, /className="tv-card-venue-line"[\s\S]*?className="tv-card-venue-name"[\s\S]*?video\.venue\.name/);
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
   assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);
