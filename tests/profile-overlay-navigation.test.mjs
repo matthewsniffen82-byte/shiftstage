@@ -4,10 +4,18 @@ import test from "node:test";
 
 const homeSource = fs.readFileSync("outputs/index.html", "utf8");
 
-test("mobile navigation cannot cover profile actions while an overlay is open", () => {
+test("mobile navigation cannot cover the fixed profile video viewer", () => {
   assert.match(
     homeSource,
-    /body\.overlay-open #discoveryTabs \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
+    /body\.profile-tv-viewer-open #discoveryTabs \{\s+visibility: hidden !important;\s+pointer-events: none !important;\s+\}/,
+  );
+  assert.match(
+    homeSource,
+    /function openProfileTvViewer[\s\S]*?document\.body\.classList\.add\("profile-tv-viewer-open"\)/,
+  );
+  assert.match(
+    homeSource,
+    /function closeProfileTvViewer[\s\S]*?document\.body\.classList\.remove\("profile-tv-viewer-open"\)/,
   );
   assert.match(
     homeSource,
