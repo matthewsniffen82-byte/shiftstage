@@ -12,12 +12,37 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
     navigation,
     /data-tab="tonight"[\s\S]*data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"[\s\S]*data-tab="trending"/,
   );
+  assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="homeTvDrawer"[^>]*aria-expanded="false"/);
+  assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
   assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
   assert.match(homeSource, /\.home-bottom-tv-icon \{[\s\S]*linear-gradient\(135deg,#7c3aed,#ec4899\)/);
   assert.match(homeSource, /@media \(max-width: 720px\)[\s\S]*?\.home-tv-launch \{\s*display: none !important/);
   assert.match(
     homeSource,
-    /bottomTv\.href = launch\.href[\s\S]*Open MyDancr TV \$\{tvCityLabel\} vertical video feed/,
+    /bottomTv\.setAttribute\("aria-label", `Show MyDancr TV \$\{tvCityLabel\} videos on Home`\)/,
+  );
+});
+
+test("the Home TV button opens a real horizontally swipeable video tray", () => {
+  assert.match(
+    homeSource,
+    /id="homeTvDrawer"[\s\S]*?id="homeTvDrawerStatus"[\s\S]*?id="homeTvDrawerList"[^>]*aria-label="Swipe through MyDancr TV videos"/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-drawer \{[\s\S]*?position: fixed[\s\S]*?bottom: calc\(70px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?\.home-tv-drawer-list \{[\s\S]*?overflow-x: auto[\s\S]*?scroll-snap-type: x mandatory/,
+  );
+  assert.match(
+    homeSource,
+    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?openHomeTvDrawer\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(city\)\}&limit=8`[^]*?payload\.videos\.filter\(\(item\) => item\?\.id && item\?\.videoUrl\)/,
+  );
+  assert.match(
+    homeSource,
+    /card\.className = "home-tv-drawer-card"[^]*?video\.autoplay = true[^]*?card\.addEventListener\("click", \(\) => openProfileTvViewer\(item, dancerName, homeTvDrawerVideos\)\)/,
   );
 });
 
