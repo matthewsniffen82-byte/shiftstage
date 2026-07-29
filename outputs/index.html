@@ -28240,6 +28240,287 @@
           outline: 2px solid #7eeaff;
           outline-offset: 3px;
         }
+        #results.home-discovery-feed {
+          position: relative;
+          width: 100%;
+          max-width: 640px;
+          height: min(760px, calc(100dvh - 150px));
+          min-height: 520px;
+          margin-inline: auto;
+          display: block;
+          overflow-x: hidden;
+          overflow-y: auto;
+          overscroll-behavior-y: none;
+          overflow-anchor: none;
+          scroll-snap-type: y mandatory;
+          touch-action: pan-y;
+          scrollbar-width: none;
+          border: 1px solid rgba(139,92,246,.34);
+          border-radius: 18px;
+          background: #000;
+          box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
+        }
+        #results.home-discovery-feed::-webkit-scrollbar {
+          display: none;
+        }
+        .home-discovery-feed-slide {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: 100%;
+          max-height: 100%;
+          overflow: hidden;
+          border: 0 !important;
+          border-radius: 0 !important;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+          background: #050507;
+          box-shadow: none !important;
+          isolation: isolate;
+          transform: none !important;
+        }
+        .home-discovery-feed-photo {
+          position: absolute !important;
+          z-index: 0;
+          inset: 0 !important;
+          width: 100%;
+          height: 100%;
+          min-height: 100% !important;
+          background-position: center, center top, center !important;
+          background-size: cover, cover, cover !important;
+        }
+        .home-discovery-feed-photo.is-photo-unavailable {
+          display: grid;
+          place-items: center;
+          color: rgba(255,255,255,.26);
+          background:
+            radial-gradient(circle at 50% 34%, rgba(126,234,255,.2), transparent 26%),
+            linear-gradient(145deg, #21133b, #07070b 58%, #160b24) !important;
+          font-size: clamp(92px, 30vw, 190px);
+          font-weight: 950;
+          text-transform: uppercase;
+        }
+        .home-discovery-feed-shade {
+          position: absolute;
+          z-index: 1;
+          inset: 0;
+          pointer-events: none;
+          background:
+            linear-gradient(180deg, rgba(0,0,0,.34) 0%, transparent 28%, transparent 48%, rgba(0,0,0,.96) 100%),
+            linear-gradient(90deg, transparent 62%, rgba(0,0,0,.28) 100%);
+        }
+        .home-discovery-feed-open-profile {
+          position: absolute;
+          z-index: 2;
+          inset: 0;
+          color: inherit;
+          text-decoration: none;
+        }
+        .home-discovery-feed-open-profile:focus-visible {
+          outline: 3px solid #7eeaff;
+          outline-offset: -4px;
+        }
+        .home-discovery-feed-copy {
+          position: absolute;
+          z-index: 3;
+          right: 86px;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          justify-items: start;
+          gap: 8px;
+          padding: 64px 0 18px 18px;
+          pointer-events: none;
+        }
+        .home-discovery-feed-copy > * {
+          pointer-events: auto;
+        }
+        .home-discovery-feed-name {
+          max-width: 100%;
+          margin: 0;
+          overflow: hidden;
+          color: #fff;
+          font-size: clamp(25px, 6vw, 36px);
+          font-weight: 950;
+          line-height: 1.03;
+          text-overflow: ellipsis;
+          text-shadow: 0 3px 18px rgba(0,0,0,.92);
+          white-space: nowrap;
+        }
+        .home-discovery-feed-name .verified-mark {
+          width: 22px;
+          height: 22px;
+          margin-left: 7px;
+          vertical-align: 3px;
+        }
+        .home-discovery-feed-status {
+          width: fit-content;
+          max-width: 100%;
+          min-height: 31px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 10px;
+          border: 1px solid rgba(255,255,255,.25);
+          border-radius: 999px;
+          color: #ddd7e7;
+          background: rgba(0,0,0,.66);
+          font-size: 11px;
+          font-weight: 900;
+          backdrop-filter: blur(12px);
+        }
+        .home-discovery-feed-status.is-now {
+          border-color: rgba(77,236,157,.54);
+          color: #8af4bb;
+          background: rgba(17,107,62,.52);
+        }
+        .home-discovery-feed-status.is-upcoming {
+          border-color: rgba(126,234,255,.48);
+          color: #aaf2ff;
+          background: rgba(11,87,110,.52);
+        }
+        .home-discovery-feed-venue {
+          width: fit-content;
+          max-width: 100%;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          overflow: hidden;
+          border: 0;
+          padding: 0;
+          color: #fff;
+          background: transparent;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 900;
+          text-shadow: 0 2px 12px rgba(0,0,0,.94);
+          cursor: pointer;
+        }
+        .home-discovery-feed-venue svg {
+          width: 17px;
+          height: 17px;
+          flex: 0 0 auto;
+        }
+        .home-discovery-feed-venue-label {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-discovery-feed-going-count {
+          color: #e9e6ef;
+          font-size: 12px;
+          font-weight: 850;
+          text-shadow: 0 2px 10px rgba(0,0,0,.92);
+        }
+        .home-discovery-feed-actions {
+          position: absolute;
+          z-index: 4;
+          right: 12px;
+          bottom: 14px;
+          width: 64px;
+          display: grid;
+          justify-items: center;
+          gap: 11px;
+        }
+        .home-discovery-feed-actions .feed-card-action,
+        .home-discovery-feed-profile-button,
+        .home-discovery-feed-directions {
+          width: 58px;
+          min-width: 58px;
+          min-height: 58px;
+          display: grid;
+          grid-template-rows: 28px auto;
+          place-items: center;
+          gap: 2px;
+          padding: 6px 2px 5px;
+          border: 1px solid rgba(255,255,255,.28);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(5,5,9,.72);
+          box-shadow: 0 8px 24px rgba(0,0,0,.36);
+          font: inherit;
+          font-size: 8px;
+          font-weight: 950;
+          line-height: 1;
+          text-align: center;
+          text-decoration: none;
+          backdrop-filter: blur(13px);
+          cursor: pointer;
+        }
+        .home-discovery-feed-actions .action-icon {
+          width: 24px;
+          height: 24px;
+        }
+        .home-discovery-feed-actions .venue-dot {
+          width: 24px;
+          height: 24px;
+          display: grid;
+          place-items: center;
+        }
+        .home-discovery-feed-actions .venue-dot svg {
+          width: 24px;
+          height: 24px;
+        }
+        .home-discovery-feed-actions .feed-card-action.is-active {
+          border-color: rgba(126,234,255,.62);
+          background: linear-gradient(135deg,rgba(124,58,237,.86),rgba(236,72,153,.72));
+        }
+        .home-discovery-feed-actions .feed-card-action:disabled {
+          opacity: .42;
+          cursor: default;
+        }
+        .home-discovery-feed-position {
+          position: absolute;
+          z-index: 4;
+          top: 17px;
+          right: 15px;
+          padding: 5px 9px;
+          border: 1px solid rgba(255,255,255,.22);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.68);
+          font-size: 10px;
+          font-weight: 900;
+          backdrop-filter: blur(12px);
+        }
+        .home-discovery-feed-close {
+          position: absolute;
+          z-index: 5;
+          top: calc(14px + env(safe-area-inset-top));
+          left: 14px;
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.36);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.74);
+          box-shadow: 0 8px 24px rgba(0,0,0,.4);
+          font-size: 28px;
+          font-weight: 500;
+          line-height: 1;
+          backdrop-filter: blur(12px);
+          cursor: pointer;
+        }
+        .home-discovery-feed-close:hover,
+        .home-discovery-feed-close:focus-visible {
+          border-color: rgba(255,255,255,.74);
+          background: rgba(20,20,26,.96);
+        }
+        .home-discovery-feed-close:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
+        }
+        #results.home-discovery-feed > .locked {
+          min-height: 100%;
+          display: grid;
+          place-items: center;
+          padding: 88px 24px;
+          color: #ddd7e7;
+          text-align: center;
+          background: radial-gradient(circle at 50% 30%, rgba(124,58,237,.22), transparent 46%), #050507;
+        }
         .profile-tv-strip { width: fit-content; max-width: 100%; display: grid; gap: 10px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 10px; background: rgba(10,10,15,.86); box-shadow: 0 16px 44px rgba(0,0,0,.22); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
         .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
@@ -28514,6 +28795,27 @@
             border-radius: 0;
             box-shadow: none;
           }
+          #results.home-discovery-feed {
+            position: fixed !important;
+            z-index: 80;
+            inset: 0 !important;
+            width: 100vw !important;
+            max-width: none !important;
+            height: var(--home-discovery-feed-height, 100dvh) !important;
+            min-height: 0;
+            max-height: none;
+            margin: 0 !important;
+            border: 0 !important;
+            border-radius: 0;
+            box-shadow: none;
+          }
+          #results.home-discovery-feed > .home-discovery-feed-slide {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100% !important;
+            max-height: 100% !important;
+            aspect-ratio: auto !important;
+          }
           html.home-tv-feed-locked,
           body.home-tv-feed-locked {
             overflow: hidden !important;
@@ -28531,6 +28833,23 @@
             visibility: hidden !important;
             pointer-events: none !important;
           }
+          html.home-discovery-feed-locked,
+          body.home-discovery-feed-locked {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+          }
+          body.home-discovery-feed-locked {
+            position: fixed !important;
+            top: var(--home-discovery-page-lock-top, 0) !important;
+            right: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100dvh !important;
+          }
+          body.home-discovery-feed-locked main.stack > .legal-links {
+            visibility: hidden !important;
+            pointer-events: none !important;
+          }
           .home-tv-feed-copy {
             padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
           }
@@ -28539,6 +28858,21 @@
           }
           .home-tv-feed-position {
             top: calc(70px + env(safe-area-inset-top));
+          }
+          .home-discovery-feed-copy {
+            right: 82px;
+            padding: 64px 0 calc(92px + env(safe-area-inset-bottom)) 14px;
+          }
+          .home-discovery-feed-actions {
+            right: 10px;
+            bottom: calc(82px + env(safe-area-inset-bottom));
+          }
+          .home-discovery-feed-position {
+            top: calc(20px + env(safe-area-inset-top));
+          }
+          .home-discovery-feed-close {
+            position: fixed;
+            z-index: 85;
           }
           #discoveryTabs {
             position: fixed !important;
@@ -30370,6 +30704,11 @@
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
     const homeTvFeedEngagedTimers = new Map();
+    let homeDiscoveryFeedOpen = false;
+    let homeDiscoveryFeedObserver = null;
+    let homeDiscoveryFeedPageLockY = null;
+    let homeDiscoveryFeedViewportFrame = 0;
+    const homeDiscoveryFeedPositions = new Map();
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
     let tonightExpanded = false;
@@ -34974,6 +35313,7 @@
         star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.4 4.2 1.1 6-5.5-3-5.5 3 1.1-6-4.4-4.2 6.1-.8L12 3Z"></path></svg>',
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
+        pin: '<svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>',
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
@@ -42163,6 +42503,267 @@
             : `${tonightDiscovery.upcoming.length} up next tonight`;
     }
 
+    function homeDiscoveryFeedUsesLockedViewport() {
+      return window.matchMedia("(max-width: 720px)").matches;
+    }
+
+    function homeDiscoveryFeedPositionKey(city = citySelect.value, tab = activeTab) {
+      return [
+        city,
+        tab,
+        distanceSelect?.value || "25 mi",
+        selectedVenueFilter()
+      ].join("::");
+    }
+
+    function rememberHomeDiscoveryFeedPosition() {
+      if (!results.classList.contains("home-discovery-feed")) return;
+      const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
+      if (!slides.length) return;
+      const current = results.querySelector('.home-discovery-feed-slide[aria-current="true"]');
+      const viewportHeight = results.clientHeight || window.innerHeight || 1;
+      const fallbackIndex = Math.min(
+        slides.length - 1,
+        Math.max(0, Math.round(results.scrollTop / viewportHeight))
+      );
+      const profileName = String((current || slides[fallbackIndex])?.dataset.profile || "");
+      if (!profileName) return;
+      homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), profileName);
+    }
+
+    function syncHomeDiscoveryFeedViewport() {
+      homeDiscoveryFeedViewportFrame = 0;
+      if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesLockedViewport()) return;
+      if (!results.classList.contains("home-discovery-feed")) return;
+      const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
+      if (viewportHeight > 0) {
+        results.style.setProperty("--home-discovery-feed-height", `${viewportHeight}px`);
+      }
+    }
+
+    function queueHomeDiscoveryFeedViewportSync() {
+      if (homeDiscoveryFeedViewportFrame) return;
+      homeDiscoveryFeedViewportFrame = window.requestAnimationFrame(syncHomeDiscoveryFeedViewport);
+    }
+
+    function lockHomeDiscoveryFeedViewport() {
+      if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesLockedViewport()) return;
+      if (homeDiscoveryFeedPageLockY === null) {
+        homeDiscoveryFeedPageLockY = window.scrollY;
+        document.body.style.setProperty("--home-discovery-page-lock-top", `-${homeDiscoveryFeedPageLockY}px`);
+        document.documentElement.classList.add("home-discovery-feed-locked");
+        document.body.classList.add("home-discovery-feed-locked");
+      }
+      queueHomeDiscoveryFeedViewportSync();
+    }
+
+    function unlockHomeDiscoveryFeedViewport() {
+      if (homeDiscoveryFeedViewportFrame) {
+        window.cancelAnimationFrame(homeDiscoveryFeedViewportFrame);
+        homeDiscoveryFeedViewportFrame = 0;
+      }
+      results.style.removeProperty("--home-discovery-feed-height");
+      document.documentElement.classList.remove("home-discovery-feed-locked");
+      document.body.classList.remove("home-discovery-feed-locked");
+      document.body.style.removeProperty("--home-discovery-page-lock-top");
+      if (homeDiscoveryFeedPageLockY === null) return;
+      const restoreY = homeDiscoveryFeedPageLockY;
+      homeDiscoveryFeedPageLockY = null;
+      window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
+    }
+
+    function activateHomeDiscoveryFeedProfile(profileName) {
+      if (!homeDiscoveryFeedOpen || !profileName) return;
+      homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), profileName);
+      results.querySelectorAll(".home-discovery-feed-slide").forEach((slide) => {
+        const isActive = slide.dataset.profile === profileName;
+        slide.classList.toggle("is-active", isActive);
+        if (isActive) slide.setAttribute("aria-current", "true");
+        else slide.removeAttribute("aria-current");
+      });
+    }
+
+    function setupHomeDiscoveryFeedObserver() {
+      homeDiscoveryFeedObserver?.disconnect();
+      homeDiscoveryFeedObserver = null;
+      const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
+      if (!slides.length) return;
+      if (!("IntersectionObserver" in window)) {
+        activateHomeDiscoveryFeedProfile(String(slides[0].dataset.profile || ""));
+        return;
+      }
+      homeDiscoveryFeedObserver = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
+          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+        if (!visible) return;
+        activateHomeDiscoveryFeedProfile(String(visible.target.dataset.profile || ""));
+      }, {
+        root: results,
+        threshold: [.72, .82, .92]
+      });
+      slides.forEach((slide) => homeDiscoveryFeedObserver.observe(slide));
+    }
+
+    function deactivateHomeDiscoveryFeed() {
+      rememberHomeDiscoveryFeedPosition();
+      homeDiscoveryFeedObserver?.disconnect();
+      homeDiscoveryFeedObserver = null;
+      results.classList.remove("home-discovery-feed");
+      results.removeAttribute("aria-label");
+      unlockHomeDiscoveryFeedViewport();
+    }
+
+    function closeHomeDiscoveryFeed() {
+      rememberHomeDiscoveryFeedPosition();
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
+      render();
+      document.querySelector(`.tab[data-tab="${activeTab}"]`)?.focus({ preventScroll: true });
+    }
+
+    function homeDiscoveryFeedStatus(profile, tab) {
+      if (isWorkingTonight(profile)) {
+        return {
+          className: "is-now",
+          label: "Working now"
+        };
+      }
+      if (profile.scheduled) {
+        return {
+          className: "is-upcoming",
+          label: tab === "tonight"
+            ? `Up next · ${displayPublicShiftTime(profile.time, profile)}`
+            : displayPublicShiftTime(profile.time, profile)
+        };
+      }
+      return {
+        className: "is-no-shift",
+        label: "No upcoming shift posted"
+      };
+    }
+
+    function homeDiscoveryFeedSlide(profile, index, total, tab) {
+      const city = citySelect.value;
+      const safeName = escapeHtml(profile.name);
+      const profileValue = escapeOptionValue(profile.name);
+      const venueName = String(profile.venue || "").trim();
+      const safeVenueName = escapeHtml(venueName);
+      const venueValue = escapeOptionValue(venueName);
+      const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
+      const profilePhotoUrl = publicProfilePhotoUrl(profile);
+      const portraitPhotoAttrs = customPhotoAttrs(profilePhotoUrl);
+      const portraitMarkup = profilePhotoUrl
+        ? `<div class="portrait home-discovery-feed-photo ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}></div>`
+        : `<div class="home-discovery-feed-photo is-photo-unavailable" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
+      const status = homeDiscoveryFeedStatus(profile, tab);
+      const locationBadge = profileLocationStatusBadge(profile);
+      const distanceLabel = profileCardDistanceLabel(profile);
+      const verifiedMark = profile.status === "Verified"
+        ? '<span class="verified-mark" aria-label="Verified">✓</span>'
+        : "";
+      const isFollowed = isFollowingProfile(city, profile.name);
+      const isNotified = isNotificationOn(city, profile.name);
+      const isGoing = !!goingTonightSavedByProfile[profile.name];
+      const canMarkGoing = Boolean(profile.shiftId && profile.scheduled);
+      const venue = resolveVenueByName(venueName, city);
+      const directionsMarkup = tab === "tonight" && venue?.address
+        ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeVenueName}">${actionButtonLabel("pin", "Directions")}</a>`
+        : "";
+      const goingMarkup = canMarkGoing
+        ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="${isWorkingTonight(profile) ? "tonight" : "upcoming"}" aria-pressed="${isGoing}">${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>`
+        : "";
+      const venueMarkup = venueName
+        ? `<button class="home-discovery-feed-venue" type="button" data-card-venue="${venueValue}" aria-label="Open ${safeVenueName} venue page">${venueIconMarkup()}<span class="home-discovery-feed-venue-label">${safeVenueName}${distanceLabel ? ` · ${escapeHtml(distanceLabel)}` : ""}</span></button>`
+        : "";
+      const goingCountMarkup = profile.scheduled
+        ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
+        : "";
+      return `
+        <article class="dancer-card home-discovery-feed-slide" data-profile="${profileValue}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+          ${portraitMarkup}
+          <div class="home-discovery-feed-shade" aria-hidden="true"></div>
+          <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>
+          <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
+          <div class="home-discovery-feed-copy">
+            <h3 class="home-discovery-feed-name">${safeName}${verifiedMark}</h3>
+            ${locationBadge}
+            ${venueMarkup}
+            <span class="home-discovery-feed-status ${status.className}">${escapeHtml(status.label)}</span>
+            ${goingCountMarkup}
+          </div>
+          <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
+            <button class="home-discovery-feed-profile-button" type="button" data-profile="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
+            <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+            <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
+            ${goingMarkup}
+            ${directionsMarkup}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderHomeDiscoveryFeedMessage(message) {
+      results.innerHTML = `
+        <button class="home-discovery-feed-close" type="button" data-home-discovery-close aria-label="Close full-screen discovery">×</button>
+        <div class="locked">${escapeHtml(message)}</div>
+      `;
+      results.querySelector("[data-home-discovery-close]")?.addEventListener("click", closeHomeDiscoveryFeed);
+    }
+
+    function renderHomeDiscoveryFeed(city, items, options = {}) {
+      rememberHomeDiscoveryFeedPosition();
+      results.classList.remove("card-grid");
+      results.classList.add("home-discovery-feed");
+      results.setAttribute("aria-label", `Swipe through ${activeTab === "tonight" ? "Now and Next appearances" : "dancer profiles"} in ${city}`);
+      viewAllBtn.hidden = true;
+      lockHomeDiscoveryFeedViewport();
+
+      if (options.loading && !items.length) {
+        renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : "dancer profiles"} from ${city}…`);
+        return;
+      }
+      if (!items.length) {
+        renderHomeDiscoveryFeedMessage(
+          activeTab === "tonight"
+            ? `No upcoming shifts are posted for tonight in ${city} yet.`
+            : `No approved dancer profiles are available in ${city} yet.`
+        );
+        return;
+      }
+
+      const positionKey = homeDiscoveryFeedPositionKey(city, activeTab);
+      const storedProfile = homeDiscoveryFeedPositions.get(positionKey) || "";
+      const restoreIndex = Math.max(0, items.findIndex((profile) => profile.name === storedProfile));
+      results.innerHTML = `
+        <button class="home-discovery-feed-close" type="button" data-home-discovery-close aria-label="Close full-screen discovery">×</button>
+        ${items.map((profile, index) => homeDiscoveryFeedSlide(profile, index, items.length, activeTab)).join("")}
+      `;
+      results.querySelector("[data-home-discovery-close]")?.addEventListener("click", closeHomeDiscoveryFeed);
+      window.requestAnimationFrame(() => {
+        const viewportHeight = results.clientHeight || window.innerHeight;
+        results.scrollTo({ top: restoreIndex * viewportHeight, left: 0, behavior: "auto" });
+        const restoredProfile = items[restoreIndex]?.name || items[0].name;
+        activateHomeDiscoveryFeedProfile(restoredProfile);
+        setupHomeDiscoveryFeedObserver();
+      });
+    }
+
+    function focusAndLockHomeDiscoveryFeed() {
+      lockHomeDiscoveryFeedViewport();
+    }
+
+    function handleHomeDiscoveryFeedViewportChange() {
+      if (!homeDiscoveryFeedOpen) return;
+      if (!["tonight", "dancers"].includes(activeTab) || !homeDiscoveryFeedUsesLockedViewport()) {
+        homeDiscoveryFeedOpen = false;
+        deactivateHomeDiscoveryFeed();
+        render();
+        return;
+      }
+      lockHomeDiscoveryFeedViewport();
+    }
+
     function render() {
       const city = citySelect.value;
       if (homeTvLaunchCity !== city) {
@@ -42174,6 +42775,8 @@
       updateTabCounts(city);
       updateHomeLiveSummary(city);
       if (activeTab === "tv") {
+        homeDiscoveryFeedOpen = false;
+        deactivateHomeDiscoveryFeed();
         renderHomeTvFeed(city);
         return;
       }
@@ -42222,6 +42825,16 @@
         : (activeTab === "tonight" || activeTab === "dancers") && allItems.length > items.length
           ? `${items.length} of ${allItems.length}`
           : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
+      const usesDiscoveryFeed =
+        homeDiscoveryFeedOpen &&
+        ["tonight", "dancers"].includes(activeTab) &&
+        homeDiscoveryFeedUsesLockedViewport();
+      if (usesDiscoveryFeed) {
+        renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
+        return;
+      }
+      if (homeDiscoveryFeedOpen) homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       viewAllBtn.hidden = !["tonight", "dancers"].includes(activeTab) || allItems.length <= 6 || !shouldLimit;
       viewAllBtn.textContent = activeTab === "dancers" ? "View All Dancers" : "View All";
       results.classList.toggle("card-grid", activeTab !== "venues");
@@ -42760,6 +43373,8 @@
         showToast("Venue profile not found");
         return;
       }
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       selectedVenueName = venue.name;
       activeTab = "venues";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
@@ -44912,6 +45527,10 @@
         closeProfileModal();
         return;
       }
+      if (event.key === "Escape" && homeDiscoveryFeedOpen) {
+        closeHomeDiscoveryFeed();
+        return;
+      }
       if (event.key === "Escape") closeUtilityMenu();
     });
 
@@ -44919,6 +45538,8 @@
     homeBottomTv?.addEventListener("click", (event) => {
       event.preventDefault();
       if (profileBackdrop.classList.contains("show")) closeProfileModal();
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       activeTab = "tv";
       tonightExpanded = false;
       dancersExpanded = false;
@@ -44933,27 +45554,40 @@
     window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("scroll", queueHomeTvFeedViewportSync, { passive: true });
+    window.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
+    window.addEventListener("orientationchange", handleHomeDiscoveryFeedViewportChange, { passive: true });
+    window.visualViewport?.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
+    window.visualViewport?.addEventListener("scroll", queueHomeDiscoveryFeedViewportSync, { passive: true });
 
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => {
         const nextTab = tab.dataset.tab;
         if (!nextTab) return;
         deactivateHomeTvFeed();
+        deactivateHomeDiscoveryFeed();
         if (profileBackdrop.classList.contains("show")) closeProfileModal();
         if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
           selectedVenueName = null;
         }
         activeTab = nextTab;
+        homeDiscoveryFeedOpen =
+          ["tonight", "dancers"].includes(nextTab) &&
+          homeDiscoveryFeedUsesLockedViewport();
         tonightExpanded = false;
         dancersExpanded = false;
         if (activeTab !== "venues") selectedVenueName = null;
         document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
         render();
+        if (homeDiscoveryFeedOpen) {
+          window.requestAnimationFrame(focusAndLockHomeDiscoveryFeed);
+        }
       });
     });
 
     brandHome.addEventListener("click", () => {
       deactivateHomeTvFeed();
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       activeTab = "tonight";
       tonightExpanded = false;
       dancersExpanded = false;
@@ -44982,6 +45616,8 @@
 
     citySelect.addEventListener("change", () => {
       deactivateHomeTvFeed();
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       tonightExpanded = false;
       dancersExpanded = false;
       dashboardTonightExpanded = false;
@@ -45004,6 +45640,8 @@
     });
 
     distanceSelect.addEventListener("change", () => {
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       tonightExpanded = false;
       dancersExpanded = false;
       selectedVenueName = null;
@@ -45013,6 +45651,8 @@
     });
 
     venueSelect?.addEventListener("change", () => {
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
       tonightExpanded = false;
       dancersExpanded = false;
       selectedVenueName = null;

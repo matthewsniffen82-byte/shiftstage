@@ -94,6 +94,67 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
+test("Now & Next and Dancers open as full-screen mobile swipe feeds", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-discovery-feed-height, 100dvh\) !important/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: 100% !important[\s\S]*?min-height: 100% !important[\s\S]*?aspect-ratio: auto !important/,
+  );
+  assert.match(
+    homeSource,
+    /html\.home-discovery-feed-locked,[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?position: fixed !important/,
+  );
+  assert.match(
+    homeSource,
+    /homeDiscoveryFeedOpen =\s*\["tonight", "dancers"\]\.includes\(nextTab\)[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
+  );
+  assert.match(
+    homeSource,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\)[\s\S]*?items\.map\(\(profile, index\) => homeDiscoveryFeedSlide\(profile, index, items\.length, activeTab\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /new IntersectionObserver\([\s\S]*?activateHomeDiscoveryFeedProfile/,
+  );
+  assert.match(
+    homeSource,
+    /homeDiscoveryFeedPositions\.set\(homeDiscoveryFeedPositionKey\(\), profileName\)/,
+  );
+  assert.match(
+    homeSource,
+    /class="home-discovery-feed-close"[\s\S]*?data-home-discovery-close[\s\S]*?closeHomeDiscoveryFeed/,
+  );
+});
+
+test("discovery swipe cards keep production profile, follow, notify, going, venue, and directions flows", () => {
+  assert.match(
+    homeSource,
+    /function homeDiscoveryFeedSlide\(profile, index, total, tab\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?is-photo-unavailable/,
+  );
+  assert.match(
+    homeSource,
+    /home-discovery-feed-open-profile[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"[\s\S]*?data-feed-action="going"/,
+  );
+  assert.match(
+    homeSource,
+    /tab === "tonight" && venue\?\.address[\s\S]*?venue-directions-btn[\s\S]*?maps\.google\.com/,
+  );
+  assert.match(homeSource, /tonightInterestCount\(profile\)\.toLocaleString\(\)\} going/);
+  assert.match(homeSource, /profileLocationStatusBadge\(profile\)/);
+  assert.match(homeSource, /profileCardDistanceLabel\(profile\)/);
+  assert.match(
+    homeSource,
+    /#profileBackdrop \.profile-modal \{[\s\S]*?overflow-y: auto !important[\s\S]*?touch-action: pan-y !important/,
+  );
+});
+
 test("bottom navigation keeps every destination on one uniform baseline", () => {
   assert.match(
     homeSource,
