@@ -238,6 +238,14 @@ test("mobile homepage cards form a single-column production action feed", () => 
   assert.match(homeSource, /\.feed-card-action \{[\s\S]*?min-height: 54px/);
   assert.match(
     homeSource,
+    /const canMarkGoing = Boolean\(workingTonight && profile\.shiftId\)[\s\S]*?const goingActionMarkup = canMarkGoing[\s\S]*?data-shift-state="tonight"[\s\S]*?: "";/,
+  );
+  assert.match(
+    homeSource,
+    /\.feed-card-actions\.without-going \{[\s\S]*?grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/,
+  );
+  assert.match(
+    homeSource,
     /\.feed-card-action\[data-feed-action="going"\] \{[\s\S]*?linear-gradient[\s\S]*?\.feed-card-action\[data-feed-action="going"\]\.is-active/,
   );
   assert.match(homeSource, /isNotified \? "Notifications On" : "Notify"/);

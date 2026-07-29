@@ -29095,6 +29095,9 @@
             gap: 8px;
             padding: 0 12px 12px;
           }
+          #results .home-feed-card .feed-card-actions.without-going {
+            grid-template-columns: repeat(2,minmax(0,1fr));
+          }
           .feed-card-action {
             min-width: 0;
             min-height: 54px;
@@ -37677,16 +37680,19 @@
         const isFollowed = isFollowingProfile(citySelect.value, profile.name);
         const isNotified = isNotificationOn(citySelect.value, profile.name);
         const isGoing = !!goingTonightSavedByProfile[profile.name];
-        const canMarkGoing = Boolean(profile.shiftId && profile.scheduled);
+        const canMarkGoing = Boolean(workingTonight && profile.shiftId);
+        const goingActionMarkup = canMarkGoing
+          ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
+          : "";
         return `
           <article class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${profile.name}">
             <a class="dancer-card-link" href="${profileHref}" aria-label="Open ${profile.name} profile">
               ${profileCardBody}
             </a>
-            <div class="feed-card-actions" aria-label="${profile.name} actions">
+            <div class="feed-card-actions${canMarkGoing ? "" : " without-going"}" aria-label="${profile.name} actions">
               <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
               <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
-              <button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="${workingTonight ? "tonight" : "upcoming"}" aria-pressed="${isGoing}" ${canMarkGoing ? "" : "disabled"}>${homeFeedGoingActionMarkup(profile, isGoing)}</button>
+              ${goingActionMarkup}
             </div>
           </article>
         `;
@@ -38115,13 +38121,11 @@
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-      const canMarkGoing = status.state === "active" || (profile.scheduled && status.state !== "ended");
-      const goingCopy = status.state === "active"
-        ? { idle: "I'm Going Now", active: "You're going now" }
-        : { idle: "I'm Going", active: "You're going" };
+      const canMarkGoing = status.state === "active" && Boolean(profile.shiftId);
+      const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="${status.state === "active" ? "tonight" : "upcoming"}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
-        : `<button class="action-btn going-btn" id="goingBtn" data-profile="${profile.name}" data-shift-state="none" disabled>${actionButtonLabel("clock", status.state === "ended" ? "Shift ended" : "No shift posted")}</button>`;
+        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="tonight">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
+        : "";
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions">
@@ -38134,7 +38138,7 @@
     }
 
     async function refreshProfileGoingState(profile) {
-      if (!profile?.shiftId || window.location.protocol === "file:") return;
+      if (!profile?.shiftId || !isWorkingTonight(profile) || window.location.protocol === "file:") return;
       try {
         const headers = { Accept: "application/json" };
         if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
@@ -38156,9 +38160,8 @@
 
         const actionButton = document.getElementById("goingBtn");
         if (!actionButton || actionButton.dataset.profile !== profile.name) return;
-        const isTonightShift = actionButton.dataset.shiftState === "tonight";
-        const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
-        const activeLabel = isTonightShift ? "You're going now" : "You're going";
+        const idleLabel = "I'm Going";
+        const activeLabel = "Going";
         const countEl = document.getElementById("tonightInterestCount");
         if (countEl) {
           countEl.classList.remove("muted");
@@ -43885,19 +43888,17 @@
       if (actionButton.disabled) return;
       const profileName = actionButton.dataset.profile;
       const profile = findProfile(profileName);
-      if (!profile?.shiftId) {
-        showToast("This shift is not available.");
+      if (!profile?.shiftId || !isWorkingTonight(profile)) {
+        showToast("I'm Going is available only while this dancer is working now.");
         return;
       }
-      const shiftState = actionButton.dataset.shiftState || "tonight";
-      const isTonightShift = shiftState === "tonight";
       const countEl = document.getElementById("tonightInterestCount");
       const wasGoing = goingTonightSavedByProfile[profileName] === true;
       const previousCount = tonightInterestCount(profile);
       const requestedGoing = !wasGoing;
       const optimisticCount = Math.max(0, previousCount + (requestedGoing ? 1 : -1));
-      const idleLabel = isTonightShift ? "I'm Going Now" : "I'm Going";
-      const activeLabel = isTonightShift ? "You're going now" : "You're going";
+      const idleLabel = "I'm Going";
+      const activeLabel = "Going";
       actionButton.disabled = true;
       goingTonightByProfile[profileName] = optimisticCount;
       profile.goingCount = optimisticCount;
@@ -43933,8 +43934,8 @@
         actionButton.classList.toggle("is-going", savedGoing);
         actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
         syncHomeFeedActionButtons(profile, citySelect.value);
-        recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? (isTonightShift ? "going_tonight_added" : "going_upcoming_added") : "going_removed" });
-        showToast(savedGoing ? (isTonightShift ? "Added to now" : "Added to upcoming shift") : "Removed");
+        recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? "going_tonight_added" : "going_removed" });
+        showToast(savedGoing ? "Added to now" : "Removed");
       } catch (error) {
         goingTonightByProfile[profileName] = previousCount;
         profile.goingCount = previousCount;

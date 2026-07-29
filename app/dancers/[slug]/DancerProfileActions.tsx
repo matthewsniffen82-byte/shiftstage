@@ -109,8 +109,8 @@ export function DancerProfileActions({
   const [reportError, setReportError] = useState("");
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
-  const nextShift = useMemo(() => shifts[0] || null, [shifts]);
-  const nextShiftId = nextShift?.id || "";
+  const liveShift = useMemo(() => shifts.find((shift) => shift.isActive) || null, [shifts]);
+  const liveShiftId = liveShift?.id || "";
   const showSignedOutRequirements = savedLoaded && !token;
 
   useEffect(() => {
@@ -120,13 +120,13 @@ export function DancerProfileActions({
     const accessToken = readToken();
     setToken(accessToken);
     if (!accessToken) {
-      if (!nextShiftId) {
+      if (!liveShiftId) {
         setSavedLoaded(true);
         return () => {
           active = false;
         };
       }
-      fetch(`/api/customer/going?shiftId=${encodeURIComponent(nextShiftId)}`, {
+      fetch(`/api/customer/going?shiftId=${encodeURIComponent(liveShiftId)}`, {
         cache: "no-store",
         credentials: "same-origin",
       })
@@ -136,7 +136,7 @@ export function DancerProfileActions({
           if (!data.ok) throw new Error(data.error || "Unable to load going status.");
           setSaved((current) => ({
             ...current,
-            goingShiftIds: data.going === true ? [nextShiftId] : [],
+            goingShiftIds: data.going === true ? [liveShiftId] : [],
           }));
           setGoingCount(readConfirmedGoingCount(data));
         })
@@ -176,7 +176,7 @@ export function DancerProfileActions({
     return () => {
       active = false;
     };
-  }, [dancerId, nextShiftId, setGoingCount]);
+  }, [dancerId, liveShiftId, setGoingCount]);
 
   useEffect(() => {
     if (!accountRequiredAction && !reportDialogOpen) return;
@@ -369,20 +369,14 @@ export function DancerProfileActions({
   return (
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
-        {nextShift ? (
+        {liveShift ? (
           <button
             className="profile-action-primary profile-action-public"
             type="button"
-            onClick={() => updateGoing(nextShift.id)}
+            onClick={() => updateGoing(liveShift.id)}
             disabled={!savedLoaded || goingSaving}
           >
-            {saved.goingShiftIds.includes(nextShift.id)
-              ? nextShift.isActive
-                ? "You’re going now"
-                : "You’re going"
-              : nextShift.isActive
-                ? "I’m Going Now"
-                : `I’m Going ${nextShift.label}`}
+            {saved.goingShiftIds.includes(liveShift.id) ? "Going" : "I’m Going"}
             {showSignedOutRequirements ? (
               <small className="profile-action-requirement">No sign-in needed</small>
             ) : null}

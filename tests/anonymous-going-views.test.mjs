@@ -53,9 +53,10 @@ test("Going GET and POST work with or without auth and return the authoritative 
   assert.match(goingRoute, /anonymous: !identity\.customerId/);
 });
 
-test("both production dancer profile surfaces let signed-out visitors use Going", () => {
+test("both production dancer profile surfaces let signed-out visitors use live-only Going", () => {
   assert.doesNotMatch(nextActions, /requireCustomerAccount\("going"\)/);
-  assert.match(nextActions, /onClick=\{\(\) => updateGoing\(nextShift\.id\)\}/);
+  assert.match(nextActions, /shifts\.find\(\(shift\) => shift\.isActive\)/);
+  assert.match(nextActions, /onClick=\{\(\) => updateGoing\(liveShift\.id\)\}/);
   assert.match(nextActions, /fetch\(`\/api\/customer\/going\?shiftId=/);
   assert.match(nextActions, /credentials: "same-origin"/);
   assert.match(nextActions, /export function DancerGoingCount/);

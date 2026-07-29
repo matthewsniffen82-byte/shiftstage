@@ -144,11 +144,13 @@ test("signed-out profile actions open a dismissible account prompt with working 
   assert.match(homeSource, /accountRequiredCreateLink\?\.addEventListener\("click"[\s\S]*openFreshCustomerSignup\(\)/);
 });
 
-test("public Next profiles keep all actions visible while signed out and gate only Follow and Notify", () => {
+test("public profiles keep Going live-only while signed out and gate only Follow and Notify", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
   assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
   assert.match(actionsSource, /profile-action-requirement">Sign in required/);
   assert.match(actionsSource, /profile-action-requirement">No sign-in needed/);
+  assert.match(actionsSource, /const liveShift = useMemo\(\(\) => shifts\.find\(\(shift\) => shift\.isActive\) \|\| null/);
+  assert.doesNotMatch(actionsSource, /const nextShift = useMemo\(\(\) => shifts\[0\]/);
   for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
@@ -157,7 +159,8 @@ test("public Next profiles keep all actions visible while signed out and gate on
   }
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
-  assert.match(actionsSource, /onClick=\{\(\) => updateGoing\(nextShift\.id\)\}/);
+  assert.match(actionsSource, /onClick=\{\(\) => updateGoing\(liveShift\.id\)\}/);
+  assert.match(actionsSource, /saved\.goingShiftIds\.includes\(liveShift\.id\) \? "Going" : "I’m Going"/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
@@ -178,6 +181,14 @@ test("the live mobile profile labels protected actions before the tap and labels
   assert.match(
     homeSource,
     /id="reportBtn"[^>]*>\$\{profileActionButtonMarkup\("report", "Report", "public"\)\}/,
+  );
+  assert.match(
+    homeSource,
+    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = status\.state === "active" && Boolean\(profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?: "";/,
+  );
+  assert.match(
+    homeSource,
+    /async function refreshProfileGoingState\(profile\) \{\s+if \(!profile\?\.shiftId \|\| !isWorkingTonight\(profile\)/,
   );
 });
 
