@@ -37,7 +37,7 @@ test("admin photo and social deletion routes require an active admin and exact U
 
 test("photo deletion is dancer-scoped, removes stored content, promotes a replacement, and is audited", () => {
   const deletion =
-    adminLibrarySource.match(/export async function deleteAdminDancerPhoto[\s\S]*?\n}\n\nexport async function deleteAdminDancerSocialLink/)?.[0] || "";
+    adminLibrarySource.match(/export async function deleteAdminDancerPhoto[\s\S]*?export async function deleteAdminDancerSocialLink/)?.[0] || "";
 
   assert.match(deletion, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("id", input\.targetId\)[\s\S]*?\.eq\("dancer_id", input\.dancerId\)/);
   assert.match(deletion, /\.from\("dancer_photos"\)[\s\S]*?\.delete\(\)[\s\S]*?\.eq\("id", photo\.id\)[\s\S]*?\.eq\("dancer_id", input\.dancerId\)/);
@@ -50,7 +50,7 @@ test("photo deletion is dancer-scoped, removes stored content, promotes a replac
 
 test("social-link deletion is dancer-scoped, cleans its review state, and is audited", () => {
   const deletion =
-    adminLibrarySource.match(/export async function deleteAdminDancerSocialLink[\s\S]*?\n}\n\nasync function selectApprovalRows/)?.[0] || "";
+    adminLibrarySource.match(/export async function deleteAdminDancerSocialLink[\s\S]*?async function selectApprovalRows/)?.[0] || "";
 
   assert.match(deletion, /\.from\("social_links"\)[\s\S]*?\.eq\("id", input\.targetId\)[\s\S]*?\.eq\("dancer_id", input\.dancerId\)/);
   assert.match(deletion, /\.from\("social_links"\)[\s\S]*?\.delete\(\)[\s\S]*?\.eq\("id", social\.id\)[\s\S]*?\.eq\("dancer_id", input\.dancerId\)/);

@@ -142,9 +142,9 @@ test("saved profiles keep every active photo moderation state in the editor", ()
 });
 
 test("onboarding Step 2 accepts only approved or human-review photo outcomes", () => {
-  const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\n    }\n\n    async function uploadApprovedDancerPhoto/)?.[0] || "";
-  const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    }\n\n    async function uploadVerificationFile/)?.[0] || "";
-  const profileHydration = mobileAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\n    }\n\n    function setDancerSetupField/)?.[0] || "";
+  const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?async function uploadApprovedDancerPhoto/)?.[0] || "";
+  const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?async function uploadVerificationFile/)?.[0] || "";
+  const profileHydration = mobileAppSource.match(/function applyDancerVerificationProfile[\s\S]*?function setDancerSetupField/)?.[0] || "";
 
   assert.match(uploadHelper, /normalizedReviewStatus\(data\?\.decision\) === "rejected"/);
   assert.match(uploadHelper, /return data/);

@@ -41,7 +41,7 @@ test("incognito uses a dedicated authenticated database operation", () => {
 
 test("the production mobile control cannot report a local-only incognito success", () => {
   const handler = mobileAppSource.match(
-    /if \(action === "toggle-incognito"\) \{[\s\S]*?\n        return;\n      \}/,
+    /if \(action === "toggle-incognito"\) \{[\s\S]*?if \(action === "preview-profile"\) \{/,
   )?.[0] || "";
 
   assert.match(handler, /!isDancerSession\(\) \|\| !authSession\?\.accessToken/);

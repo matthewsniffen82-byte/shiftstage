@@ -21,7 +21,7 @@ test("profile detail and deletion require an authenticated active admin", () => 
 
 test("admin full profile detail includes the private account and subscription state", () => {
   const detailFunction =
-    adminLibrarySource.match(/export async function getAdminDancerDetail[\s\S]*?\n}\n\nexport async function deleteAdminDancerProfile/)?.[0] || "";
+    adminLibrarySource.match(/export async function getAdminDancerDetail[\s\S]*?export async function deleteAdminDancerProfile/)?.[0] || "";
 
   assert.match(detailFunction, /\.from\("app_users"\)/);
   assert.match(detailFunction, /display_name, email, account_state/);
@@ -37,7 +37,7 @@ test("admin full profile detail includes the private account and subscription st
 
 test("profile deletion cancels billing before deleting database content and preserves login", () => {
   const deleteFunction =
-    adminLibrarySource.match(/export async function deleteAdminDancerProfile[\s\S]*?\n}\n\nasync function selectApprovalRows/)?.[0] || "";
+    adminLibrarySource.match(/export async function deleteAdminDancerProfile[\s\S]*?export async function deleteAdminDancerPhoto/)?.[0] || "";
 
   const cancelIndex = deleteFunction.indexOf("subscriptions.cancel");
   const profileDeleteIndex = deleteFunction.indexOf('.from("dancer_profiles")', deleteFunction.indexOf('.from("dancer_profiles")') + 1);

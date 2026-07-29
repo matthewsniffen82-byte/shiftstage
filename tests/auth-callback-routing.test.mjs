@@ -10,9 +10,9 @@ const [callbackSource, liveAppSource, dancerDashboardSource] = await Promise.all
 
 test("confirmed dancer accounts return to the canonical live app dashboard", () => {
   const redirectResolver =
-    callbackSource.match(/function callbackRedirectPath[\s\S]*?\n}\n\nfunction safeReturnPath/)?.[0] || "";
+    callbackSource.match(/function callbackRedirectPath[\s\S]*?function safeReturnPath/)?.[0] || "";
   const liveAppPath =
-    callbackSource.match(/function liveAppCallbackPath[\s\S]*?\n}\n\nfunction callbackHtml/)?.[0] || "";
+    callbackSource.match(/function liveAppCallbackPath[\s\S]*?function callbackHtml/)?.[0] || "";
 
   assert.match(redirectResolver, /return liveAppCallbackPath\(url, role\)/);
   assert.doesNotMatch(redirectResolver, /return "\/dashboard\/dancer"/);
@@ -38,7 +38,7 @@ test("the live app consumes the session saved by the server callback", () => {
 
 test("a confirmed session survives account synchronization errors", () => {
   const callbackSessionReader =
-    callbackSource.match(/async function readCallbackSession[\s\S]*?\n}\n\nasync function confirmSupabaseCallback/)?.[0] || "";
+    callbackSource.match(/async function readCallbackSession[\s\S]*?async function confirmSupabaseCallback/)?.[0] || "";
 
   assert.match(callbackSessionReader, /AUTH_CALLBACK_ACCOUNT_SYNC_FAILED/);
   assert.match(callbackSessionReader, /accessToken: authData\.session\?\.access_token/);
@@ -49,9 +49,9 @@ test("a confirmed session survives account synchronization errors", () => {
 
 test("implicit Supabase email-confirmation tokens are transferred into the live session", () => {
   const callbackPage =
-    callbackSource.match(/function callbackHtml[\s\S]*?\n}\n\nfunction escapeHtml/)?.[0] || "";
+    callbackSource.match(/function callbackHtml[\s\S]*?function escapeHtml/)?.[0] || "";
   const confirmationSessionReader =
-    liveAppSource.match(/function readAuthTokenPayload[\s\S]*?\n    async function hydrateConfirmedSessionAccount/)?.[0] || "";
+    liveAppSource.match(/function readAuthTokenPayload[\s\S]*?async function hydrateConfirmedSessionAccount/)?.[0] || "";
 
   assert.match(callbackPage, /fragmentParams\.get\("access_token"\)/);
   assert.match(callbackPage, /const fragmentSession = fragmentAccessToken/);
