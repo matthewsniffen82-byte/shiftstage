@@ -30,7 +30,7 @@ test("the Home TV button opens a real horizontally swipeable video tray", () => 
   );
   assert.match(
     homeSource,
-    /\.home-tv-drawer \{[\s\S]*?position: fixed[\s\S]*?bottom: calc\(70px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?\.home-tv-drawer-list \{[\s\S]*?overflow-x: auto[\s\S]*?scroll-snap-type: x mandatory/,
+    /main\.stack > \.home-tv-drawer \{[\s\S]*?position: fixed[\s\S]*?width: min\(calc\(100vw - 16px\), 704px\) !important[\s\S]*?margin: 0 !important[\s\S]*?\.home-tv-drawer-list \{[\s\S]*?overflow-x: auto[\s\S]*?scroll-snap-type: x mandatory/,
   );
   assert.match(
     homeSource,

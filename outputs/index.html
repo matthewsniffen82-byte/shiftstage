@@ -28309,15 +28309,17 @@
           .home-tv-launch {
             display: none !important;
           }
-          .home-tv-drawer {
+          main.stack > .home-tv-drawer {
             position: fixed;
             z-index: 89;
             left: 50vw;
             bottom: calc(70px + env(safe-area-inset-bottom));
-            width: min(calc(100vw - 16px), 704px);
+            width: min(calc(100vw - 16px), 704px) !important;
+            max-width: 704px !important;
             max-height: min(292px, calc(100dvh - 170px));
             display: grid;
             gap: 8px;
+            margin: 0 !important;
             padding: 10px;
             overflow: hidden;
             border: 1px solid rgba(139,92,246,.5);
