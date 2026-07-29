@@ -221,6 +221,11 @@ export function DancerPhotoCarousel({
           <span aria-live="polite" className="public-photo-status">
             Photo {safeActiveIndex + 1} of {availablePhotos.length}
           </span>
+          <div aria-hidden="true" className="public-photo-swipe-hint">
+            <span>←</span>
+            <strong>Swipe photos</strong>
+            <span>→</span>
+          </div>
         </>
       ) : null}
     </div>

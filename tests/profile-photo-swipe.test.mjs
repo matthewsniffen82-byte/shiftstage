@@ -57,6 +57,18 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
     liveApp,
     /\.profile-modal \.gallery \{ overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; \}/,
   );
+  assert.match(
+    liveApp,
+    /id="modalPhotoSwipeHint"[\s\S]*?<span>←<\/span><strong>Swipe photos<\/strong><span>→<\/span>/,
+  );
+  assert.match(
+    liveApp,
+    /id="profilePhotoViewerSwipeHint"[\s\S]*?<span>←<\/span><strong>Swipe photos<\/strong><span>→<\/span>/,
+  );
+  assert.match(
+    liveApp,
+    /const multiplePhotos = totalPhotos > 1;[\s\S]*?modalPhotoSwipeHint\.hidden = !multiplePhotos;[\s\S]*?profilePhotoViewerSwipeHint\.hidden = !multiplePhotos/,
+  );
 });
 
 test("the standalone public dancer profile uses the production swipe carousel", () => {
@@ -84,4 +96,9 @@ test("the standalone public dancer profile uses the production swipe carousel", 
     publicProfilePage,
     /@media \(max-width: 760px\)[\s\S]*?\.public-gallery \{[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory;[^}]*touch-action: pan-x pan-y;/,
   );
+  assert.match(
+    publicPhotoCarousel,
+    /availablePhotos\.length > 1[\s\S]*?className="public-photo-swipe-hint"[\s\S]*?<span>←<\/span>[\s\S]*?<strong>Swipe photos<\/strong>[\s\S]*?<span>→<\/span>/,
+  );
+  assert.match(publicProfilePage, /\.public-photo-swipe-hint \{[^}]*bottom: 52px;[^}]*pointer-events: none;/);
 });

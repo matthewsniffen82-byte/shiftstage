@@ -1158,6 +1158,47 @@
       overflow: hidden;
     }
 
+    .profile-photo-swipe-hint {
+      position: absolute;
+      z-index: 12;
+      left: 50%;
+      bottom: 58px;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid rgba(126,234,255,.42);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(5,5,8,.72);
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .profile-photo-swipe-hint[hidden] {
+      display: none !important;
+    }
+
+    .profile-photo-swipe-hint span {
+      color: #9fefff;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .profile-photo-swipe-hint strong {
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     .modal-image.two {
       background:
         linear-gradient(180deg, rgba(5,5,7,.03) 0%, rgba(5,5,7,.1) 42%, rgba(5,5,7,.78) 100%),
@@ -29763,6 +29804,9 @@
           </button>
         </div>
         <div class="modal-image" id="modalImage" role="button" tabindex="0" aria-label="Open larger profile photo. Swipe left or right to change photos.">
+          <div class="profile-photo-swipe-hint" id="modalPhotoSwipeHint" aria-hidden="true" hidden>
+            <span>←</span><strong>Swipe photos</strong><span>→</span>
+          </div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
               <h2 id="modalName">Profile</h2>
@@ -29785,6 +29829,9 @@
           <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
         </button>
         <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" tabindex="0" aria-label="Selected profile photo. Swipe left or right to change photos."></div>
+        <div class="profile-photo-swipe-hint profile-photo-viewer-swipe-hint" id="profilePhotoViewerSwipeHint" aria-hidden="true" hidden>
+          <span>←</span><strong>Swipe photos</strong><span>→</span>
+        </div>
       </div>
     </div>
 
@@ -29895,6 +29942,8 @@
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
+    const modalPhotoSwipeHint = document.getElementById("modalPhotoSwipeHint");
+    const profilePhotoViewerSwipeHint = document.getElementById("profilePhotoViewerSwipeHint");
     const modalScrollCue = document.getElementById("modalScrollCue");
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
@@ -37088,6 +37137,9 @@
       });
       const activeIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
       const totalPhotos = Math.max(1, thumbs.length);
+      const multiplePhotos = totalPhotos > 1;
+      if (modalPhotoSwipeHint) modalPhotoSwipeHint.hidden = !multiplePhotos;
+      if (profilePhotoViewerSwipeHint) profilePhotoViewerSwipeHint.hidden = !multiplePhotos;
       modalImage.dataset.activePhotoIndex = String(activeIndex);
       modalImage.setAttribute(
         "aria-label",
