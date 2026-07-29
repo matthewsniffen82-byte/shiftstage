@@ -62,6 +62,18 @@ test("the live dancer profile close control exits shared links and remains touch
     homeSource,
     /\.modal-top \{[\s\S]*?z-index: 30;[\s\S]*?\.close-btn \{[\s\S]*?pointer-events: auto;[\s\S]*?touch-action: manipulation;/,
   );
+  assert.match(
+    homeSource,
+    /#profileBackdrop\.modal-backdrop\.show \{\s+z-index: 140 !important;[\s\S]*?#profileBackdrop #modalClose \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 221 !important;[\s\S]*?pointer-events: auto !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#profileBackdrop \.modal-body \{[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-padding-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\) !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#profileBackdrop \.modal-actions \{[\s\S]*?position: static !important;[\s\S]*?scroll-margin-bottom: calc\(110px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+  );
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
   assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/);
   assert.match(profileNavigationSource, /className="public-profile-close"/);

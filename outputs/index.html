@@ -28672,6 +28672,53 @@
             opacity: .78;
           }
         }
+
+        /* Keep the full profile closable and its final safety action reachable. */
+        #profileBackdrop.modal-backdrop.show {
+          z-index: 140 !important;
+          isolation: isolate;
+        }
+        #profileBackdrop .profile-modal {
+          display: flex !important;
+          flex-direction: column;
+          max-height: calc(100dvh - env(safe-area-inset-top, 0px)) !important;
+          overflow: hidden !important;
+        }
+        #profileBackdrop .modal-top {
+          z-index: 220 !important;
+          flex: 0 0 auto;
+          pointer-events: none;
+        }
+        #profileBackdrop #modalClose {
+          position: fixed !important;
+          top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
+          right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)) !important;
+          z-index: 221 !important;
+          width: 52px !important;
+          min-height: 52px !important;
+          pointer-events: auto !important;
+          touch-action: manipulation !important;
+          -webkit-tap-highlight-color: transparent;
+        }
+        #profileBackdrop .modal-image,
+        #profileBackdrop .gallery {
+          flex: 0 0 auto;
+        }
+        #profileBackdrop .modal-body {
+          min-height: 0 !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior-y: contain;
+          scroll-padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+          padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+          touch-action: pan-y !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        #profileBackdrop .modal-actions {
+          position: static !important;
+          scroll-margin-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+          padding-bottom: 0 !important;
+        }
       </style>
 
       <section class="stack" aria-live="polite">
