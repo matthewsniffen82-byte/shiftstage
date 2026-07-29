@@ -261,7 +261,10 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(dancerPage, /<TvVideoStrip/);
   assert.match(dancerPage, /showDancerName=\{false\}/);
   assert.doesNotMatch(dancerPage, /watchAllHref|href=\{`\/tv/);
-  assert.match(videoStrip, /<video aria-hidden="true" autoPlay loop muted playsInline/);
+  assert.match(videoStrip, /<video aria-hidden="true" loop muted playsInline/);
+  assert.doesNotMatch(videoStrip, /<video aria-hidden="true" autoPlay/);
+  assert.match(videoStrip, /onMouseEnter=\{\(event\) => playPreview\(event\.currentTarget\)\}/);
+  assert.match(videoStrip, /onMouseLeave=\{\(event\) => pausePreview\(event\.currentTarget\)\}/);
   assert.match(videoStrip, /<button[\s\S]*?className="tv-strip-card"[\s\S]*?onClick=\{\(\) => \{[\s\S]*?setActiveVideo\(video\)/);
   assert.doesNotMatch(videoStrip, /Watch all|href=\{`\/tv|from "next\/link"/);
   assert.match(videoStrip, /tvProfileShiftLabel\(video\)/);
@@ -277,8 +280,12 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(videoStrip, /overflow-x: auto;[\s\S]*?scroll-snap-type: x proximity/);
   assert.doesNotMatch(videoStrip, /requestFullscreen\(\)|:fullscreen|<video[\s\S]*?\scontrols(?:\s|>)/);
   assert.match(videoStrip, /`\/tv\/\$\{encodeURIComponent\(video\.id\)\}`[\s\S]*?navigator\.share[\s\S]*?navigator\.clipboard\.writeText/);
-  assert.match(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
+  assert.doesNotMatch(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
+  assert.match(liveApp, /observeProfileTvPreview\(section, firstPreview\)/);
+  assert.match(liveApp, /section\.dataset\.videoCount = String\(Math\.min\(payload\.videos\.length, 4\)\)/);
   assert.match(liveApp, /heading\.textContent = `\$\{profile\.name\} on MyDancr TV`/);
+  assert.match(liveApp, /profile-tv-strip-count/);
+  assert.match(liveApp, /video \$\{index \+ 1\} of \$\{payload\.videos\.length\} full screen/);
   assert.match(liveApp, /const card = document\.createElement\("button"\)[\s\S]*?card\.className = "profile-tv-strip-card"/);
   assert.match(liveApp, /card\.addEventListener\("click", \(\) => openProfileTvViewer\(item, profile\.name, payload\.videos\)\)/);
   assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?profile-tv-viewer-video[\s\S]*?controlslist="nofullscreen noremoteplayback nodownload"[\s\S]*?loop playsinline/);

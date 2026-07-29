@@ -37,6 +37,48 @@ test("live profile viewer blocks gesture enlargement but keeps horizontal video 
   assert.match(liveApp, /id="profileTvViewerVideo" controlslist="nofullscreen noremoteplayback nodownload" disablepictureinpicture/);
   assert.match(liveApp, /data-toggle-profile-tv-playback>Pause/);
   assert.match(liveApp, /data-toggle-profile-tv-sound>Sound off/);
-  assert.match(liveApp, /Math\.abs\(distance\) >= 50[\s\S]*?showRelativeProfileTvVideo/);
+  assert.match(liveApp, /Math\.abs\(distance\) < 50\) return;[\s\S]*?showRelativeProfileTvVideo/);
   assert.doesNotMatch(liveApp, /data-fullscreen-profile-tv|enterProfileTvFullscreen|requestFullscreen\(\)/);
+});
+
+test("live profile sound and navigation controls are wired as top-level viewer actions", () => {
+  const soundControls =
+    liveApp.match(
+      /function syncProfileTvSoundControl\(\)[\s\S]*?function toggleProfileTvPlayback\(\)/,
+    )?.[0] || "";
+  const viewerFactory =
+    liveApp.match(
+      /function profileTvViewer\(\)[\s\S]*?\n    function profileTvScheduleLabel/,
+    )?.[0] || "";
+
+  assert.match(
+    soundControls,
+    /function syncProfileTvSoundControl\(\) \{[\s\S]*?if \(button\) button\.textContent = video\?\.muted \? "Sound on" : "Sound off";[\s\S]*?\n    \}/,
+  );
+  assert.match(
+    soundControls,
+    /function toggleProfileTvSound\(\) \{[\s\S]*?video\.muted = !video\.muted;[\s\S]*?syncProfileTvSoundControl\(\);[\s\S]*?\n    \}/,
+  );
+  assert.match(viewerFactory, /target\.closest\("\[data-toggle-profile-tv-sound\]"\)[\s\S]*?toggleProfileTvSound\(\)/);
+  assert.match(viewerFactory, /stage\.addEventListener\("touchstart"[\s\S]*?stage\.addEventListener\("touchmove"[\s\S]*?stage\.addEventListener\("touchend"/);
+  assert.doesNotMatch(
+    soundControls,
+    /function syncProfileTvSoundControl\(\) \{[\s\S]*?function toggleProfileTvSound\(\)[\s\S]*?if \(button\)/,
+  );
+});
+
+test("live profile TV cards adapt to content and avoid background autoplay storms", () => {
+  const loader =
+    liveApp.match(
+      /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
+    )?.[0] || "";
+
+  assert.match(liveApp, /\.profile-tv-strip \{[^}]*width: fit-content;[^}]*max-width: 100%/);
+  assert.match(liveApp, /\.profile-tv-strip\[data-video-count="1"\][^}]*grid-auto-columns/);
+  assert.match(liveApp, /\.profile-tv-strip\[data-video-count="2"\][^}]*grid-auto-columns/);
+  assert.match(loader, /section\.dataset\.videoCount = String\(Math\.min\(payload\.videos\.length, 4\)\)/);
+  assert.match(loader, /profile-tv-strip-count/);
+  assert.match(loader, /video \$\{index \+ 1\} of \$\{payload\.videos\.length\} full screen/);
+  assert.match(loader, /if \(firstPreview\) observeProfileTvPreview\(section, firstPreview\)/);
+  assert.doesNotMatch(loader, /video\.autoplay = true/);
 });

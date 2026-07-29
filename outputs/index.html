@@ -28211,14 +28211,18 @@
           font-size: 10px;
           font-weight: 900;
         }
-        .profile-tv-strip { display: grid; gap: 8px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 8px; background: rgba(10,10,15,.86); }
+        .profile-tv-strip { width: fit-content; max-width: 100%; display: grid; gap: 10px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 10px; background: rgba(10,10,15,.86); box-shadow: 0 16px 44px rgba(0,0,0,.22); }
         .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
         .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
-        .profile-tv-strip-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(105px, 130px); gap: 7px; overflow-x: auto; }
-        .profile-tv-strip-card { position: relative; min-height: 180px; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 7px; color: #fff; background: #000; font: inherit; text-align: left; cursor: pointer; }
+        .profile-tv-strip-count { color: #9fefff; font-size: 10px; font-weight: 900; white-space: nowrap; }
+        .profile-tv-strip-list { max-width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(165px, 190px); gap: 9px; padding-bottom: 2px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
+        .profile-tv-strip[data-video-count="1"] .profile-tv-strip-list { grid-auto-columns: minmax(210px, 250px); }
+        .profile-tv-strip[data-video-count="2"] .profile-tv-strip-list { grid-auto-columns: minmax(190px, 220px); }
+        .profile-tv-strip-card { position: relative; min-height: 0; aspect-ratio: 9 / 14; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; color: #fff; background: #000; font: inherit; text-align: left; scroll-snap-align: start; cursor: pointer; }
         .profile-tv-strip-card:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
-        .profile-tv-strip-card video { width: 100%; height: 180px; display: block; object-fit: cover; pointer-events: none; }
+        .profile-tv-strip-card video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
         .profile-tv-strip-card::after { content: "Open full screen"; position: absolute; z-index: 2; top: 7px; left: 7px; padding: 5px 7px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.68); font-size: 8px; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; }
+        .profile-tv-strip-position { position: absolute; z-index: 2; top: 8px; right: 8px; min-width: 27px; height: 24px; display: grid; place-items: center; padding: 0 6px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.68); font-size: 9px; font-weight: 950; }
         .profile-tv-strip-schedule { position: absolute; left: 7px; bottom: 7px; z-index: 2; width: fit-content; max-width: calc(100% - 14px); padding: 4px 7px; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b8b2c4; background: rgba(7,7,12,.76); font-size: 9px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
         .profile-tv-strip-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.24); }
         .profile-tv-strip-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.16); }
@@ -28306,6 +28310,10 @@
           .home-tv-launch-copy strong { font-size: clamp(13px, 3.8vw, 16px); }
           .home-tv-launch-count { min-width: 52px; min-height: 30px; padding-inline: 8px; font-size: 10px; }
           .home-tv-launch-arrow { font-size: 27px; }
+          .profile-tv-strip { width: 100%; }
+          .profile-tv-strip-list,
+          .profile-tv-strip[data-video-count="1"] .profile-tv-strip-list,
+          .profile-tv-strip[data-video-count="2"] .profile-tv-strip-list { grid-auto-columns: minmax(128px, 42vw); }
           .profile-tv-viewer-footer { grid-template-columns: minmax(0, 1fr); }
         }
         @media (max-width: 720px) {
@@ -37760,45 +37768,64 @@
         </div>
       `);
       overlay = document.getElementById("profileTvViewer");
+      const stage = document.getElementById("profileTvViewerStage");
+      const video = document.getElementById("profileTvViewerVideo");
+      let swipeStartX = null;
+      let swipeHandled = false;
+
       overlay.addEventListener("click", (event) => {
-        if (event.target === overlay || event.target.closest("[data-close-profile-tv]")) {
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target) return;
+        if (target === overlay || target.closest("[data-close-profile-tv]")) {
           closeProfileTvViewer();
           return;
         }
-        if (event.target.closest("[data-toggle-profile-tv-playback]")) {
+        if (target.closest("[data-toggle-profile-tv-playback]")) {
           toggleProfileTvPlayback();
           return;
         }
-        if (event.target.closest("[data-toggle-profile-tv-sound]")) {
+        if (target.closest("[data-toggle-profile-tv-sound]")) {
           toggleProfileTvSound();
           return;
         }
-        if (event.target.closest("[data-previous-profile-tv]")) {
+        if (target.closest("[data-previous-profile-tv]")) {
           showRelativeProfileTvVideo(-1);
           return;
         }
-      let swipeHandled = false;
-        if (event.target.closest("[data-next-profile-tv]")) {
+        if (target.closest("[data-next-profile-tv]")) {
+          showRelativeProfileTvVideo(1);
+          return;
+        }
+        const galleryButton = target.closest("[data-profile-tv-index]");
+        if (galleryButton) {
+          renderProfileTvViewerItem(Number(galleryButton.dataset.profileTvIndex));
+          return;
+        }
+        if (target.closest("[data-share-profile-tv]")) {
+          void shareProfileTvVideo();
+        }
+      });
+
+      stage.addEventListener("touchstart", (event) => {
         swipeHandled = false;
         if (event.touches.length !== 1) {
           swipeStartX = null;
           return;
         }
-          showRelativeProfileTvVideo(1);
-          return;
+        swipeStartX = event.changedTouches[0]?.clientX ?? null;
+      }, { passive: true });
       stage.addEventListener("touchmove", (event) => {
         if (event.touches.length !== 1) swipeStartX = null;
       }, { passive: true });
-        }
-        const galleryButton = event.target.closest("[data-profile-tv-index]");
-        if (galleryButton) {
-          renderProfileTvViewerItem(Number(galleryButton.dataset.profileTvIndex));
-          return;
-        }
-        if (event.target.closest("[data-share-profile-tv]")) {
-          shareProfileTvVideo();
-        }
-      const video = document.getElementById("profileTvViewerVideo");
+      stage.addEventListener("touchend", (event) => {
+        if (swipeStartX === null) return;
+        const distance = (event.changedTouches[0]?.clientX ?? 0) - swipeStartX;
+        swipeStartX = null;
+        if (Math.abs(distance) < 50) return;
+        swipeHandled = true;
+        showRelativeProfileTvVideo(distance < 0 ? 1 : -1);
+      }, { passive: true });
+
       video.addEventListener("click", () => {
         if (swipeHandled) {
           swipeHandled = false;
@@ -37810,21 +37837,6 @@
       video.addEventListener("play", syncProfileTvPlaybackControl);
       video.addEventListener("pause", syncProfileTvPlaybackControl);
       video.addEventListener("volumechange", syncProfileTvSoundControl);
-      });
-      const stage = document.getElementById("profileTvViewerStage");
-      let swipeStartX = null;
-      stage.addEventListener("touchstart", (event) => {
-        swipeStartX = event.changedTouches[0]?.clientX ?? null;
-      }, { passive: true });
-      stage.addEventListener("touchend", (event) => {
-        if (swipeStartX === null) return;
-        const distance = (event.changedTouches[0]?.clientX ?? 0) - swipeStartX;
-        swipeStartX = null;
-        if (Math.abs(distance) >= 50) {
-          swipeHandled = true;
-          showRelativeProfileTvVideo(distance < 0 ? 1 : -1);
-        }
-      }, { passive: true });
       return overlay;
     }
 
@@ -37834,8 +37846,12 @@
         : item.shift
           ? formatProfileTvShift(item.shift.startsAt, item.shift.timezone)
           : "No shift posted";
-      syncProfileTvPlaybackControl();
-      syncProfileTvSoundControl();
+    }
+
+    function formatProfileTvDuration(durationSeconds) {
+      const totalSeconds = Math.max(0, Math.round(Number(durationSeconds) || 0));
+      const minutes = Math.floor(totalSeconds / 60);
+      return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
     }
 
     function renderProfileTvViewerItem(index) {
@@ -37849,8 +37865,10 @@
       overlay.dataset.videoIndex = String(index);
       document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Video ${index + 1} of ${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
+      video.pause();
       video.src = item.videoUrl;
       video.muted = false;
+      video.load();
       document.querySelector("[data-previous-profile-tv]").disabled = index <= 0;
       document.querySelector("[data-next-profile-tv]").disabled = index >= videos.length - 1;
       document.querySelectorAll("[data-profile-tv-index]").forEach((button) => {
@@ -37862,8 +37880,10 @@
         } else {
           button.removeAttribute("aria-current");
         }
-      document.body.classList.add("profile-tv-viewer-open");
       });
+      document.body.classList.add("profile-tv-viewer-open");
+      syncProfileTvPlaybackControl();
+      syncProfileTvSoundControl();
       void video.play().catch(() => {
         syncProfileTvPlaybackControl();
         document.getElementById("profileTvViewerStatus").textContent = "Tap Play to start this video.";
@@ -37879,7 +37899,11 @@
     function openProfileTvViewer(item, profileName, videos) {
       const overlay = profileTvViewer();
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];
+      overlay.profileTvReturnTarget = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
       overlay.dataset.profileName = String(profileName || "Dancer");
+      overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
       document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
       const gallery = document.getElementById("profileTvViewerGallery");
       gallery.innerHTML = "";
@@ -37899,11 +37923,11 @@
         button.append(preview, number);
         gallery.appendChild(button);
       });
-      document.body.classList.remove("profile-tv-viewer-open");
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
-      renderProfileTvViewerItem(Math.max(0, overlay.profileTvVideos.findIndex((video) => video.id === item.id)));
+      document.body.classList.add("profile-tv-viewer-open");
+      renderProfileTvViewerItem(Math.max(0, overlay.profileTvVideos.findIndex((videoItem) => videoItem.id === item.id)));
       overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
       syncOverlayScrollLock();
     }
@@ -37911,17 +37935,21 @@
     function closeProfileTvViewer() {
       const overlay = document.getElementById("profileTvViewer");
       if (!overlay || overlay.hidden) return;
+      const returnTarget = overlay.profileTvReturnTarget;
       const video = document.getElementById("profileTvViewerVideo");
       video?.pause();
       overlay.classList.remove("show");
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
       overlay.profileTvVideos = [];
+      overlay.profileTvReturnTarget = null;
       if (video) {
         video.removeAttribute("src");
         video.load();
       }
+      document.body.classList.remove("profile-tv-viewer-open");
       syncOverlayScrollLock();
+      if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     }
 
     function syncProfileTvPlaybackControl() {
@@ -37933,14 +37961,14 @@
     function syncProfileTvSoundControl() {
       const video = document.getElementById("profileTvViewerVideo");
       const button = document.querySelector("[data-toggle-profile-tv-sound]");
+      if (button) button.textContent = video?.muted ? "Sound on" : "Sound off";
+    }
+
     function toggleProfileTvSound() {
       const video = document.getElementById("profileTvViewerVideo");
       if (!video) return;
       video.muted = !video.muted;
       syncProfileTvSoundControl();
-    }
-
-      if (button) button.textContent = video?.muted ? "Sound on" : "Sound off";
     }
 
     function toggleProfileTvPlayback() {
@@ -37980,9 +38008,31 @@
       }
     }
 
+    function playProfileTvPreview(preview, section) {
+      section.querySelectorAll("video").forEach((video) => {
+        if (video !== preview) video.pause();
+      });
+      void preview.play().catch(() => undefined);
+    }
+
+    function observeProfileTvPreview(section, preview) {
+      if (!("IntersectionObserver" in window)) return;
+      const observer = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && entry.intersectionRatio >= .65) {
+          playProfileTvPreview(preview, section);
+        } else {
+          preview.pause();
+        }
+      }, { threshold: [.65] });
+      observer.observe(section);
+      section.profileTvPreviewObserver = observer;
+    }
+
     async function loadProfileMyDancrTv(profile) {
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return;
       const existing = modalBody.querySelector(".profile-tv-strip");
+      existing?.profileTvPreviewObserver?.disconnect();
       if (existing) existing.remove();
       try {
         const response = await fetch(`/api/public/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}&limit=4`, { cache: "no-store" });
@@ -37990,27 +38040,36 @@
         if (!response.ok || !payload.ok || !payload.videos?.length) return;
         const section = document.createElement("section");
         section.className = "profile-tv-strip";
+        section.dataset.videoCount = String(Math.min(payload.videos.length, 4));
         const head = document.createElement("div");
         head.className = "profile-tv-strip-head";
         const heading = document.createElement("strong");
         heading.textContent = `${profile.name} on MyDancr TV`;
-        head.appendChild(heading);
+        const count = document.createElement("span");
+        count.className = "profile-tv-strip-count";
+        count.textContent = `${payload.videos.length} ${payload.videos.length === 1 ? "video" : "videos"}`;
+        head.append(heading, count);
         const list = document.createElement("div");
         list.className = "profile-tv-strip-list";
-        payload.videos.forEach((item) => {
+        let firstPreview = null;
+        payload.videos.forEach((item, index) => {
           const card = document.createElement("button");
           card.type = "button";
           card.className = "profile-tv-strip-card";
           const scheduleLabel = profileTvScheduleLabel(item);
-          card.setAttribute("aria-label", `Open ${profile.name} MyDancr TV video full screen, ${scheduleLabel}`);
+          const durationLabel = formatProfileTvDuration(item.durationSeconds);
+          card.setAttribute(
+            "aria-label",
+            `Open ${profile.name} MyDancr TV video ${index + 1} of ${payload.videos.length} full screen, ${scheduleLabel}, ${durationLabel}`
+          );
           const video = document.createElement("video");
           video.src = item.videoUrl;
-          video.autoplay = true;
           video.loop = true;
           video.muted = true;
           video.defaultMuted = true;
           video.playsInline = true;
           video.preload = "metadata";
+          video.setAttribute("aria-hidden", "true");
           const schedule = document.createElement("span");
           schedule.className = item.shift?.isActive
             ? "profile-tv-strip-schedule is-now"
@@ -38018,13 +38077,22 @@
               ? "profile-tv-strip-schedule is-upcoming"
               : "profile-tv-strip-schedule is-no-shift";
           schedule.textContent = scheduleLabel;
-          card.append(video, schedule);
+          const position = document.createElement("span");
+          position.className = "profile-tv-strip-position";
+          position.setAttribute("aria-hidden", "true");
+          position.textContent = `${index + 1}/${payload.videos.length}`;
+          card.append(video, schedule, position);
+          card.addEventListener("mouseenter", () => playProfileTvPreview(video, section));
+          card.addEventListener("mouseleave", () => video.pause());
+          card.addEventListener("focus", () => playProfileTvPreview(video, section));
+          card.addEventListener("blur", () => video.pause());
           card.addEventListener("click", () => openProfileTvViewer(item, profile.name, payload.videos));
           list.appendChild(card);
-          void video.play().catch(() => undefined);
+          if (index === 0) firstPreview = video;
         });
         section.append(head, list);
         modalBody.prepend(section);
+        if (firstPreview) observeProfileTvPreview(section, firstPreview);
       } catch {
         // The live profile remains fully usable if its optional video strip cannot load.
       }

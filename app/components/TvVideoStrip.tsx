@@ -111,10 +111,24 @@ export function TvVideoStrip({
     }
   }
 
+  function playPreview(card: HTMLButtonElement) {
+    const preview = card.querySelector("video");
+    if (!preview) return;
+    void preview.play().catch(() => undefined);
+  }
+
+  function pausePreview(card: HTMLButtonElement) {
+    card.querySelector("video")?.pause();
+  }
+
   if (!videos.length) return null;
 
   return (
-    <section className="tv-video-strip" aria-label={title}>
+    <section
+      aria-label={title}
+      className="tv-video-strip"
+      data-video-count={Math.min(videos.length, 4)}
+    >
       <TvVideoStripStyles />
       <div className="tv-strip-head">
         <div>
@@ -133,14 +147,18 @@ export function TvVideoStrip({
               className="tv-strip-card"
               key={video.id}
               type="button"
+              onBlur={(event) => pausePreview(event.currentTarget)}
               onClick={() => {
                 setViewerStatus("");
                 setViewerPaused(false);
                 setViewerMuted(false);
                 setActiveVideo(video);
               }}
+              onFocus={(event) => playPreview(event.currentTarget)}
+              onMouseEnter={(event) => playPreview(event.currentTarget)}
+              onMouseLeave={(event) => pausePreview(event.currentTarget)}
             >
-              <video aria-hidden="true" autoPlay loop muted playsInline preload="metadata" src={video.videoUrl} />
+              <video aria-hidden="true" loop muted playsInline preload="metadata" src={video.videoUrl} />
               <div>
                 {showDancerName ? <strong>{video.dancer.stageName}</strong> : null}
                 <span className={`tv-strip-schedule ${schedule.className}`}>{schedule.label}</span>
