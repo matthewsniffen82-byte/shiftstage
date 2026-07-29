@@ -128,13 +128,13 @@ test("official links stay compact and real videos have distinct metadata", () =>
   assert.match(tvStrip, /formatVideoDate\(video\.publishedAt\)/);
 });
 
-test("every MyDancr TV dancer destination uses the canonical database slug", () => {
+test("every MyDancr TV dancer destination opens the full live profile with the canonical database slug", () => {
   assert.match(
     tvFeed,
-    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+return `\/dancers\/\$\{encodeURIComponent\(video\.dancer\.slug\)\}`;\s+\}/,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.slug\.trim\(\)[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}/,
   );
   assert.doesNotMatch(
     tvFeed,
-    /function dancerLiveProfileHref[\s\S]*?searchParams[\s\S]*?profile=/,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+return `\/dancers\//,
   );
 });

@@ -23,6 +23,14 @@ test("MyDancr TV separates video playback from profile navigation", () => {
   );
   assert.match(
     feedClient,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.city\.trim\(\)[\s\S]*?video\.dancer\.slug\.trim\(\)[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}/,
+  );
+  assert.doesNotMatch(
+    feedClient,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+return `\/dancers\//,
+  );
+  assert.match(
+    feedClient,
     /className="tv-profile-destination"[\s\S]*?View Profile[\s\S]*?→/,
   );
   assert.match(

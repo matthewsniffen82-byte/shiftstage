@@ -44963,7 +44963,10 @@
         }
         return;
       }
-      const profile = markets[city].dancers.find((item) => slugify(item.name) === profileSlug && isApprovedPublicProfile(item));
+      const profile = markets[city].dancers.find((item) => (
+        (item.slug === profileSlug || slugify(item.name) === profileSlug) &&
+        isApprovedPublicProfile(item)
+      ));
       if (profile) {
         setTimeout(() => openProfileModal(profile.name), 120);
       }
