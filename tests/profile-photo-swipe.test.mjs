@@ -28,18 +28,15 @@ test("the live dancer profile changes photos with horizontal swipe and trackpad 
   );
   assert.match(
     liveApp,
-    /profilePhotoSwipeBlockClickUntil = Date\.now\(\) \+ 420[\s\S]*?Date\.now\(\) < profilePhotoSwipeBlockClickUntil/,
-  );
-  assert.match(
-    liveApp,
     /\.profile-modal \.modal-image,[\s\S]*?\.profile-photo-viewer-image \{ touch-action: pan-y; overscroll-behavior-x: contain;/,
   );
+  assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
 
 test("live profile photos remain accessible with thumbnails and keyboard navigation", () => {
   assert.match(
     liveApp,
-    /id="modalImage" role="button" tabindex="0" aria-label="Open larger profile photo\. Swipe left or right to change photos\."/,
+    /id="modalImage" role="group" tabindex="0" aria-label="Profile photos\. Swipe left or right to change photos\."/,
   );
   assert.match(
     liveApp,
@@ -57,17 +54,11 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
     liveApp,
     /\.profile-modal \.gallery \{ overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; \}/,
   );
-  assert.match(
+  assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
+  assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
+  assert.doesNotMatch(
     liveApp,
-    /id="modalPhotoSwipeHint"[\s\S]*?<span>←<\/span><strong>Swipe photos<\/strong><span>→<\/span>/,
-  );
-  assert.match(
-    liveApp,
-    /id="profilePhotoViewerSwipeHint"[\s\S]*?<span>←<\/span><strong>Swipe photos<\/strong><span>→<\/span>/,
-  );
-  assert.match(
-    liveApp,
-    /const multiplePhotos = totalPhotos > 1;[\s\S]*?modalPhotoSwipeHint\.hidden = !multiplePhotos;[\s\S]*?profilePhotoViewerSwipeHint\.hidden = !multiplePhotos/,
+    /modalImage\?\.addEventListener\("click",[\s\S]*?openProfilePhotoViewer\(\)/,
   );
 });
 
@@ -96,9 +87,6 @@ test("the standalone public dancer profile uses the production swipe carousel", 
     publicProfilePage,
     /@media \(max-width: 760px\)[\s\S]*?\.public-gallery \{[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory;[^}]*touch-action: pan-x pan-y;/,
   );
-  assert.match(
-    publicPhotoCarousel,
-    /availablePhotos\.length > 1[\s\S]*?className="public-photo-swipe-hint"[\s\S]*?<span>←<\/span>[\s\S]*?<strong>Swipe photos<\/strong>[\s\S]*?<span>→<\/span>/,
-  );
-  assert.match(publicProfilePage, /\.public-photo-swipe-hint \{[^}]*bottom: 52px;[^}]*pointer-events: none;/);
+  assert.doesNotMatch(publicPhotoCarousel, /public-photo-swipe-hint/);
+  assert.doesNotMatch(publicProfilePage, /\.public-photo-swipe-hint/);
 });

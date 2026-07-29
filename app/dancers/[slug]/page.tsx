@@ -425,9 +425,6 @@ function PublicProfileStyles() {
       .public-photo-dots button { width: 9px; height: 9px; padding: 0; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; background: rgba(255,255,255,.2); cursor: pointer; }
       .public-photo-dots button[aria-pressed="true"] { border-color: #7eeaff; background: #7eeaff; box-shadow: 0 0 12px rgba(126,234,255,.6); }
       .public-photo-status { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
-      .public-photo-swipe-hint { position: absolute; z-index: 2; left: 50%; bottom: 52px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; padding: 0 12px; border: 1px solid rgba(126,234,255,.42); border-radius: 999px; color: #fff; background: rgba(5,5,8,.72); box-shadow: 0 8px 24px rgba(0,0,0,.35); backdrop-filter: blur(9px); transform: translateX(-50%); pointer-events: none; }
-      .public-photo-swipe-hint span { color: #9fefff; font-size: 17px; line-height: 1; }
-      .public-photo-swipe-hint strong { font-size: 10px; font-weight: 950; letter-spacing: .08em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
       .venue-qr-section, .profile-schedule-section, .public-grid { max-width: 1120px; margin: 24px auto 0; }
       .live-deal-section { display: grid; gap: 14px; }
       .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; align-items: center; padding: 20px; border: 1px solid rgba(34,199,255,.28); border-radius: 16px; background: rgba(12,12,18,.88); }

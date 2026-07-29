@@ -1163,47 +1163,6 @@
       overflow: hidden;
     }
 
-    .profile-photo-swipe-hint {
-      position: absolute;
-      z-index: 12;
-      left: 50%;
-      bottom: 58px;
-      min-height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 0 12px;
-      border: 1px solid rgba(126,234,255,.42);
-      border-radius: 999px;
-      color: #fff;
-      background: rgba(5,5,8,.72);
-      box-shadow: 0 8px 24px rgba(0,0,0,.35);
-      backdrop-filter: blur(9px);
-      -webkit-backdrop-filter: blur(9px);
-      transform: translateX(-50%);
-      pointer-events: none;
-    }
-
-    .profile-photo-swipe-hint[hidden] {
-      display: none !important;
-    }
-
-    .profile-photo-swipe-hint span {
-      color: #9fefff;
-      font-size: 17px;
-      line-height: 1;
-    }
-
-    .profile-photo-swipe-hint strong {
-      font-size: 10px;
-      font-weight: 950;
-      letter-spacing: .08em;
-      line-height: 1;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
     .modal-image.two {
       background:
         linear-gradient(180deg, rgba(5,5,7,.03) 0%, rgba(5,5,7,.1) 42%, rgba(5,5,7,.78) 100%),
@@ -26501,7 +26460,7 @@
     }
 
     .profile-modal .modal-image {
-      cursor: zoom-in !important;
+      cursor: grab !important;
     }
 
     .profile-modal .modal-body {
@@ -28251,7 +28210,7 @@
         .profile-tv-viewer-gallery span { position: absolute; right: 4px; bottom: 4px; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 10px; font-weight: 950; }
         .profile-modal .modal-image,
         .profile-photo-viewer-image { touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; -webkit-user-select: none; }
-        .profile-modal .modal-image { cursor: zoom-in; }
+        .profile-modal .modal-image { cursor: grab; }
         .profile-modal .modal-image.is-swiping,
         .profile-photo-viewer-image.is-swiping { cursor: grabbing; }
         .profile-modal .modal-image:focus-visible,
@@ -29998,10 +29957,7 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
-        <div class="modal-image" id="modalImage" role="button" tabindex="0" aria-label="Open larger profile photo. Swipe left or right to change photos.">
-          <div class="profile-photo-swipe-hint" id="modalPhotoSwipeHint" aria-hidden="true" hidden>
-            <span>←</span><strong>Swipe photos</strong><span>→</span>
-          </div>
+        <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos. Swipe left or right to change photos.">
           <div class="modal-identity-stack">
             <div class="modal-identity">
               <h2 id="modalName">Profile</h2>
@@ -30024,9 +29980,6 @@
           <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
         </button>
         <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" tabindex="0" aria-label="Selected profile photo. Swipe left or right to change photos."></div>
-        <div class="profile-photo-swipe-hint profile-photo-viewer-swipe-hint" id="profilePhotoViewerSwipeHint" aria-hidden="true" hidden>
-          <span>←</span><strong>Swipe photos</strong><span>→</span>
-        </div>
       </div>
     </div>
 
@@ -30137,8 +30090,6 @@
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
-    const modalPhotoSwipeHint = document.getElementById("modalPhotoSwipeHint");
-    const profilePhotoViewerSwipeHint = document.getElementById("profilePhotoViewerSwipeHint");
     const modalScrollCue = document.getElementById("modalScrollCue");
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
@@ -30218,7 +30169,6 @@
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
     const homeTvFeedEngagedTimers = new Map();
-    let profilePhotoSwipeBlockClickUntil = 0;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
     let tonightExpanded = false;
@@ -37344,13 +37294,10 @@
       });
       const activeIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
       const totalPhotos = Math.max(1, thumbs.length);
-      const multiplePhotos = totalPhotos > 1;
-      if (modalPhotoSwipeHint) modalPhotoSwipeHint.hidden = !multiplePhotos;
-      if (profilePhotoViewerSwipeHint) profilePhotoViewerSwipeHint.hidden = !multiplePhotos;
       modalImage.dataset.activePhotoIndex = String(activeIndex);
       modalImage.setAttribute(
         "aria-label",
-        `${modalName.textContent.trim() || "Dancer"} profile photo ${activeIndex + 1} of ${totalPhotos}. Open larger photo. Swipe left or right to change photos.`
+        `${modalName.textContent.trim() || "Dancer"} profile photo ${activeIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
       );
       profilePhotoViewerImage?.setAttribute(
         "aria-label",
@@ -37365,13 +37312,6 @@
       profilePhotoViewerImage.style.backgroundPosition = photoStyle.backgroundPosition;
       profilePhotoViewerImage.style.backgroundRepeat = photoStyle.backgroundRepeat;
       profilePhotoViewerImage.style.backgroundSize = photoStyle.backgroundSize;
-    }
-
-    function openProfilePhotoViewer() {
-      if (!profilePhotoViewer || !profilePhotoViewerImage || !modalImage) return;
-      syncProfilePhotoViewerImage();
-      profilePhotoViewer.hidden = false;
-      profilePhotoViewerImage.focus({ preventScroll: true });
     }
 
     function openPhotoViewerFromElement(element) {
@@ -37460,7 +37400,6 @@
           Math.abs(distanceX) > Math.abs(distanceY) * 1.2
         ) {
           event.preventDefault();
-          profilePhotoSwipeBlockClickUntil = Date.now() + 420;
           moveModalPhoto(distanceX < 0 ? 1 : -1, options);
         }
         element.releasePointerCapture?.(event.pointerId);
@@ -42843,22 +42782,11 @@
     bindHorizontalProfilePhotoSwipe(modalImage);
     bindHorizontalProfilePhotoSwipe(profilePhotoViewerImage, { syncViewer: true });
 
-    modalImage?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (Date.now() < profilePhotoSwipeBlockClickUntil) return;
-      openProfilePhotoViewer();
-    });
     modalImage?.addEventListener("keydown", (event) => {
       if (event.target !== modalImage) return;
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
         moveModalPhoto(event.key === "ArrowRight" ? 1 : -1);
-        return;
-      }
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openProfilePhotoViewer();
       }
     });
     profilePhotoViewerImage?.addEventListener("keydown", (event) => {
