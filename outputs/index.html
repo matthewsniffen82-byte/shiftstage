@@ -28292,8 +28292,10 @@
           right: 14px;
           width: 44px;
           height: 44px;
-          display: grid;
-          place-items: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 1px;
           padding: 0;
           border: 1px solid rgba(126,234,255,.52);
           border-radius: 999px;
@@ -28304,12 +28306,21 @@
           -webkit-backdrop-filter: blur(12px);
           pointer-events: none;
         }
-        .home-feed-card .card-profile-destination svg {
-          width: 23px;
-          height: 23px;
+        .home-feed-card .card-profile-destination .card-profile-symbol {
+          width: 22px;
+          height: 22px;
           fill: none;
           stroke: currentColor;
           stroke-width: 1.9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-feed-card .card-profile-destination .card-profile-chevron {
+          width: 7px;
+          height: 14px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2.2;
           stroke-linecap: round;
           stroke-linejoin: round;
         }
@@ -28675,37 +28686,80 @@
           }
           #results .home-feed-card .feed-card-actions {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 7px;
+            grid-template-columns: minmax(0, .9fr) minmax(0, .9fr) minmax(0, 1.2fr);
+            gap: 8px;
             padding: 0 12px 12px;
           }
           .feed-card-action {
             min-width: 0;
-            min-height: 42px;
+            min-height: 54px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 7px 5px;
-            border: 1px solid rgba(139,92,246,.34);
-            border-radius: 11px;
+            gap: 5px;
+            padding: 8px 6px;
+            border: 1px solid rgba(165,148,208,.34);
+            border-radius: 14px;
             color: #f5f2ff;
-            background: rgba(17,17,24,.96);
+            background: linear-gradient(180deg,rgba(27,27,37,.98),rgba(16,16,23,.98));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
             font: inherit;
             font-size: 11px;
             font-weight: 900;
+            line-height: 1.05;
+            transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
           }
           .feed-card-action .action-icon {
             width: 16px;
             height: 16px;
+            flex: 0 0 auto;
           }
-          .feed-card-action.is-active {
-            border-color: rgba(126,234,255,.52);
+          .feed-card-action[data-feed-action="notify"] > span:not(.action-icon) {
+            max-width: 62px;
+            white-space: normal;
+          }
+          .feed-card-action[data-feed-action="going"] {
+            border-color: rgba(126,234,255,.72);
             color: #fff;
-            background: linear-gradient(135deg,rgba(124,58,237,.7),rgba(236,72,153,.58));
+            background: linear-gradient(135deg,rgba(16,179,224,.96),rgba(105,62,222,.96));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 8px 20px rgba(72,78,224,.24);
+          }
+          .feed-card-action[data-feed-action="follow"].is-active {
+            border-color: rgba(126,234,255,.72);
+            color: #fff;
+            background: linear-gradient(180deg,rgba(19,75,92,.98),rgba(13,38,51,.98));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 16px rgba(34,199,255,.14);
+          }
+          .feed-card-action[data-feed-action="notify"].is-active {
+            border-color: rgba(184,142,255,.72);
+            color: #fff;
+            background: linear-gradient(180deg,rgba(74,47,117,.98),rgba(35,25,57,.98));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 16px rgba(139,92,246,.16);
+          }
+          .feed-card-action[data-feed-action="going"].is-active {
+            border-color: rgba(135,255,215,.88);
+            background: linear-gradient(135deg,rgba(8,156,151,.98),rgba(93,57,210,.98));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 1px rgba(135,255,215,.18), 0 9px 22px rgba(12,166,167,.28);
+          }
+          .feed-card-action-count {
+            min-width: 21px;
+            height: 21px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            padding: 0 5px;
+            border: 1px solid rgba(255,255,255,.28);
+            border-radius: 999px;
+            color: #fff;
+            background: rgba(5,5,10,.24);
+            font-size: 9px;
+            font-weight: 950;
+            line-height: 1;
           }
           .feed-card-action:disabled {
             opacity: .48;
+            box-shadow: none;
           }
           main.stack > .legal-links {
             width: auto !important;
@@ -34895,6 +34949,14 @@
       return `${actionIconMarkup(icon)}<span>${label}</span>`;
     }
 
+    function homeFeedGoingActionMarkup(profile, active) {
+      const count = Math.max(0, Number(tonightInterestCount(profile)) || 0);
+      const countMarkup = count > 0
+        ? `<span class="feed-card-action-count" title="${count.toLocaleString()} going">${compactNumber(count)}</span>`
+        : "";
+      return `${actionButtonLabel(active ? "check" : "clock", active ? "Going" : "I'm Going")}${countMarkup}`;
+    }
+
     function socialIconMarkup(type) {
       const icons = {
         instagram: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.4"></circle><path d="M17.2 6.8h.01"></path></svg></span>',
@@ -37197,7 +37259,7 @@
             ${trendBadge}
             ${trendMarker}
           </div>
-          ${options.feedActions && !isPending ? `<span class="card-profile-destination" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="7.5" r="3.25"></circle><path d="M3.5 19c0-3.35 1.95-5.25 5-5.25s5 1.9 5 5.25"></path><path d="M15 5h5v5"></path><path d="m14.5 10.5 5.5-5.5"></path></svg></span>` : ""}
+          ${options.feedActions && !isPending ? `<span class="card-profile-destination" aria-hidden="true"><svg class="card-profile-symbol" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="15" height="15" rx="3"></rect><circle cx="11" cy="9.5" r="2.25"></circle><path d="M7.25 16c.35-2.15 1.65-3.35 3.75-3.35s3.4 1.2 3.75 3.35"></path></svg><svg class="card-profile-chevron" viewBox="0 0 12 20"><path d="m3 3 6 7-6 7"></path></svg></span>` : ""}
         </div>
         <div class="profile-body">
           <div class="card-info-stack">
@@ -37220,8 +37282,8 @@
             </a>
             <div class="feed-card-actions" aria-label="${profile.name} actions">
               <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
-              <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
-              <button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="${workingTonight ? "tonight" : "upcoming"}" aria-pressed="${isGoing}" ${canMarkGoing ? "" : "disabled"}>${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>
+              <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
+              <button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="${workingTonight ? "tonight" : "upcoming"}" aria-pressed="${isGoing}" ${canMarkGoing ? "" : "disabled"}>${homeFeedGoingActionMarkup(profile, isGoing)}</button>
             </div>
           </article>
         `;
@@ -42954,14 +43016,14 @@
           const active = isNotificationOn(city, profile.name);
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
-          button.innerHTML = actionButtonLabel(active ? "check" : "bell", active ? "On" : "Notify");
+          button.innerHTML = actionButtonLabel(active ? "check" : "bell", active ? "Notifications On" : "Notify");
           return;
         }
         if (action === "going") {
           const active = !!goingTonightSavedByProfile[profile.name];
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
-          button.innerHTML = actionButtonLabel(active ? "check" : "clock", active ? "Going" : "I'm Going");
+          button.innerHTML = homeFeedGoingActionMarkup(profile, active);
         }
       });
     }

@@ -86,4 +86,12 @@ test("I'm Going changes the visible count before the request and reconciles or r
     homeSource,
     /if \(actionButton\.id === "goingBtn"\) \{\s+await saveProfileGoing\(actionButton\)/,
   );
+  assert.match(
+    homeSource,
+    /function homeFeedGoingActionMarkup\(profile, active\) \{[\s\S]*?tonightInterestCount\(profile\)[\s\S]*?feed-card-action-count[\s\S]*?compactNumber\(count\)/,
+  );
+  assert.match(
+    homeSource,
+    /if \(action === "going"\) \{[\s\S]*?button\.innerHTML = homeFeedGoingActionMarkup\(profile, active\)/,
+  );
 });

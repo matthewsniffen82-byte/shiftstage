@@ -151,6 +151,17 @@ test("mobile homepage cards form a single-column production action feed", () => 
     homeSource,
     /const feedActionButton = event\.target\.closest\("\[data-feed-action\]"\)[\s\S]*saveProfileFollow\(feedActionButton\)[\s\S]*saveProfileNotifications\(feedActionButton\)[\s\S]*saveProfileGoing\(feedActionButton\)/,
   );
+  assert.match(
+    homeSource,
+    /grid-template-columns: minmax\(0, \.9fr\) minmax\(0, \.9fr\) minmax\(0, 1\.2fr\)/,
+  );
+  assert.match(homeSource, /\.feed-card-action \{[\s\S]*?min-height: 54px/);
+  assert.match(
+    homeSource,
+    /\.feed-card-action\[data-feed-action="going"\] \{[\s\S]*?linear-gradient[\s\S]*?\.feed-card-action\[data-feed-action="going"\]\.is-active/,
+  );
+  assert.match(homeSource, /isNotified \? "Notifications On" : "Notify"/);
+  assert.match(homeSource, /homeFeedGoingActionMarkup\(profile, isGoing\)/);
   assert.match(homeSource, /postAuthenticatedJson\("\/api\/customer\/follows"/);
   assert.match(homeSource, /postOptionalAuthJson\("\/api\/customer\/going"/);
 });
