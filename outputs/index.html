@@ -27815,12 +27815,6 @@
         <button class="brand brand-home dancr-home-logo logo-image-button" id="brandHome" type="button" aria-label="Go to Mydancr home">
           <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
         </button>
-        <div class="home-header-discovery" aria-label="Homepage discovery controls">
-          <button class="home-header-city" id="homeHeaderCity" type="button" aria-label="Change city">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"></path><circle cx="12" cy="10" r="2.2"></circle></svg>
-            <span data-city-label>Las Vegas</span>
-          </button>
-        </div>
         <div class="menu" aria-label="Menu">
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
             <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
@@ -28037,7 +28031,6 @@
         .profile-photo-viewer-image:focus-visible { outline: 2px solid #7eeaff; outline-offset: -3px; }
         .profile-modal .gallery { overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; }
         .profile-modal .gallery .thumb { scroll-snap-align: center; }
-        .home-header-discovery,
         .home-bottom-tv,
         .feed-card-actions,
         .home-nav-icon { display: none; }
@@ -28124,54 +28117,10 @@
           header #brandHome .mydancr-live-logo {
             font-size: clamp(17px, 4.8vw, 20px) !important;
           }
-          .home-header-discovery {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            min-width: 0;
-            margin-left: auto;
-            order: 2;
-          }
-          .home-header-city {
-            min-height: 40px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 0 9px;
-            border: 1px solid rgba(139,92,246,.34);
-            border-radius: 999px;
-            color: #f8f7fb;
-            background: rgba(17,17,24,.9);
-            font: inherit;
-            font-size: 12px;
-            font-weight: 900;
-          }
-          .home-header-city {
-            max-width: 90px;
-            padding-inline: 7px;
-            font-size: 11px;
-          }
-          .home-header-city span {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-          .home-header-city svg {
-            width: 17px;
-            height: 17px;
-            flex: 0 0 auto;
-            fill: none;
-            stroke: #7eeaff;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-          }
           header .menu {
             flex: 0 0 auto;
-            order: 3;
+            margin-left: auto;
+            order: 2;
           }
           header #accountBtn {
             width: 72px !important;
@@ -44341,11 +44290,6 @@
     });
 
     function installReferenceHomeShell() {
-      document.getElementById("homeHeaderCity")?.addEventListener("click", () => {
-        document.querySelector(".home-city-filter")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        requestAnimationFrame(() => citySelect.focus({ preventScroll: true }));
-      });
-
       const hero = document.querySelector(".hero");
       if (hero) {
         hero.classList.add("reference-hero", "uploaded-hero-ready");

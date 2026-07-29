@@ -107,11 +107,12 @@ test("mobile homepage cards form a single-column production action feed", () => 
   assert.match(homeSource, /postOptionalAuthJson\("\/api\/customer\/going"/);
 });
 
-test("homepage omits the top search feature and keeps city discovery controls", () => {
+test("homepage omits top search and city shortcut controls", () => {
   assert.doesNotMatch(homeSource, /homeHeaderSearch(?:Toggle|Panel|Input|Clear)/);
   assert.doesNotMatch(homeSource, /class="desktop-search"/);
   assert.doesNotMatch(homeSource, /homeSearchQuery|applySearchValue|Search dancers or venues/);
-  assert.match(homeSource, /id="homeHeaderCity"[\s\S]*aria-label="Change city"/);
+  assert.doesNotMatch(homeSource, /homeHeaderCity|home-header-(?:discovery|city)/);
+  assert.match(homeSource, /<select id="citySelect">/);
   assert.match(homeSource, /const allItems = getItems\(city, activeTab\)/);
   assert.doesNotMatch(homeSource, /\.brand \{\s*display: none;\s*\}/);
 });
