@@ -28634,28 +28634,38 @@
         .home-discovery-empty {
           grid-column: 1 / -1;
           width: 100%;
+          max-width: 100%;
           display: grid;
           justify-items: start;
           gap: 9px;
           padding: 20px;
+          overflow: hidden;
           border: 1px solid rgba(126,234,255,.2);
           border-radius: 16px;
           background: linear-gradient(145deg,rgba(18,18,28,.98),rgba(8,8,14,.98));
           box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 14px 34px rgba(0,0,0,.24);
         }
         .home-discovery-empty strong {
+          min-width: 0;
+          max-width: 100%;
           color: #fff;
           font-size: 17px;
           font-weight: 950;
           line-height: 1.15;
+          overflow-wrap: anywhere;
+          white-space: normal;
         }
         .home-discovery-empty p {
+          min-width: 0;
+          width: 100%;
           max-width: 48ch;
           margin: 0;
           color: #b8b4c7;
           font-size: 12px;
           font-weight: 750;
           line-height: 1.45;
+          overflow-wrap: anywhere;
+          white-space: normal;
         }
         .home-discovery-empty-action {
           min-height: 46px;
@@ -42551,7 +42561,7 @@
       document.querySelector(`.tab[data-tab="${activeTab}"]`)?.focus({ preventScroll: true });
     }
 
-    function homeDiscoveryFeedStatus(profile, tab) {
+    function homeDiscoveryFeedStatus(profile) {
       if (isWorkingTonight(profile)) {
         return {
           className: "is-now",
@@ -42561,9 +42571,7 @@
       if (profile.scheduled) {
         return {
           className: "is-upcoming",
-          label: tab === "tonight"
-            ? `Up next · ${displayPublicShiftTime(profile.time, profile)}`
-            : displayPublicShiftTime(profile.time, profile)
+          label: displayPublicShiftTime(profile.time, profile)
         };
       }
       return {
@@ -42613,7 +42621,7 @@
       const portraitMarkup = profilePhotoUrl
         ? `<div class="portrait home-discovery-feed-photo ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}></div>`
         : `<div class="home-discovery-feed-photo is-photo-unavailable" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
-      const status = homeDiscoveryFeedStatus(profile, tab);
+      const status = homeDiscoveryFeedStatus(profile);
       const locationBadge = profileLocationStatusBadge(profile);
       const distanceLabel = profileCardDistanceLabel(profile);
       const verifiedMark = profile.status === "Verified"
@@ -42675,7 +42683,7 @@
       rememberHomeDiscoveryFeedPosition();
       results.classList.remove("card-grid");
       results.classList.add("home-discovery-feed");
-      results.setAttribute("aria-label", `Swipe through ${activeTab === "tonight" ? "Now and Next appearances" : "dancer profiles"} in ${city}`);
+      results.setAttribute("aria-label", `Swipe through ${activeTab === "tonight" ? "dancers working now" : "dancer profiles"} in ${city}`);
       viewAllBtn.hidden = true;
       lockHomeDiscoveryFeedViewport();
 
@@ -42686,7 +42694,7 @@
       if (!items.length) {
         renderHomeDiscoveryFeedMessage(
           activeTab === "tonight"
-            ? `No upcoming shifts are posted for tonight in ${city} yet.`
+            ? `No dancers are working now in ${city}.`
             : `No approved dancer profiles are available in ${city} yet.`
         );
         return;
@@ -42782,7 +42790,8 @@
       const usesDiscoveryFeed =
         homeDiscoveryFeedOpen &&
         ["tonight", "dancers"].includes(activeTab) &&
-        homeDiscoveryFeedUsesLockedViewport();
+        homeDiscoveryFeedUsesLockedViewport() &&
+        (loadingLiveProfiles || allItems.length > 0);
       if (usesDiscoveryFeed) {
         renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
         return;

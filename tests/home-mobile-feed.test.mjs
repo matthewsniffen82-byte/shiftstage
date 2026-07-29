@@ -131,6 +131,12 @@ test("Now and Dancers open as full-screen mobile swipe feeds", () => {
     homeSource,
     /class="home-discovery-feed-close"[\s\S]*?data-home-discovery-close[\s\S]*?closeHomeDiscoveryFeed/,
   );
+  assert.match(
+    homeSource,
+    /const usesDiscoveryFeed =[\s\S]*?homeDiscoveryFeedOpen[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\) &&[\s\S]*?\(loadingLiveProfiles \|\| allItems\.length > 0\)/,
+  );
+  assert.match(homeSource, /Swipe through \$\{activeTab === "tonight" \? "dancers working now" : "dancer profiles"\}/);
+  assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
 test("discovery swipe cards expose real live QR and engagement actions without hiding the full profile", () => {

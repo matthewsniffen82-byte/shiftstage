@@ -52,6 +52,10 @@ test("the homepage exposes an honest Now empty state that opens the Dancers dire
     /const showDancersButton = event\.target\.closest\("\[data-show-dancers\]"\)[\s\S]*activeTab = "dancers"[\s\S]*tab\.dataset\.tab === "dancers"[\s\S]*render\(\)/,
   );
   assert.match(homeSource, /\.home-discovery-empty-action \{[\s\S]*?min-height: 46px/);
+  assert.match(
+    homeSource,
+    /\.home-discovery-empty \{[\s\S]*?max-width: 100%[\s\S]*?overflow: hidden[\s\S]*?\.home-discovery-empty strong \{[\s\S]*?overflow-wrap: anywhere[\s\S]*?white-space: normal/,
+  );
   assert.match(homeSource, /No upcoming or open-schedule dancers \$\{scope\}\./);
 });
 
