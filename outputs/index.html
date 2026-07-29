@@ -28262,25 +28262,39 @@
           outline-offset: -3px;
         }
         .home-feed-card .card-profile-destination {
-          width: fit-content;
-          min-height: 32px;
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 0 11px;
-          border: 1px solid rgba(126,234,255,.42);
-          border-radius: 10px;
-          color: #9fefff;
-          background: rgba(5,5,10,.88);
-          box-shadow: 0 5px 18px rgba(0,0,0,.38);
+          position: absolute;
+          z-index: 7;
+          top: 14px;
+          right: 14px;
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(126,234,255,.52);
+          border-radius: 999px;
+          color: #b7f4ff;
+          background: rgba(5,5,10,.78);
+          box-shadow: 0 8px 22px rgba(0,0,0,.42), 0 0 16px rgba(34,199,255,.12);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          font-size: 10px;
-          font-weight: 950;
-          letter-spacing: .07em;
-          line-height: 1.1;
-          text-transform: uppercase;
-          text-shadow: 0 2px 8px rgba(0,0,0,.8);
+          pointer-events: none;
+        }
+        .home-feed-card .card-profile-destination svg {
+          width: 23px;
+          height: 23px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-feed-card .dancer-card-link:hover .card-profile-destination,
+        .home-feed-card .dancer-card-link:focus-visible .card-profile-destination {
+          border-color: rgba(126,234,255,.9);
+          color: #fff;
+          background: rgba(10,16,24,.94);
+          box-shadow: 0 8px 24px rgba(0,0,0,.48), 0 0 20px rgba(34,199,255,.28);
         }
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;
@@ -37156,10 +37170,10 @@
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
           <div class="card-badges">
             ${statusBadge}
-            ${options.feedActions && !isPending ? `<span class="card-profile-destination">View full profile <span aria-hidden="true">→</span></span>` : ""}
             ${trendBadge}
             ${trendMarker}
           </div>
+          ${options.feedActions && !isPending ? `<span class="card-profile-destination" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="7.5" r="3.25"></circle><path d="M3.5 19c0-3.35 1.95-5.25 5-5.25s5 1.9 5 5.25"></path><path d="M15 5h5v5"></path><path d="m14.5 10.5 5.5-5.5"></path></svg></span>` : ""}
         </div>
         <div class="profile-body">
           <div class="card-info-stack">
