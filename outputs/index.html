@@ -42029,8 +42029,8 @@
       const now = new Date();
       const cityNow = cityWallClock(now, city);
       const tonightEnds = new Date(cityNow);
+      tonightEnds.setUTCDate(tonightEnds.getUTCDate() + 1);
       tonightEnds.setUTCHours(6, 0, 0, 0);
-      if (cityNow >= tonightEnds) tonightEnds.setUTCDate(tonightEnds.getUTCDate() + 1);
 
       return market.dancers
         .filter((profile) => {
@@ -42047,8 +42047,13 @@
 
     function homeTonightDiscovery(city) {
       const working = workingNowItems(city);
-      if (working.length) return { mode: "now", items: working };
-      return { mode: "upcoming", items: upNextTonightItems(city) };
+      const upcoming = upNextTonightItems(city);
+      return {
+        mode: working.length ? (upcoming.length ? "combined" : "now") : "upcoming",
+        working,
+        upcoming,
+        items: [...working, ...upcoming]
+      };
     }
 
     function getItems(city, tab) {
@@ -42110,9 +42115,11 @@
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
       document.getElementById("homeLiveWorking").textContent = liveDiscoveryIsLoading(city)
         ? "Loading live schedule…"
-        : tonightDiscovery.mode === "now"
-          ? `${tonightDiscovery.items.length} working now`
-          : `${tonightDiscovery.items.length} up next tonight`;
+        : tonightDiscovery.mode === "combined"
+          ? `${tonightDiscovery.working.length} now · ${tonightDiscovery.upcoming.length} next`
+          : tonightDiscovery.mode === "now"
+            ? `${tonightDiscovery.working.length} working now`
+            : `${tonightDiscovery.upcoming.length} up next tonight`;
     }
 
     function render() {
@@ -42139,9 +42146,11 @@
       const venueFilter = selectedVenueFilter();
       const tonightMode = loadingLiveProfiles ? "now" : tonightDiscovery.mode;
       const titles = {
-        tonight: tonightMode === "now"
-          ? (venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`)
-          : (venueFilter === "all" ? `Up Next Tonight in ${city}` : `Up Next Tonight at ${venueFilter}`),
+        tonight: tonightMode === "combined"
+          ? (venueFilter === "all" ? `Now & Next in ${city}` : `Now & Next at ${venueFilter}`)
+          : tonightMode === "now"
+            ? (venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`)
+            : (venueFilter === "all" ? `Up Next Tonight in ${city}` : `Up Next Tonight at ${venueFilter}`),
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
         venues: `Venues in ${city}`,
         trending: `Trending in ${city}`

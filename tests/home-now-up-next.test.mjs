@@ -4,18 +4,22 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("the homepage falls back from confirmed working dancers to tonight's next shifts", () => {
+test("the homepage combines confirmed working dancers with tonight's next shifts", () => {
   assert.match(
     homeSource,
     /function workingNowItems\(city\)[\s\S]*isApprovedPublicProfile\(profile\)[\s\S]*isWorkingTonight\(profile, city\)[\s\S]*profileMatchesVenueFilter\(profile\)/,
   );
   assert.match(
     homeSource,
-    /function upNextTonightItems\(city\)[\s\S]*tonightEnds\.setUTCHours\(6, 0, 0, 0\)[\s\S]*profile\.scheduled[\s\S]*startsAt <= now[\s\S]*cityWallClock\(startsAt, city\) <= tonightEnds/,
+    /function upNextTonightItems\(city\)[\s\S]*tonightEnds\.setUTCDate\(tonightEnds\.getUTCDate\(\) \+ 1\)[\s\S]*tonightEnds\.setUTCHours\(6, 0, 0, 0\)[\s\S]*profile\.scheduled[\s\S]*startsAt <= now[\s\S]*cityWallClock\(startsAt, city\) <= tonightEnds/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /if \(cityNow >= tonightEnds\) tonightEnds\.setUTCDate/,
   );
   assert.match(
     homeSource,
-    /function homeTonightDiscovery\(city\) \{[\s\S]*if \(working\.length\) return \{ mode: "now", items: working \};[\s\S]*return \{ mode: "upcoming", items: upNextTonightItems\(city\) \};/,
+    /function homeTonightDiscovery\(city\) \{[\s\S]*const working = workingNowItems\(city\);[\s\S]*const upcoming = upNextTonightItems\(city\);[\s\S]*mode: working\.length \? \(upcoming\.length \? "combined" : "now"\) : "upcoming"[\s\S]*working,[\s\S]*upcoming,[\s\S]*items: \[\.\.\.working, \.\.\.upcoming\]/,
   );
   assert.match(homeSource, /if \(tab === "tonight"\) return homeTonightDiscovery\(city\)\.items/);
 });
@@ -32,8 +36,13 @@ test("the homepage keeps a stable Now & Next destination while results match the
   assert.match(homeSource, /const label = tab\.dataset\.tabLabel \|\| tab\.textContent\.trim\(\)/);
   assert.doesNotMatch(homeSource, /tonightDiscovery\.mode === "now" \? "Now" : "Up Next"/);
   assert.doesNotMatch(homeSource, /M4 11\.2 12 4l8 7\.2/);
-  assert.match(homeSource, /`\$\{tonightDiscovery\.items\.length\} working now`/);
-  assert.match(homeSource, /`\$\{tonightDiscovery\.items\.length\} up next tonight`/);
+  assert.match(homeSource, /`\$\{tonightDiscovery\.working\.length\} working now`/);
+  assert.match(homeSource, /`\$\{tonightDiscovery\.upcoming\.length\} up next tonight`/);
+  assert.match(
+    homeSource,
+    /`\$\{tonightDiscovery\.working\.length\} now · \$\{tonightDiscovery\.upcoming\.length\} next`/,
+  );
+  assert.match(homeSource, /`Now & Next in \$\{city\}`/);
   assert.match(homeSource, /`Up Next Tonight in \$\{city\}`/);
   assert.match(homeSource, /No upcoming shifts are posted for tonight in \$\{city\} yet\./);
 });
