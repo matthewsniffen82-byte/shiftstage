@@ -53,7 +53,20 @@ test("the live dancer profile close control exits shared links and remains touch
     homeSource,
     /function closeProfileModal\(\) \{[\s\S]*?profileBackdrop\.classList\.remove\("show"\)[\s\S]*?clearProfileDeepLink\(\)/,
   );
+  assert.match(
+    homeSource,
+    /function closeProfileModal\(\) \{[\s\S]*?\]\.forEach\(\(closeOverlay\) => \{[\s\S]*?try \{[\s\S]*?closeOverlay\(\)[\s\S]*?Profile overlay cleanup failed/,
+  );
+  assert.match(
+    homeSource,
+    /\.modal-top \{[\s\S]*?z-index: 30;[\s\S]*?\.close-btn \{[\s\S]*?pointer-events: auto;[\s\S]*?touch-action: manipulation;/,
+  );
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
+  assert.match(
+    profilePageSource,
+    /className="public-profile-close"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}[\s\S]*?aria-label="Close full dancer profile and return to the homepage"/,
+  );
+  assert.match(profilePageSource, />\s*×\s*<\/Link>/);
 });
 
 test("signed-out profile actions open a dismissible account prompt with working signup and sign-in links", () => {

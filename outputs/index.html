@@ -1117,7 +1117,7 @@
     .modal-top {
       position: sticky;
       top: 0;
-      z-index: 3;
+      z-index: 30;
       display: flex;
       justify-content: end;
       padding: 10px;
@@ -1125,6 +1125,8 @@
     }
 
     .close-btn {
+      position: relative;
+      z-index: 31;
       width: 42px;
       min-height: 42px;
       border: 1px solid rgba(53,216,255,.2);
@@ -1135,6 +1137,9 @@
       backdrop-filter: blur(14px);
       display: grid;
       place-items: center;
+      pointer-events: auto;
+      touch-action: manipulation;
+      cursor: pointer;
     }
 
     .modal-image {
@@ -37723,10 +37728,18 @@
     }
 
     function closeProfileModal() {
-      closeProfileTvViewer();
-      closeProfilePhotoViewer();
-      closeDealPassOverlay();
-      closeQrPopovers();
+      [
+        closeProfileTvViewer,
+        closeProfilePhotoViewer,
+        closeDealPassOverlay,
+        closeQrPopovers
+      ].forEach((closeOverlay) => {
+        try {
+          closeOverlay();
+        } catch (error) {
+          console.warn("Profile overlay cleanup failed", error);
+        }
+      });
       const returnTarget = profileModalReturnTarget;
       profileModalReturnTarget = "";
       profileBackdrop.classList.remove("show");

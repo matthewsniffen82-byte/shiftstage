@@ -51,7 +51,16 @@ export default async function DancerPublicPage({ params }: PageProps) {
       <PublicProfileStyles />
       <nav className="public-nav">
         <Link href="/">Dancr</Link>
-        <span>{profile.city}</span>
+        <div className="public-nav-meta">
+          <span>{profile.city}</span>
+          <Link
+            className="public-profile-close"
+            href={`/?city=${encodeURIComponent(profile.city)}`}
+            aria-label="Close full dancer profile and return to the homepage"
+          >
+            ×
+          </Link>
+        </div>
       </nav>
       <section className="public-hero dancer-hero">
         <div className="public-copy">
@@ -225,6 +234,9 @@ function PublicProfileStyles() {
       .public-profile-shell { min-height: 100vh; padding: 22px clamp(18px, 4vw, 56px) 56px; background: radial-gradient(circle at 78% 8%, rgba(139,92,246,.28), transparent 28rem), linear-gradient(180deg, #090911, #050507 62%); }
       .public-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1120px; margin: 0 auto 28px; color: #b9accd; font-size: 14px; }
       .public-nav a { color: #fff; text-decoration: none; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+      .public-nav-meta { display: flex; align-items: center; gap: 12px; }
+      .public-nav .public-profile-close { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; background: rgba(8,8,13,.88); box-shadow: 0 0 20px rgba(34,199,255,.14); font-size: 28px; font-weight: 500; letter-spacing: 0; line-height: 1; text-transform: none; }
+      .public-profile-close:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .public-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 420px); gap: clamp(24px, 5vw, 56px); align-items: stretch; max-width: 1120px; margin: 0 auto; min-height: min(68vh, 620px); }
       .public-copy { display: grid; align-content: center; gap: 18px; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }

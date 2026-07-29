@@ -23,6 +23,10 @@ test("MyDancr TV separates video playback from profile navigation", () => {
   );
   assert.match(
     feedClient,
+    /className="tv-profile-destination"[\s\S]*?View dancer profile[\s\S]*?→/,
+  );
+  assert.match(
+    feedClient,
     /className="tv-card-venue-line"[\s\S]*?href=\{venueLiveProfileHref\(video\)\}[\s\S]*?video\.venue\.name/,
   );
   assert.match(
