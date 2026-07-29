@@ -28045,6 +28045,19 @@
           outline: 2px solid #7eeaff;
           outline-offset: -3px;
         }
+        .home-feed-card .card-profile-destination {
+          width: fit-content;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          color: #9fefff;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: .07em;
+          line-height: 1.1;
+          text-transform: uppercase;
+          text-shadow: 0 2px 8px rgba(0,0,0,.8);
+        }
         @media (max-width: 640px) {
           .home-discovery-controls { grid-template-columns: minmax(0, 1fr) auto !important; align-items: end; gap: 8px !important; padding: 10px !important; }
           .home-filter-toggle { display: inline-flex; }
@@ -36864,6 +36877,7 @@
             ${clubMarkup}
           </div>
           ${scheduleMarkup}
+          ${options.feedActions && !isPending ? `<span class="card-profile-destination">View dancer profile <span aria-hidden="true">→</span></span>` : ""}
         </div>
       `;
       if (options.feedActions && !isPending) {

@@ -67,6 +67,10 @@ test("the live dancer profile close control exits shared links and remains touch
     /className="public-profile-close"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}[\s\S]*?aria-label="Close full dancer profile and return to the homepage"/,
   );
   assert.match(profilePageSource, />\s*×\s*<\/Link>/);
+  assert.match(
+    homeSource,
+    /class="card-profile-destination">View dancer profile <span aria-hidden="true">→<\/span>/,
+  );
 });
 
 test("signed-out profile actions open a dismissible account prompt with working signup and sign-in links", () => {
