@@ -28919,6 +28919,9 @@
           }
           #discoveryTabs .tab,
           #discoveryTabs .home-bottom-tv {
+            --home-nav-accent: #a78bfa;
+            --home-nav-accent-soft: #ddd6fe;
+            --home-nav-accent-glow: rgba(124,58,237,.42);
             position: relative !important;
             width: 100% !important;
             height: 57px !important;
@@ -28945,6 +28948,26 @@
             text-decoration: none;
             transform: none !important;
           }
+          #discoveryTabs .tab[data-tab="dancers"] {
+            --home-nav-accent: #c084fc;
+            --home-nav-accent-soft: #e9d5ff;
+            --home-nav-accent-glow: rgba(192,132,252,.4);
+          }
+          #discoveryTabs .home-bottom-tv {
+            --home-nav-accent: #f472b6;
+            --home-nav-accent-soft: #fbcfe8;
+            --home-nav-accent-glow: rgba(236,72,153,.44);
+          }
+          #discoveryTabs .tab[data-tab="venues"] {
+            --home-nav-accent: #a78bfa;
+            --home-nav-accent-soft: #ddd6fe;
+            --home-nav-accent-glow: rgba(139,92,246,.42);
+          }
+          #discoveryTabs .tab[data-tab="trending"] {
+            --home-nav-accent: #e879f9;
+            --home-nav-accent-soft: #f5d0fe;
+            --home-nav-accent-glow: rgba(217,70,239,.4);
+          }
           #discoveryTabs .tab::before,
           #discoveryTabs .tab::after,
           #discoveryTabs .home-bottom-tv::before,
@@ -28964,19 +28987,24 @@
             place-items: center;
             border: 0 !important;
             border-radius: 0 !important;
-            color: inherit;
+            color: var(--home-nav-accent) !important;
             background: transparent !important;
             box-shadow: none !important;
+            filter: drop-shadow(0 0 4px var(--home-nav-accent-glow));
           }
           #discoveryTabs .tab.active .home-nav-icon {
-            color: #fff;
+            color: var(--home-nav-accent-soft) !important;
             background: transparent !important;
-            filter: drop-shadow(0 0 7px rgba(139,92,246,.72));
+            filter:
+              drop-shadow(0 0 5px var(--home-nav-accent-glow))
+              drop-shadow(0 0 9px var(--home-nav-accent-glow));
           }
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon {
             border-color: transparent !important;
             box-shadow: none !important;
-            filter: drop-shadow(0 0 7px rgba(236,72,153,.62));
+            filter:
+              drop-shadow(0 0 5px var(--home-nav-accent-glow))
+              drop-shadow(0 0 9px var(--home-nav-accent-glow));
           }
           #discoveryTabs .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv svg {
@@ -29002,7 +29030,7 @@
             padding: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
-            color: #c4b5fd;
+            color: var(--home-nav-accent-soft) !important;
             background: transparent !important;
             box-shadow: none !important;
             font-size: 10px !important;
@@ -29010,7 +29038,11 @@
             line-height: 1 !important;
             overflow: visible !important;
             text-overflow: clip;
+            text-shadow:
+              0 1px 2px rgba(0,0,0,.96),
+              0 0 6px var(--home-nav-accent-glow);
             white-space: nowrap;
+            pointer-events: none;
             transform: none !important;
           }
           #discoveryTabs .home-nav-label,
@@ -29024,9 +29056,15 @@
             text-align: center;
             text-overflow: ellipsis;
             white-space: nowrap;
+            color: #bcb4c8;
           }
           #discoveryTabs .home-bottom-tv {
-            color: #fff !important;
+            color: #bcb4c8 !important;
+          }
+          #discoveryTabs .tab.active .home-nav-label,
+          #discoveryTabs .home-bottom-tv.active > span:last-child {
+            color: var(--home-nav-accent-soft);
+            text-shadow: 0 0 8px var(--home-nav-accent-glow);
           }
           .home-bottom-tv-icon {
             width: 30px !important;
@@ -29038,6 +29076,8 @@
             border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
+            color: var(--home-nav-accent) !important;
+            filter: drop-shadow(0 0 4px var(--home-nav-accent-glow));
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-mark {
             width: 20px !important;
@@ -29047,7 +29087,11 @@
             stroke: none;
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-play {
-            fill: #fff;
+            fill: var(--home-nav-accent);
+            filter: drop-shadow(0 0 2px var(--home-nav-accent-glow));
+          }
+          #discoveryTabs .home-bottom-tv.active .mydancr-tv-play {
+            fill: var(--home-nav-accent-soft);
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-r {
             fill: none;

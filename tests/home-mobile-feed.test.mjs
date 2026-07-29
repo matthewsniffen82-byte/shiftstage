@@ -208,6 +208,18 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
     homeSource,
     /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
   );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab\[data-tab="dancers"\] \{[\s\S]*?--home-nav-accent: #c084fc[\s\S]*?#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: #f472b6/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.home-nav-icon \{[\s\S]*?color: var\(--home-nav-accent\) !important[\s\S]*?drop-shadow\(0 0 4px var\(--home-nav-accent-glow\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab-count \{[\s\S]*?border: 0 !important[\s\S]*?color: var\(--home-nav-accent-soft\) !important[\s\S]*?background: transparent !important[\s\S]*?pointer-events: none/,
+  );
 });
 
 test("mobile legal actions form a complete equal two-row grid above navigation", () => {

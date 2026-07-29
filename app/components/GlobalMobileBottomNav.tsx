@@ -89,7 +89,7 @@ export function GlobalMobileBottomNav() {
           return (
             <Link
               aria-current={active ? "page" : undefined}
-              className={`${active ? "active " : ""}${destination.id === "tv" ? "tv-destination" : ""}`}
+              className={`${active ? "active " : ""}${destination.id}-destination`}
               href={href}
               key={destination.id}
             >
@@ -136,6 +136,9 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a {
+            --mobile-nav-accent: #a78bfa;
+            --mobile-nav-accent-soft: #ddd6fe;
+            --mobile-nav-accent-glow: rgba(124, 58, 237, 0.42);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -156,44 +159,75 @@ export function GlobalMobileBottomNav() {
             text-decoration: none;
           }
 
+          .global-mobile-bottom-nav a.dancers-destination {
+            --mobile-nav-accent: #c084fc;
+            --mobile-nav-accent-soft: #e9d5ff;
+            --mobile-nav-accent-glow: rgba(192, 132, 252, 0.4);
+          }
+
+          .global-mobile-bottom-nav a.tv-destination {
+            --mobile-nav-accent: #f472b6;
+            --mobile-nav-accent-soft: #fbcfe8;
+            --mobile-nav-accent-glow: rgba(236, 72, 153, 0.44);
+          }
+
+          .global-mobile-bottom-nav a.trending-destination {
+            --mobile-nav-accent: #e879f9;
+            --mobile-nav-accent-soft: #f5d0fe;
+            --mobile-nav-accent-glow: rgba(217, 70, 239, 0.4);
+          }
+
           .global-mobile-nav-icon {
             width: 30px;
             height: 30px;
             display: grid;
             place-items: center;
-            border: 1px solid rgba(139, 92, 246, 0.24);
-            border-radius: 10px;
-            color: inherit;
-            background: rgba(28, 27, 36, 0.96);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            border: 0;
+            border-radius: 0;
+            color: var(--mobile-nav-accent);
+            background: transparent;
+            box-shadow: none;
+            filter: drop-shadow(0 0 4px var(--mobile-nav-accent-glow));
           }
 
           .global-mobile-bottom-nav a.active {
-            color: #fff;
+            color: var(--mobile-nav-accent-soft);
+            text-shadow: 0 0 8px var(--mobile-nav-accent-glow);
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
-            border-color: rgba(196, 181, 253, 0.42);
-            color: #fff;
-            background: linear-gradient(
-              135deg,
-              rgba(109, 40, 217, 0.96),
-              rgba(124, 58, 237, 0.78)
-            );
-            box-shadow: 0 0 16px rgba(124, 58, 237, 0.34);
+            border: 0;
+            color: var(--mobile-nav-accent-soft);
+            background: transparent;
+            box-shadow: none;
+            filter:
+              drop-shadow(0 0 5px var(--mobile-nav-accent-glow))
+              drop-shadow(0 0 9px var(--mobile-nav-accent-glow));
           }
 
           .global-mobile-bottom-nav a.tv-destination {
-            color: #fff;
+            color: #bcb4c8;
           }
 
           .global-mobile-bottom-nav a.tv-destination .global-mobile-nav-icon {
-            border-color: rgba(255, 255, 255, 0.62);
-            border-radius: 8px;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            box-shadow:
-              0 0 8px rgba(236, 72, 153, 0.2),
-              inset 0 1px 0 rgba(255, 255, 255, 0.16);
+            border: 0;
+            border-radius: 0;
+            color: var(--mobile-nav-accent);
+            background: transparent;
+            box-shadow: none;
+            filter: drop-shadow(0 0 4px var(--mobile-nav-accent-glow));
+          }
+
+          .global-mobile-bottom-nav a.tv-destination.active {
+            color: var(--mobile-nav-accent-soft);
+          }
+
+          .global-mobile-bottom-nav a.tv-destination.active
+            .global-mobile-nav-icon {
+            color: var(--mobile-nav-accent-soft);
+            filter:
+              drop-shadow(0 0 5px var(--mobile-nav-accent-glow))
+              drop-shadow(0 0 9px var(--mobile-nav-accent-glow));
           }
 
           .global-mobile-bottom-nav svg {
@@ -215,7 +249,14 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav .mydancr-tv-play {
-            fill: #fff;
+            fill: var(--mobile-nav-accent);
+            filter: drop-shadow(0 0 2px var(--mobile-nav-accent-glow));
+          }
+
+          .global-mobile-bottom-nav
+            a.tv-destination.active
+            .mydancr-tv-play {
+            fill: var(--mobile-nav-accent-soft);
           }
 
           .global-mobile-bottom-nav .mydancr-tv-r {
