@@ -27908,7 +27908,7 @@
       </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab active" data-tab="tonight" data-tab-label="Now &amp; Next">Now &amp; Next</button>
+        <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
@@ -28344,6 +28344,58 @@
           color: #fff;
           background: rgba(10,16,24,.94);
           box-shadow: 0 8px 24px rgba(0,0,0,.48), 0 0 20px rgba(34,199,255,.28);
+        }
+        .home-discovery-empty {
+          grid-column: 1 / -1;
+          width: 100%;
+          display: grid;
+          justify-items: start;
+          gap: 9px;
+          padding: 20px;
+          border: 1px solid rgba(126,234,255,.2);
+          border-radius: 16px;
+          background: linear-gradient(145deg,rgba(18,18,28,.98),rgba(8,8,14,.98));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 14px 34px rgba(0,0,0,.24);
+        }
+        .home-discovery-empty strong {
+          color: #fff;
+          font-size: 17px;
+          font-weight: 950;
+          line-height: 1.15;
+        }
+        .home-discovery-empty p {
+          max-width: 48ch;
+          margin: 0;
+          color: #b8b4c7;
+          font-size: 12px;
+          font-weight: 750;
+          line-height: 1.45;
+        }
+        .home-discovery-empty-action {
+          min-height: 46px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 3px;
+          padding: 0 16px;
+          border: 1px solid rgba(126,234,255,.66);
+          border-radius: 12px;
+          color: #fff;
+          background: linear-gradient(135deg,rgba(16,179,224,.94),rgba(105,62,222,.94));
+          box-shadow: 0 8px 20px rgba(72,78,224,.2);
+          font: inherit;
+          font-size: 12px;
+          font-weight: 950;
+          cursor: pointer;
+        }
+        .home-discovery-empty-action:hover,
+        .home-discovery-empty-action:focus-visible {
+          border-color: #b7f4ff;
+          background: linear-gradient(135deg,rgba(21,197,239,.98),rgba(124,72,235,.98));
+        }
+        .home-discovery-empty-action:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
         }
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;
@@ -34763,41 +34815,17 @@
       return Math.abs(hash);
     }
 
-    function dancerDiscoverySort(a, b, city = selectedCity()) {
-      const groupWeight = (profile) => isWorkingTonight(profile, city) ? 0 : profile.scheduled ? 1 : 2;
-      const groupDifference = groupWeight(a) - groupWeight(b);
-      if (groupDifference) return groupDifference;
-      if (groupWeight(a) === 0) {
-        return shiftStartMinutes(a.time) - shiftStartMinutes(b.time) || dailyRotationScore(a, city) - dailyRotationScore(b, city);
-      }
-      if (groupWeight(a) === 1) {
-        return upcomingSortValue(a, city) - upcomingSortValue(b, city) || dailyRotationScore(a, city) - dailyRotationScore(b, city);
-      }
-      return dailyRotationScore(a, city) - dailyRotationScore(b, city);
-    }
-
-    const refreshShuffleScores = new Map();
-
-    function refreshShuffleScore(profile, city = selectedCity(), group = "dancers") {
-      const key = `${city}|${group}|${profile.name}`;
-      if (!refreshShuffleScores.has(key)) {
-        refreshShuffleScores.set(key, Math.random());
-      }
-      return refreshShuffleScores.get(key);
-    }
-
-    function shuffledDancerDiscoveryProfiles(profiles, city = selectedCity()) {
-      const groupKey = (profile) => isWorkingTonight(profile, city) ? "working-now" : profile.scheduled ? "upcoming" : "no-schedule";
-      const shuffleWithinGroup = (group) =>
-        profiles
-          .filter((profile) => groupKey(profile) === group)
-          .sort((a, b) => refreshShuffleScore(a, city, group) - refreshShuffleScore(b, city, group));
-
-      return [
-        ...shuffleWithinGroup("working-now"),
-        ...shuffleWithinGroup("upcoming"),
-        ...shuffleWithinGroup("no-schedule")
-      ];
+    function dancerDirectoryProfiles(profiles, city = selectedCity()) {
+      const upcoming = profiles
+        .filter((profile) => profile.scheduled && !isWorkingTonight(profile, city))
+        .sort((a, b) => (
+          upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
+          dailyRotationScore(a, city) - dailyRotationScore(b, city)
+        ));
+      const noSchedule = profiles
+        .filter((profile) => !profile.scheduled && !isWorkingTonight(profile, city))
+        .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
+      return [...upcoming, ...noSchedule];
     }
 
     function daysFromToday(date, city = selectedCity()) {
@@ -37260,7 +37288,7 @@
           ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
           : profile.scheduled
             ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
-            : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No upcoming shifts</span></div>';
+            : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No schedule posted</span></div>';
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span>${distanceLabel ? `<span class="card-distance">• ${distanceLabel}</span>` : ""}</div>`
         : "";
@@ -42038,49 +42066,17 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
-    function upNextTonightItems(city) {
-      const market = markets[city];
-      const now = new Date();
-      const cityNow = cityWallClock(now, city);
-      const tonightEnds = new Date(cityNow);
-      tonightEnds.setUTCDate(tonightEnds.getUTCDate() + 1);
-      tonightEnds.setUTCHours(6, 0, 0, 0);
-
-      return market.dancers
-        .filter((profile) => {
-          if (!isApprovedPublicProfile(profile) || !profile.scheduled || isWorkingTonight(profile, city) || !profileMatchesVenueFilter(profile)) {
-            return false;
-          }
-          const startsAt = new Date(profile.shiftStartsAt || "");
-          if (!Number.isFinite(startsAt.getTime()) || startsAt <= now) return false;
-          return cityWallClock(startsAt, city) <= tonightEnds;
-        })
-        .sort((a, b) => new Date(a.shiftStartsAt).getTime() - new Date(b.shiftStartsAt).getTime())
-        .map((profile) => withTrendingRank(profile, city));
-    }
-
-    function homeTonightDiscovery(city) {
-      const working = workingNowItems(city);
-      const upcoming = upNextTonightItems(city);
-      return {
-        mode: working.length ? (upcoming.length ? "combined" : "now") : "upcoming",
-        working,
-        upcoming,
-        items: [...working, ...upcoming]
-      };
-    }
-
     function getItems(city, tab) {
       const market = markets[city];
       if (["tonight", "dancers", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
         return [];
       }
-      if (tab === "tonight") return homeTonightDiscovery(city).items;
+      if (tab === "tonight") return workingNowItems(city);
       if (tab === "dancers") {
         const profiles = market.dancers
           .filter((profile) => isApprovedPublicProfile(profile) && profileMatchesVenueFilter(profile))
           .map((profile) => withTrendingRank(profile, city));
-        return shuffledDancerDiscoveryProfiles(profiles, city);
+        return dancerDirectoryProfiles(profiles, city);
       }
       if (tab === "venues") {
         return market.venues
@@ -42102,9 +42098,8 @@
 
     function updateTabCounts(city) {
       const loading = liveDiscoveryIsLoading(city);
-      const tonightDiscovery = homeTonightDiscovery(city);
       const counts = {
-        tonight: tonightDiscovery.items.length,
+        tonight: getItems(city, "tonight").length,
         dancers: getItems(city, "dancers").length,
         venues: getItems(city, "venues").length,
         trending: getItems(city, "trending").length
@@ -42122,18 +42117,14 @@
       if (!summary || !markets[city]) return;
 
       const venueName = selectedVenueFilter();
-      const tonightDiscovery = homeTonightDiscovery(city);
+      const workingNowCount = getItems(city, "tonight").length;
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All venues" : venueName;
       document.getElementById("homeLiveCity").textContent = city;
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
       document.getElementById("homeLiveWorking").textContent = liveDiscoveryIsLoading(city)
         ? "Loading live schedule…"
-        : tonightDiscovery.mode === "combined"
-          ? `${tonightDiscovery.working.length} now · ${tonightDiscovery.upcoming.length} next`
-          : tonightDiscovery.mode === "now"
-            ? `${tonightDiscovery.working.length} working now`
-            : `${tonightDiscovery.upcoming.length} up next tonight`;
+        : `${workingNowCount} working now`;
     }
 
     function render() {
@@ -42153,18 +42144,12 @@
       deactivateHomeTvFeed();
 
       const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
-      const tonightDiscovery = homeTonightDiscovery(city);
       const allItems = getItems(city, activeTab);
       const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
       const items = shouldLimit ? allItems.slice(0, 6) : allItems;
       const venueFilter = selectedVenueFilter();
-      const tonightMode = loadingLiveProfiles ? "now" : tonightDiscovery.mode;
       const titles = {
-        tonight: tonightMode === "combined"
-          ? (venueFilter === "all" ? `Now & Next in ${city}` : `Now & Next at ${venueFilter}`)
-          : tonightMode === "now"
-            ? (venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`)
-            : (venueFilter === "all" ? `Up Next Tonight in ${city}` : `Up Next Tonight at ${venueFilter}`),
+        tonight: venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`,
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
         venues: `Venues in ${city}`,
         trending: `Trending in ${city}`
@@ -42209,7 +42194,24 @@
         return;
       }
       if (activeTab === "tonight" && !items.length) {
-        results.innerHTML = `<div class="locked">No upcoming shifts are posted for tonight in ${city} yet.</div>`;
+        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
+        results.innerHTML = `
+          <section class="home-discovery-empty" aria-labelledby="homeNowEmptyTitle">
+            <strong id="homeNowEmptyTitle">No dancers are working now ${scope}.</strong>
+            <p>See approved dancers with upcoming shifts first, followed by dancers with no schedule posted.</p>
+            <button class="home-discovery-empty-action" type="button" data-show-dancers>See Upcoming Dancers</button>
+          </section>
+        `;
+        return;
+      }
+      if (activeTab === "dancers" && !items.length) {
+        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
+        results.innerHTML = `
+          <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
+            <strong id="homeDancersEmptyTitle">No upcoming or open-schedule dancers ${scope}.</strong>
+            <p>Approved dancers actively working right now remain available in the Now tab.</p>
+          </section>
+        `;
         return;
       }
       results.innerHTML = items.map((item, index) => (
@@ -42733,6 +42735,18 @@
     }
 
     results.addEventListener("click", async (event) => {
+      const showDancersButton = event.target.closest("[data-show-dancers]");
+      if (showDancersButton) {
+        activeTab = "dancers";
+        tonightExpanded = false;
+        dancersExpanded = false;
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.classList.toggle("active", tab.dataset.tab === "dancers");
+        });
+        render();
+        document.querySelector('.tab[data-tab="dancers"]')?.focus({ preventScroll: true });
+        return;
+      }
       const feedActionButton = event.target.closest("[data-feed-action]");
       if (feedActionButton) {
         event.preventDefault();
