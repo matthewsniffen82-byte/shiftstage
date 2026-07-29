@@ -78,6 +78,19 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
     homeSource,
     /results\.replaceChildren\(\s*createHomeTvFeedCloseButton\(\),[\s\S]*?createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
+  assert.match(
+    homeSource,
+    /function renderHomeTvFeedLoading\(\) \{[\s\S]*?loading\.className = "home-tv-feed-loading"[\s\S]*?loading\.setAttribute\("role", "status"\)[\s\S]*?loading\.setAttribute\("aria-label", "Loading MyDancr TV"\)[\s\S]*?results\.replaceChildren\(createHomeTvFeedCloseButton\(\), loading\)/,
+  );
+  assert.match(
+    homeSource,
+    /homeTvFeedStatus === "loading"[\s\S]*?results\.setAttribute\("aria-busy", "true"\)[\s\S]*?renderHomeTvFeedLoading\(\)[\s\S]*?results\.removeAttribute\("aria-busy"\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-loading \{[\s\S]*?place-items: center[\s\S]*?background: #000[\s\S]*?\.home-tv-feed-loading::after \{[\s\S]*?animation: homeTvFeedLoadingSpin \.8s linear infinite/,
+  );
+  assert.doesNotMatch(homeSource, /Loading approved MyDancr TV videos/);
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 

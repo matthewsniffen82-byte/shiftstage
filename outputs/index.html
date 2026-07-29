@@ -27961,6 +27961,30 @@
           background: #000;
           box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
         }
+        .home-tv-feed-loading {
+          position: absolute;
+          z-index: 3;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          background: #000;
+          pointer-events: none;
+        }
+        .home-tv-feed-loading::after {
+          content: "";
+          width: 30px;
+          height: 30px;
+          border: 3px solid rgba(255,255,255,.24);
+          border-top-color: #fff;
+          border-radius: 999px;
+          animation: homeTvFeedLoadingSpin .8s linear infinite;
+        }
+        @keyframes homeTvFeedLoadingSpin {
+          to { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-tv-feed-loading::after { animation-duration: 1.6s; }
+        }
         .home-tv-feed-slide {
           position: relative;
           width: 100%;
@@ -42498,6 +42522,14 @@
       results.appendChild(retry);
     }
 
+    function renderHomeTvFeedLoading() {
+      const loading = document.createElement("div");
+      loading.className = "home-tv-feed-loading";
+      loading.setAttribute("role", "status");
+      loading.setAttribute("aria-label", "Loading MyDancr TV");
+      results.replaceChildren(createHomeTvFeedCloseButton(), loading);
+    }
+
     function renderHomeTvFeed(city) {
       const bottomTv = document.getElementById("homeBottomTv");
       bottomTv?.classList.add("active");
@@ -42517,9 +42549,11 @@
       if (homeTvFeedStatus === "loading") {
         tabCount.textContent = "Loading videos…";
         results.removeAttribute("aria-label");
-        renderHomeTvFeedMessage(`Loading approved MyDancr TV videos from ${city}…`);
+        results.setAttribute("aria-busy", "true");
+        renderHomeTvFeedLoading();
         return;
       }
+      results.removeAttribute("aria-busy");
       if (homeTvFeedStatus === "error") {
         tabCount.textContent = "Unavailable";
         renderHomeTvFeedMessage("MyDancr TV videos are temporarily unavailable.", city);
