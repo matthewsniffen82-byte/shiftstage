@@ -2,16 +2,26 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
 import { getStripe } from "../stripe";
+import {
+  automaticDancerApprovalValues,
+  getIdentityVerificationMode,
+  isVerifyMyIdentityMode,
+} from "./identity-mode";
 
 type DancrClient = SupabaseClient;
 
 const REVIEWABLE_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "rejected"]);
 const ADMIN_DIRECTORY_STATUSES = new Set<DancerStatus>(["draft", "pending_review", "approved", "rejected", "disabled"]);
 const REVIEW_STATUSES = new Set<ReviewStatus>(["approved", "rejected"]);
+const APPROVAL_IDENTITY_SELECT = isVerifyMyIdentityMode()
+  ? `
+  identity_provider,
+  identity_verified_at,
+  dancer_identity_verifications(provider, status, last_error_code, verified_at, redacted_at, updated_at),`
+  : "";
 const APPROVAL_QUEUE_SELECT = `
   id,
   user_id,
-  real_name,
   stage_name,
   slug,
   city,
@@ -19,6 +29,7 @@ const APPROVAL_QUEUE_SELECT = `
   status,
   is_public,
   verification_status,
+  ${APPROVAL_IDENTITY_SELECT}
   photo_review_status,
   approved_at,
   disabled_at,
@@ -504,10 +515,12 @@ function isMissingVisibilityColumnError(error: any) {
 
 async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<AdminApprovalDancer> {
   const reviews = row.approval_reviews || [];
+  const identity = Array.isArray(row.dancer_identity_verifications)
+    ? row.dancer_identity_verifications[0]
+    : row.dancer_identity_verifications;
   return {
     id: row.id,
     userId: row.user_id,
-    realName: row.real_name,
     stageName: row.stage_name,
     slug: row.slug,
     city: row.city,
@@ -515,6 +528,9 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
     status: row.status,
     isPublic: row.is_public !== false,
     verificationStatus: row.verification_status,
+    identityMode: getIdentityVerificationMode(),
+    identityProvider: row.identity_provider || null,
+    identityVerifiedAt: row.identity_verified_at || null,
     photoReviewStatus: row.photo_review_status,
     createdAt: row.created_at,
     updatedAt: row.updated_at || null,
@@ -550,7 +566,15 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
         };
       })
       .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-    verificationDocuments: await listVerificationDocumentsForUser(client, row.user_id, reviews),
+    identityVerification: {
+      provider: isVerifyMyIdentityMode() ? "verifymy_content" : null,
+      status: isVerifyMyIdentityMode() ? identity?.status || "not_started" : "approved",
+      lastErrorCode: identity?.last_error_code || null,
+      verifiedAt: identity?.verified_at || row.identity_verified_at || null,
+      redactedAt: identity?.redacted_at || null,
+      updatedAt: identity?.updated_at || null,
+    },
+    verificationDocuments: [],
     reviews: reviews.map((review: any) => ({
       id: review.id,
       reviewType: review.review_type,
@@ -809,6 +833,7 @@ export async function getAdminMonitoringStatus(client: DancrClient): Promise<Adm
     integrations: [
       integrationStatus("Supabase", ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"]),
       integrationStatus("Stripe", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]),
+      integrationStatus("VerifyMyContent", ["VMC_API_KEY", "VMC_API_SECRET"]),
       integrationStatus("OneSignal", ["NEXT_PUBLIC_ONESIGNAL_APP_ID", "ONESIGNAL_REST_API_KEY"]),
       integrationStatus("Resend", ["RESEND_API_KEY", "EMAIL_FROM"]),
       integrationStatus("Google Maps", ["NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"]),
@@ -936,6 +961,9 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   }
 
   const approved = input.status === "approved";
+  if (approved && isVerifyMyIdentityMode()) {
+    throw new Error("Identity approval is controlled by VerifyMy and cannot be granted manually.");
+  }
   const reviewedAt = new Date().toISOString();
   const db = client as any;
 
@@ -948,28 +976,13 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   if (dancerError) throw dancerError;
   if (!dancer) throw new Error("Dancer profile not found.");
 
-  if (approved) {
-    const { data: account, error: accountError } = await db
-      .from("app_users")
-      .select("account_state")
-      .eq("id", dancer.user_id)
-      .maybeSingle();
-    if (accountError) throw accountError;
-    if (account?.account_state !== "active" || dancer.disabled_at) {
-      throw new Error("Reactivate the dancer account before approving this profile.");
-    }
-    await assertAllSubmittedContentReviewed(client, dancer);
-  }
-
   const statusUpdate = approved
-    ? {
-        status: "approved",
-        verification_status: input.status,
-        approved_at: reviewedAt,
-      }
+    ? automaticDancerApprovalValues(reviewedAt)
     : {
-        status: "rejected",
+        status: "rejected" as const,
+        verification_status: "rejected" as const,
         approved_at: null,
+        is_public: false,
       };
 
   const { error: updateError } = await db
@@ -979,7 +992,7 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
 
   if (updateError) throw updateError;
 
-  const reviewTypes = approved ? ["identity", "profile"] : ["profile"];
+  const reviewTypes = ["profile"];
   const reviewRows = reviewTypes.map((reviewType) => ({
     dancer_id: input.dancerId,
     reviewer_id: input.reviewerId,
@@ -1062,25 +1075,11 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     if (!photo) throw new Error("Submitted photo not found.");
     await updatePhotoReviewSummary(client, input.dancerId);
   } else if (input.targetType === "verification_document") {
-    const expectedPrefix = `${dancer.user_id}/verification/`;
-    if (!input.targetId.startsWith(expectedPrefix)) {
-      throw new Error("Verification file not found for this dancer.");
-    }
-    const fileName = input.targetId.slice(expectedPrefix.length);
-    if (!fileName || fileName.includes("/")) {
-      throw new Error("Verification file not found for this dancer.");
-    }
-    const { data: storedFiles, error: storageError } = await client.storage
-      .from("verification-documents")
-      .list(`${dancer.user_id}/verification`, {
-        limit: 100,
-        offset: 0,
-        search: fileName,
-      });
-    if (storageError) throw storageError;
-    if (!(storedFiles || []).some((file: any) => file.name === fileName)) {
-      throw new Error("Verification file not found for this dancer.");
-    }
+    throw new Error(
+      isVerifyMyIdentityMode()
+        ? "Identity verification is controlled by VerifyMy and cannot be reviewed manually."
+        : "Identity documents are not collected while automatic dancer approval is active.",
+    );
   } else {
     const { data: social, error: socialError } = await db
       .from("social_links")
@@ -1121,10 +1120,6 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
       .single();
     if (reviewError) throw reviewError;
     persistedReview = insertedReview;
-  }
-
-  if (input.targetType === "verification_document") {
-    await updateVerificationReviewSummary(client, dancer.user_id, input.dancerId);
   }
 
   await logAdminAction(client, {
@@ -1562,85 +1557,6 @@ function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
 
-async function assertAllSubmittedContentReviewed(client: DancrClient, dancer: { id: string; user_id: string }) {
-  const db = client as any;
-  const { data: reviews, error: reviewsError } = await db
-    .from("approval_reviews")
-    .select("review_type, status, notes, created_at, reviewed_at")
-    .eq("dancer_id", dancer.id);
-
-  if (reviewsError) throw reviewsError;
-
-  const reviewRows = reviews || [];
-  const documents = await listVerificationDocumentsForUser(client, dancer.user_id, reviewRows);
-  const pendingRequiredDocuments = requiredVerificationDocuments()
-    .filter((required) => !documents.some((document: any, index: number) =>
-      matchesRequiredVerificationDocument(document, required, index) && document.status === "approved"
-    ));
-
-  if (pendingRequiredDocuments.length) {
-    throw new Error(`Approve required verification first: ${pendingRequiredDocuments.map((item) => item.label).join(", ")}.`);
-  }
-}
-
-function requiredVerificationDocuments() {
-  return [
-    { key: "government_id", label: "Government ID", terms: ["government", "id"], fallbackIndex: 0 },
-    { key: "selfie", label: "Selfie verification", terms: ["selfie"], fallbackIndex: 1 },
-    { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"], fallbackIndex: 2 },
-  ];
-}
-
-function matchesRequiredVerificationDocument(
-  document: { documentType?: string; displayName?: string; name?: string },
-  required: { key: string; terms: string[]; fallbackIndex: number },
-  index: number,
-) {
-  const text = [document.documentType, document.displayName, document.name].filter(Boolean).join(" ").toLowerCase();
-  if (text.includes(required.key)) return true;
-  if (required.terms.every((term) => text.includes(term))) return true;
-  return !text.trim() && index === required.fallbackIndex;
-}
-
-async function listVerificationDocumentsForUser(client: DancrClient, userId: string, reviews: any[] = []) {
-  if (!userId) return [];
-
-  const prefix = `${userId}/verification`;
-  const bucket = client.storage.from("verification-documents");
-  const { data, error } = await bucket.list(prefix, {
-    limit: 50,
-    offset: 0,
-    sortBy: { column: "created_at", order: "desc" },
-  });
-
-  if (error) return [];
-
-  return Promise.all(
-    (data || [])
-      .filter((document: any) => Boolean(document.name))
-      .map(async (document: any, index: number) => {
-        const storagePath = `${prefix}/${document.name}`;
-        const { data: signedData } = await bucket.createSignedUrl(storagePath, 60 * 60);
-        const publicUrl = bucket.getPublicUrl(storagePath).data.publicUrl;
-        const review = latestReviewFor(reviews, contentReviewType("verification_document", storagePath));
-        const display = verificationDocumentDisplay(document.name, index);
-
-        return {
-          name: document.name,
-          documentType: display.documentType,
-          displayName: display.displayName,
-          storagePath,
-          fileUrl: signedData?.signedUrl || publicUrl,
-          status: review?.status || ("pending_review" as const),
-          reviewNotes: review?.notes || null,
-          reviewedAt: review?.reviewed_at || null,
-          createdAt: document.created_at || document.updated_at || null,
-          updatedAt: document.updated_at || null,
-        };
-      }),
-  );
-}
-
 async function updatePhotoReviewSummary(client: DancrClient, dancerId: string) {
   const db = client as any;
   const { data, error } = await db.from("dancer_photos").select("review_status").eq("dancer_id", dancerId);
@@ -1648,60 +1564,6 @@ async function updatePhotoReviewSummary(client: DancrClient, dancerId: string) {
 
   const status = aggregateReviewStatus((data || []).map((row: any) => row.review_status));
   const { error: updateError } = await db.from("dancer_profiles").update({ photo_review_status: status }).eq("id", dancerId);
-  if (updateError) throw updateError;
-}
-
-async function updateVerificationReviewSummary(client: DancrClient, userId: string, dancerId: string) {
-  const db = client as any;
-  const [reviewsResult, accountResult, profileResult] = await Promise.all([
-    db
-      .from("approval_reviews")
-      .select("review_type, status, notes, created_at, reviewed_at")
-      .eq("dancer_id", dancerId),
-    db
-      .from("app_users")
-      .select("account_state")
-      .eq("id", userId)
-      .maybeSingle(),
-    db
-      .from("dancer_profiles")
-      .select("status, approved_at, disabled_at")
-      .eq("id", dancerId)
-      .maybeSingle(),
-  ]);
-
-  if (reviewsResult.error) throw reviewsResult.error;
-  if (accountResult.error) throw accountResult.error;
-  if (profileResult.error) throw profileResult.error;
-  if (!profileResult.data) throw new Error("Dancer profile not found.");
-
-  const documents = await listVerificationDocumentsForUser(client, userId, reviewsResult.data || []);
-  const statuses = requiredVerificationDocuments().map((required) => {
-    const document = documents.find((item: any, index: number) => matchesRequiredVerificationDocument(item, required, index));
-    return document ? (document.status === "pending_review" ? "pending" : document.status) : "pending";
-  });
-  const status = aggregateReviewStatus(statuses);
-  const accountIsActive = accountResult.data?.account_state === "active";
-  const profileIsDisabled = Boolean(profileResult.data.disabled_at);
-  const profileAlreadyApproved = profileResult.data.status === "approved" && status === "approved";
-  const profileUpdate: Record<string, string | null> = {
-    verification_status: profileAlreadyApproved ? "approved" : status === "rejected" ? "rejected" : "pending",
-  };
-
-  if (!accountIsActive || profileIsDisabled) {
-    profileUpdate.status = "disabled";
-  } else if (status === "approved") {
-    profileUpdate.status = profileAlreadyApproved ? "approved" : "pending_review";
-    profileUpdate.approved_at = profileAlreadyApproved ? profileResult.data.approved_at : null;
-  } else if (status === "rejected") {
-    profileUpdate.status = "rejected";
-    profileUpdate.approved_at = null;
-  } else if (profileResult.data.status !== "rejected") {
-    profileUpdate.status = "pending_review";
-    profileUpdate.approved_at = null;
-  }
-
-  const { error: updateError } = await db.from("dancer_profiles").update(profileUpdate).eq("id", dancerId);
   if (updateError) throw updateError;
 }
 
@@ -1729,16 +1591,4 @@ function latestReviewFor(reviews: any[], reviewType: string) {
 function reviewTimestamp(review: any) {
   const timestamp = Date.parse(review.reviewed_at || review.reviewedAt || review.created_at || review.createdAt || "");
   return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-function verificationDocumentDisplay(name: string, index: number) {
-  const normalized = name.toLowerCase();
-  if (normalized.includes("selfie")) return { documentType: "selfie", displayName: "Selfie verification" };
-  if (normalized.includes("proof") || normalized.includes("dance")) return { documentType: "dance_proof", displayName: "Proof that they dance" };
-  if (normalized.includes("id") || normalized.includes("license") || normalized.includes("passport")) {
-    return { documentType: "government_id", displayName: "Government ID" };
-  }
-
-  const fallback = ["Government ID", "Selfie verification", "Proof that they dance"][index];
-  return { documentType: fallback ? slugify(fallback) : "verification_file", displayName: fallback || "Verification file" };
 }

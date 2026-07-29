@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
+import {
+  automaticDancerApprovalValues,
+  getIdentityVerificationMode,
+  isVerifyMyIdentityMode,
+} from "@/src/lib/dancr/identity-mode";
 import { profilePhotoSlotFromUploadContext, profilePhotoSlotKey } from "@/src/lib/dancr/photo-slot";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -106,7 +111,8 @@ function isMissingIsPublicColumnError(error: any) {
 }
 
 async function loadProfileForSave(db: any, userId: string) {
-  const columns = "id, real_name, stage_name, city, status, approved_at, disabled_at, verification_status, photo_review_status";
+  const identityColumns = isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : "";
+  const columns = `id, real_name, stage_name, city, status, approved_at, disabled_at, verification_status, photo_review_status${identityColumns}`;
   const current = await db
     .from("dancer_profiles")
     .select(`${columns}, is_public`)
@@ -167,6 +173,7 @@ export async function GET(request: Request) {
 
   try {
     const { client, user } = await createRequestSupabaseContext(request);
+    await ensureAutomaticDancerApproval(createAdminSupabaseClient(), user.id);
     const { data, error } = await loadDancerProfile(client, user.id);
 
     if (error) throw error;
@@ -309,7 +316,6 @@ export async function PATCH(request: Request) {
 
     const update: Record<string, string | boolean> = {};
     if (typeof body.stageName === "string") update.stage_name = body.stageName.trim();
-    if (typeof body.legalName === "string") update.real_name = body.legalName.trim();
     if (typeof body.city === "string") update.city = body.city.trim();
     if (typeof body.bio === "string") update.bio = body.bio.trim();
     if (typeof body.isPublic === "boolean") {
@@ -394,7 +400,6 @@ export async function PATCH(request: Request) {
       deletedPhotoIds,
       fields: {
         stageName: typeof body.stageName === "string",
-        legalName: typeof body.legalName === "string",
         city: typeof body.city === "string",
         bio: typeof body.bio === "string",
         socials: Array.isArray(body.socials),
@@ -480,8 +485,7 @@ export async function PATCH(request: Request) {
 
     setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
-      await submitProfileForReview(client, db, user.id, profile.id, {
-        realName: String(cleanProfilePayload.real_name || profile.real_name || ""),
+      await submitProfileForReview(db, profile.id, {
         stageName: String(cleanProfilePayload.stage_name || profile.stage_name || ""),
         city: String(cleanProfilePayload.city || profile.city || ""),
         status: profile.status,
@@ -717,105 +721,68 @@ async function markApprovedProfileContentPending(db: any, dancerId: string) {
 }
 
 async function submitProfileForReview(
-  client: any,
   db: any,
-  userId: string,
   dancerId: string,
-  profile: { realName?: string; stageName?: string; city?: string; status?: string },
+  profile: { stageName?: string; city?: string; status?: string },
 ) {
-  if (!profile.realName?.trim() || !profile.stageName?.trim() || !profile.city?.trim()) {
-    throw new Error("Save legal name, stage name, and city before submitting for review.");
+  if (!profile.stageName?.trim() || !profile.city?.trim()) {
+    throw new Error("Save stage name and city before publishing your profile.");
   }
 
-  const hasProfilePhoto = await hasSavedOrPendingProfilePhoto(db, userId, dancerId);
-  if (!hasProfilePhoto) throw new Error("Upload profile photos before submitting for review.");
-
-  const { data: documents, error: documentsError } = await client.storage
-    .from("verification-documents")
-    .list(`${userId}/verification`, { limit: 3 });
-
-  if (documentsError) throw documentsError;
-  if ((documents || []).filter((document: any) => Boolean(document?.name)).length < 3) {
-    throw new Error("Upload ID, selfie, and proof that you dance before submitting for review.");
+  if (getIdentityVerificationMode() === "auto_approve") {
+    const { error } = await db
+      .from("dancer_profiles")
+      .update(automaticDancerApprovalValues())
+      .eq("id", dancerId)
+      .neq("status", "rejected")
+      .is("disabled_at", null);
+    if (error) throw error;
+    return;
   }
+
+  const { data: identity, error: identityError } = await db
+    .from("dancer_identity_verifications")
+    .select("status, verified_at")
+    .eq("dancer_id", dancerId)
+    .maybeSingle();
+  if (identityError) throw identityError;
+  if (!identity) {
+    throw new Error("Complete secure VerifyMy identity verification before going live.");
+  }
+  if (identity.status === "verified" && identity.verified_at) return;
 
   const { error } = await db
     .from("dancer_profiles")
     .update({
       status: "pending_review",
       verification_status: "pending",
-      photo_review_status: "pending",
     })
     .eq("id", dancerId);
 
   if (error) throw error;
-
-  if (profile.status === "rejected") {
-    const adminDb = createAdminSupabaseClient() as any;
-    const { error: photoError } = await db
-      .from("dancer_photos")
-      .update({ review_status: "pending" })
-      .eq("dancer_id", dancerId)
-      .eq("review_status", "rejected");
-
-    if (photoError) throw photoError;
-    await reopenRejectedReviewsForResubmission(adminDb, dancerId);
-  }
 }
 
-async function hasSavedOrPendingProfilePhoto(db: any, userId: string, dancerId: string) {
-  const { data: photos, error: photosError } = await db
-    .from("dancer_photos")
-    .select("id")
-    .eq("dancer_id", dancerId)
-    .limit(1);
+async function ensureAutomaticDancerApproval(db: any, userId: string) {
+  if (getIdentityVerificationMode() !== "auto_approve") return;
 
-  if (photosError) throw photosError;
-  if (photos?.length) return true;
-
-  const { data: pendingModeration, error: pendingModerationError } = await db
-    .from("image_moderation_records")
-    .select("id")
+  const { data: profile, error: profileError } = await db
+    .from("dancer_profiles")
+    .select("id, status, disabled_at")
     .eq("user_id", userId)
-    .eq("decision", "review")
-    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
-    .limit(1);
+    .maybeSingle();
+  if (profileError) throw profileError;
+  if (!profile || profile.disabled_at) return;
 
-  if (pendingModerationError) throw pendingModerationError;
-  return Boolean(pendingModeration?.length);
-}
+  const status = String(profile.status || "").toLowerCase();
+  if (status === "approved" || status === "rejected" || status === "disabled") return;
 
-async function reopenRejectedReviewsForResubmission(db: any, dancerId: string) {
-  const { data: reviews, error } = await db
-    .from("approval_reviews")
-    .select("review_type, status, created_at, reviewed_at")
-    .eq("dancer_id", dancerId);
-
+  const { error } = await db
+    .from("dancer_profiles")
+    .update(automaticDancerApprovalValues())
+    .eq("id", profile.id)
+    .neq("status", "rejected")
+    .is("disabled_at", null);
   if (error) throw error;
-
-  const latestByType = new Map<string, any>();
-  for (const review of reviews || []) {
-    const type = review.review_type;
-    const previous = latestByType.get(type);
-    const reviewTime = Date.parse(review.reviewed_at || review.created_at || "") || 0;
-    const previousTime = previous ? Date.parse(previous.reviewed_at || previous.created_at || "") || 0 : -1;
-    if (!previous || reviewTime >= previousTime) latestByType.set(type, review);
-  }
-
-  const rows = Array.from(latestByType.entries())
-    .filter(([, review]) => review.status === "rejected")
-    .map(([reviewType]) => ({
-      dancer_id: dancerId,
-      reviewer_id: null,
-      review_type: reviewType,
-      status: "pending",
-      notes: "Resubmitted by dancer.",
-      reviewed_at: null,
-    }));
-
-  if (!rows.length) return;
-  const { error: insertError } = await db.from("approval_reviews").insert(rows);
-  if (insertError) throw insertError;
 }
 
 async function loadDeletedPhotoStoragePaths(db: any, dancerId: string, userId: string, deletedPhotoIds: string[]) {

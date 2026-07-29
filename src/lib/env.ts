@@ -25,3 +25,8 @@ export function getServerEnv(name: string): string {
 
   return value;
 }
+
+export function getOptionalServerEnv(name: string): string | null {
+  const value = process.env[name]?.trim();
+  return value || null;
+}

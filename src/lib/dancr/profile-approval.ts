@@ -2,6 +2,10 @@ type DancerApprovalState = {
   status?: unknown;
   verification_status?: unknown;
   verificationStatus?: unknown;
+  identity_provider?: unknown;
+  identityProvider?: unknown;
+  identity_verified_at?: unknown;
+  identityVerifiedAt?: unknown;
   disabled_at?: unknown;
   disabledAt?: unknown;
   is_public?: unknown;
@@ -14,11 +18,13 @@ function normalizedStatus(value: unknown) {
 
 export function isCoreVerificationApproved(profile: DancerApprovalState | null | undefined) {
   if (!profile) return false;
-  const status = normalizedStatus(profile.status);
   const verificationStatus = normalizedStatus(profile.verification_status || profile.verificationStatus);
-
-  if (verificationStatus) return verificationStatus === "approved";
-  return status === "approved" || status === "verified";
+  const identityProvider = normalizedStatus(profile.identity_provider || profile.identityProvider);
+  const identityVerifiedAt = profile.identity_verified_at || profile.identityVerifiedAt;
+  if (!identityProvider && !identityVerifiedAt) {
+    return verificationStatus === "approved";
+  }
+  return verificationStatus === "approved" && identityProvider === "verifymy_content" && Boolean(identityVerifiedAt);
 }
 
 export function effectiveDancerProfileStatus(

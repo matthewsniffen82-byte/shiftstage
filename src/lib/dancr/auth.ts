@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json, UserRole } from "./types";
+import { isCoreVerificationApproved } from "./profile-approval";
+import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "./identity-mode";
 
 type DancrClient = SupabaseClient;
 
@@ -11,7 +13,6 @@ export type CustomerSignupInput = {
 };
 
 export type DancerSignupInput = {
-  realName: string;
   stageName: string;
   email: string;
   password: string;
@@ -62,7 +63,6 @@ export async function signUpDancer(client: DancrClient, input: DancerSignupInput
       data: {
         role: "dancer",
         display_name: input.stageName,
-        real_name: input.realName,
         stage_name: input.stageName,
         city: input.city || "Las Vegas",
       },
@@ -81,11 +81,13 @@ export async function signUpDancer(client: DancrClient, input: DancerSignupInput
 
   const { error: profileError } = await client.from("dancer_profiles").upsert({
     user_id: data.user.id,
-    real_name: input.realName,
+    real_name: null,
     stage_name: input.stageName,
     slug: slugify(input.stageName),
     city: input.city || "Las Vegas",
-    status: "draft",
+    ...(isVerifyMyIdentityMode()
+      ? { status: "draft", verification_status: "pending", is_public: false }
+      : automaticDancerApprovalValues()),
   });
 
   if (profileError) throw profileError;
@@ -198,23 +200,26 @@ export async function setAccountState(client: DancrClient, userId: string, accou
 }
 
 async function activeDancerProfileState(client: DancrClient, userId: string) {
-  const { data, error } = await client
+  const { data, error }: any = await client
     .from("dancer_profiles")
-    .select("status, verification_status")
+    .select(`status, verification_status${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}`)
     .eq("user_id", userId)
     .maybeSingle();
 
   if (error) throw error;
-  const verificationStatus = String(data?.verification_status || "").toLowerCase();
   const currentStatus = String(data?.status || "").toLowerCase();
   const status =
-    verificationStatus === "approved"
+    isCoreVerificationApproved(data)
       ? "approved"
       : currentStatus === "rejected"
         ? "rejected"
         : "pending_review";
 
-  return { status, disabled_at: null };
+  return {
+    status,
+    disabled_at: null,
+    ...(status === "approved" ? { is_public: true } : {}),
+  };
 }
 
 export async function getCustomerProfile(client: DancrClient, userId: string): Promise<CustomerProfile | null> {

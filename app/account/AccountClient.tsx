@@ -313,9 +313,9 @@ export default function AccountClient() {
           {isDancerSignup ? (
             <>
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
-                <span className="eyebrow">Dancer verification</span>
+                <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
-                <p>Confirm your email, then Mydancr opens the four-step verification setup with profile details, photos, ID/selfie review, and proof that you dance. Check your email or spam folder if it does not arrive right away. Schedule posting unlocks after approval.</p>
+                <p>Confirm your email, then finish your stage name and city to publish your profile. Dancer accounts are approved automatically right now, with no ID, selfie, or dance-proof upload required. Photos and MyDancr TV videos continue through separate safety moderation.</p>
               </section>
             </>
           ) : null}

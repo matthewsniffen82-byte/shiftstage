@@ -21,7 +21,9 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     ".next-*/**",
+    ".codex-remote-attachments/**",
     ".codex-worktrees/**",
+    "work/**",
     "out/**",
     "build/**",
     "outputs/**",

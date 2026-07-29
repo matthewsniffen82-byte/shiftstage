@@ -1,4 +1,5 @@
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -276,7 +277,6 @@ async function ensureCallbackDancerProfile(
   metadata: Record<string, unknown>,
 ) {
   const stageName = readMetadataText(metadata.stage_name) || displayName || "New Dancer";
-  const realName = readMetadataText(metadata.real_name) || "Verification pending";
   const city = readMetadataText(metadata.city) || "Las Vegas";
 
   const { data: existingProfile, error: existingProfileError } = await admin
@@ -300,11 +300,13 @@ async function ensureCallbackDancerProfile(
   const slug = await uniqueDancerSlug(admin, stageName, userId);
   const { error } = await admin.from("dancer_profiles").insert({
     user_id: userId,
-    real_name: realName,
+    real_name: null,
     stage_name: stageName,
     slug,
     city,
-    status: "draft",
+    ...(isVerifyMyIdentityMode()
+      ? { status: "draft", verification_status: "pending", is_public: false }
+      : automaticDancerApprovalValues()),
   });
   if (error) throw error;
 }

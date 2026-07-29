@@ -8,6 +8,7 @@ import {
   markGoing,
 } from "@/src/lib/dancr/customer";
 import { isPublicDancerProfileEligible } from "@/src/lib/dancr/profile-approval";
+import { isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   createRequestSupabaseContext,
@@ -124,7 +125,7 @@ async function requirePublicShift(
   const { data, error } = await admin
     .from("shifts")
     .select(
-      "id, status, ends_at, dancer_profiles(status, approved_at, disabled_at, verification_status, photo_review_status, is_public)",
+      `id, status, ends_at, dancer_profiles(status, approved_at, disabled_at, verification_status${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, photo_review_status, is_public)`,
     )
     .eq("id", shiftId)
     .maybeSingle();

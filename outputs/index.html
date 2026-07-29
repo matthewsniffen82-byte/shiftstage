@@ -29641,8 +29641,8 @@
             <div class="approval-command-summary" data-setup-checklist-toggle role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
               <div>
                 <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
-                <h3 id="dancerApprovalTitle">Finish verification to go live</h3>
-                <p id="dancerApprovalCopy">Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.</p>
+                <h3 id="dancerApprovalTitle">Finish profile setup</h3>
+                <p id="dancerApprovalCopy">Dancer accounts are approved automatically right now. No ID, selfie, or dance-proof upload is required; photos and videos are moderated separately.</p>
               </div>
               <div class="approval-progress">
                 <strong id="dancerApprovalProgress">0/4</strong>
@@ -30269,7 +30269,7 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
-          <summary><span class="dashboard-collapse-title"><strong>Dancer approvals</strong><span>Expand to review each pending dancer submission, including socials, photos, ID, selfie, proof, and final approval controls.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Dancer content reviews</strong><span>Expand to review submitted socials and photos. Dancer accounts are approved automatically.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminDancers"></div>
           </div>
@@ -30750,6 +30750,8 @@
       approval: false,
       shift: false
     };
+    let liveIdentityVerificationMode = "auto_approve";
+    let liveIdentityVerification = { provider: null, status: "approved", verifiedAt: null, lastErrorCode: null };
     let liveVerificationDocuments = [];
     let liveVerificationDocumentsAuthoritative = false;
     let verificationSubmitNotice = "";
@@ -31404,9 +31406,16 @@
         approval: false,
         shift: false
       });
+      liveIdentityVerificationMode = "auto_approve";
+      liveIdentityVerification = {
+        provider: null,
+        status: "approved",
+        verifiedAt: null,
+        lastErrorCode: null
+      };
       liveVerificationDocuments = [];
       liveVerificationDocumentsAuthoritative = false;
-      ["dancerLegalName", "dancerStageName", "dancerCity", "setupLegalName", "setupStageName", "setupCity"].forEach((id) => {
+      ["dancerLegalName", "dancerStageName", "dancerCity", "setupStageName", "setupCity"].forEach((id) => {
         const field = document.getElementById(id);
         if (field) field.value = "";
       });
@@ -31448,7 +31457,7 @@
       const target = profileForm || profileStep || document.getElementById("setupChecklistWrap") || document.getElementById("dancerApprovalCommand");
       target?.scrollIntoView({ block: "start", behavior: "smooth" });
       setTimeout(() => {
-        document.getElementById("setupLegalName")?.focus({ preventScroll: true });
+        document.getElementById("setupStageName")?.focus({ preventScroll: true });
       }, 260);
     }
 
@@ -32585,11 +32594,11 @@
     }
 
     function dancerCoreApprovalUnlocked(profile) {
-      return Boolean(
-        isApprovedDancerStatus(profile?.status) ||
-        normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved" ||
-        approvedRequiredVerificationDocuments(profile)
-      );
+      const verificationApproved = normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved";
+      const provider = normalizedReviewStatus(profile?.identity_provider || profile?.identityProvider);
+      const verifiedAt = profile?.identity_verified_at || profile?.identityVerifiedAt;
+      if (!provider && !verifiedAt) return Boolean(isApprovedDancerStatus(profile?.status) || verificationApproved);
+      return Boolean(verificationApproved && provider === "verifymy_content" && verifiedAt);
     }
 
     function applyLiveApprovalQueue(queue) {
@@ -34088,7 +34097,7 @@
     }
 
     function reviewDisplayLabel(reviewType = "") {
-      if (reviewType === "identity") return "ID, selfie, and proof";
+      if (reviewType === "identity") return "Legacy identity review";
       if (reviewType === "photos") return "Photo set";
       if (reviewType === "profile") return "Profile details";
       if (reviewType.startsWith("photo:")) {
@@ -34178,7 +34187,7 @@
 
     function dancerReviewFeedbackMarkup() {
       if (!liveDancerReviews.length) {
-        return '<div class="rule-note">No platform review notes yet. Dancr will update this step after ID, selfie, and photo review.</div>';
+        return '<div class="rule-note">No platform review notes yet. Photo and social-link moderation updates appear here.</div>';
       }
       return `<div class="review-feedback-list">${latestDancerReviews().map((review) => {
         const rawStatus = String(review.status || "pending");
@@ -38873,6 +38882,13 @@
       liveDancerBilling = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
+      liveIdentityVerificationMode = "auto_approve";
+      liveIdentityVerification = {
+        provider: null,
+        status: "approved",
+        verifiedAt: null,
+        lastErrorCode: null
+      };
       liveVerificationDocuments = [];
       liveVerificationDocumentsAuthoritative = false;
       liveCustomerProfile = null;
@@ -39032,7 +39048,7 @@
       dancerDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
       hydrateDancerVerificationProgress();
-      loadLiveVerificationDocuments();
+      loadLiveIdentityVerification();
       loadLiveAccountState();
       loadLiveDancerAnalytics();
       loadLiveDancerDeals();
@@ -39411,7 +39427,6 @@
 
     function currentDancerProfileDraft() {
       return {
-        legalName: document.getElementById("dancerLegalName")?.value || "",
         stageName: document.getElementById("dancerStageName")?.value || "",
         city: document.getElementById("dancerCity")?.value || "",
         socials: { ...dancerSignupSocials },
@@ -39429,17 +39444,9 @@
     }
 
     function hasCompletedDancerProfileSetup(profile = {}) {
-      const legalName = String(profile.real_name || profile.realName || "").trim();
       const stageName = String(profile.stage_name || profile.stageName || "").trim();
       const city = String(profile.city || profile.cityName || "").trim();
-      const placeholderLegalNames = new Set(["verification pending", "pending verification", "new dancer", "dancer"]);
-
-      return Boolean(
-        legalName &&
-        !placeholderLegalNames.has(legalName.toLowerCase()) &&
-        stageName &&
-        city
-      );
+      return Boolean(stageName && city);
     }
 
     function saveDancerProfileDraft(update = {}) {
@@ -39461,7 +39468,6 @@
       const draft = readStoredDancerProfileDraft();
       if (!draft) return false;
       const socials = draft.socials && typeof draft.socials === "object" ? draft.socials : {};
-      setDancerSetupField("dancerLegalName", draft.legalName || "");
       setDancerSetupField("dancerStageName", draft.stageName || "");
       setDancerSetupField("dancerCity", draft.city || "");
       Object.assign(dancerSignupSocials, {
@@ -39519,7 +39525,8 @@
     }
 
     function hasSubmittedVerificationDocuments() {
-      return submittedVerificationDocuments().length >= verificationDocumentLabels.length;
+      if (liveIdentityVerificationMode === "auto_approve") return true;
+      return ["pending", "started", "approved"].includes(normalizedReviewStatus(liveIdentityVerification?.status));
     }
 
     function syncVerificationStepFromDocuments() {
@@ -39549,6 +39556,14 @@
     }
 
     function verificationSubmissionMarkup() {
+      if (liveIdentityVerificationMode === "auto_approve") {
+        return `<div class="info-tile verification-submission-list" role="status" aria-live="polite"><div class="verification-submission-status"><strong>Automatically approved</strong><span>No identity check or identity-file upload is required right now.</span></div><div class="meta">Profile photos and MyDancr TV videos continue through separate safety moderation. No ID, selfie, legal identity details, or report is available to admins.</div></div>`;
+      }
+      if (liveIdentityVerificationMode === "verifymy") {
+        const status = normalizedReviewStatus(liveIdentityVerification?.status || "not_started");
+        const statusLabel = status === "approved" ? "Verified" : status === "started" || status === "pending" ? "Verification in progress" : "Not started";
+        return `<div class="info-tile verification-submission-list" role="status" aria-live="polite"><div class="verification-submission-status"><strong>VerifyMy: ${escapeHtml(statusLabel)}</strong><span>${status === "approved" ? "Your profile is live." : "Complete the secure hosted check to continue."}</span></div><div class="meta">MyDancr stores only an opaque VerifyMy reference, status, and timestamps - not your government ID, selfie, legal identity details, or verification report.</div></div>`;
+      }
       const documents = submittedVerificationDocuments();
       if (!documents.length) return "";
       const attachedDocuments = documents.slice(0, verificationDocumentLabels.length);
@@ -39592,24 +39607,17 @@
       `;
     }
 
-    async function loadLiveVerificationDocuments() {
+    async function loadLiveIdentityVerification() {
       if (!isDancerSession()) return;
-      liveVerificationDocumentsAuthoritative = false;
-      const storedDocuments = readStoredVerificationDocuments();
-      if (storedDocuments.length) {
-        setVerificationDocuments(storedDocuments, false);
-      }
       try {
-        const data = await getAuthenticatedJson("/api/dancer/verification-documents");
-        const liveDocuments = (data?.documents || []).map(normalizeVerificationDocument);
+        const data = await getAuthenticatedJson("/api/dancer/identity-verification");
+        liveIdentityVerificationMode = data?.mode || liveIdentityVerificationMode;
+        liveIdentityVerification = data?.verification || liveIdentityVerification;
         liveVerificationDocumentsAuthoritative = true;
-        setVerificationDocuments(
-          liveDocuments.length ? mergeVerificationDocuments(storedDocuments, liveDocuments) : [],
-          true
-        );
+        dancerSetup.verification = hasSubmittedVerificationDocuments();
         renderDancerSetup();
       } catch (error) {
-        if (storedDocuments.length) renderDancerSetup();
+        console.warn("Unable to load identity verification status.");
       }
     }
 
@@ -39858,6 +39866,13 @@
     }
 
     function applyDancerVerificationProfile(profile) {
+      if (normalizedReviewStatus(profile?.identity_provider || profile?.identityProvider) === "verifymy_content") {
+        liveIdentityVerificationMode = "verifymy";
+        liveIdentityVerification = { provider: "verifymy_content", status: profile?.identity_verified_at || profile?.identityVerifiedAt ? "approved" : "pending", verifiedAt: profile?.identity_verified_at || profile?.identityVerifiedAt || null, lastErrorCode: null };
+      } else if (normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved") {
+        liveIdentityVerificationMode = "auto_approve";
+        liveIdentityVerification = { provider: null, status: "approved", verifiedAt: null, lastErrorCode: null };
+      }
       const approved = dancerCoreApprovalUnlocked(profile);
       const rejected = isRejectedDancerStatus(profile.status);
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
@@ -40281,49 +40296,30 @@
     async function submitSetupVerification(form) {
       if (!canOpenStep("verification")) return;
       if (!isDancerSession()) {
-        verificationSubmitNotice = "";
-        verificationSubmitNoticeTone = "";
-        completeSetupStep("verification");
-        showToast("Verification saved. Continue to Step 4 to submit for review.");
+        showToast("Sign in as a dancer to continue.");
         return;
       }
       const submit = form.querySelector('button[type="submit"]');
       const result = document.getElementById("verificationUploadResult");
-      const idFile = document.getElementById("setupIdDocument")?.files?.[0];
-      const selfieFile = document.getElementById("setupSelfieDocument")?.files?.[0];
-      const proofFile = document.getElementById("setupDanceProofDocument")?.files?.[0];
-      if (!idFile || !selfieFile || !proofFile) {
-        showToast("Upload ID, selfie, and proof that you dance");
-        return;
-      }
       submit.disabled = true;
-      if (result) result.textContent = "Uploading verification files...";
+      if (result) result.textContent = liveIdentityVerificationMode === "verifymy" ? "Opening VerifyMy secure identity check..." : "Confirming automatic approval...";
       try {
-        const uploads = await Promise.all([
-          uploadVerificationFile(idFile, "government_id", "Government ID"),
-          uploadVerificationFile(selfieFile, "selfie", "Selfie verification"),
-          uploadVerificationFile(proofFile, "dance_proof", "Proof that you dance")
-        ]);
+        const data = await postAuthenticatedJson("/api/dancer/identity-verification", {});
+        liveIdentityVerificationMode = data?.mode || liveIdentityVerificationMode;
+        liveIdentityVerification = data?.verification || liveIdentityVerification;
         liveVerificationDocumentsAuthoritative = true;
-        setVerificationDocuments(
-          uploads.map((upload, index) => normalizeVerificationDocument(upload.document || upload, index)),
-          true
-        );
-        const profile = ensureActiveDancerProfile("Pending");
-        if (profile) {
-          profile.idStatus = "Needs review";
-          profile.selfieStatus = "Needs review";
-          profile.danceProofStatus = "Needs review";
+        dancerSetup.verification = hasSubmittedVerificationDocuments();
+        if (data?.redirectUrl) {
+          window.location.assign(data.redirectUrl);
+          return;
         }
-        dancerSetup.verification = true;
         activeSetupStep = "verification";
-        verificationSubmitNotice = "";
-        verificationSubmitNoticeTone = "";
+        if (result) result.textContent = "Account approved. No identity files are required.";
         renderDancerSetup();
-        showToast("3 verification files saved and attached. Step 4 is now unlocked.");
+        showToast("Dancer account approved");
       } catch (error) {
-        if (result) result.textContent = error.message || "Could not upload verification";
-        showToast(error.message || "Could not upload verification");
+        if (result) result.textContent = error.message || "Could not confirm approval";
+        showToast(error.message || "Could not confirm approval");
       } finally {
         submit.disabled = false;
       }
@@ -40494,13 +40490,8 @@
     }
 
     function isVerificationAdminApproved() {
-      return Boolean(
-        dancerSetup.approval ||
-        (
-          liveVerificationDocumentsAuthoritative &&
-          approvedRequiredVerificationDocuments({ verificationDocuments: liveVerificationDocuments })
-        )
-      );
+      if (liveIdentityVerificationMode === "auto_approve") return true;
+      return normalizedReviewStatus(liveIdentityVerification?.status) === "approved";
     }
 
     function setupStepMarkup(step, title, body) {
@@ -40517,10 +40508,14 @@
         : "";
       const bodyId = `setup-step-${step}-body`;
       const statusText = markerComplete
-        ? (step === "verification" || step === "approval" ? "Approved" : "Saved")
+        ? (step === "verification"
+          ? (liveIdentityVerificationMode === "auto_approve" ? "Automatically approved" : "Approved")
+          : (step === "approval" ? "Approved" : "Saved"))
         : (submittedForReview ? "Files saved" : "");
       const statusLabel = markerComplete
-        ? (step === "verification" ? "Approved by admin" : statusText)
+        ? (step === "verification"
+          ? (liveIdentityVerificationMode === "auto_approve" ? "Automatically approved" : "Verified securely by VerifyMy")
+          : statusText)
         : (submittedForReview ? "Files saved and pending admin approval" : "Not saved");
       return `
         <article class="setup-step ${markerComplete ? "complete" : ""} ${submittedForReview ? "submitted" : ""} ${open ? "open" : ""} ${locked ? "locked" : ""}" data-step="${step}">
@@ -40626,7 +40621,9 @@
         : optionalProfileFixes
           ? "Your required verification is approved. Only pictures and/or social links need fixes. You can replace them and submit again, or leave them blank."
         : approved
-          ? "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you."
+          ? (liveIdentityVerificationMode === "auto_approve"
+            ? "Your dancer account is automatically approved. Complete your public details, post shifts, and track how Dancr sends customers to you. Photos and videos publish only after separate media moderation."
+            : "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you.")
         : reviewSubmitted
           ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email and in your site notifications when review is complete."
           : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
@@ -40650,7 +40647,7 @@
       const profileIncognito = Boolean(approved && dancerProfileIsHidden(activeProfile));
       document.getElementById("dancerPublicStatus").textContent = approved
         ? (profileIncognito ? "Incognito" : "Visible to customers")
-        : "Verification required";
+        : "Profile setup required";
       document.getElementById("dancerSubscriptionDetail").textContent = billingSummary.detail;
       const billingButton = document.getElementById("billingPortalBtn");
       if (billingButton) billingButton.textContent = billingSummary.action;
@@ -40658,7 +40655,7 @@
         ? (profileIncognito
           ? "Your approved tools stay available. Press Reactivate profile any time to show your profile on Dancr again."
           : "Customers can discover this profile, follow it, view schedules, and request venue directions.")
-        : "Your dancer account is free. Public discovery, gallery, and shift posting unlock after Dancr approves your verification.";
+        : "Complete and save your stage name and city to finish your public profile setup.";
       syncDancerIncognitoToggle(activeProfile, approved);
       const approvalStatusPrimary = document.getElementById("dancerApprovalStatusPrimary");
       const approvalStatusSecondary = document.getElementById("dancerApprovalStatusSecondary");
@@ -40670,8 +40667,12 @@
           approvalStatusPrimary.textContent = "Approved with fixes needed. Social links and/or pictures need fixes only.";
           approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or leave that social/photo blank.";
         } else if (approved) {
-          approvalStatusPrimary.textContent = "Approved. Your public profile, gallery, and shift posting are unlocked.";
-          approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
+          approvalStatusPrimary.textContent = liveIdentityVerificationMode === "auto_approve"
+            ? "Automatically approved. Your dancer account and public profile tools are unlocked."
+            : "Approved. Your public profile, gallery, and shift posting are unlocked.";
+          approvalStatusSecondary.textContent = liveIdentityVerificationMode === "auto_approve"
+            ? "Photos and videos are moderated separately and appear publicly only after their own approval."
+            : "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
           approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
           approvalStatusSecondary.textContent = "You will be notified by email and in your site notifications when review is complete.";
@@ -41000,21 +41001,16 @@
       const profileBody = `
         <form class="auth-form" data-setup-form="profile">
           <div class="field">
-            <label for="setupLegalName">Real legal name</label>
-            <input id="setupLegalName" data-setup-profile-field="legalName" type="text" value="${escapeHtml(document.getElementById("dancerLegalName")?.value || "")}">
-            <div class="field-note"><strong>Private verification only.</strong> Dancr uses this for ID/selfie review and billing records. Customers never see it.</div>
-          </div>
-          <div class="field">
             <label for="setupStageName">Stage name</label>
             <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}">
             <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
           </div>
           <div class="field"><label for="setupCity">City</label><input id="setupCity" data-setup-profile-field="city" type="text" value="${escapeHtml(document.getElementById("dancerCity")?.value || "")}"></div>
-          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="@stagehandle or instagram.com/stagehandle"></div>
-          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="@stagehandle or tiktok.com/@stagehandle"></div>
+          <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="Username or profile URL"></div>
+          <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="Username or profile URL"></div>
           <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" data-setup-social="snapchat" type="text" value="${escapeHtml(dancerSignupSocials.snapchat)}" placeholder="username or snapchat.com/add/username"></div>
-          <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="@stagehandle or onlyfans.com/stagehandle"></div>
-          <div class="field"><label for="setupX">Optional X</label><input id="setupX" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="@stagehandle or x.com/stagehandle"></div>
+          <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="Username or profile URL"></div>
+          <div class="field"><label for="setupX">Optional X</label><input id="setupX" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="Username or profile URL"></div>
           <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
@@ -41031,25 +41027,17 @@
           <button class="action-btn" type="submit">Submit photos</button>
         </form>
       `;
-      const verificationBody = `
-        <form class="auth-form" data-setup-form="verification">
-          <div class="info-tile setup-verification-card"><strong>Secure review</strong><div class="meta">Upload ID, selfie, and proof that you dance for private review. Your profile stays Pending until approved.</div></div>
+      const verificationBody = liveIdentityVerificationMode === "auto_approve" ? `
+        <div class="auth-form">
           ${verificationSubmissionMarkup()}
-          <div class="field">
-            <label for="setupIdDocument">Government ID</label>
-            <input id="setupIdDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-          </div>
-          <div class="field">
-            <label for="setupSelfieDocument">Selfie verification</label>
-            <input id="setupSelfieDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-          </div>
-          <div class="field">
-            <label for="setupDanceProofDocument">Proof that you dance</label>
-            <input id="setupDanceProofDocument" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
-            <div class="field-note"><strong>Accepted examples:</strong> current schedule screenshot, club badge, venue confirmation, flyer, or other proof that shows you dance.</div>
-          </div>
-          <div class="rule-note" id="verificationUploadResult">${hasSubmittedVerificationDocuments() ? "All 3 verification files are saved and attached. They are pending admin approval; upload replacements only if Dancr asks for updated files." : "Verification documents and dance proof are private and visible only to you and platform admins."}</div>
-          <button class="action-btn" type="submit">${hasSubmittedVerificationDocuments() ? "Replace all 3 files" : "Save 3 verification files"}</button>
+          <div class="rule-note" id="verificationUploadResult">Your dancer account is approved without an ID, selfie, or dance-proof check. You can continue immediately.</div>
+        </div>
+      ` : `
+        <form class="auth-form" data-setup-form="verification">
+          <div class="info-tile setup-verification-card"><strong>Secure VerifyMy identity check</strong><div class="meta">VerifyMy collects and verifies your government ID and selfie on its hosted site. MyDancr never receives or stores those files or your verified identity details.</div></div>
+          ${verificationSubmissionMarkup()}
+          <div class="rule-note" id="verificationUploadResult">Your profile goes live automatically after VerifyMy approves your identity check. Photos and videos use separate moderation.</div>
+          <button class="action-btn" type="submit">${["pending", "started", "failed", "expired"].includes(normalizedReviewStatus(liveIdentityVerification?.status)) ? "Continue secure verification" : "Verify securely with VerifyMy"}</button>
         </form>
       `;
       const approvalBody = `
@@ -41057,14 +41045,12 @@
         <button class="action-btn secondary" type="button" data-preview-profile>
           Preview profile
         </button>
-        <button class="action-btn" type="button" data-submit-review ${readyForReview && !reviewSubmitted ? "" : "disabled"}>
-          ${reviewSubmitted ? "Submitted for review" : rejected ? "Resubmit for review" : "Submit for review"}
-        </button>
+        <div class="rule-note">${liveIdentityVerificationMode === "auto_approve" ? "Your dancer account is automatically approved. Pending photos and videos remain private until their separate moderation is complete and do not hold the profile offline." : "VerifyMy’s signed verification result makes your profile live automatically."}</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile", profileBody),
         setupStepMarkup("photos", "Upload photos for review", photosBody),
-        setupStepMarkup("verification", "Start dancer verification", verificationBody),
+        setupStepMarkup("verification", liveIdentityVerificationMode === "auto_approve" ? "Automatic dancer approval" : "Start dancer verification", verificationBody),
         setupStepMarkup("approval", "Approval status", approvalBody)
       ].join("");
     }
@@ -41110,7 +41096,6 @@
       const shiftText = profile.scheduled ? `${profile.venue} · ${displayShiftTime(profile.time)}` : "No active shift";
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
-      const documentCount = requiredSubmittedVerificationDocuments(profile).length;
       return `
         <article class="admin-item" data-admin-profile="${profile.name}" data-admin-city="${city}">
           <div class="row">
@@ -41120,8 +41105,8 @@
             </div>
             <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${visibleStatus}</span>
           </div>
-          <div class="meta">ID: ${profile.idStatus} · Selfie: ${profile.selfieStatus} · Photos: ${profile.photoStatus}</div>
-          <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · Socials: ${socialCount} · Photos: ${photoCount} · Docs: ${documentCount}</div>
+          <div class="meta">Account: Automatically approved · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
@@ -41133,13 +41118,10 @@
     function adminDirectoryDancerSearchText(city, profile) {
       return [
         profile.name,
-        profile.legalName,
         profile.stageName,
         profile.venue,
         city,
         profile.status,
-        profile.idStatus,
-        profile.selfieStatus,
         profile.photoStatus,
         profile.bio
       ].map((value) => String(value || "")).join(" ").toLowerCase();
@@ -41157,7 +41139,7 @@
             </div>
             <span class="${badgeClass}">${displayText(statusLabel)}</span>
           </div>
-          <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · ID: ${displayText(profile.idStatus)} · Selfie: ${displayText(profile.selfieStatus)} · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Account: Automatically approved · Photos: ${displayText(profile.photoStatus)}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
@@ -41227,34 +41209,7 @@
     }
 
     function adminSubmittedDocumentsMarkup(profile) {
-      const documents = requiredSubmittedVerificationDocuments(profile);
-      if (!documents.length) return '<div class="locked">No verification files submitted.</div>';
-      return documents.map((document, index) => {
-        const href = document.fileUrl || document.file_url || "#";
-        const label = document.displayName || document.display_name || document.name || ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
-        const targetId = document.storagePath || document.storage_path || document.name || href;
-        const key = `verification_document:${targetId}`;
-        const status = normalizedReviewStatus(document.status || document.reviewStatus || document.review_status);
-        const isApproved = status === "approved";
-        const isRejected = status === "rejected";
-        const statusLabel = isApproved ? "✓ Approved" : isRejected ? "Disapproved" : "Pending review";
-        return `
-          <div class="admin-submission-review ${isApproved ? "is-approved" : isRejected ? "is-rejected" : ""}">
-            <a class="lock-row" href="${displayText(href)}" data-admin-preview-kind="file" data-admin-preview-title="${displayText(label)}" data-admin-preview-url="${displayText(href)}">
-              <strong>${displayText(label)}</strong>
-              <span class="admin-review-status ${isApproved ? "is-approved" : isRejected ? "is-rejected" : ""}">${displayText(statusLabel)}</span>
-              <span>Submitted by ${displayText(profile.name || "dancer")}</span>
-              ${document.reviewNotes || document.review_notes ? `<span>Reason: ${displayText(document.reviewNotes || document.review_notes)}</span>` : ""}
-            </a>
-            <textarea data-review-reason="${displayText(key)}" placeholder="Reason for disapproval"></textarea>
-            <span class="admin-review-hint">Type the reason, then press Save disapproval.</span>
-            <div class="admin-review-actions">
-              <button class="action-btn" data-admin-content-review="approved" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}" ${isApproved ? "disabled" : ""}>${isApproved ? "Approved" : "Approve file"}</button>
-              <button class="action-btn secondary" data-admin-content-review="rejected" data-review-type="verification_document" data-review-target="${displayText(targetId)}" data-review-label="${displayText(label)}" data-review-key="${displayText(key)}">Save disapproval</button>
-            </div>
-          </div>
-        `;
-      }).join("");
+      return '<div class="locked">No identity documents, selfies, legal identity details, or verification reports are stored by MyDancr.</div>';
     }
 
     function adminSubmittedPhotosMarkup(profile) {
@@ -41314,7 +41269,6 @@
       const subscription = profile.subscription && typeof profile.subscription === "object" ? profile.subscription : {};
       const photos = Array.isArray(profile.photos) ? profile.photos : [];
       const socials = Array.isArray(profile.socialLinks) ? profile.socialLinks : [];
-      const documents = Array.isArray(profile.verificationDocuments) ? profile.verificationDocuments : [];
       const reviews = Array.isArray(profile.reviews) ? profile.reviews : [];
       const publicLabel = profile.isPublic === false || profile.is_public === false ? "Hidden" : "Visible";
       const photoMarkup = photos.length ? photos.map((photo, index) => {
@@ -41332,17 +41286,6 @@
           </div>
         `;
       }).join("") : '<div class="locked">No profile photos.</div>';
-      const documentMarkup = documents.length ? documents.map((document, index) => {
-        const url = document.fileUrl || document.file_url || "";
-        const label = document.displayName || document.display_name || document.name || `Verification file ${index + 1}`;
-        return `
-          <a class="admin-full-row" href="${displayText(url || "#")}" target="_blank" rel="noreferrer">
-            <strong>${displayText(label)}</strong>
-            <span>${displayText(document.status || "pending review")}</span>
-            ${document.reviewNotes || document.review_notes ? `<span>${displayText(document.reviewNotes || document.review_notes)}</span>` : ""}
-          </a>
-        `;
-      }).join("") : '<div class="locked">No verification files.</div>';
       const socialMarkup = socials.length ? socials.map((social) => `
         <div class="admin-full-row admin-full-managed">
           <a class="admin-full-row-link" href="${displayText(social.url || "#")}" target="_blank" rel="noreferrer">
@@ -41366,7 +41309,6 @@
           <section class="admin-full-section">
             <strong>Profile information</strong>
             <div class="admin-full-grid">
-              ${adminFullProfileValue("Legal name", profile.realName || profile.real_name)}
               ${adminFullProfileValue("Stage name", profile.stageName || profile.stage_name)}
               ${adminFullProfileValue("City", profile.city)}
               ${adminFullProfileValue("Slug", profile.slug)}
@@ -41374,7 +41316,7 @@
               ${adminFullProfileValue("User ID", profile.userId || profile.user_id)}
               ${adminFullProfileValue("Profile status", profile.status)}
               ${adminFullProfileValue("Public visibility", publicLabel)}
-              ${adminFullProfileValue("Identity review", profile.verificationStatus || profile.verification_status)}
+              ${adminFullProfileValue("Account approval", "Automatic")}
               ${adminFullProfileValue("Photo review", profile.photoReviewStatus || profile.photo_review_status)}
               ${adminFullProfileValue("Created", formatBillingDate(profile.createdAt || profile.created_at))}
               ${adminFullProfileValue("Updated", formatBillingDate(profile.updatedAt || profile.updated_at))}
@@ -41397,8 +41339,8 @@
             <div class="admin-full-photos">${photoMarkup}</div>
           </section>
           <section class="admin-full-section">
-            <strong>Verification files (${documents.length})</strong>
-            <div class="admin-full-list">${documentMarkup}</div>
+            <strong>Tokenized identity verification</strong>
+            <div class="locked">No identity documents, selfies, legal identity details, or verification reports are stored by MyDancr.</div>
           </section>
           <section class="admin-full-section">
             <strong>Social links (${socials.length})</strong>
@@ -41641,7 +41583,6 @@
       const visibleStatus = profile.hidden ? "Hidden" : profile.status;
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
-      const documentCount = requiredSubmittedVerificationDocuments(profile).length;
       const pendingItems = pendingAdminSubmissionItems(profile);
       const approveDisabled = pendingItems.length ? "disabled" : "";
       const submittedChanges = Boolean(profile.reviewSubmitted || profile.approvalChangesSubmitted);
@@ -41656,9 +41597,9 @@
             </div>
             <span class="${submittedChanges ? "badge pending" : "pill"}">${submittedChanges ? "Submitted" : "Pending"}</span>
           </summary>
-          <div class="meta">Legal: ${displayText(profile.legalName || "Not submitted")} · Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
-          <div class="meta">ID: ${displayText(profile.idStatus)} · Selfie: ${displayText(profile.selfieStatus)} · Photos: ${displayText(profile.photoStatus)}</div>
-          <div class="meta">Socials: ${socialCount} · Photos: ${photoCount} · Verification files: ${documentCount}</div>
+          <div class="meta">Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
+          <div class="meta">Account: Automatically approved · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <button class="admin-profile-open-link" type="button" data-admin-action="view-dancer-profile">Open ${displayText(profile.name || "dancer")}'s full profile</button>
           <div class="info-tile">
@@ -41670,8 +41611,8 @@
             <div class="photo-upload-grid">${adminSubmittedPhotosMarkup(profile)}</div>
           </div>
           <div class="info-tile">
-            <strong>ID, selfie, and proof</strong>
-            ${adminSubmittedDocumentsMarkup(profile)}
+            <strong>Identity verification</strong>
+            <div class="locked">No identity documents, selfies, legal identity details, or verification reports are stored by MyDancr.</div>
           </div>
           <div class="info-tile">
             <strong>Review history</strong>
@@ -45359,10 +45300,6 @@
       const profileField = event.target.closest("[data-setup-profile-field]");
       if (!profileField) return;
       const value = profileField.value;
-      if (profileField.dataset.setupProfileField === "legalName") {
-        setDancerSetupField("dancerLegalName", value);
-        saveDancerProfileDraft({ legalName: value });
-      }
       if (profileField.dataset.setupProfileField === "stageName") {
         setDancerSetupField("dancerStageName", value);
         updateDancerDashboardName(value);
@@ -45416,7 +45353,6 @@
       const form = event.target.closest("[data-setup-form='profile']");
       if (!form) return;
       event.preventDefault();
-      const legalName = document.getElementById("setupLegalName").value.trim();
       const stageName = document.getElementById("setupStageName").value.trim();
       const city = document.getElementById("setupCity").value.trim();
       const rawSocials = {
@@ -45426,8 +45362,8 @@
         onlyfans: document.getElementById("setupOnlyfans").value.trim(),
         x: document.getElementById("setupX").value.trim()
       };
-      if (!legalName || !stageName || !city) {
-        showToast("Real name, stage name, and city required");
+      if (!stageName || !city) {
+        showToast("Stage name and city required");
         return;
       }
       if (hasBlockedSocialLink(Object.values(rawSocials))) {
@@ -45442,18 +45378,16 @@
         showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
         return;
       }
-      document.getElementById("dancerLegalName").value = legalName;
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
       updateDancerDashboardName(stageName);
       assignSocialMap(dancerSignupSocials, normalizedSocials);
-      saveDancerProfileDraft({ legalName, stageName, city, socials: normalizedSocials });
+      saveDancerProfileDraft({ stageName, city, socials: normalizedSocials });
       const submit = form.querySelector('button[type="submit"]');
       if (submit) submit.disabled = true;
       try {
         if (isDancerSession()) {
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
-            legalName,
             stageName,
             city,
             socials: socialPayloadFromMap(normalizedSocials)

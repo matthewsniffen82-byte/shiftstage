@@ -1138,7 +1138,7 @@ function ApprovalQueue({
     }
   }
 
-  async function reviewProfile(dancerId: string, status: "approved" | "rejected") {
+  async function rejectProfile(dancerId: string) {
     const token = readToken();
     if (!token) {
       setStatusById((current) => ({ ...current, [dancerId]: "Admin sign in required." }));
@@ -1150,7 +1150,7 @@ function ApprovalQueue({
       const response = await fetch("/api/admin/approvals", {
         method: "POST",
         headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ dancerId, status, notes: notesById[dancerId] || null }),
+        body: JSON.stringify({ dancerId, status: "rejected", notes: notesById[dancerId] || null }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
@@ -1158,9 +1158,7 @@ function ApprovalQueue({
         return;
       }
 
-      const confirmation = status === "approved"
-        ? "Dancer profile approved successfully."
-        : "Dancer profile rejected successfully.";
+      const confirmation = "Dancer profile rejected successfully.";
       setStatusById((current) => ({ ...current, [dancerId]: confirmation }));
       onActionConfirmed(confirmation);
       onReviewed(dancerId);
@@ -1217,11 +1215,8 @@ function ApprovalQueue({
               <button className="secondary-action" type="button" onClick={() => openFullProfile(item)}>
                 View full profile
               </button>
-              <button type="button" onClick={() => reviewProfile(dancerId, "approved")} disabled={hasPendingItems || isSaving}>
-                {isSaving ? "Saving..." : "Approve"}
-              </button>
-              <button type="button" onClick={() => reviewProfile(dancerId, "rejected")} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Disapprove"}
+              <button type="button" onClick={() => rejectProfile(dancerId)} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Reject profile"}
               </button>
             </div>
             {reviewStatus ? <p role="status" aria-live="polite">{reviewStatus}</p> : null}
@@ -1283,11 +1278,13 @@ function SubmissionDetails({
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
   const socials = normalizeSubmissionSocials(item);
-  const allDocuments = asRecordArray(item.verificationDocuments || item.verification_documents);
-  const documents = submittedRequiredDocuments(allDocuments);
+  const identity =
+    item.identityVerification && typeof item.identityVerification === "object"
+      ? item.identityVerification as Record<string, unknown>
+      : {};
   const reviews = asRecordArray(item.reviews);
   const dancerId = asText(item.id);
-  const submittedBy = asText(item.stageName || item.stage_name) || asText(item.realName || item.real_name) || "this dancer";
+  const submittedBy = asText(item.stageName || item.stage_name) || "this dancer";
   const [reasonByKey, setReasonByKey] = useState<Record<string, string>>({});
   const [statusByKey, setStatusByKey] = useState<Record<string, string>>({});
   const [feedbackByKey, setFeedbackByKey] = useState<Record<string, ReviewFeedback>>({});
@@ -1386,7 +1383,6 @@ function SubmissionDetails({
       <section className="submission-section">
         <h3>Profile information</h3>
         <div className="submission-grid">
-          <SubmissionValue label="Legal name" value={item.realName || item.real_name} />
           <SubmissionValue label="Stage name" value={item.stageName || item.stage_name} />
           <SubmissionValue label="City" value={item.city} />
           <SubmissionValue label="Slug" value={item.slug} />
@@ -1453,55 +1449,18 @@ function SubmissionDetails({
       </section>
 
       <section className="submission-section">
-        <h3>Proof / verification uploads</h3>
-        {documents.length ? (
-          <div className="submission-files">
-            {documents.map((document, index) => {
-              const fileUrl = asText(document.fileUrl || document.file_url);
-              const targetId = asText(document.storagePath || document.storage_path);
-              const label = verificationDocumentLabel(document, index);
-              const key = `verification_document:${targetId}`;
-              const status = statusByKey[key] || asText(document.status) || "pending review";
-              const feedback = feedbackByKey[key];
-              const isWorking = Boolean(workingByKey[key]);
-              const reason = asText(document.reviewNotes || document.review_notes);
-              const isApproved = status === "approved";
-              const isDisapproved = status === "rejected";
-              return (
-                <div className={`submission-review-card ${isApproved ? "is-approved" : isDisapproved ? "is-rejected" : ""}`} key={targetId || index}>
-                  <a
-                    className="submission-link"
-                    href={fileUrl || "#"}
-                    onClick={(event) => openPreview(event, { kind: "file", title: label, url: fileUrl })}
-                  >
-                    <strong>{label}</strong>
-                    <small className={`submission-review-status ${isApproved ? "is-approved" : isDisapproved ? "is-rejected" : ""}`}>
-                      {isApproved ? "✓ Approved" : isDisapproved ? "Disapproved" : "Pending review"}
-                    </small>
-                  </a>
-                  <small>Submitted by {submittedBy}</small>
-                  {reason ? <small>Reason: {reason}</small> : null}
-                  <textarea
-                    placeholder="Reason for disapproval"
-                    value={reasonByKey[key] || ""}
-                    onChange={(event) => setReasonByKey((current) => ({ ...current, [key]: event.target.value }))}
-                  />
-                  <small>Type the reason, then press Save disapproval.</small>
-                  <div className="content-review-actions">
-                    <button type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "approved", label)} disabled={!targetId || isWorking || isApproved}>
-                      {isWorking ? "Saving..." : isApproved ? "Approved" : "Approve file"}
-                    </button>
-                    <button className="secondary-action" type="button" onClick={(event) => reviewContent(event, "verification_document", targetId, "rejected", label)} disabled={!targetId || isWorking}>
-                      {isWorking ? "Saving..." : isDisapproved ? "Disapproved" : "Save disapproval"}
-                    </button>
-                  </div>
-                  <ReviewFeedbackMessage feedback={feedback} />
-                </div>
-              );
-            })}
-          </div>
+        <h3>{item.identityMode === "auto_approve" ? "Automatic account approval" : "Tokenized identity verification"}</h3>
+        {item.identityMode === "auto_approve" ? (
+          <p className="submission-empty">This dancer account was approved automatically. No ID, selfie, dance proof, or personal identity report is required or stored.</p>
         ) : (
-          <p className="submission-empty">No verification files submitted.</p>
+          <>
+            <div className="submission-grid">
+              <SubmissionValue label="Provider" value={identity.provider || item.identityProvider || item.identity_provider || "VerifyMy"} />
+              <SubmissionValue label="Status" value={identity.status || item.verificationStatus || item.verification_status || "not started"} />
+              <SubmissionValue label="Verified" value={formatDate(identity.verifiedAt || identity.verified_at)} />
+            </div>
+            <p className="submission-empty">MyDancr stores only an opaque provider reference, status, and timestamps. Identity documents, selfies, personal details, and reports are never available to admins.</p>
+          </>
         )}
       </section>
 
@@ -1623,12 +1582,6 @@ function ReviewFeedbackMessage({ feedback }: { feedback?: ReviewFeedback }) {
   );
 }
 
-function verificationDocumentLabel(document: Record<string, unknown>, index: number) {
-  const existing = asText(document.displayName || document.display_name || document.documentType || document.document_type || document.name);
-  if (existing) return existing;
-  return ["Government ID", "Selfie verification", "Proof that they dance"][index] || "Verification file";
-}
-
 function labelSubmittedPhotos(photos: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   const primary = photos.find((photo) => photo.isPrimary || photo.is_primary);
   const ordered = primary ? [primary, ...photos.filter((photo) => photo !== primary)] : photos;
@@ -1644,52 +1597,9 @@ function adminPhotoLabel(photos: Array<Record<string, unknown>>, photo: Record<s
   return photo.isPrimary || photo.is_primary ? "Main Photo" : "Photo";
 }
 
-function requiredDocumentDefinitions() {
-  return [
-    { key: "government_id", label: "Government ID", terms: ["government", "id"] },
-    { key: "selfie", label: "Selfie verification", terms: ["selfie"] },
-    { key: "dance_proof", label: "Proof that they dance", terms: ["proof", "dance"] },
-  ];
-}
-
-function submittedRequiredDocuments(documents: Array<Record<string, unknown>>) {
-  const used = new Set<number>();
-  return requiredDocumentDefinitions()
-    .map((required, fallbackIndex) => {
-      const foundIndex = documents.findIndex((item, documentIndex) =>
-        !used.has(documentIndex) && matchesRequiredDocument(item, required.key, required.terms, documentIndex, fallbackIndex)
-      );
-      if (foundIndex < 0) return null;
-      used.add(foundIndex);
-      return documents[foundIndex];
-    })
-    .filter((item): item is Record<string, unknown> => Boolean(item));
-}
-
 function pendingSubmittedContent(item: Record<string, unknown>) {
-  const pending: string[] = [];
-  const documents = asRecordArray(item.verificationDocuments || item.verification_documents);
-  const requiredDocuments = requiredDocumentDefinitions();
-
-  requiredDocuments.forEach((required, index) => {
-    const document = documents.find((item, documentIndex) => matchesRequiredDocument(item, required.key, required.terms, documentIndex, index));
-    if (asText(document?.status) !== "approved") pending.push(required.label);
-  });
-  return pending;
-}
-
-function matchesRequiredDocument(document: Record<string, unknown>, key: string, terms: string[], documentIndex: number, fallbackIndex: number) {
-  const text = [
-    document.documentType,
-    document.document_type,
-    document.displayName,
-    document.display_name,
-    document.name,
-    verificationDocumentLabel(document, documentIndex),
-  ].map(asText).join(" ").toLowerCase();
-  if (text.includes(key)) return true;
-  if (terms.every((term) => text.includes(term))) return true;
-  return !text.trim() && documentIndex === fallbackIndex;
+  const identity = asRecordObject(item.identityVerification || item.identity_verification);
+  return asText(identity.status) === "approved" ? [] : ["VerifyMy identity verification"];
 }
 
 function SubmittedSocialIcon({ platform }: { platform: string }) {
@@ -1877,7 +1787,7 @@ function DancerDirectory({
     }
 
     const confirmed = window.confirm(
-      `Permanently delete ${stageName}'s dancer profile and all profile photos, verification files, schedules, and profile activity? Their login account will remain. This cannot be undone.`,
+      `Permanently delete ${stageName}'s dancer profile, profile photos, any legacy identity files, schedules, and profile activity? Their login account will remain. This cannot be undone.`,
     );
     if (!confirmed) return;
 
@@ -1987,7 +1897,7 @@ function AdminDancerFullProfile({
   const subscription = asRecordObject(profile.subscription);
   const photos = labelSubmittedPhotos(asRecordArray(profile.photos));
   const socials = asRecordArray(profile.socialLinks || profile.social_links);
-  const documents = asRecordArray(profile.verificationDocuments || profile.verification_documents);
+  const identity = asRecordObject(profile.identityVerification || profile.identity_verification);
   const reviews = asRecordArray(profile.reviews);
 
   return (
@@ -1995,7 +1905,6 @@ function AdminDancerFullProfile({
       <section className="submission-section">
         <h3>Profile information</h3>
         <div className="submission-grid">
-          <SubmissionValue label="Legal name" value={profile.realName || profile.real_name} />
           <SubmissionValue label="Stage name" value={profile.stageName || profile.stage_name} />
           <SubmissionValue label="City" value={profile.city} />
           <SubmissionValue label="Slug" value={profile.slug} />
@@ -2054,20 +1963,19 @@ function AdminDancerFullProfile({
       </section>
 
       <section className="submission-section">
-        <h3>Verification files ({documents.length})</h3>
-        {documents.length ? (
-          <div className="submission-files">
-            {documents.map((document, index) => {
-              const url = asText(document.fileUrl || document.file_url);
-              return (
-                <a className="submission-link" href={url || "#"} target="_blank" rel="noreferrer" key={asText(document.storagePath || document.storage_path) || index}>
-                  <strong>{verificationDocumentLabel(document, index)}</strong>
-                  <small>{asText(document.status) || "pending review"}</small>
-                </a>
-              );
-            })}
-          </div>
-        ) : <p className="submission-empty">No verification files.</p>}
+        <h3>{profile.identityMode === "auto_approve" ? "Automatic account approval" : "Tokenized identity verification"}</h3>
+        {profile.identityMode === "auto_approve" ? (
+          <p className="submission-empty">This dancer account was approved automatically. No identity files are required or stored.</p>
+        ) : (
+          <>
+            <div className="submission-grid">
+              <SubmissionValue label="Provider" value={identity.provider || profile.identityProvider || profile.identity_provider || "VerifyMy"} />
+              <SubmissionValue label="Status" value={identity.status || profile.verificationStatus || profile.verification_status || "not started"} />
+              <SubmissionValue label="Verified" value={formatDate(identity.verifiedAt || identity.verified_at)} />
+            </div>
+            <p className="submission-empty">No identity documents, selfies, personal identity details, or verification reports are stored by MyDancr.</p>
+          </>
+        )}
       </section>
 
       <section className="submission-section">

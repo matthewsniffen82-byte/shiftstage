@@ -923,7 +923,7 @@ function DancerPanel({
         profile={profile}
         onProfileChange={onProfileChange}
       />
-      <DancerVerificationPanel reviews={reviews} />
+      <DancerVerificationPanel profile={profile} />
       <DancerBillingPanel />
     </>
   );
@@ -1061,7 +1061,6 @@ function DancerSetupPanel({
   profile?: LoadState["profile"];
 }) {
   const [stageName, setStageName] = useState("");
-  const [legalName, setLegalName] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
   const [status, setStatus] = useState("");
@@ -1078,7 +1077,6 @@ function DancerSetupPanel({
 
   useEffect(() => {
     setStageName(String(profile?.stage_name || profile?.stageName || ""));
-    setLegalName(String(profile?.real_name || profile?.realName || ""));
     setCity(String(profile?.city || "Las Vegas"));
     setBio(String(profile?.bio || ""));
   }, [profile]);
@@ -1166,7 +1164,6 @@ function DancerSetupPanel({
     try {
       const payload = {
         stageName,
-        legalName,
         city,
         bio,
         deletedPhotoIds: idsToDelete,
@@ -1178,7 +1175,6 @@ function DancerSetupPanel({
       });
       console.log("EDIT_PROFILE_SAVE_PAYLOAD", {
         stageName: Boolean(stageName),
-        legalName: Boolean(legalName),
         city,
         bio: Boolean(bio),
         deletedPhotoIds: idsToDelete,
@@ -1238,10 +1234,6 @@ function DancerSetupPanel({
         <label>
           Stage name
           <input value={stageName} onChange={(event) => setStageName(event.target.value)} required />
-        </label>
-        <label>
-          Legal name
-          <input value={legalName} onChange={(event) => setLegalName(event.target.value)} required />
         </label>
         <label>
           City
@@ -1734,98 +1726,119 @@ function toDateTimeLocalValue(value: string) {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
-function DancerVerificationPanel({ reviews }: { reviews?: LoadState["reviews"] }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [danceProofFile, setDanceProofFile] = useState<File | null>(null);
+function DancerVerificationPanel({ profile }: { profile?: LoadState["profile"] }) {
+  const [verificationMode, setVerificationMode] = useState<"auto_approve" | "verifymy">("auto_approve");
+  const [verificationStatus, setVerificationStatus] = useState(
+    profile?.identity_verified_at || profile?.identityVerifiedAt ? "approved" : "not_started",
+  );
   const [status, setStatus] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
-  async function uploadVerificationDocument(fileToUpload: File, accessToken: string) {
-    const formData = new FormData();
-    formData.set("file", fileToUpload);
+  useEffect(() => {
+    const session = readSession();
+    if (!session?.accessToken) return;
+    void fetch("/api/dancer/identity-verification", {
+      headers: { authorization: `Bearer ${session.accessToken}` },
+      cache: "no-store",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data?.mode === "verifymy") setVerificationMode("verifymy");
+        else if (data?.mode === "auto_approve") setVerificationMode("auto_approve");
+        if (data?.ok && data?.verification?.status) setVerificationStatus(data.verification.status);
+      })
+      .catch(() => undefined);
+  }, [profile]);
 
-    const response = await fetch("/api/dancer/verification-documents", {
-      method: "POST",
-      headers: { authorization: `Bearer ${accessToken}` },
-      body: formData,
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to upload verification document.");
-  }
-
-  async function uploadDocument(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function startVerification() {
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in required.");
       return;
     }
 
-    if (!file) {
-      setStatus("Choose an identity document first.");
-      return;
-    }
-
-    if (!danceProofFile) {
-      setStatus("Choose proof that you dance.");
-      return;
-    }
-
-    setIsUploading(true);
-    setStatus("");
+    setIsStarting(true);
+    setStatus("Opening VerifyMy’s secure identity check...");
     try {
-      await Promise.all([
-        uploadVerificationDocument(file, session.accessToken),
-        uploadVerificationDocument(danceProofFile, session.accessToken),
-      ]);
-      setStatus("Verification document and dance proof uploaded.");
-      setFile(null);
-      setDanceProofFile(null);
+      const response = await fetch("/api/dancer/identity-verification", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to start identity verification.");
+      setVerificationStatus(data.verification?.status || "pending");
+
+      if (data.alreadyVerified) {
+        setStatus("Identity verified. Your profile is live.");
+        return;
+      }
+      if (data.redirectUrl) {
+        window.location.assign(data.redirectUrl);
+        return;
+      }
+      setStatus(identityStatusMessage(data.verification?.status, data.verification?.lastErrorCode));
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to upload verification document.");
+      setStatus(error instanceof Error ? error.message : "Unable to start identity verification.");
     } finally {
-      setIsUploading(false);
+      setIsStarting(false);
     }
+  }
+
+  if (verificationMode === "auto_approve") {
+    return (
+      <article className="info-panel verification-panel">
+        <h2>Profile approval</h2>
+        <p>Your dancer account is automatically approved. No ID, selfie, or dance-proof upload is required right now.</p>
+        <p><strong>Status:</strong> Approved</p>
+        <small>Profile photos and MyDancr TV videos are still moderated separately and may remain pending while your profile is live.</small>
+      </article>
+    );
   }
 
   return (
     <article className="info-panel verification-panel">
-      <h2>Verification</h2>
-      <form onSubmit={uploadDocument}>
-        <label>
-          Identity document
-          <input
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            type="file"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
-          />
-        </label>
-        <label>
-          Proof that you dance
-          <input
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            type="file"
-            onChange={(event) => setDanceProofFile(event.target.files?.[0] || null)}
-          />
-          <small>Examples: current schedule screenshot, club badge, venue confirmation, flyer, or similar proof.</small>
-        </label>
-        <button type="submit" disabled={isUploading}>
-          {isUploading ? "Uploading..." : "Upload verification"}
-        </button>
-        {status ? <p>{status}</p> : null}
-      </form>
-      <div className="review-list">
-        {(reviews || []).slice(0, 4).map((review) => (
-          <div className={`review-row ${String(review.status || "") === "rejected" ? "is-rejected" : String(review.status || "") === "approved" ? "is-approved" : ""}`} key={String(review.id || `${review.reviewType}-${review.createdAt}`)}>
-            <strong>{String(review.reviewType || "Review")}</strong>
-            <span>{String(review.status || "pending")}</span>
-            {review.notes ? <p>{String(review.notes)}</p> : null}
-          </div>
-        ))}
-        {!reviews?.length ? <p>No review notes yet.</p> : null}
-      </div>
+      <h2>Secure identity verification</h2>
+      <p>
+        VerifyMy securely collects and verifies your government ID, age, and selfie on its hosted
+        verification page. MyDancr stores only an opaque verification reference, status, and
+        timestamps—not your ID, selfie, legal identity details, or verification report.
+      </p>
+      <p><strong>Status:</strong> {identityStatusLabel(verificationStatus)}</p>
+      <button type="button" onClick={startVerification} disabled={isStarting || verificationStatus === "approved"}>
+        {verificationStatus === "approved"
+          ? "Identity verified"
+          : isStarting
+            ? "Opening VerifyMy..."
+            : verificationStatus === "started"
+              ? "Continue secure verification"
+              : "Verify securely with VerifyMy"}
+      </button>
+      {status ? <p role="status">{status}</p> : null}
+      <small>Pending profile photos and MyDancr TV videos are reviewed separately and do not hold your verified profile offline.</small>
     </article>
   );
+}
+
+function identityStatusLabel(status: string) {
+  if (status === "approved") return "Verified";
+  if (status === "started") return "Verification in progress";
+  if (status === "pending") return "Ready to begin";
+  if (status === "expired") return "Verification expired";
+  if (status === "failed") return "Action needed";
+  return "Not started";
+}
+
+function identityStatusMessage(status: string, lastErrorCode?: string | null) {
+  if (status === "approved") return "Identity verified. Your profile is live.";
+  if (status === "started") return "VerifyMy is checking your submission. Your profile will go live automatically after approval.";
+  if (status === "pending") return "Your secure verification is ready to begin.";
+  if (status === "expired") return "Your secure verification link expired. Start again to receive a new link.";
+  if (lastErrorCode === "minor") return "Verification could not confirm that you are at least 18 years old.";
+  if (lastErrorCode === "photo_mismatch") return "The selfie did not match the identity document. Start again and use a clear current photo.";
+  if (lastErrorCode === "liveness_error") return "The live selfie check could not be completed. Start again in good lighting.";
+  if (lastErrorCode === "potential_fraud") return "VerifyMy could not approve this submission. Contact support if you believe this is an error.";
+  if (status === "failed") return "VerifyMy needs another submission. Start secure verification again.";
+  return "Verification was not completed. You can safely try again.";
 }
 
 function DancerImpactPanel({

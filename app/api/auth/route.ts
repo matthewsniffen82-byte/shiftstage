@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { ensureVenueForAccount } from "@/src/lib/dancr/venue";
+import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
@@ -207,7 +208,6 @@ async function upsertAccount(
   }
 
   const stageName = readOptional(body.stageName) || displayName;
-  const realName = readOptional(body.realName) || "Verification pending";
   const { data: existingProfile, error: existingProfileError } = await admin
     .from("dancer_profiles")
     .select("*")
@@ -233,11 +233,13 @@ async function upsertAccount(
     .from("dancer_profiles")
     .insert({
       user_id: userId,
-      real_name: realName,
+      real_name: null,
       stage_name: stageName,
       slug,
       city,
-      status: "draft",
+      ...(isVerifyMyIdentityMode()
+        ? { status: "draft", verification_status: "pending", is_public: false }
+        : automaticDancerApprovalValues()),
     });
   if (error) throw error;
 }

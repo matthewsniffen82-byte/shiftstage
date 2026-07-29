@@ -62,7 +62,7 @@ export type CustomerProfile = {
 export type DancerAccountProfile = {
   id: string;
   userId: string;
-  realName: string;
+  realName: string | null;
   stageName: string;
   slug: string;
   city: string;
@@ -204,6 +204,15 @@ export type VerificationDocument = {
   updatedAt: string | null;
 };
 
+export type IdentityVerificationSummary = {
+  provider: "verifymy_content" | null;
+  status: "not_started" | "pending" | "started" | "expired" | "failed" | "approved";
+  lastErrorCode: string | null;
+  verifiedAt: string | null;
+  redactedAt: string | null;
+  updatedAt: string | null;
+};
+
 export type AdminDancerAccount = {
   id: string;
   displayName: string | null;
@@ -224,7 +233,6 @@ export type AdminDancerSubscription = {
 export type AdminApprovalDancer = {
   id: string;
   userId: string;
-  realName: string;
   stageName: string;
   slug: string;
   city: string;
@@ -232,6 +240,9 @@ export type AdminApprovalDancer = {
   status: DancerStatus;
   isPublic?: boolean;
   verificationStatus: ReviewStatus;
+  identityProvider?: "verifymy_content" | null;
+  identityVerifiedAt?: string | null;
+  identityMode?: "auto_approve" | "verifymy";
   photoReviewStatus: ReviewStatus;
   createdAt: string;
   updatedAt?: string | null;
@@ -241,6 +252,7 @@ export type AdminApprovalDancer = {
   subscription?: AdminDancerSubscription | null;
   socialLinks: SocialLink[];
   photos: DancerPhoto[];
+  identityVerification: IdentityVerificationSummary;
   verificationDocuments: VerificationDocument[];
   reviews: ApprovalReview[];
 };

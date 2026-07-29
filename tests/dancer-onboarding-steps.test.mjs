@@ -11,10 +11,9 @@ test("profile setup completion comes from the persisted dancer profile", () => {
   const profileHydrator =
     liveAppSource.match(/function applyDancerVerificationProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
 
-  assert.match(completionResolver, /profile\.real_name \|\| profile\.realName/);
+  assert.doesNotMatch(completionResolver, /real_name|realName|legalName/);
   assert.match(completionResolver, /profile\.stage_name \|\| profile\.stageName/);
   assert.match(completionResolver, /profile\.city \|\| profile\.cityName/);
-  assert.match(completionResolver, /"verification pending"/);
   assert.match(profileHydrator, /hasCompletedDancerProfileSetup\(profile\)/);
   assert.doesNotMatch(profileHydrator, /hasSavedDancerProfileSetup/);
   assert.doesNotMatch(liveAppSource, /function hasSavedDancerProfileSetup/);
@@ -78,65 +77,56 @@ test("collapsed setup pills fill their rounded shell with the matching state col
   );
 });
 
-test("Step 3 only shows an approval check after authoritative admin approval", () => {
+test("Step 3 is complete in auto-approval mode and still honors authoritative VerifyMy approval", () => {
   const verificationApproval =
     liveAppSource.match(/function isVerificationAdminApproved[\s\S]*?\n    function setupStepMarkup/)?.[0] || "";
   const stepMarkup =
     liveAppSource.match(/function setupStepMarkup[\s\S]*?\n    function scrollToSetupStep/)?.[0] || "";
-  const documentLoader =
-    liveAppSource.match(/async function loadLiveVerificationDocuments[\s\S]*?\n    async function uploadSetupPhotoFile/)?.[0] || "";
+  const identityLoader =
+    liveAppSource.match(/async function loadLiveIdentityVerification[\s\S]*?\n    async function uploadSetupPhotoFile/)?.[0] || "";
 
-  assert.match(verificationApproval, /dancerSetup\.approval/);
-  assert.match(verificationApproval, /liveVerificationDocumentsAuthoritative/);
-  assert.match(verificationApproval, /approvedRequiredVerificationDocuments\(\{ verificationDocuments: liveVerificationDocuments \}\)/);
+  assert.match(verificationApproval, /liveIdentityVerificationMode === "auto_approve"/);
+  assert.match(verificationApproval, /liveIdentityVerification\?\.status/);
+  assert.match(verificationApproval, /=== "approved"/);
   assert.match(stepMarkup, /const markerComplete = step === "verification" \? verificationApproved : saved/);
   assert.match(stepMarkup, /const submittedForReview = step === "verification" && saved && !verificationApproved/);
-  assert.match(stepMarkup, /Files saved and pending admin approval/);
-  assert.match(stepMarkup, /Approved by admin/);
+  assert.match(stepMarkup, /Automatically approved/);
+  assert.match(stepMarkup, /Verified securely by VerifyMy/);
   assert.match(stepMarkup, /\$\{markerComplete \? "✓" : '<span class="step-status-dot"/);
-  assert.match(documentLoader, /liveVerificationDocumentsAuthoritative = false/);
-  assert.match(documentLoader, /const data = await getAuthenticatedJson\("\/api\/dancer\/verification-documents"\)/);
-  assert.match(documentLoader, /liveVerificationDocumentsAuthoritative = true/);
+  assert.match(identityLoader, /getAuthenticatedJson\("\/api\/dancer\/identity-verification"\)/);
+  assert.match(identityLoader, /liveIdentityVerificationMode = data\?\.mode/);
+  assert.match(identityLoader, /liveIdentityVerification = data\?\.verification/);
 });
 
-test("Step 3 keeps saved attachments visible without implying admin approval", () => {
+test("Step 3 explains automatic approval and preserves the hosted VerifyMy pathway", () => {
   const submissionMarkup =
     liveAppSource.match(/function verificationSubmissionMarkup[\s\S]*?\n    function verificationReviewNoticeMarkup/)?.[0] || "";
   const verificationSubmit =
     liveAppSource.match(/async function submitSetupVerification[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
 
-  assert.match(submissionMarkup, /verification files saved/);
-  assert.match(submissionMarkup, /Pending admin approval/);
-  assert.match(submissionMarkup, /remain attached after submission/);
-  assert.match(submissionMarkup, /Attached securely/);
-  assert.match(verificationSubmit, /activeSetupStep = "verification"/);
-  assert.match(verificationSubmit, /3 verification files saved and attached/);
-  assert.doesNotMatch(verificationSubmit, /activeSetupStep = nextIncompleteStep\(\) \|\| "approval"/);
-  assert.match(liveAppSource, /All 3 verification files are saved and attached/);
-  assert.match(liveAppSource, /Replace all 3 files/);
+  assert.match(submissionMarkup, /No identity check or identity-file upload is required right now/);
+  assert.match(submissionMarkup, /VerifyMy/);
+  assert.match(submissionMarkup, /opaque VerifyMy reference, status, and timestamps/);
+  assert.match(submissionMarkup, /government ID, selfie, legal identity details/);
+  assert.match(verificationSubmit, /postAuthenticatedJson\("\/api\/dancer\/identity-verification"/);
+  assert.match(verificationSubmit, /window\.location\.assign\(data\.redirectUrl\)/);
+  assert.doesNotMatch(verificationSubmit, /stripe\.verifyIdentity|clientSecret|publishableKey/);
+  assert.match(liveAppSource, /profile goes live automatically after VerifyMy approves your identity check/i);
 });
 
-test("Step 4 submits pending photo reviews and keeps a visible result", () => {
-  const reviewSubmit =
-    liveAppSource.match(/async function submitDancerProfileForReview[\s\S]*?\n    async function submitApprovedProfileChangesForReview/)?.[0] || "";
-  const reviewNotice =
-    liveAppSource.match(/function verificationReviewNoticeMarkup[\s\S]*?\n    async function loadLiveVerificationDocuments/)?.[0] || "";
+test("Step 4 reports automatic activation without a manual identity review button", () => {
   const serverSubmit =
-    profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\nasync function hasSavedOrPendingProfilePhoto[\s\S]*?\n}/)?.[0] || "";
+    profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
 
-  assert.match(serverSubmit, /hasSavedOrPendingProfilePhoto\(db, userId, dancerId\)/);
-  assert.match(serverSubmit, /\.from\("image_moderation_records"\)/);
-  assert.match(serverSubmit, /\.eq\("decision", "review"\)/);
-  assert.match(serverSubmit, /\.in\("status", ACTIVE_IMAGE_MODERATION_STATUSES\)/);
-  assert.match(profileRouteSource, /if \(body\.submitForReview === true\) \{[\s\S]*?expectedProtectedChanges\.add\("status"\)[\s\S]*?expectedProtectedChanges\.add\("verificationStatus"\)[\s\S]*?expectedProtectedChanges\.add\("photoReviewStatus"\)/);
-  assert.match(reviewSubmit, /button\.textContent = "Submitting\.\.\."/);
-  assert.match(reviewSubmit, /normalizedReviewStatus\(data\.profile\.status\) !== "pending_review"/);
-  assert.match(reviewSubmit, /verificationSubmitNoticeTone = "success"/);
-  assert.match(reviewSubmit, /verificationSubmitNoticeTone = "error"/);
-  assert.match(reviewNotice, /Submitted for review/);
-  assert.match(reviewNotice, /Submission not completed/);
-  assert.match(reviewNotice, /submitted successfully/);
-  assert.match(liveAppSource, /verificationReviewNoticeMarkup\(reviewSubmitted\)/);
+  assert.match(serverSubmit, /getIdentityVerificationMode\(\) === "auto_approve"/);
+  assert.match(serverSubmit, /automaticDancerApprovalValues\(\)/);
+  assert.match(serverSubmit, /\.from\("dancer_identity_verifications"\)/);
+  assert.match(serverSubmit, /\.select\("status, verified_at"\)/);
+  assert.doesNotMatch(serverSubmit, /image_moderation_records|dancer_photos|photo_review_status/);
+  const approvalBody = liveAppSource.match(/const approvalBody = `[\s\S]*?`;/)?.[0] || "";
+  assert.match(approvalBody, /Your dancer account is automatically approved/);
+  assert.match(approvalBody, /VerifyMy’s signed verification result makes your profile live automatically/);
+  assert.doesNotMatch(approvalBody, /data-submit-review/);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {
@@ -144,15 +134,15 @@ test("real setup steps advance only after their production save succeeds", () =>
   const profileSubmitEnd = liveAppSource.indexOf('document.addEventListener("click"', profileSubmitStart);
   const profileSubmit = liveAppSource.slice(profileSubmitStart, profileSubmitEnd);
   const photoSubmit =
-    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function uploadVerificationFile/)?.[0] || "";
+    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function submitSetupVerification/)?.[0] || "";
   const verificationSubmit =
     liveAppSource.match(/async function submitSetupVerification[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
 
   assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
   assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile")'));
   assert.ok(photoSubmit.indexOf("await Promise.allSettled") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileHasApprovedOrPendingPhoto"));
-  assert.ok(verificationSubmit.indexOf("await Promise.all") < verificationSubmit.indexOf("dancerSetup.verification = true"));
-  assert.ok(verificationSubmit.indexOf("await Promise.all") < verificationSubmit.indexOf("liveVerificationDocumentsAuthoritative = true"));
+  assert.ok(verificationSubmit.indexOf('await postAuthenticatedJson("/api/dancer/identity-verification"') < verificationSubmit.indexOf("dancerSetup.verification ="));
+  assert.ok(verificationSubmit.indexOf('await postAuthenticatedJson("/api/dancer/identity-verification"') < verificationSubmit.indexOf("window.location.assign(data.redirectUrl)"));
 });
 
 test("pending photo submissions keep the photo step complete", () => {
@@ -182,7 +172,7 @@ test("all four steps render inside the Profile Setup box", () => {
   );
   assert.match(liveAppSource, /setupStepMarkup\("profile", "Create profile"/);
   assert.match(liveAppSource, /setupStepMarkup\("photos", "Upload photos for review"/);
-  assert.match(liveAppSource, /setupStepMarkup\("verification", "Start dancer verification"/);
+  assert.match(liveAppSource, /setupStepMarkup\("verification", liveIdentityVerificationMode === "auto_approve" \? "Automatic dancer approval" : "Start dancer verification"/);
   assert.match(liveAppSource, /setupStepMarkup\("approval", "Approval status"/);
 });
 

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getActiveClubDealsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
+import { isVerifyMyIdentityMode } from "./identity-mode";
 import type { ClubDeal } from "./types";
 import {
   moderateStoredMyDancrTvVideo,
@@ -35,8 +36,9 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
   "shared_link",
 ]);
 
+const IDENTITY_PROFILE_FIELDS = isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : "";
 const PUBLIC_TV_SELECT =
-  "id, caption, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at)";
+  `id, caption, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -446,9 +448,9 @@ function diversifyDancers(rows: NormalizedFeedRow[]) {
 }
 
 export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: string) {
-  const { data: dancer, error: dancerError } = await admin
+  const { data: dancer, error: dancerError }: any = await admin
     .from("dancer_profiles")
-    .select("id, user_id, stage_name, slug, city, status, verification_status, photo_review_status, approved_at, disabled_at, is_public")
+    .select(`id, user_id, stage_name, slug, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
     .eq("user_id", userId)
     .maybeSingle();
   if (dancerError) throw dancerError;
@@ -528,9 +530,9 @@ export async function createMyDancrTvUpload(
     rightsConfirmed: boolean;
   },
 ) {
-  const { data: dancer, error } = await admin
+  const { data: dancer, error }: any = await admin
     .from("dancer_profiles")
-    .select("id, user_id, status, verification_status, photo_review_status, approved_at, disabled_at, is_public")
+    .select(`id, user_id, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -604,7 +606,7 @@ export async function createMyDancrTvUpload(
 export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -650,7 +652,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
     })
     .eq("id", video.id)
     .eq("status", "uploading")
-    .select("id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
   console.info(JSON.stringify({ event: "mydancr_tv.video_moderation_started", videoId: video.id, userId }));
@@ -660,7 +662,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
 export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "moderating")
     .maybeSingle();
@@ -676,7 +678,7 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
     })
     .eq("id", video.id)
     .eq("status", "moderating")
-    .select("id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   return claimed ? finalizeMyDancrTvAutomatedModeration(admin, claimed) : null;
@@ -853,7 +855,7 @@ export async function reviewMyDancrTvVideo(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, status, shift_id, duration_seconds, shifts(ends_at), dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select(`id, status, shift_id, duration_seconds, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -998,7 +1000,7 @@ export async function recordMyDancrTvEvent(
 
   const { data: video, error: videoError } = await admin
     .from("mydancr_tv_videos")
-    .select("id, status, published_at, expires_at, dancer_profiles(status, verification_status, photo_review_status, approved_at, disabled_at, is_public)")
+    .select(`id, status, published_at, expires_at, dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", input.videoId)
     .maybeSingle();
   if (videoError) throw videoError;

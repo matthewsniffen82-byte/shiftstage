@@ -12,9 +12,8 @@ test("dancer approvals prominently show the live number still needed", () => {
   assert.match(adminSource, /className="admin-panel-badge"/);
 });
 
-test("successful approval decisions produce an accessible persistent confirmation", () => {
+test("successful review decisions produce an accessible persistent confirmation", () => {
   assert.match(adminSource, /className="admin-action-toast" role="status" aria-live="polite" aria-atomic="true"/);
-  assert.match(adminSource, /Dancer profile approved successfully\./);
   assert.match(adminSource, /Dancer profile rejected successfully\./);
   assert.match(adminSource, /Picture approved and published successfully\./);
   assert.match(adminSource, /Picture rejected successfully and removed from private review storage\./);
@@ -42,12 +41,14 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   assert.match(adminSource, /role=\{feedback\.tone === "error" \? "alert" : "status"\}/);
 });
 
-test("verification approval cards visibly retain an approved decision", () => {
-  assert.match(adminSource, /submission-review-card \$\{isApproved \? "is-approved" : isDisapproved \? "is-rejected" : ""\}/);
-  assert.match(adminSource, /\{isApproved \? "✓ Approved" : isDisapproved \? "Disapproved" : "Pending review"\}/);
-  assert.match(adminSource, /disabled=\{!targetId \|\| isWorking \|\| isApproved\}/);
-  assert.match(adminSource, /\.submission-review-card\.is-approved/);
-  assert.match(adminSource, /\.submission-review-status\.is-approved/);
+test("identity verification is tokenized and cannot be manually approved", () => {
+  assert.match(adminSource, /Tokenized identity verification/);
+  assert.match(adminSource, /opaque provider reference, status, and timestamps/);
+  assert.match(adminSource, /Identity documents, selfies, personal details, and reports are never available to admins/);
+  assert.doesNotMatch(adminSource, /reviewContent\(event, "verification_document"/);
+  assert.doesNotMatch(adminSource, /Approve file/);
+  assert.doesNotMatch(adminSource, /Dancer profile approved successfully/);
+  assert.doesNotMatch(adminSource, /reviewProfile\(dancerId, "approved"\)/);
 });
 
 test("approved socials stay in the submitted list and visibly retain their decision", () => {
@@ -79,7 +80,6 @@ test("expanded dancer approvals survive remounts and approval button events cann
   assert.match(reviewContent, /event\.preventDefault\(\)/);
   assert.match(reviewContent, /event\.stopPropagation\(\)/);
   assert.ok(keepOpenCalls.length >= 3, "content review must reassert the open state before, after, and while settling");
-  assert.match(adminSource, /onClick=\{\(event\) => reviewContent\(event, "verification_document"/);
   assert.match(adminSource, /onClick=\{\(event\) => reviewContent\(event, "social_link"/);
   assert.match(adminSource, /onClick=\{\(event\) => reviewContent\(event, "photo"/);
 });
