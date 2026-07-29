@@ -175,3 +175,23 @@ test("homepage omits top search and city shortcut controls", () => {
   assert.match(homeSource, /const allItems = getItems\(city, activeTab\)/);
   assert.doesNotMatch(homeSource, /\.brand \{\s*display: none;\s*\}/);
 });
+
+test("mobile dancer headings keep the selected city on one clean line", () => {
+  assert.match(
+    homeSource,
+    /const keepDancerCityOnOneLine =\s*!selectedVenue && activeTab === "dancers" && venueFilter === "all";/,
+  );
+  assert.match(
+    homeSource,
+    /tabTitle\.classList\.toggle\("dancers-city-title", keepDancerCityOnOneLine\);/,
+  );
+  assert.match(
+    homeSource,
+    /cityTitle\.className = "tab-title-city";[\s\S]*?cityTitle\.textContent = city;[\s\S]*?tabTitle\.replaceChildren\(document\.createTextNode\("Dancers in "\), cityTitle\);/,
+  );
+  assert.match(
+    homeSource,
+    /#tabTitle\.dancers-city-title \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;[\s\S]*?font-size: clamp\(22px, 6vw, 25px\) !important;/,
+  );
+  assert.match(homeSource, /#tabTitle \.tab-title-city \{[\s\S]*?white-space: nowrap;/);
+});
