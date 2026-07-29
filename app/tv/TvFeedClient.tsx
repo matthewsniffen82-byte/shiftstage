@@ -487,7 +487,7 @@ export default function TvFeedClient({
                               <span className="tv-verified-mark" aria-label="Verified">✓</span>
                             </span>
                             <span className="tv-profile-destination">
-                              View dancer profile <span aria-hidden="true">→</span>
+                              View Profile <span aria-hidden="true">→</span>
                             </span>
                           </span>
                         </Link>
