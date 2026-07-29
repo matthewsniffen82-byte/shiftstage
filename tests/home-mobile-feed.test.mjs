@@ -30,7 +30,31 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?activeTab = "tv"[\s\S]*?render\(\)[\s\S]*?window\.scrollTo/,
+    /#results\.home-tv-feed \{[\s\S]*?overscroll-behavior-y: none[\s\S]*?touch-action: pan-y/,
+  );
+  assert.match(
+    homeSource,
+    /html\.home-tv-feed-locked,[\s\S]*?body\.home-tv-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-tv-feed-locked \{[\s\S]*?position: fixed !important[\s\S]*?height: 100dvh !important/,
+  );
+  assert.match(
+    homeSource,
+    /height: var\(--home-tv-feed-height, calc\(100dvh - 150px\)\)[\s\S]*?min-height: 0[\s\S]*?max-height: none/,
+  );
+  assert.match(
+    homeSource,
+    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?activeTab = "tv"[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeTvFeed/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeTvFeedViewport\(\)[\s\S]*?availableBottom - feedTop - 8[\s\S]*?--home-tv-feed-height/,
+  );
+  assert.match(
+    homeSource,
+    /function focusAndLockHomeTvFeed\(\)[\s\S]*?behavior: "auto"[\s\S]*?lockHomeTvFeedViewport\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /function deactivateHomeTvFeed\(\) \{[\s\S]*?unlockHomeTvFeedViewport\(\)/,
   );
   assert.match(
     homeSource,

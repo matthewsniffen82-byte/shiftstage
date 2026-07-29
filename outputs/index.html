@@ -28396,10 +28396,27 @@
             display: none !important;
           }
           #results.home-tv-feed {
-            height: calc(100dvh - 150px);
-            min-height: 500px;
-            max-height: 760px;
+            height: var(--home-tv-feed-height, calc(100dvh - 150px));
+            min-height: 0;
+            max-height: none;
             border-radius: 15px;
+          }
+          html.home-tv-feed-locked,
+          body.home-tv-feed-locked {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+          }
+          body.home-tv-feed-locked {
+            position: fixed !important;
+            top: var(--home-tv-page-lock-top, 0) !important;
+            right: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100dvh !important;
+          }
+          body.home-tv-feed-locked main.stack > .legal-links {
+            visibility: hidden !important;
+            pointer-events: none !important;
           }
           .home-tv-feed-copy {
             padding: 54px 14px 16px;
@@ -30195,6 +30212,8 @@
     let homeTvFeedObserver = null;
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
+    let homeTvFeedPageLockY = null;
+    let homeTvFeedViewportFrame = 0;
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -42234,7 +42253,75 @@
       activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
     }
 
+    function homeTvFeedUsesLockedViewport() {
+      return window.matchMedia("(max-width: 720px)").matches;
+    }
+
+    function syncHomeTvFeedViewport() {
+      homeTvFeedViewportFrame = 0;
+      if (activeTab !== "tv" || !homeTvFeedUsesLockedViewport()) return;
+      const navigation = document.getElementById("discoveryTabs");
+      if (!navigation || !results.classList.contains("home-tv-feed")) return;
+      const feedTop = results.getBoundingClientRect().top;
+      const navigationTop = navigation.getBoundingClientRect().top;
+      const visualViewportBottom = window.visualViewport
+        ? window.visualViewport.offsetTop + window.visualViewport.height
+        : window.innerHeight;
+      const availableBottom = Math.min(navigationTop, visualViewportBottom);
+      const availableHeight = Math.floor(availableBottom - feedTop - 8);
+      if (availableHeight > 0) {
+        results.style.setProperty("--home-tv-feed-height", `${availableHeight}px`);
+      }
+    }
+
+    function queueHomeTvFeedViewportSync() {
+      if (homeTvFeedViewportFrame) window.cancelAnimationFrame(homeTvFeedViewportFrame);
+      homeTvFeedViewportFrame = window.requestAnimationFrame(syncHomeTvFeedViewport);
+    }
+
+    function lockHomeTvFeedViewport() {
+      if (!homeTvFeedUsesLockedViewport()) return;
+      if (homeTvFeedPageLockY === null) {
+        homeTvFeedPageLockY = window.scrollY;
+        document.body.style.setProperty("--home-tv-page-lock-top", `-${homeTvFeedPageLockY}px`);
+        document.documentElement.classList.add("home-tv-feed-locked");
+        document.body.classList.add("home-tv-feed-locked");
+      }
+      queueHomeTvFeedViewportSync();
+    }
+
+    function unlockHomeTvFeedViewport() {
+      if (homeTvFeedViewportFrame) {
+        window.cancelAnimationFrame(homeTvFeedViewportFrame);
+        homeTvFeedViewportFrame = 0;
+      }
+      results.style.removeProperty("--home-tv-feed-height");
+      document.documentElement.classList.remove("home-tv-feed-locked");
+      document.body.classList.remove("home-tv-feed-locked");
+      document.body.style.removeProperty("--home-tv-page-lock-top");
+      if (homeTvFeedPageLockY === null) return;
+      const restoreY = homeTvFeedPageLockY;
+      homeTvFeedPageLockY = null;
+      window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
+    }
+
+    function focusAndLockHomeTvFeed() {
+      const top = tabTitle.getBoundingClientRect().top + window.scrollY - 78;
+      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: "auto" });
+      lockHomeTvFeedViewport();
+    }
+
+    function handleHomeTvFeedViewportChange() {
+      if (activeTab !== "tv") return;
+      if (homeTvFeedUsesLockedViewport()) {
+        lockHomeTvFeedViewport();
+      } else {
+        unlockHomeTvFeedViewport();
+      }
+    }
+
     function deactivateHomeTvFeed() {
+      unlockHomeTvFeedViewport();
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
       homeTvFeedActiveVideoId = "";
@@ -42409,6 +42496,7 @@
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid");
       results.classList.add("home-tv-feed");
+      queueHomeTvFeedViewportSync();
 
       if (homeTvFeedCity !== city) {
         homeTvFeedCity = city;
@@ -44651,11 +44739,12 @@
       homeBottomTv.classList.add("active");
       homeBottomTv.setAttribute("aria-current", "page");
       render();
-      window.requestAnimationFrame(() => {
-        const top = tabTitle.getBoundingClientRect().top + window.scrollY - 78;
-        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-      });
+      window.requestAnimationFrame(focusAndLockHomeTvFeed);
     });
+    window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
+    window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
+    window.visualViewport?.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
+    window.visualViewport?.addEventListener("scroll", queueHomeTvFeedViewportSync, { passive: true });
 
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => {
