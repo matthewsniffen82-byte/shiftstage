@@ -37,7 +37,7 @@ const destinations = [
     icon: (
       <svg className="mydancr-tv-mark" viewBox="0 0 24 24" aria-hidden="true">
         <path className="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z" />
-        <path className="mydancr-tv-r" d="M17.3 8V4.7m0 1.3c.65-.85 1.45-1.12 2.4-.82" />
+        <path className="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91" />
       </svg>
     ),
   },
@@ -221,7 +221,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav .mydancr-tv-r {
             fill: none;
             stroke: #f9a8d4;
-            stroke-width: 1.7;
+            stroke-width: 1.8;
             stroke-linecap: round;
             filter: drop-shadow(0 0 1.5px rgba(236, 72, 153, 0.6));
           }

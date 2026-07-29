@@ -17,6 +17,8 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
       /mydancr-tv-mark[\s\S]*?mydancr-tv-play[\s\S]*?mydancr-tv-r/,
     );
     assert.match(source, /stroke:\s*#f9a8d4/);
+    assert.match(source, /stroke-width:\s*1\.8/);
+    assert.match(source, /M17\.05 8\.35V4\.35m0 1\.45c\.72-.95 1\.62-1\.25 2\.7-.91/);
     assert.match(source, /border-radius:\s*8px/);
     assert.match(
       source,
