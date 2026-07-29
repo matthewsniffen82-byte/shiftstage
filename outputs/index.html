@@ -28047,10 +28047,18 @@
         }
         .home-feed-card .card-profile-destination {
           width: fit-content;
+          min-height: 32px;
           display: inline-flex;
           align-items: center;
           gap: 5px;
+          padding: 0 11px;
+          border: 1px solid rgba(126,234,255,.42);
+          border-radius: 10px;
           color: #9fefff;
+          background: rgba(5,5,10,.88);
+          box-shadow: 0 5px 18px rgba(0,0,0,.38);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           font-size: 10px;
           font-weight: 950;
           letter-spacing: .07em;
@@ -36866,6 +36874,7 @@
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
           <div class="card-badges">
             ${statusBadge}
+            ${options.feedActions && !isPending ? `<span class="card-profile-destination">View dancer profile <span aria-hidden="true">→</span></span>` : ""}
             ${trendBadge}
             ${trendMarker}
           </div>
@@ -36877,7 +36886,6 @@
             ${clubMarkup}
           </div>
           ${scheduleMarkup}
-          ${options.feedActions && !isPending ? `<span class="card-profile-destination">View dancer profile <span aria-hidden="true">→</span></span>` : ""}
         </div>
       `;
       if (options.feedActions && !isPending) {
