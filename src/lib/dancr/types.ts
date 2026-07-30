@@ -83,6 +83,7 @@ export type VenueSummary = {
   latitude?: number | null;
   longitude?: number | null;
   hoursLabel: string | null;
+  coverImageUrl?: string | null;
   qrCodeUrl?: string | null;
   qrCodeLabel?: string | null;
 };
@@ -101,6 +102,9 @@ export type VenueOwnerProfile = {
   opensAt: string | null;
   closesAt: string | null;
   isActive: boolean;
+  coverImageStoragePath: string | null;
+  coverImageUrl: string | null;
+  coverImageUpdatedAt: string | null;
   qrCodeStoragePath: string | null;
   qrCodeUrl: string | null;
   qrCodeLabel: string | null;

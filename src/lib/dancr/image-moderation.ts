@@ -477,7 +477,7 @@ async function approveModeratedUpload(
   }
 }
 
-async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
+export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
   const apiKeyPresent = Boolean(process.env.OPENAI_API_KEY);
   console.log("OPENAI_KEY_PRESENT", apiKeyPresent);
   logModeration("openai_key_present", { present: apiKeyPresent });

@@ -28976,6 +28976,441 @@
           opacity: .42;
           cursor: default;
         }
+
+        /* Venue discovery shares the same image-led, cinematic language as dancer cards. */
+        #results.venue-card-grid > .venue.venue-card {
+          position: relative;
+          min-height: 430px;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: minmax(0, 1fr) auto;
+          overflow: hidden;
+          border: 1px solid rgba(139,92,246,.34);
+          border-radius: 20px;
+          background: #07070b;
+          box-shadow: 0 20px 54px rgba(0,0,0,.4), 0 0 24px rgba(124,58,237,.1);
+          transform: none;
+        }
+        #results.venue-card-grid > .venue.venue-card:hover,
+        #results.venue-card-grid > .venue.venue-card:focus-within {
+          border-color: color-mix(in srgb, var(--venue-accent) 62%, transparent);
+          box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 30px color-mix(in srgb, var(--venue-accent) 18%, transparent);
+          transform: translateY(-2px);
+        }
+        .venue-card-link {
+          min-width: 0;
+          display: grid;
+          grid-template-rows: minmax(275px, 1fr) auto;
+          color: inherit;
+          text-decoration: none;
+        }
+        .venue-card-link:focus-visible {
+          outline: 3px solid #7eeaff;
+          outline-offset: -4px;
+        }
+        #results.venue-card-grid .venue-card .venue-art {
+          position: relative;
+          width: 100%;
+          min-height: 275px;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 74% 24%, color-mix(in srgb, var(--venue-accent) 34%, transparent), transparent 32%),
+            radial-gradient(circle at 14% 72%, rgba(217,70,239,.3), transparent 38%),
+            linear-gradient(145deg, #17102a, #07070b 70%);
+          background-position: center;
+          background-size: cover;
+        }
+        #results.venue-card-grid .venue-card .venue-art.has-custom-photo {
+          background-image:
+            linear-gradient(180deg, rgba(5,5,9,.06), transparent 42%, rgba(5,5,9,.95)),
+            var(--custom-photo);
+        }
+        #results.venue-card-grid .venue-card .venue-art::before,
+        #results.venue-card-grid .venue-card .venue-art::after {
+          content: none;
+        }
+        .venue-card-kicker {
+          position: absolute;
+          z-index: 2;
+          top: 16px;
+          left: 16px;
+          color: rgba(255,255,255,.8);
+          font-size: 8px;
+          font-weight: 950;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+        }
+        .venue-card-mark {
+          position: absolute;
+          z-index: 2;
+          top: 13px;
+          right: 13px;
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.24);
+          border-radius: 14px;
+          color: #fff;
+          background: rgba(6,6,11,.55);
+          box-shadow: 0 12px 28px rgba(0,0,0,.34);
+          font-size: 13px;
+          font-weight: 950;
+          backdrop-filter: blur(14px);
+        }
+        .venue-card-live {
+          position: absolute;
+          z-index: 2;
+          right: 14px;
+          bottom: 14px;
+          padding: 6px 9px;
+          border: 1px solid rgba(77,236,157,.58);
+          border-radius: 999px;
+          color: #9af7c4;
+          background: rgba(11,93,57,.68);
+          font-size: 9px;
+          font-weight: 950;
+          backdrop-filter: blur(12px);
+        }
+        #results.venue-card-grid .venue-card .profile-body {
+          min-width: 0;
+          display: grid;
+          align-content: start;
+          gap: 7px;
+          padding: 14px 15px 15px;
+          border-top: 1px solid rgba(255,255,255,.08);
+          background: linear-gradient(180deg,rgba(12,11,18,.98),rgba(7,7,11,.99));
+        }
+        #results.venue-card-grid .venue-card h3 {
+          margin: 0;
+          overflow: hidden;
+          color: #fff;
+          font-size: 22px;
+          line-height: 1.04;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        #results.venue-card-grid .venue-card .meta {
+          overflow: hidden;
+          color: #d5cedf;
+          font-size: 11px;
+          font-weight: 750;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        #results.venue-card-grid .venue-card .pill-row {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          overflow: hidden;
+        }
+        #results.venue-card-grid .venue-card .pill {
+          min-height: 27px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border: 1px solid rgba(126,234,255,.3);
+          border-radius: 999px;
+          color: #baf4ff;
+          background: rgba(14,79,96,.4);
+          font-size: 9px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .venue-card-offer {
+          min-width: 0;
+          display: grid;
+          gap: 1px;
+          padding-left: 8px;
+          border-left: 1px solid rgba(77,236,157,.34);
+        }
+        .venue-card-offer small {
+          color: #82f2b6;
+          font-size: 7px;
+          font-weight: 950;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+        }
+        .venue-card-offer strong {
+          overflow: hidden;
+          color: #fff;
+          font-size: 10px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .venue-card-lineup {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 0;
+        }
+        .venue-card-lineup-avatar {
+          width: 25px;
+          height: 25px;
+          margin-left: -6px;
+          flex: 0 0 auto;
+          border: 2px solid #0c0b12;
+          border-radius: 50%;
+          background:
+            radial-gradient(circle at 50% 32%, rgba(126,234,255,.28), transparent 34%),
+            #181224;
+          background-image: var(--custom-photo);
+          background-position: center top;
+          background-size: cover;
+        }
+        .venue-card-lineup-avatar:first-child {
+          margin-left: 0;
+        }
+        .venue-card-lineup strong {
+          min-width: 0;
+          margin-left: 7px;
+          overflow: hidden;
+          color: #b9accd;
+          font-size: 9px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .venue-card-follow {
+          position: absolute;
+          z-index: 5;
+          top: 65px;
+          right: 13px;
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.24);
+          border-radius: 50%;
+          color: #fff;
+          background: rgba(6,6,11,.62);
+          box-shadow: 0 10px 24px rgba(0,0,0,.34);
+          backdrop-filter: blur(14px);
+          cursor: pointer;
+        }
+        .venue-card-follow .action-icon {
+          width: 20px;
+          height: 20px;
+        }
+        .venue-card-follow.is-active {
+          border-color: rgba(126,234,255,.66);
+          background: linear-gradient(135deg,rgba(124,58,237,.88),rgba(236,72,153,.72));
+        }
+        .venue-card-actions {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          border-top: 1px solid rgba(255,255,255,.08);
+          background: #08080d;
+        }
+        .venue-card-actions:empty {
+          display: none;
+        }
+        .venue-card-deal-action,
+        .venue-card-directions {
+          min-width: 0;
+          min-height: 52px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 0 10px;
+          border: 0;
+          color: #fff;
+          background: rgba(126,234,255,.07);
+          font: inherit;
+          font-size: 9px;
+          font-weight: 950;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .venue-card-deal-action {
+          background: linear-gradient(135deg,rgba(18,129,79,.92),rgba(7,92,77,.92));
+        }
+        .venue-card-actions > :only-child {
+          grid-column: 1 / -1;
+        }
+        .venue-card-actions .action-icon {
+          width: 21px;
+          height: 21px;
+        }
+
+        .home-venue-discovery-art.has-custom-photo {
+          background-image:
+            linear-gradient(180deg, rgba(5,5,9,.08) 0%, transparent 36%, rgba(5,5,9,.2) 55%, rgba(5,5,9,.96) 100%),
+            var(--custom-photo);
+          background-position: center;
+          background-size: cover;
+        }
+        .home-venue-discovery-art.has-custom-photo::before,
+        .home-venue-discovery-art.has-custom-photo::after {
+          opacity: .24;
+        }
+        .home-venue-discovery-monogram {
+          width: 82px;
+          height: 82px;
+          display: grid;
+          place-items: center;
+          border: 1px solid color-mix(in srgb, var(--venue-accent) 54%, transparent);
+          border-radius: 24px;
+          color: rgba(255,255,255,.88);
+          background: rgba(7,7,12,.38);
+          box-shadow: 0 18px 44px rgba(0,0,0,.34), 0 0 28px color-mix(in srgb, var(--venue-accent) 18%, transparent);
+          font-size: 25px;
+          letter-spacing: -.04em;
+          backdrop-filter: blur(14px);
+        }
+        .home-venue-discovery-art.has-custom-photo .home-venue-discovery-monogram {
+          position: absolute;
+          top: 16px;
+          left: 16px;
+          width: 46px;
+          height: 46px;
+          border-radius: 14px;
+          font-size: 13px;
+          opacity: .88;
+        }
+        .home-venue-discovery-kicker {
+          position: absolute;
+          z-index: 4;
+          top: 20px;
+          left: 74px;
+          color: rgba(255,255,255,.8);
+          font-size: 8px;
+          font-weight: 950;
+          letter-spacing: .19em;
+          text-transform: uppercase;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+          pointer-events: none;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-shade {
+          background:
+            linear-gradient(180deg, rgba(0,0,0,.14) 0%, transparent 34%, rgba(0,0,0,.08) 47%, rgba(0,0,0,.98) 88%),
+            radial-gradient(circle at 18% 84%, color-mix(in srgb, var(--venue-accent) 18%, transparent), transparent 34%);
+        }
+        .home-venue-discovery-slide .home-discovery-feed-copy {
+          right: 0;
+          bottom: 70px;
+          gap: 7px;
+          padding: 100px 14px 13px;
+        }
+        .home-venue-discovery-lineup {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+        }
+        .home-venue-discovery-lineup-avatar {
+          width: 28px;
+          height: 28px;
+          margin-left: -7px;
+          flex: 0 0 auto;
+          border: 2px solid rgba(7,7,12,.94);
+          border-radius: 50%;
+          background:
+            radial-gradient(circle at 50% 32%, rgba(126,234,255,.28), transparent 34%),
+            #181224;
+          background-image: var(--custom-photo);
+          background-position: center top;
+          background-size: cover;
+          box-shadow: 0 7px 18px rgba(0,0,0,.32);
+        }
+        .home-venue-discovery-lineup-avatar:first-child {
+          margin-left: 0;
+        }
+        .home-venue-discovery-lineup strong {
+          min-width: 0;
+          margin-left: 8px;
+          overflow: hidden;
+          color: #d5cedf;
+          font-size: 10px;
+          text-overflow: ellipsis;
+          text-shadow: 0 2px 10px rgba(0,0,0,.94);
+          white-space: nowrap;
+        }
+        .home-venue-discovery-meta {
+          width: fit-content;
+          max-width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 7px;
+        }
+        .home-venue-discovery-meta:empty {
+          display: none;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-status,
+        .home-venue-discovery-hours {
+          min-height: 28px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border-radius: 999px;
+          backdrop-filter: blur(12px);
+        }
+        .home-venue-discovery-hours {
+          border: 1px solid rgba(126,234,255,.32);
+          color: #c5f5ff;
+          background: rgba(11,77,94,.5);
+        }
+        .home-venue-discovery-deal {
+          width: min(100%, 330px);
+          min-height: 48px;
+          grid-template-columns: auto minmax(0,1fr);
+          align-items: center;
+          gap: 9px;
+          padding: 7px 10px;
+          border-radius: 14px;
+          background: linear-gradient(135deg,rgba(7,92,77,.78),rgba(18,129,79,.7));
+        }
+        .home-venue-discovery-deal span {
+          padding-right: 9px;
+          border-right: 1px solid rgba(145,247,192,.28);
+          white-space: nowrap;
+        }
+        .home-venue-discovery-deal strong {
+          font-size: 11px;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-actions {
+          right: 12px;
+          bottom: 12px;
+          left: 12px;
+          width: auto;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-actions > :only-child {
+          grid-column: 1 / -1;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-actions > :first-child:nth-last-child(2),
+        .home-venue-discovery-slide .home-discovery-feed-actions > :first-child:nth-last-child(2) ~ * {
+          grid-column: auto;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-actions .feed-card-action,
+        .home-venue-discovery-slide .home-discovery-feed-directions {
+          width: 100%;
+          min-width: 0;
+          min-height: 50px;
+          display: grid;
+          grid-template-columns: 23px auto;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          padding: 0 8px;
+          border-radius: 15px;
+          font-size: 9px;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-actions .action-icon {
+          width: 21px;
+          height: 21px;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-actions .home-venue-discovery-deal-action {
+          border-color: rgba(77,255,157,.86);
+          background: linear-gradient(135deg,rgba(18,139,80,.98),rgba(7,92,77,.98));
+          box-shadow: 0 10px 26px rgba(10,116,78,.38), inset 0 1px 0 rgba(255,255,255,.2);
+        }
         .home-discovery-feed-position {
           position: absolute;
           z-index: 4;
@@ -29347,12 +29782,14 @@
             box-shadow: 0 18px 44px rgba(0,0,0,.48), 0 0 24px rgba(124,58,237,.12) !important;
           }
           #results.home-venue-discovery-feed .home-discovery-feed-copy {
-            right: 82px;
-            padding: 84px 0 18px 14px;
+            right: 0;
+            bottom: 70px;
+            padding: 100px 14px 13px;
           }
           #results.home-venue-discovery-feed .home-discovery-feed-actions {
-            right: 10px;
-            bottom: 14px;
+            right: 12px;
+            bottom: 12px;
+            left: 12px;
           }
           #results.home-venue-discovery-feed .home-discovery-feed-position {
             top: 17px;
@@ -34634,6 +35071,7 @@
         distance: "",
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
         longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : null,
+        coverImageUrl: item.coverImageUrl || "",
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
         activeDeal: item.activeDeal || null
@@ -34645,6 +35083,7 @@
       return (
         (venue?.slug === canonicalSlug ? 32 : 0) +
         (venue?.id ? 16 : 0) +
+        (venue?.coverImageUrl ? 12 : 0) +
         (venue?.activeDeal?.id ? 8 : 0) +
         (venue?.qrCodeUrl ? 4 : 0) +
         (venue?.address ? 2 : 0) +
@@ -38714,32 +39153,125 @@
       `;
     }
 
+    function venueInitials(name) {
+      return String(name || "")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase();
+    }
+
+    function venueAccent(name) {
+      const palette = ["#7eeaff", "#c4b5fd", "#f0abfc", "#86efac", "#fda4af"];
+      const index = [...String(name || "")]
+        .reduce((totalValue, character) => totalValue + character.charCodeAt(0), 0);
+      return palette[index % palette.length];
+    }
+
+    function venueVisualProfiles(city, venueName) {
+      return venueDancers(city, venueName)
+        .filter((profile) => publicProfilePhotoUrl(profile))
+        .sort((left, right) => {
+          const liveDifference = Number(isWorkingTonight(right, city)) - Number(isWorkingTonight(left, city));
+          if (liveDifference) return liveDifference;
+          const scheduledDifference = Number(Boolean(right.scheduled)) - Number(Boolean(left.scheduled));
+          if (scheduledDifference) return scheduledDifference;
+          return upcomingSortValue(left, city) - upcomingSortValue(right, city);
+        });
+    }
+
+    function venueVisualAttrs(venue, city) {
+      const featuredProfile = venueVisualProfiles(city, venue.name)[0] || null;
+      const visualUrl = String(venue.coverImageUrl || publicProfilePhotoUrl(featuredProfile) || "");
+      return {
+        attrs: customPhotoAttrs(visualUrl),
+        featuredProfile,
+        visualUrl
+      };
+    }
+
+    function venueLineupMarkup(venue, city, options = {}) {
+      const profiles = venueVisualProfiles(city, venue.name).slice(0, 3);
+      if (!profiles.length) return "";
+      const avatars = profiles.map((profile) => {
+        const attrs = customPhotoAttrs(publicProfilePhotoUrl(profile));
+        return `<span class="${options.mobile ? "home-venue-discovery-lineup-avatar" : "venue-card-lineup-avatar"}${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
+      }).join("");
+      const label = profiles.length === 1
+        ? `${profiles[0].name} on the lineup`
+        : `${profiles.length} dancers on the lineup`;
+      return `<span class="${options.mobile ? "home-venue-discovery-lineup" : "venue-card-lineup"}">${avatars}<strong>${escapeHtml(label)}</strong></span>`;
+    }
+
+    function venueCardQrMarkup(venue) {
+      if (!venue?.id) return "";
+      if (venue.activeDeal?.id) {
+        const config = {
+          deal: venue.activeDeal,
+          venueId: venue.id,
+          venueSlug: venue.slug,
+          venueName: venue.name,
+          sourceType: "club_page"
+        };
+        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
+      }
+      if (!venue.qrCodeUrl) return "";
+      const pass = publishedVenueQrPass({
+        venueId: venue.id,
+        venueSlug: venue.slug,
+        venueName: venue.name,
+        qrCodeUrl: venue.qrCodeUrl,
+        qrCodeLabel: venue.qrCodeLabel,
+        sourceType: "venue_page"
+      });
+      return `<button class="venue-card-deal-action" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Open ${escapeHtml(venue.name)} venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+    }
+
     function venueCard(venue) {
-      const details = venueDetails(venue, citySelect.value);
-      const initials = venue.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+      const city = citySelect.value;
+      const details = venueDetails(venue, city);
+      const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
-      const venueHref = venueExperienceHref(venue, citySelect.value);
-      const workingNowCount = venueDancers(citySelect.value, venue.name)
-        .filter((profile) => isWorkingTonight(profile, citySelect.value))
+      const venueValue = escapeOptionValue(venue.name);
+      const venueHref = venueExperienceHref(venue, city);
+      const visual = venueVisualAttrs(venue, city);
+      const workingNowCount = venueDancers(city, venue.name)
+        .filter((profile) => isWorkingTonight(profile, city))
         .length;
+      const followsVenue = isFollowingVenue(city, venue.name);
       const workingNowMarkup = workingNowCount
-        ? `<a class="pill venue-shift-pill" href="${venueHref}" aria-label="Open ${safeName} venue details, ${workingNowCount} working now">${workingNowCount} working now</a>`
+        ? `<span class="venue-card-live">${workingNowCount} working now</span>`
+        : "";
+      const dealMarkup = venue.activeDeal?.dealTitle
+        ? `<span class="venue-card-offer"><small>Tonight's offer</small><strong>${escapeHtml(venue.activeDeal.dealTitle)}</strong></span>`
+        : "";
+      const directionsMarkup = details.address
+        ? `<a class="venue-card-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
       return `
-        <article class="card venue venue-card" aria-label="${venue.name} venue details">
-          <div class="venue-art" data-initials="${initials}"></div>
-          <div class="profile-body">
-            <div class="row">
-              <div>
-                <h3>${venue.name}</h3>
-                <div class="meta">${details.city}, ${details.state}</div>
-              </div>
-            </div>
-            <div class="pill-row">
-              <span class="pill">Today ${displayShiftTime(details.hours)}</span>
-              <span class="pill">${details.distanceLabel}</span>
+        <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
+          <a class="venue-card-link" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile">
+            <div class="venue-art${visual.attrs.className}"${visual.attrs.style}>
+              <span class="venue-card-kicker">Mydancr venue</span>
+              <span class="venue-card-mark">${escapeHtml(initials)}</span>
               ${workingNowMarkup}
             </div>
+            <div class="profile-body">
+              ${venueLineupMarkup(venue, city)}
+              <h3>${safeName}</h3>
+              <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""} · ${escapeHtml(details.distanceLabel)}</div>
+              <div class="pill-row">
+                ${details.hours ? `<span class="pill">${escapeHtml(displayShiftTime(details.hours))}</span>` : ""}
+                ${dealMarkup}
+              </div>
+            </div>
+          </a>
+          <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "heart")}</button>
+          <div class="venue-card-actions" aria-label="${safeName} quick actions">
+            ${venueCardQrMarkup(venue)}
+            ${directionsMarkup}
           </div>
         </article>
       `;
@@ -43760,22 +44292,15 @@
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.name);
       const venueHref = venueExperienceHref(venue, city);
-      const initials = String(venue.name)
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part.charAt(0))
-        .join("")
-        .toUpperCase();
-      const accentPalette = ["#7eeaff", "#c4b5fd", "#f0abfc", "#86efac", "#fda4af"];
-      const accentIndex = [...String(venue.name)].reduce((totalValue, character) => totalValue + character.charCodeAt(0), 0);
-      const accent = accentPalette[accentIndex % accentPalette.length];
+      const initials = venueInitials(venue.name);
+      const accent = venueAccent(venue.name);
+      const visual = venueVisualAttrs(venue, city);
       const localProfiles = venueDancers(city, venue.name);
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       const followsVenue = isFollowingVenue(city, venue.name);
-      const locationLabel = details.address || `${details.city}${details.state ? `, ${details.state}` : ""}`;
+      const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = details.hours
         ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>${escapeHtml(displayShiftTime(details.hours))}</span></span>`
         : "";
@@ -43791,26 +44316,34 @@
         : "";
       const workingLabel = `${workingNow.length} working now`;
       const workingNowMarkup = workingNow.length
-        ? `<a class="home-discovery-feed-status is-now" href="${venueHref}" aria-label="Open ${safeName} venue details, ${escapeHtml(workingLabel)}">${escapeHtml(workingLabel)}</a>`
+        ? `<span class="home-discovery-feed-status is-now">${escapeHtml(workingLabel)}</span>`
         : "";
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
+      const visualLabel = venue.coverImageUrl
+        ? `${safeName} venue cover`
+        : visual.featuredProfile
+          ? `${safeName} featuring ${escapeHtml(visual.featuredProfile.name)}`
+          : `${safeName} venue artwork`;
       return `
         <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}" style="--venue-accent:${accent}">
-          <div class="home-venue-discovery-art" aria-hidden="true"><span>${escapeHtml(initials)}</span></div>
+          <div class="home-venue-discovery-art${visual.attrs.className}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
+            <span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>
+          </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
+          <a class="home-discovery-feed-open-profile" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile"></a>
+          <span class="home-venue-discovery-kicker">Mydancr venue</span>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
           <div class="home-discovery-feed-copy">
+            ${venueLineupMarkup(venue, city, { mobile: true })}
             <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
-            ${hoursMarkup}
-            ${workingNowMarkup}
+            <span class="home-venue-discovery-meta">${hoursMarkup}${workingNowMarkup}</span>
             ${dealMarkup}
           </div>
           <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
             ${qrMarkup}
-            <a class="home-discovery-feed-profile-button" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Venue")}</a>
-            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
             ${directionsMarkup}
+            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
           </div>
         </article>
       `;

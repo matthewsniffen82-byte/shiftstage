@@ -263,7 +263,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?const workingNowMarkup = workingNow\.length[\s\S]*?<a class="home-discovery-feed-status is-now" href="\$\{venueHref\}"[\s\S]*?: "";/,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?const workingNowMarkup = workingNow\.length[\s\S]*?<span class="home-discovery-feed-status is-now">[\s\S]*?: "";/,
   );
   assert.match(
     homeSource,
@@ -276,11 +276,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   const venueSlide = homeSource.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
-  assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
+  assert.match(venueSlide, /home-discovery-feed-open-profile" href="\$\{venueHref\}"/);
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /home-discovery-feed-profile-button" href="\$\{venueHref\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"/,
   );
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(

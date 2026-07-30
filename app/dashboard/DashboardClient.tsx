@@ -699,11 +699,15 @@ function VenuePanel({
   });
   const [qrLabel, setQrLabel] = useState("");
   const [qrFile, setQrFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [profileStatus, setProfileStatus] = useState("");
   const [qrStatus, setQrStatus] = useState("");
+  const [coverStatus, setCoverStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPublishingCover, setIsPublishingCover] = useState(false);
   const qrFileInputRef = useRef<HTMLInputElement>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setForm({
@@ -793,6 +797,61 @@ function VenuePanel({
     }
   }
 
+  async function uploadCover(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) return setCoverStatus("Sign in required.");
+    if (!coverFile) return setCoverStatus("Choose a venue image first.");
+    setIsPublishingCover(true);
+    setCoverStatus("Checking and publishing venue image...");
+    try {
+      const body = new FormData();
+      body.set("file", coverFile);
+      const response = await fetch("/api/venue/cover-image", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+        body,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to publish venue image.");
+      }
+      onProfileChange(data.profile);
+      setCoverFile(null);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = "";
+      setCoverStatus(data.message || "Venue image published.");
+    } catch (error) {
+      setCoverStatus(error instanceof Error ? error.message : "Unable to publish venue image.");
+    } finally {
+      setIsPublishingCover(false);
+    }
+  }
+
+  async function removeCover() {
+    const session = readSession();
+    if (!session?.accessToken) return setCoverStatus("Sign in required.");
+    setIsPublishingCover(true);
+    setCoverStatus("");
+    try {
+      const response = await fetch("/api/venue/cover-image", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to remove venue image.");
+      }
+      onProfileChange(data.profile);
+      setCoverFile(null);
+      if (coverFileInputRef.current) coverFileInputRef.current.value = "";
+      setCoverStatus(data.message || "Venue image removed.");
+    } catch (error) {
+      setCoverStatus(error instanceof Error ? error.message : "Unable to remove venue image.");
+    } finally {
+      setIsPublishingCover(false);
+    }
+  }
+
   return (
     <>
       <InfoPanel title="Audience">
@@ -834,6 +893,43 @@ function VenuePanel({
           ) : null}
           {profileStatus ? <p role="status">{profileStatus}</p> : null}
         </form>
+      </article>
+      <article className="info-panel venue-cover-panel">
+        <div className="venue-cover-copy">
+          <h2>Discovery cover</h2>
+          <p>Publish a high-quality venue or branded nightlife image. Every upload is safety checked before it appears on discovery cards and your live venue page.</p>
+          <small>Use a portrait, square, or landscape JPEG, PNG, or WebP at least 720 × 720 pixels.</small>
+        </div>
+        {profile?.coverImageUrl ? (
+          <img
+            src={String(profile.coverImageUrl)}
+            alt={`${String(profile.name || "Venue")} discovery cover`}
+          />
+        ) : null}
+        <form onSubmit={uploadCover}>
+          <label>
+            Venue image
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              ref={coverFileInputRef}
+              type="file"
+              onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
+            />
+          </label>
+          <button type="submit" disabled={isPublishingCover}>
+            {isPublishingCover
+              ? "Publishing..."
+              : profile?.coverImageUrl
+                ? "Replace venue image"
+                : "Publish venue image"}
+          </button>
+          {profile?.coverImageUrl ? (
+            <button type="button" disabled={isPublishingCover} onClick={removeCover}>
+              Remove image
+            </button>
+          ) : null}
+        </form>
+        {coverStatus ? <p role="status">{coverStatus}</p> : null}
       </article>
       <article className="info-panel venue-qr-panel">
         <h2>Published venue QR</h2>
@@ -2668,7 +2764,7 @@ function DashboardStyles() {
       .visibility-panel button:disabled { opacity: .62; cursor: wait; }
       .visibility-panel.is-incognito { border-color: rgba(148,229,255,.34); box-shadow: inset 0 0 0 1px rgba(148,229,255,.08); }
       .visibility-copy { display: grid; gap: 10px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel { grid-column: span 3; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -2792,10 +2888,16 @@ function DashboardStyles() {
       .saved-deal-item.unavailable { opacity: .62; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .venue-profile-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
-      .venue-profile-panel label, .venue-qr-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
-      .venue-profile-panel input, .venue-qr-panel input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; box-sizing: border-box; }
-      .venue-profile-panel button, .venue-qr-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font: inherit; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .venue-profile-panel label, .venue-cover-panel label, .venue-qr-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .venue-profile-panel input, .venue-cover-panel input, .venue-qr-panel input { min-height: 42px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; box-sizing: border-box; }
+      .venue-profile-panel button, .venue-cover-panel button, .venue-qr-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font: inherit; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .venue-profile-panel a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: #fff; border: 1px solid rgba(255,255,255,.14); text-decoration: none; font-weight: 900; }
+      .venue-cover-panel { grid-template-columns: minmax(0, 1fr) minmax(220px, 340px); align-items: start; }
+      .venue-cover-copy { display: grid; gap: 9px !important; }
+      .venue-cover-copy small { color: #94e5ff; font-size: 13px; line-height: 1.5; }
+      .venue-cover-panel > img { grid-column: 2; grid-row: 1 / span 3; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 1px solid rgba(126,234,255,.22); border-radius: 12px; background: #050507; box-shadow: 0 18px 42px rgba(0,0,0,.36); }
+      .venue-cover-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 10px; }
+      .venue-cover-panel > p[role="status"] { color: #94e5ff; font-size: 14px; }
       .venue-qr-panel { grid-template-columns: minmax(0, 1fr) minmax(190px, 260px); align-items: start; }
       .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric { grid-column: 1; }
       .venue-qr-panel > img { grid-column: 2; grid-row: 1 / span 4; width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
@@ -2809,7 +2911,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-qr-panel, .customer-saved-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-qr-panel > img { max-width: 260px; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

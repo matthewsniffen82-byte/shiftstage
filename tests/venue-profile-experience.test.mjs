@@ -46,7 +46,7 @@ test("venue entry points use the canonical in-app venue profile", () => {
   );
   assert.match(
     liveApp,
-    /function venueCard\(venue\)[\s\S]*?const venueHref = venueExperienceHref\(venue, citySelect\.value\)/,
+    /function venueCard\(venue\)[\s\S]*?const city = citySelect\.value[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
   );
   assert.match(
     liveApp,

@@ -1,10 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  MODERATION_TEMP_BUCKET,
+  moderateImageWithOpenAI,
+} from "./image-moderation";
 import { validateAndPrepareDancrImage } from "./image-validation";
+import { evaluateDancrImageModeration } from "./moderation-policy";
 import type { VenueDashboardAnalytics, VenueDashboardDancer, VenueOwnerProfile } from "./types";
 
 type DancrClient = SupabaseClient;
 
 const QR_BUCKET = "venue-qr-codes";
+const COVER_BUCKET = "venue-cover-images";
 
 export async function ensureVenueForAccount(
   client: DancrClient,
@@ -151,6 +157,113 @@ export async function deleteVenueQrCode(client: DancrClient, userId: string): Pr
   return toVenueOwnerProfile(client, data);
 }
 
+export async function uploadVenueCoverImage(
+  client: DancrClient,
+  userId: string,
+  file: Blob,
+): Promise<VenueOwnerProfile> {
+  const venue = await requireVenueForAccount(client, userId);
+  const image = await validateAndPrepareDancrImage(file);
+  if (image.width < 720 || image.height < 720) {
+    throw new Error("Venue cover image must be at least 720 by 720 pixels.");
+  }
+
+  const ratio = image.width / image.height;
+  if (ratio < 0.65 || ratio > 1.9) {
+    throw new Error("Choose a portrait, square, or landscape venue image.");
+  }
+
+  const tempPath = `${userId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
+  const finalPath = `${venue.id}/${Date.now()}-${image.storageFileName}`;
+  let finalUploaded = false;
+
+  try {
+    const { error: tempUploadError } = await client.storage
+      .from(MODERATION_TEMP_BUCKET)
+      .upload(tempPath, image.buffer, {
+        contentType: image.contentType,
+        cacheControl: "300",
+        upsert: false,
+      });
+    if (tempUploadError) throw tempUploadError;
+
+    const evaluation = evaluateDancrImageModeration(
+      await moderateImageWithOpenAI(client, tempPath),
+    );
+    if (evaluation.decision !== "approved") {
+      console.warn("VENUE_COVER_MODERATION_BLOCKED", {
+        venueId: venue.id,
+        decision: evaluation.decision,
+        reasonCodes: evaluation.reasonCodes,
+      });
+      throw new Error(
+        evaluation.decision === "rejected"
+          ? "This image does not meet the venue cover safety requirements."
+          : "This image could not be published automatically. Choose a different venue image.",
+      );
+    }
+
+    const { error: finalUploadError } = await client.storage
+      .from(COVER_BUCKET)
+      .upload(finalPath, image.buffer, {
+        contentType: image.contentType,
+        cacheControl: "31536000",
+        upsert: false,
+      });
+    if (finalUploadError) throw finalUploadError;
+    finalUploaded = true;
+
+    const { data, error } = await client
+      .from("venues")
+      .update({
+        cover_image_storage_path: finalPath,
+        cover_image_updated_at: new Date().toISOString(),
+      })
+      .eq("id", venue.id)
+      .eq("owner_user_id", userId)
+      .select(VENUE_OWNER_COLUMNS)
+      .single();
+
+    if (error) throw error;
+    if (venue.coverImageStoragePath && venue.coverImageStoragePath !== finalPath) {
+      await client.storage.from(COVER_BUCKET).remove([venue.coverImageStoragePath]).catch(() => null);
+    }
+    console.info("VENUE_COVER_PUBLISHED", { venueId: venue.id });
+    return toVenueOwnerProfile(client, data);
+  } catch (error) {
+    if (finalUploaded) {
+      await client.storage.from(COVER_BUCKET).remove([finalPath]).catch(() => null);
+    }
+    throw error;
+  } finally {
+    await client.storage.from(MODERATION_TEMP_BUCKET).remove([tempPath]).catch(() => null);
+  }
+}
+
+export async function deleteVenueCoverImage(
+  client: DancrClient,
+  userId: string,
+): Promise<VenueOwnerProfile> {
+  const venue = await requireVenueForAccount(client, userId);
+  const { data, error } = await client
+    .from("venues")
+    .update({
+      cover_image_storage_path: null,
+      cover_image_updated_at: null,
+    })
+    .eq("id", venue.id)
+    .eq("owner_user_id", userId)
+    .select(VENUE_OWNER_COLUMNS)
+    .single();
+
+  if (error) throw error;
+  if (venue.coverImageStoragePath) {
+    await client.storage.from(COVER_BUCKET).remove([venue.coverImageStoragePath]).catch(() => null);
+  }
+  console.info("VENUE_COVER_REMOVED", { venueId: venue.id });
+  return toVenueOwnerProfile(client, data);
+}
+
 export async function getVenueDashboard(
   client: DancrClient,
   userId: string,
@@ -205,7 +318,7 @@ export async function getVenueDashboard(
 }
 
 const VENUE_OWNER_COLUMNS =
-  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, qr_code_storage_path, qr_code_label, qr_code_updated_at";
+  "id, owner_user_id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
 
 async function requireVenueForAccount(client: DancrClient, userId: string) {
   const venue = await getVenueForAccount(client, userId);
@@ -228,6 +341,11 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     opensAt: row.opens_at || null,
     closesAt: row.closes_at || null,
     isActive: row.is_active !== false,
+    coverImageStoragePath: row.cover_image_storage_path || null,
+    coverImageUrl: row.cover_image_storage_path
+      ? client.storage.from(COVER_BUCKET).getPublicUrl(row.cover_image_storage_path).data.publicUrl
+      : null,
+    coverImageUpdatedAt: row.cover_image_updated_at || null,
     qrCodeStoragePath: row.qr_code_storage_path || null,
     qrCodeUrl: row.qr_code_storage_path
       ? client.storage.from(QR_BUCKET).getPublicUrl(row.qr_code_storage_path).data.publicUrl
