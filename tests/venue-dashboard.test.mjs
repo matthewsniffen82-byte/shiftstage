@@ -66,7 +66,9 @@ test("uploaded venue QR images are validated, safely stored, and published on el
   assert.match(migration, /insert into storage\.buckets \(id, name, public, file_size_limit, allowed_mime_types\)/);
   assert.match(migration, /image\/jpeg.*image\/png.*image\/webp/s);
   assert.match(publicVenueSource, /qr_code_storage_path/);
-  assert.match(publicVenuePage, /<VenueQrCode/);
+  assert.match(publicVenuePage, /permanentRedirect\(`\/\?\$\{query\.toString\(\)\}`\)/);
+  assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?publishedVenueQrPass/);
+  assert.match(liveApp, /data-feed-venue-qr/);
   assert.match(dancerPage, /activeShift\.venueQrCodeUrl/);
   assert.match(dancerPage, /Boolean\(shift\.checkedInAt\)/);
   assert.match(dancerPage, /!shift\.checkedOutAt/);

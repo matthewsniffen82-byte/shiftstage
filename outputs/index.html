@@ -36170,6 +36170,16 @@
       return `mydancr-${venue}${source}-qr.${extension}`;
     }
 
+    function venueExperienceHref(venue, city = selectedCity()) {
+      const venueSlug = String(venue?.slug || slugify(venue?.name || "")).trim();
+      const venueCity = String(city || selectedCity()).trim() || "Las Vegas";
+      const query = new URLSearchParams({
+        city: venueCity,
+        venue: venueSlug
+      });
+      return `/?${query.toString()}`;
+    }
+
     function publishedVenueQrPass({
       venueId,
       venueSlug,
@@ -36180,7 +36190,10 @@
       dancerId = "",
       dancerName = ""
     }) {
-      const url = `${window.location.origin}/venues/${encodeURIComponent(venueSlug || slugify(venueName))}`;
+      const url = new URL(
+        venueExperienceHref({ slug: venueSlug, name: venueName }),
+        window.location.origin
+      ).toString();
       return {
         id: `${sourceType}-${venueId}-${dancerId || "venue"}`,
         venueId,
@@ -36529,7 +36542,7 @@
           sourceType: "club_page"
         };
         return `
-          <article class="venue-offer-card revenue-offer-card">
+          <article class="venue-offer-card revenue-offer-card" id="club-deal">
             <div class="venue-offer-grid">
               <div>
                 <span class="eyebrow">Club Deal</span>
@@ -36552,7 +36565,7 @@
       });
       recordVenuePageEvent({ venueId: venue.id, eventType: "qr_impression", source: "venue_page" });
       return `
-        <article class="venue-offer-card">
+        <article class="venue-offer-card" id="club-deal">
           <div class="venue-offer-grid">
             <div>
               <span class="eyebrow">Venue QR</span>
@@ -38454,9 +38467,7 @@
       const details = venueDetails(venue, citySelect.value);
       const initials = venue.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       const safeName = escapeHtml(venue.name);
-      const venueHref = venue.slug
-        ? `/venues/${encodeURIComponent(venue.slug)}`
-        : `#venue-${slugify(venue.name)}`;
+      const venueHref = venueExperienceHref(venue, citySelect.value);
       const workingNowCount = venueDancers(citySelect.value, venue.name)
         .filter((profile) => isWorkingTonight(profile, citySelect.value))
         .length;
@@ -43495,9 +43506,7 @@
       const details = venueDetails(venue, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.name);
-      const venueHref = venue.slug
-        ? `/venues/${encodeURIComponent(venue.slug)}`
-        : `#venue-${slugify(venue.name)}`;
+      const venueHref = venueExperienceHref(venue, city);
       const initials = String(venue.name)
         .trim()
         .split(/\s+/)
@@ -44252,7 +44261,10 @@
       if (venueName && venueSlug) {
         const venue = document.createElement("a");
         venue.className = "home-tv-feed-venue";
-        venue.href = `/venues/${encodeURIComponent(venueSlug)}`;
+        venue.href = venueExperienceHref(
+          { slug: venueSlug, name: venueName },
+          item?.dancer?.city || citySelect.value
+        );
         venue.setAttribute("aria-label", `Open ${venueName} venue profile`);
         venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
         venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
@@ -45255,12 +45267,12 @@
     document.getElementById("dancerDashboardClose").addEventListener("click", closeDancerDashboard);
     document.getElementById("venueDashboardClose").addEventListener("click", closeVenueDashboard);
     document.getElementById("venuePreviewPageBtn").addEventListener("click", () => {
-      const slug = liveVenueDashboard?.profile?.slug;
-      if (!slug) {
+      const profile = liveVenueDashboard?.profile;
+      if (!profile?.slug) {
         showToast("Venue page is still loading");
         return;
       }
-      window.location.href = `/venues/${encodeURIComponent(slug)}`;
+      window.location.href = venueExperienceHref(profile, profile.city || citySelect.value);
     });
     document.getElementById("venueProfileForm").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -46853,6 +46865,14 @@
       });
     }
 
+    function scrollToSharedVenueSection() {
+      const sectionId = window.location.hash.slice(1);
+      if (!sectionId) return;
+      requestAnimationFrame(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+
     function openSharedProfileFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const city = params.get("city");
@@ -46866,7 +46886,10 @@
       if (venueSlug) {
         const venue = resolveVenueByName(venueSlug, city);
         if (venue) {
-          setTimeout(() => openVenueFromName(venue.slug || venue.name), 120);
+          setTimeout(() => {
+            openVenueFromName(venue.slug || venue.name);
+            scrollToSharedVenueSection();
+          }, 120);
         }
         return;
       }

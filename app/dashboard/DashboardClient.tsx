@@ -606,7 +606,10 @@ function CustomerSavedPanel({ saved }: { saved?: LoadState["saved"] }) {
             if (!venue?.slug || !venue.name) return null;
             const location = [venue.city, venue.state].filter(Boolean).join(", ");
             return (
-              <Link href={`/venues/${encodeURIComponent(venue.slug)}`} key={`${venue.slug}-${index}`}>
+              <Link
+                href={`/?city=${encodeURIComponent(venue.city || "")}&venue=${encodeURIComponent(venue.slug)}`}
+                key={`${venue.slug}-${index}`}
+              >
                 <strong>{venue.name}</strong>
                 <small>{location || "Location unavailable"}</small>
               </Link>
@@ -822,7 +825,13 @@ function VenuePanel({
             </label>
           ))}
           <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button>
-          {profile?.slug ? <Link href={`/venues/${profile.slug}`}>Open live venue page</Link> : null}
+          {profile?.slug ? (
+            <Link
+              href={`/?city=${encodeURIComponent(String(profile.city || ""))}&venue=${encodeURIComponent(String(profile.slug))}`}
+            >
+              Open live venue page
+            </Link>
+          ) : null}
           {profileStatus ? <p role="status">{profileStatus}</p> : null}
         </form>
       </article>

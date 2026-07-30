@@ -256,7 +256,7 @@ test("administrator and venue controls persist confirmed decisions", () => {
   assert.match(venuePanel, /Venue visits/);
 });
 
-test("approved videos appear on real dancer and venue pages", () => {
+test("approved videos appear on dancer pages while venue URLs preserve the in-app experience", () => {
   assert.match(dancerPage, /getPublicMyDancrTvFeed/);
   assert.match(dancerPage, /dancerId: profile\.id/);
   assert.match(dancerPage, /<TvVideoStrip/);
@@ -307,8 +307,8 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.match(tvPage, /dancerId,[\s\S]*?initialDancerId=\{dancerId \|\| ""\}/);
   assert.match(feedClient, /if \(initialDancerId\) params\.set\("dancer", initialDancerId\)/);
   assert.match(feedClient, /if \(initialDancerId\) url\.searchParams\.set\("dancer", initialDancerId\)/);
-  assert.match(venuePage, /getPublicMyDancrTvFeed/);
-  assert.match(venuePage, /venueId: venue\.id/);
-  assert.match(venuePage, /<TvVideoStrip/);
-  assert.doesNotMatch(venuePage, /watchAllHref|href=\{`\/tv/);
+  assert.match(venuePage, /new URLSearchParams\(\{[\s\S]*?city: venue\.city[\s\S]*?venue: venue\.slug/);
+  assert.match(venuePage, /permanentRedirect/);
+  assert.match(liveApp, /function venueDetailPage\(venue\)/);
+  assert.doesNotMatch(venuePage, /TvVideoStrip|watchAllHref|href=\{`\/tv/);
 });

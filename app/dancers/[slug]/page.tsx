@@ -99,7 +99,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 Browse {profile.city}
               </Link>
               {primaryShift?.venueSlug ? (
-                <Link href={`/venues/${primaryShift.venueSlug}`}>
+                <Link
+                  href={`/?city=${encodeURIComponent(profile.city)}&venue=${encodeURIComponent(primaryShift.venueSlug)}`}
+                >
                   {primaryShift.venueName}
                 </Link>
               ) : null}
@@ -160,7 +162,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
               return (
                 <Link
                   className={`shift-row${workingNow ? " is-working" : ""}`}
-                  href={`/venues/${shift.venueSlug}`}
+                  href={`/?city=${encodeURIComponent(profile.city)}&venue=${encodeURIComponent(shift.venueSlug)}`}
                   key={shift.id}
                 >
                   <span className="shift-date">

@@ -6,17 +6,12 @@ const [
   homeSource,
   dancerPage,
   venuePage,
-  venueStyles,
   floatingControl,
   floatingStyles,
 ] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8"),
-  readFile(
-    new URL("../app/venues/[slug]/VenueProfile.module.css", import.meta.url),
-    "utf8",
-  ),
   readFile(
     new URL("../app/components/FloatingProfileHomeLink.tsx", import.meta.url),
     "utf8",
@@ -45,7 +40,7 @@ test("the homepage full dancer profile keeps the glass city-return control", () 
   );
 });
 
-test("full dancer and venue pages share one city-preserving glass home control", () => {
+test("the standalone dancer profile keeps its home control while venue URLs return to the in-app experience", () => {
   assert.match(
     floatingControl,
     /profileType: "dancer" \| "venue"/,
@@ -71,12 +66,7 @@ test("full dancer and venue pages share one city-preserving glass home control",
     dancerPage,
     /@media \(max-width: 760px\)[\s\S]*?\.profile-global-topbar \{ grid-template-columns: 46px[\s\S]*?\.profile-global-logo \{ visibility: hidden;/,
   );
-  assert.match(
-    venuePage,
-    /<FloatingProfileHomeLink city=\{venue\.city\} profileType="venue" \/>/,
-  );
-  assert.match(
-    venueStyles,
-    /@media \(max-width: 720px\)[\s\S]*?\.brand \{\s*visibility: hidden;/,
-  );
+  assert.match(venuePage, /permanentRedirect\(`\/\?\$\{query\.toString\(\)\}`\)/);
+  assert.doesNotMatch(venuePage, /FloatingProfileHomeLink/);
+  assert.match(homeSource, /function venueDetailPage\(venue\)/);
 });

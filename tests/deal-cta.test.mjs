@@ -49,14 +49,14 @@ test("dancer-attributed Club Deals require a verified active check-in at generat
   assert.match(passPage, /const qrDataUrl = isAvailable/);
 });
 
-test("venue pages and directory cards promote real active deals with a mobile sticky CTA", () => {
-  assert.match(venuePage, /sectionId="club-deal"[\s\S]*?stickyCta/);
-  assert.match(venuePage, /venueName=\{venue\.name\}/);
+test("venue pages and directory cards promote real active deals inside the canonical experience", () => {
+  assert.match(venuePage, /permanentRedirect\(`\/\?\$\{query\.toString\(\)\}`\)/);
+  assert.doesNotMatch(venuePage, /stickyCta|ClubDealCard/);
+  assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?id="club-deal"/);
+  assert.match(liveApp, /clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/);
   assert.match(venueDirectory, /getActiveClubDealsForVenues/);
   assert.match(venueDirectory, /venue\.activeDeal[\s\S]*?className="venue-card-deal"/);
-  assert.match(venueDirectory, /href=\{`\/venues\/\$\{venue\.slug\}#club-deal`\}/);
-  assert.match(dealCard, /className="club-deal-sticky"/);
-  assert.match(dealCard, /@media \(max-width: 760px\)[\s\S]*?\.club-deal-sticky \{ position: fixed/);
+  assert.match(venueDirectory, /href=\{`\/\?city=\$\{encodeURIComponent\(venue\.city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/);
 });
 
 test("deal generation produces a durable pass with save and share actions", () => {

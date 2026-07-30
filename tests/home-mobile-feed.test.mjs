@@ -68,7 +68,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
     homeSource,
     /dancer\.href = dancerSlug \? `\/dancers\/\$\{encodeURIComponent\(dancerSlug\)\}` : "#"/,
   );
-  assert.match(homeSource, /venue\.href = `\/venues\/\$\{encodeURIComponent\(venueSlug\)\}`/);
+  assert.match(homeSource, /venue\.href = venueExperienceHref\([\s\S]*?\{ slug: venueSlug, name: venueName \}[\s\S]*?item\?\.dancer\?\.city \|\| citySelect\.value/);
   assert.match(homeSource, /"Working now"[\s\S]*?`Upcoming \$\{formatProfileTvShift/);
   assert.match(
     homeSource,

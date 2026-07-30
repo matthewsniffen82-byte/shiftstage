@@ -46,6 +46,6 @@ test("the production venue directory keeps card bodies passive and deal CTAs cli
   assert.doesNotMatch(venuesPageSource, /<Link className="venue-card-main"/);
   assert.match(
     venuesPageSource,
-    /<Link className="venue-card-deal" href=\{`\/venues\/\$\{venue\.slug\}#club-deal`\}>/,
+    /className="venue-card-deal"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(venue\.city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/,
   );
 });
