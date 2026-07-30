@@ -253,7 +253,7 @@ async function approveSyntheticProfile(userId, definition) {
       disabled_at: null,
       is_public: true,
       photo_review_status: "approved",
-      real_name: null,
+      real_name: definition.stageName,
       slug: definition.slug,
       stage_name: definition.stageName,
       status: "approved",

@@ -84,7 +84,7 @@ test("layout-review approval supports the deployed auto-approval schema", () => 
   assert.doesNotMatch(approvalFunction, /identity_provider|identity_verified_at/);
   assert.match(
     approvalFunction,
-    /status: "approved"[\s\S]*?verification_status: "approved"/,
+    /real_name: definition\.stageName[\s\S]*?status: "approved"[\s\S]*?verification_status: "approved"/,
   );
 });
 
