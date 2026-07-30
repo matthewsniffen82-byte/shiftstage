@@ -54,11 +54,18 @@ test("venue pages and directory cards promote real active deals", () => {
   assert.doesNotMatch(venuePage, /ClubDealCard|stickyCta/);
   assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?id="club-deal"/);
   assert.match(liveApp, /clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/);
-  assert.match(venueDirectory, /getActiveClubDealsForVenues/);
-  assert.match(venueDirectory, /venue\.activeDeal[\s\S]*?className="venue-card-deal"/);
   assert.match(
     venueDirectory,
-    /href=\{`\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/,
+    /permanentRedirect\(homeDiscoveryHref\("venues", params\.city\)\)/,
+  );
+  assert.doesNotMatch(venueDirectory, /getActiveClubDealsForVenues|venue-card-deal/);
+  assert.match(
+    liveApp,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
+  );
+  assert.match(
+    liveApp,
+    /const dealMarkup = dealTitle[\s\S]*?Club Deal[\s\S]*?homeVenueDiscoveryQrMarkup\(venue\)/,
   );
 });
 

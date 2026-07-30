@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
 const SESSION_KEY = "dancrAuthSessionV1";
@@ -501,7 +502,7 @@ export default function TvFeedClient({
           </p>
           <div>
             {filter === "following" ? <button type="button" onClick={() => changeFilter("for-you")}>Explore videos</button> : null}
-            <Link href={`/dancers?city=${encodeURIComponent(city)}`}>Browse dancers</Link>
+            <Link href={homeDiscoveryHref("dancers", city)}>Browse dancers</Link>
           </div>
         </section>
       ) : null}
@@ -735,7 +736,7 @@ function dancerLiveProfileHref(video: MyDancrTvVideo) {
   const slug = video.dancer.slug.trim();
   return slug
     ? `/?city=${encodeURIComponent(city)}&profile=${encodeURIComponent(slug)}`
-    : `/dancers?city=${encodeURIComponent(city)}`;
+    : homeDiscoveryHref("dancers", city);
 }
 
 function venueLiveProfileHref(video: MyDancrTvVideo) {

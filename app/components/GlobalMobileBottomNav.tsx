@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 const DEFAULT_CITY = "Las Vegas";
 
@@ -10,7 +11,7 @@ const destinations = [
   {
     id: "tonight",
     label: "Now",
-    path: "/tonight",
+    view: "tonight",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 11.2 12 4l8 7.2" />
@@ -22,7 +23,7 @@ const destinations = [
   {
     id: "dancers",
     label: "Dancers",
-    path: "/dancers",
+    view: "dancers",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="8" r="3.2" />
@@ -44,7 +45,7 @@ const destinations = [
   {
     id: "venues",
     label: "Venues",
-    path: "/venues",
+    view: "venues",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M5 20V7l7-3 7 3v13" />
@@ -56,7 +57,7 @@ const destinations = [
   {
     id: "trending",
     label: "Trending",
-    path: "/trending",
+    view: "trending",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="m4 17 5-5 3.5 3.5L20 8" />
@@ -88,7 +89,10 @@ export function GlobalMobileBottomNav() {
       >
         {destinations.map((destination) => {
           const active = isActiveDestination(pathname, destination.id);
-          const href = `${destination.path}?city=${encodeURIComponent(city)}`;
+          const href =
+            "view" in destination
+              ? homeDiscoveryHref(destination.view, city)
+              : `${destination.path}?city=${encodeURIComponent(city)}`;
           return (
             <Link
               aria-current={active ? "page" : undefined}

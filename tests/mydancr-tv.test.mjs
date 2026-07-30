@@ -90,11 +90,11 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}`/);
   assert.match(feedClient, /className="tv-header"[\s\S]*?<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(globalNavigation, /path: "\/tonight"/);
-  assert.match(globalNavigation, /path: "\/dancers"/);
+  assert.match(globalNavigation, /view: "tonight"/);
+  assert.match(globalNavigation, /view: "dancers"/);
   assert.match(globalNavigation, /path: "\/tv"/);
-  assert.match(globalNavigation, /path: "\/venues"/);
-  assert.match(globalNavigation, /path: "\/trending"/);
+  assert.match(globalNavigation, /view: "venues"/);
+  assert.match(globalNavigation, /view: "trending"/);
   assert.match(feedClient, /className="tv-global-header"/);
   assert.match(feedClient, /className="tv-global-logo" href=\{homepageHref\} aria-label="Go to Mydancr home"/);
   assert.doesNotMatch(feedClient, /className="tv-global-search"|className="tv-site-nav"/);
@@ -137,7 +137,10 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(tvSource, /\.select\("id, dancer_profiles!inner\(id\)", \{ count: "exact", head: true \}\)/);
   assert.match(tvSource, /\.eq\("dancer_profiles\.status", "approved"\)[\s\S]*?\.eq\("dancer_profiles\.verification_status", "approved"\)[\s\S]*?\.is\("dancer_profiles\.disabled_at", null\)[\s\S]*?\.eq\("dancer_profiles\.is_public", true\)/);
   assert.match(feedClient, /className="tv-profile-card"[\s\S]*?<video[\s\S]*?href=\{dancerLiveProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}/);
-  assert.match(feedClient, /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?const city = video\.dancer\.city\.trim\(\) \|\| "Las Vegas";[\s\S]*?const slug = video\.dancer\.slug\.trim\(\);[\s\S]*?`\/\?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(slug\)\}`/);
+  assert.match(
+    feedClient,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?const city = video\.dancer\.city\.trim\(\) \|\| "Las Vegas";[\s\S]*?const slug = video\.dancer\.slug\.trim\(\);[\s\S]*?`\/\?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(slug\)\}`[\s\S]*?homeDiscoveryHref\("dancers", city\)/,
+  );
   assert.match(feedClient, /function venueLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.city\.trim\(\)[\s\S]*?return `\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\)\}`/);
   assert.match(feedClient, /function slugifyLiveProfileName\(value: string\) \{[\s\S]*?replaceAll\(" ", "-"\)[\s\S]*?replace\(\/\[\^a-z0-9-\]\/g, ""\)/);
   assert.doesNotMatch(feedClient, /slugifyLiveProfileName\(video\.dancer\.stageName\)|`\/dancers\/\$\{encodeURIComponent\(slug\)\}`/);

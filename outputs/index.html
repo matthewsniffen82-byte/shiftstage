@@ -45028,6 +45028,7 @@
       dancersExpanded = false;
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
+      clearHomeDestinationLocation();
       render();
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -47480,6 +47481,39 @@
     const homeBottomTv = document.getElementById("homeBottomTv");
     const homeDestinationOrder = ["tonight", "dancers", "tv", "venues", "trending"];
 
+    function homeDestinationFromLocation() {
+      const requestedView = new URLSearchParams(window.location.search).get("view");
+      return homeDestinationOrder.includes(requestedView) ? requestedView : null;
+    }
+
+    function syncHomeDestinationLocation(nextTab) {
+      if (!homeDestinationOrder.includes(nextTab)) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("city", citySelect.value);
+      url.searchParams.set("view", nextTab);
+      url.searchParams.delete("profile");
+      url.searchParams.delete("venue");
+      const search = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${search ? `?${search}` : ""}${url.hash}`
+      );
+    }
+
+    function clearHomeDestinationLocation() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("view");
+      url.searchParams.delete("profile");
+      url.searchParams.delete("venue");
+      const search = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}${search ? `?${search}` : ""}${url.hash}`
+      );
+    }
+
     function activateHomeDestination(nextTab) {
       if (!homeDestinationOrder.includes(nextTab)) return false;
       if (profileBackdrop.classList.contains("show")) return false;
@@ -47501,6 +47535,7 @@
       const isTv = nextTab === "tv";
       homeBottomTv?.classList.toggle("active", isTv);
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
+      syncHomeDestinationLocation(nextTab);
       render();
       if (isTv) {
         window.requestAnimationFrame(focusAndLockHomeTvFeed);
@@ -47650,7 +47685,7 @@
 
     viewAllBtn.addEventListener("click", () => {
       if (activeTab === "venues") {
-        window.location.assign(`/venues?city=${encodeURIComponent(citySelect.value)}`);
+        activateHomeDestination("venues");
         return;
       }
       if (activeTab === "tonight") tonightExpanded = true;
@@ -47825,8 +47860,27 @@
     if (initialProfileCity && markets[initialProfileCity]) {
       citySelect.value = initialProfileCity;
     }
+    const initialHomeDestination = homeDestinationFromLocation();
+    if (initialHomeDestination) {
+      activeTab = initialHomeDestination;
+      homeDiscoveryFeedOpen =
+        initialHomeDestination === "venues" &&
+        homeDiscoveryFeedUsesInlineLayout();
+      document.querySelectorAll(".tab").forEach((item) => (
+        item.classList.toggle("active", item.dataset.tab === initialHomeDestination)
+      ));
+      const initialIsTv = initialHomeDestination === "tv";
+      homeBottomTv?.classList.toggle("active", initialIsTv);
+      homeBottomTv?.setAttribute("aria-current", initialIsTv ? "page" : "false");
+    }
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
+    if (initialHomeDestination) {
+      window.requestAnimationFrame(() => {
+        if (initialHomeDestination === "tv") focusAndLockHomeTvFeed();
+        else focusHomeResults();
+      });
+    }
     async function refreshVisibleHomeDiscovery() {
       if (document.visibilityState !== "visible") return;
       await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: false, background: true });

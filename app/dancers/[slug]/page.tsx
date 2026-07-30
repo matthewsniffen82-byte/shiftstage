@@ -4,6 +4,7 @@ import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
 import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import type { ShiftSummary } from "@/src/lib/dancr/types";
@@ -98,7 +99,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
             <strong>{profileStatus.headline}</strong>
             <span>{profileStatus.detail}</span>
             <div className="profile-status-links">
-              <Link href={`/tonight?city=${encodeURIComponent(profile.city)}`}>
+              <Link href={homeDiscoveryHref("tonight", profile.city)}>
                 Browse {profile.city}
               </Link>
               {primaryShift?.venueSlug ? (

@@ -21,6 +21,14 @@ test("every Next page receives the shared five-destination mobile navigation", (
   );
   assert.match(
     navigationSource,
+    /view: "tonight"[\s\S]*?view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"[\s\S]*?view: "trending"/,
+  );
+  assert.match(
+    navigationSource,
+    /homeDiscoveryHref\(destination\.view, city\)/,
+  );
+  assert.match(
+    navigationSource,
     /className="global-mobile-bottom-nav"[\s\S]*?grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/,
   );
   assert.match(

@@ -70,15 +70,18 @@ test("the venue dashboard publishes and removes real moderated cover media", () 
   assert.match(dashboard, /profile\?\.coverImageUrl/);
 });
 
-test("approved cover media flows through discovery, directories, and the canonical live venue profile", () => {
+test("approved cover media flows through discovery and the canonical live venue experience", () => {
   assert.match(discoveryRoute, /cover_image_storage_path/);
   assert.match(discoveryRoute, /coverImageUrl:[\s\S]*?venue-cover-images/);
   assert.match(publicVenuesRoute, /coverImageUrl:[\s\S]*?venue-cover-images/);
   assert.match(publicService, /coverImageUrl: venueCoverImageUrl/);
   assert.match(publicService, /from\("venue-cover-images"\)/);
   assert.match(publicVenuePage, /permanentRedirect\([\s\S]*?venue=\$\{encodeURIComponent\(venue\.slug\)\}/);
-  assert.match(venueDirectory, /cover_image_storage_path/);
-  assert.match(venueDirectory, /venue\.coverImageUrl[\s\S]*?backgroundImage:/);
+  assert.match(
+    venueDirectory,
+    /permanentRedirect\(homeDiscoveryHref\("venues", params\.city\)\)/,
+  );
+  assert.doesNotMatch(venueDirectory, /cover_image_storage_path|backgroundImage:/);
   assert.match(homeSource, /venue\.coverImageUrl \|\| publicProfilePhotoUrl\(featuredProfile\)/);
 });
 

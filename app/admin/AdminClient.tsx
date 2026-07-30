@@ -2,6 +2,7 @@
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminTvPanel from "./AdminTvPanel";
 
@@ -261,10 +262,10 @@ export default function AdminClient() {
           Dancr
         </Link>
         <div className="nav-links">
-          <Link href="/tonight">Now</Link>
-          <Link href="/dancers">Dancers</Link>
-          <Link href="/venues">Venues</Link>
-          <Link href="/trending">Trending</Link>
+          <Link href={homeDiscoveryHref("tonight")}>Now</Link>
+          <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
+          <Link href={homeDiscoveryHref("venues")}>Venues</Link>
+          <Link href={homeDiscoveryHref("trending")}>Trending</Link>
           <Link href="/tv">MyDancr TV</Link>
         </div>
       </nav>

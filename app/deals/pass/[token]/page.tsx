@@ -5,6 +5,7 @@ import {
   dancerHasVerifiedActiveCheckInAtVenue,
   getRedemptionForScanner,
 } from "@/src/lib/dancr/deals";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -51,7 +52,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
       <DealPassStyles />
       <nav>
         <Link href="/">Mydancr</Link>
-        <Link href="/venues">Venues</Link>
+        <Link href={homeDiscoveryHref("venues")}>Venues</Link>
       </nav>
       <section className={isAvailable ? "deal-pass-card" : "deal-pass-card unavailable"}>
         <span className="eyebrow">{isAvailable ? "Club Deal ready" : "Club Deal unavailable"}</span>
@@ -67,7 +68,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
         ) : (
           <>
             <strong>{unavailableMessage(redemption.status, isExpired, hasLiveDancerAttribution)}</strong>
-            <Link className="primary-action" href="/venues">Find another Club Deal</Link>
+            <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find another Club Deal</Link>
           </>
         )}
       </section>

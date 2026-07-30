@@ -44,15 +44,11 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
 });
 
-test("the production venue directory uses image-led cards with explicit profile and deal links", () => {
-  assert.match(venuesPageSource, /className=\{`venue-card-main\$\{venue\.coverImageUrl/);
-  assert.match(venuesPageSource, /backgroundImage: `linear-gradient[\s\S]*?url\("\$\{venue\.coverImageUrl\}"\)`/);
+test("the retired venue directory can only open the canonical homepage venue cards", () => {
+  assert.match(venuesPageSource, /import \{ permanentRedirect \} from "next\/navigation"/);
   assert.match(
     venuesPageSource,
-    /className="venue-card-profile"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}`\}/,
+    /permanentRedirect\(homeDiscoveryHref\("venues", params\.city\)\)/,
   );
-  assert.match(
-    venuesPageSource,
-    /className="venue-card-deal"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/,
-  );
+  assert.doesNotMatch(venuesPageSource, /venue-card-main|venue-card-profile|venue-card-deal/);
 });

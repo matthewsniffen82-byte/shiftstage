@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 type AuthRole = "customer" | "dancer";
 type AuthMode = "login" | "signup";
@@ -238,10 +239,10 @@ export default function AccountClient() {
           Mydancr
         </Link>
         <div className="nav-links">
-          <Link href="/tonight">Now</Link>
-          <Link href="/dancers">Dancers</Link>
-          <Link href="/venues">Venues</Link>
-          <Link href="/trending">Trending</Link>
+          <Link href={homeDiscoveryHref("tonight")}>Now</Link>
+          <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
+          <Link href={homeDiscoveryHref("venues")}>Venues</Link>
+          <Link href={homeDiscoveryHref("trending")}>Trending</Link>
           <Link href="/tv">MyDancr TV</Link>
         </div>
       </nav>
