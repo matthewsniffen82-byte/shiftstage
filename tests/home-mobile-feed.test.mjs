@@ -316,6 +316,10 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
   );
   assert.match(
     homeSource,
+    /\.utility-menu-dashboard\[hidden\] \{[\s\S]*?display: none[\s\S]*?\.utility-menu-dashboard\[hidden\]::after \{[\s\S]*?content: none/,
+  );
+  assert.match(
+    homeSource,
     /\.utility-menu-session-end \{[\s\S]*?border-top: 1px solid rgba\(251,113,133,.18\)[\s\S]*?\.utility-menu-logout \{[\s\S]*?color: #fecdd3[\s\S]*?background: rgba\(69,10,24,.34\)/,
   );
   assert.match(
