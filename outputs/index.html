@@ -28411,6 +28411,129 @@
           font-weight: 850;
           text-shadow: 0 2px 10px rgba(0,0,0,.92);
         }
+        .home-venue-discovery-slide {
+          --venue-accent: #7eeaff;
+          background: #050507;
+        }
+        .home-venue-discovery-art {
+          position: absolute;
+          z-index: 0;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          color: rgba(255,255,255,.16);
+          background:
+            radial-gradient(circle at 70% 22%, color-mix(in srgb, var(--venue-accent) 30%, transparent), transparent 32%),
+            radial-gradient(circle at 16% 75%, rgba(124,58,237,.35), transparent 38%),
+            linear-gradient(145deg, #08080d 0%, #161124 48%, #050507 100%);
+          font-size: clamp(118px, 43vw, 250px);
+          font-weight: 950;
+          letter-spacing: -.08em;
+          line-height: 1;
+          text-transform: uppercase;
+          text-shadow: 0 0 54px color-mix(in srgb, var(--venue-accent) 24%, transparent);
+        }
+        .home-venue-discovery-art::before,
+        .home-venue-discovery-art::after {
+          position: absolute;
+          content: "";
+          pointer-events: none;
+        }
+        .home-venue-discovery-art::before {
+          inset: 7% 7% 20%;
+          border: 1px solid color-mix(in srgb, var(--venue-accent) 42%, transparent);
+          border-radius: 36px;
+          box-shadow:
+            inset 0 0 50px color-mix(in srgb, var(--venue-accent) 12%, transparent),
+            0 0 36px color-mix(in srgb, var(--venue-accent) 12%, transparent);
+        }
+        .home-venue-discovery-art::after {
+          right: 9%;
+          bottom: 26%;
+          left: 9%;
+          height: 1px;
+          background: linear-gradient(90deg,transparent,var(--venue-accent),transparent);
+          box-shadow: 0 0 16px var(--venue-accent);
+        }
+        .home-venue-discovery-art span {
+          position: relative;
+          z-index: 1;
+          transform: translateY(-8%);
+        }
+        .home-venue-discovery-slide .home-discovery-feed-shade {
+          background:
+            linear-gradient(180deg, rgba(0,0,0,.2) 0%, transparent 34%, rgba(0,0,0,.18) 49%, rgba(0,0,0,.98) 100%),
+            linear-gradient(90deg, transparent 58%, rgba(0,0,0,.34) 100%);
+        }
+        .home-venue-discovery-slide .home-discovery-feed-copy {
+          gap: 7px;
+        }
+        .home-venue-discovery-name {
+          display: -webkit-box;
+          max-height: 2.12em;
+          line-height: 1.06;
+          text-overflow: clip;
+          white-space: normal;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
+        .home-venue-discovery-location,
+        .home-venue-discovery-hours,
+        .home-venue-discovery-next {
+          width: fit-content;
+          max-width: 100%;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          overflow: hidden;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 850;
+          line-height: 1.25;
+          text-shadow: 0 2px 12px rgba(0,0,0,.94);
+        }
+        .home-venue-discovery-location span:last-child,
+        .home-venue-discovery-hours span:last-child,
+        .home-venue-discovery-next span:last-child {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-venue-discovery-hours,
+        .home-venue-discovery-next {
+          color: #d9d3e4;
+          font-size: 11px;
+        }
+        .home-venue-discovery-next {
+          color: #b7f4ff;
+        }
+        .home-venue-discovery-deal {
+          width: fit-content;
+          max-width: 100%;
+          display: grid;
+          gap: 2px;
+          padding: 8px 10px;
+          border: 1px solid rgba(77,236,157,.48);
+          border-radius: 12px;
+          color: #fff;
+          background: rgba(4,73,50,.7);
+          box-shadow: 0 8px 24px rgba(0,0,0,.28);
+          backdrop-filter: blur(12px);
+        }
+        .home-venue-discovery-deal span {
+          color: #83f5ba;
+          font-size: 8px;
+          font-weight: 950;
+          letter-spacing: .13em;
+          text-transform: uppercase;
+        }
+        .home-venue-discovery-deal strong {
+          overflow: hidden;
+          font-size: 12px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
         .home-discovery-feed-actions {
           position: absolute;
           z-index: 4;
@@ -28468,6 +28591,11 @@
           border-color: rgba(77,236,157,.72);
           background: linear-gradient(135deg,rgba(16,128,74,.94),rgba(7,92,77,.94));
           box-shadow: 0 8px 24px rgba(10,116,78,.38), inset 0 1px 0 rgba(255,255,255,.18);
+        }
+        .home-discovery-feed-actions .home-venue-discovery-deal-action {
+          border-color: rgba(77,236,157,.78);
+          background: linear-gradient(135deg,rgba(19,139,80,.96),rgba(9,88,75,.96));
+          box-shadow: 0 8px 24px rgba(10,116,78,.42), inset 0 1px 0 rgba(255,255,255,.2);
         }
         .home-discovery-feed-actions .feed-card-action:disabled {
           opacity: .42;
@@ -28877,6 +29005,9 @@
           .home-discovery-feed-copy {
             right: 82px;
             padding: 64px 0 calc(92px + env(safe-area-inset-bottom)) 14px;
+          }
+          .home-venue-discovery-slide .home-discovery-feed-copy {
+            padding-top: 84px;
           }
           .home-discovery-feed-actions {
             right: 10px;
@@ -31069,7 +31200,11 @@
 
     let accountRequiredReturnTarget = null;
 
-    function profileActionAccountMessage(actionId) {
+    function profileActionAccountMessage(actionButton) {
+      const actionId = actionButton?.id || "";
+      if (actionButton?.dataset?.accountAction === "venue-follow") {
+        return "Create a free customer account to follow this venue and receive venue alerts.";
+      }
       if (actionId === "followBtn") return "Create a free customer account to follow this dancer and save the profile.";
       if (actionId === "notifyBtn") return "Create a free customer account to turn on dancer notifications.";
       return "Create a free customer account to use this profile action.";
@@ -31079,7 +31214,7 @@
       if (!accountRequiredPopover) return;
       accountRequiredReturnTarget = actionButton || null;
       if (accountRequiredMessage) {
-        accountRequiredMessage.textContent = profileActionAccountMessage(actionButton?.id);
+        accountRequiredMessage.textContent = profileActionAccountMessage(actionButton);
       }
       accountRequiredPopover.hidden = false;
       syncOverlayScrollLock();
@@ -33758,8 +33893,34 @@
       };
     }
 
+    function publicVenueRecordScore(venue) {
+      const canonicalSlug = slugify(venue?.name || "");
+      return (
+        (venue?.slug === canonicalSlug ? 32 : 0) +
+        (venue?.id ? 16 : 0) +
+        (venue?.activeDeal?.id ? 8 : 0) +
+        (venue?.qrCodeUrl ? 4 : 0) +
+        (venue?.address ? 2 : 0) +
+        (venue?.hours ? 1 : 0)
+      );
+    }
+
+    function dedupePublicVenues(venues) {
+      const uniqueVenues = new Map();
+      venues.forEach((venue) => {
+        const nameKey = String(venue?.name || "").trim().toLowerCase();
+        const key = nameKey || String(venue?.id || venue?.slug || "");
+        if (!key) return;
+        const current = uniqueVenues.get(key);
+        if (!current || publicVenueRecordScore(venue) > publicVenueRecordScore(current)) {
+          uniqueVenues.set(key, venue);
+        }
+      });
+      return [...uniqueVenues.values()];
+    }
+
     function mergeLiveVenues(existingVenues, liveVenues) {
-      if (!liveVenues.length) return existingVenues;
+      if (!liveVenues.length) return dedupePublicVenues(existingVenues);
       const merged = [...existingVenues];
       liveVenues.forEach((liveVenue) => {
         const matchIndex = merged.findIndex((venue) => (
@@ -33781,7 +33942,7 @@
           merged.push(liveVenue);
         }
       });
-      return merged;
+      return dedupePublicVenues(merged);
     }
 
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
@@ -33793,7 +33954,7 @@
       const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
 
       market.dancers = liveDancers;
-      market.venues = liveVenues;
+      market.venues = dedupePublicVenues(liveVenues);
       market.stats = {
         dancers: market.dancers.filter(isApprovedPublicProfile).length,
         shifts: market.dancers.filter((profile) => profile.scheduled).length,
@@ -35804,12 +35965,15 @@
           const pass = await createRevenueDealPass(config);
           saveCustomerDealPass(pass, "Club Deal QR saved");
           openDealPassOverlay(pass);
-          if (revenueTrigger.hasAttribute("data-feed-live-qr")) {
+          if (
+            revenueTrigger.hasAttribute("data-feed-live-qr") ||
+            revenueTrigger.hasAttribute("data-feed-venue-qr")
+          ) {
             recordVenuePageEvent({
               venueId: pass.venueId,
               dancerId: pass.dancerId,
               eventType: "qr_impression",
-              source: "dancer_profile"
+              source: revenueTrigger.hasAttribute("data-feed-venue-qr") ? "venue_page" : "dancer_profile"
             });
           }
         } catch (error) {
@@ -35830,12 +35994,15 @@
         return true;
       }
       openDealPassOverlay(pass);
-      if (trigger.hasAttribute("data-feed-live-qr")) {
+      if (
+        trigger.hasAttribute("data-feed-live-qr") ||
+        trigger.hasAttribute("data-feed-venue-qr")
+      ) {
         recordVenuePageEvent({
           venueId: pass.venueId,
           dancerId: pass.dancerId,
           eventType: "qr_impression",
-          source: "dancer_profile"
+          source: trigger.hasAttribute("data-feed-venue-qr") ? "venue_page" : "dancer_profile"
         });
       }
       return true;
@@ -42504,6 +42671,10 @@
       ].join("::");
     }
 
+    function homeDiscoveryFeedSlideKey(slide) {
+      return String(slide?.dataset?.discoveryKey || slide?.dataset?.profile || "");
+    }
+
     function rememberHomeDiscoveryFeedPosition() {
       if (!results.classList.contains("home-discovery-feed")) return;
       const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
@@ -42514,9 +42685,9 @@
         slides.length - 1,
         Math.max(0, Math.round(results.scrollTop / viewportHeight))
       );
-      const profileName = String((current || slides[fallbackIndex])?.dataset.profile || "");
-      if (!profileName) return;
-      homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), profileName);
+      const itemKey = homeDiscoveryFeedSlideKey(current || slides[fallbackIndex]);
+      if (!itemKey) return;
+      homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), itemKey);
     }
 
     function syncHomeDiscoveryFeedViewport() {
@@ -42560,11 +42731,11 @@
       window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
     }
 
-    function activateHomeDiscoveryFeedProfile(profileName) {
-      if (!homeDiscoveryFeedOpen || !profileName) return;
-      homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), profileName);
+    function activateHomeDiscoveryFeedItem(itemKey) {
+      if (!homeDiscoveryFeedOpen || !itemKey) return;
+      homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), itemKey);
       results.querySelectorAll(".home-discovery-feed-slide").forEach((slide) => {
-        const isActive = slide.dataset.profile === profileName;
+        const isActive = homeDiscoveryFeedSlideKey(slide) === itemKey;
         slide.classList.toggle("is-active", isActive);
         if (isActive) slide.setAttribute("aria-current", "true");
         else slide.removeAttribute("aria-current");
@@ -42577,7 +42748,7 @@
       const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
       if (!slides.length) return;
       if (!("IntersectionObserver" in window)) {
-        activateHomeDiscoveryFeedProfile(String(slides[0].dataset.profile || ""));
+        activateHomeDiscoveryFeedItem(homeDiscoveryFeedSlideKey(slides[0]));
         return;
       }
       homeDiscoveryFeedObserver = new IntersectionObserver((entries) => {
@@ -42585,7 +42756,7 @@
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (!visible) return;
-        activateHomeDiscoveryFeedProfile(String(visible.target.dataset.profile || ""));
+        activateHomeDiscoveryFeedItem(homeDiscoveryFeedSlideKey(visible.target));
       }, {
         root: results,
         threshold: [.72, .82, .92]
@@ -42657,6 +42828,98 @@
       return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-live-qr aria-label="Open the live venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
     }
 
+    function homeVenueDiscoveryQrMarkup(venue) {
+      if (!venue?.id) return "";
+      if (venue.activeDeal?.id) {
+        const config = {
+          deal: venue.activeDeal,
+          venueId: venue.id,
+          venueSlug: venue.slug,
+          venueName: venue.name,
+          sourceType: "club_page"
+        };
+        return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
+      }
+      if (!venue.qrCodeUrl) return "";
+      const pass = publishedVenueQrPass({
+        venueId: venue.id,
+        venueSlug: venue.slug,
+        venueName: venue.name,
+        qrCodeUrl: venue.qrCodeUrl,
+        qrCodeLabel: venue.qrCodeLabel,
+        sourceType: "venue_page"
+      });
+      return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-venue-qr aria-label="Open ${escapeHtml(venue.name)} venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+    }
+
+    function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
+      const details = venueDetails(venue, city);
+      const safeName = escapeHtml(venue.name);
+      const venueValue = escapeOptionValue(venue.name);
+      const venueHref = venue.slug
+        ? `/venues/${encodeURIComponent(venue.slug)}`
+        : `#venue-${slugify(venue.name)}`;
+      const initials = String(venue.name)
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase();
+      const accentPalette = ["#7eeaff", "#c4b5fd", "#f0abfc", "#86efac", "#fda4af"];
+      const accentIndex = [...String(venue.name)].reduce((totalValue, character) => totalValue + character.charCodeAt(0), 0);
+      const accent = accentPalette[accentIndex % accentPalette.length];
+      const localProfiles = venueDancers(city, venue.name);
+      const workingNow = localProfiles
+        .filter((profile) => isWorkingTonight(profile, city))
+        .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
+      const upcoming = localProfiles
+        .filter((profile) => !isWorkingTonight(profile, city) && profile.scheduled)
+        .sort((left, right) => upcomingSortValue(left, city) - upcomingSortValue(right, city));
+      const followsVenue = isFollowingVenue(city, venue.name);
+      const locationLabel = details.address || `${details.city}${details.state ? `, ${details.state}` : ""}`;
+      const nextProfile = upcoming[0] || null;
+      const nextShiftMarkup = nextProfile
+        ? `<span class="home-venue-discovery-next">${clockIconMarkup()}<span>Next: ${escapeHtml(nextProfile.name)} · ${escapeHtml(displayPublicShiftTime(nextProfile.time, nextProfile))}</span></span>`
+        : '<span class="home-venue-discovery-next"><span>No upcoming dancer shifts posted</span></span>';
+      const hoursMarkup = details.hours
+        ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>${escapeHtml(displayShiftTime(details.hours))}</span></span>`
+        : "";
+      const dealTitle = String(venue.activeDeal?.dealTitle || "").trim();
+      const dealMarkup = dealTitle
+        ? `<div class="home-venue-discovery-deal"><span>Club Deal</span><strong>${escapeHtml(dealTitle)}</strong></div>`
+        : venue.qrCodeUrl
+          ? '<div class="home-venue-discovery-deal"><span>Venue QR</span><strong>Open the venue-published QR</strong></div>'
+          : "";
+      const qrMarkup = homeVenueDiscoveryQrMarkup(venue);
+      const directionsMarkup = details.address
+        ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
+        : "";
+      const workingLabel = `${workingNow.length} dancer${workingNow.length === 1 ? "" : "s"} working now`;
+      return `
+        <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${safeName}, ${escapeHtml(workingLabel)}" style="--venue-accent:${accent}">
+          <div class="home-venue-discovery-art" aria-hidden="true"><span>${escapeHtml(initials)}</span></div>
+          <div class="home-discovery-feed-shade" aria-hidden="true"></div>
+          <a class="home-discovery-feed-open-profile" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile"></a>
+          <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
+          <div class="home-discovery-feed-copy">
+            <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
+            <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
+            ${hoursMarkup}
+            <span class="home-discovery-feed-status ${workingNow.length ? "is-now" : ""}">${escapeHtml(workingLabel)}</span>
+            ${nextShiftMarkup}
+            ${dealMarkup}
+          </div>
+          <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
+            ${qrMarkup}
+            <a class="home-discovery-feed-profile-button" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Venue")}</a>
+            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
+            ${directionsMarkup}
+          </div>
+        </article>
+      `;
+    }
+
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
       const city = citySelect.value;
       const safeName = escapeHtml(profile.name);
@@ -42696,7 +42959,7 @@
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
         : "";
       return `
-        <article class="dancer-card home-discovery-feed-slide" data-profile="${profileValue}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+        <article class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileValue}" data-profile="${profileValue}" aria-label="${safeName}, ${escapeHtml(status.label)}">
           ${portraitMarkup}
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>
@@ -42732,36 +42995,47 @@
       rememberHomeDiscoveryFeedPosition();
       results.classList.remove("card-grid");
       results.classList.add("home-discovery-feed");
-      results.setAttribute("aria-label", `Swipe through ${activeTab === "tonight" ? "dancers working now" : "dancer profiles"} in ${city}`);
+      const discoveryLabel = activeTab === "tonight"
+        ? "dancers working now"
+        : activeTab === "venues"
+          ? "venue profiles"
+          : "dancer profiles";
+      results.setAttribute("aria-label", `Swipe through ${discoveryLabel} in ${city}`);
       viewAllBtn.hidden = true;
       lockHomeDiscoveryFeedViewport();
 
       if (options.loading && !items.length) {
-        renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : "dancer profiles"} from ${city}…`);
+        renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : activeTab === "venues" ? "venues" : "dancer profiles"} from ${city}…`);
         return;
       }
       if (!items.length) {
         renderHomeDiscoveryFeedMessage(
           activeTab === "tonight"
             ? `No dancers are working now in ${city}.`
-            : `No approved dancer profiles are available in ${city} yet.`
+            : activeTab === "venues"
+              ? `No venues match your current filters in ${city}.`
+              : `No approved dancer profiles are available in ${city} yet.`
         );
         return;
       }
 
       const positionKey = homeDiscoveryFeedPositionKey(city, activeTab);
-      const storedProfile = homeDiscoveryFeedPositions.get(positionKey) || "";
-      const restoreIndex = Math.max(0, items.findIndex((profile) => profile.name === storedProfile));
+      const storedItem = homeDiscoveryFeedPositions.get(positionKey) || "";
+      const restoreIndex = Math.max(0, items.findIndex((item) => item.name === storedItem));
       results.innerHTML = `
         <button class="home-discovery-feed-close" type="button" data-home-discovery-close aria-label="Close full-screen discovery">×</button>
-        ${items.map((profile, index) => homeDiscoveryFeedSlide(profile, index, items.length, activeTab)).join("")}
+        ${items.map((item, index) => (
+          activeTab === "venues"
+            ? homeVenueDiscoveryFeedSlide(item, index, items.length, city)
+            : homeDiscoveryFeedSlide(item, index, items.length, activeTab)
+        )).join("")}
       `;
       results.querySelector("[data-home-discovery-close]")?.addEventListener("click", closeHomeDiscoveryFeed);
       window.requestAnimationFrame(() => {
         const viewportHeight = results.clientHeight || window.innerHeight;
         results.scrollTo({ top: restoreIndex * viewportHeight, left: 0, behavior: "auto" });
-        const restoredProfile = items[restoreIndex]?.name || items[0].name;
-        activateHomeDiscoveryFeedProfile(restoredProfile);
+        const restoredItem = items[restoreIndex]?.name || items[0].name;
+        activateHomeDiscoveryFeedItem(restoredItem);
         setupHomeDiscoveryFeedObserver();
       });
     }
@@ -42772,7 +43046,7 @@
 
     function handleHomeDiscoveryFeedViewportChange() {
       if (!homeDiscoveryFeedOpen) return;
-      if (!["tonight", "dancers"].includes(activeTab) || !homeDiscoveryFeedUsesLockedViewport()) {
+      if (!["tonight", "dancers", "venues"].includes(activeTab) || !homeDiscoveryFeedUsesLockedViewport()) {
         homeDiscoveryFeedOpen = false;
         deactivateHomeDiscoveryFeed();
         render();
@@ -42838,7 +43112,7 @@
           : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
       const usesDiscoveryFeed =
         homeDiscoveryFeedOpen &&
-        ["tonight", "dancers"].includes(activeTab) &&
+        ["tonight", "dancers", "venues"].includes(activeTab) &&
         homeDiscoveryFeedUsesLockedViewport() &&
         (loadingLiveProfiles || allItems.length > 0);
       if (usesDiscoveryFeed) {
@@ -42877,6 +43151,15 @@
           <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
             <strong id="homeDancersEmptyTitle">No upcoming or open-schedule dancers ${scope}.</strong>
             <p>Approved dancers actively working right now remain available in the Now tab.</p>
+          </section>
+        `;
+        return;
+      }
+      if (activeTab === "venues" && !items.length) {
+        results.innerHTML = `
+          <section class="home-discovery-empty" aria-labelledby="homeVenuesEmptyTitle">
+            <strong id="homeVenuesEmptyTitle">No venues match your current filters in ${escapeHtml(city)}.</strong>
+            <p>Increase the distance or choose All venues to see active venue profiles.</p>
           </section>
         `;
         return;
@@ -43466,27 +43749,38 @@
       }
       const followVenueButton = event.target.closest("[data-venue-follow]");
       if (followVenueButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!requireCustomerAccountForProfileAction(followVenueButton)) return;
         const city = citySelect.value;
         const venueName = followVenueButton.dataset.venueFollow;
         const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
+        if (!venueRecord?.id) {
+          showToast("This venue follow is unavailable.");
+          return;
+        }
         const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
         const index = savedVenues.indexOf(venueName);
         const willFollow = index < 0;
-        if (index >= 0) {
-          savedVenues.splice(index, 1);
-          showToast("Unfollowed venue");
-        } else {
-          savedVenues.push(venueName);
-          showToast(`${venueName} saved. Venue alerts on.`);
-        }
-        render();
-        if (customerDashboard.classList.contains("show")) renderDashboard();
-        if (venueRecord?.id) {
-          postAuthenticatedJson("/api/customer/venue-follows", {
+        followVenueButton.disabled = true;
+        try {
+          await postAuthenticatedJson("/api/customer/venue-follows", {
             venueId: venueRecord.id,
             following: willFollow,
             notificationsEnabled: willFollow
-          }).catch((error) => showToast(error.message || "Could not save venue follow"));
+          });
+          if (index >= 0) {
+            savedVenues.splice(index, 1);
+            showToast("Unfollowed venue");
+          } else {
+            savedVenues.push(venueName);
+            showToast(`${venueName} saved. Venue alerts on.`);
+          }
+          render();
+          if (customerDashboard.classList.contains("show")) renderDashboard();
+        } catch (error) {
+          followVenueButton.disabled = false;
+          showToast(error.message || "Could not save venue follow");
         }
         return;
       }
@@ -45574,7 +45868,7 @@
         }
         activeTab = nextTab;
         homeDiscoveryFeedOpen =
-          ["tonight", "dancers"].includes(nextTab) &&
+          ["tonight", "dancers", "venues"].includes(nextTab) &&
           homeDiscoveryFeedUsesLockedViewport();
         tonightExpanded = false;
         dancersExpanded = false;

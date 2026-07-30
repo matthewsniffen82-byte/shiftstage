@@ -97,7 +97,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("Now and Dancers open as full-screen mobile swipe feeds", () => {
+test("Now, Dancers, and Venues open as full-screen mobile swipe feeds", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
@@ -116,19 +116,19 @@ test("Now and Dancers open as full-screen mobile swipe feeds", () => {
   );
   assert.match(
     homeSource,
-    /homeDiscoveryFeedOpen =\s*\["tonight", "dancers"\]\.includes\(nextTab\)[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
+    /homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\)[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
-    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\)[\s\S]*?items\.map\(\(profile, index\) => homeDiscoveryFeedSlide\(profile, index, items\.length, activeTab\)\)/,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\)[\s\S]*?activeTab === "venues"[\s\S]*?homeVenueDiscoveryFeedSlide\(item, index, items\.length, city\)[\s\S]*?homeDiscoveryFeedSlide\(item, index, items\.length, activeTab\)/,
   );
   assert.match(
     homeSource,
-    /new IntersectionObserver\([\s\S]*?activateHomeDiscoveryFeedProfile/,
+    /new IntersectionObserver\([\s\S]*?activateHomeDiscoveryFeedItem/,
   );
   assert.match(
     homeSource,
-    /homeDiscoveryFeedPositions\.set\(homeDiscoveryFeedPositionKey\(\), profileName\)/,
+    /homeDiscoveryFeedPositions\.set\(homeDiscoveryFeedPositionKey\(\), itemKey\)/,
   );
   assert.match(
     homeSource,
@@ -136,10 +136,68 @@ test("Now and Dancers open as full-screen mobile swipe feeds", () => {
   );
   assert.match(
     homeSource,
-    /const usesDiscoveryFeed =[\s\S]*?homeDiscoveryFeedOpen[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\) &&[\s\S]*?\(loadingLiveProfiles \|\| allItems\.length > 0\)/,
+    /const usesDiscoveryFeed =[\s\S]*?homeDiscoveryFeedOpen[\s\S]*?\["tonight", "dancers", "venues"\]\.includes\(activeTab\)[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\) &&[\s\S]*?\(loadingLiveProfiles \|\| allItems\.length > 0\)/,
   );
-  assert.match(homeSource, /Swipe through \$\{activeTab === "tonight" \? "dancers working now" : "dancer profiles"\}/);
+  assert.match(
+    homeSource,
+    /const discoveryLabel = activeTab === "tonight"[\s\S]*?"dancers working now"[\s\S]*?activeTab === "venues"[\s\S]*?"venue profiles"[\s\S]*?"dancer profiles"/,
+  );
+  assert.match(
+    homeSource,
+    /if \(activeTab === "venues" && !items\.length\)[\s\S]*?No venues match your current filters/,
+  );
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
+});
+
+test("venue swipe cards use production venue, schedule, revenue, and customer action data", () => {
+  assert.match(
+    homeSource,
+    /function dedupePublicVenues\(venues\)[\s\S]*?publicVenueRecordScore\(venue\) > publicVenueRecordScore\(current\)[\s\S]*?return \[\.\.\.uniqueVenues\.values\(\)\]/,
+  );
+  assert.match(
+    homeSource,
+    /function publicVenueRecordScore\(venue\)[\s\S]*?venue\?\.slug === canonicalSlug \? 32 : 0[\s\S]*?venue\?\.activeDeal\?\.id[\s\S]*?venue\?\.qrCodeUrl/,
+  );
+  assert.match(
+    homeSource,
+    /function mergeLiveVenues\(existingVenues, liveVenues\)[\s\S]*?return dedupePublicVenues\(merged\)/,
+  );
+  assert.match(
+    homeSource,
+    /function applyLiveMarket\(city, dancers, tonightDancers, venues\)[\s\S]*?market\.venues = dedupePublicVenues\(liveVenues\)/,
+  );
+  assert.match(
+    homeSource,
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?venueDetails\(venue, city\)[\s\S]*?venueDancers\(city, venue\.name\)/,
+  );
+  assert.match(
+    homeSource,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?const upcoming = localProfiles[\s\S]*?profile\.scheduled[\s\S]*?upcomingSortValue\(left, city\)/,
+  );
+  assert.match(
+    homeSource,
+    /home-venue-discovery-location[\s\S]*?details\.distanceLabel[\s\S]*?details\.hours[\s\S]*?displayShiftTime\(details\.hours\)[\s\S]*?nextProfile\.name[\s\S]*?displayPublicShiftTime\(nextProfile\.time, nextProfile\)/,
+  );
+  assert.match(
+    homeSource,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?venue\.qrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?sourceType: "venue_page"[\s\S]*?data-deal-pass/,
+  );
+  assert.match(
+    homeSource,
+    /home-discovery-feed-open-profile[\s\S]*?href="\$\{venueHref\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"[\s\S]*?venue-directions-btn/,
+  );
+  assert.match(
+    homeSource,
+    /const followVenueButton = event\.target\.closest\("\[data-venue-follow\]"\)[\s\S]*?requireCustomerAccountForProfileAction\(followVenueButton\)[\s\S]*?await postAuthenticatedJson\("\/api\/customer\/venue-follows"/,
+  );
+  assert.match(
+    homeSource,
+    /data-feed-venue-qr[\s\S]*?eventType: "qr_impression"[\s\S]*?"venue_page" : "dancer_profile"/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-deal-action \{[\s\S]*?linear-gradient/,
+  );
 });
 
 test("discovery swipe cards expose real live QR and engagement actions without hiding the full profile", () => {
@@ -165,7 +223,7 @@ test("discovery swipe cards expose real live QR and engagement actions without h
   );
   assert.match(
     homeSource,
-    /data-feed-live-qr[\s\S]*?recordVenuePageEvent\(\{[\s\S]*?eventType: "qr_impression"[\s\S]*?source: "dancer_profile"/,
+    /data-feed-live-qr[\s\S]*?recordVenuePageEvent\(\{[\s\S]*?eventType: "qr_impression"[\s\S]*?"venue_page" : "dancer_profile"/,
   );
   assert.match(
     homeSource,
