@@ -10,15 +10,20 @@ const [globalNavigation, homeSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
-test("the single homepage TV category uses the compact MyDancr brand mark", () => {
+test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () => {
+  for (const source of [globalNavigation, homeSource]) {
+    assert.match(
+      source,
+      /mydancr-tv-mark[\s\S]*?mydancr-tv-play[\s\S]*?mydancr-tv-r/,
+    );
+    assert.match(source, /active[\s\S]*?stroke:\s*#f9a8d4/);
+    assert.match(source, /stroke-width:\s*1\.8/);
+    assert.match(source, /M17\.05 8\.35V4\.35m0 1\.45c\.72-.95 1\.62-1\.25 2\.7-.91/);
+  }
   assert.match(
-    homeSource,
-    /mydancr-tv-mark[\s\S]*?mydancr-tv-play[\s\S]*?mydancr-tv-r/,
+    globalNavigation,
+    /a\.tv-destination \{[\s\S]*?--mobile-nav-accent: #f472b6/,
   );
-  assert.match(homeSource, /active[\s\S]*?stroke:\s*#f9a8d4/);
-  assert.match(homeSource, /stroke-width:\s*1\.8/);
-  assert.match(homeSource, /M17\.05 8\.35V4\.35m0 1\.45c\.72-.95 1\.62-1\.25 2\.7-.91/);
-  assert.doesNotMatch(globalNavigation, /id: "tv"|tv-destination|mydancr-tv-mark/);
   assert.match(
     globalNavigation,
     /\.global-mobile-nav-icon \{[\s\S]*?border: 0[\s\S]*?color: #aaa2b4[\s\S]*?background: transparent[\s\S]*?filter: none/,

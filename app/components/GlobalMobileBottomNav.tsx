@@ -8,10 +8,9 @@ const DEFAULT_CITY = "Las Vegas";
 
 const destinations = [
   {
-    id: "home",
-    label: "Home",
-    path: "/",
-    keepsCity: true,
+    id: "tonight",
+    label: "Now",
+    path: "/tonight",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 11.2 12 4l8 7.2" />
@@ -21,37 +20,47 @@ const destinations = [
     ),
   },
   {
-    id: "offers",
-    label: "Offers",
-    path: "/dashboard/customer/offers",
-    keepsCity: false,
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 7.5A2.5 2.5 0 0 0 6.5 10 2.5 2.5 0 0 0 4 12.5V18h16v-5.5a2.5 2.5 0 0 0 0-5V2H4v5.5Z" />
-        <path d="M12 5v10" />
-      </svg>
-    ),
-  },
-  {
-    id: "saved",
-    label: "Saved",
-    path: "/dashboard/customer/saved",
-    keepsCity: false,
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20.8 4.8a5.2 5.2 0 0 0-7.4 0L12 6.2l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z" />
-      </svg>
-    ),
-  },
-  {
-    id: "account",
-    label: "Account",
-    path: "/account",
-    keepsCity: false,
+    id: "dancers",
+    label: "Dancers",
+    path: "/dancers",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="8" r="3.2" />
         <path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2" />
+      </svg>
+    ),
+  },
+  {
+    id: "tv",
+    label: "TV",
+    path: "/tv",
+    icon: (
+      <svg className="mydancr-tv-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <path className="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z" />
+        <path className="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91" />
+      </svg>
+    ),
+  },
+  {
+    id: "venues",
+    label: "Venues",
+    path: "/venues",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 20V7l7-3 7 3v13" />
+        <path d="M3 20h18" />
+        <path d="M9 10h6M9 14h6" />
+      </svg>
+    ),
+  },
+  {
+    id: "trending",
+    label: "Trending",
+    path: "/trending",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m4 17 5-5 3.5 3.5L20 8" />
+        <path d="M15 8h5v5" />
       </svg>
     ),
   },
@@ -76,9 +85,7 @@ export function GlobalMobileBottomNav() {
       >
         {destinations.map((destination) => {
           const active = isActiveDestination(pathname, destination.id);
-          const href = destination.keepsCity
-            ? `${destination.path}?city=${encodeURIComponent(city)}`
-            : destination.path;
+          const href = `${destination.path}?city=${encodeURIComponent(city)}`;
           return (
             <Link
               aria-current={active ? "page" : undefined}
@@ -110,7 +117,7 @@ export function GlobalMobileBottomNav() {
             width: min(100%, 720px);
             height: calc(70px + env(safe-area-inset-bottom));
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             align-items: start;
             gap: 0;
             padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
@@ -158,13 +165,19 @@ export function GlobalMobileBottomNav() {
               text-shadow 180ms ease;
           }
 
-          .global-mobile-bottom-nav a.offers-destination {
+          .global-mobile-bottom-nav a.dancers-destination {
             --mobile-nav-accent: #c084fc;
             --mobile-nav-accent-soft: #e9d5ff;
             --mobile-nav-accent-glow: rgba(192, 132, 252, 0.4);
           }
 
-          .global-mobile-bottom-nav a.saved-destination {
+          .global-mobile-bottom-nav a.tv-destination {
+            --mobile-nav-accent: #f472b6;
+            --mobile-nav-accent-soft: #fbcfe8;
+            --mobile-nav-accent-glow: rgba(236, 72, 153, 0.44);
+          }
+
+          .global-mobile-bottom-nav a.trending-destination {
             --mobile-nav-accent: #e879f9;
             --mobile-nav-accent-soft: #f5d0fe;
             --mobile-nav-accent-glow: rgba(217, 70, 239, 0.4);
@@ -205,6 +218,31 @@ export function GlobalMobileBottomNav() {
             transform: translateY(-1px);
           }
 
+          .global-mobile-bottom-nav a.tv-destination {
+            color: #bcb4c8;
+          }
+
+          .global-mobile-bottom-nav a.tv-destination .global-mobile-nav-icon {
+            border: 0;
+            border-radius: 0;
+            color: #aaa2b4;
+            background: transparent;
+            box-shadow: none;
+            filter: none;
+          }
+
+          .global-mobile-bottom-nav a.tv-destination.active {
+            color: #fff;
+          }
+
+          .global-mobile-bottom-nav a.tv-destination.active
+            .global-mobile-nav-icon {
+            color: #fff;
+            filter:
+              drop-shadow(0 0 5px var(--mobile-nav-hero-violet-glow))
+              drop-shadow(0 0 10px var(--mobile-nav-hero-cyan-glow));
+          }
+
           .global-mobile-bottom-nav svg {
             width: 20px;
             height: 20px;
@@ -215,6 +253,40 @@ export function GlobalMobileBottomNav() {
             stroke-linejoin: round;
           }
 
+          .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {
+            width: 20px;
+            height: 20px;
+            overflow: visible;
+            fill: none;
+            stroke: none;
+          }
+
+          .global-mobile-bottom-nav .mydancr-tv-play {
+            fill: #aaa2b4;
+            filter: none;
+            transition: fill 180ms ease;
+          }
+
+          .global-mobile-bottom-nav
+            a.tv-destination.active
+            .mydancr-tv-play {
+            fill: #fff;
+          }
+
+          .global-mobile-bottom-nav .mydancr-tv-r {
+            fill: none;
+            stroke: #aaa2b4;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            filter: none;
+            transition: stroke 180ms ease;
+          }
+
+          .global-mobile-bottom-nav
+            a.tv-destination.active
+            .mydancr-tv-r {
+            stroke: #f9a8d4;
+          }
         }
       `}</style>
     </>
@@ -225,12 +297,6 @@ function isActiveDestination(
   pathname: string,
   destination: (typeof destinations)[number]["id"],
 ) {
-  if (destination === "home") return pathname === "/";
-  if (destination === "offers") {
-    return pathname === "/dashboard/customer/offers";
-  }
-  if (destination === "saved") {
-    return pathname === "/dashboard/customer/saved";
-  }
+  if (destination === "tonight") return pathname === "/tonight";
   return pathname === `/${destination}` || pathname.startsWith(`/${destination}/`);
 }

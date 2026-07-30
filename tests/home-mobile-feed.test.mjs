@@ -4,7 +4,7 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("mobile discovery places five city categories directly below the city selector", () => {
+test("mobile discovery uses a persistent five-destination app navigation", () => {
   const navigation = homeSource.match(
     /<nav class="tabs" id="discoveryTabs"[\s\S]*?<\/nav>/,
   )?.[0] || "";
@@ -12,38 +12,22 @@ test("mobile discovery places five city categories directly below the city selec
     navigation,
     /data-tab="tonight"[\s\S]*data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"[\s\S]*data-tab="trending"/,
   );
-  assert.match(navigation, /class="tab active"[^>]*data-tab="tonight"[^>]*aria-current="page"/);
+  assert.doesNotMatch(navigation, /class="tab active"/);
   assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="results"[^>]*aria-current="false"/);
   assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
+  assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
   assert.match(
     homeSource,
-    /<div class="home-discovery-sticky">[\s\S]*?<select id="citySelect">[\s\S]*?<nav class="tabs" id="discoveryTabs"[\s\S]*?<\/nav>[\s\S]*?<\/div>[\s\S]*?<div class="home-live-summary"/,
-  );
-  assert.match(
-    homeSource,
-    /main\.stack > \.home-discovery-sticky \{[\s\S]*?position: sticky[\s\S]*?#discoveryTabs \{[\s\S]*?position: relative !important[\s\S]*?grid-template-columns: repeat\(5/,
-  );
-  assert.match(
-    homeSource,
-    /#discoveryTabs \.tab,[\s\S]*?border-radius: 12px !important[\s\S]*?background: rgba\(255,255,255,.025\) !important/,
+    /\.home-bottom-tv-icon \{[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
   );
   assert.match(homeSource, /@media \(max-width: 720px\)[\s\S]*?\.home-tv-launch \{\s*display: none !important/);
   assert.match(
     homeSource,
     /bottomTv\.setAttribute\("aria-label", `Show MyDancr TV \$\{tvCityLabel\} videos in the Home feed`\)/,
   );
-  assert.match(
-    homeSource,
-    /class="home-app-bottom-nav"[\s\S]*?href="\/\?city=Las%20Vegas"[\s\S]*?href="\/dashboard\/customer\/offers"[\s\S]*?href="\/dashboard\/customer\/saved"[\s\S]*?href="\/account"/,
-  );
-  assert.equal((homeSource.match(/class="home-bottom-tv"/g) || []).length, 1);
-  assert.doesNotMatch(
-    homeSource.match(/<nav class="home-app-bottom-nav"[\s\S]*?<\/nav>/)?.[0] || "",
-    />TV</,
-  );
 });
 
-test("the Home TV button renders a real inline snap-scroll video feed without leaving Home", () => {
+test("the Home TV button renders a real snap-scroll video feed without leaving Home", () => {
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
@@ -54,24 +38,27 @@ test("the Home TV button renders a real inline snap-scroll video feed without le
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed,\s*#results\.home-discovery-feed \{[\s\S]*?position: relative !important[\s\S]*?height: var\(--home-inline-feed-height, 520px\) !important[\s\S]*?min-height: 420px[\s\S]*?max-height: 680px/,
-  );
-  assert.doesNotMatch(homeSource, /home-tv-feed-locked|--home-tv-page-lock-top/);
-  assert.match(
-    homeSource,
-    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?activeTab = "tv"[\s\S]*?render\(\)[\s\S]*?focusHomeTvFeed/,
+    /html\.home-tv-feed-locked,[\s\S]*?body\.home-tv-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-tv-feed-locked \{[\s\S]*?position: fixed !important[\s\S]*?height: 100dvh !important/,
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedViewport\(\)[\s\S]*?window\.visualViewport\?\.height \|\| window\.innerHeight[\s\S]*?stickyHeight[\s\S]*?--home-inline-feed-height/,
+    /#results\.home-tv-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-tv-feed-height, 100dvh\) !important[\s\S]*?border-radius: 0/,
   );
   assert.match(
     homeSource,
-    /function focusHomeTvFeed\(\) \{[\s\S]*?prepareHomeTvFeedViewport\(\)[\s\S]*?scrollIntoView\(\{ behavior: "smooth", block: "start" \}\)/,
+    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?activeTab = "tv"[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeTvFeed/,
   );
   assert.match(
     homeSource,
-    /function deactivateHomeTvFeed\(\) \{[\s\S]*?resetHomeTvFeedViewport\(\)/,
+    /function syncHomeTvFeedViewport\(\)[\s\S]*?window\.visualViewport\?\.height \|\| window\.innerHeight[\s\S]*?--home-tv-feed-height/,
+  );
+  assert.match(
+    homeSource,
+    /function focusAndLockHomeTvFeed\(\) \{\s*lockHomeTvFeedViewport\(\);\s*\}/,
+  );
+  assert.match(
+    homeSource,
+    /function deactivateHomeTvFeed\(\) \{[\s\S]*?unlockHomeTvFeedViewport\(\)/,
   );
   assert.match(
     homeSource,
@@ -111,11 +98,8 @@ test("the Home TV button renders a real inline snap-scroll video feed without le
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("the homepage starts with Now selected and an inline mobile discovery feed", () => {
-  assert.match(
-    homeSource,
-    /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = window\.matchMedia\("\(max-width: 720px\)"\)\.matches;/,
-  );
+test("the homepage starts neutral and discovery feeds open only after a destination tap", () => {
+  assert.match(homeSource, /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
   assert.match(
     homeSource,
     /function closeHomeTvFeed\(\) \{[\s\S]*?activeTab = "tonight";[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)/,
@@ -126,23 +110,26 @@ test("the homepage starts with Now selected and an inline mobile discovery feed"
   );
 });
 
-test("Now, Dancers, TV, Venues, and Trending use one canonical inline mobile swipe area", () => {
+test("Now, Dancers, and Venues use one canonical full-screen mobile swipe experience after selection", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed,\s*#results\.home-discovery-feed \{[\s\S]*?position: relative !important[\s\S]*?width: 100% !important[\s\S]*?height: var\(--home-inline-feed-height, 520px\) !important/,
+    /#results\.home-discovery-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-discovery-feed-height, 100dvh\) !important/,
   );
   assert.match(
     homeSource,
     /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: 100% !important[\s\S]*?min-height: 100% !important[\s\S]*?aspect-ratio: auto !important/,
   );
-  assert.doesNotMatch(homeSource, /home-discovery-feed-locked|--home-discovery-page-lock-top/);
   assert.match(
     homeSource,
-    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues", "trending"\]\.includes\(nextTab\) &&\s*homeDiscoveryFeedUsesInlineViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusHomeDiscoveryFeed/,
+    /html\.home-discovery-feed-locked,[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?position: fixed !important/,
+  );
+  assert.match(
+    homeSource,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
@@ -158,7 +145,7 @@ test("Now, Dancers, TV, Venues, and Trending use one canonical inline mobile swi
   );
   assert.match(
     homeSource,
-    /const usesDiscoveryFeed =\s*!selectedVenue &&\s*\["tonight", "dancers", "venues", "trending"\]\.includes\(activeTab\) &&\s*homeDiscoveryFeedUsesInlineViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*homeDiscoveryFeedOpen = true;\s*renderHomeDiscoveryFeed/,
+    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*\["tonight", "dancers", "venues"\]\.includes\(activeTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -245,18 +232,18 @@ test("Now and Dancers swipe cards open the existing full profile as the only nex
   );
 });
 
-test("inline category buttons keep one baseline, visible counts, and a clear active state", () => {
+test("bottom navigation keeps every destination on one uniform baseline", () => {
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?height: 52px !important[\s\S]*?grid-template-rows: 30px 14px !important[\s\S]*?border-radius: 12px !important/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?height: 57px !important[\s\S]*?grid-template-rows: 30px 14px !important[\s\S]*?background: transparent !important/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active,\s*#discoveryTabs \.home-bottom-tv\.active \{[\s\S]*?border-color: rgba\(126,234,255,.3\) !important[\s\S]*?linear-gradient[\s\S]*?box-shadow: 0 0 13px/,
+    /#discoveryTabs \.tab\.active \{[\s\S]*?background: transparent !important[\s\S]*?box-shadow: none !important/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab-count \{[\s\S]*?top: 4px !important[\s\S]*?right: 4px !important[\s\S]*?left: auto !important[\s\S]*?max-width: none !important[\s\S]*?overflow: visible !important/,
+    /#discoveryTabs \.tab-count \{[\s\S]*?top: 4px !important[\s\S]*?left: calc\(50% \+ 12px\) !important[\s\S]*?max-width: none !important[\s\S]*?overflow: visible !important/,
   );
   assert.match(
     homeSource,
@@ -292,7 +279,7 @@ test("inline category buttons keep one baseline, visible counts, and a clear act
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: 2px !important[\s\S]*?left: auto !important[\s\S]*?text-align: right/,
+    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: calc\(50% - 22px\) !important[\s\S]*?left: auto !important[\s\S]*?text-align: right/,
   );
 });
 

@@ -34,7 +34,7 @@ test("the Dancers directory lists upcoming shifts before no-schedule profiles an
 test("the homepage exposes an honest Now empty state that opens the Dancers directory", () => {
   assert.match(
     homeSource,
-    /data-tab="tonight" data-tab-label="Now" aria-current="page">Now<\/button>/,
+    /data-tab="tonight" data-tab-label="Now">Now<\/button>/,
   );
   assert.match(
     homeSource,
@@ -42,6 +42,7 @@ test("the homepage exposes an honest Now empty state that opens the Dancers dire
   );
   assert.match(homeSource, /const label = tab\.dataset\.tabLabel \|\| tab\.textContent\.trim\(\)/);
   assert.doesNotMatch(homeSource, /Now &amp; Next|Now & Next in|Up Next Tonight in/);
+  assert.doesNotMatch(homeSource, /M4 11\.2 12 4l8 7\.2/);
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
   assert.match(homeSource, /tonight: venueFilter === "all" \? `Now in \$\{city\}` : `Now at \$\{venueFilter\}`/);
   assert.match(homeSource, /No dancers are working now \$\{scope\}\./);
