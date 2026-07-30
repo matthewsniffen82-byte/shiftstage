@@ -118,56 +118,36 @@ test("the homepage starts neutral and discovery feeds open only after a destinat
   );
 });
 
-test("Now, Dancers, and Venues use one canonical full-screen mobile swipe experience after selection", () => {
+test("Now and Dancers share one responsive grid while Venues keeps its full-screen swipe experience", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important[\s\S]*?@media \(min-width: 680px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 1100px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*activeTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
+  );
+  assert.match(
+    homeSource,
+    /if \(activeTab === "tonight" \|\| activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items, activeTab\);\s*return;/,
+  );
+  assert.match(
+    homeSource,
+    /function renderHomeDancerGrid\(city, profiles, tab\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"[\s\S]*?results\.classList\.add\("card-grid", "home-dancer-grid"\)/,
+  );
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-discovery-feed-height, 100dvh\) !important/,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\)[\s\S]*?activeTab === "venues"[\s\S]*?homeVenueDiscoveryFeedSlide\(item, index, items\.length, city\)/,
   );
-  assert.match(
-    homeSource,
-    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: 100% !important[\s\S]*?min-height: 100% !important[\s\S]*?aspect-ratio: auto !important/,
-  );
-  assert.match(
-    homeSource,
-    /html\.home-discovery-feed-locked,[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?position: fixed !important/,
-  );
-  assert.match(
-    homeSource,
-    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
-  );
-  assert.match(
-    homeSource,
-    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\)[\s\S]*?activeTab === "venues"[\s\S]*?homeVenueDiscoveryFeedSlide\(item, index, items\.length, city\)[\s\S]*?homeDiscoveryFeedSlide\(item, index, items\.length, activeTab\)/,
-  );
-  assert.match(
-    homeSource,
-    /new IntersectionObserver\([\s\S]*?activateHomeDiscoveryFeedItem/,
-  );
-  assert.match(
-    homeSource,
-    /homeDiscoveryFeedPositions\.set\(homeDiscoveryFeedPositionKey\(\), itemKey\)/,
-  );
-  assert.match(
-    homeSource,
-    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*\["tonight", "dancers", "venues"\]\.includes\(activeTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
-  );
-  assert.doesNotMatch(
-    homeSource,
-    /home-discovery-feed-close|data-home-discovery-close|closeHomeDiscoveryFeed/,
-  );
-  assert.match(
-    homeSource,
-    /const discoveryLabel = activeTab === "tonight"[\s\S]*?"dancers working now"[\s\S]*?activeTab === "venues"[\s\S]*?"venue profiles"[\s\S]*?"dancer profiles"/,
-  );
-  assert.match(
-    homeSource,
-    /if \(!items\.length\)[\s\S]*?No dancers are working now[\s\S]*?No venues match your current filters[\s\S]*?No approved dancer profiles are available/,
-  );
-  assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
+  assert.doesNotMatch(homeSource, /\["tonight", "dancers", "venues"\]\.includes\(nextTab\)/);
 });
 
 test("every mobile snap feed keeps a fixed slide size and settles on exact viewport boundaries", () => {
@@ -262,18 +242,18 @@ test("venue swipe cards use production venue, schedule, revenue, and customer ac
   );
 });
 
-test("Now and Dancers swipe cards open the existing full profile as the only next level", () => {
+test("Now and Dancers grid cards open the existing full profile as the only next level", () => {
   assert.match(
     homeSource,
-    /function homeDiscoveryFeedSlide\(profile, index, total, tab\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-discovery-feed-slide"/,
+    /function homeDancerGridCard\(profile\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)/,
   );
   assert.match(
     homeSource,
-    /home-discovery-feed-open-profile[\s\S]*?home-discovery-feed-profile-button[\s\S]*?data-profile="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
+    /const photoMarkup = photoUrl[\s\S]*?home-dancer-grid-photo\$\{photoAttrs\.className\}[\s\S]*?aria-hidden="true"[\s\S]*?String\(profile\.name\)\.trim\(\)\.charAt\(0\)/,
   );
   assert.match(
     homeSource,
-    /const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
+    /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
   );
   assert.match(
     homeSource,
@@ -281,7 +261,7 @@ test("Now and Dancers swipe cards open the existing full profile as the only nex
   );
 });
 
-test("Working Now dancer slides surface the venue Club QR after a short dwell", () => {
+test("Working Now dancer grid cards expose a functional production Club QR action", () => {
   assert.match(
     homeSource,
     /function homeDiscoveryFeedLiveQrData\(profile\) \{\s*if \(!isWorkingTonight\(profile\) \|\| !profile\.venueId\) return null;/,
@@ -292,15 +272,11 @@ test("Working Now dancer slides surface the venue Club QR after a short dwell", 
   );
   assert.match(
     homeSource,
-    /function homeDiscoveryFeedLiveQrMarkup\(profile, presentation = "action"\)[\s\S]*?data-feed-qr-prompt[\s\S]*?Club QR available[\s\S]*?Save QR/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr"[\s\S]*?data-feed-live-qr[\s\S]*?<span>Club QR<\/span>/,
   );
   assert.match(
     homeSource,
-    /HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000[\s\S]*?function scheduleHomeDiscoveryFeedQrPrompt\(slide\)[\s\S]*?homeDiscoveryFeedQrPromptsShown\.has\(promptKey\)[\s\S]*?window\.setTimeout[\s\S]*?is-qr-prompt-ready/,
-  );
-  assert.match(
-    homeSource,
-    /function deactivateHomeDiscoveryFeed\(\) \{[\s\S]*?resetHomeDiscoveryFeedQrPrompt\(\)/,
+    /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\)[\s\S]*?await handleDealPassClick\(event\);[\s\S]*?return;/,
   );
   assert.match(
     homeSource,
@@ -308,7 +284,7 @@ test("Working Now dancer slides surface the venue Club QR after a short dwell", 
   );
   assert.match(
     homeSource,
-    /\.home-discovery-feed-qr-prompt \{[\s\S]*?visibility: hidden[\s\S]*?pointer-events: none[\s\S]*?\.home-discovery-feed-slide\.is-qr-prompt-ready \.home-discovery-feed-qr-prompt \{[\s\S]*?visibility: visible[\s\S]*?pointer-events: auto/,
+    /\.home-dancer-grid-qr \{[\s\S]*?position: absolute[\s\S]*?background: linear-gradient[\s\S]*?\.home-dancer-grid-qr:focus-visible \{/,
   );
 });
 

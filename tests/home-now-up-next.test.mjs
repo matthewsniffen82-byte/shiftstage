@@ -19,16 +19,23 @@ test("the Now destination contains only approved dancers with confirmed active c
   );
 });
 
-test("the Dancers directory lists upcoming shifts before no-schedule profiles and excludes active workers", () => {
+test("the Dancers directory lists Working Now, upcoming, and no-schedule profiles in that order", () => {
   assert.match(
     homeSource,
-    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*const upcoming = profiles[\s\S]*profile\.scheduled && !isWorkingTonight\(profile, city\)[\s\S]*upcomingSortValue\(a, city\)[\s\S]*const noSchedule = profiles[\s\S]*!profile\.scheduled && !isWorkingTonight\(profile, city\)[\s\S]*return \[\.\.\.upcoming, \.\.\.noSchedule\]/,
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*isWorkingTonight\(profile, city\)[\s\S]*const upcoming = profiles[\s\S]*profile\.scheduled && !isWorkingTonight\(profile, city\)[\s\S]*upcomingSortValue\(a, city\)[\s\S]*const noSchedule = profiles[\s\S]*!profile\.scheduled && !isWorkingTonight\(profile, city\)[\s\S]*return \{ workingNow, upcoming, noSchedule \}/,
+  );
+  assert.match(
+    homeSource,
+    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*dancerDirectoryGroups\(profiles, city\)[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.upcoming, \.\.\.groups\.noSchedule\]/,
   );
   assert.match(
     homeSource,
     /if \(tab === "dancers"\) \{[\s\S]*isApprovedPublicProfile\(profile\)[\s\S]*profileMatchesVenueFilter\(profile\)[\s\S]*return dancerDirectoryProfiles\(profiles, city\)/,
   );
-  assert.match(homeSource, /<span>No schedule posted<\/span>/);
+  assert.match(
+    homeSource,
+    /function renderHomeDancerGrid\(city, profiles, tab\)[\s\S]*label: "Working Now"[\s\S]*label: "Upcoming"[\s\S]*label: "No Shift Posted"/,
+  );
 });
 
 test("the homepage exposes an honest Now empty state that opens the Dancers directory", () => {
@@ -46,7 +53,7 @@ test("the homepage exposes an honest Now empty state that opens the Dancers dire
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
   assert.match(homeSource, /tonight: venueFilter === "all" \? `Now in \$\{city\}` : `Now at \$\{venueFilter\}`/);
   assert.match(homeSource, /No dancers are working now \$\{scope\}\./);
-  assert.match(homeSource, /data-show-dancers>See Upcoming Dancers<\/button>/);
+  assert.match(homeSource, /data-show-dancers>See All Dancers<\/button>/);
   assert.match(
     homeSource,
     /const showDancersButton = event\.target\.closest\("\[data-show-dancers\]"\)[\s\S]*activeTab = "dancers"[\s\S]*tab\.dataset\.tab === "dancers"[\s\S]*render\(\)/,
@@ -56,7 +63,7 @@ test("the homepage exposes an honest Now empty state that opens the Dancers dire
     homeSource,
     /\.home-discovery-empty \{[\s\S]*?max-width: 100%[\s\S]*?overflow: hidden[\s\S]*?\.home-discovery-empty strong \{[\s\S]*?overflow-wrap: anywhere[\s\S]*?white-space: normal/,
   );
-  assert.match(homeSource, /No upcoming or open-schedule dancers \$\{scope\}\./);
+  assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);
 });
 
 test("visible homepages refresh through the shared cached discovery endpoint", () => {

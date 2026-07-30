@@ -29611,6 +29611,260 @@
           }
         }
 
+        /* One production dancer grid for Now and Dancers. */
+        #results.home-dancer-grid {
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          align-items: start !important;
+          gap: 11px !important;
+          overflow: visible;
+          background: #050505 !important;
+        }
+        .home-dancer-grid-heading {
+          grid-column: 1 / -1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin: 4px 0 0;
+          padding: 10px 2px 3px;
+          color: #fff;
+        }
+        .home-dancer-grid-heading:not(:first-child) {
+          margin-top: 10px;
+          border-top: 1px solid rgba(167,139,250,.18);
+        }
+        .home-dancer-grid-heading strong {
+          min-width: 0;
+          overflow: hidden;
+          font-size: clamp(17px, 4.8vw, 22px);
+          font-weight: 950;
+          line-height: 1.05;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-dancer-grid-heading span {
+          min-width: 28px;
+          height: 26px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 auto;
+          padding: 0 8px;
+          border: 1px solid rgba(167,139,250,.28);
+          border-radius: 999px;
+          color: #ddd6fe;
+          background: rgba(43,28,76,.62);
+          font-size: 10px;
+          font-weight: 950;
+        }
+        .home-dancer-grid-heading.is-now strong {
+          color: #9af7c5;
+          text-shadow: 0 0 16px rgba(77,236,157,.2);
+        }
+        .home-dancer-grid-heading.is-upcoming strong {
+          color: #b7f4ff;
+          text-shadow: 0 0 16px rgba(34,199,255,.2);
+        }
+        .home-dancer-grid-heading.is-open strong {
+          color: #d4c8e4;
+        }
+        .home-dancer-grid-card {
+          position: relative;
+          min-width: 0;
+          min-height: 0 !important;
+          aspect-ratio: auto !important;
+          overflow: hidden;
+          border: 1px solid rgba(167,139,250,.3) !important;
+          border-radius: 16px;
+          color: #fff;
+          background: #0a0a0e;
+          box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 18px rgba(124,58,237,.1);
+          transform: none !important;
+        }
+        .home-dancer-grid-card.is-now {
+          border-color: rgba(77,236,157,.54) !important;
+          box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 20px rgba(77,236,157,.14);
+        }
+        .home-dancer-grid-card.is-upcoming {
+          border-color: rgba(126,234,255,.42) !important;
+        }
+        .home-dancer-grid-card.is-open {
+          border-color: rgba(167,139,250,.24) !important;
+        }
+        .home-dancer-grid-link {
+          min-width: 0;
+          display: grid;
+          grid-template-rows: auto minmax(104px, auto);
+          color: inherit;
+          text-decoration: none;
+        }
+        .home-dancer-grid-link:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: -3px;
+        }
+
+        .home-dancer-grid-photo {
+          position: relative;
+          width: 100%;
+          min-height: 0;
+          display: grid;
+          place-items: center;
+          aspect-ratio: 4 / 5;
+          overflow: hidden;
+          color: rgba(255,255,255,.78);
+          background:
+            radial-gradient(circle at 70% 18%, rgba(34,199,255,.2), transparent 34%),
+            radial-gradient(circle at 18% 78%, rgba(124,58,237,.38), transparent 42%),
+            linear-gradient(145deg,#15101f,#08080d);
+          background-size: cover;
+          background-position: center top;
+          font-size: clamp(42px, 15vw, 84px);
+          font-weight: 950;
+          text-transform: uppercase;
+        }
+        .home-dancer-grid-photo.has-custom-photo {
+          background-image:
+            linear-gradient(180deg,rgba(5,5,7,.02) 0%,rgba(5,5,7,.04) 58%,rgba(5,5,7,.35) 100%),
+            var(--custom-photo),
+            linear-gradient(145deg,#15101f,#08080d) !important;
+          background-size: cover, cover, cover !important;
+          background-repeat: no-repeat !important;
+          background-position: center, center top, center !important;
+        }
+        .home-dancer-grid-photo::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg,transparent 58%,rgba(5,5,8,.46));
+          pointer-events: none;
+        }
+        .home-dancer-grid-copy {
+          min-width: 0;
+          display: grid;
+          align-content: start;
+          gap: 7px;
+          padding: 11px 10px 12px;
+          background: linear-gradient(180deg,#0d0d13,#09090d);
+        }
+        .home-dancer-grid-name {
+          min-width: 0;
+          margin: 0;
+          overflow: hidden;
+          color: #fff;
+          font-size: clamp(15px, 4.4vw, 20px);
+          font-weight: 950;
+          line-height: 1.05;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-dancer-grid-name .verified-mark {
+          width: 17px;
+          height: 17px;
+          margin-left: 4px;
+          font-size: 9px;
+          vertical-align: 2px;
+        }
+        .home-dancer-grid-venue {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          overflow: hidden;
+          color: #c9c3d4;
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1.2;
+        }
+        .home-dancer-grid-venue svg {
+          width: 13px;
+          height: 13px;
+          flex: 0 0 13px;
+        }
+        .home-dancer-grid-venue span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-dancer-grid-status {
+          width: fit-content;
+          max-width: 100%;
+          min-height: 25px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 8px;
+          overflow: hidden;
+          border: 1px solid rgba(167,139,250,.25);
+          border-radius: 999px;
+          color: #cfc6dc;
+          background: rgba(42,30,61,.5);
+          font-size: 9px;
+          font-weight: 950;
+          line-height: 1;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-dancer-grid-status.is-now {
+          border-color: rgba(77,236,157,.48);
+          color: #91f7c0;
+          background: rgba(17,107,62,.38);
+        }
+        .home-dancer-grid-status.is-upcoming {
+          border-color: rgba(126,234,255,.42);
+          color: #aaf2ff;
+          background: rgba(11,87,110,.4);
+        }
+
+        .home-dancer-grid-qr {
+          position: absolute;
+          z-index: 4;
+          top: 8px;
+          right: 8px;
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 0 8px;
+          border: 1px solid rgba(77,236,157,.68);
+          border-radius: 999px;
+          color: #fff;
+          background: linear-gradient(135deg,rgba(7,92,77,.94),rgba(16,128,74,.94));
+          box-shadow: 0 8px 20px rgba(0,0,0,.38), 0 0 14px rgba(77,236,157,.14);
+          font: inherit;
+          font-size: 8px;
+          font-weight: 950;
+          cursor: pointer;
+          backdrop-filter: blur(12px);
+        }
+        .home-dancer-grid-qr .action-icon {
+          width: 16px;
+          height: 16px;
+        }
+        .home-dancer-grid-qr:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 2px;
+        }
+        .home-dancer-grid-qr:disabled {
+          opacity: .6;
+          cursor: wait;
+        }
+        @media (min-width: 680px) {
+          #results.home-dancer-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 14px !important;
+          }
+          .home-dancer-grid-name {
+            font-size: 19px;
+          }
+        }
+        @media (min-width: 1100px) {
+          #results.home-dancer-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 16px !important;
+          }
+        }
+
         /* Keep the full profile closable and its final safety action reachable. */
         #profileBackdrop.modal-backdrop.show {
           z-index: 140 !important;
@@ -35628,7 +35882,13 @@
       return Math.abs(hash);
     }
 
-    function dancerDirectoryProfiles(profiles, city = selectedCity()) {
+    function dancerDirectoryGroups(profiles, city = selectedCity()) {
+      const workingNow = profiles
+        .filter((profile) => isWorkingTonight(profile, city))
+        .sort((a, b) => (
+          shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
+          dailyRotationScore(a, city) - dailyRotationScore(b, city)
+        ));
       const upcoming = profiles
         .filter((profile) => profile.scheduled && !isWorkingTonight(profile, city))
         .sort((a, b) => (
@@ -35638,7 +35898,12 @@
       const noSchedule = profiles
         .filter((profile) => !profile.scheduled && !isWorkingTonight(profile, city))
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      return [...upcoming, ...noSchedule];
+      return { workingNow, upcoming, noSchedule };
+    }
+
+    function dancerDirectoryProfiles(profiles, city = selectedCity()) {
+      const groups = dancerDirectoryGroups(profiles, city);
+      return [...groups.workingNow, ...groups.upcoming, ...groups.noSchedule];
     }
 
     function daysFromToday(date, city = selectedCity()) {
@@ -43178,6 +43443,14 @@
       return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club QR">${actionButtonLabel("qr", "Open QR")}</button>`;
     }
 
+    function homeDancerGridQrMarkup(profile) {
+      const qr = homeDiscoveryFeedLiveQrData(profile);
+      if (!qr) return "";
+      const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
+      const venueName = escapeHtml(qr.venueName || "this venue");
+      return `<button class="home-dancer-grid-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club QR for ${venueName}">${actionIconMarkup("qr")}<span>Club QR</span></button>`;
+    }
+
     function homeVenueDiscoveryQrMarkup(venue) {
       if (!venue?.id) return "";
       if (venue.activeDeal?.id) {
@@ -43263,6 +43536,73 @@
           </div>
         </article>
       `;
+    }
+
+    function homeDancerGridCard(profile) {
+      const safeName = escapeHtml(profile.name);
+      const profileValue = escapeOptionValue(profile.name);
+      const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
+      const photoUrl = publicProfilePhotoUrl(profile);
+      const photoAttrs = customPhotoAttrs(photoUrl);
+      const photoMarkup = photoUrl
+        ? `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
+        : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
+      const venueName = String(profile.venue || "").trim();
+      const distanceLabel = profileCardDistanceLabel(profile);
+      const status = homeDiscoveryFeedStatus(profile);
+      const verifiedMark = profile.status === "Verified"
+        ? '<span class="verified-mark" aria-label="Verified">✓</span>'
+        : "";
+      const venueMarkup = venueName
+        ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
+        : "";
+      const groupClass = status.className === "is-now"
+        ? "is-now"
+        : status.className === "is-upcoming"
+          ? "is-upcoming"
+          : "is-open";
+      return `
+        <article class="dancer-card home-dancer-grid-card ${groupClass}" data-profile="${profileValue}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+          <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
+            ${photoMarkup}
+            <span class="home-dancer-grid-copy">
+              <h3 class="home-dancer-grid-name">${safeName}${verifiedMark}</h3>
+              ${venueMarkup}
+              <span class="home-dancer-grid-status ${status.className}">${escapeHtml(status.label)}</span>
+            </span>
+          </a>
+          ${homeDancerGridQrMarkup(profile)}
+        </article>
+      `;
+    }
+
+    function homeDancerGridSectionMarkup(label, className, profiles) {
+      if (!profiles.length) return "";
+      return `
+        <div class="home-dancer-grid-heading ${className}" role="heading" aria-level="3">
+          <strong>${label}</strong>
+          <span>${profiles.length}</span>
+        </div>
+        ${profiles.map((profile) => homeDancerGridCard(profile)).join("")}
+      `;
+    }
+
+    function renderHomeDancerGrid(city, profiles, tab) {
+      const groups = dancerDirectoryGroups(profiles, city);
+      const sections = tab === "tonight"
+        ? [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }]
+        : [
+            { label: "Working Now", className: "is-now", profiles: groups.workingNow },
+            { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
+            { label: "No Shift Posted", className: "is-open", profiles: groups.noSchedule }
+          ];
+      results.classList.add("card-grid", "home-dancer-grid");
+      results.setAttribute("aria-label", tab === "tonight"
+        ? `Dancers working now in ${city}`
+        : `All approved dancers in ${city}, ordered by shift status`);
+      results.innerHTML = sections
+        .map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles))
+        .join("");
     }
 
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
@@ -43412,7 +43752,7 @@
 
     function handleHomeDiscoveryFeedViewportChange() {
       if (!homeDiscoveryFeedOpen) return;
-      if (!["tonight", "dancers", "venues"].includes(activeTab) || !homeDiscoveryFeedUsesLockedViewport()) {
+      if (activeTab !== "venues" || !homeDiscoveryFeedUsesLockedViewport()) {
         homeDiscoveryFeedOpen = false;
         deactivateHomeDiscoveryFeed();
         render();
@@ -43441,8 +43781,7 @@
 
       const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
       const allItems = getItems(city, activeTab);
-      const shouldLimit = (activeTab === "tonight" && !tonightExpanded) || (activeTab === "dancers" && !dancersExpanded);
-      const items = shouldLimit ? allItems.slice(0, 6) : allItems;
+      const items = allItems;
       const venueFilter = selectedVenueFilter();
       const titles = {
         tonight: venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`,
@@ -43473,12 +43812,10 @@
         ? "Loading live profiles..."
         : selectedVenue
         ? city
-        : (activeTab === "tonight" || activeTab === "dancers") && allItems.length > items.length
-          ? `${items.length} of ${allItems.length}`
-          : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
+        : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
       const usesDiscoveryFeed =
         homeDiscoveryFeedOpen &&
-        ["tonight", "dancers", "venues"].includes(activeTab) &&
+        activeTab === "venues" &&
         homeDiscoveryFeedUsesLockedViewport();
       if (usesDiscoveryFeed) {
         renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
@@ -43486,9 +43823,9 @@
       }
       if (homeDiscoveryFeedOpen) homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
-      viewAllBtn.hidden = !["tonight", "dancers"].includes(activeTab) || allItems.length <= 6 || !shouldLimit;
-      viewAllBtn.textContent = activeTab === "dancers" ? "View All Dancers" : "View All";
-      results.classList.toggle("card-grid", activeTab !== "venues");
+      viewAllBtn.hidden = true;
+      results.classList.remove("home-dancer-grid");
+      results.classList.toggle("card-grid", activeTab === "trending");
       if (selectedVenue) {
         viewAllBtn.hidden = true;
         results.classList.remove("card-grid");
@@ -43505,7 +43842,7 @@
           <section class="home-discovery-empty" aria-labelledby="homeNowEmptyTitle">
             <strong id="homeNowEmptyTitle">No dancers are working now ${scope}.</strong>
             <p>See approved dancers with upcoming shifts first, followed by dancers with no schedule posted.</p>
-            <button class="home-discovery-empty-action" type="button" data-show-dancers>See Upcoming Dancers</button>
+            <button class="home-discovery-empty-action" type="button" data-show-dancers>See All Dancers</button>
           </section>
         `;
         return;
@@ -43514,8 +43851,8 @@
         const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
         results.innerHTML = `
           <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
-            <strong id="homeDancersEmptyTitle">No upcoming or open-schedule dancers ${scope}.</strong>
-            <p>Approved dancers actively working right now remain available in the Now tab.</p>
+            <strong id="homeDancersEmptyTitle">No approved dancer profiles ${scope}.</strong>
+            <p>Profiles appear here as soon as they are approved for public discovery.</p>
           </section>
         `;
         return;
@@ -43527,6 +43864,10 @@
             <p>Increase the distance or choose All venues to see active venue profiles.</p>
           </section>
         `;
+        return;
+      }
+      if (activeTab === "tonight" || activeTab === "dancers") {
+        renderHomeDancerGrid(city, items, activeTab);
         return;
       }
       results.innerHTML = items.map((item, index) => (
@@ -44078,6 +44419,11 @@
     }
 
     results.addEventListener("click", async (event) => {
+      const dealPassTrigger = event.target.closest("[data-club-deal-cta], [data-deal-pass]");
+      if (dealPassTrigger) {
+        await handleDealPassClick(event);
+        return;
+      }
       const showDancersButton = event.target.closest("[data-show-dancers]");
       if (showDancersButton) {
         activeTab = "dancers";
@@ -46221,7 +46567,7 @@
       }
       activeTab = nextTab;
       homeDiscoveryFeedOpen =
-        ["tonight", "dancers", "venues"].includes(nextTab) &&
+        nextTab === "venues" &&
         homeDiscoveryFeedUsesLockedViewport();
       tonightExpanded = false;
       dancersExpanded = false;
