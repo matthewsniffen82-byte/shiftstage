@@ -139,15 +139,66 @@ test("Now and Dancers share one responsive grid while Venues keeps its full-scre
     homeSource,
     /function renderHomeDancerGrid\(city, profiles, tab\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"[\s\S]*?results\.classList\.add\("card-grid", "home-dancer-grid"\)/,
   );
+});
+
+test("Venues uses a horizontal one-and-a-peek mobile carousel", () => {
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: flex !important[\s\S]*?overflow-x: auto !important[\s\S]*?overflow-y: hidden !important[\s\S]*?scroll-snap-type: x mandatory[\s\S]*?touch-action: pan-x/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: min\(82vw, 410px\) !important[\s\S]*?flex: 0 0 min\(82vw, 410px\)[\s\S]*?scroll-snap-align: start/,
+  );
+  assert.match(
+    homeSource,
+    /const isVenueFeed = results\.classList\.contains\("home-venue-discovery-feed"\)[\s\S]*?slide\.offsetLeft - results\.scrollLeft/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-discovery-feed-height, 100dvh\) !important/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: 100% !important[\s\S]*?min-height: 100% !important[\s\S]*?aspect-ratio: auto !important/,
+  );
+  assert.match(
+    homeSource,
+    /html\.home-discovery-feed-locked,[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?position: fixed !important/,
+  );
+  assert.match(
+    homeSource,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
     /function renderHomeDiscoveryFeed\(city, items, options = \{\}\)[\s\S]*?activeTab === "venues"[\s\S]*?homeVenueDiscoveryFeedSlide\(item, index, items\.length, city\)/,
   );
-  assert.doesNotMatch(homeSource, /\["tonight", "dancers", "venues"\]\.includes\(nextTab\)/);
+  assert.match(
+    homeSource,
+    /new IntersectionObserver\([\s\S]*?activateHomeDiscoveryFeedItem/,
+  );
+  assert.match(
+    homeSource,
+    /homeDiscoveryFeedPositions\.set\(homeDiscoveryFeedPositionKey\(\), itemKey\)/,
+  );
+  assert.match(
+    homeSource,
+    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*activeTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /home-discovery-feed-close|data-home-discovery-close|closeHomeDiscoveryFeed/,
+  );
+  assert.match(
+    homeSource,
+    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"venue profiles"[\s\S]*?"Swipe left or right" : "Swipe vertically"/,
+  );
+  assert.match(
+    homeSource,
+    /if \(!items\.length\)[\s\S]*?No dancers are working now[\s\S]*?No venues match your current filters[\s\S]*?No approved dancer profiles are available/,
+  );
+  assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
 test("every mobile snap feed keeps a fixed slide size and settles on exact viewport boundaries", () => {

@@ -15,7 +15,7 @@ test("venue discovery tracks mobile browser height changes and settles repeated 
   );
   assert.match(
     homeSource,
-    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);/,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);/,
   );
   assert.match(
     homeSource,
