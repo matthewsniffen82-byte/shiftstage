@@ -60,14 +60,14 @@ test("homepage full profiles keep the homepage navigation usable", () => {
   );
 });
 
-test("only the current mobile destination receives an icon container", () => {
+test("every mobile icon stays container-free while the current icon keeps its glow", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.24\);[\s\S]*?border-radius: 10px;[\s\S]*?linear-gradient\([\s\S]*?0 0 14px rgba\(124, 58, 237, 0\.3\)/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)/,
   );
   assert.match(
     homeSource,
@@ -75,6 +75,10 @@ test("only the current mobile destination receives an icon container", () => {
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 10px !important;[\s\S]*?linear-gradient\(145deg/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
   );
 });
