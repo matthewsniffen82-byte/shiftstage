@@ -78,7 +78,7 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
 
 test("layout-review approval supports the deployed auto-approval schema", () => {
   const approvalFunction = scriptSource.match(
-    /async function approveSyntheticProfile[\s\S]*?\n}\n\nasync function upsertProfilePhotos/,
+    /async function approveSyntheticProfile[\s\S]*?\r?\n}\r?\n\r?\nasync function upsertProfilePhotos/,
   )?.[0];
   assert.ok(approvalFunction);
   assert.doesNotMatch(approvalFunction, /identity_provider|identity_verified_at/);
