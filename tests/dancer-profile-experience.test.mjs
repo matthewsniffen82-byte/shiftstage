@@ -130,15 +130,15 @@ test("official links stay compact and real videos have distinct metadata", () =>
   assert.match(tvStrip, /formatVideoDate\(video\.publishedAt\)/);
 });
 
-test("every MyDancr TV dancer destination opens the full live profile with the canonical database slug", () => {
+test("every MyDancr TV dancer destination opens the in-app live profile with the canonical database slug", () => {
   const dancerProfileHref =
     tvFeed.match(/function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?\n\}/)?.[0] || "";
   assert.match(
     dancerProfileHref,
-    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+const slug = video\.dancer\.slug\.trim\(\);\s+return slug \? `\/dancers\/\$\{encodeURIComponent\(slug\)\}` : "\/dancers";\s+\}/,
+    /const city = video\.dancer\.city\.trim\(\) \|\| "Las Vegas";[\s\S]*?const slug = video\.dancer\.slug\.trim\(\);[\s\S]*?`\/\?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(slug\)\}`/,
   );
   assert.doesNotMatch(
     dancerProfileHref,
-    /const profile = video\.dancer\.slug\.trim\(\) \|\| slugifyLiveProfileName|return `\/\?city=/,
+    /slugifyLiveProfileName\(video\.dancer\.stageName\)|`\/dancers\/\$\{encodeURIComponent\(slug\)\}`/,
   );
 });

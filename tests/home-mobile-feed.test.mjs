@@ -66,7 +66,11 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /dancer\.href = dancerSlug \? `\/dancers\/\$\{encodeURIComponent\(dancerSlug\)\}` : "#"/,
+    /dancer\.href = dancerSlug[\s\S]*?`\/\?city=\$\{encodeURIComponent\(dancerCity\)\}&profile=\$\{encodeURIComponent\(dancerSlug\)\}`[\s\S]*?: "#"/,
+  );
+  assert.match(
+    homeSource,
+    /dancer\.addEventListener\("click", \(event\) => \{[\s\S]*?markets\[dancerCity\]\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profile\.name\)/,
   );
   assert.match(homeSource, /venue\.href = venueExperienceHref\([\s\S]*?\{ slug: venueSlug, name: venueName \}[\s\S]*?item\?\.dancer\?\.city \|\| citySelect\.value/);
   assert.match(homeSource, /"Working now"[\s\S]*?`Upcoming \$\{formatProfileTvShift/);

@@ -44507,6 +44507,7 @@
       const videoId = String(item.id);
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const dancerSlug = String(item?.dancer?.slug || "").trim();
+      const dancerCity = String(item?.dancer?.city || citySelect.value).trim() || "Las Vegas";
       const venueName = String(item?.venue?.name || "").trim();
       const venueSlug = String(item?.venue?.slug || "").trim();
       const copy = document.createElement("div");
@@ -44514,9 +44515,23 @@
 
       const dancer = document.createElement("a");
       dancer.className = "home-tv-feed-dancer";
-      dancer.href = dancerSlug ? `/dancers/${encodeURIComponent(dancerSlug)}` : "#";
-      dancer.setAttribute("aria-label", `Open ${dancerName}'s full profile`);
-      dancer.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "profile_click"));
+      dancer.href = dancerSlug
+        ? `/?city=${encodeURIComponent(dancerCity)}&profile=${encodeURIComponent(dancerSlug)}`
+        : "#";
+      dancer.setAttribute("aria-label", `Open ${dancerName}'s live profile`);
+      dancer.addEventListener("click", (event) => {
+        trackHomeTvFeedEvent(videoId, "profile_click");
+        if (!dancerSlug) {
+          event.preventDefault();
+          return;
+        }
+        const profile = markets[dancerCity]?.dancers.find((profileItem) => (
+          profileItem.slug === dancerSlug && isApprovedPublicProfile(profileItem)
+        ));
+        if (!profile) return;
+        event.preventDefault();
+        openProfileModal(profile.name);
+      });
       const dancerLabel = document.createElement("span");
       dancerLabel.textContent = dancerName;
       const verified = document.createElement("span");
@@ -47166,10 +47181,9 @@
         }
         return;
       }
-      const profile = markets[city].dancers.find((item) => (
-        (item.slug === profileSlug || slugify(item.name) === profileSlug) &&
-        isApprovedPublicProfile(item)
-      ));
+      const approvedProfiles = markets[city].dancers.filter(isApprovedPublicProfile);
+      const profile = approvedProfiles.find((item) => item.slug === profileSlug)
+        || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
       if (profile) {
         setTimeout(() => openProfileModal(profile.name), 120);
       }
