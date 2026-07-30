@@ -93,6 +93,10 @@ test("venue discovery prefers venue covers and falls back to approved lineup med
   );
   assert.match(homeSource, /home-venue-discovery-art\$\{visual\.attrs\.className\}/);
   assert.match(homeSource, /home-venue-discovery-lineup/);
+  assert.match(
+    homeSource,
+    /#results\.venue-card-grid \.venue-card \.venue-art\.has-custom-photo[\s\S]*?var\(--custom-photo\) !important/,
+  );
   assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo[\s\S]*?var\(--custom-photo\)/);
   assert.match(homeSource, /\.home-venue-discovery-slide \.home-discovery-feed-actions[\s\S]*?grid-template-columns: repeat\(3/);
   assert.doesNotMatch(
