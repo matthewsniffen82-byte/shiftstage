@@ -280,7 +280,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: 4px !important[\s\S]*?left: auto !important/,
+    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: calc\(50% - 22px\) !important[\s\S]*?left: auto !important[\s\S]*?text-align: right/,
   );
 });
 
