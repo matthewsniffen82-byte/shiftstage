@@ -26537,15 +26537,15 @@
       }
     }
 
-    /* Final profile preview thumbnails: one row without horizontal squashing. */
+    /* Full-profile media stage and thumbnail filmstrip. */
     .profile-modal .gallery {
       display: flex !important;
       flex-wrap: nowrap !important;
-      gap: clamp(4px, 1.2vw, 7px) !important;
+      gap: clamp(8px, 2vw, 12px) !important;
       width: 100% !important;
       max-width: min(100%, 620px) !important;
       margin-inline: auto !important;
-      padding: 4px clamp(10px, 2.8vw, 14px) 2px !important;
+      padding: 12px clamp(10px, 2.8vw, 14px) 14px !important;
       position: relative !important;
       left: auto !important;
       bottom: auto !important;
@@ -26553,20 +26553,32 @@
       z-index: 3 !important;
       border: 0 !important;
       border-radius: 0 !important;
-      background: transparent !important;
+      background: #000 !important;
       box-shadow: none !important;
       backdrop-filter: none !important;
       overflow-x: auto !important;
       overflow-y: hidden !important;
+      overscroll-behavior-inline: contain !important;
+      scroll-padding-inline: 10px !important;
+      scroll-snap-type: x mandatory !important;
       -webkit-overflow-scrolling: touch !important;
-      scrollbar-width: none !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(255,255,255,.34) transparent !important;
     }
 
     .profile-modal .gallery::-webkit-scrollbar {
-      display: none !important;
+      height: 4px !important;
+    }
+
+    .profile-modal .gallery::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(255,255,255,.34);
     }
 
     .profile-modal .modal-image {
+      background-color: #000 !important;
+      background-position: center, center, center !important;
+      background-size: contain, contain, cover !important;
       cursor: grab !important;
     }
 
@@ -26610,29 +26622,143 @@
     }
 
     .profile-modal .thumb {
-      flex: 0 0 clamp(38px, 9vw, 54px) !important;
-      width: clamp(38px, 9vw, 54px) !important;
-      min-width: clamp(38px, 9vw, 54px) !important;
-      max-width: clamp(38px, 9vw, 54px) !important;
-      height: clamp(44px, 10vw, 62px) !important;
+      position: relative !important;
+      flex: 0 0 clamp(82px, 23vw, 108px) !important;
+      width: clamp(82px, 23vw, 108px) !important;
+      min-width: clamp(82px, 23vw, 108px) !important;
+      max-width: clamp(82px, 23vw, 108px) !important;
+      height: auto !important;
       min-height: 0 !important;
-      aspect-ratio: 2 / 3 !important;
+      aspect-ratio: 1 !important;
+      overflow: hidden !important;
+      border: 3px solid transparent !important;
+      border-radius: 14px !important;
+      background: #101014 !important;
+      box-shadow: none !important;
+      scroll-snap-align: center !important;
+    }
+
+    .profile-modal .thumb.active {
+      border-color: #fff !important;
+      box-shadow: 0 0 0 3px #050507, 0 0 0 5px rgba(255,255,255,.72) !important;
+    }
+
+    .profile-modal .thumb .portrait,
+    .profile-modal .thumb > video {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      object-fit: cover !important;
+      background: #000 !important;
+      pointer-events: none !important;
+    }
+
+    .profile-modal .profile-media-thumb-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 44%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 5px 18px rgba(0,0,0,.3);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .profile-modal .profile-media-thumb-play::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 54%;
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-left: 12px solid #111;
+      transform: translate(-50%, -50%);
+    }
+
+    .profile-modal .profile-media-thumb-duration {
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      padding: 3px 5px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(0,0,0,.76);
+      font-size: 9px;
+      font-weight: 950;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .profile-modal .modal-image.is-video-media {
+      background-image: none !important;
+    }
+
+    .profile-modal .modal-media-video-preview {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: #000;
+    }
+
+    .profile-modal .modal-media-video-preview > video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: #000;
+      pointer-events: none;
+    }
+
+    .profile-modal .modal-media-video-play {
+      position: absolute;
+      z-index: 3;
+      top: 50%;
+      left: 50%;
+      width: clamp(88px, 25%, 124px);
+      min-height: 0;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      color: #111;
+      background: rgba(255,255,255,.84);
+      box-shadow: 0 14px 44px rgba(0,0,0,.34);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+    }
+
+    .profile-modal .modal-media-video-play::after {
+      content: "";
+      width: 0;
+      height: 0;
+      margin-left: 9%;
+      border-top: 24px solid transparent;
+      border-bottom: 24px solid transparent;
+      border-left: 36px solid #111;
     }
 
     @media (max-width: 390px) {
       .profile-modal .gallery {
-        gap: 4px !important;
+        gap: 9px !important;
         width: 100% !important;
         max-width: 100% !important;
-        padding: 4px 8px 2px !important;
+        padding: 11px 8px 13px !important;
       }
 
       .profile-modal .thumb {
-        flex-basis: 36px !important;
-        width: 36px !important;
-        min-width: 36px !important;
-        max-width: 36px !important;
-        height: 46px !important;
+        flex-basis: 82px !important;
+        width: 82px !important;
+        min-width: 82px !important;
+        max-width: 82px !important;
       }
     }
 
@@ -28872,21 +28998,6 @@
           text-align: center;
           background: radial-gradient(circle at 50% 30%, rgba(124,58,237,.22), transparent 46%), #050507;
         }
-        .profile-tv-strip { width: fit-content; max-width: 100%; display: grid; gap: 10px; margin: 10px 0; padding: 12px; border: 1px solid rgba(139,92,246,.25); border-radius: 10px; background: rgba(10,10,15,.86); box-shadow: 0 16px 44px rgba(0,0,0,.22); }
-        .profile-tv-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
-        .profile-tv-strip-head strong { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
-        .profile-tv-strip-count { color: #9fefff; font-size: 10px; font-weight: 900; white-space: nowrap; }
-        .profile-tv-strip-list { max-width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(165px, 190px); gap: 9px; padding-bottom: 2px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
-        .profile-tv-strip[data-video-count="1"] .profile-tv-strip-list { grid-auto-columns: minmax(210px, 250px); }
-        .profile-tv-strip[data-video-count="2"] .profile-tv-strip-list { grid-auto-columns: minmax(190px, 220px); }
-        .profile-tv-strip-card { position: relative; min-height: 0; aspect-ratio: 9 / 14; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; color: #fff; background: #000; font: inherit; text-align: left; scroll-snap-align: start; cursor: pointer; }
-        .profile-tv-strip-card:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
-        .profile-tv-strip-card video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
-        .profile-tv-strip-card::after { content: "Open full screen"; position: absolute; z-index: 2; top: 7px; left: 7px; padding: 5px 7px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.68); font-size: 8px; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; }
-        .profile-tv-strip-position { position: absolute; z-index: 2; top: 8px; right: 8px; min-width: 27px; height: 24px; display: grid; place-items: center; padding: 0 6px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.68); font-size: 9px; font-weight: 950; }
-        .profile-tv-strip-schedule { position: absolute; left: 7px; bottom: 7px; z-index: 2; width: fit-content; max-width: calc(100% - 14px); padding: 4px 7px; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b8b2c4; background: rgba(7,7,12,.76); font-size: 9px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
-        .profile-tv-strip-schedule.is-now { border-color: rgba(77,236,157,.38); color: #80f3b6; background: rgba(31,143,87,.24); }
-        .profile-tv-strip-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.16); }
         .profile-tv-viewer { position: fixed; z-index: 1200; inset: 0; display: grid; place-items: center; padding: 0; overscroll-behavior: none; touch-action: none; background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
         .profile-tv-viewer[hidden] { display: none; }
         .profile-tv-viewer-shell { position: relative; width: 100%; max-width: none; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 0; border-radius: 0; background: #000; box-shadow: none; overscroll-behavior: none; touch-action: none; }
@@ -29058,10 +29169,6 @@
           .home-tv-launch-copy strong { font-size: clamp(13px, 3.8vw, 16px); }
           .home-tv-launch-count { min-width: 52px; min-height: 30px; padding-inline: 8px; font-size: 10px; }
           .home-tv-launch-arrow { font-size: 27px; }
-          .profile-tv-strip { width: 100%; }
-          .profile-tv-strip-list,
-          .profile-tv-strip[data-video-count="1"] .profile-tv-strip-list,
-          .profile-tv-strip[data-video-count="2"] .profile-tv-strip-list { grid-auto-columns: minmax(128px, 42vw); }
           .profile-tv-viewer-footer { grid-template-columns: minmax(0, 1fr); }
         }
         @media (max-width: 720px) {
@@ -31277,7 +31384,7 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
-        <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos. Swipe left or right to change photos.">
+        <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
           <div class="modal-identity-stack">
             <div class="modal-identity">
               <h2 id="modalName">Profile</h2>
@@ -38691,7 +38798,14 @@
       return profile ? (profile.status === "Pending" ? profile : withTrendingRank(profile, citySelect.value)) : null;
     }
 
+    function clearModalVideoPreview() {
+      modalImage.querySelector(".modal-media-video-preview")?.remove();
+      modalImage.classList.remove("is-video-media");
+      delete modalImage.dataset.activeVideoIndex;
+    }
+
     function setModalPhoto(photoClass, photoUrl = "") {
+      clearModalVideoPreview();
       const safeUrl = safeCssUrl(photoUrl);
       modalImage.className = `modal-image ${photoClass}${safeUrl ? " has-custom-photo" : ""}`;
       if (safeUrl) {
@@ -38704,18 +38818,93 @@
         const isActive = thumb.dataset.photo === photoClass && (thumb.dataset.photoUrl || "") === (photoUrl || "");
         thumb.classList.toggle("active", isActive);
         thumb.setAttribute("aria-pressed", String(isActive));
+        if (isActive) {
+          thumb.setAttribute("aria-current", "true");
+        } else {
+          thumb.removeAttribute("aria-current");
+        }
       });
       const activeIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
-      const totalPhotos = Math.max(1, thumbs.length);
+      const photoThumbs = thumbs.filter((thumb) => !thumb.hasAttribute("data-profile-tv-index"));
+      const activePhotoIndex = Math.max(0, photoThumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      const totalPhotos = Math.max(1, photoThumbs.length);
       modalImage.dataset.activePhotoIndex = String(activeIndex);
+      modalImage.dataset.activeMediaType = "photo";
       modalImage.setAttribute(
         "aria-label",
-        `${modalName.textContent.trim() || "Dancer"} profile photo ${activeIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
+        `${modalName.textContent.trim() || "Dancer"} profile photo, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Swipe left or right to change media.`
       );
       profilePhotoViewerImage?.setAttribute(
         "aria-label",
-        `Selected profile photo ${activeIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
+        `Selected profile photo ${activePhotoIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
       );
+    }
+
+    function setModalVideo(item, profileName, videos, index) {
+      if (!item?.videoUrl) return false;
+      clearModalVideoPreview();
+      modalImage.className = "modal-image is-video-media";
+      modalImage.style.removeProperty("--custom-photo");
+
+      const preview = document.createElement("div");
+      preview.className = "modal-media-video-preview";
+      const video = document.createElement("video");
+      video.src = item.videoUrl;
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.setAttribute("aria-hidden", "true");
+      const play = document.createElement("button");
+      play.type = "button";
+      play.className = "modal-media-video-play";
+      play.setAttribute("aria-label", `Play ${profileName} profile video ${index + 1}`);
+      play.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openProfileTvViewer(item, profileName, videos);
+      });
+      preview.append(video, play);
+      modalImage.appendChild(preview);
+
+      const thumbs = [...modalGallery.querySelectorAll(".thumb")];
+      thumbs.forEach((thumb) => {
+        const isActive = Number(thumb.dataset.profileTvIndex) === index;
+        thumb.classList.toggle("active", isActive);
+        thumb.setAttribute("aria-pressed", String(isActive));
+        if (isActive) {
+          thumb.setAttribute("aria-current", "true");
+          modalGallery.scrollTo({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+            left: thumb.offsetLeft - (modalGallery.clientWidth - thumb.offsetWidth) / 2
+          });
+        } else {
+          thumb.removeAttribute("aria-current");
+        }
+      });
+      const activeIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      modalImage.dataset.activeMediaType = "video";
+      modalImage.dataset.activeVideoIndex = String(index);
+      modalImage.dataset.activePhotoIndex = String(activeIndex);
+      modalImage.setAttribute(
+        "aria-label",
+        `${profileName} profile video, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Select Play to watch or swipe left or right to change media.`
+      );
+      return true;
+    }
+
+    function selectModalMediaThumb(thumb, options = {}) {
+      if (!thumb) return false;
+      if (thumb.hasAttribute("data-profile-tv-index")) {
+        const videos = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
+        const videoIndex = Number(thumb.dataset.profileTvIndex);
+        const item = videos[videoIndex];
+        if (!item) return false;
+        return setModalVideo(item, modalGallery.profileTvProfileName || "Dancer", videos, videoIndex);
+      }
+      setModalPhoto(thumb.dataset.photo, thumb.dataset.photoUrl || "");
+      if (options.syncViewer) syncProfilePhotoViewerImage();
+      return true;
     }
 
     function syncProfilePhotoViewerImage() {
@@ -38746,14 +38935,15 @@
     }
 
     function moveModalPhoto(direction, options = {}) {
-      const thumbs = [...modalGallery.querySelectorAll(".thumb")];
+      const selector = options.syncViewer
+        ? ".thumb:not([data-profile-tv-index])"
+        : ".thumb";
+      const thumbs = [...modalGallery.querySelectorAll(selector)];
       if (thumbs.length < 2) return false;
       const currentIndex = Math.max(0, thumbs.findIndex((thumb) => thumb.classList.contains("active")));
       const nextIndex = (currentIndex + direction + thumbs.length) % thumbs.length;
       const nextThumb = thumbs[nextIndex];
-      setModalPhoto(nextThumb.dataset.photo, nextThumb.dataset.photoUrl || "");
-      if (options.syncViewer) syncProfilePhotoViewerImage();
-      return true;
+      return selectModalMediaThumb(nextThumb, options);
     }
 
     function bindHorizontalProfilePhotoSwipe(element, options = {}) {
@@ -39377,93 +39567,54 @@
       }
     }
 
-    function playProfileTvPreview(preview, section) {
-      section.querySelectorAll("video").forEach((video) => {
-        if (video !== preview) video.pause();
-      });
-      void preview.play().catch(() => undefined);
-    }
-
-    function observeProfileTvPreview(section, preview) {
-      if (!("IntersectionObserver" in window)) return;
-      const observer = new IntersectionObserver((entries) => {
-        const entry = entries[0];
-        if (entry?.isIntersecting && entry.intersectionRatio >= .65) {
-          playProfileTvPreview(preview, section);
-        } else {
-          preview.pause();
-        }
-      }, { threshold: [.65] });
-      observer.observe(section);
-      section.profileTvPreviewObserver = observer;
-    }
-
     async function loadProfileMyDancrTv(profile) {
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return;
-      const existing = modalBody.querySelector(".profile-tv-strip");
-      existing?.profileTvPreviewObserver?.disconnect();
-      if (existing) existing.remove();
+      const requestProfileId = profile.id;
+      modalGallery.dataset.profileMediaProfile = requestProfileId;
+      modalGallery.querySelectorAll("[data-profile-tv-index]").forEach((thumb) => thumb.remove());
+      modalGallery.profileTvVideos = [];
+      modalGallery.profileTvProfileName = profile.name || "Dancer";
       try {
         const response = await fetch(`/api/public/tv?city=${encodeURIComponent(citySelect.value)}&dancer=${encodeURIComponent(profile.id)}&limit=4`, { cache: "no-store" });
         const payload = await response.json();
-        if (!response.ok || !payload.ok || !payload.videos?.length) return;
-        const section = document.createElement("section");
-        section.className = "profile-tv-strip";
-        section.dataset.videoCount = String(Math.min(payload.videos.length, 4));
-        const head = document.createElement("div");
-        head.className = "profile-tv-strip-head";
-        const heading = document.createElement("strong");
-        heading.textContent = `${profile.name} on MyDancr TV`;
-        const count = document.createElement("span");
-        count.className = "profile-tv-strip-count";
-        count.textContent = `${payload.videos.length} ${payload.videos.length === 1 ? "video" : "videos"}`;
-        head.append(heading, count);
-        const list = document.createElement("div");
-        list.className = "profile-tv-strip-list";
-        let firstPreview = null;
-        payload.videos.forEach((item, index) => {
-          const card = document.createElement("button");
-          card.type = "button";
-          card.className = "profile-tv-strip-card";
+        if (
+          modalGallery.dataset.profileMediaProfile !== requestProfileId ||
+          !response.ok ||
+          !payload.ok ||
+          !payload.videos?.length
+        ) return;
+        const videos = payload.videos.slice(0, 4);
+        modalGallery.profileTvVideos = videos;
+        videos.forEach((item, index) => {
+          const thumb = document.createElement("button");
+          thumb.type = "button";
+          thumb.className = "thumb profile-media-thumb is-video";
+          thumb.dataset.profileTvIndex = String(index);
+          thumb.setAttribute("aria-pressed", "false");
           const scheduleLabel = profileTvScheduleLabel(item);
           const durationLabel = formatProfileTvDuration(item.durationSeconds);
-          card.setAttribute(
+          thumb.setAttribute(
             "aria-label",
-            `Open ${profile.name} MyDancr TV video ${index + 1} of ${payload.videos.length} full screen, ${scheduleLabel}, ${durationLabel}`
+            `Show ${profile.name} profile video ${index + 1} of ${videos.length}, ${scheduleLabel}, ${durationLabel}`
           );
           const video = document.createElement("video");
           video.src = item.videoUrl;
-          video.loop = true;
           video.muted = true;
           video.defaultMuted = true;
           video.playsInline = true;
           video.preload = "metadata";
           video.setAttribute("aria-hidden", "true");
-          const schedule = document.createElement("span");
-          schedule.className = item.shift?.isActive
-            ? "profile-tv-strip-schedule is-now"
-            : item.shift
-              ? "profile-tv-strip-schedule is-upcoming"
-              : "profile-tv-strip-schedule is-no-shift";
-          schedule.textContent = scheduleLabel;
-          const position = document.createElement("span");
-          position.className = "profile-tv-strip-position";
-          position.setAttribute("aria-hidden", "true");
-          position.textContent = `${index + 1}/${payload.videos.length}`;
-          card.append(video, schedule, position);
-          card.addEventListener("mouseenter", () => playProfileTvPreview(video, section));
-          card.addEventListener("mouseleave", () => video.pause());
-          card.addEventListener("focus", () => playProfileTvPreview(video, section));
-          card.addEventListener("blur", () => video.pause());
-          card.addEventListener("click", () => openProfileTvViewer(item, profile.name, payload.videos));
-          list.appendChild(card);
-          if (index === 0) firstPreview = video;
+          const play = document.createElement("span");
+          play.className = "profile-media-thumb-play";
+          play.setAttribute("aria-hidden", "true");
+          const duration = document.createElement("span");
+          duration.className = "profile-media-thumb-duration";
+          duration.textContent = durationLabel;
+          thumb.append(video, play, duration);
+          modalGallery.appendChild(thumb);
         });
-        section.append(head, list);
-        modalBody.prepend(section);
-        if (firstPreview) observeProfileTvPreview(section, firstPreview);
       } catch {
-        // The live profile remains fully usable if its optional video strip cannot load.
+        // The live profile remains fully usable if optional profile videos cannot load.
       }
     }
 
@@ -44759,7 +44910,7 @@
       event.stopPropagation();
       const thumb = event.target.closest(".thumb");
       if (!thumb) return;
-      setModalPhoto(thumb.dataset.photo, thumb.dataset.photoUrl || "");
+      selectModalMediaThumb(thumb);
     });
 
     bindHorizontalProfilePhotoSwipe(modalImage);

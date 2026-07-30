@@ -67,18 +67,21 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
-test("live profile TV cards adapt to content and avoid background autoplay storms", () => {
+test("live profile videos join the thumbnail filmstrip without background autoplay", () => {
   const loader =
     liveApp.match(
       /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
     )?.[0] || "";
 
-  assert.match(liveApp, /\.profile-tv-strip \{[^}]*width: fit-content;[^}]*max-width: 100%/);
-  assert.match(liveApp, /\.profile-tv-strip\[data-video-count="1"\][^}]*grid-auto-columns/);
-  assert.match(liveApp, /\.profile-tv-strip\[data-video-count="2"\][^}]*grid-auto-columns/);
-  assert.match(loader, /section\.dataset\.videoCount = String\(Math\.min\(payload\.videos\.length, 4\)\)/);
-  assert.match(loader, /profile-tv-strip-count/);
-  assert.match(loader, /video \$\{index \+ 1\} of \$\{payload\.videos\.length\} full screen/);
-  assert.match(loader, /if \(firstPreview\) observeProfileTvPreview\(section, firstPreview\)/);
+  assert.match(loader, /const videos = payload\.videos\.slice\(0, 4\)/);
+  assert.match(loader, /modalGallery\.profileTvVideos = videos/);
+  assert.match(loader, /modalGallery\.dataset\.profileMediaProfile !== requestProfileId/);
+  assert.match(loader, /thumb\.className = "thumb profile-media-thumb is-video"/);
+  assert.match(loader, /video\.preload = "metadata"/);
+  assert.match(loader, /profile-media-thumb-play/);
+  assert.match(loader, /profile-media-thumb-duration/);
+  assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)/);
+  assert.match(liveApp, /className = "modal-media-video-play"/);
   assert.doesNotMatch(loader, /video\.autoplay = true/);
+  assert.doesNotMatch(loader, /\.play\(\)/);
 });

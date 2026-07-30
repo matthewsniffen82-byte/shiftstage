@@ -36,7 +36,7 @@ test("the live dancer profile changes photos with horizontal swipe and trackpad 
 test("live profile photos remain accessible with thumbnails and keyboard navigation", () => {
   assert.match(
     liveApp,
-    /id="modalImage" role="group" tabindex="0" aria-label="Profile photos\. Swipe left or right to change photos\."/,
+    /id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos\. Swipe left or right to change media\."/,
   );
   assert.match(
     liveApp,
@@ -70,6 +70,27 @@ test("the profile carousel mixes approved videos with profile photos", () => {
   );
   assert.match(publicPhotoCarousel, /data-dancer-media-carousel/);
   assert.match(publicProfilePage, /\.public-profile-video video \{[^}]*object-fit: contain/);
+  assert.match(
+    publicPhotoCarousel,
+    /className="public-media-stage"[\s\S]*?className="public-profile-play"[\s\S]*?className="public-media-thumbnails"/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /className={`public-media-thumbnail\$\{isSelected \? " is-selected" : ""\}\$\{media\.kind === "video" \? " is-video" : ""\}`}/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /strip\.scrollTo\(\{[\s\S]*?selectedThumbnail\.offsetLeft[\s\S]*?strip\.clientWidth/,
+  );
+  assert.match(
+    publicProfilePage,
+    /\.public-photo-image \{[^}]*object-fit: contain;[^}]*background: #000;/,
+  );
+  assert.match(
+    publicProfilePage,
+    /\.public-media-thumbnail\.is-selected \{[^}]*border-color: #fff;[^}]*box-shadow:/,
+  );
+  assert.doesNotMatch(`${publicProfilePage}\n${liveApp}`, /VIEWED TODAY|viewed-today/);
   assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
 });
 
@@ -97,8 +118,9 @@ test("the standalone public dancer profile uses the production swipe carousel", 
   );
   assert.match(
     publicProfilePage,
-    /@media \(max-width: 760px\)[\s\S]*?\.public-gallery \{[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory;[^}]*touch-action: pan-x pan-y;/,
+    /\.public-media-thumbnails \{[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory;/,
   );
+  assert.match(publicProfilePage, /@media \(max-width: 760px\)[\s\S]*?\.public-photo-nav \{ display: none; \}/);
   assert.doesNotMatch(publicPhotoCarousel, /public-photo-swipe-hint/);
   assert.doesNotMatch(publicProfilePage, /\.public-photo-swipe-hint/);
 });

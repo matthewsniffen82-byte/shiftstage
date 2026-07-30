@@ -283,13 +283,11 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.doesNotMatch(videoStrip, /requestFullscreen\(\)|:fullscreen|<video[\s\S]*?\scontrols(?:\s|>)/);
   assert.match(videoStrip, /`\/tv\/\$\{encodeURIComponent\(video\.id\)\}`[\s\S]*?navigator\.share[\s\S]*?navigator\.clipboard\.writeText/);
   assert.doesNotMatch(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
-  assert.match(liveApp, /observeProfileTvPreview\(section, firstPreview\)/);
-  assert.match(liveApp, /section\.dataset\.videoCount = String\(Math\.min\(payload\.videos\.length, 4\)\)/);
-  assert.match(liveApp, /heading\.textContent = `\$\{profile\.name\} on MyDancr TV`/);
-  assert.match(liveApp, /profile-tv-strip-count/);
-  assert.match(liveApp, /video \$\{index \+ 1\} of \$\{payload\.videos\.length\} full screen/);
-  assert.match(liveApp, /const card = document\.createElement\("button"\)[\s\S]*?card\.className = "profile-tv-strip-card"/);
-  assert.match(liveApp, /card\.addEventListener\("click", \(\) => openProfileTvViewer\(item, profile\.name, payload\.videos\)\)/);
+  assert.match(liveApp, /const videos = payload\.videos\.slice\(0, 4\)/);
+  assert.match(liveApp, /modalGallery\.profileTvVideos = videos/);
+  assert.match(liveApp, /thumb\.className = "thumb profile-media-thumb is-video"/);
+  assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?className = "modal-media-video-preview"/);
+  assert.match(liveApp, /play\.addEventListener\("click"[\s\S]*?openProfileTvViewer\(item, profileName, videos\)/);
   assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?profile-tv-viewer-video[\s\S]*?controlslist="nofullscreen noremoteplayback nodownload"[\s\S]*?loop playsinline/);
   assert.match(liveApp, /data-previous-profile-tv[\s\S]*?data-next-profile-tv[\s\S]*?id="profileTvViewerGallery"/);
   assert.match(liveApp, /touchstart[\s\S]*?touchend[\s\S]*?showRelativeProfileTvVideo\(distance < 0 \? 1 : -1\)/);
@@ -299,7 +297,6 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /async function shareProfileTvVideo\(\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(videoId\)\}`[\s\S]*?navigator\.share[\s\S]*?copyText\(url, "Video link copied"\)/);
   assert.doesNotMatch(liveApp, /all\.href = `\/tv\?|link\.href = `\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/);
   assert.doesNotMatch(liveApp, /id="homeTvTeaserLink"/);
-  assert.match(liveApp, /profile-tv-strip-schedule is-now[\s\S]*?profile-tv-strip-schedule is-upcoming[\s\S]*?profile-tv-strip-schedule is-no-shift/);
   assert.match(liveApp, /formatProfileTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)/);
   assert.match(liveApp, /<strong>Next shift<\/strong>/);
   assert.doesNotMatch(liveApp, /Upcoming interest/);

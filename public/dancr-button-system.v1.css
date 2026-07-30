@@ -199,6 +199,39 @@
     inset 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
+.dancr-button-system .public-media-thumbnail {
+  min-height: 0 !important;
+  border: 3px solid transparent !important;
+  border-radius: 14px !important;
+  background: #101014 !important;
+  box-shadow: none !important;
+}
+
+.dancr-button-system .public-media-thumbnail.is-selected {
+  border-color: #ffffff !important;
+  box-shadow:
+    0 0 0 3px #050507,
+    0 0 0 5px rgba(255, 255, 255, 0.72) !important;
+}
+
+.dancr-button-system .public-profile-play,
+.dancr-button-system .profile-modal .modal-media-video-play {
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  color: #111111 !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.34) !important;
+  text-shadow: none !important;
+}
+
+.dancr-button-system .public-profile-play:hover,
+.dancr-button-system .profile-modal .modal-media-video-play:hover {
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.42) !important;
+}
+
 .dancr-button-system :where(
   button,
   input[type="button"],

@@ -75,3 +75,18 @@ test("venue-card QR revenue actions retain their green glow over the shared butt
     /\.home-venue-discovery-deal-action:active \{[\s\S]*?0 0 14px rgba\(49, 255, 143, 0\.58\)/,
   );
 });
+
+test("profile media thumbnails and play controls retain their gallery-specific shapes", () => {
+  assert.match(
+    buttonCss,
+    /\.dancr-button-system \.public-media-thumbnail \{[\s\S]*?border-radius: 14px !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    buttonCss,
+    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: #ffffff !important;[\s\S]*?0 0 0 5px rgba\(255, 255, 255, 0\.72\)/,
+  );
+  assert.match(
+    buttonCss,
+    /\.public-profile-play,[\s\S]*?\.modal-media-video-play \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: rgba\(255, 255, 255, 0\.84\) !important;/,
+  );
+});

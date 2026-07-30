@@ -416,25 +416,30 @@ function PublicProfileStyles() {
       .profile-report-dialog select:focus, .profile-report-dialog textarea:focus { border-color: #7eeaff; box-shadow: 0 0 0 3px rgba(126,234,255,.13); }
       .profile-report-dialog form > button { min-height: 48px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
       .profile-report-error { color: #ffb4c8 !important; font-size: 13px !important; font-weight: 850 !important; }
-      .public-photo { grid-area: photo; position: relative; min-height: 520px; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); box-shadow: 0 30px 80px rgba(0,0,0,.45); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; cursor: grab; }
-      .public-photo:active { cursor: grabbing; }
-      .public-photo:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .public-photo { grid-area: photo; position: relative; min-width: 0; display: grid; gap: 12px; padding: 0; border: 0; border-radius: 18px; background: #000; box-shadow: 0 30px 80px rgba(0,0,0,.45); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; }
+      .public-photo:focus-visible { outline: 2px solid #7eeaff; outline-offset: 4px; }
+      .public-media-stage { position: relative; min-height: 0; aspect-ratio: 1 / 1.08; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 16px 16px 8px 8px; background: #000; cursor: grab; }
+      .public-media-stage:active { cursor: grabbing; }
       .public-profile-video { position: absolute; inset: 0; display: grid; place-items: center; background: #000; }
       .public-profile-video video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
-      .public-media-badge { position: absolute; z-index: 2; top: 14px; left: 14px; width: auto !important; height: auto !important; display: inline-flex !important; align-items: center; padding: 6px 9px !important; border: 1px solid rgba(126,234,255,.42) !important; border-radius: 999px !important; color: #e9fcff; background: rgba(5,5,8,.78) !important; font-size: 10px !important; font-weight: 950 !important; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; backdrop-filter: blur(8px); }
-      .public-video-caption { position: absolute; z-index: 2; top: 51px; left: 14px; max-width: min(70%, 300px); display: -webkit-box; padding: 7px 9px; overflow: hidden; border-radius: 9px; color: #fff; background: rgba(5,5,8,.72); font-size: 11px; font-weight: 750; line-height: 1.3; text-shadow: 0 1px 4px rgba(0,0,0,.8); pointer-events: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; backdrop-filter: blur(8px); }
-      .public-photo-image { position: absolute; inset: 0; background-position: center top; background-repeat: no-repeat; background-size: cover; }
-      .public-photo > span:not(.public-photo-status) { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
+      .public-profile-play { position: absolute; z-index: 3; top: 50%; left: 50%; width: clamp(88px, 25%, 124px); min-height: 0; aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #111; background: rgba(255,255,255,.84); box-shadow: 0 14px 44px rgba(0,0,0,.34); cursor: pointer; transform: translate(-50%, -50%); backdrop-filter: blur(5px); }
+      .public-profile-play:hover, .public-profile-play:focus-visible { outline: 3px solid #fff; outline-offset: 4px; background: rgba(255,255,255,.94); }
+      .public-profile-play > span { width: 0; height: 0; margin-left: 9%; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 36px solid #111; }
+      .public-video-caption { position: absolute; z-index: 2; left: 14px; bottom: 14px; max-width: calc(100% - 28px); display: -webkit-box; padding: 7px 9px; overflow: hidden; border-radius: 9px; color: #fff; background: rgba(5,5,8,.72); font-size: 11px; font-weight: 750; line-height: 1.3; text-shadow: 0 1px 4px rgba(0,0,0,.8); pointer-events: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; backdrop-filter: blur(8px); }
+      .public-photo-image { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; background: #000; pointer-events: none; -webkit-user-drag: none; }
+      .public-media-empty { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; background: rgba(139,92,246,.34); font-size: 32px; font-weight: 900; }
       .public-photo-nav { position: absolute; z-index: 2; top: 50%; width: 44px; height: 54px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: rgba(5,5,8,.62); box-shadow: 0 10px 28px rgba(0,0,0,.32); font-size: 34px; line-height: 1; cursor: pointer; transform: translateY(-50%); backdrop-filter: blur(8px); }
       .public-photo-nav.previous { left: 12px; }
       .public-photo-nav.next { right: 12px; }
       .public-photo-nav:hover, .public-photo-nav:focus-visible { border-color: #7eeaff; outline: none; background: rgba(45,16,111,.88); }
-      .public-photo-dots { position: absolute; z-index: 2; left: 50%; bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 9px; border-radius: 999px; background: rgba(5,5,8,.66); transform: translateX(-50%); backdrop-filter: blur(8px); }
-      .public-photo-dots button { width: 9px; height: 9px; padding: 0; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; background: rgba(255,255,255,.2); cursor: pointer; }
-      .public-gallery[data-active-media-type="video"] .public-photo-dots { top: 14px; right: 14px; bottom: auto; left: auto; max-width: calc(100% - 110px); overflow-x: auto; transform: none; }
-      .public-photo-dots button.is-video { width: 18px; border-radius: 999px; }
-      .public-photo-dots button.is-video::after { content: "▶"; display: block; color: #fff; font-size: 6px; line-height: 7px; }
-      .public-photo-dots button[aria-pressed="true"] { border-color: #7eeaff; background: #7eeaff; box-shadow: 0 0 12px rgba(126,234,255,.6); }
+      .public-media-thumbnails { min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: clamp(82px, 24%, 108px); justify-content: start; gap: 10px; padding: 6px 5px 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-padding-inline: 5px; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.34) transparent; }
+      .public-media-thumbnail { position: relative; min-width: 0; min-height: 0; aspect-ratio: 1; display: block; padding: 0; overflow: hidden; border: 3px solid transparent; border-radius: 14px; background: #101014; scroll-snap-align: center; cursor: pointer; }
+      .public-media-thumbnail img, .public-media-thumbnail video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
+      .public-media-thumbnail.is-selected { border-color: #fff; box-shadow: 0 0 0 3px #050507, 0 0 0 5px rgba(255,255,255,.72); }
+      .public-media-thumbnail:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .public-media-thumbnail-play { position: absolute; top: 50%; left: 50%; width: 42%; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 5px 18px rgba(0,0,0,.3); transform: translate(-50%, -50%); pointer-events: none; }
+      .public-media-thumbnail-play::after { content: ""; position: absolute; top: 50%; left: 53%; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #111; transform: translate(-50%, -50%); }
+      .public-media-thumbnail-duration { position: absolute; right: 5px; bottom: 5px; padding: 3px 5px; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 9px; font-weight: 950; line-height: 1; pointer-events: none; }
       .public-photo-status { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
       .venue-qr-section, .profile-schedule-section, .public-grid { max-width: 1120px; margin: 24px auto 0; }
       .live-deal-section { display: grid; gap: 14px; }
@@ -469,7 +474,7 @@ function PublicProfileStyles() {
       .social-list-toggle { min-height: 40px; justify-self: start; padding: 0 14px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #9fefff; background: rgba(34,199,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; }
       .club-deal-card { border-radius: 16px; }
       @media (max-width: 760px) {
-        .public-gallery { overflow-x: auto; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; }
+        .public-gallery { touch-action: pan-x pan-y; }
         .public-profile-shell { padding: 0 12px 98px; }
         .profile-global-header { margin: 0 -2px 12px; padding-inline: 2px; }
         .profile-global-topbar { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 7px; }
@@ -480,13 +485,15 @@ function PublicProfileStyles() {
         .profile-global-account.profile-account-icon, .profile-notification-button, .public-profile-close { width: 40px; min-height: 40px; }
         .profile-notification-panel { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 68px); left: 10px; right: 10px; width: auto; max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 88px); }
         .public-hero { grid-template-areas: "photo" "copy"; grid-template-columns: 1fr; gap: 15px; align-items: start; }
-        .public-photo { min-height: 0; aspect-ratio: 4 / 5; border-radius: 18px; }
+        .public-photo { min-height: 0; border-radius: 16px; }
+        .public-media-stage { aspect-ratio: 1 / 1.08; border-radius: 14px 14px 7px 7px; }
+        .public-photo-nav { display: none; }
+        .public-media-thumbnails { grid-auto-columns: clamp(78px, 25vw, 104px); gap: 9px; padding-inline: 4px; }
         .public-copy { gap: 12px; }
         h1 { font-size: clamp(38px, 12vw, 52px); }
         .profile-status-card { padding: 14px; }
         .profile-status-card > strong { font-size: 18px; }
         .profile-status-links a { min-height: 36px; padding-inline: 11px; font-size: 11px; }
-        .public-photo-nav { width: 40px; height: 48px; font-size: 30px; }
         .venue-published-qr, .public-grid { grid-template-columns: 1fr; }
         .venue-published-qr img { max-width: 230px; justify-self: center; }
         .profile-schedule-section { padding: 16px; }

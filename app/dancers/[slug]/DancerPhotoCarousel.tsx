@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   KeyboardEvent as ReactKeyboardEvent,
   PointerEvent as ReactPointerEvent,
@@ -52,6 +52,7 @@ export function DancerPhotoCarousel({
   stageName,
 }: DancerPhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const gesture = useRef<SwipeGesture>({
     pointerId: null,
     startX: 0,
@@ -60,6 +61,9 @@ export function DancerPhotoCarousel({
     cancelled: false,
   });
   const trackpadLockedUntil = useRef(0);
+  const activeVideo = useRef<HTMLVideoElement | null>(null);
+  const thumbnailStrip = useRef<HTMLDivElement | null>(null);
+  const thumbnailButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const availablePhotos = photos.filter((photo) => photo.imageUrl);
   const availableVideos = videos.filter((video) => video.videoUrl);
   const availableMedia: ProfileMedia[] = [
@@ -80,6 +84,8 @@ export function DancerPhotoCarousel({
   const showPhoto = useCallback(
     (nextIndex: number) => {
       if (!availableMedia.length) return;
+      activeVideo.current?.pause();
+      setIsVideoPlaying(false);
       setActiveIndex(
         (nextIndex + availableMedia.length) % availableMedia.length,
       );
@@ -90,6 +96,8 @@ export function DancerPhotoCarousel({
   const movePhoto = useCallback(
     (direction: -1 | 1) => {
       if (availableMedia.length < 2) return;
+      activeVideo.current?.pause();
+      setIsVideoPlaying(false);
       setActiveIndex((currentIndex) => {
         const normalizedIndex = currentIndex % availableMedia.length;
         return (
@@ -99,6 +107,21 @@ export function DancerPhotoCarousel({
     },
     [availableMedia.length],
   );
+
+  useEffect(() => {
+    const strip = thumbnailStrip.current;
+    const selectedThumbnail = thumbnailButtons.current[safeActiveIndex];
+    if (!strip || !selectedThumbnail) return;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    strip.scrollTo({
+      behavior: reducedMotion ? "auto" : "smooth",
+      left:
+        selectedThumbnail.offsetLeft -
+        (strip.clientWidth - selectedThumbnail.offsetWidth) / 2,
+    });
+  }, [safeActiveIndex]);
 
   const resetGesture = () => {
     gesture.current = {
@@ -192,6 +215,13 @@ export function DancerPhotoCarousel({
     }
   };
 
+  const playSelectedVideo = () => {
+    if (!activeVideo.current) return;
+    void activeVideo.current.play().catch(() => {
+      setIsVideoPlaying(false);
+    });
+  };
+
   return (
     <div
       aria-label={`${stageName} profile photos and videos`}
@@ -211,36 +241,49 @@ export function DancerPhotoCarousel({
       role="group"
       tabIndex={0}
     >
-      {activeMedia?.kind === "photo" ? (
-        <div
-          aria-label={`${stageName} profile photo ${safeActiveIndex + 1} of ${availableMedia.length}`}
-          className="public-photo-image"
-          role="img"
-          style={{ backgroundImage: `url(${activeMedia.imageUrl})` }}
-        />
-      ) : activeMedia?.kind === "video" ? (
-        <div className="public-profile-video">
-          <video
-            aria-label={`${stageName} profile video ${safeActiveIndex + 1} of ${availableMedia.length}`}
-            controls
-            controlsList="nodownload noremoteplayback"
-            disablePictureInPicture
-            playsInline
-            preload="metadata"
-            src={activeMedia.videoUrl}
+      <div className="public-media-stage">
+        {activeMedia?.kind === "photo" ? (
+          <img
+            alt={`${stageName} profile photo ${safeActiveIndex + 1} of ${availableMedia.length}`}
+            className="public-photo-image"
+            decoding="async"
+            draggable={false}
+            src={activeMedia.imageUrl}
           />
-          <span className="public-media-badge">
-            Video · {formatDuration(activeMedia.durationSeconds)}
-          </span>
-          {activeMedia.caption.trim() ? (
-            <p className="public-video-caption">{activeMedia.caption}</p>
-          ) : null}
-        </div>
-      ) : (
-        <span>{initials(stageName)}</span>
-      )}
-      {availableMedia.length > 1 ? (
-        <>
+        ) : activeMedia?.kind === "video" ? (
+          <div className="public-profile-video">
+            <video
+              aria-label={`${stageName} profile video ${safeActiveIndex + 1} of ${availableMedia.length}`}
+              controls
+              controlsList="nodownload noremoteplayback"
+              disablePictureInPicture
+              onEnded={() => setIsVideoPlaying(false)}
+              onPause={() => setIsVideoPlaying(false)}
+              onPlay={() => setIsVideoPlaying(true)}
+              playsInline
+              preload="metadata"
+              ref={activeVideo}
+              src={activeMedia.videoUrl}
+            />
+            {!isVideoPlaying ? (
+              <button
+                aria-label={`Play ${stageName} profile video ${safeActiveIndex + 1}`}
+                className="public-profile-play"
+                onClick={playSelectedVideo}
+                type="button"
+              >
+                <span aria-hidden="true" />
+              </button>
+            ) : null}
+            {activeMedia.caption.trim() ? (
+              <p className="public-video-caption">{activeMedia.caption}</p>
+            ) : null}
+          </div>
+        ) : (
+          <span className="public-media-empty">{initials(stageName)}</span>
+        )}
+        {availableMedia.length > 1 ? (
+          <>
           <button
             aria-label="Show previous profile media"
             className="public-photo-nav previous"
@@ -257,28 +300,68 @@ export function DancerPhotoCarousel({
           >
             ›
           </button>
-          <div
-            aria-label="Choose profile photo or video"
-            className="public-photo-dots"
-            role="group"
-          >
-            {availableMedia.map((media, index) => (
+          </>
+        ) : null}
+      </div>
+      {availableMedia.length > 1 ? (
+        <div
+          aria-label="Choose profile photo or video"
+          className="public-media-thumbnails"
+          ref={thumbnailStrip}
+          role="group"
+        >
+          {availableMedia.map((media, index) => {
+            const isSelected = index === safeActiveIndex;
+            return (
               <button
+                aria-current={isSelected ? "true" : undefined}
                 aria-label={`Show profile ${media.kind} ${index + 1} of ${availableMedia.length}`}
-                aria-pressed={index === safeActiveIndex}
-                className={media.kind === "video" ? "is-video" : undefined}
+                aria-pressed={isSelected}
+                className={`public-media-thumbnail${isSelected ? " is-selected" : ""}${media.kind === "video" ? " is-video" : ""}`}
                 key={`${media.kind}-${media.id}`}
                 onClick={() => showPhoto(index)}
+                ref={(element) => {
+                  thumbnailButtons.current[index] = element;
+                }}
                 type="button"
-              />
-            ))}
-          </div>
-          <span aria-live="polite" className="public-photo-status">
-            {activeMedia?.kind === "video" ? "Video" : "Photo"}{" "}
-            {safeActiveIndex + 1} of {availableMedia.length}
-          </span>
-        </>
+              >
+                {media.kind === "photo" ? (
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    decoding="async"
+                    draggable={false}
+                    src={media.imageUrl}
+                  />
+                ) : (
+                  <>
+                    <video
+                      aria-hidden="true"
+                      muted
+                      playsInline
+                      preload="metadata"
+                      src={media.videoUrl}
+                      tabIndex={-1}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="public-media-thumbnail-play"
+                    />
+                    <span className="public-media-thumbnail-duration">
+                      {formatDuration(media.durationSeconds)}
+                    </span>
+                  </>
+                )}
+              </button>
+            );
+          })}
+        </div>
       ) : null}
+      <span aria-live="polite" className="public-photo-status">
+        {activeMedia?.kind === "video" ? "Video" : "Photo"}{" "}
+        {availableMedia.length ? safeActiveIndex + 1 : 0} of{" "}
+        {availableMedia.length}
+      </span>
     </div>
   );
 }
