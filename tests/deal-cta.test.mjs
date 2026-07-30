@@ -73,6 +73,7 @@ test("deal generation produces a durable pass with save and share actions", () =
   assert.match(dealCard, /`\/deals\/pass\/\$\{encodeURIComponent\(redemptionToken\)\}`/);
   assert.match(passPage, /Show this QR to venue staff/);
   assert.match(passPage, /\/deals\/redeem\/\$\{encodeURIComponent\(token\)\}/);
+  assert.match(dealCard, /\.club-deal-dialog-backdrop \{ position: fixed; z-index: 1700;/);
 });
 
 test("checked-in dancer profiles and MyDancr TV promote attributed deals without exposing future shifts", () => {
