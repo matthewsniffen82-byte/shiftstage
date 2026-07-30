@@ -731,9 +731,8 @@ function tvCitiesMatch(left: string, right: string) {
 }
 
 function dancerLiveProfileHref(video: MyDancrTvVideo) {
-  const city = video.dancer.city.trim() || "Las Vegas";
-  const profile = video.dancer.slug.trim() || slugifyLiveProfileName(video.dancer.stageName);
-  return `/?city=${encodeURIComponent(city)}&profile=${encodeURIComponent(profile)}`;
+  const slug = video.dancer.slug.trim();
+  return slug ? `/dancers/${encodeURIComponent(slug)}` : "/dancers";
 }
 
 function venueLiveProfileHref(video: MyDancrTvVideo) {

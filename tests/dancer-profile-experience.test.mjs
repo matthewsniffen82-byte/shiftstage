@@ -133,10 +133,10 @@ test("official links stay compact and real videos have distinct metadata", () =>
 test("every MyDancr TV dancer destination opens the full live profile with the canonical database slug", () => {
   assert.match(
     tvFeed,
-    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.slug\.trim\(\)[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}/,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+const slug = video\.dancer\.slug\.trim\(\);\s+return slug \? `\/dancers\/\$\{encodeURIComponent\(slug\)\}` : "\/dancers";\s+\}/,
   );
   assert.doesNotMatch(
     tvFeed,
-    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+return `\/dancers\//,
+    /const profile = video\.dancer\.slug\.trim\(\) \|\| slugifyLiveProfileName|return `\/\?city=/,
   );
 });

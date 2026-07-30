@@ -23,11 +23,11 @@ test("MyDancr TV separates video playback from profile navigation", () => {
   );
   assert.match(
     feedClient,
-    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.city\.trim\(\)[\s\S]*?video\.dancer\.slug\.trim\(\)[\s\S]*?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}/,
+    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+const slug = video\.dancer\.slug\.trim\(\);\s+return slug \? `\/dancers\/\$\{encodeURIComponent\(slug\)\}` : "\/dancers";\s+\}/,
   );
   assert.doesNotMatch(
     feedClient,
-    /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+return `\/dancers\//,
+    /return `\/\?city=\$\{encodeURIComponent\(city\)\}&profile=\$\{encodeURIComponent\(profile\)\}`/,
   );
   assert.match(
     feedClient,
