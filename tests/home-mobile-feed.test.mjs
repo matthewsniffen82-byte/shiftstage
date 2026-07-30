@@ -97,7 +97,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("Now and Dancers open card directories while Venues keeps its mobile swipe feed", () => {
+test("Now, Dancers, and Venues always use one canonical full-screen mobile swipe experience", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
@@ -116,19 +116,7 @@ test("Now and Dancers open card directories while Venues keeps its mobile swipe 
   );
   assert.match(
     homeSource,
-    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\);/,
-  );
-  assert.doesNotMatch(
-    homeSource,
-    /homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\)/,
-  );
-  assert.match(
-    homeSource,
-    /results\.classList\.toggle\("card-grid", activeTab !== "venues"\)[\s\S]*?profileCard\(item, index, \{ tonight: activeTab === "tonight", trendingContext: activeTab === "trending", feedActions: true \}\)/,
-  );
-  assert.match(
-    homeSource,
-    /const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
@@ -144,11 +132,11 @@ test("Now and Dancers open card directories while Venues keeps its mobile swipe 
   );
   assert.match(
     homeSource,
-    /class="home-discovery-feed-close"[\s\S]*?data-home-discovery-close[\s\S]*?closeHomeDiscoveryFeed/,
+    /const usesDiscoveryFeed =\s*\["tonight", "dancers", "venues"\]\.includes\(activeTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*homeDiscoveryFeedOpen = true;\s*renderHomeDiscoveryFeed/,
   );
-  assert.match(
+  assert.doesNotMatch(
     homeSource,
-    /const usesDiscoveryFeed =[\s\S]*?homeDiscoveryFeedOpen[\s\S]*?activeTab === "venues"[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\) &&[\s\S]*?\(loadingLiveProfiles \|\| allItems\.length > 0\)/,
+    /home-discovery-feed-close|data-home-discovery-close|closeHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
@@ -156,7 +144,7 @@ test("Now and Dancers open card directories while Venues keeps its mobile swipe 
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "venues" && !items\.length\)[\s\S]*?No venues match your current filters/,
+    /if \(!items\.length\)[\s\S]*?No dancers are working now[\s\S]*?No venues match your current filters[\s\S]*?No approved dancer profiles are available/,
   );
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
@@ -209,6 +197,25 @@ test("venue swipe cards use production venue, schedule, revenue, and customer ac
   assert.match(
     homeSource,
     /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-deal-action \{[\s\S]*?linear-gradient/,
+  );
+});
+
+test("Now and Dancers swipe cards open the existing full profile as the only next level", () => {
+  assert.match(
+    homeSource,
+    /function homeDiscoveryFeedSlide\(profile, index, total, tab\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-discovery-feed-slide"/,
+  );
+  assert.match(
+    homeSource,
+    /home-discovery-feed-open-profile[\s\S]*?home-discovery-feed-profile-button[\s\S]*?data-profile="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
+  );
+  assert.match(
+    homeSource,
+    /const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
+  );
+  assert.match(
+    homeSource,
+    /#profileBackdrop \.profile-modal \{[\s\S]*?overflow-y: auto !important[\s\S]*?touch-action: pan-y !important/,
   );
 });
 
