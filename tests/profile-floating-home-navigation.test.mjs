@@ -40,7 +40,7 @@ test("the homepage full dancer profile keeps the glass city-return control", () 
   );
 });
 
-test("standalone dancer and venue profiles keep the same city-return control", () => {
+test("standalone dancer and venue profiles keep the glass city-return control", () => {
   assert.match(
     floatingControl,
     /profileType: "dancer" \| "venue"/,
@@ -72,5 +72,9 @@ test("standalone dancer and venue profiles keep the same city-return control", (
   );
   assert.match(venuePage, /<PublicProfileHeader/);
   assert.doesNotMatch(venuePage, /permanentRedirect/);
+  assert.match(
+    venuePage,
+    /<ProfileCloseButton[\s\S]*?fallbackHref=\{venuesHref\}[\s\S]*?profileType="venue"/,
+  );
   assert.match(homeSource, /function venueDetailPage\(venue\)/);
 });

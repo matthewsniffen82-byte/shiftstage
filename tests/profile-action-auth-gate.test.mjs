@@ -93,7 +93,10 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/);
   assert.match(profileNavigationSource, /className="public-profile-close"/);
-  assert.match(profileNavigationSource, /aria-label="Close full dancer profile and return to the previous page"/);
+  assert.match(
+    profileNavigationSource,
+    /profileType = "dancer"[\s\S]*?aria-label={`Close full \$\{profileType\} profile and return to the previous page`}/,
+  );
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
   assert.match(profileNavigationSource, />\s*×\s*<\/button>/);
   assert.match(

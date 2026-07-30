@@ -607,7 +607,7 @@ function CustomerSavedPanel({ saved }: { saved?: LoadState["saved"] }) {
             const location = [venue.city, venue.state].filter(Boolean).join(", ");
             return (
               <Link
-                href={`/?city=${encodeURIComponent(venue.city || "")}&venue=${encodeURIComponent(venue.slug)}`}
+                href={`/venues/${encodeURIComponent(venue.slug)}`}
                 key={`${venue.slug}-${index}`}
               >
                 <strong>{venue.name}</strong>
@@ -827,7 +827,7 @@ function VenuePanel({
           <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button>
           {profile?.slug ? (
             <Link
-              href={`/?city=${encodeURIComponent(String(profile.city || ""))}&venue=${encodeURIComponent(String(profile.slug))}`}
+              href={`/venues/${encodeURIComponent(String(profile.slug))}`}
             >
               Open live venue page
             </Link>

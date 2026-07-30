@@ -66,9 +66,7 @@ test("uploaded venue QR images are validated, safely stored, and published on el
   assert.match(migration, /insert into storage\.buckets \(id, name, public, file_size_limit, allowed_mime_types\)/);
   assert.match(migration, /image\/jpeg.*image\/png.*image\/webp/s);
   assert.match(publicVenueSource, /qr_code_storage_path/);
-  assert.match(publicVenuePage, /venue\.qrCodeUrl \? \(/);
-  assert.match(publicVenuePage, /<VenueQrCode/);
-  assert.match(publicVenuePage, /source="venue_page"/);
+  assert.match(publicVenuePage, /<VenueQrCode[\s\S]*?tapToShow/);
   assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?publishedVenueQrPass/);
   assert.match(liveApp, /data-feed-venue-qr/);
   assert.match(dancerPage, /activeShift\.venueQrCodeUrl/);
@@ -77,6 +75,9 @@ test("uploaded venue QR images are validated, safely stored, and published on el
   assert.match(dancerPage, /source="dancer_profile"/);
   assert.match(dancerPage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\}/);
   assert.match(trackingComponent, /Club Scan unavailable at this venue\./);
+  assert.match(trackingComponent, /if \(tapToShow && !visible\)/);
+  assert.match(trackingComponent, /Show venue QR/);
+  assert.match(trackingComponent, /className="venue-qr-dialog"/);
   assert.match(trackingComponent, /eventType: "qr_impression"/);
 });
 

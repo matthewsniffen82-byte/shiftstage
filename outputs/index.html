@@ -36244,10 +36244,7 @@
 
     function venueExperienceHref(venue, city = selectedCity()) {
       const venueSlug = String(venue?.slug || slugify(venue?.name || "")).trim();
-      if (!venueSlug) {
-        const venueCity = String(city || selectedCity()).trim() || "Las Vegas";
-        return `/?city=${encodeURIComponent(venueCity)}`;
-      }
+      if (!venueSlug) return `/venues?city=${encodeURIComponent(String(city || selectedCity()).trim() || "Las Vegas")}`;
       return `/venues/${encodeURIComponent(venueSlug)}`;
     }
 

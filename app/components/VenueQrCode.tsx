@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type VenueQrCodeProps = {
   venueId: string;
@@ -11,6 +11,7 @@ type VenueQrCodeProps = {
   dancerId?: string | null;
   recordPageView?: boolean;
   compact?: boolean;
+  tapToShow?: boolean;
 };
 
 const SESSION_KEY = "dancrVenueAnalyticsSessionV1";
@@ -24,14 +25,50 @@ export function VenueQrCode({
   dancerId,
   recordPageView = false,
   compact = false,
+  tapToShow = false,
 }: VenueQrCodeProps) {
+  const [visible, setVisible] = useState(!tapToShow);
+
   useEffect(() => {
+    if (!recordPageView) return;
     const sessionId = analyticsSessionId();
-    if (recordPageView) void recordEvent({ venueId, dancerId, source, sessionId, eventType: "page_view" });
-    void recordEvent({ venueId, dancerId, source, sessionId, eventType: "qr_impression" });
+    void recordEvent({ venueId, dancerId, source, sessionId, eventType: "page_view" });
   }, [dancerId, recordPageView, source, venueId]);
 
-  return (
+  useEffect(() => {
+    if (!visible) return;
+    const sessionId = analyticsSessionId();
+    void recordEvent({ venueId, dancerId, source, sessionId, eventType: "qr_impression" });
+  }, [dancerId, source, venueId, visible]);
+
+  useEffect(() => {
+    if (!tapToShow || !visible) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setVisible(false);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [tapToShow, visible]);
+
+  if (tapToShow && !visible) {
+    return (
+      <button
+        className="venue-qr-launcher"
+        onClick={() => setVisible(true)}
+        type="button"
+      >
+        <span>Venue QR</span>
+        <strong>Show venue QR</strong>
+      </button>
+    );
+  }
+
+  const qr = (
     <section className={compact ? "venue-published-qr compact" : "venue-published-qr"} aria-label={`${venueName} QR code`}>
       <div>
         <span className="eyebrow">Venue QR</span>
@@ -40,6 +77,35 @@ export function VenueQrCode({
       </div>
       <img src={imageUrl} alt={`${venueName} venue QR code`} loading="lazy" decoding="async" />
     </section>
+  );
+
+  if (!tapToShow) return qr;
+
+  return (
+    <div
+      className="venue-qr-dialog-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setVisible(false);
+      }}
+    >
+      <section
+        aria-label={`${venueName} QR code`}
+        aria-modal="true"
+        className="venue-qr-dialog"
+        role="dialog"
+      >
+        <button
+          aria-label="Close venue QR code"
+          autoFocus
+          className="venue-qr-dialog-close"
+          onClick={() => setVisible(false)}
+          type="button"
+        >
+          ×
+        </button>
+        {qr}
+      </section>
+    </div>
   );
 }
 

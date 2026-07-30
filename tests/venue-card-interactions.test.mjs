@@ -41,11 +41,15 @@ test("venue card surfaces stay passive while live status and explicit actions re
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
 });
 
-test("the production venue directory keeps card bodies passive and deal CTAs clickable", () => {
+test("the production venue directory keeps card bodies passive and explicit actions clickable", () => {
   assert.match(venuesPageSource, /<div className="venue-card-main">/);
   assert.doesNotMatch(venuesPageSource, /<Link className="venue-card-main"/);
   assert.match(
     venuesPageSource,
-    /className="venue-card-deal"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(venue\.city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/,
+    /className="venue-card-profile"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(venue\.slug\)\}`\}/,
+  );
+  assert.match(
+    venuesPageSource,
+    /className="venue-card-deal"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(venue\.slug\)\}`\}/,
   );
 });

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-export function ProfileCloseButton({ fallbackHref }: { fallbackHref: string }) {
+export function ProfileCloseButton({
+  fallbackHref,
+  profileType = "dancer",
+}: {
+  fallbackHref: string;
+  profileType?: "dancer" | "venue";
+}) {
   function closeProfile() {
     const referrer = document.referrer;
     if (referrer) {
@@ -25,7 +31,7 @@ export function ProfileCloseButton({ fallbackHref }: { fallbackHref: string }) {
 
   return (
     <button
-      aria-label="Close full dancer profile and return to the previous page"
+      aria-label={`Close full ${profileType} profile and return to the previous page`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"

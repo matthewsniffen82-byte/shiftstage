@@ -5,7 +5,7 @@ import test from "node:test";
 const profileRoute = await readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8");
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("venue URLs load the focused Mydancr venue profile with real production data", () => {
+test("venue URLs load a focused full profile backed by production data", () => {
   assert.match(profileRoute, /getVenueProfile\(client, slug\)/);
   assert.match(profileRoute, /if \(!venue\) notFound\(\)/);
   assert.match(profileRoute, /<PublicProfileHeader/);
@@ -15,7 +15,8 @@ test("venue URLs load the focused Mydancr venue profile with real production dat
   assert.match(profileRoute, /getActiveClubDealForVenue\(client, venue\.id\)/);
   assert.match(profileRoute, /getPublicMyDancrTvFeed\(client,/);
   assert.match(profileRoute, /\/api\/public\/maps\/embed\?address=/);
-  assert.doesNotMatch(profileRoute, /permanentRedirect|stickyCta/);
+  assert.match(profileRoute, /← Back to venues/);
+  assert.doesNotMatch(profileRoute, /permanentRedirect|stickyCta|details\.description/);
 });
 
 test("the canonical in-app venue page keeps live data, planning details, and production actions together", () => {
@@ -39,7 +40,7 @@ test("the canonical in-app venue page keeps live data, planning details, and pro
   assert.match(venueDetail, /Other \$\{city\} venues/);
 });
 
-test("venue entry points open the dedicated venue profile route", () => {
+test("venue entry points use the dedicated full venue profile", () => {
   assert.match(
     liveApp,
     /function venueExperienceHref\(venue, city = selectedCity\(\)\)[\s\S]*?return `\/venues\/\$\{encodeURIComponent\(venueSlug\)\}`/,
@@ -52,4 +53,6 @@ test("venue entry points open the dedicated venue profile route", () => {
     liveApp,
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
   );
+  assert.match(profileRoute, /className=\{styles\.relatedScroller\}/);
+  assert.match(profileRoute, /href=\{`\/venues\/\$\{encodeURIComponent\(item\.slug\)\}`\}/);
 });

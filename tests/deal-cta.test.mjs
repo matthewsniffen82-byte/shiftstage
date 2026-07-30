@@ -52,13 +52,15 @@ test("dancer-attributed Club Deals require a verified active check-in at generat
 test("venue pages and directory cards promote real active deals", () => {
   assert.match(venuePage, /getActiveClubDealForVenue\(client, venue\.id\)/);
   assert.match(venuePage, /<ClubDealCard/);
+  assert.match(venuePage, /presentation="launcher"/);
+  assert.match(venuePage, /ctaLabel="Show Club QR"/);
   assert.match(venuePage, /sourceType="club_page"/);
   assert.doesNotMatch(venuePage, /stickyCta/);
   assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?id="club-deal"/);
   assert.match(liveApp, /clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/);
   assert.match(venueDirectory, /getActiveClubDealsForVenues/);
   assert.match(venueDirectory, /venue\.activeDeal[\s\S]*?className="venue-card-deal"/);
-  assert.match(venueDirectory, /href=\{`\/\?city=\$\{encodeURIComponent\(venue\.city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/);
+  assert.match(venueDirectory, /href=\{`\/venues\/\$\{encodeURIComponent\(venue\.slug\)\}`\}/);
 });
 
 test("deal generation produces a durable pass with save and share actions", () => {

@@ -5,16 +5,18 @@ import { FloatingProfileHomeLink } from "@/app/components/FloatingProfileHomeLin
 import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
 import { VenuePageView, VenueQrCode } from "@/app/components/VenueQrCode";
 import { TvVideoStrip } from "@/app/components/TvVideoStrip";
+import { ProfileCloseButton } from "@/app/dancers/[slug]/ProfileNavigationActions";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
-import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/public";
+import {
+  formatVenueHours,
+  getVenueProfile,
+  isApprovedPublicDancerRow,
+} from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DirectionsLink } from "./DirectionsLink";
 import styles from "./VenueProfile.module.css";
-import {
-  VenueProfileActions,
-  VenueProfileCloseButton,
-} from "./VenueProfileActions";
+import { VenueProfileActions } from "./VenueProfileActions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +32,7 @@ type VenueDancer = {
   approved_at?: string;
   verification_status?: string;
   photo_review_status?: string;
+  disabled_at?: string | null;
   is_public?: boolean;
   dancer_photos?: Array<{
     storage_path?: string;
@@ -47,12 +50,22 @@ type VenueShift = {
   location_status?: string | null;
   checked_in_at?: string | null;
   checked_out_at?: string | null;
-  dancer_profiles?: VenueDancer | VenueDancer[];
+  dancer_profiles?: VenueDancer | VenueDancer[] | null;
 };
 
 type PublicVenueShift = VenueShift & {
   dancer?: VenueDancer;
   photoUrl: string | null;
+};
+
+type RelatedVenue = {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  state?: string | null;
+  address?: string | null;
+  hoursLabel: string | null;
 };
 
 export default async function VenuePublicPage({ params }: PageProps) {
@@ -63,46 +76,57 @@ export default async function VenuePublicPage({ params }: PageProps) {
 
   const now = new Date();
   const nowIso = now.toISOString();
-  const activeDeal = await getActiveClubDealForVenue(client, venue.id);
-  const tvVideos = await getPublicMyDancrTvFeed(client, {
-    city: venue.city,
-    venueId: venue.id,
-    limit: 6,
-  });
+  const [activeDeal, tvVideos, shiftResult, relatedResult] = await Promise.all([
+    getActiveClubDealForVenue(client, venue.id),
+    getPublicMyDancrTvFeed(client, {
+      city: venue.city,
+      venueId: venue.id,
+      limit: 6,
+    }),
+    client
+      .from("shifts")
+      .select(`
+        id,
+        starts_at,
+        ends_at,
+        timezone,
+        location_status,
+        checked_in_at,
+        checked_out_at,
+        dancer_profiles(
+          slug,
+          stage_name,
+          status,
+          approved_at,
+          disabled_at,
+          verification_status,
+          photo_review_status,
+          is_public,
+          dancer_photos(storage_path, is_primary, review_status, sort_order)
+        )
+      `)
+      .eq("venue_id", venue.id)
+      .eq("status", "posted")
+      .gt("ends_at", nowIso)
+      .order("starts_at", { ascending: true }),
+    client
+      .from("venues")
+      .select("id, slug, name, city, state, address, opens_at, closes_at")
+      .eq("is_active", true)
+      .ilike("city", venue.city)
+      .neq("id", venue.id)
+      .order("name", { ascending: true })
+      .limit(6),
+  ]);
 
-  const { data, error } = await client
-    .from("shifts")
-    .select(`
-      id,
-      starts_at,
-      ends_at,
-      timezone,
-      location_status,
-      checked_in_at,
-      checked_out_at,
-      dancer_profiles(
-        slug,
-        stage_name,
-        status,
-        approved_at,
-        verification_status,
-        photo_review_status,
-        is_public,
-        dancer_photos(storage_path, is_primary, review_status, sort_order)
-      )
-    `)
-    .eq("venue_id", venue.id)
-    .eq("status", "posted")
-    .gt("ends_at", nowIso)
-    .order("starts_at", { ascending: true });
+  if (shiftResult.error) throw shiftResult.error;
+  if (relatedResult.error) throw relatedResult.error;
 
-  if (error) throw error;
-
-  const shifts = ((data || []) as VenueShift[])
+  const shifts = ((shiftResult.data || []) as VenueShift[])
     .map((shift): PublicVenueShift => {
       const dancer = Array.isArray(shift.dancer_profiles)
         ? shift.dancer_profiles[0]
-        : shift.dancer_profiles;
+        : shift.dancer_profiles || undefined;
       return {
         ...shift,
         dancer,
@@ -110,11 +134,23 @@ export default async function VenuePublicPage({ params }: PageProps) {
       };
     })
     .filter((shift) => isApprovedPublicDancerRow(shift.dancer));
-
   const workingNow = shifts.filter((shift) => isWorkingNow(shift, now));
-  const upcoming = shifts.filter((shift) => new Date(shift.starts_at).getTime() > now.getTime());
+  const upcoming = shifts.filter(
+    (shift) => new Date(shift.starts_at).getTime() > now.getTime(),
+  );
+  const relatedVenues: RelatedVenue[] = (relatedResult.data || []).map(
+    (item) => ({
+      id: item.id,
+      slug: item.slug,
+      name: item.name,
+      city: item.city,
+      state: item.state,
+      address: item.address,
+      hoursLabel: formatVenueHours(item.opens_at, item.closes_at),
+    }),
+  );
   const location = [venue.city, venue.state].filter(Boolean).join(", ");
-  const cityHref = `/?city=${encodeURIComponent(venue.city)}`;
+  const venuesHref = `/venues?city=${encodeURIComponent(venue.city)}`;
 
   return (
     <main className={styles.shell}>
@@ -123,12 +159,18 @@ export default async function VenuePublicPage({ params }: PageProps) {
       <PublicProfileHeader
         city={venue.city}
         closeControl={
-          <VenueProfileCloseButton fallbackHref={cityHref} />
+          <ProfileCloseButton
+            fallbackHref={venuesHref}
+            profileType="venue"
+          />
         }
       />
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
+          <Link className={styles.backLink} href={venuesHref}>
+            ← Back to venues
+          </Link>
           <span
             className={`${styles.liveState}${workingNow.length ? ` ${styles.isWorking}` : ""}`}
           >
@@ -140,67 +182,59 @@ export default async function VenuePublicPage({ params }: PageProps) {
           <h1>{venue.name}</h1>
           <p className={styles.location}>{location}</p>
 
-          <section
-            className={styles.statusCard}
-            aria-label={`${venue.name} venue information`}
-          >
-            <strong>
-              {venue.hoursLabel ? `Tonight · ${venue.hoursLabel}` : "Plan your visit"}
-            </strong>
-            <span>{venue.address || location}</span>
-            <div className={styles.statusLinks}>
-              <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>
-                Browse {venue.city}
-              </Link>
-              {upcoming.length ? (
-                <a href="#upcoming-shifts">
-                  {upcoming.length} upcoming {upcoming.length === 1 ? "shift" : "shifts"}
-                </a>
-              ) : null}
-            </div>
-          </section>
-
           <div className={styles.primaryActions}>
-            {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
-            <VenueProfileActions venueId={venue.id} venueName={venue.name} />
+            {activeDeal ? (
+              <ClubDealCard
+                ctaLabel="Show Club QR"
+                deal={activeDeal}
+                presentation="launcher"
+                sourceType="club_page"
+                venueId={venue.id}
+                venueName={venue.name}
+              />
+            ) : venue.qrCodeUrl ? (
+              <VenueQrCode
+                compact
+                imageUrl={venue.qrCodeUrl}
+                label={venue.qrCodeLabel}
+                source="venue_page"
+                tapToShow
+                venueId={venue.id}
+                venueName={venue.name}
+              />
+            ) : null}
+            {venue.address ? (
+              <DirectionsLink address={venue.address} venueId={venue.id} />
+            ) : null}
           </div>
+          <VenueProfileActions venueId={venue.id} venueName={venue.name} />
         </div>
 
-        <section className={styles.venueVisual} aria-label={`${venue.name} location`}>
-          {venue.address ? (
-            <iframe
-              loading="eager"
-              referrerPolicy="no-referrer-when-downgrade"
-              src={`/api/public/maps/embed?address=${encodeURIComponent(venue.address)}`}
-              title={`${venue.name} map`}
-            />
-          ) : (
-            <div className={styles.venueVisualFallback}>
-              <span>Mydancr venue</span>
-              <strong>{venue.name}</strong>
-              <p>{location}</p>
-            </div>
-          )}
-          <div className={styles.venueVisualLabel}>
-            <span>Tonight in {venue.city}</span>
-            <strong>{venue.name}</strong>
+        <aside className={styles.tonightCard} aria-label={`${venue.name} tonight`}>
+          <span className={styles.eyebrow}>Tonight</span>
+          <strong>{venue.hoursLabel || "Hours not posted"}</strong>
+          <p>{venue.address || location}</p>
+          <div className={styles.tonightStats}>
+            <a href="#working-now">
+              <strong>{workingNow.length}</strong>
+              <span>working now</span>
+            </a>
+            <a href="#upcoming-shifts">
+              <strong>{upcoming.length}</strong>
+              <span>upcoming</span>
+            </a>
           </div>
-        </section>
+          {activeDeal ? (
+            <div className={styles.dealSummary}>
+              <span>Club Deal</span>
+              <strong>{activeDeal.dealTitle}</strong>
+              <p>{activeDeal.dealDescription}</p>
+            </div>
+          ) : null}
+        </aside>
       </section>
 
-      {activeDeal ? (
-        <section className={styles.dealSection} aria-label={`${venue.name} Club Deal`}>
-          <ClubDealCard
-            deal={activeDeal}
-            venueId={venue.id}
-            venueName={venue.name}
-            sourceType="club_page"
-            sectionId="club-deal"
-          />
-        </section>
-      ) : null}
-
-      <section className={styles.scheduleSection}>
+      <section className={styles.scheduleSection} id="working-now">
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Live roster</span>
@@ -210,11 +244,10 @@ export default async function VenuePublicPage({ params }: PageProps) {
             <span className={styles.sectionCount}>{workingNow.length} live</span>
           ) : null}
         </div>
-
         {workingNow.length ? (
           <div className={styles.dancerGrid}>
             {workingNow.map((shift) => (
-              <DancerShiftCard key={shift.id} shift={shift} mode="now" />
+              <DancerShiftCard key={shift.id} mode="now" shift={shift} />
             ))}
           </div>
         ) : (
@@ -222,16 +255,13 @@ export default async function VenuePublicPage({ params }: PageProps) {
             <span className={styles.emptyPulse} aria-hidden="true" />
             <div>
               <strong>No verified dancers are working now.</strong>
-              <p>Check the upcoming schedule below or return later for live check-ins.</p>
+              <p>Check the upcoming schedule below for posted shifts.</p>
             </div>
           </div>
         )}
       </section>
 
-      <section
-        className={styles.scheduleSection}
-        id="upcoming-shifts"
-      >
+      <section className={styles.scheduleSection} id="upcoming-shifts">
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.eyebrow}>Plan your visit</span>
@@ -243,11 +273,10 @@ export default async function VenuePublicPage({ params }: PageProps) {
             </span>
           ) : null}
         </div>
-
         {upcoming.length ? (
           <div className={styles.upcomingList}>
             {upcoming.map((shift) => (
-              <DancerShiftCard key={shift.id} shift={shift} mode="upcoming" />
+              <DancerShiftCard key={shift.id} mode="upcoming" shift={shift} />
             ))}
           </div>
         ) : (
@@ -255,7 +284,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
             <span className={styles.calendarIcon} aria-hidden="true">+</span>
             <div>
               <strong>No upcoming shifts are posted.</strong>
-              <p>Published dancer shifts will appear here as soon as they are available.</p>
+              <p>Published dancer shifts will appear here automatically.</p>
             </div>
           </div>
         )}
@@ -290,12 +319,9 @@ export default async function VenuePublicPage({ params }: PageProps) {
             ) : null}
           </dl>
           {venue.address ? (
-            <div className={styles.infoDirections}>
-              <DirectionsLink address={venue.address} venueId={venue.id} />
-            </div>
+            <DirectionsLink address={venue.address} venueId={venue.id} />
           ) : null}
         </article>
-
         {venue.address ? (
           <section className={styles.mapPanel} aria-label={`${venue.name} map preview`}>
             <iframe
@@ -308,15 +334,31 @@ export default async function VenuePublicPage({ params }: PageProps) {
         ) : null}
       </section>
 
-      {venue.qrCodeUrl ? (
-        <section className={styles.qrSection}>
-          <VenueQrCode
-            venueId={venue.id}
-            venueName={venue.name}
-            imageUrl={venue.qrCodeUrl}
-            label={venue.qrCodeLabel}
-            source="venue_page"
-          />
+      {relatedVenues.length ? (
+        <section className={styles.relatedSection}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.eyebrow}>{venue.city}</span>
+              <h2>Other venues</h2>
+            </div>
+            <Link className={styles.viewAllLink} href={venuesHref}>
+              View all
+            </Link>
+          </div>
+          <div className={styles.relatedScroller}>
+            {relatedVenues.map((item) => (
+              <Link
+                className={styles.relatedCard}
+                href={`/venues/${encodeURIComponent(item.slug)}`}
+                key={item.id}
+              >
+                <span aria-hidden="true">{initials(item.name)}</span>
+                <strong>{item.name}</strong>
+                <small>{item.address || [item.city, item.state].filter(Boolean).join(", ")}</small>
+                {item.hoursLabel ? <em>{item.hoursLabel}</em> : null}
+              </Link>
+            ))}
+          </div>
         </section>
       ) : null}
     </main>
@@ -331,13 +373,19 @@ function DancerShiftCard({
   mode: "now" | "upcoming";
 }) {
   const name = shift.dancer?.stage_name || "Dancer";
-  const href = shift.dancer?.slug ? `/dancers/${encodeURIComponent(shift.dancer.slug)}` : "";
-  const card = (
+  const href = shift.dancer?.slug
+    ? `/dancers/${encodeURIComponent(shift.dancer.slug)}`
+    : "";
+  const content = (
     <>
       <div
-        className={`${styles.dancerPhoto}${shift.photoUrl ? ` ${styles.hasPhoto}` : ""}`}
-        style={shift.photoUrl ? { backgroundImage: `url("${cssUrl(shift.photoUrl)}")` } : undefined}
         aria-hidden="true"
+        className={`${styles.dancerPhoto}${shift.photoUrl ? ` ${styles.hasPhoto}` : ""}`}
+        style={
+          shift.photoUrl
+            ? { backgroundImage: `url("${cssUrl(shift.photoUrl)}")` }
+            : undefined
+        }
       >
         {!shift.photoUrl ? name.charAt(0).toUpperCase() : null}
       </div>
@@ -355,26 +403,28 @@ function DancerShiftCard({
       <span className={styles.cardArrow} aria-hidden="true">›</span>
     </>
   );
-
-  if (!href) return <article className={styles.dancerShiftCard}>{card}</article>;
+  if (!href) return <article className={styles.dancerShiftCard}>{content}</article>;
   return (
-    <Link className={styles.dancerShiftCard} href={href} aria-label={`Open ${name}'s profile`}>
-      {card}
+    <Link
+      aria-label={`Open ${name}'s full dancer profile`}
+      className={styles.dancerShiftCard}
+      href={href}
+    >
+      {content}
     </Link>
   );
 }
 
 function isWorkingNow(shift: VenueShift, now: Date) {
   if (shift.checked_out_at) return false;
-  const isConfirmed =
+  const confirmed =
     shift.location_status === "club_confirmed" ||
     (shift.location_status === "location_confirmed" && Boolean(shift.checked_in_at));
-  if (!isConfirmed) return false;
-
-  const nowTime = now.getTime();
+  if (!confirmed) return false;
   const startsAt = new Date(shift.starts_at).getTime();
   const endsAt = new Date(shift.ends_at).getTime();
-  return Number.isFinite(startsAt) && Number.isFinite(endsAt) && startsAt <= nowTime && endsAt > nowTime;
+  const nowTime = now.getTime();
+  return startsAt <= nowTime && endsAt > nowTime;
 }
 
 function approvedDancerPhotoUrl(
@@ -389,31 +439,38 @@ function approvedDancerPhotoUrl(
     })[0];
   if (!photo?.storage_path) return null;
   if (/^https?:\/\//i.test(photo.storage_path)) return photo.storage_path;
-  return client.storage.from("dancer-photos").getPublicUrl(photo.storage_path).data.publicUrl;
+  return client.storage
+    .from("dancer-photos")
+    .getPublicUrl(photo.storage_path).data.publicUrl;
 }
 
 function formatShift(startsAt: string, timeZone?: string | null) {
   const start = new Date(startsAt);
   if (!Number.isFinite(start.getTime())) return "Upcoming";
-
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  };
   try {
     return new Intl.DateTimeFormat("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      timeZone: timeZone || undefined,
+      ...options,
+      ...(timeZone ? { timeZone } : {}),
     }).format(start);
   } catch {
-    return new Intl.DateTimeFormat("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(start);
+    return new Intl.DateTimeFormat("en-US", options).format(start);
   }
+}
+
+function initials(value: string) {
+  return value
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function cssUrl(value: string) {

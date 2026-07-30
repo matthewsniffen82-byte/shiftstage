@@ -47,15 +47,23 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
               <small>{venue.address || `${venue.city}${venue.state ? `, ${venue.state}` : ""}`}</small>
               {venue.hoursLabel ? <em>{venue.hoursLabel}</em> : null}
             </div>
-            {venue.activeDeal ? (
+            <div className="venue-card-actions">
               <Link
-                className="venue-card-deal"
-                href={`/?city=${encodeURIComponent(venue.city)}&venue=${encodeURIComponent(venue.slug)}#club-deal`}
+                className="venue-card-profile"
+                href={`/venues/${encodeURIComponent(venue.slug)}`}
               >
-                <span>Club Deal</span>
-                <strong>Get {venue.activeDeal.dealTitle}</strong>
+                View venue
               </Link>
-            ) : null}
+              {venue.activeDeal ? (
+                <Link
+                  className="venue-card-deal"
+                  href={`/venues/${encodeURIComponent(venue.slug)}`}
+                >
+                  <span>Club Deal</span>
+                  <strong>View deal</strong>
+                </Link>
+              ) : null}
+            </div>
           </article>
         ))}
         {!venues.length ? (
@@ -124,7 +132,10 @@ function VenuesStyles() {
       .venue-card-main > strong { font-size: 26px; line-height: 1; overflow-wrap: anywhere; }
       .venue-card-main small, .empty-state span { color: #b9accd; line-height: 1.4; }
       .venue-card-main em { color: #94e5ff; font-style: normal; font-weight: 900; }
-      .venue-card-deal { display: grid; gap: 3px; padding: 13px 18px; border-top: 1px solid rgba(126,234,255,.3); color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.62)); text-decoration: none; }
+      .venue-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid rgba(126,234,255,.2); }
+      .venue-card-actions > a:only-child { grid-column: 1 / -1; }
+      .venue-card-profile { min-height: 54px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; color: #fff; background: rgba(126,234,255,.08); font-size: 13px; font-weight: 950; text-decoration: none; }
+      .venue-card-deal { display: grid; align-content: center; gap: 3px; min-height: 54px; padding: 9px 14px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.62)); text-decoration: none; }
       .venue-card-deal span { color: #d8f7ff; font-size: 9px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
       .venue-card-deal strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
       .empty-state { grid-column: 1 / -1; min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 24px; }

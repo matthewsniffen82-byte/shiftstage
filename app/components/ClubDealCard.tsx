@@ -16,6 +16,7 @@ type ClubDealCardProps = {
   dancerNote?: boolean;
   compact?: boolean;
   presentation?: "card" | "launcher";
+  ctaLabel?: string;
   stickyCta?: boolean;
   sectionId?: string;
 };
@@ -29,6 +30,7 @@ export function ClubDealCard({
   dancerNote,
   compact,
   presentation = "card",
+  ctaLabel,
   stickyCta = false,
   sectionId,
 }: ClubDealCardProps) {
@@ -39,7 +41,7 @@ export function ClubDealCard({
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const passUrl = redemptionToken ? `/deals/pass/${encodeURIComponent(redemptionToken)}` : "";
-  const ctaLabel = `Get ${deal.dealTitle}`;
+  const actionLabel = ctaLabel || `Get ${deal.dealTitle}`;
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -148,7 +150,7 @@ export function ClubDealCard({
           </div>
         ) : null}
         <button type="button" onClick={() => generateDealQr(false)} disabled={isLoading}>
-          {isLoading ? "Creating your QR…" : qrDataUrl ? "Refresh QR" : ctaLabel}
+          {isLoading ? "Creating your QR…" : qrDataUrl ? "Refresh QR" : actionLabel}
         </button>
         {qrDataUrl ? (
           <div className="club-deal-pass-actions">
@@ -172,7 +174,7 @@ export function ClubDealCard({
           disabled={isLoading}
         >
           <span>Club Deal</span>
-          <strong>{isLoading ? "Creating QR…" : ctaLabel}</strong>
+          <strong>{isLoading ? "Creating QR…" : actionLabel}</strong>
         </button>
       ) : (
         <article

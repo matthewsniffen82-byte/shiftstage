@@ -1,42 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
-export function VenueProfileCloseButton({ fallbackHref }: { fallbackHref: string }) {
-  function closeProfile() {
-    const referrer = document.referrer;
-    if (referrer) {
-      try {
-        const previousUrl = new URL(referrer);
-        if (
-          previousUrl.origin === window.location.origin &&
-          previousUrl.href !== window.location.href &&
-          window.history.length > 1
-        ) {
-          window.history.back();
-          return;
-        }
-      } catch {
-        // Use the city fallback below.
-      }
-    }
-    window.location.assign(fallbackHref);
-  }
-
-  return (
-    <button
-      aria-label="Close full venue profile and return to the previous page"
-      className="public-profile-close"
-      onClick={closeProfile}
-      type="button"
-    >
-      ×
-    </button>
-  );
-}
+type SavedVenueFollow = {
+  venueId?: string;
+  notificationsEnabled?: boolean;
+};
 
 export function VenueProfileActions({
   venueId,
@@ -49,29 +21,48 @@ export function VenueProfileActions({
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [following, setFollowing] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [accountGateOpen, setAccountGateOpen] = useState(false);
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const accessToken = readToken();
+    const accessToken = readCustomerToken();
     setToken(accessToken);
     setSessionLoaded(true);
     if (!accessToken) return;
 
-    fetch("/api/customer/saved", { headers: { authorization: `Bearer ${accessToken}` } })
-      .then((response) => response.json())
-      .then((data) => {
-        if (!data.ok) return;
-        const follow = (data.saved?.venueFollows || []).find((item: any) => item.venueId === venueId);
+    const controller = new AbortController();
+    fetch("/api/customer/saved", {
+      headers: { authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Unable to load your saved venues.");
+        }
+        const follow = (data.saved?.venueFollows || []).find(
+          (item: SavedVenueFollow) => item.venueId === venueId,
+        );
         setFollowing(Boolean(follow));
         setNotificationsEnabled(Boolean(follow?.notificationsEnabled));
       })
-      .catch(() => undefined);
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setStatus(
+          error instanceof Error
+            ? error.message
+            : "Unable to load your saved venues.",
+        );
+      });
+
+    return () => controller.abort();
   }, [venueId]);
 
   async function shareVenue() {
-    const url = window.location.href;
     setStatus("");
+    const url = window.location.href;
     try {
       if (navigator.share) {
         await navigator.share({
@@ -90,46 +81,48 @@ export function VenueProfileActions({
     }
   }
 
-  if (!sessionLoaded) return null;
-
-  if (!token) {
-    return (
-      <div className="live-actions" aria-label="Venue actions">
-        <Link href="/account?role=customer">Follow venue</Link>
-        <Link href="/account?role=customer">Venue alerts</Link>
-        <button type="button" onClick={shareVenue}>Share venue</button>
-        {status ? <span role="status">{status}</span> : null}
-      </div>
-    );
-  }
-
-  async function updateFollow(nextNotificationsEnabled = notificationsEnabled) {
-    if (isSaving) return;
+  async function updateFollow() {
+    if (!requireCustomer() || isSaving) return;
     const nextFollowing = !following;
-    const saved = await postVenueFollow(nextFollowing, nextFollowing && nextNotificationsEnabled);
-    if (saved) {
-      setFollowing(nextFollowing);
-      setNotificationsEnabled(nextFollowing ? nextNotificationsEnabled : false);
-    }
+    const saved = await saveVenueFollow(
+      nextFollowing,
+      nextFollowing && notificationsEnabled,
+    );
+    if (!saved) return;
+    setFollowing(nextFollowing);
+    setNotificationsEnabled(nextFollowing ? notificationsEnabled : false);
+    setStatus(nextFollowing ? "Venue followed." : "Venue unfollowed.");
   }
 
   async function updateNotifications() {
-    if (isSaving) return;
+    if (!requireCustomer() || isSaving) return;
     const nextNotificationsEnabled = !notificationsEnabled;
-    const saved = await postVenueFollow(true, nextNotificationsEnabled);
-    if (saved) {
-      setFollowing(true);
-      setNotificationsEnabled(nextNotificationsEnabled);
-    }
+    const saved = await saveVenueFollow(true, nextNotificationsEnabled);
+    if (!saved) return;
+    setFollowing(true);
+    setNotificationsEnabled(nextNotificationsEnabled);
+    setStatus(nextNotificationsEnabled ? "Venue alerts turned on." : "Venue alerts turned off.");
   }
 
-  async function postVenueFollow(nextFollowing: boolean, nextNotificationsEnabled: boolean) {
+  function requireCustomer() {
+    if (token) return true;
+    setAccountGateOpen(true);
+    return false;
+  }
+
+  async function saveVenueFollow(
+    nextFollowing: boolean,
+    nextNotificationsEnabled: boolean,
+  ) {
     setStatus("");
     setIsSaving(true);
     try {
       const response = await fetch("/api/customer/venue-follows", {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
         body: JSON.stringify({
           venueId,
           following: nextFollowing,
@@ -138,39 +131,106 @@ export function VenueProfileActions({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.ok) {
-        setStatus(data.error || "Unable to update this venue. Please try again.");
-        return false;
+        if (response.status === 401 || response.status === 403) {
+          setToken("");
+          setAccountGateOpen(true);
+        }
+        throw new Error(data.error || "Unable to update this venue.");
       }
-      setStatus("Saved.");
+      if (
+        data.following !== nextFollowing ||
+        data.notificationsEnabled !==
+          (nextFollowing && nextNotificationsEnabled)
+      ) {
+        throw new Error("The venue update could not be confirmed.");
+      }
       return true;
-    } catch {
-      setStatus("Unable to update this venue. Check your connection and try again.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Unable to update this venue. Please try again.",
+      );
       return false;
     } finally {
       setIsSaving(false);
     }
   }
 
+  if (!sessionLoaded) {
+    return <div className="venue-actions-loading" aria-label="Loading venue actions" />;
+  }
+
   return (
-    <div className="live-actions" aria-label="Venue actions">
-      <button type="button" disabled={isSaving} onClick={() => updateFollow(false)}>
-        {isSaving ? "Saving…" : following ? "Following venue" : "Follow venue"}
-      </button>
-      <button type="button" disabled={isSaving} onClick={updateNotifications}>
-        {notificationsEnabled ? "Venue alerts on" : "Venue alerts"}
-      </button>
-      <button type="button" onClick={shareVenue}>
-        Share venue
-      </button>
-      {status ? <span role="status">{status}</span> : null}
-    </div>
+    <>
+      <div className="venue-profile-actions" aria-busy={isSaving}>
+        <button
+          aria-pressed={following}
+          disabled={isSaving}
+          onClick={updateFollow}
+          type="button"
+        >
+          {isSaving ? "Saving…" : following ? "Following" : "Follow venue"}
+        </button>
+        <button
+          aria-pressed={notificationsEnabled}
+          disabled={isSaving}
+          onClick={updateNotifications}
+          type="button"
+        >
+          {notificationsEnabled ? "Alerts on" : "Venue alerts"}
+        </button>
+        <button onClick={shareVenue} type="button">
+          Share
+        </button>
+        {status ? <span role="status">{status}</span> : null}
+      </div>
+
+      {accountGateOpen ? (
+        <div
+          className="venue-account-gate"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setAccountGateOpen(false);
+          }}
+        >
+          <section
+            aria-labelledby="venue-account-gate-title"
+            aria-modal="true"
+            className="venue-account-gate-dialog"
+            role="dialog"
+          >
+            <button
+              aria-label="Close account prompt"
+              autoFocus
+              className="venue-account-gate-close"
+              onClick={() => setAccountGateOpen(false)}
+              type="button"
+            >
+              ×
+            </button>
+            <span>Free customer account</span>
+            <h2 id="venue-account-gate-title">Save this venue</h2>
+            <p>Use a customer account to follow venues and receive schedule alerts.</p>
+            <div>
+              <Link href="/account?role=customer&mode=signup">Create a free account</Link>
+              <Link className="secondary" href="/account?role=customer">
+                Sign in
+              </Link>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </>
   );
 }
 
-function readToken() {
+function readCustomerToken() {
   try {
     const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null");
-    return typeof session?.accessToken === "string" ? session.accessToken : "";
+    return session?.account?.role === "customer" &&
+      typeof session?.accessToken === "string"
+      ? session.accessToken
+      : "";
   } catch {
     return "";
   }
