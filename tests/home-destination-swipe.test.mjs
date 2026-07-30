@@ -4,7 +4,7 @@ import test from "node:test";
 
 const homeSource = fs.readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("mobile destinations can be changed with a deliberate horizontal swipe", () => {
+test("mobile destinations can be changed with an easy deliberate horizontal swipe", () => {
   assert.match(
     homeSource,
     /const homeDestinationOrder = \["tonight", "dancers", "tv", "venues", "trending"\]/,
@@ -15,7 +15,7 @@ test("mobile destinations can be changed with a deliberate horizontal swipe", ()
   );
   assert.match(
     homeSource,
-    /HOME_DESTINATION_SWIPE_MIN_PX = 64[\s\S]*?HOME_DESTINATION_SWIPE_MAX_MS = 900[\s\S]*?HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 24/,
+    /HOME_DESTINATION_SWIPE_MIN_PX = 44[\s\S]*?HOME_DESTINATION_SWIPE_MAX_MS = 1200[\s\S]*?HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 24/,
   );
   assert.match(
     homeSource,
@@ -23,14 +23,25 @@ test("mobile destinations can be changed with a deliberate horizontal swipe", ()
   );
   assert.match(
     homeSource,
-    /addEventListener\("touchend"[\s\S]*?Math\.abs\(deltaX\) < HOME_DESTINATION_SWIPE_MIN_PX[\s\S]*?Math\.abs\(deltaX\) <= Math\.abs\(deltaY\) \* 1\.35[\s\S]*?moveToAdjacentHomeDestination\(deltaX < 0 \? 1 : -1\)[\s\S]*?event\.preventDefault\(\)/,
+    /addEventListener\("touchend"[\s\S]*?Math\.abs\(deltaX\) < HOME_DESTINATION_SWIPE_MIN_PX[\s\S]*?Math\.abs\(deltaX\) <= Math\.abs\(deltaY\) \* 1\.15[\s\S]*?moveToAdjacentHomeDestination\(deltaX < 0 \? 1 : -1\)[\s\S]*?event\.preventDefault\(\)/,
   );
 });
 
-test("swipe navigation does not steal taps, vertical scrolling, overlays, or browser edge gestures", () => {
+test("swipe navigation works from controls and open profiles without stealing local media gestures", () => {
+  const swipeBlocker = homeSource.match(
+    /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  assert.match(
+    swipeBlocker,
+    /input, select, textarea,[\s\S]*?#modalImage,[\s\S]*?modal-gallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer/,
+  );
+  assert.doesNotMatch(
+    swipeBlocker,
+    /button, a|#discoveryTabs|modal-backdrop|profileBackdrop|overlay-open/,
+  );
   assert.match(
     homeSource,
-    /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?"button, a, input, select, textarea, label,[\s\S]*?#discoveryTabs,[\s\S]*?profileBackdrop\.classList\.contains\("show"\)[\s\S]*?overlay-open/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)[\s\S]*?closeProfileModal\(\)/,
   );
   assert.match(
     homeSource,
@@ -39,6 +50,17 @@ test("swipe navigation does not steal taps, vertical scrolling, overlays, or bro
   assert.match(
     homeSource,
     /document\.addEventListener\("touchcancel", resetHomeDestinationSwipe, \{ passive: true, capture: true \}\)/,
+  );
+});
+
+test("global destination swiping still rejects vertical scrolling and browser-edge gestures", () => {
+  assert.match(
+    homeSource,
+    /Math\.abs\(deltaX\) <= Math\.abs\(deltaY\) \* 1\.15/,
+  );
+  assert.match(
+    homeSource,
+    /touch\.clientX <= HOME_DESTINATION_SWIPE_EDGE_GUARD_PX[\s\S]*?touch\.clientX >= window\.innerWidth - HOME_DESTINATION_SWIPE_EDGE_GUARD_PX/,
   );
 });
 

@@ -46911,8 +46911,8 @@
       startedAt: 0,
       tracking: false
     };
-    const HOME_DESTINATION_SWIPE_MIN_PX = 64;
-    const HOME_DESTINATION_SWIPE_MAX_MS = 900;
+    const HOME_DESTINATION_SWIPE_MIN_PX = 44;
+    const HOME_DESTINATION_SWIPE_MAX_MS = 1200;
     const HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 24;
 
     function homeDestinationIsSelected() {
@@ -46921,12 +46921,11 @@
 
     function homeDestinationSwipeBlocked(target) {
       if (!(target instanceof Element)) return true;
-      if (target.closest(
-        "button, a, input, select, textarea, label, [contenteditable], [role='slider'], " +
-        "#discoveryTabs, .modal-backdrop, .profile-photo-viewer, .profile-tv-viewer"
-      )) return true;
-      return profileBackdrop.classList.contains("show") ||
-        document.body.classList.contains("overlay-open");
+      return Boolean(target.closest(
+        "input, select, textarea, [contenteditable], [role='slider'], " +
+        "#modalImage, .modal-gallery, .profile-photo-viewer, " +
+        ".profile-tv-strip-list, .profile-tv-viewer"
+      ));
     }
 
     function resetHomeDestinationSwipe() {
@@ -46975,7 +46974,7 @@
       if (
         elapsed > HOME_DESTINATION_SWIPE_MAX_MS ||
         Math.abs(deltaX) < HOME_DESTINATION_SWIPE_MIN_PX ||
-        Math.abs(deltaX) <= Math.abs(deltaY) * 1.35
+        Math.abs(deltaX) <= Math.abs(deltaY) * 1.15
       ) return;
       const moved = moveToAdjacentHomeDestination(deltaX < 0 ? 1 : -1);
       if (moved) event.preventDefault();
