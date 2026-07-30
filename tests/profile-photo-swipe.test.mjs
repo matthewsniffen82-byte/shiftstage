@@ -61,6 +61,18 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
     /modalImage\?\.addEventListener\("click",[\s\S]*?openProfilePhotoViewer\(\)/,
   );
 });
+test("the profile carousel mixes approved videos with profile photos", () => {
+  assert.match(publicPhotoCarousel, /const availableMedia: ProfileMedia\[\] = \[/);
+  assert.match(publicPhotoCarousel, /activeMedia\?\.kind === "video"/);
+  assert.match(
+    publicPhotoCarousel,
+    /<video[\s\S]*?controls[\s\S]*?preload="metadata"[\s\S]*?src=\{activeMedia\.videoUrl\}/,
+  );
+  assert.match(publicPhotoCarousel, /data-dancer-media-carousel/);
+  assert.match(publicProfilePage, /\.public-profile-video video \{[^}]*object-fit: contain/);
+  assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
+});
+
 
 test("the standalone public dancer profile uses the production swipe carousel", () => {
   assert.match(
@@ -69,7 +81,7 @@ test("the standalone public dancer profile uses the production swipe carousel", 
   );
   assert.match(
     publicProfilePage,
-    /<DancerPhotoCarousel[\s\S]*?photos=\{gallery\.map\([\s\S]*?stageName=\{profile\.stageName\}/,
+    /<DancerPhotoCarousel[\s\S]*?photos=\{gallery\.map\([\s\S]*?videos=\{tvVideos\.map\([\s\S]*?stageName=\{profile\.stageName\}/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -81,7 +93,7 @@ test("the standalone public dancer profile uses the production swipe carousel", 
   );
   assert.match(
     publicPhotoCarousel,
-    /onWheel=\{handleWheel\}[\s\S]*?aria-label="Show previous profile photo"[\s\S]*?aria-label="Show next profile photo"/,
+    /onWheel=\{handleWheel\}[\s\S]*?aria-label="Show previous profile media"[\s\S]*?aria-label="Show next profile media"/,
   );
   assert.match(
     publicProfilePage,

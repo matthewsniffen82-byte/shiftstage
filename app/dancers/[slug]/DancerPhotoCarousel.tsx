@@ -12,8 +12,28 @@ type DancerPhotoCarouselProps = {
     id: string;
     imageUrl: string;
   }>;
+  videos?: Array<{
+    id: string;
+    videoUrl: string;
+    caption: string;
+    durationSeconds: number;
+  }>;
   stageName: string;
 };
+
+type ProfileMedia =
+  | {
+      id: string;
+      kind: "photo";
+      imageUrl: string;
+    }
+  | {
+      id: string;
+      kind: "video";
+      videoUrl: string;
+      caption: string;
+      durationSeconds: number;
+    };
 
 type SwipeGesture = {
   pointerId: number | null;
@@ -28,6 +48,7 @@ const TRACKPAD_LOCK_MS = 320;
 
 export function DancerPhotoCarousel({
   photos,
+  videos = [],
   stageName,
 }: DancerPhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -40,32 +61,43 @@ export function DancerPhotoCarousel({
   });
   const trackpadLockedUntil = useRef(0);
   const availablePhotos = photos.filter((photo) => photo.imageUrl);
-  const safeActiveIndex = availablePhotos.length
-    ? activeIndex % availablePhotos.length
+  const availableVideos = videos.filter((video) => video.videoUrl);
+  const availableMedia: ProfileMedia[] = [
+    ...availablePhotos.map((photo) => ({
+      ...photo,
+      kind: "photo" as const,
+    })),
+    ...availableVideos.map((video) => ({
+      ...video,
+      kind: "video" as const,
+    })),
+  ];
+  const safeActiveIndex = availableMedia.length
+    ? activeIndex % availableMedia.length
     : 0;
-  const activePhoto = availablePhotos[safeActiveIndex];
+  const activeMedia = availableMedia[safeActiveIndex];
 
   const showPhoto = useCallback(
     (nextIndex: number) => {
-      if (!availablePhotos.length) return;
+      if (!availableMedia.length) return;
       setActiveIndex(
-        (nextIndex + availablePhotos.length) % availablePhotos.length,
+        (nextIndex + availableMedia.length) % availableMedia.length,
       );
     },
-    [availablePhotos.length],
+    [availableMedia.length],
   );
 
   const movePhoto = useCallback(
     (direction: -1 | 1) => {
-      if (availablePhotos.length < 2) return;
+      if (availableMedia.length < 2) return;
       setActiveIndex((currentIndex) => {
-        const normalizedIndex = currentIndex % availablePhotos.length;
+        const normalizedIndex = currentIndex % availableMedia.length;
         return (
-          normalizedIndex + direction + availablePhotos.length
-        ) % availablePhotos.length;
+          normalizedIndex + direction + availableMedia.length
+        ) % availableMedia.length;
       });
     },
-    [availablePhotos.length],
+    [availableMedia.length],
   );
 
   const resetGesture = () => {
@@ -84,7 +116,7 @@ export function DancerPhotoCarousel({
     if (
       !event.isPrimary ||
       (event.pointerType === "mouse" && event.button !== 0) ||
-      (event.target as HTMLElement).closest("button, a")
+      (event.target as HTMLElement).closest("button, a, video")
     ) {
       return;
     }
@@ -135,7 +167,7 @@ export function DancerPhotoCarousel({
 
   const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
     if (
-      availablePhotos.length < 2 ||
+      availableMedia.length < 2 ||
       Math.abs(event.deltaX) < 18 ||
       Math.abs(event.deltaX) <= Math.abs(event.deltaY)
     ) {
@@ -149,6 +181,7 @@ export function DancerPhotoCarousel({
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("video")) return;
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       movePhoto(-1);
@@ -161,10 +194,13 @@ export function DancerPhotoCarousel({
 
   return (
     <div
-      aria-label={`${stageName} profile pictures`}
+      aria-label={`${stageName} profile photos and videos`}
       aria-roledescription="carousel"
       className="public-photo public-gallery"
+      data-active-media-index={safeActiveIndex}
+      data-active-media-type={activeMedia?.kind || "empty"}
       data-active-photo-index={safeActiveIndex}
+      data-dancer-media-carousel
       data-dancer-photo-carousel
       onKeyDown={handleKeyDown}
       onPointerCancel={resetGesture}
@@ -175,20 +211,38 @@ export function DancerPhotoCarousel({
       role="group"
       tabIndex={0}
     >
-      {activePhoto ? (
+      {activeMedia?.kind === "photo" ? (
         <div
-          aria-label={`${stageName} profile photo ${safeActiveIndex + 1} of ${availablePhotos.length}`}
+          aria-label={`${stageName} profile photo ${safeActiveIndex + 1} of ${availableMedia.length}`}
           className="public-photo-image"
           role="img"
-          style={{ backgroundImage: `url(${activePhoto.imageUrl})` }}
+          style={{ backgroundImage: `url(${activeMedia.imageUrl})` }}
         />
+      ) : activeMedia?.kind === "video" ? (
+        <div className="public-profile-video">
+          <video
+            aria-label={`${stageName} profile video ${safeActiveIndex + 1} of ${availableMedia.length}`}
+            controls
+            controlsList="nodownload noremoteplayback"
+            disablePictureInPicture
+            playsInline
+            preload="metadata"
+            src={activeMedia.videoUrl}
+          />
+          <span className="public-media-badge">
+            Video · {formatDuration(activeMedia.durationSeconds)}
+          </span>
+          {activeMedia.caption.trim() ? (
+            <p className="public-video-caption">{activeMedia.caption}</p>
+          ) : null}
+        </div>
       ) : (
         <span>{initials(stageName)}</span>
       )}
-      {availablePhotos.length > 1 ? (
+      {availableMedia.length > 1 ? (
         <>
           <button
-            aria-label="Show previous profile photo"
+            aria-label="Show previous profile media"
             className="public-photo-nav previous"
             onClick={() => movePhoto(-1)}
             type="button"
@@ -196,7 +250,7 @@ export function DancerPhotoCarousel({
             ‹
           </button>
           <button
-            aria-label="Show next profile photo"
+            aria-label="Show next profile media"
             className="public-photo-nav next"
             onClick={() => movePhoto(1)}
             type="button"
@@ -204,27 +258,34 @@ export function DancerPhotoCarousel({
             ›
           </button>
           <div
-            aria-label="Choose profile photo"
+            aria-label="Choose profile photo or video"
             className="public-photo-dots"
             role="group"
           >
-            {availablePhotos.map((photo, index) => (
+            {availableMedia.map((media, index) => (
               <button
-                aria-label={`Show profile photo ${index + 1}`}
+                aria-label={`Show profile ${media.kind} ${index + 1} of ${availableMedia.length}`}
                 aria-pressed={index === safeActiveIndex}
-                key={photo.id}
+                className={media.kind === "video" ? "is-video" : undefined}
+                key={`${media.kind}-${media.id}`}
                 onClick={() => showPhoto(index)}
                 type="button"
               />
             ))}
           </div>
           <span aria-live="polite" className="public-photo-status">
-            Photo {safeActiveIndex + 1} of {availablePhotos.length}
+            {activeMedia?.kind === "video" ? "Video" : "Photo"}{" "}
+            {safeActiveIndex + 1} of {availableMedia.length}
           </span>
         </>
       ) : null}
     </div>
   );
+}
+
+function formatDuration(durationSeconds: number) {
+  const seconds = Math.max(0, Math.round(durationSeconds));
+  return `0:${String(seconds).padStart(2, "0")}`;
 }
 
 function initials(value: string) {

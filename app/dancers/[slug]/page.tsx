@@ -4,7 +4,6 @@ import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { FloatingProfileHomeLink } from "@/app/components/FloatingProfileHomeLink";
 import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
 import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
-import { TvVideoStrip } from "@/app/components/TvVideoStrip";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
@@ -79,6 +78,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
           photos={gallery.map((photo) => ({
             id: photo.id,
             imageUrl: photo.imageUrl,
+          }))}
+          videos={tvVideos.map((video) => ({
+            id: video.id,
+            videoUrl: video.videoUrl,
+            caption: video.caption,
+            durationSeconds: video.durationSeconds,
           }))}
           stageName={profile.stageName}
         />
@@ -181,11 +186,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </div>
         </section>
       ) : null}
-      <TvVideoStrip
-        showDancerName={false}
-        title={`${profile.stageName} on MyDancr TV`}
-        videos={tvVideos}
-      />
       <section className="public-grid" aria-label="Profile details">
         <article className="public-panel profile-about-panel">
           <span className="eyebrow">Profile</span>
@@ -419,6 +419,10 @@ function PublicProfileStyles() {
       .public-photo { grid-area: photo; position: relative; min-height: 520px; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 20px; background: linear-gradient(135deg, rgba(139,92,246,.5), rgba(236,72,153,.24)); box-shadow: 0 30px 80px rgba(0,0,0,.45); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; cursor: grab; }
       .public-photo:active { cursor: grabbing; }
       .public-photo:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .public-profile-video { position: absolute; inset: 0; display: grid; place-items: center; background: #000; }
+      .public-profile-video video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
+      .public-media-badge { position: absolute; z-index: 2; top: 14px; left: 14px; width: auto !important; height: auto !important; display: inline-flex !important; align-items: center; padding: 6px 9px !important; border: 1px solid rgba(126,234,255,.42) !important; border-radius: 999px !important; color: #e9fcff; background: rgba(5,5,8,.78) !important; font-size: 10px !important; font-weight: 950 !important; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; backdrop-filter: blur(8px); }
+      .public-video-caption { position: absolute; z-index: 2; top: 51px; left: 14px; max-width: min(70%, 300px); display: -webkit-box; padding: 7px 9px; overflow: hidden; border-radius: 9px; color: #fff; background: rgba(5,5,8,.72); font-size: 11px; font-weight: 750; line-height: 1.3; text-shadow: 0 1px 4px rgba(0,0,0,.8); pointer-events: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; backdrop-filter: blur(8px); }
       .public-photo-image { position: absolute; inset: 0; background-position: center top; background-repeat: no-repeat; background-size: cover; }
       .public-photo > span:not(.public-photo-status) { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.38); font-size: 32px; font-weight: 900; }
       .public-photo-nav { position: absolute; z-index: 2; top: 50%; width: 44px; height: 54px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: rgba(5,5,8,.62); box-shadow: 0 10px 28px rgba(0,0,0,.32); font-size: 34px; line-height: 1; cursor: pointer; transform: translateY(-50%); backdrop-filter: blur(8px); }
@@ -427,6 +431,9 @@ function PublicProfileStyles() {
       .public-photo-nav:hover, .public-photo-nav:focus-visible { border-color: #7eeaff; outline: none; background: rgba(45,16,111,.88); }
       .public-photo-dots { position: absolute; z-index: 2; left: 50%; bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 9px; border-radius: 999px; background: rgba(5,5,8,.66); transform: translateX(-50%); backdrop-filter: blur(8px); }
       .public-photo-dots button { width: 9px; height: 9px; padding: 0; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; background: rgba(255,255,255,.2); cursor: pointer; }
+      .public-gallery[data-active-media-type="video"] .public-photo-dots { top: 14px; right: 14px; bottom: auto; left: auto; max-width: calc(100% - 110px); overflow-x: auto; transform: none; }
+      .public-photo-dots button.is-video { width: 18px; border-radius: 999px; }
+      .public-photo-dots button.is-video::after { content: "▶"; display: block; color: #fff; font-size: 6px; line-height: 7px; }
       .public-photo-dots button[aria-pressed="true"] { border-color: #7eeaff; background: #7eeaff; box-shadow: 0 0 12px rgba(126,234,255,.6); }
       .public-photo-status { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
       .venue-qr-section, .profile-schedule-section, .public-grid { max-width: 1120px; margin: 24px auto 0; }

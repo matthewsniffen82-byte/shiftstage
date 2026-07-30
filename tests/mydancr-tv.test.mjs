@@ -259,8 +259,9 @@ test("administrator and venue controls persist confirmed decisions", () => {
 test("approved videos appear on dancer pages while venue URLs preserve the in-app experience", () => {
   assert.match(dancerPage, /getPublicMyDancrTvFeed/);
   assert.match(dancerPage, /dancerId: profile\.id/);
-  assert.match(dancerPage, /<TvVideoStrip/);
-  assert.match(dancerPage, /showDancerName=\{false\}/);
+  assert.match(dancerPage, /videos=\{tvVideos\.map\(/);
+  assert.match(dancerPage, /videoUrl: video\.videoUrl/);
+  assert.doesNotMatch(dancerPage, /<TvVideoStrip/);
   assert.doesNotMatch(dancerPage, /watchAllHref|href=\{`\/tv/);
   assert.match(videoStrip, /<video aria-hidden="true" loop muted playsInline/);
   assert.doesNotMatch(videoStrip, /<video aria-hidden="true" autoPlay/);

@@ -48,16 +48,18 @@ test("the public dancer profile uses the full authenticated global header", () =
 
 test("the mobile profile is ordered around identity, revenue, schedule, media, and details", () => {
   const heroIndex = profilePage.indexOf('className="public-hero dancer-hero"');
+  const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const dealIndex = profilePage.indexOf('className="venue-qr-section live-deal-section"');
   const scheduleIndex = profilePage.indexOf('className="profile-schedule-section"');
-  const tvIndex = profilePage.indexOf("<TvVideoStrip");
   const detailsIndex = profilePage.indexOf('className="public-grid"');
 
   assert.ok(heroIndex > -1);
-  assert.ok(dealIndex > heroIndex);
+  assert.ok(mediaIndex > heroIndex);
+  assert.ok(dealIndex > mediaIndex);
   assert.ok(scheduleIndex > dealIndex);
-  assert.ok(tvIndex > scheduleIndex);
-  assert.ok(detailsIndex > tvIndex);
+  assert.ok(detailsIndex > scheduleIndex);
+  assert.match(profilePage, /videos=\{tvVideos\.map\(/);
+  assert.doesNotMatch(profilePage, /<TvVideoStrip/);
   assert.match(profilePage, /grid-template-areas: "photo" "copy"/);
   assert.match(profilePage, /profile-live-state\$\{activeShift \? " is-working"/);
   assert.match(profilePage, /Verified check-in · until/);
