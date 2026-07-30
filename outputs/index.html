@@ -43458,7 +43458,7 @@
       homeDiscoveryFeedObserver?.disconnect();
       homeDiscoveryFeedObserver = null;
       homeDiscoveryFeedRenderKey = "";
-      results.classList.remove("home-discovery-feed", "home-venue-discovery-feed");
+      results.classList.remove("home-discovery-feed", "home-venue-discovery-feed", "home-dancer-grid");
       results.removeAttribute("aria-label");
       unlockHomeDiscoveryFeedViewport();
     }
@@ -44453,7 +44453,7 @@
       tabTitle.classList.remove("dancers-city-title");
       tabTitle.textContent = `MyDancr TV · ${city}`;
       viewAllBtn.hidden = true;
-      results.classList.remove("card-grid");
+      results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
       results.classList.add("home-tv-feed");
       queueHomeTvFeedViewportSync();
 
