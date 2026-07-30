@@ -145,6 +145,60 @@
   filter: brightness(0.96);
 }
 
+.dancr-button-system
+  .home-discovery-feed-actions
+  .home-venue-discovery-deal-action {
+  border-color: rgba(77, 255, 157, 0.92) !important;
+  color: #f2fff8 !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.14),
+      rgba(255, 255, 255, 0.015) 48%
+    ),
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(113, 255, 179, 0.42),
+      transparent 58%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(18, 151, 82, 0.98),
+      rgba(6, 91, 68, 0.98)
+    ) !important;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(77, 255, 157, 0.24),
+    0 0 18px rgba(49, 255, 143, 0.7),
+    0 0 38px rgba(25, 221, 113, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+  text-shadow: 0 0 10px rgba(105, 255, 178, 0.52) !important;
+}
+
+.dancr-button-system
+  .home-discovery-feed-actions
+  .home-venue-discovery-deal-action:hover {
+  border-color: rgba(139, 255, 194, 0.98) !important;
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.46),
+    0 0 0 1px rgba(103, 255, 174, 0.34),
+    0 0 22px rgba(55, 255, 147, 0.82),
+    0 0 44px rgba(25, 221, 113, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+}
+
+.dancr-button-system
+  .home-discovery-feed-actions
+  .home-venue-discovery-deal-action:active {
+  border-color: rgba(77, 255, 157, 0.86) !important;
+  box-shadow:
+    0 7px 20px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(77, 255, 157, 0.2),
+    0 0 14px rgba(49, 255, 143, 0.58),
+    0 0 28px rgba(25, 221, 113, 0.34),
+    inset 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
 .dancr-button-system :where(
   button,
   input[type="button"],
