@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { FloatingProfileHomeLink } from "@/app/components/FloatingProfileHomeLink";
 import { VenuePageView, VenueQrCode } from "@/app/components/VenueQrCode";
 import { TvVideoStrip } from "@/app/components/TvVideoStrip";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
@@ -114,6 +115,7 @@ export default async function VenuePublicPage({ params }: PageProps) {
   return (
     <main className={styles.shell}>
       <VenuePageView venueId={venue.id} />
+      <FloatingProfileHomeLink city={venue.city} profileType="venue" />
 
       <header className={styles.header}>
         <Link className={styles.brand} href="/" aria-label="Go to Mydancr home">

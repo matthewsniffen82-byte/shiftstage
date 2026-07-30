@@ -1,0 +1,59 @@
+.control {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .control {
+    position: fixed;
+    z-index: 1490;
+    top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
+    left: max(12px, calc(env(safe-area-inset-left, 0px) + 8px));
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    border-radius: 999px;
+    color: #fff;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.11),
+        rgba(255, 255, 255, 0.02) 48%,
+        rgba(255, 255, 255, 0)
+      ),
+      rgba(5, 5, 10, 0.78);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.42),
+      0 0 16px rgba(124, 58, 237, 0.34),
+      0 0 22px rgba(34, 199, 255, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    text-decoration: none;
+    touch-action: manipulation;
+  }
+
+  .control svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .control:hover,
+  .control:focus-visible {
+    border-color: rgba(126, 234, 255, 0.76);
+    outline: 2px solid #7eeaff;
+    outline-offset: 3px;
+    background: rgba(18, 12, 30, 0.94);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.46),
+      0 0 18px rgba(124, 58, 237, 0.46),
+      0 0 24px rgba(34, 199, 255, 0.22);
+  }
+}

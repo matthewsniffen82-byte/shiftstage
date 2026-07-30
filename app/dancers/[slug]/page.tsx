@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { FloatingProfileHomeLink } from "@/app/components/FloatingProfileHomeLink";
 import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
 import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { TvVideoStrip } from "@/app/components/TvVideoStrip";
@@ -62,6 +63,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
       key={profile.id}
     >
       <main className="public-profile-shell">
+      <FloatingProfileHomeLink city={profile.city} profileType="dancer" />
       <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
       <PublicProfileHeader
@@ -461,8 +463,8 @@ function PublicProfileStyles() {
         .public-gallery { overflow-x: auto; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; }
         .public-profile-shell { padding: 0 12px 98px; }
         .profile-global-header { margin: 0 -2px 12px; padding-inline: 2px; }
-        .profile-global-topbar { gap: 7px; }
-        .profile-global-logo { min-height: 40px; padding-inline: 11px; font-size: 23px; }
+        .profile-global-topbar { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 7px; }
+        .profile-global-logo { visibility: hidden; width: 46px; min-height: 40px; padding: 0; font-size: 0; pointer-events: none; }
         .profile-global-city { display: none; }
         .profile-global-actions { grid-column: 2 / 4; gap: 6px; }
         .profile-global-account { min-height: 40px; padding-inline: 11px; }

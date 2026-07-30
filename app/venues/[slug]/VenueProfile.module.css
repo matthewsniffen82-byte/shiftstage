@@ -716,6 +716,7 @@
   }
 
   .brand {
+    visibility: hidden;
     font-size: 34px;
   }
 
