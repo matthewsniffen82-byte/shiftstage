@@ -290,10 +290,10 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
 });
 
-test("Now and Dancers grid cards open the existing full profile as the only next level", () => {
+test("Now and Dancers grid cards restore the full production action dock", () => {
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)/,
+    /function homeDancerGridCard\(profile, city\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDancerGridActionsMarkup\(profile, city\)/,
   );
   assert.match(
     homeSource,
@@ -301,7 +301,19 @@ test("Now and Dancers grid cards open the existing full profile as the only next
   );
   assert.match(
     homeSource,
-    /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
+    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?data-grid-profile-action="\$\{profileValue\}"[\s\S]*?data-profile-qr="\$\{profileValue\}"[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
+  );
+  assert.match(
+    homeSource,
+    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?resolveVenueByName\(venueName, city\)[\s\S]*?data-card-venue="\$\{venueValue\}"[\s\S]*?venue-directions-btn[\s\S]*?const goingMarkup = canMarkGoing[\s\S]*?data-feed-action="going"/,
+  );
+  assert.match(
+    homeSource,
+    /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?handleQrClick\(event\)[\s\S]*?handleShareClick\(event\)[\s\S]*?data-grid-profile-action[\s\S]*?openProfileModal\(gridProfileButton\.dataset\.gridProfileAction\)[\s\S]*?const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-dancer-grid-actions \{[\s\S]*?\.home-dancer-grid-primary-actions,[\s\S]*?grid-template-columns: repeat\(3,minmax\(0,1fr\)\)[\s\S]*?\.home-dancer-grid-context-actions/,
   );
   assert.match(
     homeSource,

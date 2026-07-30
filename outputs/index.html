@@ -30476,6 +30476,80 @@
           background: rgba(11,87,110,.4);
         }
 
+        .home-dancer-grid-actions {
+          display: grid;
+          gap: 7px;
+          padding: 10px;
+          border-top: 1px solid rgba(167,139,250,.18);
+          background: linear-gradient(180deg,#09090d,#07070a);
+        }
+        .home-dancer-grid-primary-actions,
+        .home-dancer-grid-context-actions {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: repeat(3,minmax(0,1fr));
+          gap: 7px;
+        }
+        .home-dancer-grid-context-actions {
+          padding-top: 7px;
+          border-top: 1px solid rgba(126,234,255,.12);
+        }
+        .home-dancer-grid-actions .feed-card-action,
+        .home-dancer-grid-actions .home-dancer-grid-profile-button {
+          min-width: 0;
+          min-height: 48px;
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          padding: 6px 4px;
+          border: 1px solid rgba(165,148,208,.3);
+          border-radius: 12px;
+          color: #f5f2ff;
+          background: linear-gradient(180deg,rgba(27,27,37,.98),rgba(16,16,23,.98));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+          font: inherit;
+          font-size: 9px;
+          font-weight: 950;
+          line-height: 1.05;
+          text-align: center;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .home-dancer-grid-actions .action-icon {
+          width: 17px;
+          height: 17px;
+          flex: 0 0 17px;
+        }
+        .home-dancer-grid-actions .feed-card-action:focus-visible,
+        .home-dancer-grid-actions .home-dancer-grid-profile-button:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 2px;
+        }
+        .home-dancer-grid-actions .home-dancer-grid-profile-button {
+          border-color: rgba(126,234,255,.4);
+          background: linear-gradient(180deg,rgba(13,55,73,.96),rgba(10,31,43,.98));
+        }
+        .home-dancer-grid-actions .home-dancer-grid-profile-qr.is-open {
+          border-color: rgba(126,234,255,.72);
+          color: #fff;
+          background: linear-gradient(180deg,rgba(13,75,92,.98),rgba(10,38,51,.98));
+          box-shadow: 0 0 16px rgba(34,199,255,.14), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .home-dancer-grid-actions .home-dancer-grid-share {
+          border-color: rgba(192,132,252,.42);
+        }
+        .home-dancer-grid-actions .home-dancer-grid-venue-action,
+        .home-dancer-grid-actions .home-dancer-grid-directions {
+          border-color: rgba(126,234,255,.28);
+        }
+        .home-dancer-grid-actions .feed-card-action:disabled,
+        .home-dancer-grid-actions .home-dancer-grid-profile-button:disabled {
+          opacity: .56;
+          cursor: wait;
+        }
+
         .home-dancer-grid-qr {
           position: absolute;
           z-index: 4;
@@ -44311,7 +44385,43 @@
       `;
     }
 
-    function homeDancerGridCard(profile) {
+    function homeDancerGridActionsMarkup(profile, city) {
+      const safeName = escapeHtml(profile.name);
+      const profileValue = escapeOptionValue(profile.name);
+      const cityValue = escapeOptionValue(city);
+      const isFollowed = isFollowingProfile(city, profile.name);
+      const isNotified = isNotificationOn(city, profile.name);
+      const isGoing = !!goingTonightSavedByProfile[profile.name];
+      const isLive = isWorkingTonight(profile, city);
+      const canMarkGoing = Boolean(isLive && profile.shiftId);
+      const venueName = String(profile.venue || "").trim();
+      const venueValue = escapeOptionValue(venueName);
+      const venue = resolveVenueByName(venueName, city);
+      const venueActionMarkup = venue
+        ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} venue profile">${actionButtonLabel("pin", "Venue")}</button>`
+        : "";
+      const directionsMarkup = venue?.address
+        ? `<a class="feed-card-action home-dancer-grid-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${escapeHtml(venueName)}">${actionButtonLabel("pin", "Directions")}</a>`
+        : "";
+      const goingMarkup = canMarkGoing
+        ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
+        : "";
+      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}`;
+      return `
+        <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
+          <div class="home-dancer-grid-primary-actions">
+            <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
+            <button class="feed-card-action home-dancer-grid-profile-qr" type="button" data-profile-qr="${profileValue}" data-share-city="${cityValue}" aria-expanded="false" aria-label="Show ${safeName}'s profile QR code">${actionButtonLabel("qr", "Profile QR")}</button>
+            <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
+            <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
+            <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
+          </div>
+          ${contextActions ? `<div class="home-dancer-grid-context-actions">${contextActions}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function homeDancerGridCard(profile, city) {
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
@@ -44345,18 +44455,19 @@
             </span>
           </a>
           ${homeDancerGridQrMarkup(profile)}
+          ${homeDancerGridActionsMarkup(profile, city)}
         </article>
       `;
     }
 
-    function homeDancerGridSectionMarkup(label, className, profiles) {
+    function homeDancerGridSectionMarkup(label, className, profiles, city) {
       if (!profiles.length) return "";
       return `
         <div class="home-dancer-grid-heading ${className}" role="heading" aria-level="3">
           <strong>${label}</strong>
           <span>${profiles.length}</span>
         </div>
-        ${profiles.map((profile) => homeDancerGridCard(profile)).join("")}
+        ${profiles.map((profile) => homeDancerGridCard(profile, city)).join("")}
       `;
     }
 
@@ -44374,7 +44485,7 @@
         ? `Dancers working now in ${city}`
         : `All approved dancers in ${city}, ordered by shift status`);
       results.innerHTML = sections
-        .map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles))
+        .map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city))
         .join("");
     }
 
@@ -45226,6 +45337,23 @@
       const dealPassTrigger = event.target.closest("[data-club-deal-cta], [data-deal-pass]");
       if (dealPassTrigger) {
         await handleDealPassClick(event);
+        return;
+      }
+      if (handleQrClick(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      if (handleShareClick(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      const gridProfileButton = event.target.closest("[data-grid-profile-action]");
+      if (gridProfileButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        openProfileModal(gridProfileButton.dataset.gridProfileAction);
         return;
       }
       const showDancersButton = event.target.closest("[data-show-dancers]");
