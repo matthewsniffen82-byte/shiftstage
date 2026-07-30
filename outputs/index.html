@@ -29302,27 +29302,43 @@
             scroll-snap-stop: normal !important;
           }
           #results.home-discovery-feed.home-venue-discovery-feed {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) !important;
-            align-items: stretch;
-            gap: 16px !important;
-            padding: 0 0 24px !important;
-            overflow: visible !important;
-            overscroll-behavior: auto;
-            scroll-snap-type: none;
+            --home-venue-feed-height: max(520px, calc(100dvh - 158px));
+            --home-venue-feed-card-height: clamp(460px, calc(100dvh - 280px), 620px);
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px !important;
+            height: var(--home-venue-feed-height) !important;
+            min-height: var(--home-venue-feed-height) !important;
+            max-height: var(--home-venue-feed-height) !important;
+            padding:
+              calc((var(--home-venue-feed-height) - var(--home-venue-feed-card-height)) / 2)
+              0 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            overscroll-behavior-x: none;
+            overscroll-behavior-y: contain;
+            scroll-padding-block:
+              calc((var(--home-venue-feed-height) - var(--home-venue-feed-card-height)) / 2);
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
             touch-action: pan-y;
+          }
+          #results.home-discovery-feed.home-venue-discovery-feed::-webkit-scrollbar {
+            display: none;
           }
           #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
             width: 100% !important;
             min-width: 0 !important;
             max-width: none !important;
-            height: clamp(460px, calc(100dvh - 180px), 580px) !important;
-            min-height: 460px !important;
-            max-height: 580px !important;
-            flex: none;
+            height: var(--home-venue-feed-card-height) !important;
+            min-height: var(--home-venue-feed-card-height) !important;
+            max-height: var(--home-venue-feed-card-height) !important;
+            flex: 0 0 var(--home-venue-feed-card-height);
             border: 1px solid rgba(139,92,246,.42) !important;
             border-radius: 20px !important;
-            scroll-snap-align: none !important;
+            scroll-snap-align: center !important;
+            scroll-snap-stop: always !important;
             box-shadow: 0 18px 44px rgba(0,0,0,.48), 0 0 24px rgba(124,58,237,.12) !important;
           }
           #results.home-venue-discovery-feed .home-discovery-feed-copy {
@@ -43510,11 +43526,34 @@
 
     function rememberHomeDiscoveryFeedPosition() {
       if (!results.classList.contains("home-discovery-feed")) return;
+      const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
+      if (!slides.length) return;
       const current = results.querySelector('.home-discovery-feed-slide[aria-current="true"]');
-      const first = results.querySelector(".home-discovery-feed-slide");
-      const itemKey = homeDiscoveryFeedSlideKey(current || first);
+      const fallbackIndex = slides.reduce((closestIndex, slide, index) => (
+        Math.abs(homeDiscoveryFeedSlideTop(slide) - results.scrollTop) <
+        Math.abs(homeDiscoveryFeedSlideTop(slides[closestIndex]) - results.scrollTop)
+          ? index
+          : closestIndex
+      ), 0);
+      const itemKey = homeDiscoveryFeedSlideKey(current || slides[fallbackIndex]);
       if (!itemKey) return;
       homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), itemKey);
+    }
+
+    function homeDiscoveryFeedSlideTop(slide) {
+      if (!slide) return 0;
+      const centeredTop = slide.offsetTop - Math.max(0, (results.clientHeight - slide.offsetHeight) / 2);
+      const maxTop = Math.max(0, results.scrollHeight - results.clientHeight);
+      return Math.min(maxTop, Math.max(0, centeredTop));
+    }
+
+    function syncHomeVenueFeedPosition() {
+      if (!results.classList.contains("home-venue-discovery-feed")) return;
+      const current = results.querySelector('.home-discovery-feed-slide[aria-current="true"]');
+      if (!current) return;
+      window.requestAnimationFrame(() => {
+        results.scrollTo({ top: homeDiscoveryFeedSlideTop(current), left: 0, behavior: "auto" });
+      });
     }
 
     function activateHomeDiscoveryFeedItem(itemKey) {
@@ -43544,14 +43583,13 @@
       }
       homeDiscoveryFeedObserver = new IntersectionObserver((entries) => {
         const visible = entries
-          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .55)
+          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (!visible) return;
         activateHomeDiscoveryFeedItem(homeDiscoveryFeedSlideKey(visible.target));
       }, {
-        root: null,
-        rootMargin: "-72px 0px -88px",
-        threshold: [.35, .55, .75]
+        root: results,
+        threshold: [.72, .82, .92]
       });
       slides.forEach((slide) => homeDiscoveryFeedObserver.observe(slide));
     }
@@ -43909,7 +43947,7 @@
         : isVenueFeed
           ? "venue profiles"
           : "dancer profiles";
-      results.setAttribute("aria-label", `Scroll through ${discoveryLabel} in ${city}`);
+      results.setAttribute("aria-label", `Swipe vertically through ${discoveryLabel} in ${city}`);
       viewAllBtn.hidden = true;
 
       if (options.loading && !items.length) {
@@ -43946,6 +43984,8 @@
         )).join("")}
       `;
       window.requestAnimationFrame(() => {
+        const restoredSlide = results.querySelectorAll(".home-discovery-feed-slide")[restoreIndex];
+        results.scrollTo({ top: homeDiscoveryFeedSlideTop(restoredSlide), left: 0, behavior: "auto" });
         const restoredItem = items[restoreIndex]?.name || items[0].name;
         activateHomeDiscoveryFeedItem(restoredItem);
         setupHomeDiscoveryFeedObserver();
@@ -43960,7 +44000,10 @@
       const shouldUseInlineLayout =
         activeTab === "venues" &&
         homeDiscoveryFeedUsesInlineLayout();
-      if (homeDiscoveryFeedOpen === shouldUseInlineLayout) return;
+      if (homeDiscoveryFeedOpen === shouldUseInlineLayout) {
+        if (shouldUseInlineLayout) syncHomeVenueFeedPosition();
+        return;
+      }
       homeDiscoveryFeedOpen = shouldUseInlineLayout;
       deactivateHomeDiscoveryFeed();
       render();
@@ -44316,17 +44359,27 @@
       window.clearTimeout(homeSnapFeedSettleTimer);
       homeSnapFeedSettleTimer = 0;
       const isTvFeed = results.classList.contains("home-tv-feed");
-      if (!isTvFeed) return;
-      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      const isVenueFeed = results.classList.contains("home-venue-discovery-feed");
+      if (!isTvFeed && !isVenueFeed) return;
+      const slideSelector = isTvFeed ? ".home-tv-feed-slide" : ".home-discovery-feed-slide";
+      const slides = [...results.querySelectorAll(slideSelector)];
       const viewportHeight = results.clientHeight;
       if (!slides.length || viewportHeight <= 0) return;
-      const index = Math.min(slides.length - 1, Math.max(0, Math.round(results.scrollTop / viewportHeight)));
-      const targetTop = index * viewportHeight;
+      const index = isTvFeed
+        ? Math.min(slides.length - 1, Math.max(0, Math.round(results.scrollTop / viewportHeight)))
+        : slides.reduce((closestIndex, slide, slideIndex) => (
+            Math.abs(homeDiscoveryFeedSlideTop(slide) - results.scrollTop) <
+            Math.abs(homeDiscoveryFeedSlideTop(slides[closestIndex]) - results.scrollTop)
+              ? slideIndex
+              : closestIndex
+          ), 0);
+      const targetTop = isTvFeed ? index * viewportHeight : homeDiscoveryFeedSlideTop(slides[index]);
       if (Math.abs(results.scrollTop - targetTop) > 1) {
         results.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
       }
       const slide = slides[index];
-      activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
+      if (isTvFeed) activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
+      else activateHomeDiscoveryFeedItem(homeDiscoveryFeedSlideKey(slide));
     }
 
     function queueHomeSnapFeedSettle() {
