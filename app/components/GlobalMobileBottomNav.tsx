@@ -122,9 +122,24 @@ export function GlobalMobileBottomNav() {
             gap: 0;
             padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
             overflow: hidden;
-            border-top: 1px solid rgba(139, 92, 246, 0.3);
-            background: rgba(6, 6, 10, 0.97);
-            box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.42);
+            border-top: 1px solid rgba(139, 92, 246, 0.56);
+            background:
+              radial-gradient(
+                circle at 50% -42%,
+                rgba(124, 58, 237, 0.3),
+                transparent 54%
+              ),
+              radial-gradient(
+                circle at 16% 0%,
+                rgba(34, 199, 255, 0.11),
+                transparent 34%
+              ),
+              rgba(5, 4, 11, 0.98);
+            box-shadow:
+              0 -1px 0 rgba(216, 180, 254, 0.2),
+              0 -10px 28px rgba(124, 58, 237, 0.17),
+              0 -17px 36px rgba(34, 199, 255, 0.08),
+              0 -12px 32px rgba(0, 0, 0, 0.46);
             backdrop-filter: blur(22px) saturate(1.3);
             -webkit-backdrop-filter: blur(22px) saturate(1.3);
             transform: translateX(-50%);
@@ -139,6 +154,7 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: #a78bfa;
             --mobile-nav-accent-soft: #ddd6fe;
             --mobile-nav-accent-glow: rgba(124, 58, 237, 0.42);
+            --mobile-nav-hero-white-glow: rgba(255, 255, 255, 0.9);
             --mobile-nav-hero-violet-glow: rgba(124, 58, 237, 0.78);
             --mobile-nav-hero-cyan-glow: rgba(34, 199, 255, 0.48);
             width: 100%;
@@ -151,7 +167,7 @@ export function GlobalMobileBottomNav() {
             justify-items: center;
             gap: 2px;
             padding: 3px 1px 2px;
-            color: #aaa2b4;
+            color: var(--mobile-nav-accent-soft);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
               sans-serif;
             font-size: 10px;
@@ -159,7 +175,9 @@ export function GlobalMobileBottomNav() {
             line-height: 14px;
             text-align: center;
             text-decoration: none;
-            text-shadow: none;
+            text-shadow:
+              0 0 5px var(--mobile-nav-accent-glow),
+              0 0 9px rgba(124, 58, 237, 0.17);
             transition:
               color 180ms ease,
               text-shadow 180ms ease;
@@ -190,10 +208,12 @@ export function GlobalMobileBottomNav() {
             place-items: center;
             border: 0;
             border-radius: 0;
-            color: #aaa2b4;
+            color: var(--mobile-nav-accent);
             background: transparent;
             box-shadow: none;
-            filter: none;
+            filter:
+              drop-shadow(0 0 3px var(--mobile-nav-accent-glow))
+              drop-shadow(0 0 7px rgba(124, 58, 237, 0.22));
             transition:
               color 180ms ease,
               filter 180ms ease,
@@ -203,8 +223,9 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav a.active {
             color: #fff;
             text-shadow:
-              0 0 7px var(--mobile-nav-hero-violet-glow),
-              0 0 11px var(--mobile-nav-hero-cyan-glow);
+              0 0 3px var(--mobile-nav-hero-white-glow),
+              0 0 8px var(--mobile-nav-hero-violet-glow),
+              0 0 14px var(--mobile-nav-hero-cyan-glow);
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
@@ -213,22 +234,25 @@ export function GlobalMobileBottomNav() {
             background: transparent;
             box-shadow: none;
             filter:
-              drop-shadow(0 0 5px var(--mobile-nav-hero-violet-glow))
-              drop-shadow(0 0 10px var(--mobile-nav-hero-cyan-glow));
-            transform: translateY(-1px);
+              drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
+              drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
+              drop-shadow(0 0 13px var(--mobile-nav-hero-cyan-glow));
+            transform: translateY(-2px) scale(1.08);
           }
 
           .global-mobile-bottom-nav a.tv-destination {
-            color: #bcb4c8;
+            color: var(--mobile-nav-accent-soft);
           }
 
           .global-mobile-bottom-nav a.tv-destination .global-mobile-nav-icon {
             border: 0;
             border-radius: 0;
-            color: #aaa2b4;
+            color: var(--mobile-nav-accent);
             background: transparent;
             box-shadow: none;
-            filter: none;
+            filter:
+              drop-shadow(0 0 3px var(--mobile-nav-accent-glow))
+              drop-shadow(0 0 7px rgba(124, 58, 237, 0.22));
           }
 
           .global-mobile-bottom-nav a.tv-destination.active {
@@ -239,8 +263,9 @@ export function GlobalMobileBottomNav() {
             .global-mobile-nav-icon {
             color: #fff;
             filter:
-              drop-shadow(0 0 5px var(--mobile-nav-hero-violet-glow))
-              drop-shadow(0 0 10px var(--mobile-nav-hero-cyan-glow));
+              drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
+              drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
+              drop-shadow(0 0 13px var(--mobile-nav-hero-cyan-glow));
           }
 
           .global-mobile-bottom-nav svg {
@@ -262,7 +287,7 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav .mydancr-tv-play {
-            fill: #aaa2b4;
+            fill: var(--mobile-nav-accent);
             filter: none;
             transition: fill 180ms ease;
           }
@@ -275,7 +300,7 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav .mydancr-tv-r {
             fill: none;
-            stroke: #aaa2b4;
+            stroke: var(--mobile-nav-accent-soft);
             stroke-width: 1.8;
             stroke-linecap: round;
             filter: none;

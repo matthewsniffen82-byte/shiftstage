@@ -29111,9 +29111,16 @@
             margin: 0 !important;
             padding: 6px 4px calc(6px + env(safe-area-inset-bottom)) !important;
             overflow: hidden !important;
-            border-top: 1px solid rgba(139,92,246,.3);
-            background: rgba(6,6,10,.97) !important;
-            box-shadow: 0 -12px 32px rgba(0,0,0,.42);
+            border-top: 1px solid rgba(139,92,246,.56);
+            background:
+              radial-gradient(circle at 50% -42%, rgba(124,58,237,.3), transparent 54%),
+              radial-gradient(circle at 16% 0%, rgba(34,199,255,.11), transparent 34%),
+              rgba(5,4,11,.98) !important;
+            box-shadow:
+              0 -1px 0 rgba(216,180,254,.2),
+              0 -10px 28px rgba(124,58,237,.17),
+              0 -17px 36px rgba(34,199,255,.08),
+              0 -12px 32px rgba(0,0,0,.46);
             backdrop-filter: blur(22px) saturate(1.3);
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
@@ -29129,6 +29136,7 @@
             --home-nav-accent: #a78bfa;
             --home-nav-accent-soft: #ddd6fe;
             --home-nav-accent-glow: rgba(124,58,237,.42);
+            --home-nav-hero-white-glow: rgba(255,255,255,.9);
             --home-nav-hero-violet-glow: rgba(124,58,237,.78);
             --home-nav-hero-cyan-glow: rgba(34,199,255,.48);
             position: relative !important;
@@ -29148,7 +29156,7 @@
             overflow: visible !important;
             border: 0 !important;
             border-radius: 0 !important;
-            color: #aaa2b4 !important;
+            color: var(--home-nav-accent-soft) !important;
             background: transparent !important;
             box-shadow: none !important;
             font-size: 10px !important;
@@ -29196,10 +29204,12 @@
             place-items: center;
             border: 0 !important;
             border-radius: 0 !important;
-            color: #aaa2b4 !important;
+            color: var(--home-nav-accent) !important;
             background: transparent !important;
             box-shadow: none !important;
-            filter: none;
+            filter:
+              drop-shadow(0 0 3px var(--home-nav-accent-glow))
+              drop-shadow(0 0 7px rgba(124,58,237,.22));
             transition:
               color 180ms ease,
               filter 180ms ease,
@@ -29209,17 +29219,19 @@
             color: #fff !important;
             background: transparent !important;
             filter:
-              drop-shadow(0 0 5px var(--home-nav-hero-violet-glow))
-              drop-shadow(0 0 10px var(--home-nav-hero-cyan-glow));
-            transform: translateY(-1px);
+              drop-shadow(0 0 2px var(--home-nav-hero-white-glow))
+              drop-shadow(0 0 7px var(--home-nav-hero-violet-glow))
+              drop-shadow(0 0 13px var(--home-nav-hero-cyan-glow));
+            transform: translateY(-2px) scale(1.08);
           }
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon {
             border-color: transparent !important;
             box-shadow: none !important;
             filter:
-              drop-shadow(0 0 5px var(--home-nav-hero-violet-glow))
-              drop-shadow(0 0 10px var(--home-nav-hero-cyan-glow));
-            transform: translateY(-1px);
+              drop-shadow(0 0 2px var(--home-nav-hero-white-glow))
+              drop-shadow(0 0 7px var(--home-nav-hero-violet-glow))
+              drop-shadow(0 0 13px var(--home-nav-hero-cyan-glow));
+            transform: translateY(-2px) scale(1.08);
           }
           #discoveryTabs .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv svg {
@@ -29255,7 +29267,8 @@
             text-overflow: clip;
             text-shadow:
               0 1px 2px rgba(0,0,0,.96),
-              0 0 6px var(--home-nav-accent-glow);
+              0 0 8px var(--home-nav-accent-glow),
+              0 0 12px rgba(124,58,237,.2);
             white-space: nowrap;
             pointer-events: none;
             transform: none !important;
@@ -29276,21 +29289,24 @@
             text-align: center;
             text-overflow: ellipsis;
             white-space: nowrap;
-            color: #bcb4c8;
-            text-shadow: none;
+            color: var(--home-nav-accent-soft);
+            text-shadow:
+              0 0 5px var(--home-nav-accent-glow),
+              0 0 9px rgba(124,58,237,.17);
             transition:
               color 180ms ease,
               text-shadow 180ms ease;
           }
           #discoveryTabs .home-bottom-tv {
-            color: #bcb4c8 !important;
+            color: var(--home-nav-accent-soft) !important;
           }
           #discoveryTabs .tab.active .home-nav-label,
           #discoveryTabs .home-bottom-tv.active > span:last-child {
             color: #fff;
             text-shadow:
-              0 0 7px var(--home-nav-hero-violet-glow),
-              0 0 11px var(--home-nav-hero-cyan-glow);
+              0 0 3px var(--home-nav-hero-white-glow),
+              0 0 8px var(--home-nav-hero-violet-glow),
+              0 0 14px var(--home-nav-hero-cyan-glow);
           }
           .home-bottom-tv-icon {
             width: 30px !important;
@@ -29302,8 +29318,10 @@
             border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
-            color: #aaa2b4 !important;
-            filter: none;
+            color: var(--home-nav-accent) !important;
+            filter:
+              drop-shadow(0 0 3px var(--home-nav-accent-glow))
+              drop-shadow(0 0 7px rgba(124,58,237,.22));
             transition:
               color 180ms ease,
               filter 180ms ease,
@@ -29317,7 +29335,7 @@
             stroke: none;
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-play {
-            fill: #aaa2b4;
+            fill: var(--home-nav-accent);
             filter: none;
             transition: fill 180ms ease;
           }
@@ -29326,7 +29344,7 @@
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-r {
             fill: none;
-            stroke: #aaa2b4;
+            stroke: var(--home-nav-accent-soft);
             stroke-width: 1.8;
             stroke-linecap: round;
             filter: none;
