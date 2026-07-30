@@ -43935,9 +43935,7 @@
       if (homeDiscoveryFeedOpen) homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
       const showsVenueDirectoryLink = activeTab === "venues" && !selectedVenue;
-      viewAllBtn.hidden = showsVenueDirectoryLink
-        ? !allItems.length
-        : !["tonight", "dancers"].includes(activeTab) || allItems.length <= 6 || !shouldLimit;
+      viewAllBtn.hidden = !showsVenueDirectoryLink || !allItems.length;
       viewAllBtn.textContent = showsVenueDirectoryLink
         ? "View All Venues"
         : activeTab === "dancers"
