@@ -7,7 +7,15 @@ const homeSource = await readFile(new URL("../outputs/index.html", import.meta.u
 test("venue discovery tracks mobile browser height changes and settles repeated swipes", () => {
   assert.match(
     homeSource,
+    /#results\.home-discovery-feed \{[\s\S]*?display: block !important;[\s\S]*?grid-template-columns: none !important;[\s\S]*?scroll-snap-type: y mandatory;/,
+  );
+  assert.match(
+    homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?-webkit-overflow-scrolling: touch;/,
+  );
+  assert.match(
+    homeSource,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);/,
   );
   assert.match(
     homeSource,

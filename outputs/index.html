@@ -28372,7 +28372,8 @@
           height: min(760px, calc(100dvh - 150px));
           min-height: 520px;
           margin-inline: auto;
-          display: block;
+          display: block !important;
+          grid-template-columns: none !important;
           overflow-x: hidden;
           overflow-y: auto;
           overscroll-behavior-y: none;
@@ -43718,7 +43719,7 @@
 
     function renderHomeDiscoveryFeed(city, items, options = {}) {
       rememberHomeDiscoveryFeedPosition();
-      results.classList.remove("card-grid");
+      results.classList.remove("card-grid", "home-dancer-grid");
       results.classList.add("home-discovery-feed");
       const discoveryLabel = activeTab === "tonight"
         ? "dancers working now"
