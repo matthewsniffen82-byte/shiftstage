@@ -391,6 +391,7 @@ function PublicProfileStyles() {
       .live-actions button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 13px; border: 1px solid rgba(148,229,255,.24); border-radius: 13px; color: #fff; background: rgba(148,229,255,.075); cursor: pointer; font: inherit; font-size: 13px; font-weight: 900; }
       .live-actions button:disabled { opacity: .66; cursor: wait; }
       .live-actions .profile-action-primary { grid-column: 1 / -1; min-height: 58px; flex-direction: column; gap: 2px; border-color: rgba(126,234,255,.58); background: linear-gradient(135deg, #6d28d9, #0b94c9); box-shadow: 0 14px 32px rgba(35,114,178,.24); font-size: 16px; }
+      .live-actions .profile-action-primary.profile-action-unavailable { border-color: rgba(148,137,166,.3); color: #bdb4ca; background: rgba(255,255,255,.055); box-shadow: none; cursor: default; opacity: 1; }
       .live-actions .profile-action-secondary.profile-action-requires-account { flex-direction: column; gap: 1px; }
       .live-actions .profile-action-requirement { color: #c7bbd8; font-size: 9px; font-weight: 850; line-height: 1.1; }
       .live-actions .profile-action-public .profile-action-requirement { color: #d8f7ff; }

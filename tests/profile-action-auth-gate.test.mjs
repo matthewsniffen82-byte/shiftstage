@@ -151,13 +151,13 @@ test("signed-out profile actions open a dismissible account prompt with working 
   assert.match(homeSource, /accountRequiredCreateLink\?\.addEventListener\("click"[\s\S]*openFreshCustomerSignup\(\)/);
 });
 
-test("public profiles keep Going live-only while signed out and gate only Follow and Notify", () => {
+test("public profiles keep Going visible for the next posted shift and gate only Follow and Notify", () => {
   assert.doesNotMatch(actionsSource, /if \(!token\) \{\s+return/);
   assert.match(actionsSource, /showSignedOutRequirements = savedLoaded && !token/);
   assert.match(actionsSource, /profile-action-requirement">Sign in required/);
-  assert.match(actionsSource, /profile-action-requirement">No sign-in needed/);
-  assert.match(actionsSource, /const liveShift = useMemo\(\(\) => shifts\.find\(\(shift\) => shift\.isActive\) \|\| null/);
-  assert.doesNotMatch(actionsSource, /const nextShift = useMemo\(\(\) => shifts\[0\]/);
+  assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
+  assert.match(actionsSource, /\? `\$\{actionShift\.isActive \? "Working now" : actionShift\.label\} · No sign-in needed`/);
+  assert.match(actionsSource, /: "No shift posted"/);
   for (const action of ["follow", "notify"]) {
     assert.match(
       actionsSource,
@@ -166,8 +166,9 @@ test("public profiles keep Going live-only while signed out and gate only Follow
   }
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
-  assert.match(actionsSource, /onClick=\{\(\) => updateGoing\(liveShift\.id\)\}/);
-  assert.match(actionsSource, /saved\.goingShiftIds\.includes\(liveShift\.id\) \? "Going" : "I’m Going"/);
+  assert.match(actionsSource, /if \(actionShift\) updateGoing\(actionShift\.id\)/);
+  assert.match(actionsSource, /actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\) \? "Going" : "I’m Going"/);
+  assert.match(actionsSource, /disabled=\{!actionShift \|\| !savedLoaded \|\| goingSaving\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
@@ -191,12 +192,14 @@ test("the live mobile profile labels protected actions before the tap and labels
   );
   assert.match(
     homeSource,
-    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = status\.state === "active" && Boolean\(profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?: "";/,
+    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(profile\.shiftId\)[\s\S]*?No shift posted/,
   );
   assert.match(
     homeSource,
-    /async function refreshProfileGoingState\(profile\) \{\s+if \(!profile\?\.shiftId \|\| !isWorkingTonight\(profile\)/,
+    /async function refreshProfileGoingState\(profile\) \{\s+if \(!profile\?\.shiftId \|\| window\.location\.protocol === "file:"\) return;/,
   );
+  assert.match(homeSource, /data-shift-state="posted"/);
+  assert.match(homeSource, /This dancer has no posted shift yet\./);
 });
 
 test("profile reports accept signed-out visitors and preserve optional signed-in attribution", () => {

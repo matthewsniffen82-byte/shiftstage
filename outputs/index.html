@@ -39172,11 +39172,11 @@
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-      const canMarkGoing = status.state === "active" && Boolean(profile.shiftId);
+      const canMarkGoing = Boolean(profile.shiftId);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="tonight">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
-        : "";
+        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="posted">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
+        : `<button class="action-btn going-btn is-unavailable" id="goingBtn" type="button" disabled aria-disabled="true">${profileActionButtonMarkup("clock", goingCopy.idle)}<small class="profile-action-requirement">No shift posted</small></button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
         <div class="modal-actions">
@@ -39189,7 +39189,7 @@
     }
 
     async function refreshProfileGoingState(profile) {
-      if (!profile?.shiftId || !isWorkingTonight(profile) || window.location.protocol === "file:") return;
+      if (!profile?.shiftId || window.location.protocol === "file:") return;
       try {
         const headers = { Accept: "application/json" };
         if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
@@ -45134,8 +45134,8 @@
       if (actionButton.disabled) return;
       const profileName = actionButton.dataset.profile;
       const profile = findProfile(profileName);
-      if (!profile?.shiftId || !isWorkingTonight(profile)) {
-        showToast("I'm Going is available only while this dancer is working now.");
+      if (!profile?.shiftId) {
+        showToast("This dancer has no posted shift yet.");
         return;
       }
       const countEl = document.getElementById("tonightInterestCount");

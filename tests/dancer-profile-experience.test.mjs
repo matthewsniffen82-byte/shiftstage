@@ -69,7 +69,7 @@ test("the mobile profile is ordered around identity, revenue, schedule, media, a
 test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {
   assert.match(
     profileActions,
-    /className="profile-action-primary profile-action-public"/,
+    /className=\{`profile-action-primary profile-action-public\$\{actionShift \? "" : " profile-action-unavailable"\}`\}/,
   );
   assert.match(profileActions, /className="profile-action-report"/);
   assert.match(profileActions, /onClick=\{submitReport\}/);

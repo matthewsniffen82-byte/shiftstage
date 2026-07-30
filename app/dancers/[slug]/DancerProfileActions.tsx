@@ -109,8 +109,11 @@ export function DancerProfileActions({
   const [reportError, setReportError] = useState("");
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
-  const liveShift = useMemo(() => shifts.find((shift) => shift.isActive) || null, [shifts]);
-  const liveShiftId = liveShift?.id || "";
+  const actionShift = useMemo(
+    () => shifts.find((shift) => shift.isActive) || shifts[0] || null,
+    [shifts],
+  );
+  const actionShiftId = actionShift?.id || "";
   const showSignedOutRequirements = savedLoaded && !token;
 
   useEffect(() => {
@@ -120,13 +123,13 @@ export function DancerProfileActions({
     const accessToken = readToken();
     setToken(accessToken);
     if (!accessToken) {
-      if (!liveShiftId) {
+      if (!actionShiftId) {
         setSavedLoaded(true);
         return () => {
           active = false;
         };
       }
-      fetch(`/api/customer/going?shiftId=${encodeURIComponent(liveShiftId)}`, {
+      fetch(`/api/customer/going?shiftId=${encodeURIComponent(actionShiftId)}`, {
         cache: "no-store",
         credentials: "same-origin",
       })
@@ -136,7 +139,7 @@ export function DancerProfileActions({
           if (!data.ok) throw new Error(data.error || "Unable to load going status.");
           setSaved((current) => ({
             ...current,
-            goingShiftIds: data.going === true ? [liveShiftId] : [],
+            goingShiftIds: data.going === true ? [actionShiftId] : [],
           }));
           setGoingCount(readConfirmedGoingCount(data));
         })
@@ -176,7 +179,7 @@ export function DancerProfileActions({
     return () => {
       active = false;
     };
-  }, [dancerId, liveShiftId, setGoingCount]);
+  }, [actionShiftId, dancerId, setGoingCount]);
 
   useEffect(() => {
     if (!accountRequiredAction && !reportDialogOpen) return;
@@ -369,19 +372,21 @@ export function DancerProfileActions({
   return (
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
-        {liveShift ? (
-          <button
-            className="profile-action-primary profile-action-public"
-            type="button"
-            onClick={() => updateGoing(liveShift.id)}
-            disabled={!savedLoaded || goingSaving}
-          >
-            {saved.goingShiftIds.includes(liveShift.id) ? "Going" : "I’m Going"}
-            {showSignedOutRequirements ? (
-              <small className="profile-action-requirement">No sign-in needed</small>
-            ) : null}
-          </button>
-        ) : null}
+        <button
+          className={`profile-action-primary profile-action-public${actionShift ? "" : " profile-action-unavailable"}`}
+          type="button"
+          onClick={() => {
+            if (actionShift) updateGoing(actionShift.id);
+          }}
+          disabled={!actionShift || !savedLoaded || goingSaving}
+        >
+          {actionShift && saved.goingShiftIds.includes(actionShift.id) ? "Going" : "I’m Going"}
+          <small className="profile-action-requirement">
+            {actionShift
+              ? `${actionShift.isActive ? "Working now" : actionShift.label} · No sign-in needed`
+              : "No shift posted"}
+          </small>
+        </button>
         <button
           className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
