@@ -76,6 +76,18 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   assert.match(scriptSource, /workingNowShifts: 0/);
 });
 
+test("layout-review approval supports the deployed auto-approval schema", () => {
+  const approvalFunction = scriptSource.match(
+    /async function approveSyntheticProfile[\s\S]*?\n}\n\nasync function upsertProfilePhotos/,
+  )?.[0];
+  assert.ok(approvalFunction);
+  assert.doesNotMatch(approvalFunction, /identity_provider|identity_verified_at/);
+  assert.match(
+    approvalFunction,
+    /status: "approved"[\s\S]*?verification_status: "approved"/,
+  );
+});
+
 test("the population workflow uses approved database media and real venue schedules", () => {
   assert.match(scriptSource, /const REVIEW_PHOTO_COUNT = 3/);
   assert.match(scriptSource, /sharp\(Buffer\.from\(svg\)\)\.png/);

@@ -251,8 +251,6 @@ async function approveSyntheticProfile(userId, definition) {
       bio: `[${DATASET_MARKER}] Synthetic layout-review profile. This is not a real dancer or work schedule.`,
       city: REVIEW_CITY,
       disabled_at: null,
-      identity_provider: null,
-      identity_verified_at: null,
       is_public: true,
       photo_review_status: "approved",
       real_name: null,
