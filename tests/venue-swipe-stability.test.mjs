@@ -4,18 +4,18 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("venue discovery uses an inline centered snap scroller with visible neighbors", () => {
+test("venue discovery uses inline one-column cards with visible continuation", () => {
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: flex !important;[\s\S]*?flex-direction: column;[\s\S]*?height: var\(--home-venue-feed-height\) !important;[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-snap-type: y mandatory;/,
+    /#results\.home-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 16px !important;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?height: var\(--home-venue-feed-card-height\) !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?scroll-snap-align: center !important;[\s\S]*?scroll-snap-stop: always !important;/,
+    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\) !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?scroll-snap-align: none !important;/,
   );
   assert.match(
     homeSource,
-    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);[\s\S]*?`Swipe vertically through \$\{discoveryLabel\} in \$\{city\}`/,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
   );
   assert.match(
     homeSource,
@@ -23,26 +23,20 @@ test("venue discovery uses an inline centered snap scroller with visible neighbo
   );
   assert.match(
     homeSource,
-    /root: results,[\s\S]*?threshold: \[\.72, \.82, \.92\]/,
+    /root: null,[\s\S]*?rootMargin: "-72px 0px -88px"[\s\S]*?threshold: \[\.35, \.55, \.75\]/,
   );
   assert.doesNotMatch(homeSource, /home-discovery-feed-locked/);
   assert.doesNotMatch(homeSource, /syncHomeDiscoveryFeedViewport|lockHomeDiscoveryFeedViewport/);
-  assert.match(
-    homeSource,
-    /function syncHomeVenueFeedPosition\(\)[\s\S]*?homeDiscoveryFeedSlideTop\(current\)[\s\S]*?function handleHomeDiscoveryFeedViewportChange\(\)[\s\S]*?syncHomeVenueFeedPosition\(\)/,
-  );
 
   const snapSettler =
     homeSource.match(
       /function settleHomeSnapFeed\(\) \{[\s\S]*?(?=\n    function queueHomeSnapFeedSettle)/,
     )?.[0] || "";
   assert.match(snapSettler, /results\.classList\.contains\("home-tv-feed"\)/);
-  assert.match(snapSettler, /results\.classList\.contains\("home-venue-discovery-feed"\)/);
-  assert.match(snapSettler, /homeDiscoveryFeedSlideTop\(slides\[index\]\)/);
-  assert.match(snapSettler, /activateHomeDiscoveryFeedItem\(homeDiscoveryFeedSlideKey\(slide\)\)/);
+  assert.doesNotMatch(snapSettler, /home-discovery-feed|activateHomeDiscoveryFeedItem/);
 });
 
-test("unchanged live venue refreshes reuse the current cards and snap position", () => {
+test("unchanged live venue refreshes reuse the current cards and reading position", () => {
   const contentKey =
     homeSource.match(
       /function homeDiscoveryFeedContentKey\(city, items\) \{[\s\S]*?(?=\n    function renderHomeDiscoveryFeed)/,

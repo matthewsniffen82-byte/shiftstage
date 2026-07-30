@@ -122,7 +122,7 @@ test("the homepage starts neutral and discovery feeds open only after a destinat
   );
 });
 
-test("Now and Dancers use natural one-column browsing while Venues keeps its inline destination", () => {
+test("Now, Dancers, and Venues use natural one-column browsing on phones", () => {
   assert.match(
     homeSource,
     /#results\.home-dancer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?@media \(min-width: 680px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 900px\) \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 1100px\) \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/,
@@ -153,22 +153,18 @@ test("Now and Dancers use natural one-column browsing while Venues keeps its inl
   );
 });
 
-test("Venues uses an inline vertical snap feed with neighboring cards visible", () => {
+test("Venues uses natural one-column cards with a visible next-card continuation", () => {
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?--home-venue-feed-height: max\(520px, calc\(100dvh - 158px\)\)[\s\S]*?--home-venue-feed-card-height: clamp\(460px, calc\(100dvh - 280px\), 620px\)[\s\S]*?display: flex !important[\s\S]*?flex-direction: column[\s\S]*?overflow-x: hidden !important[\s\S]*?overflow-y: auto !important[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?touch-action: pan-y/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?overflow: visible !important[\s\S]*?scroll-snap-type: none[\s\S]*?touch-action: pan-y/,
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: var\(--home-venue-feed-card-height\) !important[\s\S]*?flex: 0 0 var\(--home-venue-feed-card-height\)[\s\S]*?scroll-snap-align: center !important[\s\S]*?scroll-snap-stop: always !important/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\) !important[\s\S]*?scroll-snap-align: none !important/,
   );
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?position: relative !important[\s\S]*?height: auto !important[\s\S]*?scroll-margin-top: 72px/,
-  );
-  assert.match(
-    homeSource,
-    /function homeDiscoveryFeedSlideTop\(slide\)[\s\S]*?slide\.offsetTop[\s\S]*?results\.clientHeight - slide\.offsetHeight/,
   );
   assert.doesNotMatch(homeSource, /home-discovery-feed-locked|homeDiscoveryFeedPageLockY/);
   assert.match(
@@ -181,7 +177,7 @@ test("Venues uses an inline vertical snap feed with neighboring cards visible", 
   );
   assert.match(
     homeSource,
-    /root: results,[\s\S]*?threshold: \[\.72, \.82, \.92\][\s\S]*?activateHomeDiscoveryFeedItem/,
+    /root: null,[\s\S]*?rootMargin: "-72px 0px -88px"[\s\S]*?activateHomeDiscoveryFeedItem/,
   );
   assert.match(
     homeSource,
@@ -193,7 +189,7 @@ test("Venues uses an inline vertical snap feed with neighboring cards visible", 
   );
   assert.match(
     homeSource,
-    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"venue profiles"[\s\S]*?`Swipe vertically through \$\{discoveryLabel\} in \$\{city\}`/,
+    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"venue profiles"[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
   );
   assert.match(
     homeSource,
@@ -202,7 +198,7 @@ test("Venues uses an inline vertical snap feed with neighboring cards visible", 
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
-test("TV and Venues settle independently on their intended vertical snap anchors", () => {
+test("TV remains the only snap feed while discovery cards use natural page scrolling", () => {
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?-webkit-overflow-scrolling: touch;[\s\S]*?scrollbar-width: none;/,
@@ -229,11 +225,8 @@ test("TV and Venues settle independently on their intended vertical snap anchors
       /function settleHomeSnapFeed\(\) \{[\s\S]*?(?=\n    function queueHomeSnapFeedSettle)/,
     )?.[0] || "";
   assert.match(snapSettler, /Math\.round\(results\.scrollTop \/ viewportHeight\)/);
-  assert.match(
-    snapSettler,
-    /isVenueFeed = results\.classList\.contains\("home-venue-discovery-feed"\)[\s\S]*?targetTop = isTvFeed \? index \* viewportHeight : homeDiscoveryFeedSlideTop\(slides\[index\]\)/,
-  );
-  assert.match(snapSettler, /activateHomeDiscoveryFeedItem\(homeDiscoveryFeedSlideKey\(slide\)\)/);
+  assert.match(snapSettler, /targetTop = index \* viewportHeight/);
+  assert.doesNotMatch(snapSettler, /home-discovery-feed|activateHomeDiscoveryFeedItem/);
   assert.match(
     homeSource,
     /results\.addEventListener\("scroll", queueHomeSnapFeedSettle[\s\S]*?results\.addEventListener\("scrollend", settleHomeSnapFeed/,
