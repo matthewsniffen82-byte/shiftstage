@@ -29176,6 +29176,10 @@
           body {
             padding-bottom: calc(86px + env(safe-area-inset-bottom));
           }
+          html.is-samsung-browser body,
+          body.is-samsung-browser {
+            padding-bottom: calc(156px + env(safe-area-inset-bottom));
+          }
           header {
             z-index: 120 !important;
             width: 100% !important;
@@ -29429,6 +29433,10 @@
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
             transform: translateX(-50%);
+          }
+          html.is-samsung-browser #discoveryTabs,
+          body.is-samsung-browser #discoveryTabs {
+            bottom: calc(78px + env(safe-area-inset-bottom));
           }
           @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             #discoveryTabs {

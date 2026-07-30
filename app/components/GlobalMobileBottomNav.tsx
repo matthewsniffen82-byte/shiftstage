@@ -71,6 +71,11 @@ export function GlobalMobileBottomNav() {
   const [city, setCity] = useState(DEFAULT_CITY);
 
   useEffect(() => {
+    if (/SamsungBrowser/i.test(window.navigator.userAgent)) {
+      document.documentElement.classList.add("is-samsung-browser");
+      document.body.classList.add("is-samsung-browser");
+    }
+
     const selectedCity = new URLSearchParams(window.location.search)
       .get("city")
       ?.trim();
@@ -107,6 +112,10 @@ export function GlobalMobileBottomNav() {
         @media (max-width: 720px) {
           body {
             padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+          }
+
+          html.is-samsung-browser body {
+            padding-bottom: calc(156px + env(safe-area-inset-bottom)) !important;
           }
 
           .global-mobile-bottom-nav {
@@ -151,6 +160,10 @@ export function GlobalMobileBottomNav() {
             -webkit-backdrop-filter: blur(26px) saturate(1.65);
             isolation: isolate;
             transform: translateX(-50%);
+          }
+
+          html.is-samsung-browser .global-mobile-bottom-nav {
+            bottom: calc(78px + env(safe-area-inset-bottom));
           }
 
           @supports (
