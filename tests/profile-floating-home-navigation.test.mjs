@@ -40,7 +40,7 @@ test("the homepage full dancer profile keeps the glass city-return control", () 
   );
 });
 
-test("standalone dancer and venue profiles keep the glass city-return control", () => {
+test("standalone dancers keep the glass control while legacy venues enter the in-app profile", () => {
   assert.match(
     floatingControl,
     /profileType: "dancer" \| "venue"/,
@@ -68,13 +68,11 @@ test("standalone dancer and venue profiles keep the glass city-return control", 
   );
   assert.match(
     venuePage,
-    /<FloatingProfileHomeLink city=\{venue\.city\} profileType="venue" \/>/,
+    /permanentRedirect\([\s\S]*?city=\$\{encodeURIComponent\(venue\.city \|\| "Las Vegas"\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}/,
   );
-  assert.match(venuePage, /<PublicProfileHeader/);
-  assert.doesNotMatch(venuePage, /permanentRedirect/);
-  assert.match(
+  assert.doesNotMatch(
     venuePage,
-    /<ProfileCloseButton[\s\S]*?fallbackHref=\{venuesHref\}[\s\S]*?profileType="venue"/,
+    /FloatingProfileHomeLink|PublicProfileHeader|ProfileCloseButton/,
   );
   assert.match(homeSource, /function venueDetailPage\(venue\)/);
 });

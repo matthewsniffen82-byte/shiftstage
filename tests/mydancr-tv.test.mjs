@@ -138,7 +138,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(tvSource, /\.eq\("dancer_profiles\.status", "approved"\)[\s\S]*?\.eq\("dancer_profiles\.verification_status", "approved"\)[\s\S]*?\.is\("dancer_profiles\.disabled_at", null\)[\s\S]*?\.eq\("dancer_profiles\.is_public", true\)/);
   assert.match(feedClient, /className="tv-profile-card"[\s\S]*?<video[\s\S]*?href=\{dancerLiveProfileHref\(video\)\}[\s\S]*?aria-label=\{`Open \$\{video\.dancer\.stageName\}'s live profile`\}/);
   assert.match(feedClient, /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+const slug = video\.dancer\.slug\.trim\(\);\s+return slug \? `\/dancers\/\$\{encodeURIComponent\(slug\)\}` : "\/dancers";\s+\}/);
-  assert.match(feedClient, /function venueLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?return `\/venues\/\$\{encodeURIComponent\(venue\)\}`/);
+  assert.match(feedClient, /function venueLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?video\.dancer\.city\.trim\(\)[\s\S]*?return `\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\)\}`/);
   assert.match(feedClient, /function slugifyLiveProfileName\(value: string\) \{[\s\S]*?replaceAll\(" ", "-"\)[\s\S]*?replace\(\/\[\^a-z0-9-\]\/g, ""\)/);
   assert.doesNotMatch(feedClient, /const profile = video\.dancer\.slug\.trim\(\) \|\| slugifyLiveProfileName/);
   assert.match(liveApp, /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value\)/);
@@ -305,8 +305,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(tvPage, /dancerId,[\s\S]*?initialDancerId=\{dancerId \|\| ""\}/);
   assert.match(feedClient, /if \(initialDancerId\) params\.set\("dancer", initialDancerId\)/);
   assert.match(feedClient, /if \(initialDancerId\) url\.searchParams\.set\("dancer", initialDancerId\)/);
-  assert.match(venuePage, /getPublicMyDancrTvFeed\(client,[\s\S]*?venueId: venue\.id/);
   assert.match(liveApp, /function venueDetailPage\(venue\)/);
-  assert.match(venuePage, /<TvVideoStrip title=\{`Tonight at \$\{venue\.name\}`\} videos=\{tvVideos\} \/>/);
-  assert.doesNotMatch(venuePage, /permanentRedirect|watchAllHref|href=\{`\/tv/);
+  assert.match(venuePage, /permanentRedirect/);
+  assert.doesNotMatch(venuePage, /TvVideoStrip|watchAllHref|href=\{`\/tv/);
 });

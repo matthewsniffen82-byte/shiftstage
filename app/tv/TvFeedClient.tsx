@@ -737,8 +737,9 @@ function dancerLiveProfileHref(video: MyDancrTvVideo) {
 
 function venueLiveProfileHref(video: MyDancrTvVideo) {
   if (!video.venue) return "/";
+  const city = video.dancer.city.trim() || "Las Vegas";
   const venue = video.venue.slug.trim() || slugifyLiveProfileName(video.venue.name);
-  return `/venues/${encodeURIComponent(venue)}`;
+  return `/?city=${encodeURIComponent(city)}&venue=${encodeURIComponent(venue)}`;
 }
 
 function slugifyLiveProfileName(value: string) {

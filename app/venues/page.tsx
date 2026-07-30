@@ -50,14 +50,14 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
             <div className="venue-card-actions">
               <Link
                 className="venue-card-profile"
-                href={`/venues/${encodeURIComponent(venue.slug)}`}
+                href={`/?city=${encodeURIComponent(city)}&venue=${encodeURIComponent(venue.slug)}`}
               >
                 View venue
               </Link>
               {venue.activeDeal ? (
                 <Link
                   className="venue-card-deal"
-                  href={`/venues/${encodeURIComponent(venue.slug)}`}
+                  href={`/?city=${encodeURIComponent(city)}&venue=${encodeURIComponent(venue.slug)}#club-deal`}
                 >
                   <span>Club Deal</span>
                   <strong>View deal</strong>

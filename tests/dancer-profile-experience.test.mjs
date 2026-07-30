@@ -131,12 +131,14 @@ test("official links stay compact and real videos have distinct metadata", () =>
 });
 
 test("every MyDancr TV dancer destination opens the full live profile with the canonical database slug", () => {
+  const dancerProfileHref =
+    tvFeed.match(/function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{[\s\S]*?\n\}/)?.[0] || "";
   assert.match(
-    tvFeed,
+    dancerProfileHref,
     /function dancerLiveProfileHref\(video: MyDancrTvVideo\) \{\s+const slug = video\.dancer\.slug\.trim\(\);\s+return slug \? `\/dancers\/\$\{encodeURIComponent\(slug\)\}` : "\/dancers";\s+\}/,
   );
   assert.doesNotMatch(
-    tvFeed,
+    dancerProfileHref,
     /const profile = video\.dancer\.slug\.trim\(\) \|\| slugifyLiveProfileName|return `\/\?city=/,
   );
 });

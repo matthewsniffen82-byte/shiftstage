@@ -46,10 +46,10 @@ test("the production venue directory keeps card bodies passive and explicit acti
   assert.doesNotMatch(venuesPageSource, /<Link className="venue-card-main"/);
   assert.match(
     venuesPageSource,
-    /className="venue-card-profile"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(venue\.slug\)\}`\}/,
+    /className="venue-card-profile"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}`\}/,
   );
   assert.match(
     venuesPageSource,
-    /className="venue-card-deal"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(venue\.slug\)\}`\}/,
+    /className="venue-card-deal"[\s\S]*?href=\{`\/\?city=\$\{encodeURIComponent\(city\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}#club-deal`\}/,
   );
 });

@@ -5,18 +5,17 @@ import test from "node:test";
 const profileRoute = await readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8");
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("venue URLs load a focused full profile backed by production data", () => {
-  assert.match(profileRoute, /getVenueProfile\(client, slug\)/);
+test("legacy venue URLs resolve real production data before redirecting to the canonical in-app profile", () => {
+  assert.match(profileRoute, /getVenueProfile\(createAdminSupabaseClient\(\), slug\)/);
   assert.match(profileRoute, /if \(!venue\) notFound\(\)/);
-  assert.match(profileRoute, /<PublicProfileHeader/);
-  assert.match(profileRoute, /<FloatingProfileHomeLink city=\{venue\.city\} profileType="venue" \/>/);
-  assert.match(profileRoute, /<VenueProfileActions venueId=\{venue\.id\} venueName=\{venue\.name\} \/>/);
-  assert.match(profileRoute, /\.from\("shifts"\)/);
-  assert.match(profileRoute, /getActiveClubDealForVenue\(client, venue\.id\)/);
-  assert.match(profileRoute, /getPublicMyDancrTvFeed\(client,/);
-  assert.match(profileRoute, /\/api\/public\/maps\/embed\?address=/);
-  assert.match(profileRoute, /← Back to venues/);
-  assert.doesNotMatch(profileRoute, /permanentRedirect|stickyCta|details\.description/);
+  assert.match(
+    profileRoute,
+    /permanentRedirect\([\s\S]*?city=\$\{encodeURIComponent\(venue\.city \|\| "Las Vegas"\)\}&venue=\$\{encodeURIComponent\(venue\.slug\)\}/,
+  );
+  assert.doesNotMatch(
+    profileRoute,
+    /PublicProfileHeader|FloatingProfileHomeLink|VenueProfileActions|ClubDealCard|TvVideoStrip/,
+  );
 });
 
 test("the canonical in-app venue page keeps live data, planning details, and production actions together", () => {
@@ -40,10 +39,10 @@ test("the canonical in-app venue page keeps live data, planning details, and pro
   assert.match(venueDetail, /Other \$\{city\} venues/);
 });
 
-test("venue entry points use the dedicated full venue profile", () => {
+test("venue entry points use the canonical in-app venue profile", () => {
   assert.match(
     liveApp,
-    /function venueExperienceHref\(venue, city = selectedCity\(\)\)[\s\S]*?return `\/venues\/\$\{encodeURIComponent\(venueSlug\)\}`/,
+    /function venueExperienceHref\(venue, city = selectedCity\(\)\)[\s\S]*?new URLSearchParams\(\{[\s\S]*?city: venueCity,[\s\S]*?venue: venueSlug[\s\S]*?return `\/\?\$\{query\.toString\(\)\}`/,
   );
   assert.match(
     liveApp,
@@ -53,6 +52,5 @@ test("venue entry points use the dedicated full venue profile", () => {
     liveApp,
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
   );
-  assert.match(profileRoute, /className=\{styles\.relatedScroller\}/);
-  assert.match(profileRoute, /href=\{`\/venues\/\$\{encodeURIComponent\(item\.slug\)\}`\}/);
+  assert.match(profileRoute, /permanentRedirect/);
 });

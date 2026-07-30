@@ -36414,8 +36414,13 @@
 
     function venueExperienceHref(venue, city = selectedCity()) {
       const venueSlug = String(venue?.slug || slugify(venue?.name || "")).trim();
-      if (!venueSlug) return `/venues?city=${encodeURIComponent(String(city || selectedCity()).trim() || "Las Vegas")}`;
-      return `/venues/${encodeURIComponent(venueSlug)}`;
+      const venueCity = String(city || selectedCity()).trim() || "Las Vegas";
+      if (!venueSlug) return `/?city=${encodeURIComponent(venueCity)}`;
+      const query = new URLSearchParams({
+        city: venueCity,
+        venue: venueSlug
+      });
+      return `/?${query.toString()}`;
     }
 
     function publishedVenueQrPass({
