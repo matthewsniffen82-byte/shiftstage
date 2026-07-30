@@ -30330,6 +30330,11 @@
           box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 18px rgba(124,58,237,.1);
           transform: none !important;
         }
+        #results.home-dancer-grid > .home-dancer-grid-card::before,
+        #results.home-dancer-grid > .home-dancer-grid-card::after {
+          content: none !important;
+          display: none !important;
+        }
         .home-dancer-grid-card.is-now {
           border-color: rgba(77,236,157,.54) !important;
           box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 20px rgba(77,236,157,.14);
@@ -30469,22 +30474,34 @@
         }
 
         .home-dancer-grid-actions {
-          display: grid;
-          gap: 7px;
-          padding: 10px;
-          border-top: 1px solid rgba(167,139,250,.18);
-          background: linear-gradient(180deg,#09090d,#07070a);
+          display: block;
+          padding: 0;
+          border: 0;
+          background: #09090d;
         }
-        .home-dancer-grid-primary-actions,
+        .home-dancer-grid-action-rail {
+          position: absolute;
+          z-index: 6;
+          top: 44px;
+          right: 10px;
+          width: 52px;
+          display: grid;
+          grid-template-columns: minmax(0,1fr);
+          gap: 7px;
+          background: transparent !important;
+          box-shadow: none !important;
+          filter: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
         .home-dancer-grid-context-actions {
           min-width: 0;
           display: grid;
-          grid-template-columns: repeat(3,minmax(0,1fr));
+          grid-template-columns: repeat(auto-fit,minmax(104px,1fr));
           gap: 7px;
-        }
-        .home-dancer-grid-context-actions {
-          padding-top: 7px;
-          border-top: 1px solid rgba(126,234,255,.12);
+          padding: 0 10px 12px;
+          border: 0;
+          background: linear-gradient(180deg,#09090d,#07070a);
         }
         .home-dancer-grid-actions .feed-card-action,
         .home-dancer-grid-actions .home-dancer-grid-profile-button {
@@ -30509,10 +30526,39 @@
           text-decoration: none;
           cursor: pointer;
         }
+        .dancr-button-system .home-dancer-grid-action-rail .feed-card-action,
+        .dancr-button-system .home-dancer-grid-action-rail .home-dancer-grid-profile-button {
+          width: 52px;
+          min-width: 52px;
+          min-height: 50px;
+          display: grid;
+          grid-template-rows: 22px auto;
+          place-items: center;
+          gap: 2px;
+          padding: 5px 2px 4px;
+          border-color: rgba(255,255,255,.3) !important;
+          border-radius: 999px;
+          background: rgba(5,5,9,.88) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.06) !important;
+          font-size: 8px;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          touch-action: manipulation;
+        }
+        .dancr-button-system .home-dancer-grid-action-rail .feed-card-action.is-active {
+          border-color: rgba(126,234,255,.68) !important;
+          background: linear-gradient(135deg,rgba(84,56,160,.96),rgba(151,51,129,.92)) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.42), 0 0 16px rgba(124,58,237,.22), inset 0 1px 0 rgba(255,255,255,.12) !important;
+        }
         .home-dancer-grid-actions .action-icon {
           width: 17px;
           height: 17px;
           flex: 0 0 17px;
+        }
+        .home-dancer-grid-action-rail .action-icon {
+          width: 21px;
+          height: 21px;
+          flex-basis: 21px;
         }
         .home-dancer-grid-actions .feed-card-action:focus-visible,
         .home-dancer-grid-actions .home-dancer-grid-profile-button:focus-visible {
@@ -30520,17 +30566,17 @@
           outline-offset: 2px;
         }
         .home-dancer-grid-actions .home-dancer-grid-profile-button {
-          border-color: rgba(126,234,255,.4);
-          background: linear-gradient(180deg,rgba(13,55,73,.96),rgba(10,31,43,.98));
+          border-color: rgba(126,234,255,.4) !important;
+          background: rgba(5,33,44,.92) !important;
         }
         .home-dancer-grid-actions .home-dancer-grid-profile-qr.is-open {
-          border-color: rgba(126,234,255,.72);
+          border-color: rgba(126,234,255,.72) !important;
           color: #fff;
-          background: linear-gradient(180deg,rgba(13,75,92,.98),rgba(10,38,51,.98));
-          box-shadow: 0 0 16px rgba(34,199,255,.14), inset 0 1px 0 rgba(255,255,255,.08);
+          background: linear-gradient(180deg,rgba(13,75,92,.98),rgba(10,38,51,.98)) !important;
+          box-shadow: 0 0 16px rgba(34,199,255,.14), inset 0 1px 0 rgba(255,255,255,.08) !important;
         }
         .home-dancer-grid-actions .home-dancer-grid-share {
-          border-color: rgba(192,132,252,.42);
+          border-color: rgba(192,132,252,.42) !important;
         }
         .home-dancer-grid-actions .home-dancer-grid-venue-action,
         .home-dancer-grid-actions .home-dancer-grid-directions {
@@ -44401,9 +44447,9 @@
       const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}`;
       return `
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
-          <div class="home-dancer-grid-primary-actions">
+          <div class="home-dancer-grid-action-rail">
             <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
-            <button class="feed-card-action home-dancer-grid-profile-qr" type="button" data-profile-qr="${profileValue}" data-share-city="${cityValue}" aria-expanded="false" aria-label="Show ${safeName}'s profile QR code">${actionButtonLabel("qr", "Profile QR")}</button>
+            <button class="feed-card-action home-dancer-grid-profile-qr" type="button" data-profile-qr="${profileValue}" data-share-city="${cityValue}" aria-expanded="false" aria-label="Show ${safeName}'s profile QR code">${actionButtonLabel("qr", "QR")}</button>
             <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>

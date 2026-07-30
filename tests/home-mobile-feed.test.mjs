@@ -290,7 +290,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
 });
 
-test("Now and Dancers grid cards restore the full production action dock", () => {
+test("Now and Dancers grid cards place the full production action rail on the card", () => {
   assert.match(
     homeSource,
     /function homeDancerGridCard\(profile, city\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDancerGridActionsMarkup\(profile, city\)/,
@@ -313,7 +313,15 @@ test("Now and Dancers grid cards restore the full production action dock", () =>
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-actions \{[\s\S]*?\.home-dancer-grid-primary-actions,[\s\S]*?grid-template-columns: repeat\(3,minmax\(0,1fr\)\)[\s\S]*?\.home-dancer-grid-context-actions/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card::before,[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-dancer-grid-action-rail \{[\s\S]*?position: absolute;[\s\S]*?right: 10px;[\s\S]*?width: 52px;[\s\S]*?grid-template-columns: minmax\(0,1fr\)[\s\S]*?background: transparent !important;[\s\S]*?\.home-dancer-grid-context-actions \{[\s\S]*?repeat\(auto-fit,minmax\(104px,1fr\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.dancr-button-system \.home-dancer-grid-action-rail \.feed-card-action,[\s\S]*?background: rgba\(5,5,9,.88\) !important;[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     homeSource,
