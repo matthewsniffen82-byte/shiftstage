@@ -27908,7 +27908,7 @@
       </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab active" data-tab="tonight" data-tab-label="Now">Now</button>
+        <button class="tab" data-tab="tonight" data-tab-label="Now">Now</button>
         <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
@@ -43089,10 +43089,10 @@
           ? `${items.length} of ${allItems.length}`
           : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
       const usesDiscoveryFeed =
+        homeDiscoveryFeedOpen &&
         ["tonight", "dancers", "venues"].includes(activeTab) &&
         homeDiscoveryFeedUsesLockedViewport();
       if (usesDiscoveryFeed) {
-        homeDiscoveryFeedOpen = true;
         renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
         return;
       }
@@ -43370,12 +43370,11 @@
 
     function closeHomeTvFeed() {
       activeTab = "tonight";
+      homeDiscoveryFeedOpen = false;
       tonightExpanded = false;
       dancersExpanded = false;
       selectedVenueName = null;
-      document.querySelectorAll(".tab").forEach((tab) => {
-        tab.classList.toggle("active", tab.dataset.tab === "tonight");
-      });
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
       render();
       document.getElementById("homeBottomTv")?.focus({ preventScroll: true });
     }
@@ -45862,7 +45861,7 @@
       tonightExpanded = false;
       dancersExpanded = false;
       selectedVenueName = null;
-      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "tonight"));
+      document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });

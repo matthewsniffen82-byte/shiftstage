@@ -12,6 +12,7 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
     navigation,
     /data-tab="tonight"[\s\S]*data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"[\s\S]*data-tab="trending"/,
   );
+  assert.doesNotMatch(navigation, /class="tab active"/);
   assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="results"[^>]*aria-current="false"/);
   assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
   assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
@@ -97,7 +98,19 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("Now, Dancers, and Venues always use one canonical full-screen mobile swipe experience", () => {
+test("the homepage starts neutral and discovery feeds open only after a destination tap", () => {
+  assert.match(homeSource, /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
+  assert.match(
+    homeSource,
+    /function closeHomeTvFeed\(\) \{[\s\S]*?activeTab = "tonight";[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /brandHome\.addEventListener\("click"[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?activeTab = "tonight";[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)/,
+  );
+});
+
+test("Now, Dancers, and Venues use one canonical full-screen mobile swipe experience after selection", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
@@ -132,7 +145,7 @@ test("Now, Dancers, and Venues always use one canonical full-screen mobile swipe
   );
   assert.match(
     homeSource,
-    /const usesDiscoveryFeed =\s*\["tonight", "dancers", "venues"\]\.includes\(activeTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*homeDiscoveryFeedOpen = true;\s*renderHomeDiscoveryFeed/,
+    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*\["tonight", "dancers", "venues"\]\.includes\(activeTab\) &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
   );
   assert.doesNotMatch(
     homeSource,
