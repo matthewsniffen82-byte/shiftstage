@@ -82,6 +82,10 @@ test("live profile videos join the thumbnail filmstrip without background autopl
   assert.match(loader, /profile-media-thumb-duration/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)/);
   assert.match(liveApp, /className = "modal-media-video-play"/);
+  assert.match(
+    liveApp,
+    /\.profile-modal \.gallery \{[^}]*display: flex !important;[^}]*justify-content: flex-start !important;/,
+  );
   assert.doesNotMatch(loader, /video\.autoplay = true/);
   assert.doesNotMatch(loader, /\.play\(\)/);
 });
