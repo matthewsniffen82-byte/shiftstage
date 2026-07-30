@@ -283,18 +283,23 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
 });
 
-test("mobile legal actions form a complete equal two-row grid above navigation", () => {
+test("legal and support actions stay out of the mobile discovery scroll", () => {
+  const homeMain = homeSource.match(/<main class="stack">[\s\S]*?<\/main>/)?.[0] || "";
+  const accountMenu = homeSource.match(
+    /<div class="utility-menu-panel" id="moreMenuPanel"[\s\S]*?<\/nav>[\s\S]*?<\/div>/,
+  )?.[0] || "";
+  assert.doesNotMatch(homeMain, /legal-links|data-legal-page|contactAdminBtn|adminBtn/);
   assert.match(
-    homeSource,
-    /main\.stack > \.legal-links \{[\s\S]*?display: grid !important[\s\S]*?grid-template-columns: repeat\(3,minmax\(0,1fr\)\) !important/,
+    accountMenu,
+    /class="utility-menu-legal"[\s\S]*?data-legal-page="termsPage"[\s\S]*?data-legal-page="privacyPage"[\s\S]*?data-legal-page="guidelinesPage"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
   );
   assert.match(
     homeSource,
-    /main\.stack > \.legal-links \.legal-link \{[\s\S]*?width: 100% !important[\s\S]*?min-height: 44px !important[\s\S]*?margin: 0 !important/,
+    /\.utility-menu-panel \{[\s\S]*?max-height: calc\(100dvh - 84px\)[\s\S]*?overflow-y: auto/,
   );
   assert.match(
     homeSource,
-    /main\.stack > \.legal-links \.admin-legal-link \{[\s\S]*?grid-column: auto !important[\s\S]*?justify-self: stretch !important[\s\S]*?margin: 0 !important/,
+    /@media \(max-width: 720px\)[\s\S]*?header \{[\s\S]*?z-index: 120 !important[\s\S]*?header \.utility-menu-panel \{[\s\S]*?max-height: calc\(100dvh - 150px\) !important/,
   );
 });
 

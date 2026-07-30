@@ -301,15 +301,19 @@
       top: calc(100% + 10px);
       right: 0;
       z-index: 40;
-      width: 168px;
+      width: 200px;
+      max-height: calc(100dvh - 84px);
       display: grid;
       gap: 6px;
       padding: 8px;
+      overflow-x: hidden;
+      overflow-y: auto;
       border: 1px solid rgba(192,132,255,.2);
       border-radius: 14px;
       background: rgba(6,6,9,.94);
       box-shadow: 0 24px 60px rgba(0,0,0,.58), 0 0 24px rgba(155,92,255,.14), inset 0 0 16px rgba(255,255,255,.025);
       backdrop-filter: blur(18px) saturate(125%);
+      overscroll-behavior: contain;
       animation: utilityMenuIn .16s ease both;
     }
 
@@ -343,6 +347,34 @@
     .utility-menu-item:active {
       transform: translateY(0);
       background: rgba(52,34,78,.92);
+    }
+
+    .utility-menu-legal {
+      display: grid;
+      gap: 6px;
+      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(192,132,255,.18);
+    }
+
+    .utility-menu-section-label {
+      padding: 2px 4px 0;
+      color: #a8a1ba;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .utility-menu-legal .utility-menu-item {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .utility-menu-legal .admin-utility-menu-item {
+      color: rgba(168,161,186,.82);
+      background: rgba(7,7,10,.64);
     }
 
     @keyframes utilityMenuIn {
@@ -27816,6 +27848,15 @@
               <button class="utility-menu-item" id="loginVenueOption" type="button">Venue</button>
               <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
+              <nav class="utility-menu-legal" aria-label="Legal and support">
+                <span class="utility-menu-section-label">Legal &amp; support</span>
+                <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
+                <button class="utility-menu-item" data-legal-page="privacyPage" type="button">Privacy</button>
+                <button class="utility-menu-item" data-legal-page="guidelinesPage" type="button">Guidelines</button>
+                <a class="utility-menu-item" href="/dmca">Copyright / DMCA</a>
+                <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
+                <button class="utility-menu-item admin-utility-menu-item" id="adminBtn" type="button">Platform admin</button>
+              </nav>
             </div>
             <button class="account-tooltip" id="accountTooltip" type="button" hidden>Manage your account here.</button>
           </div>
@@ -28821,12 +28862,16 @@
             padding-bottom: calc(78px + env(safe-area-inset-bottom));
           }
           header {
+            z-index: 120 !important;
             width: 100% !important;
             max-width: 100% !important;
             padding: calc(8px + env(safe-area-inset-top)) 12px 8px !important;
             border-radius: 0 !important;
             background: rgba(5,5,8,.96) !important;
             backdrop-filter: blur(20px) saturate(1.25);
+          }
+          header .utility-menu-panel {
+            max-height: calc(100dvh - 150px) !important;
           }
           header .topbar {
             min-height: 48px;
@@ -28942,10 +28987,6 @@
             width: 100% !important;
             height: 100dvh !important;
           }
-          body.home-tv-feed-locked main.stack > .legal-links {
-            visibility: hidden !important;
-            pointer-events: none !important;
-          }
           html.home-discovery-feed-locked,
           body.home-discovery-feed-locked {
             overflow: hidden !important;
@@ -28958,10 +28999,6 @@
             left: 0 !important;
             width: 100% !important;
             height: 100dvh !important;
-          }
-          body.home-discovery-feed-locked main.stack > .legal-links {
-            visibility: hidden !important;
-            pointer-events: none !important;
           }
           .home-tv-feed-copy {
             padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
@@ -29349,35 +29386,6 @@
             opacity: .48;
             box-shadow: none;
           }
-          main.stack > .legal-links {
-            width: auto !important;
-            display: grid !important;
-            grid-template-columns: repeat(3,minmax(0,1fr)) !important;
-            align-items: stretch;
-            gap: 8px !important;
-            padding: 4px 0 10px !important;
-          }
-          main.stack > .legal-links .legal-link {
-            width: 100% !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            min-height: 44px !important;
-            margin: 0 !important;
-            padding: 6px 5px !important;
-            border-radius: 12px !important;
-            font-size: clamp(9px,2.7vw,11px) !important;
-            line-height: 1.1 !important;
-            text-align: center;
-            white-space: normal;
-            overflow-wrap: anywhere;
-            transform: none !important;
-          }
-          main.stack > .legal-links .admin-legal-link {
-            grid-column: auto !important;
-            justify-self: stretch !important;
-            margin: 0 !important;
-            opacity: .78;
-          }
         }
 
         /* Keep the full profile closable and its final safety action reachable. */
@@ -29438,14 +29446,6 @@
         <button class="view-all" id="viewAllBtn" hidden>View All</button>
       </section>
 
-      <nav class="legal-links" aria-label="Legal and safety">
-        <button class="legal-link" data-legal-page="termsPage">Terms</button>
-        <button class="legal-link" data-legal-page="privacyPage">Privacy</button>
-        <button class="legal-link" data-legal-page="guidelinesPage">Guidelines</button>
-        <a class="legal-link" href="/dmca">Copyright / DMCA</a>
-        <button class="legal-link" id="contactAdminBtn" type="button">Contact</button>
-        <button class="legal-link admin-legal-link" id="adminBtn" type="button">Platform admin</button>
-      </nav>
     </main>
 
     <section class="page-panel legal-page" id="termsPage" aria-hidden="true">
@@ -44386,7 +44386,10 @@
     });
 
     document.querySelectorAll("[data-legal-page]").forEach((button) => {
-      button.addEventListener("click", () => openLegalPage(button.dataset.legalPage));
+      button.addEventListener("click", () => {
+        closeUtilityMenu();
+        openLegalPage(button.dataset.legalPage);
+      });
     });
 
     document.querySelectorAll(".legal-close").forEach((button) => {
