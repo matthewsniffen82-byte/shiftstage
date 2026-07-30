@@ -264,8 +264,8 @@ test("approved videos appear on real dancer and venue pages", () => {
   assert.doesNotMatch(dancerPage, /watchAllHref|href=\{`\/tv/);
   assert.match(videoStrip, /<video aria-hidden="true" loop muted playsInline/);
   assert.doesNotMatch(videoStrip, /<video aria-hidden="true" autoPlay/);
-  assert.match(videoStrip, /onMouseEnter=\{\(event\) => playPreview\(event\.currentTarget\)\}/);
-  assert.match(videoStrip, /onMouseLeave=\{\(event\) => pausePreview\(event\.currentTarget\)\}/);
+  assert.match(videoStrip, /onMouseEnter=\{\(event\) => playPreviewCard\(event\.currentTarget\)\}/);
+  assert.match(videoStrip, /onMouseLeave=\{\(event\) => pausePreviewCard\(event\.currentTarget\)\}/);
   assert.match(videoStrip, /<button[\s\S]*?className="tv-strip-card"[\s\S]*?onClick=\{\(\) => \{[\s\S]*?setActiveVideo\(video\)/);
   assert.doesNotMatch(videoStrip, /Watch all|href=\{`\/tv|from "next\/link"/);
   assert.match(videoStrip, /tvProfileShiftLabel\(video\)/);

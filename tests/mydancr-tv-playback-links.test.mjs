@@ -11,11 +11,11 @@ test("MyDancr TV separates video playback from profile navigation", () => {
   );
   assert.match(
     feedClient,
-    /<div className="tv-profile-card">[\s\S]*?<video[\s\S]*?role="button"[\s\S]*?tabIndex=\{0\}[\s\S]*?onClick=\{\(event\) => toggleVideoPlayback\(event\.currentTarget\)\}/,
+    /<div className="tv-profile-card">[\s\S]*?<video[\s\S]*?role="button"[\s\S]*?tabIndex=\{0\}[\s\S]*?onClick=\{\(event\) => toggleVideoPlayback\(video\.id, event\.currentTarget\)\}/,
   );
   assert.match(
     feedClient,
-    /function toggleVideoPlayback\(video: HTMLVideoElement\) \{[\s\S]*?video\.paused[\s\S]*?video\.play\(\)\.catch\(\(\) => null\)[\s\S]*?video\.pause\(\)/,
+    /function toggleVideoPlayback\(videoId: string, element: HTMLVideoElement\) \{[\s\S]*?element\.paused[\s\S]*?attemptVideoPlayback\(videoId, element\)[\s\S]*?element\.pause\(\)/,
   );
   assert.match(
     feedClient,

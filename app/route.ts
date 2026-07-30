@@ -11,12 +11,12 @@ export async function GET() {
   const html = await readFile(htmlPath, "utf8");
   const activeEditProfileMarker = `<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");document.documentElement.setAttribute("data-active-edit-profile-version","canonical-profile-approval-v13");document.documentElement.setAttribute("data-live-shell-version","${LIVE_SHELL_SHA256}");</script>`;
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
-  const withLiveProfileStyles = withBase.replace(
+  const withLiveProfileAssets = withBase.replace(
     "</head>",
-    '<link rel="stylesheet" href="/mobile-social-strip.css?v=3"></head>',
+    '<link rel="stylesheet" href="/mobile-social-strip.css?v=3"><script src="/video-autoplay-recovery.js?v=1" defer></script></head>',
   );
 
-  return new Response(withLiveProfileStyles, {
+  return new Response(withLiveProfileAssets, {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",

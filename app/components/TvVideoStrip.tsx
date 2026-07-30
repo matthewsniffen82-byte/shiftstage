@@ -15,14 +15,56 @@ export function TvVideoStrip({
   const [activeVideo, setActiveVideo] = useState<MyDancrTvVideo | null>(null);
   const [viewerStatus, setViewerStatus] = useState("");
   const [viewerPaused, setViewerPaused] = useState(false);
-  const [viewerMuted, setViewerMuted] = useState(false);
+  const [viewerMuted, setViewerMuted] = useState(true);
   const viewerVideo = useRef<HTMLVideoElement | null>(null);
+  const previewCards = useRef<Record<string, HTMLButtonElement | null>>({});
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const swipeStartX = useRef<number | null>(null);
   const swipeHandled = useRef(false);
   const activeIndex = activeVideo
     ? videos.findIndex((video) => video.id === activeVideo.id)
     : -1;
+
+  useEffect(() => {
+    const cards = Object.values(previewCards.current).filter(
+      (card): card is HTMLButtonElement => Boolean(card),
+    );
+    if (!cards.length) return;
+    if (activeVideo) {
+      cards.forEach(pausePreviewCard);
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      playPreviewCard(cards[0]);
+      return () => pausePreviewCard(cards[0]);
+    }
+
+    const visibility = new Map<HTMLButtonElement, number>();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        visibility.set(entry.target as HTMLButtonElement, entry.intersectionRatio);
+      });
+      const mostVisible = cards.reduce<HTMLButtonElement | null>((current, card) => {
+        const ratio = visibility.get(card) || 0;
+        const currentRatio = current ? visibility.get(current) || 0 : 0;
+        return ratio > currentRatio ? card : current;
+      }, null);
+      cards.forEach((card) => {
+        if (card === mostVisible && (visibility.get(card) || 0) >= 0.65) {
+          playPreviewCard(card);
+        } else {
+          pausePreviewCard(card);
+        }
+      });
+    }, { threshold: [0, 0.65, 0.9] });
+
+    cards.forEach((card) => observer.observe(card));
+    return () => {
+      observer.disconnect();
+      cards.forEach(pausePreviewCard);
+    };
+  }, [activeVideo, videos]);
 
   useEffect(() => {
     if (!activeVideo) return;
@@ -63,14 +105,35 @@ export function TvVideoStrip({
     const video = viewerVideo.current;
     if (!video) return;
     if (video.paused) {
-      try {
-        await video.play();
-      } catch {
-        setViewerStatus("Tap Play again to start this video.");
-      }
+      await playViewerVideo(video);
       return;
     }
     video.pause();
+  }
+
+  async function playViewerVideo(video: HTMLVideoElement) {
+    try {
+      await video.play();
+      setViewerStatus("");
+      return;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+    }
+
+    if (!video.muted) {
+      video.muted = true;
+      setViewerMuted(true);
+      try {
+        await video.play();
+        setViewerStatus("");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    setViewerPaused(true);
+    setViewerStatus("Tap Play to start this video.");
   }
 
   function toggleViewerSound() {
@@ -111,16 +174,6 @@ export function TvVideoStrip({
     }
   }
 
-  function playPreview(card: HTMLButtonElement) {
-    const preview = card.querySelector("video");
-    if (!preview) return;
-    void preview.play().catch(() => undefined);
-  }
-
-  function pausePreview(card: HTMLButtonElement) {
-    card.querySelector("video")?.pause();
-  }
-
   if (!videos.length) return null;
 
   return (
@@ -146,17 +199,20 @@ export function TvVideoStrip({
               aria-label={`Open ${video.dancer.stageName} MyDancr TV ${videoPosition} full screen, ${schedule.label}, ${formatVideoDuration(video.durationSeconds)}`}
               className="tv-strip-card"
               key={video.id}
+              ref={(element) => {
+                previewCards.current[video.id] = element;
+              }}
               type="button"
-              onBlur={(event) => pausePreview(event.currentTarget)}
+              onBlur={(event) => pausePreviewCard(event.currentTarget)}
               onClick={() => {
                 setViewerStatus("");
                 setViewerPaused(false);
-                setViewerMuted(false);
+                setViewerMuted(true);
                 setActiveVideo(video);
               }}
-              onFocus={(event) => playPreview(event.currentTarget)}
-              onMouseEnter={(event) => playPreview(event.currentTarget)}
-              onMouseLeave={(event) => pausePreview(event.currentTarget)}
+              onFocus={(event) => playPreviewCard(event.currentTarget)}
+              onMouseEnter={(event) => playPreviewCard(event.currentTarget)}
+              onMouseLeave={(event) => pausePreviewCard(event.currentTarget)}
             >
               <video aria-hidden="true" loop muted playsInline preload="metadata" src={video.videoUrl} />
               <div>
@@ -217,6 +273,11 @@ export function TvVideoStrip({
                 preload="auto"
                 ref={viewerVideo}
                 src={activeVideo.videoUrl}
+                onCanPlay={(event) => {
+                  if (event.currentTarget.paused && !viewerPaused) {
+                    void playViewerVideo(event.currentTarget);
+                  }
+                }}
                 onClick={() => {
                   if (swipeHandled.current) {
                     swipeHandled.current = false;
@@ -287,6 +348,27 @@ export function TvVideoStrip({
       ) : null}
     </section>
   );
+}
+
+function playPreviewCard(card: HTMLButtonElement) {
+  const preview = card.querySelector("video");
+  if (!preview) return;
+  card.closest(".tv-video-strip")
+    ?.querySelectorAll<HTMLVideoElement>(".tv-strip-card video")
+    .forEach((video) => {
+      const active = video === preview;
+      video.autoplay = active;
+      if (!active) video.pause();
+    });
+  preview.muted = true;
+  void preview.play().catch(() => undefined);
+}
+
+function pausePreviewCard(card: HTMLButtonElement) {
+  const preview = card.querySelector("video");
+  if (!preview) return;
+  preview.autoplay = false;
+  preview.pause();
 }
 
 function tvProfileShiftLabel(video: MyDancrTvVideo) {

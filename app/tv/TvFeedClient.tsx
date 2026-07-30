@@ -57,6 +57,7 @@ export default function TvFeedClient({
   );
   const [activeVideoId, setActiveVideoId] = useState(initialSelectedVideoId || initialVideos[0]?.id || "");
   const [muted, setMuted] = useState(true);
+  const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [session, setSession] = useState<TvAuthSession | null>(null);
@@ -67,10 +68,15 @@ export default function TvFeedClient({
   const feedElement = useRef<HTMLElement | null>(null);
   const headerActionsElement = useRef<HTMLDivElement | null>(null);
   const videoElements = useRef<Record<string, HTMLVideoElement | null>>({});
+  const activeVideoIdRef = useRef(activeVideoId);
+  const mutedRef = useRef(muted);
+  const manuallyPausedVideoId = useRef("");
   const engagedTimers = useRef<Record<string, number>>({});
   const completedVideos = useRef(new Set<string>());
   const loadedAuthenticatedFeed = useRef(false);
   const viewerSessionId = useMemo(readViewerSessionId, []);
+  activeVideoIdRef.current = activeVideoId;
+  mutedRef.current = muted;
 
   const trackEvent = useCallback((videoId: string, eventType: string) => {
     const token = readAnyToken();
@@ -84,6 +90,54 @@ export default function TvFeedClient({
       keepalive: true,
     }).catch(() => null);
   }, [source, viewerSessionId]);
+
+  const attemptVideoPlayback = useCallback(async (
+    videoId: string,
+    element: HTMLVideoElement,
+  ) => {
+    if (
+      videoId !== activeVideoIdRef.current ||
+      manuallyPausedVideoId.current === videoId ||
+      document.visibilityState === "hidden"
+    ) {
+      return;
+    }
+
+    element.autoplay = true;
+    element.muted = mutedRef.current;
+    try {
+      await element.play();
+      setAutoplayBlockedVideoId((current) => current === videoId ? "" : current);
+      return;
+    } catch (error) {
+      if (
+        videoId !== activeVideoIdRef.current ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
+        return;
+      }
+    }
+
+    if (!element.muted) {
+      mutedRef.current = true;
+      element.muted = true;
+      setMuted(true);
+      try {
+        await element.play();
+        setAutoplayBlockedVideoId((current) => current === videoId ? "" : current);
+        return;
+      } catch (error) {
+        if (
+          videoId !== activeVideoIdRef.current ||
+          (error instanceof DOMException && error.name === "AbortError")
+        ) {
+          return;
+        }
+      }
+    }
+
+    setAutoplayBlockedVideoId(videoId);
+  }, []);
 
   const loadFeed = useCallback(async (nextFilter: string, nextCity: string, selectedVideoId = "") => {
     setIsLoading(true);
@@ -199,7 +253,12 @@ export default function TvFeedClient({
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (!visible || visible.intersectionRatio < 0.75) return;
         const videoId = (visible.target as HTMLElement).dataset.videoId || "";
-        if (videoId) setActiveVideoId(videoId);
+        if (videoId) {
+          if (videoId !== activeVideoIdRef.current) {
+            manuallyPausedVideoId.current = "";
+          }
+          setActiveVideoId(videoId);
+        }
       },
       { root: feed, threshold: [0.75, 0.9] },
     );
@@ -212,18 +271,34 @@ export default function TvFeedClient({
       if (!element) return;
       element.muted = muted;
       if (videoId === activeVideoId) {
-        element.play().catch(() => null);
+        void attemptVideoPlayback(videoId, element);
         trackEvent(videoId, "impression");
         window.clearTimeout(engagedTimers.current[videoId]);
         engagedTimers.current[videoId] = window.setTimeout(() => {
           if (!element.paused) trackEvent(videoId, "engaged_view");
         }, 3000);
       } else {
+        element.autoplay = false;
         element.pause();
         window.clearTimeout(engagedTimers.current[videoId]);
       }
     });
-  }, [activeVideoId, muted, trackEvent]);
+  }, [activeVideoId, attemptVideoPlayback, muted, trackEvent]);
+
+  useEffect(() => {
+    const resumeActiveVideo = () => {
+      if (document.visibilityState === "hidden") return;
+      const videoId = activeVideoIdRef.current;
+      const element = videoElements.current[videoId];
+      if (videoId && element) void attemptVideoPlayback(videoId, element);
+    };
+    document.addEventListener("visibilitychange", resumeActiveVideo);
+    window.addEventListener("pageshow", resumeActiveVideo);
+    return () => {
+      document.removeEventListener("visibilitychange", resumeActiveVideo);
+      window.removeEventListener("pageshow", resumeActiveVideo);
+    };
+  }, [attemptVideoPlayback]);
 
   useEffect(() => () => {
     Object.values(engagedTimers.current).forEach((timer) => window.clearTimeout(timer));
@@ -233,6 +308,17 @@ export default function TvFeedClient({
     if (nextFilter === filter && videos.length) return;
     setFilter(nextFilter);
     loadFeed(nextFilter, city);
+  }
+
+  function toggleVideoPlayback(videoId: string, element: HTMLVideoElement) {
+    if (element.paused) {
+      manuallyPausedVideoId.current = "";
+      void attemptVideoPlayback(videoId, element);
+      return;
+    }
+    manuallyPausedVideoId.current = videoId;
+    setAutoplayBlockedVideoId("");
+    element.pause();
   }
 
   async function markNotificationRead(notificationId: string) {
@@ -438,16 +524,25 @@ export default function TvFeedClient({
                   aria-label={`${video.dancer.stageName} MyDancr TV video. Play or pause.`}
                   role="button"
                   tabIndex={0}
+                  autoPlay={video.id === activeVideoId}
                   loop
                   muted={muted}
                   playsInline
                   preload={video.id === activeVideoId ? "auto" : "metadata"}
                   src={video.videoUrl}
-                  onClick={(event) => toggleVideoPlayback(event.currentTarget)}
+                  onCanPlay={(event) => {
+                    if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {
+                      void attemptVideoPlayback(video.id, event.currentTarget);
+                    }
+                  }}
+                  onClick={(event) => toggleVideoPlayback(video.id, event.currentTarget)}
                   onKeyDown={(event) => {
                     if (event.key !== "Enter" && event.key !== " ") return;
                     event.preventDefault();
-                    toggleVideoPlayback(event.currentTarget);
+                    toggleVideoPlayback(video.id, event.currentTarget);
+                  }}
+                  onPlay={() => {
+                    setAutoplayBlockedVideoId((current) => current === video.id ? "" : current);
                   }}
                   onTimeUpdate={(event) => {
                     const element = event.currentTarget;
@@ -461,6 +556,19 @@ export default function TvFeedClient({
                     }
                   }}
                 />
+                {autoplayBlockedVideoId === video.id ? (
+                  <button
+                    className="tv-playback-retry"
+                    type="button"
+                    onClick={() => {
+                      manuallyPausedVideoId.current = "";
+                      const element = videoElements.current[video.id];
+                      if (element) void attemptVideoPlayback(video.id, element);
+                    }}
+                  >
+                    Tap to play
+                  </button>
+                ) : null}
                 <div className="tv-player-shade" />
                 <div className="tv-profile-body">
                   <span
@@ -648,11 +756,6 @@ function dancerInitials(value: string) {
     .join("") || "D";
 }
 
-function toggleVideoPlayback(video: HTMLVideoElement) {
-  if (video.paused) video.play().catch(() => null);
-  else video.pause();
-}
-
 function readCustomerToken() {
   const session = readSession();
   return session?.account?.role === "customer" && typeof session?.accessToken === "string"
@@ -740,6 +843,7 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
+      .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; min-height: 46px; padding: 0 18px; border: 1px solid rgba(126,234,255,.58); border-radius: 999px; color: #fff; background: rgba(3,3,7,.82); box-shadow: 0 0 28px rgba(34,199,255,.2); font-weight: 950; transform: translate(-50%, -50%); cursor: pointer; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 12px; font-weight: 900; cursor: pointer; }
       .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: end; gap: 14px; padding: 86px 20px 22px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
