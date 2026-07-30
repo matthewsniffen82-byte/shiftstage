@@ -27842,6 +27842,7 @@
         </div>
       </section>
 
+      <div class="home-discovery-sticky">
       <section class="controls home-discovery-controls" aria-label="Discovery filters">
         <div class="field home-city-filter">
           <label for="citySelect">City</label>
@@ -27885,6 +27886,23 @@
         </div>
       </section>
 
+      <nav class="tabs" id="discoveryTabs" aria-label="City discovery">
+        <button class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now</button>
+        <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
+        <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
+          <span class="home-bottom-tv-icon" aria-hidden="true">
+            <svg class="mydancr-tv-mark" viewBox="0 0 24 24">
+              <path class="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z"></path>
+              <path class="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91"></path>
+            </svg>
+          </span>
+          <span>TV</span>
+        </button>
+        <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
+        <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
+      </nav>
+      </div>
+
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
         <span id="homeLiveCity">Las Vegas</span>
         <span id="homeLiveRadius">25 mi radius · All venues</span>
@@ -27907,25 +27925,10 @@
         <span class="home-tv-launch-arrow" aria-hidden="true">›</span>
       </a>
 
-      <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab" data-tab="tonight" data-tab-label="Now">Now</button>
-        <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
-        <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
-          <span class="home-bottom-tv-icon" aria-hidden="true">
-            <svg class="mydancr-tv-mark" viewBox="0 0 24 24">
-              <path class="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z"></path>
-              <path class="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91"></path>
-            </svg>
-          </span>
-          <span>TV</span>
-        </button>
-        <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
-        <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
-      </nav>
-
       <style>
         main.stack,
         main.stack > * { min-width: 0; max-width: 100%; }
+        .home-discovery-sticky { width: 100%; min-width: 0; max-width: 100%; display: grid; gap: 10px; }
         .home-discovery-controls { width: 100%; min-width: 0; max-width: 100%; grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr) !important; align-items: end; gap: 10px !important; padding: 10px !important; overflow: hidden; }
         .home-discovery-controls > *,
         .home-advanced-filters > * { min-width: 0; max-width: 100%; }
@@ -27954,6 +27957,7 @@
         .home-tv-launch-count { min-width: 58px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #baf5ff; background: #12062f; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
         .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
         #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
+        .home-app-bottom-nav { display: none; }
         #results.home-tv-feed {
           position: relative;
           width: 100%;
@@ -28820,6 +28824,68 @@
           body {
             padding-bottom: calc(78px + env(safe-area-inset-bottom));
           }
+          .home-app-bottom-nav {
+            position: fixed;
+            z-index: 130;
+            left: 50%;
+            bottom: 0;
+            width: min(100%, 720px);
+            height: calc(70px + env(safe-area-inset-bottom));
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            align-items: start;
+            padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+            overflow: hidden;
+            border-top: 1px solid rgba(139,92,246,.3);
+            background: rgba(6,6,10,.97);
+            box-shadow: 0 -12px 32px rgba(0,0,0,.42);
+            backdrop-filter: blur(22px) saturate(1.3);
+            transform: translateX(-50%);
+          }
+          .home-app-bottom-nav,
+          .home-app-bottom-nav * {
+            box-sizing: border-box;
+          }
+          .home-app-bottom-nav a {
+            height: 57px;
+            min-width: 0;
+            display: grid;
+            grid-template-rows: 30px 14px;
+            align-content: center;
+            align-items: center;
+            justify-items: center;
+            gap: 2px;
+            padding: 3px 1px 2px;
+            color: #aaa2b4;
+            font-size: 10px;
+            font-weight: 850;
+            line-height: 14px;
+            text-align: center;
+            text-decoration: none;
+          }
+          .home-app-bottom-nav a[aria-current="page"] {
+            color: #fff;
+            text-shadow: 0 0 7px rgba(124,58,237,.78), 0 0 11px rgba(34,199,255,.48);
+          }
+          .home-app-bottom-nav span:first-child {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+          }
+          .home-app-bottom-nav svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+          }
+          .home-app-bottom-nav a[aria-current="page"] span:first-child {
+            filter: drop-shadow(0 0 5px rgba(124,58,237,.78)) drop-shadow(0 0 10px rgba(34,199,255,.48));
+            transform: translateY(-1px);
+          }
           header {
             width: 100% !important;
             max-width: 100% !important;
@@ -28878,6 +28944,9 @@
             min-height: clamp(150px, 43vw, 188px) !important;
             border-radius: 16px !important;
           }
+          main.stack .content-head {
+            scroll-margin-top: calc(202px + env(safe-area-inset-top));
+          }
           .hero-copy {
             padding: 15px !important;
           }
@@ -28894,33 +28963,20 @@
           .home-tv-launch {
             display: none !important;
           }
-          #results.home-tv-feed {
-            position: fixed !important;
-            z-index: 80;
-            inset: 0 !important;
-            width: 100vw !important;
-            max-width: none !important;
-            height: var(--home-tv-feed-height, 100dvh) !important;
-            min-height: 0;
-            max-height: none;
-            margin: 0 !important;
-            border: 0 !important;
-            border-radius: 0;
-            box-shadow: none;
-          }
+          #results.home-tv-feed,
           #results.home-discovery-feed {
-            position: fixed !important;
-            z-index: 80;
-            inset: 0 !important;
-            width: 100vw !important;
-            max-width: none !important;
-            height: var(--home-discovery-feed-height, 100dvh) !important;
-            min-height: 0;
-            max-height: none;
-            margin: 0 !important;
-            border: 0 !important;
-            border-radius: 0;
-            box-shadow: none;
+            position: relative !important;
+            z-index: 1;
+            inset: auto !important;
+            width: 100% !important;
+            max-width: 640px !important;
+            height: var(--home-inline-feed-height, 520px) !important;
+            min-height: 420px;
+            max-height: 680px;
+            margin: 0 auto !important;
+            border: 1px solid rgba(139,92,246,.38) !important;
+            border-radius: 18px;
+            box-shadow: 0 18px 44px rgba(0,0,0,.48), 0 0 24px rgba(124,58,237,.14);
           }
           #results.home-discovery-feed > .home-discovery-feed-slide {
             width: 100% !important;
@@ -28929,85 +28985,66 @@
             max-height: 100% !important;
             aspect-ratio: auto !important;
           }
-          html.home-tv-feed-locked,
-          body.home-tv-feed-locked {
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-          }
-          body.home-tv-feed-locked {
-            position: fixed !important;
-            top: var(--home-tv-page-lock-top, 0) !important;
-            right: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100dvh !important;
-          }
-          body.home-tv-feed-locked main.stack > .legal-links {
-            visibility: hidden !important;
-            pointer-events: none !important;
-          }
-          html.home-discovery-feed-locked,
-          body.home-discovery-feed-locked {
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-          }
-          body.home-discovery-feed-locked {
-            position: fixed !important;
-            top: var(--home-discovery-page-lock-top, 0) !important;
-            right: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100dvh !important;
-          }
-          body.home-discovery-feed-locked main.stack > .legal-links {
-            visibility: hidden !important;
-            pointer-events: none !important;
-          }
           .home-tv-feed-copy {
-            padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
+            padding: 54px 14px 20px;
           }
           .home-tv-feed-dancer {
             font-size: clamp(22px, 7vw, 31px);
           }
           .home-tv-feed-position {
-            top: calc(70px + env(safe-area-inset-top));
+            top: 18px;
           }
           .home-discovery-feed-copy {
             right: 82px;
-            padding: 64px 0 calc(92px + env(safe-area-inset-bottom)) 14px;
+            padding: 64px 0 18px 14px;
           }
           .home-venue-discovery-slide .home-discovery-feed-copy {
             padding-top: 84px;
           }
           .home-discovery-feed-actions {
             right: 10px;
-            bottom: calc(82px + env(safe-area-inset-bottom));
+            bottom: 14px;
           }
           .home-discovery-feed-position {
-            top: calc(20px + env(safe-area-inset-top));
+            top: 18px;
+          }
+          main.stack > .home-discovery-sticky {
+            position: sticky;
+            z-index: 70;
+            top: calc(64px + env(safe-area-inset-top));
+            width: auto !important;
+            max-width: none !important;
+            gap: 8px;
+            margin: 0 !important;
+            padding: 0 12px 8px;
+            border-bottom: 1px solid rgba(139,92,246,.18);
+            background: linear-gradient(180deg, rgba(5,5,8,.98) 0%, rgba(5,5,8,.94) 82%, rgba(5,5,8,.72) 100%);
+            backdrop-filter: blur(18px) saturate(1.2);
+          }
+          .home-discovery-sticky .home-discovery-controls {
+            margin: 0 !important;
           }
           #discoveryTabs {
-            position: fixed !important;
-            z-index: 90;
-            left: 50%;
-            bottom: 0;
-            width: min(100%, 720px) !important;
-            height: calc(70px + env(safe-area-inset-bottom));
-            min-height: calc(70px + env(safe-area-inset-bottom));
+            position: relative !important;
+            z-index: 1;
+            inset: auto;
+            width: 100% !important;
+            height: 62px;
+            min-height: 62px;
             display: grid !important;
             grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-            align-items: start !important;
-            gap: 0 !important;
+            align-items: stretch !important;
+            gap: 4px !important;
             margin: 0 !important;
-            padding: 6px 4px calc(6px + env(safe-area-inset-bottom)) !important;
-            overflow: hidden !important;
-            border-top: 1px solid rgba(139,92,246,.3);
-            background: rgba(6,6,10,.97) !important;
-            box-shadow: 0 -12px 32px rgba(0,0,0,.42);
-            backdrop-filter: blur(22px) saturate(1.3);
+            padding: 4px !important;
+            overflow: visible !important;
+            border: 1px solid rgba(139,92,246,.26);
+            border-radius: 16px;
+            background: rgba(12,10,20,.96) !important;
+            box-shadow: 0 10px 28px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.04);
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
-            transform: translateX(-50%);
+            transform: none;
           }
           #discoveryTabs *,
           #discoveryTabs *::before,
@@ -29023,10 +29060,10 @@
             --home-nav-hero-cyan-glow: rgba(34,199,255,.48);
             position: relative !important;
             width: 100% !important;
-            height: 57px !important;
+            height: 52px !important;
             min-width: 0 !important;
-            min-height: 57px !important;
-            max-height: 57px !important;
+            min-height: 52px !important;
+            max-height: 52px !important;
             display: grid !important;
             grid-template-rows: 30px 14px !important;
             align-content: center !important;
@@ -29036,11 +29073,11 @@
             margin: 0 !important;
             padding: 3px 1px 2px !important;
             overflow: visible !important;
-            border: 0 !important;
-            border-radius: 0 !important;
+            border: 1px solid rgba(255,255,255,.06) !important;
+            border-radius: 12px !important;
             color: #aaa2b4 !important;
-            background: transparent !important;
-            box-shadow: none !important;
+            background: rgba(255,255,255,.025) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
             font-size: 10px !important;
             font-weight: 850;
             line-height: 1;
@@ -29074,10 +29111,12 @@
             content: none !important;
             display: none !important;
           }
-          #discoveryTabs .tab.active {
+          #discoveryTabs .tab.active,
+          #discoveryTabs .home-bottom-tv.active {
             color: #fff !important;
-            background: transparent !important;
-            box-shadow: none !important;
+            border-color: rgba(126,234,255,.3) !important;
+            background: linear-gradient(145deg, rgba(124,58,237,.22), rgba(34,199,255,.08)) !important;
+            box-shadow: 0 0 13px rgba(124,58,237,.25), inset 0 1px 0 rgba(255,255,255,.08) !important;
           }
           #discoveryTabs .home-nav-icon {
             width: 30px !important;
@@ -29125,7 +29164,8 @@
             position: absolute;
             z-index: 2;
             top: 4px !important;
-            left: calc(50% + 12px) !important;
+            right: 4px !important;
+            left: auto !important;
             width: auto !important;
             min-width: 0 !important;
             max-width: none !important;
@@ -29151,7 +29191,7 @@
             transform: none !important;
           }
           #discoveryTabs .tab[data-tab="trending"] .tab-count {
-            right: calc(50% - 22px) !important;
+            right: 2px !important;
             left: auto !important;
             text-align: right;
           }
@@ -29379,6 +29419,13 @@
             opacity: .78;
           }
         }
+        @media (max-width: 340px) {
+          #discoveryTabs .home-nav-label,
+          #discoveryTabs .home-bottom-tv > span:last-child {
+            font-size: 9px !important;
+            letter-spacing: -.02em;
+          }
+        }
 
         /* Keep the full profile closable and its final safety action reachable. */
         #profileBackdrop.modal-backdrop.show {
@@ -29447,6 +29494,33 @@
         <button class="legal-link admin-legal-link" id="adminBtn" type="button">Platform admin</button>
       </nav>
     </main>
+
+    <nav class="home-app-bottom-nav" aria-label="Mobile primary navigation">
+      <a class="home-destination" href="/?city=Las%20Vegas" aria-current="page">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 11.2 12 4l8 7.2"></path><path d="M6.5 10.5V20h11v-9.5"></path><path d="M9.5 20v-5.5h5V20"></path></svg>
+        </span>
+        <span>Home</span>
+      </a>
+      <a class="offers-destination" href="/dashboard/customer/offers">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 0 6.5 10 2.5 2.5 0 0 0 4 12.5V18h16v-5.5a2.5 2.5 0 0 0 0-5V2H4v5.5Z"></path><path d="M12 5v10"></path></svg>
+        </span>
+        <span>Offers</span>
+      </a>
+      <a class="saved-destination" href="/dashboard/customer/saved">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20.8 4.8a5.2 5.2 0 0 0-7.4 0L12 6.2l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z"></path></svg>
+        </span>
+        <span>Saved</span>
+      </a>
+      <a class="account-destination" href="/account">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2"></path></svg>
+        </span>
+        <span>Account</span>
+      </a>
+    </nav>
 
     <section class="page-panel legal-page" id="termsPage" aria-hidden="true">
       <div class="page-inner">
@@ -30886,15 +30960,13 @@
     let homeTvFeedObserver = null;
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
-    let homeTvFeedPageLockY = null;
     let homeTvFeedViewportFrame = 0;
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
     const homeTvFeedEngagedTimers = new Map();
-    let homeDiscoveryFeedOpen = false;
+    let homeDiscoveryFeedOpen = window.matchMedia("(max-width: 720px)").matches;
     let homeDiscoveryFeedObserver = null;
-    let homeDiscoveryFeedPageLockY = null;
     let homeDiscoveryFeedViewportFrame = 0;
     const homeDiscoveryFeedPositions = new Map();
     const HOME_DISCOVERY_REFRESH_MS = 30000;
@@ -42648,7 +42720,7 @@
         : `${workingNowCount} working now`;
     }
 
-    function homeDiscoveryFeedUsesLockedViewport() {
+    function homeDiscoveryFeedUsesInlineViewport() {
       return window.matchMedia("(max-width: 720px)").matches;
     }
 
@@ -42682,11 +42754,14 @@
 
     function syncHomeDiscoveryFeedViewport() {
       homeDiscoveryFeedViewportFrame = 0;
-      if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesLockedViewport()) return;
+      if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesInlineViewport()) return;
       if (!results.classList.contains("home-discovery-feed")) return;
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
       if (viewportHeight > 0) {
-        results.style.setProperty("--home-discovery-feed-height", `${viewportHeight}px`);
+        const stickyHeight = document.querySelector(".home-discovery-sticky")?.getBoundingClientRect().height || 126;
+        const headerHeight = document.querySelector("header")?.getBoundingClientRect().height || 64;
+        const availableHeight = Math.max(420, Math.min(680, viewportHeight - stickyHeight - headerHeight - 22));
+        results.style.setProperty("--home-inline-feed-height", `${availableHeight}px`);
       }
     }
 
@@ -42695,30 +42770,17 @@
       homeDiscoveryFeedViewportFrame = window.requestAnimationFrame(syncHomeDiscoveryFeedViewport);
     }
 
-    function lockHomeDiscoveryFeedViewport() {
-      if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesLockedViewport()) return;
-      if (homeDiscoveryFeedPageLockY === null) {
-        homeDiscoveryFeedPageLockY = window.scrollY;
-        document.body.style.setProperty("--home-discovery-page-lock-top", `-${homeDiscoveryFeedPageLockY}px`);
-        document.documentElement.classList.add("home-discovery-feed-locked");
-        document.body.classList.add("home-discovery-feed-locked");
-      }
+    function prepareHomeDiscoveryFeedViewport() {
+      if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesInlineViewport()) return;
       queueHomeDiscoveryFeedViewportSync();
     }
 
-    function unlockHomeDiscoveryFeedViewport() {
+    function resetHomeDiscoveryFeedViewport() {
       if (homeDiscoveryFeedViewportFrame) {
         window.cancelAnimationFrame(homeDiscoveryFeedViewportFrame);
         homeDiscoveryFeedViewportFrame = 0;
       }
-      results.style.removeProperty("--home-discovery-feed-height");
-      document.documentElement.classList.remove("home-discovery-feed-locked");
-      document.body.classList.remove("home-discovery-feed-locked");
-      document.body.style.removeProperty("--home-discovery-page-lock-top");
-      if (homeDiscoveryFeedPageLockY === null) return;
-      const restoreY = homeDiscoveryFeedPageLockY;
-      homeDiscoveryFeedPageLockY = null;
-      window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
+      results.style.removeProperty("--home-inline-feed-height");
     }
 
     function activateHomeDiscoveryFeedItem(itemKey) {
@@ -42760,7 +42822,7 @@
       homeDiscoveryFeedObserver = null;
       results.classList.remove("home-discovery-feed");
       results.removeAttribute("aria-label");
-      unlockHomeDiscoveryFeedViewport();
+      resetHomeDiscoveryFeedViewport();
     }
 
     function homeDiscoveryFeedStatus(profile) {
@@ -42982,7 +43044,7 @@
           : "dancer profiles";
       results.setAttribute("aria-label", `Swipe through ${discoveryLabel} in ${city}`);
       viewAllBtn.hidden = true;
-      lockHomeDiscoveryFeedViewport();
+      prepareHomeDiscoveryFeedViewport();
 
       if (options.loading && !items.length) {
         renderHomeDiscoveryFeedMessage(`Loading live ${activeTab === "tonight" ? "appearances" : activeTab === "venues" ? "venues" : "dancer profiles"} from ${city}…`);
@@ -43018,29 +43080,40 @@
       });
     }
 
-    function focusAndLockHomeDiscoveryFeed() {
-      lockHomeDiscoveryFeedViewport();
+    function focusHomeDiscoveryFeed() {
+      prepareHomeDiscoveryFeedViewport();
+      tabTitle.closest(".content-head")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function handleHomeDiscoveryFeedViewportChange() {
       if (!homeDiscoveryFeedOpen) return;
-      if (!["tonight", "dancers", "venues"].includes(activeTab) || !homeDiscoveryFeedUsesLockedViewport()) {
+      if (!["tonight", "dancers", "venues", "trending"].includes(activeTab) || !homeDiscoveryFeedUsesInlineViewport()) {
         homeDiscoveryFeedOpen = false;
         deactivateHomeDiscoveryFeed();
         render();
         return;
       }
-      lockHomeDiscoveryFeedViewport();
+      prepareHomeDiscoveryFeedViewport();
     }
 
     function render() {
       const city = citySelect.value;
+      document.querySelectorAll(".tab").forEach((tab) => {
+        const active = tab.dataset.tab === activeTab;
+        tab.classList.toggle("active", active);
+        if (active) tab.setAttribute("aria-current", "page");
+        else tab.removeAttribute("aria-current");
+      });
+      const homeBottomTvButton = document.getElementById("homeBottomTv");
+      homeBottomTvButton?.classList.toggle("active", activeTab === "tv");
+      homeBottomTvButton?.setAttribute("aria-current", activeTab === "tv" ? "page" : "false");
       if (homeTvLaunchCity !== city) {
         homeTvLaunchCity = city;
         void renderHomeTvLaunch(city);
       }
       populateVenueSelect(city);
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
+      document.querySelector(".home-app-bottom-nav .home-destination")?.setAttribute("href", `/?city=${encodeURIComponent(city)}`);
       updateTabCounts(city);
       updateHomeLiveSummary(city);
       if (activeTab === "tv") {
@@ -43089,10 +43162,11 @@
           ? `${items.length} of ${allItems.length}`
           : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
       const usesDiscoveryFeed =
-        homeDiscoveryFeedOpen &&
-        ["tonight", "dancers", "venues"].includes(activeTab) &&
-        homeDiscoveryFeedUsesLockedViewport();
+        !selectedVenue &&
+        ["tonight", "dancers", "venues", "trending"].includes(activeTab) &&
+        homeDiscoveryFeedUsesInlineViewport();
       if (usesDiscoveryFeed) {
+        homeDiscoveryFeedOpen = true;
         renderHomeDiscoveryFeed(city, allItems, { loading: loadingLiveProfiles });
         return;
       }
@@ -43295,17 +43369,20 @@
       activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
     }
 
-    function homeTvFeedUsesLockedViewport() {
+    function homeTvFeedUsesInlineViewport() {
       return window.matchMedia("(max-width: 720px)").matches;
     }
 
     function syncHomeTvFeedViewport() {
       homeTvFeedViewportFrame = 0;
-      if (activeTab !== "tv" || !homeTvFeedUsesLockedViewport()) return;
+      if (activeTab !== "tv" || !homeTvFeedUsesInlineViewport()) return;
       if (!results.classList.contains("home-tv-feed")) return;
       const viewportHeight = Math.floor(window.visualViewport?.height || window.innerHeight);
       if (viewportHeight > 0) {
-        results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
+        const stickyHeight = document.querySelector(".home-discovery-sticky")?.getBoundingClientRect().height || 126;
+        const headerHeight = document.querySelector("header")?.getBoundingClientRect().height || 64;
+        const availableHeight = Math.max(420, Math.min(680, viewportHeight - stickyHeight - headerHeight - 22));
+        results.style.setProperty("--home-inline-feed-height", `${availableHeight}px`);
       }
     }
 
@@ -43314,47 +43391,35 @@
       homeTvFeedViewportFrame = window.requestAnimationFrame(syncHomeTvFeedViewport);
     }
 
-    function lockHomeTvFeedViewport() {
-      if (!homeTvFeedUsesLockedViewport()) return;
-      if (homeTvFeedPageLockY === null) {
-        homeTvFeedPageLockY = window.scrollY;
-        document.body.style.setProperty("--home-tv-page-lock-top", `-${homeTvFeedPageLockY}px`);
-        document.documentElement.classList.add("home-tv-feed-locked");
-        document.body.classList.add("home-tv-feed-locked");
-      }
+    function prepareHomeTvFeedViewport() {
+      if (!homeTvFeedUsesInlineViewport()) return;
       queueHomeTvFeedViewportSync();
     }
 
-    function unlockHomeTvFeedViewport() {
+    function resetHomeTvFeedViewport() {
       if (homeTvFeedViewportFrame) {
         window.cancelAnimationFrame(homeTvFeedViewportFrame);
         homeTvFeedViewportFrame = 0;
       }
-      results.style.removeProperty("--home-tv-feed-height");
-      document.documentElement.classList.remove("home-tv-feed-locked");
-      document.body.classList.remove("home-tv-feed-locked");
-      document.body.style.removeProperty("--home-tv-page-lock-top");
-      if (homeTvFeedPageLockY === null) return;
-      const restoreY = homeTvFeedPageLockY;
-      homeTvFeedPageLockY = null;
-      window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
+      results.style.removeProperty("--home-inline-feed-height");
     }
 
-    function focusAndLockHomeTvFeed() {
-      lockHomeTvFeedViewport();
+    function focusHomeTvFeed() {
+      prepareHomeTvFeedViewport();
+      tabTitle.closest(".content-head")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function handleHomeTvFeedViewportChange() {
       if (activeTab !== "tv") return;
-      if (homeTvFeedUsesLockedViewport()) {
-        lockHomeTvFeedViewport();
+      if (homeTvFeedUsesInlineViewport()) {
+        prepareHomeTvFeedViewport();
       } else {
-        unlockHomeTvFeedViewport();
+        resetHomeTvFeedViewport();
       }
     }
 
     function deactivateHomeTvFeed() {
-      unlockHomeTvFeedViewport();
+      resetHomeTvFeedViewport();
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
       homeTvFeedActiveVideoId = "";
@@ -45817,7 +45882,7 @@
       homeBottomTv.classList.add("active");
       homeBottomTv.setAttribute("aria-current", "page");
       render();
-      window.requestAnimationFrame(focusAndLockHomeTvFeed);
+      window.requestAnimationFrame(focusHomeTvFeed);
     });
     window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
@@ -45840,15 +45905,15 @@
         }
         activeTab = nextTab;
         homeDiscoveryFeedOpen =
-          ["tonight", "dancers", "venues"].includes(nextTab) &&
-          homeDiscoveryFeedUsesLockedViewport();
+          ["tonight", "dancers", "venues", "trending"].includes(nextTab) &&
+          homeDiscoveryFeedUsesInlineViewport();
         tonightExpanded = false;
         dancersExpanded = false;
         if (activeTab !== "venues") selectedVenueName = null;
         document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
         render();
         if (homeDiscoveryFeedOpen) {
-          window.requestAnimationFrame(focusAndLockHomeDiscoveryFeed);
+          window.requestAnimationFrame(focusHomeDiscoveryFeed);
         }
       });
     });

@@ -8,14 +8,31 @@ import DancerTvStudio from "./DancerTvStudio";
 import VenueTvPanel from "./VenueTvPanel";
 
 type DashboardRole = "customer" | "dancer" | "venue";
+type CustomerDashboardSection = "offers" | "saved";
+
+type SavedDancerSummary = {
+  slug?: string | null;
+  stageName?: string | null;
+  city?: string | null;
+};
+
+type SavedVenueSummary = {
+  slug?: string | null;
+  name?: string | null;
+  city?: string | null;
+  state?: string | null;
+};
 
 type LoadState = {
   account?: { displayName?: string | null; email?: string | null; role?: string; accountState?: string } | null;
   profile?: Record<string, unknown> | null;
   saved?: {
-    follows?: Array<{ notificationsEnabled?: boolean }>;
-    favorites?: unknown[];
-    venueFollows?: unknown[];
+    follows?: Array<{
+      notificationsEnabled?: boolean;
+      dancer?: SavedDancerSummary | null;
+    }>;
+    favorites?: Array<{ dancer?: SavedDancerSummary | null }>;
+    venueFollows?: Array<{ venue?: SavedVenueSummary | null }>;
     goingSignals?: unknown[];
     dealRedemptions?: Array<{
       id: string;
@@ -41,7 +58,13 @@ type LoadState = {
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
-export default function DashboardClient({ role }: { role: DashboardRole }) {
+export default function DashboardClient({
+  role,
+  initialSection,
+}: {
+  role: DashboardRole;
+  initialSection?: CustomerDashboardSection;
+}) {
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -107,6 +130,17 @@ export default function DashboardClient({ role }: { role: DashboardRole }) {
       cancelled = true;
     };
   }, [role]);
+
+  useEffect(() => {
+    if (role !== "customer" || !initialSection || isLoading || state.error) return;
+    const sectionId = initialSection === "offers" ? "customer-offers" : "customer-saved";
+    const frame = window.requestAnimationFrame(() => {
+      const section = document.getElementById(sectionId);
+      section?.scrollIntoView({ behavior: "smooth", block: "start" });
+      section?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialSection, isLoading, role, state.error]);
 
   function updateProfile(profile: Record<string, unknown> | null | undefined) {
     if (!profile) return;
@@ -514,9 +548,83 @@ function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile
         />
         <Metric label="Going" value={String(saved?.goingSignals?.length || 0)} />
       </InfoPanel>
+      <CustomerSavedPanel saved={saved} />
       <CustomerDealPassPanel deals={saved?.dealRedemptions || []} />
       <CustomerPreferencesPanel profile={profile} />
     </>
+  );
+}
+
+function CustomerSavedPanel({ saved }: { saved?: LoadState["saved"] }) {
+  const followedDancers = saved?.follows || [];
+  const favoriteDancers = saved?.favorites || [];
+  const followedVenues = saved?.venueFollows || [];
+
+  return (
+    <article
+      className="info-panel customer-saved-panel"
+      id="customer-saved"
+      tabIndex={-1}
+    >
+      <div className="customer-saved-head">
+        <span>Live account data</span>
+        <h2>Saved</h2>
+      </div>
+      <div className="customer-saved-grid">
+        <SavedLinkGroup title="Following">
+          {followedDancers.map((item, index) => {
+            const dancer = item.dancer;
+            if (!dancer?.slug || !dancer.stageName) return null;
+            return (
+              <Link href={`/dancers/${encodeURIComponent(dancer.slug)}`} key={`${dancer.slug}-${index}`}>
+                <strong>{dancer.stageName}</strong>
+                <small>
+                  {dancer.city || "City unavailable"}
+                  {item.notificationsEnabled ? " · Alerts on" : ""}
+                </small>
+              </Link>
+            );
+          })}
+          {!followedDancers.length ? <p>No followed dancers yet.</p> : null}
+        </SavedLinkGroup>
+        <SavedLinkGroup title="Favorites">
+          {favoriteDancers.map((item, index) => {
+            const dancer = item.dancer;
+            if (!dancer?.slug || !dancer.stageName) return null;
+            return (
+              <Link href={`/dancers/${encodeURIComponent(dancer.slug)}`} key={`${dancer.slug}-${index}`}>
+                <strong>{dancer.stageName}</strong>
+                <small>{dancer.city || "City unavailable"}</small>
+              </Link>
+            );
+          })}
+          {!favoriteDancers.length ? <p>No favorite dancers yet.</p> : null}
+        </SavedLinkGroup>
+        <SavedLinkGroup title="Clubs">
+          {followedVenues.map((item, index) => {
+            const venue = item.venue;
+            if (!venue?.slug || !venue.name) return null;
+            const location = [venue.city, venue.state].filter(Boolean).join(", ");
+            return (
+              <Link href={`/venues/${encodeURIComponent(venue.slug)}`} key={`${venue.slug}-${index}`}>
+                <strong>{venue.name}</strong>
+                <small>{location || "Location unavailable"}</small>
+              </Link>
+            );
+          })}
+          {!followedVenues.length ? <p>No followed clubs yet.</p> : null}
+        </SavedLinkGroup>
+      </div>
+    </article>
+  );
+}
+
+function SavedLinkGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="customer-saved-group">
+      <h3>{title}</h3>
+      <div>{children}</div>
+    </section>
   );
 }
 
@@ -526,7 +634,7 @@ function CustomerDealPassPanel({
   deals: NonNullable<NonNullable<LoadState["saved"]>["dealRedemptions"]>;
 }) {
   return (
-    <article className="info-panel saved-deal-panel">
+    <article className="info-panel saved-deal-panel" id="customer-offers" tabIndex={-1}>
       <div className="saved-deal-head">
         <div>
           <span>Saved QR wallet</span>
@@ -2646,7 +2754,20 @@ function DashboardStyles() {
       .support-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
       .support-message p, .support-panel p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+      .customer-saved-panel { grid-column: span 3; scroll-margin-top: 20px; }
+      .customer-saved-panel:focus, .saved-deal-panel:focus { outline: 2px solid rgba(126,234,255,.72); outline-offset: 4px; }
+      .customer-saved-head { display: grid; gap: 4px !important; }
+      .customer-saved-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .customer-saved-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px !important; }
+      .customer-saved-group { min-width: 0; display: grid; align-content: start; gap: 10px; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.035); }
+      .customer-saved-group h3 { margin: 0; color: #fff; font-size: 15px; }
+      .customer-saved-group > div { display: grid; gap: 8px; }
+      .customer-saved-group a { min-width: 0; display: grid; gap: 3px; padding: 9px 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 8px; color: #fff; background: rgba(126,234,255,.06); text-decoration: none; }
+      .customer-saved-group a strong, .customer-saved-group a small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .customer-saved-group a small { color: #b9accd; font-size: 12px; }
+      .customer-saved-group p { color: #b9accd; font-size: 14px; }
       .saved-deal-panel { grid-column: span 2; }
+      .saved-deal-panel { scroll-margin-top: 20px; }
       .saved-deal-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .saved-deal-head > div { display: grid; gap: 4px; }
       .saved-deal-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
@@ -2679,7 +2800,7 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-qr-panel { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-qr-panel > img { max-width: 260px; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-qr-panel, .customer-saved-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-qr-panel > img { max-width: 260px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );
