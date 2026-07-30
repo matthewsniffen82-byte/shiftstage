@@ -87,7 +87,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /\{ value: "new", label: "New" \}/);
   assert.doesNotMatch(feedClient, /className="tv-city"/);
   assert.doesNotMatch(feedClient, /id="tv-city"/);
-  assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}`/);
+  assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}&view=tonight`/);
   assert.match(feedClient, /className="tv-header"[\s\S]*?<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(globalNavigation, /view: "tonight"/);

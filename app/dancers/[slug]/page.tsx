@@ -68,7 +68,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
         city={profile.city}
         closeControl={
           <ProfileCloseButton
-            fallbackHref={`/?city=${encodeURIComponent(profile.city)}`}
+            fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=tonight`}
           />
         }
       />

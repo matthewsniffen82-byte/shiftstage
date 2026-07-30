@@ -91,7 +91,7 @@ test("the live dancer profile close control exits shared links and remains touch
     homeSource,
     /document\.addEventListener\("click", \(event\) => \{[\s\S]*?event\.target\.closest\?\.\("#modalClose"\)[\s\S]*?closeProfileModal\(\);\s+\}, \{ capture: true \}\);/,
   );
-  assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/);
+  assert.match(profilePageSource, /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}&view=tonight`\}/);
   assert.match(profileNavigationSource, /className="public-profile-close"/);
   assert.match(
     profileNavigationSource,

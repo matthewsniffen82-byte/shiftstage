@@ -45070,16 +45070,7 @@
 
     function returnToHomeDiscoveryMain() {
       if (profileBackdrop.classList.contains("show")) return false;
-      deactivateHomeTvFeed();
-      homeDiscoveryFeedOpen = false;
-      deactivateHomeDiscoveryFeed();
-      activeTab = "tonight";
-      tonightExpanded = false;
-      dancersExpanded = false;
-      selectedVenueName = null;
-      document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
-      clearHomeDestinationLocation();
-      render();
+      activateHomeDestination("tonight");
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });
@@ -47579,9 +47570,11 @@
       tonightExpanded = false;
       dancersExpanded = false;
       if (activeTab !== "venues") selectedVenueName = null;
-      document.querySelectorAll(".tab").forEach((item) => (
-        item.classList.toggle("active", item.dataset.tab === nextTab)
-      ));
+      document.querySelectorAll(".tab").forEach((item) => {
+        const isActive = item.dataset.tab === nextTab;
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-current", isActive ? "page" : "false");
+      });
       const isTv = nextTab === "tv";
       homeBottomTv?.classList.toggle("active", isTv);
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
@@ -47916,9 +47909,11 @@
       homeDiscoveryFeedOpen =
         initialHomeDestination === "venues" &&
         homeDiscoveryFeedUsesInlineLayout();
-      document.querySelectorAll(".tab").forEach((item) => (
-        item.classList.toggle("active", item.dataset.tab === initialHomeDestination)
-      ));
+      document.querySelectorAll(".tab").forEach((item) => {
+        const isActive = item.dataset.tab === initialHomeDestination;
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-current", isActive ? "page" : "false");
+      });
       const initialIsTv = initialHomeDestination === "tv";
       homeBottomTv?.classList.toggle("active", initialIsTv);
       homeBottomTv?.setAttribute("aria-current", initialIsTv ? "page" : "false");

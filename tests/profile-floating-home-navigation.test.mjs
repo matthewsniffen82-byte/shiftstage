@@ -35,14 +35,14 @@ test("the homepage full dancer profile reserves dismissal for its X control", ()
   );
 });
 
-test("standalone dancers keep only the X while legacy venues enter the in-app profile", () => {
+test("standalone dancers keep only the X with an active Now fallback while legacy venues enter the in-app profile", () => {
   assert.doesNotMatch(
     dancerPage,
     /FloatingProfileHomeLink/,
   );
   assert.match(
     dancerPage,
-    /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/,
+    /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}&view=tonight`\}/,
   );
   assert.match(
     dancerPage,

@@ -114,11 +114,23 @@ test("the homepage starts neutral and discovery feeds open only after a destinat
   assert.match(homeSource, /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
   assert.match(
     homeSource,
-    /function returnToHomeDiscoveryMain\(\) \{[\s\S]*?deactivateHomeTvFeed\(\);[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?deactivateHomeDiscoveryFeed\(\);[\s\S]*?activeTab = "tonight";[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
+    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("tonight"\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
   );
   assert.match(
     homeSource,
     /homeFeedReturnHomeBtn\?\.addEventListener\("click", returnToHomeDiscoveryMain\);[\s\S]*?brandHome\.addEventListener\("click", returnToHomeDiscoveryMain\)/,
+  );
+  assert.match(
+    homeSource,
+    /function homeDestinationFromLocation\(\) \{[\s\S]*?get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\)[\s\S]*?const initialHomeDestination = homeDestinationFromLocation\(\);[\s\S]*?const isActive = item\.dataset\.tab === initialHomeDestination;[\s\S]*?setAttribute\("aria-current", isActive \? "page" : "false"\)/,
+  );
+  assert.match(
+    homeSource,
+    /document\.querySelectorAll\("\.tab"\)\.forEach\(\(item\) => \{[\s\S]*?const isActive = item\.dataset\.tab === nextTab;[\s\S]*?classList\.toggle\("active", isActive\);[\s\S]*?setAttribute\("aria-current", isActive \? "page" : "false"\)/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /function returnToHomeDiscoveryMain\(\) \{[\s\S]*?document\.querySelectorAll\("\.tab"\)[\s\S]*?classList\.remove\("active"\)/,
   );
 });
 
