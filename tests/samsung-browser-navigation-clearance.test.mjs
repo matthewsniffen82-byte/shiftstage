@@ -10,33 +10,37 @@ const [homeSource, globalNavigation] = await Promise.all([
   ),
 ]);
 
-test("homepage navigation stays anchored to the CSS viewport in Samsung Browser", () => {
+test("Samsung Browser's native scroll-to-top control cannot cover a homepage button", () => {
   assert.match(homeSource, /const isSamsung = \/SamsungBrowser\/i\.test\(ua\)/);
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?body \{[\s\S]*?padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom\)\)/,
+    /html\.is-samsung-browser body,[\s\S]*?body\.is-samsung-browser \{[\s\S]*?padding-bottom: calc\(156px \+ env\(safe-area-inset-bottom\)\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)/,
+    /html\.is-samsung-browser\.samsung-scroll-control-visible #discoveryTabs \{[\s\S]*?bottom: calc\(78px \+ env\(safe-area-inset-bottom\)\)/,
   );
-  assert.doesNotMatch(
+  assert.match(
     homeSource,
-    /is-samsung-browser[\s\S]{0,120}(?:padding-bottom: calc\(156px|bottom: calc\(78px)/,
+    /const syncSamsungScrollClearance = \(\) => \{[\s\S]*?"samsung-scroll-control-visible",[\s\S]*?window\.scrollY > 120[\s\S]*?window\.addEventListener\("scroll", syncSamsungScrollClearance, \{ passive: true \}\)/,
   );
 });
 
-test("routed-page navigation uses the same viewport-safe bottom offset", () => {
-  assert.doesNotMatch(
+test("Samsung Browser's native scroll-to-top control cannot cover a routed-page button", () => {
+  assert.match(
     globalNavigation,
-    /SamsungBrowser|is-samsung-browser/,
+    /const isSamsungBrowser = \/SamsungBrowser\/i\.test\([\s\S]*?window\.navigator\.userAgent,[\s\S]*?document\.documentElement\.classList\.add\("is-samsung-browser"\)[\s\S]*?document\.body\.classList\.add\("is-samsung-browser"\)/,
   );
   assert.match(
     globalNavigation,
-    /body \{[\s\S]*?padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom\)\) !important/,
+    /html\.is-samsung-browser body \{[\s\S]*?padding-bottom: calc\(156px \+ env\(safe-area-inset-bottom\)\) !important/,
   );
   assert.match(
     globalNavigation,
-    /\.global-mobile-bottom-nav \{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)/,
+    /html\.is-samsung-browser\.samsung-scroll-control-visible[\s\S]*?\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(78px \+ env\(safe-area-inset-bottom\)\)/,
+  );
+  assert.match(
+    globalNavigation,
+    /const syncSamsungScrollClearance = \(\) => \{[\s\S]*?"samsung-scroll-control-visible",[\s\S]*?isSamsungBrowser && window\.scrollY > 120[\s\S]*?window\.addEventListener\("scroll", syncSamsungScrollClearance,[\s\S]*?passive: true/,
   );
 });
