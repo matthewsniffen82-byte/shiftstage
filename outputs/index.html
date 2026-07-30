@@ -37932,9 +37932,8 @@
     function venueCard(venue) {
       const details = venueDetails(venue, citySelect.value);
       const initials = venue.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-      const venueHref = venue.slug ? `/venues/${venue.slug}` : `#venue-${slugify(venue.name)}`;
       return `
-        <a class="card venue venue-card" href="${venueHref}" data-venue="${venue.name}" aria-label="${venue.name} venue details">
+        <article class="card venue venue-card" aria-label="${venue.name} venue details">
           <div class="venue-art" data-initials="${initials}"></div>
           <div class="profile-body">
             <div class="row">
@@ -37949,7 +37948,7 @@
               <span class="pill venue-shift-pill">${venue.shifts} posted shifts</span>
             </div>
           </div>
-        </a>
+        </article>
       `;
     }
 
@@ -42882,7 +42881,6 @@
         <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${safeName}, ${escapeHtml(workingLabel)}" style="--venue-accent:${accent}">
           <div class="home-venue-discovery-art" aria-hidden="true"><span>${escapeHtml(initials)}</span></div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
-          <a class="home-discovery-feed-open-profile" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile"></a>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
           <div class="home-discovery-feed-copy">
             <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
@@ -43767,12 +43765,6 @@
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-        return;
-      }
-      const venue = event.target.closest(".venue-card");
-      if (venue) {
-        event.preventDefault();
-        openVenueFromName(venue.dataset.venue);
         return;
       }
       const venueShift = event.target.closest(".venue-shift-row");
@@ -45158,13 +45150,6 @@
         event.stopPropagation();
         closeDashboard();
         openVenueFromName(cardVenueLink.dataset.cardVenue);
-        return;
-      }
-      const venue = event.target.closest(".venue-card");
-      if (venue) {
-        event.preventDefault();
-        closeDashboard();
-        openVenueFromName(venue.dataset.venue);
         return;
       }
       const card = event.target.closest(".dancer-card");

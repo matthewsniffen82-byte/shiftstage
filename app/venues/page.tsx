@@ -41,12 +41,12 @@ export default async function VenuesPage({ searchParams }: VenuesPageProps) {
       <section className="venue-grid" aria-label="Venues">
         {venues.map((venue) => (
           <article className="venue-card" key={venue.id}>
-            <Link className="venue-card-main" href={`/venues/${venue.slug}`}>
+            <div className="venue-card-main">
               <span className="venue-mark">{initials(venue.name)}</span>
               <strong>{venue.name}</strong>
               <small>{venue.address || `${venue.city}${venue.state ? `, ${venue.state}` : ""}`}</small>
               {venue.hoursLabel ? <em>{venue.hoursLabel}</em> : null}
-            </Link>
+            </div>
             {venue.activeDeal ? (
               <Link className="venue-card-deal" href={`/venues/${venue.slug}#club-deal`}>
                 <span>Club Deal</span>

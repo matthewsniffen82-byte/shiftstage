@@ -195,10 +195,15 @@ test("venue swipe cards use production venue, schedule, revenue, and customer ac
     homeSource,
     /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?venue\.qrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?sourceType: "venue_page"[\s\S]*?data-deal-pass/,
   );
+  const venueSlide = homeSource.match(
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
   assert.match(
-    homeSource,
-    /home-discovery-feed-open-profile[\s\S]*?href="\$\{venueHref\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"[\s\S]*?venue-directions-btn/,
+    venueSlide,
+    /home-discovery-feed-profile-button" href="\$\{venueHref\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"/,
   );
+  assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
     /const followVenueButton = event\.target\.closest\("\[data-venue-follow\]"\)[\s\S]*?requireCustomerAccountForProfileAction\(followVenueButton\)[\s\S]*?await postAuthenticatedJson\("\/api\/customer\/venue-follows"/,
