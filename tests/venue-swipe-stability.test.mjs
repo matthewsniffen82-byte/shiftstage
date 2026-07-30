@@ -4,53 +4,39 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("venue discovery tracks mobile browser height changes and settles repeated swipes", () => {
+test("venue discovery uses inline one-column cards with visible continuation", () => {
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed \{[\s\S]*?display: block !important;[\s\S]*?grid-template-columns: none !important;[\s\S]*?scroll-snap-type: y mandatory;/,
+    /#results\.home-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 16px !important;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?-webkit-overflow-scrolling: touch;/,
+    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\) !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?scroll-snap-align: none !important;/,
   );
   assert.match(
     homeSource,
-    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);/,
+    /function renderHomeDiscoveryFeed\(city, items, options = \{\}\) \{[\s\S]*?results\.classList\.remove\("card-grid", "home-dancer-grid", "venue-card-grid"\);[\s\S]*?results\.classList\.add\("home-discovery-feed"\);[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
   );
   assert.match(
     homeSource,
-    /let homeDiscoveryFeedViewportWidth = 0;[\s\S]*?let homeDiscoveryFeedViewportHeight = 0;[\s\S]*?let homeSnapFeedSettleTimer = 0;/,
+    /function focusHomeResults\(\) \{[\s\S]*?results\.scrollIntoView\(\{ block: "start", behavior: "auto" \}\);/,
   );
+  assert.match(
+    homeSource,
+    /root: null,[\s\S]*?rootMargin: "-72px 0px -88px"[\s\S]*?threshold: \[\.35, \.55, \.75\]/,
+  );
+  assert.doesNotMatch(homeSource, /home-discovery-feed-locked/);
+  assert.doesNotMatch(homeSource, /syncHomeDiscoveryFeedViewport|lockHomeDiscoveryFeedViewport/);
 
-  const viewportSync =
+  const snapSettler =
     homeSource.match(
-      /function syncHomeDiscoveryFeedViewport\(\) \{[\s\S]*?(?=\n    function queueHomeDiscoveryFeedViewportSync)/,
+      /function settleHomeSnapFeed\(\) \{[\s\S]*?(?=\n    function queueHomeSnapFeedSettle)/,
     )?.[0] || "";
-  assert.match(viewportSync, /window\.visualViewport\?\.width \|\| window\.innerWidth/);
-  assert.match(viewportSync, /window\.visualViewport\?\.height \|\| window\.innerHeight/);
-  assert.match(
-    viewportSync,
-    /viewportWidth === homeDiscoveryFeedViewportWidth &&[\s\S]*?viewportHeight === homeDiscoveryFeedViewportHeight/,
-  );
-  assert.match(viewportSync, /const activeSlide = results\.querySelector/);
-  assert.match(viewportSync, /homeDiscoveryFeedViewportHeight = viewportHeight/);
-  assert.match(viewportSync, /results\.scrollTo\(\{ top: activeIndex \* viewportHeight, left: 0, behavior: "auto" \}\)/);
-  assert.match(
-    homeSource,
-    /function unlockHomeDiscoveryFeedViewport\(\)[\s\S]*?homeDiscoveryFeedViewportWidth = 0;[\s\S]*?homeDiscoveryFeedViewportHeight = 0;/,
-  );
-
-  assert.match(
-    homeSource,
-    /function settleHomeSnapFeed\(\)[\s\S]*?Math\.round\(results\.scrollTop \/ viewportHeight\)[\s\S]*?Math\.abs\(results\.scrollTop - targetTop\) > 1[\s\S]*?behavior: "auto"/,
-  );
-  assert.match(
-    homeSource,
-    /results\.addEventListener\("scroll", queueHomeSnapFeedSettle[\s\S]*?results\.addEventListener\("scrollend", settleHomeSnapFeed/,
-  );
+  assert.match(snapSettler, /results\.classList\.contains\("home-tv-feed"\)/);
+  assert.doesNotMatch(snapSettler, /home-discovery-feed|activateHomeDiscoveryFeedItem/);
 });
 
-test("unchanged live venue refreshes reuse the current cards and snap position", () => {
+test("unchanged live venue refreshes reuse the current cards and reading position", () => {
   const contentKey =
     homeSource.match(
       /function homeDiscoveryFeedContentKey\(city, items\) \{[\s\S]*?(?=\n    function renderHomeDiscoveryFeed)/,

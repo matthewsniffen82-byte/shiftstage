@@ -92,7 +92,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /body\.home-tv-feed-locked \.home-feed-return-home,[\s\S]*?body\.home-discovery-feed-locked \.home-feed-return-home \{[\s\S]*?display: grid/,
+    /body\.home-tv-feed-locked \.home-feed-return-home \{[\s\S]*?display: grid/,
   );
   assert.match(
     homeSource,
@@ -118,18 +118,26 @@ test("the homepage starts neutral and discovery feeds open only after a destinat
   );
 });
 
-test("Now and Dancers share one responsive grid while Venues keeps its full-screen swipe experience", () => {
+test("Now, Dancers, and Venues use natural one-column browsing on phones", () => {
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important[\s\S]*?@media \(min-width: 680px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 1100px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/,
+    /#results\.home-dancer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?@media \(min-width: 680px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 900px\) \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 1100px\) \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/,
   );
   assert.match(
     homeSource,
-    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\)/,
+    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-photo \{[\s\S]*?aspect-ratio: 1 \/ 1;/,
   );
   assert.match(
     homeSource,
-    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*activeTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?aspect-ratio: auto !important;/,
+  );
+  assert.match(
+    homeSource,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesInlineLayout\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*activeTab === "venues" &&\s*homeDiscoveryFeedUsesInlineLayout\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
   );
   assert.match(
     homeSource,
@@ -141,34 +149,23 @@ test("Now and Dancers share one responsive grid while Venues keeps its full-scre
   );
 });
 
-test("Venues uses a horizontal one-and-a-peek mobile carousel", () => {
+test("Venues uses natural one-column cards with a visible next-card continuation", () => {
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: flex !important[\s\S]*?overflow-x: auto !important[\s\S]*?overflow-y: hidden !important[\s\S]*?scroll-snap-type: x mandatory[\s\S]*?touch-action: pan-x/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?overflow: visible !important[\s\S]*?scroll-snap-type: none[\s\S]*?touch-action: pan-y/,
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: min\(82vw, 410px\) !important[\s\S]*?flex: 0 0 min\(82vw, 410px\)[\s\S]*?scroll-snap-align: start/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\) !important[\s\S]*?scroll-snap-align: none !important/,
   );
   assert.match(
     homeSource,
-    /const isVenueFeed = results\.classList\.contains\("home-venue-discovery-feed"\)[\s\S]*?slide\.offsetLeft - results\.scrollLeft/,
+    /#results\.home-discovery-feed \{[\s\S]*?position: relative !important[\s\S]*?height: auto !important[\s\S]*?scroll-margin-top: 72px/,
   );
+  assert.doesNotMatch(homeSource, /home-discovery-feed-locked|homeDiscoveryFeedPageLockY/);
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed \{[\s\S]*?position: fixed !important[\s\S]*?inset: 0 !important[\s\S]*?width: 100vw !important[\s\S]*?height: var\(--home-discovery-feed-height, 100dvh\) !important/,
-  );
-  assert.match(
-    homeSource,
-    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: 100% !important[\s\S]*?min-height: 100% !important[\s\S]*?aspect-ratio: auto !important/,
-  );
-  assert.match(
-    homeSource,
-    /html\.home-discovery-feed-locked,[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?overflow: hidden !important[\s\S]*?body\.home-discovery-feed-locked \{[\s\S]*?position: fixed !important/,
-  );
-  assert.match(
-    homeSource,
-    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesInlineLayout\(\)[\s\S]*?render\(\)[\s\S]*?focusHomeResults/,
   );
   assert.match(
     homeSource,
@@ -176,15 +173,11 @@ test("Venues uses a horizontal one-and-a-peek mobile carousel", () => {
   );
   assert.match(
     homeSource,
-    /new IntersectionObserver\([\s\S]*?activateHomeDiscoveryFeedItem/,
+    /root: null,[\s\S]*?rootMargin: "-72px 0px -88px"[\s\S]*?activateHomeDiscoveryFeedItem/,
   );
   assert.match(
     homeSource,
     /homeDiscoveryFeedPositions\.set\(homeDiscoveryFeedPositionKey\(\), itemKey\)/,
-  );
-  assert.match(
-    homeSource,
-    /const usesDiscoveryFeed =\s*homeDiscoveryFeedOpen &&\s*activeTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\);\s*if \(usesDiscoveryFeed\) \{\s*renderHomeDiscoveryFeed/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -192,7 +185,7 @@ test("Venues uses a horizontal one-and-a-peek mobile carousel", () => {
   );
   assert.match(
     homeSource,
-    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"venue profiles"[\s\S]*?"Swipe left or right" : "Swipe vertically"/,
+    /const isVenueFeed = activeTab === "venues";[\s\S]*?classList\.toggle\("home-venue-discovery-feed", isVenueFeed\)[\s\S]*?"venue profiles"[\s\S]*?`Scroll through \$\{discoveryLabel\} in \$\{city\}`/,
   );
   assert.match(
     homeSource,
@@ -201,14 +194,14 @@ test("Venues uses a horizontal one-and-a-peek mobile carousel", () => {
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
-test("every mobile snap feed keeps a fixed slide size and settles on exact viewport boundaries", () => {
+test("TV remains the only snap feed while discovery cards use natural page scrolling", () => {
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?-webkit-overflow-scrolling: touch;[\s\S]*?scrollbar-width: none;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?-webkit-overflow-scrolling: touch;/,
+    /#results\.home-discovery-feed \{[\s\S]*?display: grid[\s\S]*?overflow: visible[\s\S]*?scroll-snap-type: none[\s\S]*?scroll-margin-top: 72px/,
   );
   assert.match(
     homeSource,
@@ -216,27 +209,27 @@ test("every mobile snap feed keeps a fixed slide size and settles on exact viewp
   );
   assert.match(
     homeSource,
-    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: 100%;[\s\S]*?min-height: 100%;[\s\S]*?max-height: 100%;[\s\S]*?contain: layout paint style;/,
+    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\);[\s\S]*?min-height: 460px;[\s\S]*?max-height: 580px;[\s\S]*?contain: layout paint style;/,
   );
   assert.match(
     homeSource,
     /function syncHomeTvFeedViewport\(\)[\s\S]*?viewportWidth === homeTvFeedViewportWidth[\s\S]*?viewportHeight === homeTvFeedViewportHeight[\s\S]*?activeIndex \* viewportHeight/,
   );
-  assert.match(
-    homeSource,
-    /function syncHomeDiscoveryFeedViewport\(\)[\s\S]*?viewportWidth === homeDiscoveryFeedViewportWidth[\s\S]*?viewportHeight === homeDiscoveryFeedViewportHeight[\s\S]*?activeIndex \* viewportHeight/,
-  );
-  assert.match(
-    homeSource,
-    /function settleHomeSnapFeed\(\)[\s\S]*?Math\.round\(results\.scrollTop \/ viewportHeight\)[\s\S]*?targetTop = index \* viewportHeight[\s\S]*?behavior: "auto"/,
-  );
+  assert.doesNotMatch(homeSource, /function syncHomeDiscoveryFeedViewport\(\)/);
+  const snapSettler =
+    homeSource.match(
+      /function settleHomeSnapFeed\(\) \{[\s\S]*?(?=\n    function queueHomeSnapFeedSettle)/,
+    )?.[0] || "";
+  assert.match(snapSettler, /Math\.round\(results\.scrollTop \/ viewportHeight\)/);
+  assert.match(snapSettler, /targetTop = index \* viewportHeight/);
+  assert.doesNotMatch(snapSettler, /home-discovery-feed|activateHomeDiscoveryFeedItem/);
   assert.match(
     homeSource,
     /results\.addEventListener\("scroll", queueHomeSnapFeedSettle[\s\S]*?results\.addEventListener\("scrollend", settleHomeSnapFeed/,
   );
 });
 
-test("venue swipe cards use production venue, schedule, revenue, and customer action data", () => {
+test("venue inline cards use production venue, schedule, revenue, and customer action data", () => {
   assert.match(
     homeSource,
     /function dedupePublicVenues\(venues\)[\s\S]*?publicVenueRecordScore\(venue\) > publicVenueRecordScore\(current\)[\s\S]*?return \[\.\.\.uniqueVenues\.values\(\)\]/,
