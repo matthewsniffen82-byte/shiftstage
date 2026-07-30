@@ -97,7 +97,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("Now, Dancers, and Venues open as full-screen mobile swipe feeds", () => {
+test("Now and Dancers open card directories while Venues keeps its mobile swipe feed", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-discovery-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
@@ -116,7 +116,19 @@ test("Now, Dancers, and Venues open as full-screen mobile swipe feeds", () => {
   );
   assert.match(
     homeSource,
-    /homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\)[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeDiscoveryFeed/,
+    /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesLockedViewport\(\)[\s\S]*?render\(\);/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /homeDiscoveryFeedOpen =\s*\["tonight", "dancers", "venues"\]\.includes\(nextTab\)/,
+  );
+  assert.match(
+    homeSource,
+    /results\.classList\.toggle\("card-grid", activeTab !== "venues"\)[\s\S]*?profileCard\(item, index, \{ tonight: activeTab === "tonight", trendingContext: activeTab === "trending", feedActions: true \}\)/,
+  );
+  assert.match(
+    homeSource,
+    /const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
   );
   assert.match(
     homeSource,
@@ -136,7 +148,7 @@ test("Now, Dancers, and Venues open as full-screen mobile swipe feeds", () => {
   );
   assert.match(
     homeSource,
-    /const usesDiscoveryFeed =[\s\S]*?homeDiscoveryFeedOpen[\s\S]*?\["tonight", "dancers", "venues"\]\.includes\(activeTab\)[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\) &&[\s\S]*?\(loadingLiveProfiles \|\| allItems\.length > 0\)/,
+    /const usesDiscoveryFeed =[\s\S]*?homeDiscoveryFeedOpen[\s\S]*?activeTab === "venues"[\s\S]*?homeDiscoveryFeedUsesLockedViewport\(\) &&[\s\S]*?\(loadingLiveProfiles \|\| allItems\.length > 0\)/,
   );
   assert.match(
     homeSource,
@@ -197,47 +209,6 @@ test("venue swipe cards use production venue, schedule, revenue, and customer ac
   assert.match(
     homeSource,
     /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-deal-action \{[\s\S]*?linear-gradient/,
-  );
-});
-
-test("discovery swipe cards expose real live QR and engagement actions without hiding the full profile", () => {
-  assert.match(
-    homeSource,
-    /function homeDiscoveryFeedSlide\(profile, index, total, tab\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?is-photo-unavailable/,
-  );
-  assert.match(
-    homeSource,
-    /home-discovery-feed-open-profile[\s\S]*?liveQrMarkup[\s\S]*?home-discovery-feed-profile-button[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"[\s\S]*?goingMarkup/,
-  );
-  assert.match(
-    homeSource,
-    /function homeDiscoveryFeedLiveQrMarkup\(profile\) \{[\s\S]*?!isWorkingTonight\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?profile\.venueQrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?data-deal-pass/,
-  );
-  assert.match(
-    homeSource,
-    /const canMarkGoing = Boolean\(isLive && profile\.shiftId\)[\s\S]*?data-feed-action="going"[\s\S]*?data-shift-state="tonight"/,
-  );
-  assert.match(
-    homeSource,
-    /const goingCountMarkup = isLive[\s\S]*?tonightInterestCount\(profile\)\.toLocaleString\(\)\} going/,
-  );
-  assert.match(
-    homeSource,
-    /data-feed-live-qr[\s\S]*?recordVenuePageEvent\(\{[\s\S]*?eventType: "qr_impression"[\s\S]*?"venue_page" : "dancer_profile"/,
-  );
-  assert.match(
-    homeSource,
-    /tab === "tonight" && venue\?\.address[\s\S]*?venue-directions-btn[\s\S]*?maps\.google\.com/,
-  );
-  assert.match(homeSource, /profileLocationStatusBadge\(profile\)/);
-  assert.match(homeSource, /profileCardDistanceLabel\(profile\)/);
-  assert.match(
-    homeSource,
-    /\.home-discovery-feed-actions \.home-discovery-feed-live-qr \{[\s\S]*?border-color: rgba\(77,236,157,.72\)[\s\S]*?linear-gradient/,
-  );
-  assert.match(
-    homeSource,
-    /#profileBackdrop \.profile-modal \{[\s\S]*?overflow-y: auto !important[\s\S]*?touch-action: pan-y !important/,
   );
 });
 

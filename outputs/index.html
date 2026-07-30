@@ -43047,7 +43047,7 @@
 
     function handleHomeDiscoveryFeedViewportChange() {
       if (!homeDiscoveryFeedOpen) return;
-      if (!["tonight", "dancers", "venues"].includes(activeTab) || !homeDiscoveryFeedUsesLockedViewport()) {
+      if (activeTab !== "venues" || !homeDiscoveryFeedUsesLockedViewport()) {
         homeDiscoveryFeedOpen = false;
         deactivateHomeDiscoveryFeed();
         render();
@@ -43113,7 +43113,7 @@
           : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
       const usesDiscoveryFeed =
         homeDiscoveryFeedOpen &&
-        ["tonight", "dancers", "venues"].includes(activeTab) &&
+        activeTab === "venues" &&
         homeDiscoveryFeedUsesLockedViewport() &&
         (loadingLiveProfiles || allItems.length > 0);
       if (usesDiscoveryFeed) {
@@ -45869,7 +45869,7 @@
         }
         activeTab = nextTab;
         homeDiscoveryFeedOpen =
-          ["tonight", "dancers", "venues"].includes(nextTab) &&
+          nextTab === "venues" &&
           homeDiscoveryFeedUsesLockedViewport();
         tonightExpanded = false;
         dancersExpanded = false;
