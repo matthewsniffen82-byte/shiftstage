@@ -5,15 +5,17 @@ import test from "node:test";
 const profileRoute = await readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8");
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("legacy venue URLs resolve real venues and enter the canonical Mydancr experience", () => {
-  assert.match(profileRoute, /getVenueProfile\(createAdminSupabaseClient\(\), slug\)/);
+test("venue URLs load the focused Mydancr venue profile with real production data", () => {
+  assert.match(profileRoute, /getVenueProfile\(client, slug\)/);
   assert.match(profileRoute, /if \(!venue\) notFound\(\)/);
-  assert.match(
-    profileRoute,
-    /new URLSearchParams\(\{[\s\S]*?city: venue\.city,[\s\S]*?venue: venue\.slug,[\s\S]*?\}\)/,
-  );
-  assert.match(profileRoute, /permanentRedirect\(`\/\?\$\{query\.toString\(\)\}`\)/);
-  assert.doesNotMatch(profileRoute, /VenueProfileActions|VenueProfile\.module|stickyCta|<main/);
+  assert.match(profileRoute, /<PublicProfileHeader/);
+  assert.match(profileRoute, /<FloatingProfileHomeLink city=\{venue\.city\} profileType="venue" \/>/);
+  assert.match(profileRoute, /<VenueProfileActions venueId=\{venue\.id\} venueName=\{venue\.name\} \/>/);
+  assert.match(profileRoute, /\.from\("shifts"\)/);
+  assert.match(profileRoute, /getActiveClubDealForVenue\(client, venue\.id\)/);
+  assert.match(profileRoute, /getPublicMyDancrTvFeed\(client,/);
+  assert.match(profileRoute, /\/api\/public\/maps\/embed\?address=/);
+  assert.doesNotMatch(profileRoute, /permanentRedirect|stickyCta/);
 });
 
 test("the canonical in-app venue page keeps live data, planning details, and production actions together", () => {
@@ -37,10 +39,10 @@ test("the canonical in-app venue page keeps live data, planning details, and pro
   assert.match(venueDetail, /Other \$\{city\} venues/);
 });
 
-test("venue entry points use one city-aware destination instead of competing detail pages", () => {
+test("venue entry points open the dedicated venue profile route", () => {
   assert.match(
     liveApp,
-    /function venueExperienceHref\(venue, city = selectedCity\(\)\)[\s\S]*?new URLSearchParams\(\{[\s\S]*?city: venueCity,[\s\S]*?venue: venueSlug/,
+    /function venueExperienceHref\(venue, city = selectedCity\(\)\)[\s\S]*?return `\/venues\/\$\{encodeURIComponent\(venueSlug\)\}`/,
   );
   assert.match(
     liveApp,

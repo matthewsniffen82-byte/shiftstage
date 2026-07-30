@@ -308,8 +308,8 @@ test("approved videos appear on dancer pages while venue URLs preserve the in-ap
   assert.match(tvPage, /dancerId,[\s\S]*?initialDancerId=\{dancerId \|\| ""\}/);
   assert.match(feedClient, /if \(initialDancerId\) params\.set\("dancer", initialDancerId\)/);
   assert.match(feedClient, /if \(initialDancerId\) url\.searchParams\.set\("dancer", initialDancerId\)/);
-  assert.match(venuePage, /new URLSearchParams\(\{[\s\S]*?city: venue\.city[\s\S]*?venue: venue\.slug/);
-  assert.match(venuePage, /permanentRedirect/);
+  assert.match(venuePage, /getPublicMyDancrTvFeed\(client, \{[\s\S]*?city: venue\.city,[\s\S]*?venueId: venue\.id/);
+  assert.match(venuePage, /<TvVideoStrip title=\{`Tonight at \$\{venue\.name\}`\} videos=\{tvVideos\} \/>/);
   assert.match(liveApp, /function venueDetailPage\(venue\)/);
-  assert.doesNotMatch(venuePage, /TvVideoStrip|watchAllHref|href=\{`\/tv/);
+  assert.doesNotMatch(venuePage, /permanentRedirect|watchAllHref|href=\{`\/tv/);
 });

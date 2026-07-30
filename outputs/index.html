@@ -36244,12 +36244,11 @@
 
     function venueExperienceHref(venue, city = selectedCity()) {
       const venueSlug = String(venue?.slug || slugify(venue?.name || "")).trim();
-      const venueCity = String(city || selectedCity()).trim() || "Las Vegas";
-      const query = new URLSearchParams({
-        city: venueCity,
-        venue: venueSlug
-      });
-      return `/?${query.toString()}`;
+      if (!venueSlug) {
+        const venueCity = String(city || selectedCity()).trim() || "Las Vegas";
+        return `/?city=${encodeURIComponent(venueCity)}`;
+      }
+      return `/venues/${encodeURIComponent(venueSlug)}`;
     }
 
     function publishedVenueQrPass({
