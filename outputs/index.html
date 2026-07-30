@@ -31135,6 +31135,7 @@
     let homeSnapFeedSettleTimer = 0;
     let homeDiscoveryFeedQrPromptTimer = 0;
     let homeDiscoveryFeedQrPromptKey = "";
+    let homeDiscoveryFeedRenderKey = "";
     const homeDiscoveryFeedPositions = new Map();
     const homeDiscoveryFeedQrPromptsShown = new Set();
     const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
@@ -43070,6 +43071,7 @@
       resetHomeDiscoveryFeedQrPrompt();
       homeDiscoveryFeedObserver?.disconnect();
       homeDiscoveryFeedObserver = null;
+      homeDiscoveryFeedRenderKey = "";
       results.classList.remove("home-discovery-feed");
       results.removeAttribute("aria-label");
       unlockHomeDiscoveryFeedViewport();
@@ -43318,9 +43320,24 @@
     }
 
     function renderHomeDiscoveryFeedMessage(message) {
+      homeDiscoveryFeedRenderKey = "";
       results.innerHTML = `
         <div class="locked">${escapeHtml(message)}</div>
       `;
+    }
+
+    function homeDiscoveryFeedContentKey(city, items) {
+      return JSON.stringify({
+        city,
+        tab: activeTab,
+        venueFilter: selectedVenueFilter(),
+        items,
+        venueDancers: activeTab === "venues" ? markets[city]?.dancers || [] : [],
+        followedProfiles: followedByCity[city] || [],
+        followedVenues: followedVenuesByCity[city] || [],
+        notifications: notifiedByCity[city] || [],
+        going: goingTonightSavedByProfile
+      });
     }
 
     function renderHomeDiscoveryFeed(city, items, options = {}) {
@@ -43354,6 +43371,14 @@
       const positionKey = homeDiscoveryFeedPositionKey(city, activeTab);
       const storedItem = homeDiscoveryFeedPositions.get(positionKey) || "";
       const restoreIndex = Math.max(0, items.findIndex((item) => item.name === storedItem));
+      const nextRenderKey = homeDiscoveryFeedContentKey(city, items);
+      if (
+        homeDiscoveryFeedRenderKey === nextRenderKey &&
+        results.querySelector(".home-discovery-feed-slide")
+      ) {
+        return;
+      }
+      homeDiscoveryFeedRenderKey = nextRenderKey;
       results.innerHTML = `
         ${items.map((item, index) => (
           activeTab === "venues"
