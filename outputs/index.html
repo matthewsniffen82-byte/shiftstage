@@ -349,6 +349,31 @@
       background: rgba(52,34,78,.92);
     }
 
+    .utility-menu-dashboard {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-color: rgba(167,139,250,.88);
+      color: #fff;
+      background: linear-gradient(135deg, rgba(124,58,237,.98), rgba(8,145,178,.94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 10px 24px rgba(124,58,237,.28), 0 0 20px rgba(34,199,255,.13);
+    }
+
+    .utility-menu-dashboard::after {
+      content: "›";
+      color: #dffbff;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .utility-menu-dashboard:hover {
+      border-color: #c4b5fd;
+      background: linear-gradient(135deg, #7c3aed, #0891b2);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 12px 28px rgba(124,58,237,.34), 0 0 24px rgba(34,199,255,.18);
+    }
+
     .utility-menu-legal {
       display: grid;
       gap: 6px;
@@ -375,6 +400,32 @@
     .utility-menu-legal .admin-utility-menu-item {
       color: rgba(168,161,186,.82);
       background: rgba(7,7,10,.64);
+    }
+
+    .utility-menu-session-end {
+      display: grid;
+      margin-top: 2px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(251,113,133,.18);
+    }
+
+    .utility-menu-session-end[hidden] {
+      display: none;
+    }
+
+    .utility-menu-logout {
+      min-height: 42px;
+      border-color: rgba(251,113,133,.42);
+      color: #fecdd3;
+      background: rgba(69,10,24,.34);
+      box-shadow: inset 0 0 14px rgba(251,113,133,.035);
+    }
+
+    .utility-menu-logout:hover {
+      border-color: rgba(251,113,133,.7);
+      color: #fff1f2;
+      background: rgba(100,18,38,.52);
+      box-shadow: inset 0 0 16px rgba(251,113,133,.07);
     }
 
     @keyframes utilityMenuIn {
@@ -27846,8 +27897,7 @@
               <button class="utility-menu-item" id="loginCustomerOption" type="button">Customer</button>
               <button class="utility-menu-item" id="loginDancerOption" type="button">Dancer</button>
               <button class="utility-menu-item" id="loginVenueOption" type="button">Venue</button>
-              <button class="utility-menu-item" id="dashboardBtn" type="button" hidden>Dashboard</button>
-              <button class="utility-menu-item" id="logoutBtn" type="button" hidden>Logout</button>
+              <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
               <nav class="utility-menu-legal" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Legal &amp; support</span>
                 <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
@@ -27857,6 +27907,9 @@
                 <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
                 <button class="utility-menu-item admin-utility-menu-item" id="adminBtn" type="button">Platform admin</button>
               </nav>
+              <div class="utility-menu-session-end" id="sessionMenuEnd" hidden>
+                <button class="utility-menu-item utility-menu-logout" id="logoutBtn" type="button">Logout</button>
+              </div>
             </div>
             <button class="account-tooltip" id="accountTooltip" type="button" hidden>Manage your account here.</button>
           </div>
@@ -30852,6 +30905,7 @@
     const accountBtn = document.getElementById("accountBtn");
     const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
+    const sessionMenuEnd = document.getElementById("sessionMenuEnd");
     const adminBtn = document.getElementById("adminBtn");
     const contactAdminBtn = document.getElementById("contactAdminBtn");
     const moreMenuPanel = document.getElementById("moreMenuPanel");
@@ -39044,7 +39098,7 @@
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
       const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Customer";
       dashboardBtn.hidden = !loggedIn;
-      logoutBtn.hidden = !loggedIn;
+      sessionMenuEnd.hidden = !loggedIn;
       document.getElementById("loginCustomerOption").hidden = loggedIn;
       document.getElementById("loginDancerOption").hidden = loggedIn;
       document.getElementById("loginVenueOption").hidden = loggedIn;

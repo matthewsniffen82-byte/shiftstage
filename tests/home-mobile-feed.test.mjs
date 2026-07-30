@@ -299,12 +299,28 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
     /class="utility-menu-legal"[\s\S]*?data-legal-page="termsPage"[\s\S]*?data-legal-page="privacyPage"[\s\S]*?data-legal-page="guidelinesPage"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
   );
   assert.match(
+    accountMenu,
+    /class="utility-menu-item utility-menu-dashboard" id="dashboardBtn"[\s\S]*?<nav class="utility-menu-legal"[\s\S]*?<div class="utility-menu-session-end" id="sessionMenuEnd" hidden>[\s\S]*?class="utility-menu-item utility-menu-logout" id="logoutBtn"/,
+  );
+  assert.match(
     homeSource,
     /\.utility-menu-panel \{[\s\S]*?max-height: calc\(100dvh - 84px\)[\s\S]*?overflow-y: auto/,
   );
   assert.match(
     homeSource,
     /@media \(max-width: 720px\)[\s\S]*?header \{[\s\S]*?z-index: 120 !important[\s\S]*?header \.utility-menu-panel \{[\s\S]*?max-height: calc\(100dvh - 150px\) !important/,
+  );
+  assert.match(
+    homeSource,
+    /\.utility-menu-dashboard \{[\s\S]*?linear-gradient\(135deg, rgba\(124,58,237,.98\), rgba\(8,145,178,.94\)\)[\s\S]*?box-shadow:/,
+  );
+  assert.match(
+    homeSource,
+    /\.utility-menu-session-end \{[\s\S]*?border-top: 1px solid rgba\(251,113,133,.18\)[\s\S]*?\.utility-menu-logout \{[\s\S]*?color: #fecdd3[\s\S]*?background: rgba\(69,10,24,.34\)/,
+  );
+  assert.match(
+    homeSource,
+    /dashboardBtn\.hidden = !loggedIn;[\s\S]*?sessionMenuEnd\.hidden = !loggedIn;/,
   );
 });
 
