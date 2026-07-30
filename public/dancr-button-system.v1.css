@@ -1,0 +1,398 @@
+.dancr-button-system {
+  --dancr-action-text: #f8fbff;
+  --dancr-action-muted: #d8d2e7;
+  --dancr-action-border: rgba(255, 255, 255, 0.16);
+  --dancr-action-border-strong: rgba(34, 199, 255, 0.42);
+  --dancr-action-surface: rgba(10, 9, 17, 0.9);
+  --dancr-action-violet: #8b5cf6;
+  --dancr-action-cyan: #22c7ff;
+  --dancr-action-pink: #ec4899;
+  --dancr-action-danger: #ff637c;
+  --dancr-action-warning: #f6c453;
+  --dancr-action-radius: 15px;
+  --dancr-action-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.38),
+    0 0 18px rgba(124, 58, 237, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --dancr-action-shadow-hover:
+    0 15px 34px rgba(0, 0, 0, 0.46),
+    0 0 22px rgba(124, 58, 237, 0.2),
+    0 0 14px rgba(34, 199, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13);
+}
+
+.dancr-button-system :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  [role="button"],
+  a[class*="button"],
+  a[class*="-btn"],
+  a[class$="-action"],
+  a.primary-action,
+  a.secondary-action,
+  .nav-links a,
+  .profile-status-links a,
+  .empty-state a
+) {
+  box-sizing: border-box !important;
+  border: 1px solid var(--dancr-action-border) !important;
+  border-radius: var(--dancr-action-radius) !important;
+  color: var(--dancr-action-text) !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.09),
+      rgba(255, 255, 255, 0.018) 42%,
+      rgba(255, 255, 255, 0)
+    ),
+    radial-gradient(
+      circle at 20% -25%,
+      rgba(34, 199, 255, 0.12),
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 78% -38%,
+      rgba(139, 92, 246, 0.22),
+      transparent 58%
+    ),
+    var(--dancr-action-surface) !important;
+  box-shadow: var(--dancr-action-shadow) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.45) !important;
+  backdrop-filter: blur(18px) saturate(1.45) !important;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.005em !important;
+  text-decoration: none !important;
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.16) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease,
+    opacity 160ms ease !important;
+}
+
+.dancr-button-system :where(
+  button:not([aria-label]):not(.tv-strip-card),
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  [role="button"]:not([aria-label]),
+  a[class*="button"],
+  a[class*="-btn"],
+  a[class$="-action"],
+  a.primary-action,
+  a.secondary-action,
+  .nav-links a,
+  .profile-status-links a,
+  .empty-state a
+) {
+  min-height: 44px !important;
+}
+
+.dancr-button-system :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  [role="button"],
+  a[class*="button"],
+  a[class*="-btn"],
+  a[class$="-action"],
+  a.primary-action,
+  a.secondary-action,
+  .nav-links a,
+  .profile-status-links a,
+  .empty-state a
+):hover {
+  border-color: var(--dancr-action-border-strong) !important;
+  color: #ffffff !important;
+  box-shadow: var(--dancr-action-shadow-hover) !important;
+  filter: brightness(1.06);
+}
+
+.dancr-button-system :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  [role="button"],
+  a[class*="button"],
+  a[class*="-btn"],
+  a[class$="-action"],
+  a.primary-action,
+  a.secondary-action,
+  .nav-links a,
+  .profile-status-links a,
+  .empty-state a
+):active {
+  border-color: rgba(139, 92, 246, 0.58) !important;
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(124, 58, 237, 0.18),
+    inset 0 2px 8px rgba(0, 0, 0, 0.24) !important;
+  filter: brightness(0.96);
+}
+
+.dancr-button-system :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  [role="button"],
+  a[class*="button"],
+  a[class*="-btn"],
+  a[class$="-action"],
+  a.primary-action,
+  a.secondary-action,
+  .nav-links a,
+  .profile-status-links a,
+  .empty-state a
+):focus-visible {
+  outline: 2px solid var(--dancr-action-cyan) !important;
+  outline-offset: 3px !important;
+  border-color: rgba(34, 199, 255, 0.68) !important;
+  box-shadow:
+    0 0 0 4px rgba(34, 199, 255, 0.16),
+    0 0 24px rgba(124, 58, 237, 0.26),
+    var(--dancr-action-shadow) !important;
+}
+
+.dancr-button-system :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"]
+):disabled,
+.dancr-button-system :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"]
+)[aria-disabled="true"] {
+  opacity: 0.46 !important;
+  filter: saturate(0.55) !important;
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  cursor: not-allowed !important;
+}
+
+.dancr-button-system :where(
+  button[type="submit"],
+  input[type="submit"],
+  .submit,
+  .continue-signup,
+  .counter-submit,
+  .dmca-submit,
+  .primary-action,
+  [class*="action-primary"],
+  [class*="primary-action"],
+  [class*="save-button"],
+  [class*="save-btn"],
+  [class*="approve-button"],
+  [class*="approve-btn"]
+):not(
+  [class*="danger"],
+  [class*="delete"],
+  [class*="remove"],
+  [class*="reject"]
+) {
+  border-color: rgba(34, 199, 255, 0.62) !important;
+  color: #ffffff !important;
+  background:
+    linear-gradient(
+      132deg,
+      rgba(0, 177, 224, 0.96) 0%,
+      rgba(84, 71, 215, 0.98) 48%,
+      rgba(139, 57, 208, 0.98) 100%
+    ) !important;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.4),
+    0 0 22px rgba(34, 199, 255, 0.22),
+    0 0 26px rgba(124, 58, 237, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.34) !important;
+}
+
+.dancr-button-system :where(
+  button,
+  [role="button"],
+  a[class*="button"],
+  a[class*="-btn"],
+  a[class$="-action"]
+):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
+  border-color: rgba(34, 199, 255, 0.66) !important;
+  color: #ffffff !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.025) 45%,
+      rgba(255, 255, 255, 0)
+    ),
+    radial-gradient(
+      circle at 50% -25%,
+      rgba(34, 199, 255, 0.26),
+      transparent 58%
+    ),
+    radial-gradient(
+      circle at 45% 120%,
+      rgba(124, 58, 237, 0.4),
+      transparent 62%
+    ),
+    rgba(14, 11, 28, 0.96) !important;
+  box-shadow:
+    0 0 0 1px rgba(34, 199, 255, 0.11),
+    0 0 18px rgba(34, 199, 255, 0.2),
+    0 0 26px rgba(124, 58, 237, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  text-shadow:
+    0 0 5px rgba(255, 255, 255, 0.54),
+    0 0 11px rgba(124, 58, 237, 0.48) !important;
+}
+
+.dancr-button-system :where(
+  .danger,
+  .danger-action,
+  .danger-button,
+  .photo-delete-button,
+  .reject,
+  [class*="delete-button"],
+  [class*="delete-btn"],
+  [class*="remove-button"],
+  [class*="remove-btn"],
+  [class*="reject-button"],
+  [class*="reject-btn"],
+  [data-action*="delete"],
+  [data-action*="remove"],
+  [data-action*="reject"]
+) {
+  border-color: rgba(255, 99, 124, 0.58) !important;
+  color: #fff2f5 !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0)
+    ),
+    radial-gradient(
+      circle at 50% -30%,
+      rgba(255, 99, 124, 0.24),
+      transparent 58%
+    ),
+    rgba(42, 8, 17, 0.93) !important;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(255, 69, 100, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  text-shadow: 0 0 12px var(--dancr-action-danger) !important;
+}
+
+.dancr-button-system :where(
+  .profile-action-report,
+  [class*="report-button"],
+  [class*="report-btn"]
+) {
+  border-color: rgba(246, 196, 83, 0.48) !important;
+  color: #fff1bd !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0)
+    ),
+    radial-gradient(
+      circle at 50% -30%,
+      rgba(246, 196, 83, 0.18),
+      transparent 58%
+    ),
+    rgba(35, 25, 7, 0.9) !important;
+}
+
+.dancr-button-system :where(
+  button[class*="close"],
+  button[class*="previous"],
+  button[class*="next"],
+  button[class*="notification-button"],
+  button[class*="social-list-toggle"],
+  button[class*="sound"],
+  button[class*="nav"],
+  button[aria-label*="password" i],
+  button[aria-label*="share" i]
+) {
+  min-width: 40px !important;
+  min-height: 40px !important;
+  border-radius: 999px !important;
+}
+
+.dancr-button-system input[type="file"]::file-selector-button {
+  margin-inline-end: 10px;
+  border: 1px solid rgba(34, 199, 255, 0.42);
+  border-radius: 12px;
+  padding: 9px 12px;
+  color: #ffffff;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 144, 192, 0.96),
+      rgba(99, 67, 188, 0.96)
+    );
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.32),
+    0 0 14px rgba(34, 199, 255, 0.12);
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .dancr-button-system :where(
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="button"],
+    a[class*="-btn"],
+    a[class$="-action"],
+    a.primary-action,
+    a.secondary-action,
+    .nav-links a,
+    .profile-status-links a,
+    .empty-state a
+  ):hover {
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dancr-button-system :where(
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="button"],
+    a[class*="-btn"],
+    a[class$="-action"],
+    a.primary-action,
+    a.secondary-action,
+    .nav-links a,
+    .profile-status-links a,
+    .empty-state a
+  ) {
+    transition: none !important;
+  }
+}

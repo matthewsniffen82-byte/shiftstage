@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
+import "../public/dancr-button-system.v1.css";
 
 export const metadata: Metadata = {
   title: "mydancr",
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="dancr-button-system">
         {children}
         <GlobalMobileBottomNav />
       </body>
