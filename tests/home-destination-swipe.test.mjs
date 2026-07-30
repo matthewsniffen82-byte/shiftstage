@@ -27,21 +27,21 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
 });
 
-test("swipe navigation works from controls and open profiles without stealing local media gestures", () => {
+test("full profiles reserve horizontal swipes for their local photo and video media", () => {
   const swipeBlocker = homeSource.match(
     /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   assert.match(
     swipeBlocker,
-    /input, select, textarea,[\s\S]*?#modalImage,[\s\S]*?modal-gallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer/,
-  );
-  assert.doesNotMatch(
-    swipeBlocker,
-    /button, a|#discoveryTabs|modal-backdrop|profileBackdrop|overlay-open/,
+    /profileBackdrop\.classList\.contains\("show"\)[\s\S]*?profile-full-view-open[\s\S]*?#modalImage,[\s\S]*?#modalGallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer/,
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)[\s\S]*?closeProfileModal\(\)/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?deactivateHomeTvFeed\(\)/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\)/,
   );
   assert.match(
     homeSource,

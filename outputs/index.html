@@ -29374,8 +29374,12 @@
             display: grid;
           }
           body.profile-full-view-open .home-feed-return-home {
-            z-index: 222;
-            display: grid;
+            display: none !important;
+            pointer-events: none !important;
+          }
+          body.profile-full-view-open #discoveryTabs {
+            visibility: hidden !important;
+            pointer-events: none !important;
           }
           .home-tv-feed-copy {
             padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
@@ -44432,7 +44436,7 @@
     }
 
     function returnToHomeDiscoveryMain() {
-      if (profileBackdrop.classList.contains("show")) closeProfileModal();
+      if (profileBackdrop.classList.contains("show")) return false;
       deactivateHomeTvFeed();
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
@@ -44445,6 +44449,7 @@
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });
+      return true;
     }
 
     function homeTvFeedSchedule(item) {
@@ -45408,7 +45413,6 @@
 
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target.closest?.("#profilePhotoViewer")) return;
-      if (event.target === profileBackdrop) closeProfileModal();
       if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
     });
 
@@ -46867,7 +46871,7 @@
           closeProfilePhotoViewer();
           return;
         }
-        closeProfileModal();
+        event.preventDefault();
         return;
       }
       if (event.key === "Escape") closeUtilityMenu();
@@ -46878,9 +46882,9 @@
 
     function activateHomeDestination(nextTab) {
       if (!homeDestinationOrder.includes(nextTab)) return false;
+      if (profileBackdrop.classList.contains("show")) return false;
       deactivateHomeTvFeed();
       deactivateHomeDiscoveryFeed();
-      if (profileBackdrop.classList.contains("show")) closeProfileModal();
       if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
         selectedVenueName = null;
       }
@@ -46940,9 +46944,13 @@
 
     function homeDestinationSwipeBlocked(target) {
       if (!(target instanceof Element)) return true;
+      if (
+        profileBackdrop.classList.contains("show") ||
+        document.body.classList.contains("profile-full-view-open")
+      ) return true;
       return Boolean(target.closest(
         "input, select, textarea, [contenteditable], [role='slider'], " +
-        "#modalImage, .modal-gallery, .profile-photo-viewer, " +
+        "#modalImage, #modalGallery, .profile-photo-viewer, " +
         ".profile-tv-strip-list, .profile-tv-viewer"
       ));
     }

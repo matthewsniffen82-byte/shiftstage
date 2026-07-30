@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
-import { FloatingProfileHomeLink } from "@/app/components/FloatingProfileHomeLink";
 import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
 import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
@@ -62,7 +61,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
       key={profile.id}
     >
       <main className="public-profile-shell">
-      <FloatingProfileHomeLink city={profile.city} profileType="dancer" />
       <ProfileViewTracker dancerId={profile.id} hasSchedule={profile.upcomingShifts.length > 0} />
       <PublicProfileStyles />
       <PublicProfileHeader

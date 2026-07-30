@@ -49,14 +49,18 @@ test("homepage and Next pages share the same floating glass mobile dock", () => 
   );
 });
 
-test("homepage full profiles keep the homepage navigation usable", () => {
-  assert.doesNotMatch(
+test("full profiles hide destination navigation until the profile X is clicked", () => {
+  assert.match(
     homeSource,
-    /body\.overlay-open #discoveryTabs[\s\S]*?visibility: hidden/,
+    /body\.profile-full-view-open #discoveryTabs \{[\s\S]*?visibility: hidden !important;[\s\S]*?pointer-events: none !important;/,
   );
   assert.match(
     homeSource,
-    /tab\.addEventListener\("click", \(\) => \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\)/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;/,
+  );
+  assert.match(
+    navigationSource,
+    /const fullProfileOpen = [^\n]+dancers\|venues[^\n]+test\(pathname\);[\s\S]*?if \(fullProfileOpen\) return null;/,
   );
 });
 

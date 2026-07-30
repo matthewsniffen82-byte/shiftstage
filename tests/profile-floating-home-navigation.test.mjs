@@ -6,29 +6,16 @@ const [
   homeSource,
   dancerPage,
   venuePage,
-  floatingControl,
-  floatingStyles,
 ] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8"),
-  readFile(
-    new URL("../app/components/FloatingProfileHomeLink.tsx", import.meta.url),
-    "utf8",
-  ),
-  readFile(
-    new URL(
-      "../app/components/FloatingProfileHomeLink.module.css",
-      import.meta.url,
-    ),
-    "utf8",
-  ),
 ]);
 
-test("the homepage full dancer profile keeps the glass city-return control", () => {
+test("the homepage full dancer profile reserves dismissal for its X control", () => {
   assert.match(
     homeSource,
-    /body\.profile-full-view-open \.home-feed-return-home \{[\s\S]*?z-index: 222;[\s\S]*?display: grid;/,
+    /body\.profile-full-view-open \.home-feed-return-home \{[\s\S]*?display: none !important;[\s\S]*?pointer-events: none !important;/,
   );
   assert.match(
     homeSource,
@@ -36,31 +23,26 @@ test("the homepage full dancer profile keeps the glass city-return control", () 
   );
   assert.match(
     homeSource,
-    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);/,
+    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /if \(event\.target === profileBackdrop\) closeProfileModal\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /event\.key === "Escape" && profileBackdrop\.classList\.contains\("show"\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?return;/,
   );
 });
 
-test("standalone dancers keep the glass control while legacy venues enter the in-app profile", () => {
-  assert.match(
-    floatingControl,
-    /profileType: "dancer" \| "venue"/,
-  );
-  assert.match(
-    floatingControl,
-    /aria-label={`Return from this full \$\{profileType\} profile to the \$\{selectedCity\} city screen`}/,
-  );
-  assert.match(
-    floatingControl,
-    /href={`\/\?city=\$\{encodeURIComponent\(selectedCity\)\}`}/,
-  );
-  assert.match(floatingControl, /<svg aria-hidden="true" viewBox="0 0 24 24">/);
-  assert.match(
-    floatingStyles,
-    /@media \(max-width: 720px\)[\s\S]*?position: fixed;[\s\S]*?top: max\(12px, calc\(env\(safe-area-inset-top, 0px\) \+ 8px\)\);[\s\S]*?left: max\(12px, calc\(env\(safe-area-inset-left, 0px\) \+ 8px\)\);[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?backdrop-filter: blur\(14px\) saturate\(1\.2\);/,
+test("standalone dancers keep only the X while legacy venues enter the in-app profile", () => {
+  assert.doesNotMatch(
+    dancerPage,
+    /FloatingProfileHomeLink/,
   );
   assert.match(
     dancerPage,
-    /<FloatingProfileHomeLink city=\{profile\.city\} profileType="dancer" \/>/,
+    /<ProfileCloseButton[\s\S]*?fallbackHref=\{`\/\?city=\$\{encodeURIComponent\(profile\.city\)\}`\}/,
   );
   assert.match(
     dancerPage,

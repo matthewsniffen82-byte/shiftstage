@@ -82,6 +82,9 @@ export function GlobalMobileBottomNav() {
     if (selectedCity) setCity(selectedCity);
   }, [pathname]);
 
+  const fullProfileOpen = /^\/(?:dancers|venues)\/[^/]+/.test(pathname);
+  if (fullProfileOpen) return null;
+
   return (
     <>
       <nav
