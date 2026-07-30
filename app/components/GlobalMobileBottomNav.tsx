@@ -106,43 +106,81 @@ export function GlobalMobileBottomNav() {
 
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(70px + env(safe-area-inset-bottom)) !important;
+            padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
           }
 
           .global-mobile-bottom-nav {
             position: fixed;
             z-index: 1500;
             left: 50%;
-            bottom: 0;
-            width: min(100%, 720px);
-            height: calc(70px + env(safe-area-inset-bottom));
+            bottom: calc(8px + env(safe-area-inset-bottom));
+            width: min(calc(100% - 16px), 700px);
+            height: 64px;
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            align-items: start;
+            align-items: center;
             gap: 0;
-            padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-            overflow: hidden;
-            border-top: 1px solid rgba(139, 92, 246, 0.56);
+            padding: 3px 4px;
+            overflow: visible;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 23px;
             background:
+              linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.1),
+                rgba(255, 255, 255, 0.018) 42%,
+                rgba(255, 255, 255, 0)
+              ),
               radial-gradient(
                 circle at 50% -42%,
-                rgba(124, 58, 237, 0.3),
+                rgba(124, 58, 237, 0.22),
                 transparent 54%
               ),
               radial-gradient(
                 circle at 16% 0%,
-                rgba(34, 199, 255, 0.11),
+                rgba(34, 199, 255, 0.08),
                 transparent 34%
               ),
-              rgba(5, 4, 11, 0.98);
+              rgba(7, 7, 12, 0.9);
             box-shadow:
-              0 -1px 0 rgba(216, 180, 254, 0.2),
-              0 -10px 28px rgba(124, 58, 237, 0.17),
-              0 -17px 36px rgba(34, 199, 255, 0.08),
-              0 -12px 32px rgba(0, 0, 0, 0.46);
-            backdrop-filter: blur(22px) saturate(1.3);
-            -webkit-backdrop-filter: blur(22px) saturate(1.3);
+              0 18px 44px rgba(0, 0, 0, 0.58),
+              0 0 24px rgba(124, 58, 237, 0.15),
+              0 0 0 1px rgba(139, 92, 246, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(26px) saturate(1.65);
+            -webkit-backdrop-filter: blur(26px) saturate(1.65);
+            isolation: isolate;
             transform: translateX(-50%);
+          }
+
+          @supports (
+              (backdrop-filter: blur(1px)) or
+                (-webkit-backdrop-filter: blur(1px))
+            ) {
+            .global-mobile-bottom-nav {
+              background:
+                linear-gradient(
+                  180deg,
+                  rgba(255, 255, 255, 0.11),
+                  rgba(255, 255, 255, 0.02) 42%,
+                  rgba(255, 255, 255, 0)
+                ),
+                radial-gradient(
+                  circle at 50% -42%,
+                  rgba(124, 58, 237, 0.18),
+                  transparent 54%
+                ),
+                radial-gradient(
+                  circle at 16% 0%,
+                  rgba(34, 199, 255, 0.06),
+                  transparent 34%
+                ),
+                linear-gradient(
+                  135deg,
+                  rgba(20, 16, 34, 0.6),
+                  rgba(5, 6, 12, 0.5)
+                );
+            }
           }
 
           .global-mobile-bottom-nav,
@@ -178,6 +216,7 @@ export function GlobalMobileBottomNav() {
             text-shadow:
               0 0 5px var(--mobile-nav-accent-glow),
               0 0 9px rgba(124, 58, 237, 0.17);
+            touch-action: manipulation;
             transition:
               color 180ms ease,
               text-shadow 180ms ease;

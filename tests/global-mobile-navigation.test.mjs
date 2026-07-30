@@ -30,6 +30,25 @@ test("every Next page receives the shared five-destination mobile navigation", (
   assert.doesNotMatch(tvSource, /className="tv-mobile-nav"/);
 });
 
+test("homepage and Next pages share the same floating glass mobile dock", () => {
+  assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?overflow: visible[\s\S]*?border-radius: 23px[\s\S]*?blur\(26px\) saturate\(1\.65\)/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?overflow: visible !important[\s\S]*?border-radius: 23px[\s\S]*?blur\(26px\) saturate\(1\.65\)/,
+  );
+  assert.match(
+    navigationSource,
+    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20, 16, 34, 0\.6\)[\s\S]*?rgba\(5, 6, 12, 0\.5\)/,
+  );
+  assert.match(
+    homeSource,
+    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20,16,34,.6\)[\s\S]*?rgba\(5,6,12,.5\)/,
+  );
+});
+
 test("homepage full profiles keep the homepage navigation usable", () => {
   assert.doesNotMatch(
     homeSource,
