@@ -29611,10 +29611,6 @@
           body {
             padding-bottom: calc(86px + env(safe-area-inset-bottom));
           }
-          html.is-samsung-browser body,
-          body.is-samsung-browser {
-            padding-bottom: calc(156px + env(safe-area-inset-bottom));
-          }
           header {
             z-index: 120 !important;
             width: 100% !important;
@@ -29858,10 +29854,6 @@
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
             transform: translateX(-50%);
-            transition: bottom 180ms ease;
-          }
-          html.is-samsung-browser.samsung-scroll-control-visible #discoveryTabs {
-            bottom: calc(78px + env(safe-area-inset-bottom));
           }
           @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
             #discoveryTabs {
@@ -32061,14 +32053,6 @@
     if (/SamsungBrowser/i.test(userAgent)) {
       document.documentElement.classList.add("is-samsung-browser", "samsung-rendering");
       document.body?.classList.add("is-samsung-browser", "samsung-rendering");
-      const syncSamsungScrollClearance = () => {
-        document.documentElement.classList.toggle(
-          "samsung-scroll-control-visible",
-          window.scrollY > 120
-        );
-      };
-      syncSamsungScrollClearance();
-      window.addEventListener("scroll", syncSamsungScrollClearance, { passive: true });
     }
     window.__dancrApplyDeviceClasses?.();
 

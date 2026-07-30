@@ -72,33 +72,10 @@ export function GlobalMobileBottomNav() {
   const [city, setCity] = useState(DEFAULT_CITY);
 
   useEffect(() => {
-    const isSamsungBrowser = /SamsungBrowser/i.test(
-      window.navigator.userAgent,
-    );
-    const syncSamsungScrollClearance = () => {
-      document.documentElement.classList.toggle(
-        "samsung-scroll-control-visible",
-        isSamsungBrowser && window.scrollY > 120,
-      );
-    };
-
-    if (isSamsungBrowser) {
-      document.documentElement.classList.add("is-samsung-browser");
-      document.body.classList.add("is-samsung-browser");
-      syncSamsungScrollClearance();
-      window.addEventListener("scroll", syncSamsungScrollClearance, {
-        passive: true,
-      });
-    }
-
     const selectedCity = new URLSearchParams(window.location.search)
       .get("city")
       ?.trim();
     if (selectedCity) setCity(selectedCity);
-
-    return () => {
-      window.removeEventListener("scroll", syncSamsungScrollClearance);
-    };
   }, [pathname]);
 
   const fullProfileOpen = /^\/(?:dancers|venues)\/[^/]+/.test(pathname);
@@ -137,10 +114,6 @@ export function GlobalMobileBottomNav() {
         @media (max-width: 720px) {
           body {
             padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
-          }
-
-          html.is-samsung-browser body {
-            padding-bottom: calc(156px + env(safe-area-inset-bottom)) !important;
           }
 
           .global-mobile-bottom-nav {
@@ -185,12 +158,6 @@ export function GlobalMobileBottomNav() {
             -webkit-backdrop-filter: blur(26px) saturate(1.65);
             isolation: isolate;
             transform: translateX(-50%);
-            transition: bottom 180ms ease;
-          }
-
-          html.is-samsung-browser.samsung-scroll-control-visible
-            .global-mobile-bottom-nav {
-            bottom: calc(78px + env(safe-area-inset-bottom));
           }
 
           @supports (
