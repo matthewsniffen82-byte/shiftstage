@@ -28525,6 +28525,102 @@
           font-weight: 850;
           text-shadow: 0 2px 10px rgba(0,0,0,.92);
         }
+        .home-discovery-feed-qr-prompt {
+          width: min(100%, 320px);
+          min-height: 0;
+          max-height: 0;
+          display: grid;
+          grid-template-columns: auto minmax(0,1fr) auto;
+          align-items: center;
+          gap: 9px;
+          margin: 0;
+          padding: 0 11px;
+          overflow: hidden;
+          border: 0 solid rgba(77,236,157,.64);
+          border-radius: 14px;
+          color: #fff;
+          background: linear-gradient(135deg,rgba(7,92,77,.96),rgba(16,128,74,.94));
+          box-shadow: 0 10px 28px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.16);
+          font: inherit;
+          text-align: left;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(8px) scale(.98);
+          transition: max-height .24s ease, min-height .24s ease, margin .24s ease, padding .24s ease, border-width .24s ease, opacity .2s ease, transform .24s ease, visibility 0s linear .24s;
+          pointer-events: none;
+          cursor: pointer;
+          backdrop-filter: blur(14px);
+        }
+        .home-discovery-feed-slide.is-qr-prompt-ready .home-discovery-feed-qr-prompt {
+          min-height: 56px;
+          max-height: 68px;
+          margin-top: 2px;
+          padding: 8px 11px;
+          border-width: 1px;
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0) scale(1);
+          transition-delay: 0s;
+          pointer-events: auto;
+        }
+        .home-discovery-feed-qr-prompt .action-icon {
+          width: 30px;
+          height: 30px;
+          padding: 5px;
+          border: 1px solid rgba(255,255,255,.26);
+          border-radius: 9px;
+          background: rgba(0,0,0,.22);
+        }
+        .home-discovery-feed-qr-prompt .action-icon svg {
+          width: 100%;
+          height: 100%;
+        }
+        .home-discovery-feed-qr-prompt-copy {
+          min-width: 0;
+          display: grid;
+          gap: 2px;
+        }
+        .home-discovery-feed-qr-prompt-copy small {
+          color: #91f7c0;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: .09em;
+          line-height: 1;
+          text-transform: uppercase;
+        }
+        .home-discovery-feed-qr-prompt-copy strong {
+          overflow: hidden;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 950;
+          line-height: 1.15;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-discovery-feed-qr-prompt-action {
+          color: #fff;
+          font-size: 10px;
+          font-weight: 950;
+          white-space: nowrap;
+        }
+        .home-discovery-feed-qr-prompt:hover,
+        .home-discovery-feed-qr-prompt:focus-visible {
+          border-color: rgba(146,255,197,.92);
+          background: linear-gradient(135deg,rgba(9,111,91,.98),rgba(19,151,86,.98));
+        }
+        .home-discovery-feed-qr-prompt:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
+        }
+        .home-discovery-feed-qr-prompt:disabled {
+          cursor: wait;
+          opacity: .7;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-discovery-feed-qr-prompt {
+            transition-duration: 0s;
+          }
+        }
         .home-venue-discovery-slide {
           --venue-accent: #7eeaff;
           background: #050507;
@@ -30991,7 +31087,11 @@
     let homeDiscoveryFeedViewportFrame = 0;
     let homeDiscoveryFeedViewportWidth = 0;
     let homeSnapFeedSettleTimer = 0;
+    let homeDiscoveryFeedQrPromptTimer = 0;
+    let homeDiscoveryFeedQrPromptKey = "";
     const homeDiscoveryFeedPositions = new Map();
+    const homeDiscoveryFeedQrPromptsShown = new Set();
+    const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
     let tonightExpanded = false;
@@ -36077,6 +36177,9 @@
       if (!pass) {
         showToast("Deal QR unavailable");
         return true;
+      }
+      if (trigger.hasAttribute("data-save-deal-pass-on-open")) {
+        saveCustomerDealPass(pass, "Club QR saved to Offers");
       }
       openDealPassOverlay(pass);
       if (
@@ -42759,6 +42862,60 @@
       return String(slide?.dataset?.discoveryKey || slide?.dataset?.profile || "");
     }
 
+    function resetHomeDiscoveryFeedQrPrompt() {
+      if (homeDiscoveryFeedQrPromptTimer) {
+        window.clearTimeout(homeDiscoveryFeedQrPromptTimer);
+        homeDiscoveryFeedQrPromptTimer = 0;
+      }
+      homeDiscoveryFeedQrPromptKey = "";
+      results.querySelectorAll(".home-discovery-feed-slide.is-qr-prompt-ready").forEach((slide) => {
+        slide.classList.remove("is-qr-prompt-ready");
+      });
+      results.querySelectorAll("[data-feed-qr-prompt]").forEach((prompt) => {
+        prompt.setAttribute("aria-hidden", "true");
+      });
+    }
+
+    function scheduleHomeDiscoveryFeedQrPrompt(slide) {
+      const prompt = slide?.querySelector("[data-feed-qr-prompt]");
+      const promptKey = prompt
+        ? `${homeDiscoveryFeedPositionKey()}::${homeDiscoveryFeedSlideKey(slide)}`
+        : "";
+      if (
+        promptKey &&
+        promptKey === homeDiscoveryFeedQrPromptKey &&
+        (homeDiscoveryFeedQrPromptTimer || slide.classList.contains("is-qr-prompt-ready"))
+      ) {
+        return;
+      }
+      resetHomeDiscoveryFeedQrPrompt();
+      if (
+        !prompt ||
+        !promptKey ||
+        !homeDiscoveryFeedOpen ||
+        document.visibilityState !== "visible" ||
+        homeDiscoveryFeedQrPromptsShown.has(promptKey)
+      ) {
+        return;
+      }
+      homeDiscoveryFeedQrPromptKey = promptKey;
+      homeDiscoveryFeedQrPromptTimer = window.setTimeout(() => {
+        homeDiscoveryFeedQrPromptTimer = 0;
+        if (
+          !homeDiscoveryFeedOpen ||
+          !slide.isConnected ||
+          slide.getAttribute("aria-current") !== "true" ||
+          document.visibilityState !== "visible"
+        ) {
+          homeDiscoveryFeedQrPromptKey = "";
+          return;
+        }
+        homeDiscoveryFeedQrPromptsShown.add(promptKey);
+        slide.classList.add("is-qr-prompt-ready");
+        prompt.setAttribute("aria-hidden", "false");
+      }, HOME_DISCOVERY_QR_PROMPT_DELAY_MS);
+    }
+
     function rememberHomeDiscoveryFeedPosition() {
       if (!results.classList.contains("home-discovery-feed")) return;
       const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
@@ -42827,12 +42984,17 @@
     function activateHomeDiscoveryFeedItem(itemKey) {
       if (!homeDiscoveryFeedOpen || !itemKey) return;
       homeDiscoveryFeedPositions.set(homeDiscoveryFeedPositionKey(), itemKey);
+      let activeSlide = null;
       results.querySelectorAll(".home-discovery-feed-slide").forEach((slide) => {
         const isActive = homeDiscoveryFeedSlideKey(slide) === itemKey;
         slide.classList.toggle("is-active", isActive);
-        if (isActive) slide.setAttribute("aria-current", "true");
+        if (isActive) {
+          activeSlide = slide;
+          slide.setAttribute("aria-current", "true");
+        }
         else slide.removeAttribute("aria-current");
       });
+      scheduleHomeDiscoveryFeedQrPrompt(activeSlide);
     }
 
     function setupHomeDiscoveryFeedObserver() {
@@ -42859,12 +43021,24 @@
 
     function deactivateHomeDiscoveryFeed() {
       rememberHomeDiscoveryFeedPosition();
+      resetHomeDiscoveryFeedQrPrompt();
       homeDiscoveryFeedObserver?.disconnect();
       homeDiscoveryFeedObserver = null;
       results.classList.remove("home-discovery-feed");
       results.removeAttribute("aria-label");
       unlockHomeDiscoveryFeedViewport();
     }
+
+    document.addEventListener("visibilitychange", () => {
+      if (!homeDiscoveryFeedOpen) return;
+      if (document.visibilityState !== "visible") {
+        resetHomeDiscoveryFeedQrPrompt();
+        return;
+      }
+      scheduleHomeDiscoveryFeedQrPrompt(
+        results.querySelector('.home-discovery-feed-slide[aria-current="true"]')
+      );
+    });
 
     function homeDiscoveryFeedStatus(profile) {
       if (isWorkingTonight(profile)) {
@@ -42885,8 +43059,8 @@
       };
     }
 
-    function homeDiscoveryFeedLiveQrMarkup(profile) {
-      if (!isWorkingTonight(profile) || !profile.venueId) return "";
+    function homeDiscoveryFeedLiveQrData(profile) {
+      if (!isWorkingTonight(profile) || !profile.venueId) return null;
       if (profile.activeDeal?.id) {
         const config = {
           deal: profile.activeDeal,
@@ -42897,9 +43071,13 @@
           dancerId: profile.id,
           dancerName: profile.name
         };
-        return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-live-qr aria-label="Open the live Club Deal QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+        return {
+          triggerAttribute: `data-club-deal-cta="${encodeDealPass(config)}"`,
+          venueName: profile.venue,
+          saveOnOpen: false
+        };
       }
-      if (!profile.venueQrCodeUrl) return "";
+      if (!profile.venueQrCodeUrl) return null;
       const pass = publishedVenueQrPass({
         venueId: profile.venueId,
         venueSlug: profile.venueSlug,
@@ -42910,7 +43088,31 @@
         dancerId: profile.id,
         dancerName: profile.name
       });
-      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-live-qr aria-label="Open the live venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+      return {
+        triggerAttribute: `data-deal-pass="${encodeDealPass(pass)}"`,
+        venueName: profile.venue,
+        saveOnOpen: true
+      };
+    }
+
+    function homeDiscoveryFeedLiveQrMarkup(profile, presentation = "action") {
+      const qr = homeDiscoveryFeedLiveQrData(profile);
+      if (!qr) return "";
+      const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
+      if (presentation === "prompt") {
+        const safeVenueName = escapeHtml(qr.venueName || "this venue");
+        return `
+          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt${saveOnOpen} aria-hidden="true" aria-label="Save the live Club QR for ${safeVenueName}">
+            ${actionIconMarkup("qr")}
+            <span class="home-discovery-feed-qr-prompt-copy">
+              <small>Club QR available</small>
+              <strong>${safeVenueName}</strong>
+            </span>
+            <span class="home-discovery-feed-qr-prompt-action">Save QR</span>
+          </button>
+        `;
+      }
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club QR">${actionButtonLabel("qr", "Open QR")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue) {
@@ -43036,6 +43238,7 @@
         ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${actionButtonLabel(isGoing ? "check" : "clock", isGoing ? "Going" : "I'm Going")}</button>`
         : "";
       const liveQrMarkup = homeDiscoveryFeedLiveQrMarkup(profile);
+      const liveQrPromptMarkup = homeDiscoveryFeedLiveQrMarkup(profile, "prompt");
       const venueMarkup = venueName
         ? `<button class="home-discovery-feed-venue" type="button" data-card-venue="${venueValue}" aria-label="Open ${safeVenueName} venue page">${venueIconMarkup()}<span class="home-discovery-feed-venue-label">${safeVenueName}${distanceLabel ? ` · ${escapeHtml(distanceLabel)}` : ""}</span></button>`
         : "";
@@ -43054,6 +43257,7 @@
             ${venueMarkup}
             <span class="home-discovery-feed-status ${status.className}">${escapeHtml(status.label)}</span>
             ${goingCountMarkup}
+            ${liveQrPromptMarkup}
           </div>
           <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
             ${liveQrMarkup}

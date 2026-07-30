@@ -272,6 +272,37 @@ test("Now and Dancers swipe cards open the existing full profile as the only nex
   );
 });
 
+test("Working Now dancer slides surface the venue Club QR after a short dwell", () => {
+  assert.match(
+    homeSource,
+    /function homeDiscoveryFeedLiveQrData\(profile\) \{\s*if \(!isWorkingTonight\(profile\) \|\| !profile\.venueId\) return null;/,
+  );
+  assert.match(
+    homeSource,
+    /profile\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?profile\.venueQrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?data-deal-pass/,
+  );
+  assert.match(
+    homeSource,
+    /function homeDiscoveryFeedLiveQrMarkup\(profile, presentation = "action"\)[\s\S]*?data-feed-qr-prompt[\s\S]*?Club QR available[\s\S]*?Save QR/,
+  );
+  assert.match(
+    homeSource,
+    /HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000[\s\S]*?function scheduleHomeDiscoveryFeedQrPrompt\(slide\)[\s\S]*?homeDiscoveryFeedQrPromptsShown\.has\(promptKey\)[\s\S]*?window\.setTimeout[\s\S]*?is-qr-prompt-ready/,
+  );
+  assert.match(
+    homeSource,
+    /function deactivateHomeDiscoveryFeed\(\) \{[\s\S]*?resetHomeDiscoveryFeedQrPrompt\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /trigger\.hasAttribute\("data-save-deal-pass-on-open"\)[\s\S]*?saveCustomerDealPass\(pass, "Club QR saved to Offers"\)[\s\S]*?openDealPassOverlay\(pass\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-discovery-feed-qr-prompt \{[\s\S]*?visibility: hidden[\s\S]*?pointer-events: none[\s\S]*?\.home-discovery-feed-slide\.is-qr-prompt-ready \.home-discovery-feed-qr-prompt \{[\s\S]*?visibility: visible[\s\S]*?pointer-events: auto/,
+  );
+});
+
 test("bottom navigation keeps every destination on one uniform baseline", () => {
   assert.match(
     homeSource,
