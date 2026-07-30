@@ -29494,6 +29494,28 @@
           #discoveryTabs .home-bottom-tv {
             color: var(--home-nav-accent-soft) !important;
           }
+          #discoveryTabs .home-bottom-tv,
+          #discoveryTabs .home-bottom-tv:hover,
+          #discoveryTabs .home-bottom-tv:focus,
+          #discoveryTabs .home-bottom-tv:focus-visible,
+          #discoveryTabs .home-bottom-tv:active,
+          #discoveryTabs .home-bottom-tv.active,
+          #discoveryTabs .home-bottom-tv[aria-current="true"] {
+            border: 0 !important;
+            border-radius: 0 !important;
+            outline: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -webkit-tap-highlight-color: transparent;
+          }
+          #discoveryTabs .home-bottom-tv:focus-visible .home-bottom-tv-icon {
+            filter:
+              drop-shadow(0 0 2px var(--home-nav-hero-white-glow))
+              drop-shadow(0 0 7px var(--home-nav-hero-violet-glow))
+              drop-shadow(0 0 13px var(--home-nav-hero-cyan-glow));
+          }
           #discoveryTabs .tab.active .home-nav-label,
           #discoveryTabs .home-bottom-tv.active > span:last-child {
             color: #fff;

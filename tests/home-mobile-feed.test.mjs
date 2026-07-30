@@ -358,6 +358,10 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
+    /#discoveryTabs \.home-bottom-tv,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active,[\s\S]*?#discoveryTabs \.home-bottom-tv\[aria-current="true"\] \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    homeSource,
     /#discoveryTabs \.tab::before,[\s\S]*?#discoveryTabs \.home-bottom-tv::after \{[\s\S]*?content: none !important/,
   );
   assert.match(
