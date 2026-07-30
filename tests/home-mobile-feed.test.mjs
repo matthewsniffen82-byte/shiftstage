@@ -220,6 +220,10 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
     homeSource,
     /#discoveryTabs \.tab-count \{[\s\S]*?border: 0 !important[\s\S]*?color: var\(--home-nav-accent-soft\) !important[\s\S]*?background: transparent !important[\s\S]*?pointer-events: none/,
   );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: 4px !important[\s\S]*?left: auto !important/,
+  );
 });
 
 test("mobile legal actions form a complete equal two-row grid above navigation", () => {
