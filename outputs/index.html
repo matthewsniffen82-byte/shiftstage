@@ -29019,6 +29019,8 @@
             --home-nav-accent: #a78bfa;
             --home-nav-accent-soft: #ddd6fe;
             --home-nav-accent-glow: rgba(124,58,237,.42);
+            --home-nav-hero-violet-glow: rgba(124,58,237,.78);
+            --home-nav-hero-cyan-glow: rgba(34,199,255,.48);
             position: relative !important;
             width: 100% !important;
             height: 57px !important;
@@ -29084,24 +29086,30 @@
             place-items: center;
             border: 0 !important;
             border-radius: 0 !important;
-            color: var(--home-nav-accent) !important;
+            color: #aaa2b4 !important;
             background: transparent !important;
             box-shadow: none !important;
-            filter: drop-shadow(0 0 4px var(--home-nav-accent-glow));
+            filter: none;
+            transition:
+              color 180ms ease,
+              filter 180ms ease,
+              transform 180ms ease;
           }
           #discoveryTabs .tab.active .home-nav-icon {
-            color: var(--home-nav-accent-soft) !important;
+            color: #fff !important;
             background: transparent !important;
             filter:
-              drop-shadow(0 0 5px var(--home-nav-accent-glow))
-              drop-shadow(0 0 9px var(--home-nav-accent-glow));
+              drop-shadow(0 0 5px var(--home-nav-hero-violet-glow))
+              drop-shadow(0 0 10px var(--home-nav-hero-cyan-glow));
+            transform: translateY(-1px);
           }
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon {
             border-color: transparent !important;
             box-shadow: none !important;
             filter:
-              drop-shadow(0 0 5px var(--home-nav-accent-glow))
-              drop-shadow(0 0 9px var(--home-nav-accent-glow));
+              drop-shadow(0 0 5px var(--home-nav-hero-violet-glow))
+              drop-shadow(0 0 10px var(--home-nav-hero-cyan-glow));
+            transform: translateY(-1px);
           }
           #discoveryTabs .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv svg {
@@ -29159,14 +29167,20 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             color: #bcb4c8;
+            text-shadow: none;
+            transition:
+              color 180ms ease,
+              text-shadow 180ms ease;
           }
           #discoveryTabs .home-bottom-tv {
             color: #bcb4c8 !important;
           }
           #discoveryTabs .tab.active .home-nav-label,
           #discoveryTabs .home-bottom-tv.active > span:last-child {
-            color: var(--home-nav-accent-soft);
-            text-shadow: 0 0 8px var(--home-nav-accent-glow);
+            color: #fff;
+            text-shadow:
+              0 0 7px var(--home-nav-hero-violet-glow),
+              0 0 11px var(--home-nav-hero-cyan-glow);
           }
           .home-bottom-tv-icon {
             width: 30px !important;
@@ -29178,8 +29192,12 @@
             border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
-            color: var(--home-nav-accent) !important;
-            filter: drop-shadow(0 0 4px var(--home-nav-accent-glow));
+            color: #aaa2b4 !important;
+            filter: none;
+            transition:
+              color 180ms ease,
+              filter 180ms ease,
+              transform 180ms ease;
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-mark {
             width: 20px !important;
@@ -29189,18 +29207,23 @@
             stroke: none;
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-play {
-            fill: var(--home-nav-accent);
-            filter: drop-shadow(0 0 2px var(--home-nav-accent-glow));
+            fill: #aaa2b4;
+            filter: none;
+            transition: fill 180ms ease;
           }
           #discoveryTabs .home-bottom-tv.active .mydancr-tv-play {
-            fill: var(--home-nav-accent-soft);
+            fill: #fff;
           }
           #discoveryTabs .home-bottom-tv-icon .mydancr-tv-r {
             fill: none;
-            stroke: #f9a8d4;
+            stroke: #aaa2b4;
             stroke-width: 1.8;
             stroke-linecap: round;
-            filter: drop-shadow(0 0 1.5px rgba(236,72,153,.6));
+            filter: none;
+            transition: stroke 180ms ease;
+          }
+          #discoveryTabs .home-bottom-tv.active .mydancr-tv-r {
+            stroke: #f9a8d4;
           }
           #results.card-grid {
             grid-template-columns: minmax(0, 1fr) !important;

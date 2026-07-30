@@ -139,6 +139,8 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: #a78bfa;
             --mobile-nav-accent-soft: #ddd6fe;
             --mobile-nav-accent-glow: rgba(124, 58, 237, 0.42);
+            --mobile-nav-hero-violet-glow: rgba(124, 58, 237, 0.78);
+            --mobile-nav-hero-cyan-glow: rgba(34, 199, 255, 0.48);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -157,6 +159,10 @@ export function GlobalMobileBottomNav() {
             line-height: 14px;
             text-align: center;
             text-decoration: none;
+            text-shadow: none;
+            transition:
+              color 180ms ease,
+              text-shadow 180ms ease;
           }
 
           .global-mobile-bottom-nav a.dancers-destination {
@@ -184,25 +190,32 @@ export function GlobalMobileBottomNav() {
             place-items: center;
             border: 0;
             border-radius: 0;
-            color: var(--mobile-nav-accent);
+            color: #aaa2b4;
             background: transparent;
             box-shadow: none;
-            filter: drop-shadow(0 0 4px var(--mobile-nav-accent-glow));
+            filter: none;
+            transition:
+              color 180ms ease,
+              filter 180ms ease,
+              transform 180ms ease;
           }
 
           .global-mobile-bottom-nav a.active {
-            color: var(--mobile-nav-accent-soft);
-            text-shadow: 0 0 8px var(--mobile-nav-accent-glow);
+            color: #fff;
+            text-shadow:
+              0 0 7px var(--mobile-nav-hero-violet-glow),
+              0 0 11px var(--mobile-nav-hero-cyan-glow);
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
             border: 0;
-            color: var(--mobile-nav-accent-soft);
+            color: #fff;
             background: transparent;
             box-shadow: none;
             filter:
-              drop-shadow(0 0 5px var(--mobile-nav-accent-glow))
-              drop-shadow(0 0 9px var(--mobile-nav-accent-glow));
+              drop-shadow(0 0 5px var(--mobile-nav-hero-violet-glow))
+              drop-shadow(0 0 10px var(--mobile-nav-hero-cyan-glow));
+            transform: translateY(-1px);
           }
 
           .global-mobile-bottom-nav a.tv-destination {
@@ -212,22 +225,22 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav a.tv-destination .global-mobile-nav-icon {
             border: 0;
             border-radius: 0;
-            color: var(--mobile-nav-accent);
+            color: #aaa2b4;
             background: transparent;
             box-shadow: none;
-            filter: drop-shadow(0 0 4px var(--mobile-nav-accent-glow));
+            filter: none;
           }
 
           .global-mobile-bottom-nav a.tv-destination.active {
-            color: var(--mobile-nav-accent-soft);
+            color: #fff;
           }
 
           .global-mobile-bottom-nav a.tv-destination.active
             .global-mobile-nav-icon {
-            color: var(--mobile-nav-accent-soft);
+            color: #fff;
             filter:
-              drop-shadow(0 0 5px var(--mobile-nav-accent-glow))
-              drop-shadow(0 0 9px var(--mobile-nav-accent-glow));
+              drop-shadow(0 0 5px var(--mobile-nav-hero-violet-glow))
+              drop-shadow(0 0 10px var(--mobile-nav-hero-cyan-glow));
           }
 
           .global-mobile-bottom-nav svg {
@@ -249,22 +262,30 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav .mydancr-tv-play {
-            fill: var(--mobile-nav-accent);
-            filter: drop-shadow(0 0 2px var(--mobile-nav-accent-glow));
+            fill: #aaa2b4;
+            filter: none;
+            transition: fill 180ms ease;
           }
 
           .global-mobile-bottom-nav
             a.tv-destination.active
             .mydancr-tv-play {
-            fill: var(--mobile-nav-accent-soft);
+            fill: #fff;
           }
 
           .global-mobile-bottom-nav .mydancr-tv-r {
             fill: none;
-            stroke: #f9a8d4;
+            stroke: #aaa2b4;
             stroke-width: 1.8;
             stroke-linecap: round;
-            filter: drop-shadow(0 0 1.5px rgba(236, 72, 153, 0.6));
+            filter: none;
+            transition: stroke 180ms ease;
+          }
+
+          .global-mobile-bottom-nav
+            a.tv-destination.active
+            .mydancr-tv-r {
+            stroke: #f9a8d4;
           }
         }
       `}</style>
