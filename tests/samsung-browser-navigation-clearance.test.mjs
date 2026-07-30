@@ -10,29 +10,33 @@ const [homeSource, globalNavigation] = await Promise.all([
   ),
 ]);
 
-test("Samsung Browser's native scroll-to-top control cannot cover a homepage button", () => {
+test("homepage navigation stays anchored to the CSS viewport in Samsung Browser", () => {
   assert.match(homeSource, /const isSamsung = \/SamsungBrowser\/i\.test\(ua\)/);
   assert.match(
     homeSource,
-    /html\.is-samsung-browser body,[\s\S]*?body\.is-samsung-browser \{[\s\S]*?padding-bottom: calc\(156px \+ env\(safe-area-inset-bottom\)\)/,
+    /@media \(max-width: 720px\) \{[\s\S]*?body \{[\s\S]*?padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom\)\)/,
   );
   assert.match(
     homeSource,
-    /html\.is-samsung-browser #discoveryTabs,[\s\S]*?body\.is-samsung-browser #discoveryTabs \{[\s\S]*?bottom: calc\(78px \+ env\(safe-area-inset-bottom\)\)/,
+    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /is-samsung-browser[\s\S]{0,120}(?:padding-bottom: calc\(156px|bottom: calc\(78px)/,
   );
 });
 
-test("Samsung Browser's native scroll-to-top control cannot cover a routed-page button", () => {
-  assert.match(
+test("routed-page navigation uses the same viewport-safe bottom offset", () => {
+  assert.doesNotMatch(
     globalNavigation,
-    /\/SamsungBrowser\/i\.test\(window\.navigator\.userAgent\)[\s\S]*?document\.documentElement\.classList\.add\("is-samsung-browser"\)[\s\S]*?document\.body\.classList\.add\("is-samsung-browser"\)/,
+    /SamsungBrowser|is-samsung-browser/,
   );
   assert.match(
     globalNavigation,
-    /html\.is-samsung-browser body \{[\s\S]*?padding-bottom: calc\(156px \+ env\(safe-area-inset-bottom\)\) !important/,
+    /body \{[\s\S]*?padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom\)\) !important/,
   );
   assert.match(
     globalNavigation,
-    /html\.is-samsung-browser \.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(78px \+ env\(safe-area-inset-bottom\)\)/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)/,
   );
 });
