@@ -46,7 +46,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /homeBottomTv\?\.addEventListener\("click"[\s\S]*?activeTab = "tv"[\s\S]*?render\(\)[\s\S]*?focusAndLockHomeTvFeed/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?const isTv = nextTab === "tv";[\s\S]*?render\(\);[\s\S]*?focusAndLockHomeTvFeed/,
   );
   assert.match(
     homeSource,
@@ -228,11 +228,11 @@ test("venue swipe cards use production venue, schedule, revenue, and customer ac
   );
   assert.match(
     homeSource,
-    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?const upcoming = localProfiles[\s\S]*?profile\.scheduled[\s\S]*?upcomingSortValue\(left, city\)/,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?const workingNowMarkup = workingNow\.length[\s\S]*?<a class="home-discovery-feed-status is-now" href="\$\{venueHref\}"[\s\S]*?: "";/,
   );
   assert.match(
     homeSource,
-    /home-venue-discovery-location[\s\S]*?details\.distanceLabel[\s\S]*?details\.hours[\s\S]*?displayShiftTime\(details\.hours\)[\s\S]*?nextProfile\.name[\s\S]*?displayPublicShiftTime\(nextProfile\.time, nextProfile\)/,
+    /home-venue-discovery-location[\s\S]*?details\.distanceLabel[\s\S]*?details\.hours[\s\S]*?displayShiftTime\(details\.hours\)[\s\S]*?accessibilityLabel = workingNow\.length/,
   );
   assert.match(
     homeSource,
@@ -242,6 +242,7 @@ test("venue swipe cards use production venue, schedule, revenue, and customer ac
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
+  assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
     /home-discovery-feed-profile-button" href="\$\{venueHref\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"/,

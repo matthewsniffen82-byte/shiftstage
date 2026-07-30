@@ -8,6 +8,7 @@ import { getVenueProfile, isApprovedPublicDancerRow } from "@/src/lib/dancr/publ
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { DirectionsLink } from "./DirectionsLink";
+import styles from "./VenueProfile.module.css";
 import { VenueProfileActions } from "./VenueProfileActions";
 
 export const runtime = "nodejs";
@@ -17,11 +18,36 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+type VenueDancer = {
+  slug?: string;
+  stage_name?: string;
+  status?: string;
+  approved_at?: string;
+  verification_status?: string;
+  photo_review_status?: string;
+  is_public?: boolean;
+  dancer_photos?: Array<{
+    storage_path?: string;
+    is_primary?: boolean;
+    review_status?: string;
+    sort_order?: number;
+  }>;
+};
+
 type VenueShift = {
   id: string;
-  dancer_profiles?: { slug?: string; stage_name?: string; status?: string; approved_at?: string; verification_status?: string; photo_review_status?: string; is_public?: boolean } | Array<{ slug?: string; stage_name?: string; status?: string; approved_at?: string; verification_status?: string; photo_review_status?: string; is_public?: boolean }>;
   starts_at: string;
   ends_at: string;
+  timezone?: string | null;
+  location_status?: string | null;
+  checked_in_at?: string | null;
+  checked_out_at?: string | null;
+  dancer_profiles?: VenueDancer | VenueDancer[];
+};
+
+type PublicVenueShift = VenueShift & {
+  dancer?: VenueDancer;
+  photoUrl: string | null;
 };
 
 export default async function VenuePublicPage({ params }: PageProps) {
@@ -29,6 +55,9 @@ export default async function VenuePublicPage({ params }: PageProps) {
   const client = createAdminSupabaseClient();
   const venue = await getVenueProfile(client, slug);
   if (!venue) notFound();
+
+  const now = new Date();
+  const nowIso = now.toISOString();
   const activeDeal = await getActiveClubDealForVenue(client, venue.id);
   const tvVideos = await getPublicMyDancrTvFeed(client, {
     city: venue.city,
@@ -38,59 +67,215 @@ export default async function VenuePublicPage({ params }: PageProps) {
 
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, dancer_profiles(slug, stage_name, status, approved_at, verification_status, photo_review_status, is_public)")
+    .select(`
+      id,
+      starts_at,
+      ends_at,
+      timezone,
+      location_status,
+      checked_in_at,
+      checked_out_at,
+      dancer_profiles(
+        slug,
+        stage_name,
+        status,
+        approved_at,
+        verification_status,
+        photo_review_status,
+        is_public,
+        dancer_photos(storage_path, is_primary, review_status, sort_order)
+      )
+    `)
     .eq("venue_id", venue.id)
     .eq("status", "posted")
-    .gt("ends_at", new Date().toISOString())
+    .gt("ends_at", nowIso)
     .order("starts_at", { ascending: true });
 
   if (error) throw error;
 
   const shifts = ((data || []) as VenueShift[])
-    .map((shift) => {
-      const dancer = Array.isArray(shift.dancer_profiles) ? shift.dancer_profiles[0] : shift.dancer_profiles;
-      return { ...shift, dancer };
+    .map((shift): PublicVenueShift => {
+      const dancer = Array.isArray(shift.dancer_profiles)
+        ? shift.dancer_profiles[0]
+        : shift.dancer_profiles;
+      return {
+        ...shift,
+        dancer,
+        photoUrl: approvedDancerPhotoUrl(client, dancer),
+      };
     })
     .filter((shift) => isApprovedPublicDancerRow(shift.dancer));
 
+  const workingNow = shifts.filter((shift) => isWorkingNow(shift, now));
+  const upcoming = shifts.filter((shift) => new Date(shift.starts_at).getTime() > now.getTime());
+  const location = [venue.city, venue.state].filter(Boolean).join(", ");
+  const cityHref = `/?city=${encodeURIComponent(venue.city)}`;
+
   return (
-    <main className="public-profile-shell">
+    <main className={styles.shell}>
       <VenuePageView venueId={venue.id} />
-      <VenueProfileStyles />
-      <nav className="public-nav">
-        <Link href="/">Dancr</Link>
-        <span>{venue.city}</span>
-      </nav>
-      <section className="venue-hero">
-        <div className="venue-mark">{initials(venue.name)}</div>
-        <div className="public-copy">
-          <span className="eyebrow">Venue</span>
+
+      <header className={styles.header}>
+        <Link className={styles.brand} href="/" aria-label="Go to Mydancr home">
+          mydanc<span>r</span>
+        </Link>
+        <Link className={styles.backLink} href={cityHref}>
+          <span aria-hidden="true">←</span>
+          Back to {venue.city}
+        </Link>
+      </header>
+
+      <section className={styles.hero}>
+        <div className={styles.heroGlow} aria-hidden="true" />
+        <div className={styles.venueMark} aria-hidden="true">
+          {initials(venue.name)}
+        </div>
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} aria-hidden="true" />
+            Mydancr venue
+          </span>
           <h1>{venue.name}</h1>
-          <p>
-            {venue.city}
-            {venue.state ? `, ${venue.state}` : ""} nightlife schedule with approved dancer shifts.
-          </p>
-          {activeDeal ? (
-            <section className="deal-section">
-              <ClubDealCard
-                deal={activeDeal}
-                venueId={venue.id}
-                venueName={venue.name}
-                sourceType="club_page"
-                sectionId="club-deal"
-                stickyCta
-              />
-            </section>
-          ) : null}
-          <div className="public-actions">
-            <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>Now in {venue.city}</Link>
+          <p className={styles.location}>{location}</p>
+          <div className={styles.heroFacts}>
+            {workingNow.length ? (
+              <span className={styles.workingNow}>
+                <span aria-hidden="true" />
+                {workingNow.length} {workingNow.length === 1 ? "dancer" : "dancers"} working now
+              </span>
+            ) : null}
+            {venue.hoursLabel ? <span>Today · {venue.hoursLabel}</span> : null}
+          </div>
+          <div className={styles.primaryActions}>
+            <Link href={`/tonight?city=${encodeURIComponent(venue.city)}`}>
+              See who&apos;s working in {venue.city}
+            </Link>
             {venue.address ? <DirectionsLink address={venue.address} venueId={venue.id} /> : null}
           </div>
           <VenueProfileActions venueId={venue.id} />
         </div>
       </section>
+
+      {activeDeal ? (
+        <section className={styles.dealSection} aria-label={`${venue.name} Club Deal`}>
+          <ClubDealCard
+            deal={activeDeal}
+            venueId={venue.id}
+            venueName={venue.name}
+            sourceType="club_page"
+            sectionId="club-deal"
+            stickyCta
+          />
+        </section>
+      ) : null}
+
+      <section className={styles.scheduleSection}>
+        <div className={styles.sectionHeading}>
+          <div>
+            <span className={styles.eyebrow}>Live roster</span>
+            <h2>Working now</h2>
+          </div>
+          {workingNow.length ? (
+            <span className={styles.sectionCount}>{workingNow.length} live</span>
+          ) : null}
+        </div>
+
+        {workingNow.length ? (
+          <div className={styles.dancerGrid}>
+            {workingNow.map((shift) => (
+              <DancerShiftCard key={shift.id} shift={shift} mode="now" />
+            ))}
+          </div>
+        ) : (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyPulse} aria-hidden="true" />
+            <div>
+              <strong>No verified dancers are working now.</strong>
+              <p>Check the upcoming schedule below or return later for live check-ins.</p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className={styles.scheduleSection}>
+        <div className={styles.sectionHeading}>
+          <div>
+            <span className={styles.eyebrow}>Plan your visit</span>
+            <h2>Upcoming shifts</h2>
+          </div>
+          {upcoming.length ? (
+            <span className={styles.sectionCount}>
+              {upcoming.length} {upcoming.length === 1 ? "shift" : "shifts"}
+            </span>
+          ) : null}
+        </div>
+
+        {upcoming.length ? (
+          <div className={styles.upcomingList}>
+            {upcoming.map((shift) => (
+              <DancerShiftCard key={shift.id} shift={shift} mode="upcoming" />
+            ))}
+          </div>
+        ) : (
+          <div className={styles.emptyState}>
+            <span className={styles.calendarIcon} aria-hidden="true">+</span>
+            <div>
+              <strong>No upcoming shifts are posted.</strong>
+              <p>Published dancer shifts will appear here as soon as they are available.</p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {tvVideos.length ? (
+        <section className={styles.tvSection}>
+          <TvVideoStrip title={`Tonight at ${venue.name}`} videos={tvVideos} />
+        </section>
+      ) : null}
+
+      <section className={styles.venueInfoSection}>
+        <article className={styles.infoCard}>
+          <span className={styles.eyebrow}>Venue information</span>
+          <h2>Plan your night</h2>
+          <dl className={styles.factList}>
+            <div>
+              <dt>Location</dt>
+              <dd>{location}</dd>
+            </div>
+            {venue.address ? (
+              <div>
+                <dt>Address</dt>
+                <dd>{venue.address}</dd>
+              </div>
+            ) : null}
+            {venue.hoursLabel ? (
+              <div>
+                <dt>Today&apos;s hours</dt>
+                <dd>{venue.hoursLabel}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {venue.address ? (
+            <div className={styles.infoDirections}>
+              <DirectionsLink address={venue.address} venueId={venue.id} />
+            </div>
+          ) : null}
+        </article>
+
+        {venue.address ? (
+          <section className={styles.mapPanel} aria-label={`${venue.name} map preview`}>
+            <iframe
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`/api/public/maps/embed?address=${encodeURIComponent(venue.address)}`}
+              title={`${venue.name} map preview`}
+            />
+          </section>
+        ) : null}
+      </section>
+
       {venue.qrCodeUrl ? (
-        <section className="venue-qr-section">
+        <section className={styles.qrSection}>
           <VenueQrCode
             venueId={venue.id}
             venueName={venue.name}
@@ -100,62 +285,48 @@ export default async function VenuePublicPage({ params }: PageProps) {
           />
         </section>
       ) : null}
-      <TvVideoStrip title={`Tonight at ${venue.name}`} videos={tvVideos} />
-      <section className="public-grid">
-        <article className="public-panel">
-          <h2>Current and upcoming shifts</h2>
-          {shifts.length ? (
-            <div className="shift-list">
-              {shifts.map((shift) => (
-                <Link className="shift-row" href={`/dancers/${shift.dancer?.slug}`} key={shift.id}>
-                  <strong>{shift.dancer?.stage_name}</strong>
-                  <span>{formatShift(shift.starts_at)}</span>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="muted">No upcoming posted shifts.</p>
-          )}
-        </article>
-        <article className="public-panel">
-          <h2>Venue</h2>
-          <dl className="fact-list">
-            <div>
-              <dt>City</dt>
-              <dd>{venue.city}</dd>
-            </div>
-            {venue.state ? (
-              <div>
-                <dt>State</dt>
-                <dd>{venue.state}</dd>
-              </div>
-            ) : null}
-            {venue.address ? (
-              <div>
-                <dt>Address</dt>
-                <dd>{venue.address}</dd>
-              </div>
-            ) : null}
-            {venue.hoursLabel ? (
-              <div>
-                <dt>Hours</dt>
-                <dd>{venue.hoursLabel}</dd>
-              </div>
-            ) : null}
-          </dl>
-        </article>
-      </section>
-      {venue.address ? (
-        <section className="map-panel" aria-label={`${venue.name} map preview`}>
-          <iframe
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            src={`/api/public/maps/embed?address=${encodeURIComponent(venue.address)}`}
-            title={`${venue.name} map preview`}
-          />
-        </section>
-      ) : null}
     </main>
+  );
+}
+
+function DancerShiftCard({
+  shift,
+  mode,
+}: {
+  shift: PublicVenueShift;
+  mode: "now" | "upcoming";
+}) {
+  const name = shift.dancer?.stage_name || "Dancer";
+  const href = shift.dancer?.slug ? `/dancers/${encodeURIComponent(shift.dancer.slug)}` : "";
+  const card = (
+    <>
+      <div
+        className={`${styles.dancerPhoto}${shift.photoUrl ? ` ${styles.hasPhoto}` : ""}`}
+        style={shift.photoUrl ? { backgroundImage: `url("${cssUrl(shift.photoUrl)}")` } : undefined}
+        aria-hidden="true"
+      >
+        {!shift.photoUrl ? name.charAt(0).toUpperCase() : null}
+      </div>
+      <div className={styles.dancerCopy}>
+        <strong>{name}</strong>
+        {mode === "now" ? (
+          <span className={styles.liveLabel}>
+            <span aria-hidden="true" />
+            Working now
+          </span>
+        ) : (
+          <span>{formatShift(shift.starts_at, shift.timezone)}</span>
+        )}
+      </div>
+      <span className={styles.cardArrow} aria-hidden="true">›</span>
+    </>
+  );
+
+  if (!href) return <article className={styles.dancerShiftCard}>{card}</article>;
+  return (
+    <Link className={styles.dancerShiftCard} href={href} aria-label={`Open ${name}'s profile`}>
+      {card}
+    </Link>
   );
 }
 
@@ -168,62 +339,58 @@ function initials(value: string) {
     .toUpperCase();
 }
 
-function formatShift(startsAt: string) {
-  const start = new Date(startsAt);
-  const date = new Intl.DateTimeFormat("en-US", {
-    month: "numeric",
-    day: "numeric",
-  }).format(start);
+function isWorkingNow(shift: VenueShift, now: Date) {
+  if (shift.checked_out_at) return false;
+  const isConfirmed =
+    shift.location_status === "club_confirmed" ||
+    (shift.location_status === "location_confirmed" && Boolean(shift.checked_in_at));
+  if (!isConfirmed) return false;
 
-  return `Scheduled ${date}`;
+  const nowTime = now.getTime();
+  const startsAt = new Date(shift.starts_at).getTime();
+  const endsAt = new Date(shift.ends_at).getTime();
+  return Number.isFinite(startsAt) && Number.isFinite(endsAt) && startsAt <= nowTime && endsAt > nowTime;
 }
 
-function VenueProfileStyles() {
-  return (
-    <style>{`
-      body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .public-profile-shell { min-height: 100vh; padding: 22px clamp(18px, 4vw, 56px) 56px; background: radial-gradient(circle at 78% 8%, rgba(34,199,255,.18), transparent 28rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.26), transparent 24rem), linear-gradient(180deg, #090911, #050507 62%); }
-      .public-nav { display: flex; justify-content: space-between; align-items: center; max-width: 1120px; margin: 0 auto 28px; color: #b9accd; font-size: 14px; }
-      .public-nav a { color: #fff; text-decoration: none; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-      .venue-hero { max-width: 1120px; margin: 0 auto; min-height: min(62vh, 560px); display: grid; grid-template-columns: minmax(220px, 380px) minmax(0, 1fr); gap: clamp(24px, 5vw, 56px); align-items: center; }
-      .venue-mark { min-height: 360px; border-radius: 8px; display: grid; place-items: center; font-size: clamp(56px, 9vw, 110px); font-weight: 950; background: radial-gradient(circle at 50% 48%, rgba(34,199,255,.22), transparent 34%), linear-gradient(135deg, rgba(139,92,246,.52), rgba(236,72,153,.2)); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 30px 80px rgba(0,0,0,.45); }
-      .public-copy { display: grid; gap: 18px; }
-      .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
-      h1 { margin: 0; font-size: clamp(42px, 7vw, 88px); line-height: .94; letter-spacing: 0; }
-      p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
-      .public-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-      .public-actions a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(135deg, rgba(139,92,246,.38), rgba(34,199,255,.16)); }
-      .directions-link { background: linear-gradient(135deg, rgba(34,199,255,.28), rgba(16,185,129,.14)) !important; }
-      .live-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; align-items: center; }
-      .live-actions button, .live-actions a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 850; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.08); cursor: pointer; font: inherit; }
-      .live-actions span { color: #94e5ff; font-size: 13px; font-weight: 850; }
-      .deal-section { width: 100%; margin: 4px 0 0; }
-      .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); gap: 18px; align-items: center; border: 1px solid rgba(139,92,246,.28); background: rgba(8,8,13,.9); border-radius: 8px; padding: 18px; box-shadow: 0 22px 70px rgba(0,0,0,.38); }
-      .club-deal-copy { display: grid; gap: 9px; }
-      .club-deal-copy h2 { margin: 0; font-size: 24px; }
-      .club-deal-copy small, .club-deal-action em, .deal-qr-frame span { color: #b9accd; font-size: 13px; line-height: 1.45; font-style: normal; font-weight: 800; }
-      .club-deal-action { display: grid; gap: 10px; justify-items: stretch; }
-      .club-deal-action button { min-height: 46px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #22c7ff); font: inherit; font-weight: 950; cursor: pointer; }
-      .club-deal-action button:disabled { opacity: .7; cursor: wait; }
-      .club-deal-pass-actions button, .club-deal-pass-actions a { min-height: 40px; border: 1px solid rgba(148,229,255,.28); color: #fff; background: rgba(148,229,255,.08); }
-      .deal-qr-frame { display: grid; justify-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: #050507; padding: 12px; }
-      .deal-qr-frame img { width: min(170px, 100%); aspect-ratio: 1; border-radius: 6px; }
-      .venue-qr-section { max-width: 1120px; margin: 22px auto 0; }
-      .venue-published-qr { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 22px; align-items: center; border: 1px solid rgba(34,199,255,.28); background: rgba(12,12,18,.88); border-radius: 8px; padding: 22px; }
-      .venue-published-qr h2 { margin: 7px 0; }
-      .venue-published-qr img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; }
-      .public-grid { max-width: 1120px; margin: 34px auto 0; display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; }
-      .public-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.82); border-radius: 8px; padding: 22px; }
-      h2 { margin: 0 0 16px; font-size: 20px; }
-      .shift-list { display: grid; gap: 10px; }
-      .shift-row { display: flex; justify-content: space-between; gap: 14px; color: #f7f2ff; text-decoration: none; padding: 14px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
-      .shift-row span, .muted { color: #b9accd; }
-      .fact-list { display: grid; gap: 12px; margin: 0; }
-      .fact-list div { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
-      dt { color: #b9accd; } dd { margin: 0; font-weight: 850; }
-      .map-panel { max-width: 1120px; margin: 18px auto 0; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); min-height: 320px; }
-      .map-panel iframe { display: block; width: 100%; min-height: 320px; border: 0; }
-      @media (max-width: 760px) { .public-profile-shell { padding-bottom: 92px; } .venue-hero, .public-grid, .club-deal-card, .venue-published-qr { grid-template-columns: 1fr; } .venue-mark { min-height: 280px; } .venue-published-qr img { max-width: 240px; justify-self: center; } .shift-row, .fact-list div { flex-direction: column; } }
-    `}</style>
-  );
+function approvedDancerPhotoUrl(
+  client: ReturnType<typeof createAdminSupabaseClient>,
+  dancer?: VenueDancer,
+) {
+  const photo = [...(dancer?.dancer_photos || [])]
+    .filter((item) => item.review_status === "approved" && item.storage_path)
+    .sort((left, right) => {
+      if (left.is_primary !== right.is_primary) return left.is_primary ? -1 : 1;
+      return Number(left.sort_order || 0) - Number(right.sort_order || 0);
+    })[0];
+  if (!photo?.storage_path) return null;
+  if (/^https?:\/\//i.test(photo.storage_path)) return photo.storage_path;
+  return client.storage.from("dancer-photos").getPublicUrl(photo.storage_path).data.publicUrl;
+}
+
+function formatShift(startsAt: string, timeZone?: string | null) {
+  const start = new Date(startsAt);
+  if (!Number.isFinite(start.getTime())) return "Upcoming";
+
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: timeZone || undefined,
+    }).format(start);
+  } catch {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(start);
+  }
+}
+
+function cssUrl(value: string) {
+  return value.replace(/["\\\n\r\f]/g, (character) => `\\${character}`);
 }

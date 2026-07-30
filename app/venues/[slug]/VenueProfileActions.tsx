@@ -10,6 +10,7 @@ export function VenueProfileActions({ venueId }: { venueId: string }) {
   const [following, setFollowing] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const accessToken = readToken();
@@ -36,48 +37,62 @@ export function VenueProfileActions({ venueId }: { venueId: string }) {
   }
 
   async function updateFollow(nextNotificationsEnabled = notificationsEnabled) {
+    if (isSaving) return;
     const nextFollowing = !following;
-    await postVenueFollow(nextFollowing, nextFollowing && nextNotificationsEnabled);
-    setFollowing(nextFollowing);
-    setNotificationsEnabled(nextFollowing ? nextNotificationsEnabled : false);
+    const saved = await postVenueFollow(nextFollowing, nextFollowing && nextNotificationsEnabled);
+    if (saved) {
+      setFollowing(nextFollowing);
+      setNotificationsEnabled(nextFollowing ? nextNotificationsEnabled : false);
+    }
   }
 
   async function updateNotifications() {
+    if (isSaving) return;
     const nextNotificationsEnabled = !notificationsEnabled;
-    await postVenueFollow(true, nextNotificationsEnabled);
-    setFollowing(true);
-    setNotificationsEnabled(nextNotificationsEnabled);
+    const saved = await postVenueFollow(true, nextNotificationsEnabled);
+    if (saved) {
+      setFollowing(true);
+      setNotificationsEnabled(nextNotificationsEnabled);
+    }
   }
 
   async function postVenueFollow(nextFollowing: boolean, nextNotificationsEnabled: boolean) {
     setStatus("");
-    const response = await fetch("/api/customer/venue-follows", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        venueId,
-        following: nextFollowing,
-        notificationsEnabled: nextNotificationsEnabled,
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      const message = data.error || "Unable to update venue.";
-      setStatus(message);
-      throw new Error(message);
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/customer/venue-follows", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          venueId,
+          following: nextFollowing,
+          notificationsEnabled: nextNotificationsEnabled,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        setStatus(data.error || "Unable to update this venue. Please try again.");
+        return false;
+      }
+      setStatus("Saved.");
+      return true;
+    } catch {
+      setStatus("Unable to update this venue. Check your connection and try again.");
+      return false;
+    } finally {
+      setIsSaving(false);
     }
-    setStatus("Saved.");
   }
 
   return (
     <div className="live-actions" aria-label="Venue actions">
-      <button type="button" onClick={() => updateFollow(false)}>
-        {following ? "Following venue" : "Follow venue"}
+      <button type="button" disabled={isSaving} onClick={() => updateFollow(false)}>
+        {isSaving ? "Saving…" : following ? "Following venue" : "Follow venue"}
       </button>
-      <button type="button" onClick={updateNotifications}>
+      <button type="button" disabled={isSaving} onClick={updateNotifications}>
         {notificationsEnabled ? "Venue alerts on" : "Venue alerts"}
       </button>
-      {status ? <span>{status}</span> : null}
+      {status ? <span role="status">{status}</span> : null}
     </div>
   );
 }

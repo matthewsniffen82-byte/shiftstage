@@ -10755,6 +10755,8 @@
 
     .venue.venue-card .venue-shift-pill {
       margin-left: auto;
+      text-decoration: none;
+      cursor: pointer;
     }
 
     .popular-clubs.is-hidden {
@@ -28495,6 +28497,8 @@
           font-size: 11px;
           font-weight: 900;
           backdrop-filter: blur(12px);
+          text-decoration: none;
+          touch-action: manipulation;
         }
         .home-discovery-feed-status.is-now {
           border-color: rgba(77,236,157,.54);
@@ -31036,6 +31040,7 @@
     const homeFilterToggle = document.getElementById("homeFilterToggle");
     const homeAdvancedFilters = document.getElementById("homeAdvancedFilters");
     const results = document.getElementById("results");
+    const discoveryTabs = document.getElementById("discoveryTabs");
     const tabTitle = document.getElementById("tabTitle");
     const tabCount = document.getElementById("tabCount");
     const toast = document.getElementById("toast");
@@ -38177,6 +38182,16 @@
     function venueCard(venue) {
       const details = venueDetails(venue, citySelect.value);
       const initials = venue.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+      const safeName = escapeHtml(venue.name);
+      const venueHref = venue.slug
+        ? `/venues/${encodeURIComponent(venue.slug)}`
+        : `#venue-${slugify(venue.name)}`;
+      const workingNowCount = venueDancers(citySelect.value, venue.name)
+        .filter((profile) => isWorkingTonight(profile, citySelect.value))
+        .length;
+      const workingNowMarkup = workingNowCount
+        ? `<a class="pill venue-shift-pill" href="${venueHref}" aria-label="Open ${safeName} venue details, ${workingNowCount} working now">${workingNowCount} working now</a>`
+        : "";
       return `
         <article class="card venue venue-card" aria-label="${venue.name} venue details">
           <div class="venue-art" data-initials="${initials}"></div>
@@ -38190,7 +38205,7 @@
             <div class="pill-row">
               <span class="pill">Today ${displayShiftTime(details.hours)}</span>
               <span class="pill">${details.distanceLabel}</span>
-              <span class="pill venue-shift-pill">${venue.shifts} posted shifts</span>
+              ${workingNowMarkup}
             </div>
           </div>
         </article>
@@ -43208,15 +43223,8 @@
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
-      const upcoming = localProfiles
-        .filter((profile) => !isWorkingTonight(profile, city) && profile.scheduled)
-        .sort((left, right) => upcomingSortValue(left, city) - upcomingSortValue(right, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = details.address || `${details.city}${details.state ? `, ${details.state}` : ""}`;
-      const nextProfile = upcoming[0] || null;
-      const nextShiftMarkup = nextProfile
-        ? `<span class="home-venue-discovery-next">${clockIconMarkup()}<span>Next: ${escapeHtml(nextProfile.name)} · ${escapeHtml(displayPublicShiftTime(nextProfile.time, nextProfile))}</span></span>`
-        : '<span class="home-venue-discovery-next"><span>No upcoming dancer shifts posted</span></span>';
       const hoursMarkup = details.hours
         ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>${escapeHtml(displayShiftTime(details.hours))}</span></span>`
         : "";
@@ -43230,9 +43238,13 @@
       const directionsMarkup = details.address
         ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
-      const workingLabel = `${workingNow.length} dancer${workingNow.length === 1 ? "" : "s"} working now`;
+      const workingLabel = `${workingNow.length} working now`;
+      const workingNowMarkup = workingNow.length
+        ? `<a class="home-discovery-feed-status is-now" href="${venueHref}" aria-label="Open ${safeName} venue details, ${escapeHtml(workingLabel)}">${escapeHtml(workingLabel)}</a>`
+        : "";
+      const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${safeName}, ${escapeHtml(workingLabel)}" style="--venue-accent:${accent}">
+        <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}" style="--venue-accent:${accent}">
           <div class="home-venue-discovery-art" aria-hidden="true"><span>${escapeHtml(initials)}</span></div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
@@ -43240,8 +43252,7 @@
             <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             ${hoursMarkup}
-            <span class="home-discovery-feed-status ${workingNow.length ? "is-now" : ""}">${escapeHtml(workingLabel)}</span>
-            ${nextShiftMarkup}
+            ${workingNowMarkup}
             ${dealMarkup}
           </div>
           <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
@@ -46198,20 +46209,41 @@
     });
 
     const homeBottomTv = document.getElementById("homeBottomTv");
-    homeBottomTv?.addEventListener("click", (event) => {
-      event.preventDefault();
-      if (profileBackdrop.classList.contains("show")) closeProfileModal();
-      homeDiscoveryFeedOpen = false;
+    const homeDestinationOrder = ["tonight", "dancers", "tv", "venues", "trending"];
+
+    function activateHomeDestination(nextTab) {
+      if (!homeDestinationOrder.includes(nextTab)) return false;
+      deactivateHomeTvFeed();
       deactivateHomeDiscoveryFeed();
-      activeTab = "tv";
+      if (profileBackdrop.classList.contains("show")) closeProfileModal();
+      if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
+        selectedVenueName = null;
+      }
+      activeTab = nextTab;
+      homeDiscoveryFeedOpen =
+        ["tonight", "dancers", "venues"].includes(nextTab) &&
+        homeDiscoveryFeedUsesLockedViewport();
       tonightExpanded = false;
       dancersExpanded = false;
-      selectedVenueName = null;
-      document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
-      homeBottomTv.classList.add("active");
-      homeBottomTv.setAttribute("aria-current", "page");
+      if (activeTab !== "venues") selectedVenueName = null;
+      document.querySelectorAll(".tab").forEach((item) => (
+        item.classList.toggle("active", item.dataset.tab === nextTab)
+      ));
+      const isTv = nextTab === "tv";
+      homeBottomTv?.classList.toggle("active", isTv);
+      homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
       render();
-      window.requestAnimationFrame(focusAndLockHomeTvFeed);
+      if (isTv) {
+        window.requestAnimationFrame(focusAndLockHomeTvFeed);
+      } else if (homeDiscoveryFeedOpen) {
+        window.requestAnimationFrame(focusAndLockHomeDiscoveryFeed);
+      }
+      return true;
+    }
+
+    homeBottomTv?.addEventListener("click", (event) => {
+      event.preventDefault();
+      activateHomeDestination("tv");
     });
     window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
@@ -46225,29 +46257,86 @@
     results.addEventListener("scrollend", settleHomeSnapFeed, { passive: true });
 
     document.querySelectorAll(".tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        const nextTab = tab.dataset.tab;
-        if (!nextTab) return;
-        deactivateHomeTvFeed();
-        deactivateHomeDiscoveryFeed();
-        if (profileBackdrop.classList.contains("show")) closeProfileModal();
-        if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
-          selectedVenueName = null;
-        }
-        activeTab = nextTab;
-        homeDiscoveryFeedOpen =
-          ["tonight", "dancers", "venues"].includes(nextTab) &&
-          homeDiscoveryFeedUsesLockedViewport();
-        tonightExpanded = false;
-        dancersExpanded = false;
-        if (activeTab !== "venues") selectedVenueName = null;
-        document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
-        render();
-        if (homeDiscoveryFeedOpen) {
-          window.requestAnimationFrame(focusAndLockHomeDiscoveryFeed);
-        }
-      });
+      tab.addEventListener("click", () => activateHomeDestination(tab.dataset.tab || ""));
     });
+
+    const homeDestinationSwipe = {
+      startX: 0,
+      startY: 0,
+      startedAt: 0,
+      tracking: false
+    };
+    const HOME_DESTINATION_SWIPE_MIN_PX = 64;
+    const HOME_DESTINATION_SWIPE_MAX_MS = 900;
+    const HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 24;
+
+    function homeDestinationIsSelected() {
+      return Boolean(discoveryTabs?.querySelector(".tab.active, .home-bottom-tv.active"));
+    }
+
+    function homeDestinationSwipeBlocked(target) {
+      if (!(target instanceof Element)) return true;
+      if (target.closest(
+        "button, a, input, select, textarea, label, [contenteditable], [role='slider'], " +
+        "#discoveryTabs, .modal-backdrop, .profile-photo-viewer, .profile-tv-viewer"
+      )) return true;
+      return profileBackdrop.classList.contains("show") ||
+        document.body.classList.contains("overlay-open");
+    }
+
+    function resetHomeDestinationSwipe() {
+      homeDestinationSwipe.tracking = false;
+      homeDestinationSwipe.startX = 0;
+      homeDestinationSwipe.startY = 0;
+      homeDestinationSwipe.startedAt = 0;
+    }
+
+    function moveToAdjacentHomeDestination(direction) {
+      const currentIndex = homeDestinationOrder.indexOf(activeTab);
+      const nextIndex = currentIndex + direction;
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= homeDestinationOrder.length) return false;
+      return activateHomeDestination(homeDestinationOrder[nextIndex]);
+    }
+
+    document.addEventListener("touchstart", (event) => {
+      resetHomeDestinationSwipe();
+      if (
+        window.innerWidth > 720 ||
+        event.touches.length !== 1 ||
+        !homeDestinationIsSelected() ||
+        homeDestinationSwipeBlocked(event.target)
+      ) return;
+      const touch = event.touches[0];
+      if (
+        touch.clientX <= HOME_DESTINATION_SWIPE_EDGE_GUARD_PX ||
+        touch.clientX >= window.innerWidth - HOME_DESTINATION_SWIPE_EDGE_GUARD_PX
+      ) return;
+      homeDestinationSwipe.startX = touch.clientX;
+      homeDestinationSwipe.startY = touch.clientY;
+      homeDestinationSwipe.startedAt = Date.now();
+      homeDestinationSwipe.tracking = true;
+    }, { passive: true, capture: true });
+
+    document.addEventListener("touchend", (event) => {
+      if (!homeDestinationSwipe.tracking || event.changedTouches.length !== 1) {
+        resetHomeDestinationSwipe();
+        return;
+      }
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - homeDestinationSwipe.startX;
+      const deltaY = touch.clientY - homeDestinationSwipe.startY;
+      const elapsed = Date.now() - homeDestinationSwipe.startedAt;
+      resetHomeDestinationSwipe();
+      if (
+        elapsed > HOME_DESTINATION_SWIPE_MAX_MS ||
+        Math.abs(deltaX) < HOME_DESTINATION_SWIPE_MIN_PX ||
+        Math.abs(deltaX) <= Math.abs(deltaY) * 1.35
+      ) return;
+      const moved = moveToAdjacentHomeDestination(deltaX < 0 ? 1 : -1);
+      if (moved) event.preventDefault();
+    }, { passive: false, capture: true });
+
+    document.addEventListener("touchcancel", resetHomeDestinationSwipe, { passive: true, capture: true });
 
     homeFeedReturnHomeBtn?.addEventListener("click", returnToHomeDiscoveryMain);
     brandHome.addEventListener("click", returnToHomeDiscoveryMain);
