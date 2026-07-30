@@ -76,15 +76,23 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /function createHomeTvFeedCloseButton\(\)[\s\S]*?close\.className = "home-tv-feed-close"[\s\S]*?close\.setAttribute\("aria-label", "Close MyDancr TV"\)[\s\S]*?close\.addEventListener\("click", closeHomeTvFeed\)/,
+    /class="home-feed-return-home"[\s\S]*?id="homeFeedReturnHomeBtn"[\s\S]*?aria-label="Return to the main city screen"[\s\S]*?<svg viewBox="0 0 24 24"/,
   );
   assert.match(
     homeSource,
-    /results\.replaceChildren\(\s*createHomeTvFeedCloseButton\(\),[\s\S]*?createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
+    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
   assert.match(
     homeSource,
-    /function renderHomeTvFeedLoading\(\) \{[\s\S]*?loading\.className = "home-tv-feed-loading"[\s\S]*?loading\.setAttribute\("role", "status"\)[\s\S]*?loading\.setAttribute\("aria-label", "Loading MyDancr TV"\)[\s\S]*?results\.replaceChildren\(createHomeTvFeedCloseButton\(\), loading\)/,
+    /function renderHomeTvFeedLoading\(\) \{[\s\S]*?loading\.className = "home-tv-feed-loading"[\s\S]*?loading\.setAttribute\("role", "status"\)[\s\S]*?loading\.setAttribute\("aria-label", "Loading MyDancr TV"\)[\s\S]*?results\.replaceChildren\(loading\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-feed-return-home \{[\s\S]*?position: fixed[\s\S]*?z-index: 110[\s\S]*?width: 46px[\s\S]*?height: 46px[\s\S]*?touch-action: manipulation/,
+  );
+  assert.match(
+    homeSource,
+    /body\.home-tv-feed-locked \.home-feed-return-home,[\s\S]*?body\.home-discovery-feed-locked \.home-feed-return-home \{[\s\S]*?display: grid/,
   );
   assert.match(
     homeSource,
@@ -102,11 +110,11 @@ test("the homepage starts neutral and discovery feeds open only after a destinat
   assert.match(homeSource, /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
   assert.match(
     homeSource,
-    /function closeHomeTvFeed\(\) \{[\s\S]*?activeTab = "tonight";[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)/,
+    /function returnToHomeDiscoveryMain\(\) \{[\s\S]*?deactivateHomeTvFeed\(\);[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?deactivateHomeDiscoveryFeed\(\);[\s\S]*?activeTab = "tonight";[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
   );
   assert.match(
     homeSource,
-    /brandHome\.addEventListener\("click"[\s\S]*?homeDiscoveryFeedOpen = false;[\s\S]*?activeTab = "tonight";[\s\S]*?classList\.remove\("active"\)[\s\S]*?render\(\)/,
+    /homeFeedReturnHomeBtn\?\.addEventListener\("click", returnToHomeDiscoveryMain\);[\s\S]*?brandHome\.addEventListener\("click", returnToHomeDiscoveryMain\)/,
   );
 });
 

@@ -28160,7 +28160,7 @@
         }
         .home-tv-feed-copy a,
         .home-tv-feed-sound,
-        .home-tv-feed-close {
+        .home-feed-return-home {
           pointer-events: auto;
         }
         .home-tv-feed-dancer {
@@ -28320,32 +28320,46 @@
           font-size: 10px;
           font-weight: 900;
         }
-        .home-tv-feed-close {
-          position: absolute;
-          z-index: 4;
+        .home-feed-return-home {
+          position: fixed;
+          z-index: 110;
           top: calc(14px + env(safe-area-inset-top));
           left: 14px;
-          width: 44px;
-          height: 44px;
-          display: grid;
+          width: 46px;
+          height: 46px;
+          display: none;
           place-items: center;
           padding: 0;
-          border: 1px solid rgba(255,255,255,.34);
+          border: 1px solid rgba(167,139,250,.5);
           border-radius: 999px;
           color: #fff;
-          background: rgba(0,0,0,.72);
-          box-shadow: 0 8px 24px rgba(0,0,0,.38);
-          font-size: 28px;
-          font-weight: 500;
-          line-height: 1;
-          backdrop-filter: blur(12px);
+          background: rgba(5,5,10,.78);
+          box-shadow:
+            0 8px 24px rgba(0,0,0,.42),
+            0 0 16px rgba(124,58,237,.34),
+            0 0 22px rgba(34,199,255,.14);
+          backdrop-filter: blur(14px) saturate(1.2);
+          touch-action: manipulation;
         }
-        .home-tv-feed-close:hover,
-        .home-tv-feed-close:focus-visible {
-          border-color: rgba(255,255,255,.72);
-          background: rgba(20,20,26,.94);
+        .home-feed-return-home svg {
+          width: 21px;
+          height: 21px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
-        .home-tv-feed-close:focus-visible {
+        .home-feed-return-home:hover,
+        .home-feed-return-home:focus-visible {
+          border-color: rgba(126,234,255,.76);
+          background: rgba(18,12,30,.94);
+          box-shadow:
+            0 8px 24px rgba(0,0,0,.46),
+            0 0 18px rgba(124,58,237,.46),
+            0 0 24px rgba(34,199,255,.22);
+        }
+        .home-feed-return-home:focus-visible {
           outline: 2px solid #7eeaff;
           outline-offset: 3px;
         }
@@ -29169,6 +29183,10 @@
             width: 100% !important;
             height: 100dvh !important;
           }
+          body.home-tv-feed-locked .home-feed-return-home,
+          body.home-discovery-feed-locked .home-feed-return-home {
+            display: grid;
+          }
           .home-tv-feed-copy {
             padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
           }
@@ -29630,6 +29648,19 @@
           <div class="count" id="tabCount">0 results</div>
         </div>
         <div class="list" id="results"></div>
+        <button
+          class="home-feed-return-home"
+          id="homeFeedReturnHomeBtn"
+          type="button"
+          aria-label="Return to the main city screen"
+          title="Return to city selection"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 11.2 12 4l8 7.2"></path>
+            <path d="M6.5 10.5V20h11v-9.5"></path>
+            <path d="M9.5 20v-5.5h5V20"></path>
+          </svg>
+        </button>
         <button class="view-all" id="viewAllBtn" hidden>View All</button>
       </section>
 
@@ -31064,6 +31095,7 @@
     const dancerNotificationList = document.getElementById("dancerNotificationList");
     const customerBrowseTonight = document.getElementById("customerBrowseTonight");
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
+    const homeFeedReturnHomeBtn = document.getElementById("homeFeedReturnHomeBtn");
     let activeTab = "tonight";
     let homeTvLaunchRequest = 0;
     let homeTvLaunchCity = "";
@@ -43708,15 +43740,19 @@
       bottomTv?.setAttribute("aria-current", "false");
     }
 
-    function closeHomeTvFeed() {
-      activeTab = "tonight";
+    function returnToHomeDiscoveryMain() {
+      deactivateHomeTvFeed();
       homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
+      activeTab = "tonight";
       tonightExpanded = false;
       dancersExpanded = false;
       selectedVenueName = null;
       document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
       render();
-      document.getElementById("homeBottomTv")?.focus({ preventScroll: true });
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      });
     }
 
     function homeTvFeedSchedule(item) {
@@ -43857,21 +43893,11 @@
       return slide;
     }
 
-    function createHomeTvFeedCloseButton() {
-      const close = document.createElement("button");
-      close.className = "home-tv-feed-close";
-      close.type = "button";
-      close.setAttribute("aria-label", "Close MyDancr TV");
-      close.textContent = "×";
-      close.addEventListener("click", closeHomeTvFeed);
-      return close;
-    }
-
     function renderHomeTvFeedMessage(message, retryCity = "") {
       const state = document.createElement("div");
       state.className = "locked";
       state.textContent = message;
-      results.replaceChildren(createHomeTvFeedCloseButton(), state);
+      results.replaceChildren(state);
       if (!retryCity) return;
       const retry = document.createElement("button");
       retry.className = "view-all";
@@ -43890,7 +43916,7 @@
       loading.className = "home-tv-feed-loading";
       loading.setAttribute("role", "status");
       loading.setAttribute("aria-label", "Loading MyDancr TV");
-      results.replaceChildren(createHomeTvFeedCloseButton(), loading);
+      results.replaceChildren(loading);
     }
 
     function renderHomeTvFeed(city) {
@@ -43935,7 +43961,6 @@
       if (results.dataset.homeTvFeedKey === feedKey) return;
       homeTvFeedObserver?.disconnect();
       results.replaceChildren(
-        createHomeTvFeedCloseButton(),
         ...homeTvFeedVideos.map((item, index) => (
           createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
         ))
@@ -46185,18 +46210,8 @@
       });
     });
 
-    brandHome.addEventListener("click", () => {
-      deactivateHomeTvFeed();
-      homeDiscoveryFeedOpen = false;
-      deactivateHomeDiscoveryFeed();
-      activeTab = "tonight";
-      tonightExpanded = false;
-      dancersExpanded = false;
-      selectedVenueName = null;
-      document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
-      render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+    homeFeedReturnHomeBtn?.addEventListener("click", returnToHomeDiscoveryMain);
+    brandHome.addEventListener("click", returnToHomeDiscoveryMain);
 
     homeFilterToggle?.addEventListener("click", () => {
       const expanded = homeFilterToggle.getAttribute("aria-expanded") === "true";
