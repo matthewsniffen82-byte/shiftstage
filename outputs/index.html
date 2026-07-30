@@ -31386,6 +31386,7 @@
     let homeTvFeedPageLockY = null;
     let homeTvFeedViewportFrame = 0;
     let homeTvFeedViewportWidth = 0;
+    let homeTvFeedViewportHeight = 0;
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -31395,6 +31396,7 @@
     let homeDiscoveryFeedPageLockY = null;
     let homeDiscoveryFeedViewportFrame = 0;
     let homeDiscoveryFeedViewportWidth = 0;
+    let homeDiscoveryFeedViewportHeight = 0;
     let homeSnapFeedSettleTimer = 0;
     let homeDiscoveryFeedQrPromptTimer = 0;
     let homeDiscoveryFeedQrPromptKey = "";
@@ -43271,11 +43273,18 @@
       const viewportWidth = Math.round(window.visualViewport?.width || window.innerWidth);
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
       if (viewportWidth <= 0 || viewportHeight <= 0) return;
-      if (homeDiscoveryFeedViewportWidth && viewportWidth === homeDiscoveryFeedViewportWidth) return;
+      if (
+        homeDiscoveryFeedViewportWidth &&
+        viewportWidth === homeDiscoveryFeedViewportWidth &&
+        viewportHeight === homeDiscoveryFeedViewportHeight
+      ) {
+        return;
+      }
       const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
       const activeSlide = results.querySelector('.home-discovery-feed-slide[aria-current="true"]');
       const activeIndex = Math.max(0, activeSlide ? slides.indexOf(activeSlide) : Math.round(results.scrollTop / Math.max(1, results.clientHeight)));
       homeDiscoveryFeedViewportWidth = viewportWidth;
+      homeDiscoveryFeedViewportHeight = viewportHeight;
       results.style.setProperty("--home-discovery-feed-height", `${viewportHeight}px`);
       window.requestAnimationFrame(() => {
         results.scrollTo({ top: activeIndex * viewportHeight, left: 0, behavior: "auto" });
@@ -43305,6 +43314,7 @@
       }
       results.style.removeProperty("--home-discovery-feed-height");
       homeDiscoveryFeedViewportWidth = 0;
+      homeDiscoveryFeedViewportHeight = 0;
       document.documentElement.classList.remove("home-discovery-feed-locked");
       document.body.classList.remove("home-discovery-feed-locked");
       document.body.style.removeProperty("--home-discovery-page-lock-top");
@@ -44041,11 +44051,18 @@
       const viewportWidth = Math.floor(window.visualViewport?.width || window.innerWidth);
       const viewportHeight = Math.floor(window.visualViewport?.height || window.innerHeight);
       if (viewportWidth <= 0 || viewportHeight <= 0) return;
-      if (homeTvFeedViewportWidth && viewportWidth === homeTvFeedViewportWidth) return;
+      if (
+        homeTvFeedViewportWidth &&
+        viewportWidth === homeTvFeedViewportWidth &&
+        viewportHeight === homeTvFeedViewportHeight
+      ) {
+        return;
+      }
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       const activeSlide = results.querySelector('.home-tv-feed-slide[aria-current="true"]');
       const activeIndex = Math.max(0, activeSlide ? slides.indexOf(activeSlide) : Math.round(results.scrollTop / Math.max(1, results.clientHeight)));
       homeTvFeedViewportWidth = viewportWidth;
+      homeTvFeedViewportHeight = viewportHeight;
       results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
       window.requestAnimationFrame(() => {
         results.scrollTo({ top: activeIndex * viewportHeight, left: 0, behavior: "auto" });
@@ -44075,6 +44092,7 @@
       }
       results.style.removeProperty("--home-tv-feed-height");
       homeTvFeedViewportWidth = 0;
+      homeTvFeedViewportHeight = 0;
       document.documentElement.classList.remove("home-tv-feed-locked");
       document.body.classList.remove("home-tv-feed-locked");
       document.body.style.removeProperty("--home-tv-page-lock-top");

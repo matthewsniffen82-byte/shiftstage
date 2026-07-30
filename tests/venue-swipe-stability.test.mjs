@@ -4,14 +4,14 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("venue discovery keeps one stable viewport and settles repeated mobile swipes", () => {
+test("venue discovery tracks mobile browser height changes and settles repeated swipes", () => {
   assert.match(
     homeSource,
     /#results\.home-discovery-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?-webkit-overflow-scrolling: touch;/,
   );
   assert.match(
     homeSource,
-    /let homeDiscoveryFeedViewportWidth = 0;[\s\S]*?let homeSnapFeedSettleTimer = 0;/,
+    /let homeDiscoveryFeedViewportWidth = 0;[\s\S]*?let homeDiscoveryFeedViewportHeight = 0;[\s\S]*?let homeSnapFeedSettleTimer = 0;/,
   );
 
   const viewportSync =
@@ -20,9 +20,17 @@ test("venue discovery keeps one stable viewport and settles repeated mobile swip
     )?.[0] || "";
   assert.match(viewportSync, /window\.visualViewport\?\.width \|\| window\.innerWidth/);
   assert.match(viewportSync, /window\.visualViewport\?\.height \|\| window\.innerHeight/);
-  assert.match(viewportSync, /if \(homeDiscoveryFeedViewportWidth && viewportWidth === homeDiscoveryFeedViewportWidth\) return;/);
+  assert.match(
+    viewportSync,
+    /viewportWidth === homeDiscoveryFeedViewportWidth &&[\s\S]*?viewportHeight === homeDiscoveryFeedViewportHeight/,
+  );
   assert.match(viewportSync, /const activeSlide = results\.querySelector/);
+  assert.match(viewportSync, /homeDiscoveryFeedViewportHeight = viewportHeight/);
   assert.match(viewportSync, /results\.scrollTo\(\{ top: activeIndex \* viewportHeight, left: 0, behavior: "auto" \}\)/);
+  assert.match(
+    homeSource,
+    /function unlockHomeDiscoveryFeedViewport\(\)[\s\S]*?homeDiscoveryFeedViewportWidth = 0;[\s\S]*?homeDiscoveryFeedViewportHeight = 0;/,
+  );
 
   assert.match(
     homeSource,

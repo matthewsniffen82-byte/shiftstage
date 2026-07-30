@@ -169,11 +169,11 @@ test("every mobile snap feed keeps a fixed slide size and settles on exact viewp
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedViewport\(\)[\s\S]*?homeTvFeedViewportWidth && viewportWidth === homeTvFeedViewportWidth[\s\S]*?activeIndex \* viewportHeight/,
+    /function syncHomeTvFeedViewport\(\)[\s\S]*?viewportWidth === homeTvFeedViewportWidth[\s\S]*?viewportHeight === homeTvFeedViewportHeight[\s\S]*?activeIndex \* viewportHeight/,
   );
   assert.match(
     homeSource,
-    /function syncHomeDiscoveryFeedViewport\(\)[\s\S]*?homeDiscoveryFeedViewportWidth && viewportWidth === homeDiscoveryFeedViewportWidth[\s\S]*?activeIndex \* viewportHeight/,
+    /function syncHomeDiscoveryFeedViewport\(\)[\s\S]*?viewportWidth === homeDiscoveryFeedViewportWidth[\s\S]*?viewportHeight === homeDiscoveryFeedViewportHeight[\s\S]*?activeIndex \* viewportHeight/,
   );
   assert.match(
     homeSource,
