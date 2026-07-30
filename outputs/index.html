@@ -29974,6 +29974,20 @@
           scroll-margin-bottom: max(16px, env(safe-area-inset-bottom, 0px));
           padding-bottom: 0 !important;
         }
+        @media (max-width: 720px) {
+          #profileBackdrop .profile-modal {
+            --profile-report-clearance: max(84px, calc(16px + env(safe-area-inset-bottom, 0px)));
+            overscroll-behavior-y: none;
+            scroll-padding-bottom: var(--profile-report-clearance) !important;
+          }
+          #profileBackdrop .modal-body {
+            padding-bottom: 0 !important;
+          }
+          #profileBackdrop .modal-actions {
+            scroll-margin-bottom: var(--profile-report-clearance);
+            padding-bottom: var(--profile-report-clearance) !important;
+          }
+        }
       </style>
 
       <section class="stack" aria-live="polite">
