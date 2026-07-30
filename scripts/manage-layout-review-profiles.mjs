@@ -11,6 +11,9 @@ const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 3;
 const UPCOMING_SHIFT_COUNT = 14;
 const AUTH_BAN_DURATION = "876000h";
+const STORAGE_BUCKET = "dancer-photos";
+const STORAGE_PAGE_SIZE = 100;
+const STORAGE_SCAN_LIMIT = 10_000;
 
 const STAGE_NAMES = [
   "Preview Aurora",
@@ -91,6 +94,7 @@ async function inspectEnvironment() {
 }
 
 async function applyDataset() {
+  await removeOrphanedDatasetStorageObjects();
   const venues = await listReviewVenues();
   if (!venues.length) {
     throw new Error(`No active ${REVIEW_CITY} venues are available for layout-review schedules.`);
@@ -223,6 +227,7 @@ async function cleanupDataset() {
   if (remaining.length) {
     throw new Error(`${remaining.length} marked review profiles remain after cleanup.`);
   }
+  await removeOrphanedDatasetStorageObjects();
 
   writeResult({
     mode,
@@ -376,7 +381,6 @@ async function replaceProfileSchedule(profile, definition, venues) {
     status: "posted",
     timezone: venue.timezone || "America/Los_Angeles",
     venue_id: venue.id,
-    working_status: "self_reported",
   });
   assertSuccess(error, `insert upcoming shift for ${definition.slug}`);
 }
@@ -484,6 +488,14 @@ async function listAllAuthUsers() {
 
 async function rollbackNewUsers(userIds) {
   for (const userId of userIds.reverse()) {
+    try {
+      await removeDatasetStorageForUser(userId);
+    } catch (error) {
+      console.error("LAYOUT_REVIEW_STORAGE_ROLLBACK_FAILED", {
+        userId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
     const { error } = await admin.auth.admin.deleteUser(userId);
     if (error) {
       console.error("LAYOUT_REVIEW_ROLLBACK_FAILED", {
@@ -491,6 +503,68 @@ async function rollbackNewUsers(userIds) {
         message: error.message,
       });
     }
+  }
+}
+
+async function removeDatasetStorageForUser(userId) {
+  const paths = await listDatasetStoragePaths(userId);
+  await removeStoragePaths(paths);
+}
+
+async function removeOrphanedDatasetStorageObjects() {
+  const profiles = await listDatasetProfiles();
+  const activeUserIds = new Set(profiles.map((profile) => String(profile.user_id)));
+  const paths = await listDatasetStoragePaths();
+  const orphaned = paths.filter(
+    (path) => !activeUserIds.has(String(path).split("/")[0]),
+  );
+  await removeStoragePaths(orphaned);
+}
+
+async function listDatasetStoragePaths(rootPrefix = "") {
+  const paths = [];
+  const state = { scanned: 0 };
+  await scanStorageFolder(rootPrefix, paths, state);
+  return paths;
+}
+
+async function scanStorageFolder(prefix, paths, state) {
+  for (let offset = 0; ; offset += STORAGE_PAGE_SIZE) {
+    const { data, error } = await admin.storage.from(STORAGE_BUCKET).list(prefix, {
+      limit: STORAGE_PAGE_SIZE,
+      offset,
+      sortBy: { column: "name", order: "asc" },
+    });
+    assertSuccess(error, `scan storage folder ${prefix || "/"}`);
+    const entries = data || [];
+
+    for (const entry of entries) {
+      state.scanned += 1;
+      if (state.scanned > STORAGE_SCAN_LIMIT) {
+        throw new Error(
+          `Refusing layout-review storage scan after ${STORAGE_SCAN_LIMIT} entries.`,
+        );
+      }
+
+      const path = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.id) {
+        if (String(entry.name).startsWith(`${DATASET_MARKER}-`)) {
+          paths.push(path);
+        }
+      } else {
+        await scanStorageFolder(path, paths, state);
+      }
+    }
+
+    if (entries.length < STORAGE_PAGE_SIZE) return;
+  }
+}
+
+async function removeStoragePaths(paths) {
+  for (let index = 0; index < paths.length; index += STORAGE_PAGE_SIZE) {
+    const batch = paths.slice(index, index + STORAGE_PAGE_SIZE);
+    const { error } = await admin.storage.from(STORAGE_BUCKET).remove(batch);
+    assertSuccess(error, "remove layout-review storage objects");
   }
 }
 

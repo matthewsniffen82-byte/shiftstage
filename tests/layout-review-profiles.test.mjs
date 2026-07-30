@@ -88,6 +88,23 @@ test("layout-review approval supports the deployed auto-approval schema", () => 
   );
 });
 
+test("layout-review schedules and rollback support the deployed production schema", () => {
+  const scheduleFunction = scriptSource.match(
+    /async function replaceProfileSchedule[\s\S]*?\r?\n}\r?\n\r?\nasync function createReviewPortrait/,
+  )?.[0];
+  assert.ok(scheduleFunction);
+  assert.match(scheduleFunction, /location_status: "self_reported"/);
+  assert.doesNotMatch(scheduleFunction, /working_status/);
+  assert.match(
+    scriptSource,
+    /async function rollbackNewUsers[\s\S]*?removeDatasetStorageForUser\(userId\)[\s\S]*?deleteUser\(userId\)/,
+  );
+  assert.match(
+    scriptSource,
+    /async function removeOrphanedDatasetStorageObjects[\s\S]*?listDatasetStoragePaths\(\)[\s\S]*?removeStoragePaths\(orphaned\)/,
+  );
+});
+
 test("the population workflow uses approved database media and real venue schedules", () => {
   assert.match(scriptSource, /const REVIEW_PHOTO_COUNT = 3/);
   assert.match(scriptSource, /sharp\(Buffer\.from\(svg\)\)\.png/);
