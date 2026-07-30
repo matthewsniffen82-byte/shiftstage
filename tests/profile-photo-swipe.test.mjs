@@ -80,7 +80,7 @@ test("the profile carousel mixes approved videos with profile photos", () => {
   );
   assert.match(
     publicPhotoCarousel,
-    /strip\.scrollTo\(\{[\s\S]*?selectedThumbnail\.offsetLeft[\s\S]*?strip\.clientWidth/,
+    /const maxLeft = Math\.max\(0, strip\.scrollWidth - strip\.clientWidth\)[\s\S]*?left: Math\.min\(maxLeft, Math\.max\(0, centeredLeft\)\)/,
   );
   assert.match(
     publicProfilePage,
@@ -106,7 +106,7 @@ test("the standalone public dancer profile uses the production swipe carousel", 
   );
   assert.match(
     publicPhotoCarousel,
-    /data-dancer-photo-carousel[\s\S]*?onPointerDown=\{handlePointerDown\}[\s\S]*?onPointerMove=\{handlePointerMove\}[\s\S]*?onPointerUp=\{handlePointerEnd\}/,
+    /data-carousel-swipe-surface[\s\S]*?onPointerDown=\{handlePointerDown\}[\s\S]*?onPointerMove=\{handlePointerMove\}[\s\S]*?onPointerUp=\{handlePointerEnd\}/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -118,9 +118,24 @@ test("the standalone public dancer profile uses the production swipe carousel", 
   );
   assert.match(
     publicProfilePage,
-    /\.public-media-thumbnails \{[^}]*overflow-x: auto;[^}]*scroll-snap-type: x mandatory;/,
+    /\.public-media-stage \{[^}]*touch-action: pan-y;[^}]*overscroll-behavior-x: contain;/,
   );
-  assert.match(publicProfilePage, /@media \(max-width: 760px\)[\s\S]*?\.public-photo-nav \{ display: none; \}/);
+  assert.match(
+    publicProfilePage,
+    /\.public-media-thumbnails \{[^}]*overflow-x: auto;[^}]*scroll-snap-type: x proximity;[^}]*touch-action: pan-x pan-y;[^}]*-webkit-overflow-scrolling: touch;/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /\(event\.target as HTMLElement\)\.closest\("button, a"\)[\s\S]*?isVideoPlaying && \(event\.target as HTMLElement\)\.closest\("video"\)/,
+  );
+  assert.match(
+    publicProfilePage,
+    /@media \(max-width: 760px\)[\s\S]*?\.public-photo-nav \{ width: 40px; height: 48px; font-size: 30px; \}/,
+  );
+  assert.doesNotMatch(
+    publicProfilePage,
+    /\.public-gallery \{[^}]*touch-action: pan-x pan-y;/,
+  );
   assert.doesNotMatch(publicPhotoCarousel, /public-photo-swipe-hint/);
   assert.doesNotMatch(publicProfilePage, /\.public-photo-swipe-hint/);
 });

@@ -115,11 +115,13 @@ export function DancerPhotoCarousel({
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    const centeredLeft =
+      selectedThumbnail.offsetLeft -
+      (strip.clientWidth - selectedThumbnail.offsetWidth) / 2;
+    const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
     strip.scrollTo({
       behavior: reducedMotion ? "auto" : "smooth",
-      left:
-        selectedThumbnail.offsetLeft -
-        (strip.clientWidth - selectedThumbnail.offsetWidth) / 2,
+      left: Math.min(maxLeft, Math.max(0, centeredLeft)),
     });
   }, [safeActiveIndex]);
 
@@ -139,7 +141,8 @@ export function DancerPhotoCarousel({
     if (
       !event.isPrimary ||
       (event.pointerType === "mouse" && event.button !== 0) ||
-      (event.target as HTMLElement).closest("button, a, video")
+      (event.target as HTMLElement).closest("button, a") ||
+      (isVideoPlaying && (event.target as HTMLElement).closest("video"))
     ) {
       return;
     }
@@ -233,15 +236,18 @@ export function DancerPhotoCarousel({
       data-dancer-media-carousel
       data-dancer-photo-carousel
       onKeyDown={handleKeyDown}
-      onPointerCancel={resetGesture}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerEnd}
-      onWheel={handleWheel}
       role="group"
       tabIndex={0}
     >
-      <div className="public-media-stage">
+      <div
+        className="public-media-stage"
+        data-carousel-swipe-surface
+        onPointerCancel={resetGesture}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onWheel={handleWheel}
+      >
         {activeMedia?.kind === "photo" ? (
           <img
             alt={`${stageName} profile photo ${safeActiveIndex + 1} of ${availableMedia.length}`}

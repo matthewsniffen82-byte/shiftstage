@@ -417,9 +417,9 @@ function PublicProfileStyles() {
       .profile-report-dialog select:focus, .profile-report-dialog textarea:focus { border-color: #7eeaff; box-shadow: 0 0 0 3px rgba(126,234,255,.13); }
       .profile-report-dialog form > button { min-height: 48px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
       .profile-report-error { color: #ffb4c8 !important; font-size: 13px !important; font-weight: 850 !important; }
-      .public-photo { grid-area: photo; position: relative; min-width: 0; display: grid; gap: 12px; padding: 0; border: 0; border-radius: 18px; background: #000; box-shadow: 0 30px 80px rgba(0,0,0,.45); touch-action: pan-y; overscroll-behavior-x: contain; user-select: none; }
+      .public-photo { grid-area: photo; position: relative; min-width: 0; display: grid; gap: 12px; padding: 0; border: 0; border-radius: 18px; background: #000; box-shadow: 0 30px 80px rgba(0,0,0,.45); user-select: none; }
       .public-photo:focus-visible { outline: 2px solid #7eeaff; outline-offset: 4px; }
-      .public-media-stage { position: relative; min-height: 0; aspect-ratio: 1 / 1.08; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 16px 16px 8px 8px; background: #000; cursor: grab; }
+      .public-media-stage { position: relative; min-height: 0; aspect-ratio: 1 / 1.08; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 16px 16px 8px 8px; background: #000; cursor: grab; touch-action: pan-y; overscroll-behavior-x: contain; }
       .public-media-stage:active { cursor: grabbing; }
       .public-profile-video { position: absolute; inset: 0; display: grid; place-items: center; background: #000; }
       .public-profile-video video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
@@ -433,7 +433,7 @@ function PublicProfileStyles() {
       .public-photo-nav.previous { left: 12px; }
       .public-photo-nav.next { right: 12px; }
       .public-photo-nav:hover, .public-photo-nav:focus-visible { border-color: #7eeaff; outline: none; background: rgba(45,16,111,.88); }
-      .public-media-thumbnails { min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: clamp(82px, 24%, 108px); justify-content: start; gap: 10px; padding: 6px 5px 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-padding-inline: 5px; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.34) transparent; }
+      .public-media-thumbnails { min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: clamp(82px, 24%, 108px); justify-content: start; gap: 10px; padding: 6px 5px 10px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-padding-inline: 5px; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.34) transparent; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; }
       .public-media-thumbnail { position: relative; min-width: 0; min-height: 0; aspect-ratio: 1; display: block; padding: 0; overflow: hidden; border: 3px solid transparent; border-radius: 14px; background: #101014; scroll-snap-align: center; cursor: pointer; }
       .public-media-thumbnail img, .public-media-thumbnail video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
       .public-media-thumbnail.is-selected { border-color: #fff; box-shadow: 0 0 0 3px #050507, 0 0 0 5px rgba(255,255,255,.72); }
@@ -475,7 +475,6 @@ function PublicProfileStyles() {
       .social-list-toggle { min-height: 40px; justify-self: start; padding: 0 14px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #9fefff; background: rgba(34,199,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; }
       .club-deal-card { border-radius: 16px; }
       @media (max-width: 760px) {
-        .public-gallery { touch-action: pan-x pan-y; }
         .public-profile-shell { padding: 0 12px 98px; }
         .profile-global-header { margin: 0 -2px 12px; padding-inline: 2px; }
         .profile-global-topbar { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 7px; }
@@ -488,7 +487,7 @@ function PublicProfileStyles() {
         .public-hero { grid-template-areas: "photo" "copy"; grid-template-columns: 1fr; gap: 15px; align-items: start; }
         .public-photo { min-height: 0; border-radius: 16px; }
         .public-media-stage { aspect-ratio: 1 / 1.08; border-radius: 14px 14px 7px 7px; }
-        .public-photo-nav { display: none; }
+        .public-photo-nav { width: 40px; height: 48px; font-size: 30px; }
         .public-media-thumbnails { grid-auto-columns: clamp(78px, 25vw, 104px); gap: 9px; padding-inline: 4px; }
         .public-copy { gap: 12px; }
         h1 { font-size: clamp(38px, 12vw, 52px); }
