@@ -162,6 +162,41 @@ test("Now, Dancers, and Venues use one canonical full-screen mobile swipe experi
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
+test("every mobile snap feed keeps a fixed slide size and settles on exact viewport boundaries", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?-webkit-overflow-scrolling: touch;[\s\S]*?scrollbar-width: none;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed \{[\s\S]*?scroll-behavior: auto;[\s\S]*?scroll-padding-block: 0;[\s\S]*?-webkit-overflow-scrolling: touch;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: 100%;[\s\S]*?min-height: 100%;[\s\S]*?max-height: 100%;[\s\S]*?contain: layout paint style;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: 100%;[\s\S]*?min-height: 100%;[\s\S]*?max-height: 100%;[\s\S]*?contain: layout paint style;/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeTvFeedViewport\(\)[\s\S]*?homeTvFeedViewportWidth && viewportWidth === homeTvFeedViewportWidth[\s\S]*?activeIndex \* viewportHeight/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeDiscoveryFeedViewport\(\)[\s\S]*?homeDiscoveryFeedViewportWidth && viewportWidth === homeDiscoveryFeedViewportWidth[\s\S]*?activeIndex \* viewportHeight/,
+  );
+  assert.match(
+    homeSource,
+    /function settleHomeSnapFeed\(\)[\s\S]*?Math\.round\(results\.scrollTop \/ viewportHeight\)[\s\S]*?targetTop = index \* viewportHeight[\s\S]*?behavior: "auto"/,
+  );
+  assert.match(
+    homeSource,
+    /results\.addEventListener\("scroll", queueHomeSnapFeedSettle[\s\S]*?results\.addEventListener\("scrollend", settleHomeSnapFeed/,
+  );
+});
+
 test("venue swipe cards use production venue, schedule, revenue, and customer action data", () => {
   assert.match(
     homeSource,

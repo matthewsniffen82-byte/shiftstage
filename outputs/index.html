@@ -28068,14 +28068,19 @@
           overflow-y: auto;
           overscroll-behavior-y: none;
           overflow-anchor: none;
+          scroll-behavior: auto;
+          scroll-padding-block: 0;
           scroll-snap-type: y mandatory;
           touch-action: pan-y;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(139,92,246,.76) transparent;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
           border: 1px solid rgba(139,92,246,.34);
           border-radius: 18px;
           background: #000;
           box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
+        }
+        #results.home-tv-feed::-webkit-scrollbar {
+          display: none;
         }
         .home-tv-feed-loading {
           position: absolute;
@@ -28103,6 +28108,7 @@
         }
         .home-tv-feed-slide {
           position: relative;
+          box-sizing: border-box;
           width: 100%;
           height: 100%;
           min-height: 100%;
@@ -28111,6 +28117,7 @@
           scroll-snap-align: start;
           scroll-snap-stop: always;
           background: #000;
+          contain: layout paint style;
           isolation: isolate;
         }
         .home-tv-feed-slide + .home-tv-feed-slide {
@@ -28354,8 +28361,11 @@
           overflow-y: auto;
           overscroll-behavior-y: none;
           overflow-anchor: none;
+          scroll-behavior: auto;
+          scroll-padding-block: 0;
           scroll-snap-type: y mandatory;
           touch-action: pan-y;
+          -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
           border: 1px solid rgba(139,92,246,.34);
           border-radius: 18px;
@@ -28367,6 +28377,7 @@
         }
         .home-discovery-feed-slide {
           position: relative;
+          box-sizing: border-box;
           width: 100%;
           height: 100%;
           min-height: 100%;
@@ -28378,6 +28389,7 @@
           scroll-snap-stop: always;
           background: #050507;
           box-shadow: none !important;
+          contain: layout paint style;
           isolation: isolate;
           transform: none !important;
         }
@@ -30950,6 +30962,7 @@
     let homeTvFeedMuted = true;
     let homeTvFeedPageLockY = null;
     let homeTvFeedViewportFrame = 0;
+    let homeTvFeedViewportWidth = 0;
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -30958,6 +30971,8 @@
     let homeDiscoveryFeedObserver = null;
     let homeDiscoveryFeedPageLockY = null;
     let homeDiscoveryFeedViewportFrame = 0;
+    let homeDiscoveryFeedViewportWidth = 0;
+    let homeSnapFeedSettleTimer = 0;
     const homeDiscoveryFeedPositions = new Map();
     const HOME_DISCOVERY_REFRESH_MS = 30000;
     let savedScrollY = 0;
@@ -42745,10 +42760,18 @@
       homeDiscoveryFeedViewportFrame = 0;
       if (!homeDiscoveryFeedOpen || !homeDiscoveryFeedUsesLockedViewport()) return;
       if (!results.classList.contains("home-discovery-feed")) return;
+      const viewportWidth = Math.round(window.visualViewport?.width || window.innerWidth);
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight);
-      if (viewportHeight > 0) {
-        results.style.setProperty("--home-discovery-feed-height", `${viewportHeight}px`);
-      }
+      if (viewportWidth <= 0 || viewportHeight <= 0) return;
+      if (homeDiscoveryFeedViewportWidth && viewportWidth === homeDiscoveryFeedViewportWidth) return;
+      const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
+      const activeSlide = results.querySelector('.home-discovery-feed-slide[aria-current="true"]');
+      const activeIndex = Math.max(0, activeSlide ? slides.indexOf(activeSlide) : Math.round(results.scrollTop / Math.max(1, results.clientHeight)));
+      homeDiscoveryFeedViewportWidth = viewportWidth;
+      results.style.setProperty("--home-discovery-feed-height", `${viewportHeight}px`);
+      window.requestAnimationFrame(() => {
+        results.scrollTo({ top: activeIndex * viewportHeight, left: 0, behavior: "auto" });
+      });
     }
 
     function queueHomeDiscoveryFeedViewportSync() {
@@ -42773,6 +42796,7 @@
         homeDiscoveryFeedViewportFrame = 0;
       }
       results.style.removeProperty("--home-discovery-feed-height");
+      homeDiscoveryFeedViewportWidth = 0;
       document.documentElement.classList.remove("home-discovery-feed-locked");
       document.body.classList.remove("home-discovery-feed-locked");
       document.body.style.removeProperty("--home-discovery-page-lock-top");
@@ -43363,10 +43387,18 @@
       homeTvFeedViewportFrame = 0;
       if (activeTab !== "tv" || !homeTvFeedUsesLockedViewport()) return;
       if (!results.classList.contains("home-tv-feed")) return;
+      const viewportWidth = Math.floor(window.visualViewport?.width || window.innerWidth);
       const viewportHeight = Math.floor(window.visualViewport?.height || window.innerHeight);
-      if (viewportHeight > 0) {
-        results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
-      }
+      if (viewportWidth <= 0 || viewportHeight <= 0) return;
+      if (homeTvFeedViewportWidth && viewportWidth === homeTvFeedViewportWidth) return;
+      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      const activeSlide = results.querySelector('.home-tv-feed-slide[aria-current="true"]');
+      const activeIndex = Math.max(0, activeSlide ? slides.indexOf(activeSlide) : Math.round(results.scrollTop / Math.max(1, results.clientHeight)));
+      homeTvFeedViewportWidth = viewportWidth;
+      results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
+      window.requestAnimationFrame(() => {
+        results.scrollTo({ top: activeIndex * viewportHeight, left: 0, behavior: "auto" });
+      });
     }
 
     function queueHomeTvFeedViewportSync() {
@@ -43391,6 +43423,7 @@
         homeTvFeedViewportFrame = 0;
       }
       results.style.removeProperty("--home-tv-feed-height");
+      homeTvFeedViewportWidth = 0;
       document.documentElement.classList.remove("home-tv-feed-locked");
       document.body.classList.remove("home-tv-feed-locked");
       document.body.style.removeProperty("--home-tv-page-lock-top");
@@ -43411,6 +43444,31 @@
       } else {
         unlockHomeTvFeedViewport();
       }
+    }
+
+    function settleHomeSnapFeed() {
+      window.clearTimeout(homeSnapFeedSettleTimer);
+      homeSnapFeedSettleTimer = 0;
+      const isTvFeed = results.classList.contains("home-tv-feed");
+      const isDiscoveryFeed = results.classList.contains("home-discovery-feed");
+      if (!isTvFeed && !isDiscoveryFeed) return;
+      const slideSelector = isTvFeed ? ".home-tv-feed-slide" : ".home-discovery-feed-slide";
+      const slides = [...results.querySelectorAll(slideSelector)];
+      const viewportHeight = results.clientHeight;
+      if (!slides.length || viewportHeight <= 0) return;
+      const index = Math.min(slides.length - 1, Math.max(0, Math.round(results.scrollTop / viewportHeight)));
+      const targetTop = index * viewportHeight;
+      if (Math.abs(results.scrollTop - targetTop) > 1) {
+        results.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
+      }
+      const slide = slides[index];
+      if (isTvFeed) activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
+      else activateHomeDiscoveryFeedItem(homeDiscoveryFeedSlideKey(slide));
+    }
+
+    function queueHomeSnapFeedSettle() {
+      window.clearTimeout(homeSnapFeedSettleTimer);
+      homeSnapFeedSettleTimer = window.setTimeout(settleHomeSnapFeed, 120);
     }
 
     function deactivateHomeTvFeed() {
@@ -45877,6 +45935,8 @@
     window.addEventListener("orientationchange", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("scroll", queueHomeDiscoveryFeedViewportSync, { passive: true });
+    results.addEventListener("scroll", queueHomeSnapFeedSettle, { passive: true });
+    results.addEventListener("scrollend", settleHomeSnapFeed, { passive: true });
 
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => {
