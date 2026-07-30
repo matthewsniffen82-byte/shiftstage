@@ -250,13 +250,22 @@ export function GlobalMobileBottomNav() {
             color: var(--mobile-nav-accent);
             background: transparent;
             box-shadow: none;
-            filter:
-              drop-shadow(0 0 3px var(--mobile-nav-accent-glow))
-              drop-shadow(0 0 7px rgba(124, 58, 237, 0.22));
+            filter: none;
             transition:
               color 180ms ease,
+              background 180ms ease,
+              border-color 180ms ease,
+              box-shadow 180ms ease,
               filter 180ms ease,
               transform 180ms ease;
+          }
+
+          .global-mobile-bottom-nav a:not(.active) .global-mobile-nav-icon {
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            filter: none;
           }
 
           .global-mobile-bottom-nav a.active {
@@ -268,10 +277,17 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
-            border: 0;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 10px;
             color: #fff;
-            background: transparent;
-            box-shadow: none;
+            background: linear-gradient(
+              145deg,
+              rgba(124, 58, 237, 0.48),
+              rgba(236, 72, 153, 0.22)
+            );
+            box-shadow:
+              0 0 0 1px rgba(124, 58, 237, 0.22),
+              0 0 14px rgba(124, 58, 237, 0.3);
             filter:
               drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
               drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
@@ -289,9 +305,7 @@ export function GlobalMobileBottomNav() {
             color: var(--mobile-nav-accent);
             background: transparent;
             box-shadow: none;
-            filter:
-              drop-shadow(0 0 3px var(--mobile-nav-accent-glow))
-              drop-shadow(0 0 7px rgba(124, 58, 237, 0.22));
+            filter: none;
           }
 
           .global-mobile-bottom-nav a.tv-destination.active {
@@ -300,7 +314,17 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.tv-destination.active
             .global-mobile-nav-icon {
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 10px;
             color: #fff;
+            background: linear-gradient(
+              145deg,
+              rgba(124, 58, 237, 0.48),
+              rgba(236, 72, 153, 0.22)
+            );
+            box-shadow:
+              0 0 0 1px rgba(124, 58, 237, 0.22),
+              0 0 14px rgba(124, 58, 237, 0.3);
             filter:
               drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
               drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))

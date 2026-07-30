@@ -374,11 +374,11 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon \{[\s\S]*?color: var\(--home-nav-accent\) !important[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-accent-glow\)\)[\s\S]*?drop-shadow\(0 0 7px rgba\(124,58,237,\.22\)\)/,
+    /#discoveryTabs \.home-nav-icon \{[\s\S]*?color: var\(--home-nav-accent\) !important[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?color: #fff !important[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--home-nav-hero-cyan-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid[\s\S]*?color: #fff !important[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--home-nav-hero-cyan-glow\)\)/,
   );
   assert.match(
     homeSource,

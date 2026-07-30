@@ -26,11 +26,11 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   );
   assert.match(
     globalNavigation,
-    /\.global-mobile-nav-icon \{[\s\S]*?border: 0[\s\S]*?color: var\(--mobile-nav-accent\)[\s\S]*?background: transparent[\s\S]*?drop-shadow\(0 0 3px var\(--mobile-nav-accent-glow\)\)/,
+    /\.global-mobile-nav-icon \{[\s\S]*?border: 0[\s\S]*?color: var\(--mobile-nav-accent\)[\s\S]*?background: transparent[\s\S]*?filter: none/,
   );
   assert.match(
     globalNavigation,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?color: #fff[\s\S]*?drop-shadow\(0 0 2px var\(--mobile-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--mobile-nav-hero-cyan-glow\)\)/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid[\s\S]*?color: #fff[\s\S]*?drop-shadow\(0 0 2px var\(--mobile-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--mobile-nav-hero-cyan-glow\)\)/,
   );
   assert.match(
     homeSource,

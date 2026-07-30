@@ -59,3 +59,22 @@ test("homepage full profiles keep the homepage navigation usable", () => {
     /tab\.addEventListener\("click", \(\) => \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\)/,
   );
 });
+
+test("only the current mobile destination receives an icon container", () => {
+  assert.match(
+    navigationSource,
+    /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
+  );
+  assert.match(
+    navigationSource,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.24\);[\s\S]*?border-radius: 10px;[\s\S]*?linear-gradient\([\s\S]*?0 0 14px rgba\(124, 58, 237, 0\.3\)/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab:not\(\.active\) \.home-nav-icon,[\s\S]*?#discoveryTabs \.home-bottom-tv:not\(\.active\) \.home-bottom-tv-icon \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?filter: none !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 10px !important;[\s\S]*?linear-gradient\(145deg/,
+  );
+});
