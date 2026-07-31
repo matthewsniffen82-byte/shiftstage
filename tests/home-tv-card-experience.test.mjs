@@ -61,19 +61,20 @@ test("empty schedules are hidden while real city, venue, and shift context remai
   );
 });
 
-test("profile video cards support playback, horizontal media, applause, sharing, and reporting", () => {
+test("every uploaded video gets a vertically scrollable card with playback, applause, sharing, and reporting", () => {
   assert.match(
     homeSource,
-    /function groupHomeTvFeedVideos\(items\)[\s\S]*?return \[\.\.\.groups\.values\(\)\]/,
+    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
   assert.match(
     homeSource,
-    /function setupHomeTvFeedMediaGestures\(slide\)[\s\S]*?touchstart[\s\S]*?touchend[\s\S]*?Math\.abs\(distanceX\) < 56[\s\S]*?showHomeTvFeedMedia\(slide, distanceX < 0 \? 1 : -1\)/,
+    /function createHomeTvFeedSlide\(item, index, total\)[\s\S]*?renderHomeTvFeedSlide\(slide, item, index, total\)/,
   );
   assert.match(
     homeSource,
-    /position\.textContent = `\$\{profileIndex \+ 1\} of \$\{totalProfiles\} \$\{totalProfiles === 1 \? "profile" : "profiles"\}`[\s\S]*?mediaPosition\.textContent = `Video \$\{mediaIndex \+ 1\} of \$\{mediaTotal\}`/,
+    /position\.textContent = `Video \$\{videoIndex \+ 1\} of \$\{totalVideos\}`/,
   );
+  assert.doesNotMatch(homeSource, /groupHomeTvFeedVideos|setupHomeTvFeedMediaGestures|showHomeTvFeedMedia/);
   assert.match(
     homeSource,
     /tapAt - lastTapAt <= 320[\s\S]*?applaudHomeTvFeedVideo\(item, slide\)/,
@@ -111,7 +112,7 @@ test("card controls expose accessible labels, keyboard alternatives, and feedbac
   );
   assert.match(
     homeSource,
-    /Tap to play or pause, double tap to applaud[\s\S]*?event\.key === "ArrowLeft" \|\| event\.key === "ArrowRight"[\s\S]*?event\.key === "a" \|\| event\.key === "A"/,
+    /Tap to play or pause, double tap to applaud[\s\S]*?swipe up or down for another video[\s\S]*?event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"[\s\S]*?event\.key === "a" \|\| event\.key === "A"/,
   );
   assert.match(
     homeSource,

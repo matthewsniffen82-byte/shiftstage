@@ -31,7 +31,7 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
 });
 
-test("full profiles allow destination swipes outside media while galleries keep their gestures", () => {
+test("TV cards and full profiles allow destination swipes while galleries keep their gestures", () => {
   const swipeBlocker = homeSource.match(
     /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
@@ -39,8 +39,9 @@ test("full profiles allow destination swipes outside media while galleries keep 
   assert.doesNotMatch(swipeBlocker, /profile-full-view-open|venue-full-view-open/);
   assert.match(
     swipeBlocker,
-    /#modalImage,[\s\S]*?#modalGallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer,[\s\S]*?home-tv-feed-slide/,
+    /#modalImage,[\s\S]*?#modalGallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer/,
   );
+  assert.doesNotMatch(swipeBlocker, /home-tv-feed-slide/);
   assert.match(
     homeSource,
     /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?deactivateHomeTvFeed\(\)/,

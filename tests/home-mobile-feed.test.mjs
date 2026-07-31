@@ -88,8 +88,9 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /const profileGroups = groupHomeTvFeedVideos\(homeTvFeedVideos\)[\s\S]*?results\.replaceChildren\(\s*\.\.\.profileGroups\.map\(\(profileVideos, index\) => \(\s*createHomeTvFeedSlide\(profileVideos, index, profileGroups\.length\)/,
+    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
+  assert.doesNotMatch(homeSource, /groupHomeTvFeedVideos/);
   assert.match(
     homeSource,
     /function renderHomeTvFeedLoading\(\) \{[\s\S]*?loading\.className = "home-tv-feed-loading"[\s\S]*?loading\.setAttribute\("role", "status"\)[\s\S]*?loading\.setAttribute\("aria-label", "Loading MyDancr TV"\)[\s\S]*?results\.replaceChildren\(loading\)/,

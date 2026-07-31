@@ -45965,18 +45965,6 @@
       }
     }
 
-    function groupHomeTvFeedVideos(items) {
-      const groups = new Map();
-      items.forEach((item) => {
-        const dancerKey = String(item?.dancer?.id || item?.dancer?.slug || item?.id || "");
-        if (!dancerKey) return;
-        const group = groups.get(dancerKey) || [];
-        group.push(item);
-        groups.set(dancerKey, group);
-      });
-      return [...groups.values()];
-    }
-
     function activateHomeTvFeedVideo(videoId) {
       if (activeTab !== "tv" || !videoId) return;
       homeTvFeedActiveVideoId = videoId;
@@ -46216,7 +46204,25 @@
       return progress;
     }
 
-    function createHomeTvFeedVideo(item, index, slide, profileVideoCount) {
+    function showRelativeHomeTvFeedSlide(slide, direction) {
+      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      const currentIndex = slides.indexOf(slide);
+      const nextIndex = currentIndex + direction;
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= slides.length) {
+        showHomeTvFeedFeedback(slide, direction > 0 ? "Last video" : "First video");
+        return;
+      }
+      const nextSlide = slides[nextIndex];
+      results.scrollTo({
+        top: nextIndex * results.clientHeight,
+        left: 0,
+        behavior: "auto"
+      });
+      activateHomeTvFeedVideo(String(nextSlide.dataset.videoId || ""));
+      nextSlide.querySelector("video")?.focus({ preventScroll: true });
+    }
+
+    function createHomeTvFeedVideo(item, index, slide, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const videoId = String(item.id);
       const video = document.createElement("video");
@@ -46236,16 +46242,12 @@
       video.setAttribute(
         "aria-label",
         `${dancerName} MyDancr TV video. Tap to play or pause, double tap to applaud${
-          profileVideoCount > 1 ? ", or swipe left or right for another profile video" : ""
+          totalVideos > 1 ? ", or swipe up or down for another video" : ""
         }.`
       );
       let lastTapAt = 0;
       let singleTapTimer = 0;
       video.addEventListener("click", () => {
-        if (slide.homeTvGestureConsumed) {
-          slide.homeTvGestureConsumed = false;
-          return;
-        }
         const tapAt = Date.now();
         if (tapAt - lastTapAt <= 320) {
           window.clearTimeout(singleTapTimer);
@@ -46263,9 +46265,9 @@
       video.addEventListener("dblclick", (event) => event.preventDefault());
       video.addEventListener("contextmenu", (event) => event.preventDefault());
       video.addEventListener("keydown", (event) => {
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        if (event.key === "ArrowUp" || event.key === "ArrowDown") {
           event.preventDefault();
-          showHomeTvFeedMedia(slide, event.key === "ArrowRight" ? 1 : -1);
+          showRelativeHomeTvFeedSlide(slide, event.key === "ArrowDown" ? 1 : -1);
           return;
         }
         if (event.key === "a" || event.key === "A") {
@@ -46482,22 +46484,22 @@
       return sound;
     }
 
-    function renderHomeTvFeedSlideMedia(slide, item, profileIndex, totalProfiles, mediaIndex, mediaTotal) {
+    function renderHomeTvFeedSlide(slide, item, videoIndex, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const scheduleContext = homeTvFeedSchedule(item);
       const previousVideoId = String(slide.dataset.videoId || "");
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
-      slide.homeTvMediaIndex = mediaIndex;
-      slide.homeTvCurrentItem = item;
       slide.classList.remove("is-media-unavailable", "is-applauding");
       slide.classList.add("is-media-loading", "is-paused");
       slide.setAttribute(
         "aria-label",
-        `${dancerName} MyDancr TV profile video, ${scheduleContext?.label || "no shift currently posted"}`
+        `${dancerName} MyDancr TV video ${videoIndex + 1} of ${totalVideos}, ${
+          scheduleContext?.label || "no shift currently posted"
+        }`
       );
       const fallback = createHomeTvFeedMediaFallback(item);
-      const video = createHomeTvFeedVideo(item, profileIndex, slide, mediaTotal);
+      const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
       const shade = document.createElement("div");
       shade.className = "home-tv-feed-shade";
       shade.setAttribute("aria-hidden", "true");
@@ -46507,10 +46509,7 @@
       playback.setAttribute("aria-hidden", "true");
       const position = document.createElement("span");
       position.className = "home-tv-feed-position";
-      position.textContent = `${profileIndex + 1} of ${totalProfiles} ${totalProfiles === 1 ? "profile" : "profiles"}`;
-      const mediaPosition = document.createElement("span");
-      mediaPosition.className = "home-tv-feed-media-position";
-      mediaPosition.textContent = `Video ${mediaIndex + 1} of ${mediaTotal}`;
+      position.textContent = `Video ${videoIndex + 1} of ${totalVideos}`;
       const applause = document.createElement("span");
       applause.className = "home-tv-feed-applause";
       applause.textContent = "★";
@@ -46525,7 +46524,6 @@
         shade,
         playback,
         position,
-        ...(mediaTotal > 1 ? [mediaPosition] : []),
         createHomeTvFeedSoundButton(slide),
         createHomeTvFeedActions(item, slide),
         createHomeTvFeedCopy(item, scheduleContext),
@@ -46537,65 +46535,10 @@
       syncHomeTvFeedSoundButtons();
     }
 
-    function showHomeTvFeedMedia(slide, direction) {
-      const items = Array.isArray(slide?.homeTvProfileVideos) ? slide.homeTvProfileVideos : [];
-      if (!slide || items.length <= 1) {
-        showHomeTvFeedFeedback(slide, "No additional profile videos");
-        return;
-      }
-      const nextIndex = Number(slide.homeTvMediaIndex || 0) + direction;
-      if (nextIndex < 0 || nextIndex >= items.length) {
-        showHomeTvFeedFeedback(slide, "End of profile videos");
-        return;
-      }
-      slide.querySelector("video")?.pause();
-      renderHomeTvFeedSlideMedia(
-        slide,
-        items[nextIndex],
-        Number(slide.homeTvProfileIndex || 0),
-        Number(slide.homeTvProfileTotal || 1),
-        nextIndex,
-        items.length
-      );
-      activateHomeTvFeedVideo(String(items[nextIndex].id));
-      showHomeTvFeedFeedback(slide, `Video ${nextIndex + 1} of ${items.length}`);
-    }
-
-    function setupHomeTvFeedMediaGestures(slide) {
-      let startX = null;
-      let startY = null;
-      slide.addEventListener("touchstart", (event) => {
-        if (event.touches.length !== 1) {
-          startX = null;
-          startY = null;
-          return;
-        }
-        startX = event.touches[0]?.clientX ?? null;
-        startY = event.touches[0]?.clientY ?? null;
-      }, { passive: true });
-      slide.addEventListener("touchend", (event) => {
-        if (startX === null || startY === null) return;
-        const endX = event.changedTouches[0]?.clientX ?? startX;
-        const endY = event.changedTouches[0]?.clientY ?? startY;
-        const distanceX = endX - startX;
-        const distanceY = endY - startY;
-        startX = null;
-        startY = null;
-        if (Math.abs(distanceX) < 56 || Math.abs(distanceX) <= Math.abs(distanceY) * 1.2) return;
-        slide.homeTvGestureConsumed = true;
-        showHomeTvFeedMedia(slide, distanceX < 0 ? 1 : -1);
-      }, { passive: true });
-    }
-
-    function createHomeTvFeedSlide(profileVideos, index, total) {
+    function createHomeTvFeedSlide(item, index, total) {
       const slide = document.createElement("article");
       slide.className = "home-tv-feed-slide is-paused is-media-loading";
-      slide.homeTvProfileVideos = profileVideos;
-      slide.homeTvProfileIndex = index;
-      slide.homeTvProfileTotal = total;
-      slide.homeTvMediaIndex = 0;
-      setupHomeTvFeedMediaGestures(slide);
-      renderHomeTvFeedSlideMedia(slide, profileVideos[0], index, total, 0, profileVideos.length);
+      renderHomeTvFeedSlide(slide, item, index, total);
       return slide;
     }
 
@@ -46661,18 +46604,17 @@
         return;
       }
 
-      const profileGroups = groupHomeTvFeedVideos(homeTvFeedVideos);
       tabCount.textContent = `${homeTvFeedVideos.length} video${homeTvFeedVideos.length === 1 ? "" : "s"}`;
       results.setAttribute(
         "aria-label",
-        `Swipe through ${profileGroups.length} MyDancr profile${profileGroups.length === 1 ? "" : "s"} and ${homeTvFeedVideos.length} video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}`
+        `Swipe through ${homeTvFeedVideos.length} MyDancr TV video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}`
       );
       const feedKey = `${city}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
       if (results.dataset.homeTvFeedKey === feedKey) return;
       homeTvFeedObserver?.disconnect();
       results.replaceChildren(
-        ...profileGroups.map((profileVideos, index) => (
-          createHomeTvFeedSlide(profileVideos, index, profileGroups.length)
+        ...homeTvFeedVideos.map((item, index) => (
+          createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
         ))
       );
       results.dataset.homeTvFeedKey = feedKey;
@@ -49164,7 +49106,7 @@
         "input, select, textarea, [contenteditable], [role='slider'], " +
         "iframe, [data-global-navigation-swipe='ignore'], " +
         "#modalImage, #modalGallery, .profile-photo-viewer, " +
-        ".profile-tv-strip-list, .profile-tv-viewer, .home-tv-feed-slide"
+        ".profile-tv-strip-list, .profile-tv-viewer"
       ));
     }
 
