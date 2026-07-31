@@ -121,7 +121,7 @@ test("applause is recorded through the constrained production TV analytics path"
 test("card controls expose accessible labels, keyboard alternatives, and feedback", () => {
   assert.match(
     homeSource,
-    /body\.home-tv-feed-locked \.app > header \{[\s\S]*?visibility: hidden !important[\s\S]*?pointer-events: none !important/,
+    /body\.home-tv-feed-locked \.app > header,[\s\S]*?body\.home-destination-immersive \.app > header \{[\s\S]*?visibility: hidden !important[\s\S]*?pointer-events: none !important/,
   );
   assert.match(
     homeSource,

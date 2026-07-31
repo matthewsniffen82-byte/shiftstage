@@ -114,7 +114,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /body\.home-tv-feed-locked \.home-feed-return-home \{[\s\S]*?display: grid/,
+    /body\.home-tv-feed-locked \.home-feed-return-home,[\s\S]*?body\.home-destination-immersive \.home-feed-return-home \{[\s\S]*?display: grid/,
   );
   assert.match(
     homeSource,
@@ -156,7 +156,7 @@ test("the homepage selects Now on first load and keeps destination navigation au
   );
 });
 
-test("all discovery destinations request browser-free mobile fullscreen from navigation gestures", () => {
+test("all five discovery destinations share one browser-free immersive shell", () => {
   assert.match(
     homeSource,
     /const homeImmersiveDestinations = new Set\(\["tonight", "dancers", "tv", "venues", "trending"\]\);/,
@@ -176,6 +176,22 @@ test("all discovery destinations request browser-free mobile fullscreen from nav
   assert.match(
     homeSource,
     /function handleHomeDestinationFullscreenChange\(\) \{[\s\S]*?!homeDestinationFullscreenElement\(\)[\s\S]*?homeDestinationImmersiveRequested = false;[\s\S]*?return;[\s\S]*?focusHomeResults/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeDestinationImmersiveUi\(\) \{[\s\S]*?homeDestinationImmersiveRequested[\s\S]*?homeImmersiveDestinations\.has\(activeTab\)[\s\S]*?classList\.toggle\("home-destination-immersive", immersive\)[\s\S]*?homeFeedReturnHomeBtn\?\.setAttribute\("aria-hidden", immersive \? "false" : "true"\)/,
+  );
+  assert.match(
+    homeSource,
+    /body\.home-tv-feed-locked \.app > header,[\s\S]*?body\.home-destination-immersive \.app > header[\s\S]*?body\.home-tv-feed-locked \.home-feed-return-home,[\s\S]*?body\.home-destination-immersive \.home-feed-return-home[\s\S]*?display: grid/,
+  );
+  assert.match(
+    homeSource,
+    /body\.home-destination-immersive:not\(\.home-tv-feed-locked\) main\.stack > \.hero,[\s\S]*?\.home-discovery-controls,[\s\S]*?\.home-live-summary,[\s\S]*?\.home-tv-launch[\s\S]*?display: none !important/,
+  );
+  assert.match(
+    homeSource,
+    /activeTab = nextTab;[\s\S]*?homeDestinationImmersiveRequested = immersive;[\s\S]*?syncHomeDestinationImmersiveUi\(\);[\s\S]*?requestHomeDestinationFullscreen\(nextTab\)/,
   );
 });
 
