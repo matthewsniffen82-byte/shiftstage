@@ -425,7 +425,7 @@ test("mobile Dancers and Venues share the same scrollbar-safe results track", ()
   );
 });
 
-test("mobile dancer cards clone the centered venue card shell and use a defined brand border", () => {
+test("mobile dancer cards clone the centered venue shell with a platform-consistent subtle border", () => {
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-items: stretch !important;[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?margin: 0 !important;[\s\S]*?justify-self: center !important;/,
@@ -433,6 +433,10 @@ test("mobile dancer cards clone the centered venue card shell and use a defined 
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?border: 1px solid transparent !important;[\s\S]*?linear-gradient\(145deg,rgba\(126,234,255,.72\),rgba\(139,92,246,.82\) 56%,rgba\(236,72,153,.58\)\) border-box !important;[\s\S]*?0 0 22px rgba\(124,58,237,.18\) !important;/,
+  );
+  assert.match(
+    homeSource,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?linear-gradient\(145deg,rgba\(126,234,255,.26\),rgba\(139,92,246,.34\) 56%,rgba\(236,72,153,.22\)\) border-box !important;[\s\S]*?0 0 12px rgba\(124,58,237,.07\) !important;/,
   );
   const dancerShellOverride = homeSource.match(
     /#results\.home-dancer-grid > \.home-dancer-grid-card \{\s*border: 1px solid transparent !important;[\s\S]*?\n          \}/,
