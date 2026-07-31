@@ -630,7 +630,21 @@ test("mobile dancer headings keep the selected city on one clean line", () => {
   );
   assert.match(
     homeSource,
-    /#tabTitle\.dancers-city-title \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;[\s\S]*?font-size: clamp\(22px, 6vw, 25px\) !important;/,
+    /#tabTitle\.dancers-city-title \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/,
   );
   assert.match(homeSource, /#tabTitle \.tab-title-city \{[\s\S]*?white-space: nowrap;/);
+});
+
+test("all five discovery titles use one typography system and consistent city wording", () => {
+  assert.match(
+    homeSource,
+    /\.content-head h2,[\s\S]*?#tabTitle \{[\s\S]*?font-family: var\(--font-display\) !important;[\s\S]*?font-size: clamp\(24px, 6\.4vw, 30px\) !important;[\s\S]*?font-weight: 800 !important;[\s\S]*?line-height: 1\.02 !important;[\s\S]*?letter-spacing: -0\.01em !important;/,
+  );
+  assert.match(
+    homeSource,
+    /tonight: venueFilter === "all" \? `Working Now in \$\{city\}` : `Working Now at \$\{venueFilter\}`,[\s\S]*?dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Venues in \$\{city\}`,[\s\S]*?trending: `Trending Dancers in \$\{city\}`/,
+  );
+  assert.match(homeSource, /tabTitle\.textContent = `MyDancr TV in \$\{city\}`;/);
+  const dancerTitleStyle = homeSource.match(/#tabTitle\.dancers-city-title \{[\s\S]*?\n      \}/)?.[0] || "";
+  assert.doesNotMatch(dancerTitleStyle, /font-size|font-family|font-weight|line-height|letter-spacing/);
 });

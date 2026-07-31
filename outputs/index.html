@@ -22645,8 +22645,11 @@
 
       .content-head h2,
       #tabTitle {
-        font-size: clamp(27px, 7.4vw, 36px) !important;
+        font-family: var(--font-display) !important;
+        font-size: clamp(24px, 6.4vw, 30px) !important;
+        font-weight: 800 !important;
         line-height: 1.02 !important;
+        letter-spacing: -0.01em !important;
       }
 
       #tabTitle.dancers-city-title {
@@ -22655,8 +22658,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: clamp(22px, 6vw, 25px) !important;
-        letter-spacing: -0.035em;
       }
 
       #tabTitle .tab-title-city {
@@ -32007,7 +32008,7 @@
 
       <section class="stack" aria-live="polite">
         <div class="content-head">
-          <h2 id="tabTitle">Now</h2>
+          <h2 id="tabTitle">Working Now in Las Vegas</h2>
           <div class="count" id="tabCount">0 results</div>
         </div>
         <div class="list" id="results"></div>
@@ -46272,10 +46273,10 @@
       const items = allItems;
       const venueFilter = selectedVenueFilter();
       const titles = {
-        tonight: venueFilter === "all" ? `Now in ${city}` : `Now at ${venueFilter}`,
+        tonight: venueFilter === "all" ? `Working Now in ${city}` : `Working Now at ${venueFilter}`,
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
         venues: `Venues in ${city}`,
-        trending: `Trending in ${city}`
+        trending: `Trending Dancers in ${city}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
         ? resolveVenueByName(selectedVenueName, city)
@@ -47102,7 +47103,7 @@
       bottomTv?.classList.add("active");
       bottomTv?.setAttribute("aria-current", "page");
       tabTitle.classList.remove("dancers-city-title");
-      tabTitle.textContent = `MyDancr TV · ${city}`;
+      tabTitle.textContent = `MyDancr TV in ${city}`;
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
       results.classList.add("home-tv-feed");

@@ -51,7 +51,7 @@ test("the homepage exposes an honest Now empty state that opens the Dancers dire
   assert.doesNotMatch(homeSource, /Now &amp; Next|Now & Next in|Up Next Tonight in/);
   assert.doesNotMatch(homeSource, /class="home-app-bottom-nav"/);
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
-  assert.match(homeSource, /tonight: venueFilter === "all" \? `Now in \$\{city\}` : `Now at \$\{venueFilter\}`/);
+  assert.match(homeSource, /tonight: venueFilter === "all" \? `Working Now in \$\{city\}` : `Working Now at \$\{venueFilter\}`/);
   assert.match(homeSource, /No dancers are working now \$\{scope\}\./);
   assert.match(homeSource, /data-show-dancers>See All Dancers<\/button>/);
   assert.match(
