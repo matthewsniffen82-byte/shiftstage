@@ -28264,8 +28264,8 @@
       </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab" data-tab="tonight" data-tab-label="Now">Now</button>
-        <button class="tab" data-tab="dancers" data-tab-label="Dancers">Dancers</button>
+        <button class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now</button>
+        <button class="tab" data-tab="dancers" data-tab-label="Dancers" aria-current="false">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
             <svg class="mydancr-tv-mark" viewBox="0 0 24 24">
@@ -28275,8 +28275,8 @@
           </span>
           <span>TV</span>
         </button>
-        <button class="tab" data-tab="venues" data-tab-label="Venues">Venues</button>
-        <button class="tab" data-tab="trending" data-tab-label="Trending">Trending</button>
+        <button class="tab" data-tab="venues" data-tab-label="Venues" aria-current="false">Venues</button>
+        <button class="tab" data-tab="trending" data-tab-label="Trending" aria-current="false">Trending</button>
       </nav>
 
       <style>
@@ -49036,7 +49036,7 @@
 
     function homeDestinationFromLocation() {
       const requestedView = new URLSearchParams(window.location.search).get("view");
-      return homeDestinationOrder.includes(requestedView) ? requestedView : null;
+      return homeDestinationOrder.includes(requestedView) ? requestedView : "tonight";
     }
 
     function syncHomeDestinationLocation(nextTab) {

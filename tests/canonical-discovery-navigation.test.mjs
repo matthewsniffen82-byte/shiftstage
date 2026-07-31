@@ -96,7 +96,7 @@ test("all shared navigation targets canonical homepage views directly", () => {
 test("canonical homepage deep links select and retain the requested destination", () => {
   assert.match(
     homeSource,
-    /function homeDestinationFromLocation\(\)[\s\S]*?new URLSearchParams\(window\.location\.search\)\.get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\)/,
+    /function homeDestinationFromLocation\(\)[\s\S]*?new URLSearchParams\(window\.location\.search\)\.get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\) \? requestedView : "tonight"/,
   );
   assert.match(
     homeSource,

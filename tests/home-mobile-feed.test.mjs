@@ -12,7 +12,11 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
     navigation,
     /data-tab="tonight"[\s\S]*data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"[\s\S]*data-tab="trending"/,
   );
-  assert.doesNotMatch(navigation, /class="tab active"/);
+  assert.match(
+    navigation,
+    /class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page"/,
+  );
+  assert.doesNotMatch(navigation, /class="tab active" data-tab="(?:dancers|venues|trending)"/);
   assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="results"[^>]*aria-current="false"/);
   assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
   assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
@@ -110,8 +114,12 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("the homepage starts neutral and discovery feeds open only after a destination tap", () => {
+test("the homepage selects Now on first load and keeps destination navigation authoritative", () => {
   assert.match(homeSource, /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
+  assert.match(
+    homeSource,
+    /<button class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now<\/button>/,
+  );
   assert.match(
     homeSource,
     /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("tonight"\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
@@ -122,7 +130,7 @@ test("the homepage starts neutral and discovery feeds open only after a destinat
   );
   assert.match(
     homeSource,
-    /function homeDestinationFromLocation\(\) \{[\s\S]*?get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\)[\s\S]*?const initialHomeDestination = homeDestinationFromLocation\(\);[\s\S]*?const isActive = item\.dataset\.tab === initialHomeDestination;[\s\S]*?setAttribute\("aria-current", isActive \? "page" : "false"\)/,
+    /function homeDestinationFromLocation\(\) \{[\s\S]*?get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\) \? requestedView : "tonight"[\s\S]*?const initialHomeDestination = homeDestinationFromLocation\(\);[\s\S]*?const isActive = item\.dataset\.tab === initialHomeDestination;[\s\S]*?setAttribute\("aria-current", isActive \? "page" : "false"\)/,
   );
   assert.match(
     homeSource,

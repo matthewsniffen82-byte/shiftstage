@@ -41,7 +41,7 @@ test("the Dancers directory lists Working Now, upcoming, and no-schedule profile
 test("the homepage exposes an honest Now empty state that opens the Dancers directory", () => {
   assert.match(
     homeSource,
-    /data-tab="tonight" data-tab-label="Now">Now<\/button>/,
+    /class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now<\/button>/,
   );
   assert.match(
     homeSource,
