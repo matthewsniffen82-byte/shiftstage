@@ -288,6 +288,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     venueSlide,
     /homeVenueDiscoveryQrMarkup\(venue, "rail"\)[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{qrMarkup\}[\s\S]*?\$\{directionsMarkup\}/,
   );
+  assert.match(
+    venueSlide,
+    /home-venue-discovery-identity[\s\S]*?home-venue-discovery-identity-mark[\s\S]*?home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
+  );
+  assert.doesNotMatch(venueSlide, /dealMarkup|home-venue-discovery-deal/);
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
@@ -312,6 +317,10 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.match(
     homeSource,
     /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 58px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-venue-discovery-lineup-slot \{[\s\S]*?min-height: 34px;[\s\S]*?\.home-venue-discovery-lineup strong \{[\s\S]*?color: #fff;[\s\S]*?font-size: 11px;/,
   );
 });
 

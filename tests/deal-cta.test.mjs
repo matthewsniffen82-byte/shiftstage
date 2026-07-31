@@ -63,10 +63,12 @@ test("venue pages and directory cards promote real active deals", () => {
     liveApp,
     /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
   );
-  assert.match(
-    liveApp,
-    /const dealMarkup = dealTitle[\s\S]*?Club Deal[\s\S]*?homeVenueDiscoveryQrMarkup\(venue\)/,
-  );
+  const venueSlide =
+    liveApp.match(
+      /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
+    )?.[0] || "";
+  assert.match(venueSlide, /const qrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
+  assert.doesNotMatch(venueSlide, /dealMarkup|home-venue-discovery-deal/);
 });
 
 test("deal generation produces a durable pass with save and share actions", () => {

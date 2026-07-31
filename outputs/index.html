@@ -28847,6 +28847,7 @@
         }
         .home-venue-discovery-name {
           display: -webkit-box;
+          min-height: 2.12em;
           max-height: 2.12em;
           line-height: 1.06;
           text-overflow: clip;
@@ -28868,6 +28869,9 @@
           font-weight: 850;
           line-height: 1.25;
           text-shadow: 0 2px 12px rgba(0,0,0,.94);
+        }
+        .home-venue-discovery-location {
+          min-height: 22px;
         }
         .home-venue-discovery-location span:last-child,
         .home-venue-discovery-hours span:last-child,
@@ -29245,9 +29249,16 @@
           background-position: center;
           background-size: cover;
         }
+        .home-venue-discovery-art.has-lineup-photo {
+          background-position: center top;
+        }
         .home-venue-discovery-art.has-custom-photo::before,
         .home-venue-discovery-art.has-custom-photo::after {
           opacity: .24;
+        }
+        .home-venue-discovery-art.has-custom-photo.has-venue-cover::before,
+        .home-venue-discovery-art.has-custom-photo.has-venue-cover::after {
+          opacity: .12;
         }
         .home-venue-discovery-monogram {
           width: 82px;
@@ -29264,27 +29275,52 @@
           backdrop-filter: blur(14px);
         }
         .home-venue-discovery-art.has-custom-photo .home-venue-discovery-monogram {
-          position: absolute;
-          top: 16px;
-          left: 16px;
-          width: 46px;
-          height: 46px;
-          border-radius: 14px;
-          font-size: 13px;
-          opacity: .88;
+          display: none;
         }
-        .home-venue-discovery-kicker {
+        .home-venue-discovery-identity {
           position: absolute;
           z-index: 4;
-          top: 20px;
-          left: 74px;
+          top: 14px;
+          left: 14px;
+          max-width: calc(100% - 92px);
+          min-height: 46px;
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          padding: 4px 11px 4px 4px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 16px;
+          background: rgba(5,5,10,.72);
+          box-shadow: 0 10px 26px rgba(0,0,0,.34);
+          backdrop-filter: blur(14px);
+          pointer-events: none;
+        }
+        .home-venue-discovery-identity-mark {
+          width: 36px;
+          height: 36px;
+          flex: 0 0 36px;
+          display: grid;
+          place-items: center;
+          border: 1px solid color-mix(in srgb, var(--venue-accent) 54%, transparent);
+          border-radius: 12px;
+          color: #fff;
+          background: color-mix(in srgb, var(--venue-accent) 18%, rgba(7,7,12,.92));
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: -.02em;
+        }
+        .home-venue-discovery-kicker {
+          min-width: 0;
+          overflow: hidden;
           color: rgba(255,255,255,.8);
           font-size: 8px;
           font-weight: 950;
           letter-spacing: .19em;
+          text-overflow: ellipsis;
           text-transform: uppercase;
           text-shadow: 0 2px 12px rgba(0,0,0,.9);
-          pointer-events: none;
+          white-space: nowrap;
         }
         .home-venue-discovery-slide .home-discovery-feed-shade {
           background:
@@ -29294,13 +29330,27 @@
         .home-venue-discovery-slide .home-discovery-feed-copy {
           right: 72px;
           bottom: 70px;
-          gap: 7px;
+          gap: 9px;
           padding: 100px 14px 13px;
+        }
+        .home-venue-discovery-lineup-slot {
+          min-height: 34px;
+          display: flex;
+          align-items: center;
         }
         .home-venue-discovery-lineup {
           min-width: 0;
+          max-width: 100%;
+          min-height: 32px;
           display: flex;
           align-items: center;
+          padding: 2px 9px 2px 3px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 999px;
+          background: rgba(4,4,9,.64);
+          box-shadow: 0 7px 18px rgba(0,0,0,.26);
+          backdrop-filter: blur(12px);
         }
         .home-venue-discovery-lineup-avatar {
           width: 28px;
@@ -29324,22 +29374,25 @@
           min-width: 0;
           margin-left: 8px;
           overflow: hidden;
-          color: #d5cedf;
-          font-size: 10px;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 900;
           text-overflow: ellipsis;
-          text-shadow: 0 2px 10px rgba(0,0,0,.94);
+          text-shadow: 0 2px 12px rgba(0,0,0,1);
           white-space: nowrap;
         }
         .home-venue-discovery-meta {
           width: fit-content;
           max-width: 100%;
+          min-height: 28px;
           display: flex;
           flex-wrap: wrap;
           align-items: center;
           gap: 7px;
         }
         .home-venue-discovery-meta:empty {
-          display: none;
+          display: flex;
+          visibility: hidden;
         }
         .home-venue-discovery-slide .home-discovery-feed-status,
         .home-venue-discovery-hours {
@@ -39423,11 +39476,22 @@
 
     function venueVisualAttrs(venue, city) {
       const featuredProfile = venueVisualProfiles(city, venue.name)[0] || null;
+      const venueCoverUrl = String(venue.coverImageUrl || "").trim();
       const visualUrl = String(venue.coverImageUrl || publicProfilePhotoUrl(featuredProfile) || "");
+      const attrs = customPhotoAttrs(visualUrl);
+      const sourceClass = venueCoverUrl
+        ? " has-venue-cover"
+        : featuredProfile
+          ? " has-lineup-photo"
+          : " is-venue-artwork";
       return {
-        attrs: customPhotoAttrs(visualUrl),
+        attrs: {
+          ...attrs,
+          className: `${attrs.className}${sourceClass}`
+        },
         featuredProfile,
-        visualUrl
+        visualUrl,
+        source: venueCoverUrl ? "venue_cover" : featuredProfile ? "lineup_photo" : "artwork"
       };
     }
 
@@ -44525,14 +44589,9 @@
       const hoursMarkup = details.hours
         ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>${escapeHtml(displayShiftTime(details.hours))}</span></span>`
         : "";
-      const dealTitle = String(venue.activeDeal?.dealTitle || "").trim();
-      const dealMarkup = dealTitle
-        ? `<div class="home-venue-discovery-deal"><span>Club Deal</span><strong>${escapeHtml(dealTitle)}</strong></div>`
-        : venue.qrCodeUrl
-          ? '<div class="home-venue-discovery-deal"><span>Venue QR</span><strong>Open the venue-published QR</strong></div>'
-          : "";
       const qrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue, "rail");
+      const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true });
       const directionsMarkup = details.address
         ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
@@ -44552,14 +44611,16 @@
             <span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
-          <span class="home-venue-discovery-kicker">Mydancr venue</span>
+          <div class="home-venue-discovery-identity" aria-hidden="true">
+            <span class="home-venue-discovery-identity-mark">${escapeHtml(initials)}</span>
+            <span class="home-venue-discovery-kicker">Mydancr venue</span>
+          </div>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
           <div class="home-discovery-feed-copy">
-            ${venueLineupMarkup(venue, city, { mobile: true })}
+            <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
             <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${hoursMarkup}${workingNowMarkup}</span>
-            ${dealMarkup}
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
             <button class="feed-card-action home-dancer-grid-profile-button" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Profile")}</button>

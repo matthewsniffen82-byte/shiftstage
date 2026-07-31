@@ -92,6 +92,10 @@ test("venue discovery prefers venue covers and falls back to approved lineup med
   );
   assert.match(
     homeSource,
+    /const sourceClass = venueCoverUrl[\s\S]*?" has-venue-cover"[\s\S]*?" has-lineup-photo"[\s\S]*?" is-venue-artwork"/,
+  );
+  assert.match(
+    homeSource,
     /function venueVisualProfiles\(city, venueName\)[\s\S]*?venueDancers\(city, venueName\)[\s\S]*?publicProfilePhotoUrl\(profile\)/,
   );
   assert.match(homeSource, /home-venue-discovery-art\$\{visual\.attrs\.className\}/);
@@ -101,6 +105,8 @@ test("venue discovery prefers venue covers and falls back to approved lineup med
     /#results\.venue-card-grid \.venue-card \.venue-art\.has-custom-photo[\s\S]*?var\(--custom-photo\) !important/,
   );
   assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo[\s\S]*?var\(--custom-photo\)/);
+  assert.match(homeSource, /\.home-venue-discovery-art\.has-lineup-photo \{[\s\S]*?background-position: center top/);
+  assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo\.has-venue-cover::before/);
   assert.match(homeSource, /\.home-venue-discovery-context-actions[\s\S]*?grid-template-columns: repeat\(2/);
   assert.match(homeSource, /home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile[\s\S]*?data-share-venue/);
   assert.doesNotMatch(
