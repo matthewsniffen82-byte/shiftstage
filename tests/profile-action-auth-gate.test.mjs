@@ -149,6 +149,14 @@ test("signed-out profile actions open a dismissible account prompt with working 
     /if \(accountRequiredPopover && !accountRequiredPopover\.hidden\) \{\s+closeAccountRequiredPrompt\(\)/,
   );
   assert.match(homeSource, /accountRequiredCreateLink\?\.addEventListener\("click"[\s\S]*openFreshCustomerSignup\(\)/);
+  assert.match(
+    homeSource,
+    /\.account-required-popover \{\s+z-index: 1600;/,
+  );
+  assert.match(
+    homeSource,
+    /class="action-btn follow-venue-btn[^"]*"[^>]*data-venue-follow="\$\{venue\.name\}"[^>]*data-account-action="venue-follow"[^>]*aria-pressed="\$\{followsVenue\}"/,
+  );
 });
 
 test("public profiles keep Going visible for the next posted shift and gate only Follow and Notify", () => {

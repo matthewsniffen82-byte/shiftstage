@@ -26122,7 +26122,7 @@
     }
 
     .account-required-popover {
-      z-index: 92;
+      z-index: 1600;
     }
 
     .account-required-sheet {
@@ -39550,7 +39550,7 @@
               ${details.address ? `<div class="map-preview has-live-map" aria-label="${details.name} map preview">
                 <iframe title="${details.name} map preview" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="/api/public/maps/embed?address=${encodeURIComponent(details.address)}"></iframe>
               </div>` : ""}
-              <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}">
+              <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
               ${details.address ? `<a class="action-btn venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venue.name}">${venueIconMarkup()}Get Directions</a>` : ""}
