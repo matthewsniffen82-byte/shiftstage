@@ -24018,6 +24018,26 @@
       font-size: 22px;
     }
 
+    .venue-profile-qr-card {
+      border-color: rgba(77, 255, 157, .48);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(77, 255, 157, .18), transparent 38%),
+        linear-gradient(145deg, rgba(8, 28, 21, .96), rgba(5, 12, 10, .98));
+      box-shadow:
+        0 0 28px rgba(77, 255, 157, .14),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    .venue-profile-qr-cta {
+      border-color: rgba(77, 255, 157, .72);
+      background: linear-gradient(135deg, #128b50, #075c4d);
+      box-shadow: 0 14px 36px rgba(10, 116, 78, .3), 0 0 22px rgba(77, 255, 157, .16);
+    }
+
+    .venue-profile-qr-cta > span {
+      color: #c7ffe0;
+    }
+
     .venue-detail .venue-offer-qr {
       min-height: 0;
       padding: 12px;
@@ -37467,7 +37487,32 @@
           </article>
         `;
       }
-      return "";
+      if (!venue?.id) return "";
+      const venueValue = escapeOptionValue(venue.name);
+      const cityValue = escapeOptionValue(venue.city || selectedCity());
+      return `
+        <article class="venue-offer-card venue-profile-qr-card" id="venue-qr">
+          <div class="venue-offer-grid">
+            <div>
+              <span class="eyebrow">Venue QR</span>
+              <h3>Share ${escapeHtml(venue.name)}</h3>
+              <p>Open this venue's verified MyDancr page on another phone. A paid Club Deal QR will appear here automatically when the venue activates an offer.</p>
+            </div>
+            <button
+              class="club-deal-primary-cta venue-club-deal-cta venue-profile-qr-cta"
+              type="button"
+              data-venue-profile-qr="${venueValue}"
+              data-share-city="${cityValue}"
+              aria-expanded="false"
+              aria-label="Show ${escapeHtml(venue.name)} venue QR code"
+            >
+              <span>Venue QR</span>
+              <strong>Show venue QR</strong>
+              <small>No sign-in needed</small>
+            </button>
+          </div>
+        </article>
+      `;
     }
 
     function profileDealTileMarkup(profile) {
@@ -39423,7 +39468,7 @@
         };
         return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
       }
-      return "";
+      return `<button class="venue-card-deal-action venue-card-profile-qr" type="button" data-venue-profile-qr="${escapeOptionValue(venue.name)}" data-share-city="${escapeOptionValue(venue.city || selectedCity())}" aria-expanded="false" aria-label="Show ${escapeHtml(venue.name)} venue QR code">${actionButtonLabel("qr", "Venue QR")}</button>`;
     }
 
     function venueCard(venue) {
@@ -44437,8 +44482,11 @@
         return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
       }
       const externalQrUrl = safeExternalHref(venue.qrCodeUrl);
-      if (!rail || !externalQrUrl) return "";
-      return `<a class="feed-card-action home-venue-discovery-rail-qr" href="${escapeHtml(externalQrUrl)}" target="_blank" rel="noopener noreferrer" data-external-venue-qr data-venue-id="${escapeHtml(venue.id)}" aria-label="Open ${escapeHtml(venue.name)} external marketing QR">${actionButtonLabel("qr", "QR")}</a>`;
+      if (!rail) return "";
+      if (externalQrUrl) {
+        return `<a class="feed-card-action home-venue-discovery-rail-qr" href="${escapeHtml(externalQrUrl)}" target="_blank" rel="noopener noreferrer" data-external-venue-qr data-venue-id="${escapeHtml(venue.id)}" aria-label="Open ${escapeHtml(venue.name)} external marketing QR">${actionButtonLabel("qr", "QR")}</a>`;
+      }
+      return `<button class="feed-card-action home-venue-discovery-rail-qr home-venue-discovery-profile-qr" type="button" data-venue-profile-qr="${escapeOptionValue(venue.name)}" data-share-city="${escapeOptionValue(venue.city || selectedCity())}" aria-expanded="false" aria-label="Show ${escapeHtml(venue.name)} venue QR code">${actionButtonLabel("qr", "QR")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -45712,8 +45760,8 @@
           return;
         }
         if (event.target.closest("[data-copy-qr-profile]")) {
-          const url = overlay.dataset.profileUrl;
-          if (url) copyText(url, "Profile link copied");
+          const url = overlay.dataset.qrUrl;
+          if (url) copyText(url, overlay.dataset.qrKind === "venue" ? "Venue link copied" : "Profile link copied");
         }
       });
       return overlay;
@@ -45728,28 +45776,43 @@
         overlay.classList.remove("show");
         overlay.setAttribute("aria-hidden", "true");
         overlay.hidden = true;
-        delete overlay.dataset.profileUrl;
+        delete overlay.dataset.qrUrl;
+        delete overlay.dataset.qrKind;
       }
-      document.querySelectorAll("[data-profile-qr], [data-toggle-qr]").forEach((button) => {
+      document.querySelectorAll("[data-profile-qr], [data-toggle-qr], [data-venue-profile-qr]").forEach((button) => {
         button.classList.remove("is-open");
         button.setAttribute("aria-expanded", "false");
       });
       syncOverlayScrollLock();
     }
 
-    function openQrOverlay(profileName, city, triggerButton) {
+    function openShareQrOverlay({
+      url,
+      kicker,
+      title,
+      subtitle,
+      imageAlt,
+      openLabel,
+      kind,
+      triggerButton
+    }) {
       const overlay = profileQrOverlay();
       overlay.hidden = false;
-      const url = profileShareUrl(profileName, city);
       const image = document.getElementById("profileQrImage");
-      const subtitle = document.getElementById("profileQrSubtitle");
+      const kickerNode = overlay.querySelector(".profile-qr-kicker");
+      const titleNode = document.getElementById("profileQrTitle");
+      const subtitleNode = document.getElementById("profileQrSubtitle");
       const openLink = document.getElementById("profileQrOpen");
-      overlay.dataset.profileUrl = url;
+      overlay.dataset.qrUrl = url;
+      overlay.dataset.qrKind = kind;
       image.src = qrCodeUrl(url);
-      image.alt = `QR code for ${profileName} profile`;
-      subtitle.textContent = `No account needed. Scan to view ${profileName}'s Dancr profile.`;
+      image.alt = imageAlt;
+      kickerNode.textContent = kicker;
+      titleNode.textContent = title;
+      subtitleNode.textContent = subtitle;
       openLink.href = url;
-      document.querySelectorAll("[data-profile-qr], [data-toggle-qr]").forEach((button) => {
+      openLink.textContent = openLabel;
+      document.querySelectorAll("[data-profile-qr], [data-toggle-qr], [data-venue-profile-qr]").forEach((button) => {
         const isActive = button === triggerButton;
         button.classList.toggle("is-open", isActive);
         button.setAttribute("aria-expanded", String(isActive));
@@ -45759,7 +45822,56 @@
       overlay.querySelector("[data-close-qr-overlay]")?.focus({ preventScroll: true });
     }
 
+    function openQrOverlay(profileName, city, triggerButton) {
+      openShareQrOverlay({
+        url: profileShareUrl(profileName, city),
+        kicker: "Profile QR",
+        title: `${profileName} on MyDancr`,
+        subtitle: `No account needed. Scan to view ${profileName}'s MyDancr profile.`,
+        imageAlt: `QR code for ${profileName} profile`,
+        openLabel: "Open profile",
+        kind: "profile",
+        triggerButton
+      });
+    }
+
+    function openVenueQrOverlay(venueName, city, triggerButton) {
+      const venue = resolveVenueByName(venueName, city);
+      if (!venue) {
+        showToast("Venue QR unavailable");
+        return;
+      }
+      openShareQrOverlay({
+        url: venueShareUrl(venue, city),
+        kicker: "Venue QR",
+        title: venue.name,
+        subtitle: `No account needed. Scan to open ${venue.name}'s verified MyDancr venue page.`,
+        imageAlt: `QR code for ${venue.name} venue page`,
+        openLabel: "Open venue",
+        kind: "venue",
+        triggerButton
+      });
+      if (venue.id) {
+        recordVenuePageEvent({
+          venueId: venue.id,
+          eventType: "qr_impression",
+          source: "venue_page"
+        });
+      }
+    }
+
     function handleQrClick(event) {
+      const venueQrButton = event.target.closest("[data-venue-profile-qr]");
+      if (venueQrButton) {
+        const venueName = venueQrButton.dataset.venueProfileQr;
+        if (!venueName) return true;
+        openVenueQrOverlay(
+          venueName,
+          venueQrButton.dataset.shareCity || selectedCity(),
+          venueQrButton
+        );
+        return true;
+      }
       const qrButton = event.target.closest("[data-profile-qr], [data-toggle-qr]");
       if (!qrButton) return false;
       const profileName = qrButton.dataset.profileQr;

@@ -277,7 +277,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action[\s\S]*?safeExternalHref\(venue\.qrCodeUrl\)[\s\S]*?if \(!rail \|\| !externalQrUrl\) return "";[\s\S]*?home-venue-discovery-rail-qr[\s\S]*?data-external-venue-qr/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action[\s\S]*?safeExternalHref\(venue\.qrCodeUrl\)[\s\S]*?if \(!rail\) return "";[\s\S]*?if \(externalQrUrl\)[\s\S]*?data-external-venue-qr[\s\S]*?data-venue-profile-qr/,
   );
   assert.doesNotMatch(homeSource, /publishedVenueQrPass/);
   const venueSlide = homeSource.match(

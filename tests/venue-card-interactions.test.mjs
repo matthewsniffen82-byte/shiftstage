@@ -32,6 +32,10 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.doesNotMatch(venueCardRenderer, /\? "dancer" : "dancers"/);
   assert.match(venueCardRenderer, /venue-card-follow[\s\S]*?data-venue-follow="\$\{venueValue\}"/);
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
+  assert.match(
+    homeSource,
+    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?data-venue-profile-qr="\$\{escapeOptionValue\(venue\.name\)\}"/,
+  );
 
   assert.doesNotMatch(venueSwipeRenderer, /nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.doesNotMatch(
@@ -51,6 +55,10 @@ test("venue cards open the live profile while revenue and customer actions remai
     /const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?<span class="home-discovery-feed-status is-now">\$\{escapeHtml\(workingLabel\)\}<\/span>[\s\S]*?: "";/,
   );
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
+  assert.match(
+    homeSource,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?data-club-deal-cta[\s\S]*?home-venue-discovery-profile-qr[\s\S]*?data-venue-profile-qr=/,
+  );
 });
 
 test("the retired venue directory can only open the canonical homepage venue cards", () => {

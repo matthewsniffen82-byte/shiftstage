@@ -44,6 +44,25 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
 });
 
+test("venue QR access remains visible before a paid Club Deal is activated", () => {
+  assert.match(
+    liveApp,
+    /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?clubDealCtaMarkup\(config, "venue-club-deal-cta"\)[\s\S]*?venue-profile-qr-card[\s\S]*?data-venue-profile-qr="\$\{venueValue\}"/,
+  );
+  assert.match(
+    liveApp,
+    /function openVenueQrOverlay\(venueName, city, triggerButton\)[\s\S]*?venueShareUrl\(venue, city\)[\s\S]*?kicker: "Venue QR"[\s\S]*?openLabel: "Open venue"/,
+  );
+  assert.match(
+    liveApp,
+    /function handleQrClick\(event\)[\s\S]*?event\.target\.closest\("\[data-venue-profile-qr\]"\)[\s\S]*?openVenueQrOverlay/,
+  );
+  assert.match(
+    liveApp,
+    /recordVenuePageEvent\(\{[\s\S]*?venueId: venue\.id,[\s\S]*?eventType: "qr_impression",[\s\S]*?source: "venue_page"/,
+  );
+});
+
 test("venue profiles stay full-screen with X dismissal and the shared floating navigation", () => {
   assert.match(
     liveApp,
