@@ -80,14 +80,14 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("mobile icons share the hero palette while every selected shape gets one stronger glow", () => {
+test("mobile icons share the hero pole's electric-blue palette while every selected shape gets one stronger glow", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.24\);[\s\S]*?border-radius: 999px;[\s\S]*?rgba\(236, 72, 153, 0\.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124, 58, 237, 0\.3\);[\s\S]*?filter: none;/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.24\);[\s\S]*?border-radius: 999px;[\s\S]*?rgba\(57, 84, 255, 0\.62\)[\s\S]*?rgba\(111, 46, 255, 0\.34\)[\s\S]*?box-shadow: 0 0 16px rgba\(67, 101, 255, 0\.48\);[\s\S]*?filter: none;/,
   );
   assert.doesNotMatch(
     navigationSource,
@@ -99,11 +99,11 @@ test("mobile icons share the hero palette while every selected shape gets one st
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important;[\s\S]*?filter: none !important;/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(57,84,255,.62\)[\s\S]*?rgba\(111,46,255,.34\)[\s\S]*?box-shadow: 0 0 16px rgba\(67,101,255,.48\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important;[\s\S]*?filter: none !important;/,
+    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(57,84,255,.62\)[\s\S]*?rgba\(111,46,255,.34\)[\s\S]*?box-shadow: 0 0 16px rgba\(67,101,255,.48\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.doesNotMatch(navigationSource, /a\.active \.global-mobile-nav-icon \{[^}]*drop-shadow/);
   assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\.active \.home-nav-icon \{[^}]*drop-shadow/);
@@ -126,11 +126,11 @@ test("mobile icons share the hero palette while every selected shape gets one st
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: #c084fc;[\s\S]*?--mobile-nav-icon-rest-violet-glow: rgba\(183, 77, 255, 0\.68\);[\s\S]*?--mobile-nav-icon-rest-cyan-glow: rgba\(53, 216, 255, 0\.28\);[\s\S]*?--mobile-nav-icon-violet-blur: 2\.4px;[\s\S]*?--mobile-nav-icon-cyan-blur: 5px;/,
+    /--mobile-nav-accent: #6680ff;[\s\S]*?--mobile-nav-icon-rest-violet-glow: rgba\(103, 52, 255, 0\.58\);[\s\S]*?--mobile-nav-icon-rest-cyan-glow: rgba\(45, 171, 255, 0\.32\);[\s\S]*?--mobile-nav-icon-violet-blur: 2\.4px;[\s\S]*?--mobile-nav-icon-cyan-blur: 5px;/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: #c084fc;[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(183,77,255,.68\);[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(53,216,255,.28\);[\s\S]*?--home-nav-icon-violet-blur: 2\.4px;[\s\S]*?--home-nav-icon-cyan-blur: 5px;/,
+    /--home-nav-accent: #6680ff;[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(103,52,255,.58\);[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(45,171,255,.32\);[\s\S]*?--home-nav-icon-violet-blur: 2\.4px;[\s\S]*?--home-nav-icon-cyan-blur: 5px;/,
   );
   assert.doesNotMatch(
     navigationSource,

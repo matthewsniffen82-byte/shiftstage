@@ -440,7 +440,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: #c084fc[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(183,77,255,.68\)[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(53,216,255,.28\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: #6680ff[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(103,52,255,.58\)[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(45,171,255,.32\)/,
   );
   assert.match(
     homeSource,
@@ -448,7 +448,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important[\s\S]*?border-radius: 999px !important[\s\S]*?color: #fff !important[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important[\s\S]*?filter: none !important/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important[\s\S]*?border-radius: 999px !important[\s\S]*?color: #fff !important[\s\S]*?rgba\(57,84,255,.62\)[\s\S]*?rgba\(111,46,255,.34\)[\s\S]*?box-shadow: 0 0 16px rgba\(67,101,255,.48\) !important[\s\S]*?filter: none !important/,
   );
   assert.match(
     homeSource,

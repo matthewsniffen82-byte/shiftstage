@@ -193,20 +193,20 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a {
-            --mobile-nav-accent: #c084fc;
-            --mobile-nav-accent-soft: #e9d5ff;
-            --mobile-nav-accent-glow: rgba(183, 77, 255, 0.5);
+            --mobile-nav-accent: #6680ff;
+            --mobile-nav-accent-soft: #c7d2fe;
+            --mobile-nav-accent-glow: rgba(77, 109, 255, 0.62);
             --mobile-nav-hero-white-glow: rgba(255, 255, 255, 0.9);
-            --mobile-nav-hero-violet-glow: rgba(183, 77, 255, 0.86);
-            --mobile-nav-hero-cyan-glow: rgba(53, 216, 255, 0.54);
+            --mobile-nav-hero-violet-glow: rgba(104, 48, 255, 0.82);
+            --mobile-nav-hero-cyan-glow: rgba(40, 180, 255, 0.58);
             --mobile-nav-icon-rest-violet-blur: 1.5px;
             --mobile-nav-icon-rest-cyan-blur: 3px;
-            --mobile-nav-icon-rest-violet-glow: rgba(183, 77, 255, 0.68);
-            --mobile-nav-icon-rest-cyan-glow: rgba(53, 216, 255, 0.28);
+            --mobile-nav-icon-rest-violet-glow: rgba(103, 52, 255, 0.58);
+            --mobile-nav-icon-rest-cyan-glow: rgba(45, 171, 255, 0.32);
             --mobile-nav-icon-violet-blur: 2.4px;
             --mobile-nav-icon-cyan-blur: 5px;
-            --mobile-nav-icon-violet-glow: rgba(183, 77, 255, 0.88);
-            --mobile-nav-icon-cyan-glow: rgba(53, 216, 255, 0.52);
+            --mobile-nav-icon-violet-glow: rgba(92, 54, 255, 0.92);
+            --mobile-nav-icon-cyan-glow: rgba(48, 180, 255, 0.58);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -276,10 +276,10 @@ export function GlobalMobileBottomNav() {
             color: #fff;
             background: linear-gradient(
               145deg,
-              rgba(124, 58, 237, 0.48),
-              rgba(236, 72, 153, 0.22)
+              rgba(57, 84, 255, 0.62),
+              rgba(111, 46, 255, 0.34)
             );
-            box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 0 16px rgba(67, 101, 255, 0.48);
             filter: none;
             transform: translateY(-2px) scale(1.08);
           }
@@ -308,10 +308,10 @@ export function GlobalMobileBottomNav() {
             color: #fff;
             background: linear-gradient(
               145deg,
-              rgba(124, 58, 237, 0.48),
-              rgba(236, 72, 153, 0.22)
+              rgba(57, 84, 255, 0.62),
+              rgba(111, 46, 255, 0.34)
             );
-            box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 0 16px rgba(67, 101, 255, 0.48);
             filter: none;
           }
 
@@ -385,7 +385,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav
             a.tv-destination.active
             .mydancr-tv-r {
-            stroke: #f9a8d4;
+            stroke: #9fe7ff;
           }
         }
       `}</style>
