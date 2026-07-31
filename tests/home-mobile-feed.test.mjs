@@ -84,7 +84,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
+    /const profileGroups = groupHomeTvFeedVideos\(homeTvFeedVideos\)[\s\S]*?results\.replaceChildren\(\s*\.\.\.profileGroups\.map\(\(profileVideos, index\) => \(\s*createHomeTvFeedSlide\(profileVideos, index, profileGroups\.length\)/,
   );
   assert.match(
     homeSource,

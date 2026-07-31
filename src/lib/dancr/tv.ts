@@ -26,6 +26,7 @@ export const MYDANCR_TV_EVENT_TYPES = new Set([
   "follow",
   "going",
   "reminder",
+  "applause",
   "share",
   "report",
 ]);
@@ -1114,6 +1115,7 @@ function emptyMetrics() {
     follow: 0,
     going: 0,
     reminder: 0,
+    applause: 0,
     share: 0,
     report: 0,
   };

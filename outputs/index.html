@@ -13192,8 +13192,96 @@
         inset 0 0 18px rgba(245,158,11,.035);
     }
 
-    #setupChecklist .setup-step .step-head {
+    #setupChecklist .step-head {
+      width: 100%;
+      min-height: 54px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 24px 28px;
+      grid-template-rows: minmax(30px, auto);
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      padding: 10px 12px 10px 14px;
+      border: 1px solid rgba(255,255,255,.1);
       border-radius: 0;
+      color: #fff;
+      background: #181821;
+      text-align: left;
+    }
+
+    #setupChecklist .step-head > span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #setupChecklist .step-check {
+      grid-column: 2;
+      grid-row: 1;
+      width: 24px;
+      height: 24px;
+      display: inline-grid;
+      place-items: center;
+      justify-self: center;
+      align-self: center;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      color: #fff;
+      background: #3a3a48;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    #setupChecklist .step-status-dot {
+      width: 6px;
+      height: 6px;
+      display: block;
+      border-radius: 999px;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    #setupChecklist .step-expand {
+      grid-column: 3;
+      grid-row: 1;
+      width: 28px;
+      height: 28px;
+      display: inline-grid;
+      place-items: center;
+      justify-self: center;
+      align-self: center;
+      border-radius: 999px;
+      color: #f1d7ff;
+      background: #301b46;
+      font-size: 18px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    #setupChecklist .setup-step.complete .step-head {
+      border-color: rgba(74,222,128,.3);
+      background: #12331f;
+    }
+
+    #setupChecklist .setup-step.submitted .step-head {
+      border-color: rgba(74,222,128,.22);
+      background: #10291b;
+    }
+
+    #setupChecklist .setup-step.open:not(.complete):not(.submitted) .step-head {
+      border-color: rgba(245,158,11,.34);
+      background: #2f220f;
+    }
+
+    #setupChecklist .setup-step.locked .step-head {
+      border-color: rgba(255,255,255,.06);
+      background: #15141b;
+    }
+
+    #setupChecklist .setup-step.complete .step-check {
+      border-color: rgba(134,239,172,.64);
+      color: #06150c;
+      background: #86efac;
     }
 
     #setupChecklist .setup-step:not(.open) {
@@ -13210,6 +13298,12 @@
 
     #setupChecklist .setup-step.submitted:not(.open) {
       background: #10291b;
+    }
+
+    .submitted-photo-slot.is-pending {
+      border-color: rgba(255,194,71,.98);
+      background: rgba(78,48,7,.32);
+      box-shadow: 0 0 0 1px rgba(255,194,71,.12), inset 0 0 18px rgba(255,194,71,.08);
     }
 
     #setupChecklist .setup-step:not(.open) .step-head {
@@ -28285,85 +28379,175 @@
         }
         .home-tv-feed-video {
           position: absolute;
+          z-index: 1;
           inset: 0;
           width: 100%;
           height: 100%;
           display: block;
           border: 0;
-          object-fit: cover;
+          object-fit: contain;
           background: #000;
           cursor: pointer;
+          opacity: 1;
+          transition: opacity .22s ease;
           user-select: none;
           -webkit-user-select: none;
+        }
+        .home-tv-feed-slide.is-media-loading .home-tv-feed-video,
+        .home-tv-feed-slide.is-media-unavailable .home-tv-feed-video {
+          opacity: 0;
         }
         .home-tv-feed-video:focus-visible {
           outline: 3px solid #7eeaff;
           outline-offset: -4px;
         }
+        .home-tv-feed-media-fallback {
+          position: absolute;
+          z-index: 0;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          background-color: #050507;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: cover;
+        }
+        .home-tv-feed-media-fallback::before {
+          content: "";
+          position: absolute;
+          inset: -24px;
+          background: inherit;
+          filter: blur(22px) brightness(.46);
+          transform: scale(1.08);
+        }
+        .home-tv-feed-media-status {
+          position: relative;
+          z-index: 1;
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 12px;
+          border: 1px solid rgba(255,255,255,.18);
+          border-radius: 999px;
+          color: rgba(255,255,255,.9);
+          background: rgba(3,3,7,.72);
+          font-size: 11px;
+          font-weight: 900;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-slide:not(.is-media-loading):not(.is-media-unavailable) .home-tv-feed-media-status {
+          display: none;
+        }
         .home-tv-feed-shade {
           position: absolute;
-          z-index: 1;
+          z-index: 2;
           inset: 0;
           pointer-events: none;
-          background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, transparent 34%, transparent 54%, rgba(0,0,0,.9) 100%);
+          background:
+            linear-gradient(180deg, rgba(0,0,0,.26) 0%, transparent 24%, transparent 46%, rgba(0,0,0,.5) 66%, rgba(0,0,0,.98) 100%),
+            linear-gradient(90deg, rgba(0,0,0,.08), transparent 54%, rgba(0,0,0,.18));
         }
         .home-tv-feed-copy {
           position: absolute;
-          z-index: 2;
-          right: 0;
+          z-index: 4;
+          right: 70px;
           bottom: 0;
           left: 0;
           display: grid;
-          gap: 8px;
-          padding: 54px 18px 18px;
+          justify-items: start;
+          gap: 7px;
+          padding: 96px 0 22px 18px;
           pointer-events: none;
         }
         .home-tv-feed-copy a,
         .home-tv-feed-sound,
+        .home-tv-feed-action,
+        .home-tv-feed-report-option,
         .home-feed-return-home {
           pointer-events: auto;
         }
         .home-tv-feed-dancer {
-          width: fit-content;
+          width: min(100%, 520px);
+          min-height: 44px;
           max-width: 100%;
-          display: inline-flex;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           color: #fff;
-          font-size: clamp(22px, 5.8vw, 34px);
+          font-size: clamp(23px, 5.8vw, 34px);
           font-weight: 950;
           line-height: 1.05;
+          text-decoration: none;
           text-shadow: 0 3px 16px rgba(0,0,0,.88);
+        }
+        .home-tv-feed-dancer-name-row {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+        .home-tv-feed-dancer-name {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
         .home-tv-feed-dancer:hover,
         .home-tv-feed-dancer:focus-visible,
         .home-tv-feed-venue:hover,
         .home-tv-feed-venue:focus-visible {
           color: #9fefff;
-          text-decoration: underline;
-          text-underline-offset: 4px;
+        }
+        .home-tv-feed-dancer:focus-visible,
+        .home-tv-feed-venue:focus-visible,
+        .home-tv-feed-action:focus-visible,
+        .home-tv-feed-report-option:focus-visible,
+        .home-tv-feed-sound:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
         }
         .home-tv-feed-verified {
-          width: 22px;
-          height: 22px;
-          flex: 0 0 auto;
+          width: 18px;
+          height: 18px;
+          flex: 0 0 18px;
           display: inline-grid;
           place-items: center;
           border-radius: 999px;
           color: #fff;
-          background: linear-gradient(135deg,#22c7ff,#2563eb);
-          box-shadow: 0 0 16px rgba(34,199,255,.48);
-          font-size: 13px;
+          background: linear-gradient(135deg,#22c7ff,#4f46e5);
+          box-shadow: 0 0 10px rgba(34,199,255,.34);
+          font-size: 11px;
+          line-height: 1;
         }
         .home-tv-feed-profile-cue {
-          padding: 5px 8px;
-          border: 1px solid rgba(126,234,255,.4);
+          min-height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 12px;
+          border: 1px solid rgba(126,234,255,.52);
           border-radius: 999px;
-          color: #c8f8ff;
-          background: rgba(0,0,0,.62);
-          font-size: 9px;
-          letter-spacing: .07em;
+          color: #e5fbff;
+          background: linear-gradient(135deg, rgba(67,26,122,.78), rgba(8,82,104,.72));
+          box-shadow: 0 0 16px rgba(124,58,237,.2);
+          font-size: 10px;
+          letter-spacing: .055em;
+          white-space: nowrap;
           text-transform: uppercase;
+        }
+        .home-tv-feed-meta {
+          width: fit-content;
+          max-width: 100%;
+          overflow: hidden;
+          color: #d4cbe0;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: .025em;
+          text-overflow: ellipsis;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+          white-space: nowrap;
         }
         .home-tv-feed-venue {
           width: fit-content;
@@ -28393,10 +28577,10 @@
         .home-tv-feed-schedule {
           width: fit-content;
           max-width: 100%;
-          min-height: 30px;
+          min-height: 32px;
           display: inline-flex;
           align-items: center;
-          padding: 0 10px;
+          padding: 0 11px;
           border: 1px solid rgba(255,255,255,.24);
           border-radius: 999px;
           color: #d7d3df;
@@ -28416,26 +28600,37 @@
         }
         .home-tv-feed-sound {
           position: absolute;
-          z-index: 3;
+          z-index: 6;
           top: 14px;
           right: 14px;
-          min-width: 82px;
-          min-height: 40px;
+          min-width: 74px;
+          min-height: 36px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 0 12px;
-          border: 1px solid rgba(255,255,255,.32);
+          gap: 6px;
+          padding: 0 10px;
+          border: 1px solid rgba(255,255,255,.22);
           border-radius: 999px;
           color: #fff;
-          background: rgba(0,0,0,.7);
-          font-size: 11px;
+          background: rgba(4,4,8,.56);
+          box-shadow: 0 6px 18px rgba(0,0,0,.26);
+          font-size: 10px;
           font-weight: 900;
           backdrop-filter: blur(12px);
         }
+        .home-tv-feed-sound svg {
+          width: 15px;
+          height: 15px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
         .home-tv-feed-playback {
           position: absolute;
-          z-index: 2;
+          z-index: 5;
           top: 50%;
           left: 50%;
           width: 68px;
@@ -28459,16 +28654,189 @@
         }
         .home-tv-feed-position {
           position: absolute;
-          z-index: 3;
+          z-index: 6;
           top: 17px;
           left: 15px;
-          padding: 5px 9px;
+          min-height: 30px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 10px;
           border: 1px solid rgba(255,255,255,.2);
           border-radius: 999px;
           color: #fff;
-          background: rgba(0,0,0,.64);
+          background: rgba(4,4,8,.54);
           font-size: 10px;
           font-weight: 900;
+          backdrop-filter: blur(10px);
+        }
+        .home-tv-feed-media-position {
+          position: absolute;
+          z-index: 6;
+          top: 53px;
+          left: 15px;
+          min-height: 26px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border: 1px solid rgba(167,139,250,.28);
+          border-radius: 999px;
+          color: #e7ddff;
+          background: rgba(31,15,52,.56);
+          font-size: 9px;
+          font-weight: 900;
+          backdrop-filter: blur(10px);
+        }
+        .home-tv-feed-actions {
+          position: absolute;
+          z-index: 7;
+          right: 12px;
+          bottom: 24px;
+          display: grid;
+          justify-items: end;
+          gap: 9px;
+        }
+        .home-tv-feed-action {
+          width: 44px;
+          height: 44px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.2);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(5,5,10,.64);
+          box-shadow: 0 8px 24px rgba(0,0,0,.3), 0 0 16px rgba(124,58,237,.12);
+          backdrop-filter: blur(12px);
+          touch-action: manipulation;
+        }
+        .home-tv-feed-action:hover,
+        .home-tv-feed-action[aria-pressed="true"],
+        .home-tv-feed-action[aria-expanded="true"] {
+          border-color: rgba(126,234,255,.58);
+          color: #e9fbff;
+          background: rgba(54,24,93,.78);
+          box-shadow: 0 0 20px rgba(124,58,237,.26);
+        }
+        .home-tv-feed-action svg {
+          width: 20px;
+          height: 20px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-tv-feed-report-menu {
+          position: absolute;
+          right: 52px;
+          bottom: 0;
+          width: min(242px, calc(100vw - 90px));
+          display: grid;
+          gap: 5px;
+          padding: 10px;
+          border: 1px solid rgba(167,139,250,.34);
+          border-radius: 14px;
+          background: rgba(7,7,12,.96);
+          box-shadow: 0 16px 44px rgba(0,0,0,.56), 0 0 24px rgba(124,58,237,.18);
+          backdrop-filter: blur(18px);
+        }
+        .home-tv-feed-report-menu[hidden] {
+          display: none;
+        }
+        .home-tv-feed-report-menu strong {
+          padding: 3px 5px 6px;
+          color: #fff;
+          font-size: 12px;
+        }
+        .home-tv-feed-report-option {
+          min-height: 38px;
+          padding: 0 10px;
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 9px;
+          color: #ded7e8;
+          background: rgba(255,255,255,.035);
+          font-size: 11px;
+          font-weight: 800;
+          text-align: left;
+        }
+        .home-tv-feed-progress {
+          position: absolute;
+          z-index: 8;
+          right: 14px;
+          bottom: 7px;
+          left: 14px;
+          height: 3px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: rgba(255,255,255,.22);
+          pointer-events: none;
+        }
+        .home-tv-feed-progress > span {
+          width: 0;
+          height: 100%;
+          display: block;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #a855f7, #22d3ee);
+          box-shadow: 0 0 10px rgba(34,211,238,.62);
+          transition: width .1s linear;
+        }
+        .home-tv-feed-feedback {
+          position: absolute;
+          z-index: 9;
+          top: 50%;
+          left: 50%;
+          min-width: 112px;
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 14px;
+          border: 1px solid rgba(255,255,255,.22);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(6,6,10,.78);
+          box-shadow: 0 12px 34px rgba(0,0,0,.46), 0 0 24px rgba(124,58,237,.2);
+          font-size: 12px;
+          font-weight: 950;
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(.9);
+          transition: opacity .18s ease, transform .18s ease;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-feedback.show {
+          opacity: 1;
+          transform: translate(-50%,-50%) scale(1);
+        }
+        .home-tv-feed-applause {
+          position: absolute;
+          z-index: 8;
+          top: 46%;
+          left: 50%;
+          color: #fff;
+          font-size: 56px;
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(.5);
+          text-shadow: 0 0 22px rgba(236,72,153,.84), 0 0 42px rgba(124,58,237,.7);
+        }
+        .home-tv-feed-slide.is-applauding .home-tv-feed-applause {
+          animation: homeTvFeedApplause .7s ease-out;
+        }
+        @keyframes homeTvFeedApplause {
+          0% { opacity: 0; transform: translate(-50%,-50%) scale(.5) rotate(-8deg); }
+          24% { opacity: 1; transform: translate(-50%,-50%) scale(1.18) rotate(4deg); }
+          100% { opacity: 0; transform: translate(-50%,-58%) scale(.96) rotate(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-tv-feed-video,
+          .home-tv-feed-progress > span,
+          .home-tv-feed-feedback {
+            transition: none;
+          }
+          .home-tv-feed-slide.is-applauding .home-tv-feed-applause {
+            animation: none;
+          }
         }
         .home-feed-return-home {
           position: fixed;
@@ -28483,17 +28851,16 @@
           border: 1px solid rgba(167,139,250,.5);
           border-radius: 999px;
           color: #fff;
-          background: rgba(5,5,10,.78);
+          background: rgba(5,5,10,.58);
           box-shadow:
-            0 8px 24px rgba(0,0,0,.42),
-            0 0 16px rgba(124,58,237,.34),
-            0 0 22px rgba(34,199,255,.14);
+            0 7px 20px rgba(0,0,0,.34),
+            0 0 12px rgba(124,58,237,.22);
           backdrop-filter: blur(14px) saturate(1.2);
           touch-action: manipulation;
         }
         .home-feed-return-home svg {
-          width: 21px;
-          height: 21px;
+          width: 19px;
+          height: 19px;
           fill: none;
           stroke: currentColor;
           stroke-width: 2;
@@ -29845,6 +30212,11 @@
             width: 100% !important;
             height: 100dvh !important;
           }
+          body.home-tv-feed-locked .app > header {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+          }
           body.home-tv-feed-locked .home-feed-return-home {
             display: grid;
           }
@@ -29859,13 +30231,36 @@
             pointer-events: auto !important;
           }
           .home-tv-feed-copy {
-            padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
+            right: 68px;
+            gap: 6px;
+            padding: 96px 0 calc(96px + env(safe-area-inset-bottom)) 14px;
           }
           .home-tv-feed-dancer {
             font-size: clamp(22px, 7vw, 31px);
           }
+          .home-tv-feed-profile-cue {
+            min-height: 34px;
+            padding-inline: 10px;
+            font-size: 9px;
+          }
+          .home-tv-feed-sound {
+            top: calc(14px + env(safe-area-inset-top));
+            right: 12px;
+          }
           .home-tv-feed-position {
             top: calc(70px + env(safe-area-inset-top));
+          }
+          .home-tv-feed-media-position {
+            top: calc(106px + env(safe-area-inset-top));
+          }
+          .home-tv-feed-actions {
+            right: 10px;
+            bottom: calc(98px + env(safe-area-inset-bottom));
+          }
+          .home-tv-feed-progress {
+            right: 12px;
+            bottom: calc(82px + env(safe-area-inset-bottom));
+            left: 12px;
           }
           .home-discovery-feed-copy {
             right: 82px;
@@ -32725,6 +33120,7 @@
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
+    const homeTvFeedApplaudedVideos = new Set();
     const homeTvFeedEngagedTimers = new Map();
     let homeDiscoveryFeedOpen = false;
     let homeDiscoveryFeedObserver = null;
@@ -45419,10 +45815,10 @@
     }
 
     function trackHomeTvFeedEvent(videoId, eventType) {
-      if (!videoId || window.location.protocol === "file:") return;
+      if (!videoId || window.location.protocol === "file:") return Promise.resolve(false);
       const headers = { "Content-Type": "application/json", Accept: "application/json" };
       if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
-      fetch(`/api/public/tv/${encodeURIComponent(videoId)}/events`, {
+      return fetch(`/api/public/tv/${encodeURIComponent(videoId)}/events`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -45431,7 +45827,7 @@
           source: "home"
         }),
         keepalive: true
-      }).catch(() => undefined);
+      }).then((response) => response.ok).catch(() => false);
     }
 
     function clearHomeTvFeedEngagedTimer(videoId) {
@@ -45454,10 +45850,110 @@
 
     function syncHomeTvFeedSoundButtons() {
       document.querySelectorAll("[data-home-tv-sound]").forEach((button) => {
-        button.textContent = homeTvFeedMuted ? "Sound off" : "Sound on";
+        const label = button.querySelector("[data-home-tv-sound-label]");
+        if (label) label.textContent = homeTvFeedMuted ? "Sound off" : "Sound on";
         button.setAttribute("aria-label", homeTvFeedMuted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV");
         button.setAttribute("aria-pressed", String(!homeTvFeedMuted));
       });
+    }
+
+    function showHomeTvFeedFeedback(slide, message) {
+      const feedback = slide?.querySelector(".home-tv-feed-feedback");
+      if (!feedback) return;
+      window.clearTimeout(slide.homeTvFeedbackTimer);
+      feedback.textContent = message;
+      feedback.classList.add("show");
+      slide.homeTvFeedbackTimer = window.setTimeout(() => {
+        feedback.classList.remove("show");
+      }, 1100);
+    }
+
+    function applaudHomeTvFeedVideo(item, slide) {
+      const videoId = String(item?.id || "");
+      if (!videoId || !slide) return;
+      const alreadyApplauded = homeTvFeedApplaudedVideos.has(videoId);
+      homeTvFeedApplaudedVideos.add(videoId);
+      slide.querySelector("[data-home-tv-applause]")?.setAttribute("aria-pressed", "true");
+      slide.classList.remove("is-applauding");
+      void slide.offsetWidth;
+      slide.classList.add("is-applauding");
+      window.setTimeout(() => slide.classList.remove("is-applauding"), 720);
+      showHomeTvFeedFeedback(slide, alreadyApplauded ? "Already applauded" : "Applauded");
+      if (!alreadyApplauded) void trackHomeTvFeedEvent(videoId, "applause");
+    }
+
+    async function shareHomeTvFeedVideo(item, slide, button) {
+      const videoId = String(item?.id || "");
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      if (!videoId) return;
+      const url = new URL(`/tv/${encodeURIComponent(videoId)}`, window.location.origin).toString();
+      button.disabled = true;
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: `${dancerName} on MyDancr TV`,
+            text: `Watch ${dancerName} on MyDancr TV.`,
+            url
+          });
+          showHomeTvFeedFeedback(slide, "Shared");
+        } else {
+          await copyText(url, "Video link copied");
+          showHomeTvFeedFeedback(slide, "Link copied");
+        }
+        void trackHomeTvFeedEvent(videoId, "share");
+      } catch (error) {
+        if (error?.name !== "AbortError") showHomeTvFeedFeedback(slide, "Sharing unavailable");
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function reportHomeTvFeedVideo(item, reason, slide, button) {
+      const videoId = String(item?.id || "");
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      if (!videoId || !reason) return;
+      button.disabled = true;
+      try {
+        const headers = { "Content-Type": "application/json", Accept: "application/json" };
+        if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
+        const response = await fetch("/api/reports", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            targetType: "tv_video",
+            targetId: videoId,
+            targetLabel: `${dancerName} MyDancr TV video`,
+            reason,
+            details: "Reported from the homepage MyDancr TV feed."
+          })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to submit report.");
+        void trackHomeTvFeedEvent(videoId, "report");
+        showHomeTvFeedFeedback(slide, "Report submitted");
+        const menu = button.closest(".home-tv-feed-report-menu");
+        menu.hidden = true;
+        slide.querySelector("[data-home-tv-report]")?.setAttribute("aria-expanded", "false");
+      } catch (error) {
+        showHomeTvFeedFeedback(
+          slide,
+          error instanceof Error && error.message ? error.message : "Report unavailable"
+        );
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function groupHomeTvFeedVideos(items) {
+      const groups = new Map();
+      items.forEach((item) => {
+        const dancerKey = String(item?.dancer?.id || item?.dancer?.slug || item?.id || "");
+        if (!dancerKey) return;
+        const group = groups.get(dancerKey) || [];
+        group.push(item);
+        groups.set(dancerKey, group);
+      });
+      return [...groups.values()];
     }
 
     function activateHomeTvFeedVideo(videoId) {
@@ -45497,11 +45993,13 @@
       if (!videoId) return;
       if (video.paused) {
         activateHomeTvFeedVideo(videoId);
+        showHomeTvFeedFeedback(slide, "Playing");
         return;
       }
       clearHomeTvFeedEngagedTimer(videoId);
       video.pause();
       slide.classList.add("is-paused");
+      showHomeTvFeedFeedback(slide, "Paused");
     }
 
     function setupHomeTvFeedObserver() {
@@ -45652,28 +46150,129 @@
           className: "is-upcoming"
         };
       }
-      return { label: "No shift posted", className: "is-no-shift" };
+      return null;
     }
 
-    function createHomeTvFeedVideo(item, index, slide) {
+    function createHomeTvFeedMediaFallback(item) {
+      const fallback = document.createElement("div");
+      fallback.className = "home-tv-feed-media-fallback";
+      fallback.setAttribute("aria-hidden", "true");
+      const photoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
+      if (photoUrl) fallback.style.backgroundImage = `url("${photoUrl.replaceAll('"', "%22")}")`;
+      const status = document.createElement("span");
+      status.className = "home-tv-feed-media-status";
+      status.textContent = "Loading video";
+      fallback.appendChild(status);
+      return fallback;
+    }
+
+    function syncHomeTvFeedProgress(video, slide) {
+      const progress = slide.querySelector(".home-tv-feed-progress");
+      const fill = progress?.querySelector("span");
+      if (!progress || !fill) return;
+      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
+      const ratio = duration ? Math.min(1, Math.max(0, video.currentTime / duration)) : 0;
+      fill.style.width = `${ratio * 100}%`;
+      progress.setAttribute("aria-valuenow", String(Math.round(ratio * 100)));
+      progress.setAttribute(
+        "aria-valuetext",
+        duration
+          ? `${Math.round(video.currentTime)} of ${Math.round(duration)} seconds`
+          : "Video loading"
+      );
+    }
+
+    function createHomeTvFeedProgress() {
+      const progress = document.createElement("div");
+      progress.className = "home-tv-feed-progress";
+      progress.setAttribute("role", "progressbar");
+      progress.setAttribute("aria-label", "Video playback progress");
+      progress.setAttribute("aria-valuemin", "0");
+      progress.setAttribute("aria-valuemax", "100");
+      progress.setAttribute("aria-valuenow", "0");
+      progress.setAttribute("aria-valuetext", "Video loading");
+      progress.appendChild(document.createElement("span"));
+      return progress;
+    }
+
+    function createHomeTvFeedVideo(item, index, slide, profileVideoCount) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const videoId = String(item.id);
       const video = document.createElement("video");
       video.className = "home-tv-feed-video";
       video.src = item.videoUrl;
+      const posterUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
+      if (posterUrl) video.poster = posterUrl;
       video.loop = true;
       video.muted = homeTvFeedMuted;
       video.defaultMuted = true;
       video.playsInline = true;
       video.preload = index === 0 ? "auto" : "metadata";
+      video.controlsList = "nodownload noremoteplayback nofullscreen";
+      video.disablePictureInPicture = true;
       video.tabIndex = 0;
       video.setAttribute("role", "button");
-      video.setAttribute("aria-label", `${dancerName} MyDancr TV video. Play or pause.`);
-      video.addEventListener("click", () => toggleHomeTvFeedPlayback(video));
+      video.setAttribute(
+        "aria-label",
+        `${dancerName} MyDancr TV video. Tap to play or pause, double tap to applaud${
+          profileVideoCount > 1 ? ", or swipe left or right for another profile video" : ""
+        }.`
+      );
+      let lastTapAt = 0;
+      let singleTapTimer = 0;
+      video.addEventListener("click", () => {
+        if (slide.homeTvGestureConsumed) {
+          slide.homeTvGestureConsumed = false;
+          return;
+        }
+        const tapAt = Date.now();
+        if (tapAt - lastTapAt <= 320) {
+          window.clearTimeout(singleTapTimer);
+          lastTapAt = 0;
+          applaudHomeTvFeedVideo(item, slide);
+          return;
+        }
+        lastTapAt = tapAt;
+        singleTapTimer = window.setTimeout(() => {
+          if (lastTapAt !== tapAt) return;
+          lastTapAt = 0;
+          toggleHomeTvFeedPlayback(video);
+        }, 260);
+      });
+      video.addEventListener("dblclick", (event) => event.preventDefault());
+      video.addEventListener("contextmenu", (event) => event.preventDefault());
       video.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        toggleHomeTvFeedPlayback(video);
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          event.preventDefault();
+          showHomeTvFeedMedia(slide, event.key === "ArrowRight" ? 1 : -1);
+          return;
+        }
+        if (event.key === "a" || event.key === "A") {
+          event.preventDefault();
+          applaudHomeTvFeedVideo(item, slide);
+          return;
+        }
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleHomeTvFeedPlayback(video);
+        }
+      });
+      video.addEventListener("loadstart", () => {
+        slide.classList.add("is-media-loading");
+        slide.classList.remove("is-media-unavailable");
+        const mediaStatus = slide.querySelector(".home-tv-feed-media-status");
+        if (mediaStatus) mediaStatus.textContent = "Loading video";
+      });
+      video.addEventListener("loadeddata", () => {
+        slide.classList.remove("is-media-loading", "is-media-unavailable");
+        syncHomeTvFeedProgress(video, slide);
+      });
+      video.addEventListener("error", () => {
+        slide.classList.remove("is-media-loading");
+        slide.classList.add("is-media-unavailable");
+        const mediaStatus = slide.querySelector(".home-tv-feed-media-status");
+        if (mediaStatus) mediaStatus.textContent = "Video unavailable";
+        showHomeTvFeedFeedback(slide, "Video unavailable");
       });
       video.addEventListener("play", () => {
         slide.classList.remove("is-paused");
@@ -45684,6 +46283,7 @@
         clearHomeTvFeedEngagedTimer(videoId);
       });
       video.addEventListener("timeupdate", () => {
+        syncHomeTvFeedProgress(video, slide);
         if (
           video.duration > 0 &&
           video.currentTime / video.duration >= .95 &&
@@ -45725,7 +46325,10 @@
         event.preventDefault();
         openProfileModal(profile.name);
       });
+      const nameRow = document.createElement("span");
+      nameRow.className = "home-tv-feed-dancer-name-row";
       const dancerLabel = document.createElement("span");
+      dancerLabel.className = "home-tv-feed-dancer-name";
       dancerLabel.textContent = dancerName;
       const verified = document.createElement("span");
       verified.className = "home-tv-feed-verified";
@@ -45733,9 +46336,15 @@
       verified.setAttribute("aria-label", "Verified");
       const profileCue = document.createElement("span");
       profileCue.className = "home-tv-feed-profile-cue";
-      profileCue.textContent = "View profile";
-      dancer.append(dancerLabel, verified, profileCue);
+      profileCue.textContent = "View profile →";
+      nameRow.append(dancerLabel, verified);
+      dancer.append(nameRow, profileCue);
       copy.appendChild(dancer);
+
+      const meta = document.createElement("span");
+      meta.className = "home-tv-feed-meta";
+      meta.textContent = `Dancer · ${dancerCity}`;
+      copy.appendChild(meta);
 
       if (venueName && venueSlug) {
         const venue = document.createElement("a");
@@ -45753,21 +46362,121 @@
         copy.appendChild(venue);
       }
 
-      const schedule = document.createElement("span");
-      schedule.className = `home-tv-feed-schedule ${scheduleContext.className}`;
-      schedule.textContent = scheduleContext.label;
-      copy.appendChild(schedule);
+      if (scheduleContext) {
+        const schedule = document.createElement("span");
+        schedule.className = `home-tv-feed-schedule ${scheduleContext.className}`;
+        schedule.textContent = scheduleContext.label;
+        copy.appendChild(schedule);
+      }
       return copy;
     }
 
-    function createHomeTvFeedSlide(item, index, total) {
+    function createHomeTvFeedActionButton(className, label, iconMarkup) {
+      const button = document.createElement("button");
+      button.className = `home-tv-feed-action ${className}`;
+      button.type = "button";
+      button.setAttribute("aria-label", label);
+      button.title = label;
+      button.innerHTML = iconMarkup;
+      return button;
+    }
+
+    function createHomeTvFeedActions(item, slide) {
+      const actions = document.createElement("div");
+      actions.className = "home-tv-feed-actions";
+      actions.setAttribute("aria-label", "Video actions");
+
+      const applause = createHomeTvFeedActionButton(
+        "home-tv-feed-applause-action",
+        "Applaud this video",
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg>'
+      );
+      applause.dataset.homeTvApplause = "true";
+      applause.setAttribute("aria-pressed", String(homeTvFeedApplaudedVideos.has(String(item.id))));
+      applause.addEventListener("click", () => applaudHomeTvFeedVideo(item, slide));
+
+      const share = createHomeTvFeedActionButton(
+        "home-tv-feed-share-action",
+        "Share this video",
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"></path></svg>'
+      );
+      share.addEventListener("click", () => void shareHomeTvFeedVideo(item, slide, share));
+
+      const report = createHomeTvFeedActionButton(
+        "home-tv-feed-report-action",
+        "Report this video",
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4m0 1h11l-1.6 3L16 11H5"></path></svg>'
+      );
+      report.dataset.homeTvReport = "true";
+      report.setAttribute("aria-expanded", "false");
+
+      const reportMenu = document.createElement("div");
+      reportMenu.className = "home-tv-feed-report-menu";
+      reportMenu.id = `homeTvReport${String(item.id).replaceAll("-", "")}`;
+      reportMenu.hidden = true;
+      reportMenu.setAttribute("role", "menu");
+      reportMenu.setAttribute("aria-label", "Choose a report reason");
+      report.setAttribute("aria-controls", reportMenu.id);
+      const reportTitle = document.createElement("strong");
+      reportTitle.textContent = "Why are you reporting this?";
+      reportMenu.appendChild(reportTitle);
+      [
+        "Sexual or unsafe content",
+        "Harassment or abuse",
+        "Spam or misleading content",
+        "Other safety concern"
+      ].forEach((reason) => {
+        const option = document.createElement("button");
+        option.className = "home-tv-feed-report-option";
+        option.type = "button";
+        option.setAttribute("role", "menuitem");
+        option.textContent = reason;
+        option.addEventListener("click", () => void reportHomeTvFeedVideo(item, reason, slide, option));
+        reportMenu.appendChild(option);
+      });
+      report.addEventListener("click", () => {
+        const open = reportMenu.hidden;
+        reportMenu.hidden = !open;
+        report.setAttribute("aria-expanded", String(open));
+        if (open) reportMenu.querySelector("button")?.focus({ preventScroll: true });
+      });
+      actions.append(applause, share, report, reportMenu);
+      return actions;
+    }
+
+    function createHomeTvFeedSoundButton(slide) {
+      const sound = document.createElement("button");
+      sound.className = "home-tv-feed-sound";
+      sound.type = "button";
+      sound.dataset.homeTvSound = "true";
+      sound.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"></path><path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"></path></svg><span data-home-tv-sound-label></span>';
+      sound.addEventListener("click", () => {
+        homeTvFeedMuted = !homeTvFeedMuted;
+        results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
+          feedVideo.muted = homeTvFeedMuted;
+        });
+        syncHomeTvFeedSoundButtons();
+        showHomeTvFeedFeedback(slide, homeTvFeedMuted ? "Sound off" : "Sound on");
+      });
+      return sound;
+    }
+
+    function renderHomeTvFeedSlideMedia(slide, item, profileIndex, totalProfiles, mediaIndex, mediaTotal) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const scheduleContext = homeTvFeedSchedule(item);
-      const slide = document.createElement("article");
-      slide.className = "home-tv-feed-slide is-paused";
+      const previousVideoId = String(slide.dataset.videoId || "");
+      if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
-      slide.setAttribute("aria-label", `${dancerName} MyDancr TV video, ${scheduleContext.label}`);
-      const video = createHomeTvFeedVideo(item, index, slide);
+      slide.homeTvMediaIndex = mediaIndex;
+      slide.homeTvCurrentItem = item;
+      slide.classList.remove("is-media-unavailable", "is-applauding");
+      slide.classList.add("is-media-loading", "is-paused");
+      slide.setAttribute(
+        "aria-label",
+        `${dancerName} MyDancr TV profile video, ${scheduleContext?.label || "no shift currently posted"}`
+      );
+      const fallback = createHomeTvFeedMediaFallback(item);
+      const video = createHomeTvFeedVideo(item, profileIndex, slide, mediaTotal);
       const shade = document.createElement("div");
       shade.className = "home-tv-feed-shade";
       shade.setAttribute("aria-hidden", "true");
@@ -45777,19 +46486,95 @@
       playback.setAttribute("aria-hidden", "true");
       const position = document.createElement("span");
       position.className = "home-tv-feed-position";
-      position.textContent = `${index + 1} / ${total}`;
-      const sound = document.createElement("button");
-      sound.className = "home-tv-feed-sound";
-      sound.type = "button";
-      sound.dataset.homeTvSound = "true";
-      sound.addEventListener("click", () => {
-        homeTvFeedMuted = !homeTvFeedMuted;
-        results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
-          feedVideo.muted = homeTvFeedMuted;
-        });
-        syncHomeTvFeedSoundButtons();
-      });
-      slide.append(video, shade, playback, position, sound, createHomeTvFeedCopy(item, scheduleContext));
+      position.textContent = `${profileIndex + 1} of ${totalProfiles} ${totalProfiles === 1 ? "profile" : "profiles"}`;
+      const mediaPosition = document.createElement("span");
+      mediaPosition.className = "home-tv-feed-media-position";
+      mediaPosition.textContent = `Video ${mediaIndex + 1} of ${mediaTotal}`;
+      const applause = document.createElement("span");
+      applause.className = "home-tv-feed-applause";
+      applause.textContent = "★";
+      applause.setAttribute("aria-hidden", "true");
+      const feedback = document.createElement("span");
+      feedback.className = "home-tv-feed-feedback";
+      feedback.setAttribute("role", "status");
+      feedback.setAttribute("aria-live", "polite");
+      const children = [
+        fallback,
+        video,
+        shade,
+        playback,
+        position,
+        ...(mediaTotal > 1 ? [mediaPosition] : []),
+        createHomeTvFeedSoundButton(slide),
+        createHomeTvFeedActions(item, slide),
+        createHomeTvFeedCopy(item, scheduleContext),
+        createHomeTvFeedProgress(),
+        applause,
+        feedback
+      ];
+      slide.replaceChildren(...children);
+      syncHomeTvFeedSoundButtons();
+    }
+
+    function showHomeTvFeedMedia(slide, direction) {
+      const items = Array.isArray(slide?.homeTvProfileVideos) ? slide.homeTvProfileVideos : [];
+      if (!slide || items.length <= 1) {
+        showHomeTvFeedFeedback(slide, "No additional profile videos");
+        return;
+      }
+      const nextIndex = Number(slide.homeTvMediaIndex || 0) + direction;
+      if (nextIndex < 0 || nextIndex >= items.length) {
+        showHomeTvFeedFeedback(slide, "End of profile videos");
+        return;
+      }
+      slide.querySelector("video")?.pause();
+      renderHomeTvFeedSlideMedia(
+        slide,
+        items[nextIndex],
+        Number(slide.homeTvProfileIndex || 0),
+        Number(slide.homeTvProfileTotal || 1),
+        nextIndex,
+        items.length
+      );
+      activateHomeTvFeedVideo(String(items[nextIndex].id));
+      showHomeTvFeedFeedback(slide, `Video ${nextIndex + 1} of ${items.length}`);
+    }
+
+    function setupHomeTvFeedMediaGestures(slide) {
+      let startX = null;
+      let startY = null;
+      slide.addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 1) {
+          startX = null;
+          startY = null;
+          return;
+        }
+        startX = event.touches[0]?.clientX ?? null;
+        startY = event.touches[0]?.clientY ?? null;
+      }, { passive: true });
+      slide.addEventListener("touchend", (event) => {
+        if (startX === null || startY === null) return;
+        const endX = event.changedTouches[0]?.clientX ?? startX;
+        const endY = event.changedTouches[0]?.clientY ?? startY;
+        const distanceX = endX - startX;
+        const distanceY = endY - startY;
+        startX = null;
+        startY = null;
+        if (Math.abs(distanceX) < 56 || Math.abs(distanceX) <= Math.abs(distanceY) * 1.2) return;
+        slide.homeTvGestureConsumed = true;
+        showHomeTvFeedMedia(slide, distanceX < 0 ? 1 : -1);
+      }, { passive: true });
+    }
+
+    function createHomeTvFeedSlide(profileVideos, index, total) {
+      const slide = document.createElement("article");
+      slide.className = "home-tv-feed-slide is-paused is-media-loading";
+      slide.homeTvProfileVideos = profileVideos;
+      slide.homeTvProfileIndex = index;
+      slide.homeTvProfileTotal = total;
+      slide.homeTvMediaIndex = 0;
+      setupHomeTvFeedMediaGestures(slide);
+      renderHomeTvFeedSlideMedia(slide, profileVideos[0], index, total, 0, profileVideos.length);
       return slide;
     }
 
@@ -45855,14 +46640,18 @@
         return;
       }
 
+      const profileGroups = groupHomeTvFeedVideos(homeTvFeedVideos);
       tabCount.textContent = `${homeTvFeedVideos.length} video${homeTvFeedVideos.length === 1 ? "" : "s"}`;
-      results.setAttribute("aria-label", `Snap-scroll through MyDancr TV videos in ${city}`);
+      results.setAttribute(
+        "aria-label",
+        `Swipe through ${profileGroups.length} MyDancr profile${profileGroups.length === 1 ? "" : "s"} and ${homeTvFeedVideos.length} video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}`
+      );
       const feedKey = `${city}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
       if (results.dataset.homeTvFeedKey === feedKey) return;
       homeTvFeedObserver?.disconnect();
       results.replaceChildren(
-        ...homeTvFeedVideos.map((item, index) => (
-          createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
+        ...profileGroups.map((profileVideos, index) => (
+          createHomeTvFeedSlide(profileVideos, index, profileGroups.length)
         ))
       );
       results.dataset.homeTvFeedKey = feedKey;
