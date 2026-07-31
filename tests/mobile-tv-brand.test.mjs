@@ -24,7 +24,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   }
   assert.match(
     globalNavigation,
-    /a\.tv-destination \{[\s\S]*?--mobile-nav-accent: #f472b6/,
+    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: #c084fc/,
   );
   assert.match(
     globalNavigation,

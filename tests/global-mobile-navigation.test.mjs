@@ -80,7 +80,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("inactive mobile icons stay container-free while every selected shape gets one normalized glow", () => {
+test("mobile icons share the hero palette while every selected shape gets one stronger glow", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
@@ -113,16 +113,32 @@ test("inactive mobile icons stay container-free while every selected shape gets 
     /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-violet-blur\)[\s\S]*?var\(--mobile-nav-icon-violet-glow\)[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-cyan-blur\)[\s\S]*?var\(--mobile-nav-icon-cyan-glow\)/,
   );
   assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav svg \{[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-rest-violet-blur\)[\s\S]*?var\(--mobile-nav-icon-rest-violet-glow\)[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-rest-cyan-blur\)[\s\S]*?var\(--mobile-nav-icon-rest-cyan-glow\)/,
+  );
+  assert.match(
     homeSource,
     /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)/,
   );
   assert.match(
+    homeSource,
+    /#discoveryTabs \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv svg \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-rest-violet-blur\) var\(--home-nav-icon-rest-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-rest-cyan-blur\) var\(--home-nav-icon-rest-cyan-glow\)\)/,
+  );
+  assert.match(
     navigationSource,
-    /--mobile-nav-icon-violet-blur: 2\.2px;[\s\S]*?a\.dancers-destination \{[\s\S]*?--mobile-nav-icon-violet-blur: 2\.8px;[\s\S]*?a\.tv-destination \{[\s\S]*?--mobile-nav-icon-violet-blur: 1\.8px;[\s\S]*?a\.venues-destination \{[\s\S]*?--mobile-nav-icon-violet-blur: 2\.1px;[\s\S]*?a\.trending-destination \{[\s\S]*?--mobile-nav-icon-violet-blur: 2\.25px;/,
+    /--mobile-nav-accent: #c084fc;[\s\S]*?--mobile-nav-icon-rest-violet-glow: rgba\(183, 77, 255, 0\.68\);[\s\S]*?--mobile-nav-icon-rest-cyan-glow: rgba\(53, 216, 255, 0\.28\);[\s\S]*?--mobile-nav-icon-violet-blur: 2\.4px;[\s\S]*?--mobile-nav-icon-cyan-blur: 5px;/,
   );
   assert.match(
     homeSource,
-    /--home-nav-icon-violet-blur: 2\.2px;[\s\S]*?\.tab\[data-tab="dancers"\] \{[\s\S]*?--home-nav-icon-violet-blur: 2\.8px;[\s\S]*?\.home-bottom-tv \{[\s\S]*?--home-nav-icon-violet-blur: 1\.8px;[\s\S]*?\.tab\[data-tab="venues"\] \{[\s\S]*?--home-nav-icon-violet-blur: 2\.1px;[\s\S]*?\.tab\[data-tab="trending"\] \{[\s\S]*?--home-nav-icon-violet-blur: 2\.25px;/,
+    /--home-nav-accent: #c084fc;[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(183,77,255,.68\);[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(53,216,255,.28\);[\s\S]*?--home-nav-icon-violet-blur: 2\.4px;[\s\S]*?--home-nav-icon-cyan-blur: 5px;/,
+  );
+  assert.doesNotMatch(
+    navigationSource,
+    /a\.(?:dancers|tv|venues|trending)-destination \{[^}]*--mobile-nav-(?:accent|icon)[^:;]*:/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /--home-nav-icon-violet-blur: (?:2\.8|1\.8|2\.1|2\.25)px;/,
   );
   assert.doesNotMatch(
     homeSource,
