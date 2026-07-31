@@ -944,6 +944,108 @@
   background: rgba(126, 234, 255, 0.08);
 }
 
+/* Shared production palette. The independently owned profile navigation stays unchanged. */
+
+.hero,
+.scheduleSection,
+.tvSection,
+.venueInfoSection,
+.relatedSection {
+  color: var(--dancr-color-text-primary);
+}
+
+.heroCopy,
+.tonightCard,
+.scheduleSection,
+.tvSection,
+.venueInfoSection,
+.relatedSection,
+.infoCard,
+.mapPanel,
+.dancerShiftCard,
+.relatedCard,
+.emptyState {
+  border-color: var(--dancr-color-border-subtle);
+  background: var(--dancr-color-surface-translucent);
+  box-shadow: var(--dancr-shadow-surface);
+}
+
+.heroCopy :is(p, small),
+.tonightCard :is(p, small, span),
+.dancerCopy > span,
+.infoCard :is(p, dt),
+.relatedCard :is(small, em),
+.emptyState p {
+  color: var(--dancr-color-text-secondary);
+}
+
+.eyebrow,
+.sectionCount,
+.viewAllLink,
+.liveLabel,
+.dealSummary > span {
+  color: var(--dancr-color-info);
+}
+
+.liveState.isWorking,
+.dancerCopy .liveLabel,
+.liveLabel > span,
+.emptyPulse {
+  border-color: var(--dancr-color-success-medium);
+  color: var(--dancr-color-success);
+  background-color: var(--dancr-color-success-soft);
+  box-shadow: none;
+}
+
+.primaryActions > :global(.directions-link),
+.primaryActions > :global(.club-deal-launcher),
+.primaryActions > :global(.venue-qr-launcher),
+.shell :global(.venue-profile-actions button[aria-pressed="true"]),
+.infoCard :global(.directions-link),
+.shell :global(.venue-qr-launcher),
+.shell :global(.venue-account-gate-dialog a:not(.secondary)) {
+  border-color: var(--dancr-color-brand-primary-strong);
+  color: var(--dancr-color-text-primary);
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  );
+  box-shadow: var(--dancr-shadow-brand-control);
+}
+
+.shell :global(.venue-profile-actions button),
+.sectionCount,
+.viewAllLink {
+  border-color: var(--dancr-color-border);
+  color: var(--dancr-color-text-primary);
+  background: var(--dancr-color-surface-raised);
+  box-shadow: none;
+}
+
+.dancerShiftCard:focus-visible,
+.relatedCard:focus-visible,
+.shell :global(.venue-profile-actions button:focus-visible),
+.primaryActions > :global(a:focus-visible),
+.primaryActions > :global(button:focus-visible) {
+  border-color: var(--dancr-color-brand-primary);
+  outline-color: var(--dancr-color-brand-primary);
+  box-shadow: var(--dancr-focus-ring);
+}
+
+.shell :global(.venue-qr-dialog-backdrop),
+.shell :global(.venue-account-gate) {
+  background: var(--dancr-color-overlay);
+}
+
+.shell :global(.venue-qr-dialog),
+.shell :global(.venue-account-gate-dialog) {
+  border-color: var(--dancr-color-border);
+  color: var(--dancr-color-text-primary);
+  background: var(--dancr-color-surface-translucent);
+  box-shadow: var(--dancr-shadow-modal);
+}
+
 @media (max-width: 800px) {
   .hero {
     grid-template-columns: 1fr;

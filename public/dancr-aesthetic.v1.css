@@ -6,10 +6,10 @@
  */
 
 :root {
-  --mydancr-verified-cyan: #35d8ff;
-  --mydancr-verified-blue: #176bff;
-  --mydancr-verified-violet: #7c3aed;
-  --mydancr-verified-magenta: #b74dff;
+  --mydancr-verified-cyan: var(--dancr-color-info);
+  --mydancr-verified-blue: var(--dancr-color-info);
+  --mydancr-verified-violet: var(--dancr-color-brand-primary);
+  --mydancr-verified-magenta: var(--dancr-color-brand-primary);
 }
 
 /*
@@ -31,22 +31,15 @@
   .profile-verified.profile-verified.profile-verified,
   .tv-verified-mark.tv-verified-mark.tv-verified-mark
 ) {
-  border: 1px solid rgba(215, 136, 255, 0.96) !important;
-  color: #fff !important;
-  background:
-    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.58), transparent 24%),
-    linear-gradient(
-      145deg,
-      var(--mydancr-verified-cyan) 0%,
-      var(--mydancr-verified-blue) 48%,
-      var(--mydancr-verified-violet) 100%
-    ) !important;
-  box-shadow:
-    0 0 0 1px rgba(183, 77, 255, 0.72),
-    0 0 10px rgba(183, 77, 255, 0.58),
-    0 0 18px rgba(124, 58, 237, 0.34),
-    inset 0 0 5px rgba(53, 216, 255, 0.3) !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.72) !important;
+  border: 1px solid var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-info-soft) !important;
+  text-shadow: none !important;
 }
 
 :is(
@@ -59,21 +52,18 @@
   .deal-pass-page,
   .tv-studio-page
 ) {
-  --mydancr-bg: #050507;
-  --mydancr-surface: rgba(9, 9, 14, 0.94);
-  --mydancr-surface-raised: rgba(14, 13, 21, 0.96);
-  --mydancr-line: rgba(255, 255, 255, 0.1);
-  --mydancr-line-accent: rgba(126, 234, 255, 0.28);
-  --mydancr-text: #f8f6fb;
-  --mydancr-muted: #aaa1b5;
-  --mydancr-cyan: #7eeaff;
-  --mydancr-violet: #8b5cf6;
-  --mydancr-pink: #ec4899;
+  --mydancr-bg: var(--dancr-color-background);
+  --mydancr-surface: var(--dancr-color-surface-translucent);
+  --mydancr-surface-raised: var(--dancr-color-surface-raised);
+  --mydancr-line: var(--dancr-color-border-subtle);
+  --mydancr-line-accent: var(--dancr-color-brand-primary-medium);
+  --mydancr-text: var(--dancr-color-text-primary);
+  --mydancr-muted: var(--dancr-color-text-muted);
+  --mydancr-cyan: var(--dancr-color-info);
+  --mydancr-violet: var(--dancr-color-brand-primary);
+  --mydancr-pink: var(--dancr-color-brand-primary);
   color: var(--mydancr-text) !important;
-  background:
-    radial-gradient(circle at 84% -8%, rgba(126, 234, 255, 0.08), transparent 25rem),
-    radial-gradient(circle at 10% 3%, rgba(139, 92, 246, 0.11), transparent 28rem),
-    linear-gradient(180deg, #08080d 0, var(--mydancr-bg) 42rem) !important;
+  background: var(--mydancr-bg) !important;
 }
 
 :is(
@@ -102,7 +92,7 @@
   .deal-pass-page,
   .tv-studio-page
 ) :is(.eyebrow, label, legend) {
-  color: var(--mydancr-cyan);
+  color: var(--dancr-color-text-secondary);
   font-weight: 900;
   letter-spacing: 0.12em;
 }
@@ -136,11 +126,10 @@
   overflow: hidden;
   border: 1px solid var(--mydancr-line) !important;
   border-radius: 18px !important;
-  background:
-    linear-gradient(145deg, rgba(15, 14, 22, 0.97), rgba(6, 6, 10, 0.98)) !important;
+  background: var(--mydancr-surface) !important;
   box-shadow:
-    0 20px 52px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    var(--dancr-shadow-surface),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
 :is(
@@ -168,7 +157,7 @@
 ) {
   border: 1px solid var(--mydancr-line) !important;
   border-radius: 14px !important;
-  background: rgba(255, 255, 255, 0.035) !important;
+  background: var(--dancr-color-surface-subtle) !important;
   box-shadow: none !important;
 }
 
@@ -182,10 +171,10 @@
   .deal-pass-page,
   .tv-studio-page
 ) :is(input, select, textarea) {
-  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border: 1px solid var(--dancr-color-border) !important;
   border-radius: 12px !important;
   color: var(--mydancr-text) !important;
-  background: rgba(255, 255, 255, 0.045) !important;
+  background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
 }
 
@@ -199,9 +188,9 @@
   .deal-pass-page,
   .tv-studio-page
 ) :is(input, select, textarea):focus {
-  border-color: rgba(126, 234, 255, 0.58) !important;
+  border-color: var(--dancr-color-brand-primary) !important;
   outline: 0 !important;
-  box-shadow: 0 0 0 3px rgba(126, 234, 255, 0.1) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
 }
 
 :is(
@@ -220,10 +209,10 @@
   .secondary-action,
   .venue-sign-in
 ) {
-  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border: 1px solid var(--dancr-color-border) !important;
   border-radius: 12px !important;
   color: var(--mydancr-text) !important;
-  background: rgba(255, 255, 255, 0.055) !important;
+  background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
   text-shadow: none !important;
 }
@@ -246,13 +235,15 @@
   .primary-link,
   .primary-action
 ) {
-  border-color: rgba(126, 234, 255, 0.46) !important;
-  color: #fff !important;
-  background:
-    linear-gradient(135deg, rgba(109, 40, 217, 0.96), rgba(11, 148, 201, 0.88)) !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
   box-shadow:
-    0 14px 30px rgba(0, 0, 0, 0.32),
-    0 0 20px rgba(126, 234, 255, 0.08) !important;
+    var(--dancr-shadow-brand-control) !important;
 }
 
 :is(
@@ -278,7 +269,7 @@
   padding: 4px !important;
   border: 1px solid var(--mydancr-line) !important;
   border-radius: 14px !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  background: var(--dancr-color-background) !important;
 }
 
 :is(
@@ -295,10 +286,11 @@
   .admin-shell .segmented,
   .dashboard-shell .segmented
 ) button.active {
-  color: #fff !important;
-  background:
-    linear-gradient(135deg, rgba(109, 40, 217, 0.72), rgba(34, 199, 255, 0.2)) !important;
-  box-shadow: inset 0 0 0 1px rgba(126, 234, 255, 0.22) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--dancr-color-brand-primary-medium),
+    var(--dancr-shadow-brand-subtle) !important;
 }
 
 :is(
@@ -315,7 +307,7 @@
   button[aria-label*="password" i]
 ) {
   border-radius: 999px !important;
-  background: rgba(12, 12, 18, 0.72) !important;
+  background: var(--dancr-color-surface-soft) !important;
   backdrop-filter: blur(18px) saturate(1.3);
   -webkit-backdrop-filter: blur(18px) saturate(1.3);
 }
@@ -353,38 +345,37 @@
 }
 
 .dashboard-shell .visibility-panel.is-incognito {
-  border-color: rgba(236, 72, 153, 0.32) !important;
-  background:
-    linear-gradient(145deg, rgba(34, 9, 28, 0.94), rgba(6, 6, 10, 0.98)) !important;
+  border-color: var(--dancr-color-border) !important;
+  background: var(--dancr-color-surface-translucent) !important;
 }
 
 .dashboard-shell .deal-panel,
 .dashboard-shell .venue-deal-panel {
-  border-color: rgba(126, 234, 255, 0.2) !important;
+  border-color: var(--dancr-color-success-medium) !important;
 }
 
 .admin-shell .admin-panel-badge,
 .dashboard-shell .deal-state.active,
 .redeem-shell .status-pill.success {
-  border: 1px solid rgba(126, 234, 255, 0.32) !important;
-  color: #dffbff !important;
-  background: rgba(126, 234, 255, 0.1) !important;
+  border: 1px solid var(--dancr-color-info-medium) !important;
+  color: var(--dancr-color-info) !important;
+  background: var(--dancr-color-info-soft) !important;
 }
 
 .admin-shell :is(
   .submission-review-card.is-approved,
   .submitted-social-review.is-approved
 ) {
-  border-color: rgba(74, 222, 128, 0.32) !important;
-  background: rgba(74, 222, 128, 0.055) !important;
+  border-color: var(--dancr-color-success-medium) !important;
+  background: var(--dancr-color-success-soft) !important;
 }
 
 .admin-shell :is(
   .submission-review-card.is-rejected,
   .submitted-social-review.is-rejected
 ) {
-  border-color: rgba(255, 99, 124, 0.32) !important;
-  background: rgba(255, 99, 124, 0.055) !important;
+  border-color: var(--dancr-color-danger-medium) !important;
+  background: var(--dancr-color-danger-soft) !important;
 }
 
 .tv-studio-page .tv-managed-video {
@@ -402,70 +393,67 @@
 
 body > .app main.stack > .hero.reference-hero {
   overflow: hidden;
-  border: 1px solid rgba(139, 92, 246, 0.38) !important;
+  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
   border-radius: 24px !important;
-  background: #020204 !important;
-  box-shadow:
-    0 24px 58px rgba(0, 0, 0, 0.36),
-    0 0 28px rgba(124, 58, 237, 0.08) !important;
+  background: var(--dancr-color-background) !important;
+  box-shadow: var(--dancr-shadow-surface) !important;
 }
 
 body > .app main.stack > .home-discovery-controls {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 20px !important;
-  background:
-    linear-gradient(145deg, rgba(14, 13, 20, 0.97), rgba(6, 6, 10, 0.98)) !important;
+  background: var(--dancr-color-surface-translucent) !important;
   box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    var(--dancr-shadow-surface),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
 body > .app main.stack > .home-discovery-controls label {
-  color: #aaa1b5 !important;
+  color: var(--dancr-color-text-secondary) !important;
   font-size: 10px !important;
   font-weight: 900 !important;
   letter-spacing: 0.16em !important;
 }
 
 body > .app main.stack > .home-discovery-controls :is(select, button) {
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid var(--dancr-color-border) !important;
   border-radius: 14px !important;
-  color: #f8f6fb !important;
-  background: rgba(255, 255, 255, 0.045) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
   text-shadow: none !important;
 }
 
 body > .app main.stack > .home-discovery-controls :is(select, button):focus-visible {
-  border-color: rgba(126, 234, 255, 0.58) !important;
+  border-color: var(--dancr-color-brand-primary) !important;
   outline: 0 !important;
-  box-shadow: 0 0 0 3px rgba(126, 234, 255, 0.1) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
 }
 
 body > .app main.stack > .home-live-summary {
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 999px !important;
-  background: rgba(7, 7, 11, 0.78) !important;
+  background: var(--dancr-color-surface-soft) !important;
   box-shadow: none !important;
 }
 
 body > .app main.stack > .home-tv-launch {
-  border: 1px solid rgba(126, 234, 255, 0.2) !important;
+  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
   border-radius: 18px !important;
-  background:
-    linear-gradient(135deg, rgba(23, 13, 48, 0.92), rgba(6, 15, 23, 0.94)) !important;
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.3) !important;
+  background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: var(--dancr-shadow-surface) !important;
 }
 
 body > .app main.stack > .home-tv-launch .home-tv-launch-icon {
-  border: 1px solid rgba(126, 234, 255, 0.26) !important;
-  background: rgba(126, 234, 255, 0.08) !important;
+  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
   box-shadow: none !important;
 }
 
 body > .app main.stack > :is(.home-results-header, .section-title) h2,
 body > .app main.stack > #results :is(h2, h3) {
-  color: #f8f6fb !important;
+  color: var(--dancr-color-text-primary) !important;
   font-weight: 950 !important;
   letter-spacing: -0.035em !important;
 }
@@ -476,13 +464,12 @@ body > .app main.stack > #results :is(
   .venue-card,
   .empty-state
 ) {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 20px !important;
-  background:
-    linear-gradient(145deg, rgba(14, 13, 20, 0.96), rgba(5, 5, 8, 0.98)) !important;
+  background: var(--dancr-color-surface-translucent) !important;
   box-shadow:
-    0 18px 46px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    var(--dancr-shadow-surface),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
 body > .app main.stack > #results :is(
@@ -492,9 +479,9 @@ body > .app main.stack > #results :is(
   .home-feed-context,
   .home-dancer-grid-context
 ) {
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 14px !important;
-  background: rgba(0, 0, 0, 0.26) !important;
+  background: var(--dancr-color-black-soft) !important;
   box-shadow: none !important;
 }
 
@@ -502,9 +489,9 @@ body > .app main.stack > #results :is(
   .home-dancer-grid-action-rail,
   .home-venue-discovery-action-rail
 ) {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 18px !important;
-  background: rgba(7, 7, 11, 0.64) !important;
+  background: var(--dancr-color-surface-soft) !important;
   box-shadow: none !important;
   backdrop-filter: blur(18px) saturate(1.3);
   -webkit-backdrop-filter: blur(18px) saturate(1.3);
@@ -525,38 +512,36 @@ body > .app main.stack > #results :is(
   .home-dancer-grid-action-rail,
   .home-venue-discovery-action-rail
 ) :is(button, a).is-active {
-  color: #fff !important;
-  background: rgba(126, 234, 255, 0.1) !important;
-  box-shadow: inset 0 0 0 1px rgba(126, 234, 255, 0.22) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
 }
 
 #profileBackdrop .profile-modal,
 .venue-detail,
 .modal-card {
-  border: 1px solid rgba(126, 234, 255, 0.2) !important;
+  border: 1px solid var(--dancr-color-border) !important;
   border-radius: 22px !important;
-  color: #f8f6fb !important;
-  background:
-    radial-gradient(circle at 88% 2%, rgba(126, 234, 255, 0.07), transparent 18rem),
-    linear-gradient(145deg, rgba(12, 11, 18, 0.99), rgba(4, 4, 7, 0.99)) !important;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.66) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: var(--dancr-shadow-modal) !important;
 }
 
 #profileBackdrop .profile-modal :is(.info-tile, .social-tile, .modal-actions),
 .venue-detail :is(.info-tile, .venue-section, .venue-offer) {
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 15px !important;
-  background: rgba(255, 255, 255, 0.035) !important;
+  background: var(--dancr-color-surface-subtle) !important;
   box-shadow: none !important;
 }
 
 #profileBackdrop .profile-modal :is(.close-btn, button[class*="close"]),
 .venue-detail :is(.close-btn, button[class*="close"]),
 .modal-card :is(.close-btn, button[class*="close"]) {
-  border: 1px solid rgba(126, 234, 255, 0.24) !important;
+  border: 1px solid var(--dancr-color-border) !important;
   border-radius: 999px !important;
-  color: #fff !important;
-  background: rgba(10, 10, 15, 0.68) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-soft) !important;
   box-shadow: none !important;
   backdrop-filter: blur(18px) saturate(1.3);
   -webkit-backdrop-filter: blur(18px) saturate(1.3);
@@ -573,9 +558,7 @@ body > .app main.stack > #results :is(
     .deal-pass-page,
     .tv-studio-page
   ) {
-    background:
-      radial-gradient(circle at 86% -5%, rgba(126, 234, 255, 0.06), transparent 18rem),
-      linear-gradient(180deg, #08080d 0, #050507 28rem) !important;
+    background: var(--dancr-color-background) !important;
   }
 
   :is(
@@ -629,4 +612,167 @@ body > .app main.stack > #results :is(
   ) * {
     transition: none !important;
   }
+}
+
+/* Production brand palette: content surfaces only. Navigation is excluded. */
+
+:is(.public-profile-shell, .tv-shell) {
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-background) !important;
+}
+
+:is(.public-profile-shell, .tv-shell) :is(h1, h2, h3, strong) {
+  color: var(--dancr-color-text-primary);
+}
+
+.public-profile-shell :is(p, small, .profile-action-requirement),
+.tv-shell :is(.tv-card-venue-line, .tv-no-shifts-state, .tv-empty p) {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+.public-profile-shell :is(
+  .profile-media,
+  .profile-working-card,
+  .profile-social-card,
+  .profile-info-card,
+  .club-deal-card,
+  .profile-account-gate,
+  .profile-share-panel
+),
+.tv-shell :is(.tv-header, .tv-player, .tv-empty, .tv-status, .tv-loading) {
+  border-color: var(--dancr-color-border) !important;
+  background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: var(--dancr-shadow-surface) !important;
+}
+
+.public-profile-shell :is(.profile-metrics, .social-list a, .live-actions > button),
+.tv-shell :is(.tv-sound, .tv-playback-retry, .tv-empty button, .tv-empty a) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+}
+
+.public-profile-shell :is(
+  .live-actions .profile-action-primary,
+  .club-deal-action > button,
+  .venue-qr-launcher
+) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
+}
+
+.public-profile-shell :is(
+  .public-profile-close,
+  .social-list-toggle,
+  .profile-action-share-slot .profile-share button
+) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+.public-profile-shell :is(
+  .public-profile-close,
+  .social-list-toggle,
+  .profile-action-share-slot .profile-share button,
+  .profile-media-grid-item
+):focus-visible,
+.tv-shell :is(
+  .tv-player video,
+  .tv-card-stage-link,
+  .tv-card-venue-line,
+  .tv-playback-retry
+):focus-visible {
+  border-color: var(--dancr-color-brand-primary) !important;
+  outline-color: var(--dancr-color-brand-primary) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+.public-profile-shell .profile-media-tabs button {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+.public-profile-shell .profile-media-tabs button.active,
+.tv-shell .tv-filters button.active {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
+  box-shadow: var(--dancr-shadow-brand-subtle) !important;
+  text-shadow: none !important;
+}
+
+.public-profile-shell :is(.profile-live-state, .profile-working-head .eyebrow),
+.tv-shell :is(.tv-status, .tv-loading, .tv-profile-destination) {
+  color: var(--dancr-color-info) !important;
+}
+
+.public-profile-shell .profile-working-card.is-working,
+.public-profile-shell .profile-live-state.is-working,
+.tv-shell :is(
+  .tv-schedule-row.is-tonight svg,
+  .tv-card-schedule-text.tonight
+),
+.dashboard-shell :is(
+  .photo-review-card.is-approved,
+  .review-row.is-approved,
+  .shift-checkin-card.ready,
+  .deal-state.active
+) {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-success) !important;
+  background-color: var(--dancr-color-success-soft) !important;
+}
+
+.dashboard-shell :is(.photo-review-card.is-pending, .review-row.is-pending) {
+  border-color: var(--dancr-color-featured-medium) !important;
+  background-color: var(--dancr-color-featured-soft) !important;
+  box-shadow: inset 3px 0 0 var(--dancr-color-featured) !important;
+}
+
+:is(.dashboard-shell, .admin-shell) :is(
+  .photo-review-card.is-rejected,
+  .review-row.is-rejected,
+  .submission-review-card.is-rejected,
+  .submitted-social-review.is-rejected,
+  .error,
+  [role="alert"]
+) {
+  border-color: var(--dancr-color-danger-medium) !important;
+  color: var(--dancr-color-danger) !important;
+  background-color: var(--dancr-color-danger-soft) !important;
+}
+
+.tv-shell :is(.tv-verified-mark, .verified-mark),
+.public-profile-shell :is(.profile-verified, .verified-mark) {
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.tv-shell :is(.tv-card-venue-name, .tv-card-schedule-text.upcoming) {
+  color: var(--dancr-color-text-secondary) !important;
+  text-shadow: none !important;
+}
+
+.tv-shell .tv-player-shade,
+.tv-shell .tv-profile-body {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--dancr-color-black-medium) 44%,
+    var(--dancr-color-background) 100%
+  ) !important;
 }

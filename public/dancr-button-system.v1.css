@@ -1,24 +1,21 @@
 .dancr-button-system {
-  --dancr-action-text: #f8fbff;
-  --dancr-action-muted: #d8d2e7;
-  --dancr-action-border: rgba(255, 255, 255, 0.16);
-  --dancr-action-border-strong: rgba(34, 199, 255, 0.42);
-  --dancr-action-surface: rgba(10, 9, 17, 0.9);
-  --dancr-action-violet: #8b5cf6;
-  --dancr-action-cyan: #22c7ff;
-  --dancr-action-pink: #ec4899;
-  --dancr-action-danger: #ff637c;
-  --dancr-action-warning: #f6c453;
+  --dancr-action-text: var(--dancr-color-text-primary);
+  --dancr-action-muted: var(--dancr-color-text-secondary);
+  --dancr-action-border: var(--dancr-color-border-subtle);
+  --dancr-action-border-strong: var(--dancr-color-brand-primary-strong);
+  --dancr-action-surface: var(--dancr-color-surface-translucent);
+  --dancr-action-violet: var(--dancr-color-brand-primary);
+  --dancr-action-cyan: var(--dancr-color-info);
+  --dancr-action-pink: var(--dancr-color-brand-primary);
+  --dancr-action-danger: var(--dancr-color-danger);
+  --dancr-action-warning: var(--dancr-color-featured);
   --dancr-action-radius: 15px;
   --dancr-action-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.38),
-    0 0 18px rgba(124, 58, 237, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    0 12px 30px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft);
   --dancr-action-shadow-hover:
-    0 15px 34px rgba(0, 0, 0, 0.46),
-    0 0 22px rgba(124, 58, 237, 0.2),
-    0 0 14px rgba(34, 199, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    0 15px 34px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium);
 }
 
 .dancr-button-system :where(
@@ -43,18 +40,18 @@
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.09),
-      rgba(255, 255, 255, 0.018) 42%,
-      rgba(255, 255, 255, 0)
+      var(--dancr-color-white-soft),
+      transparent 42%,
+      transparent
     ),
     radial-gradient(
       circle at 20% -25%,
-      rgba(34, 199, 255, 0.12),
+      var(--dancr-color-brand-primary-soft),
       transparent 52%
     ),
     radial-gradient(
       circle at 78% -38%,
-      rgba(139, 92, 246, 0.22),
+      var(--dancr-color-brand-primary-medium),
       transparent 58%
     ),
     var(--dancr-action-surface) !important;
@@ -70,7 +67,7 @@
   font-weight: 850 !important;
   letter-spacing: 0.005em !important;
   text-decoration: none !important;
-  text-shadow: 0 0 8px rgba(139, 92, 246, 0.16) !important;
+  text-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
   touch-action: manipulation;
   cursor: pointer;
@@ -117,7 +114,7 @@
   .empty-state a
 ):hover {
   border-color: var(--dancr-action-border-strong) !important;
-  color: #ffffff !important;
+  color: var(--dancr-color-text-primary) !important;
   box-shadow: var(--dancr-action-shadow-hover) !important;
   filter: brightness(1.06);
 }
@@ -137,11 +134,10 @@
   .profile-status-links a,
   .empty-state a
 ):active {
-  border-color: rgba(139, 92, 246, 0.58) !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
   box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.4),
-    0 0 15px rgba(124, 58, 237, 0.18),
-    inset 0 2px 8px rgba(0, 0, 0, 0.24) !important;
+    0 7px 18px var(--dancr-color-black-medium),
+    inset 0 2px 8px var(--dancr-color-black-soft) !important;
   filter: brightness(0.96);
 }
 
@@ -151,31 +147,28 @@
 .dancr-button-system
   .home-venue-discovery-context-actions
   .home-venue-discovery-deal-action {
-  border-color: rgba(77, 255, 157, 0.92) !important;
-  color: #f2fff8 !important;
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.14),
-      rgba(255, 255, 255, 0.015) 48%
+      var(--dancr-color-white-medium),
+      transparent 48%
     ),
     radial-gradient(
       circle at 50% -20%,
-      rgba(113, 255, 179, 0.42),
+      var(--dancr-color-success-medium),
       transparent 58%
     ),
     linear-gradient(
       135deg,
-      rgba(18, 151, 82, 0.98),
-      rgba(6, 91, 68, 0.98)
+      var(--dancr-color-success),
+      color-mix(in srgb, var(--dancr-color-success) 58%, var(--dancr-color-background))
     ) !important;
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(77, 255, 157, 0.24),
-    0 0 18px rgba(49, 255, 143, 0.7),
-    0 0 38px rgba(25, 221, 113, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
-  text-shadow: 0 0 10px rgba(105, 255, 178, 0.52) !important;
+    0 10px 28px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
 }
 
 .dancr-button-system
@@ -184,13 +177,10 @@
 .dancr-button-system
   .home-venue-discovery-context-actions
   .home-venue-discovery-deal-action:hover {
-  border-color: rgba(139, 255, 194, 0.98) !important;
+  border-color: var(--dancr-color-success) !important;
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.46),
-    0 0 0 1px rgba(103, 255, 174, 0.34),
-    0 0 22px rgba(55, 255, 147, 0.82),
-    0 0 44px rgba(25, 221, 113, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+    0 12px 30px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
 }
 
 .dancr-button-system
@@ -199,28 +189,25 @@
 .dancr-button-system
   .home-venue-discovery-context-actions
   .home-venue-discovery-deal-action:active {
-  border-color: rgba(77, 255, 157, 0.86) !important;
+  border-color: var(--dancr-color-success-strong) !important;
   box-shadow:
-    0 7px 20px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(77, 255, 157, 0.2),
-    0 0 14px rgba(49, 255, 143, 0.58),
-    0 0 28px rgba(25, 221, 113, 0.34),
-    inset 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    0 7px 20px var(--dancr-color-black-medium),
+    inset 0 2px 8px var(--dancr-color-black-soft) !important;
 }
 
 .dancr-button-system .public-media-thumbnail {
   min-height: 0 !important;
   border: 3px solid transparent !important;
   border-radius: 14px !important;
-  background: #101014 !important;
+  background: var(--dancr-color-surface) !important;
   box-shadow: none !important;
 }
 
 .dancr-button-system .public-media-thumbnail.is-selected {
-  border-color: #ffffff !important;
+  border-color: var(--dancr-color-brand-primary) !important;
   box-shadow:
-    0 0 0 3px #050507,
-    0 0 0 5px rgba(255, 255, 255, 0.72) !important;
+    0 0 0 3px var(--dancr-color-background),
+    0 0 0 5px var(--dancr-color-brand-primary-strong) !important;
 }
 
 .dancr-button-system .public-profile-play,
@@ -228,17 +215,17 @@
   min-height: 0 !important;
   border: 0 !important;
   border-radius: 50% !important;
-  color: #111111 !important;
-  background: rgba(255, 255, 255, 0.84) !important;
-  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.34) !important;
+  color: var(--dancr-color-text-on-bright) !important;
+  background: var(--dancr-color-text-primary) !important;
+  box-shadow: 0 14px 44px var(--dancr-color-black-medium) !important;
   text-shadow: none !important;
 }
 
 .dancr-button-system .public-profile-play:hover,
 .dancr-button-system .profile-modal .modal-media-video-play:hover {
   border: 0 !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.42) !important;
+  background: var(--dancr-color-text-primary) !important;
+  box-shadow: 0 14px 44px var(--dancr-color-black-medium) !important;
 }
 
 .dancr-button-system :where(
@@ -256,12 +243,11 @@
   .profile-status-links a,
   .empty-state a
 ):focus-visible {
-  outline: 2px solid var(--dancr-action-cyan) !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important;
   outline-offset: 3px !important;
-  border-color: rgba(34, 199, 255, 0.68) !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
   box-shadow:
-    0 0 0 4px rgba(34, 199, 255, 0.16),
-    0 0 24px rgba(124, 58, 237, 0.26),
+    var(--dancr-focus-ring),
     var(--dancr-action-shadow) !important;
 }
 
@@ -280,8 +266,8 @@
   opacity: 0.46 !important;
   filter: saturate(0.55) !important;
   box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    0 7px 18px var(--dancr-color-black-soft),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
   cursor: not-allowed !important;
 }
 
@@ -305,21 +291,19 @@
   [class*="remove"],
   [class*="reject"]
 ) {
-  border-color: rgba(34, 199, 255, 0.62) !important;
-  color: #ffffff !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       132deg,
-      rgba(0, 177, 224, 0.96) 0%,
-      rgba(84, 71, 215, 0.98) 48%,
-      rgba(139, 57, 208, 0.98) 100%
-    ) !important;
+      var(--dancr-color-brand-primary) 0%,
+      var(--dancr-color-brand-primary) 54%,
+      var(--dancr-color-brand-primary-deep) 100%
+  ) !important;
   box-shadow:
-    0 14px 32px rgba(0, 0, 0, 0.4),
-    0 0 22px rgba(34, 199, 255, 0.22),
-    0 0 26px rgba(124, 58, 237, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.34) !important;
+    var(--dancr-shadow-brand-control),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
 }
 
 .dancr-button-system :where(
@@ -329,34 +313,30 @@
   a[class*="-btn"],
   a[class$="-action"]
 ):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
-  border-color: rgba(34, 199, 255, 0.66) !important;
-  color: #ffffff !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.15),
-      rgba(255, 255, 255, 0.025) 45%,
-      rgba(255, 255, 255, 0)
+      var(--dancr-color-white-medium),
+      transparent 45%,
+      transparent
     ),
     radial-gradient(
       circle at 50% -25%,
-      rgba(34, 199, 255, 0.26),
+      var(--dancr-color-brand-primary-medium),
       transparent 58%
     ),
     radial-gradient(
       circle at 45% 120%,
-      rgba(124, 58, 237, 0.4),
+      var(--dancr-color-brand-primary-medium),
       transparent 62%
     ),
-    rgba(14, 11, 28, 0.96) !important;
+    var(--dancr-color-surface-translucent) !important;
   box-shadow:
-    0 0 0 1px rgba(34, 199, 255, 0.11),
-    0 0 18px rgba(34, 199, 255, 0.2),
-    0 0 26px rgba(124, 58, 237, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
-  text-shadow:
-    0 0 5px rgba(255, 255, 255, 0.54),
-    0 0 11px rgba(124, 58, 237, 0.48) !important;
+    inset 0 0 0 1px var(--dancr-color-brand-primary-medium),
+    0 12px 30px var(--dancr-color-black-medium) !important;
+  text-shadow: none !important;
 }
 
 .dancr-button-system :where(
@@ -375,25 +355,24 @@
   [data-action*="remove"],
   [data-action*="reject"]
 ) {
-  border-color: rgba(255, 99, 124, 0.58) !important;
-  color: #fff2f5 !important;
+  border-color: var(--dancr-color-danger-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.08),
-      rgba(255, 255, 255, 0)
+      var(--dancr-color-white-soft),
+      transparent
     ),
     radial-gradient(
       circle at 50% -30%,
-      rgba(255, 99, 124, 0.24),
+      var(--dancr-color-danger-soft),
       transparent 58%
     ),
-    rgba(42, 8, 17, 0.93) !important;
+    color-mix(in srgb, var(--dancr-color-danger) 14%, var(--dancr-color-surface)) !important;
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(255, 69, 100, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  text-shadow: 0 0 12px var(--dancr-action-danger) !important;
+    0 12px 28px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  text-shadow: none !important;
 }
 
 .dancr-button-system :where(
@@ -401,20 +380,20 @@
   [class*="report-button"],
   [class*="report-btn"]
 ) {
-  border-color: rgba(246, 196, 83, 0.48) !important;
-  color: #fff1bd !important;
+  border-color: var(--dancr-color-featured-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.07),
-      rgba(255, 255, 255, 0)
+      var(--dancr-color-white-soft),
+      transparent
     ),
     radial-gradient(
       circle at 50% -30%,
-      rgba(246, 196, 83, 0.18),
+      var(--dancr-color-featured-soft),
       transparent 58%
     ),
-    rgba(35, 25, 7, 0.9) !important;
+    color-mix(in srgb, var(--dancr-color-featured) 10%, var(--dancr-color-surface)) !important;
 }
 
 .dancr-button-system :where(
@@ -435,19 +414,19 @@
 
 .dancr-button-system input[type="file"]::file-selector-button {
   margin-inline-end: 10px;
-  border: 1px solid rgba(34, 199, 255, 0.42);
+  border: 1px solid var(--dancr-color-brand-primary-strong);
   border-radius: 12px;
   padding: 9px 12px;
-  color: #ffffff;
+  color: var(--dancr-color-text-primary);
   background:
     linear-gradient(
       135deg,
-      rgba(20, 144, 192, 0.96),
-      rgba(99, 67, 188, 0.96)
+      var(--dancr-color-brand-primary),
+      var(--dancr-color-brand-primary-deep)
     );
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.32),
-    0 0 14px rgba(34, 199, 255, 0.12);
+    0 8px 20px var(--dancr-color-black-medium),
+    var(--dancr-shadow-brand-subtle);
   font: inherit;
   font-weight: 850;
   cursor: pointer;

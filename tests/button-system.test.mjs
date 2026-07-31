@@ -46,33 +46,36 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
   );
   assert.match(
     buttonCss,
-    /\.danger-action,[\s\S]*?\.photo-delete-button,[\s\S]*?\.reject,[\s\S]*?--dancr-action-danger/,
+    /\.danger-action,[\s\S]*?\.photo-delete-button,[\s\S]*?\.reject,[\s\S]*?--dancr-color-danger/,
   );
   assert.match(
     buttonCss,
     /button\[class\*="close"\][\s\S]*?button\[aria-label\*="password" i\][\s\S]*?min-height: 40px[\s\S]*?border-radius: 999px/,
   );
-  assert.match(buttonCss, /:focus-visible[\s\S]*?outline: 2px solid var\(--dancr-action-cyan\)/);
+  assert.match(
+    buttonCss,
+    /:focus-visible[\s\S]*?outline: 2px solid var\(--dancr-color-brand-primary\)/,
+  );
   assert.match(buttonCss, /:disabled,[\s\S]*?cursor: not-allowed/);
   assert.match(buttonCss, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test("venue-card QR revenue actions retain their green glow over the shared button defaults", () => {
+test("venue-card QR revenue actions use the semantic emerald success treatment", () => {
   assert.match(
     liveSource,
     /venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?"feed-card-action home-venue-discovery-deal-action"[\s\S]*?data-feed-venue-qr/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: rgba\(77, 255, 157, 0\.92\) !important;[\s\S]*?0 0 18px rgba\(49, 255, 143, 0\.7\)[\s\S]*?0 0 38px rgba\(25, 221, 113, 0\.42\)/,
+    /\.home-venue-discovery-context-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:hover \{[\s\S]*?0 0 22px rgba\(55, 255, 147, 0\.82\)/,
+    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:hover \{[\s\S]*?border-color: var\(--dancr-color-success\) !important/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:active \{[\s\S]*?0 0 14px rgba\(49, 255, 143, 0\.58\)/,
+    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:active \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important/,
   );
 });
 
@@ -83,10 +86,10 @@ test("profile media thumbnails and play controls retain their gallery-specific s
   );
   assert.match(
     buttonCss,
-    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: #ffffff !important;[\s\S]*?0 0 0 5px rgba\(255, 255, 255, 0\.72\)/,
+    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?0 0 0 5px var\(--dancr-color-brand-primary-strong\)/,
   );
   assert.match(
     buttonCss,
-    /\.public-profile-play,[\s\S]*?\.modal-media-video-play \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: rgba\(255, 255, 255, 0\.84\) !important;/,
+    /\.public-profile-play,[\s\S]*?\.modal-media-video-play \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: var\(--dancr-color-text-primary\) !important;/,
   );
 });

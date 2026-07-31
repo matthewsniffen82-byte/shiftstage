@@ -1,0 +1,68 @@
+/*
+ * Production color tokens for MyDancr.
+ *
+ * Components consume semantic tokens from this file so the brand palette has
+ * one source of truth. Navigation keeps its existing, independently owned
+ * visual contract.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --dancr-color-brand-primary: #7c3aed;
+  --dancr-color-brand-primary-deep: #5b21b6;
+  --dancr-color-brand-primary-soft: rgba(124, 58, 237, 0.14);
+  --dancr-color-brand-primary-medium: rgba(124, 58, 237, 0.34);
+  --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
+
+  --dancr-color-text-primary: #f8fafc;
+  --dancr-color-text-secondary: #cbd5e1;
+  --dancr-color-text-muted: #94a3b8;
+  --dancr-color-text-on-bright: #050507;
+
+  --dancr-color-background: #050507;
+  --dancr-color-surface: #111118;
+  --dancr-color-surface-raised: #171721;
+  --dancr-color-surface-soft: rgba(17, 17, 24, 0.84);
+  --dancr-color-surface-translucent: rgba(17, 17, 24, 0.94);
+  --dancr-color-surface-subtle: rgba(248, 250, 252, 0.045);
+  --dancr-color-overlay: rgba(5, 5, 7, 0.82);
+
+  --dancr-color-border: #334155;
+  --dancr-color-border-subtle: rgba(51, 65, 85, 0.58);
+  --dancr-color-border-strong: rgba(51, 65, 85, 0.9);
+
+  --dancr-color-info: #22d3ee;
+  --dancr-color-info-soft: rgba(34, 211, 238, 0.1);
+  --dancr-color-info-medium: rgba(34, 211, 238, 0.34);
+  --dancr-color-info-strong: rgba(34, 211, 238, 0.72);
+
+  --dancr-color-success: #10b981;
+  --dancr-color-success-soft: rgba(16, 185, 129, 0.1);
+  --dancr-color-success-medium: rgba(16, 185, 129, 0.36);
+  --dancr-color-success-strong: rgba(16, 185, 129, 0.78);
+
+  --dancr-color-featured: #fbbf24;
+  --dancr-color-featured-soft: rgba(251, 191, 36, 0.1);
+  --dancr-color-featured-medium: rgba(251, 191, 36, 0.38);
+  --dancr-color-featured-strong: rgba(251, 191, 36, 0.76);
+
+  --dancr-color-danger: #ef4444;
+  --dancr-color-danger-soft: rgba(239, 68, 68, 0.1);
+  --dancr-color-danger-medium: rgba(239, 68, 68, 0.38);
+  --dancr-color-danger-strong: rgba(239, 68, 68, 0.76);
+
+  --dancr-color-white-soft: rgba(248, 250, 252, 0.08);
+  --dancr-color-white-medium: rgba(248, 250, 252, 0.16);
+  --dancr-color-black-soft: rgba(5, 5, 7, 0.28);
+  --dancr-color-black-medium: rgba(5, 5, 7, 0.48);
+  --dancr-color-black-strong: rgba(5, 5, 7, 0.72);
+
+  --dancr-shadow-surface: 0 20px 52px rgba(5, 5, 7, 0.46);
+  --dancr-shadow-modal: 0 30px 90px rgba(5, 5, 7, 0.72);
+  --dancr-shadow-brand-subtle: 0 0 20px rgba(124, 58, 237, 0.2);
+  --dancr-shadow-brand-control:
+    0 14px 32px rgba(5, 5, 7, 0.42),
+    0 0 20px rgba(124, 58, 237, 0.24);
+  --dancr-focus-ring: 0 0 0 3px rgba(124, 58, 237, 0.3);
+}
