@@ -24180,12 +24180,17 @@
       z-index: 13000;
       display: grid;
       place-items: center;
-      padding: 18px;
+      padding:
+        max(18px, env(safe-area-inset-top))
+        18px
+        max(18px, env(safe-area-inset-bottom));
       background:
         radial-gradient(circle at 50% 36%, rgba(125, 74, 255, .20), transparent 34%),
         rgba(5, 5, 7, .78);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
       opacity: 0;
       pointer-events: none;
       transition: opacity 180ms ease;
@@ -24218,7 +24223,11 @@
     .deal-pass-sheet {
       position: relative;
       width: min(430px, calc(100vw - 28px));
-      padding: 22px;
+      max-height: calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-padding-bottom: calc(22px + env(safe-area-inset-bottom));
+      padding: 22px 22px calc(22px + env(safe-area-inset-bottom));
       border: 1px solid rgba(125, 74, 255, .46);
       border-radius: 26px;
       background:
@@ -24297,15 +24306,19 @@
     @media (max-width: 560px) {
       .deal-pass-overlay,
       .profile-qr-overlay {
-        padding: 14px;
+        padding:
+          max(14px, env(safe-area-inset-top))
+          14px
+          max(18px, env(safe-area-inset-bottom));
       }
 
       .deal-pass-sheet,
       .profile-qr-sheet {
         width: min(330px, calc(100vw - 42px));
-        max-height: min(82dvh, 640px);
+        max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
         overflow-y: auto;
-        padding: 18px 16px 16px;
+        scroll-padding-bottom: calc(18px + env(safe-area-inset-bottom));
+        padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
         border-radius: 22px;
       }
 
@@ -24369,6 +24382,13 @@
       box-shadow: 0 0 26px rgba(125, 74, 255, .28);
     }
 
+    .deal-pass-action.tertiary {
+      border-color: rgba(255, 255, 255, .12);
+      background: rgba(255, 255, 255, .035);
+      color: rgba(245, 245, 255, .78);
+      font-size: .9rem;
+    }
+
     .saved-deal-list {
       display: grid;
       gap: 10px;
@@ -24409,16 +24429,6 @@
       padding: 4px;
       border-radius: 12px;
       background: #fff;
-    }
-
-    @media (max-width: 430px) {
-      .deal-pass-actions {
-        grid-template-columns: 1fr;
-      }
-
-      .deal-pass-action.primary {
-        grid-column: auto;
-      }
     }
 
     .venue-admin-list {
@@ -37240,7 +37250,7 @@
         <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true" hidden>
           <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle">
             <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close deal QR">${actionIconMarkup("close")}</button>
-            <p class="deal-pass-kicker">Venue-published QR</p>
+            <p class="deal-pass-kicker" id="dealPassKicker">Venue-published QR</p>
             <h3 class="deal-pass-title" id="dealPassTitle">Venue QR</h3>
             <p class="deal-pass-copy" id="dealPassCopy">Show this QR at the venue.</p>
             <div class="deal-pass-frame">
@@ -37248,10 +37258,9 @@
             </div>
             <p class="deal-pass-how" id="dealPassHow">This QR was uploaded by the venue. No Dancr account is required to view or save it.</p>
             <div class="deal-pass-actions">
-              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save on this device</button>
-              <button class="deal-pass-action" type="button" data-download-deal-pass>Download QR</button>
+              <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save QR</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share QR</button>
-              <button class="deal-pass-action" type="button" data-copy-deal-pass>Copy link</button>
+              <button class="deal-pass-action tertiary" type="button" data-copy-deal-pass>Copy link</button>
             </div>
           </div>
         </div>
@@ -37275,10 +37284,6 @@
         const pass = decodeDealPass(overlay.dataset.dealPass || "");
         if (!pass) return;
         if (event.target.closest("[data-save-deal-pass]")) {
-          saveCustomerDealPass(pass);
-          return;
-        }
-        if (event.target.closest("[data-download-deal-pass]")) {
           downloadDealQrImage(pass);
           return;
         }
@@ -37293,17 +37298,41 @@
       return overlay;
     }
 
+    function dealPassPresentation(pass) {
+      const venueName = String(pass?.venueName || "Venue").trim() || "Venue";
+      const dancerName = String(pass?.dancerName || "").trim();
+      const dancerAttributed = pass?.sourceType === "dancer_profile" && dancerName;
+      if (pass?.serverGenerated) {
+        return {
+          kicker: "MyDancr Club Deal QR",
+          copy: dancerAttributed
+            ? `${venueName} · Valid while ${dancerName} is working now`
+            : `${venueName} · Valid tonight`,
+          status: dancerAttributed
+            ? "Unique QR · Tracked for redemption · Dancer-attributed while checked in"
+            : "Unique QR · Tracked for redemption"
+        };
+      }
+      return {
+        kicker: "Venue-published QR",
+        copy: dancerAttributed
+          ? `${venueName} · Available while ${dancerName} is working now`
+          : `${venueName} · Venue-published QR`,
+        status: `Published by ${venueName} · No sign-in required`
+      };
+    }
+
     function openDealPassOverlay(pass) {
       const overlay = dealPassOverlay();
+      const presentation = dealPassPresentation(pass);
       overlay.hidden = false;
       overlay.dataset.dealPass = encodeDealPass(pass);
+      document.getElementById("dealPassKicker").textContent = presentation.kicker;
       document.getElementById("dealPassTitle").textContent = pass.title;
-      document.getElementById("dealPassCopy").textContent = `${pass.venueName} · ${pass.details}`;
+      document.getElementById("dealPassCopy").textContent = presentation.copy;
       document.getElementById("dealPassImage").src = pass.qrImageUrl;
       document.getElementById("dealPassImage").alt = `${pass.venueName} deal QR code`;
-      document.getElementById("dealPassHow").textContent = pass.serverGenerated
-        ? `This unique Club Deal QR is tracked for redemption${pass.sourceType === "dancer_profile" ? " and remains dancer-attributed only during the verified check-in" : ""}.`
-        : `This QR was uploaded by ${pass.venueName}. No Dancr account is required to view or save it.`;
+      document.getElementById("dealPassHow").textContent = presentation.status;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();

@@ -82,6 +82,27 @@ test("deal generation produces a durable pass with save and share actions", () =
   assert.match(dealCard, /\.club-deal-dialog-backdrop \{ position: fixed; z-index: 1700;/);
 });
 
+test("live venue QR sheet uses concise MyDancr labeling and mobile-safe actions", () => {
+  assert.match(
+    liveApp,
+    /function dealPassPresentation\(pass\)[\s\S]*?kicker: "MyDancr Club Deal QR"[\s\S]*?`\$\{venueName\} · Valid tonight`[\s\S]*?status: dancerAttributed[\s\S]*?: "Unique QR · Tracked for redemption"/,
+  );
+  assert.match(liveApp, /id="dealPassKicker"/);
+  assert.match(liveApp, /data-save-deal-pass>Save QR</);
+  assert.match(liveApp, /data-share-deal-pass>Share QR</);
+  assert.match(liveApp, /class="deal-pass-action tertiary"[^>]*data-copy-deal-pass>Copy link</);
+  assert.doesNotMatch(liveApp, /data-download-deal-pass/);
+  assert.match(
+    liveApp,
+    /event\.target\.closest\("\[data-save-deal-pass\]"\)[\s\S]*?downloadDealQrImage\(pass\)/,
+  );
+  assert.match(
+    liveApp,
+    /\.deal-pass-sheet \{[\s\S]*?max-height: calc\(100dvh - 36px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\);[\s\S]*?overflow-y: auto;/,
+  );
+  assert.match(liveApp, /\.deal-pass-actions \{[\s\S]*?grid-template-columns: 1fr 1fr;/);
+});
+
 test("checked-in dancer profiles and MyDancr TV promote attributed deals without exposing future shifts", () => {
   assert.match(dancerPage, /\{activeShift \? \([\s\S]*?\{activeDeal \? \([\s\S]*?sourceType="dancer_profile"/);
   assert.match(dancerPage, /function isActiveNow[\s\S]*?Boolean\(shift\.checkedInAt\)[\s\S]*?!shift\.checkedOutAt/);
