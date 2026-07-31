@@ -119,13 +119,10 @@ test("applause is recorded through the constrained production TV analytics path"
 });
 
 test("card controls expose accessible labels, keyboard alternatives, and feedback", () => {
+  assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
   assert.match(
     homeSource,
-    /body\.home-tv-feed-locked \.app > header,[\s\S]*?body\.home-destination-immersive \.app > header \{[\s\S]*?visibility: hidden !important[\s\S]*?pointer-events: none !important/,
-  );
-  assert.match(
-    homeSource,
-    /Tap to play or pause, double tap to applaud[\s\S]*?swipe up or down for another video[\s\S]*?event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"[\s\S]*?event\.key === "a" \|\| event\.key === "A"/,
+    /Tap to play or pause, double tap to applaud[\s\S]*?scroll up or down for another video[\s\S]*?event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"[\s\S]*?event\.key === "a" \|\| event\.key === "A"/,
   );
   assert.match(
     homeSource,

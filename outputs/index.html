@@ -717,6 +717,7 @@
       gap: 10px;
       margin-top: 4px;
       padding: 2px 0 1px;
+      scroll-margin-top: calc(84px + env(safe-area-inset-top));
     }
 
     .count {
@@ -28356,34 +28357,35 @@
           position: relative;
           width: 100%;
           max-width: 640px;
-          height: min(760px, calc(100dvh - 150px));
-          min-height: 520px;
+          height: auto;
+          min-height: 0;
           margin-inline: auto;
-          display: block;
-          overflow-x: hidden;
-          overflow-y: auto;
-          overscroll-behavior-y: none;
-          overflow-anchor: none;
-          scroll-behavior: auto;
-          scroll-padding-block: 0;
-          scroll-snap-type: y mandatory;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 16px;
+          overflow: visible;
+          overscroll-behavior-y: auto;
+          overflow-anchor: auto;
+          scroll-snap-type: none;
           touch-action: pan-y;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          border: 1px solid rgba(139,92,246,.34);
-          border-radius: 18px;
-          background: #000;
-          box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
         }
         #results.home-tv-feed::-webkit-scrollbar {
           display: none;
         }
         .home-tv-feed-loading {
-          position: absolute;
+          position: relative;
           z-index: 3;
-          inset: 0;
+          width: 100%;
+          min-height: clamp(460px, calc(100svh - 180px), 580px);
           display: grid;
           place-items: center;
+          overflow: hidden;
+          border: 1px solid rgba(139,92,246,.34);
+          border-radius: 18px;
           background: #000;
           pointer-events: none;
         }
@@ -28406,13 +28408,15 @@
           position: relative;
           box-sizing: border-box;
           width: 100%;
-          height: 100%;
-          min-height: 100%;
-          max-height: 100%;
+          height: clamp(500px, calc(100vh - 180px), 680px);
+          height: clamp(500px, calc(100svh - 180px), 680px);
+          min-height: 500px;
+          max-height: 680px;
           overflow: hidden;
-          scroll-snap-align: start;
-          scroll-snap-stop: always;
+          border: 1px solid rgba(139,92,246,.34);
+          border-radius: 18px;
           background: #000;
+          box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
           contain: layout paint style;
           isolation: isolate;
         }
@@ -30226,18 +30230,26 @@
             display: none !important;
           }
           #results.home-tv-feed {
-            position: fixed !important;
-            z-index: 80;
-            inset: 0 !important;
-            width: 100vw !important;
+            position: relative !important;
+            z-index: auto;
+            inset: auto !important;
+            width: 100% !important;
             max-width: none !important;
-            height: var(--home-tv-feed-height, 100dvh) !important;
+            height: auto !important;
             min-height: 0;
             max-height: none;
             margin: 0 !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 16px !important;
+            padding-bottom: 24px;
+            overflow: visible !important;
             border: 0 !important;
             border-radius: 0;
+            background: transparent;
             box-shadow: none;
+            scroll-snap-type: none;
+            touch-action: pan-y;
           }
           #results.home-discovery-feed {
             position: relative !important;
@@ -30312,45 +30324,6 @@
           }
           #results.home-venue-discovery-feed .home-discovery-feed-position {
             top: 17px;
-          }
-          html.home-tv-feed-locked,
-          body.home-tv-feed-locked {
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-          }
-          body.home-tv-feed-locked {
-            position: fixed !important;
-            top: var(--home-tv-page-lock-top, 0) !important;
-            right: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100dvh !important;
-          }
-          body.home-tv-feed-locked .app > header,
-          body.home-destination-immersive .app > header {
-            opacity: 0 !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-          }
-          body.home-tv-feed-locked .home-feed-return-home,
-          body.home-destination-immersive .home-feed-return-home {
-            display: grid;
-          }
-          body.home-destination-immersive:not(.home-tv-feed-locked) main.stack > .hero,
-          body.home-destination-immersive:not(.home-tv-feed-locked) main.stack > .home-discovery-controls,
-          body.home-destination-immersive:not(.home-tv-feed-locked) main.stack > .home-live-summary,
-          body.home-destination-immersive:not(.home-tv-feed-locked) main.stack > .home-tv-launch {
-            display: none !important;
-          }
-          body.home-destination-immersive:not(.home-tv-feed-locked) main.stack > section.stack {
-            padding-top: calc(8px + env(safe-area-inset-top));
-            padding-bottom: calc(96px + env(safe-area-inset-bottom));
-          }
-          body.home-destination-immersive:not(.home-tv-feed-locked) .content-head {
-            min-height: calc(68px + env(safe-area-inset-top));
-            padding-top: calc(12px + env(safe-area-inset-top));
-            padding-left: 62px;
-            scroll-margin-top: 0;
           }
           body.profile-full-view-open .home-feed-return-home {
             display: none !important;
@@ -33519,14 +33492,6 @@
     let homeTvFeedObserver = null;
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
-    let homeTvFeedPageLockY = null;
-    let homeTvFeedViewportFrame = 0;
-    let homeTvFeedViewportWidth = 0;
-    let homeTvFeedViewportHeight = 0;
-    let homeDestinationFullscreenPending = false;
-    let homeDestinationOwnsFullscreen = false;
-    let homeDestinationImmersiveRequested = false;
-    const homeImmersiveDestinations = new Set(["tonight", "dancers", "tv", "venues", "trending"]);
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -46193,9 +46158,9 @@
       });
     }
 
-    function focusHomeResults() {
+    function focusHomeResults(behavior = "smooth") {
       const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
-      destinationStart.scrollIntoView({ block: "start", behavior: "auto" });
+      destinationStart.scrollIntoView({ block: "start", behavior });
     }
 
     function handleHomeDiscoveryFeedViewportChange() {
@@ -46570,185 +46535,12 @@
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (visible) activateHomeTvFeedVideo(String(visible.target.dataset.videoId || ""));
-      }, { root: results, threshold: [.25, .72, .9] });
+      }, { root: null, rootMargin: "-72px 0px -88px", threshold: [.25, .6, .72] });
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
       activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
     }
 
-    function homeTvFeedUsesLockedViewport() {
-      return window.matchMedia("(max-width: 720px)").matches;
-    }
-
-    function homeDestinationFullscreenElement() {
-      return document.fullscreenElement || document.webkitFullscreenElement || null;
-    }
-
-    function syncHomeDestinationImmersiveUi() {
-      const immersive =
-        homeDestinationImmersiveRequested &&
-        homeImmersiveDestinations.has(activeTab) &&
-        homeTvFeedUsesLockedViewport();
-      document.documentElement.classList.toggle("home-destination-immersive", immersive);
-      document.body.classList.toggle("home-destination-immersive", immersive);
-      homeFeedReturnHomeBtn?.setAttribute("aria-hidden", immersive ? "false" : "true");
-    }
-
-    async function requestHomeDestinationFullscreen(nextTab = activeTab) {
-      if (
-        !homeImmersiveDestinations.has(nextTab) ||
-        !homeTvFeedUsesLockedViewport() ||
-        homeDestinationFullscreenPending
-      ) {
-        return false;
-      }
-      homeDestinationImmersiveRequested = true;
-      syncHomeDestinationImmersiveUi();
-      if (homeDestinationFullscreenElement()) {
-        homeDestinationOwnsFullscreen = true;
-        return true;
-      }
-      const root = document.documentElement;
-      const request = typeof root.requestFullscreen === "function"
-        ? () => root.requestFullscreen({ navigationUI: "hide" })
-        : typeof root.webkitRequestFullscreen === "function"
-          ? () => root.webkitRequestFullscreen()
-          : null;
-      if (!request) return false;
-      homeDestinationFullscreenPending = true;
-      try {
-        await request();
-        if (!homeDestinationImmersiveRequested || !homeImmersiveDestinations.has(activeTab)) {
-          const exit = document.exitFullscreen || document.webkitExitFullscreen;
-          if (homeDestinationFullscreenElement() && typeof exit === "function") await exit.call(document);
-          return false;
-        }
-        homeDestinationOwnsFullscreen = Boolean(homeDestinationFullscreenElement());
-        if (activeTab === "tv") queueHomeTvFeedViewportSync();
-        else window.requestAnimationFrame(focusHomeResults);
-        return homeDestinationOwnsFullscreen;
-      } catch {
-        return false;
-      } finally {
-        homeDestinationFullscreenPending = false;
-      }
-    }
-
-    function requestHomeTvFeedFullscreen() {
-      return requestHomeDestinationFullscreen("tv");
-    }
-
-    function exitHomeDestinationFullscreen() {
-      homeDestinationImmersiveRequested = false;
-      syncHomeDestinationImmersiveUi();
-      if (!homeDestinationOwnsFullscreen) return;
-      homeDestinationOwnsFullscreen = false;
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (!homeDestinationFullscreenElement() || typeof exit !== "function") return;
-      try {
-        const exitResult = exit.call(document);
-        if (exitResult && typeof exitResult.catch === "function") exitResult.catch(() => {});
-      } catch {}
-    }
-
-    function handleHomeDestinationFullscreenChange() {
-      if (!homeDestinationFullscreenElement()) {
-        homeDestinationOwnsFullscreen = false;
-        homeDestinationImmersiveRequested = false;
-        syncHomeDestinationImmersiveUi();
-        if (activeTab === "tv") queueHomeTvFeedViewportSync();
-        return;
-      }
-      homeDestinationOwnsFullscreen = true;
-      homeDestinationImmersiveRequested = homeImmersiveDestinations.has(activeTab);
-      syncHomeDestinationImmersiveUi();
-      if (activeTab === "tv") queueHomeTvFeedViewportSync();
-      else if (homeImmersiveDestinations.has(activeTab)) window.requestAnimationFrame(focusHomeResults);
-    }
-
-    function handleHomeTvFeedFullscreenIntent(event) {
-      if (activeTab !== "tv" || !results.classList.contains("home-tv-feed")) return;
-      const target = event.target instanceof Element ? event.target : null;
-      if (target?.closest("a, button, input, select, textarea, [role='button']")) return;
-      void requestHomeTvFeedFullscreen();
-    }
-
-    function syncHomeTvFeedViewport() {
-      homeTvFeedViewportFrame = 0;
-      if (activeTab !== "tv" || !homeTvFeedUsesLockedViewport()) return;
-      if (!results.classList.contains("home-tv-feed")) return;
-      const viewportWidth = Math.floor(window.visualViewport?.width || window.innerWidth);
-      const viewportHeight = Math.floor(window.visualViewport?.height || window.innerHeight);
-      if (viewportWidth <= 0 || viewportHeight <= 0) return;
-      if (
-        homeTvFeedViewportWidth &&
-        viewportWidth === homeTvFeedViewportWidth &&
-        viewportHeight === homeTvFeedViewportHeight
-      ) {
-        return;
-      }
-      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
-      const activeSlide = results.querySelector('.home-tv-feed-slide[aria-current="true"]');
-      const activeIndex = Math.max(0, activeSlide ? slides.indexOf(activeSlide) : Math.round(results.scrollTop / Math.max(1, results.clientHeight)));
-      homeTvFeedViewportWidth = viewportWidth;
-      homeTvFeedViewportHeight = viewportHeight;
-      results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
-      window.requestAnimationFrame(() => {
-        const targetTop = activeIndex * viewportHeight;
-        if (Math.abs(results.scrollTop - targetTop) > 1) {
-          results.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
-        }
-      });
-    }
-
-    function queueHomeTvFeedViewportSync() {
-      if (homeTvFeedViewportFrame) window.cancelAnimationFrame(homeTvFeedViewportFrame);
-      homeTvFeedViewportFrame = window.requestAnimationFrame(syncHomeTvFeedViewport);
-    }
-
-    function lockHomeTvFeedViewport() {
-      if (!homeTvFeedUsesLockedViewport()) return;
-      if (homeTvFeedPageLockY === null) {
-        homeTvFeedPageLockY = window.scrollY;
-        document.body.style.setProperty("--home-tv-page-lock-top", `-${homeTvFeedPageLockY}px`);
-        document.documentElement.classList.add("home-tv-feed-locked");
-        document.body.classList.add("home-tv-feed-locked");
-      }
-      queueHomeTvFeedViewportSync();
-    }
-
-    function unlockHomeTvFeedViewport() {
-      if (homeTvFeedViewportFrame) {
-        window.cancelAnimationFrame(homeTvFeedViewportFrame);
-        homeTvFeedViewportFrame = 0;
-      }
-      results.style.removeProperty("--home-tv-feed-height");
-      homeTvFeedViewportWidth = 0;
-      homeTvFeedViewportHeight = 0;
-      document.documentElement.classList.remove("home-tv-feed-locked");
-      document.body.classList.remove("home-tv-feed-locked");
-      document.body.style.removeProperty("--home-tv-page-lock-top");
-      if (homeTvFeedPageLockY === null) return;
-      const restoreY = homeTvFeedPageLockY;
-      homeTvFeedPageLockY = null;
-      window.scrollTo({ top: restoreY, left: 0, behavior: "auto" });
-    }
-
-    function focusAndLockHomeTvFeed() {
-      lockHomeTvFeedViewport();
-      void requestHomeTvFeedFullscreen();
-    }
-
-    function handleHomeTvFeedViewportChange() {
-      if (activeTab !== "tv") return;
-      if (homeTvFeedUsesLockedViewport()) {
-        lockHomeTvFeedViewport();
-      } else {
-        unlockHomeTvFeedViewport();
-      }
-    }
-
     function deactivateHomeTvFeed() {
-      unlockHomeTvFeedViewport();
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
       homeTvFeedActiveVideoId = "";
@@ -46764,8 +46556,7 @@
 
     function returnToHomeDiscoveryMain() {
       if (profileBackdrop.classList.contains("show")) return false;
-      exitHomeDestinationFullscreen();
-      activateHomeDestination("tonight", { immersive: false });
+      activateHomeDestination("tonight", { scroll: false });
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });
@@ -46834,11 +46625,7 @@
         return;
       }
       const nextSlide = slides[nextIndex];
-      results.scrollTo({
-        top: nextIndex * results.clientHeight,
-        left: 0,
-        behavior: "auto"
-      });
+      nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
       activateHomeTvFeedVideo(String(nextSlide.dataset.videoId || ""));
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
     }
@@ -46863,7 +46650,7 @@
       video.setAttribute(
         "aria-label",
         `${dancerName} MyDancr TV video. Tap to play or pause, double tap to applaud${
-          totalVideos > 1 ? ", or swipe up or down for another video" : ""
+          totalVideos > 1 ? ", or scroll up or down for another video" : ""
         }.`
       );
       let lastTapAt = 0;
@@ -47247,7 +47034,6 @@
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
       results.classList.add("home-tv-feed");
-      queueHomeTvFeedViewportSync();
 
       if (homeTvFeedCity !== city) {
         homeTvFeedCity = city;
@@ -47288,7 +47074,6 @@
         ))
       );
       results.dataset.homeTvFeedKey = feedKey;
-      results.scrollTop = 0;
       syncHomeTvFeedSoundButtons();
       window.requestAnimationFrame(setupHomeTvFeedObserver);
     }
@@ -49790,6 +49575,11 @@
       return homeDestinationOrder.includes(requestedView) ? requestedView : "tonight";
     }
 
+    function homeDestinationWasRequested() {
+      const requestedView = new URLSearchParams(window.location.search).get("view");
+      return homeDestinationOrder.includes(requestedView);
+    }
+
     function syncHomeDestinationLocation(nextTab) {
       if (!homeDestinationOrder.includes(nextTab)) return;
       const url = new URL(window.location.href);
@@ -49827,11 +49617,6 @@
         selectedVenueName = null;
       }
       activeTab = nextTab;
-      const immersive = options.immersive !== false && homeImmersiveDestinations.has(nextTab);
-      homeDestinationImmersiveRequested = immersive;
-      syncHomeDestinationImmersiveUi();
-      if (immersive) void requestHomeDestinationFullscreen(nextTab);
-      else exitHomeDestinationFullscreen();
       homeDiscoveryFeedOpen =
         nextTab === "venues" &&
         homeDiscoveryFeedUsesInlineLayout();
@@ -49848,10 +49633,8 @@
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
       syncHomeDestinationLocation(nextTab);
       render();
-      if (isTv) {
-        window.requestAnimationFrame(focusAndLockHomeTvFeed);
-      } else {
-        window.requestAnimationFrame(focusHomeResults);
+      if (options.scroll !== false) {
+        window.requestAnimationFrame(() => focusHomeResults(options.behavior || "smooth"));
       }
       return true;
     }
@@ -49860,15 +49643,6 @@
       event.preventDefault();
       activateHomeDestination("tv");
     });
-    results.addEventListener("pointerup", handleHomeTvFeedFullscreenIntent, { passive: true });
-    results.addEventListener("touchend", handleHomeTvFeedFullscreenIntent, { passive: true });
-    document.addEventListener("fullscreenchange", handleHomeDestinationFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleHomeDestinationFullscreenChange);
-    window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
-    window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
-    window.visualViewport?.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
-    window.addEventListener("resize", syncHomeDestinationImmersiveUi, { passive: true });
-    window.addEventListener("orientationchange", syncHomeDestinationImmersiveUi, { passive: true });
     window.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
@@ -50231,6 +50005,7 @@
     if (initialProfileCity && markets[initialProfileCity]) {
       citySelect.value = initialProfileCity;
     }
+    const initialHomeDestinationRequested = homeDestinationWasRequested();
     const initialHomeDestination = homeDestinationFromLocation();
     if (initialHomeDestination) {
       activeTab = initialHomeDestination;
@@ -50248,10 +50023,9 @@
     }
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
-    if (initialHomeDestination) {
+    if (initialHomeDestinationRequested) {
       window.requestAnimationFrame(() => {
-        if (initialHomeDestination === "tv") focusAndLockHomeTvFeed();
-        else focusHomeResults();
+        focusHomeResults("auto");
       });
     }
     async function refreshVisibleHomeDiscovery() {
