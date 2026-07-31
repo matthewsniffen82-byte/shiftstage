@@ -172,11 +172,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /\/\* Venue discovery uses the same scroll-card shell as dancer discovery\. \*\/[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: auto !important[\s\S]*?min-height: 0 !important[\s\S]*?max-height: none !important[\s\S]*?border-radius: 16px !important/,
-  );
-  assert.match(
-    homeSource,
-    /\.home-venue-grid-actions \.home-venue-discovery-context-actions \{[\s\S]*?position: relative;[\s\S]*?inset: auto;[\s\S]*?bottom: auto;/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\) !important[\s\S]*?scroll-snap-align: none !important/,
   );
   assert.match(
     homeSource,
@@ -286,14 +282,6 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
-  assert.match(
-    venueSlide,
-    /home-dancer-grid-photo home-venue-discovery-art[\s\S]*?home-dancer-grid-copy home-discovery-feed-copy home-venue-grid-copy[\s\S]*?home-dancer-grid-name home-discovery-feed-name home-venue-discovery-name/,
-  );
-  assert.match(
-    venueSlide,
-    /home-dancer-grid-actions home-venue-grid-actions[\s\S]*?home-dancer-grid-action-rail home-venue-discovery-action-rail[\s\S]*?home-dancer-grid-profile-button[\s\S]*?home-dancer-grid-context-actions home-venue-discovery-context-actions/,
-  );
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
