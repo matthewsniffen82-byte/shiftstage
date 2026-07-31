@@ -72,14 +72,14 @@ test("full profiles hide destination navigation until the profile X is clicked",
   );
 });
 
-test("every mobile icon stays container-free while the current icon keeps its glow", () => {
+test("inactive mobile icons stay container-free while only the current page gets a circle", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\);[\s\S]*?border-radius: 999px;[\s\S]*?background: linear-gradient\([\s\S]*?box-shadow:[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)/,
   );
   assert.match(
     homeSource,
@@ -87,10 +87,10 @@ test("every mobile icon stays container-free while the current icon keeps its gl
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?background: linear-gradient\([\s\S]*?box-shadow:[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
+    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?background: linear-gradient\([\s\S]*?box-shadow:[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
   );
 });

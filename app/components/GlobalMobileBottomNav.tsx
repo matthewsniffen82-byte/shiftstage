@@ -284,11 +284,17 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
-            border: 0;
-            border-radius: 0;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 999px;
             color: #fff;
-            background: transparent;
-            box-shadow: none;
+            background: linear-gradient(
+              145deg,
+              rgba(124, 58, 237, 0.5),
+              rgba(34, 199, 255, 0.16)
+            );
+            box-shadow:
+              0 0 0 1px rgba(124, 58, 237, 0.2),
+              0 0 14px rgba(124, 58, 237, 0.34);
             filter:
               drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
               drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
@@ -316,7 +322,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav a.tv-destination.active
             .global-mobile-nav-icon {
             border: 1px solid rgba(255, 255, 255, 0.24);
-            border-radius: 10px;
+            border-radius: 999px;
             color: #fff;
             background: linear-gradient(
               145deg,
