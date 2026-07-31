@@ -117,7 +117,7 @@ test("Next pages and the live shell load tokens before shared component styling"
     '<link href="/dancr-button-system.v1.css" rel="stylesheet">',
   );
   const aestheticLink = liveShell.indexOf(
-    '<link href="/dancr-aesthetic.v1.css?v=4" rel="stylesheet">',
+    '<link href="/dancr-aesthetic.v1.css?v=5" rel="stylesheet">',
   );
 
   assert.ok(tokenLink >= 0);

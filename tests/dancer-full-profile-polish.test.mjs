@@ -6,6 +6,10 @@ const liveApp = await readFile(
   new URL("../outputs/index.html", import.meta.url),
   "utf8",
 );
+const aesthetic = await readFile(
+  new URL("../public/dancr-aesthetic.v1.css", import.meta.url),
+  "utf8",
+);
 
 const profilePolishBlock = liveApp.match(
   /\/\* Instagram-familiar dancer profile hierarchy; scoped away from global navigation\. \*\/[\s\S]*?\/\* Venue profiles keep X dismissal/,
@@ -70,6 +74,21 @@ test("profile-only polish does not restyle or reposition the bottom navigation",
   assert.match(
     profilePolishBlock,
     /Profile content clears the existing dock; the dock itself is intentionally untouched\./,
+  );
+});
+
+test("mobile profile scrolling has no fixed rounded top-edge sliver", () => {
+  const mobileProfileShellRule = aesthetic.match(
+    /#profileBackdrop\.modal-backdrop\.show \.profile-modal \{[\s\S]*?\n  \}/,
+  )?.[0] || "";
+
+  assert.match(mobileProfileShellRule, /border-top-color: transparent !important;/);
+  assert.match(mobileProfileShellRule, /border-top-left-radius: 0 !important;/);
+  assert.match(mobileProfileShellRule, /border-top-right-radius: 0 !important;/);
+  assert.match(mobileProfileShellRule, /box-shadow: none !important;/);
+  assert.doesNotMatch(
+    mobileProfileShellRule,
+    /\b(?:overflow|touch-action|position|width|height|padding|margin)\b/,
   );
 });
 

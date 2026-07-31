@@ -597,6 +597,16 @@ body > .app main.stack > #results :is(
     width: auto !important;
     margin-inline: 12px !important;
   }
+
+  /* The full-profile shell is the mobile scroll viewport. Keep its fixed outer
+     edge square and transparent so it cannot leave a rounded glow sliver over
+     profile media as the inner content scrolls. */
+  #profileBackdrop.modal-backdrop.show .profile-modal {
+    border-top-color: transparent !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    box-shadow: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
