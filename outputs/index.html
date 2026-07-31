@@ -30731,6 +30731,7 @@
           display: block !important;
           overflow-x: hidden !important;
           overflow-y: auto !important;
+          overflow-anchor: none !important;
           overscroll-behavior-y: contain;
           scroll-padding-block:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
@@ -45500,9 +45501,20 @@
         `${url.pathname}?${url.searchParams.toString()}${url.hash}`
       );
       render();
-      requestAnimationFrame(() => {
+      focusVenueProfileStart();
+    }
+
+    function focusVenueProfileStart() {
+      const resetProfileScroll = () => {
         results.scrollTo({ top: 0, left: 0, behavior: "auto" });
-        results.querySelector("[data-close-venue-profile]")?.focus({ preventScroll: true });
+      };
+      resetProfileScroll();
+      requestAnimationFrame(() => {
+        resetProfileScroll();
+        requestAnimationFrame(() => {
+          resetProfileScroll();
+          results.querySelector("[data-close-venue-profile]")?.focus({ preventScroll: true });
+        });
       });
     }
 

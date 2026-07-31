@@ -50,7 +50,7 @@ test("venue profiles open as dismissible full-screen sheets above the locked pag
   );
   assert.match(
     liveApp,
-    /#results\.venue-profile-overlay \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 80;[\s\S]*?height: 100dvh !important;[\s\S]*?overflow-y: auto !important;/,
+    /#results\.venue-profile-overlay \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 80;[\s\S]*?height: 100dvh !important;[\s\S]*?overflow-y: auto !important;[\s\S]*?overflow-anchor: none !important;/,
   );
   assert.match(
     liveApp,
@@ -63,6 +63,10 @@ test("venue profiles open as dismissible full-screen sheets above the locked pag
   assert.match(
     liveApp,
     /const venueProfileClose = event\.target\.closest\("\[data-close-venue-profile\]"\);[\s\S]*?closeVenueProfile\(\);/,
+  );
+  assert.match(
+    liveApp,
+    /function focusVenueProfileStart\(\) \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?focus\(\{ preventScroll: true \}\);/,
   );
 });
 
