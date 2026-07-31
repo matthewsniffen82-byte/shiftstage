@@ -172,7 +172,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\) !important[\s\S]*?scroll-snap-align: none !important/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(460px, calc\(100vh - 180px\), 580px\) !important[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important[\s\S]*?scroll-snap-align: none !important/,
   );
   assert.match(
     homeSource,
@@ -225,8 +225,9 @@ test("TV remains the only snap feed while discovery cards use natural page scrol
   );
   assert.match(
     homeSource,
-    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(460px, calc\(100dvh - 180px\), 580px\);[\s\S]*?min-height: 460px;[\s\S]*?max-height: 580px;[\s\S]*?contain: layout paint style;/,
+    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(460px, calc\(100vh - 180px\), 580px\);[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\);[\s\S]*?min-height: 460px;[\s\S]*?max-height: 580px;[\s\S]*?contain: layout paint style;/,
   );
+  assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(
     homeSource,
     /function syncHomeTvFeedViewport\(\)[\s\S]*?viewportWidth === homeTvFeedViewportWidth[\s\S]*?viewportHeight === homeTvFeedViewportHeight[\s\S]*?activeIndex \* viewportHeight/,
