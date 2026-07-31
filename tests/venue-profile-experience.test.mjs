@@ -18,7 +18,7 @@ test("legacy venue URLs resolve real production data before redirecting to the c
   );
 });
 
-test("the canonical in-app venue page keeps live data, planning details, and production actions together", () => {
+test("the canonical in-app venue page is dedicated to the selected club and its live production data", () => {
   const venueDetail = liveApp.match(
     /function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
@@ -35,8 +35,11 @@ test("the canonical in-app venue page keeps live data, planning details, and pro
   assert.match(venueDetail, /https:\/\/maps\.google\.com\/\?q=/);
   assert.match(venueDetail, /Working now at \$\{details\.name\}/);
   assert.match(venueDetail, /Upcoming shifts at \$\{details\.name\}/);
-  assert.match(venueDetail, /Trending in \$\{details\.city\}/);
-  assert.match(venueDetail, /Other \$\{city\} venues/);
+  assert.match(venueDetail, /Trending at \$\{details\.name\}/);
+  assert.doesNotMatch(
+    venueDetail,
+    /otherVenues|Other \$\{city\} venues|other venues|venueCard\(item\)/i,
+  );
 });
 
 test("venue profiles match dancer profiles as X-only full-screen sheets above the locked page", () => {

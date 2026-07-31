@@ -39499,7 +39499,6 @@
       const trending = localProfiles
         .filter((profile) => profile.trendRank)
         .sort((a, b) => a.trendRank - b.trendRank);
-      const otherVenues = markets[city].venues.filter((item) => item.name !== venue.name && !item.hidden);
       const shiftCount = localProfiles.filter((profile) => profile.scheduled).length;
       const followsVenue = isFollowingVenue(city, venue.name);
       if (venue.id) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
@@ -39557,11 +39556,8 @@
           <h3 class="section-title" id="venue-verified-shifts">Upcoming shifts at ${details.name}</h3>
           <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
-          <h3 class="section-title" id="venue-trending-dancers">Trending in ${details.city}</h3>
+          <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
           <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
-
-          <h3 class="section-title">Other ${city} venues</h3>
-          <div class="mini-list">${otherVenues.map((item) => venueCard(item)).join("")}</div>
         </div>
       `;
     }
