@@ -20,7 +20,7 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   );
   assert.match(
     homeSource,
-    /function focusHomeResults\(behavior = "smooth"\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?destinationStart\.scrollIntoView\(\{ block: "start", behavior \}\);/,
+    /function alignHomeResultsTitle\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?destinationStart\.scrollIntoView\(\{ block: "start", behavior: "auto" \}\);[\s\S]*?function focusHomeResults\(\)/,
   );
   assert.match(
     homeSource,

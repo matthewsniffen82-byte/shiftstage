@@ -717,7 +717,7 @@
       gap: 10px;
       margin-top: 4px;
       padding: 2px 0 1px;
-      scroll-margin-top: calc(84px + env(safe-area-inset-top));
+      scroll-margin-top: calc(14px + env(safe-area-inset-top));
     }
 
     .count {
@@ -46218,9 +46218,21 @@
       });
     }
 
-    function focusHomeResults(behavior = "smooth") {
+    let homeResultsFocusFrame = 0;
+
+    function alignHomeResultsTitle() {
       const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
-      destinationStart.scrollIntoView({ block: "start", behavior });
+      if (!destinationStart.isConnected) return;
+      destinationStart.scrollIntoView({ block: "start", behavior: "auto" });
+    }
+
+    function focusHomeResults() {
+      alignHomeResultsTitle();
+      if (homeResultsFocusFrame) window.cancelAnimationFrame(homeResultsFocusFrame);
+      homeResultsFocusFrame = window.requestAnimationFrame(() => {
+        homeResultsFocusFrame = 0;
+        alignHomeResultsTitle();
+      });
     }
 
     function handleHomeDiscoveryFeedViewportChange() {
@@ -49694,7 +49706,7 @@
       syncHomeDestinationLocation(nextTab);
       render();
       if (options.scroll !== false) {
-        window.requestAnimationFrame(() => focusHomeResults(options.behavior || "smooth"));
+        window.requestAnimationFrame(focusHomeResults);
       }
       return true;
     }
@@ -50085,7 +50097,7 @@
     render();
     if (initialHomeDestinationRequested) {
       window.requestAnimationFrame(() => {
-        focusHomeResults("auto");
+        focusHomeResults();
       });
     }
     async function refreshVisibleHomeDiscovery() {

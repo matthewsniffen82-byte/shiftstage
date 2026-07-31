@@ -47,7 +47,7 @@ test("the Home TV button renders a real page-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?focusHomeResults\(options\.behavior \|\| "smooth"\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?requestAnimationFrame\(focusHomeResults\)/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive|requestHomeDestinationFullscreen|focusAndLockHomeTvFeed/);
   assert.match(
@@ -132,15 +132,15 @@ test("all five discovery destinations stay in one continuously scrollable homepa
   );
   assert.match(
     homeSource,
-    /function focusHomeResults\(behavior = "smooth"\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?scrollIntoView\(\{ block: "start", behavior \}\)/,
+    /function alignHomeResultsTitle\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?scrollIntoView\(\{ block: "start", behavior: "auto" \}\)[\s\S]*?function focusHomeResults\(\) \{[\s\S]*?alignHomeResultsTitle\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?alignHomeResultsTitle\(\)/,
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?classList\.toggle\("active", isActive\)[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?focusHomeResults\(options\.behavior \|\| "smooth"\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?classList\.toggle\("active", isActive\)[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?requestAnimationFrame\(focusHomeResults\)/,
   );
   assert.match(
     homeSource,
-    /\.content-head \{[\s\S]*?scroll-margin-top: calc\(84px \+ env\(safe-area-inset-top\)\)/,
+    /\.content-head \{[\s\S]*?scroll-margin-top: calc\(14px \+ env\(safe-area-inset-top\)\)/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
