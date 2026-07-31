@@ -32407,12 +32407,12 @@
                   <div class="control-card-head">
                     <span class="eyebrow">Photos</span>
                     <strong>Manage profile pictures</strong>
-                    <p>Update the main card photo and gallery photos customers see in full profile view.</p>
+                    <p>Update the main card photo and gallery photos customers see in full profile view. For maximum detail, choose the original camera image—not a screenshot or social-media copy—ideally at least 2,000 pixels on its longest edge.</p>
                   </div>
                   <div class="control-action-row">
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
                     <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
-                    <input id="approvedPhotoUploadInput" type="file" accept="image/*" hidden>
+                    <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
                   </div>
                 </section>
 
@@ -35066,11 +35066,26 @@
       return gallery[offset - 1] || profile?.mainPhotoUrl || "";
     }
 
-    function customPhotoAttrs(url) {
+    function responsiveCssImageSet(srcSet) {
+      const sources = String(srcSet || "")
+        .split(",")
+        .map((source) => source.trim().match(/^(\S+)\s+(\d+)w$/))
+        .filter(Boolean)
+        .map((match) => ({ url: safeCssUrl(match[1]), width: Number(match[2]) }))
+        .filter((source) => source.url && Number.isFinite(source.width))
+        .sort((left, right) => left.width - right.width);
+      if (!sources.length) return "";
+      return `image-set(${sources
+        .map((source, index) => `url('${source.url}') ${index + 1}x`)
+        .join(", ")})`;
+    }
+
+    function customPhotoAttrs(url, srcSet = "") {
       const safeUrl = safeCssUrl(url);
+      const responsiveImageSet = responsiveCssImageSet(srcSet);
       return safeUrl ? {
         className: " has-custom-photo",
-        style: ` style="--custom-photo: url('${safeUrl}')"`
+        style: ` style="--custom-photo: ${responsiveImageSet || `url('${safeUrl}')`}"`
       } : { className: "", style: "" };
     }
 
@@ -35126,7 +35141,9 @@
         trendRank: item.currentRank || null,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
+        mainPhotoSrcSet: item.primaryPhotoSrcSet || "",
         galleryPhotoUrls,
+        galleryPhotoSrcSets: Array.isArray(item.galleryPhotoSrcSets) ? item.galleryPhotoSrcSets : [],
         socialLinks,
         socials,
         shiftLabel: item.shiftLabel || "",
@@ -36301,6 +36318,9 @@
         latitude: Number.isFinite(Number(item.latitude)) ? Number(item.latitude) : null,
         longitude: Number.isFinite(Number(item.longitude)) ? Number(item.longitude) : null,
         coverImageUrl: item.coverImageUrl || "",
+        coverImageSrcSet: item.coverImageSrcSet || "",
+        coverImageWidth: item.coverImageWidth || null,
+        coverImageHeight: item.coverImageHeight || null,
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
         activeDeal: item.activeDeal || null
@@ -40340,7 +40360,11 @@
       const clubMarkup = !isPending && profile.scheduled
         ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} venue page">${profile.venue}</span>${distanceLabel ? `<span class="card-distance">• ${distanceLabel}</span>` : ""}</div>`
         : "";
-      const portraitPhotoAttrs = customPhotoAttrs(isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile));
+      const portraitPhotoUrl = isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile);
+      const portraitPhotoAttrs = customPhotoAttrs(
+        portraitPhotoUrl,
+        isPending ? "" : profilePhotoSrcSet(profile, portraitPhotoUrl)
+      );
       const profileHref = profile.slug ? `/dancers/${profile.slug}` : `#profile-${slugify(profile.name)}`;
       const profileCardBody = `
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
@@ -40419,7 +40443,7 @@
 
     function venueVisualAttrs(venue) {
       const venueCoverUrl = String(venue.coverImageUrl || "").trim();
-      const attrs = customPhotoAttrs(venueCoverUrl);
+      const attrs = customPhotoAttrs(venueCoverUrl, venue.coverImageSrcSet);
       const sourceClass = venueCoverUrl ? " has-venue-cover" : " is-venue-artwork";
       return {
         attrs: {
@@ -40435,7 +40459,10 @@
       const profiles = venueVisualProfiles(city, venue.name).slice(0, 3);
       if (!profiles.length) return "";
       const avatars = profiles.map((profile) => {
-        const attrs = customPhotoAttrs(publicProfilePhotoUrl(profile));
+        const attrs = customPhotoAttrs(
+          publicProfilePhotoUrl(profile),
+          publicProfilePhotoSrcSet(profile)
+        );
         return `<span class="${options.mobile ? "home-venue-discovery-lineup-avatar" : "venue-card-lineup-avatar"}${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
       }).join("");
       const label = profiles.length === 1
@@ -40872,6 +40899,26 @@
       return uploadedProfilePhotoUrls(profile, false)[0] || "";
     }
 
+    function profilePhotoSrcSet(profile, photoUrl) {
+      const normalizedUrl = String(photoUrl || "").trim();
+      if (!normalizedUrl) return "";
+      const submittedPhoto = (profile?.submittedPhotos || []).find((photo) =>
+        [photo.imageUrl, photo.image_url, photo.url].some((url) => String(url || "").trim() === normalizedUrl)
+      );
+      if (submittedPhoto) return submittedPhoto.imageSrcSet || submittedPhoto.image_src_set || "";
+      if (String(profile?.mainPhotoUrl || "").trim() === normalizedUrl) {
+        return profile?.mainPhotoSrcSet || "";
+      }
+      const galleryIndex = (profile?.galleryPhotoUrls || []).findIndex(
+        (url) => String(url || "").trim() === normalizedUrl
+      );
+      return galleryIndex >= 0 ? profile?.galleryPhotoSrcSets?.[galleryIndex] || "" : "";
+    }
+
+    function publicProfilePhotoSrcSet(profile) {
+      return profilePhotoSrcSet(profile, publicProfilePhotoUrl(profile));
+    }
+
     function galleryMarkup(profile, baseIndex, options = {}) {
       const isPrivatePreview = Boolean(options.preview);
       const uploadedUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
@@ -40884,7 +40931,7 @@
       const galleryOffsets = uploadedUrls.length ? uploadedUrls.map((photoUrl, offset) => ({ offset, photoUrl })) : [0, 1, 2, 3].map((offset) => ({ offset, photoUrl: customPhotoUrl(profile, offset) }));
       return galleryOffsets.map(({ offset, photoUrl }) => {
         const photoClass = portraitClass(baseIndex + offset);
-        const photoAttrs = customPhotoAttrs(photoUrl);
+        const photoAttrs = customPhotoAttrs(photoUrl, profilePhotoSrcSet(profile, photoUrl));
         return `
           <button class="thumb ${offset === 0 ? "active" : ""}" type="button" data-photo="${photoClass}" data-photo-url="${displayText(photoUrl)}" aria-label="Show gallery photo ${offset + 1}" aria-pressed="${offset === 0 ? "true" : "false"}">
             <span class="portrait ${photoClass}${photoAttrs.className}"${photoAttrs.style}></span>
@@ -43953,8 +44000,8 @@
           ${dancerSetupPhotoPreviewMarkup()}
           <div class="field">
             <label for="setupProfilePhotos">Profile photos</label>
-            <input id="setupProfilePhotos" type="file" accept="image/*" multiple>
-            <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
+            <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
+            <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> For the sharpest result, choose original camera images—not screenshots or social-media copies—with at least 2,000 pixels on the longest edge. MyDancr keeps the high-resolution master, serves responsive sizes, and never enlarges a small upload. The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
           </div>
           <div class="rule-note" id="photoUploadResult">Approved and pending-human-review photos unlock Step 3. Pending slots stay occupied. Fully rejected photos do not count and must be replaced.</div>
           <button class="action-btn" type="submit">Submit photos</button>
@@ -45692,7 +45739,7 @@
       const profileValue = escapeOptionValue(profile.name);
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const photoUrl = publicProfilePhotoUrl(profile);
-      const photoAttrs = customPhotoAttrs(photoUrl);
+      const photoAttrs = customPhotoAttrs(photoUrl, publicProfilePhotoSrcSet(profile));
       const photoMarkup = photoUrl
         ? `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
@@ -45764,7 +45811,10 @@
       const venueValue = escapeOptionValue(venueName);
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const profilePhotoUrl = publicProfilePhotoUrl(profile);
-      const portraitPhotoAttrs = customPhotoAttrs(profilePhotoUrl);
+      const portraitPhotoAttrs = customPhotoAttrs(
+        profilePhotoUrl,
+        publicProfilePhotoSrcSet(profile)
+      );
       const portraitMarkup = profilePhotoUrl
         ? `<div class="portrait home-discovery-feed-photo ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}></div>`
         : `<div class="home-discovery-feed-photo is-photo-unavailable" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;

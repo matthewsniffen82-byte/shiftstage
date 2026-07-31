@@ -6,6 +6,11 @@ import {
 import { validateAndPrepareDancrImage } from "./image-validation";
 import { evaluateDancrImageModeration } from "./moderation-policy";
 import {
+  removeResponsiveImage,
+  responsivePublicImage,
+  uploadResponsiveImage,
+} from "./responsive-image";
+import {
   getVenueDealForAccount,
   getVenueDealRevenueMetrics,
 } from "./deals";
@@ -183,7 +188,7 @@ export async function uploadVenueCoverImage(
   }
 
   const tempPath = `${userId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
-  const finalPath = `${venue.id}/${Date.now()}-${image.storageFileName}`;
+  let finalPath = "";
   let finalUploaded = false;
 
   try {
@@ -212,14 +217,13 @@ export async function uploadVenueCoverImage(
       );
     }
 
-    const { error: finalUploadError } = await client.storage
-      .from(COVER_BUCKET)
-      .upload(finalPath, image.buffer, {
-        contentType: image.contentType,
-        cacheControl: "31536000",
-        upsert: false,
-      });
-    if (finalUploadError) throw finalUploadError;
+    const uploadedImage = await uploadResponsiveImage(
+      client,
+      COVER_BUCKET,
+      venue.id,
+      image,
+    );
+    finalPath = uploadedImage.storagePath;
     finalUploaded = true;
 
     const { data, error } = await client
@@ -235,13 +239,19 @@ export async function uploadVenueCoverImage(
 
     if (error) throw error;
     if (venue.coverImageStoragePath && venue.coverImageStoragePath !== finalPath) {
-      await client.storage.from(COVER_BUCKET).remove([venue.coverImageStoragePath]).catch(() => null);
+      await removeResponsiveImage(
+        client,
+        COVER_BUCKET,
+        venue.coverImageStoragePath,
+      ).catch(() => null);
     }
     console.info("VENUE_COVER_PUBLISHED", { venueId: venue.id });
     return toVenueOwnerProfile(client, data);
   } catch (error) {
     if (finalUploaded) {
-      await client.storage.from(COVER_BUCKET).remove([finalPath]).catch(() => null);
+      await removeResponsiveImage(client, COVER_BUCKET, finalPath).catch(
+        () => null,
+      );
     }
     throw error;
   } finally {
@@ -267,7 +277,11 @@ export async function deleteVenueCoverImage(
 
   if (error) throw error;
   if (venue.coverImageStoragePath) {
-    await client.storage.from(COVER_BUCKET).remove([venue.coverImageStoragePath]).catch(() => null);
+    await removeResponsiveImage(
+      client,
+      COVER_BUCKET,
+      venue.coverImageStoragePath,
+    ).catch(() => null);
   }
   console.info("VENUE_COVER_REMOVED", { venueId: venue.id });
   return toVenueOwnerProfile(client, data);
@@ -348,6 +362,11 @@ async function requireVenueForAccount(client: DancrClient, userId: string) {
 }
 
 function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
+  const coverImage = responsivePublicImage(
+    client,
+    COVER_BUCKET,
+    row.cover_image_storage_path,
+  );
   return {
     id: row.id,
     ownerUserId: row.owner_user_id,
@@ -363,9 +382,10 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     closesAt: row.closes_at || null,
     isActive: row.is_active !== false,
     coverImageStoragePath: row.cover_image_storage_path || null,
-    coverImageUrl: row.cover_image_storage_path
-      ? client.storage.from(COVER_BUCKET).getPublicUrl(row.cover_image_storage_path).data.publicUrl
-      : null,
+    coverImageUrl: coverImage?.imageUrl || null,
+    coverImageSrcSet: coverImage?.imageSrcSet || null,
+    coverImageWidth: coverImage?.imageWidth || null,
+    coverImageHeight: coverImage?.imageHeight || null,
     coverImageUpdatedAt: row.cover_image_updated_at || null,
     qrCodeStoragePath: row.qr_code_storage_path || null,
     qrCodeUrl: row.qr_code_storage_path

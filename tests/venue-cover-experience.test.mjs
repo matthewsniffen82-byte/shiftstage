@@ -48,7 +48,7 @@ test("venue cover uploads are validated, moderated, compensated, and owner-scope
   assert.match(venueService, /evaluation\.decision !== "approved"/);
   assert.match(venueService, /const COVER_BUCKET = "venue-cover-images"/);
   assert.match(venueService, /cover_image_storage_path: finalPath/);
-  assert.match(venueService, /if \(finalUploaded\)[\s\S]*?remove\(\[finalPath\]\)/);
+  assert.match(venueService, /if \(finalUploaded\)[\s\S]*?removeResponsiveImage\(/);
   assert.match(venueService, /\.eq\("owner_user_id", userId\)/);
   assert.match(moderationService, /export async function moderateImageWithOpenAI/);
 });
@@ -65,17 +65,17 @@ test("the venue dashboard publishes and removes real moderated cover media", () 
   assert.match(dashboard, /fetch\("\/api\/venue\/cover-image", \{[\s\S]*?method: "POST"/);
   assert.match(dashboard, /fetch\("\/api\/venue\/cover-image", \{[\s\S]*?method: "DELETE"/);
   assert.match(dashboard, /Checking and publishing venue image/);
-  assert.match(dashboard, /Every upload is safety checked/);
-  assert.match(dashboard, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(dashboard, /after the safety check/);
+  assert.match(dashboard, /accept="image\/jpeg,image\/png,image\/webp,image\/heic,image\/heif/);
   assert.match(dashboard, /profile\?\.coverImageUrl/);
 });
 
 test("approved cover media flows through discovery and the canonical live venue experience", () => {
   assert.match(discoveryRoute, /cover_image_storage_path/);
-  assert.match(discoveryRoute, /coverImageUrl:[\s\S]*?venue-cover-images/);
-  assert.match(publicVenuesRoute, /coverImageUrl:[\s\S]*?venue-cover-images/);
-  assert.match(publicService, /coverImageUrl: venueCoverImageUrl/);
-  assert.match(publicService, /from\("venue-cover-images"\)/);
+  assert.match(discoveryRoute, /responsivePublicImage\([\s\S]*?"venue-cover-images"[\s\S]*?coverImageUrl:/);
+  assert.match(publicVenuesRoute, /responsivePublicImage\([\s\S]*?"venue-cover-images"[\s\S]*?coverImageUrl:/);
+  assert.match(publicService, /coverImageUrl: image\?\.imageUrl/);
+  assert.match(publicService, /responsivePublicImage\([\s\S]*?"venue-cover-images"/);
   assert.match(publicVenuePage, /permanentRedirect\([\s\S]*?venue=\$\{encodeURIComponent\(venue\.slug\)\}/);
   assert.match(
     venueDirectory,
@@ -84,14 +84,14 @@ test("approved cover media flows through discovery and the canonical live venue 
   assert.doesNotMatch(venueDirectory, /cover_image_storage_path|backgroundImage:/);
   assert.match(
     homeSource,
-    /function venueVisualAttrs\(venue\)[\s\S]*?const venueCoverUrl = String\(venue\.coverImageUrl \|\| ""\)\.trim\(\)[\s\S]*?customPhotoAttrs\(venueCoverUrl\)/,
+    /function venueVisualAttrs\(venue\)[\s\S]*?const venueCoverUrl = String\(venue\.coverImageUrl \|\| ""\)\.trim\(\)[\s\S]*?customPhotoAttrs\(venueCoverUrl, venue\.coverImageSrcSet\)/,
   );
 });
 
 test("venue discovery uses approved venue covers with a branded artwork fallback", () => {
   const visualHelper =
     homeSource.match(/function venueVisualAttrs\(venue\) \{[\s\S]*?(?=\n    function venueLineupMarkup)/)?.[0] || "";
-  assert.match(visualHelper, /customPhotoAttrs\(venueCoverUrl\)/);
+  assert.match(visualHelper, /customPhotoAttrs\(venueCoverUrl, venue\.coverImageSrcSet\)/);
   assert.doesNotMatch(visualHelper, /publicProfilePhotoUrl|featuredProfile|has-lineup-photo/);
   assert.match(
     visualHelper,

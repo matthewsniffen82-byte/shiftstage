@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import { APPROVED_PHOTO_BUCKET, MODERATION_REVIEW_BUCKET, MODERATION_TEMP_BUCKET } from "@/src/lib/dancr/image-moderation";
+import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
 import { profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
+import {
+  removeResponsiveImage,
+  responsiveImageStoragePaths,
+  uploadResponsiveImage,
+} from "@/src/lib/dancr/responsive-image";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -98,13 +104,14 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
   const { data: file, error: downloadError } = await admin.storage.from(sourceBucket).download(sourcePath);
   if (downloadError || !file) throw downloadError || new Error("Unable to read review image.");
 
-  const extension = sourcePath.split(".").pop() || "jpg";
-  const finalPath = `${record.user_id}/${profile.id}/${crypto.randomUUID()}.${extension}`;
-  const { error: uploadError } = await admin.storage.from(APPROVED_PHOTO_BUCKET).upload(finalPath, file, {
-    contentType: file.type || "image/jpeg",
-    upsert: false,
-  });
-  if (uploadError) throw uploadError;
+  const image = await validateAndPrepareDancrImage(file);
+  const uploadedImage = await uploadResponsiveImage(
+    admin,
+    APPROVED_PHOTO_BUCKET,
+    `${record.user_id}/${profile.id}`,
+    image,
+  );
+  const finalPath = uploadedImage.storagePath;
 
   try {
     const requestedSlot = profilePhotoSlotFromUploadContext(record.upload_context);
@@ -160,7 +167,14 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       } else {
         const supersededPaths = (supersededPhotos || []).map((item: any) => item.storage_path).filter(Boolean);
         if (supersededPaths.length) {
-          await admin.storage.from(APPROVED_PHOTO_BUCKET).remove(supersededPaths).catch(() => null);
+          await admin.storage
+            .from(APPROVED_PHOTO_BUCKET)
+            .remove(
+              supersededPaths.flatMap((storagePath: string) =>
+                responsiveImageStoragePaths(storagePath),
+              ),
+            )
+            .catch(() => null);
         }
       }
     }
@@ -168,7 +182,11 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
     return updated;
   } catch (error) {
-    await admin.storage.from(APPROVED_PHOTO_BUCKET).remove([finalPath]).catch(() => null);
+    await removeResponsiveImage(
+      admin,
+      APPROVED_PHOTO_BUCKET,
+      finalPath,
+    ).catch(() => null);
     throw error;
   }
 }

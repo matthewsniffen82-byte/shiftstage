@@ -38,6 +38,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
   const heroPhoto =
     profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
+  const heroPhotoSrcSet =
+    profile.primaryPhotoSrcSet || profile.photos[0]?.imageSrcSet || null;
+  const heroPhotoWidth =
+    profile.primaryPhotoWidth || profile.photos[0]?.imageWidth || null;
+  const heroPhotoHeight =
+    profile.primaryPhotoHeight || profile.photos[0]?.imageHeight || null;
   const gallery = profile.photos.length
     ? profile.photos
     : heroPhoto
@@ -100,9 +106,19 @@ export default async function DancerPublicPage({ params }: PageProps) {
             aria-label={`${profile.stageName} profile photo`}
             className={`profile-avatar${heroPhoto ? " has-photo" : ""}`}
             role="img"
-            style={heroPhoto ? { backgroundImage: `url("${heroPhoto}")` } : undefined}
           >
-            {!heroPhoto ? initials(profile.stageName) : null}
+            {heroPhoto ? (
+              <img
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+                height={heroPhotoHeight || undefined}
+                sizes="132px"
+                src={heroPhoto}
+                srcSet={heroPhotoSrcSet || undefined}
+                width={heroPhotoWidth || undefined}
+              />
+            ) : initials(profile.stageName)}
           </div>
           <dl className="profile-metrics" aria-label="Profile activity">
             <div>
@@ -176,6 +192,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
           photos={gallery.map((photo) => ({
             id: photo.id,
             imageUrl: photo.imageUrl,
+            imageSrcSet: photo.imageSrcSet,
+            imageWidth: photo.imageWidth,
+            imageHeight: photo.imageHeight,
           }))}
           videos={tvVideos.map((video) => ({
             id: video.id,
@@ -304,6 +323,7 @@ function PublicProfileStyles() {
       .profile-overview { display: grid; grid-template-columns: clamp(96px, 18vw, 132px) minmax(0, 1fr); align-items: center; gap: clamp(18px, 5vw, 42px); padding: 22px 0 18px; }
       .profile-avatar { width: 100%; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border: 2px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 18px 44px rgba(0,0,0,.38), 0 0 28px rgba(124,58,237,.2); background-position: center; background-size: cover; font-size: 30px; font-weight: 950; }
       .profile-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
+      .profile-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 10px 4px; }
       .profile-metrics dd { margin: 0; color: #fff; font-size: clamp(20px, 4vw, 28px); font-weight: 950; line-height: 1; }

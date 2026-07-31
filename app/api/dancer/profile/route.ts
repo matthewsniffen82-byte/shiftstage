@@ -8,6 +8,10 @@ import {
   isVerifyMyIdentityMode,
 } from "@/src/lib/dancr/identity-mode";
 import { profilePhotoSlotFromUploadContext, profilePhotoSlotKey } from "@/src/lib/dancr/photo-slot";
+import {
+  responsiveImageStoragePaths,
+  responsivePublicImage,
+} from "@/src/lib/dancr/responsive-image";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -275,17 +279,23 @@ function withPhotoUrls(client: any, profile: any) {
   });
   return {
     ...profile,
-    dancer_photos: activePhotos.slice(0, MAX_DANCER_PROFILE_PHOTOS).map((photo: any) => ({
-      ...photo,
-      imageUrl: getPhotoUrl(client, photo.storage_path),
-    })),
+    dancer_photos: activePhotos
+      .slice(0, MAX_DANCER_PROFILE_PHOTOS)
+      .map((photo: any) => {
+        const image = responsivePublicImage(
+          client,
+          "dancer-photos",
+          photo.storage_path,
+        );
+        return {
+          ...photo,
+          imageHeight: image?.imageHeight || null,
+          imageSrcSet: image?.imageSrcSet || null,
+          imageUrl: image?.imageUrl || "",
+          imageWidth: image?.imageWidth || null,
+        };
+      }),
   };
-}
-
-function getPhotoUrl(client: any, storagePath: unknown) {
-  if (typeof storagePath !== "string" || !storagePath.trim()) return "";
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
 }
 
 export async function PATCH(request: Request) {
@@ -869,7 +879,13 @@ async function deleteDancerPhotosByStoragePaths(db: any, userId: string, dancerI
   });
 
   if (removedStoragePaths.length) {
-    const { error: storageError } = await db.storage.from(APPROVED_PHOTO_BUCKET).remove(removedStoragePaths);
+    const { error: storageError } = await db.storage
+      .from(APPROVED_PHOTO_BUCKET)
+      .remove(
+        removedStoragePaths.flatMap((storagePath) =>
+          responsiveImageStoragePaths(String(storagePath)),
+        ),
+      );
     if (storageError) console.log("PROFILE_PHOTO_DELETE_STORAGE_WARNING", { message: storageError.message });
   }
 

@@ -44,7 +44,10 @@ test("photo deletion is dancer-scoped, removes stored content, promotes a replac
   assert.match(deletion, /contentReviewType\("photo", photo\.id\)/);
   assert.match(deletion, /\.from\("image_moderation_records"\)/);
   assert.match(deletion, /\.update\(\{ is_primary: true \}\)/);
-  assert.match(deletion, /removeBucketPaths\(client, "dancer-photos", \[photo\.storage_path\], warnings\)/);
+  assert.match(
+    deletion,
+    /removeBucketPaths\([\s\S]*?responsiveImageStoragePaths\(photo\.storage_path\)[\s\S]*?warnings/,
+  );
   assert.match(deletion, /action: "delete_dancer_photo"/);
 });
 

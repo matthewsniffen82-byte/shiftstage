@@ -10,6 +10,9 @@ type DancerPhotoCarouselProps = {
   photos: Array<{
     id: string;
     imageUrl: string;
+    imageSrcSet?: string | null;
+    imageWidth?: number | null;
+    imageHeight?: number | null;
   }>;
   videos?: Array<{
     id: string;
@@ -23,6 +26,9 @@ type PhotoMedia = {
   id: string;
   kind: "photo";
   imageUrl: string;
+  imageSrcSet?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
 };
 
 type VideoMedia = {
@@ -253,7 +259,11 @@ export function DancerPhotoCarousel({
                 aria-hidden="true"
                 decoding="async"
                 draggable={false}
+                height={item.imageHeight || undefined}
+                sizes="(max-width: 760px) 33vw, 250px"
                 src={item.imageUrl}
+                srcSet={item.imageSrcSet || undefined}
+                width={item.imageWidth || undefined}
               />
             ) : (
               <>
@@ -309,7 +319,11 @@ export function DancerPhotoCarousel({
                 alt={`${stageName} photo ${viewerIndex + 1} of ${viewerItems.length}`}
                 decoding="async"
                 draggable={false}
+                height={activeViewerItem.imageHeight || undefined}
+                sizes="100vw"
                 src={activeViewerItem.imageUrl}
+                srcSet={activeViewerItem.imageSrcSet || undefined}
+                width={activeViewerItem.imageWidth || undefined}
               />
             ) : (
               <video

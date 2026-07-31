@@ -84,6 +84,9 @@ export type VenueSummary = {
   longitude?: number | null;
   hoursLabel: string | null;
   coverImageUrl?: string | null;
+  coverImageSrcSet?: string | null;
+  coverImageWidth?: number | null;
+  coverImageHeight?: number | null;
   qrCodeUrl?: string | null;
   qrCodeLabel?: string | null;
 };
@@ -104,6 +107,9 @@ export type VenueOwnerProfile = {
   isActive: boolean;
   coverImageStoragePath: string | null;
   coverImageUrl: string | null;
+  coverImageSrcSet: string | null;
+  coverImageWidth: number | null;
+  coverImageHeight: number | null;
   coverImageUpdatedAt: string | null;
   qrCodeStoragePath: string | null;
   qrCodeUrl: string | null;
@@ -143,7 +149,11 @@ export type DancerCard = {
   verified: boolean;
   distanceMiles?: number;
   primaryPhotoUrl: string | null;
+  primaryPhotoSrcSet?: string | null;
+  primaryPhotoWidth?: number | null;
+  primaryPhotoHeight?: number | null;
   galleryPhotoUrls?: string[];
+  galleryPhotoSrcSets?: Array<string | null>;
   socialLinks?: SocialLink[];
   currentRank: number | null;
   venueName: string | null;
@@ -178,6 +188,9 @@ export type DancerProfile = DancerCard & {
 export type DancerPhoto = {
   id: string;
   imageUrl: string;
+  imageSrcSet?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
   isPrimary: boolean;
   sortOrder: number;
   reviewStatus?: ReviewStatus;

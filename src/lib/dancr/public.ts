@@ -3,6 +3,7 @@ import type { DancerCard, DancerProfile, ShiftSummary, VenueSummary } from "./ty
 import { getTonightWindow } from "./schedule";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
+import { responsivePublicImage } from "./responsive-image";
 
 type DancrClient = SupabaseClient;
 
@@ -280,12 +281,22 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
     bio: row.bio || null,
     followerCount: card.followerCount || 0,
     goingCount,
-    photos: approvedPhotos.map((photo: any) => ({
-      id: photo.id,
-      imageUrl: toDancerPhotoUrl(client, photo.storage_path),
-      isPrimary: photo.is_primary,
-      sortOrder: photo.sort_order,
-    })),
+    photos: approvedPhotos.map((photo: any) => {
+      const image = responsivePublicImage(
+        client,
+        "dancer-photos",
+        photo.storage_path,
+      );
+      return {
+        id: photo.id,
+        imageUrl: image?.imageUrl || "",
+        imageSrcSet: image?.imageSrcSet || null,
+        imageWidth: image?.imageWidth || null,
+        imageHeight: image?.imageHeight || null,
+        isPrimary: photo.is_primary,
+        sortOrder: photo.sort_order,
+      };
+    }),
     socialLinks: (row.social_links || [])
       .filter((link: any) => link.is_active !== false)
       .map((link: any) => ({
@@ -335,7 +346,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     latitude: data.latitude,
     longitude: data.longitude,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
-    coverImageUrl: venueCoverImageUrl(client, data.cover_image_storage_path),
+    ...venueCoverImageFields(client, data.cover_image_storage_path),
     qrCodeUrl: venueQrCodeUrl(client, data.qr_code_storage_path),
     qrCodeLabel: data.qr_code_label || null,
   };
@@ -441,7 +452,8 @@ function buildDancerCard(
   const shift = liveShift || upcomingShift || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
-  const approvedPhotoUrls = approvedDancerPhotoUrls(client, row);
+  const approvedPhotos = approvedDancerPhotoSources(client, row);
+  const primaryPhoto = approvedPhotos[0] || null;
 
   return {
     shift,
@@ -451,8 +463,14 @@ function buildDancerCard(
       stageName: row.stage_name,
       city: row.city,
       verified: true,
-      primaryPhotoUrl: approvedPhotoUrls[0] || null,
-      galleryPhotoUrls: approvedPhotoUrls,
+      primaryPhotoUrl: primaryPhoto?.imageUrl || null,
+      primaryPhotoSrcSet: primaryPhoto?.imageSrcSet || null,
+      primaryPhotoWidth: primaryPhoto?.imageWidth || null,
+      primaryPhotoHeight: primaryPhoto?.imageHeight || null,
+      galleryPhotoUrls: approvedPhotos.map((photo) => photo.imageUrl),
+      galleryPhotoSrcSets: approvedPhotos.map(
+        (photo) => photo.imageSrcSet || null,
+      ),
       socialLinks: approvedSocialLinks(row),
       currentRank: score?.rank || null,
       venueName: venue?.name || null,
@@ -578,13 +596,17 @@ async function toDancerCard(client: DancrClient, row: any, options: DancerCardOp
   };
 }
 
-function approvedDancerPhotoUrls(client: DancrClient, row: any): string[] {
+function approvedDancerPhotoSources(client: DancrClient, row: any) {
   const photos = (row.dancer_photos || []).filter((photo: any) => photo.review_status === "approved");
   const ordered = [...photos].sort((left: any, right: any) => {
     if (left.is_primary !== right.is_primary) return left.is_primary ? -1 : 1;
     return Number(left.sort_order || 0) - Number(right.sort_order || 0);
   });
-  return ordered.map((photo: any) => photo.storage_path ? toDancerPhotoUrl(client, photo.storage_path) : "").filter(Boolean);
+  return ordered
+    .map((photo: any) =>
+      responsivePublicImage(client, "dancer-photos", photo.storage_path),
+    )
+    .filter((photo): photo is NonNullable<typeof photo> => Boolean(photo));
 }
 
 function approvedSocialLinks(row: any) {
@@ -599,8 +621,9 @@ function approvedSocialLinks(row: any) {
 }
 
 function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
+  return (
+    responsivePublicImage(client, "dancer-photos", storagePath)?.imageUrl || ""
+  );
 }
 
 function toShiftSummary(row: any): ShiftSummary {
@@ -629,10 +652,21 @@ function venueQrCodeUrl(client: DancrClient, storagePath?: string | null) {
   return client.storage.from("venue-qr-codes").getPublicUrl(storagePath).data.publicUrl;
 }
 
-function venueCoverImageUrl(client: DancrClient, storagePath?: string | null) {
-  if (!storagePath) return null;
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  return client.storage.from("venue-cover-images").getPublicUrl(storagePath).data.publicUrl;
+function venueCoverImageFields(
+  client: DancrClient,
+  storagePath?: string | null,
+) {
+  const image = responsivePublicImage(
+    client,
+    "venue-cover-images",
+    storagePath,
+  );
+  return {
+    coverImageHeight: image?.imageHeight || null,
+    coverImageSrcSet: image?.imageSrcSet || null,
+    coverImageUrl: image?.imageUrl || null,
+    coverImageWidth: image?.imageWidth || null,
+  };
 }
 
 function venueQrCodeUrlFromRow(venue: any) {

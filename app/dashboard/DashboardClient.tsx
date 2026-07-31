@@ -909,12 +909,14 @@ function VenuePanel({
       <article className="info-panel venue-cover-panel">
         <div className="venue-cover-copy">
           <h2>Discovery cover</h2>
-          <p>Publish a high-quality venue or branded nightlife image. Every upload is safety checked before it appears on discovery cards and your live venue page.</p>
-          <small>Use a portrait, square, or landscape JPEG, PNG, or WebP at least 720 × 720 pixels.</small>
+          <p>Publish a high-quality venue or branded nightlife image. MyDancr keeps the high-resolution master and automatically serves optimized sizes after the safety check.</p>
+          <small>For the sharpest result, choose the original camera image—not a screenshot or social-media copy—with at least 2,000 pixels on its longest edge. JPEG, PNG, WebP, HEIC, and HEIF are supported; venue covers must be at least 720 × 720 pixels.</small>
         </div>
         {profile?.coverImageUrl ? (
           <img
             src={String(profile.coverImageUrl)}
+            srcSet={profile.coverImageSrcSet ? String(profile.coverImageSrcSet) : undefined}
+            sizes="(max-width: 760px) 100vw, 760px"
             alt={`${String(profile.name || "Venue")} discovery cover`}
           />
         ) : null}
@@ -922,7 +924,7 @@ function VenuePanel({
           <label>
             Venue image
             <input
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
               ref={coverFileInputRef}
               type="file"
               onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
@@ -2684,11 +2686,17 @@ function DancerPhotoPanel({
   return (
     <article className="info-panel upload-panel">
       <h2>Photos</h2>
+      <p className="image-quality-guidance">
+        Choose the original camera photo for maximum detail—ideally at least
+        2,000 pixels on its longest edge. MyDancr preserves the high-resolution
+        master, creates responsive display sizes, and never enlarges a small
+        upload.
+      </p>
       <form onSubmit={uploadPhoto}>
         <label>
           Profile photo
           <input
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
             type="file"
             onChange={(event) => selectPhoto(event.target.files?.[0] || null)}
           />

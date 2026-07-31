@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "crypto";
 export const MAX_DANCR_IMAGE_BYTES = 10 * 1024 * 1024;
 export const MAX_DANCR_RAW_UPLOAD_BYTES = 25 * 1024 * 1024;
 export const MAX_DANCR_IMAGE_DIMENSION = 6000;
+export const DANCR_HEIC_JPEG_QUALITY = 94;
 
 export type ValidatedDancrImage = {
   buffer: Buffer;
@@ -78,7 +79,11 @@ async function convertHeicToJpeg(buffer: Buffer) {
         fit: "inside",
         withoutEnlargement: true,
       })
-      .jpeg({ quality: 88, mozjpeg: true })
+      .jpeg({
+        chromaSubsampling: "4:4:4",
+        mozjpeg: true,
+        quality: DANCR_HEIC_JPEG_QUALITY,
+      })
       .toBuffer();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error || "");

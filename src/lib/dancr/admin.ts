@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  responsiveImageStoragePaths,
+  responsivePublicImage,
+} from "./responsive-image";
 import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
 import { getStripe } from "../stripe";
@@ -283,7 +287,14 @@ export async function deleteAdminDancerProfile(
     moderationRows.map((row: any) => row.temporary_storage_path),
   );
 
-  await removeBucketPaths(client, "dancer-photos", approvedPhotoPaths, warnings);
+  await removeBucketPaths(
+    client,
+    "dancer-photos",
+    approvedPhotoPaths.flatMap((storagePath) =>
+      responsiveImageStoragePaths(storagePath),
+    ),
+    warnings,
+  );
   await removeBucketPaths(client, "dancr-image-moderation-temp", moderationTemporaryPaths, warnings);
   await removeBucketPaths(client, "dancr-image-moderation-review", moderationTemporaryPaths, warnings);
   if (verificationListing.error) {
@@ -406,7 +417,12 @@ export async function deleteAdminDancerPhoto(
     }
   }
 
-  await removeBucketPaths(client, "dancer-photos", [photo.storage_path], warnings);
+  await removeBucketPaths(
+    client,
+    "dancer-photos",
+    responsiveImageStoragePaths(photo.storage_path),
+    warnings,
+  );
 
   try {
     await logAdminAction(client, {
@@ -1553,8 +1569,9 @@ function slugify(value: string) {
 }
 
 function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
+  return (
+    responsivePublicImage(client, "dancer-photos", storagePath)?.imageUrl || ""
+  );
 }
 
 async function updatePhotoReviewSummary(client: DancrClient, dancerId: string) {

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
+import { removeResponsiveImage } from "./responsive-image";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
@@ -166,7 +167,11 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     });
 
     if (photo.storage_path) {
-      await adminClient.storage.from("dancer-photos").remove([photo.storage_path]).catch(() => null);
+      await removeResponsiveImage(
+        adminClient,
+        "dancer-photos",
+        photo.storage_path,
+      ).catch(() => null);
     }
 
     if (photo.is_primary) {
@@ -241,7 +246,11 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     await adminClient.storage.from("dancr-image-moderation-review").remove([temporaryPath]).catch(() => null);
   }
   if (finalPath) {
-    await adminClient.storage.from("dancer-photos").remove([finalPath]).catch(() => null);
+    await removeResponsiveImage(
+      adminClient,
+      "dancer-photos",
+      finalPath,
+    ).catch(() => null);
   }
 
   await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);

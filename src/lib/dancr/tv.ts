@@ -3,6 +3,7 @@ import { createDancerDealAttributionToken } from "./deal-attribution";
 import { getActiveClubDealsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
+import { responsivePublicImage } from "./responsive-image";
 import type { ClubDeal } from "./types";
 import {
   moderateStoredMyDancrTvVideo,
@@ -416,7 +417,7 @@ async function signPublicVideos(
     if (!videoUrl) throw new Error("Unable to prepare MyDancr TV playback.");
     const photoPath = photoByDancer.get(row.dancer.id);
     const primaryPhotoUrl = photoPath
-      ? admin.storage.from("dancer-photos").getPublicUrl(photoPath).data.publicUrl
+      ? responsivePublicImage(admin, "dancer-photos", photoPath)?.imageUrl || null
       : null;
     const { storagePath: _storagePath, dancerPhotoPath: _dancerPhotoPath, ...publicVideo } = row;
     return {

@@ -15,6 +15,11 @@ import {
   profilePhotoSlotKey,
   profilePhotoUploadContext,
 } from "./photo-slot";
+import {
+  removeResponsiveImage,
+  responsivePublicImage,
+  uploadResponsiveImage,
+} from "./responsive-image";
 
 type DancrClient = SupabaseClient;
 
@@ -422,8 +427,13 @@ async function approveModeratedUpload(
     categoryFlags: Record<string, boolean>;
   },
 ): Promise<ModeratedPhotoResult> {
-  const finalPath = `${input.userId}/${input.profileId}/${input.image.storageFileName}`;
-  await uploadApprovedObject(admin, finalPath, input.image);
+  const uploadedImage = await uploadResponsiveImage(
+    admin,
+    APPROVED_PHOTO_BUCKET,
+    `${input.userId}/${input.profileId}`,
+    input.image,
+  );
+  const finalPath = uploadedImage.storagePath;
 
   try {
     const photo = await insertApprovedDancerPhoto(admin, {
@@ -461,7 +471,11 @@ async function approveModeratedUpload(
       },
     };
   } catch (error) {
-    await safeRemoveObject(admin, APPROVED_PHOTO_BUCKET, finalPath);
+    await removeResponsiveImage(
+      admin,
+      APPROVED_PHOTO_BUCKET,
+      finalPath,
+    ).catch(() => null);
     await updateModerationRecord(admin, input.recordId, {
       finalStoragePath: finalPath,
       decision: "review",
@@ -794,11 +808,6 @@ async function uploadPrivateObject(client: DancrClient, bucket: string, path: st
   if (error) throw error;
 }
 
-async function uploadApprovedObject(client: DancrClient, path: string, image: ValidatedDancrImage) {
-  const { error } = await client.storage.from(APPROVED_PHOTO_BUCKET).upload(path, image.buffer, { contentType: image.contentType, upsert: false });
-  if (error) throw error;
-}
-
 async function movePrivateObject(client: DancrClient, fromBucket: string, fromPath: string, toBucket: string, toPath: string, contentType: string) {
   const { data, error } = await client.storage.from(fromBucket).download(fromPath);
   if (error || !data) throw error || new Error("Unable to read private moderation object.");
@@ -840,6 +849,15 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       await safeDeleteDancerPhotoRow(client, data.id);
       throw supersededDeleteError;
     }
+    await Promise.all(
+      supersededPhotos.map((photo) =>
+        removeResponsiveImage(
+          client,
+          APPROVED_PHOTO_BUCKET,
+          photo.storage_path,
+        ).catch(() => null),
+      ),
+    );
   }
   if (input.isPrimary) {
     const { error: demoteError } = await client
@@ -883,7 +901,10 @@ async function safeDeleteDancerPhotoRow(client: DancrClient, photoId: string) {
 }
 
 function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
-  return client.storage.from(APPROVED_PHOTO_BUCKET).getPublicUrl(storagePath).data.publicUrl;
+  return (
+    responsivePublicImage(client, APPROVED_PHOTO_BUCKET, storagePath)
+      ?.imageUrl || ""
+  );
 }
 
 async function createModerationRecord(client: DancrClient, input: { userId: string; temporaryStoragePath: string; uploadContext: string; idempotencyKey: string }) {
