@@ -450,7 +450,7 @@ test("mobile dancer and venue discovery cards use the same stable viewport footp
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?width: 100% !important;[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?min-height: 460px !important;[\s\S]*?max-height: 580px !important;[\s\S]*?border-radius: 20px !important;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?box-sizing: border-box !important;[\s\S]*?width: 100% !important;[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?min-height: 460px !important;[\s\S]*?max-height: 580px !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 0 !important;[\s\S]*?flex: none !important;[\s\S]*?aspect-ratio: auto !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?contain: layout paint style;/,
   );
   assert.match(
     homeSource,

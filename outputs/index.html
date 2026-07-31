@@ -31187,7 +31187,9 @@
           cursor: wait;
         }
         @media (max-width: 679px) {
-          #results.home-dancer-grid > .home-dancer-grid-card {
+          #results.home-dancer-grid > .home-dancer-grid-card,
+          #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
+            box-sizing: border-box !important;
             width: 100% !important;
             min-width: 0 !important;
             max-width: none !important;
@@ -31195,7 +31197,12 @@
             height: clamp(460px, calc(100svh - 180px), 580px) !important;
             min-height: 460px !important;
             max-height: 580px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            flex: none !important;
+            aspect-ratio: auto !important;
             border-radius: 20px !important;
+            contain: layout paint style;
           }
           .home-dancer-grid-link {
             position: relative;
