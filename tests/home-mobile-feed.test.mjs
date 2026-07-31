@@ -32,6 +32,7 @@ test("mobile discovery uses a persistent five-destination app navigation", () =>
 });
 
 test("the Home TV button renders a real snap-scroll video feed without leaving Home", () => {
+  assert.match(homeSource, /name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/);
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?overflow-y: auto[\s\S]*?scroll-snap-type: y mandatory[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: 100%[\s\S]*?scroll-snap-align: start[\s\S]*?scroll-snap-stop: always/,
@@ -58,11 +59,23 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /function focusAndLockHomeTvFeed\(\) \{\s*lockHomeTvFeedViewport\(\);\s*\}/,
+    /function focusAndLockHomeTvFeed\(\) \{\s*lockHomeTvFeedViewport\(\);\s*void requestHomeTvFeedFullscreen\(\);\s*\}/,
   );
   assert.match(
     homeSource,
-    /function deactivateHomeTvFeed\(\) \{[\s\S]*?unlockHomeTvFeedViewport\(\)/,
+    /function deactivateHomeTvFeed\(\) \{[\s\S]*?exitHomeTvFeedFullscreen\(\);[\s\S]*?unlockHomeTvFeedViewport\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /async function requestHomeTvFeedFullscreen\(\)[\s\S]*?root\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?root\.webkitRequestFullscreen\(\)[\s\S]*?homeTvFeedOwnsFullscreen = Boolean\(homeTvFeedFullscreenElement\(\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /activeTab = nextTab;\s*if \(nextTab === "tv"\) void requestHomeTvFeedFullscreen\(\);/,
+  );
+  assert.match(
+    homeSource,
+    /results\.addEventListener\("pointerup", handleHomeTvFeedFullscreenIntent[\s\S]*?results\.addEventListener\("touchend", handleHomeTvFeedFullscreenIntent[\s\S]*?document\.addEventListener\("fullscreenchange", handleHomeTvFeedFullscreenChange\)/,
   );
   assert.match(
     homeSource,

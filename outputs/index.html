@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>mydancr</title>
   <meta name="application-name" content="mydancr">
   <meta name="apple-mobile-web-app-title" content="mydancr">
@@ -33292,6 +33292,8 @@
     let homeTvFeedViewportFrame = 0;
     let homeTvFeedViewportWidth = 0;
     let homeTvFeedViewportHeight = 0;
+    let homeTvFeedFullscreenPending = false;
+    let homeTvFeedOwnsFullscreen = false;
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -46278,6 +46280,67 @@
       return window.matchMedia("(max-width: 720px)").matches;
     }
 
+    function homeTvFeedFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    async function requestHomeTvFeedFullscreen() {
+      if (
+        activeTab !== "tv" ||
+        !homeTvFeedUsesLockedViewport() ||
+        homeTvFeedFullscreenPending ||
+        homeTvFeedFullscreenElement()
+      ) {
+        return false;
+      }
+      const root = document.documentElement;
+      const request = typeof root.requestFullscreen === "function"
+        ? () => root.requestFullscreen({ navigationUI: "hide" })
+        : typeof root.webkitRequestFullscreen === "function"
+          ? () => root.webkitRequestFullscreen()
+          : null;
+      if (!request) return false;
+      homeTvFeedFullscreenPending = true;
+      try {
+        await request();
+        if (activeTab !== "tv") {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (homeTvFeedFullscreenElement() && typeof exit === "function") await exit.call(document);
+          return false;
+        }
+        homeTvFeedOwnsFullscreen = Boolean(homeTvFeedFullscreenElement());
+        queueHomeTvFeedViewportSync();
+        return homeTvFeedOwnsFullscreen;
+      } catch {
+        return false;
+      } finally {
+        homeTvFeedFullscreenPending = false;
+      }
+    }
+
+    function exitHomeTvFeedFullscreen() {
+      if (!homeTvFeedOwnsFullscreen) return;
+      homeTvFeedOwnsFullscreen = false;
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (!homeTvFeedFullscreenElement() || typeof exit !== "function") return;
+      try {
+        const exitResult = exit.call(document);
+        if (exitResult && typeof exitResult.catch === "function") exitResult.catch(() => {});
+      } catch {}
+    }
+
+    function handleHomeTvFeedFullscreenChange() {
+      if (!homeTvFeedFullscreenElement()) homeTvFeedOwnsFullscreen = false;
+      if (activeTab === "tv") queueHomeTvFeedViewportSync();
+    }
+
+    function handleHomeTvFeedFullscreenIntent(event) {
+      if (activeTab !== "tv" || !results.classList.contains("home-tv-feed")) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest("a, button, input, select, textarea, [role='button']")) return;
+      void requestHomeTvFeedFullscreen();
+    }
+
     function syncHomeTvFeedViewport() {
       homeTvFeedViewportFrame = 0;
       if (activeTab !== "tv" || !homeTvFeedUsesLockedViewport()) return;
@@ -46341,6 +46404,7 @@
 
     function focusAndLockHomeTvFeed() {
       lockHomeTvFeedViewport();
+      void requestHomeTvFeedFullscreen();
     }
 
     function handleHomeTvFeedViewportChange() {
@@ -46353,6 +46417,7 @@
     }
 
     function deactivateHomeTvFeed() {
+      exitHomeTvFeedFullscreen();
       unlockHomeTvFeedViewport();
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
@@ -49370,6 +49435,7 @@
         selectedVenueName = null;
       }
       activeTab = nextTab;
+      if (nextTab === "tv") void requestHomeTvFeedFullscreen();
       homeDiscoveryFeedOpen =
         nextTab === "venues" &&
         homeDiscoveryFeedUsesInlineLayout();
@@ -49398,6 +49464,10 @@
       event.preventDefault();
       activateHomeDestination("tv");
     });
+    results.addEventListener("pointerup", handleHomeTvFeedFullscreenIntent, { passive: true });
+    results.addEventListener("touchend", handleHomeTvFeedFullscreenIntent, { passive: true });
+    document.addEventListener("fullscreenchange", handleHomeTvFeedFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleHomeTvFeedFullscreenChange);
     window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
