@@ -15,7 +15,6 @@ type DancerPhotoCarouselProps = {
   videos?: Array<{
     id: string;
     videoUrl: string;
-    caption: string;
     durationSeconds: number;
   }>;
   stageName: string;
@@ -31,7 +30,6 @@ type ProfileMedia =
       id: string;
       kind: "video";
       videoUrl: string;
-      caption: string;
       durationSeconds: number;
     };
 
@@ -280,9 +278,6 @@ export function DancerPhotoCarousel({
               >
                 <span aria-hidden="true" />
               </button>
-            ) : null}
-            {activeMedia.caption.trim() ? (
-              <p className="public-video-caption">{activeMedia.caption}</p>
             ) : null}
           </div>
         ) : (

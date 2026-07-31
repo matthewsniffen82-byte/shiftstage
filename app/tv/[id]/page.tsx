@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!video) return { title: "MyDancr TV | mydancr" };
   return {
     title: `${video.dancer.stageName} on MyDancr TV`,
-    description: video.caption,
+    description: `Watch ${video.dancer.stageName} on MyDancr TV.`,
   };
 }
 

@@ -81,7 +81,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
-            caption: video.caption,
             durationSeconds: video.durationSeconds,
           }))}
           stageName={profile.stageName}
@@ -425,7 +424,6 @@ function PublicProfileStyles() {
       .public-profile-play { position: absolute; z-index: 3; top: 50%; left: 50%; width: clamp(88px, 25%, 124px); min-height: 0; aspect-ratio: 1; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #111; background: rgba(255,255,255,.84); box-shadow: 0 14px 44px rgba(0,0,0,.34); cursor: pointer; transform: translate(-50%, -50%); backdrop-filter: blur(5px); }
       .public-profile-play:hover, .public-profile-play:focus-visible { outline: 3px solid #fff; outline-offset: 4px; background: rgba(255,255,255,.94); }
       .public-profile-play > span { width: 0; height: 0; margin-left: 9%; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 36px solid #111; }
-      .public-video-caption { position: absolute; z-index: 2; left: 14px; bottom: 14px; max-width: calc(100% - 28px); display: -webkit-box; padding: 7px 9px; overflow: hidden; border-radius: 9px; color: #fff; background: rgba(5,5,8,.72); font-size: 11px; font-weight: 750; line-height: 1.3; text-shadow: 0 1px 4px rgba(0,0,0,.8); pointer-events: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; backdrop-filter: blur(8px); }
       .public-photo-image { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; background: #000; pointer-events: none; -webkit-user-drag: none; }
       .public-media-empty { width: 118px; height: 118px; display: grid; place-items: center; border-radius: 50%; background: rgba(139,92,246,.34); font-size: 32px; font-weight: 900; }
       .public-photo-nav { position: absolute; z-index: 2; top: 50%; width: 44px; height: 54px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: rgba(5,5,8,.62); box-shadow: 0 10px 28px rgba(0,0,0,.32); font-size: 34px; line-height: 1; cursor: pointer; transform: translateY(-50%); backdrop-filter: blur(8px); }

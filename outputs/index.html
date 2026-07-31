@@ -28384,16 +28384,6 @@
           color: #aaf2ff;
           background: rgba(11,87,110,.48);
         }
-        .home-tv-feed-caption {
-          max-width: 92%;
-          overflow: hidden;
-          color: #e9e6ef;
-          font-size: 12px;
-          line-height: 1.35;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          text-shadow: 0 2px 10px rgba(0,0,0,.9);
-        }
         .home-tv-feed-sound {
           position: absolute;
           z-index: 3;
@@ -45408,13 +45398,6 @@
       schedule.className = `home-tv-feed-schedule ${scheduleContext.className}`;
       schedule.textContent = scheduleContext.label;
       copy.appendChild(schedule);
-      const captionText = String(item?.caption || "").trim();
-      if (captionText) {
-        const caption = document.createElement("p");
-        caption.className = "home-tv-feed-caption";
-        caption.textContent = captionText;
-        copy.appendChild(caption);
-      }
       return copy;
     }
 
