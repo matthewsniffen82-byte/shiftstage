@@ -276,16 +276,16 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?venue\.qrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?sourceType: "venue_page"[\s\S]*?data-deal-pass/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?venue\.qrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?sourceType: "venue_page"[\s\S]*?data-deal-pass/,
   );
   const venueSlide = homeSource.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
-  assert.match(venueSlide, /home-discovery-feed-open-profile" href="\$\{venueHref\}"/);
+  assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?data-account-action="venue-follow"/,
+    /homeVenueDiscoveryQrMarkup\(venue, "rail"\)[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{qrMarkup\}[\s\S]*?\$\{directionsMarkup\}/,
   );
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
@@ -298,7 +298,19 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
+    /function runVenueShareAction\(venueName, city = selectedCity\(\)\)[\s\S]*?venueShareUrl\(venue, city\)[\s\S]*?navigator\.share\(shareData\)[\s\S]*?copyText\(url, "Venue link copied"\)/,
+  );
+  assert.match(
+    homeSource,
+    /const venueButton = event\.target\.closest\("\[data-share-venue\]"\)[\s\S]*?runVenueShareAction\([\s\S]*?venueButton\.dataset\.shareVenue/,
+  );
+  assert.match(
+    homeSource,
     /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-deal-action \{[\s\S]*?linear-gradient/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 58px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
   );
 });
 

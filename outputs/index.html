@@ -29291,7 +29291,7 @@
             radial-gradient(circle at 18% 84%, color-mix(in srgb, var(--venue-accent) 18%, transparent), transparent 34%);
         }
         .home-venue-discovery-slide .home-discovery-feed-copy {
-          right: 0;
+          right: 72px;
           bottom: 70px;
           gap: 7px;
           padding: 100px 14px 13px;
@@ -29372,24 +29372,25 @@
         .home-venue-discovery-deal strong {
           font-size: 11px;
         }
-        .home-venue-discovery-slide .home-discovery-feed-actions {
+        .home-dancer-grid-action-rail.home-venue-discovery-action-rail {
+          top: 58px;
+        }
+        .home-venue-discovery-context-actions {
+          position: absolute;
+          z-index: 4;
           right: 12px;
           bottom: 12px;
           left: 12px;
           width: auto;
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
         }
-        .home-venue-discovery-slide .home-discovery-feed-actions > :only-child {
+        .home-venue-discovery-context-actions > :only-child {
           grid-column: 1 / -1;
         }
-        .home-venue-discovery-slide .home-discovery-feed-actions > :first-child:nth-last-child(2),
-        .home-venue-discovery-slide .home-discovery-feed-actions > :first-child:nth-last-child(2) ~ * {
-          grid-column: auto;
-        }
-        .home-venue-discovery-slide .home-discovery-feed-actions .feed-card-action,
-        .home-venue-discovery-slide .home-discovery-feed-directions {
+        .home-venue-discovery-context-actions .feed-card-action,
+        .home-venue-discovery-context-actions .home-discovery-feed-directions {
           width: 100%;
           min-width: 0;
           min-height: 50px;
@@ -29402,11 +29403,11 @@
           border-radius: 15px;
           font-size: 9px;
         }
-        .home-venue-discovery-slide .home-discovery-feed-actions .action-icon {
+        .home-venue-discovery-context-actions .action-icon {
           width: 21px;
           height: 21px;
         }
-        .home-venue-discovery-slide .home-discovery-feed-actions .home-venue-discovery-deal-action {
+        .home-venue-discovery-context-actions .home-venue-discovery-deal-action {
           border-color: rgba(77,255,157,.86);
           background: linear-gradient(135deg,rgba(18,139,80,.98),rgba(7,92,77,.98));
           box-shadow: 0 10px 26px rgba(10,116,78,.38), inset 0 1px 0 rgba(255,255,255,.2);
@@ -29762,11 +29763,11 @@
             box-shadow: 0 18px 44px rgba(0,0,0,.48), 0 0 24px rgba(124,58,237,.12) !important;
           }
           #results.home-venue-discovery-feed .home-discovery-feed-copy {
-            right: 0;
+            right: 72px;
             bottom: 70px;
             padding: 100px 14px 13px;
           }
-          #results.home-venue-discovery-feed .home-discovery-feed-actions {
+          #results.home-venue-discovery-feed .home-venue-discovery-context-actions {
             right: 12px;
             bottom: 12px;
             left: 12px;
@@ -37507,6 +37508,33 @@
       return `See ${profileName}'s verified Dancr schedule in ${city}.`;
     }
 
+    function venueShareUrl(venue, city = selectedCity()) {
+      return new URL(venueExperienceHref(venue, city), window.location.origin).toString();
+    }
+
+    async function runVenueShareAction(venueName, city = selectedCity()) {
+      const venue = resolveVenueByName(venueName, city);
+      if (!venue) {
+        showToast("Venue profile unavailable");
+        return;
+      }
+      const url = venueShareUrl(venue, city);
+      const shareData = {
+        title: `${venue.name} on MyDancr`,
+        text: `See ${venue.name} on MyDancr.`,
+        url
+      };
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch {
+          return;
+        }
+      }
+      await copyText(url, "Venue link copied");
+    }
+
     function socialShareUrl(platformKey, profileName, city = selectedCity()) {
       const url = profileShareUrl(profileName, city);
       const text = profileShareText(profileName, city);
@@ -44416,8 +44444,12 @@
       return `<button class="home-dancer-grid-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club QR for ${venueName}">${actionIconMarkup("qr")}<span>Club QR</span></button>`;
     }
 
-    function homeVenueDiscoveryQrMarkup(venue) {
+    function homeVenueDiscoveryQrMarkup(venue, presentation = "primary") {
       if (!venue?.id) return "";
+      const rail = presentation === "rail";
+      const className = rail
+        ? "feed-card-action home-venue-discovery-rail-qr"
+        : "feed-card-action home-venue-discovery-deal-action";
       if (venue.activeDeal?.id) {
         const config = {
           deal: venue.activeDeal,
@@ -44426,7 +44458,7 @@
           venueName: venue.name,
           sourceType: "club_page"
         };
-        return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
+        return `<button class="${className}" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", rail ? "QR" : "Get Deal")}</button>`;
       }
       if (!venue.qrCodeUrl) return "";
       const pass = publishedVenueQrPass({
@@ -44437,14 +44469,13 @@
         qrCodeLabel: venue.qrCodeLabel,
         sourceType: "venue_page"
       });
-      return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-venue-qr aria-label="Open ${escapeHtml(venue.name)} venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+      return `<button class="${className}" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-venue-qr aria-label="Open ${escapeHtml(venue.name)} venue QR">${actionButtonLabel("qr", rail ? "QR" : "Open QR")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
       const details = venueDetails(venue, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.name);
-      const venueHref = venueExperienceHref(venue, city);
       const initials = venueInitials(venue.name);
       const accent = venueAccent(venue.name);
       const visual = venueVisualAttrs(venue, city);
@@ -44464,6 +44495,7 @@
           ? '<div class="home-venue-discovery-deal"><span>Venue QR</span><strong>Open the venue-published QR</strong></div>'
           : "";
       const qrMarkup = homeVenueDiscoveryQrMarkup(venue);
+      const railQrMarkup = homeVenueDiscoveryQrMarkup(venue, "rail");
       const directionsMarkup = details.address
         ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
@@ -44483,7 +44515,6 @@
             <span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
-          <a class="home-discovery-feed-open-profile" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile"></a>
           <span class="home-venue-discovery-kicker">Mydancr venue</span>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
           <div class="home-discovery-feed-copy">
@@ -44493,10 +44524,15 @@
             <span class="home-venue-discovery-meta">${hoursMarkup}${workingNowMarkup}</span>
             ${dealMarkup}
           </div>
-          <div class="home-discovery-feed-actions" aria-label="${safeName} actions">
+          <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
+            <button class="feed-card-action home-dancer-grid-profile-button" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Profile")}</button>
+            ${railQrMarkup}
+            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
+            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
+          </div>
+          <div class="home-venue-discovery-context-actions" aria-label="${safeName} primary actions">
             ${qrMarkup}
             ${directionsMarkup}
-            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
           </div>
         </article>
       `;
@@ -45768,6 +45804,14 @@
     }
 
     function handleShareClick(event) {
+      const venueButton = event.target.closest("[data-share-venue]");
+      if (venueButton) {
+        runVenueShareAction(
+          venueButton.dataset.shareVenue,
+          venueButton.dataset.shareCity || selectedCity()
+        );
+        return true;
+      }
       const toggleButton = event.target.closest("[data-toggle-share]");
       if (toggleButton) {
         runShareAction(toggleButton.dataset.toggleShare, selectedCity());

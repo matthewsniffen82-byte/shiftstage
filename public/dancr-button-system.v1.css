@@ -147,6 +147,9 @@
 
 .dancr-button-system
   .home-discovery-feed-actions
+  .home-venue-discovery-deal-action,
+.dancr-button-system
+  .home-venue-discovery-context-actions
   .home-venue-discovery-deal-action {
   border-color: rgba(77, 255, 157, 0.92) !important;
   color: #f2fff8 !important;
@@ -177,6 +180,9 @@
 
 .dancr-button-system
   .home-discovery-feed-actions
+  .home-venue-discovery-deal-action:hover,
+.dancr-button-system
+  .home-venue-discovery-context-actions
   .home-venue-discovery-deal-action:hover {
   border-color: rgba(139, 255, 194, 0.98) !important;
   box-shadow:
@@ -189,6 +195,9 @@
 
 .dancr-button-system
   .home-discovery-feed-actions
+  .home-venue-discovery-deal-action:active,
+.dancr-button-system
+  .home-venue-discovery-context-actions
   .home-venue-discovery-deal-action:active {
   border-color: rgba(77, 255, 157, 0.86) !important;
   box-shadow:

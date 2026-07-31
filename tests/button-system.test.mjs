@@ -60,19 +60,19 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
 test("venue-card QR revenue actions retain their green glow over the shared button defaults", () => {
   assert.match(
     liveSource,
-    /class="feed-card-action home-venue-discovery-deal-action"[\s\S]*?data-feed-venue-qr/,
+    /const className = rail[\s\S]*?"feed-card-action home-venue-discovery-deal-action"[\s\S]*?data-feed-venue-qr/,
   );
   assert.match(
     buttonCss,
-    /\.home-discovery-feed-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: rgba\(77, 255, 157, 0\.92\) !important;[\s\S]*?0 0 18px rgba\(49, 255, 143, 0\.7\)[\s\S]*?0 0 38px rgba\(25, 221, 113, 0\.42\)/,
+    /\.home-venue-discovery-context-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: rgba\(77, 255, 157, 0\.92\) !important;[\s\S]*?0 0 18px rgba\(49, 255, 143, 0\.7\)[\s\S]*?0 0 38px rgba\(25, 221, 113, 0\.42\)/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-deal-action:hover \{[\s\S]*?0 0 22px rgba\(55, 255, 147, 0\.82\)/,
+    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:hover \{[\s\S]*?0 0 22px rgba\(55, 255, 147, 0\.82\)/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-deal-action:active \{[\s\S]*?0 0 14px rgba\(49, 255, 143, 0\.58\)/,
+    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:active \{[\s\S]*?0 0 14px rgba\(49, 255, 143, 0\.58\)/,
   );
 });
 

@@ -61,7 +61,7 @@ test("venue pages and directory cards promote real active deals", () => {
   assert.doesNotMatch(venueDirectory, /getActiveClubDealsForVenues|venue-card-deal/);
   assert.match(
     liveApp,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
   );
   assert.match(
     liveApp,

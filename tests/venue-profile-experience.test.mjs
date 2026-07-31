@@ -89,7 +89,7 @@ test("venue entry points use the canonical in-app venue profile", () => {
   );
   assert.match(
     liveApp,
-    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?aria-label="Open \$\{safeName\}'s full venue profile"/,
   );
   assert.match(
     liveApp,

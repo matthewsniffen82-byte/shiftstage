@@ -34,14 +34,17 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
 
   assert.doesNotMatch(venueSwipeRenderer, /nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
-  assert.match(
+  assert.doesNotMatch(
     venueSwipeRenderer,
-    /home-discovery-feed-open-profile" href="\$\{venueHref\}" data-open-venue-profile="\$\{venueValue\}"/,
+    /home-discovery-feed-open-profile/,
   );
-  assert.doesNotMatch(venueSwipeRenderer, /home-discovery-feed-profile-button/);
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue, "rail"\)[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow/,
+  );
+  assert.match(
+    venueSwipeRenderer,
+    /home-venue-discovery-context-actions[\s\S]*?\$\{qrMarkup\}[\s\S]*?\$\{directionsMarkup\}/,
   );
   assert.match(
     venueSwipeRenderer,
