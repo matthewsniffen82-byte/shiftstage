@@ -60,6 +60,10 @@ test("homepage active TV state uses icon-only color and the shared circular halo
   );
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: translate\(-50%,-50%\) scale\(1\);/,
+    /home-bottom-tv\.active \.mobile-nav-selection-halo \{[\s\S]*?opacity: 1;[\s\S]*?transform: translate\(-50%,-50%\) scale\(1\);/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;/,
   );
 });

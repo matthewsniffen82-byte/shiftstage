@@ -303,7 +303,10 @@ export function GlobalMobileBottomNav() {
               href={href}
               key={destination.id}
             >
-              <span className="global-mobile-nav-icon">{destination.icon}</span>
+              <span className="global-mobile-nav-icon">
+                <span className="mobile-nav-selection-halo" aria-hidden="true" />
+                {destination.icon}
+              </span>
               <span>{destination.label}</span>
             </Link>
           );
@@ -490,14 +493,28 @@ export function GlobalMobileBottomNav() {
               transform 180ms ease;
           }
 
-          .global-mobile-nav-icon::before {
-            content: "";
+          .mobile-nav-selection-halo {
             position: absolute;
             z-index: 0;
             top: 50%;
             left: 50%;
             width: 46px;
             height: 46px;
+            overflow: hidden;
+            border-radius: 50%;
+            contain: paint;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0.72);
+            transition:
+              opacity 180ms ease,
+              transform 180ms ease;
+          }
+
+          .mobile-nav-selection-halo::before {
+            content: "";
+            position: absolute;
+            inset: 8px;
             border-radius: 50%;
             background: radial-gradient(
               circle,
@@ -512,12 +529,6 @@ export function GlobalMobileBottomNav() {
               0 0 20px rgba(91, 19, 255, 0.48),
               0 0 28px rgba(52, 110, 255, 0.28);
             filter: blur(2px);
-            opacity: 0;
-            pointer-events: none;
-            transform: translate(-50%, -50%) scale(0.72);
-            transition:
-              opacity 180ms ease,
-              transform 180ms ease;
           }
 
           .global-mobile-bottom-nav a:not(.active) .global-mobile-nav-icon {
@@ -543,8 +554,7 @@ export function GlobalMobileBottomNav() {
             transform: translateY(-1px) scale(1.05);
           }
 
-          .global-mobile-bottom-nav a.active
-            .global-mobile-nav-icon::before {
+          .global-mobile-bottom-nav a.active .mobile-nav-selection-halo {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
           }

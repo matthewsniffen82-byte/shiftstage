@@ -28300,6 +28300,7 @@
         <button class="tab" data-tab="dancers" data-tab-label="Dancers" aria-current="false">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
+            <span class="mobile-nav-selection-halo"></span>
             <svg class="mydancr-tv-mark" viewBox="0 0 24 24">
               <path class="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z"></path>
               <path class="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91"></path>
@@ -30579,23 +30580,29 @@
               filter 180ms ease,
               transform 180ms ease;
           }
-          #discoveryTabs .home-nav-icon::before,
-          #discoveryTabs .home-bottom-tv-icon::before {
-            content: "";
+          #discoveryTabs .mobile-nav-selection-halo {
             position: absolute;
             z-index: 0;
             top: 50%;
             left: 50%;
             width: 46px;
             height: 46px;
+            overflow: hidden;
             border-radius: 50%;
-            background: radial-gradient(circle,rgba(152,95,255,.9) 0%,rgba(91,19,255,.72) 28%,rgba(91,19,255,.42) 48%,rgba(52,110,255,.24) 64%,transparent 78%);
-            box-shadow: 0 0 10px rgba(91,19,255,.76),0 0 20px rgba(91,19,255,.48),0 0 28px rgba(52,110,255,.28);
-            filter: blur(2px);
+            contain: paint;
             opacity: 0;
             pointer-events: none;
             transform: translate(-50%,-50%) scale(.72);
             transition: opacity 180ms ease,transform 180ms ease;
+          }
+          #discoveryTabs .mobile-nav-selection-halo::before {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle,rgba(152,95,255,.9) 0%,rgba(91,19,255,.72) 28%,rgba(91,19,255,.42) 48%,rgba(52,110,255,.24) 64%,transparent 78%);
+            box-shadow: 0 0 10px rgba(91,19,255,.76),0 0 20px rgba(91,19,255,.48),0 0 28px rgba(52,110,255,.28);
+            filter: blur(2px);
           }
           #discoveryTabs .tab:not(.active) .home-nav-icon,
           #discoveryTabs .home-bottom-tv:not(.active) .home-bottom-tv-icon {
@@ -30623,8 +30630,8 @@
             filter: none !important;
             transform: translateY(-1px) scale(1.05);
           }
-          #discoveryTabs .tab.active .home-nav-icon::before,
-          #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon::before {
+          #discoveryTabs .tab.active .mobile-nav-selection-halo,
+          #discoveryTabs .home-bottom-tv.active .mobile-nav-selection-halo {
             opacity: 1;
             transform: translate(-50%,-50%) scale(1);
           }
@@ -45852,7 +45859,7 @@
         venues: '<svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>',
         trending: '<svg viewBox="0 0 24 24"><path d="m4 17 5-5 3.5 3.5L20 8"></path><path d="M15 8h5v5"></path></svg>'
       };
-      return `<span class="home-nav-icon" aria-hidden="true">${icons[tabName] || icons.tonight}</span>`;
+      return `<span class="home-nav-icon" aria-hidden="true"><span class="mobile-nav-selection-halo"></span>${icons[tabName] || icons.tonight}</span>`;
     }
 
     function updateTabCounts(city) {
