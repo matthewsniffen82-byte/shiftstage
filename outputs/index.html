@@ -36205,12 +36205,40 @@
       return dedupePublicVenues(merged);
     }
 
+    function mergeAuthenticatedDancerIntoDiscovery(city, liveDancers) {
+      if (!isDancerSession() || city !== activeDancerCity()) return liveDancers;
+      const ownProfile = activeDancerProfile(city);
+      if (!ownProfile) return liveDancers;
+      const ownIndex = liveDancers.findIndex((profile) => (
+        (ownProfile.id && profile.id === ownProfile.id) ||
+        profile.name === ownProfile.name
+      ));
+      if (ownIndex < 0) return [...liveDancers, ownProfile];
+      const privatePhotoState = {
+        dancer_photos: Array.isArray(ownProfile.dancer_photos) ? ownProfile.dancer_photos : [],
+        submittedPhotos: Array.isArray(ownProfile.submittedPhotos) ? ownProfile.submittedPhotos : [],
+        deletedPhotoIds: Array.isArray(ownProfile.deletedPhotoIds) ? ownProfile.deletedPhotoIds : [],
+        deletedPhotoStoragePaths: Array.isArray(ownProfile.deletedPhotoStoragePaths) ? ownProfile.deletedPhotoStoragePaths : [],
+        deletedPhotoUrls: Array.isArray(ownProfile.deletedPhotoUrls) ? ownProfile.deletedPhotoUrls : [],
+        mainPhotoUrl: ownProfile.mainPhotoUrl || liveDancers[ownIndex].mainPhotoUrl || "",
+        galleryPhotoUrls: Array.isArray(ownProfile.galleryPhotoUrls) && ownProfile.galleryPhotoUrls.length
+          ? ownProfile.galleryPhotoUrls
+          : liveDancers[ownIndex].galleryPhotoUrls || []
+      };
+      Object.assign(ownProfile, liveDancers[ownIndex], privatePhotoState);
+      liveDancers[ownIndex] = ownProfile;
+      return liveDancers;
+    }
+
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
       const market = markets[city];
       if (!market) return false;
       const tonightIds = new Set((tonightDancers || []).map((item) => item.id));
       const venueShiftCounts = {};
-      const liveDancers = (dancers || []).map((item, index) => mapLiveDancer(item, tonightIds.has(item.id), index, venueShiftCounts));
+      const liveDancers = mergeAuthenticatedDancerIntoDiscovery(
+        city,
+        (dancers || []).map((item, index) => mapLiveDancer(item, tonightIds.has(item.id), index, venueShiftCounts))
+      );
       const liveVenues = (venues || []).map((item) => mapLiveVenue(item, city, venueShiftCounts));
 
       market.dancers = liveDancers;
@@ -38966,12 +38994,6 @@
       };
     }
 
-    if (new URLSearchParams(window.location.search).get("photo-source-test") === "1") {
-      window.__dancrPhotoSourceTestResult = runPhotoSourceOfTruthSelfTest();
-      document.documentElement.setAttribute("data-photo-source-test", JSON.stringify(window.__dancrPhotoSourceTestResult));
-      console.log(`PHOTO_SOURCE_OF_TRUTH_SELF_TEST ${JSON.stringify(window.__dancrPhotoSourceTestResult)}`);
-    }
-
     function approvedVisualPhotoItems(profile, options = {}) {
       const includeUnapproved = options.includeUnapproved !== false;
       return relabelVisualPhotoItems(editableDancerPhotoRows(profile)
@@ -39199,6 +39221,12 @@
         photo.storagePath,
         photo.storage_path
       ].map(normalizeDancerPhotoKey).filter(Boolean).some((key) => deleted.has(key));
+    }
+
+    if (new URLSearchParams(window.location.search).get("photo-source-test") === "1") {
+      window.__dancrPhotoSourceTestResult = runPhotoSourceOfTruthSelfTest();
+      document.documentElement.setAttribute("data-photo-source-test", JSON.stringify(window.__dancrPhotoSourceTestResult));
+      console.log(`PHOTO_SOURCE_OF_TRUTH_SELF_TEST ${JSON.stringify(window.__dancrPhotoSourceTestResult)}`);
     }
 
     function photoUrlFromTarget(profile, target, submittedIndex, galleryIndex) {
@@ -42348,16 +42376,24 @@
               ? requestedAddSortOrder
               : nextAvailableApprovedGallerySortOrder(profile);
       const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto });
+      const uploadDecision = normalizedReviewStatus(data?.decision);
+      if (!["approved", "review", "moderation_retry", "moderation_error", "rejected"].includes(uploadDecision)) {
+        throw new Error("Dancr could not confirm the photo upload status. Please try again.");
+      }
       let uploadedPhotoTarget = target;
       if (profile) {
         const uploaded = data?.photo || data || {};
         const serverSortOrder = Number(uploaded.sortOrder ?? uploaded.sort_order);
         const resolvedSortOrder = Number.isInteger(serverSortOrder) && serverSortOrder >= 0 ? serverSortOrder : sortOrder;
-        const imageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || URL.createObjectURL(file);
-        const uploadReviewStatus = normalizedReviewStatus(uploaded.reviewStatus || uploaded.review_status || data?.decision || "pending");
+        const persistedImageUrl = uploaded.imageUrl || uploaded.image_url || uploaded.url || "";
+        const imageUrl = persistedImageUrl || (uploadDecision !== "rejected" ? URL.createObjectURL(file) : "");
+        const uploadReviewStatus = uploadDecision;
         const approvedUpload = uploadReviewStatus === "approved";
         const rejectedUpload = uploadReviewStatus === "rejected";
         const pendingUpload = !approvedUpload && !rejectedUpload;
+        if (approvedUpload && (!uploaded.id || !(uploaded.storage_path || uploaded.storagePath) || !persistedImageUrl)) {
+          throw new Error("Dancr saved the upload but could not verify its photo record. Please try again.");
+        }
         const photo = {
           id: uploaded.id || data?.moderationRecordId || `${profile.id || profile.name}-resubmitted-photo-${Date.now()}`,
           imageUrl,
@@ -42448,6 +42484,70 @@
         }
       }
       return { ...data, photoTarget: uploadedPhotoTarget };
+    }
+
+    function dancerPhotoIdentityKeys(photo = {}) {
+      return [...new Set([
+        photo.id,
+        photo.storage_path,
+        photo.storagePath,
+        photo.imageUrl,
+        photo.image_url,
+        photo.url
+      ].map(normalizeDancerPhotoKey).filter(Boolean))];
+    }
+
+    function dancerPhotoDisplayUrl(photo = {}) {
+      return String(
+        photo.imageUrl ||
+        photo.image_url ||
+        photo.url ||
+        photo.storage_path ||
+        photo.storagePath ||
+        ""
+      ).trim();
+    }
+
+    function confirmedApprovedDancerPhoto(profile, uploadResult) {
+      if (normalizedReviewStatus(uploadResult?.decision) !== "approved") return null;
+      const uploaded = uploadResult?.photo || {};
+      const uploadedId = String(uploaded.id || "").trim();
+      const uploadedStoragePath = String(uploaded.storage_path || uploaded.storagePath || "").trim();
+      const uploadedImageUrl = dancerPhotoDisplayUrl(uploaded);
+      if (!uploadedId || !uploadedStoragePath || !uploadedImageUrl) return null;
+      const uploadedKeys = new Set(dancerPhotoIdentityKeys(uploaded));
+      return (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).find((photo) => {
+        const status = normalizedReviewStatus(photo.review_status || photo.reviewStatus);
+        const matchesUpload = dancerPhotoIdentityKeys(photo).some((key) => uploadedKeys.has(key));
+        return status === "approved" && matchesUpload && Boolean(dancerPhotoDisplayUrl(photo));
+      }) || null;
+    }
+
+    async function hydrateConfirmedApprovedDancerPhoto(uploadResult) {
+      if (!confirmedApprovedDancerPhoto({ dancer_photos: [uploadResult?.photo] }, uploadResult)) {
+        throw new Error("Dancr saved the upload but could not verify its photo record. Please try again.");
+      }
+      const data = await getAuthenticatedJson("/api/dancer/profile");
+      const confirmedPhoto = confirmedApprovedDancerPhoto(data?.profile, uploadResult);
+      if (!data?.profile || !confirmedPhoto) {
+        throw new Error("The photo was saved but could not be loaded into your profile. Please refresh and try again.");
+      }
+      applyDancerVerificationProfile(data.profile);
+      const localProfile = activeDancerProfile(data.profile.city || data.profile.cityName || activeDancerCity());
+      const visiblePhoto = confirmedApprovedDancerPhoto(localProfile, uploadResult);
+      if (!localProfile || !visiblePhoto) {
+        throw new Error("The photo was saved but could not be displayed in your profile. Please refresh and try again.");
+      }
+      const isPrimary = Boolean(confirmedPhoto.is_primary || confirmedPhoto.isPrimary);
+      const sortOrder = Number(confirmedPhoto.sort_order ?? confirmedPhoto.sortOrder ?? 0);
+      return {
+        ...uploadResult,
+        photo: {
+          ...confirmedPhoto,
+          imageUrl: dancerPhotoDisplayUrl(confirmedPhoto)
+        },
+        photoTarget: isPrimary ? "main" : `gallery:${Math.max(0, sortOrder - 1)}`
+      };
     }
 
     async function deleteApprovedDancerPhoto(deleteRequest) {
@@ -48504,20 +48604,29 @@
       showToast("Checking your photo...");
       input.disabled = true;
       try {
-        const uploadResult = await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
+        let uploadResult = await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
+        const decision = normalizedReviewStatus(uploadResult?.decision);
+        if (decision === "approved") {
+          uploadResult = await hydrateConfirmedApprovedDancerPhoto(uploadResult);
+        }
         activeApprovedVisualPhotoTarget = uploadResult?.photoTarget || pendingApprovedPhotoTarget;
-        renderAdminDashboard();
         renderDancerManagement();
         renderApprovedVisualProfileEditor();
         syncApprovedProfileSubmitState();
-        if (uploadResult?.decision && uploadResult.decision !== "approved") {
+        if (["review", "moderation_retry", "moderation_error"].includes(decision)) {
           const message = uploadResult.message || "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.";
           setApprovedPhotoUploadStatus(message, "review");
           showToast("Photo awaiting review");
-        } else {
+        } else if (decision === "approved") {
           const message = uploadResult?.message || "Photo uploaded successfully.";
           setApprovedPhotoUploadStatus(message, "success");
           showToast("Photo uploaded successfully");
+        } else if (decision === "rejected") {
+          const message = uploadResult?.message || "This photo was not approved. Please choose a different photo.";
+          setApprovedPhotoUploadStatus(message, "error");
+          showToast(message);
+        } else {
+          throw new Error("Dancr could not confirm the photo upload status. Please try again.");
         }
       } catch (error) {
         const message = normalizeRequestError(error, "Could not upload photo");
