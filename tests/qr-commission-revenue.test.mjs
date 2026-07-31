@@ -156,6 +156,17 @@ test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr 
   assert.doesNotMatch(liveApp, /publishedVenueQrPass/);
   assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?return "";/);
   assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?return "";/);
+  const venueQrHelper =
+    liveApp.match(
+      /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+    )?.[0] || "";
+  const externalQrBranch =
+    venueQrHelper.match(/const externalQrUrl = safeExternalHref[\s\S]*?(?=\n    \})/)?.[0] || "";
+  assert.match(
+    externalQrBranch,
+    /href="\$\{escapeHtml\(externalQrUrl\)\}"[\s\S]*?target="_blank"[\s\S]*?data-external-venue-qr/,
+  );
+  assert.doesNotMatch(externalQrBranch, /data-club-deal-cta|data-deal-pass|data-feed-venue-qr/);
   assert.match(liveApp, /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?return null;/);
   assert.match(venueDashboard, /External marketing QR/);
   assert.match(venueDashboard, /never used for tracked Club Deals, dancer attribution, or commissions/);

@@ -60,7 +60,7 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
 test("venue-card QR revenue actions retain their green glow over the shared button defaults", () => {
   assert.match(
     liveSource,
-    /const className = rail[\s\S]*?"feed-card-action home-venue-discovery-deal-action"[\s\S]*?data-feed-venue-qr/,
+    /venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?"feed-card-action home-venue-discovery-deal-action"[\s\S]*?data-feed-venue-qr/,
   );
   assert.match(
     buttonCss,

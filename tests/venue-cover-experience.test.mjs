@@ -82,17 +82,20 @@ test("approved cover media flows through discovery and the canonical live venue 
     /permanentRedirect\(homeDiscoveryHref\("venues", params\.city\)\)/,
   );
   assert.doesNotMatch(venueDirectory, /cover_image_storage_path|backgroundImage:/);
-  assert.match(homeSource, /venue\.coverImageUrl \|\| publicProfilePhotoUrl\(featuredProfile\)/);
+  assert.match(
+    homeSource,
+    /function venueVisualAttrs\(venue\)[\s\S]*?const venueCoverUrl = String\(venue\.coverImageUrl \|\| ""\)\.trim\(\)[\s\S]*?customPhotoAttrs\(venueCoverUrl\)/,
+  );
 });
 
-test("venue discovery prefers venue covers and falls back to approved lineup media", () => {
+test("venue discovery uses approved venue covers with a branded artwork fallback", () => {
+  const visualHelper =
+    homeSource.match(/function venueVisualAttrs\(venue\) \{[\s\S]*?(?=\n    function venueLineupMarkup)/)?.[0] || "";
+  assert.match(visualHelper, /customPhotoAttrs\(venueCoverUrl\)/);
+  assert.doesNotMatch(visualHelper, /publicProfilePhotoUrl|featuredProfile|has-lineup-photo/);
   assert.match(
-    homeSource,
-    /function venueVisualAttrs\(venue, city\)[\s\S]*?venue\.coverImageUrl \|\| publicProfilePhotoUrl\(featuredProfile\)/,
-  );
-  assert.match(
-    homeSource,
-    /const sourceClass = venueCoverUrl[\s\S]*?" has-venue-cover"[\s\S]*?" has-lineup-photo"[\s\S]*?" is-venue-artwork"/,
+    visualHelper,
+    /const sourceClass = venueCoverUrl \? " has-venue-cover" : " is-venue-artwork"/,
   );
   assert.match(
     homeSource,
@@ -105,7 +108,9 @@ test("venue discovery prefers venue covers and falls back to approved lineup med
     /#results\.venue-card-grid \.venue-card \.venue-art\.has-custom-photo[\s\S]*?var\(--custom-photo\) !important/,
   );
   assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo[\s\S]*?var\(--custom-photo\)/);
-  assert.match(homeSource, /\.home-venue-discovery-art\.has-lineup-photo \{[\s\S]*?background-position: center top/);
+  assert.match(homeSource, /\.home-venue-discovery-art\.is-venue-artwork \{[\s\S]*?linear-gradient\(132deg/);
+  assert.match(homeSource, /\.home-venue-discovery-monogram \{[\s\S]*?width: 112px;[\s\S]*?height: 112px;/);
+  assert.doesNotMatch(homeSource, /\.home-venue-discovery-art\.has-lineup-photo/);
   assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo\.has-venue-cover::before/);
   assert.match(homeSource, /\.home-venue-discovery-context-actions[\s\S]*?grid-template-columns: repeat\(2/);
   assert.match(homeSource, /home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile[\s\S]*?data-share-venue/);

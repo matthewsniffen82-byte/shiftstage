@@ -277,7 +277,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?return "";/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action[\s\S]*?safeExternalHref\(venue\.qrCodeUrl\)[\s\S]*?if \(!rail \|\| !externalQrUrl\) return "";[\s\S]*?home-venue-discovery-rail-qr[\s\S]*?data-external-venue-qr/,
   );
   assert.doesNotMatch(homeSource, /publishedVenueQrPass/);
   const venueSlide = homeSource.match(
@@ -305,6 +305,10 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
+    /const externalVenueQr = event\.target\.closest\("\[data-external-venue-qr\]"\)[\s\S]*?venueId: externalVenueQr\.dataset\.venueId[\s\S]*?eventType: "qr_impression"[\s\S]*?source: "venue_page"/,
+  );
+  assert.match(
+    homeSource,
     /function runVenueShareAction\(venueName, city = selectedCity\(\)\)[\s\S]*?venueShareUrl\(venue, city\)[\s\S]*?navigator\.share\(shareData\)[\s\S]*?copyText\(url, "Venue link copied"\)/,
   );
   assert.match(
@@ -323,6 +327,20 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     homeSource,
     /\.home-venue-discovery-lineup-slot \{[\s\S]*?min-height: 34px;[\s\S]*?\.home-venue-discovery-lineup strong \{[\s\S]*?color: #fff;[\s\S]*?font-size: 11px;/,
   );
+  assert.match(
+    homeSource,
+    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border-radius: 18px;[\s\S]*?backdrop-filter: blur\(15px\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-venue-discovery-lineup-slot:empty \{[\s\S]*?display: none;[\s\S]*?\.home-venue-discovery-meta:empty \{[\s\S]*?display: none;/,
+  );
+  const venueRailStyle =
+    homeSource.match(
+      /\.dancr-button-system \.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?\n        \}/,
+    )?.[0] || "";
+  assert.match(venueRailStyle, /border-color: rgba\(255,255,255,.18\) !important;[\s\S]*?background: rgba\(5,5,9,.68\) !important;/);
+  assert.doesNotMatch(venueRailStyle, /\b(?:width|min-width|min-height|height|padding|border-radius)\s*:/);
 });
 
 test("Now and Dancers grid cards place the full production action rail on the card", () => {

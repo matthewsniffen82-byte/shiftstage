@@ -63,6 +63,19 @@ test("venue pages and directory cards promote real active deals", () => {
     liveApp,
     /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
   );
+  const venueQrHelper =
+    liveApp.match(
+      /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+    )?.[0] || "";
+  assert.match(
+    venueQrHelper,
+    /venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action/,
+  );
+  assert.match(
+    venueQrHelper,
+    /safeExternalHref\(venue\.qrCodeUrl\)[\s\S]*?if \(!rail \|\| !externalQrUrl\) return "";[\s\S]*?home-venue-discovery-rail-qr[\s\S]*?data-external-venue-qr/,
+  );
+  assert.doesNotMatch(venueQrHelper, /publishedVenueQrPass|data-deal-pass/);
   const venueSlide =
     liveApp.match(
       /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
