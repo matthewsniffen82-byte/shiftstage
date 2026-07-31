@@ -13,7 +13,7 @@ export async function GET() {
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileAssets = withBase.replace(
     "</head>",
-    '<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=1" defer></script></head>',
+    '<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=2" defer></script></head>',
   );
 
   return new Response(withLiveProfileAssets, {

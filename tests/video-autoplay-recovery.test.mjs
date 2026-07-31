@@ -43,8 +43,9 @@ test("profile and venue video strips autoplay only their visible muted preview",
 });
 
 test("the production home shell loads autoplay recovery for dynamically rendered videos", () => {
-  assert.match(rootRoute, /script src="\/video-autoplay-recovery\.js\?v=1" defer/);
+  assert.match(rootRoute, /script src="\/video-autoplay-recovery\.js\?v=2" defer/);
   assert.match(homeRecovery, /const HOME_FEED_VIDEO_SELECTOR = "\.home-tv-feed-video"/);
+  assert.match(homeRecovery, /slide\.dataset\.userPaused === "true"/);
   assert.match(homeRecovery, /video\.defaultMuted = true/);
   assert.match(homeRecovery, /video\.addEventListener\("canplay"/);
   assert.match(homeRecovery, /video\.addEventListener\("loadeddata"/);

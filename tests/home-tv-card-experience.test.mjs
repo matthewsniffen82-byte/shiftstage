@@ -76,6 +76,14 @@ test("the mobile TV identity and progress sit low without moving actions or navi
     homeSource,
     /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
   );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-position \{\s*top: calc\(14px \+ env\(safe-area-inset-top\)\);\s*left: 12px;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-fullscreen \{\s*top: calc\(58px \+ env\(safe-area-inset-top\)\);\s*right: 12px;/,
+  );
 });
 
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
@@ -154,5 +162,28 @@ test("card controls expose accessible labels, keyboard alternatives, and feedbac
   assert.match(
     homeSource,
     /video\.controlsList = "nodownload noremoteplayback nofullscreen"[\s\S]*?video\.disablePictureInPicture = true/,
+  );
+});
+
+test("intentional pauses persist and every TV card exposes immersive fullscreen", () => {
+  assert.match(
+    homeSource,
+    /function toggleHomeTvFeedPlayback\(video\)[\s\S]*?delete slide\.dataset\.userPaused[\s\S]*?slide\.dataset\.userPaused = "true"[\s\S]*?video\.pause\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /function activateHomeTvFeedVideo\(videoId\)[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?video\.pause\(\)[\s\S]*?return/,
+  );
+  assert.match(
+    homeSource,
+    /function createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?View full screen[\s\S]*?toggleHomeTvFeedFullscreen\(slide, video\)/,
+  );
+  assert.match(
+    homeSource,
+    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?slide\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?video\.webkitEnterFullscreen\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-slide:fullscreen,[\s\S]*?height: 100dvh;[\s\S]*?border-radius: 0;/,
   );
 });

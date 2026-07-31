@@ -8,6 +8,7 @@
   function isActiveHomeFeedVideo(video) {
     const slide = video.closest(".home-tv-feed-slide");
     if (!slide) return false;
+    if (slide.dataset.userPaused === "true") return false;
     if (slide.getAttribute("aria-current") === "true") return true;
     return !document.querySelector('.home-tv-feed-slide[aria-current="true"]') &&
       slide === document.querySelector(".home-tv-feed-slide");

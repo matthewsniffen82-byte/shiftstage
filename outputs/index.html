@@ -28390,6 +28390,17 @@
           contain: layout paint style;
           isolation: isolate;
         }
+        .home-tv-feed-slide:fullscreen,
+        .home-tv-feed-slide:-webkit-full-screen {
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 100vh;
+          max-height: none;
+          border: 0;
+          border-radius: 0;
+          background: #000;
+        }
         .home-tv-feed-video {
           position: absolute;
           z-index: 1;
@@ -28475,6 +28486,7 @@
         }
         .home-tv-feed-copy a,
         .home-tv-feed-sound,
+        .home-tv-feed-fullscreen,
         .home-tv-feed-action,
         .home-tv-feed-report-option,
         .home-feed-return-home {
@@ -28548,7 +28560,8 @@
         .home-tv-feed-venue:focus-visible,
         .home-tv-feed-action:focus-visible,
         .home-tv-feed-report-option:focus-visible,
-        .home-tv-feed-sound:focus-visible {
+        .home-tv-feed-sound:focus-visible,
+        .home-tv-feed-fullscreen:focus-visible {
           outline: 2px solid #7eeaff;
           outline-offset: 3px;
         }
@@ -28673,6 +28686,43 @@
         .home-tv-feed-sound svg {
           width: 15px;
           height: 15px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-tv-feed-fullscreen {
+          position: absolute;
+          z-index: 6;
+          top: 58px;
+          right: 14px;
+          min-height: 32px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 0 10px;
+          border: 1px solid rgba(255,255,255,.18);
+          border-radius: 999px;
+          color: rgba(255,255,255,.92);
+          background: rgba(4,4,8,.38);
+          box-shadow: 0 6px 18px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06);
+          font-size: 10px;
+          font-weight: 900;
+          backdrop-filter: blur(14px) saturate(1.1);
+          -webkit-backdrop-filter: blur(14px) saturate(1.1);
+          touch-action: manipulation;
+        }
+        .home-tv-feed-fullscreen:hover,
+        .home-tv-feed-fullscreen[aria-pressed="true"] {
+          border-color: rgba(126,234,255,.42);
+          color: #fff;
+          background: rgba(20,20,28,.52);
+        }
+        .home-tv-feed-fullscreen svg {
+          width: 14px;
+          height: 14px;
           fill: none;
           stroke: currentColor;
           stroke-width: 2;
@@ -30346,10 +30396,15 @@
             right: 12px;
           }
           .home-tv-feed-position {
-            top: calc(70px + env(safe-area-inset-top));
+            top: calc(14px + env(safe-area-inset-top));
+            left: 12px;
           }
           .home-tv-feed-media-position {
             top: calc(106px + env(safe-area-inset-top));
+          }
+          .home-tv-feed-fullscreen {
+            top: calc(58px + env(safe-area-inset-top));
+            right: 12px;
           }
           .home-tv-feed-actions {
             right: 10px;
@@ -46492,6 +46547,54 @@
       });
     }
 
+    function homeTvFeedFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    function syncHomeTvFeedFullscreenButtons() {
+      const fullscreenElement = homeTvFeedFullscreenElement();
+      document.querySelectorAll("[data-home-tv-fullscreen]").forEach((button) => {
+        const slide = button.closest(".home-tv-feed-slide");
+        const video = slide?.querySelector("video");
+        const isFullscreen = fullscreenElement === slide || Boolean(video?.webkitDisplayingFullscreen);
+        const label = button.querySelector("[data-home-tv-fullscreen-label]");
+        if (label) label.textContent = isFullscreen ? "Exit full screen" : "View full screen";
+        button.setAttribute("aria-label", isFullscreen ? "Exit full-screen video" : "View this video full screen");
+        button.setAttribute("aria-pressed", String(isFullscreen));
+      });
+    }
+
+    async function toggleHomeTvFeedFullscreen(slide, video) {
+      if (!slide || !video) return;
+      const fullscreenElement = homeTvFeedFullscreenElement();
+      const isFullscreen = fullscreenElement === slide || Boolean(video.webkitDisplayingFullscreen);
+      try {
+        if (isFullscreen) {
+          if (video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen === "function") {
+            video.webkitExitFullscreen();
+          } else {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (typeof exit === "function") await exit.call(document);
+          }
+          return;
+        }
+        if (typeof slide.requestFullscreen === "function") {
+          await slide.requestFullscreen({ navigationUI: "hide" });
+        } else if (typeof slide.webkitRequestFullscreen === "function") {
+          await slide.webkitRequestFullscreen();
+        } else if (typeof video.webkitEnterFullscreen === "function") {
+          video.webkitEnterFullscreen();
+        } else {
+          throw new Error("Fullscreen is unavailable");
+        }
+        showHomeTvFeedFeedback(slide, "Full screen");
+      } catch {
+        showHomeTvFeedFeedback(slide, "Full screen unavailable");
+      } finally {
+        syncHomeTvFeedFullscreenButtons();
+      }
+    }
+
     function showHomeTvFeedFeedback(slide, message) {
       const feedback = slide?.querySelector(".home-tv-feed-feedback");
       if (!feedback) return;
@@ -46594,6 +46697,11 @@
             homeTvFeedImpressions.add(videoId);
             trackHomeTvFeedEvent(videoId, "impression");
           }
+          if (slide.dataset.userPaused === "true") {
+            video.pause();
+            slide.classList.add("is-paused");
+            return;
+          }
           void video.play().then(() => {
             slide.classList.remove("is-paused");
             scheduleHomeTvFeedEngagedView(videoId, video);
@@ -46615,11 +46723,13 @@
       const videoId = String(slide?.dataset.videoId || "");
       if (!videoId) return;
       if (video.paused) {
+        delete slide.dataset.userPaused;
         activateHomeTvFeedVideo(videoId);
         showHomeTvFeedFeedback(slide, "Playing");
         return;
       }
       clearHomeTvFeedEngagedTimer(videoId);
+      slide.dataset.userPaused = "true";
       video.pause();
       slide.classList.add("is-paused");
       showHomeTvFeedFeedback(slide, "Paused");
@@ -46817,6 +46927,8 @@
         slide.classList.add("is-paused");
         clearHomeTvFeedEngagedTimer(videoId);
       });
+      video.addEventListener("webkitbeginfullscreen", syncHomeTvFeedFullscreenButtons);
+      video.addEventListener("webkitendfullscreen", syncHomeTvFeedFullscreenButtons);
       video.addEventListener("timeupdate", () => {
         syncHomeTvFeedProgress(video, slide);
         if (
@@ -47045,12 +47157,23 @@
       return sound;
     }
 
+    function createHomeTvFeedFullscreenButton(slide, video) {
+      const button = document.createElement("button");
+      button.className = "home-tv-feed-fullscreen";
+      button.type = "button";
+      button.dataset.homeTvFullscreen = "true";
+      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></svg><span data-home-tv-fullscreen-label>View full screen</span>';
+      button.addEventListener("click", () => void toggleHomeTvFeedFullscreen(slide, video));
+      return button;
+    }
+
     function renderHomeTvFeedSlide(slide, item, videoIndex, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const scheduleContext = homeTvFeedSchedule(item);
       const previousVideoId = String(slide.dataset.videoId || "");
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
+      delete slide.dataset.userPaused;
       slide.classList.remove("is-media-unavailable", "is-applauding");
       slide.classList.add("is-media-loading", "is-paused");
       slide.setAttribute(
@@ -47086,6 +47209,7 @@
         playback,
         position,
         createHomeTvFeedSoundButton(slide),
+        createHomeTvFeedFullscreenButton(slide, video),
         createHomeTvFeedActions(item, slide),
         createHomeTvFeedCopy(item, scheduleContext),
         createHomeTvFeedProgress(),
@@ -47094,6 +47218,7 @@
       ];
       slide.replaceChildren(...children);
       syncHomeTvFeedSoundButtons();
+      syncHomeTvFeedFullscreenButtons();
     }
 
     function createHomeTvFeedSlide(item, index, total) {
@@ -47102,6 +47227,10 @@
       renderHomeTvFeedSlide(slide, item, index, total);
       return slide;
     }
+
+    ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
+      document.addEventListener(eventName, syncHomeTvFeedFullscreenButtons);
+    });
 
     function renderHomeTvFeedMessage(message, retryCity = "") {
       const state = document.createElement("div");
