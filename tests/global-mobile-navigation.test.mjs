@@ -80,7 +80,15 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("neutral mobile glass uses soft-white idle icons and a pole-style active halo", () => {
+test("neutral mobile glass uses soft-white idle icons and a contained circular active halo", () => {
+  assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 23px;/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \{[\s\S]*?overflow: hidden !important;[\s\S]*?border-radius: 23px;/,
+  );
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
@@ -110,7 +118,7 @@ test("neutral mobile glass uses soft-white idle icons and a pole-style active ha
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /\.global-mobile-nav-icon::before \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 70px;[\s\S]*?height: 46px;[\s\S]*?radial-gradient\([\s\S]*?ellipse,[\s\S]*?rgba\(152, 95, 255, 0\.9\) 0%[\s\S]*?rgba\(91, 19, 255, 0\.72\) 28%[\s\S]*?rgba\(52, 110, 255, 0\.24\) 64%[\s\S]*?0 0 22px rgba\(52, 110, 255, 0\.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
+    /\.global-mobile-nav-icon::before \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?radial-gradient\([\s\S]*?circle,[\s\S]*?rgba\(152, 95, 255, 0\.9\) 0%[\s\S]*?rgba\(91, 19, 255, 0\.72\) 28%[\s\S]*?rgba\(52, 110, 255, 0\.24\) 64%[\s\S]*?0 0 28px rgba\(52, 110, 255, 0\.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
   );
   assert.match(
     navigationSource,
@@ -118,7 +126,7 @@ test("neutral mobile glass uses soft-white idle icons and a pole-style active ha
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon::before,[\s\S]*?#discoveryTabs \.home-bottom-tv-icon::before \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 70px;[\s\S]*?height: 46px;[\s\S]*?radial-gradient\(ellipse,rgba\(152,95,255,.9\) 0%,rgba\(91,19,255,.72\) 28%,rgba\(91,19,255,.42\) 48%,rgba\(52,110,255,.24\) 64%,transparent 78%\)[\s\S]*?0 0 22px rgba\(52,110,255,.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
+    /#discoveryTabs \.home-nav-icon::before,[\s\S]*?#discoveryTabs \.home-bottom-tv-icon::before \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?radial-gradient\(circle,rgba\(152,95,255,.9\) 0%,rgba\(91,19,255,.72\) 28%,rgba\(91,19,255,.42\) 48%,rgba\(52,110,255,.24\) 64%,transparent 78%\)[\s\S]*?0 0 28px rgba\(52,110,255,.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
   );
   assert.match(
     homeSource,

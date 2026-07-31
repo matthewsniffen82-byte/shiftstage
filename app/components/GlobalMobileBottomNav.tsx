@@ -390,7 +390,7 @@ export function GlobalMobileBottomNav() {
             align-items: center;
             gap: 0;
             padding: 3px 4px;
-            overflow: visible;
+            overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 23px;
             background:
@@ -496,11 +496,11 @@ export function GlobalMobileBottomNav() {
             z-index: 0;
             top: 50%;
             left: 50%;
-            width: 70px;
+            width: 46px;
             height: 46px;
             border-radius: 50%;
             background: radial-gradient(
-              ellipse,
+              circle,
               rgba(152, 95, 255, 0.9) 0%,
               rgba(91, 19, 255, 0.72) 28%,
               rgba(91, 19, 255, 0.42) 48%,
@@ -508,9 +508,9 @@ export function GlobalMobileBottomNav() {
               transparent 78%
             );
             box-shadow:
-              0 0 8px rgba(91, 19, 255, 0.76),
-              0 0 16px rgba(91, 19, 255, 0.48),
-              0 0 22px rgba(52, 110, 255, 0.28);
+              0 0 10px rgba(91, 19, 255, 0.76),
+              0 0 20px rgba(91, 19, 255, 0.48),
+              0 0 28px rgba(52, 110, 255, 0.28);
             filter: blur(2px);
             opacity: 0;
             pointer-events: none;
