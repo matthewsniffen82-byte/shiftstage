@@ -28310,6 +28310,26 @@
         .home-tv-launch-count { min-width: 58px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #baf5ff; background: #12062f; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
         .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
         #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
+        @media (max-width: 720px) {
+          .content-head,
+          #results {
+            transform: translate3d(0, 0, 0);
+            transition: transform 170ms cubic-bezier(.22, .74, .26, 1), opacity 170ms ease;
+          }
+          body.home-destination-swipe-active .content-head,
+          body.home-destination-swipe-active #results {
+            opacity: .97;
+            transform: translate3d(var(--home-destination-swipe-offset, 0px), 0, 0);
+            transition: none;
+            will-change: transform;
+          }
+        }
+        @media (max-width: 720px) and (prefers-reduced-motion: reduce) {
+          .content-head,
+          #results {
+            transition: none;
+          }
+        }
         #results.home-tv-feed {
           position: relative;
           width: 100%;
@@ -49122,11 +49142,16 @@
       startX: 0,
       startY: 0,
       startedAt: 0,
-      tracking: false
+      tracking: false,
+      axis: "pending"
     };
-    const HOME_DESTINATION_SWIPE_MIN_PX = 44;
-    const HOME_DESTINATION_SWIPE_MAX_MS = 1200;
-    const HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 24;
+    const HOME_DESTINATION_SWIPE_MIN_PX = 34;
+    const HOME_DESTINATION_SWIPE_FLICK_MIN_PX = 22;
+    const HOME_DESTINATION_SWIPE_FLICK_VELOCITY = .32;
+    const HOME_DESTINATION_SWIPE_DIRECTION_LOCK_PX = 10;
+    const HOME_DESTINATION_SWIPE_HORIZONTAL_RATIO = 1.08;
+    const HOME_DESTINATION_SWIPE_MAX_MS = 1400;
+    const HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 20;
 
     function homeDestinationIsSelected() {
       return Boolean(discoveryTabs?.querySelector(".tab.active, .home-bottom-tv.active"));
@@ -49134,16 +49159,26 @@
 
     function homeDestinationSwipeBlocked(target) {
       if (!(target instanceof Element)) return true;
-      if (
-        profileBackdrop.classList.contains("show") ||
-        document.body.classList.contains("profile-full-view-open") ||
-        document.body.classList.contains("venue-full-view-open")
-      ) return true;
       return Boolean(target.closest(
         "input, select, textarea, [contenteditable], [role='slider'], " +
+        "iframe, [data-global-navigation-swipe='ignore'], " +
         "#modalImage, #modalGallery, .profile-photo-viewer, " +
-        ".profile-tv-strip-list, .profile-tv-viewer"
+        ".profile-tv-strip-list, .profile-tv-viewer, .home-tv-feed-slide"
       ));
+    }
+
+    function setHomeDestinationSwipeOffset(deltaX) {
+      const currentIndex = homeDestinationOrder.indexOf(activeTab);
+      const direction = deltaX < 0 ? 1 : -1;
+      const canMove =
+        currentIndex >= 0 &&
+        currentIndex + direction >= 0 &&
+        currentIndex + direction < homeDestinationOrder.length;
+      const resistance = canMove ? .16 : .05;
+      const maxOffset = canMove ? 30 : 10;
+      const offset = Math.max(-maxOffset, Math.min(maxOffset, deltaX * resistance));
+      document.body.style.setProperty("--home-destination-swipe-offset", `${offset}px`);
+      document.body.classList.add("home-destination-swipe-active");
     }
 
     function resetHomeDestinationSwipe() {
@@ -49151,6 +49186,9 @@
       homeDestinationSwipe.startX = 0;
       homeDestinationSwipe.startY = 0;
       homeDestinationSwipe.startedAt = 0;
+      homeDestinationSwipe.axis = "pending";
+      document.body.classList.remove("home-destination-swipe-active");
+      document.body.style.removeProperty("--home-destination-swipe-offset");
     }
 
     function moveToAdjacentHomeDestination(direction) {
@@ -49179,6 +49217,34 @@
       homeDestinationSwipe.tracking = true;
     }, { passive: true, capture: true });
 
+    document.addEventListener("touchmove", (event) => {
+      if (!homeDestinationSwipe.tracking || event.touches.length !== 1) {
+        resetHomeDestinationSwipe();
+        return;
+      }
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - homeDestinationSwipe.startX;
+      const deltaY = touch.clientY - homeDestinationSwipe.startY;
+      const distanceX = Math.abs(deltaX);
+      const distanceY = Math.abs(deltaY);
+
+      if (homeDestinationSwipe.axis === "pending") {
+        if (
+          distanceX < HOME_DESTINATION_SWIPE_DIRECTION_LOCK_PX &&
+          distanceY < HOME_DESTINATION_SWIPE_DIRECTION_LOCK_PX
+        ) return;
+        if (distanceY > distanceX * HOME_DESTINATION_SWIPE_HORIZONTAL_RATIO) {
+          resetHomeDestinationSwipe();
+          return;
+        }
+        if (distanceX <= distanceY * HOME_DESTINATION_SWIPE_HORIZONTAL_RATIO) return;
+        homeDestinationSwipe.axis = "horizontal";
+      }
+
+      setHomeDestinationSwipeOffset(deltaX);
+      if (event.cancelable) event.preventDefault();
+    }, { passive: false, capture: true });
+
     document.addEventListener("touchend", (event) => {
       if (!homeDestinationSwipe.tracking || event.changedTouches.length !== 1) {
         resetHomeDestinationSwipe();
@@ -49187,12 +49253,22 @@
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - homeDestinationSwipe.startX;
       const deltaY = touch.clientY - homeDestinationSwipe.startY;
-      const elapsed = Date.now() - homeDestinationSwipe.startedAt;
+      const elapsed = Math.max(1, Date.now() - homeDestinationSwipe.startedAt);
+      const distanceX = Math.abs(deltaX);
+      const velocity = distanceX / elapsed;
+      const isDeliberate =
+        distanceX >= HOME_DESTINATION_SWIPE_MIN_PX ||
+        (
+          distanceX >= HOME_DESTINATION_SWIPE_FLICK_MIN_PX &&
+          velocity >= HOME_DESTINATION_SWIPE_FLICK_VELOCITY
+        );
+      const isHorizontal =
+        distanceX > Math.abs(deltaY) * HOME_DESTINATION_SWIPE_HORIZONTAL_RATIO;
       resetHomeDestinationSwipe();
       if (
         elapsed > HOME_DESTINATION_SWIPE_MAX_MS ||
-        Math.abs(deltaX) < HOME_DESTINATION_SWIPE_MIN_PX ||
-        Math.abs(deltaX) <= Math.abs(deltaY) * 1.15
+        !isDeliberate ||
+        !isHorizontal
       ) return;
       const moved = moveToAdjacentHomeDestination(deltaX < 0 ? 1 : -1);
       if (moved) event.preventDefault();

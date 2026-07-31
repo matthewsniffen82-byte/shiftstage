@@ -15,7 +15,7 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
   assert.match(
     homeSource,
-    /HOME_DESTINATION_SWIPE_MIN_PX = 44[\s\S]*?HOME_DESTINATION_SWIPE_MAX_MS = 1200[\s\S]*?HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 24/,
+    /HOME_DESTINATION_SWIPE_MIN_PX = 34[\s\S]*?HOME_DESTINATION_SWIPE_FLICK_MIN_PX = 22[\s\S]*?HOME_DESTINATION_SWIPE_FLICK_VELOCITY = \.32[\s\S]*?HOME_DESTINATION_SWIPE_MAX_MS = 1400[\s\S]*?HOME_DESTINATION_SWIPE_EDGE_GUARD_PX = 20/,
   );
   assert.match(
     homeSource,
@@ -23,17 +23,23 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
   assert.match(
     homeSource,
-    /addEventListener\("touchend"[\s\S]*?Math\.abs\(deltaX\) < HOME_DESTINATION_SWIPE_MIN_PX[\s\S]*?Math\.abs\(deltaX\) <= Math\.abs\(deltaY\) \* 1\.15[\s\S]*?moveToAdjacentHomeDestination\(deltaX < 0 \? 1 : -1\)[\s\S]*?event\.preventDefault\(\)/,
+    /addEventListener\("touchmove"[\s\S]*?HOME_DESTINATION_SWIPE_DIRECTION_LOCK_PX[\s\S]*?HOME_DESTINATION_SWIPE_HORIZONTAL_RATIO[\s\S]*?setHomeDestinationSwipeOffset\(deltaX\)[\s\S]*?event\.preventDefault\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /addEventListener\("touchend"[\s\S]*?distanceX >= HOME_DESTINATION_SWIPE_MIN_PX[\s\S]*?HOME_DESTINATION_SWIPE_FLICK_MIN_PX[\s\S]*?HOME_DESTINATION_SWIPE_FLICK_VELOCITY[\s\S]*?moveToAdjacentHomeDestination\(deltaX < 0 \? 1 : -1\)[\s\S]*?event\.preventDefault\(\)/,
   );
 });
 
-test("full profiles reserve horizontal swipes for media while dock buttons remain active", () => {
+test("full profiles allow destination swipes outside media while galleries keep their gestures", () => {
   const swipeBlocker = homeSource.match(
     /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
+  assert.doesNotMatch(swipeBlocker, /profileBackdrop\.classList\.contains/);
+  assert.doesNotMatch(swipeBlocker, /profile-full-view-open|venue-full-view-open/);
   assert.match(
     swipeBlocker,
-    /profileBackdrop\.classList\.contains\("show"\)[\s\S]*?profile-full-view-open[\s\S]*?#modalImage,[\s\S]*?#modalGallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer/,
+    /#modalImage,[\s\S]*?#modalGallery,[\s\S]*?profile-photo-viewer,[\s\S]*?profile-tv-strip-list,[\s\S]*?profile-tv-viewer,[\s\S]*?home-tv-feed-slide/,
   );
   assert.match(
     homeSource,
@@ -56,11 +62,26 @@ test("full profiles reserve horizontal swipes for media while dock buttons remai
 test("global destination swiping still rejects vertical scrolling and browser-edge gestures", () => {
   assert.match(
     homeSource,
-    /Math\.abs\(deltaX\) <= Math\.abs\(deltaY\) \* 1\.15/,
+    /distanceY > distanceX \* HOME_DESTINATION_SWIPE_HORIZONTAL_RATIO[\s\S]*?resetHomeDestinationSwipe\(\)/,
   );
   assert.match(
     homeSource,
     /touch\.clientX <= HOME_DESTINATION_SWIPE_EDGE_GUARD_PX[\s\S]*?touch\.clientX >= window\.innerWidth - HOME_DESTINATION_SWIPE_EDGE_GUARD_PX/,
+  );
+});
+
+test("the current discovery content follows the finger and settles smoothly", () => {
+  assert.match(
+    homeSource,
+    /body\.home-destination-swipe-active \.content-head,[\s\S]*?body\.home-destination-swipe-active #results[\s\S]*?translate3d\(var\(--home-destination-swipe-offset, 0px\), 0, 0\)[\s\S]*?transition: none/,
+  );
+  assert.match(
+    homeSource,
+    /function setHomeDestinationSwipeOffset\(deltaX\)[\s\S]*?resistance = canMove \? \.16 : \.05[\s\S]*?--home-destination-swipe-offset[\s\S]*?home-destination-swipe-active/,
+  );
+  assert.match(
+    homeSource,
+    /prefers-reduced-motion: reduce[\s\S]*?\.content-head,[\s\S]*?#results[\s\S]*?transition: none/,
   );
 });
 

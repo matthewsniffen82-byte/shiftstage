@@ -1,11 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 const DEFAULT_CITY = "Las Vegas";
+const MOBILE_NAVIGATION_MAX_WIDTH = 720;
+const MOBILE_SWIPE_EDGE_GUARD_PX = 20;
+const MOBILE_SWIPE_DIRECTION_LOCK_PX = 10;
+const MOBILE_SWIPE_MIN_DISTANCE_PX = 34;
+const MOBILE_SWIPE_FLICK_DISTANCE_PX = 22;
+const MOBILE_SWIPE_FLICK_VELOCITY_PX_MS = 0.32;
+const MOBILE_SWIPE_MAX_DURATION_MS = 1400;
+const MOBILE_SWIPE_HORIZONTAL_RATIO = 1.08;
+const MOBILE_SWIPE_BLOCKED_SELECTOR = [
+  "input",
+  "select",
+  "textarea",
+  "[contenteditable]",
+  "[role='slider']",
+  "iframe",
+  "[data-carousel-swipe-surface]",
+  "[data-global-navigation-swipe='ignore']",
+  ".public-media-thumbnails",
+  ".tv-strip-list",
+  ".tv-video-viewer",
+  ".profile-photo-viewer",
+  ".profile-tv-strip-list",
+  ".profile-tv-viewer",
+].join(", ");
 
 const destinations = [
   {
@@ -69,7 +93,9 @@ const destinations = [
 
 export function GlobalMobileBottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [city, setCity] = useState(DEFAULT_CITY);
+  const swipeIndicator = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const selectedCity = new URLSearchParams(window.location.search)
@@ -78,8 +104,188 @@ export function GlobalMobileBottomNav() {
     if (selectedCity) setCity(selectedCity);
   }, [pathname]);
 
+  useEffect(() => {
+    const currentIndex = destinations.findIndex((destination) =>
+      isActiveDestination(pathname, destination.id),
+    );
+    if (currentIndex < 0) return;
+
+    const gesture = {
+      startX: 0,
+      startY: 0,
+      startedAt: 0,
+      tracking: false,
+      axis: "pending" as "pending" | "horizontal" | "vertical",
+    };
+
+    const resetGesture = () => {
+      gesture.startX = 0;
+      gesture.startY = 0;
+      gesture.startedAt = 0;
+      gesture.tracking = false;
+      gesture.axis = "pending";
+      if (swipeIndicator.current) {
+        swipeIndicator.current.classList.remove("is-visible", "is-ready");
+        swipeIndicator.current.style.removeProperty("--mobile-swipe-opacity");
+        swipeIndicator.current.style.removeProperty("--mobile-swipe-offset");
+        swipeIndicator.current.style.removeProperty("--mobile-swipe-scale");
+      }
+    };
+
+    const updateIndicator = (deltaX: number) => {
+      const direction = deltaX < 0 ? 1 : -1;
+      const nextIndex = currentIndex + direction;
+      const indicator = swipeIndicator.current;
+      if (!indicator || nextIndex < 0 || nextIndex >= destinations.length) {
+        indicator?.classList.remove("is-visible", "is-ready");
+        return;
+      }
+      const distance = Math.abs(deltaX);
+      const progress = Math.min(1, distance / 84);
+      const label = indicator.querySelector<HTMLElement>("[data-mobile-swipe-label]");
+      const arrow = indicator.querySelector<HTMLElement>("[data-mobile-swipe-arrow]");
+      if (label) label.textContent = destinations[nextIndex].label;
+      if (arrow) arrow.textContent = direction > 0 ? "→" : "←";
+      indicator.style.setProperty(
+        "--mobile-swipe-opacity",
+        String(progress * 0.96),
+      );
+      indicator.style.setProperty(
+        "--mobile-swipe-offset",
+        `${direction * (1 - progress) * 16}px`,
+      );
+      indicator.style.setProperty(
+        "--mobile-swipe-scale",
+        String(0.94 + progress * 0.06),
+      );
+      indicator.classList.toggle("is-ready", distance >= MOBILE_SWIPE_MIN_DISTANCE_PX);
+      indicator.classList.add("is-visible");
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      resetGesture();
+      if (
+        window.innerWidth > MOBILE_NAVIGATION_MAX_WIDTH ||
+        event.touches.length !== 1 ||
+        mobileNavigationSwipeBlocked(event.target)
+      ) {
+        return;
+      }
+      const touch = event.touches[0];
+      if (
+        touch.clientX <= MOBILE_SWIPE_EDGE_GUARD_PX ||
+        touch.clientX >= window.innerWidth - MOBILE_SWIPE_EDGE_GUARD_PX
+      ) {
+        return;
+      }
+      gesture.startX = touch.clientX;
+      gesture.startY = touch.clientY;
+      gesture.startedAt = performance.now();
+      gesture.tracking = true;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (!gesture.tracking || event.touches.length !== 1) {
+        resetGesture();
+        return;
+      }
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - gesture.startX;
+      const deltaY = touch.clientY - gesture.startY;
+      const distanceX = Math.abs(deltaX);
+      const distanceY = Math.abs(deltaY);
+
+      if (gesture.axis === "pending") {
+        if (
+          distanceX < MOBILE_SWIPE_DIRECTION_LOCK_PX &&
+          distanceY < MOBILE_SWIPE_DIRECTION_LOCK_PX
+        ) {
+          return;
+        }
+        if (distanceY > distanceX * MOBILE_SWIPE_HORIZONTAL_RATIO) {
+          gesture.axis = "vertical";
+          resetGesture();
+          return;
+        }
+        if (distanceX > distanceY * MOBILE_SWIPE_HORIZONTAL_RATIO) {
+          gesture.axis = "horizontal";
+        } else {
+          return;
+        }
+      }
+
+      if (gesture.axis !== "horizontal") return;
+      updateIndicator(deltaX);
+      if (event.cancelable) event.preventDefault();
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (!gesture.tracking || event.changedTouches.length !== 1) {
+        resetGesture();
+        return;
+      }
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - gesture.startX;
+      const deltaY = touch.clientY - gesture.startY;
+      const elapsed = Math.max(1, performance.now() - gesture.startedAt);
+      const distanceX = Math.abs(deltaX);
+      const velocity = distanceX / elapsed;
+      const isHorizontal =
+        distanceX > Math.abs(deltaY) * MOBILE_SWIPE_HORIZONTAL_RATIO;
+      const isDeliberate =
+        distanceX >= MOBILE_SWIPE_MIN_DISTANCE_PX ||
+        (distanceX >= MOBILE_SWIPE_FLICK_DISTANCE_PX &&
+          velocity >= MOBILE_SWIPE_FLICK_VELOCITY_PX_MS);
+      const direction = deltaX < 0 ? 1 : -1;
+      const nextIndex = currentIndex + direction;
+      const shouldNavigate =
+        elapsed <= MOBILE_SWIPE_MAX_DURATION_MS &&
+        isHorizontal &&
+        isDeliberate &&
+        nextIndex >= 0 &&
+        nextIndex < destinations.length;
+
+      resetGesture();
+      if (!shouldNavigate) return;
+      if (event.cancelable) event.preventDefault();
+      router.push(destinationHref(destinations[nextIndex], city));
+    };
+
+    document.addEventListener("touchstart", onTouchStart, {
+      passive: true,
+      capture: true,
+    });
+    document.addEventListener("touchmove", onTouchMove, {
+      passive: false,
+      capture: true,
+    });
+    document.addEventListener("touchend", onTouchEnd, {
+      passive: false,
+      capture: true,
+    });
+    document.addEventListener("touchcancel", resetGesture, {
+      passive: true,
+      capture: true,
+    });
+
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart, true);
+      document.removeEventListener("touchmove", onTouchMove, true);
+      document.removeEventListener("touchend", onTouchEnd, true);
+      document.removeEventListener("touchcancel", resetGesture, true);
+    };
+  }, [city, pathname, router]);
+
   return (
     <>
+      <div
+        aria-hidden="true"
+        className="global-mobile-swipe-indicator"
+        ref={swipeIndicator}
+      >
+        <span data-mobile-swipe-arrow />
+        <strong data-mobile-swipe-label />
+      </div>
       <nav
         aria-label="Mobile primary navigation"
         className="global-mobile-bottom-nav"
@@ -111,6 +317,65 @@ export function GlobalMobileBottomNav() {
         @media (max-width: 720px) {
           body {
             padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+          }
+
+          .global-mobile-swipe-indicator {
+            --mobile-swipe-opacity: 0;
+            --mobile-swipe-offset: 16px;
+            --mobile-swipe-scale: 0.94;
+            position: fixed;
+            z-index: 1499;
+            left: 50%;
+            bottom: calc(83px + env(safe-area-inset-bottom));
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 7px 13px;
+            border: 1px solid rgba(192, 132, 252, 0.3);
+            border-radius: 999px;
+            color: #f5f3ff;
+            background: rgba(9, 7, 16, 0.88);
+            box-shadow:
+              0 12px 32px rgba(0, 0, 0, 0.42),
+              0 0 22px rgba(124, 58, 237, 0.2);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+              sans-serif;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: var(--mobile-swipe-opacity);
+            transform:
+              translate3d(-50%, 7px, 0)
+              translateX(var(--mobile-swipe-offset))
+              scale(var(--mobile-swipe-scale));
+            transition:
+              opacity 140ms ease,
+              transform 140ms ease,
+              border-color 140ms ease;
+            visibility: hidden;
+            will-change: opacity, transform;
+          }
+
+          .global-mobile-swipe-indicator.is-visible {
+            visibility: visible;
+          }
+
+          .global-mobile-swipe-indicator.is-ready {
+            border-color: rgba(126, 234, 255, 0.62);
+            box-shadow:
+              0 12px 32px rgba(0, 0, 0, 0.42),
+              0 0 25px rgba(53, 216, 255, 0.24);
+          }
+
+          .global-mobile-swipe-indicator span {
+            color: #7eeaff;
+            font-size: 16px;
+            line-height: 1;
+          }
+
+          .global-mobile-swipe-indicator strong {
+            font-weight: 900;
           }
 
           .global-mobile-bottom-nav {
@@ -387,6 +652,12 @@ export function GlobalMobileBottomNav() {
             .mydancr-tv-r {
             stroke: #9fe7ff;
           }
+
+          @media (prefers-reduced-motion: reduce) {
+            .global-mobile-swipe-indicator {
+              transition: none;
+            }
+          }
         }
       `}</style>
     </>
@@ -399,4 +670,20 @@ function isActiveDestination(
 ) {
   if (destination === "tonight") return pathname === "/tonight";
   return pathname === `/${destination}` || pathname.startsWith(`/${destination}/`);
+}
+
+function destinationHref(
+  destination: (typeof destinations)[number],
+  city: string,
+) {
+  return "view" in destination
+    ? homeDiscoveryHref(destination.view, city)
+    : `${destination.path}?city=${encodeURIComponent(city)}`;
+}
+
+function mobileNavigationSwipeBlocked(target: EventTarget | null) {
+  return (
+    target instanceof Element &&
+    Boolean(target.closest(MOBILE_SWIPE_BLOCKED_SELECTOR))
+  );
 }
