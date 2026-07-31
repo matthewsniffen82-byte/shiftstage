@@ -156,10 +156,10 @@ test("the homepage selects Now on first load and keeps destination navigation au
   );
 });
 
-test("primary discovery destinations request browser-free mobile fullscreen from navigation gestures", () => {
+test("all discovery destinations request browser-free mobile fullscreen from navigation gestures", () => {
   assert.match(
     homeSource,
-    /const homeImmersiveDestinations = new Set\(\["tonight", "dancers", "tv", "venues"\]\);/,
+    /const homeImmersiveDestinations = new Set\(\["tonight", "dancers", "tv", "venues", "trending"\]\);/,
   );
   assert.match(
     homeSource,
@@ -176,10 +176,6 @@ test("primary discovery destinations request browser-free mobile fullscreen from
   assert.match(
     homeSource,
     /function handleHomeDestinationFullscreenChange\(\) \{[\s\S]*?!homeDestinationFullscreenElement\(\)[\s\S]*?homeDestinationImmersiveRequested = false;[\s\S]*?return;[\s\S]*?focusHomeResults/,
-  );
-  assert.doesNotMatch(
-    homeSource,
-    /homeImmersiveDestinations = new Set\([^)]*"trending"/,
   );
 });
 
