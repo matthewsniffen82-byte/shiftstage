@@ -28,7 +28,7 @@ const result = spawnSync(
     managerPath,
     "--apply",
     "--target=production",
-    "--count=20",
+    "--count=6",
     `--confirm=${DATASET_MARKER}`,
   ],
   {

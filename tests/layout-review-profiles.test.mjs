@@ -1,18 +1,29 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import sharp from "sharp";
+import {
+  createProfilePhoto,
+  PROFILE_DEFINITIONS,
+  validateProfileSheet,
+} from "../scripts/layout-review-profile-sheet.mjs";
 
-const [packageSource, postbuildSource, scriptSource] = await Promise.all([
-  readFile(new URL("../package.json", import.meta.url), "utf8"),
-  readFile(
-    new URL("../scripts/manage-layout-review-postbuild.mjs", import.meta.url),
-    "utf8",
-  ),
-  readFile(
-    new URL("../scripts/manage-layout-review-profiles.mjs", import.meta.url),
-    "utf8",
-  ),
-]);
+const [packageSource, postbuildSource, profileSheetSource, scriptSource] =
+  await Promise.all([
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(
+      new URL("../scripts/manage-layout-review-postbuild.mjs", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../scripts/layout-review-profile-sheet.mjs", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../scripts/manage-layout-review-profiles.mjs", import.meta.url),
+      "utf8",
+    ),
+  ]);
 
 test("layout-review profiles require an explicit marked and reversible database workflow", () => {
   assert.match(
@@ -21,15 +32,19 @@ test("layout-review profiles require an explicit marked and reversible database 
   );
   assert.match(scriptSource, /const DATASET_MARKER = "mydancr-layout-review-v1"/);
   assert.match(scriptSource, /const PROFILE_PREFIX = "layout-review-"/);
-  assert.match(scriptSource, /const DEFAULT_COUNT = 20/);
-  assert.match(scriptSource, /const MAX_COUNT = 50/);
+  assert.match(scriptSource, /const DEFAULT_COUNT = PROFILE_DEFINITIONS\.length/);
+  assert.match(scriptSource, /const MAX_COUNT = PROFILE_DEFINITIONS\.length/);
   assert.match(
     scriptSource,
     /if \(confirmation !== DATASET_MARKER\) \{[\s\S]*?Database writes require --confirm=/,
   );
   assert.match(
     scriptSource,
-    /!String\(profile\.slug \|\| ""\)\.startsWith\(PROFILE_PREFIX\)[\s\S]*?!String\(profile\.bio \|\| ""\)\.includes\(DATASET_MARKER\)[\s\S]*?Refusing to delete unmarked profile/,
+    /async function removeDatasetProfile[\s\S]*?assertMarkedDatasetAccount\(profile\)[\s\S]*?deleteUser\(profile\.user_id\)/,
+  );
+  assert.match(
+    scriptSource,
+    /user\?\.user_metadata\?\.dataset_marker !== DATASET_MARKER[\s\S]*?Refusing to mutate unmarked auth account/,
   );
 });
 
@@ -56,7 +71,7 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /"--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=20"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
+    /"--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=6"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
   );
 });
 
@@ -64,11 +79,12 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   assert.match(scriptSource, /const EMAIL_DOMAIN = "synthetic\.mydancr\.invalid"/);
   assert.match(scriptSource, /const AUTH_BAN_DURATION = "876000h"/);
   assert.match(scriptSource, /ban_duration: AUTH_BAN_DURATION/);
+  assert.match(scriptSource, /bio: null/);
+  assert.match(scriptSource, /const UPCOMING_SHIFT_COUNT = PROFILE_DEFINITIONS\.length/);
   assert.match(
     scriptSource,
-    /Synthetic layout-review profile\. This is not a real dancer or work schedule\./,
+    /async function removeProfileSocialLinks[\s\S]*?\.from\("social_links"\)[\s\S]*?\.delete\(\)/,
   );
-  assert.match(scriptSource, /const UPCOMING_SHIFT_COUNT = 14/);
   assert.match(
     scriptSource,
     /checked_in_at: null,[\s\S]*?checked_out_at: null,[\s\S]*?location_status: "self_reported"/,
@@ -90,7 +106,7 @@ test("layout-review approval supports the deployed auto-approval schema", () => 
 
 test("layout-review schedules and rollback support the deployed production schema", () => {
   const scheduleFunction = scriptSource.match(
-    /async function replaceProfileSchedule[\s\S]*?\r?\n}\r?\n\r?\nasync function createReviewPortrait/,
+    /async function replaceProfileSchedule[\s\S]*?\r?\n}\r?\n\r?\nasync function listDatasetProfiles/,
   )?.[0];
   assert.ok(scheduleFunction);
   assert.match(scheduleFunction, /location_status: "self_reported"/);
@@ -105,12 +121,29 @@ test("layout-review schedules and rollback support the deployed production schem
   );
 });
 
-test("the population workflow uses approved database media and real venue schedules", () => {
-  assert.match(scriptSource, /const REVIEW_PHOTO_COUNT = 3/);
-  assert.match(scriptSource, /sharp\(Buffer\.from\(svg\)\)\.png/);
+test("the population workflow uses the supplied five-photo galleries and real venue schedules", async () => {
+  assert.deepEqual(
+    PROFILE_DEFINITIONS.map((profile) => profile.stageName),
+    ["Luna", "Ivy", "Kai", "Sienna", "Nova", "Bella"],
+  );
+  assert.ok(PROFILE_DEFINITIONS.every((profile) => profile.tiles.length === 5));
+  assert.deepEqual(await validateProfileSheet(), {
+    format: "jpeg",
+    height: 853,
+    width: 1280,
+  });
+  const rendered = await createProfilePhoto(PROFILE_DEFINITIONS[0], 0);
+  const renderedMetadata = await sharp(rendered).metadata();
+  assert.equal(renderedMetadata.format, "jpeg");
+  assert.equal(renderedMetadata.width, 1200);
+  assert.equal(renderedMetadata.height, 900);
+  assert.match(profileSheetSource, /\.extract\(tile\)/);
+  assert.doesNotMatch(profileSheetSource, /generate|openai/i);
+  assert.match(scriptSource, /const REVIEW_PHOTO_COUNT = 5/);
+  assert.match(scriptSource, /createProfilePhoto\(definition, photoIndex\)/);
   assert.match(
     scriptSource,
-    /\.from\("dancer-photos"\)[\s\S]*?contentType: "image\/png"[\s\S]*?upsert: true/,
+    /\.from\("dancer-photos"\)[\s\S]*?contentType: "image\/jpeg"[\s\S]*?upsert: true/,
   );
   assert.match(
     scriptSource,

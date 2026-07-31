@@ -1,50 +1,23 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-import sharp from "sharp";
+import {
+  createProfilePhoto,
+  PROFILE_DEFINITIONS,
+  validateProfileSheet,
+} from "./layout-review-profile-sheet.mjs";
 
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const PROFILE_PREFIX = "layout-review-";
 const EMAIL_DOMAIN = "synthetic.mydancr.invalid";
-const DEFAULT_COUNT = 20;
-const MAX_COUNT = 50;
+const DEFAULT_COUNT = PROFILE_DEFINITIONS.length;
+const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
-const REVIEW_PHOTO_COUNT = 3;
-const UPCOMING_SHIFT_COUNT = 14;
+const REVIEW_PHOTO_COUNT = 5;
+const UPCOMING_SHIFT_COUNT = PROFILE_DEFINITIONS.length;
 const AUTH_BAN_DURATION = "876000h";
 const STORAGE_BUCKET = "dancer-photos";
 const STORAGE_PAGE_SIZE = 100;
 const STORAGE_SCAN_LIMIT = 10_000;
-
-const STAGE_NAMES = [
-  "Preview Aurora",
-  "Preview Bella",
-  "Preview Celeste",
-  "Preview Dahlia",
-  "Preview Ember",
-  "Preview Freya",
-  "Preview Gia",
-  "Preview Halo",
-  "Preview Indigo",
-  "Preview Jade",
-  "Preview Kira",
-  "Preview Luna",
-  "Preview Monroe",
-  "Preview Nova",
-  "Preview Opal",
-  "Preview Phoenix",
-  "Preview Quinn",
-  "Preview Raven",
-  "Preview Sienna",
-  "Preview Venus",
-];
-
-const PALETTES = [
-  ["#12082b", "#7428d7", "#35d8ff", "#f9a8d4"],
-  ["#1a081f", "#b42378", "#7c3aed", "#7eeaff"],
-  ["#071827", "#075985", "#22c55e", "#c084fc"],
-  ["#211006", "#b45309", "#ec4899", "#a78bfa"],
-  ["#07131f", "#0f766e", "#06b6d4", "#f472b6"],
-];
 
 const cli = parseArguments(process.argv.slice(2));
 const target = readRequiredChoice(cli, "--target", ["preview", "production"]);
@@ -80,6 +53,12 @@ async function inspectEnvironment() {
     listReviewVenues(),
     countPublicProfiles(),
   ]);
+  const profileIds = profiles.map((profile) => profile.id);
+  const [approvedPhotos, socialLinks, upcomingShifts] = await Promise.all([
+    countRowsForProfiles("dancer_photos", profileIds),
+    countRowsForProfiles("social_links", profileIds),
+    countRowsForProfiles("shifts", profileIds),
+  ]);
 
   writeResult({
     mode,
@@ -88,12 +67,17 @@ async function inspectEnvironment() {
     environmentFingerprint: environmentFingerprint(),
     datasetMarker: DATASET_MARKER,
     datasetProfiles: profiles.length,
+    profileNames: profiles.map((profile) => profile.stage_name),
+    approvedPhotos,
+    socialLinks,
+    upcomingShifts,
     publicProfiles,
     activeReviewVenues: venues.length,
   });
 }
 
 async function applyDataset() {
+  await validateProfileSheet();
   await removeOrphanedDatasetStorageObjects();
   const venues = await listReviewVenues();
   if (!venues.length) {
@@ -151,7 +135,7 @@ async function applyDataset() {
 
       const profile = await approveSyntheticProfile(authUser.id, definition);
       await upsertProfilePhotos(profile, definition, authUser.id);
-      await upsertProfileSocialLinks(profile, definition);
+      await removeProfileSocialLinks(profile, definition);
       await replaceProfileSchedule(profile, definition, venues);
     }
   } catch (error) {
@@ -159,6 +143,7 @@ async function applyDataset() {
     throw error;
   }
 
+  await removeProfilesOutsideRequestedSet(count);
   const profiles = await listDatasetProfiles();
   const profileIds = profiles.map((profile) => profile.id);
   const [photoCount, shiftCount] = await Promise.all([
@@ -196,31 +181,10 @@ async function cleanupDataset() {
   }
 
   for (const profile of profiles) {
-    if (
-      !String(profile.slug || "").startsWith(PROFILE_PREFIX) ||
-      !String(profile.bio || "").includes(DATASET_MARKER)
-    ) {
+    if (!String(profile.slug || "").startsWith(PROFILE_PREFIX)) {
       throw new Error(`Refusing to delete unmarked profile ${profile.id}.`);
     }
-
-    const { data: photos, error: photoError } = await admin
-      .from("dancer_photos")
-      .select("storage_path")
-      .eq("dancer_id", profile.id);
-    assertSuccess(photoError, `read storage paths for ${profile.slug}`);
-
-    const paths = (photos || [])
-      .map((photo) => String(photo.storage_path || ""))
-      .filter((path) => path.includes(`/${DATASET_MARKER}-`));
-    if (paths.length) {
-      const { error: storageError } = await admin.storage
-        .from("dancer-photos")
-        .remove(paths);
-      assertSuccess(storageError, `remove storage objects for ${profile.slug}`);
-    }
-
-    const { error: userError } = await admin.auth.admin.deleteUser(profile.user_id);
-    assertSuccess(userError, `delete marked auth account for ${profile.slug}`);
+    await removeDatasetProfile(profile);
   }
 
   const remaining = await listDatasetProfiles();
@@ -253,7 +217,7 @@ async function approveSyntheticProfile(userId, definition) {
     .from("dancer_profiles")
     .update({
       approved_at: approvedAt,
-      bio: `[${DATASET_MARKER}] Synthetic layout-review profile. This is not a real dancer or work schedule.`,
+      bio: null,
       city: REVIEW_CITY,
       disabled_at: null,
       is_public: true,
@@ -276,14 +240,14 @@ async function upsertProfilePhotos(profile, definition, userId) {
   const expectedPaths = [];
 
   for (let photoIndex = 0; photoIndex < REVIEW_PHOTO_COUNT; photoIndex += 1) {
-    const storagePath = `${userId}/${profile.id}/${DATASET_MARKER}-${photoIndex + 1}.png`;
+    const storagePath = `${userId}/${profile.id}/${DATASET_MARKER}-${photoIndex + 1}.jpg`;
     expectedPaths.push(storagePath);
-    const buffer = await createReviewPortrait(definition, photoIndex);
+    const buffer = await createProfilePhoto(definition, photoIndex);
     const { error: uploadError } = await admin.storage
       .from("dancer-photos")
       .upload(storagePath, buffer, {
         cacheControl: "3600",
-        contentType: "image/png",
+        contentType: "image/jpeg",
         upsert: true,
       });
     assertSuccess(uploadError, `upload photo ${photoIndex + 1} for ${definition.slug}`);
@@ -296,7 +260,7 @@ async function upsertProfilePhotos(profile, definition, userId) {
     assertSuccess(readError, `read photo ${photoIndex + 1} for ${definition.slug}`);
 
     const photoValues = {
-      alt_text: `Synthetic layout-review artwork for ${definition.stageName}`,
+      alt_text: `${definition.stageName} profile photo ${photoIndex + 1}`,
       is_primary: photoIndex === 0,
       review_status: "approved",
       sort_order: photoIndex,
@@ -332,31 +296,29 @@ async function upsertProfilePhotos(profile, definition, userId) {
     .not("storage_path", "in", `(${expectedPaths.map(escapePostgrestValue).join(",")})`);
   assertSuccess(staleReadError, `read stale photos for ${definition.slug}`);
   if (staleRows?.length) {
-    throw new Error(`Refusing to replace unrecognized photos on ${definition.slug}.`);
+    const recognized = staleRows.filter((photo) =>
+      String(photo.storage_path || "").includes(`/${DATASET_MARKER}-`),
+    );
+    if (recognized.length !== staleRows.length) {
+      throw new Error(`Refusing to replace unrecognized photos on ${definition.slug}.`);
+    }
+    const staleIds = recognized.map((photo) => photo.id);
+    const stalePaths = recognized.map((photo) => String(photo.storage_path));
+    const { error: deleteError } = await admin
+      .from("dancer_photos")
+      .delete()
+      .in("id", staleIds);
+    assertSuccess(deleteError, `remove prior photos for ${definition.slug}`);
+    await removeStoragePaths(stalePaths);
   }
 }
 
-async function upsertProfileSocialLinks(profile, definition) {
-  const links = [
-    {
-      dancer_id: profile.id,
-      handle: `${definition.slug}_instagram`,
-      is_active: true,
-      platform: "instagram",
-      url: "https://www.instagram.com/",
-    },
-    {
-      dancer_id: profile.id,
-      handle: `${definition.slug}_tiktok`,
-      is_active: true,
-      platform: "tiktok",
-      url: "https://www.tiktok.com/",
-    },
-  ];
+async function removeProfileSocialLinks(profile, definition) {
   const { error } = await admin
     .from("social_links")
-    .upsert(links, { onConflict: "dancer_id,platform" });
-  assertSuccess(error, `upsert social links for ${definition.slug}`);
+    .delete()
+    .eq("dancer_id", profile.id);
+  assertSuccess(error, `remove temporary social links for ${definition.slug}`);
 }
 
 async function replaceProfileSchedule(profile, definition, venues) {
@@ -385,49 +347,6 @@ async function replaceProfileSchedule(profile, definition, venues) {
   assertSuccess(error, `insert upcoming shift for ${definition.slug}`);
 }
 
-async function createReviewPortrait(definition, photoIndex) {
-  const palette = PALETTES[(definition.index + photoIndex) % PALETTES.length];
-  const rotation = (definition.index * 17 + photoIndex * 23) % 360;
-  const initials = definition.stageName
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  const safeName = escapeXml(definition.stageName);
-  const svg = `
-    <svg width="900" height="1200" viewBox="0 0 900 1200" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="${palette[0]}"/>
-          <stop offset=".52" stop-color="${palette[1]}"/>
-          <stop offset="1" stop-color="#020204"/>
-        </linearGradient>
-        <radialGradient id="spotlight">
-          <stop offset="0" stop-color="${palette[2]}" stop-opacity=".78"/>
-          <stop offset="1" stop-color="${palette[2]}" stop-opacity="0"/>
-        </radialGradient>
-        <filter id="glow"><feGaussianBlur stdDeviation="18"/></filter>
-      </defs>
-      <rect width="900" height="1200" fill="url(#background)"/>
-      <circle cx="${180 + photoIndex * 260}" cy="${220 + definition.index * 11}" r="360" fill="url(#spotlight)" opacity=".54"/>
-      <path d="M-80 1060 L980 210" stroke="${palette[3]}" stroke-width="34" opacity=".16"/>
-      <path d="M-40 1170 L940 320" stroke="${palette[2]}" stroke-width="5" opacity=".75" filter="url(#glow)"/>
-      <g transform="translate(450 610) rotate(${rotation / 18 - 10})">
-        <ellipse cx="0" cy="-180" rx="166" ry="210" fill="#07070c" opacity=".92"/>
-        <circle cx="0" cy="-150" r="116" fill="${palette[3]}" opacity=".78"/>
-        <path d="M-185 250 C-160 40 -86 -12 0 -12 C86 -12 160 40 185 250 Z" fill="#08080e"/>
-        <path d="M-116 250 C-96 82 -52 36 0 36 C52 36 96 82 116 250 Z" fill="${palette[1]}" opacity=".92"/>
-      </g>
-      <circle cx="450" cy="580" r="290" fill="none" stroke="${palette[2]}" stroke-width="2" opacity=".46"/>
-      <text x="44" y="72" fill="#ffffff" opacity=".74" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="7">LAYOUT REVIEW</text>
-      <text x="44" y="1108" fill="#ffffff" font-family="Arial, sans-serif" font-size="68" font-weight="800">${initials}</text>
-      <text x="44" y="1160" fill="#ffffff" opacity=".74" font-family="Arial, sans-serif" font-size="24">${safeName} · ${photoIndex + 1}/${REVIEW_PHOTO_COUNT}</text>
-    </svg>
-  `;
-  return sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toBuffer();
-}
-
 async function listDatasetProfiles() {
   const { data, error } = await admin
     .from("dancer_profiles")
@@ -435,9 +354,54 @@ async function listDatasetProfiles() {
     .like("slug", `${PROFILE_PREFIX}%`)
     .order("slug", { ascending: true });
   assertSuccess(error, "list layout-review profiles");
-  return (data || []).filter((profile) =>
-    String(profile.bio || "").includes(DATASET_MARKER),
+  return data || [];
+}
+
+async function removeProfilesOutsideRequestedSet(requestedCount) {
+  const expectedSlugs = new Set(
+    Array.from({ length: requestedCount }, (_, index) => profileDefinition(index).slug),
   );
+  const profiles = await listDatasetProfiles();
+  for (const profile of profiles) {
+    if (!expectedSlugs.has(String(profile.slug || ""))) {
+      await removeDatasetProfile(profile);
+    }
+  }
+}
+
+async function removeDatasetProfile(profile) {
+  await assertMarkedDatasetAccount(profile);
+
+  const { data: photos, error: photoError } = await admin
+    .from("dancer_photos")
+    .select("storage_path")
+    .eq("dancer_id", profile.id);
+  assertSuccess(photoError, `read storage paths for ${profile.slug}`);
+
+  const paths = (photos || [])
+    .map((photo) => String(photo.storage_path || ""))
+    .filter(Boolean);
+  if (paths.some((path) => !path.includes(`/${DATASET_MARKER}-`))) {
+    throw new Error(`Refusing to delete unrecognized photos on ${profile.slug}.`);
+  }
+  await removeStoragePaths(paths);
+
+  const { error: userError } = await admin.auth.admin.deleteUser(profile.user_id);
+  assertSuccess(userError, `delete marked auth account for ${profile.slug}`);
+}
+
+async function assertMarkedDatasetAccount(profile) {
+  const { data, error } = await admin.auth.admin.getUserById(profile.user_id);
+  assertSuccess(error, `read auth account for ${profile.slug}`);
+  const user = data?.user;
+  const email = String(user?.email || "").toLowerCase();
+  if (
+    user?.user_metadata?.dataset_marker !== DATASET_MARKER ||
+    !email.startsWith(PROFILE_PREFIX) ||
+    !email.endsWith(`@${EMAIL_DOMAIN}`)
+  ) {
+    throw new Error(`Refusing to mutate unmarked auth account for ${profile.slug}.`);
+  }
 }
 
 async function listReviewVenues() {
@@ -569,12 +533,16 @@ async function removeStoragePaths(paths) {
 }
 
 function profileDefinition(index) {
+  const profile = PROFILE_DEFINITIONS[index];
+  if (!profile) {
+    throw new Error(`No supplied dancer profile exists at index ${index}.`);
+  }
   const ordinal = String(index + 1).padStart(2, "0");
   return {
+    ...profile,
     email: `${PROFILE_PREFIX}${ordinal}@${EMAIL_DOMAIN}`,
     index,
     slug: `${PROFILE_PREFIX}${ordinal}`,
-    stageName: STAGE_NAMES[index] || `Preview Dancer ${ordinal}`,
   };
 }
 
@@ -661,15 +629,6 @@ function assertSuccess(error, operation) {
   if (error) {
     throw new Error(`${operation} failed: ${error.message || "Unknown Supabase error"}`);
   }
-}
-
-function escapeXml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
 }
 
 function escapePostgrestValue(value) {
