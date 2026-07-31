@@ -30649,6 +30649,106 @@
           }
         }
 
+        /* Venue discovery uses the same scroll-card shell as dancer discovery. */
+        #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
+          position: relative;
+          min-width: 0 !important;
+          width: 100% !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          overflow: hidden;
+          border: 1px solid rgba(167,139,250,.3) !important;
+          border-radius: 16px !important;
+          color: #fff;
+          background: #0a0a0e;
+          box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 18px rgba(124,58,237,.1) !important;
+          contain: layout paint style;
+          isolation: isolate;
+        }
+        .home-venue-discovery-slide .home-venue-discovery-art {
+          position: relative;
+          z-index: 0;
+          inset: auto;
+          width: 100%;
+          height: auto;
+          min-height: 0;
+          aspect-ratio: 4 / 5;
+          background-position: center;
+          background-size: cover;
+        }
+        .home-venue-discovery-slide .home-venue-grid-copy {
+          position: relative;
+          z-index: 1;
+          inset: auto;
+          right: auto;
+          bottom: auto;
+          left: auto;
+          align-content: start;
+          justify-items: start;
+          gap: 7px;
+          padding: 11px 10px 12px;
+          pointer-events: none;
+        }
+        .home-venue-discovery-slide .home-venue-grid-copy > * {
+          pointer-events: auto;
+        }
+        .home-venue-discovery-slide .home-venue-discovery-name {
+          display: block;
+          max-height: none;
+          overflow: hidden;
+          font-size: clamp(15px,4.4vw,20px);
+          line-height: 1.05;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          -webkit-line-clamp: initial;
+        }
+        .home-venue-discovery-slide .home-venue-discovery-location {
+          font-size: 10px;
+          text-shadow: none;
+        }
+        .home-venue-discovery-slide .home-venue-discovery-hours,
+        .home-venue-discovery-slide .home-discovery-feed-status {
+          min-height: 25px;
+          padding: 0 8px;
+          font-size: 9px;
+        }
+        .home-venue-discovery-slide .home-venue-discovery-deal {
+          width: 100%;
+          min-height: 0;
+          padding: 7px 9px;
+          border-radius: 12px;
+        }
+        .home-venue-discovery-slide .home-venue-discovery-lineup {
+          width: 100%;
+        }
+        .home-venue-discovery-slide .home-discovery-feed-position {
+          top: 10px;
+          right: 10px;
+        }
+        .home-venue-grid-actions .home-venue-discovery-deal-action {
+          border-color: rgba(77,236,157,.72) !important;
+          background: linear-gradient(135deg,rgba(16,128,74,.96),rgba(7,92,77,.96)) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.42), 0 0 16px rgba(77,236,157,.16), inset 0 1px 0 rgba(255,255,255,.1) !important;
+        }
+        .home-venue-grid-actions .home-venue-discovery-context-actions {
+          position: relative;
+          z-index: auto;
+          inset: auto;
+          right: auto;
+          bottom: auto;
+          left: auto;
+          width: auto;
+        }
+        .home-venue-grid-actions .home-dancer-grid-context-actions:empty {
+          display: none;
+        }
+        @media (max-width: 679px) {
+          .home-venue-discovery-slide .home-venue-discovery-art {
+            aspect-ratio: 1 / 1;
+          }
+        }
+
         /* Keep the full profile closable and its final safety action reachable. */
         #profileBackdrop.modal-backdrop.show {
           z-index: 140 !important;
@@ -44497,7 +44597,7 @@
       const qrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue, "rail");
       const directionsMarkup = details.address
-        ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
+        ? `<a class="feed-card-action home-dancer-grid-directions home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
       const workingLabel = `${workingNow.length} working now`;
       const workingNowMarkup = workingNow.length
@@ -44510,29 +44610,30 @@
           ? `${safeName} featuring ${escapeHtml(visual.featuredProfile.name)}`
           : `${safeName} venue artwork`;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}" style="--venue-accent:${accent}">
-          <div class="home-venue-discovery-art${visual.attrs.className}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
+        <article class="venue home-discovery-feed-slide home-venue-discovery-slide home-profile-scroll-card" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}" style="--venue-accent:${accent}">
+          <div class="home-dancer-grid-photo home-venue-discovery-art${visual.attrs.className}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
             <span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>
           </div>
-          <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <span class="home-venue-discovery-kicker">Mydancr venue</span>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
-          <div class="home-discovery-feed-copy">
-            ${venueLineupMarkup(venue, city, { mobile: true })}
-            <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
-            <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
+          <div class="home-dancer-grid-copy home-discovery-feed-copy home-venue-grid-copy">
+            <h3 class="home-dancer-grid-name home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
+            <span class="home-dancer-grid-venue home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${hoursMarkup}${workingNowMarkup}</span>
+            ${venueLineupMarkup(venue, city, { mobile: true })}
             ${dealMarkup}
           </div>
-          <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
-            <button class="feed-card-action home-dancer-grid-profile-button" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Profile")}</button>
-            ${railQrMarkup}
-            <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
-            <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
-          </div>
-          <div class="home-venue-discovery-context-actions" aria-label="${safeName} primary actions">
-            ${qrMarkup}
-            ${directionsMarkup}
+          <div class="home-dancer-grid-actions home-venue-grid-actions" aria-label="${safeName} actions">
+            <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail">
+              <button class="feed-card-action home-dancer-grid-profile-button" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Profile")}</button>
+              ${railQrMarkup}
+              <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
+              <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
+            </div>
+            <div class="home-dancer-grid-context-actions home-venue-discovery-context-actions" aria-label="${safeName} primary actions">
+              ${qrMarkup}
+              ${directionsMarkup}
+            </div>
           </div>
         </article>
       `;

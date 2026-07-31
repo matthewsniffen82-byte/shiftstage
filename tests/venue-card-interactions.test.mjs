@@ -40,6 +40,10 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
+    /home-dancer-grid-actions home-venue-grid-actions[\s\S]*?home-dancer-grid-action-rail home-venue-discovery-action-rail[\s\S]*?home-dancer-grid-profile-button[\s\S]*?home-dancer-grid-context-actions home-venue-discovery-context-actions/,
+  );
+  assert.match(
+    venueSwipeRenderer,
     /homeVenueDiscoveryQrMarkup\(venue, "rail"\)[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow/,
   );
   assert.match(
