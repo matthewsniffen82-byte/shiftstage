@@ -449,7 +449,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: #6680ff[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(103,52,255,.58\)[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(45,171,255,.32\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: #7650ff[\s\S]*?--home-nav-accent-soft: #aaa0d8[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(92,24,255,.68\)[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(46,101,255,.22\)[\s\S]*?--home-nav-icon-rest-magenta-glow: rgba\(218,56,255,.12\)/,
   );
   assert.match(
     homeSource,
@@ -457,15 +457,15 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important[\s\S]*?border-radius: 999px !important[\s\S]*?color: #fff !important[\s\S]*?rgba\(57,84,255,.62\)[\s\S]*?rgba\(111,46,255,.34\)[\s\S]*?box-shadow: 0 0 16px rgba\(67,101,255,.48\) !important[\s\S]*?filter: none !important/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important[\s\S]*?border-radius: 999px !important[\s\S]*?color: #fff !important[\s\S]*?rgba\(74,0,255,.74\)[\s\S]*?rgba\(118,16,255,.48\)[\s\S]*?0 0 12px rgba\(90,22,255,.62\)[\s\S]*?0 0 20px rgba\(43,92,255,.3\)[\s\S]*?0 0 24px rgba\(218,56,255,.1\) !important[\s\S]*?filter: none !important/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-magenta-blur\) var\(--home-nav-icon-magenta-glow\)\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-label,[\s\S]*?color: #fff[\s\S]*?var\(--home-nav-hero-white-glow\)[\s\S]*?var\(--home-nav-hero-violet-glow\)[\s\S]*?var\(--home-nav-hero-cyan-glow\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-label,[\s\S]*?color: #fff[\s\S]*?var\(--home-nav-hero-white-glow\)[\s\S]*?var\(--home-nav-hero-violet-glow\)[\s\S]*?var\(--home-nav-hero-cyan-glow\)[\s\S]*?var\(--home-nav-hero-magenta-glow\)/,
   );
   assert.match(
     homeSource,

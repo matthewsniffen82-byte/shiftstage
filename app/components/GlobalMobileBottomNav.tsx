@@ -458,20 +458,26 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a {
-            --mobile-nav-accent: #6680ff;
-            --mobile-nav-accent-soft: #c7d2fe;
-            --mobile-nav-accent-glow: rgba(77, 109, 255, 0.62);
-            --mobile-nav-hero-white-glow: rgba(255, 255, 255, 0.9);
-            --mobile-nav-hero-violet-glow: rgba(104, 48, 255, 0.82);
-            --mobile-nav-hero-cyan-glow: rgba(40, 180, 255, 0.58);
+            --mobile-nav-accent: #7650ff;
+            --mobile-nav-accent-soft: #aaa0d8;
+            --mobile-nav-accent-glow: rgba(91, 28, 255, 0.4);
+            --mobile-nav-accent-magenta-glow: rgba(218, 56, 255, 0.14);
+            --mobile-nav-hero-white-glow: rgba(255, 255, 255, 0.94);
+            --mobile-nav-hero-violet-glow: rgba(82, 10, 255, 0.92);
+            --mobile-nav-hero-cyan-glow: rgba(43, 92, 255, 0.36);
+            --mobile-nav-hero-magenta-glow: rgba(218, 56, 255, 0.2);
             --mobile-nav-icon-rest-violet-blur: 1.5px;
             --mobile-nav-icon-rest-cyan-blur: 3px;
-            --mobile-nav-icon-rest-violet-glow: rgba(103, 52, 255, 0.58);
-            --mobile-nav-icon-rest-cyan-glow: rgba(45, 171, 255, 0.32);
+            --mobile-nav-icon-rest-magenta-blur: 1px;
+            --mobile-nav-icon-rest-violet-glow: rgba(92, 24, 255, 0.68);
+            --mobile-nav-icon-rest-cyan-glow: rgba(46, 101, 255, 0.22);
+            --mobile-nav-icon-rest-magenta-glow: rgba(218, 56, 255, 0.12);
             --mobile-nav-icon-violet-blur: 2.4px;
             --mobile-nav-icon-cyan-blur: 5px;
-            --mobile-nav-icon-violet-glow: rgba(92, 54, 255, 0.92);
-            --mobile-nav-icon-cyan-glow: rgba(48, 180, 255, 0.58);
+            --mobile-nav-icon-magenta-blur: 1.6px;
+            --mobile-nav-icon-violet-glow: rgba(91, 19, 255, 0.96);
+            --mobile-nav-icon-cyan-glow: rgba(50, 105, 255, 0.38);
+            --mobile-nav-icon-magenta-glow: rgba(218, 54, 255, 0.2);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -492,7 +498,7 @@ export function GlobalMobileBottomNav() {
             text-decoration: none;
             text-shadow:
               0 0 5px var(--mobile-nav-accent-glow),
-              0 0 9px rgba(124, 58, 237, 0.17);
+              0 0 9px var(--mobile-nav-accent-magenta-glow);
             touch-action: manipulation;
             transition:
               color 180ms ease,
@@ -532,19 +538,23 @@ export function GlobalMobileBottomNav() {
             text-shadow:
               0 0 3px var(--mobile-nav-hero-white-glow),
               0 0 8px var(--mobile-nav-hero-violet-glow),
-              0 0 14px var(--mobile-nav-hero-cyan-glow);
+              0 0 14px var(--mobile-nav-hero-cyan-glow),
+              0 0 18px var(--mobile-nav-hero-magenta-glow);
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
-            border: 1px solid rgba(255, 255, 255, 0.24);
+            border: 1px solid rgba(255, 255, 255, 0.28);
             border-radius: 999px;
             color: #fff;
             background: linear-gradient(
               145deg,
-              rgba(57, 84, 255, 0.62),
-              rgba(111, 46, 255, 0.34)
+              rgba(74, 0, 255, 0.74),
+              rgba(118, 16, 255, 0.48)
             );
-            box-shadow: 0 0 16px rgba(67, 101, 255, 0.48);
+            box-shadow:
+              0 0 12px rgba(90, 22, 255, 0.62),
+              0 0 20px rgba(43, 92, 255, 0.3),
+              0 0 24px rgba(218, 56, 255, 0.1);
             filter: none;
             transform: translateY(-2px) scale(1.08);
           }
@@ -568,15 +578,18 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.tv-destination.active
             .global-mobile-nav-icon {
-            border: 1px solid rgba(255, 255, 255, 0.24);
+            border: 1px solid rgba(255, 255, 255, 0.28);
             border-radius: 999px;
             color: #fff;
             background: linear-gradient(
               145deg,
-              rgba(57, 84, 255, 0.62),
-              rgba(111, 46, 255, 0.34)
+              rgba(74, 0, 255, 0.74),
+              rgba(118, 16, 255, 0.48)
             );
-            box-shadow: 0 0 16px rgba(67, 101, 255, 0.48);
+            box-shadow:
+              0 0 12px rgba(90, 22, 255, 0.62),
+              0 0 20px rgba(43, 92, 255, 0.3),
+              0 0 24px rgba(218, 56, 255, 0.1);
             filter: none;
           }
 
@@ -592,6 +605,10 @@ export function GlobalMobileBottomNav() {
               drop-shadow(
                 0 0 var(--mobile-nav-icon-rest-cyan-blur)
                   var(--mobile-nav-icon-rest-cyan-glow)
+              )
+              drop-shadow(
+                0 0 var(--mobile-nav-icon-rest-magenta-blur)
+                  var(--mobile-nav-icon-rest-magenta-glow)
               );
             stroke: currentColor;
             stroke-width: 2;
@@ -609,6 +626,10 @@ export function GlobalMobileBottomNav() {
               drop-shadow(
                 0 0 var(--mobile-nav-icon-cyan-blur)
                   var(--mobile-nav-icon-cyan-glow)
+              )
+              drop-shadow(
+                0 0 var(--mobile-nav-icon-magenta-blur)
+                  var(--mobile-nav-icon-magenta-glow)
               );
           }
 
@@ -650,7 +671,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav
             a.tv-destination.active
             .mydancr-tv-r {
-            stroke: #9fe7ff;
+            stroke: #e1a7ff;
           }
 
           @media (prefers-reduced-motion: reduce) {

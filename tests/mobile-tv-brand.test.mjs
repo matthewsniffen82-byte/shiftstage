@@ -16,7 +16,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
       source,
       /mydancr-tv-mark[\s\S]*?mydancr-tv-play[\s\S]*?mydancr-tv-r/,
     );
-    assert.match(source, /active[\s\S]*?stroke:\s*#9fe7ff/);
+    assert.match(source, /active[\s\S]*?stroke:\s*#e1a7ff/);
     assert.match(source, /mydancr-tv-mark[\s\S]*?width:\s*24px(?:\s*!important)?;[\s\S]*?height:\s*24px(?:\s*!important)?;/);
     assert.match(source, /mydancr-tv-play[\s\S]*?transform:\s*scale\(1\.12\)/);
     assert.match(source, /mydancr-tv-r[\s\S]*?stroke-width:\s*2;[\s\S]*?transform:\s*scale\(1\.12\)/);
@@ -24,7 +24,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   }
   assert.match(
     globalNavigation,
-    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: #6680ff/,
+    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: #7650ff/,
   );
   assert.match(
     globalNavigation,
@@ -32,7 +32,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   );
   assert.match(
     globalNavigation,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid[\s\S]*?color: #fff[\s\S]*?box-shadow: 0 0 16px rgba\(67, 101, 255, 0\.48\);[\s\S]*?filter: none;/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid[\s\S]*?color: #fff[\s\S]*?0 0 12px rgba\(90, 22, 255, 0\.62\)[\s\S]*?0 0 20px rgba\(43, 92, 255, 0\.3\)[\s\S]*?0 0 24px rgba\(218, 56, 255, 0\.1\);[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
@@ -48,11 +48,11 @@ test("homepage active TV state keeps its emphasis controlled", () => {
 
   assert.match(
     activeTvRule,
-    /box-shadow: 0 0 16px rgba\(67,101,255,.48\) !important;[\s\S]*?filter: none !important;/,
+    /box-shadow: 0 0 12px rgba\(90,22,255,.62\),0 0 20px rgba\(43,92,255,.3\),0 0 24px rgba\(218,56,255,.1\) !important;[\s\S]*?filter: none !important;/,
   );
-  assert.doesNotMatch(activeTvRule, /drop-shadow|0 0 (?:20|28)px/);
+  assert.doesNotMatch(activeTvRule, /drop-shadow|0 0 (?:28|32)px/);
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-magenta-blur\) var\(--home-nav-icon-magenta-glow\)\)/,
   );
 });

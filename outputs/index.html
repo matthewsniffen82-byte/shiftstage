@@ -30347,20 +30347,26 @@
           }
           #discoveryTabs .tab,
           #discoveryTabs .home-bottom-tv {
-            --home-nav-accent: #6680ff;
-            --home-nav-accent-soft: #c7d2fe;
-            --home-nav-accent-glow: rgba(77,109,255,.62);
-            --home-nav-hero-white-glow: rgba(255,255,255,.9);
-            --home-nav-hero-violet-glow: rgba(104,48,255,.82);
-            --home-nav-hero-cyan-glow: rgba(40,180,255,.58);
+            --home-nav-accent: #7650ff;
+            --home-nav-accent-soft: #aaa0d8;
+            --home-nav-accent-glow: rgba(91,28,255,.4);
+            --home-nav-accent-magenta-glow: rgba(218,56,255,.14);
+            --home-nav-hero-white-glow: rgba(255,255,255,.94);
+            --home-nav-hero-violet-glow: rgba(82,10,255,.92);
+            --home-nav-hero-cyan-glow: rgba(43,92,255,.36);
+            --home-nav-hero-magenta-glow: rgba(218,56,255,.2);
             --home-nav-icon-rest-violet-blur: 1.5px;
             --home-nav-icon-rest-cyan-blur: 3px;
-            --home-nav-icon-rest-violet-glow: rgba(103,52,255,.58);
-            --home-nav-icon-rest-cyan-glow: rgba(45,171,255,.32);
+            --home-nav-icon-rest-magenta-blur: 1px;
+            --home-nav-icon-rest-violet-glow: rgba(92,24,255,.68);
+            --home-nav-icon-rest-cyan-glow: rgba(46,101,255,.22);
+            --home-nav-icon-rest-magenta-glow: rgba(218,56,255,.12);
             --home-nav-icon-violet-blur: 2.4px;
             --home-nav-icon-cyan-blur: 5px;
-            --home-nav-icon-violet-glow: rgba(92,54,255,.92);
-            --home-nav-icon-cyan-glow: rgba(48,180,255,.58);
+            --home-nav-icon-magenta-blur: 1.6px;
+            --home-nav-icon-violet-glow: rgba(91,19,255,.96);
+            --home-nav-icon-cyan-glow: rgba(50,105,255,.38);
+            --home-nav-icon-magenta-glow: rgba(218,54,255,.2);
             position: relative !important;
             width: 100% !important;
             height: 57px !important;
@@ -30428,19 +30434,19 @@
             filter: none !important;
           }
           #discoveryTabs .tab.active .home-nav-icon {
-            border: 1px solid rgba(255,255,255,.24) !important;
+            border: 1px solid rgba(255,255,255,.28) !important;
             border-radius: 999px !important;
             color: #fff !important;
-            background: linear-gradient(145deg,rgba(57,84,255,.62),rgba(111,46,255,.34)) !important;
-            box-shadow: 0 0 16px rgba(67,101,255,.48) !important;
+            background: linear-gradient(145deg,rgba(74,0,255,.74),rgba(118,16,255,.48)) !important;
+            box-shadow: 0 0 12px rgba(90,22,255,.62),0 0 20px rgba(43,92,255,.3),0 0 24px rgba(218,56,255,.1) !important;
             filter: none !important;
             transform: translateY(-2px) scale(1.08);
           }
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon {
-            border: 1px solid rgba(255,255,255,.24) !important;
+            border: 1px solid rgba(255,255,255,.28) !important;
             border-radius: 999px !important;
-            background: linear-gradient(145deg,rgba(57,84,255,.62),rgba(111,46,255,.34)) !important;
-            box-shadow: 0 0 16px rgba(67,101,255,.48) !important;
+            background: linear-gradient(145deg,rgba(74,0,255,.74),rgba(118,16,255,.48)) !important;
+            box-shadow: 0 0 12px rgba(90,22,255,.62),0 0 20px rgba(43,92,255,.3),0 0 24px rgba(218,56,255,.1) !important;
             filter: none !important;
             transform: translateY(-2px) scale(1.08);
           }
@@ -30451,7 +30457,8 @@
             fill: none;
             filter:
               drop-shadow(0 0 var(--home-nav-icon-rest-violet-blur) var(--home-nav-icon-rest-violet-glow))
-              drop-shadow(0 0 var(--home-nav-icon-rest-cyan-blur) var(--home-nav-icon-rest-cyan-glow));
+              drop-shadow(0 0 var(--home-nav-icon-rest-cyan-blur) var(--home-nav-icon-rest-cyan-glow))
+              drop-shadow(0 0 var(--home-nav-icon-rest-magenta-blur) var(--home-nav-icon-rest-magenta-glow));
             stroke: currentColor;
             stroke-width: 2;
             stroke-linecap: round;
@@ -30462,7 +30469,8 @@
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon .mydancr-tv-mark {
             filter:
               drop-shadow(0 0 var(--home-nav-icon-violet-blur) var(--home-nav-icon-violet-glow))
-              drop-shadow(0 0 var(--home-nav-icon-cyan-blur) var(--home-nav-icon-cyan-glow));
+              drop-shadow(0 0 var(--home-nav-icon-cyan-blur) var(--home-nav-icon-cyan-glow))
+              drop-shadow(0 0 var(--home-nav-icon-magenta-blur) var(--home-nav-icon-magenta-glow));
           }
           #discoveryTabs .tab-count {
             position: absolute;
@@ -30489,7 +30497,7 @@
             text-shadow:
               0 1px 2px rgba(0,0,0,.96),
               0 0 8px var(--home-nav-accent-glow),
-              0 0 12px rgba(124,58,237,.2);
+              0 0 12px var(--home-nav-accent-magenta-glow);
             white-space: nowrap;
             pointer-events: none;
             transform: none !important;
@@ -30513,7 +30521,7 @@
             color: var(--home-nav-accent-soft);
             text-shadow:
               0 0 5px var(--home-nav-accent-glow),
-              0 0 9px rgba(124,58,237,.17);
+              0 0 9px var(--home-nav-accent-magenta-glow);
             transition:
               color 180ms ease,
               text-shadow 180ms ease;
@@ -30548,7 +30556,8 @@
             text-shadow:
               0 0 3px var(--home-nav-hero-white-glow),
               0 0 8px var(--home-nav-hero-violet-glow),
-              0 0 14px var(--home-nav-hero-cyan-glow);
+              0 0 14px var(--home-nav-hero-cyan-glow),
+              0 0 18px var(--home-nav-hero-magenta-glow);
           }
           .home-bottom-tv-icon {
             width: 30px !important;
@@ -30600,7 +30609,7 @@
             transition: stroke 180ms ease;
           }
           #discoveryTabs .home-bottom-tv.active .mydancr-tv-r {
-            stroke: #9fe7ff;
+            stroke: #e1a7ff;
           }
           #results.card-grid {
             grid-template-columns: minmax(0, 1fr) !important;
