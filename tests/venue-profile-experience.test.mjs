@@ -39,7 +39,7 @@ test("the canonical in-app venue page keeps live data, planning details, and pro
   assert.match(venueDetail, /Other \$\{city\} venues/);
 });
 
-test("venue profiles open as dismissible full-screen sheets above the locked page and below the floating navigation", () => {
+test("venue profiles match dancer profiles as X-only full-screen sheets above the locked page", () => {
   assert.match(
     liveApp,
     /<div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
@@ -50,15 +50,23 @@ test("venue profiles open as dismissible full-screen sheets above the locked pag
   );
   assert.match(
     liveApp,
-    /#results\.venue-profile-overlay \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 80;[\s\S]*?height: 100dvh !important;[\s\S]*?overflow-y: auto !important;[\s\S]*?overflow-anchor: none !important;/,
+    /#results\.venue-profile-overlay \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 140;[\s\S]*?height: 100dvh !important;[\s\S]*?overflow-y: auto !important;[\s\S]*?overflow-anchor: none !important;/,
   );
   assert.match(
     liveApp,
-    /body\.venue-full-view-open #discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 90 !important;/,
+    /body\.venue-full-view-open #discoveryTabs \{[\s\S]*?visibility: hidden !important;[\s\S]*?pointer-events: none !important;/,
   );
   assert.match(
     liveApp,
-    /function closeVenueProfile\(\) \{[\s\S]*?selectedVenueName = null;[\s\S]*?syncHomeDestinationLocation\("venues"\);[\s\S]*?render\(\);/,
+    /#results\.venue-profile-overlay \{[\s\S]*?max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?max\(16px, env\(safe-area-inset-bottom, 0px\)\);/,
+  );
+  assert.doesNotMatch(
+    liveApp,
+    /body\.venue-full-view-open #discoveryTabs \{[^}]*position: fixed !important;/,
+  );
+  assert.match(
+    liveApp,
+    /function closeVenueProfile\(\) \{[\s\S]*?selectedVenueName = null;[\s\S]*?item\.setAttribute\("aria-current", isActive \? "page" : "false"\);[\s\S]*?syncHomeDestinationLocation\("venues"\);[\s\S]*?render\(\);/,
   );
   assert.match(
     liveApp,

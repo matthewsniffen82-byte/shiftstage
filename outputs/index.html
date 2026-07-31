@@ -30704,8 +30704,7 @@
           }
         }
 
-        /* Venue profiles use the same full-screen dismissal model as dancer profiles
-           while keeping the primary discovery navigation available. */
+        /* Venue profiles use the same X-only full-screen dismissal model as dancer profiles. */
         body.venue-full-view-open {
           overflow: hidden !important;
           overscroll-behavior: none !important;
@@ -30716,9 +30715,13 @@
           display: none !important;
           pointer-events: none !important;
         }
+        body.venue-full-view-open #discoveryTabs {
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
         #results.venue-profile-overlay {
           position: fixed !important;
-          z-index: 80;
+          z-index: 140;
           inset: 0;
           width: 100vw !important;
           max-width: none !important;
@@ -30727,7 +30730,7 @@
           padding:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
             max(12px, calc((100vw - 760px) / 2))
-            calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+            max(16px, env(safe-area-inset-bottom, 0px)) !important;
           display: block !important;
           overflow-x: hidden !important;
           overflow-y: auto !important;
@@ -30735,7 +30738,7 @@
           overscroll-behavior-y: contain;
           scroll-padding-block:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
-            calc(92px + env(safe-area-inset-bottom, 0px));
+            max(16px, env(safe-area-inset-bottom, 0px));
           touch-action: pan-y;
           -webkit-overflow-scrolling: touch;
           background:
@@ -30758,77 +30761,14 @@
         }
         .venue-detail-close {
           position: fixed !important;
-          z-index: 86 !important;
-          top: var(--dancr-floating-control-top) !important;
+          z-index: 221 !important;
+          top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
           right: max(12px, calc((100vw - 720px) / 2 + 12px)) !important;
           width: 52px !important;
           min-height: 52px !important;
           pointer-events: auto !important;
           touch-action: manipulation !important;
           -webkit-tap-highlight-color: transparent;
-        }
-        body.venue-full-view-open #discoveryTabs {
-          position: fixed !important;
-          z-index: 90 !important;
-          left: 50% !important;
-          bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
-          width: min(calc(100% - 16px), 700px) !important;
-          min-height: 64px;
-          margin: 0 !important;
-          transform: translateX(-50%);
-        }
-        @media (min-width: 721px) {
-          body.venue-full-view-open #discoveryTabs {
-            height: 64px;
-            display: grid !important;
-            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-            align-items: center;
-            gap: 4px;
-            padding: 5px !important;
-            overflow: visible;
-            border: 1px solid rgba(255,255,255,.16);
-            border-radius: 23px;
-            background:
-              linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.02) 44%, transparent),
-              rgba(7,7,12,.9);
-            box-shadow: 0 18px 44px rgba(0,0,0,.58), 0 0 24px rgba(124,58,237,.15);
-            backdrop-filter: blur(26px) saturate(1.65);
-          }
-          body.venue-full-view-open #discoveryTabs .tab,
-          body.venue-full-view-open #discoveryTabs .home-bottom-tv {
-            min-width: 0;
-            min-height: 52px;
-            display: grid !important;
-            grid-template-rows: 24px auto;
-            place-items: center;
-            gap: 2px;
-            padding: 3px 2px !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
-          }
-          body.venue-full-view-open #discoveryTabs .home-nav-icon,
-          body.venue-full-view-open #discoveryTabs .home-bottom-tv-icon {
-            display: grid;
-            width: 25px;
-            height: 25px;
-            place-items: center;
-          }
-          body.venue-full-view-open #discoveryTabs .home-nav-icon svg,
-          body.venue-full-view-open #discoveryTabs .home-bottom-tv svg {
-            width: 25px;
-            height: 25px;
-          }
-          body.venue-full-view-open #discoveryTabs .tab-count {
-            display: none;
-          }
-          body.venue-full-view-open #discoveryTabs .home-nav-label,
-          body.venue-full-view-open #discoveryTabs .home-bottom-tv > span:last-child {
-            color: #fff;
-            font-size: 11px;
-            font-weight: 900;
-          }
         }
       </style>
 
@@ -45489,7 +45429,13 @@
       deactivateHomeDiscoveryFeed();
       selectedVenueName = venue.name;
       activeTab = "venues";
-      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+      document.querySelectorAll(".tab").forEach((item) => {
+        const isActive = item.dataset.tab === "venues";
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-current", isActive ? "page" : "false");
+      });
+      homeBottomTv?.classList.toggle("active", false);
+      homeBottomTv?.setAttribute("aria-current", "false");
       const url = new URL(window.location.href);
       url.searchParams.set("city", citySelect.value);
       url.searchParams.set("venue", venue.slug || slugify(venue.name));
@@ -45523,7 +45469,13 @@
       selectedVenueName = null;
       activeTab = "venues";
       homeDiscoveryFeedOpen = homeDiscoveryFeedUsesInlineLayout();
-      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+      document.querySelectorAll(".tab").forEach((item) => {
+        const isActive = item.dataset.tab === "venues";
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-current", isActive ? "page" : "false");
+      });
+      homeBottomTv?.classList.toggle("active", false);
+      homeBottomTv?.setAttribute("aria-current", "false");
       syncHomeDestinationLocation("venues");
       render();
       requestAnimationFrame(() => {
