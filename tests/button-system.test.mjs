@@ -54,7 +54,7 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
   );
   assert.match(
     buttonCss,
-    /:focus-visible[\s\S]*?outline: 2px solid var\(--dancr-color-brand-primary\)/,
+    /:focus-visible[\s\S]*?outline: 2px solid var\(--dancr-color-beam-violet\)/,
   );
   assert.match(buttonCss, /:disabled,[\s\S]*?cursor: not-allowed/);
   assert.match(buttonCss, /@media \(prefers-reduced-motion: reduce\)/);
@@ -77,6 +77,10 @@ test("venue-card QR revenue actions use the semantic emerald success treatment",
     buttonCss,
     /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:active \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important/,
   );
+  assert.match(
+    buttonCss,
+    /\[data-feed-venue-qr\],[\s\S]*?\.home-venue-discovery-deal-action[\s\S]*?:focus-visible \{[\s\S]*?outline-color: var\(--dancr-color-success\)[\s\S]*?0 0 0 4px var\(--dancr-color-success-medium\)/,
+  );
 });
 
 test("profile media thumbnails and play controls retain their gallery-specific shapes", () => {
@@ -86,7 +90,7 @@ test("profile media thumbnails and play controls retain their gallery-specific s
   );
   assert.match(
     buttonCss,
-    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?0 0 0 5px var\(--dancr-color-brand-primary-strong\)/,
+    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: var\(--dancr-color-beam-violet\) !important;[\s\S]*?0 0 0 5px var\(--dancr-color-beam-violet-medium\)[\s\S]*?var\(--dancr-shadow-beam-active\)/,
   );
   assert.match(
     buttonCss,

@@ -700,8 +700,8 @@ body > .app main.stack > #results :is(
   .tv-card-venue-line,
   .tv-playback-retry
 ):focus-visible {
-  border-color: var(--dancr-color-brand-primary) !important;
-  outline-color: var(--dancr-color-brand-primary) !important;
+  border-color: var(--dancr-color-beam-violet-medium) !important;
+  outline-color: var(--dancr-color-beam-violet) !important;
   box-shadow: var(--dancr-focus-ring) !important;
 }
 
@@ -711,11 +711,58 @@ body > .app main.stack > #results :is(
 
 .public-profile-shell .profile-media-tabs button.active,
 .tv-shell .tv-filters button.active {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-beam-violet-medium) !important;
   color: var(--dancr-color-text-primary) !important;
-  background: var(--dancr-color-brand-primary) !important;
-  box-shadow: var(--dancr-shadow-brand-subtle) !important;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--dancr-color-beam-violet) 62%, var(--dancr-color-surface)),
+      color-mix(in srgb, var(--dancr-color-beam-blue) 34%, var(--dancr-color-surface))
+    ) !important;
+  box-shadow: var(--dancr-shadow-beam-active) !important;
   text-shadow: none !important;
+}
+
+/* The hero beam is a state signal, reserved for active, selected, and keyboard-focused UI. */
+.home-filter-toggle[aria-expanded="true"],
+#profileBackdrop .profile-modal-media-tabs button.active,
+#profileBackdrop .gallery .thumb.active,
+.profile-tv-viewer-gallery button.active,
+.public-profile-shell .profile-media-grid-item.active {
+  border-color: var(--dancr-color-beam-violet-medium) !important;
+  outline-color: var(--dancr-color-beam-violet-medium) !important;
+  box-shadow: var(--dancr-shadow-beam-active) !important;
+}
+
+.home-filter-toggle[aria-expanded="true"],
+#profileBackdrop .profile-modal-media-tabs button.active {
+  color: var(--dancr-color-text-primary) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(91, 19, 255, 0.48),
+      rgba(52, 110, 255, 0.24)
+    ) !important;
+}
+
+:is(
+  .home-dancer-grid-link,
+  .home-feed-card .dancer-card-link,
+  .profile-modal .modal-image,
+  .profile-photo-viewer-image,
+  .public-profile-shell .profile-media-feature
+):focus-visible {
+  outline: 2px solid var(--dancr-color-beam-violet) !important;
+  outline-offset: 3px !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+@supports selector(:has(*)) {
+  #results.home-dancer-grid > .home-dancer-grid-card:has(:focus-visible),
+  #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide:has(:focus-visible) {
+    border-color: var(--dancr-color-beam-violet-medium) !important;
+    box-shadow: var(--dancr-shadow-beam-card) !important;
+  }
 }
 
 .public-profile-shell :is(.profile-live-state, .profile-working-head .eyebrow),

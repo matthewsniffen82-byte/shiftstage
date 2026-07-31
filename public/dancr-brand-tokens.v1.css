@@ -15,6 +15,12 @@
   --dancr-color-brand-primary-medium: rgba(124, 58, 237, 0.34);
   --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
 
+  --dancr-color-beam-violet: #985fff;
+  --dancr-color-beam-violet-medium: rgba(152, 95, 255, 0.58);
+  --dancr-color-beam-violet-soft: rgba(91, 19, 255, 0.24);
+  --dancr-color-beam-blue: #346eff;
+  --dancr-color-beam-blue-soft: rgba(52, 110, 255, 0.18);
+
   --dancr-color-text-primary: #f8fafc;
   --dancr-color-text-secondary: #cbd5e1;
   --dancr-color-text-muted: #94a3b8;
@@ -64,5 +70,16 @@
   --dancr-shadow-brand-control:
     0 14px 32px rgba(5, 5, 7, 0.42),
     0 0 20px rgba(124, 58, 237, 0.24);
-  --dancr-focus-ring: 0 0 0 3px rgba(124, 58, 237, 0.3);
+  --dancr-shadow-beam-active:
+    0 0 10px var(--dancr-color-beam-violet-medium),
+    0 0 22px var(--dancr-color-beam-violet-soft),
+    0 0 32px var(--dancr-color-beam-blue-soft);
+  --dancr-shadow-beam-card:
+    0 18px 44px rgba(5, 5, 7, 0.48),
+    0 0 18px rgba(152, 95, 255, 0.28),
+    0 0 30px rgba(52, 110, 255, 0.14);
+  --dancr-focus-ring:
+    0 0 0 2px var(--dancr-color-background),
+    0 0 0 4px var(--dancr-color-beam-violet-medium),
+    0 0 18px var(--dancr-color-beam-violet-soft);
 }

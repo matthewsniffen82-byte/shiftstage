@@ -204,10 +204,11 @@
 }
 
 .dancr-button-system .public-media-thumbnail.is-selected {
-  border-color: var(--dancr-color-brand-primary) !important;
+  border-color: var(--dancr-color-beam-violet) !important;
   box-shadow:
     0 0 0 3px var(--dancr-color-background),
-    0 0 0 5px var(--dancr-color-brand-primary-strong) !important;
+    0 0 0 5px var(--dancr-color-beam-violet-medium),
+    var(--dancr-shadow-beam-active) !important;
 }
 
 .dancr-button-system .public-profile-play {
@@ -241,11 +242,27 @@
   .profile-status-links a,
   .empty-state a
 ):focus-visible {
-  outline: 2px solid var(--dancr-color-brand-primary) !important;
+  outline: 2px solid var(--dancr-color-beam-violet) !important;
   outline-offset: 3px !important;
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-beam-violet-medium) !important;
   box-shadow:
     var(--dancr-focus-ring),
+    var(--dancr-action-shadow) !important;
+}
+
+.dancr-button-system :is(
+  [data-feed-venue-qr],
+  [data-club-deal-cta],
+  .venue-qr-launcher,
+  .home-discovery-feed-qr-prompt,
+  .home-venue-discovery-deal-action
+):focus-visible {
+  outline-color: var(--dancr-color-success) !important;
+  border-color: var(--dancr-color-success-strong) !important;
+  box-shadow:
+    0 0 0 2px var(--dancr-color-background),
+    0 0 0 4px var(--dancr-color-success-medium),
+    0 0 20px var(--dancr-color-success-soft),
     var(--dancr-action-shadow) !important;
 }
 

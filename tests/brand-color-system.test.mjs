@@ -34,6 +34,8 @@ const [
 
 const requiredTokens = new Map([
   ["--dancr-color-brand-primary", "#7c3aed"],
+  ["--dancr-color-beam-violet", "#985fff"],
+  ["--dancr-color-beam-blue", "#346eff"],
   ["--dancr-color-text-primary", "#f8fafc"],
   ["--dancr-color-background", "#050507"],
   ["--dancr-color-surface", "#111118"],
@@ -146,17 +148,26 @@ test("the shared palette does not target the frozen navigation systems", () => {
   }
 });
 
-test("primary controls and selected tabs alone receive the shared violet glow", () => {
+test("the beam glow is reserved for active, selected, and keyboard-focused UI", () => {
   assert.match(
     buttons,
     /button\[type="submit"\][\s\S]*?var\(--dancr-shadow-brand-control\)/,
   );
+  assert.match(tokens, /--dancr-shadow-beam-active:[\s\S]*?--dancr-shadow-beam-card:/);
   assert.match(
     aesthetic,
-    /\.profile-media-tabs button\.active,[\s\S]*?var\(--dancr-shadow-brand-subtle\)/,
+    /\.profile-media-tabs button\.active,[\s\S]*?var\(--dancr-shadow-beam-active\)/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-filter-toggle\[aria-expanded="true"\],[\s\S]*?#profileBackdrop \.gallery \.thumb\.active,[\s\S]*?\.profile-media-grid-item\.active[\s\S]*?var\(--dancr-shadow-beam-active\)/,
+  );
+  assert.match(
+    aesthetic,
+    /@supports selector\(:has\(\*\)\)[\s\S]*?\.home-dancer-grid-card:has\(:focus-visible\)[\s\S]*?\.home-venue-discovery-slide:has\(:focus-visible\)[\s\S]*?var\(--dancr-shadow-beam-card\)/,
   );
   assert.doesNotMatch(
     aesthetic,
-    /\.tv-verified-mark[\s\S]{0,500}var\(--dancr-shadow-brand-subtle\)/,
+    /\.tv-verified-mark[\s\S]{0,500}var\(--dancr-shadow-beam-active\)/,
   );
 });
