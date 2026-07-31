@@ -33346,8 +33346,10 @@
     let homeTvFeedViewportFrame = 0;
     let homeTvFeedViewportWidth = 0;
     let homeTvFeedViewportHeight = 0;
-    let homeTvFeedFullscreenPending = false;
-    let homeTvFeedOwnsFullscreen = false;
+    let homeDestinationFullscreenPending = false;
+    let homeDestinationOwnsFullscreen = false;
+    let homeDestinationImmersiveRequested = false;
+    const homeImmersiveDestinations = new Set(["tonight", "dancers", "tv", "venues"]);
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -46000,7 +46002,8 @@
     }
 
     function focusHomeResults() {
-      results.scrollIntoView({ block: "start", behavior: "auto" });
+      const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
+      destinationStart.scrollIntoView({ block: "start", behavior: "auto" });
     }
 
     function handleHomeDiscoveryFeedViewportChange() {
@@ -46384,18 +46387,22 @@
       return window.matchMedia("(max-width: 720px)").matches;
     }
 
-    function homeTvFeedFullscreenElement() {
+    function homeDestinationFullscreenElement() {
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
 
-    async function requestHomeTvFeedFullscreen() {
+    async function requestHomeDestinationFullscreen(nextTab = activeTab) {
       if (
-        activeTab !== "tv" ||
+        !homeImmersiveDestinations.has(nextTab) ||
         !homeTvFeedUsesLockedViewport() ||
-        homeTvFeedFullscreenPending ||
-        homeTvFeedFullscreenElement()
+        homeDestinationFullscreenPending
       ) {
         return false;
+      }
+      homeDestinationImmersiveRequested = true;
+      if (homeDestinationFullscreenElement()) {
+        homeDestinationOwnsFullscreen = true;
+        return true;
       }
       const root = document.documentElement;
       const request = typeof root.requestFullscreen === "function"
@@ -46404,38 +46411,50 @@
           ? () => root.webkitRequestFullscreen()
           : null;
       if (!request) return false;
-      homeTvFeedFullscreenPending = true;
+      homeDestinationFullscreenPending = true;
       try {
         await request();
-        if (activeTab !== "tv") {
+        if (!homeDestinationImmersiveRequested || !homeImmersiveDestinations.has(activeTab)) {
           const exit = document.exitFullscreen || document.webkitExitFullscreen;
-          if (homeTvFeedFullscreenElement() && typeof exit === "function") await exit.call(document);
+          if (homeDestinationFullscreenElement() && typeof exit === "function") await exit.call(document);
           return false;
         }
-        homeTvFeedOwnsFullscreen = Boolean(homeTvFeedFullscreenElement());
-        queueHomeTvFeedViewportSync();
-        return homeTvFeedOwnsFullscreen;
+        homeDestinationOwnsFullscreen = Boolean(homeDestinationFullscreenElement());
+        if (activeTab === "tv") queueHomeTvFeedViewportSync();
+        else window.requestAnimationFrame(focusHomeResults);
+        return homeDestinationOwnsFullscreen;
       } catch {
         return false;
       } finally {
-        homeTvFeedFullscreenPending = false;
+        homeDestinationFullscreenPending = false;
       }
     }
 
-    function exitHomeTvFeedFullscreen() {
-      if (!homeTvFeedOwnsFullscreen) return;
-      homeTvFeedOwnsFullscreen = false;
+    function requestHomeTvFeedFullscreen() {
+      return requestHomeDestinationFullscreen("tv");
+    }
+
+    function exitHomeDestinationFullscreen() {
+      homeDestinationImmersiveRequested = false;
+      if (!homeDestinationOwnsFullscreen) return;
+      homeDestinationOwnsFullscreen = false;
       const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (!homeTvFeedFullscreenElement() || typeof exit !== "function") return;
+      if (!homeDestinationFullscreenElement() || typeof exit !== "function") return;
       try {
         const exitResult = exit.call(document);
         if (exitResult && typeof exitResult.catch === "function") exitResult.catch(() => {});
       } catch {}
     }
 
-    function handleHomeTvFeedFullscreenChange() {
-      if (!homeTvFeedFullscreenElement()) homeTvFeedOwnsFullscreen = false;
+    function handleHomeDestinationFullscreenChange() {
+      if (!homeDestinationFullscreenElement()) {
+        homeDestinationOwnsFullscreen = false;
+        homeDestinationImmersiveRequested = false;
+        if (activeTab === "tv") queueHomeTvFeedViewportSync();
+        return;
+      }
       if (activeTab === "tv") queueHomeTvFeedViewportSync();
+      else if (homeImmersiveDestinations.has(activeTab)) window.requestAnimationFrame(focusHomeResults);
     }
 
     function handleHomeTvFeedFullscreenIntent(event) {
@@ -46521,7 +46540,6 @@
     }
 
     function deactivateHomeTvFeed() {
-      exitHomeTvFeedFullscreen();
       unlockHomeTvFeedViewport();
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
@@ -46538,7 +46556,8 @@
 
     function returnToHomeDiscoveryMain() {
       if (profileBackdrop.classList.contains("show")) return false;
-      activateHomeDestination("tonight");
+      exitHomeDestinationFullscreen();
+      activateHomeDestination("tonight", { immersive: false });
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });
@@ -49546,7 +49565,7 @@
       );
     }
 
-    function activateHomeDestination(nextTab) {
+    function activateHomeDestination(nextTab, options = {}) {
       if (!homeDestinationOrder.includes(nextTab)) return false;
       if (profileBackdrop.classList.contains("show")) closeProfileModal();
       deactivateHomeTvFeed();
@@ -49555,7 +49574,10 @@
         selectedVenueName = null;
       }
       activeTab = nextTab;
-      if (nextTab === "tv") void requestHomeTvFeedFullscreen();
+      const immersive = options.immersive !== false && homeImmersiveDestinations.has(nextTab);
+      homeDestinationImmersiveRequested = immersive;
+      if (immersive) void requestHomeDestinationFullscreen(nextTab);
+      else if (!homeImmersiveDestinations.has(nextTab)) exitHomeDestinationFullscreen();
       homeDiscoveryFeedOpen =
         nextTab === "venues" &&
         homeDiscoveryFeedUsesInlineLayout();
@@ -49586,8 +49608,8 @@
     });
     results.addEventListener("pointerup", handleHomeTvFeedFullscreenIntent, { passive: true });
     results.addEventListener("touchend", handleHomeTvFeedFullscreenIntent, { passive: true });
-    document.addEventListener("fullscreenchange", handleHomeTvFeedFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleHomeTvFeedFullscreenChange);
+    document.addEventListener("fullscreenchange", handleHomeDestinationFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleHomeDestinationFullscreenChange);
     window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });

@@ -11,7 +11,7 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?render\(\);[\s\S]*?focusAndLockHomeTvFeed[\s\S]*?focusHomeResults/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?render\(\);[\s\S]*?focusAndLockHomeTvFeed[\s\S]*?focusHomeResults/,
   );
   assert.match(
     homeSource,
@@ -44,11 +44,11 @@ test("TV cards and full profiles allow destination swipes while galleries keep t
   assert.doesNotMatch(swipeBlocker, /home-tv-feed-slide/);
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?deactivateHomeTvFeed\(\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?deactivateHomeTvFeed\(\)/,
   );
   assert.doesNotMatch(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;/,
   );
   assert.match(
     homeSource,

@@ -51,7 +51,7 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?const isTv = nextTab === "tv";[\s\S]*?render\(\);[\s\S]*?focusAndLockHomeTvFeed/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?const isTv = nextTab === "tv";[\s\S]*?render\(\);[\s\S]*?focusAndLockHomeTvFeed/,
   );
   assert.match(
     homeSource,
@@ -63,19 +63,19 @@ test("the Home TV button renders a real snap-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /function deactivateHomeTvFeed\(\) \{[\s\S]*?exitHomeTvFeedFullscreen\(\);[\s\S]*?unlockHomeTvFeedViewport\(\)/,
+    /function deactivateHomeTvFeed\(\) \{\s*unlockHomeTvFeedViewport\(\);/,
   );
   assert.match(
     homeSource,
-    /async function requestHomeTvFeedFullscreen\(\)[\s\S]*?root\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?root\.webkitRequestFullscreen\(\)[\s\S]*?homeTvFeedOwnsFullscreen = Boolean\(homeTvFeedFullscreenElement\(\)\)/,
+    /async function requestHomeDestinationFullscreen\(nextTab = activeTab\)[\s\S]*?!homeImmersiveDestinations\.has\(nextTab\)[\s\S]*?root\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?root\.webkitRequestFullscreen\(\)[\s\S]*?homeDestinationOwnsFullscreen = Boolean\(homeDestinationFullscreenElement\(\)\)/,
   );
   assert.match(
     homeSource,
-    /activeTab = nextTab;\s*if \(nextTab === "tv"\) void requestHomeTvFeedFullscreen\(\);/,
+    /activeTab = nextTab;[\s\S]*?const immersive = options\.immersive !== false && homeImmersiveDestinations\.has\(nextTab\);[\s\S]*?requestHomeDestinationFullscreen\(nextTab\)/,
   );
   assert.match(
     homeSource,
-    /results\.addEventListener\("pointerup", handleHomeTvFeedFullscreenIntent[\s\S]*?results\.addEventListener\("touchend", handleHomeTvFeedFullscreenIntent[\s\S]*?document\.addEventListener\("fullscreenchange", handleHomeTvFeedFullscreenChange\)/,
+    /results\.addEventListener\("pointerup", handleHomeTvFeedFullscreenIntent[\s\S]*?results\.addEventListener\("touchend", handleHomeTvFeedFullscreenIntent[\s\S]*?document\.addEventListener\("fullscreenchange", handleHomeDestinationFullscreenChange\)/,
   );
   assert.match(
     homeSource,
@@ -136,7 +136,7 @@ test("the homepage selects Now on first load and keeps destination navigation au
   );
   assert.match(
     homeSource,
-    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("tonight"\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
+    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?exitHomeDestinationFullscreen\(\);[\s\S]*?activateHomeDestination\("tonight", \{ immersive: false \}\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
   );
   assert.match(
     homeSource,
@@ -153,6 +153,33 @@ test("the homepage selects Now on first load and keeps destination navigation au
   assert.doesNotMatch(
     homeSource,
     /function returnToHomeDiscoveryMain\(\) \{[\s\S]*?document\.querySelectorAll\("\.tab"\)[\s\S]*?classList\.remove\("active"\)/,
+  );
+});
+
+test("primary discovery destinations request browser-free mobile fullscreen from navigation gestures", () => {
+  assert.match(
+    homeSource,
+    /const homeImmersiveDestinations = new Set\(\["tonight", "dancers", "tv", "venues"\]\);/,
+  );
+  assert.match(
+    homeSource,
+    /async function requestHomeDestinationFullscreen\(nextTab = activeTab\)[\s\S]*?!homeImmersiveDestinations\.has\(nextTab\)[\s\S]*?!homeTvFeedUsesLockedViewport\(\)[\s\S]*?homeDestinationImmersiveRequested = true;[\s\S]*?requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?!homeDestinationImmersiveRequested \|\| !homeImmersiveDestinations\.has\(activeTab\)/,
+  );
+  assert.match(
+    homeSource,
+    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?options\.immersive !== false[\s\S]*?requestHomeDestinationFullscreen\(nextTab\)/,
+  );
+  assert.match(
+    homeSource,
+    /function focusHomeResults\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?destinationStart\.scrollIntoView/,
+  );
+  assert.match(
+    homeSource,
+    /function handleHomeDestinationFullscreenChange\(\) \{[\s\S]*?!homeDestinationFullscreenElement\(\)[\s\S]*?homeDestinationImmersiveRequested = false;[\s\S]*?return;[\s\S]*?focusHomeResults/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /homeImmersiveDestinations = new Set\([^)]*"trending"/,
   );
 });
 
