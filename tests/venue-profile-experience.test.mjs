@@ -30,7 +30,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
   assert.match(venueDetail, /recordVenuePageEvent\(\{ venueId: venue\.id, eventType: "page_view", source: "venue_page" \}\)/);
   assert.match(venueDetail, /venueOfferMarkup\(venue\)/);
-  assert.match(venueDetail, /\/api\/public\/maps\/embed\?address=/);
+  assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
   assert.match(venueDetail, /data-venue-follow="\$\{venue\.name\}"/);
   assert.match(venueDetail, /https:\/\/maps\.google\.com\/\?q=/);
   assert.match(venueDetail, /Working now at \$\{details\.name\}/);

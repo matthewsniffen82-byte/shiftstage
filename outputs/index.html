@@ -39547,9 +39547,6 @@
                 <div class="info-tile"><strong>Distance</strong><div class="meta">${details.distanceLabel}</div></div>
                 ${details.hours ? `<div class="info-tile"><strong>Hours</strong><div class="meta">${displayShiftTime(details.hours)}</div></div>` : ""}
               </div>
-              ${details.address ? `<div class="map-preview has-live-map" aria-label="${details.name} map preview">
-                <iframe title="${details.name} map preview" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="/api/public/maps/embed?address=${encodeURIComponent(details.address)}"></iframe>
-              </div>` : ""}
               <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
