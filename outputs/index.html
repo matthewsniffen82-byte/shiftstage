@@ -31164,6 +31164,9 @@
           #results.home-discovery-feed.home-venue-discovery-feed {
             position: relative !important;
             box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            justify-items: stretch !important;
             width: 100% !important;
             min-width: 0 !important;
             max-width: none !important;
@@ -31183,10 +31186,21 @@
             max-height: 580px !important;
             margin: 0 !important;
             padding: 0 !important;
+            justify-self: center !important;
             flex: none !important;
             aspect-ratio: auto !important;
             border-radius: 20px !important;
             contain: layout paint style;
+          }
+          #results.home-dancer-grid > .home-dancer-grid-card {
+            border: 1px solid transparent !important;
+            background:
+              linear-gradient(#050507,#050507) padding-box,
+              linear-gradient(145deg,rgba(126,234,255,.72),rgba(139,92,246,.82) 56%,rgba(236,72,153,.58)) border-box !important;
+            box-shadow:
+              inset 0 0 0 1px rgba(255,255,255,.05),
+              0 18px 42px rgba(0,0,0,.48),
+              0 0 22px rgba(124,58,237,.18) !important;
           }
           .home-dancer-grid-link {
             position: relative;
