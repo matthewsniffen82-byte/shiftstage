@@ -182,8 +182,8 @@ test("public profiles keep Going visible for the next posted shift and gate only
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);
   assert.match(actionsSource, /href="\/account\?role=customer"/);
-  assert.match(profilePageSource, /\.profile-account-gate \{ position: fixed; inset: 0; z-index: 120/);
-  assert.match(profilePageSource, /\.live-actions \.profile-action-requirement/);
+  assert.match(profilePageSource, /\.profile-account-gate, \.profile-report-gate \{ position: fixed; inset: 0; z-index: 1700/);
+  assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 
 test("the live mobile profile labels protected actions before the tap and labels Going and Report as public", () => {

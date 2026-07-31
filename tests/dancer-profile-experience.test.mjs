@@ -34,36 +34,41 @@ const [
   readFile(new URL("../app/components/TvVideoStrip.tsx", import.meta.url), "utf8"),
 ]);
 
-test("the public dancer profile uses the full authenticated global header", () => {
-  assert.match(profilePage, /<PublicProfileHeader/);
+test("the public dancer profile keeps identity, verification, city, and close control at the top", () => {
+  assert.match(profilePage, /<header className="profile-titlebar">/);
+  assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
+  assert.match(profilePage, /className="profile-verified" aria-label="Verified dancer"/);
+  assert.match(profilePage, /<span>\{profile\.city\}<\/span>/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /className="public-profile-close"/);
-  assert.match(profileHeader, /className="profile-global-logo"/);
-  assert.match(profileHeader, /Open notifications/);
-  assert.match(profileHeader, /fetch\("\/api\/notifications"/);
-  assert.match(profileHeader, /href=\{dashboardHref\(role\)\}/);
-  assert.match(profileHeader, /Login \/ Join/);
-  assert.match(profileHeader, /method: "DELETE"/);
+  assert.match(profilePage, /\.profile-titlebar \{ position: sticky;/);
+  assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
-test("the mobile profile is ordered around identity, revenue, schedule, media, and details", () => {
-  const heroIndex = profilePage.indexOf('className="public-hero dancer-hero"');
+test("the mobile profile is ordered around identity, metrics, actions, live revenue, media, and schedule", () => {
+  const identityIndex = profilePage.indexOf('className="profile-titlebar"');
+  const overviewIndex = profilePage.indexOf('className="profile-overview"');
+  const actionsIndex = profilePage.indexOf("<DancerProfileActions");
+  const dealIndex = profilePage.indexOf('className="profile-working-card"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
-  const dealIndex = profilePage.indexOf('className="venue-qr-section live-deal-section"');
   const scheduleIndex = profilePage.indexOf('className="profile-schedule-section"');
-  const detailsIndex = profilePage.indexOf('className="public-grid"');
 
-  assert.ok(heroIndex > -1);
-  assert.ok(mediaIndex > heroIndex);
-  assert.ok(dealIndex > mediaIndex);
-  assert.ok(scheduleIndex > dealIndex);
-  assert.ok(detailsIndex > scheduleIndex);
+  assert.ok(identityIndex > -1);
+  assert.ok(overviewIndex > identityIndex);
+  assert.ok(actionsIndex > overviewIndex);
+  assert.ok(dealIndex > actionsIndex);
+  assert.ok(mediaIndex > dealIndex);
+  assert.ok(scheduleIndex > mediaIndex);
+  assert.match(profilePage, /<DancerFollowerCount \/>/);
+  assert.match(profilePage, /<DancerNotificationCount \/>/);
+  assert.match(profilePage, /<DancerGoingCount \/>/);
+  assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
-  assert.match(profilePage, /grid-template-areas: "photo" "copy"/);
-  assert.match(profilePage, /profile-live-state\$\{activeShift \? " is-working"/);
   assert.match(profilePage, /Verified check-in · until/);
-  assert.match(profilePage, /No posted shift right now/);
+  assert.match(profilePage, /Venue &amp; directions/);
+  assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
+  assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
 });
 
 test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {
@@ -94,21 +99,21 @@ test("reports are bounded, validated, attributable when possible, and logged", (
 });
 
 test("the profile removes repeated galleries and hides empty ranking language", () => {
-  assert.doesNotMatch(profilePage, /className="public-gallery"/);
-  assert.doesNotMatch(profilePage, /className="gallery-photo"/);
+  assert.match(profilePage, /className=\{`profile-avatar/);
+  assert.match(profilePage, /<DancerPhotoCarousel/);
   assert.doesNotMatch(profilePage, /Not ranked yet/);
-  assert.match(profilePage, /\{profile\.bio \? <p className="profile-bio">/);
-  assert.match(profilePage, /\{profile\.currentRank \? \(/);
+  assert.doesNotMatch(profilePage, /profile\.bio|profile-bio|About \{profile\.stageName\}/);
+  assert.doesNotMatch(profilePage, /profile\.currentRank/);
 });
 
 test("the primary shift is not repeated and empty profile sections stay hidden", () => {
   assert.match(
     profilePage,
-    /const additionalShifts = primaryShift[\s\S]*?shift\.id !== primaryShift\.id/,
+    /const upcomingShifts = profile\.upcomingShifts\.filter\([\s\S]*?shift\.id !== activeShift\?\.id/,
   );
-  assert.match(profilePage, /\{additionalShifts\.length \? \(/);
-  assert.match(profilePage, /<h2 id="profile-schedule-title">More shifts<\/h2>/);
-  assert.match(profilePage, /\{additionalShifts\.map\(\(shift\) =>/);
+  assert.match(profilePage, /\{upcomingShifts\.length \? \(/);
+  assert.match(profilePage, /<h2 id="profile-schedule-title">Upcoming shifts<\/h2>/);
+  assert.match(profilePage, /\{upcomingShifts\.map\(\(shift\) =>/);
   assert.doesNotMatch(profilePage, /<p className="muted">No posted shifts right now\.<\/p>/);
 });
 

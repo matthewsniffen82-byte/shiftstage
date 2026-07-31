@@ -46,7 +46,7 @@ test("standalone dancers keep only the X with an active Now fallback while legac
   );
   assert.match(
     dancerPage,
-    /@media \(max-width: 760px\)[\s\S]*?\.profile-global-topbar \{ grid-template-columns: 46px[\s\S]*?\.profile-global-logo \{ visibility: hidden;/,
+    /@media \(max-width: 600px\)[\s\S]*?\.profile-titlebar \{ min-height: 66px; \}/,
   );
   assert.match(
     venuePage,

@@ -16,7 +16,7 @@ test("the public follower count is shared with the live follow controls", () => 
     profileSource,
     /<DancerFollowStateProvider[\s\S]*?initialFollowerCount=\{profile\.followerCount\}[\s\S]*?key=\{profile\.id\}/,
   );
-  assert.match(profileSource, /<dt>Followers<\/dt>[\s\S]*?<DancerFollowerCount \/>/);
+  assert.match(profileSource, /<DancerFollowerCount \/>[\s\S]*?<dt>Followers<\/dt>/);
 });
 
 test("successful follow and unfollow responses update the visible follower count immediately", () => {
@@ -64,8 +64,8 @@ test("the signed-in live profile updates its visible follow metrics immediately 
   assert.match(followHandler, /finally \{[\s\S]*?actionButton\.disabled = false/);
   assert.match(confirmedState, /followerCount: confirmedFollowerCount\(/);
   assert.match(confirmedState, /notificationCount: confirmedNotificationCount\(/);
-  assert.match(mobileSource, /followerCountEl\.innerHTML = followerMetricMarkup\(profile, city\)/);
-  assert.match(mobileSource, /notificationCountEl\.innerHTML = notificationMetricMarkup\(profile, city\)/);
+  assert.match(mobileSource, /followerCountEl\.textContent = followerNumber\(profile, city\)\.toLocaleString\(\)/);
+  assert.match(mobileSource, /notificationCountEl\.textContent = notificationNumber\(profile, city\)\.toLocaleString\(\)/);
   assert.doesNotMatch(
     mobileSource.match(/function followerNumber[\s\S]*?\r?\n    }/)?.[0] || "",
     /isFollowingProfile/,

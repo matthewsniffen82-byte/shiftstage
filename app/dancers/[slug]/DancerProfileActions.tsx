@@ -9,6 +9,7 @@ import {
   useState,
   type FormEvent,
   type PropsWithChildren,
+  type ReactNode,
 } from "react";
 import Link from "next/link";
 
@@ -40,6 +41,8 @@ const SESSION_KEY = "dancrAuthSessionV1";
 type DancerFollowState = {
   followerCount: number;
   setFollowerCount: (count: number) => void;
+  notificationCount: number;
+  setNotificationCount: (count: number) => void;
   goingCount: number;
   setGoingCount: (count: number) => void;
 };
@@ -48,10 +51,18 @@ const DancerFollowStateContext = createContext<DancerFollowState | null>(null);
 
 export function DancerFollowStateProvider({
   initialFollowerCount,
+  initialNotificationCount,
   initialGoingCount,
   children,
-}: PropsWithChildren<{ initialFollowerCount: number; initialGoingCount: number }>) {
+}: PropsWithChildren<{
+  initialFollowerCount: number;
+  initialNotificationCount: number;
+  initialGoingCount: number;
+}>) {
   const [followerCount, setFollowerCount] = useState(Math.max(0, initialFollowerCount));
+  const [notificationCount, setNotificationCount] = useState(
+    Math.max(0, initialNotificationCount),
+  );
   const [goingCount, setGoingCount] = useState(Math.max(0, initialGoingCount));
   const setConfirmedFollowerCount = useCallback((count: number) => {
     setFollowerCount(Math.max(0, count));
@@ -59,14 +70,26 @@ export function DancerFollowStateProvider({
   const setConfirmedGoingCount = useCallback((count: number) => {
     setGoingCount(Math.max(0, count));
   }, []);
+  const setConfirmedNotificationCount = useCallback((count: number) => {
+    setNotificationCount(Math.max(0, count));
+  }, []);
   const value = useMemo(
     () => ({
       followerCount,
       setFollowerCount: setConfirmedFollowerCount,
+      notificationCount,
+      setNotificationCount: setConfirmedNotificationCount,
       goingCount,
       setGoingCount: setConfirmedGoingCount,
     }),
-    [followerCount, setConfirmedFollowerCount, goingCount, setConfirmedGoingCount],
+    [
+      followerCount,
+      setConfirmedFollowerCount,
+      notificationCount,
+      setConfirmedNotificationCount,
+      goingCount,
+      setConfirmedGoingCount,
+    ],
   );
 
   return <DancerFollowStateContext.Provider value={value}>{children}</DancerFollowStateContext.Provider>;
@@ -82,16 +105,27 @@ export function DancerGoingCount() {
   return <>{new Intl.NumberFormat("en-US").format(goingCount)}</>;
 }
 
+export function DancerNotificationCount() {
+  const { notificationCount } = useDancerFollowState();
+  return <>{new Intl.NumberFormat("en-US").format(notificationCount)}</>;
+}
+
 export function DancerProfileActions({
   dancerId,
   profileName,
   shifts,
+  shareControl,
 }: {
   dancerId: string;
   profileName: string;
   shifts: ShiftAction[];
+  shareControl?: ReactNode;
 }) {
-  const { setFollowerCount, setGoingCount } = useDancerFollowState();
+  const {
+    setFollowerCount,
+    setNotificationCount,
+    setGoingCount,
+  } = useDancerFollowState();
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState<SavedState>({
     following: false,
@@ -218,6 +252,7 @@ export function DancerProfileActions({
       const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
       const savedNotificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
+      const confirmedNotificationCount = readConfirmedNotificationCount(data);
 
       setSaved((current) => ({
         ...current,
@@ -225,6 +260,7 @@ export function DancerProfileActions({
         notificationsEnabled: savedNotificationsEnabled,
       }));
       setFollowerCount(confirmedFollowerCount);
+      setNotificationCount(confirmedNotificationCount);
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {
@@ -246,9 +282,11 @@ export function DancerProfileActions({
       const following = typeof data.following === "boolean" ? data.following : true;
       const notificationsEnabled = following && data.notificationsEnabled === true;
       const confirmedFollowerCount = readConfirmedFollowerCount(data);
+      const confirmedNotificationCount = readConfirmedNotificationCount(data);
 
       setSaved((current) => ({ ...current, following, notificationsEnabled }));
       setFollowerCount(confirmedFollowerCount);
+      setNotificationCount(confirmedNotificationCount);
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {
@@ -373,21 +411,6 @@ export function DancerProfileActions({
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
-          className={`profile-action-primary profile-action-public${actionShift ? "" : " profile-action-unavailable"}`}
-          type="button"
-          onClick={() => {
-            if (actionShift) updateGoing(actionShift.id);
-          }}
-          disabled={!actionShift || !savedLoaded || goingSaving}
-        >
-          {actionShift && saved.goingShiftIds.includes(actionShift.id) ? "Going" : "I’m Going"}
-          <small className="profile-action-requirement">
-            {actionShift
-              ? `${actionShift.isActive ? "Working now" : actionShift.label} · No sign-in needed`
-              : "No shift posted"}
-          </small>
-        </button>
-        <button
           className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
           onClick={() => {
@@ -413,6 +436,22 @@ export function DancerProfileActions({
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
+        <button
+          className={`profile-action-primary profile-action-public${actionShift ? "" : " profile-action-unavailable"}`}
+          type="button"
+          onClick={() => {
+            if (actionShift) updateGoing(actionShift.id);
+          }}
+          disabled={!actionShift || !savedLoaded || goingSaving}
+        >
+          {actionShift && saved.goingShiftIds.includes(actionShift.id) ? "Going" : "I’m Going"}
+          <small className="profile-action-requirement">
+            {actionShift
+              ? `${actionShift.isActive ? "Working now" : actionShift.label} · No sign-in needed`
+              : "No shift posted"}
+          </small>
+        </button>
+        {shareControl ? <div className="profile-action-share-slot">{shareControl}</div> : null}
         <button
           className="profile-action-report"
           type="button"
@@ -545,6 +584,16 @@ function readConfirmedGoingCount(data: { goingCount?: unknown }) {
   const count = Number(data.goingCount);
   if (!Number.isSafeInteger(count) || count < 0) {
     throw new Error("The going status was saved, but the count could not be confirmed.");
+  }
+  return count;
+}
+
+function readConfirmedNotificationCount(data: { notificationCount?: unknown }) {
+  const count = Number(data.notificationCount);
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error(
+      "The notification preference was saved, but its count could not be confirmed.",
+    );
   }
   return count;
 }

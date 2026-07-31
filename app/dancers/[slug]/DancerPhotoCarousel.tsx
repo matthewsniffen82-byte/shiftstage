@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
-  KeyboardEvent as ReactKeyboardEvent,
   PointerEvent as ReactPointerEvent,
   WheelEvent as ReactWheelEvent,
 } from "react";
@@ -20,18 +19,21 @@ type DancerPhotoCarouselProps = {
   stageName: string;
 };
 
-type ProfileMedia =
-  | {
-      id: string;
-      kind: "photo";
-      imageUrl: string;
-    }
-  | {
-      id: string;
-      kind: "video";
-      videoUrl: string;
-      durationSeconds: number;
-    };
+type PhotoMedia = {
+  id: string;
+  kind: "photo";
+  imageUrl: string;
+};
+
+type VideoMedia = {
+  id: string;
+  kind: "video";
+  videoUrl: string;
+  durationSeconds: number;
+};
+
+type ProfileMedia = PhotoMedia | VideoMedia;
+type MediaTab = ProfileMedia["kind"];
 
 type SwipeGesture = {
   pointerId: number | null;
@@ -49,98 +51,88 @@ export function DancerPhotoCarousel({
   videos = [],
   stageName,
 }: DancerPhotoCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const gesture = useRef<SwipeGesture>({
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-    horizontal: false,
-    cancelled: false,
-  });
+  const photoMedia = useMemo<PhotoMedia[]>(
+    () =>
+      photos
+        .filter((photo) => photo.imageUrl)
+        .map((photo) => ({ ...photo, kind: "photo" })),
+    [photos],
+  );
+  const videoMedia = useMemo<VideoMedia[]>(
+    () =>
+      videos
+        .filter((video) => video.videoUrl)
+        .map((video) => ({ ...video, kind: "video" })),
+    [videos],
+  );
+  const [activeTab, setActiveTab] = useState<MediaTab>(
+    photoMedia.length ? "photo" : "video",
+  );
+  const [viewer, setViewer] = useState<{ kind: MediaTab; index: number } | null>(
+    null,
+  );
+  const gesture = useRef<SwipeGesture>(emptyGesture());
   const trackpadLockedUntil = useRef(0);
-  const activeVideo = useRef<HTMLVideoElement | null>(null);
-  const thumbnailStrip = useRef<HTMLDivElement | null>(null);
-  const thumbnailButtons = useRef<Array<HTMLButtonElement | null>>([]);
-  const availablePhotos = photos.filter((photo) => photo.imageUrl);
-  const availableVideos = videos.filter((video) => video.videoUrl);
-  const availableMedia: ProfileMedia[] = [
-    ...availablePhotos.map((photo) => ({
-      ...photo,
-      kind: "photo" as const,
-    })),
-    ...availableVideos.map((video) => ({
-      ...video,
-      kind: "video" as const,
-    })),
-  ];
-  const safeActiveIndex = availableMedia.length
-    ? activeIndex % availableMedia.length
+  const closeButton = useRef<HTMLButtonElement | null>(null);
+  const activeItems: ProfileMedia[] =
+    activeTab === "photo" ? photoMedia : videoMedia;
+  const viewerItems: ProfileMedia[] = viewer?.kind === "video"
+    ? videoMedia
+    : photoMedia;
+  const viewerIndex = viewer
+    ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
-  const activeMedia = availableMedia[safeActiveIndex];
-
-  const showPhoto = useCallback(
-    (nextIndex: number) => {
-      if (!availableMedia.length) return;
-      activeVideo.current?.pause();
-      setIsVideoPlaying(false);
-      setActiveIndex(
-        (nextIndex + availableMedia.length) % availableMedia.length,
-      );
-    },
-    [availableMedia.length],
-  );
-
-  const movePhoto = useCallback(
-    (direction: -1 | 1) => {
-      if (availableMedia.length < 2) return;
-      activeVideo.current?.pause();
-      setIsVideoPlaying(false);
-      setActiveIndex((currentIndex) => {
-        const normalizedIndex = currentIndex % availableMedia.length;
-        return (
-          normalizedIndex + direction + availableMedia.length
-        ) % availableMedia.length;
-      });
-    },
-    [availableMedia.length],
-  );
+  const activeViewerItem = viewerItems[viewerIndex];
 
   useEffect(() => {
-    const strip = thumbnailStrip.current;
-    const selectedThumbnail = thumbnailButtons.current[safeActiveIndex];
-    if (!strip || !selectedThumbnail) return;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const centeredLeft =
-      selectedThumbnail.offsetLeft -
-      (strip.clientWidth - selectedThumbnail.offsetWidth) / 2;
-    const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
-    strip.scrollTo({
-      behavior: reducedMotion ? "auto" : "smooth",
-      left: Math.min(maxLeft, Math.max(0, centeredLeft)),
-    });
-  }, [safeActiveIndex]);
+    if (activeTab === "photo" && !photoMedia.length && videoMedia.length) {
+      setActiveTab("video");
+    }
+    if (activeTab === "video" && !videoMedia.length && photoMedia.length) {
+      setActiveTab("photo");
+    }
+  }, [activeTab, photoMedia.length, videoMedia.length]);
 
-  const resetGesture = () => {
-    gesture.current = {
-      pointerId: null,
-      startX: 0,
-      startY: 0,
-      horizontal: false,
-      cancelled: false,
+  useEffect(() => {
+    if (!viewer) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setViewer(null);
+      if (event.key === "ArrowLeft") showRelativeViewerItem(-1);
+      if (event.key === "ArrowRight") showRelativeViewerItem(1);
     };
-  };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  });
 
-  const handlePointerDown = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
+  function openViewer(kind: MediaTab, index: number) {
+    setViewer({ kind, index });
+  }
+
+  function showRelativeViewerItem(direction: -1 | 1) {
+    setViewer((current) => {
+      if (!current) return current;
+      const items = current.kind === "photo" ? photoMedia : videoMedia;
+      const nextIndex = current.index + direction;
+      if (nextIndex < 0 || nextIndex >= items.length) return current;
+      return { ...current, index: nextIndex };
+    });
+  }
+
+  function resetGesture() {
+    gesture.current = emptyGesture();
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (
       !event.isPrimary ||
       (event.pointerType === "mouse" && event.button !== 0) ||
-      (event.target as HTMLElement).closest("button, a") ||
-      (isVideoPlaying && (event.target as HTMLElement).closest("video"))
+      (event.target as HTMLElement).closest("button")
     ) {
       return;
     }
@@ -152,11 +144,9 @@ export function DancerPhotoCarousel({
       cancelled: false,
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
-  };
+  }
 
-  const handlePointerMove = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const current = gesture.current;
     if (current.pointerId !== event.pointerId || current.cancelled) return;
     const distanceX = event.clientX - current.startX;
@@ -168,11 +158,9 @@ export function DancerPhotoCarousel({
     }
     current.horizontal = true;
     event.preventDefault();
-  };
+  }
 
-  const handlePointerEnd = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
+  function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
     const current = gesture.current;
     if (current.pointerId !== event.pointerId) return;
     const distanceX = event.clientX - current.startX;
@@ -184,14 +172,14 @@ export function DancerPhotoCarousel({
       Math.abs(distanceX) > Math.abs(distanceY) * 1.2
     ) {
       event.preventDefault();
-      movePhoto(distanceX < 0 ? 1 : -1);
+      showRelativeViewerItem(distanceX < 0 ? 1 : -1);
     }
     resetGesture();
-  };
+  }
 
-  const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
     if (
-      availableMedia.length < 2 ||
+      viewerItems.length < 2 ||
       Math.abs(event.deltaX) < 18 ||
       Math.abs(event.deltaX) <= Math.abs(event.deltaY)
     ) {
@@ -201,182 +189,186 @@ export function DancerPhotoCarousel({
     const now = Date.now();
     if (now < trackpadLockedUntil.current) return;
     trackpadLockedUntil.current = now + TRACKPAD_LOCK_MS;
-    movePhoto(event.deltaX > 0 ? 1 : -1);
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest("video")) return;
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      movePhoto(-1);
-    }
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      movePhoto(1);
-    }
-  };
-
-  const playSelectedVideo = () => {
-    if (!activeVideo.current) return;
-    void activeVideo.current.play().catch(() => {
-      setIsVideoPlaying(false);
-    });
-  };
+    showRelativeViewerItem(event.deltaX > 0 ? 1 : -1);
+  }
 
   return (
-    <div
-      aria-label={`${stageName} profile photos and videos`}
-      aria-roledescription="carousel"
-      className="public-photo public-gallery"
-      data-active-media-index={safeActiveIndex}
-      data-active-media-type={activeMedia?.kind || "empty"}
-      data-active-photo-index={safeActiveIndex}
-      data-dancer-media-carousel
-      data-dancer-photo-carousel
-      onKeyDown={handleKeyDown}
-      role="group"
-      tabIndex={0}
+    <section
+      aria-label={`${stageName} approved profile media`}
+      className="profile-media-section"
+      data-dancer-media-tabs
     >
+      <div className="profile-media-heading">
+        <div>
+          <span className="eyebrow">Media</span>
+          <h2>{stageName}</h2>
+        </div>
+        <span>{photoMedia.length + videoMedia.length} approved</span>
+      </div>
       <div
-        className="public-media-stage"
-        data-carousel-swipe-surface
-        onPointerCancel={resetGesture}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onWheel={handleWheel}
+        aria-label={`${stageName} media type`}
+        className="profile-media-tabs"
+        role="tablist"
       >
-        {activeMedia?.kind === "photo" ? (
-          <img
-            alt={`${stageName} profile photo ${safeActiveIndex + 1} of ${availableMedia.length}`}
-            className="public-photo-image"
-            decoding="async"
-            draggable={false}
-            src={activeMedia.imageUrl}
-          />
-        ) : activeMedia?.kind === "video" ? (
-          <div className="public-profile-video">
-            <video
-              aria-label={`${stageName} profile video ${safeActiveIndex + 1} of ${availableMedia.length}`}
-              controls
-              controlsList="nodownload noremoteplayback"
-              disablePictureInPicture
-              onEnded={() => setIsVideoPlaying(false)}
-              onPause={() => setIsVideoPlaying(false)}
-              onPlay={() => setIsVideoPlaying(true)}
-              playsInline
-              preload="metadata"
-              ref={activeVideo}
-              src={activeMedia.videoUrl}
-            />
-            {!isVideoPlaying ? (
-              <button
-                aria-label={`Play ${stageName} profile video ${safeActiveIndex + 1}`}
-                className="public-profile-play"
-                onClick={playSelectedVideo}
-                type="button"
-              >
-                <span aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
-        ) : (
-          <span className="public-media-empty">{initials(stageName)}</span>
-        )}
-        {availableMedia.length > 1 ? (
-          <>
+        <button
+          aria-controls="dancer-profile-media-grid"
+          aria-selected={activeTab === "photo"}
+          className={activeTab === "photo" ? "active" : ""}
+          disabled={!photoMedia.length}
+          onClick={() => setActiveTab("photo")}
+          role="tab"
+          type="button"
+        >
+          Photos <span>{photoMedia.length}</span>
+        </button>
+        <button
+          aria-controls="dancer-profile-media-grid"
+          aria-selected={activeTab === "video"}
+          className={activeTab === "video" ? "active" : ""}
+          disabled={!videoMedia.length}
+          onClick={() => setActiveTab("video")}
+          role="tab"
+          type="button"
+        >
+          TV <span>{videoMedia.length}</span>
+        </button>
+      </div>
+      <div
+        aria-label={`${stageName} ${activeTab === "photo" ? "photos" : "MyDancr TV videos"}`}
+        className="profile-media-grid"
+        id="dancer-profile-media-grid"
+        role="tabpanel"
+      >
+        {activeItems.map((item, index) => (
           <button
-            aria-label="Show previous profile media"
-            className="public-photo-nav previous"
-            onClick={() => movePhoto(-1)}
+            aria-label={`Open ${stageName} ${item.kind} ${index + 1} of ${activeItems.length} full screen`}
+            className={`profile-media-grid-item is-${item.kind}`}
+            key={`${item.kind}-${item.id}`}
+            onClick={() => openViewer(item.kind, index)}
             type="button"
           >
-            ‹
+            {item.kind === "photo" ? (
+              <img
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+                draggable={false}
+                src={item.imageUrl}
+              />
+            ) : (
+              <>
+                <video
+                  aria-hidden="true"
+                  muted
+                  playsInline
+                  preload="metadata"
+                  src={item.videoUrl}
+                  tabIndex={-1}
+                />
+                <span aria-hidden="true" className="profile-media-play" />
+                <span className="profile-media-duration">
+                  {formatDuration(item.durationSeconds)}
+                </span>
+              </>
+            )}
           </button>
-          <button
-            aria-label="Show next profile media"
-            className="public-photo-nav next"
-            onClick={() => movePhoto(1)}
-            type="button"
-          >
-            ›
-          </button>
-          </>
+        ))}
+        {!activeItems.length ? (
+          <p className="profile-media-empty">
+            No approved {activeTab === "photo" ? "photos" : "TV videos"} yet.
+          </p>
         ) : null}
       </div>
-      {availableMedia.length > 1 ? (
+      {viewer && activeViewerItem ? (
         <div
-          aria-label="Choose profile photo or video"
-          className="public-media-thumbnails"
-          ref={thumbnailStrip}
-          role="group"
+          aria-label={`${stageName} ${viewer.kind === "photo" ? "photo" : "TV video"} viewer`}
+          aria-modal="true"
+          className="profile-media-viewer"
+          role="dialog"
         >
-          {availableMedia.map((media, index) => {
-            const isSelected = index === safeActiveIndex;
-            return (
-              <button
-                aria-current={isSelected ? "true" : undefined}
-                aria-label={`Show profile ${media.kind} ${index + 1} of ${availableMedia.length}`}
-                aria-pressed={isSelected}
-                className={`public-media-thumbnail${isSelected ? " is-selected" : ""}${media.kind === "video" ? " is-video" : ""}`}
-                key={`${media.kind}-${media.id}`}
-                onClick={() => showPhoto(index)}
-                ref={(element) => {
-                  thumbnailButtons.current[index] = element;
-                }}
-                type="button"
-              >
-                {media.kind === "photo" ? (
-                  <img
-                    alt=""
-                    aria-hidden="true"
-                    decoding="async"
-                    draggable={false}
-                    src={media.imageUrl}
-                  />
-                ) : (
-                  <>
-                    <video
-                      aria-hidden="true"
-                      muted
-                      playsInline
-                      preload="metadata"
-                      src={media.videoUrl}
-                      tabIndex={-1}
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="public-media-thumbnail-play"
-                    />
-                    <span className="public-media-thumbnail-duration">
-                      {formatDuration(media.durationSeconds)}
-                    </span>
-                  </>
-                )}
-              </button>
-            );
-          })}
+          <button
+            aria-label="Close full-screen profile media"
+            className="profile-media-viewer-close"
+            onClick={() => setViewer(null)}
+            ref={closeButton}
+            type="button"
+          >
+            ×
+          </button>
+          <div
+            className="profile-media-viewer-stage"
+            data-profile-media-swipe-surface
+            onPointerCancel={resetGesture}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerEnd}
+            onWheel={handleWheel}
+          >
+            {activeViewerItem.kind === "photo" ? (
+              <img
+                alt={`${stageName} photo ${viewerIndex + 1} of ${viewerItems.length}`}
+                decoding="async"
+                draggable={false}
+                src={activeViewerItem.imageUrl}
+              />
+            ) : (
+              <video
+                aria-label={`${stageName} TV video ${viewerIndex + 1} of ${viewerItems.length}`}
+                autoPlay
+                controls
+                controlsList="nofullscreen noremoteplayback nodownload"
+                disablePictureInPicture
+                key={activeViewerItem.id}
+                loop
+                playsInline
+                preload="auto"
+                src={activeViewerItem.videoUrl}
+              />
+            )}
+            <button
+              aria-label={`Previous ${viewer.kind === "photo" ? "photo" : "TV video"}`}
+              className="profile-media-viewer-previous"
+              disabled={viewerIndex <= 0}
+              onClick={() => showRelativeViewerItem(-1)}
+              type="button"
+            >
+              ‹
+            </button>
+            <button
+              aria-label={`Next ${viewer.kind === "photo" ? "photo" : "TV video"}`}
+              className="profile-media-viewer-next"
+              disabled={viewerIndex >= viewerItems.length - 1}
+              onClick={() => showRelativeViewerItem(1)}
+              type="button"
+            >
+              ›
+            </button>
+          </div>
+          <div className="profile-media-viewer-footer">
+            <strong>{stageName}</strong>
+            <span>
+              {viewer.kind === "photo" ? "Photo" : "TV"} {viewerIndex + 1} of{" "}
+              {viewerItems.length}
+            </span>
+          </div>
         </div>
       ) : null}
-      <span aria-live="polite" className="public-photo-status">
-        {activeMedia?.kind === "video" ? "Video" : "Photo"}{" "}
-        {availableMedia.length ? safeActiveIndex + 1 : 0} of{" "}
-        {availableMedia.length}
-      </span>
-    </div>
+    </section>
   );
+}
+
+function emptyGesture(): SwipeGesture {
+  return {
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    horizontal: false,
+    cancelled: false,
+  };
 }
 
 function formatDuration(durationSeconds: number) {
   const seconds = Math.max(0, Math.round(durationSeconds));
-  return `0:${String(seconds).padStart(2, "0")}`;
-}
-
-function initials(value: string) {
-  return value
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
 }
