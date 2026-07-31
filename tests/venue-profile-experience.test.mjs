@@ -34,8 +34,10 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /data-venue-follow="\$\{venue\.name\}"/);
   assert.match(venueDetail, /https:\/\/maps\.google\.com\/\?q=/);
   assert.match(venueDetail, /Working now at \$\{details\.name\}/);
-  assert.match(venueDetail, /Upcoming shifts at \$\{details\.name\}/);
+  assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming shifts<\/span>/);
+  assert.match(venueDetail, /id="venue-upcoming-shifts">Upcoming shifts at \$\{details\.name\}/);
   assert.match(venueDetail, /Trending at \$\{details\.name\}/);
+  assert.doesNotMatch(venueDetail, /verified shifts/i);
   assert.doesNotMatch(
     venueDetail,
     /otherVenues|Other \$\{city\} venues|other venues|venueCard\(item\)/i,

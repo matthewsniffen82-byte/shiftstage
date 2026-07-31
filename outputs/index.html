@@ -39541,7 +39541,7 @@
               <p>${details.description}</p>
               <div class="venue-quick-stats">
                 <button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>
-                <button class="venue-quick-stat" type="button" data-venue-jump="venue-verified-shifts"><strong>${shiftCount}</strong><span>verified shifts</span></button>
+                <button class="venue-quick-stat" type="button" data-venue-jump="venue-upcoming-shifts"><strong>${shiftCount}</strong><span>upcoming shifts</span></button>
               </div>
               ${venueOfferMarkup(venue)}
               <div class="venue-info">
@@ -39564,7 +39564,7 @@
           <h3 class="section-title" id="venue-working-now">Working now at ${details.name}</h3>
           <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts now.</div>'}</div>
 
-          <h3 class="section-title" id="venue-verified-shifts">Upcoming shifts at ${details.name}</h3>
+          <h3 class="section-title" id="venue-upcoming-shifts">Upcoming shifts at ${details.name}</h3>
           <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
 
           <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
