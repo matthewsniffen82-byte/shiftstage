@@ -431,7 +431,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important[\s\S]*?border-radius: 999px !important[\s\S]*?color: #fff !important[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--home-nav-hero-cyan-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important[\s\S]*?border-radius: 999px !important[\s\S]*?color: #fff !important[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important[\s\S]*?filter: none !important/,
   );
   assert.match(
     homeSource,

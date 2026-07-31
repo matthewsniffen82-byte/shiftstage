@@ -293,10 +293,7 @@ export function GlobalMobileBottomNav() {
               rgba(236, 72, 153, 0.22)
             );
             box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
-            filter:
-              drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
-              drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
-              drop-shadow(0 0 13px var(--mobile-nav-hero-cyan-glow));
+            filter: none;
             transform: translateY(-2px) scale(1.08);
           }
 
@@ -328,10 +325,7 @@ export function GlobalMobileBottomNav() {
               rgba(236, 72, 153, 0.22)
             );
             box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
-            filter:
-              drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
-              drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
-              drop-shadow(0 0 13px var(--mobile-nav-hero-cyan-glow));
+            filter: none;
           }
 
           .global-mobile-bottom-nav svg {

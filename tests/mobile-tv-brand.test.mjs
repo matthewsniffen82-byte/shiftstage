@@ -32,7 +32,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   );
   assert.match(
     globalNavigation,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid[\s\S]*?color: #fff[\s\S]*?drop-shadow\(0 0 2px var\(--mobile-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--mobile-nav-hero-cyan-glow\)\)/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid[\s\S]*?color: #fff[\s\S]*?box-shadow: 0 0 14px rgba\(124, 58, 237, 0\.3\);[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
@@ -48,7 +48,7 @@ test("homepage active TV state keeps its emphasis controlled", () => {
 
   assert.match(
     activeTvRule,
-    /drop-shadow\(0 0 2px var\(--home-nav-hero-white-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 13px var\(--home-nav-hero-cyan-glow\)\)/,
+    /box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important;[\s\S]*?filter: none !important;/,
   );
-  assert.doesNotMatch(activeTvRule, /0 0 (?:20|28)px/);
+  assert.doesNotMatch(activeTvRule, /drop-shadow|0 0 (?:20|28)px/);
 });
