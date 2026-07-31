@@ -393,10 +393,10 @@
 
 body > .app main.stack > .hero.reference-hero {
   overflow: hidden;
-  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
+  border: 0 !important;
   border-radius: 24px !important;
   background: var(--dancr-color-background) !important;
-  box-shadow: var(--dancr-shadow-surface) !important;
+  box-shadow: none !important;
 }
 
 body > .app main.stack > .home-discovery-controls {
