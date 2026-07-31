@@ -284,17 +284,15 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
-            border: 1px solid rgba(255, 255, 255, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.24);
             border-radius: 999px;
             color: #fff;
             background: linear-gradient(
               145deg,
-              rgba(124, 58, 237, 0.5),
-              rgba(34, 199, 255, 0.16)
+              rgba(124, 58, 237, 0.48),
+              rgba(236, 72, 153, 0.22)
             );
-            box-shadow:
-              0 0 0 1px rgba(124, 58, 237, 0.2),
-              0 0 14px rgba(124, 58, 237, 0.34);
+            box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
             filter:
               drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
               drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))
@@ -329,9 +327,7 @@ export function GlobalMobileBottomNav() {
               rgba(124, 58, 237, 0.48),
               rgba(236, 72, 153, 0.22)
             );
-            box-shadow:
-              0 0 0 1px rgba(124, 58, 237, 0.22),
-              0 0 14px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 0 14px rgba(124, 58, 237, 0.3);
             filter:
               drop-shadow(0 0 2px var(--mobile-nav-hero-white-glow))
               drop-shadow(0 0 7px var(--mobile-nav-hero-violet-glow))

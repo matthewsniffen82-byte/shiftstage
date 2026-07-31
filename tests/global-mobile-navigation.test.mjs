@@ -79,7 +79,11 @@ test("inactive mobile icons stay container-free while only the current page gets
   );
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\);[\s\S]*?border-radius: 999px;[\s\S]*?background: linear-gradient\([\s\S]*?box-shadow:[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.24\);[\s\S]*?border-radius: 999px;[\s\S]*?rgba\(236, 72, 153, 0\.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124, 58, 237, 0\.3\);[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-hero-violet-glow\)\)/,
+  );
+  assert.doesNotMatch(
+    navigationSource,
+    /a\.active \.global-mobile-nav-icon \{[^}]*box-shadow:[^}]*0 0 0 1px/,
   );
   assert.match(
     homeSource,
@@ -87,10 +91,14 @@ test("inactive mobile icons stay container-free while only the current page gets
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?background: linear-gradient\([\s\S]*?box-shadow:[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important;[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?background: linear-gradient\([\s\S]*?box-shadow:[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
+    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important;[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-hero-violet-glow\)\)/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /#discoveryTabs \.(?:tab|home-bottom-tv)\.active [^{]+\{[^}]*box-shadow:[^}]*0 0 0 1px/,
   );
 });
