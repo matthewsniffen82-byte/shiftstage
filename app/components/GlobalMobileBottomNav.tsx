@@ -202,6 +202,10 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-hero-white-glow: rgba(255, 255, 255, 0.9);
             --mobile-nav-hero-violet-glow: rgba(124, 58, 237, 0.78);
             --mobile-nav-hero-cyan-glow: rgba(34, 199, 255, 0.48);
+            --mobile-nav-icon-violet-blur: 2.2px;
+            --mobile-nav-icon-cyan-blur: 4.4px;
+            --mobile-nav-icon-violet-glow: rgba(124, 58, 237, 0.72);
+            --mobile-nav-icon-cyan-glow: rgba(34, 199, 255, 0.38);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -233,18 +237,37 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: #c084fc;
             --mobile-nav-accent-soft: #e9d5ff;
             --mobile-nav-accent-glow: rgba(192, 132, 252, 0.4);
+            --mobile-nav-icon-violet-blur: 2.8px;
+            --mobile-nav-icon-cyan-blur: 5.4px;
+            --mobile-nav-icon-violet-glow: rgba(124, 58, 237, 0.82);
+            --mobile-nav-icon-cyan-glow: rgba(34, 199, 255, 0.46);
           }
 
           .global-mobile-bottom-nav a.tv-destination {
             --mobile-nav-accent: #f472b6;
             --mobile-nav-accent-soft: #fbcfe8;
             --mobile-nav-accent-glow: rgba(236, 72, 153, 0.44);
+            --mobile-nav-icon-violet-blur: 1.8px;
+            --mobile-nav-icon-cyan-blur: 3.6px;
+            --mobile-nav-icon-violet-glow: rgba(124, 58, 237, 0.66);
+            --mobile-nav-icon-cyan-glow: rgba(34, 199, 255, 0.32);
+          }
+
+          .global-mobile-bottom-nav a.venues-destination {
+            --mobile-nav-icon-violet-blur: 2.1px;
+            --mobile-nav-icon-cyan-blur: 4.2px;
+            --mobile-nav-icon-violet-glow: rgba(124, 58, 237, 0.7);
+            --mobile-nav-icon-cyan-glow: rgba(34, 199, 255, 0.36);
           }
 
           .global-mobile-bottom-nav a.trending-destination {
             --mobile-nav-accent: #e879f9;
             --mobile-nav-accent-soft: #f5d0fe;
             --mobile-nav-accent-glow: rgba(217, 70, 239, 0.4);
+            --mobile-nav-icon-violet-blur: 2.25px;
+            --mobile-nav-icon-cyan-blur: 4.4px;
+            --mobile-nav-icon-violet-glow: rgba(124, 58, 237, 0.74);
+            --mobile-nav-icon-cyan-glow: rgba(34, 199, 255, 0.38);
           }
 
           .global-mobile-nav-icon {
@@ -342,8 +365,14 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon > svg {
             filter:
-              drop-shadow(0 0 3px var(--mobile-nav-hero-violet-glow))
-              drop-shadow(0 0 6px var(--mobile-nav-hero-cyan-glow));
+              drop-shadow(
+                0 0 var(--mobile-nav-icon-violet-blur)
+                  var(--mobile-nav-icon-violet-glow)
+              )
+              drop-shadow(
+                0 0 var(--mobile-nav-icon-cyan-blur)
+                  var(--mobile-nav-icon-cyan-glow)
+              );
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {

@@ -29881,6 +29881,10 @@
             --home-nav-hero-white-glow: rgba(255,255,255,.9);
             --home-nav-hero-violet-glow: rgba(124,58,237,.78);
             --home-nav-hero-cyan-glow: rgba(34,199,255,.48);
+            --home-nav-icon-violet-blur: 2.2px;
+            --home-nav-icon-cyan-blur: 4.4px;
+            --home-nav-icon-violet-glow: rgba(124,58,237,.72);
+            --home-nav-icon-cyan-glow: rgba(34,199,255,.38);
             position: relative !important;
             width: 100% !important;
             height: 57px !important;
@@ -29912,21 +29916,37 @@
             --home-nav-accent: #c084fc;
             --home-nav-accent-soft: #e9d5ff;
             --home-nav-accent-glow: rgba(192,132,252,.4);
+            --home-nav-icon-violet-blur: 2.8px;
+            --home-nav-icon-cyan-blur: 5.4px;
+            --home-nav-icon-violet-glow: rgba(124,58,237,.82);
+            --home-nav-icon-cyan-glow: rgba(34,199,255,.46);
           }
           #discoveryTabs .home-bottom-tv {
             --home-nav-accent: #f472b6;
             --home-nav-accent-soft: #fbcfe8;
             --home-nav-accent-glow: rgba(236,72,153,.44);
+            --home-nav-icon-violet-blur: 1.8px;
+            --home-nav-icon-cyan-blur: 3.6px;
+            --home-nav-icon-violet-glow: rgba(124,58,237,.66);
+            --home-nav-icon-cyan-glow: rgba(34,199,255,.32);
           }
           #discoveryTabs .tab[data-tab="venues"] {
             --home-nav-accent: #a78bfa;
             --home-nav-accent-soft: #ddd6fe;
             --home-nav-accent-glow: rgba(139,92,246,.42);
+            --home-nav-icon-violet-blur: 2.1px;
+            --home-nav-icon-cyan-blur: 4.2px;
+            --home-nav-icon-violet-glow: rgba(124,58,237,.7);
+            --home-nav-icon-cyan-glow: rgba(34,199,255,.36);
           }
           #discoveryTabs .tab[data-tab="trending"] {
             --home-nav-accent: #e879f9;
             --home-nav-accent-soft: #f5d0fe;
             --home-nav-accent-glow: rgba(217,70,239,.4);
+            --home-nav-icon-violet-blur: 2.25px;
+            --home-nav-icon-cyan-blur: 4.4px;
+            --home-nav-icon-violet-glow: rgba(124,58,237,.74);
+            --home-nav-icon-cyan-glow: rgba(34,199,255,.38);
           }
           #discoveryTabs .tab::before,
           #discoveryTabs .tab::after,
@@ -29999,8 +30019,8 @@
           #discoveryTabs .tab.active .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon .mydancr-tv-mark {
             filter:
-              drop-shadow(0 0 3px var(--home-nav-hero-violet-glow))
-              drop-shadow(0 0 6px var(--home-nav-hero-cyan-glow));
+              drop-shadow(0 0 var(--home-nav-icon-violet-blur) var(--home-nav-icon-violet-glow))
+              drop-shadow(0 0 var(--home-nav-icon-cyan-blur) var(--home-nav-icon-cyan-glow));
           }
           #discoveryTabs .tab-count {
             position: absolute;

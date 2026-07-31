@@ -53,6 +53,6 @@ test("homepage active TV state keeps its emphasis controlled", () => {
   assert.doesNotMatch(activeTvRule, /drop-shadow|0 0 (?:20|28)px/);
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-hero-cyan-glow\)\)/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)/,
   );
 });
