@@ -501,7 +501,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(232,230,238,.74\)[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\)[\s\S]*?--home-nav-active: #a78bfa[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.72\)[\s\S]*?--home-nav-active-cyan-glow: rgba\(34,199,255,.24\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(232,230,238,.74\)[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\)[\s\S]*?--home-nav-active: #fff[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.72\)[\s\S]*?--home-nav-active-cyan-glow: rgba\(34,199,255,.24\)/,
   );
   assert.match(
     homeSource,

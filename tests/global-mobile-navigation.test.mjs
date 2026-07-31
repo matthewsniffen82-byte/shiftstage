@@ -80,7 +80,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("neutral mobile glass uses color only for the active destination", () => {
+test("neutral mobile glass uses soft-white idle icons and bright-white active icons", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
@@ -126,11 +126,11 @@ test("neutral mobile glass uses color only for the active destination", () => {
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #a78bfa;[\s\S]*?--mobile-nav-active-violet-glow: rgba\(124, 58, 237, 0\.72\);[\s\S]*?--mobile-nav-active-cyan-glow: rgba\(34, 199, 255, 0\.24\);/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-violet-glow: rgba\(124, 58, 237, 0\.72\);[\s\S]*?--mobile-nav-active-cyan-glow: rgba\(34, 199, 255, 0\.24\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #a78bfa;[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.72\);[\s\S]*?--home-nav-active-cyan-glow: rgba\(34,199,255,.24\);/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.72\);[\s\S]*?--home-nav-active-cyan-glow: rgba\(34,199,255,.24\);/,
   );
   assert.doesNotMatch(
     navigationSource,

@@ -439,7 +439,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav a {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
-            --mobile-nav-active: #a78bfa;
+            --mobile-nav-active: #fff;
             --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.72);
             --mobile-nav-active-cyan-glow: rgba(34, 199, 255, 0.24);
             width: 100%;
@@ -593,7 +593,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav
             a.tv-destination.active
             .mydancr-tv-r {
-            stroke: #67e8f9;
+            stroke: var(--mobile-nav-active);
           }
 
           @media (prefers-reduced-motion: reduce) {

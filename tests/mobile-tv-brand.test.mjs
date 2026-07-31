@@ -16,7 +16,10 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
       source,
       /mydancr-tv-mark[\s\S]*?mydancr-tv-play[\s\S]*?mydancr-tv-r/,
     );
-    assert.match(source, /active[\s\S]*?stroke:\s*#67e8f9/);
+    assert.match(
+      source,
+      /active[\s\S]*?stroke:\s*var\(--(?:mobile|home)-nav-active\)/,
+    );
     assert.match(source, /mydancr-tv-mark[\s\S]*?width:\s*24px(?:\s*!important)?;[\s\S]*?height:\s*24px(?:\s*!important)?;/);
     assert.match(source, /mydancr-tv-play[\s\S]*?transform:\s*scale\(1\.12\)/);
     assert.match(source, /mydancr-tv-r[\s\S]*?stroke-width:\s*2;[\s\S]*?transform:\s*scale\(1\.12\)/);
@@ -24,7 +27,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   }
   assert.match(
     globalNavigation,
-    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\)[\s\S]*?--mobile-nav-active: #a78bfa/,
+    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\)[\s\S]*?--mobile-nav-active: #fff/,
   );
   assert.match(
     globalNavigation,
