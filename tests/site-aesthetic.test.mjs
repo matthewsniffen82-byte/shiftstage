@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=2" rel="stylesheet">/,
   );
 });
 
@@ -30,6 +30,21 @@ test("the shared aesthetic covers public content, accounts, and operations surfa
   assert.match(aesthetic, /body > \.app main\.stack > #results/);
   assert.match(aesthetic, /#profileBackdrop \.profile-modal/);
   assert.match(aesthetic, /\.venue-detail/);
+});
+
+test("verified check marks use the hero electric-blue and violet trust glow", () => {
+  assert.match(
+    aesthetic,
+    /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
+  );
+  assert.match(aesthetic, /--mydancr-verified-cyan: #35d8ff/);
+  assert.match(aesthetic, /--mydancr-verified-blue: #176bff/);
+  assert.match(aesthetic, /--mydancr-verified-violet: #7c3aed/);
+  assert.match(aesthetic, /color: #fff !important/);
+  assert.match(
+    aesthetic,
+    /0 0 10px rgba\(53, 216, 255, 0\.48\),\s*0 0 18px rgba\(124, 58, 237, 0\.3\)/,
+  );
 });
 
 test("the frozen bottom navigation is outside the shared aesthetic contract", () => {

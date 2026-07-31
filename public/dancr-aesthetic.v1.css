@@ -5,6 +5,48 @@
  * navigation is owned by its existing components and is not styled here.
  */
 
+:root {
+  --mydancr-verified-cyan: #35d8ff;
+  --mydancr-verified-blue: #176bff;
+  --mydancr-verified-violet: #7c3aed;
+}
+
+/*
+ * The trust mark comes directly from the hero: white against the electric-blue
+ * pole light, with a restrained violet halo. Sizes remain owned by each
+ * surface so dense cards, TV, and full profiles retain their existing layout.
+ */
+
+/*
+ * Repeating each class gives this shared rule enough specificity to supersede
+ * the legacy device-targeted badge colors in the live shell. It changes no
+ * geometry and keeps the same treatment on iOS, Android, and desktop.
+ */
+:root :is(
+  .verified-mark.verified-mark.verified-mark,
+  .verified-check.verified-check.verified-check,
+  .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
+  .profile-modal-verified.profile-modal-verified.profile-modal-verified,
+  .profile-verified.profile-verified.profile-verified,
+  .tv-verified-mark.tv-verified-mark.tv-verified-mark
+) {
+  border: 1px solid rgba(203, 247, 255, 0.72) !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.58), transparent 24%),
+    linear-gradient(
+      145deg,
+      var(--mydancr-verified-cyan) 0%,
+      var(--mydancr-verified-blue) 48%,
+      var(--mydancr-verified-violet) 100%
+    ) !important;
+  box-shadow:
+    0 0 0 1px rgba(124, 58, 237, 0.2),
+    0 0 10px rgba(53, 216, 255, 0.48),
+    0 0 18px rgba(124, 58, 237, 0.3) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.72) !important;
+}
+
 :is(
   .account-shell,
   .dashboard-shell,
