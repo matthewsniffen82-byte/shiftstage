@@ -139,8 +139,9 @@ export function VenueQrUnavailable({
       aria-label={`${status.label} for ${venueName}`}
     >
       <span className="venue-qr-placeholder-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2" />
+        <svg viewBox="0 0 28 28">
+          <path className="qr-finder" d="M2 2h8v8H2zM18 2h8v8h-8zM2 18h8v8H2z" />
+          <path className="qr-module" d="M5 5h2v2H5zM21 5h2v2h-2zM5 21h2v2H5zM13 2h2v4h-2zM12 9h3v3h-3zM18 13h3v3h-3zM23 12h3v3h-3zM12 15h3v5h-3zM16 18h3v3h-3zM21 18h5v3h-5zM12 23h3v3h-3zM18 23h3v3h-3zM23 23h3v3h-3z" />
         </svg>
       </span>
       <div className="venue-qr-unavailable-copy">

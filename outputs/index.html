@@ -27995,40 +27995,36 @@
 
     #profileModal .profile-deal-placeholder,
     .approved-visual-profile .profile-deal-placeholder {
-      min-width: 112px;
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 7px 10px;
+      width: 64px;
+      min-width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      justify-self: end;
+      padding: 8px;
       border: 1px solid rgba(255,255,255,.13);
-      border-radius: 13px;
+      border-radius: 11px;
       color: rgba(245,245,255,.56);
-      background: rgba(255,255,255,.035);
-      font-size: .7rem;
-      font-weight: 900;
-      line-height: 1.12;
-      text-align: center;
+      background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
     }
 
-    #profileModal .profile-deal-placeholder .action-icon,
-    .approved-visual-profile .profile-deal-placeholder .action-icon {
-      width: 19px;
-      height: 19px;
-      flex: 0 0 19px;
+    #profileModal .profile-deal-placeholder svg,
+    .approved-visual-profile .profile-deal-placeholder svg {
+      width: 100%;
+      height: 100%;
     }
 
-    @media (max-width: 420px) {
-      #profileModal .profile-qr-unavailable,
-      .approved-visual-profile .profile-qr-unavailable {
-        grid-template-columns: minmax(0, 1fr) !important;
-      }
+    .club-deal-qr-symbol .qr-finder {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linejoin: miter;
+    }
 
-      #profileModal .profile-deal-placeholder,
-      .approved-visual-profile .profile-deal-placeholder {
-        width: 100%;
-      }
+    .club-deal-qr-symbol .qr-module {
+      fill: currentColor;
+      stroke: none;
     }
 
     @media (max-width: 430px) {
@@ -31136,7 +31132,7 @@
         .home-dancer-grid-action-rail {
           position: absolute;
           z-index: 6;
-          top: 44px;
+          top: 78px;
           right: 10px;
           width: 52px;
           display: grid;
@@ -31258,43 +31254,62 @@
           z-index: 4;
           top: 8px;
           right: 8px;
-          min-height: 34px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 0 8px;
-          border: 1px solid rgba(77,236,157,.68);
-          border-radius: 999px;
+          width: 72px;
+          min-height: 66px;
+          display: grid;
+          justify-items: center;
+          gap: 3px;
+          padding: 0;
+          border: 0;
           color: #fff;
-          background: linear-gradient(135deg,rgba(7,92,77,.94),rgba(16,128,74,.94));
-          box-shadow: 0 8px 20px rgba(0,0,0,.38), 0 0 14px rgba(77,236,157,.14);
+          background: transparent;
+          box-shadow: none;
           font: inherit;
-          font-size: 8px;
-          font-weight: 950;
           cursor: pointer;
-          backdrop-filter: blur(12px);
         }
-        .home-dancer-grid-qr .action-icon {
-          width: 16px;
-          height: 16px;
+        .home-dancer-grid-qr .club-deal-qr-symbol {
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          padding: 5px;
+          border: 1px solid rgba(77,236,157,.72);
+          border-radius: 9px;
+          color: #fff;
+          background: linear-gradient(145deg,rgba(7,92,77,.98),rgba(16,128,74,.96));
+          box-shadow: 0 8px 20px rgba(0,0,0,.38), 0 0 14px rgba(77,236,157,.16), inset 0 1px 0 rgba(255,255,255,.1);
+        }
+        .home-dancer-grid-qr .club-deal-qr-symbol svg {
+          width: 100%;
+          height: 100%;
+        }
+        .home-dancer-grid-qr > span:last-child {
+          max-width: 72px;
+          color: rgba(255,255,255,.92);
+          font-size: 7px;
+          font-weight: 950;
+          line-height: 1.12;
+          text-align: center;
+          white-space: normal;
         }
         .home-dancer-grid-qr:focus-visible {
+          outline: none;
+        }
+        .home-dancer-grid-qr:focus-visible .club-deal-qr-symbol {
           outline: 2px solid #7eeaff;
           outline-offset: 2px;
         }
         .home-dancer-grid-qr:disabled {
-          opacity: .62;
           cursor: default;
         }
-        .home-dancer-grid-qr.is-unavailable {
-          max-width: min(160px, calc(100% - 78px));
-          overflow: hidden;
+        .home-dancer-grid-qr.is-unavailable .club-deal-qr-symbol {
           border-color: rgba(255,255,255,.18);
-          color: rgba(245,245,255,.72);
-          background: rgba(8,8,13,.76);
+          color: rgba(245,245,255,.48);
+          background: linear-gradient(145deg,rgba(35,35,45,.88),rgba(8,8,13,.82));
           box-shadow: 0 8px 20px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.04);
-          text-overflow: ellipsis;
-          white-space: nowrap;
+        }
+        .home-dancer-grid-qr.is-unavailable > span:last-child {
+          color: rgba(245,245,255,.62);
         }
         @media (max-width: 679px) {
           #results.home-dancer-grid,
@@ -38393,6 +38408,11 @@
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
     }
 
+    function clubDealQrSymbolMarkup(className = "") {
+      const classes = ["club-deal-qr-symbol", className].filter(Boolean).join(" ");
+      return `<span class="${classes}" aria-hidden="true"><svg viewBox="0 0 28 28"><path class="qr-finder" d="M2 2h8v8H2zM18 2h8v8h-8zM2 18h8v8H2z"></path><path class="qr-module" d="M5 5h2v2H5zM21 5h2v2h-2zM5 21h2v2H5zM13 2h2v4h-2zM12 9h3v3h-3zM18 13h3v3h-3zM23 12h3v3h-3zM12 15h3v5h-3zM16 18h3v3h-3zM21 18h5v3h-5zM12 23h3v3h-3zM18 23h3v3h-3zM23 23h3v3h-3z"></path></svg></span>`;
+    }
+
     document.querySelectorAll("[data-quick-icon]").forEach((target) => {
       target.innerHTML = actionIconMarkup(target.dataset.quickIcon);
     });
@@ -38971,7 +38991,7 @@
               <span class="profile-deal-note">${escapeHtml(state.detail)}</span>
             </div>
           </div>
-          <span class="profile-deal-placeholder" aria-hidden="true">${actionIconMarkup("qr")}<span>${escapeHtml(state.label)}</span></span>
+          ${clubDealQrSymbolMarkup("profile-deal-placeholder")}
         </div>
       `;
     }
@@ -46075,11 +46095,11 @@
       const state = dancerClubDealState(profile);
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
-        return `<button class="home-dancer-grid-qr is-unavailable is-${state.key}" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${actionIconMarkup("qr")}<span>${escapeHtml(state.label)}</span></button>`;
+        return `<button class="home-dancer-grid-qr is-unavailable is-${state.key}" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${clubDealQrSymbolMarkup()}<span>${escapeHtml(state.label)}</span></button>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
-      return `<button class="home-dancer-grid-qr is-available" type="button" ${qr.triggerAttribute} data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Get the Club Deal for ${venueName}">${actionIconMarkup("qr")}<span>Get Club Deal</span></button>`;
+      return `<button class="home-dancer-grid-qr is-available" type="button" ${qr.triggerAttribute} data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Get the Club Deal for ${venueName}">${clubDealQrSymbolMarkup()}<span>Get Club Deal</span></button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue, presentation = "primary") {

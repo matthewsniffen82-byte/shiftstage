@@ -170,13 +170,19 @@ test("dancer scroll cards and full profiles reserve a truthful Club Deal state",
   assert.match(gridDealMarkup, /state\.key !== "available"/);
   assert.match(gridDealMarkup, /data-club-deal-state="\$\{state\.key\}"[^>]*disabled aria-disabled="true"/);
   assert.match(gridDealMarkup, /data-club-deal-state="available" data-feed-live-qr/);
+  assert.match(gridDealMarkup, /clubDealQrSymbolMarkup\(\)/);
 
   const profileDealMarkup =
     liveApp.match(
       /function profileDealTileMarkup\(profile\) \{[\s\S]*?(?=\n    function profileShareText)/,
     )?.[0] || "";
   assert.match(profileDealMarkup, /data-club-deal-state="\$\{state\.key\}"/);
-  assert.match(profileDealMarkup, /profile-deal-placeholder/);
+  assert.match(profileDealMarkup, /clubDealQrSymbolMarkup\("profile-deal-placeholder"\)/);
+  assert.match(
+    liveApp,
+    /function clubDealQrSymbolMarkup\(className = ""\)[\s\S]*?viewBox="0 0 28 28"[\s\S]*?class="qr-finder"[\s\S]*?class="qr-module"/,
+  );
+  assert.match(liveApp, /\.profile-deal-placeholder \{[\s\S]*?width: 64px;[\s\S]*?min-width: 64px;[\s\S]*?height: 64px;/);
   assert.match(liveApp, /label: "No Club Deal available"/);
   assert.match(liveApp, /label: "Available when working"/);
   assert.match(liveApp, /label: "Not available now"/);
@@ -190,7 +196,8 @@ test("dancer scroll cards and full profiles reserve a truthful Club Deal state",
     /availability=\{upcomingShifts\.length \? "available-when-working" : "not-available-now"\}/,
   );
   assert.match(venueQrComponent, /type ClubDealAvailability = "no-active-offer" \| "available-when-working" \| "not-available-now"/);
-  assert.match(venueQrComponent, /className="venue-qr-placeholder-icon"[\s\S]*?<svg viewBox="0 0 24 24">/);
+  assert.match(venueQrComponent, /className="venue-qr-placeholder-icon"[\s\S]*?<svg viewBox="0 0 28 28">[\s\S]*?className="qr-finder"[\s\S]*?className="qr-module"/);
+  assert.match(dancerPage, /\.venue-qr-placeholder-icon \{ width: 58px; height: 58px;/);
   assert.match(venueQrComponent, /label: "No Club Deal available"/);
   assert.match(venueQrComponent, /label: "Available when working"/);
   assert.match(venueQrComponent, /label: "Not available now"/);

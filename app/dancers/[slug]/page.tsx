@@ -401,8 +401,10 @@ function PublicProfileStyles() {
       .profile-deal-availability { margin-top: 0; }
       .venue-qr-unavailable { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 14px; border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; background: rgba(0,0,0,.2); }
       .profile-deal-availability .venue-qr-unavailable { border-color: rgba(167,139,250,.22); background: linear-gradient(135deg, rgba(34,29,47,.58), rgba(8,8,13,.82)); }
-      .venue-qr-placeholder-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 13px; color: rgba(245,245,255,.54); background: rgba(255,255,255,.04); }
-      .venue-qr-placeholder-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .venue-qr-placeholder-icon { width: 58px; height: 58px; display: grid; place-items: center; padding: 7px; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; color: rgba(245,245,255,.52); background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+      .venue-qr-placeholder-icon svg { width: 100%; height: 100%; }
+      .venue-qr-placeholder-icon .qr-finder { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: miter; }
+      .venue-qr-placeholder-icon .qr-module { fill: currentColor; stroke: none; }
       .venue-qr-unavailable-copy { min-width: 0; display: grid; gap: 4px; }
       .venue-qr-unavailable-copy strong { color: #f5f2ff; font-size: 14px; }
       .venue-qr-unavailable-copy p { color: #a99eb7; font-size: 11px; }
