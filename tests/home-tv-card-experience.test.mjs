@@ -59,6 +59,25 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
 });
 
+test("the mobile TV identity and progress sit low without moving actions or navigation", () => {
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 calc\(66px \+ env\(safe-area-inset-bottom\)\) 14px;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-actions \{[\s\S]*?bottom: calc\(98px \+ env\(safe-area-inset-bottom\)\);/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-progress \{[\s\S]*?bottom: calc\(52px \+ env\(safe-area-inset-bottom\)\);/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
+  );
+});
+
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
   const scheduleFunction =
     homeSource.match(
