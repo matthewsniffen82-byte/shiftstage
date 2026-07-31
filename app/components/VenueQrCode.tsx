@@ -109,11 +109,45 @@ export function VenueQrCode({
   );
 }
 
-export function VenueQrUnavailable({ venueName }: { venueName: string }) {
+type ClubDealAvailability = "no-active-offer" | "available-when-working" | "not-available-now";
+
+export function VenueQrUnavailable({
+  venueName,
+  availability = "no-active-offer",
+}: {
+  venueName: string;
+  availability?: ClubDealAvailability;
+}) {
+  const status = availability === "available-when-working"
+    ? {
+        label: "Available when working",
+        detail: "A tracked Club Deal can unlock after a verified check-in when the venue has an active offer.",
+      }
+    : availability === "not-available-now"
+      ? {
+          label: "Not available now",
+          detail: "A verified current check-in is required before a customer Club Deal QR can be issued.",
+        }
+      : {
+          label: "No Club Deal available",
+          detail: "No tracked Club Deal is active at this venue.",
+        };
+
   return (
-    <aside className="venue-qr-unavailable" aria-label={`Tracked Club Deal unavailable at ${venueName}`}>
-      <span className="eyebrow">Club Scan</span>
-      <p>No tracked Club Deal is active at this venue.</p>
+    <aside
+      className={`venue-qr-unavailable is-${availability}`}
+      aria-label={`${status.label} for ${venueName}`}
+    >
+      <span className="venue-qr-placeholder-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2" />
+        </svg>
+      </span>
+      <div className="venue-qr-unavailable-copy">
+        <span className="eyebrow">Club Deal</span>
+        <strong>{status.label}</strong>
+        <p>{status.detail}</p>
+      </div>
     </aside>
   );
 }

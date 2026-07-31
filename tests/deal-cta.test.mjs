@@ -15,6 +15,7 @@ const [
   discoveryRoute,
   customerSavedRoute,
   customerDashboard,
+  venueQrComponent,
   liveApp,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
@@ -29,6 +30,7 @@ const [
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/saved/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/components/VenueQrCode.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
@@ -150,11 +152,48 @@ test("homepage live profiles use the server-generated revenue QR only while Work
   assert.match(discoveryRoute, /dealAttributionToken:[\s\S]*?createDancerDealAttributionToken/);
   assert.match(liveApp, /activeDeal: item\.activeDeal \|\| null/);
   assert.match(liveApp, /dealAttributionToken: item\.dealAttributionToken \|\| ""/);
-  assert.match(liveApp, /function profileDealTileMarkup\(profile\) \{\s*if \(!profile\?\.venue \|\| !isWorkingTonight\(profile\)\) return ""/);
-  assert.match(liveApp, /profile\.activeDeal && profile\.venueId/);
+  assert.match(
+    liveApp,
+    /function dancerClubDealState\(profile\)[\s\S]*?workingNow &&[\s\S]*?profile\?\.venueId &&[\s\S]*?profile\?\.activeDeal\?\.id &&[\s\S]*?profile\?\.dealAttributionToken/,
+  );
+  assert.match(liveApp, /function profileDealTileMarkup\(profile\)[\s\S]*?state\.key === "available"/);
   assert.match(liveApp, /data-club-deal-cta/);
   assert.match(liveApp, /postOptionalAuthJson\("\/api\/deals\/redemptions"/);
   assert.match(liveApp, /sourceType: "dancer_profile"/);
+});
+
+test("dancer scroll cards and full profiles reserve a truthful Club Deal state", () => {
+  const gridDealMarkup =
+    liveApp.match(
+      /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,
+    )?.[0] || "";
+  assert.match(gridDealMarkup, /state\.key !== "available"/);
+  assert.match(gridDealMarkup, /data-club-deal-state="\$\{state\.key\}"[^>]*disabled aria-disabled="true"/);
+  assert.match(gridDealMarkup, /data-club-deal-state="available" data-feed-live-qr/);
+
+  const profileDealMarkup =
+    liveApp.match(
+      /function profileDealTileMarkup\(profile\) \{[\s\S]*?(?=\n    function profileShareText)/,
+    )?.[0] || "";
+  assert.match(profileDealMarkup, /data-club-deal-state="\$\{state\.key\}"/);
+  assert.match(profileDealMarkup, /profile-deal-placeholder/);
+  assert.match(liveApp, /label: "No Club Deal available"/);
+  assert.match(liveApp, /label: "Available when working"/);
+  assert.match(liveApp, /label: "Not available now"/);
+  assert.match(
+    liveApp,
+    /function shiftsMarkup\(profile[\s\S]*?if \(isWorkingTonight\(profile\)[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?if \(profile\.scheduled\)[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?No shift posted[\s\S]*?profileDealTileMarkup\(profile\)/,
+  );
+
+  assert.match(
+    dancerPage,
+    /availability=\{upcomingShifts\.length \? "available-when-working" : "not-available-now"\}/,
+  );
+  assert.match(venueQrComponent, /type ClubDealAvailability = "no-active-offer" \| "available-when-working" \| "not-available-now"/);
+  assert.match(venueQrComponent, /className="venue-qr-placeholder-icon"[\s\S]*?<svg viewBox="0 0 24 24">/);
+  assert.match(venueQrComponent, /label: "No Club Deal available"/);
+  assert.match(venueQrComponent, /label: "Available when working"/);
+  assert.match(venueQrComponent, /label: "Not available now"/);
 });
 
 test("signed-in customer deal passes are attached to the real account dashboard", () => {

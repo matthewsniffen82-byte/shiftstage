@@ -195,7 +195,14 @@ export default async function DancerPublicPage({ params }: PageProps) {
               )}
             </div>
           </section>
-        ) : null}
+        ) : (
+          <section className="profile-deal-availability" aria-label="Club Deal status">
+            <VenueQrUnavailable
+              availability={upcomingShifts.length ? "available-when-working" : "not-available-now"}
+              venueName={upcomingShifts[0]?.venueName || profile.city}
+            />
+          </section>
+        )}
 
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-labelledby="profile-social-heading">
@@ -321,7 +328,7 @@ function PublicProfileStyles() {
       .profile-verified { width: 22px; height: 22px; flex: 0 0 22px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 17px rgba(126,234,255,.34); font-size: 13px; font-weight: 950; }
       .public-profile-close { width: 44px; min-height: 44px; display: inline-grid; flex: 0 0 44px; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.36); border-radius: 50%; color: #fff; background: rgba(10,10,14,.84); box-shadow: 0 0 18px rgba(124,58,237,.16); font-size: 28px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
-      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
+      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-deal-availability, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
       .profile-overview { display: block; padding: 14px 0 12px; }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 10px 4px; }
@@ -385,12 +392,20 @@ function PublicProfileStyles() {
       .club-deal-copy p, .club-deal-copy small { color: #b9accd; font-size: 11px; line-height: 1.4; }
       .club-deal-action { display: grid; justify-items: end; gap: 8px; }
       .club-deal-action > button, .venue-qr-launcher { min-height: 44px; padding: 0 15px; border: 1px solid rgba(126,234,255,.4); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
+      .profile-working-card .club-deal-action > button { border-color: rgba(77,236,157,.7); background: linear-gradient(135deg, #075c4d, #10804a); box-shadow: 0 0 22px rgba(77,236,157,.15); }
       .deal-qr-frame { display: grid; justify-items: center; gap: 6px; }
       .deal-qr-frame img { width: 116px; aspect-ratio: 1; border-radius: 10px; background: #fff; }
       .deal-qr-frame span, .club-deal-action em { color: #9fefff; font-size: 10px; font-style: normal; }
       .venue-qr-launcher { width: 100%; display: flex; align-items: center; justify-content: space-between; }
       .venue-qr-launcher span { color: #d8f7ff; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
-      .venue-qr-unavailable { display: grid; gap: 5px; padding: 14px; border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; background: rgba(0,0,0,.2); }
+      .profile-deal-availability { margin-top: 0; }
+      .venue-qr-unavailable { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 14px; border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; background: rgba(0,0,0,.2); }
+      .profile-deal-availability .venue-qr-unavailable { border-color: rgba(167,139,250,.22); background: linear-gradient(135deg, rgba(34,29,47,.58), rgba(8,8,13,.82)); }
+      .venue-qr-placeholder-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 13px; color: rgba(245,245,255,.54); background: rgba(255,255,255,.04); }
+      .venue-qr-placeholder-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .venue-qr-unavailable-copy { min-width: 0; display: grid; gap: 4px; }
+      .venue-qr-unavailable-copy strong { color: #f5f2ff; font-size: 14px; }
+      .venue-qr-unavailable-copy p { color: #a99eb7; font-size: 11px; }
       .profile-schedule-section { margin-top: 24px; }
       .profile-media-section { display: grid; gap: 11px; margin-top: 14px; }
       .profile-media-heading, .profile-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; }

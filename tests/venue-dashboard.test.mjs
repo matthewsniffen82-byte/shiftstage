@@ -83,10 +83,10 @@ test("uploaded venue QR images are isolated as external marketing assets and nev
 });
 
 test("checked-in dancer profiles show only a tracked MyDancr Club Deal or an explicit unavailable state", () => {
-  assert.match(liveApp, /if \(!profile\?\.venue \|\| !isWorkingTonight\(profile\)\) return ""/);
-  assert.match(liveApp, /if \(profile\.activeDeal && profile\.venueId\)/);
-  assert.match(liveApp, /No tracked Club Deal is active at this venue\./);
-  assert.match(liveApp, /<strong>Club Scan<\/strong>/);
+  assert.match(liveApp, /function dancerClubDealState\(profile\)[\s\S]*?profile\?\.activeDeal\?\.id &&[\s\S]*?profile\?\.dealAttributionToken/);
+  assert.match(liveApp, /if \(state\.key === "available"\)/);
+  assert.match(liveApp, /label: "No Club Deal available"/);
+  assert.match(liveApp, /profile-qr-unavailable[\s\S]*?<strong>Club Deal<\/strong>/);
   assert.match(liveApp, /Saving or sharing keeps your credit attached until that QR expires/);
   assert.doesNotMatch(liveApp, /profile\.venueQrCodeUrl[\s\S]*?data-deal-pass/);
 });

@@ -452,7 +452,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr"[\s\S]*?data-feed-live-qr[\s\S]*?<span>Get Club Deal<\/span>/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr[^\"]*"[\s\S]*?data-feed-live-qr[\s\S]*?<span>Get Club Deal<\/span>/,
   );
   assert.match(
     homeSource,
