@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 import "../public/dancr-button-system.v1.css";
+import "../public/dancr-aesthetic.v1.css";
 
 export const metadata: Metadata = {
   title: "mydancr",

@@ -1,0 +1,583 @@
+/*
+ * Shared MyDancr visual language.
+ *
+ * This stylesheet is intentionally scoped to content surfaces. Primary
+ * navigation is owned by its existing components and is not styled here.
+ */
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) {
+  --mydancr-bg: #050507;
+  --mydancr-surface: rgba(9, 9, 14, 0.94);
+  --mydancr-surface-raised: rgba(14, 13, 21, 0.96);
+  --mydancr-line: rgba(255, 255, 255, 0.1);
+  --mydancr-line-accent: rgba(126, 234, 255, 0.28);
+  --mydancr-text: #f8f6fb;
+  --mydancr-muted: #aaa1b5;
+  --mydancr-cyan: #7eeaff;
+  --mydancr-violet: #8b5cf6;
+  --mydancr-pink: #ec4899;
+  color: var(--mydancr-text) !important;
+  background:
+    radial-gradient(circle at 84% -8%, rgba(126, 234, 255, 0.08), transparent 25rem),
+    radial-gradient(circle at 10% 3%, rgba(139, 92, 246, 0.11), transparent 28rem),
+    linear-gradient(180deg, #08080d 0, var(--mydancr-bg) 42rem) !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(h1, h2, h3) {
+  color: var(--mydancr-text);
+  font-weight: 950;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(.eyebrow, label, legend) {
+  color: var(--mydancr-cyan);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(p, small, .muted, .empty) {
+  color: var(--mydancr-muted);
+}
+
+:is(
+  .account-shell .account-panel,
+  .dashboard-shell .info-panel,
+  .admin-shell .admin-panel,
+  .dmca-shell .dmca-card,
+  .counter-shell .counter-card,
+  .redeem-shell .scanner-card,
+  .deal-pass-page .deal-pass-card,
+  .tv-studio-page .tv-upload-form,
+  .tv-studio-page .tv-video-manager,
+  .tv-studio-page .tv-studio-lock,
+  .tv-studio-page .tv-studio-incognito
+) {
+  overflow: hidden;
+  border: 1px solid var(--mydancr-line) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(145deg, rgba(15, 14, 22, 0.97), rgba(6, 6, 10, 0.98)) !important;
+  box-shadow:
+    0 20px 52px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+:is(
+  .dashboard-shell .metric,
+  .dashboard-shell .dashboard-shift,
+  .dashboard-shell .photo-review-card,
+  .dashboard-shell .saved-deal-item,
+  .dashboard-shell .support-thread,
+  .dashboard-shell .notification-row,
+  .dashboard-shell .event-row,
+  .dashboard-shell .commission-tier-table,
+  .admin-shell .approval-row,
+  .admin-shell .dancer-directory-row,
+  .admin-shell .submission-section,
+  .admin-shell .submission-value,
+  .admin-shell .submission-review-card,
+  .admin-shell .submitted-social-review,
+  .admin-shell .venue-admin-row,
+  .admin-shell .report-row,
+  .admin-shell .support-inbox-thread,
+  .admin-shell .support-inbox-message,
+  .account-shell .signup-benefits,
+  .account-shell .dancer-signup-note,
+  .account-shell .customer-benefit-tile
+) {
+  border: 1px solid var(--mydancr-line) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.035) !important;
+  box-shadow: none !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(input, select, textarea) {
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border-radius: 12px !important;
+  color: var(--mydancr-text) !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  box-shadow: none !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(input, select, textarea):focus {
+  border-color: rgba(126, 234, 255, 0.58) !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(126, 234, 255, 0.1) !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(
+  button,
+  .primary-link,
+  .primary-action,
+  .secondary-action,
+  .venue-sign-in
+) {
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border-radius: 12px !important;
+  color: var(--mydancr-text) !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(
+  button[type="submit"],
+  .submit,
+  .continue-signup,
+  .counter-submit,
+  .dmca-submit,
+  .primary-link,
+  .primary-action
+) {
+  border-color: rgba(126, 234, 255, 0.46) !important;
+  color: #fff !important;
+  background:
+    linear-gradient(135deg, rgba(109, 40, 217, 0.96), rgba(11, 148, 201, 0.88)) !important;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.32),
+    0 0 20px rgba(126, 234, 255, 0.08) !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(button, a):hover {
+  border-color: var(--mydancr-line-accent) !important;
+  filter: none !important;
+}
+
+:is(
+  .account-shell .segmented,
+  .admin-shell .segmented,
+  .dashboard-shell .segmented
+) {
+  gap: 4px !important;
+  padding: 4px !important;
+  border: 1px solid var(--mydancr-line) !important;
+  border-radius: 14px !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+:is(
+  .account-shell .segmented,
+  .admin-shell .segmented,
+  .dashboard-shell .segmented
+) button {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+:is(
+  .account-shell .segmented,
+  .admin-shell .segmented,
+  .dashboard-shell .segmented
+) button.active {
+  color: #fff !important;
+  background:
+    linear-gradient(135deg, rgba(109, 40, 217, 0.72), rgba(34, 199, 255, 0.2)) !important;
+  box-shadow: inset 0 0 0 1px rgba(126, 234, 255, 0.22) !important;
+}
+
+:is(
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .dmca-shell,
+  .counter-shell,
+  .redeem-shell,
+  .deal-pass-page,
+  .tv-studio-page
+) :is(
+  button[class*="close"],
+  button[aria-label*="password" i]
+) {
+  border-radius: 999px !important;
+  background: rgba(12, 12, 18, 0.72) !important;
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+.account-shell .account-copy {
+  align-content: start;
+}
+
+.account-shell .account-copy h1,
+.dashboard-shell .dashboard-head h1,
+.admin-shell .admin-head h1,
+.dmca-shell .dmca-hero h1 {
+  max-width: 760px;
+  font-size: clamp(40px, 7vw, 72px) !important;
+  line-height: 0.96 !important;
+}
+
+.account-shell .account-panel {
+  padding: clamp(18px, 3vw, 24px) !important;
+}
+
+.dashboard-shell .dashboard-grid,
+.admin-shell .admin-grid {
+  gap: 14px !important;
+}
+
+.dashboard-shell .info-panel,
+.admin-shell .admin-panel {
+  padding: clamp(16px, 2.4vw, 22px) !important;
+}
+
+.dashboard-shell .info-panel > h2,
+.admin-shell .admin-panel-head h2 {
+  font-size: clamp(20px, 3vw, 27px) !important;
+}
+
+.dashboard-shell .visibility-panel.is-incognito {
+  border-color: rgba(236, 72, 153, 0.32) !important;
+  background:
+    linear-gradient(145deg, rgba(34, 9, 28, 0.94), rgba(6, 6, 10, 0.98)) !important;
+}
+
+.dashboard-shell .deal-panel,
+.dashboard-shell .venue-deal-panel {
+  border-color: rgba(126, 234, 255, 0.2) !important;
+}
+
+.admin-shell .admin-panel-badge,
+.dashboard-shell .deal-state.active,
+.redeem-shell .status-pill.success {
+  border: 1px solid rgba(126, 234, 255, 0.32) !important;
+  color: #dffbff !important;
+  background: rgba(126, 234, 255, 0.1) !important;
+}
+
+.admin-shell :is(
+  .submission-review-card.is-approved,
+  .submitted-social-review.is-approved
+) {
+  border-color: rgba(74, 222, 128, 0.32) !important;
+  background: rgba(74, 222, 128, 0.055) !important;
+}
+
+.admin-shell :is(
+  .submission-review-card.is-rejected,
+  .submitted-social-review.is-rejected
+) {
+  border-color: rgba(255, 99, 124, 0.32) !important;
+  background: rgba(255, 99, 124, 0.055) !important;
+}
+
+.tv-studio-page .tv-managed-video {
+  overflow: hidden;
+  border: 1px solid var(--mydancr-line) !important;
+  border-radius: 16px !important;
+  background: var(--mydancr-surface) !important;
+  box-shadow: none !important;
+}
+
+/*
+ * Homepage content surfaces. The fixed discovery navigation is intentionally
+ * outside every selector in this section.
+ */
+
+body > .app main.stack > .hero.reference-hero {
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.38) !important;
+  border-radius: 24px !important;
+  background: #020204 !important;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.36),
+    0 0 28px rgba(124, 58, 237, 0.08) !important;
+}
+
+body > .app main.stack > .home-discovery-controls {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(145deg, rgba(14, 13, 20, 0.97), rgba(6, 6, 10, 0.98)) !important;
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+body > .app main.stack > .home-discovery-controls label {
+  color: #aaa1b5 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.16em !important;
+}
+
+body > .app main.stack > .home-discovery-controls :is(select, button) {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 14px !important;
+  color: #f8f6fb !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body > .app main.stack > .home-discovery-controls :is(select, button):focus-visible {
+  border-color: rgba(126, 234, 255, 0.58) !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(126, 234, 255, 0.1) !important;
+}
+
+body > .app main.stack > .home-live-summary {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 999px !important;
+  background: rgba(7, 7, 11, 0.78) !important;
+  box-shadow: none !important;
+}
+
+body > .app main.stack > .home-tv-launch {
+  border: 1px solid rgba(126, 234, 255, 0.2) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(135deg, rgba(23, 13, 48, 0.92), rgba(6, 15, 23, 0.94)) !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.3) !important;
+}
+
+body > .app main.stack > .home-tv-launch .home-tv-launch-icon {
+  border: 1px solid rgba(126, 234, 255, 0.26) !important;
+  background: rgba(126, 234, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+body > .app main.stack > :is(.home-results-header, .section-title) h2,
+body > .app main.stack > #results :is(h2, h3) {
+  color: #f8f6fb !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.035em !important;
+}
+
+body > .app main.stack > #results :is(
+  .home-feed-card,
+  .dancer-card,
+  .venue-card,
+  .empty-state
+) {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(145deg, rgba(14, 13, 20, 0.96), rgba(5, 5, 8, 0.98)) !important;
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+body > .app main.stack > #results :is(
+  .info-tile,
+  .venue-offer,
+  .venue-hours,
+  .home-feed-context,
+  .home-dancer-grid-context
+) {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  background: rgba(0, 0, 0, 0.26) !important;
+  box-shadow: none !important;
+}
+
+body > .app main.stack > #results :is(
+  .home-dancer-grid-action-rail,
+  .home-venue-discovery-action-rail
+) {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 18px !important;
+  background: rgba(7, 7, 11, 0.64) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+body > .app main.stack > #results :is(
+  .home-dancer-grid-action-rail,
+  .home-venue-discovery-action-rail
+) :is(button, a) {
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body > .app main.stack > #results :is(
+  .home-dancer-grid-action-rail,
+  .home-venue-discovery-action-rail
+) :is(button, a).is-active {
+  color: #fff !important;
+  background: rgba(126, 234, 255, 0.1) !important;
+  box-shadow: inset 0 0 0 1px rgba(126, 234, 255, 0.22) !important;
+}
+
+#profileBackdrop .profile-modal,
+.venue-detail,
+.modal-card {
+  border: 1px solid rgba(126, 234, 255, 0.2) !important;
+  border-radius: 22px !important;
+  color: #f8f6fb !important;
+  background:
+    radial-gradient(circle at 88% 2%, rgba(126, 234, 255, 0.07), transparent 18rem),
+    linear-gradient(145deg, rgba(12, 11, 18, 0.99), rgba(4, 4, 7, 0.99)) !important;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.66) !important;
+}
+
+#profileBackdrop .profile-modal :is(.info-tile, .social-tile, .modal-actions),
+.venue-detail :is(.info-tile, .venue-section, .venue-offer) {
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 15px !important;
+  background: rgba(255, 255, 255, 0.035) !important;
+  box-shadow: none !important;
+}
+
+#profileBackdrop .profile-modal :is(.close-btn, button[class*="close"]),
+.venue-detail :is(.close-btn, button[class*="close"]),
+.modal-card :is(.close-btn, button[class*="close"]) {
+  border: 1px solid rgba(126, 234, 255, 0.24) !important;
+  border-radius: 999px !important;
+  color: #fff !important;
+  background: rgba(10, 10, 15, 0.68) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+@media (max-width: 720px) {
+  :is(
+    .account-shell,
+    .dashboard-shell,
+    .admin-shell,
+    .dmca-shell,
+    .counter-shell,
+    .redeem-shell,
+    .deal-pass-page,
+    .tv-studio-page
+  ) {
+    background:
+      radial-gradient(circle at 86% -5%, rgba(126, 234, 255, 0.06), transparent 18rem),
+      linear-gradient(180deg, #08080d 0, #050507 28rem) !important;
+  }
+
+  :is(
+    .account-shell .account-panel,
+    .dashboard-shell .info-panel,
+    .admin-shell .admin-panel,
+    .dmca-shell .dmca-card,
+    .counter-shell .counter-card,
+    .redeem-shell .scanner-card,
+    .deal-pass-page .deal-pass-card,
+    .tv-studio-page .tv-upload-form,
+    .tv-studio-page .tv-video-manager
+  ) {
+    border-radius: 16px !important;
+  }
+
+  .account-shell .account-copy h1,
+  .dashboard-shell .dashboard-head h1,
+  .admin-shell .admin-head h1,
+  .dmca-shell .dmca-hero h1 {
+    font-size: clamp(38px, 12vw, 54px) !important;
+  }
+
+  body > .app main.stack > .hero.reference-hero,
+  body > .app main.stack > .home-discovery-controls,
+  body > .app main.stack > #results :is(
+    .home-feed-card,
+    .dancer-card,
+    .venue-card,
+    .empty-state
+  ) {
+    border-radius: 18px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .account-shell,
+    .dashboard-shell,
+    .admin-shell,
+    .dmca-shell,
+    .counter-shell,
+    .redeem-shell,
+    .deal-pass-page,
+    .tv-studio-page
+  ) * {
+    transition: none !important;
+  }
+}
