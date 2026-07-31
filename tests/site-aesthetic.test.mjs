@@ -47,6 +47,31 @@ test("verified check marks use the hero electric-blue and violet trust glow", ()
   );
 });
 
+test("the homepage hero uses one crisp purple-to-electric-blue edge", () => {
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero::before/,
+  );
+  assert.match(
+    aesthetic,
+    /rgba\(124, 58, 237, 0\.94\)[\s\S]*?rgba\(53, 216, 255, 0\.92\)/,
+  );
+  assert.match(aesthetic, /-webkit-mask-composite: xor/);
+  assert.match(aesthetic, /mask-composite: exclude/);
+  assert.match(
+    aesthetic,
+    /10px 0 34px rgba\(53, 216, 255, 0\.12\)/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero::after[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.1\)/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art[\s\S]*?transform: scale\(1\.026\) !important/,
+  );
+});
+
 test("the frozen bottom navigation is outside the shared aesthetic contract", () => {
   assert.doesNotMatch(
     aesthetic,

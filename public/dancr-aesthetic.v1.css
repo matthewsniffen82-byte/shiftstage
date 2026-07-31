@@ -399,13 +399,64 @@
  */
 
 body > .app main.stack > .hero.reference-hero {
+  position: relative;
   overflow: hidden;
-  border: 1px solid rgba(139, 92, 246, 0.38) !important;
+  border: 1px solid transparent !important;
   border-radius: 24px !important;
   background: #020204 !important;
   box-shadow:
     0 24px 58px rgba(0, 0, 0, 0.36),
-    0 0 28px rgba(124, 58, 237, 0.08) !important;
+    10px 0 34px rgba(53, 216, 255, 0.12),
+    14px 0 52px rgba(124, 58, 237, 0.16) !important;
+}
+
+body > .app main.stack > .hero.reference-hero::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  display: block !important;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background: linear-gradient(
+    108deg,
+    rgba(124, 58, 237, 0.94) 0%,
+    rgba(139, 92, 246, 0.74) 46%,
+    rgba(53, 216, 255, 0.92) 82%,
+    rgba(139, 92, 246, 0.86) 100%
+  ) border-box !important;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+body > .app main.stack > .hero.reference-hero::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 1px !important;
+  z-index: 2 !important;
+  display: block !important;
+  border-radius: calc(24px - 1px);
+  background:
+    radial-gradient(
+      ellipse at 94% 50%,
+      rgba(53, 216, 255, 0.09),
+      rgba(124, 58, 237, 0.035) 34%,
+      transparent 58%
+    ) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+body > .app main.stack > .hero.reference-hero > .hero-art {
+  transform: scale(1.026) !important;
+  transform-origin: center;
 }
 
 body > .app main.stack > .home-discovery-controls {
