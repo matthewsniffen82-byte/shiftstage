@@ -54,6 +54,8 @@ type LoadState = {
   weeklyReport?: Record<string, unknown> | null;
   rankingEvents?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
+  deal?: Record<string, unknown> | null;
+  dealRevenue?: Record<string, unknown> | null;
   error?: string;
 };
 
@@ -115,6 +117,8 @@ export default function DashboardClient({
             weeklyReport: weeklyReport?.report || null,
             rankingEvents: rankingEvents?.events || [],
             workingNow: secondary.workingNow || [],
+            deal: secondary.deal || null,
+            dealRevenue: secondary.dealRevenue || null,
           });
           setIsLoading(false);
         }
@@ -207,6 +211,8 @@ export default function DashboardClient({
           {role === "venue" ? (
             <VenuePanel
               analytics={state.analytics}
+              deal={state.deal}
+              dealRevenue={state.dealRevenue}
               profile={state.profile}
               workingNow={state.workingNow || []}
               onProfileChange={updateProfile}
@@ -681,11 +687,15 @@ function dealPassStatus(status: string, expired: boolean) {
 
 function VenuePanel({
   analytics,
+  deal,
+  dealRevenue,
   profile,
   workingNow,
   onProfileChange,
 }: {
   analytics?: LoadState["analytics"];
+  deal?: LoadState["deal"];
+  dealRevenue?: LoadState["dealRevenue"];
   profile?: LoadState["profile"];
   workingNow: Array<Record<string, unknown>>;
   onProfileChange: (profile: Record<string, unknown>) => void;
@@ -870,6 +880,7 @@ function VenuePanel({
         <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
         <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
       </InfoPanel>
+      <VenueClubDealPanel initialDeal={deal} revenue={dealRevenue} />
       <article className="info-panel venue-profile-panel">
         <h2>Public venue page</h2>
         <form onSubmit={saveProfile}>
@@ -933,8 +944,8 @@ function VenuePanel({
         {coverStatus ? <p role="status">{coverStatus}</p> : null}
       </article>
       <article className="info-panel venue-qr-panel">
-        <h2>Published venue QR</h2>
-        <p>This QR appears on your live venue page and only on dancer profiles while they are verified working at your venue.</p>
+        <h2>External marketing QR</h2>
+        <p>This optional uploaded image is stored for venue marketing only. It is never used for tracked Club Deals, dancer attribution, or commissions.</p>
         {profile?.qrCodeUrl ? <img src={String(profile.qrCodeUrl)} alt={`${String(profile.name || "Venue")} QR code`} /> : null}
         <form onSubmit={uploadQr}>
           <label>
@@ -950,10 +961,10 @@ function VenuePanel({
             QR label
             <input value={qrLabel} maxLength={100} onChange={(event) => setQrLabel(event.target.value)} />
           </label>
-          <button type="submit" disabled={isUploading}>{isUploading ? "Publishing..." : profile?.qrCodeUrl ? "Replace QR code" : "Upload QR code"}</button>
+          <button type="submit" disabled={isUploading}>{isUploading ? "Uploading..." : profile?.qrCodeUrl ? "Replace marketing QR" : "Upload marketing QR"}</button>
           {profile?.qrCodeUrl ? <button type="button" disabled={isUploading} onClick={removeQr}>Remove QR code</button> : null}
         </form>
-        <Metric label="Dancer-profile QR impressions · 30 days" value={String(analytics?.dancerProfileQrImpressions30Days || 0)} />
+        <Metric label="Legacy QR impressions · 30 days" value={String(analytics?.dancerProfileQrImpressions30Days || 0)} />
         {qrStatus ? <p role="status">{qrStatus}</p> : null}
       </article>
       <article className="info-panel venue-working-panel">
@@ -971,6 +982,184 @@ function VenuePanel({
       <VenueTvPanel />
     </>
   );
+}
+
+function VenueClubDealPanel({
+  initialDeal,
+  revenue,
+}: {
+  initialDeal?: LoadState["deal"];
+  revenue?: LoadState["dealRevenue"];
+}) {
+  const [deal, setDeal] = useState(initialDeal || null);
+  const [form, setForm] = useState({
+    dealTitle: "",
+    dealDescription: "",
+    dealTerms: "",
+    referralCommission: "",
+    isActive: false,
+  });
+  const [status, setStatus] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setDeal(initialDeal || null);
+    setForm({
+      dealTitle: String(initialDeal?.dealTitle || "Tonight's venue offer"),
+      dealDescription: String(
+        initialDeal?.dealDescription
+          || "Show your unique MyDancr QR to venue staff for the active offer.",
+      ),
+      dealTerms: String(initialDeal?.dealTerms || ""),
+      referralCommission: initialDeal?.payoutAmountCents
+        ? (Number(initialDeal.payoutAmountCents) / 100).toFixed(2)
+        : "",
+      isActive: initialDeal?.isActive === true,
+    });
+  }, [initialDeal]);
+
+  async function saveDeal(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+
+    const referralCommissionCents = dollarsToCents(form.referralCommission);
+    if (referralCommissionCents === null) {
+      setStatus("Enter a referral commission between $1.00 and $1,000.00.");
+      return;
+    }
+
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/venue/deal", {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${session.accessToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          dealTitle: form.dealTitle,
+          dealDescription: form.dealDescription,
+          dealTerms: form.dealTerms,
+          referralCommissionCents,
+          isActive: form.isActive,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to update the tracked Club Deal.");
+      }
+      setDeal(data.deal);
+      setStatus(data.message || "Tracked Club Deal saved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to update the tracked Club Deal.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <article className="info-panel venue-deal-panel">
+      <div className="venue-deal-heading">
+        <div>
+          <span className="eyebrow">Revenue QR</span>
+          <h2>Tracked Club Deal</h2>
+        </div>
+        <strong className={deal?.isActive ? "deal-state active" : "deal-state"}>
+          {deal?.isActive ? "Live" : "Not published"}
+        </strong>
+      </div>
+      <p>
+        MyDancr generates every venue and dancer QR. Venue-page redemptions credit 100% of the referral commission to MyDancr. Dancer-profile redemptions use the monthly tier below.
+      </p>
+      <form onSubmit={saveDeal}>
+        <label>
+          Deal title
+          <input
+            maxLength={100}
+            required
+            value={form.dealTitle}
+            onChange={(event) => setForm((current) => ({ ...current, dealTitle: event.target.value }))}
+          />
+        </label>
+        <label>
+          Customer offer
+          <textarea
+            maxLength={500}
+            required
+            rows={3}
+            value={form.dealDescription}
+            onChange={(event) => setForm((current) => ({ ...current, dealDescription: event.target.value }))}
+          />
+        </label>
+        <label>
+          Terms
+          <textarea
+            maxLength={1200}
+            rows={3}
+            value={form.dealTerms}
+            onChange={(event) => setForm((current) => ({ ...current, dealTerms: event.target.value }))}
+          />
+        </label>
+        <label>
+          Referral commission per successful redemption
+          <span className="currency-input">
+            <span>$</span>
+            <input
+              inputMode="decimal"
+              placeholder="20.00"
+              required
+              value={form.referralCommission}
+              onChange={(event) => setForm((current) => ({ ...current, referralCommission: event.target.value }))}
+            />
+          </span>
+        </label>
+        <label className="deal-active-toggle">
+          <input
+            checked={form.isActive}
+            type="checkbox"
+            onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
+          />
+          Publish this tracked Club Deal
+        </label>
+        <button disabled={isSaving} type="submit">
+          {isSaving ? "Saving..." : "Save Club Deal"}
+        </button>
+      </form>
+      <div className="commission-tier-table" aria-label="Dancer monthly QR commission tiers">
+        <strong>Monthly successful dancer QR redemptions</strong>
+        <div><span>1–24</span><b>Dancer 30%</b><b>MyDancr 70%</b></div>
+        <div><span>25–74</span><b>Dancer 40%</b><b>MyDancr 60%</b></div>
+        <div><span>75+</span><b>Dancer 50%</b><b>MyDancr 50%</b></div>
+      </div>
+      <div className="deal-metrics venue-deal-metrics">
+        <Metric label="Successful this month" value={String(revenue?.successfulRedemptionsThisMonth || 0)} />
+        <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
+        <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
+        <Metric label="Gross referral commission" value={formatCents(Number(revenue?.grossCommissionCentsThisMonth || 0))} />
+        <Metric label="Dancer share" value={formatCents(Number(revenue?.dancerCommissionCentsThisMonth || 0))} />
+        <Metric label="MyDancr share" value={formatCents(Number(revenue?.platformCommissionCentsThisMonth || 0))} />
+        <Metric label="Pending venue payment" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
+        <Metric label="Saves / scanner opens" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
+      </div>
+      <aside className="venue-redemption-instructions">
+        <strong>Venue staff redemption</strong>
+        <p>Staff scan the customer&apos;s QR with their phone, sign in to this venue account, review the offer, and press Redeem Deal. Only that authenticated confirmation creates revenue and dancer commission.</p>
+      </aside>
+      {status ? <p role="status">{status}</p> : null}
+    </article>
+  );
+}
+
+function dollarsToCents(value: string) {
+  const normalized = value.trim();
+  if (!/^\d{1,4}(?:\.\d{1,2})?$/.test(normalized)) return null;
+  const cents = Math.round(Number(normalized) * 100);
+  return cents >= 100 && cents <= 100_000 ? cents : null;
 }
 
 function venueFieldLabel(key: string) {
@@ -1241,17 +1430,35 @@ function DancerLockedAnalyticsPanel() {
 function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
   const earnedCommissionCents = Number(deals?.earnedCommissionCents || 0);
   const pendingCommissionCents = Number(deals?.pendingCommissionCents || 0);
+  const successfulThisMonth = Number(deals?.successfulRedemptionsThisMonth || 0);
+  const currentShare = Number(deals?.currentDancerSharePercent || 30);
+  const nextTierAt = deals?.nextTierAt === null ? null : Number(deals?.nextTierAt || 25);
 
   return (
     <article className="info-panel deal-panel">
       <h2>QR commissions</h2>
+      <p>
+        Your dancer credit is locked when a QR is created from your profile during a verified check-in. Saves and shares keep that attribution; venue-confirmed successful redemptions earn commission.
+      </p>
       <div className="deal-metrics">
         <Metric label="Earned commissions" value={formatCents(earnedCommissionCents)} />
         <Metric label="Pending commissions" value={formatCents(pendingCommissionCents)} />
-        <Metric label="QR opens" value={String(deals?.qrOpens || 0)} />
-        <Metric label="Redeemed QR codes" value={String(deals?.redeemed || 0)} />
+        <Metric label="Successful this month" value={String(successfulThisMonth)} />
+        <Metric label="Current dancer share" value={`${currentShare}%`} />
+        <Metric label="QR saves / shares" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
+        <Metric label="Scanner opens" value={String(deals?.qrOpens || 0)} />
         <Metric label="Payable / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
         <Metric label="Rejected / voided" value={String(deals?.rejectedCommissions || 0)} />
+      </div>
+      <div className="commission-tier-table">
+        <strong>
+          {nextTierAt === null
+            ? "Top 50% dancer tier reached"
+            : `${String(deals?.redemptionsUntilNextTier || 0)} successful redemptions to the ${nextTierAt === 25 ? "40%" : "50%"} tier`}
+        </strong>
+        <div><span>1–24 monthly</span><b>30% dancer</b><b>70% MyDancr</b></div>
+        <div><span>25–74 monthly</span><b>40% dancer</b><b>60% MyDancr</b></div>
+        <div><span>75+ monthly</span><b>50% dancer</b><b>50% MyDancr</b></div>
       </div>
     </article>
   );
@@ -2906,13 +3113,38 @@ function DashboardStyles() {
       .venue-working-list { display: grid; gap: 9px; }
       .venue-working-list a { display: flex; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
       .venue-working-list span { color: #94e5ff; text-transform: capitalize; }
+      .venue-deal-panel { grid-column: span 3; border-color: rgba(50,255,164,.24); background: radial-gradient(circle at 100% 0%, rgba(50,255,164,.1), transparent 28rem), rgba(12,12,18,.86); }
+      .venue-deal-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+      .venue-deal-heading > div { display: grid; gap: 4px; }
+      .deal-state { width: fit-content; padding: 7px 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b9accd; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+      .deal-state.active { border-color: rgba(50,255,164,.42); color: #78ffc0; background: rgba(50,255,164,.1); }
+      .venue-deal-panel > p, .venue-redemption-instructions p { color: #cfc5de; line-height: 1.5; }
+      .venue-deal-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .venue-deal-panel label { display: grid; align-content: start; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .venue-deal-panel input, .venue-deal-panel textarea { width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: rgba(255,255,255,.06); padding: 10px 12px; font: inherit; }
+      .venue-deal-panel input { min-height: 42px; }
+      .venue-deal-panel textarea { resize: vertical; }
+      .venue-deal-panel button { min-height: 44px; border: 0; border-radius: 8px; color: #061015; background: #78ffc0; font: inherit; font-weight: 950; cursor: pointer; padding: 0 16px; }
+      .venue-deal-panel button:disabled { opacity: .62; cursor: wait; }
+      .currency-input { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; border: 1px solid rgba(50,255,164,.28); border-radius: 8px; background: rgba(50,255,164,.06); overflow: hidden; }
+      .currency-input > span { padding-left: 12px; color: #78ffc0; font-weight: 950; }
+      .currency-input input { border: 0; background: transparent; }
+      .deal-active-toggle { grid-template-columns: auto minmax(0, 1fr) !important; align-items: center !important; align-content: center !important; }
+      .deal-active-toggle input { width: 22px; min-height: 22px; accent-color: #32ffa4; }
+      .commission-tier-table { display: grid; border: 1px solid rgba(50,255,164,.2); border-radius: 10px; overflow: hidden; }
+      .commission-tier-table > strong { padding: 12px; color: #78ffc0; background: rgba(50,255,164,.08); }
+      .commission-tier-table > div { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; padding: 11px 12px; border-top: 1px solid rgba(255,255,255,.08); }
+      .commission-tier-table b { color: #fff; font-size: 13px; }
+      .venue-deal-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .venue-redemption-instructions { display: grid; gap: 6px; padding: 14px; border: 1px solid rgba(148,229,255,.22); border-radius: 10px; background: rgba(148,229,255,.06); }
+      .venue-redemption-instructions strong { color: #94e5ff; }
       .deal-panel { grid-column: span 2; }
       .deal-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .venue-deal-panel form, .venue-deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
     `}</style>
   );

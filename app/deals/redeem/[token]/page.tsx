@@ -46,6 +46,7 @@ function RedeemStyles() {
       dd { margin: 0; color: #fff; font-weight: 900; text-align: right; }
       button { min-height: 48px; border: 0; border-radius: 8px; background: linear-gradient(135deg, #7c3aed, #22c7ff); color: #fff; font-weight: 950; font: inherit; cursor: pointer; }
       button:disabled { opacity: .62; cursor: default; }
+      .venue-sign-in { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(148,229,255,.42); border-radius: 8px; color: #94e5ff; background: rgba(148,229,255,.08); font-weight: 950; text-decoration: none; }
       em { color: #94e5ff; font-style: normal; font-weight: 850; }
     `}</style>
   );

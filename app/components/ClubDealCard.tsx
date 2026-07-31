@@ -13,6 +13,7 @@ type ClubDealCardProps = {
   venueName?: string;
   sourceType: DealSourceType;
   dancerId?: string | null;
+  attributionToken?: string | null;
   dancerNote?: boolean;
   compact?: boolean;
   presentation?: "card" | "launcher";
@@ -27,6 +28,7 @@ export function ClubDealCard({
   venueName,
   sourceType,
   dancerId,
+  attributionToken,
   dancerNote,
   compact,
   presentation = "card",
@@ -76,6 +78,7 @@ export function ClubDealCard({
           venueId,
           sourceType,
           dancerId: sourceType === "dancer_profile" ? dancerId : null,
+          attributionToken: sourceType === "dancer_profile" ? attributionToken : null,
           sessionId: readOrCreateDealSessionId(),
         }),
       });
@@ -85,6 +88,9 @@ export function ClubDealCard({
       setQrDataUrl(data.qrDataUrl);
       setRedemptionToken(data.redemption?.redemptionToken || "");
       setExpiresAt(data.redemption?.expiresAt || "");
+      if (session.accessToken && data.redemption?.redemptionToken) {
+        await recordLifecycleEvent(data.redemption.redemptionToken, "saved");
+      }
       setStatus(session.accessToken
         ? "QR ready and saved to your customer dashboard."
         : "QR ready. Save or share it before you go.");
@@ -98,7 +104,7 @@ export function ClubDealCard({
     }
   }
 
-  function downloadQr() {
+  async function downloadQr() {
     if (!qrDataUrl) return;
     const link = document.createElement("a");
     link.href = qrDataUrl;
@@ -106,6 +112,7 @@ export function ClubDealCard({
     document.body.appendChild(link);
     link.click();
     link.remove();
+    await recordLifecycleEvent(redemptionToken, "saved");
     setStatus("QR image saved.");
   }
 
@@ -119,10 +126,12 @@ export function ClubDealCard({
           text: `${deal.dealTitle}${venueName ? ` at ${venueName}` : ""}`,
           url: absoluteUrl,
         });
+        await recordLifecycleEvent(redemptionToken, "shared");
         setStatus("Club Deal shared.");
         return;
       }
       await navigator.clipboard.writeText(absoluteUrl);
+      await recordLifecycleEvent(redemptionToken, "shared");
       setStatus("Club Deal link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -139,7 +148,7 @@ export function ClubDealCard({
         {deal.dealTerms && !compact ? <small>{deal.dealTerms}</small> : null}
         {!compact ? <small>Get your unique QR and show it at the venue. No sign-in is required.</small> : null}
         {dancerNote ? (
-          <small>This deal supports dancer attribution only while the verified check-in remains active.</small>
+          <small>Dancer credit is locked when the QR is issued during a verified check-in and stays attached when saved or shared.</small>
         ) : null}
       </div>
       <div className="club-deal-action">
@@ -227,6 +236,25 @@ export function ClubDealCard({
       <ClubDealInteractionStyles />
     </>
   );
+}
+
+async function recordLifecycleEvent(
+  token: string,
+  eventType: "saved" | "shared",
+) {
+  if (!token) return;
+  const session = readCustomerSession();
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (session.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
+  await fetch(`/api/deals/redemptions/${encodeURIComponent(token)}/events`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      eventType,
+      sessionId: readOrCreateDealSessionId(),
+    }),
+    keepalive: true,
+  }).catch(() => null);
 }
 
 function readCustomerSession() {

@@ -643,6 +643,7 @@ export default function TvFeedClient({
                         venueName={video.venue.name}
                         sourceType="dancer_profile"
                         dancerId={video.dancer.id}
+                        attributionToken={video.dealAttributionToken}
                         presentation="launcher"
                       />
                     ) : null}

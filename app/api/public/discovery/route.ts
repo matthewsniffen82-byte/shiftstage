@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealsForVenues } from "@/src/lib/dancr/deals";
 import { formatVenueHours, getLiveDancerDiscovery } from "@/src/lib/dancr/public";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -62,10 +63,21 @@ export async function GET(request: Request) {
       qrCodeLabel: venue.qr_code_label || null,
       activeDeal: activeDeals.get(venue.id) || null,
     }));
-    const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => ({
-      ...dancer,
-      activeDeal: dancer.venueId ? activeDeals.get(dancer.venueId) || null : null,
-    });
+    const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => {
+      const activeDeal = dancer.venueId ? activeDeals.get(dancer.venueId) || null : null;
+      return {
+        ...dancer,
+        activeDeal,
+        dealAttributionToken: activeDeal && dancer.venueId && dancer.shiftId
+          ? createDancerDealAttributionToken({
+              dancerId: dancer.id,
+              venueId: dancer.venueId,
+              dealId: activeDeal.id,
+              shiftId: dancer.shiftId,
+            })
+          : null,
+      };
+    };
 
     return NextResponse.json(
       {

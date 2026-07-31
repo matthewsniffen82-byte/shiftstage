@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import {
-  dancerHasVerifiedActiveCheckInAtVenue,
-  getRedemptionForScanner,
-} from "@/src/lib/dancr/deals";
+import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -25,19 +22,10 @@ export default async function ClubDealPassPage({ params }: PageProps) {
   if (!redemption?.deal || !redemption.venue) notFound();
 
   const isExpired = new Date(redemption.expiresAt).getTime() <= Date.now();
-  const hasLiveDancerAttribution =
-    redemption.sourceType !== "dancer_profile" ||
-    (Boolean(redemption.dancerId) &&
-      await dancerHasVerifiedActiveCheckInAtVenue(
-        admin,
-        redemption.dancerId,
-        redemption.venueId,
-      ));
   const isAvailable =
     redemption.status === "generated" &&
     redemption.deal.isActive &&
-    !isExpired &&
-    hasLiveDancerAttribution;
+    !isExpired;
   const redemptionUrl = `${getPublicEnv().siteUrl.replace(/\/+$/, "")}/deals/redeem/${encodeURIComponent(token)}`;
   const qrDataUrl = isAvailable
     ? await QRCode.toDataURL(redemptionUrl, {
@@ -63,11 +51,14 @@ export default async function ClubDealPassPage({ params }: PageProps) {
             <img src={qrDataUrl} alt={`${redemption.deal.dealTitle} QR code`} />
             <strong>Show this QR to venue staff</strong>
             <small>Expires {formatExpiry(redemption.expiresAt)}</small>
+            {redemption.sourceType === "dancer_profile" ? (
+              <small>Dancer credit was locked when this QR was issued during a verified check-in.</small>
+            ) : null}
             {redemption.deal.dealTerms ? <small>{redemption.deal.dealTerms}</small> : null}
           </>
         ) : (
           <>
-            <strong>{unavailableMessage(redemption.status, isExpired, hasLiveDancerAttribution)}</strong>
+            <strong>{unavailableMessage(redemption.status, isExpired)}</strong>
             <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find another Club Deal</Link>
           </>
         )}
@@ -76,8 +67,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
   );
 }
 
-function unavailableMessage(status: string, isExpired: boolean, hasLiveDancerAttribution: boolean) {
-  if (!hasLiveDancerAttribution) return "This dancer-attributed deal ended when the verified check-in ended.";
+function unavailableMessage(status: string, isExpired: boolean) {
   if (status === "redeemed") return "This Club Deal has already been redeemed.";
   if (status === "voided") return "This Club Deal is no longer valid.";
   if (isExpired || status === "expired") return "This Club Deal has expired.";

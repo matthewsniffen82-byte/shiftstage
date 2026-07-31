@@ -297,6 +297,7 @@ export type ClubDeal = {
   redemptionRules: Json;
   payoutType: "none" | "flat" | "percent";
   payoutAmountCents: number;
+  currency?: string;
 };
 
 export type DancerDashboardAnalytics = {

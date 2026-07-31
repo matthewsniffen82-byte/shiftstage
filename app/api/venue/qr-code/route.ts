@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       profile,
-      message: "QR code uploaded and published to the venue page and working-now dancer profiles.",
+      message: "External marketing QR uploaded. Tracked Club Deals use MyDancr-generated QR codes.",
     });
   } catch (error) {
     return apiError(error, "Unable to upload venue QR code.", 400);
@@ -39,7 +39,7 @@ export async function DELETE(request: Request) {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireVenueRole(client, user.id);
     const profile = await deleteVenueQrCode(createAdminSupabaseClient(), user.id);
-    return NextResponse.json({ ok: true, profile, message: "QR code removed from public pages." });
+    return NextResponse.json({ ok: true, profile, message: "External marketing QR removed." });
   } catch (error) {
     return apiError(error, "Unable to remove venue QR code.", 400);
   }

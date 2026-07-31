@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { apiError } from "@/src/lib/api";
+import { verifyDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import {
   createDealRedemption,
-  dancerHasVerifiedActiveCheckInAtVenue,
+  getVerifiedActiveCheckInAtVenue,
   getActiveClubDealForVenue,
 } from "@/src/lib/dancr/deals";
 import type { DealSourceType } from "@/src/lib/dancr/types";
@@ -24,6 +25,9 @@ export async function POST(request: Request) {
     const venueId = typeof body?.venueId === "string" ? body.venueId.trim() : "";
     const sourceType = typeof body?.sourceType === "string" ? body.sourceType.trim() : "";
     const dancerId = typeof body?.dancerId === "string" ? body.dancerId.trim() : null;
+    const attributionToken = typeof body?.attributionToken === "string"
+      ? body.attributionToken.trim()
+      : "";
     const sessionId = typeof body?.sessionId === "string" && UUID_PATTERN.test(body.sessionId.trim())
       ? body.sessionId.trim()
       : null;
@@ -40,8 +44,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "This club deal is not active." }, { status: 404 });
     }
 
+    let shiftId: string | null = null;
     if (sourceType === "dancer_profile") {
-      if (!dancerId) {
+      if (!dancerId || !attributionToken) {
         return NextResponse.json({ ok: false, error: "Missing dancer attribution." }, { status: 400 });
       }
 
@@ -49,13 +54,27 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "Invalid dancer attribution." }, { status: 400 });
       }
 
-      const hasVerifiedCheckIn = await dancerHasVerifiedActiveCheckInAtVenue(admin, dancerId, venueId);
-      if (!hasVerifiedCheckIn) {
+      const attribution = verifyDancerDealAttributionToken(attributionToken);
+      if (
+        !attribution ||
+        attribution.dancerId !== dancerId ||
+        attribution.venueId !== venueId ||
+        attribution.dealId !== clubDealId
+      ) {
+        return NextResponse.json({ ok: false, error: "Invalid or expired dancer attribution." }, { status: 400 });
+      }
+
+      const verifiedCheckIn = await getVerifiedActiveCheckInAtVenue(admin, dancerId, venueId);
+      if (!verifiedCheckIn) {
         return NextResponse.json(
           { ok: false, error: "This Club Deal is available from the dancer profile only during a verified check-in." },
           { status: 400 },
         );
       }
+      if (verifiedCheckIn.shiftId !== attribution.shiftId) {
+        return NextResponse.json({ ok: false, error: "The verified dancer check-in changed. Refresh the profile." }, { status: 409 });
+      }
+      shiftId = verifiedCheckIn.shiftId;
     }
 
     const customerId = await optionalCustomerId(request, admin);
@@ -64,6 +83,7 @@ export async function POST(request: Request) {
       venueId,
       sourceType: sourceType as DealSourceType,
       dancerId,
+      shiftId,
       customerId,
       sessionId,
       request,

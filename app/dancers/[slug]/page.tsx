@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { PublicProfileHeader } from "@/app/components/PublicProfileHeader";
-import { VenueQrCode, VenueQrUnavailable } from "@/app/components/VenueQrCode";
+import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
+import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { getDancerProfile } from "@/src/lib/dancr/public";
@@ -50,6 +51,14 @@ export default async function DancerPublicPage({ params }: PageProps) {
       limit: 4,
     }),
   ]);
+  const dealAttributionToken = activeShift && activeDeal
+    ? createDancerDealAttributionToken({
+        dancerId: profile.id,
+        venueId: activeShift.venueId,
+        dealId: activeDeal.id,
+        shiftId: activeShift.id,
+      })
+    : null;
   const profileStatus = buildProfileStatus(profile.city, primaryShift, Boolean(activeShift));
   const additionalShifts = primaryShift
     ? profile.upcomingShifts.filter((shift) => shift.id !== primaryShift.id)
@@ -130,20 +139,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
               venueName={activeShift.venueName}
               sourceType="dancer_profile"
               dancerId={profile.id}
+              attributionToken={dealAttributionToken}
               dancerNote
               sectionId="club-deal"
               stickyCta
-            />
-          ) : null}
-          {activeShift.venueQrCodeUrl ? (
-            <VenueQrCode
-              compact
-              venueId={activeShift.venueId}
-              venueName={activeShift.venueName}
-              imageUrl={activeShift.venueQrCodeUrl}
-              label={activeShift.venueQrCodeLabel}
-              source="dancer_profile"
-              dancerId={profile.id}
             />
           ) : (
             <VenueQrUnavailable venueName={activeShift.venueName} />

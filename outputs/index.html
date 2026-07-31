@@ -31566,7 +31566,7 @@
               Profile cards show active checked-in shifts as Working Now. Upcoming shifts show the date only. Exact times are private and used for shift windows and QR commission eligibility.
             </div>
             <div class="rule-note">
-              <strong>Club Scan preview:</strong> A venue-uploaded QR appears on your live profile only while this shift is actively checked in. If the venue has not published one, customers see “Club Scan unavailable at this venue.”
+              <strong>Tracked Club Deal:</strong> During a verified check-in, customers can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
             </div>
             <div class="field">
               <label for="shiftRepeat">Repeat option</label>
@@ -34130,6 +34130,7 @@
         venueQrCodeUrl: item.venueQrCodeUrl || "",
         venueQrCodeLabel: item.venueQrCodeLabel || "",
         activeDeal: item.activeDeal || null,
+        dealAttributionToken: item.dealAttributionToken || "",
         shiftId: item.shiftId || "",
         status: item.verified ? "Verified" : "Pending",
         venue: item.venueName || "Venue pending",
@@ -37114,37 +37115,6 @@
       return `/?${query.toString()}`;
     }
 
-    function publishedVenueQrPass({
-      venueId,
-      venueSlug,
-      venueName,
-      qrCodeUrl,
-      qrCodeLabel,
-      sourceType = "venue_page",
-      dancerId = "",
-      dancerName = ""
-    }) {
-      const url = new URL(
-        venueExperienceHref({ slug: venueSlug, name: venueName }),
-        window.location.origin
-      ).toString();
-      return {
-        id: `${sourceType}-${venueId}-${dancerId || "venue"}`,
-        venueId,
-        venueSlug,
-        venueName,
-        dancerId,
-        dancerName,
-        sourceType,
-        title: qrCodeLabel || `${venueName} QR code`,
-        details: sourceType === "dancer_profile"
-          ? `Published by ${venueName} and shown while ${dancerName} is verified working now.`
-          : `Published by ${venueName}.`,
-        url,
-        qrImageUrl: qrCodeUrl
-      };
-    }
-
     function liveDealSessionId() {
       const key = "mydancrDealSessionV1";
       try {
@@ -37165,7 +37135,8 @@
       venueName,
       sourceType = "club_page",
       dancerId = "",
-      dancerName = ""
+      dancerName = "",
+      attributionToken = ""
     }) {
       if (!deal?.id || !venueId) throw new Error("This Club Deal is unavailable.");
       const data = await postOptionalAuthJson("/api/deals/redemptions", {
@@ -37173,6 +37144,7 @@
         venueId,
         sourceType,
         dancerId: sourceType === "dancer_profile" ? dancerId : null,
+        attributionToken: sourceType === "dancer_profile" ? attributionToken : null,
         sessionId: liveDealSessionId()
       });
       const redemption = data?.redemption;
@@ -37189,10 +37161,11 @@
         sourceType,
         title: deal.dealTitle || "Club Deal",
         details: sourceType === "dancer_profile"
-          ? `Attributed to ${dancerName} while the verified check-in remains active.`
+          ? `Attributed to ${dancerName} when issued during a verified check-in. Saving or sharing keeps that credit attached.`
           : `Active Club Deal from ${venueName}.`,
         url: `${window.location.origin}/deals/pass/${encodeURIComponent(redemption.redemptionToken)}`,
         qrImageUrl: data.qrDataUrl,
+        redemptionToken: redemption.redemptionToken,
         expiresAt: redemption.expiresAt || "",
         serverGenerated: true
       };
@@ -37268,9 +37241,21 @@
       const savedPass = { ...pass, savedAt: new Date().toISOString() };
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
       saveSavedDealPasses();
+      recordRevenueDealLifecycle(pass, "saved");
       if (customerDashboard.classList.contains("show")) renderDashboard();
       renderCustomerQuickActions();
       showToast(message);
+    }
+
+    function recordRevenueDealLifecycle(pass, eventType) {
+      if (!pass?.serverGenerated || !pass?.redemptionToken) return;
+      postOptionalAuthJson(
+        `/api/deals/redemptions/${encodeURIComponent(pass.redemptionToken)}/events`,
+        {
+          eventType,
+          sessionId: liveDealSessionId()
+        }
+      ).catch(() => null);
     }
 
     async function downloadDealQrImage(pass) {
@@ -37304,9 +37289,11 @@
       try {
         if (navigator.share) {
           await navigator.share(shareData);
+          recordRevenueDealLifecycle(pass, "shared");
           saveCustomerDealPass(pass, "QR saved on this device");
         } else {
           await copyText(pass.url, "Deal link copied");
+          recordRevenueDealLifecycle(pass, "shared");
           saveCustomerDealPass(pass, "QR saved on this device");
         }
       } catch {
@@ -37327,7 +37314,7 @@
             <div class="deal-pass-frame">
               <img id="dealPassImage" alt="Club deal QR code" loading="lazy" decoding="async">
             </div>
-            <p class="deal-pass-how" id="dealPassHow">This QR was uploaded by the venue. No Dancr account is required to view or save it.</p>
+            <p class="deal-pass-how" id="dealPassHow">This unique MyDancr QR is tracked through venue confirmation.</p>
             <div class="deal-pass-actions">
               <button class="deal-pass-action primary" type="button" data-save-deal-pass>Save QR</button>
               <button class="deal-pass-action" type="button" data-share-deal-pass>Share QR</button>
@@ -37377,10 +37364,10 @@
         return {
           kicker: "MyDancr Club Deal QR",
           copy: dancerAttributed
-            ? `${venueName} · Valid while ${dancerName} is working now`
+            ? `${venueName} · Credited to ${dancerName}`
             : `${venueName} · Valid tonight`,
           status: dancerAttributed
-            ? "Unique QR · Tracked for redemption · Dancer-attributed while checked in"
+            ? "Unique QR · Attribution locked when issued · Venue confirmation required"
             : "Unique QR · Tracked for redemption"
         };
       }
@@ -37507,28 +37494,7 @@
           </article>
         `;
       }
-      if (!venue?.qrCodeUrl || !venue?.id) return "";
-      const pass = publishedVenueQrPass({
-        venueId: venue.id,
-        venueSlug: venue.slug,
-        venueName: venue.name,
-        qrCodeUrl: venue.qrCodeUrl,
-        qrCodeLabel: venue.qrCodeLabel,
-        sourceType: "venue_page"
-      });
-      recordVenuePageEvent({ venueId: venue.id, eventType: "qr_impression", source: "venue_page" });
-      return `
-        <article class="venue-offer-card" id="club-deal">
-          <div class="venue-offer-grid">
-            <div>
-              <span class="eyebrow">Venue QR</span>
-              <h3>${escapeHtml(pass.title)}</h3>
-              <p>Uploaded and published by ${escapeHtml(venue.name)}.</p>
-            </div>
-            ${dealPassButtonMarkup(pass, "venue-offer-qr")}
-          </div>
-        </article>
-      `;
+      return "";
     }
 
     function profileDealTileMarkup(profile) {
@@ -37541,7 +37507,8 @@
           venueName: profile.venue,
           sourceType: "dancer_profile",
           dancerId: profile.id,
-          dancerName: profile.name
+          dancerName: profile.name,
+          attributionToken: profile.dealAttributionToken
         };
         return `
           <div class="info-tile profile-qr-tile profile-club-deal-tile">
@@ -37549,49 +37516,21 @@
               <strong>Working Now Club Deal</strong>
               <div class="meta profile-deal-meta">
                 <span class="profile-deal-main">${escapeHtml(profile.activeDeal.dealTitle)}</span>
-                <span class="profile-deal-note">Supports ${escapeHtml(profile.name)} only while checked in.</span>
+                <span class="profile-deal-note">Dancer credit locks when this QR is issued and stays attached when saved or shared.</span>
               </div>
             </div>
             ${clubDealCtaMarkup(config, "profile-club-deal-cta")}
           </div>
         `;
       }
-      if (!profile.venueId || !profile.venueQrCodeUrl) {
-        return `
-          <div class="info-tile profile-qr-unavailable" aria-label="Club Scan unavailable at ${escapeHtml(profile.venue)}">
+      return `
+        <div class="info-tile profile-qr-unavailable" aria-label="Tracked Club Deal unavailable at ${escapeHtml(profile.venue)}">
+          <div>
             <strong>Club Scan</strong>
             <div class="meta">
-              <span class="profile-deal-main">Club Scan unavailable at this venue.</span>
+              <span class="profile-deal-main">No tracked Club Deal is active at this venue.</span>
             </div>
           </div>
-        `;
-      }
-      const pass = publishedVenueQrPass({
-        venueId: profile.venueId,
-        venueSlug: profile.venueSlug,
-        venueName: profile.venue,
-        qrCodeUrl: profile.venueQrCodeUrl,
-        qrCodeLabel: profile.venueQrCodeLabel,
-        sourceType: "dancer_profile",
-        dancerId: profile.id,
-        dancerName: profile.name
-      });
-      recordVenuePageEvent({
-        venueId: profile.venueId,
-        dancerId: profile.id,
-        eventType: "qr_impression",
-        source: "dancer_profile"
-      });
-      return `
-        <div class="info-tile profile-qr-tile">
-          <div class="profile-deal-copy">
-            <strong>Club Scan</strong>
-            <div class="meta profile-deal-meta">
-              <span class="profile-deal-main">Scan at ${escapeHtml(profile.venue)}</span>
-              <span class="profile-deal-note">Works while ${escapeHtml(profile.name)} is checked in.</span>
-            </div>
-          </div>
-          ${dealPassButtonMarkup(pass, "profile-deal-qr")}
         </div>
       `;
     }
@@ -39518,16 +39457,7 @@
         };
         return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
       }
-      if (!venue.qrCodeUrl) return "";
-      const pass = publishedVenueQrPass({
-        venueId: venue.id,
-        venueSlug: venue.slug,
-        venueName: venue.name,
-        qrCodeUrl: venue.qrCodeUrl,
-        qrCodeLabel: venue.qrCodeLabel,
-        sourceType: "venue_page"
-      });
-      return `<button class="venue-card-deal-action" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Open ${escapeHtml(venue.name)} venue QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+      return "";
     }
 
     function venueCard(venue) {
@@ -44489,7 +44419,8 @@
           venueName: profile.venue,
           sourceType: "dancer_profile",
           dancerId: profile.id,
-          dancerName: profile.name
+          dancerName: profile.name,
+          attributionToken: profile.dealAttributionToken
         };
         return {
           triggerAttribute: `data-club-deal-cta="${encodeDealPass(config)}"`,
@@ -44497,22 +44428,7 @@
           saveOnOpen: false
         };
       }
-      if (!profile.venueQrCodeUrl) return null;
-      const pass = publishedVenueQrPass({
-        venueId: profile.venueId,
-        venueSlug: profile.venueSlug,
-        venueName: profile.venue,
-        qrCodeUrl: profile.venueQrCodeUrl,
-        qrCodeLabel: profile.venueQrCodeLabel,
-        sourceType: "dancer_profile",
-        dancerId: profile.id,
-        dancerName: profile.name
-      });
-      return {
-        triggerAttribute: `data-deal-pass="${encodeDealPass(pass)}"`,
-        venueName: profile.venue,
-        saveOnOpen: true
-      };
+      return null;
     }
 
     function homeDiscoveryFeedLiveQrMarkup(profile, presentation = "action") {
@@ -44559,16 +44475,7 @@
         };
         return `<button class="${className}" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", rail ? "QR" : "Get Deal")}</button>`;
       }
-      if (!venue.qrCodeUrl) return "";
-      const pass = publishedVenueQrPass({
-        venueId: venue.id,
-        venueSlug: venue.slug,
-        venueName: venue.name,
-        qrCodeUrl: venue.qrCodeUrl,
-        qrCodeLabel: venue.qrCodeLabel,
-        sourceType: "venue_page"
-      });
-      return `<button class="${className}" type="button" data-deal-pass="${encodeDealPass(pass)}" data-feed-venue-qr aria-label="Open ${escapeHtml(venue.name)} venue QR">${actionButtonLabel("qr", rail ? "QR" : "Open QR")}</button>`;
+      return "";
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {

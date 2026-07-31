@@ -509,6 +509,7 @@ function DealActivityManager({
   const [suspicious, setSuspicious] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [paymentReferences, setPaymentReferences] = useState<Record<string, string>>({});
 
   async function loadFiltered() {
     const token = readToken();
@@ -565,6 +566,37 @@ function DealActivityManager({
 
     onActivityChange(activity.map((item) => (String(item.id) === redemptionId ? { ...item, status: "voided", suspicious: true } : item)));
     setMessage("Redemption voided.");
+  }
+
+  async function settleRevenue(
+    revenueEventId: string,
+    action: "venue_payment_received" | "dancer_paid",
+  ) {
+    const token = readToken();
+    if (!token) {
+      setMessage("Admin sign in required.");
+      return;
+    }
+    const externalReference = String(paymentReferences[revenueEventId] || "").trim();
+    if (externalReference.length < 3) {
+      setMessage("Enter the real invoice, payment, or payout reference first.");
+      return;
+    }
+
+    setMessage(action === "venue_payment_received" ? "Recording venue payment..." : "Recording dancer payout...");
+    const response = await fetch("/api/admin/deals", {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ action, revenueEventId, externalReference }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setMessage(data.error || "Unable to record settlement.");
+      return;
+    }
+    await loadFiltered();
+    setPaymentReferences((current) => ({ ...current, [revenueEventId]: "" }));
+    setMessage(action === "venue_payment_received" ? "Venue payment recorded." : "Dancer payout recorded.");
   }
 
   return (
@@ -624,17 +656,56 @@ function DealActivityManager({
       </div>
       {message ? <p>{message}</p> : null}
       <div className="deal-activity-list">
-        {activity.slice(0, 8).map((item) => (
-          <div className="deal-activity-row" key={String(item.id)}>
-            <strong>{previewDealName(item)}</strong>
-            <span>{String(item.source_type || "source")} / {String(item.status || "status")}</span>
-            <em>{previewCommission(item)}</em>
-            {item.suspicious ? <span>Flagged suspicious</span> : null}
-            <button type="button" onClick={() => voidRedemption(String(item.id))} disabled={item.status === "voided"}>
-              {item.status === "voided" ? "Voided" : "Void"}
-            </button>
-          </div>
-        ))}
+        {activity.slice(0, 8).map((item) => {
+          const revenue = readFirst(item.deal_revenue_events);
+          const revenueEventId = String(revenue?.id || "");
+          const revenueStatus = String(revenue?.status || "");
+          return (
+            <div className="deal-activity-row" key={String(item.id)}>
+              <strong>{previewDealName(item)}</strong>
+              <span>{String(item.source_type || "source")} / {String(item.status || "status")}</span>
+              <em>{previewCommission(item)}</em>
+              {revenue ? (
+                <>
+                  <span>
+                    Revenue: {formatAdminCents(Number(revenue.gross_commission_cents || 0))}
+                    {" · "}Dancer {formatAdminCents(Number(revenue.dancer_commission_cents || 0))}
+                    {" · "}MyDancr {formatAdminCents(Number(revenue.platform_commission_cents || 0))}
+                  </span>
+                  <span>Settlement: {revenueStatus.replaceAll("_", " ")}</span>
+                  {revenueStatus === "pending_venue_payment" || revenueStatus === "payable" ? (
+                    <div className="deal-settlement-action">
+                      <input
+                        aria-label="External payment reference"
+                        placeholder={revenueStatus === "pending_venue_payment" ? "Venue invoice/payment reference" : "Dancer payout reference"}
+                        value={paymentReferences[revenueEventId] || ""}
+                        onChange={(event) => setPaymentReferences((current) => ({
+                          ...current,
+                          [revenueEventId]: event.target.value,
+                        }))}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => settleRevenue(
+                          revenueEventId,
+                          revenueStatus === "pending_venue_payment" ? "venue_payment_received" : "dancer_paid",
+                        )}
+                      >
+                        {revenueStatus === "pending_venue_payment" ? "Record venue payment" : "Record dancer payout"}
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+              {item.suspicious ? <span>Flagged suspicious</span> : null}
+              {item.status === "generated" ? (
+                <button type="button" onClick={() => voidRedemption(String(item.id))}>
+                  Void unused QR
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
         {!activity.length ? <p className="empty">No deal redemptions yet.</p> : null}
       </div>
     </div>
@@ -2169,6 +2240,13 @@ function previewCommission(item: Record<string, unknown>) {
   return `Commission: ${String(commission.status || "pending")}`;
 }
 
+function formatAdminCents(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Math.max(0, value) / 100);
+}
+
 function readFirst(value: unknown): Record<string, unknown> | null {
   if (Array.isArray(value)) return (value[0] as Record<string, unknown>) || null;
   if (value && typeof value === "object") return value as Record<string, unknown>;
@@ -2473,6 +2551,8 @@ function AdminStyles() {
       .deal-activity-row span { color: #b9accd; font-size: 13px; }
       .deal-activity-row em { color: #94e5ff; font-size: 13px; font-style: normal; font-weight: 850; }
       .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
+      .deal-settlement-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+      .deal-settlement-action input { min-height: 38px; border: 1px solid rgba(148,229,255,.22); border-radius: 8px; color: #fff; background: rgba(148,229,255,.06); padding: 0 10px; font: inherit; }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) {
         .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters, .dmca-agent-settings form, .dmca-case-actions { grid-template-columns: 1fr; }
@@ -2482,6 +2562,7 @@ function AdminStyles() {
         .approval-summary { display: grid; grid-template-columns: 1fr; }
         .approval-actions, .report-row div, .content-review-actions { display: grid; grid-template-columns: 1fr; }
         .approval-row button, .report-row button, .venue-manager button, .deal-activity-row button { width: 100%; }
+        .deal-settlement-action { grid-template-columns: 1fr; }
         .admin-shell { padding-left: 8px; padding-right: 8px; overflow-x: hidden; }
         .admin-head, .admin-grid, .admin-panel, .approval-row, .submission-detail, .submission-section, .submission-review-card, .submitted-social-review, .submitted-social-review-list, .submitted-social-icons { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
         .admin-panel, .approval-row, .submission-detail { padding: 10px; }

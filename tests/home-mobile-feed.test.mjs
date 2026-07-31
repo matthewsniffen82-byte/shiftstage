@@ -277,8 +277,9 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?venue\.qrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?sourceType: "venue_page"[\s\S]*?data-deal-pass/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?sourceType: "club_page"[\s\S]*?data-club-deal-cta[\s\S]*?return "";/,
   );
+  assert.doesNotMatch(homeSource, /publishedVenueQrPass/);
   const venueSlide = homeSource.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
@@ -370,7 +371,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /profile\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?profile\.venueQrCodeUrl[\s\S]*?publishedVenueQrPass[\s\S]*?data-deal-pass/,
+    /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?return null;/,
   );
   assert.match(
     homeSource,

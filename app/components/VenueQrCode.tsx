@@ -111,9 +111,9 @@ export function VenueQrCode({
 
 export function VenueQrUnavailable({ venueName }: { venueName: string }) {
   return (
-    <aside className="venue-qr-unavailable" aria-label={`Club Scan unavailable at ${venueName}`}>
+    <aside className="venue-qr-unavailable" aria-label={`Tracked Club Deal unavailable at ${venueName}`}>
       <span className="eyebrow">Club Scan</span>
-      <p>Club Scan unavailable at this venue.</p>
+      <p>No tracked Club Deal is active at this venue.</p>
     </aside>
   );
 }

@@ -32,20 +32,20 @@ const [
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
-test("dancer-attributed Club Deals require a verified active check-in at generation and redemption", () => {
-  assert.match(deals, /export async function dancerHasVerifiedActiveCheckInAtVenue/);
+test("dancer-attributed Club Deals require a verified check-in at issue and preserve the locked attribution", () => {
+  assert.match(deals, /export async function getVerifiedActiveCheckInAtVenue/);
   assert.match(
     deals,
     /\.not\("checked_in_at", "is", null\)[\s\S]*?\.is\("checked_out_at", null\)[\s\S]*?\.in\("location_status", \["location_confirmed", "club_confirmed"\]\)/,
   );
-  assert.match(redemptionRoute, /dancerHasVerifiedActiveCheckInAtVenue\(admin, dancerId, venueId\)/);
+  assert.match(redemptionRoute, /getVerifiedActiveCheckInAtVenue\(admin, dancerId, venueId\)/);
   assert.match(redemptionRoute, /available from the dancer profile only during a verified check-in/);
-  assert.match(
-    deals,
-    /redemption\.sourceType === "dancer_profile"[\s\S]*?dancerHasVerifiedActiveCheckInAtVenue\(client, redemption\.dancerId, redemption\.venueId\)[\s\S]*?status: "voided"/,
-  );
-  assert.match(deals, /ended when the verified check-in ended/);
-  assert.match(passPage, /hasLiveDancerAttribution[\s\S]*?dancerHasVerifiedActiveCheckInAtVenue/);
+  assert.match(redemptionRoute, /shiftId = verifiedCheckIn\.shiftId/);
+  assert.match(deals, /shift_id: input\.sourceType === "dancer_profile" \? input\.shiftId/);
+  assert.match(deals, /attribution_locked_at: input\.sourceType === "dancer_profile"/);
+  assert.doesNotMatch(deals, /ended when the verified check-in ended/);
+  assert.doesNotMatch(passPage, /hasLiveDancerAttribution|dancerHasVerifiedActiveCheckInAtVenue/);
+  assert.match(passPage, /Dancer credit was locked when this QR was issued during a verified check-in/);
   assert.match(passPage, /const qrDataUrl = isAvailable/);
 });
 
@@ -82,12 +82,14 @@ test("deal generation produces a durable pass with save and share actions", () =
   assert.match(passPage, /Show this QR to venue staff/);
   assert.match(passPage, /\/deals\/redeem\/\$\{encodeURIComponent\(token\)\}/);
   assert.match(dealCard, /\.club-deal-dialog-backdrop \{ position: fixed; z-index: 1700;/);
+  assert.match(dealCard, /recordLifecycleEvent\(redemptionToken, "saved"\)/);
+  assert.match(dealCard, /recordLifecycleEvent\(redemptionToken, "shared"\)/);
 });
 
 test("live venue QR sheet uses concise MyDancr labeling and mobile-safe actions", () => {
   assert.match(
     liveApp,
-    /function dealPassPresentation\(pass\)[\s\S]*?kicker: "MyDancr Club Deal QR"[\s\S]*?`\$\{venueName\} · Valid tonight`[\s\S]*?status: dancerAttributed[\s\S]*?: "Unique QR · Tracked for redemption"/,
+    /function dealPassPresentation\(pass\)[\s\S]*?kicker: "MyDancr Club Deal QR"[\s\S]*?`\$\{venueName\} · Valid tonight`[\s\S]*?status: dancerAttributed[\s\S]*?Attribution locked when issued[\s\S]*?: "Unique QR · Tracked for redemption"/,
   );
   assert.match(liveApp, /id="dealPassKicker"/);
   assert.match(liveApp, /data-save-deal-pass>Save QR</);
@@ -110,16 +112,20 @@ test("checked-in dancer profiles and MyDancr TV promote attributed deals without
   assert.match(dancerPage, /function isActiveNow[\s\S]*?Boolean\(shift\.checkedInAt\)[\s\S]*?!shift\.checkedOutAt/);
   assert.doesNotMatch(dancerPage, /autoGenerate/);
   assert.match(tvSource, /video\.shift\?\.isActive && video\.venue/);
-  assert.match(tvSource, /deal: video\.shift\?\.isActive && video\.venue/);
+  assert.match(tvSource, /const deal = video\.shift\?\.isActive && video\.venue/);
+  assert.match(tvSource, /createDancerDealAttributionToken/);
   assert.match(tvClient, /video\.shift\?\.isActive && video\.venue && video\.deal/);
   assert.match(tvClient, /sourceType="dancer_profile"/);
+  assert.match(tvClient, /attributionToken=\{video\.dealAttributionToken\}/);
   assert.match(tvClient, /presentation="launcher"/);
 });
 
 test("homepage live profiles use the server-generated revenue QR only while Working Now", () => {
   assert.match(discoveryRoute, /activeDeal: activeDeals\.get\(venue\.id\) \|\| null/);
-  assert.match(discoveryRoute, /activeDeal: dancer\.venueId \? activeDeals\.get\(dancer\.venueId\) \|\| null : null/);
+  assert.match(discoveryRoute, /const activeDeal = dancer\.venueId \? activeDeals\.get\(dancer\.venueId\) \|\| null : null/);
+  assert.match(discoveryRoute, /dealAttributionToken:[\s\S]*?createDancerDealAttributionToken/);
   assert.match(liveApp, /activeDeal: item\.activeDeal \|\| null/);
+  assert.match(liveApp, /dealAttributionToken: item\.dealAttributionToken \|\| ""/);
   assert.match(liveApp, /function profileDealTileMarkup\(profile\) \{\s*if \(!profile\?\.venue \|\| !isWorkingTonight\(profile\)\) return ""/);
   assert.match(liveApp, /profile\.activeDeal && profile\.venueId/);
   assert.match(liveApp, /data-club-deal-cta/);

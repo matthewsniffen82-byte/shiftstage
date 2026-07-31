@@ -57,7 +57,7 @@ test("venue dashboard APIs require an active venue account and scope writes by o
   assert.match(dashboardRoute, /getVenueDashboard\(createAdminSupabaseClient\(\), user\.id\)/);
 });
 
-test("uploaded venue QR images are validated, safely stored, and published on eligible public pages", () => {
+test("uploaded venue QR images are isolated as external marketing assets and never used for commission attribution", () => {
   assert.match(venueSource, /validateAndPrepareDancrImage\(file\)/);
   assert.match(venueSource, /image\.width < 180 \|\| image\.height < 180/);
   assert.match(venueSource, /ratio < 0\.8 \|\| ratio > 1\.25/);
@@ -68,28 +68,27 @@ test("uploaded venue QR images are validated, safely stored, and published on el
   assert.match(publicVenueSource, /qr_code_storage_path/);
   assert.match(publicVenuePage, /permanentRedirect/);
   assert.doesNotMatch(publicVenuePage, /<VenueQrCode/);
-  assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?publishedVenueQrPass/);
+  assert.doesNotMatch(liveApp, /publishedVenueQrPass/);
+  assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal/);
   assert.match(liveApp, /data-feed-venue-qr/);
-  assert.match(dancerPage, /activeShift\.venueQrCodeUrl/);
+  assert.doesNotMatch(dancerPage, /activeShift\.venueQrCodeUrl|<VenueQrCode/);
   assert.match(dancerPage, /Boolean\(shift\.checkedInAt\)/);
   assert.match(dancerPage, /!shift\.checkedOutAt/);
-  assert.match(dancerPage, /source="dancer_profile"/);
   assert.match(dancerPage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\}/);
-  assert.match(trackingComponent, /Club Scan unavailable at this venue\./);
+  assert.match(trackingComponent, /No tracked Club Deal is active at this venue\./);
   assert.match(trackingComponent, /if \(tapToShow && !visible\)/);
   assert.match(trackingComponent, /Show venue QR/);
   assert.match(trackingComponent, /className="venue-qr-dialog"/);
   assert.match(trackingComponent, /eventType: "qr_impression"/);
 });
 
-test("checked-in dancer profiles show a Club Scan or an explicit unavailable state without exposing it on future shifts", () => {
+test("checked-in dancer profiles show only a tracked MyDancr Club Deal or an explicit unavailable state", () => {
   assert.match(liveApp, /if \(!profile\?\.venue \|\| !isWorkingTonight\(profile\)\) return ""/);
-  assert.match(liveApp, /if \(!profile\.venueId \|\| !profile\.venueQrCodeUrl\)/);
-  assert.match(liveApp, /Club Scan unavailable at this venue\./);
+  assert.match(liveApp, /if \(profile\.activeDeal && profile\.venueId\)/);
+  assert.match(liveApp, /No tracked Club Deal is active at this venue\./);
   assert.match(liveApp, /<strong>Club Scan<\/strong>/);
-  assert.match(liveApp, /id="venueQrPlaceholder"/);
-  assert.match(liveApp, /qrPlaceholder\.hidden = Boolean\(profile\.qrCodeUrl\)/);
-  assert.match(liveApp, /A venue-uploaded QR appears on your live profile only while this shift is actively checked in/);
+  assert.match(liveApp, /Saving or sharing keeps your credit attached until that QR expires/);
+  assert.doesNotMatch(liveApp, /profile\.venueQrCodeUrl[\s\S]*?data-deal-pass/);
 });
 
 test("venue analytics are real database counts and the dashboard exposes useful operating metrics", () => {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createDancerDealAttributionToken } from "./deal-attribution";
 import { getActiveClubDealsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
@@ -86,6 +87,7 @@ export type MyDancrTvVideo = {
     isStartingSoon: boolean;
   } | null;
   deal: ClubDeal | null;
+  dealAttributionToken: string | null;
 };
 
 export async function getPublicMyDancrTvVideoCount(
@@ -208,10 +210,21 @@ export async function getPublicMyDancrTvFeed(
       .filter((video) => video.shift?.isActive && video.venue)
       .map((video) => video.venue?.id || ""),
   );
-  return signedVideos.map((video) => ({
-    ...video,
-    deal: video.shift?.isActive && video.venue ? deals.get(video.venue.id) || null : null,
-  }));
+  return signedVideos.map((video) => {
+    const deal = video.shift?.isActive && video.venue ? deals.get(video.venue.id) || null : null;
+    return {
+      ...video,
+      deal,
+      dealAttributionToken: deal && video.shift && video.venue
+        ? createDancerDealAttributionToken({
+            dancerId: video.dancer.id,
+            venueId: video.venue.id,
+            dealId: deal.id,
+            shiftId: video.shift.id,
+          })
+        : null,
+    };
+  });
 }
 
 function normalizeTvCity(value: string | undefined) {
@@ -284,6 +297,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
         }
       : null,
     deal: null,
+    dealAttributionToken: null,
   };
 }
 

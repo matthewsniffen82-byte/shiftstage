@@ -5,7 +5,16 @@ import {
 } from "./image-moderation";
 import { validateAndPrepareDancrImage } from "./image-validation";
 import { evaluateDancrImageModeration } from "./moderation-policy";
-import type { VenueDashboardAnalytics, VenueDashboardDancer, VenueOwnerProfile } from "./types";
+import {
+  getVenueDealForAccount,
+  getVenueDealRevenueMetrics,
+} from "./deals";
+import type {
+  ClubDeal,
+  VenueDashboardAnalytics,
+  VenueDashboardDancer,
+  VenueOwnerProfile,
+} from "./types";
 
 type DancrClient = SupabaseClient;
 
@@ -267,7 +276,13 @@ export async function deleteVenueCoverImage(
 export async function getVenueDashboard(
   client: DancrClient,
   userId: string,
-): Promise<{ profile: VenueOwnerProfile; analytics: VenueDashboardAnalytics; workingNow: VenueDashboardDancer[] }> {
+): Promise<{
+  profile: VenueOwnerProfile;
+  analytics: VenueDashboardAnalytics;
+  workingNow: VenueDashboardDancer[];
+  deal: ClubDeal | null;
+  dealRevenue: Awaited<ReturnType<typeof getVenueDealRevenueMetrics>>;
+}> {
   const profile = await requireVenueForAccount(client, userId);
   const now = new Date();
   const since = new Date(now);
@@ -286,6 +301,8 @@ export async function getVenueDashboard(
     upcomingShiftCount,
     goingSignals30Days,
     workingNow,
+    venueDeal,
+    dealRevenue,
   ] = await Promise.all([
     countByVenue(client, "venue_follows", profile.id),
     countByVenueSince(client, "venue_follows", profile.id, "created_at", since),
@@ -297,6 +314,8 @@ export async function getVenueDashboard(
     countUpcomingShifts(client, profile.id, now),
     countVenueGoingSignals(client, profile.id, since),
     getWorkingDancers(client, profile.id, now),
+    getVenueDealForAccount(client, userId),
+    getVenueDealRevenueMetrics(client, profile.id),
   ]);
 
   return {
@@ -314,6 +333,8 @@ export async function getVenueDashboard(
       goingSignals30Days,
     },
     workingNow,
+    deal: venueDeal?.deal || null,
+    dealRevenue,
   };
 }
 
