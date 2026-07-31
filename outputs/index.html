@@ -30490,14 +30490,17 @@
             content: "";
             position: absolute;
             z-index: 0;
-            inset: -8px;
-            border-radius: 999px;
-            background: radial-gradient(circle,rgba(152,95,255,.9) 0%,rgba(91,19,255,.72) 28%,rgba(91,19,255,.42) 48%,rgba(52,110,255,.24) 64%,transparent 78%);
-            box-shadow: 0 0 10px rgba(91,19,255,.76),0 0 20px rgba(91,19,255,.48),0 0 28px rgba(52,110,255,.28);
+            top: 50%;
+            left: 50%;
+            width: 70px;
+            height: 46px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse,rgba(152,95,255,.9) 0%,rgba(91,19,255,.72) 28%,rgba(91,19,255,.42) 48%,rgba(52,110,255,.24) 64%,transparent 78%);
+            box-shadow: 0 0 8px rgba(91,19,255,.76),0 0 16px rgba(91,19,255,.48),0 0 22px rgba(52,110,255,.28);
             filter: blur(2px);
             opacity: 0;
             pointer-events: none;
-            transform: scale(.72);
+            transform: translate(-50%,-50%) scale(.72);
             transition: opacity 180ms ease,transform 180ms ease;
           }
           #discoveryTabs .tab:not(.active) .home-nav-icon,
@@ -30529,7 +30532,7 @@
           #discoveryTabs .tab.active .home-nav-icon::before,
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon::before {
             opacity: 1;
-            transform: scale(1);
+            transform: translate(-50%,-50%) scale(1);
           }
           #discoveryTabs .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv svg {

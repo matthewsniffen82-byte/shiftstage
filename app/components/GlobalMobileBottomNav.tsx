@@ -494,10 +494,13 @@ export function GlobalMobileBottomNav() {
             content: "";
             position: absolute;
             z-index: 0;
-            inset: -8px;
-            border-radius: 999px;
+            top: 50%;
+            left: 50%;
+            width: 70px;
+            height: 46px;
+            border-radius: 50%;
             background: radial-gradient(
-              circle,
+              ellipse,
               rgba(152, 95, 255, 0.9) 0%,
               rgba(91, 19, 255, 0.72) 28%,
               rgba(91, 19, 255, 0.42) 48%,
@@ -505,13 +508,13 @@ export function GlobalMobileBottomNav() {
               transparent 78%
             );
             box-shadow:
-              0 0 10px rgba(91, 19, 255, 0.76),
-              0 0 20px rgba(91, 19, 255, 0.48),
-              0 0 28px rgba(52, 110, 255, 0.28);
+              0 0 8px rgba(91, 19, 255, 0.76),
+              0 0 16px rgba(91, 19, 255, 0.48),
+              0 0 22px rgba(52, 110, 255, 0.28);
             filter: blur(2px);
             opacity: 0;
             pointer-events: none;
-            transform: scale(0.72);
+            transform: translate(-50%, -50%) scale(0.72);
             transition:
               opacity 180ms ease,
               transform 180ms ease;
@@ -543,7 +546,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav a.active
             .global-mobile-nav-icon::before {
             opacity: 1;
-            transform: scale(1);
+            transform: translate(-50%, -50%) scale(1);
           }
 
           .global-mobile-bottom-nav a.tv-destination {

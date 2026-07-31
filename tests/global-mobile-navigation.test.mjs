@@ -110,19 +110,19 @@ test("neutral mobile glass uses soft-white idle icons and a pole-style active ha
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /\.global-mobile-nav-icon::before \{[\s\S]*?inset: -8px;[\s\S]*?radial-gradient\([\s\S]*?rgba\(152, 95, 255, 0\.9\) 0%[\s\S]*?rgba\(91, 19, 255, 0\.72\) 28%[\s\S]*?rgba\(52, 110, 255, 0\.24\) 64%[\s\S]*?0 0 28px rgba\(52, 110, 255, 0\.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: scale\(0\.72\);/,
+    /\.global-mobile-nav-icon::before \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 70px;[\s\S]*?height: 46px;[\s\S]*?radial-gradient\([\s\S]*?ellipse,[\s\S]*?rgba\(152, 95, 255, 0\.9\) 0%[\s\S]*?rgba\(91, 19, 255, 0\.72\) 28%[\s\S]*?rgba\(52, 110, 255, 0\.24\) 64%[\s\S]*?0 0 22px rgba\(52, 110, 255, 0\.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
   );
   assert.match(
     navigationSource,
-    /a\.active[\s\S]*?\.global-mobile-nav-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: scale\(1\);/,
+    /a\.active[\s\S]*?\.global-mobile-nav-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: translate\(-50%, -50%\) scale\(1\);/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon::before,[\s\S]*?#discoveryTabs \.home-bottom-tv-icon::before \{[\s\S]*?inset: -8px;[\s\S]*?radial-gradient\(circle,rgba\(152,95,255,.9\) 0%,rgba\(91,19,255,.72\) 28%,rgba\(91,19,255,.42\) 48%,rgba\(52,110,255,.24\) 64%,transparent 78%\)[\s\S]*?0 0 28px rgba\(52,110,255,.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: scale\(.72\);/,
+    /#discoveryTabs \.home-nav-icon::before,[\s\S]*?#discoveryTabs \.home-bottom-tv-icon::before \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 70px;[\s\S]*?height: 46px;[\s\S]*?radial-gradient\(ellipse,rgba\(152,95,255,.9\) 0%,rgba\(91,19,255,.72\) 28%,rgba\(91,19,255,.42\) 48%,rgba\(52,110,255,.24\) 64%,transparent 78%\)[\s\S]*?0 0 22px rgba\(52,110,255,.28\)[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon::before,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: scale\(1\);/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon::before,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: translate\(-50%,-50%\) scale\(1\);/,
   );
   assert.match(
     navigationSource,

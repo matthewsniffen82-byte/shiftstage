@@ -60,6 +60,6 @@ test("homepage active TV state uses icon-only color and a pole-style halo", () =
   );
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: scale\(1\);/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon::before \{[\s\S]*?opacity: 1;[\s\S]*?transform: translate\(-50%,-50%\) scale\(1\);/,
   );
 });
