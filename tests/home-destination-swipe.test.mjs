@@ -27,7 +27,7 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
 });
 
-test("full profiles reserve horizontal swipes for their local photo and video media", () => {
+test("full profiles reserve horizontal swipes for media while dock buttons remain active", () => {
   const swipeBlocker = homeSource.match(
     /function homeDestinationSwipeBlocked\(target\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
@@ -37,11 +37,11 @@ test("full profiles reserve horizontal swipes for their local photo and video me
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?deactivateHomeTvFeed\(\)/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?deactivateHomeTvFeed\(\)/,
   );
   assert.doesNotMatch(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\)/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;/,
   );
   assert.match(
     homeSource,

@@ -57,18 +57,26 @@ test("homepage and Next pages share the same floating glass mobile dock", () => 
   );
 });
 
-test("full profiles hide destination navigation until the profile X is clicked", () => {
+test("full dancer and venue profiles retain the shared destination navigation", () => {
   assert.match(
     homeSource,
-    /body\.profile-full-view-open #discoveryTabs \{[\s\S]*?visibility: hidden !important;[\s\S]*?pointer-events: none !important;/,
+    /body\.profile-full-view-open:not\(\.profile-tv-viewer-open\) #discoveryTabs,\s*body\.venue-full-view-open:not\(\.profile-tv-viewer-open\) #discoveryTabs \{[\s\S]*?z-index: 210;[\s\S]*?visibility: visible !important;[\s\S]*?pointer-events: auto !important;/,
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) return false;/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?activeTab = nextTab;[\s\S]*?syncHomeDestinationLocation\(nextTab\);[\s\S]*?render\(\);/,
   );
-  assert.match(
+  assert.doesNotMatch(
     navigationSource,
-    /const fullProfileOpen = [^\n]+dancers\|venues[^\n]+test\(pathname\);[\s\S]*?if \(fullProfileOpen\) return null;/,
+    /fullProfileOpen|if \([^)]+profile[^)]*\) return null/i,
+  );
+  assert.match(
+    homeSource,
+    /--profile-report-clearance: calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.venue-profile-overlay \{[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
 });
 

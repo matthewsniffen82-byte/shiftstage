@@ -29851,9 +29851,11 @@
             display: none !important;
             pointer-events: none !important;
           }
-          body.profile-full-view-open #discoveryTabs {
-            visibility: hidden !important;
-            pointer-events: none !important;
+          body.profile-full-view-open:not(.profile-tv-viewer-open) #discoveryTabs,
+          body.venue-full-view-open:not(.profile-tv-viewer-open) #discoveryTabs {
+            z-index: 210;
+            visibility: visible !important;
+            pointer-events: auto !important;
           }
           .home-tv-feed-copy {
             padding: 54px 14px calc(92px + env(safe-area-inset-bottom));
@@ -30773,7 +30775,7 @@
         }
         @media (max-width: 720px) {
           #profileBackdrop .profile-modal {
-            --profile-report-clearance: max(16px, env(safe-area-inset-bottom, 0px));
+            --profile-report-clearance: calc(88px + env(safe-area-inset-bottom, 0px));
             overscroll-behavior-y: none;
             scroll-padding-bottom: var(--profile-report-clearance) !important;
           }
@@ -30786,7 +30788,7 @@
           }
         }
 
-        /* Venue profiles use the same X-only full-screen dismissal model as dancer profiles. */
+        /* Venue profiles keep X dismissal while the shared destination dock stays available. */
         body.venue-full-view-open {
           overflow: hidden !important;
           overscroll-behavior: none !important;
@@ -30795,10 +30797,6 @@
         body.venue-full-view-open .content-head,
         body.venue-full-view-open #viewAllBtn {
           display: none !important;
-          pointer-events: none !important;
-        }
-        body.venue-full-view-open #discoveryTabs {
-          visibility: hidden !important;
           pointer-events: none !important;
         }
         #results.venue-profile-overlay {
@@ -30812,7 +30810,7 @@
           padding:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
             max(12px, calc((100vw - 760px) / 2))
-            max(16px, env(safe-area-inset-bottom, 0px)) !important;
+            calc(88px + env(safe-area-inset-bottom, 0px)) !important;
           display: block !important;
           overflow-x: hidden !important;
           overflow-y: auto !important;
@@ -30820,7 +30818,7 @@
           overscroll-behavior-y: contain;
           scroll-padding-block:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
-            max(16px, env(safe-area-inset-bottom, 0px));
+            calc(88px + env(safe-area-inset-bottom, 0px));
           touch-action: pan-y;
           -webkit-overflow-scrolling: touch;
           background:
@@ -47839,7 +47837,7 @@
 
     function activateHomeDestination(nextTab) {
       if (!homeDestinationOrder.includes(nextTab)) return false;
-      if (profileBackdrop.classList.contains("show")) return false;
+      if (profileBackdrop.classList.contains("show")) closeProfileModal();
       deactivateHomeTvFeed();
       deactivateHomeDiscoveryFeed();
       if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {

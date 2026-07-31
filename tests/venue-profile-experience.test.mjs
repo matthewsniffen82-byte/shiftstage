@@ -42,7 +42,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
 });
 
-test("venue profiles match dancer profiles as X-only full-screen sheets above the locked page", () => {
+test("venue profiles stay full-screen with X dismissal and the shared floating navigation", () => {
   assert.match(
     liveApp,
     /<div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
@@ -57,15 +57,15 @@ test("venue profiles match dancer profiles as X-only full-screen sheets above th
   );
   assert.match(
     liveApp,
-    /body\.venue-full-view-open #discoveryTabs \{[\s\S]*?visibility: hidden !important;[\s\S]*?pointer-events: none !important;/,
+    /body\.profile-full-view-open:not\(\.profile-tv-viewer-open\) #discoveryTabs,\s*body\.venue-full-view-open:not\(\.profile-tv-viewer-open\) #discoveryTabs \{[\s\S]*?z-index: 210;[\s\S]*?visibility: visible !important;[\s\S]*?pointer-events: auto !important;/,
   );
   assert.match(
     liveApp,
-    /#results\.venue-profile-overlay \{[\s\S]*?max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?max\(16px, env\(safe-area-inset-bottom, 0px\)\);/,
+    /#results\.venue-profile-overlay \{[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
-  assert.doesNotMatch(
+  assert.match(
     liveApp,
-    /body\.venue-full-view-open #discoveryTabs \{[^}]*position: fixed !important;/,
+    /function activateHomeDestination\(nextTab\) \{[\s\S]*?if \(profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?if \(nextTab === "venues" && activeTab === "venues" && selectedVenueName\) \{[\s\S]*?selectedVenueName = null;/,
   );
   assert.match(
     liveApp,
