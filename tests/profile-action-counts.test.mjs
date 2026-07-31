@@ -42,7 +42,7 @@ test("Follow and Notify update visible counts immediately, confirm exact databas
   );
 
   assert.match(homeSource, /id="modalFollowerCount" aria-live="polite"/);
-  assert.match(homeSource, /id="modalNotificationCount" aria-live="polite"/);
+  assert.match(homeSource, /id="modalProfileViews" aria-live="polite"/);
   assert.match(homeSource, /function optimisticProfileFollowState\(/);
   assert.match(homeSource, /function applyConfirmedProfileFollow[\s\S]*confirmedFollowerCount[\s\S]*confirmedNotificationCount/);
   assert.ok(

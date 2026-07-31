@@ -44,11 +44,11 @@ test("profile avatars, gallery thumbnails, and full-screen photos stay at natura
   );
   assert.match(
     publicProfileSource,
-    /\.profile-avatar\.has-photo \{ filter: none; opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-titlebar-avatar\.has-photo \{ filter: none; opacity: 1; mix-blend-mode: normal; \}/,
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-grid-item img \{ filter: none; opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-feature > img \{ filter: none; opacity: 1; mix-blend-mode: normal; \}/,
   );
   assert.match(
     publicProfileSource,

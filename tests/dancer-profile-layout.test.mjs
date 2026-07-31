@@ -34,13 +34,15 @@ const [
     ),
   ]);
 
-test("full dancer profiles use an Instagram-familiar identity and activity header without a bio", () => {
+test("full dancer profiles use a compact identity and honest public activity header without a bio", () => {
   assert.match(profilePage, /className="profile-titlebar"/);
-  assert.match(profilePage, /className=\{`profile-avatar/);
+  assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /className="profile-metrics"/);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
-  assert.match(profilePage, /<DancerNotificationCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
+  assert.match(profilePage, /profile\.profileViewsToday \|\| 0/);
+  assert.match(profilePage, /<dt>Views today<\/dt>/);
+  assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.match(profilePage, /aria-labelledby="profile-social-heading"/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
@@ -48,8 +50,9 @@ test("full dancer profiles use an Instagram-familiar identity and activity heade
   assert.match(liveApp, /class="profile-modal-avatar" id="modalProfileAvatar"/);
   assert.match(liveApp, /class="profile-activity-metrics"/);
   assert.match(liveApp, /id="modalFollowerCount"/);
-  assert.match(liveApp, /id="modalNotificationCount"/);
   assert.match(liveApp, /id="tonightInterestCount"/);
+  assert.match(liveApp, /id="modalProfileViews"/);
+  assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
 });
 
 test("profile actions expose live customer actions and nest profile QR inside Share Profile", () => {
@@ -71,7 +74,8 @@ test("profile actions expose live customer actions and nest profile QR inside Sh
     /This is not a Club Deal and cannot be redeemed at a venue/,
   );
   assert.match(liveApp, /followerCountEl\.textContent = followerNumber/);
-  assert.match(liveApp, /notificationCountEl\.textContent = notificationNumber/);
+  assert.match(liveApp, /notificationCount: confirmedNotificationCount\(/);
+  assert.doesNotMatch(liveApp, /id="modalNotificationCount"/);
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
 });
 

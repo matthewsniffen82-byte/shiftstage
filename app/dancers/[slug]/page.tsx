@@ -12,7 +12,6 @@ import {
   DancerFollowerCount,
   DancerFollowStateProvider,
   DancerGoingCount,
-  DancerNotificationCount,
   DancerProfileActions,
 } from "./DancerProfileActions";
 import { DancerPhotoCarousel } from "./DancerPhotoCarousel";
@@ -87,6 +86,24 @@ export default async function DancerPublicPage({ params }: PageProps) {
         <PublicProfileStyles />
 
         <header className="profile-titlebar">
+          <div
+            aria-label={`${profile.stageName} profile photo`}
+            className={`profile-titlebar-avatar${heroPhoto ? " has-photo" : ""}`}
+            role="img"
+          >
+            {heroPhoto ? (
+              <img
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+                height={heroPhotoHeight || undefined}
+                sizes="46px"
+                src={heroPhoto}
+                srcSet={heroPhotoSrcSet || undefined}
+                width={heroPhotoWidth || undefined}
+              />
+            ) : initials(profile.stageName)}
+          </div>
           <div className="profile-titlebar-identity">
             <div>
               <h1>{profile.stageName}</h1>
@@ -101,46 +118,38 @@ export default async function DancerPublicPage({ params }: PageProps) {
           />
         </header>
 
+        <DancerPhotoCarousel
+          photos={gallery.map((photo) => ({
+            id: photo.id,
+            imageUrl: photo.imageUrl,
+            imageSrcSet: photo.imageSrcSet,
+            imageWidth: photo.imageWidth,
+            imageHeight: photo.imageHeight,
+          }))}
+          videos={tvVideos.map((video) => ({
+            id: video.id,
+            videoUrl: video.videoUrl,
+            durationSeconds: video.durationSeconds,
+          }))}
+          stageName={profile.stageName}
+        />
+
         <section className="profile-overview" aria-label={`${profile.stageName} profile summary`}>
-          <div
-            aria-label={`${profile.stageName} profile photo`}
-            className={`profile-avatar${heroPhoto ? " has-photo" : ""}`}
-            role="img"
-          >
-            {heroPhoto ? (
-              <img
-                alt=""
-                aria-hidden="true"
-                decoding="async"
-                height={heroPhotoHeight || undefined}
-                sizes="132px"
-                src={heroPhoto}
-                srcSet={heroPhotoSrcSet || undefined}
-                width={heroPhotoWidth || undefined}
-              />
-            ) : initials(profile.stageName)}
-          </div>
           <dl className="profile-metrics" aria-label="Profile activity">
             <div>
               <dd><DancerFollowerCount /></dd>
               <dt>Followers</dt>
             </div>
             <div>
-              <dd><DancerNotificationCount /></dd>
-              <dt>Notifications</dt>
-            </div>
-            <div>
               <dd><DancerGoingCount /></dd>
               <dt>Going</dt>
             </div>
+            <div>
+              <dd>{profile.profileViewsToday || 0}</dd>
+              <dt>Views today</dt>
+            </div>
           </dl>
         </section>
-
-        {profile.socialLinks.length ? (
-          <section className="profile-social-section" aria-labelledby="profile-social-heading">
-            <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
-          </section>
-        ) : null}
 
         <DancerProfileActions
           dancerId={profile.id}
@@ -188,21 +197,11 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </section>
         ) : null}
 
-        <DancerPhotoCarousel
-          photos={gallery.map((photo) => ({
-            id: photo.id,
-            imageUrl: photo.imageUrl,
-            imageSrcSet: photo.imageSrcSet,
-            imageWidth: photo.imageWidth,
-            imageHeight: photo.imageHeight,
-          }))}
-          videos={tvVideos.map((video) => ({
-            id: video.id,
-            videoUrl: video.videoUrl,
-            durationSeconds: video.durationSeconds,
-          }))}
-          stageName={profile.stageName}
-        />
+        {profile.socialLinks.length ? (
+          <section className="profile-social-section" aria-labelledby="profile-social-heading">
+            <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
+          </section>
+        ) : null}
 
         {upcomingShifts.length ? (
           <section
@@ -311,8 +310,11 @@ function PublicProfileStyles() {
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       button, input, select, textarea { font: inherit; }
       .public-profile-shell { min-height: 100vh; padding: 0 clamp(18px, 4vw, 56px) 64px; background: radial-gradient(circle at 78% 8%, rgba(139,92,246,.22), transparent 28rem), linear-gradient(180deg, #090911, #050507 62%); }
-      .profile-titlebar { position: sticky; z-index: 90; top: 0; max-width: 760px; min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 auto; padding: max(10px, env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid rgba(126,234,255,.14); background: linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.9)); backdrop-filter: blur(22px); }
-      .profile-titlebar-identity { min-width: 0; display: grid; gap: 2px; }
+      .profile-titlebar { position: sticky; z-index: 90; top: 0; max-width: 760px; min-height: 72px; display: flex; align-items: center; justify-content: flex-start; gap: 11px; margin: 0 auto; padding: max(10px, env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid rgba(126,234,255,.14); background: linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.9)); backdrop-filter: blur(22px); }
+      .profile-titlebar-avatar { width: 46px; height: 46px; display: grid; flex: 0 0 46px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 0 20px rgba(124,58,237,.18); font-size: 14px; font-weight: 950; }
+      .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
+      .profile-titlebar-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 2px; }
       .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(21px, 4vw, 29px); line-height: 1; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
       .profile-titlebar-identity > span { overflow: hidden; color: #b9accd; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
@@ -320,15 +322,12 @@ function PublicProfileStyles() {
       .public-profile-close { width: 44px; min-height: 44px; display: inline-grid; flex: 0 0 44px; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.36); border-radius: 50%; color: #fff; background: rgba(10,10,14,.84); box-shadow: 0 0 18px rgba(124,58,237,.16); font-size: 28px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
       .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
-      .profile-overview { display: grid; grid-template-columns: clamp(96px, 18vw, 132px) minmax(0, 1fr); align-items: center; gap: clamp(18px, 5vw, 42px); padding: 22px 0 18px; }
-      .profile-avatar { width: 100%; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border: 2px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 18px 44px rgba(0,0,0,.38), 0 0 28px rgba(124,58,237,.2); background-position: center; background-size: cover; font-size: 30px; font-weight: 950; }
-      .profile-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
-      .profile-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .profile-overview { display: block; padding: 14px 0 12px; }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 10px 4px; }
       .profile-metrics dd { margin: 0; color: #fff; font-size: clamp(20px, 4vw, 28px); font-weight: 950; line-height: 1; }
       .profile-metrics dt { color: #afa5bd; font-size: clamp(9px, 2.2vw, 12px); font-weight: 850; text-align: center; }
-      .profile-social-section { display: grid; margin-bottom: 18px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%, rgba(126,234,255,.08), transparent 11rem), rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 38px rgba(0,0,0,.2); }
+      .profile-social-section { display: grid; margin-top: 20px; margin-bottom: 18px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%, rgba(126,234,255,.08), transparent 11rem), rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 38px rgba(0,0,0,.2); }
       .social-links-control { display: grid; justify-items: center; gap: 12px; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -392,23 +391,36 @@ function PublicProfileStyles() {
       .venue-qr-launcher { width: 100%; display: flex; align-items: center; justify-content: space-between; }
       .venue-qr-launcher span { color: #d8f7ff; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
       .venue-qr-unavailable { display: grid; gap: 5px; padding: 14px; border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; background: rgba(0,0,0,.2); }
-      .profile-media-section, .profile-schedule-section { margin-top: 24px; }
-      .profile-media-section { display: grid; gap: 12px; }
+      .profile-schedule-section { margin-top: 24px; }
+      .profile-media-section { display: grid; gap: 11px; margin-top: 14px; }
       .profile-media-heading, .profile-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; }
       .profile-media-heading > div, .profile-section-heading > div { display: grid; gap: 5px; }
       .profile-media-heading > span, .profile-section-heading > span { color: #9487a5; font-size: 11px; font-weight: 850; }
-      .profile-media-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid rgba(255,255,255,.1); }
-      .profile-media-tabs button { min-height: 46px; border: 0; border-bottom: 2px solid transparent; color: #91869f; background: transparent; font-weight: 950; cursor: pointer; }
+      .profile-media-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 4px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(255,255,255,.025); }
+      .profile-media-tabs button { min-height: 42px; border: 1px solid transparent; border-radius: 10px; color: #91869f; background: transparent; font-weight: 950; cursor: pointer; }
       .profile-media-tabs button span { color: #6f657c; font-size: 10px; }
-      .profile-media-tabs button.active { border-bottom-color: #7eeaff; color: #fff; text-shadow: 0 0 16px rgba(126,234,255,.32); }
+      .profile-media-tabs button.active { border-color: rgba(126,234,255,.42); color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(11,148,201,.2)); box-shadow: 0 0 20px rgba(124,58,237,.12); text-shadow: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
-      .profile-media-grid { min-height: 110px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
-      .profile-media-grid-item { position: relative; aspect-ratio: 1; display: block; padding: 0; overflow: hidden; border: 0; color: #fff; background: #0b0b10; cursor: pointer; }
+      .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: zoom-in; isolation: isolate; touch-action: pan-y; }
+      .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.7)); }
+      .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; user-select: none; }
+      .profile-media-feature > img { filter: none; opacity: 1; mix-blend-mode: normal; }
+      .profile-media-feature:focus-visible { border-color: #7eeaff; outline: 3px solid rgba(126,234,255,.2); outline-offset: 3px; }
+      .profile-media-feature-position, .profile-media-feature-expand { position: absolute; z-index: 2; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(4,4,8,.68); backdrop-filter: blur(12px); font-size: 10px; font-weight: 900; }
+      .profile-media-feature-position { top: 12px; left: 12px; }
+      .profile-media-feature-expand { right: 12px; bottom: 12px; cursor: pointer; }
+      .profile-media-feature-previous, .profile-media-feature-next { position: absolute; z-index: 3; top: 50%; width: 42px; height: 52px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #fff; background: rgba(4,4,8,.52); font-size: 30px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(9px); }
+      .profile-media-feature-previous { left: 10px; }
+      .profile-media-feature-next { right: 10px; }
+      .profile-media-feature-previous:disabled, .profile-media-feature-next:disabled { opacity: 0; pointer-events: none; }
+      .profile-media-grid { min-height: 76px; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px; scroll-snap-type: x proximity; scrollbar-width: thin; touch-action: pan-x pan-y; }
+      .profile-media-grid-item { position: relative; width: 64px; min-width: 64px; aspect-ratio: 4 / 5; display: block; flex: 0 0 64px; padding: 0; overflow: hidden; scroll-snap-align: start; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; background: #0b0b10; cursor: pointer; }
       .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
       .profile-media-grid-item img { filter: none; opacity: 1; mix-blend-mode: normal; }
-      .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: -2px; }
-      .profile-media-play { position: absolute; top: 50%; left: 50%; width: 42px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
-      .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #111; transform: translate(-50%, -50%); }
+      .profile-media-grid-item.active { border-color: #7eeaff; box-shadow: 0 0 0 2px rgba(126,234,255,.16), 0 0 16px rgba(34,199,255,.12); }
+      .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .profile-media-play { position: absolute; top: 50%; left: 50%; width: 30px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
+      .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid #111; transform: translate(-50%, -50%); }
       .profile-media-duration { position: absolute; right: 6px; bottom: 6px; padding: 4px 6px; border-radius: 999px; color: #fff; background: rgba(0,0,0,.78); font-size: 9px; font-weight: 950; }
       .profile-media-empty { grid-column: 1 / -1; align-self: center; justify-self: center; color: #8f849c; }
       .profile-media-viewer { position: fixed; z-index: 1600; inset: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; color: #fff; background: rgba(0,0,0,.98); overscroll-behavior: none; touch-action: none; }
@@ -446,7 +458,8 @@ function PublicProfileStyles() {
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px 32px; }
         .profile-titlebar { min-height: 66px; }
-        .profile-overview { grid-template-columns: 94px minmax(0, 1fr); gap: 12px; padding-top: 16px; }
+        .profile-titlebar-avatar { width: 42px; height: 42px; flex-basis: 42px; }
+        .profile-overview { padding-top: 12px; }
         .live-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
         .profile-working-card { padding: 16px; }
@@ -454,7 +467,9 @@ function PublicProfileStyles() {
         .club-deal-card { grid-template-columns: 1fr; }
         .club-deal-action { justify-items: stretch; }
         .deal-qr-frame { justify-items: center; }
-        .profile-media-grid { gap: 2px; }
+        .profile-media-feature { max-height: min(64dvh, 540px); border-radius: 17px; }
+        .profile-media-feature-previous, .profile-media-feature-next { width: 38px; height: 48px; font-size: 28px; }
+        .profile-media-feature-expand { right: 10px; bottom: 10px; }
         .profile-media-viewer-previous, .profile-media-viewer-next { width: 40px; height: 50px; font-size: 30px; }
         .shift-list { grid-template-columns: 1fr; }
       }

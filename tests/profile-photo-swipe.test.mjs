@@ -52,16 +52,18 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
   );
   assert.match(
     liveApp,
+    /function openSelectedModalMediaViewer\(\)[\s\S]*?openProfileTvViewer[\s\S]*?openPhotoViewerFromElement\(modalImage\)/,
+  );
+  assert.match(liveApp, /id="modalMediaExpand"[\s\S]*?modalMediaExpand\?\.addEventListener\("click"/);
+  assert.match(
+    liveApp,
     /\.profile-modal \.gallery \{ overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; \}/,
   );
   assert.doesNotMatch(liveApp, /id="modalPhotoSwipeHint"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerSwipeHint"/);
-  assert.doesNotMatch(
-    liveApp,
-    /modalImage\?\.addEventListener\("click",[\s\S]*?openProfilePhotoViewer\(\)/,
-  );
+  assert.match(liveApp, /id="modalMediaPrevious"[\s\S]*?id="modalMediaNext"/);
 });
-test("the profile separates approved photos and dancer-only TV videos into one tabbed media section", () => {
+test("the profile promotes approved photos and dancer-only TV videos into one tabbed media stage", () => {
   assert.match(publicPhotoCarousel, /type MediaTab = ProfileMedia\["kind"\]/);
   assert.match(publicPhotoCarousel, /className="profile-media-tabs"/);
   assert.match(publicPhotoCarousel, /Photos <span>\{photoMedia\.length\}<\/span>/);
@@ -69,13 +71,18 @@ test("the profile separates approved photos and dancer-only TV videos into one t
   assert.match(publicPhotoCarousel, /activeTab === "photo" \? photoMedia : videoMedia/);
   assert.match(
     publicPhotoCarousel,
-    /className="profile-media-grid"[\s\S]*?activeItems\.map\(\(item, index\) =>/,
+    /className=\{`profile-media-feature is-\$\{selectedItem\.kind\}`\}[\s\S]*?data-profile-inline-media-swipe-surface/,
   );
   assert.match(publicPhotoCarousel, /data-dancer-media-tabs/);
   assert.match(
     publicPhotoCarousel,
-    /onClick=\{\(\) => openViewer\(item\.kind, index\)\}/,
+    /onClick=\{\(\) => setActiveIndex\(index\)\}/,
   );
+  assert.match(publicPhotoCarousel, /openViewer\(selectedItem\.kind, selectedIndex\)/);
+  assert.match(publicPhotoCarousel, /profile-media-feature-position/);
+  assert.match(publicPhotoCarousel, /profile-media-feature-expand/);
+  assert.match(publicPhotoCarousel, /IntersectionObserver/);
+  assert.match(publicPhotoCarousel, /video\.play\(\)\.catch/);
   assert.match(
     publicPhotoCarousel,
     /className="profile-media-viewer"[\s\S]*?activeViewerItem\.kind === "photo"/,
@@ -86,13 +93,19 @@ test("the profile separates approved photos and dancer-only TV videos into one t
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-grid \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+    /\.profile-media-grid \{[^}]*display: flex;[^}]*overflow-x: auto;[^}]*scroll-snap-type: x proximity/,
+  );
+  assert.match(
+    publicProfilePage,
+    /\.profile-media-feature \{[^}]*aspect-ratio: 4 \/ 5;[^}]*touch-action: pan-y/,
   );
   assert.match(
     publicProfilePage,
     /\.profile-media-viewer-stage > img, \.profile-media-viewer-stage > video \{[^}]*object-fit: contain/,
   );
-  assert.doesNotMatch(`${publicProfilePage}\n${liveApp}`, /VIEWED TODAY|viewed-today/);
+  assert.match(publicProfilePage, /<dt>Views today<\/dt>/);
+  assert.match(liveApp, /<dt>Views today<\/dt>/);
+  assert.doesNotMatch(`${publicProfilePage}\n${liveApp}`, /<dt>Notifications<\/dt>/);
   assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
 });
 

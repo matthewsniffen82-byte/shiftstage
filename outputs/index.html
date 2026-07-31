@@ -25985,24 +25985,6 @@
       -webkit-backdrop-filter: blur(10px) !important;
     }
 
-    .profile-modal .modal-scroll-cue .icon {
-      animation: modalScrollCueBounce 1.35s ease-in-out infinite;
-      height: 16px !important;
-      stroke: currentColor !important;
-      stroke-width: 2.8 !important;
-      width: 16px !important;
-    }
-
-    .profile-modal .modal-scroll-cue:focus-visible {
-      outline: 2px solid rgba(53, 216, 255, 0.78);
-      outline-offset: 3px;
-    }
-
-    @keyframes modalScrollCueBounce {
-      0%, 100% { transform: translateY(-1px); }
-      50% { transform: translateY(3px); }
-    }
-
     @media (prefers-reduced-motion: reduce) {
       .profile-modal .modal-scroll-cue .icon {
         animation: none !important;
@@ -31483,8 +31465,8 @@
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 0;
-          margin: 0 0 12px;
-          padding: 7px 0 8px;
+          margin: 0 0 14px;
+          padding: 10px 0 9px;
         }
         #profileBackdrop .profile-activity-metrics > div {
           min-width: 0;
@@ -31507,23 +31489,100 @@
           text-align: center;
         }
         #profileBackdrop .modal-image {
-          position: absolute !important;
-          width: 1px !important;
-          height: 1px !important;
+          position: relative !important;
+          width: 100% !important;
+          height: auto !important;
           min-height: 0 !important;
+          max-height: 660px !important;
+          aspect-ratio: 4 / 5 !important;
           margin: 0 !important;
           padding: 0 !important;
           overflow: hidden !important;
-          clip-path: inset(50%) !important;
-          pointer-events: none !important;
+          clip-path: none !important;
+          border: 1px solid rgba(126,234,255,.22) !important;
+          border-radius: 20px !important;
+          background-color: #020204 !important;
+          background-position: center !important;
+          background-size: cover !important;
+          box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12) !important;
+          cursor: zoom-in;
+          pointer-events: auto !important;
+          touch-action: pan-y !important;
+          filter: none !important;
+          opacity: 1 !important;
+          mix-blend-mode: normal !important;
         }
-        #profileBackdrop .modal-scroll-cue {
+        #profileBackdrop .modal-image[hidden] {
           display: none !important;
+        }
+        #profileBackdrop .modal-image.has-custom-photo {
+          background-image: var(--custom-photo), linear-gradient(145deg, #140a25, #040407) !important;
+          background-position: center, center !important;
+          background-size: cover, cover !important;
+          background-repeat: no-repeat !important;
+        }
+        #profileBackdrop .modal-image::after {
+          z-index: 1;
+          height: 28%;
+          inset: auto 0 0;
+          background: linear-gradient(180deg, transparent, rgba(0,0,0,.72)) !important;
+        }
+        #profileBackdrop .profile-modal-media-position,
+        #profileBackdrop .profile-modal-media-expand {
+          position: absolute;
+          z-index: 4;
+          display: inline-flex;
+          align-items: center;
+          min-height: 32px;
+          padding: 0 10px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(4,4,8,.68);
+          backdrop-filter: blur(12px);
+          font-size: 10px;
+          font-weight: 900;
+        }
+        #profileBackdrop .profile-modal-media-position { top: 12px; left: 12px; }
+        #profileBackdrop .profile-modal-media-position { pointer-events: none; }
+        #profileBackdrop .profile-modal-media-expand { right: 12px; bottom: 12px; cursor: pointer; }
+        #profileBackdrop .profile-modal-media-previous,
+        #profileBackdrop .profile-modal-media-next {
+          position: absolute;
+          z-index: 5;
+          top: 50%;
+          width: 42px;
+          height: 52px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(4,4,8,.52);
+          font: inherit;
+          font-size: 30px;
+          transform: translateY(-50%);
+          cursor: pointer;
+          backdrop-filter: blur(9px);
+        }
+        #profileBackdrop .profile-modal-media-previous { left: 10px; }
+        #profileBackdrop .profile-modal-media-next { right: 10px; }
+        #profileBackdrop .profile-modal-media-previous:disabled,
+        #profileBackdrop .profile-modal-media-next:disabled {
+          opacity: 0;
+          pointer-events: none;
+        }
+        #profileBackdrop .modal-media-video-preview,
+        #profileBackdrop .modal-media-video-preview > video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
         }
         #profileBackdrop .profile-modal-media {
           display: grid;
-          gap: 8px;
-          margin: 0 0 14px;
+          gap: 10px;
+          margin: 0 0 12px;
         }
         #profileBackdrop .profile-modal-media-head {
           display: flex;
@@ -31544,13 +31603,17 @@
         #profileBackdrop .profile-modal-media-tabs {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          border-bottom: 1px solid rgba(255,255,255,.1);
+          gap: 6px;
+          padding: 4px;
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 14px;
+          background: rgba(255,255,255,.025);
         }
         #profileBackdrop .profile-modal-media-tabs button {
-          min-height: 38px;
+          min-height: 40px;
           padding: 0 10px;
-          border: 0;
-          border-bottom: 2px solid transparent;
+          border: 1px solid transparent;
+          border-radius: 10px;
           color: #8f849e;
           background: transparent;
           font: inherit;
@@ -31563,9 +31626,11 @@
           font-size: 10px;
         }
         #profileBackdrop .profile-modal-media-tabs button.active {
-          border-bottom-color: #7eeaff;
+          border-color: rgba(126,234,255,.42);
           color: #fff;
-          text-shadow: 0 0 16px rgba(126,234,255,.34);
+          background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(11,148,201,.2));
+          box-shadow: 0 0 20px rgba(124,58,237,.12);
+          text-shadow: none;
         }
         #profileBackdrop .profile-modal-media-tabs button:disabled {
           opacity: .4;
@@ -31573,13 +31638,13 @@
         }
         #profileBackdrop .gallery {
           width: 100% !important;
-          min-height: 126px !important;
+          min-height: 76px !important;
           display: flex !important;
           align-items: stretch !important;
           justify-content: flex-start !important;
           gap: 8px !important;
           margin: 0 !important;
-          padding: 2px 2px 8px !important;
+          padding: 2px 2px 6px !important;
           overflow-x: auto !important;
           overflow-y: hidden !important;
           overscroll-behavior-x: contain !important;
@@ -31588,9 +31653,9 @@
           touch-action: pan-x pan-y !important;
         }
         #profileBackdrop .gallery .thumb {
-          flex: 0 0 clamp(94px, 28vw, 124px) !important;
-          width: clamp(94px, 28vw, 124px) !important;
-          min-width: clamp(94px, 28vw, 124px) !important;
+          flex: 0 0 64px !important;
+          width: 64px !important;
+          min-width: 64px !important;
           height: auto !important;
           min-height: 0 !important;
           aspect-ratio: 4 / 5 !important;
@@ -31598,15 +31663,17 @@
           padding: 0 !important;
           overflow: hidden !important;
           scroll-snap-align: start !important;
-          border: 0 !important;
-          border-radius: 12px !important;
+          border: 1px solid rgba(255,255,255,.1) !important;
+          border-radius: 10px !important;
           background: #0b0b10 !important;
           box-shadow: none !important;
           transform: none !important;
         }
         #profileBackdrop .gallery .thumb.active {
-          outline: 2px solid #7eeaff !important;
-          outline-offset: -2px !important;
+          border-color: #7eeaff !important;
+          outline: 2px solid rgba(126,234,255,.16) !important;
+          outline-offset: 1px !important;
+          box-shadow: 0 0 16px rgba(34,199,255,.12) !important;
         }
         #profileBackdrop .gallery .thumb .portrait,
         #profileBackdrop .gallery .thumb > video {
@@ -31615,7 +31682,7 @@
           min-height: 0 !important;
           display: block !important;
           object-fit: cover !important;
-          border-radius: 11px !important;
+          border-radius: 9px !important;
         }
         #profileBackdrop .gallery[data-media-tab="photo"] .thumb[data-profile-tv-index],
         #profileBackdrop .gallery[data-media-tab="video"] .thumb:not([data-profile-tv-index]),
@@ -33214,37 +33281,38 @@
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
         </div>
-        <dl class="profile-activity-metrics" aria-label="Profile activity">
-          <div>
-            <dd id="modalFollowerCount" aria-live="polite">0</dd>
-            <dt>Followers</dt>
-          </div>
-          <div>
-            <dd id="modalNotificationCount" aria-live="polite">0</dd>
-            <dt>Notifications</dt>
-          </div>
-          <div>
-            <dd id="tonightInterestCount" aria-live="polite">0</dd>
-            <dt>Going</dt>
-          </div>
-        </dl>
-        <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
-          <button class="modal-scroll-cue" id="modalScrollCue" type="button" aria-label="Scroll down to profile details">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
-          </button>
-        </div>
         <section class="profile-modal-media" aria-labelledby="profileModalMediaTitle">
           <div class="profile-modal-media-head">
-            <strong id="profileModalMediaTitle">Media</strong>
+            <strong id="profileModalMediaTitle">Photos &amp; TV</strong>
             <span id="profileModalMediaCount">0 approved</span>
           </div>
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
             <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">Photos <span id="modalMediaPhotoCount">0</span></button>
             <button id="modalMediaTvTab" type="button" role="tab" aria-selected="false" aria-controls="modalGallery" data-profile-media-tab="video" disabled>TV <span id="modalMediaTvCount">0</span></button>
           </div>
+          <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
+            <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
+            <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
+            <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
+            <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile media full screen">View full screen</button>
+          </div>
           <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel"></div>
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
         </section>
+        <dl class="profile-activity-metrics" aria-label="Profile activity">
+          <div>
+            <dd id="modalFollowerCount" aria-live="polite">0</dd>
+            <dt>Followers</dt>
+          </div>
+          <div>
+            <dd id="tonightInterestCount" aria-live="polite">0</dd>
+            <dt>Going</dt>
+          </div>
+          <div>
+            <dd id="modalProfileViews" aria-live="polite">0</dd>
+            <dt>Views today</dt>
+          </div>
+        </dl>
         <div class="modal-body" id="modalBody"></div>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
@@ -33366,7 +33434,6 @@
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
-    const modalScrollCue = document.getElementById("modalScrollCue");
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
@@ -33379,6 +33446,10 @@
     const modalMediaTvCount = document.getElementById("modalMediaTvCount");
     const profileModalMediaCount = document.getElementById("profileModalMediaCount");
     const modalMediaEmpty = document.getElementById("modalMediaEmpty");
+    const modalMediaPosition = document.getElementById("modalMediaPosition");
+    const modalMediaPrevious = document.getElementById("modalMediaPrevious");
+    const modalMediaNext = document.getElementById("modalMediaNext");
+    const modalMediaExpand = document.getElementById("modalMediaExpand");
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
     const cityCoordinates = {
@@ -40815,11 +40886,20 @@
         : ".thumb:not([data-profile-tv-index])";
       const visibleThumbs = [...modalGallery.querySelectorAll(selector)];
       modalMediaEmpty.hidden = visibleThumbs.length > 0;
+      modalImage.hidden = visibleThumbs.length === 0;
       modalMediaEmpty.textContent = tab === "video"
         ? "No approved MyDancr TV videos yet."
         : "No approved profile photos yet.";
       const selected = visibleThumbs.find((thumb) => thumb.classList.contains("active")) || visibleThumbs[0];
       if (selected) selectModalMediaThumb(selected);
+    }
+
+    function syncModalMediaNavigation(kind, index, total) {
+      if (modalMediaPosition) {
+        modalMediaPosition.textContent = `${kind === "video" ? "TV" : "Photo"} ${Math.max(0, index) + 1} of ${Math.max(1, total)}`;
+      }
+      if (modalMediaPrevious) modalMediaPrevious.disabled = index <= 0;
+      if (modalMediaNext) modalMediaNext.disabled = index >= total - 1;
     }
 
     function setModalPhoto(photoClass, photoUrl = "") {
@@ -40856,6 +40936,7 @@
         "aria-label",
         `Selected profile photo ${activePhotoIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
       );
+      syncModalMediaNavigation("photo", activePhotoIndex, totalPhotos);
     }
 
     function setModalVideo(item, profileName, videos, index) {
@@ -40868,6 +40949,8 @@
       preview.className = "modal-media-video-preview";
       const video = document.createElement("video");
       video.src = item.videoUrl;
+      video.autoplay = true;
+      video.loop = true;
       video.muted = true;
       video.defaultMuted = true;
       video.playsInline = true;
@@ -40884,6 +40967,7 @@
       });
       preview.append(video, play);
       modalImage.appendChild(preview);
+      void video.play().catch(() => undefined);
 
       const thumbs = [...modalGallery.querySelectorAll(".thumb")];
       thumbs.forEach((thumb) => {
@@ -40908,6 +40992,7 @@
         "aria-label",
         `${profileName} profile video, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Select Play to watch or swipe left or right to change media.`
       );
+      syncModalMediaNavigation("video", index, videos.length);
       return true;
     }
 
@@ -41281,7 +41366,7 @@
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
       document.getElementById("modalFollowerCount").textContent = followerNumber(profile, city).toLocaleString();
-      document.getElementById("modalNotificationCount").textContent = notificationNumber(profile, city).toLocaleString();
+      document.getElementById("modalProfileViews").textContent = profileViewsToday(profile, city).toLocaleString();
       document.getElementById("tonightInterestCount").textContent = tonightInterestCount(profile).toLocaleString();
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
@@ -41699,6 +41784,7 @@
     }
 
     function closeProfileModal() {
+      modalImage?.querySelector("video")?.pause();
       [
         closeProfileTvViewer,
         closeProfilePhotoViewer,
@@ -47787,16 +47873,7 @@
       event.stopPropagation();
       const thumb = event.target.closest(".thumb");
       if (!thumb) return;
-      const selected = selectModalMediaThumb(thumb);
-      if (!selected) return;
-      if (thumb.hasAttribute("data-profile-tv-index")) {
-        const videos = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
-        const videoIndex = Number(thumb.dataset.profileTvIndex);
-        const item = videos[videoIndex];
-        if (item) openProfileTvViewer(item, modalGallery.profileTvProfileName || "Dancer", videos);
-        return;
-      }
-      openPhotoViewerFromElement(modalImage);
+      selectModalMediaThumb(thumb);
     });
 
     [modalMediaPhotoTab, modalMediaTvTab].forEach((button) => {
@@ -47808,6 +47885,37 @@
 
     bindHorizontalProfilePhotoSwipe(modalImage);
     bindHorizontalProfilePhotoSwipe(profilePhotoViewerImage, { syncViewer: true });
+
+    function openSelectedModalMediaViewer() {
+      if (modalImage.dataset.activeMediaType === "video") {
+        const videos = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
+        const videoIndex = Number(modalImage.dataset.activeVideoIndex);
+        const item = videos[videoIndex];
+        if (item) openProfileTvViewer(item, modalGallery.profileTvProfileName || "Dancer", videos);
+        return;
+      }
+      openPhotoViewerFromElement(modalImage);
+    }
+
+    modalMediaPrevious?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      moveModalPhoto(-1);
+    });
+    modalMediaNext?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      moveModalPhoto(1);
+    });
+    modalMediaExpand?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openSelectedModalMediaViewer();
+    });
+    modalImage?.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      openSelectedModalMediaViewer();
+    });
 
     modalImage?.addEventListener("keydown", (event) => {
       if (event.target !== modalImage) return;
@@ -47912,8 +48020,6 @@
 
       const followerCountEl = document.getElementById("modalFollowerCount");
       if (followerCountEl) followerCountEl.textContent = followerNumber(profile, city).toLocaleString();
-      const notificationCountEl = document.getElementById("modalNotificationCount");
-      if (notificationCountEl) notificationCountEl.textContent = notificationNumber(profile, city).toLocaleString();
       syncHomeFeedActionButtons(profile, city);
       return { following, notificationsEnabled };
     }
@@ -48164,14 +48270,6 @@
       event.preventDefault();
       event.stopPropagation();
       closeProfileModal();
-    });
-    modalScrollCue?.addEventListener("pointerdown", (event) => {
-      event.stopPropagation();
-    }, { passive: true });
-    modalScrollCue?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      modalBody?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     profilePhotoViewerClose?.addEventListener("click", (event) => {
       event.preventDefault();

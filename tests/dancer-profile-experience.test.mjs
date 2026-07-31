@@ -36,6 +36,7 @@ const [
 
 test("the public dancer profile keeps identity, verification, city, and close control at the top", () => {
   assert.match(profilePage, /<header className="profile-titlebar">/);
+  assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
   assert.match(profilePage, /className="profile-verified" aria-label="Verified dancer"/);
   assert.match(profilePage, /<span>\{profile\.city\}<\/span>/);
@@ -45,23 +46,26 @@ test("the public dancer profile keeps identity, verification, city, and close co
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
-test("the mobile profile is ordered around identity, metrics, actions, live revenue, media, and schedule", () => {
+test("the mobile profile is ordered around identity, featured media, activity, actions, live revenue, socials, and schedule", () => {
   const identityIndex = profilePage.indexOf('className="profile-titlebar"');
+  const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
   const dealIndex = profilePage.indexOf('className="profile-working-card"');
-  const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
+  const socialIndex = profilePage.indexOf('className="profile-social-section"');
   const scheduleIndex = profilePage.indexOf('className="profile-schedule-section"');
 
   assert.ok(identityIndex > -1);
-  assert.ok(overviewIndex > identityIndex);
+  assert.ok(mediaIndex > identityIndex);
+  assert.ok(overviewIndex > mediaIndex);
   assert.ok(actionsIndex > overviewIndex);
   assert.ok(dealIndex > actionsIndex);
-  assert.ok(mediaIndex > dealIndex);
-  assert.ok(scheduleIndex > mediaIndex);
+  assert.ok(socialIndex > dealIndex);
+  assert.ok(scheduleIndex > socialIndex);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
-  assert.match(profilePage, /<DancerNotificationCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
+  assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);
+  assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.match(profilePage, /shareControl=\{<ProfileShareButton stageName=\{profile\.stageName\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
@@ -99,7 +103,7 @@ test("reports are bounded, validated, attributable when possible, and logged", (
 });
 
 test("the profile removes repeated galleries and hides empty ranking language", () => {
-  assert.match(profilePage, /className=\{`profile-avatar/);
+  assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<DancerPhotoCarousel/);
   assert.doesNotMatch(profilePage, /Not ranked yet/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio|About \{profile\.stageName\}/);

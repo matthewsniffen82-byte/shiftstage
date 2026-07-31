@@ -54,7 +54,7 @@ test("the signed-in live profile updates its visible follow metrics immediately 
     mobileSource.match(/function applyConfirmedProfileFollow[\s\S]*?\r?\n    }\r?\n\r?\n    async function saveProfileFollow/)?.[0] || "";
 
   assert.match(mobileSource, /id="modalFollowerCount" aria-live="polite"/);
-  assert.match(mobileSource, /id="modalNotificationCount" aria-live="polite"/);
+  assert.match(mobileSource, /id="modalProfileViews" aria-live="polite"/);
   assert.match(mobileSource, /async function loadLiveCustomerSaved\(\) \{\s+if \(!isCustomerSession\(\)\) return/);
   assert.match(followHandler, /const data = await postAuthenticatedJson\("\/api\/customer\/follows"/);
   assert.match(followHandler, /applyProfileFollowState\(profile, city, optimisticState\)/);
@@ -65,7 +65,7 @@ test("the signed-in live profile updates its visible follow metrics immediately 
   assert.match(confirmedState, /followerCount: confirmedFollowerCount\(/);
   assert.match(confirmedState, /notificationCount: confirmedNotificationCount\(/);
   assert.match(mobileSource, /followerCountEl\.textContent = followerNumber\(profile, city\)\.toLocaleString\(\)/);
-  assert.match(mobileSource, /notificationCountEl\.textContent = notificationNumber\(profile, city\)\.toLocaleString\(\)/);
+  assert.doesNotMatch(mobileSource, /id="modalNotificationCount"/);
   assert.doesNotMatch(
     mobileSource.match(/function followerNumber[\s\S]*?\r?\n    }/)?.[0] || "",
     /isFollowingProfile/,

@@ -74,14 +74,23 @@ export function DancerPhotoCarousel({
   const [activeTab, setActiveTab] = useState<MediaTab>(
     photoMedia.length ? "photo" : "video",
   );
+  const [activeIndex, setActiveIndex] = useState(0);
   const [viewer, setViewer] = useState<{ kind: MediaTab; index: number } | null>(
     null,
   );
+  const inlineGesture = useRef<SwipeGesture>(emptyGesture());
   const gesture = useRef<SwipeGesture>(emptyGesture());
+  const inlineTrackpadLockedUntil = useRef(0);
   const trackpadLockedUntil = useRef(0);
+  const inlineVideo = useRef<HTMLVideoElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const activeItems: ProfileMedia[] =
     activeTab === "photo" ? photoMedia : videoMedia;
+  const selectedIndex = Math.min(
+    Math.max(activeIndex, 0),
+    Math.max(0, activeItems.length - 1),
+  );
+  const selectedItem = activeItems[selectedIndex];
   const viewerItems: ProfileMedia[] = viewer?.kind === "video"
     ? videoMedia
     : photoMedia;
@@ -98,6 +107,43 @@ export function DancerPhotoCarousel({
       setActiveTab("photo");
     }
   }, [activeTab, photoMedia.length, videoMedia.length]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeIndex >= activeItems.length && activeItems.length) {
+      setActiveIndex(activeItems.length - 1);
+    }
+  }, [activeIndex, activeItems.length]);
+
+  useEffect(() => {
+    const video = inlineVideo.current;
+    if (!video || selectedItem?.kind !== "video") return;
+    video.muted = true;
+    video.defaultMuted = true;
+    const playWhenVisible = (visible: boolean) => {
+      if (visible) {
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    };
+    if (!("IntersectionObserver" in window)) {
+      playWhenVisible(true);
+      return () => video.pause();
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => playWhenVisible(Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.6)),
+      { threshold: [0, 0.6, 1] },
+    );
+    observer.observe(video);
+    return () => {
+      observer.disconnect();
+      video.pause();
+    };
+  }, [selectedItem]);
 
   useEffect(() => {
     if (!viewer) return;
@@ -118,6 +164,82 @@ export function DancerPhotoCarousel({
 
   function openViewer(kind: MediaTab, index: number) {
     setViewer({ kind, index });
+  }
+
+  function showRelativeInlineItem(direction: -1 | 1) {
+    setActiveIndex((current) => {
+      const nextIndex = current + direction;
+      if (nextIndex < 0 || nextIndex >= activeItems.length) return current;
+      return nextIndex;
+    });
+  }
+
+  function resetInlineGesture() {
+    inlineGesture.current = emptyGesture();
+  }
+
+  function handleInlinePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (
+      !event.isPrimary ||
+      (event.pointerType === "mouse" && event.button !== 0) ||
+      (event.target as HTMLElement).closest("button")
+    ) {
+      return;
+    }
+    inlineGesture.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      horizontal: false,
+      cancelled: false,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  function handleInlinePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const current = inlineGesture.current;
+    if (current.pointerId !== event.pointerId || current.cancelled) return;
+    const distanceX = event.clientX - current.startX;
+    const distanceY = event.clientY - current.startY;
+    if (Math.abs(distanceX) < 10 && Math.abs(distanceY) < 10) return;
+    if (Math.abs(distanceY) >= Math.abs(distanceX)) {
+      current.cancelled = true;
+      return;
+    }
+    current.horizontal = true;
+    event.preventDefault();
+  }
+
+  function handleInlinePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    const current = inlineGesture.current;
+    if (current.pointerId !== event.pointerId) return;
+    const distanceX = event.clientX - current.startX;
+    const distanceY = event.clientY - current.startY;
+    if (
+      !current.cancelled &&
+      current.horizontal &&
+      Math.abs(distanceX) >= SWIPE_DISTANCE_PX &&
+      Math.abs(distanceX) > Math.abs(distanceY) * 1.2
+    ) {
+      event.preventDefault();
+      showRelativeInlineItem(distanceX < 0 ? 1 : -1);
+    }
+    resetInlineGesture();
+  }
+
+  function handleInlineWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    if (
+      activeItems.length < 2 ||
+      Math.abs(event.deltaX) < 18 ||
+      Math.abs(event.deltaX) <= Math.abs(event.deltaY)
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const now = Date.now();
+    if (now < inlineTrackpadLockedUntil.current) return;
+    inlineTrackpadLockedUntil.current = now + TRACKPAD_LOCK_MS;
+    showRelativeInlineItem(event.deltaX > 0 ? 1 : -1);
   }
 
   function showRelativeViewerItem(direction: -1 | 1) {
@@ -207,7 +329,7 @@ export function DancerPhotoCarousel({
       <div className="profile-media-heading">
         <div>
           <span className="eyebrow">Media</span>
-          <h2>{stageName}</h2>
+          <h2>Photos &amp; TV</h2>
         </div>
         <span>{photoMedia.length + videoMedia.length} approved</span>
       </div>
@@ -239,6 +361,83 @@ export function DancerPhotoCarousel({
           TV <span>{videoMedia.length}</span>
         </button>
       </div>
+      {selectedItem ? (
+        <div
+          aria-label={`${stageName} ${selectedItem.kind} ${selectedIndex + 1} of ${activeItems.length}. Open full screen.`}
+          className={`profile-media-feature is-${selectedItem.kind}`}
+          data-profile-inline-media-swipe-surface
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest("button")) return;
+            openViewer(selectedItem.kind, selectedIndex);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault();
+              showRelativeInlineItem(event.key === "ArrowRight" ? 1 : -1);
+            }
+          }}
+          onPointerCancel={resetInlineGesture}
+          onPointerDown={handleInlinePointerDown}
+          onPointerMove={handleInlinePointerMove}
+          onPointerUp={handleInlinePointerEnd}
+          onWheel={handleInlineWheel}
+          role="group"
+          tabIndex={0}
+        >
+          {selectedItem.kind === "photo" ? (
+            <img
+              alt={`${stageName} photo ${selectedIndex + 1} of ${activeItems.length}`}
+              decoding="async"
+              draggable={false}
+              height={selectedItem.imageHeight || undefined}
+              sizes="(max-width: 760px) calc(100vw - 24px), 760px"
+              src={selectedItem.imageUrl}
+              srcSet={selectedItem.imageSrcSet || undefined}
+              width={selectedItem.imageWidth || undefined}
+            />
+          ) : (
+            <video
+              aria-label={`${stageName} muted TV preview ${selectedIndex + 1} of ${activeItems.length}`}
+              key={selectedItem.id}
+              loop
+              muted
+              playsInline
+              preload="auto"
+              ref={inlineVideo}
+              src={selectedItem.videoUrl}
+            />
+          )}
+          <span className="profile-media-feature-position">
+            {selectedItem.kind === "photo" ? "Photo" : "TV"} {selectedIndex + 1} of {activeItems.length}
+          </span>
+          <button
+            aria-label={`Open ${stageName} ${selectedItem.kind} ${selectedIndex + 1} full screen`}
+            className="profile-media-feature-expand"
+            onClick={() => openViewer(selectedItem.kind, selectedIndex)}
+            type="button"
+          >
+            View full screen
+          </button>
+          <button
+            aria-label={`Previous ${activeTab === "photo" ? "photo" : "TV video"}`}
+            className="profile-media-feature-previous"
+            disabled={selectedIndex <= 0}
+            onClick={() => showRelativeInlineItem(-1)}
+            type="button"
+          >
+            ‹
+          </button>
+          <button
+            aria-label={`Next ${activeTab === "photo" ? "photo" : "TV video"}`}
+            className="profile-media-feature-next"
+            disabled={selectedIndex >= activeItems.length - 1}
+            onClick={() => showRelativeInlineItem(1)}
+            type="button"
+          >
+            ›
+          </button>
+        </div>
+      ) : null}
       <div
         aria-label={`${stageName} ${activeTab === "photo" ? "photos" : "MyDancr TV videos"}`}
         className="profile-media-grid"
@@ -247,10 +446,11 @@ export function DancerPhotoCarousel({
       >
         {activeItems.map((item, index) => (
           <button
-            aria-label={`Open ${stageName} ${item.kind} ${index + 1} of ${activeItems.length} full screen`}
-            className={`profile-media-grid-item is-${item.kind}`}
+            aria-label={`Select ${stageName} ${item.kind} ${index + 1} of ${activeItems.length}`}
+            aria-pressed={selectedIndex === index}
+            className={`profile-media-grid-item is-${item.kind}${selectedIndex === index ? " active" : ""}`}
             key={`${item.kind}-${item.id}`}
-            onClick={() => openViewer(item.kind, index)}
+            onClick={() => setActiveIndex(index)}
             type="button"
           >
             {item.kind === "photo" ? (
