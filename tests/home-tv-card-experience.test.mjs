@@ -22,7 +22,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
+    /\.home-tv-feed-dancer \{[\s\S]*?grid-template-columns: 50px minmax\(0, 1fr\) auto[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 50px;[\s\S]*?height: 50px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
   );
   assert.match(
     homeSource,
@@ -31,6 +31,10 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.match(
     homeSource,
     /profileCue\.textContent = "View profile →"[\s\S]*?meta\.textContent = `Dancer · \$\{dancerCity\}`/,
+  );
+  assert.match(
+    homeSource,
+    /const dancerPhotoUrl = String\(item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, nameRow, profileCue\)/,
   );
   assert.match(
     homeSource,

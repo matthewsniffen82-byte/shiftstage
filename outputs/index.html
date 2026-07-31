@@ -28501,10 +28501,10 @@
         }
         .home-tv-feed-dancer {
           width: min(100%, 520px);
-          min-height: 44px;
+          min-height: 50px;
           max-width: 100%;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-columns: 50px minmax(0, 1fr) auto;
           align-items: center;
           gap: 10px;
           color: #fff;
@@ -28513,6 +28513,32 @@
           line-height: 1.05;
           text-decoration: none;
           text-shadow: 0 3px 16px rgba(0,0,0,.88);
+        }
+        .home-tv-feed-dancer-photo {
+          position: relative;
+          width: 50px;
+          height: 50px;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          border: 2px solid rgba(255,255,255,.88);
+          border-radius: 999px;
+          color: #fff;
+          background: linear-gradient(135deg, rgba(124,58,237,.94), rgba(8,145,178,.9));
+          box-shadow: 0 5px 18px rgba(0,0,0,.45), 0 0 14px rgba(124,58,237,.3);
+          font-size: 17px;
+          font-weight: 950;
+          line-height: 1;
+          text-shadow: none;
+        }
+        .home-tv-feed-dancer-photo img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+          object-position: center;
         }
         .home-tv-feed-dancer-name-row {
           min-width: 0;
@@ -46664,6 +46690,7 @@
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const dancerSlug = String(item?.dancer?.slug || "").trim();
       const dancerCity = String(item?.dancer?.city || citySelect.value).trim() || "Las Vegas";
+      const dancerPhotoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
       const venueName = String(item?.venue?.name || "").trim();
       const venueSlug = String(item?.venue?.slug || "").trim();
       const copy = document.createElement("div");
@@ -46688,6 +46715,20 @@
         event.preventDefault();
         openProfileModal(profile.name);
       });
+      const dancerPhoto = document.createElement("span");
+      dancerPhoto.className = "home-tv-feed-dancer-photo";
+      dancerPhoto.textContent = dancerName.charAt(0).toLocaleUpperCase();
+      dancerPhoto.setAttribute("aria-hidden", "true");
+      if (dancerPhotoUrl) {
+        const dancerPhotoImage = document.createElement("img");
+        dancerPhotoImage.src = dancerPhotoUrl;
+        dancerPhotoImage.alt = "";
+        dancerPhotoImage.loading = "lazy";
+        dancerPhotoImage.decoding = "async";
+        dancerPhotoImage.referrerPolicy = "no-referrer";
+        dancerPhotoImage.addEventListener("error", () => dancerPhotoImage.remove());
+        dancerPhoto.appendChild(dancerPhotoImage);
+      }
       const nameRow = document.createElement("span");
       nameRow.className = "home-tv-feed-dancer-name-row";
       const dancerLabel = document.createElement("span");
@@ -46701,7 +46742,7 @@
       profileCue.className = "home-tv-feed-profile-cue";
       profileCue.textContent = "View profile →";
       nameRow.append(dancerLabel, verified);
-      dancer.append(nameRow, profileCue);
+      dancer.append(dancerPhoto, nameRow, profileCue);
       copy.appendChild(dancer);
 
       const meta = document.createElement("span");
