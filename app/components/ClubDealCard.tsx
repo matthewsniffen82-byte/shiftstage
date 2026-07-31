@@ -43,7 +43,7 @@ export function ClubDealCard({
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const passUrl = redemptionToken ? `/deals/pass/${encodeURIComponent(redemptionToken)}` : "";
-  const actionLabel = ctaLabel || `Get ${deal.dealTitle}`;
+  const actionLabel = ctaLabel || "Get Club Deal";
 
   useEffect(() => {
     if (!dialogOpen) return;

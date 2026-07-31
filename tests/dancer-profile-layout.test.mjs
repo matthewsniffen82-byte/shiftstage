@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [liveApp, profilePage, profileMedia, profileActions, bottomNavigation] =
+const [
+  liveApp,
+  profilePage,
+  profileMedia,
+  profileActions,
+  profileNavigationActions,
+  bottomNavigation,
+] =
   await Promise.all([
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
@@ -12,6 +19,13 @@ const [liveApp, profilePage, profileMedia, profileActions, bottomNavigation] =
     ),
     readFile(
       new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "../app/dancers/[slug]/ProfileNavigationActions.tsx",
+        import.meta.url,
+      ),
       "utf8",
     ),
     readFile(
@@ -38,13 +52,24 @@ test("full dancer profiles use an Instagram-familiar identity and activity heade
   assert.match(liveApp, /id="tonightInterestCount"/);
 });
 
-test("profile actions expose Follow, Notify Me, I'm Going, and Share with live counts", () => {
+test("profile actions expose live customer actions and nest profile QR inside Share Profile", () => {
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
   assert.match(profileActions, /\{saved\.notificationsEnabled \? "Notifications on" : "Notify me"\}/);
   assert.match(profileActions, /"I’m Going"/);
   assert.match(profileActions, /profile-action-share-slot/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
-  assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
+  assert.match(liveApp, /profileActionButtonMarkup\("share", "Share Profile"\)/);
+  assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
+  assert.match(liveApp, /data-show-profile-share-qr/);
+  assert.match(liveApp, /Show profile-sharing QR/);
+  assert.match(liveApp, /This is not a Club Deal and cannot be redeemed at a venue/);
+  assert.match(profileNavigationActions, /import QRCode from "qrcode"/);
+  assert.match(profileNavigationActions, /Show profile-sharing QR/);
+  assert.match(profileNavigationActions, /Profile-sharing QR/);
+  assert.match(
+    profileNavigationActions,
+    /This is not a Club Deal and cannot be redeemed at a venue/,
+  );
   assert.match(liveApp, /followerCountEl\.textContent = followerNumber/);
   assert.match(liveApp, /notificationCountEl\.textContent = notificationNumber/);
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
@@ -55,6 +80,7 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(profilePage, /Verified check-in · until/);
   assert.match(profilePage, /Venue &amp; directions/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
+  assert.match(profilePage, /ctaLabel="Get Club Deal"/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);

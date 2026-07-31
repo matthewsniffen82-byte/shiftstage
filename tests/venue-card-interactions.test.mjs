@@ -34,8 +34,12 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
   assert.match(
     homeSource,
-    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?data-venue-profile-qr="\$\{escapeOptionValue\(venue\.name\)\}"/,
+    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?Get Club Deal[\s\S]*?return "";/,
   );
+  const venueCardQrHelper = homeSource.match(
+    /function venueCardQrMarkup\(venue\) \{[\s\S]*?(?=\n    function venueCard)/,
+  )?.[0] || "";
+  assert.doesNotMatch(venueCardQrHelper, /data-venue-profile-qr|Venue QR/);
 
   assert.doesNotMatch(venueSwipeRenderer, /nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.doesNotMatch(
@@ -57,7 +61,14 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?data-club-deal-cta[\s\S]*?home-venue-discovery-profile-qr[\s\S]*?data-venue-profile-qr=/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?data-club-deal-cta[\s\S]*?Get Club Deal[\s\S]*?return "";/,
+  );
+  const venueSwipeQrHelper = homeSource.match(
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+  )?.[0] || "";
+  assert.doesNotMatch(
+    venueSwipeQrHelper,
+    /data-venue-profile-qr|data-external-venue-qr|home-venue-discovery-profile-qr/,
   );
 });
 

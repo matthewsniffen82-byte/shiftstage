@@ -162,6 +162,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                   dancerId={profile.id}
                   attributionToken={dealAttributionToken}
                   dancerNote
+                  ctaLabel="Get Club Deal"
                   sectionId="club-deal"
                 />
               ) : (
@@ -325,6 +326,22 @@ function PublicProfileStyles() {
       .profile-action-share-slot .profile-share button { gap: 6px; }
       .profile-action-share-slot .profile-share svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; }
       .profile-action-share-slot .profile-share > span { display: block; color: #9fefff; font-size: 9px; text-align: center; }
+      .profile-share-dialog-backdrop { position: fixed; z-index: 1750; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.84); backdrop-filter: blur(12px); }
+      .profile-share-dialog { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 28px); display: grid; gap: 14px; overflow-y: auto; padding: 24px; border: 1px solid rgba(126,234,255,.42); border-radius: 18px; color: #f7f2ff; background: radial-gradient(circle at 82% 4%, rgba(34,199,255,.14), transparent 15rem), linear-gradient(145deg, #0d0a18, #050507); box-shadow: 0 28px 90px rgba(0,0,0,.74), 0 0 38px rgba(109,40,217,.22); }
+      .profile-share-dialog > span:first-of-type { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .15em; text-transform: uppercase; }
+      .profile-share-dialog h2 { padding-right: 42px; }
+      .profile-share-dialog p { color: #cfc5de; font-size: 13px; }
+      .profile-share-dialog-close { position: absolute; z-index: 2; top: 11px; right: 11px; width: 40px !important; min-height: 40px !important; display: grid !important; place-items: center; padding: 0 !important; border: 1px solid rgba(126,234,255,.38) !important; border-radius: 50% !important; color: #fff; background: rgba(5,5,7,.86) !important; font-size: 27px !important; cursor: pointer; }
+      .profile-share-qr { display: grid; justify-items: center; gap: 9px; padding: 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 14px; background: rgba(0,0,0,.28); }
+      .profile-share-qr strong { color: #fff; font-size: 14px; }
+      .profile-share-qr img { width: min(240px, 70vw); aspect-ratio: 1; padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 0 30px rgba(34,199,255,.18); }
+      .profile-share-qr > div { min-height: 150px; display: grid; place-items: center; color: #9fefff; }
+      .profile-share-qr small { color: #a99eb7; font-size: 11px; }
+      .profile-share-dialog-actions { display: grid; gap: 9px; }
+      .profile-action-share-slot .profile-share-dialog-actions button { width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border: 1px solid rgba(126,234,255,.28); border-radius: 999px; color: #fff; background: rgba(126,234,255,.07); font-size: 12px; font-weight: 950; cursor: pointer; }
+      .profile-action-share-slot .profile-share-dialog-actions button.primary { border-color: transparent; background: linear-gradient(135deg, #6d28d9, #0b94c9); }
+      .profile-share-dialog-actions svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; }
+      .profile-share-dialog-status { min-height: 16px; color: #9fefff; font-size: 11px; font-weight: 850; text-align: center; }
       .live-actions .profile-action-report { grid-column: 1 / -1; min-height: 30px; justify-self: end; width: fit-content; padding-inline: 4px; border: 0; color: #958aa4; background: transparent; font-size: 11px; text-decoration: underline; }
       .profile-action-status { grid-column: 1 / -1; color: #94e5ff; font-size: 12px; font-weight: 850; }
       .profile-working-card { display: grid; gap: 16px; padding: 20px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }

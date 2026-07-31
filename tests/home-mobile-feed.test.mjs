@@ -283,7 +283,14 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action[\s\S]*?safeExternalHref\(venue\.qrCodeUrl\)[\s\S]*?if \(!rail\) return "";[\s\S]*?if \(externalQrUrl\)[\s\S]*?data-external-venue-qr[\s\S]*?data-venue-profile-qr/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action[\s\S]*?Get Club Deal[\s\S]*?return "";/,
+  );
+  const venueQrHelper = homeSource.match(
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+  )?.[0] || "";
+  assert.doesNotMatch(
+    venueQrHelper,
+    /data-external-venue-qr|data-venue-profile-qr|home-venue-discovery-profile-qr/,
   );
   assert.doesNotMatch(homeSource, /publishedVenueQrPass/);
   const venueSlide = homeSource.match(
@@ -308,10 +315,6 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.match(
     homeSource,
     /data-feed-venue-qr[\s\S]*?eventType: "qr_impression"[\s\S]*?"venue_page" : "dancer_profile"/,
-  );
-  assert.match(
-    homeSource,
-    /const externalVenueQr = event\.target\.closest\("\[data-external-venue-qr\]"\)[\s\S]*?venueId: externalVenueQr\.dataset\.venueId[\s\S]*?eventType: "qr_impression"[\s\S]*?source: "venue_page"/,
   );
   assert.match(
     homeSource,
@@ -360,8 +363,12 @@ test("Now and Dancers grid cards place the full production action rail on the ca
   );
   assert.match(
     homeSource,
-    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?data-grid-profile-action="\$\{profileValue\}"[\s\S]*?data-profile-qr="\$\{profileValue\}"[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
+    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?data-grid-profile-action="\$\{profileValue\}"[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
   );
+  const dancerGridActions = homeSource.match(
+    /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
+  )?.[0] || "";
+  assert.doesNotMatch(dancerGridActions, /data-profile-qr|home-dancer-grid-profile-qr/);
   assert.match(
     homeSource,
     /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?resolveVenueByName\(venueName, city\)[\s\S]*?data-card-venue="\$\{venueValue\}"[\s\S]*?venue-directions-btn[\s\S]*?const goingMarkup = canMarkGoing[\s\S]*?data-feed-action="going"/,
@@ -399,7 +406,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr"[\s\S]*?data-feed-live-qr[\s\S]*?<span>Club QR<\/span>/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr"[\s\S]*?data-feed-live-qr[\s\S]*?<span>Get Club Deal<\/span>/,
   );
   assert.match(
     homeSource,

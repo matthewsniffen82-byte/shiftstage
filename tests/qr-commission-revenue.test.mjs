@@ -154,19 +154,25 @@ test("unused QR invalidation is atomic and cannot rewrite settled financial hist
 
 test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr QR codes", () => {
   assert.doesNotMatch(liveApp, /publishedVenueQrPass/);
-  assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?return "";/);
+  const venueOfferHelper =
+    liveApp.match(
+      /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
+    )?.[0] || "";
+  assert.match(
+    venueOfferHelper,
+    /venue\?\.activeDeal[\s\S]*?clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/,
+  );
+  assert.match(venueOfferHelper, /No active Club Deal/);
+  assert.doesNotMatch(venueOfferHelper, /data-venue-profile-qr|Show venue QR/);
   assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?return "";/);
   const venueQrHelper =
     liveApp.match(
       /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
     )?.[0] || "";
-  const externalQrBranch =
-    venueQrHelper.match(/const externalQrUrl = safeExternalHref[\s\S]*?(?=\n    \})/)?.[0] || "";
-  assert.match(
-    externalQrBranch,
-    /href="\$\{escapeHtml\(externalQrUrl\)\}"[\s\S]*?target="_blank"[\s\S]*?data-external-venue-qr/,
+  assert.doesNotMatch(
+    venueQrHelper,
+    /externalQrUrl|data-external-venue-qr|data-venue-profile-qr|data-deal-pass/,
   );
-  assert.doesNotMatch(externalQrBranch, /data-club-deal-cta|data-deal-pass|data-feed-venue-qr/);
   assert.match(liveApp, /function homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?profile\.activeDeal\?\.id[\s\S]*?return null;/);
   assert.match(venueDashboard, /External marketing QR/);
   assert.match(venueDashboard, /never used for tracked Club Deals, dancer attribution, or commissions/);

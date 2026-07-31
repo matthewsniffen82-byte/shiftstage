@@ -19513,7 +19513,7 @@
       }
     }
 
-    /* Profile QR: available from the Social Links utility icon, hidden until requested. */
+    /* Profile-sharing QR: available only after the user opens Share Profile. */
     .profile-modal .profile-qr-popover {
       margin: 0 0 8px !important;
       padding-top: 8px;
@@ -19724,6 +19724,20 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
+    }
+
+    .profile-share-choice-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .profile-share-choice-actions .profile-qr-action {
+      gap: 8px;
+      padding-inline: 14px;
+    }
+
+    .profile-share-choice-actions .profile-qr-action .action-button-label {
+      justify-content: center;
     }
 
     .profile-qr-action {
@@ -38491,28 +38505,14 @@
         `;
       }
       if (!venue?.id) return "";
-      const venueValue = escapeOptionValue(venue.name);
-      const cityValue = escapeOptionValue(venue.city || selectedCity());
       return `
-        <article class="venue-offer-card venue-profile-qr-card" id="venue-qr">
+        <article class="venue-offer-card venue-club-deal-unavailable" id="club-deal">
           <div class="venue-offer-grid">
             <div>
-              <span class="eyebrow">Venue QR</span>
-              <h3>Share ${escapeHtml(venue.name)}</h3>
-              <p>Open this venue's verified MyDancr page on another phone. A paid Club Deal QR will appear here automatically when the venue activates an offer.</p>
+              <span class="eyebrow">Club Deal</span>
+              <h3>No active Club Deal</h3>
+              <p>${escapeHtml(venue.name)} has not published a tracked customer offer. Use Share to send this venue profile.</p>
             </div>
-            <button
-              class="club-deal-primary-cta venue-club-deal-cta venue-profile-qr-cta"
-              type="button"
-              data-venue-profile-qr="${venueValue}"
-              data-share-city="${cityValue}"
-              aria-expanded="false"
-              aria-label="Show ${escapeHtml(venue.name)} venue QR code"
-            >
-              <span>Venue QR</span>
-              <strong>Show venue QR</strong>
-              <small>No sign-in needed</small>
-            </button>
           </div>
         </article>
       `;
@@ -39461,10 +39461,7 @@
       const shareCity = displayText(activeDancerCity());
       const socialUtilityButtons = `
         <div class="profile-utility-actions approved-social-tools" aria-label="Profile social tools">
-          <button class="profile-qr-trigger" type="button" data-readonly-profile-tool="qr" data-profile-qr="${shareName}" data-share-city="${shareCity}" aria-expanded="false" aria-label="Show profile QR code" title="Profile QR code - not editable">
-            ${actionIconMarkup("qr")}
-          </button>
-          <button class="profile-share-trigger" type="button" data-readonly-profile-tool="share" data-native-share="${shareName}" data-share-city="${shareCity}" aria-label="Share profile" title="Share profile - not editable">
+          <button class="profile-share-trigger" type="button" data-readonly-profile-tool="share" data-profile-share-menu="${shareName}" data-share-city="${shareCity}" aria-haspopup="dialog" aria-label="Share profile" title="Share profile - not editable">
             ${actionIconMarkup("share")}
           </button>
         </div>
@@ -40455,9 +40452,9 @@
           venueName: venue.name,
           sourceType: "club_page"
         };
-        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
+        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal">${actionButtonLabel("qr", "Get Club Deal")}</button>`;
       }
-      return `<button class="venue-card-deal-action venue-card-profile-qr" type="button" data-venue-profile-qr="${escapeOptionValue(venue.name)}" data-share-city="${escapeOptionValue(venue.city || selectedCity())}" aria-expanded="false" aria-label="Show ${escapeHtml(venue.name)} venue QR code">${actionButtonLabel("qr", "Venue QR")}</button>`;
+      return "";
     }
 
     function venueCard(venue) {
@@ -40997,7 +40994,7 @@
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
           ${goingButton}
-          <button class="action-btn secondary profile-share-action" type="button" data-native-share="${profile.name}" data-share-city="${city}" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
+          <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share Profile")}</button>
           <button class="action-btn secondary ${accountRequirementClass}" id="reportBtn" data-profile="${profile.name}">${profileActionButtonMarkup("report", "Report", "public")}</button>
         </div>
       `;
@@ -41495,6 +41492,7 @@
         closeProfileTvViewer,
         closeProfilePhotoViewer,
         closeDealPassOverlay,
+        closeProfileShareChoice,
         closeQrPopovers
       ].forEach((closeOverlay) => {
         try {
@@ -41525,7 +41523,7 @@
 
     function syncOverlayScrollLock() {
       const profileFullViewOpen = profileBackdrop.classList.contains("show");
-      const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .profile-tv-viewer.show, .deal-pass-overlay.show, .account-required-popover:not([hidden])");
+      const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .profile-tv-viewer.show, .deal-pass-overlay.show, .profile-qr-overlay.show, .account-required-popover:not([hidden])");
       document.body.classList.toggle("overlay-open", overlayOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
       syncProfileDestinationNavigation();
@@ -45553,17 +45551,17 @@
       if (presentation === "prompt") {
         const safeVenueName = escapeHtml(qr.venueName || "this venue");
         return `
-          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt${saveOnOpen} aria-hidden="true" aria-label="Save the live Club QR for ${safeVenueName}">
+          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt${saveOnOpen} aria-hidden="true" aria-label="Get the Club Deal for ${safeVenueName}">
             ${actionIconMarkup("qr")}
             <span class="home-discovery-feed-qr-prompt-copy">
-              <small>Club QR available</small>
+              <small>Club Deal available</small>
               <strong>${safeVenueName}</strong>
             </span>
-            <span class="home-discovery-feed-qr-prompt-action">Save QR</span>
+            <span class="home-discovery-feed-qr-prompt-action">Get Deal</span>
           </button>
         `;
       }
-      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club QR">${actionButtonLabel("qr", "Open QR")}</button>`;
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Get the live Club Deal">${actionButtonLabel("qr", "Get Club Deal")}</button>`;
     }
 
     function homeDancerGridQrMarkup(profile) {
@@ -45571,7 +45569,7 @@
       if (!qr) return "";
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
-      return `<button class="home-dancer-grid-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Open the live Club QR for ${venueName}">${actionIconMarkup("qr")}<span>Club QR</span></button>`;
+      return `<button class="home-dancer-grid-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr${saveOnOpen} aria-label="Get the Club Deal for ${venueName}">${actionIconMarkup("qr")}<span>Get Club Deal</span></button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue, presentation = "primary") {
@@ -45586,14 +45584,9 @@
           venueName: venue.name,
           sourceType: "club_page"
         };
-        return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal QR">${actionButtonLabel("qr", "Get Deal")}</button>`;
+        return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal">${actionButtonLabel("qr", "Get Club Deal")}</button>`;
       }
-      const externalQrUrl = safeExternalHref(venue.qrCodeUrl);
-      if (!rail) return "";
-      if (externalQrUrl) {
-        return `<a class="feed-card-action home-venue-discovery-rail-qr" href="${escapeHtml(externalQrUrl)}" target="_blank" rel="noopener noreferrer" data-external-venue-qr data-venue-id="${escapeHtml(venue.id)}" aria-label="Open ${escapeHtml(venue.name)} external marketing QR">${actionButtonLabel("qr", "QR")}</a>`;
-      }
-      return `<button class="feed-card-action home-venue-discovery-rail-qr home-venue-discovery-profile-qr" type="button" data-venue-profile-qr="${escapeOptionValue(venue.name)}" data-share-city="${escapeOptionValue(venue.city || selectedCity())}" aria-expanded="false" aria-label="Show ${escapeHtml(venue.name)} venue QR code">${actionButtonLabel("qr", "QR")}</button>`;
+      return "";
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -45683,7 +45676,6 @@
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
             <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
-            <button class="feed-card-action home-dancer-grid-profile-qr" type="button" data-profile-qr="${profileValue}" data-share-city="${cityValue}" aria-expanded="false" aria-label="Show ${safeName}'s profile QR code">${actionButtonLabel("qr", "QR")}</button>
             <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
@@ -47163,9 +47155,9 @@
         <div class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true" hidden>
           <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileQrTitle">
             <button class="profile-qr-close" type="button" data-close-qr-overlay aria-label="Close QR code">${actionIconMarkup("close")}</button>
-            <p class="profile-qr-kicker">Profile QR</p>
+            <p class="profile-qr-kicker">Profile-sharing QR</p>
             <h3 class="profile-qr-title" id="profileQrTitle">Open dancer account profile</h3>
-            <p class="profile-qr-subtitle" id="profileQrSubtitle">No account needed. Scan to view this Dancr profile.</p>
+            <p class="profile-qr-subtitle" id="profileQrSubtitle">Scan to open this dancer profile. This is not a Club Deal.</p>
             <div class="profile-qr-frame">
               <img class="profile-qr-overlay-image" id="profileQrImage" alt="QR code for dancer profile" loading="lazy" decoding="async">
             </div>
@@ -47188,6 +47180,87 @@
         }
       });
       return overlay;
+    }
+
+    function profileShareChoiceOverlay() {
+      let overlay = document.getElementById("profileShareChoiceOverlay");
+      if (overlay) return overlay;
+      document.body.insertAdjacentHTML("beforeend", `
+        <div class="profile-qr-overlay profile-share-choice-overlay" id="profileShareChoiceOverlay" aria-hidden="true" hidden>
+          <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileShareChoiceTitle">
+            <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
+            <p class="profile-qr-kicker">Share profile</p>
+            <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Send the profile or show a profile-sharing QR. This is not a Club Deal.</p>
+            <div class="profile-share-choice-actions">
+              <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
+              <button class="profile-qr-action" type="button" data-show-profile-share-qr>${actionButtonLabel("qr", "Show profile-sharing QR")}</button>
+              <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
+            </div>
+          </div>
+        </div>
+      `);
+      overlay = document.getElementById("profileShareChoiceOverlay");
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay || event.target.closest("[data-close-profile-share-choice]")) {
+          closeProfileShareChoice();
+          return;
+        }
+        const profileName = overlay.dataset.profileName || "";
+        const city = overlay.dataset.shareCity || selectedCity();
+        if (event.target.closest("[data-share-profile-choice]")) {
+          closeProfileShareChoice({ restoreFocus: false });
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
+          runShareAction(profileName, city);
+          return;
+        }
+        if (event.target.closest("[data-show-profile-share-qr]")) {
+          const triggerButton = overlay.profileShareTrigger || null;
+          closeProfileShareChoice({ restoreFocus: false });
+          openQrOverlay(profileName, city, triggerButton);
+          recordLiveEvent("profile_action", { dancerName: profileName, source: "qr_opened" });
+          return;
+        }
+        if (event.target.closest("[data-copy-profile-choice]")) {
+          copyText(profileShareUrl(profileName, city), "Profile link copied");
+        }
+      });
+      return overlay;
+    }
+
+    function openProfileShareChoice(profileName, city, triggerButton) {
+      const overlay = profileShareChoiceOverlay();
+      const safeProfileName = String(profileName || "Dancer").trim() || "Dancer";
+      overlay.dataset.profileName = safeProfileName;
+      overlay.dataset.shareCity = city || selectedCity();
+      overlay.profileShareTrigger = triggerButton || null;
+      document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
+      document.getElementById("profileShareChoiceSubtitle").textContent =
+        "Send this profile directly or let someone scan a profile-sharing QR. This is not a Club Deal and cannot be redeemed at a venue.";
+      overlay.hidden = false;
+      overlay.classList.add("show");
+      overlay.setAttribute("aria-hidden", "false");
+      syncOverlayScrollLock();
+      overlay.querySelector("[data-close-profile-share-choice]")?.focus({ preventScroll: true });
+    }
+
+    function closeProfileShareChoice({ restoreFocus = true } = {}) {
+      const overlay = document.getElementById("profileShareChoiceOverlay");
+      if (!overlay) return;
+      const returnTarget = overlay.profileShareTrigger;
+      if (overlay.contains(document.activeElement)) {
+        document.activeElement.blur();
+      }
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden", "true");
+      overlay.hidden = true;
+      delete overlay.dataset.profileName;
+      delete overlay.dataset.shareCity;
+      overlay.profileShareTrigger = null;
+      syncOverlayScrollLock();
+      if (restoreFocus && returnTarget?.isConnected) {
+        returnTarget.focus({ preventScroll: true });
+      }
     }
 
     function closeQrPopovers() {
@@ -47248,9 +47321,9 @@
     function openQrOverlay(profileName, city, triggerButton) {
       openShareQrOverlay({
         url: profileShareUrl(profileName, city),
-        kicker: "Profile QR",
+        kicker: "Profile-sharing QR",
         title: `${profileName} on MyDancr`,
-        subtitle: `No account needed. Scan to view ${profileName}'s MyDancr profile.`,
+        subtitle: `Scan to open ${profileName}'s MyDancr profile. This is not a Club Deal and cannot be redeemed at a venue.`,
         imageAlt: `QR code for ${profileName} profile`,
         openLabel: "Open profile",
         kind: "profile",
@@ -47310,6 +47383,15 @@
         runVenueShareAction(
           venueButton.dataset.shareVenue,
           venueButton.dataset.shareCity || selectedCity()
+        );
+        return true;
+      }
+      const profileShareMenuButton = event.target.closest("[data-profile-share-menu]");
+      if (profileShareMenuButton) {
+        openProfileShareChoice(
+          profileShareMenuButton.dataset.profileShareMenu,
+          profileShareMenuButton.dataset.shareCity || selectedCity(),
+          profileShareMenuButton
         );
         return true;
       }
@@ -49215,6 +49297,13 @@
         const dealOverlay = document.getElementById("dealPassOverlay");
         if (dealOverlay?.classList.contains("show")) {
           closeDealPassOverlay();
+          return;
+        }
+      }
+      if (event.key === "Escape") {
+        const profileShareOverlay = document.getElementById("profileShareChoiceOverlay");
+        if (profileShareOverlay?.classList.contains("show")) {
+          closeProfileShareChoice();
           return;
         }
       }

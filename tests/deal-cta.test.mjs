@@ -71,11 +71,17 @@ test("venue pages and directory cards promote real active deals", () => {
     venueQrHelper,
     /venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action/,
   );
-  assert.match(
+  assert.match(venueQrHelper, /actionButtonLabel\("qr", "Get Club Deal"\)/);
+  assert.doesNotMatch(
     venueQrHelper,
-    /safeExternalHref\(venue\.qrCodeUrl\)[\s\S]*?if \(!rail\) return "";[\s\S]*?if \(externalQrUrl\)[\s\S]*?home-venue-discovery-rail-qr[\s\S]*?data-external-venue-qr[\s\S]*?data-venue-profile-qr/,
+    /safeExternalHref\(venue\.qrCodeUrl\)|data-external-venue-qr|data-venue-profile-qr|publishedVenueQrPass|data-deal-pass/,
   );
-  assert.doesNotMatch(venueQrHelper, /publishedVenueQrPass|data-deal-pass/);
+  const venueOffer =
+    liveApp.match(
+      /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
+    )?.[0] || "";
+  assert.match(venueOffer, /No active Club Deal/);
+  assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR/);
   const venueSlide =
     liveApp.match(
       /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
