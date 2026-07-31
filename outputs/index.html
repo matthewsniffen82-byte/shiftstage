@@ -28525,14 +28525,14 @@
         }
         .home-tv-feed-dancer {
           width: min(100%, 520px);
-          min-height: 50px;
+          min-height: 46px;
           max-width: 100%;
           display: grid;
-          grid-template-columns: 50px minmax(0, 1fr) auto;
+          grid-template-columns: 46px minmax(0, 1fr) 16px;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
           color: #fff;
-          font-size: clamp(23px, 5.8vw, 34px);
+          font-size: clamp(22px, 5.4vw, 31px);
           font-weight: 950;
           line-height: 1.05;
           text-decoration: none;
@@ -28540,8 +28540,8 @@
         }
         .home-tv-feed-dancer-photo {
           position: relative;
-          width: 50px;
-          height: 50px;
+          width: 46px;
+          height: 46px;
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -28568,7 +28568,7 @@
           min-width: 0;
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: 6px;
         }
         .home-tv-feed-dancer-name {
           min-width: 0;
@@ -28603,29 +28603,26 @@
           font-size: 11px;
           line-height: 1;
         }
-        .home-tv-feed-profile-cue {
-          min-height: 36px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 12px;
-          border: 1px solid rgba(126,234,255,.52);
-          border-radius: 999px;
-          color: #e5fbff;
-          background: linear-gradient(135deg, rgba(67,26,122,.78), rgba(8,82,104,.72));
-          box-shadow: 0 0 16px rgba(124,58,237,.2);
-          font-size: 10px;
-          letter-spacing: .055em;
-          white-space: nowrap;
-          text-transform: uppercase;
+        .home-tv-feed-profile-chevron {
+          width: 16px;
+          height: 32px;
+          display: grid;
+          place-items: center;
+          color: rgba(255,255,255,.9);
+          font-size: 26px;
+          font-weight: 500;
+          line-height: 1;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+          transform: translateY(-1px);
         }
         .home-tv-feed-meta {
           width: fit-content;
-          max-width: 100%;
+          max-width: calc(100% - 54px);
+          margin-left: 54px;
           overflow: hidden;
-          color: #d4cbe0;
+          color: rgba(247,244,255,.86);
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 850;
           letter-spacing: .025em;
           text-overflow: ellipsis;
           text-shadow: 0 2px 12px rgba(0,0,0,.9);
@@ -30318,12 +30315,7 @@
             padding: 96px 0 calc(96px + env(safe-area-inset-bottom)) 14px;
           }
           .home-tv-feed-dancer {
-            font-size: clamp(22px, 7vw, 31px);
-          }
-          .home-tv-feed-profile-cue {
-            min-height: 34px;
-            padding-inline: 10px;
-            font-size: 9px;
+            font-size: clamp(22px, 6.2vw, 28px);
           }
           .home-tv-feed-sound {
             top: calc(14px + env(safe-area-inset-top));
@@ -46730,11 +46722,12 @@
       verified.className = "home-tv-feed-verified";
       verified.textContent = "✓";
       verified.setAttribute("aria-label", "Verified");
-      const profileCue = document.createElement("span");
-      profileCue.className = "home-tv-feed-profile-cue";
-      profileCue.textContent = "View profile →";
+      const profileChevron = document.createElement("span");
+      profileChevron.className = "home-tv-feed-profile-chevron";
+      profileChevron.textContent = "›";
+      profileChevron.setAttribute("aria-hidden", "true");
       nameRow.append(dancerLabel, verified);
-      dancer.append(dancerPhoto, nameRow, profileCue);
+      dancer.append(dancerPhoto, nameRow, profileChevron);
       copy.appendChild(dancer);
 
       const meta = document.createElement("span");
