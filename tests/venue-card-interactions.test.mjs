@@ -15,7 +15,10 @@ test("venue cards open the live profile while revenue and customer actions remai
 
   assert.match(venueCardRenderer, /<article class="card venue venue-card"/);
   assert.doesNotMatch(venueCardRenderer, /<a class="card venue venue-card"/);
-  assert.match(venueCardRenderer, /<a class="venue-card-link" href="\$\{venueHref\}"/);
+  assert.match(
+    venueCardRenderer,
+    /<a class="venue-card-link" href="\$\{venueHref\}" data-open-venue-profile="\$\{venueValue\}"/,
+  );
   assert.doesNotMatch(homeSource, /event\.target\.closest\("\.venue-card"\)/);
 
   assert.match(
@@ -31,7 +34,10 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
 
   assert.doesNotMatch(venueSwipeRenderer, /nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
-  assert.match(venueSwipeRenderer, /home-discovery-feed-open-profile" href="\$\{venueHref\}"/);
+  assert.match(
+    venueSwipeRenderer,
+    /home-discovery-feed-open-profile" href="\$\{venueHref\}" data-open-venue-profile="\$\{venueValue\}"/,
+  );
   assert.doesNotMatch(venueSwipeRenderer, /home-discovery-feed-profile-button/);
   assert.match(
     venueSwipeRenderer,

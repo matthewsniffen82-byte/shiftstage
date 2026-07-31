@@ -30707,6 +30707,132 @@
             padding-bottom: var(--profile-report-clearance) !important;
           }
         }
+
+        /* Venue profiles use the same full-screen dismissal model as dancer profiles
+           while keeping the primary discovery navigation available. */
+        body.venue-full-view-open {
+          overflow: hidden !important;
+          overscroll-behavior: none !important;
+        }
+        body.venue-full-view-open .home-feed-return-home,
+        body.venue-full-view-open .content-head,
+        body.venue-full-view-open #viewAllBtn {
+          display: none !important;
+          pointer-events: none !important;
+        }
+        #results.venue-profile-overlay {
+          position: fixed !important;
+          z-index: 80;
+          inset: 0;
+          width: 100vw !important;
+          max-width: none !important;
+          height: 100dvh !important;
+          margin: 0 !important;
+          padding:
+            max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
+            max(12px, calc((100vw - 760px) / 2))
+            calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+          display: block !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior-y: contain;
+          scroll-padding-block:
+            max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
+            calc(92px + env(safe-area-inset-bottom, 0px));
+          touch-action: pan-y;
+          -webkit-overflow-scrolling: touch;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(124,58,237,.16), transparent 34rem),
+            radial-gradient(circle at 12% 26%, rgba(34,199,255,.07), transparent 26rem),
+            rgba(3,3,6,.985);
+          box-shadow: none !important;
+        }
+        #results.venue-profile-overlay .venue-detail {
+          width: min(100%, 720px);
+          margin: 0 auto;
+          padding: 0 0 12px;
+        }
+        .venue-detail-modal-top {
+          position: sticky;
+          top: 0;
+          z-index: 4;
+          height: 0;
+          pointer-events: none;
+        }
+        .venue-detail-close {
+          position: fixed !important;
+          z-index: 86 !important;
+          top: var(--dancr-floating-control-top) !important;
+          right: max(12px, calc((100vw - 720px) / 2 + 12px)) !important;
+          width: 52px !important;
+          min-height: 52px !important;
+          pointer-events: auto !important;
+          touch-action: manipulation !important;
+          -webkit-tap-highlight-color: transparent;
+        }
+        body.venue-full-view-open #discoveryTabs {
+          position: fixed !important;
+          z-index: 90 !important;
+          left: 50% !important;
+          bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+          width: min(calc(100% - 16px), 700px) !important;
+          min-height: 64px;
+          margin: 0 !important;
+          transform: translateX(-50%);
+        }
+        @media (min-width: 721px) {
+          body.venue-full-view-open #discoveryTabs {
+            height: 64px;
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            align-items: center;
+            gap: 4px;
+            padding: 5px !important;
+            overflow: visible;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 23px;
+            background:
+              linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.02) 44%, transparent),
+              rgba(7,7,12,.9);
+            box-shadow: 0 18px 44px rgba(0,0,0,.58), 0 0 24px rgba(124,58,237,.15);
+            backdrop-filter: blur(26px) saturate(1.65);
+          }
+          body.venue-full-view-open #discoveryTabs .tab,
+          body.venue-full-view-open #discoveryTabs .home-bottom-tv {
+            min-width: 0;
+            min-height: 52px;
+            display: grid !important;
+            grid-template-rows: 24px auto;
+            place-items: center;
+            gap: 2px;
+            padding: 3px 2px !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+          }
+          body.venue-full-view-open #discoveryTabs .home-nav-icon,
+          body.venue-full-view-open #discoveryTabs .home-bottom-tv-icon {
+            display: grid;
+            width: 25px;
+            height: 25px;
+            place-items: center;
+          }
+          body.venue-full-view-open #discoveryTabs .home-nav-icon svg,
+          body.venue-full-view-open #discoveryTabs .home-bottom-tv svg {
+            width: 25px;
+            height: 25px;
+          }
+          body.venue-full-view-open #discoveryTabs .tab-count {
+            display: none;
+          }
+          body.venue-full-view-open #discoveryTabs .home-nav-label,
+          body.venue-full-view-open #discoveryTabs .home-bottom-tv > span:last-child {
+            color: #fff;
+            font-size: 11px;
+            font-weight: 900;
+          }
+        }
       </style>
 
       <section class="stack" aria-live="polite">
@@ -32196,6 +32322,7 @@
     let tonightExpanded = false;
     let dancersExpanded = false;
     let selectedVenueName = null;
+    let venueProfileSavedScrollY = 0;
     let isCustomerLoggedIn = false;
     let isDancerLoggedIn = false;
     let isVenueLoggedIn = false;
@@ -39352,7 +39479,7 @@
         : "";
       return `
         <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
-          <a class="venue-card-link" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile">
+          <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">
             <div class="venue-art${visual.attrs.className}"${visual.attrs.style}>
               <span class="venue-card-kicker">Mydancr venue</span>
               <span class="venue-card-mark">${escapeHtml(initials)}</span>
@@ -39415,7 +39542,12 @@
       if (venue.id) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
-        <div class="venue-detail">
+        <div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
+          <div class="venue-detail-modal-top">
+            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} venue profile">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+          </div>
           <article class="venue-hero">
             <div class="venue-main-photo">
               <div class="venue-art">
@@ -39428,7 +39560,7 @@
             <div class="venue-hero-body">
               <div class="row">
                 <div>
-                  <h2>${details.name}</h2>
+                  <h2 id="venueDetailName">${details.name}</h2>
                   <div class="meta">${details.city}${details.state ? `, ${details.state}` : ""}</div>
                 </div>
                 <span class="venue-status-pill">${details.hours ? `Hours · ${displayShiftTime(details.hours)}` : "Hours not posted"}</span>
@@ -44408,7 +44540,7 @@
             <span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
-          <a class="home-discovery-feed-open-profile" href="${venueHref}" aria-label="Open ${safeName}'s full venue profile"></a>
+          <a class="home-discovery-feed-open-profile" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile"></a>
           <span class="home-venue-discovery-kicker">Mydancr venue</span>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>
           <div class="home-discovery-feed-copy">
@@ -44696,6 +44828,9 @@
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
       updateTabCounts(city);
       updateHomeLiveSummary(city);
+      const expectsVenueProfile = activeTab === "venues" && Boolean(selectedVenueName);
+      document.body.classList.toggle("venue-full-view-open", expectsVenueProfile);
+      results.classList.toggle("venue-profile-overlay", expectsVenueProfile);
       if (activeTab === "tv") {
         homeDiscoveryFeedOpen = false;
         deactivateHomeDiscoveryFeed();
@@ -44722,6 +44857,9 @@
         render();
         return;
       }
+      const venueProfileOpen = Boolean(selectedVenue);
+      document.body.classList.toggle("venue-full-view-open", venueProfileOpen);
+      results.classList.toggle("venue-profile-overlay", venueProfileOpen);
       const keepDancerCityOnOneLine =
         !selectedVenue && activeTab === "dancers" && venueFilter === "all";
       tabTitle.classList.toggle("dancers-city-title", keepDancerCityOnOneLine);
@@ -45349,13 +45487,42 @@
         showToast("Venue profile not found");
         return;
       }
+      if (!selectedVenueName) venueProfileSavedScrollY = window.scrollY || 0;
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
       selectedVenueName = venue.name;
       activeTab = "venues";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+      const url = new URL(window.location.href);
+      url.searchParams.set("city", citySelect.value);
+      url.searchParams.set("venue", venue.slug || slugify(venue.name));
+      url.searchParams.delete("profile");
+      url.searchParams.delete("view");
+      window.history.replaceState(
+        {},
+        document.title,
+        `${url.pathname}?${url.searchParams.toString()}${url.hash}`
+      );
       render();
-      scrollToVenueDetail();
+      requestAnimationFrame(() => {
+        results.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        results.querySelector("[data-close-venue-profile]")?.focus({ preventScroll: true });
+      });
+    }
+
+    function closeVenueProfile() {
+      if (!selectedVenueName) return false;
+      selectedVenueName = null;
+      activeTab = "venues";
+      homeDiscoveryFeedOpen = homeDiscoveryFeedUsesInlineLayout();
+      document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "venues"));
+      syncHomeDestinationLocation("venues");
+      render();
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: venueProfileSavedScrollY, left: 0, behavior: "auto" });
+        document.querySelector('.tab[data-tab="venues"]')?.focus({ preventScroll: true });
+      });
+      return true;
     }
 
     function scrollToVenueDetail() {
@@ -45368,6 +45535,20 @@
     }
 
     results.addEventListener("click", async (event) => {
+      const venueProfileClose = event.target.closest("[data-close-venue-profile]");
+      if (venueProfileClose) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeVenueProfile();
+        return;
+      }
+      const venueProfileLink = event.target.closest("[data-open-venue-profile]");
+      if (venueProfileLink) {
+        event.preventDefault();
+        event.stopPropagation();
+        openVenueFromName(venueProfileLink.dataset.openVenueProfile);
+        return;
+      }
       const dealPassTrigger = event.target.closest("[data-club-deal-cta], [data-deal-pass]");
       if (dealPassTrigger) {
         await handleDealPassClick(event);
@@ -47624,7 +47805,8 @@
       if (!(target instanceof Element)) return true;
       if (
         profileBackdrop.classList.contains("show") ||
-        document.body.classList.contains("profile-full-view-open")
+        document.body.classList.contains("profile-full-view-open") ||
+        document.body.classList.contains("venue-full-view-open")
       ) return true;
       return Boolean(target.closest(
         "input, select, textarea, [contenteditable], [role='slider'], " +

@@ -39,6 +39,33 @@ test("the canonical in-app venue page keeps live data, planning details, and pro
   assert.match(venueDetail, /Other \$\{city\} venues/);
 });
 
+test("venue profiles open as dismissible full-screen sheets above the locked page and below the floating navigation", () => {
+  assert.match(
+    liveApp,
+    /<div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
+  );
+  assert.match(
+    liveApp,
+    /class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} venue profile"/,
+  );
+  assert.match(
+    liveApp,
+    /#results\.venue-profile-overlay \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 80;[\s\S]*?height: 100dvh !important;[\s\S]*?overflow-y: auto !important;/,
+  );
+  assert.match(
+    liveApp,
+    /body\.venue-full-view-open #discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?z-index: 90 !important;/,
+  );
+  assert.match(
+    liveApp,
+    /function closeVenueProfile\(\) \{[\s\S]*?selectedVenueName = null;[\s\S]*?syncHomeDestinationLocation\("venues"\);[\s\S]*?render\(\);/,
+  );
+  assert.match(
+    liveApp,
+    /const venueProfileClose = event\.target\.closest\("\[data-close-venue-profile\]"\);[\s\S]*?closeVenueProfile\(\);/,
+  );
+});
+
 test("venue entry points use the canonical in-app venue profile", () => {
   assert.match(
     liveApp,
@@ -51,6 +78,10 @@ test("venue entry points use the canonical in-app venue profile", () => {
   assert.match(
     liveApp,
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
+  );
+  assert.match(
+    liveApp,
+    /const venueProfileLink = event\.target\.closest\("\[data-open-venue-profile\]"\);[\s\S]*?openVenueFromName\(venueProfileLink\.dataset\.openVenueProfile\);/,
   );
   assert.match(profileRoute, /permanentRedirect/);
 });
