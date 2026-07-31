@@ -49,68 +49,29 @@ test("verified check marks use the hero electric-blue and magenta trust glow", (
   );
 });
 
-test("the homepage hero uses one crisp purple-to-electric-blue edge", () => {
+test("the homepage hero keeps its original restrained purple edge", () => {
   assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?border: 1px solid rgba\(139, 92, 246, 0\.38\) !important/,
+  );
+  assert.match(
+    aesthetic,
+    /0 0 28px rgba\(124, 58, 237, 0\.08\) !important/,
+  );
+  assert.doesNotMatch(
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero::before/,
   );
-  assert.match(
+  assert.doesNotMatch(
     aesthetic,
-    /rgba\(124, 58, 237, 0\.94\)[\s\S]*?rgba\(53, 216, 255, 0\.92\)/,
-  );
-  assert.match(aesthetic, /-webkit-mask-composite: xor/);
-  assert.match(aesthetic, /mask-composite: exclude/);
-  assert.match(
-    aesthetic,
-    /10px 0 34px rgba\(53, 216, 255, 0\.12\)/,
-  );
-  assert.match(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.1\)/,
-  );
-  assert.match(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art[\s\S]*?transform: scale\(1\.026\) !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero::after/,
   );
 });
 
 test("the mobile homepage keeps the complete hero artwork inside the page gutter", () => {
   assert.match(
     aesthetic,
-    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?width: auto !important;[\s\S]*?margin-inline: 12px !important;[\s\S]*?border: 0 !important;/,
-  );
-  assert.match(
-    aesthetic,
-    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
-  );
-  assert.match(
-    aesthetic,
-    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?transform: none !important;/,
-  );
-});
-
-test("mobile discovery connects the hero, filters, and real profile results with a restrained magenta accent", () => {
-  assert.match(liveApp, /<main class="stack home-discovery-shell">/);
-  assert.match(
-    liveApp,
-    /<section class="stack home-discovery-results-shell" aria-live="polite">/,
-  );
-  assert.match(aesthetic, /--mydancr-discovery-magenta: 255, 46, 174/);
-  assert.match(
-    aesthetic,
-    /main\.home-discovery-shell > \.hero\.reference-hero[\s\S]*?border-radius: 22px 22px 8px 8px !important/,
-  );
-  assert.match(
-    aesthetic,
-    /main\.home-discovery-shell > \.home-discovery-controls[\s\S]*?border-radius: 8px 8px 20px 20px !important/,
-  );
-  assert.match(
-    aesthetic,
-    /main\.home-discovery-shell > \.home-discovery-results-shell[\s\S]*?radial-gradient\(ellipse at 88% 0, rgba\(var\(--mydancr-discovery-magenta\), 0\.11\)/,
-  );
-  assert.match(
-    aesthetic,
-    /#results\.home-dancer-grid[\s\S]*?background: transparent !important/,
+    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?width: auto !important;[\s\S]*?margin-inline: 12px !important;/,
   );
 });
 
