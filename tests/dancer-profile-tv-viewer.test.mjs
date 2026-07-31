@@ -38,7 +38,12 @@ test("live profile viewer blocks gesture enlargement but keeps horizontal video 
   assert.match(liveApp, /data-toggle-profile-tv-playback>Pause/);
   assert.match(liveApp, /data-toggle-profile-tv-sound>Sound off/);
   assert.match(liveApp, /Math\.abs\(distance\) < 50\) return;[\s\S]*?showRelativeProfileTvVideo/);
-  assert.doesNotMatch(liveApp, /data-fullscreen-profile-tv|enterProfileTvFullscreen|requestFullscreen\(\)/);
+  assert.match(
+    liveApp,
+    /async function requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
+  );
+  assert.match(liveApp, /void requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?renderProfileTvViewerItem/);
+  assert.match(liveApp, /function exitProfileTvViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
 });
 
 test("live profile sound and navigation controls are wired as top-level viewer actions", () => {
@@ -67,7 +72,7 @@ test("live profile sound and navigation controls are wired as top-level viewer a
   );
 });
 
-test("live profile videos join the thumbnail filmstrip without background autoplay", () => {
+test("live profile thumbnails stay idle while the selected preview autoplays without a redundant play overlay", () => {
   const loader =
     liveApp.match(
       /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
@@ -81,7 +86,16 @@ test("live profile videos join the thumbnail filmstrip without background autopl
   assert.match(loader, /profile-media-thumb-play/);
   assert.match(loader, /profile-media-thumb-duration/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)/);
-  assert.match(liveApp, /className = "modal-media-video-play"/);
+  assert.match(
+    liveApp,
+    /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?video\.autoplay = true[\s\S]*?video\.muted = true[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/,
+  );
+  assert.doesNotMatch(liveApp, /modal-media-video-play/);
+  assert.match(liveApp, /Select View full screen for immersive playback/);
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-modal-media-previous,[\s\S]*?background: rgba\(8,8,12,\.18\)[\s\S]*?backdrop-filter: blur\(16px\) saturate\(1\.1\)/,
+  );
   assert.match(
     liveApp,
     /\.profile-modal \.gallery \{[^}]*display: flex !important;[^}]*justify-content: flex-start !important;/,

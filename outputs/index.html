@@ -26837,37 +26837,6 @@
       pointer-events: none;
     }
 
-    .profile-modal .modal-media-video-play {
-      position: absolute;
-      z-index: 3;
-      top: 50%;
-      left: 50%;
-      width: clamp(88px, 25%, 124px);
-      min-height: 0;
-      aspect-ratio: 1;
-      display: grid;
-      place-items: center;
-      padding: 0;
-      border: 0;
-      border-radius: 50%;
-      color: #111;
-      background: rgba(255,255,255,.84);
-      box-shadow: 0 14px 44px rgba(0,0,0,.34);
-      transform: translate(-50%, -50%);
-      cursor: pointer;
-      backdrop-filter: blur(5px);
-    }
-
-    .profile-modal .modal-media-video-play::after {
-      content: "";
-      width: 0;
-      height: 0;
-      margin-left: 9%;
-      border-top: 24px solid transparent;
-      border-bottom: 24px solid transparent;
-      border-left: 36px solid #111;
-    }
-
     @media (max-width: 390px) {
       .profile-modal .gallery {
         gap: 9px !important;
@@ -29980,7 +29949,35 @@
         .profile-tv-viewer-stage { position: relative; min-height: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; }
         .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
         .profile-tv-viewer-close { position: absolute; z-index: 3; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); font-size: 28px; line-height: 1; cursor: pointer; }
-        .profile-tv-viewer-previous, .profile-tv-viewer-next { position: absolute; z-index: 2; top: 50%; width: 46px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.62); font-size: 34px; line-height: 1; transform: translateY(-50%); cursor: pointer; }
+        .profile-tv-viewer-previous,
+        .profile-tv-viewer-next {
+          position: absolute;
+          z-index: 2;
+          top: 50%;
+          width: 38px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 999px;
+          color: rgba(255,255,255,.82);
+          background: rgba(8,8,12,.2);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.16);
+          font-size: 28px;
+          line-height: 1;
+          transform: translateY(-50%);
+          cursor: pointer;
+          backdrop-filter: blur(16px) saturate(1.1);
+          -webkit-backdrop-filter: blur(16px) saturate(1.1);
+        }
+        .profile-tv-viewer-previous:hover,
+        .profile-tv-viewer-next:hover,
+        .profile-tv-viewer-previous:focus-visible,
+        .profile-tv-viewer-next:focus-visible {
+          border-color: rgba(255,255,255,.24);
+          color: #fff;
+          background: rgba(20,20,28,.36);
+        }
         .profile-tv-viewer-previous { left: 12px; }
         .profile-tv-viewer-next { right: 12px; }
         .profile-tv-viewer-previous:disabled, .profile-tv-viewer-next:disabled { opacity: .28; cursor: default; }
@@ -31538,23 +31535,33 @@
           position: absolute;
           z-index: 5;
           top: 50%;
-          width: 42px;
-          height: 52px;
+          width: 36px;
+          height: 44px;
           display: grid;
           place-items: center;
           padding: 0;
-          border: 1px solid rgba(255,255,255,.16);
+          border: 1px solid rgba(255,255,255,.12);
           border-radius: 999px;
-          color: #fff;
-          background: rgba(4,4,8,.52);
+          color: rgba(255,255,255,.82);
+          background: rgba(8,8,12,.18);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.14);
           font: inherit;
-          font-size: 30px;
+          font-size: 26px;
           transform: translateY(-50%);
           cursor: pointer;
-          backdrop-filter: blur(9px);
+          backdrop-filter: blur(16px) saturate(1.1);
+          -webkit-backdrop-filter: blur(16px) saturate(1.1);
         }
         #profileBackdrop .profile-modal-media-previous { left: 10px; }
         #profileBackdrop .profile-modal-media-next { right: 10px; }
+        #profileBackdrop .profile-modal-media-previous:hover,
+        #profileBackdrop .profile-modal-media-next:hover,
+        #profileBackdrop .profile-modal-media-previous:focus-visible,
+        #profileBackdrop .profile-modal-media-next:focus-visible {
+          border-color: rgba(255,255,255,.24);
+          color: #fff;
+          background: rgba(20,20,28,.34);
+        }
         #profileBackdrop .profile-modal-media-previous:disabled,
         #profileBackdrop .profile-modal-media-next:disabled {
           opacity: 0;
@@ -40934,17 +40941,9 @@
       video.defaultMuted = true;
       video.playsInline = true;
       video.preload = "metadata";
+      video.setAttribute("autoplay", "");
       video.setAttribute("aria-hidden", "true");
-      const play = document.createElement("button");
-      play.type = "button";
-      play.className = "modal-media-video-play";
-      play.setAttribute("aria-label", `Play ${profileName} profile video ${index + 1}`);
-      play.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openProfileTvViewer(item, profileName, videos);
-      });
-      preview.append(video, play);
+      preview.appendChild(video);
       modalImage.appendChild(preview);
       void video.play().catch(() => undefined);
 
@@ -40969,7 +40968,7 @@
       modalImage.dataset.activePhotoIndex = String(activeIndex);
       modalImage.setAttribute(
         "aria-label",
-        `${profileName} profile video, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Select Play to watch or swipe left or right to change media.`
+        `${profileName} profile video autoplaying muted, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Select View full screen for immersive playback or swipe left or right to change media.`
       );
       syncModalMediaNavigation("video", index, videos.length);
       return true;
@@ -41403,6 +41402,46 @@
       }
     }
 
+    let profileTvViewerOwnsFullscreen = false;
+
+    function profileTvFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    async function requestProfileTvViewerFullscreen(overlay) {
+      if (!overlay || profileTvFullscreenElement()) return false;
+      const request = typeof overlay.requestFullscreen === "function"
+        ? () => overlay.requestFullscreen({ navigationUI: "hide" })
+        : typeof overlay.webkitRequestFullscreen === "function"
+          ? () => overlay.webkitRequestFullscreen()
+          : null;
+      if (!request) return false;
+      try {
+        await request();
+        profileTvViewerOwnsFullscreen = profileTvFullscreenElement() === overlay;
+        return profileTvViewerOwnsFullscreen;
+      } catch {
+        profileTvViewerOwnsFullscreen = false;
+        return false;
+      }
+    }
+
+    function exitProfileTvViewerFullscreen() {
+      const fullscreenElement = profileTvFullscreenElement();
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (!profileTvViewerOwnsFullscreen || !fullscreenElement || typeof exit !== "function") {
+        profileTvViewerOwnsFullscreen = false;
+        return;
+      }
+      profileTvViewerOwnsFullscreen = false;
+      try {
+        const result = exit.call(document);
+        if (result && typeof result.catch === "function") result.catch(() => {});
+      } catch {
+        // The fixed immersive overlay remains available if device fullscreen exits first.
+      }
+    }
+
     function profileTvViewer() {
       let overlay = document.getElementById("profileTvViewer");
       if (overlay) return overlay;
@@ -41501,6 +41540,11 @@
       video.addEventListener("play", syncProfileTvPlaybackControl);
       video.addEventListener("pause", syncProfileTvPlaybackControl);
       video.addEventListener("volumechange", syncProfileTvSoundControl);
+      ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
+        document.addEventListener(eventName, () => {
+          if (profileTvFullscreenElement() !== overlay) profileTvViewerOwnsFullscreen = false;
+        });
+      });
       return overlay;
     }
 
@@ -41591,6 +41635,7 @@
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
       document.body.classList.add("profile-tv-viewer-open");
+      void requestProfileTvViewerFullscreen(overlay);
       renderProfileTvViewerItem(Math.max(0, overlay.profileTvVideos.findIndex((videoItem) => videoItem.id === item.id)));
       overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
       syncOverlayScrollLock();
@@ -41602,6 +41647,7 @@
       const returnTarget = overlay.profileTvReturnTarget;
       const video = document.getElementById("profileTvViewerVideo");
       video?.pause();
+      exitProfileTvViewerFullscreen();
       overlay.classList.remove("show");
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");

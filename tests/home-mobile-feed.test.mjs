@@ -142,7 +142,7 @@ test("all five discovery destinations stay in one continuously scrollable homepa
     homeSource,
     /\.content-head \{[\s\S]*?scroll-margin-top: calc\(84px \+ env\(safe-area-inset-top\)\)/,
   );
-  assert.doesNotMatch(homeSource, /requestFullscreen|webkitRequestFullscreen|home-tv-feed-locked|home-destination-immersive/);
+  assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
 
 test("Now, Dancers, and Venues use natural one-column browsing on phones", () => {

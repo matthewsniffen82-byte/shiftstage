@@ -90,6 +90,7 @@ test("profile media thumbnails and play controls retain their gallery-specific s
   );
   assert.match(
     buttonCss,
-    /\.public-profile-play,[\s\S]*?\.modal-media-video-play \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: var\(--dancr-color-text-primary\) !important;/,
+    /\.dancr-button-system \.public-profile-play \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: var\(--dancr-color-text-primary\) !important;/,
   );
+  assert.doesNotMatch(buttonCss, /modal-media-video-play/);
 });
