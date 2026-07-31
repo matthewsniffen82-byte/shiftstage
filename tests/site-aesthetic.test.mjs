@@ -74,6 +74,21 @@ test("the homepage hero uses one crisp purple-to-electric-blue edge", () => {
   );
 });
 
+test("the mobile homepage keeps the complete hero artwork inside the page gutter", () => {
+  assert.match(
+    aesthetic,
+    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?width: auto !important;[\s\S]*?margin-inline: 12px !important;[\s\S]*?border: 0 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?transform: none !important;/,
+  );
+});
+
 test("the frozen bottom navigation is outside the shared aesthetic contract", () => {
   assert.doesNotMatch(
     aesthetic,

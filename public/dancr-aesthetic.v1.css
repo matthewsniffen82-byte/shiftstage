@@ -660,6 +660,38 @@ body > .app main.stack > #results :is(
   ) {
     border-radius: 18px !important;
   }
+
+  body > .app main.stack > .hero.reference-hero {
+    width: auto !important;
+    margin-inline: 12px !important;
+    border: 0 !important;
+    box-shadow:
+      0 18px 42px rgba(0, 0, 0, 0.38),
+      6px 0 24px rgba(53, 216, 255, 0.07),
+      8px 0 28px rgba(124, 58, 237, 0.1) !important;
+  }
+
+  body > .app main.stack > .hero.reference-hero::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  body > .app main.stack > .hero.reference-hero::after {
+    inset: 0 !important;
+    border-radius: inherit;
+    background:
+      radial-gradient(
+        ellipse at 94% 50%,
+        rgba(53, 216, 255, 0.055),
+        rgba(124, 58, 237, 0.025) 36%,
+        transparent 58%
+      ) !important;
+    box-shadow: none;
+  }
+
+  body > .app main.stack > .hero.reference-hero > .hero-art {
+    transform: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
