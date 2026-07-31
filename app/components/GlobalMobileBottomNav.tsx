@@ -332,10 +332,18 @@ export function GlobalMobileBottomNav() {
             width: 20px;
             height: 20px;
             fill: none;
+            filter: none;
             stroke: currentColor;
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
+            transition: filter 180ms ease;
+          }
+
+          .global-mobile-bottom-nav a.active .global-mobile-nav-icon > svg {
+            filter:
+              drop-shadow(0 0 3px var(--mobile-nav-hero-violet-glow))
+              drop-shadow(0 0 6px var(--mobile-nav-hero-cyan-glow));
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {

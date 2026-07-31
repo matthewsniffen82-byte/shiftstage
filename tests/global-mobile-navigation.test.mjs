@@ -98,7 +98,16 @@ test("inactive mobile icons stay container-free while the current page gets one 
     /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.24\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(236,72,153,.22\)[\s\S]*?box-shadow: 0 0 14px rgba\(124,58,237,.3\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.doesNotMatch(navigationSource, /a\.active \.global-mobile-nav-icon \{[^}]*drop-shadow/);
-  assert.doesNotMatch(homeSource, /#discoveryTabs \.(?:tab|home-bottom-tv)\.active [^{]+\{[^}]*drop-shadow/);
+  assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\.active \.home-nav-icon \{[^}]*drop-shadow/);
+  assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
+  assert.match(
+    navigationSource,
+    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\(0 0 3px var\(--mobile-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--mobile-nav-hero-cyan-glow\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-hero-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-hero-cyan-glow\)\)/,
+  );
   assert.doesNotMatch(
     homeSource,
     /#discoveryTabs \.(?:tab|home-bottom-tv)\.active [^{]+\{[^}]*box-shadow:[^}]*0 0 0 1px/,

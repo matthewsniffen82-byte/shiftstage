@@ -29976,10 +29976,18 @@
             width: 25px !important;
             height: 25px !important;
             fill: none;
+            filter: none;
             stroke: currentColor;
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
+            transition: filter 180ms ease;
+          }
+          #discoveryTabs .tab.active .home-nav-icon svg,
+          #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon .mydancr-tv-mark {
+            filter:
+              drop-shadow(0 0 3px var(--home-nav-hero-violet-glow))
+              drop-shadow(0 0 6px var(--home-nav-hero-cyan-glow));
           }
           #discoveryTabs .tab-count {
             position: absolute;
