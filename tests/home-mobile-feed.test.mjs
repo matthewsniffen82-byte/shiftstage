@@ -443,6 +443,21 @@ test("Now and Dancers grid cards place all profile context and production action
   );
 });
 
+test("mobile dancer and venue discovery cards use the same stable viewport footprint", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?min-height: 460px !important;[\s\S]*?max-height: 580px !important;[\s\S]*?border-radius: 20px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?width: 100% !important;[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?min-height: 460px !important;[\s\S]*?max-height: 580px !important;[\s\S]*?border-radius: 20px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-link \{[\s\S]*?height: 100%;[\s\S]*?\.home-dancer-grid-photo \{[\s\S]*?position: absolute;[\s\S]*?inset: 0;[\s\S]*?height: 100%;[\s\S]*?aspect-ratio: auto;/,
+  );
+});
+
 test("Working Now dancer grid cards expose a functional production Club QR action", () => {
   assert.match(
     homeSource,
