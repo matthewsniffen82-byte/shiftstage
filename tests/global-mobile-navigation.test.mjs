@@ -72,7 +72,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
   assert.match(
     homeSource,
-    /--profile-report-clearance: calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\)/,
+    /--profile-report-clearance: calc\(76px \+ env\(safe-area-inset-bottom, 0px\)\)/,
   );
   assert.match(
     homeSource,

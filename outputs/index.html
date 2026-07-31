@@ -31179,7 +31179,7 @@
         }
         @media (max-width: 720px) {
           #profileBackdrop .profile-modal {
-            --profile-report-clearance: calc(88px + env(safe-area-inset-bottom, 0px));
+            --profile-report-clearance: calc(76px + env(safe-area-inset-bottom, 0px));
             overscroll-behavior-y: none;
             scroll-padding-bottom: var(--profile-report-clearance) !important;
           }
@@ -31198,6 +31198,7 @@
           max-width: 760px !important;
           margin-inline: auto !important;
           padding: 0 14px max(18px, env(safe-area-inset-bottom, 0px)) !important;
+          overflow-anchor: none;
           border-inline: 1px solid rgba(126,234,255,.1) !important;
           background:
             radial-gradient(circle at 76% 4%, rgba(124,58,237,.18), transparent 25rem),
@@ -31205,13 +31206,13 @@
         }
         #profileBackdrop .profile-modal-summary {
           display: grid;
-          grid-template-columns: 102px minmax(0, 1fr);
+          grid-template-columns: 92px minmax(0, 1fr);
           align-items: center;
-          gap: 18px;
-          padding: max(20px, calc(env(safe-area-inset-top, 0px) + 16px)) 64px 14px 2px;
+          gap: 15px;
+          padding: max(18px, calc(env(safe-area-inset-top, 0px) + 14px)) 58px 10px 2px;
         }
         #profileBackdrop .profile-modal-avatar {
-          width: 102px;
+          width: 92px;
           aspect-ratio: 1;
           display: grid;
           place-items: center;
@@ -31300,31 +31301,35 @@
         #profileBackdrop #modalStatus.modal-status-hidden {
           display: none !important;
         }
+        #profileBackdrop #modalClose {
+          width: 46px !important;
+          height: 46px !important;
+        }
         #profileBackdrop .profile-activity-metrics {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 6px;
-          margin: 0 0 14px;
-          padding: 0 4px;
+          gap: 0;
+          margin: 0 0 12px;
+          padding: 7px 0 8px;
         }
         #profileBackdrop .profile-activity-metrics > div {
           min-width: 0;
           display: grid;
-          gap: 4px;
+          gap: 3px;
           justify-items: center;
-          padding: 9px 4px;
+          padding: 3px 4px;
         }
         #profileBackdrop .profile-activity-metrics dd {
           margin: 0;
           color: #fff;
-          font-size: clamp(20px, 5vw, 28px);
+          font-size: clamp(18px, 4.5vw, 23px);
           font-weight: 950;
           line-height: 1;
         }
         #profileBackdrop .profile-activity-metrics dt {
           color: #aaa0b8;
-          font-size: clamp(9px, 2.5vw, 12px);
-          font-weight: 850;
+          font-size: clamp(9px, 2.3vw, 11px);
+          font-weight: 800;
           text-align: center;
         }
         #profileBackdrop .modal-image {
@@ -31343,8 +31348,8 @@
         }
         #profileBackdrop .profile-modal-media {
           display: grid;
-          gap: 10px;
-          margin: 0 0 18px;
+          gap: 8px;
+          margin: 0 0 14px;
         }
         #profileBackdrop .profile-modal-media-head {
           display: flex;
@@ -31354,7 +31359,8 @@
           padding-inline: 4px;
         }
         #profileBackdrop .profile-modal-media-head strong {
-          font-size: 20px;
+          font-size: 18px;
+          letter-spacing: -.015em;
         }
         #profileBackdrop .profile-modal-media-head span {
           color: #9487a5;
@@ -31367,15 +31373,15 @@
           border-bottom: 1px solid rgba(255,255,255,.1);
         }
         #profileBackdrop .profile-modal-media-tabs button {
-          min-height: 44px;
+          min-height: 38px;
           padding: 0 10px;
           border: 0;
           border-bottom: 2px solid transparent;
           color: #8f849e;
           background: transparent;
           font: inherit;
-          font-size: 13px;
-          font-weight: 950;
+          font-size: 12px;
+          font-weight: 900;
           cursor: pointer;
         }
         #profileBackdrop .profile-modal-media-tabs button span {
@@ -31393,28 +31399,33 @@
         }
         #profileBackdrop .gallery {
           width: 100% !important;
-          min-height: 104px !important;
-          display: grid !important;
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          grid-auto-flow: row !important;
-          grid-auto-columns: auto !important;
-          gap: 3px !important;
+          min-height: 126px !important;
+          display: flex !important;
+          align-items: stretch !important;
+          justify-content: flex-start !important;
+          gap: 8px !important;
           margin: 0 !important;
-          padding: 0 !important;
-          overflow: visible !important;
-          touch-action: manipulation !important;
+          padding: 2px 2px 8px !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          overscroll-behavior-x: contain !important;
+          scroll-snap-type: x proximity !important;
+          scrollbar-width: thin;
+          touch-action: pan-x pan-y !important;
         }
         #profileBackdrop .gallery .thumb {
-          width: auto !important;
-          min-width: 0 !important;
+          flex: 0 0 clamp(94px, 28vw, 124px) !important;
+          width: clamp(94px, 28vw, 124px) !important;
+          min-width: clamp(94px, 28vw, 124px) !important;
           height: auto !important;
           min-height: 0 !important;
-          aspect-ratio: 1 !important;
+          aspect-ratio: 4 / 5 !important;
           margin: 0 !important;
           padding: 0 !important;
           overflow: hidden !important;
+          scroll-snap-align: start !important;
           border: 0 !important;
-          border-radius: 1px !important;
+          border-radius: 12px !important;
           background: #0b0b10 !important;
           box-shadow: none !important;
           transform: none !important;
@@ -31430,7 +31441,7 @@
           min-height: 0 !important;
           display: block !important;
           object-fit: cover !important;
-          border-radius: 0 !important;
+          border-radius: 11px !important;
         }
         #profileBackdrop .gallery[data-media-tab="photo"] .thumb[data-profile-tv-index],
         #profileBackdrop .gallery[data-media-tab="video"] .thumb:not([data-profile-tv-index]),
@@ -31438,7 +31449,7 @@
           display: none !important;
         }
         #profileBackdrop .profile-modal-media-empty {
-          min-height: 104px;
+          min-height: 92px;
           place-items: center;
           margin: 0;
           color: #8f849c;
@@ -31449,21 +31460,45 @@
         }
         #profileBackdrop .modal-body {
           display: grid !important;
-          gap: 14px !important;
+          gap: 10px !important;
           padding: 0 0 max(16px, env(safe-area-inset-bottom, 0px)) !important;
         }
         #profileBackdrop .modal-grid {
           display: grid !important;
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          grid-template-columns: minmax(0, 1fr) !important;
           gap: 10px !important;
         }
         #profileBackdrop .modal-grid > .info-tile {
           min-width: 0 !important;
-          min-height: 92px !important;
-          padding: 14px !important;
+          min-height: 0 !important;
+          padding: 13px 14px !important;
           border: 1px solid rgba(255,255,255,.09) !important;
           border-radius: 14px !important;
           background: rgba(255,255,255,.035) !important;
+        }
+        #profileBackdrop .profile-schedule-card {
+          position: relative;
+          grid-column: 1 / -1 !important;
+          display: grid !important;
+          gap: 8px !important;
+          overflow: hidden;
+        }
+        #profileBackdrop .profile-schedule-card > strong {
+          font-size: 10px !important;
+          letter-spacing: .14em !important;
+          text-transform: uppercase !important;
+        }
+        #profileBackdrop .profile-schedule-card .profile-schedule-primary {
+          font-size: clamp(16px, 4.5vw, 20px);
+          font-weight: 950;
+          letter-spacing: -.02em;
+          line-height: 1.12;
+        }
+        #profileBackdrop .profile-schedule-card .profile-schedule-explanation {
+          margin: 0;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.4;
         }
         #profileBackdrop .modal-grid > .working-now-tile {
           grid-column: 1 / -1 !important;
@@ -31514,10 +31549,16 @@
         }
         #profileBackdrop .social-tile {
           grid-column: 1 / -1 !important;
+          padding-block: 14px !important;
+        }
+        #profileBackdrop .social-tile .social-tile-head strong {
+          font-size: 10px !important;
+          letter-spacing: .15em !important;
+          text-transform: uppercase !important;
         }
         #profileBackdrop .modal-actions {
           display: grid !important;
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           gap: 8px !important;
           margin: 0 !important;
           padding: 0 0 max(12px, env(safe-area-inset-bottom, 0px)) !important;
@@ -31525,10 +31566,25 @@
         #profileBackdrop .modal-actions .action-btn {
           width: 100% !important;
           min-width: 0 !important;
-          min-height: 48px !important;
-          padding: 7px 8px !important;
-          border-radius: 12px !important;
-          font-size: 12px !important;
+          min-height: 50px !important;
+          padding: 7px 10px !important;
+          border-radius: 14px !important;
+          font-size: 13px !important;
+        }
+        #profileBackdrop .modal-actions .profile-action-requirement {
+          font-size: 9px !important;
+          line-height: 1.1 !important;
+        }
+        #profileBackdrop .modal-actions .going-btn {
+          grid-column: 1 / -1 !important;
+          min-height: 54px !important;
+        }
+        #profileBackdrop .modal-actions .going-btn.is-unavailable:disabled {
+          opacity: .72 !important;
+        }
+        #profileBackdrop .modal-actions .profile-share-action {
+          grid-column: 1 / -1 !important;
+          min-height: 44px !important;
         }
         #profileBackdrop .modal-actions #reportBtn {
           grid-column: 1 / -1 !important;
@@ -31550,17 +31606,16 @@
             padding-inline: 12px !important;
           }
           #profileBackdrop .profile-modal-summary {
-            grid-template-columns: 88px minmax(0, 1fr);
-            gap: 13px;
+            grid-template-columns: 80px minmax(0, 1fr);
+            gap: 12px;
             padding-right: 56px;
           }
           #profileBackdrop .profile-modal-avatar {
-            width: 88px;
+            width: 80px;
           }
           #profileBackdrop .profile-modal-summary .modal-identity h2 {
             font-size: clamp(23px, 7vw, 31px) !important;
           }
-          #profileBackdrop .modal-grid,
           #profileBackdrop .modal-actions {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
@@ -31571,6 +31626,16 @@
             grid-column: 1 !important;
             grid-row: auto !important;
             justify-self: start !important;
+          }
+        }
+        @media (max-width: 720px) {
+          /* Profile content clears the existing dock; the dock itself is intentionally untouched. */
+          #profileBackdrop .profile-modal {
+            padding-bottom: 0 !important;
+          }
+          #profileBackdrop .modal-actions {
+            scroll-margin-bottom: var(--profile-report-clearance) !important;
+            padding-bottom: var(--profile-report-clearance) !important;
           }
         }
 
@@ -33115,6 +33180,8 @@
     const homeAdvancedFilters = document.getElementById("homeAdvancedFilters");
     const results = document.getElementById("results");
     const discoveryTabs = document.getElementById("discoveryTabs");
+    const discoveryTabsHomeParent = discoveryTabs?.parentNode || null;
+    const discoveryTabsHomeNextSibling = discoveryTabs?.nextSibling || null;
     const tabTitle = document.getElementById("tabTitle");
     const tabCount = document.getElementById("tabCount");
     const toast = document.getElementById("toast");
@@ -40869,31 +40936,25 @@
         `;
       }
       if (profile.scheduled) {
-        const upcomingLabel = upcomingFullLabel(profile);
         return `
-          <div class="info-tile">
-            <strong>Now</strong>
-            <div class="meta"><span class="muted-value">Not scheduled now</span></div>
-          </div>
-          <div class="info-tile">
-            <strong>Next shift</strong>
+          <div class="info-tile profile-schedule-card schedule-upcoming">
+            <strong>Upcoming shift</strong>
+            <div class="profile-schedule-primary">Not working now</div>
             <div class="schedule-stack">
-                <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
+              <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${displayPublicShiftTime(profile.time, profile)}</span></div>
             </div>
+            <p class="profile-schedule-explanation">This is the dancer's next posted shift. Follow or turn on notifications for schedule updates.</p>
           </div>
           ${shiftNotesMarkup(profile)}
         `;
       }
       return `
-        <div class="info-tile">
-          <strong>Now</strong>
-          <div class="meta"><span class="muted-value">Not scheduled now</span></div>
+        <div class="info-tile profile-schedule-card schedule-empty">
+          <strong>Schedule</strong>
+          <div class="profile-schedule-primary">No shift posted</div>
+          <p class="profile-schedule-explanation">This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update.</p>
         </div>
-          <div class="info-tile">
-            <strong>Next shift</strong>
-            <div class="meta"><span class="muted-value">No shift posted</span></div>
-          </div>
       `;
     }
 
@@ -40936,7 +40997,7 @@
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
           ${goingButton}
-          <button class="action-btn secondary" type="button" data-native-share="${profile.name}" data-share-city="${city}" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
+          <button class="action-btn secondary profile-share-action" type="button" data-native-share="${profile.name}" data-share-city="${city}" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
           <button class="action-btn secondary ${accountRequirementClass}" id="reportBtn" data-profile="${profile.name}">${profileActionButtonMarkup("report", "Report", "public")}</button>
         </div>
       `;
@@ -41467,7 +41528,26 @@
       const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .profile-tv-viewer.show, .deal-pass-overlay.show, .account-required-popover:not([hidden])");
       document.body.classList.toggle("overlay-open", overlayOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
+      syncProfileDestinationNavigation();
     }
+
+    function syncProfileDestinationNavigation() {
+      if (!discoveryTabs || !discoveryTabsHomeParent) return;
+      const shouldClearProfileStack =
+        profileBackdrop.classList.contains("show") &&
+        window.matchMedia("(max-width: 720px)").matches;
+      if (shouldClearProfileStack) {
+        if (discoveryTabs.parentNode !== profileBackdrop.parentNode) {
+          profileBackdrop.parentNode?.insertBefore(discoveryTabs, profileBackdrop);
+        }
+        return;
+      }
+      if (discoveryTabs.parentNode !== discoveryTabsHomeParent) {
+        discoveryTabsHomeParent.insertBefore(discoveryTabs, discoveryTabsHomeNextSibling);
+      }
+    }
+
+    window.addEventListener("resize", syncProfileDestinationNavigation, { passive: true });
 
     function openAuthPage() {
       authPage.classList.add("show");
