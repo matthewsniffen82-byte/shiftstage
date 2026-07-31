@@ -89,6 +89,31 @@ test("the mobile homepage keeps the complete hero artwork inside the page gutter
   );
 });
 
+test("mobile discovery connects the hero, filters, and real profile results with a restrained magenta accent", () => {
+  assert.match(liveApp, /<main class="stack home-discovery-shell">/);
+  assert.match(
+    liveApp,
+    /<section class="stack home-discovery-results-shell" aria-live="polite">/,
+  );
+  assert.match(aesthetic, /--mydancr-discovery-magenta: 255, 46, 174/);
+  assert.match(
+    aesthetic,
+    /main\.home-discovery-shell > \.hero\.reference-hero[\s\S]*?border-radius: 22px 22px 8px 8px !important/,
+  );
+  assert.match(
+    aesthetic,
+    /main\.home-discovery-shell > \.home-discovery-controls[\s\S]*?border-radius: 8px 8px 20px 20px !important/,
+  );
+  assert.match(
+    aesthetic,
+    /main\.home-discovery-shell > \.home-discovery-results-shell[\s\S]*?radial-gradient\(ellipse at 88% 0, rgba\(var\(--mydancr-discovery-magenta\), 0\.11\)/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.home-dancer-grid[\s\S]*?background: transparent !important/,
+  );
+});
+
 test("the frozen bottom navigation is outside the shared aesthetic contract", () => {
   assert.doesNotMatch(
     aesthetic,
