@@ -365,7 +365,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueRailStyle, /\b(?:width|min-width|min-height|height|padding|border-radius)\s*:/);
 });
 
-test("Now and Dancers grid cards place the full production action rail on the card", () => {
+test("Now and Dancers grid cards place all profile context and production actions on the photo", () => {
   assert.match(
     homeSource,
     /function homeDancerGridCard\(profile, city\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDancerGridActionsMarkup\(profile, city\)/,
@@ -401,6 +401,14 @@ test("Now and Dancers grid cards place the full production action rail on the ca
   assert.match(
     homeSource,
     /\.dancr-button-system \.home-dancer-grid-action-rail \.feed-card-action,[\s\S]*?background: rgba\(5,5,9,.88\) !important;[\s\S]*?backdrop-filter: none !important;/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-link \{[\s\S]*?position: relative;[\s\S]*?display: block;[\s\S]*?\.home-dancer-grid-copy \{[\s\S]*?position: absolute;[\s\S]*?right: 70px;[\s\S]*?bottom: 68px;[\s\S]*?background: transparent;/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-context-actions \{[\s\S]*?position: absolute;[\s\S]*?right: 70px;[\s\S]*?bottom: 0;[\s\S]*?background: linear-gradient\(180deg,transparent,rgba\(5,5,8,.94\) 34%\);/,
   );
   assert.match(
     homeSource,

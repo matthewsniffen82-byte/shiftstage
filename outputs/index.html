@@ -31134,6 +31134,49 @@
           opacity: .6;
           cursor: wait;
         }
+        @media (max-width: 679px) {
+          .home-dancer-grid-link {
+            position: relative;
+            display: block;
+          }
+          .home-dancer-grid-photo::after {
+            background: linear-gradient(180deg,transparent 42%,rgba(5,5,8,.22) 57%,rgba(5,5,8,.96) 100%);
+          }
+          .home-dancer-grid-copy {
+            position: absolute;
+            z-index: 5;
+            right: 70px;
+            bottom: 68px;
+            left: 0;
+            gap: 6px;
+            padding: 12px 12px 9px;
+            background: transparent;
+            text-shadow: 0 2px 8px rgba(0,0,0,.94);
+            pointer-events: none;
+          }
+          .home-dancer-grid-venue {
+            color: rgba(255,255,255,.88);
+          }
+          .home-dancer-grid-context-actions {
+            position: absolute;
+            z-index: 7;
+            right: 70px;
+            bottom: 0;
+            left: 0;
+            grid-template-columns: repeat(auto-fit,minmax(96px,1fr));
+            gap: 6px;
+            padding: 8px 8px 9px;
+            background: linear-gradient(180deg,transparent,rgba(5,5,8,.94) 34%);
+          }
+          .home-dancer-grid-context-actions .feed-card-action {
+            min-height: 50px;
+            border-color: rgba(255,255,255,.24);
+            background: rgba(8,8,13,.76);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.06),0 8px 20px rgba(0,0,0,.28);
+            backdrop-filter: blur(12px) saturate(1.2);
+            -webkit-backdrop-filter: blur(12px) saturate(1.2);
+          }
+        }
         @media (min-width: 680px) {
           #results.home-dancer-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
