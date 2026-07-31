@@ -41,19 +41,19 @@ test("every Next page receives the shared five-destination mobile navigation", (
 test("homepage and Next pages share the same floating glass mobile dock", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?overflow: visible[\s\S]*?border-radius: 23px[\s\S]*?blur\(26px\) saturate\(1\.65\)/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.14\)[\s\S]*?rgba\(9, 9, 12, 0\.82\)[\s\S]*?blur\(24px\) saturate\(1\.15\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?overflow: visible !important[\s\S]*?border-radius: 23px[\s\S]*?blur\(26px\) saturate\(1\.65\)/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(255,255,255,\.14\)[\s\S]*?rgba\(9,9,12,\.82\)[\s\S]*?blur\(24px\) saturate\(1\.15\)/,
   );
   assert.match(
     navigationSource,
-    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20, 16, 34, 0\.6\)[\s\S]*?rgba\(5, 6, 12, 0\.5\)/,
+    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20, 20, 24, 0\.56\)[\s\S]*?rgba\(5, 5, 8, 0\.44\)/,
   );
   assert.match(
     homeSource,
-    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20,16,34,.6\)[\s\S]*?rgba\(5,6,12,.5\)/,
+    /@supports \([\s\S]*?backdrop-filter: blur\(1px\)[\s\S]*?rgba\(20,20,24,.56\)[\s\S]*?rgba\(5,5,8,.44\)/,
   );
 });
 
@@ -80,18 +80,18 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("mobile icons share the hero's ultraviolet core, blue edge, and restrained magenta highlight", () => {
+test("neutral mobile glass uses color only for the active destination", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\);[\s\S]*?border-radius: 999px;[\s\S]*?rgba\(74, 0, 255, 0\.74\)[\s\S]*?rgba\(118, 16, 255, 0\.48\)[\s\S]*?0 0 12px rgba\(90, 22, 255, 0\.62\)[\s\S]*?0 0 20px rgba\(43, 92, 255, 0\.3\)[\s\S]*?0 0 24px rgba\(218, 56, 255, 0\.1\);[\s\S]*?filter: none;/,
+    /a\.active \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;[\s\S]*?color: var\(--mobile-nav-active\);[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?transform: translateY\(-1px\) scale\(1\.05\);/,
   );
   assert.doesNotMatch(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon \{[^}]*box-shadow:[^}]*0 0 0 1px/,
+    /a\.active \.global-mobile-nav-icon \{[^}]*(?:border-radius: 999px|background: linear-gradient)/,
   );
   assert.match(
     homeSource,
@@ -99,38 +99,38 @@ test("mobile icons share the hero's ultraviolet core, blue edge, and restrained 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(74,0,255,.74\)[\s\S]*?rgba\(118,16,255,.48\)[\s\S]*?0 0 12px rgba\(90,22,255,.62\)[\s\S]*?0 0 20px rgba\(43,92,255,.3\)[\s\S]*?0 0 24px rgba\(218,56,255,.1\) !important;[\s\S]*?filter: none !important;/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?color: var\(--home-nav-active\) !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?transform: translateY\(-1px\) scale\(1\.05\);/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 1px solid rgba\(255,255,255,.28\) !important;[\s\S]*?border-radius: 999px !important;[\s\S]*?rgba\(74,0,255,.74\)[\s\S]*?rgba\(118,16,255,.48\)[\s\S]*?0 0 12px rgba\(90,22,255,.62\)[\s\S]*?0 0 20px rgba\(43,92,255,.3\)[\s\S]*?0 0 24px rgba\(218,56,255,.1\) !important;[\s\S]*?filter: none !important;/,
+    /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?border: 0 !important;[\s\S]*?color: var\(--home-nav-active\) !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.doesNotMatch(navigationSource, /a\.active \.global-mobile-nav-icon \{[^}]*drop-shadow/);
   assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\.active \.home-nav-icon \{[^}]*drop-shadow/);
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-violet-blur\)[\s\S]*?var\(--mobile-nav-icon-violet-glow\)[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-cyan-blur\)[\s\S]*?var\(--mobile-nav-icon-cyan-glow\)[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-magenta-blur\)[\s\S]*?var\(--mobile-nav-icon-magenta-glow\)/,
+    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\(0 0 3px var\(--mobile-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav svg \{[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-rest-violet-blur\)[\s\S]*?var\(--mobile-nav-icon-rest-violet-glow\)[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-rest-cyan-blur\)[\s\S]*?var\(--mobile-nav-icon-rest-cyan-glow\)[\s\S]*?drop-shadow\([\s\S]*?var\(--mobile-nav-icon-rest-magenta-blur\)[\s\S]*?var\(--mobile-nav-icon-rest-magenta-glow\)/,
+    /\.global-mobile-bottom-nav svg \{[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-violet-blur\) var\(--home-nav-icon-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-cyan-blur\) var\(--home-nav-icon-cyan-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-magenta-blur\) var\(--home-nav-icon-magenta-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv svg \{[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-rest-violet-blur\) var\(--home-nav-icon-rest-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-rest-cyan-blur\) var\(--home-nav-icon-rest-cyan-glow\)\)[\s\S]*?drop-shadow\(0 0 var\(--home-nav-icon-rest-magenta-blur\) var\(--home-nav-icon-rest-magenta-glow\)\)/,
+    /#discoveryTabs \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv svg \{[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: #7650ff;[\s\S]*?--mobile-nav-accent-soft: #aaa0d8;[\s\S]*?--mobile-nav-icon-rest-violet-glow: rgba\(92, 24, 255, 0\.68\);[\s\S]*?--mobile-nav-icon-rest-cyan-glow: rgba\(46, 101, 255, 0\.22\);[\s\S]*?--mobile-nav-icon-rest-magenta-glow: rgba\(218, 56, 255, 0\.12\);[\s\S]*?--mobile-nav-icon-magenta-blur: 1\.6px;/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #a78bfa;[\s\S]*?--mobile-nav-active-violet-glow: rgba\(124, 58, 237, 0\.72\);[\s\S]*?--mobile-nav-active-cyan-glow: rgba\(34, 199, 255, 0\.24\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: #7650ff;[\s\S]*?--home-nav-accent-soft: #aaa0d8;[\s\S]*?--home-nav-icon-rest-violet-glow: rgba\(92,24,255,.68\);[\s\S]*?--home-nav-icon-rest-cyan-glow: rgba\(46,101,255,.22\);[\s\S]*?--home-nav-icon-rest-magenta-glow: rgba\(218,56,255,.12\);[\s\S]*?--home-nav-icon-magenta-blur: 1\.6px;/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #a78bfa;[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.72\);[\s\S]*?--home-nav-active-cyan-glow: rgba\(34,199,255,.24\);/,
   );
   assert.doesNotMatch(
     navigationSource,
@@ -138,7 +138,7 @@ test("mobile icons share the hero's ultraviolet core, blue edge, and restrained 
   );
   assert.doesNotMatch(
     homeSource,
-    /--home-nav-icon-violet-blur: (?:2\.8|1\.8|2\.1|2\.25)px;/,
+    /home-nav-icon-rest|home-nav-icon-magenta/,
   );
   assert.doesNotMatch(
     homeSource,

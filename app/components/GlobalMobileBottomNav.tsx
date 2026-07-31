@@ -391,33 +391,22 @@ export function GlobalMobileBottomNav() {
             gap: 0;
             padding: 3px 4px;
             overflow: visible;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 23px;
             background:
               linear-gradient(
                 180deg,
-                rgba(255, 255, 255, 0.1),
-                rgba(255, 255, 255, 0.018) 42%,
-                rgba(255, 255, 255, 0)
+                rgba(255, 255, 255, 0.09),
+                rgba(255, 255, 255, 0.025) 42%,
+                rgba(255, 255, 255, 0.01)
               ),
-              radial-gradient(
-                circle at 50% -42%,
-                rgba(124, 58, 237, 0.22),
-                transparent 54%
-              ),
-              radial-gradient(
-                circle at 16% 0%,
-                rgba(34, 199, 255, 0.08),
-                transparent 34%
-              ),
-              rgba(7, 7, 12, 0.9);
+              rgba(9, 9, 12, 0.82);
             box-shadow:
-              0 18px 44px rgba(0, 0, 0, 0.58),
-              0 0 24px rgba(124, 58, 237, 0.15),
-              0 0 0 1px rgba(139, 92, 246, 0.08),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(26px) saturate(1.65);
-            -webkit-backdrop-filter: blur(26px) saturate(1.65);
+              0 16px 36px rgba(0, 0, 0, 0.48),
+              0 0 0 1px rgba(255, 255, 255, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.09);
+            backdrop-filter: blur(24px) saturate(1.15);
+            -webkit-backdrop-filter: blur(24px) saturate(1.15);
             isolation: isolate;
             transform: translateX(-50%);
           }
@@ -430,24 +419,14 @@ export function GlobalMobileBottomNav() {
               background:
                 linear-gradient(
                   180deg,
-                  rgba(255, 255, 255, 0.11),
-                  rgba(255, 255, 255, 0.02) 42%,
-                  rgba(255, 255, 255, 0)
-                ),
-                radial-gradient(
-                  circle at 50% -42%,
-                  rgba(124, 58, 237, 0.18),
-                  transparent 54%
-                ),
-                radial-gradient(
-                  circle at 16% 0%,
-                  rgba(34, 199, 255, 0.06),
-                  transparent 34%
+                  rgba(255, 255, 255, 0.1),
+                  rgba(255, 255, 255, 0.03) 42%,
+                  rgba(255, 255, 255, 0.01)
                 ),
                 linear-gradient(
                   135deg,
-                  rgba(20, 16, 34, 0.6),
-                  rgba(5, 6, 12, 0.5)
+                  rgba(20, 20, 24, 0.56),
+                  rgba(5, 5, 8, 0.44)
                 );
             }
           }
@@ -458,26 +437,11 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a {
-            --mobile-nav-accent: #7650ff;
-            --mobile-nav-accent-soft: #aaa0d8;
-            --mobile-nav-accent-glow: rgba(91, 28, 255, 0.4);
-            --mobile-nav-accent-magenta-glow: rgba(218, 56, 255, 0.14);
-            --mobile-nav-hero-white-glow: rgba(255, 255, 255, 0.94);
-            --mobile-nav-hero-violet-glow: rgba(82, 10, 255, 0.92);
-            --mobile-nav-hero-cyan-glow: rgba(43, 92, 255, 0.36);
-            --mobile-nav-hero-magenta-glow: rgba(218, 56, 255, 0.2);
-            --mobile-nav-icon-rest-violet-blur: 1.5px;
-            --mobile-nav-icon-rest-cyan-blur: 3px;
-            --mobile-nav-icon-rest-magenta-blur: 1px;
-            --mobile-nav-icon-rest-violet-glow: rgba(92, 24, 255, 0.68);
-            --mobile-nav-icon-rest-cyan-glow: rgba(46, 101, 255, 0.22);
-            --mobile-nav-icon-rest-magenta-glow: rgba(218, 56, 255, 0.12);
-            --mobile-nav-icon-violet-blur: 2.4px;
-            --mobile-nav-icon-cyan-blur: 5px;
-            --mobile-nav-icon-magenta-blur: 1.6px;
-            --mobile-nav-icon-violet-glow: rgba(91, 19, 255, 0.96);
-            --mobile-nav-icon-cyan-glow: rgba(50, 105, 255, 0.38);
-            --mobile-nav-icon-magenta-glow: rgba(218, 54, 255, 0.2);
+            --mobile-nav-accent: rgba(232, 230, 238, 0.74);
+            --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
+            --mobile-nav-active: #a78bfa;
+            --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.72);
+            --mobile-nav-active-cyan-glow: rgba(34, 199, 255, 0.24);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -496,9 +460,7 @@ export function GlobalMobileBottomNav() {
             line-height: 14px;
             text-align: center;
             text-decoration: none;
-            text-shadow:
-              0 0 5px var(--mobile-nav-accent-glow),
-              0 0 9px var(--mobile-nav-accent-magenta-glow);
+            text-shadow: none;
             touch-action: manipulation;
             transition:
               color 180ms ease,
@@ -535,28 +497,17 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.active {
             color: #fff;
-            text-shadow:
-              0 0 3px var(--mobile-nav-hero-white-glow),
-              0 0 8px var(--mobile-nav-hero-violet-glow),
-              0 0 14px var(--mobile-nav-hero-cyan-glow),
-              0 0 18px var(--mobile-nav-hero-magenta-glow);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.96);
           }
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon {
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            border-radius: 999px;
-            color: #fff;
-            background: linear-gradient(
-              145deg,
-              rgba(74, 0, 255, 0.74),
-              rgba(118, 16, 255, 0.48)
-            );
-            box-shadow:
-              0 0 12px rgba(90, 22, 255, 0.62),
-              0 0 20px rgba(43, 92, 255, 0.3),
-              0 0 24px rgba(218, 56, 255, 0.1);
+            border: 0;
+            border-radius: 0;
+            color: var(--mobile-nav-active);
+            background: transparent;
+            box-shadow: none;
             filter: none;
-            transform: translateY(-2px) scale(1.08);
+            transform: translateY(-1px) scale(1.05);
           }
 
           .global-mobile-bottom-nav a.tv-destination {
@@ -578,18 +529,11 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.tv-destination.active
             .global-mobile-nav-icon {
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            border-radius: 999px;
-            color: #fff;
-            background: linear-gradient(
-              145deg,
-              rgba(74, 0, 255, 0.74),
-              rgba(118, 16, 255, 0.48)
-            );
-            box-shadow:
-              0 0 12px rgba(90, 22, 255, 0.62),
-              0 0 20px rgba(43, 92, 255, 0.3),
-              0 0 24px rgba(218, 56, 255, 0.1);
+            border: 0;
+            border-radius: 0;
+            color: var(--mobile-nav-active);
+            background: transparent;
+            box-shadow: none;
             filter: none;
           }
 
@@ -597,19 +541,7 @@ export function GlobalMobileBottomNav() {
             width: 20px;
             height: 20px;
             fill: none;
-            filter:
-              drop-shadow(
-                0 0 var(--mobile-nav-icon-rest-violet-blur)
-                  var(--mobile-nav-icon-rest-violet-glow)
-              )
-              drop-shadow(
-                0 0 var(--mobile-nav-icon-rest-cyan-blur)
-                  var(--mobile-nav-icon-rest-cyan-glow)
-              )
-              drop-shadow(
-                0 0 var(--mobile-nav-icon-rest-magenta-blur)
-                  var(--mobile-nav-icon-rest-magenta-glow)
-              );
+            filter: none;
             stroke: currentColor;
             stroke-width: 2;
             stroke-linecap: round;
@@ -619,18 +551,8 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon > svg {
             filter:
-              drop-shadow(
-                0 0 var(--mobile-nav-icon-violet-blur)
-                  var(--mobile-nav-icon-violet-glow)
-              )
-              drop-shadow(
-                0 0 var(--mobile-nav-icon-cyan-blur)
-                  var(--mobile-nav-icon-cyan-glow)
-              )
-              drop-shadow(
-                0 0 var(--mobile-nav-icon-magenta-blur)
-                  var(--mobile-nav-icon-magenta-glow)
-              );
+              drop-shadow(0 0 3px var(--mobile-nav-active-violet-glow))
+              drop-shadow(0 0 7px var(--mobile-nav-active-cyan-glow));
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {
@@ -653,7 +575,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav
             a.tv-destination.active
             .mydancr-tv-play {
-            fill: #fff;
+            fill: var(--mobile-nav-active);
           }
 
           .global-mobile-bottom-nav .mydancr-tv-r {
@@ -671,7 +593,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav
             a.tv-destination.active
             .mydancr-tv-r {
-            stroke: #e1a7ff;
+            stroke: #67e8f9;
           }
 
           @media (prefers-reduced-motion: reduce) {
