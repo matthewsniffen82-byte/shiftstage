@@ -28395,9 +28395,6 @@
           contain: layout paint style;
           isolation: isolate;
         }
-        .home-tv-feed-slide + .home-tv-feed-slide {
-          border-top: 1px solid rgba(255,255,255,.1);
-        }
         .home-tv-feed-video {
           position: absolute;
           z-index: 1;
@@ -28406,7 +28403,7 @@
           height: 100%;
           display: block;
           border: 0;
-          object-fit: contain;
+          object-fit: cover;
           background: #000;
           cursor: pointer;
           opacity: 1;
@@ -33221,7 +33218,6 @@
     const homeTvFeedEngagedTimers = new Map();
     let homeDiscoveryFeedOpen = false;
     let homeDiscoveryFeedObserver = null;
-    let homeSnapFeedSettleTimer = 0;
     let homeDiscoveryFeedQrPromptTimer = 0;
     let homeDiscoveryFeedQrPromptKey = "";
     let homeDiscoveryFeedRenderKey = "";
@@ -46231,7 +46227,10 @@
       homeTvFeedViewportHeight = viewportHeight;
       results.style.setProperty("--home-tv-feed-height", `${viewportHeight}px`);
       window.requestAnimationFrame(() => {
-        results.scrollTo({ top: activeIndex * viewportHeight, left: 0, behavior: "auto" });
+        const targetTop = activeIndex * viewportHeight;
+        if (Math.abs(results.scrollTop - targetTop) > 1) {
+          results.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
+        }
       });
     }
 
@@ -46279,28 +46278,6 @@
       } else {
         unlockHomeTvFeedViewport();
       }
-    }
-
-    function settleHomeSnapFeed() {
-      window.clearTimeout(homeSnapFeedSettleTimer);
-      homeSnapFeedSettleTimer = 0;
-      const isTvFeed = results.classList.contains("home-tv-feed");
-      if (!isTvFeed) return;
-      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
-      const viewportHeight = results.clientHeight;
-      if (!slides.length || viewportHeight <= 0) return;
-      const index = Math.min(slides.length - 1, Math.max(0, Math.round(results.scrollTop / viewportHeight)));
-      const targetTop = index * viewportHeight;
-      if (Math.abs(results.scrollTop - targetTop) > 1) {
-        results.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
-      }
-      const slide = slides[index];
-      activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
-    }
-
-    function queueHomeSnapFeedSettle() {
-      window.clearTimeout(homeSnapFeedSettleTimer);
-      homeSnapFeedSettleTimer = window.setTimeout(settleHomeSnapFeed, 120);
     }
 
     function deactivateHomeTvFeed() {
@@ -49255,12 +49232,9 @@
     window.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeTvFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeTvFeedViewportChange, { passive: true });
-    window.visualViewport?.addEventListener("scroll", queueHomeTvFeedViewportSync, { passive: true });
     window.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
-    results.addEventListener("scroll", queueHomeSnapFeedSettle, { passive: true });
-    results.addEventListener("scrollend", settleHomeSnapFeed, { passive: true });
 
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => activateHomeDestination(tab.dataset.tab || ""));

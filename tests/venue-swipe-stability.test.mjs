@@ -29,12 +29,10 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   assert.doesNotMatch(homeSource, /home-discovery-feed-locked/);
   assert.doesNotMatch(homeSource, /syncHomeDiscoveryFeedViewport|lockHomeDiscoveryFeedViewport/);
 
-  const snapSettler =
-    homeSource.match(
-      /function settleHomeSnapFeed\(\) \{[\s\S]*?(?=\n    function queueHomeSnapFeedSettle)/,
-    )?.[0] || "";
-  assert.match(snapSettler, /results\.classList\.contains\("home-tv-feed"\)/);
-  assert.doesNotMatch(snapSettler, /home-discovery-feed|activateHomeDiscoveryFeedItem/);
+  assert.doesNotMatch(
+    homeSource,
+    /settleHomeSnapFeed|queueHomeSnapFeedSettle|homeSnapFeedSettleTimer/,
+  );
 });
 
 test("unchanged live venue refreshes reuse the current cards and reading position", () => {

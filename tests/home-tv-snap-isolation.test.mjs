@@ -24,4 +24,6 @@ test("MyDancr TV remains one full-width video per mandatory vertical snap", () =
     homeSource,
     /\.home-tv-feed-slide \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?min-height: 100%;[\s\S]*?max-height: 100%;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
+  assert.match(homeSource, /\.home-tv-feed-video \{[\s\S]*?inset: 0;[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?object-fit: cover;/);
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-slide \+ \.home-tv-feed-slide \{[\s\S]*?border-top:/);
 });

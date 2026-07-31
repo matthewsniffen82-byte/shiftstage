@@ -14,7 +14,7 @@ const [homeSource, tvSource, applauseMigration] = await Promise.all([
 test("the homepage TV card uses a resilient, readable media-first presentation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-video \{[\s\S]*?object-fit: contain[\s\S]*?\.home-tv-feed-media-fallback \{[\s\S]*?background-size: cover/,
+    /\.home-tv-feed-video \{[\s\S]*?object-fit: cover[\s\S]*?\.home-tv-feed-media-fallback \{[\s\S]*?background-size: cover/,
   );
   assert.match(
     homeSource,

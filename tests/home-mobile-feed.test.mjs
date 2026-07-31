@@ -239,19 +239,16 @@ test("TV remains the only snap feed while discovery cards use natural page scrol
   assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(
     homeSource,
-    /function syncHomeTvFeedViewport\(\)[\s\S]*?viewportWidth === homeTvFeedViewportWidth[\s\S]*?viewportHeight === homeTvFeedViewportHeight[\s\S]*?activeIndex \* viewportHeight/,
+    /function syncHomeTvFeedViewport\(\)[\s\S]*?viewportWidth === homeTvFeedViewportWidth[\s\S]*?viewportHeight === homeTvFeedViewportHeight[\s\S]*?targetTop = activeIndex \* viewportHeight[\s\S]*?Math\.abs\(results\.scrollTop - targetTop\) > 1/,
   );
   assert.doesNotMatch(homeSource, /function syncHomeDiscoveryFeedViewport\(\)/);
-  const snapSettler =
-    homeSource.match(
-      /function settleHomeSnapFeed\(\) \{[\s\S]*?(?=\n    function queueHomeSnapFeedSettle)/,
-    )?.[0] || "";
-  assert.match(snapSettler, /Math\.round\(results\.scrollTop \/ viewportHeight\)/);
-  assert.match(snapSettler, /targetTop = index \* viewportHeight/);
-  assert.doesNotMatch(snapSettler, /home-discovery-feed|activateHomeDiscoveryFeedItem/);
-  assert.match(
+  assert.doesNotMatch(
     homeSource,
-    /results\.addEventListener\("scroll", queueHomeSnapFeedSettle[\s\S]*?results\.addEventListener\("scrollend", settleHomeSnapFeed/,
+    /homeSnapFeedSettleTimer|settleHomeSnapFeed|queueHomeSnapFeedSettle/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /visualViewport\?\.addEventListener\("scroll", queueHomeTvFeedViewportSync/,
   );
 });
 
