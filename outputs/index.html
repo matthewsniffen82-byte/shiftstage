@@ -31577,6 +31577,73 @@
           }
         }
 
+        /* Production dancer photos render at their natural luminance.
+           Current cards place identity copy below the photo, so they need no
+           image-wide veil. Only legacy overlay cards retain a localized text
+           gradient at the very bottom of the portrait. */
+        #results .home-dancer-grid-photo.has-custom-photo,
+        #results .home-feed-card .portrait.has-custom-photo {
+          background-color: #0b0b10 !important;
+          background-image: var(--custom-photo) !important;
+          background-position: center top !important;
+          background-repeat: no-repeat !important;
+          background-size: cover !important;
+          filter: none !important;
+          -webkit-filter: none !important;
+          mix-blend-mode: normal !important;
+          opacity: 1 !important;
+        }
+        #results .home-dancer-grid-photo.has-custom-photo::after,
+        #results .home-feed-card .portrait.has-custom-photo::after {
+          content: none !important;
+          display: none !important;
+          background: none !important;
+        }
+        #results .dancer-card:not(.home-dancer-grid-card):not(.home-feed-card) .portrait.has-custom-photo {
+          background-color: #0b0b10 !important;
+          background-image: var(--custom-photo) !important;
+          background-position: center top !important;
+          background-repeat: no-repeat !important;
+          background-size: cover !important;
+          filter: none !important;
+          -webkit-filter: none !important;
+          mix-blend-mode: normal !important;
+          opacity: 1 !important;
+        }
+        #results .dancer-card:not(.home-dancer-grid-card):not(.home-feed-card) .portrait.has-custom-photo::after {
+          content: "" !important;
+          display: block !important;
+          background:
+            linear-gradient(
+              180deg,
+              transparent 0 74%,
+              rgba(5,5,8,.12) 84%,
+              rgba(5,5,8,.68) 100%
+            ) !important;
+          mix-blend-mode: normal !important;
+          pointer-events: none !important;
+        }
+        #profileBackdrop .profile-modal-avatar.has-photo,
+        #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
+        .profile-photo-viewer-image {
+          filter: none !important;
+          -webkit-filter: none !important;
+          mix-blend-mode: normal !important;
+          opacity: 1 !important;
+        }
+        #profileBackdrop .gallery .thumb .portrait.has-custom-photo {
+          background-color: #0b0b10 !important;
+          background-image: var(--custom-photo) !important;
+          background-position: center top !important;
+          background-repeat: no-repeat !important;
+          background-size: cover !important;
+        }
+        #profileBackdrop .gallery .thumb .portrait.has-custom-photo::after {
+          content: none !important;
+          display: none !important;
+          background: none !important;
+        }
+
         /* Venue profiles keep X dismissal while the shared destination dock stays available. */
         body.venue-full-view-open {
           overflow: hidden !important;

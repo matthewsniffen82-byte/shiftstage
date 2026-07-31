@@ -302,6 +302,7 @@ function PublicProfileStyles() {
       .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
       .profile-overview { display: grid; grid-template-columns: clamp(96px, 18vw, 132px) minmax(0, 1fr); align-items: center; gap: clamp(18px, 5vw, 42px); padding: 22px 0 18px; }
       .profile-avatar { width: 100%; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border: 2px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 18px 44px rgba(0,0,0,.38), 0 0 28px rgba(124,58,237,.2); background-position: center; background-size: cover; font-size: 30px; font-weight: 950; }
+      .profile-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 10px 4px; }
       .profile-metrics dd { margin: 0; color: #fff; font-size: clamp(20px, 4vw, 28px); font-weight: 950; line-height: 1; }
@@ -360,6 +361,7 @@ function PublicProfileStyles() {
       .profile-media-grid { min-height: 110px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
       .profile-media-grid-item { position: relative; aspect-ratio: 1; display: block; padding: 0; overflow: hidden; border: 0; color: #fff; background: #0b0b10; cursor: pointer; }
       .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
+      .profile-media-grid-item img { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: -2px; }
       .profile-media-play { position: absolute; top: 50%; left: 50%; width: 42px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
       .profile-media-play::after { content: ""; position: absolute; top: 50%; left: 54%; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 12px solid #111; transform: translate(-50%, -50%); }
@@ -369,6 +371,7 @@ function PublicProfileStyles() {
       .profile-media-viewer-close { position: fixed; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 50px; height: 50px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: rgba(10,10,14,.78); font-size: 30px; cursor: pointer; backdrop-filter: blur(12px); }
       .profile-media-viewer-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; }
       .profile-media-viewer-stage > img, .profile-media-viewer-stage > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }
+      .profile-media-viewer-stage > img { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-media-viewer-previous, .profile-media-viewer-next { position: absolute; top: 50%; width: 46px; height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,8,.58); font-size: 34px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(8px); }
       .profile-media-viewer-previous { left: 12px; }
       .profile-media-viewer-next { right: 12px; }
