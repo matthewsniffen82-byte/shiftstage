@@ -168,7 +168,10 @@ test("dancer scroll cards and full profiles reserve a truthful Club Deal state",
       /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,
     )?.[0] || "";
   assert.match(gridDealMarkup, /state\.key !== "available"/);
-  assert.match(gridDealMarkup, /data-club-deal-state="\$\{state\.key\}"[^>]*disabled aria-disabled="true"/);
+  assert.match(gridDealMarkup, /data-club-deal-state="\$\{state\.key\}" role="img"/);
+  assert.doesNotMatch(gridDealMarkup, /is-unavailable[^>]*disabled/);
+  assert.match(gridDealMarkup, /cardLabel = state\.key === "available-when-working" \? "Unlocks when working" : state\.label/);
+  assert.match(gridDealMarkup, /class="club-deal-qr-status"><strong>Club Deal<\/strong>/);
   assert.match(gridDealMarkup, /data-club-deal-state="available" data-feed-live-qr/);
   assert.match(gridDealMarkup, /clubDealQrSymbolMarkup\(\)/);
 

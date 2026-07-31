@@ -31139,7 +31139,7 @@
         .home-dancer-grid-action-rail {
           position: absolute;
           z-index: 6;
-          top: 78px;
+          top: 96px;
           right: 10px;
           width: 52px;
           display: grid;
@@ -31261,11 +31261,11 @@
           z-index: 4;
           top: 8px;
           right: 8px;
-          width: 72px;
-          min-height: 66px;
+          width: 90px;
+          min-height: 82px;
           display: grid;
           justify-items: center;
-          gap: 3px;
+          gap: 5px;
           padding: 0;
           border: 0;
           color: #fff;
@@ -31275,11 +31275,12 @@
           cursor: pointer;
         }
         .home-dancer-grid-qr .club-deal-qr-symbol {
-          width: 40px;
-          height: 40px;
+          box-sizing: border-box;
+          width: 52px;
+          height: 52px;
           display: grid;
           place-items: center;
-          padding: 5px;
+          padding: 6px;
           border: 1px solid rgba(77,236,157,.72);
           border-radius: 9px;
           color: #fff;
@@ -31290,14 +31291,26 @@
           width: 100%;
           height: 100%;
         }
-        .home-dancer-grid-qr > span:last-child {
-          max-width: 72px;
-          color: rgba(255,255,255,.92);
-          font-size: 7px;
-          font-weight: 950;
-          line-height: 1.12;
+        .home-dancer-grid-qr .club-deal-qr-status {
+          width: 90px;
+          display: grid;
+          gap: 1px;
+          color: rgba(255,255,255,.94);
           text-align: center;
-          white-space: normal;
+          text-shadow: 0 2px 7px rgba(0,0,0,.98);
+        }
+        .home-dancer-grid-qr .club-deal-qr-status strong {
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: .06em;
+          line-height: 1.1;
+          text-transform: uppercase;
+        }
+        .home-dancer-grid-qr .club-deal-qr-status span {
+          color: rgba(245,245,255,.78);
+          font-size: 8.5px;
+          font-weight: 850;
+          line-height: 1.15;
         }
         .home-dancer-grid-qr:focus-visible {
           outline: none;
@@ -31306,17 +31319,30 @@
           outline: 2px solid #7eeaff;
           outline-offset: 2px;
         }
-        .home-dancer-grid-qr:disabled {
-          cursor: default;
+        .dancr-button-system button.home-dancer-grid-qr.is-available {
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          backdrop-filter: none !important;
+          opacity: 1 !important;
         }
         .home-dancer-grid-qr.is-unavailable .club-deal-qr-symbol {
-          border-color: rgba(255,255,255,.18);
-          color: rgba(245,245,255,.48);
-          background: linear-gradient(145deg,rgba(35,35,45,.88),rgba(8,8,13,.82));
-          box-shadow: 0 8px 20px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.04);
+          border-color: rgba(196,181,253,.34);
+          color: rgba(245,245,255,.82);
+          background: linear-gradient(145deg,rgba(35,30,51,.96),rgba(8,8,15,.94));
+          box-shadow: 0 8px 20px rgba(0,0,0,.38), 0 0 13px rgba(124,58,237,.12), inset 0 1px 0 rgba(255,255,255,.08);
         }
-        .home-dancer-grid-qr.is-unavailable > span:last-child {
-          color: rgba(245,245,255,.62);
+        .home-dancer-grid-qr.is-unavailable {
+          cursor: default;
+        }
+        .home-dancer-grid-qr.is-unavailable .club-deal-qr-status strong {
+          color: rgba(245,245,255,.9);
+        }
+        .home-dancer-grid-qr.is-unavailable .club-deal-qr-status span {
+          color: rgba(221,214,254,.76);
         }
         @media (max-width: 679px) {
           #results.home-dancer-grid,
@@ -46102,11 +46128,12 @@
       const state = dancerClubDealState(profile);
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
-        return `<button class="home-dancer-grid-qr is-unavailable is-${state.key}" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${clubDealQrSymbolMarkup()}<span>${escapeHtml(state.label)}</span></button>`;
+        const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
+        return `<span class="home-dancer-grid-qr is-unavailable is-${state.key}" data-club-deal-state="${state.key}" role="img" aria-label="Club Deal: ${escapeHtml(cardLabel)}">${clubDealQrSymbolMarkup()}<span class="club-deal-qr-status"><strong>Club Deal</strong><span>${escapeHtml(cardLabel)}</span></span></span>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
-      return `<button class="home-dancer-grid-qr is-available" type="button" ${qr.triggerAttribute} data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Get the Club Deal for ${venueName}">${clubDealQrSymbolMarkup()}<span>Get Club Deal</span></button>`;
+      return `<button class="home-dancer-grid-qr is-available" type="button" ${qr.triggerAttribute} data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Get the Club Deal for ${venueName}">${clubDealQrSymbolMarkup()}<span class="club-deal-qr-status"><strong>Club Deal</strong><span>Get deal</span></span></button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue, presentation = "primary") {

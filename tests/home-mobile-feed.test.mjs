@@ -452,7 +452,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr[^\"]*"[\s\S]*?data-feed-live-qr[\s\S]*?<span>Get Club Deal<\/span>/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr[^\"]*"[\s\S]*?data-feed-live-qr[\s\S]*?class="club-deal-qr-status"><strong>Club Deal<\/strong><span>Get deal<\/span>/,
   );
   assert.match(
     homeSource,
@@ -464,7 +464,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-qr \{[\s\S]*?position: absolute[\s\S]*?background: linear-gradient[\s\S]*?\.home-dancer-grid-qr:focus-visible \{/,
+    /\.home-dancer-grid-qr \{[\s\S]*?position: absolute[\s\S]*?background: transparent[\s\S]*?\.home-dancer-grid-qr \.club-deal-qr-symbol \{[\s\S]*?background: linear-gradient[\s\S]*?\.home-dancer-grid-qr:focus-visible \{/,
   );
 });
 
