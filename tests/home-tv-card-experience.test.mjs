@@ -22,7 +22,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?grid-template-columns: 46px minmax\(0, 1fr\) 16px[\s\S]*?gap: 8px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
+    /\.home-tv-feed-dancer \{[\s\S]*?grid-template-columns: 46px minmax\(0, 1fr\)[\s\S]*?gap: 8px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
   );
   assert.match(
     homeSource,
@@ -30,12 +30,20 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /profileChevron\.className = "home-tv-feed-profile-chevron"[\s\S]*?profileChevron\.textContent = "›"[\s\S]*?dancer\.append\(dancerPhoto, nameRow, profileChevron\)[\s\S]*?meta\.textContent = `Dancer · \$\{dancerCity\}`/,
+    /profileHint\.className = "home-tv-feed-profile-hint"[\s\S]*?profileHint\.textContent = "View profile"[\s\S]*?profileChevron\.textContent = "›"[\s\S]*?dancerCopy\.append\(nameRow, profileHint\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)[\s\S]*?meta\.textContent = `Dancer · \$\{dancerCity\}`/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-profile-cue|View profile →/);
   assert.match(
     homeSource,
-    /const dancerPhotoUrl = String\(item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, nameRow, profileChevron\)/,
+    /const dancerPhotoUrl = String\(item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
+  );
+  assert.match(
+    homeSource,
+    /const hasLiveDeal = item\?\.shift\?\.isActive === true[\s\S]*?item\?\.venue\?\.id && item\?\.deal\?\.id && item\?\.dealAttributionToken[\s\S]*?"home-tv-feed-deal-action"[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?deal\.dataset\.feedLiveQr = "true"/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-deal-action \{[\s\S]*?border-color: var\(--dancr-color-success-strong\)[\s\S]*?var\(--dancr-color-success\)/,
   );
   assert.match(
     homeSource,

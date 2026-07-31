@@ -137,6 +137,11 @@ test("checked-in dancer profiles and MyDancr TV promote attributed deals without
   assert.match(tvClient, /sourceType="dancer_profile"/);
   assert.match(tvClient, /attributionToken=\{video\.dealAttributionToken\}/);
   assert.match(tvClient, /presentation="launcher"/);
+  assert.match(
+    liveApp,
+    /const hasLiveDeal = item\?\.shift\?\.isActive === true[\s\S]*?item\?\.venue\?\.id && item\?\.deal\?\.id && item\?\.dealAttributionToken[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?attributionToken: item\.dealAttributionToken/,
+  );
+  assert.match(liveApp, /deal\.dataset\.feedLiveQr = "true"/);
 });
 
 test("homepage live profiles use the server-generated revenue QR only while Working Now", () => {
