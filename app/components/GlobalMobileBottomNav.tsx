@@ -440,8 +440,9 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
             --mobile-nav-active: #fff;
-            --mobile-nav-active-violet-glow: rgba(91, 19, 255, 0.94);
-            --mobile-nav-active-cyan-glow: rgba(52, 110, 255, 0.3);
+            --mobile-nav-active-violet-core: rgba(152, 95, 255, 0.98);
+            --mobile-nav-active-violet-glow: rgba(91, 19, 255, 1);
+            --mobile-nav-active-cyan-glow: rgba(52, 110, 255, 0.58);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -468,6 +469,8 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-nav-icon {
+            position: relative;
+            isolation: isolate;
             width: 30px;
             height: 30px;
             display: grid;
@@ -484,6 +487,33 @@ export function GlobalMobileBottomNav() {
               border-color 180ms ease,
               box-shadow 180ms ease,
               filter 180ms ease,
+              transform 180ms ease;
+          }
+
+          .global-mobile-nav-icon::before {
+            content: "";
+            position: absolute;
+            z-index: 0;
+            inset: -8px;
+            border-radius: 999px;
+            background: radial-gradient(
+              circle,
+              rgba(152, 95, 255, 0.9) 0%,
+              rgba(91, 19, 255, 0.72) 28%,
+              rgba(91, 19, 255, 0.42) 48%,
+              rgba(52, 110, 255, 0.24) 64%,
+              transparent 78%
+            );
+            box-shadow:
+              0 0 10px rgba(91, 19, 255, 0.76),
+              0 0 20px rgba(91, 19, 255, 0.48),
+              0 0 28px rgba(52, 110, 255, 0.28);
+            filter: blur(2px);
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.72);
+            transition:
+              opacity 180ms ease,
               transform 180ms ease;
           }
 
@@ -508,6 +538,12 @@ export function GlobalMobileBottomNav() {
             box-shadow: none;
             filter: none;
             transform: translateY(-1px) scale(1.05);
+          }
+
+          .global-mobile-bottom-nav a.active
+            .global-mobile-nav-icon::before {
+            opacity: 1;
+            transform: scale(1);
           }
 
           .global-mobile-bottom-nav a.tv-destination {
@@ -538,6 +574,8 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav svg {
+            position: relative;
+            z-index: 1;
             width: 20px;
             height: 20px;
             fill: none;
@@ -551,8 +589,9 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon > svg {
             filter:
-              drop-shadow(0 0 4px var(--mobile-nav-active-violet-glow))
-              drop-shadow(0 0 9px var(--mobile-nav-active-cyan-glow));
+              drop-shadow(0 0 2px var(--mobile-nav-active-violet-core))
+              drop-shadow(0 0 6px var(--mobile-nav-active-violet-glow))
+              drop-shadow(0 0 12px var(--mobile-nav-active-cyan-glow));
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {
