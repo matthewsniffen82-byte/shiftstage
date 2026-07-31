@@ -41,7 +41,7 @@ test("full dancer profiles use an Instagram-familiar identity and activity heade
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerNotificationCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
-  assert.match(profilePage, /aria-label="Approved social links"/);
+  assert.match(profilePage, /aria-labelledby="profile-social-heading"/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 
   assert.match(liveApp, /class="profile-modal-summary"/);

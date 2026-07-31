@@ -127,9 +127,20 @@ test("profiles can be shared and close back to the referring site page", () => {
   assert.match(navigationActions, /window\.location\.assign\(fallbackHref\)/);
 });
 
-test("official links stay compact and real videos have distinct metadata", () => {
-  assert.match(socialLinks, /const visibleLinks = expanded \? links : links\.slice\(0, 3\)/);
-  assert.match(socialLinks, /Show \$\{links\.length - 3\} more links/);
+test("official social icons stay centered without publishing handles", () => {
+  assert.match(socialLinks, /<h2 id="profile-social-heading">Official socials<\/h2>/);
+  assert.match(socialLinks, /rel="noopener noreferrer"/);
+  assert.match(socialLinks, /opens in a new tab/);
+  assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
+  assert.match(socialLinks, /<SocialIcon platform=\{link\.platform\} \/>/);
+  assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
+  assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
+  assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
+  assert.match(profilePage, /\.social-list \{ width: 100%;[\s\S]*?justify-content: center;/);
+  assert.match(profilePage, /\.social-list a \{ width: 48px;[\s\S]*?height: 48px;[\s\S]*?justify-content: center;/);
+});
+
+test("real videos keep distinct metadata", () => {
   assert.match(tvStrip, /Video \$\{index \+ 1\} of \$\{videos\.length\}/);
   assert.match(tvStrip, /formatVideoDuration\(video\.durationSeconds\)/);
   assert.match(tvStrip, /formatVideoDate\(video\.publishedAt\)/);
