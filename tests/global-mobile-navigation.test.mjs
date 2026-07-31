@@ -80,7 +80,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("neutral mobile glass uses soft-white idle icons and bright-white active icons", () => {
+test("neutral mobile glass uses soft-white idle icons and a deep-violet active glow", () => {
   assert.match(
     navigationSource,
     /a:not\(\.active\) \.global-mobile-nav-icon \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?filter: none;/,
@@ -110,7 +110,7 @@ test("neutral mobile glass uses soft-white idle icons and bright-white active ic
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\(0 0 3px var\(--mobile-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--mobile-nav-active-cyan-glow\)\)/,
+    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\(0 0 4px var\(--mobile-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--mobile-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     navigationSource,
@@ -118,7 +118,7 @@ test("neutral mobile glass uses soft-white idle icons and bright-white active ic
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-active-cyan-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 4px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--home-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     homeSource,
@@ -126,11 +126,11 @@ test("neutral mobile glass uses soft-white idle icons and bright-white active ic
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-violet-glow: rgba\(124, 58, 237, 0\.72\);[\s\S]*?--mobile-nav-active-cyan-glow: rgba\(34, 199, 255, 0\.24\);/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-violet-glow: rgba\(91, 19, 255, 0\.94\);[\s\S]*?--mobile-nav-active-cyan-glow: rgba\(52, 110, 255, 0\.3\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.72\);[\s\S]*?--home-nav-active-cyan-glow: rgba\(34,199,255,.24\);/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-violet-glow: rgba\(91,19,255,.94\);[\s\S]*?--home-nav-active-cyan-glow: rgba\(52,110,255,.3\);/,
   );
   assert.doesNotMatch(
     navigationSource,

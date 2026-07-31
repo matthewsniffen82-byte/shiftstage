@@ -56,6 +56,6 @@ test("homepage active TV state uses icon-only color and a compact glow", () => {
   assert.doesNotMatch(activeTvRule, /drop-shadow|border-radius: 999px|linear-gradient/);
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 7px var\(--home-nav-active-cyan-glow\)\)/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 4px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--home-nav-active-cyan-glow\)\)/,
   );
 });

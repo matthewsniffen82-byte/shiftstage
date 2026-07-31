@@ -440,8 +440,8 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
             --mobile-nav-active: #fff;
-            --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.72);
-            --mobile-nav-active-cyan-glow: rgba(34, 199, 255, 0.24);
+            --mobile-nav-active-violet-glow: rgba(91, 19, 255, 0.94);
+            --mobile-nav-active-cyan-glow: rgba(52, 110, 255, 0.3);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -551,8 +551,8 @@ export function GlobalMobileBottomNav() {
 
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon > svg {
             filter:
-              drop-shadow(0 0 3px var(--mobile-nav-active-violet-glow))
-              drop-shadow(0 0 7px var(--mobile-nav-active-cyan-glow));
+              drop-shadow(0 0 4px var(--mobile-nav-active-violet-glow))
+              drop-shadow(0 0 9px var(--mobile-nav-active-cyan-glow));
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {
