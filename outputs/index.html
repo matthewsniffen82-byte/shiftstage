@@ -2153,6 +2153,196 @@
       margin-top: 4px;
     }
 
+    .approved-profile-video-manager {
+      display: grid;
+      gap: 12px;
+      margin: 4px 0 16px;
+      padding: 14px;
+      border: 1px solid rgba(53,216,255,.24);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(9,12,18,.96), rgba(22,10,36,.9));
+      box-shadow: inset 0 0 24px rgba(139,92,246,.05), 0 14px 34px rgba(0,0,0,.28);
+    }
+
+    .approved-profile-video-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .approved-profile-video-head > div { display: grid; gap: 4px; }
+    .approved-profile-video-head strong { color: #fff; font-size: 17px; }
+    .approved-profile-video-head p { margin: 0; color: #b8acc9; font-size: 12px; line-height: 1.45; }
+    .approved-profile-video-count {
+      flex: 0 0 auto;
+      min-width: 52px;
+      padding: 7px 9px;
+      border: 1px solid rgba(53,216,255,.34);
+      border-radius: 999px;
+      color: #85ebff;
+      background: rgba(53,216,255,.08);
+      font-size: 12px;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .approved-profile-video-slots {
+      display: flex;
+      gap: 9px;
+      overflow-x: auto;
+      padding: 2px 2px 7px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+    }
+
+    .approved-profile-video-slot {
+      position: relative;
+      flex: 0 0 112px;
+      min-height: 178px;
+      display: grid;
+      grid-template-rows: 138px auto;
+      overflow: hidden;
+      scroll-snap-align: start;
+      border: 1px solid rgba(139,92,246,.32);
+      border-radius: 14px;
+      color: #f7f2ff;
+      background: rgba(4,4,8,.92);
+    }
+
+    .approved-profile-video-slot video {
+      width: 100%;
+      height: 138px;
+      display: block;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .approved-profile-video-slot-copy {
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      padding: 8px;
+    }
+
+    .approved-profile-video-slot-copy strong {
+      display: -webkit-box;
+      overflow: hidden;
+      color: #fff;
+      font-size: 11px;
+      line-height: 1.25;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .approved-profile-video-status {
+      width: fit-content;
+      color: #aeefff;
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .approved-profile-video-remove {
+      width: calc(100% - 12px);
+      min-height: 30px;
+      margin: 0 6px 7px;
+      border: 1px solid rgba(255,104,124,.34);
+      border-radius: 9px;
+      color: #ffc9d2;
+      background: rgba(72,9,24,.46);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .approved-profile-video-empty {
+      grid-template-rows: 1fr;
+      place-items: center;
+      min-height: 178px;
+      padding: 12px;
+      border-style: dashed;
+      color: #c7b9d9;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .approved-profile-video-empty span { color: #72e7ff; font-size: 34px; font-weight: 400; line-height: 1; }
+    .approved-profile-video-empty small { color: #b8acc9; font-size: 10px; font-weight: 850; }
+
+    .approved-profile-video-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .approved-profile-video-form > label {
+      min-width: 0;
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      color: #ded5ec;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .approved-profile-video-form > label:first-child,
+    .approved-profile-video-form .approved-profile-video-caption,
+    .approved-profile-video-form .approved-profile-video-check,
+    .approved-profile-video-form > button,
+    .approved-profile-video-preview { grid-column: 1 / -1; }
+
+    .approved-profile-video-form input[type="file"],
+    .approved-profile-video-form textarea,
+    .approved-profile-video-form select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 11px;
+      color: #fff;
+      background: rgba(255,255,255,.055);
+      padding: 10px;
+      font: inherit;
+    }
+
+    .approved-profile-video-form select option { color: #111; }
+    .approved-profile-video-form textarea { min-height: 82px; resize: vertical; }
+    .approved-profile-video-form small { color: #9e92b2; font-size: 10px; font-weight: 700; line-height: 1.4; }
+    .approved-profile-video-preview { width: min(230px, 100%); max-height: 360px; justify-self: center; border-radius: 12px; background: #000; }
+    .approved-profile-video-preview[hidden] { display: none; }
+    .approved-profile-video-check { grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
+    .approved-profile-video-check input { width: 18px; height: 18px; margin-top: 1px; }
+    .approved-profile-video-form > button {
+      min-height: 48px;
+      border: 1px solid rgba(53,216,255,.7);
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, rgba(0,155,198,.96), rgba(111,49,183,.96), rgba(218,27,146,.9));
+      box-shadow: 0 0 22px rgba(53,216,255,.15);
+      font-weight: 950;
+    }
+
+    .approved-profile-video-form > button:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; }
+    .approved-profile-video-message {
+      padding: 9px 10px;
+      border: 1px solid rgba(53,216,255,.2);
+      border-radius: 10px;
+      color: #b9effa;
+      background: rgba(53,216,255,.055);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .approved-profile-video-message.is-error { border-color: rgba(255,104,124,.38); color: #ffd0d8; background: rgba(92,12,28,.3); }
+    .approved-profile-video-message.is-success { border-color: rgba(60,255,167,.3); color: #baffd9; background: rgba(18,84,55,.25); }
+    .approved-profile-video-limit { margin: 0; color: #ddd2ed; font-size: 12px; line-height: 1.45; }
+
+    @media (max-width: 560px) {
+      .approved-profile-video-manager { margin-inline: -4px; padding: 12px 10px; }
+      .approved-profile-video-form { grid-template-columns: 1fr; }
+      .approved-profile-video-form > * { grid-column: 1 !important; }
+    }
+
     #approvedEditProfileDropdown.show {
       position: fixed;
       inset: 0;
@@ -33093,7 +33283,7 @@
             <div class="approval-tool-actions" id="dancerApprovedTopTools" aria-label="Approved dancer tools">
               <button type="button" data-dancer-control-action="edit-profile">
                 <strong>Edit profile</strong>
-                <span>Profile, photos, and socials</span>
+                <span>Profile, photos, videos, and socials</span>
               </button>
               <button type="button" data-dancer-control-action="post-schedule">
                 <strong>Post schedule</strong>
@@ -33102,10 +33292,6 @@
               <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
                 <strong>Go incognito</strong>
                 <span>Hide profile from site</span>
-              </button>
-              <button type="button" onclick="window.location.href='/dashboard/dancer/tv'">
-                <strong>MyDancr TV</strong>
-                <span>Post and manage videos</span>
               </button>
             </div>
             <p class="dancer-incognito-status" id="dancerIncognitoStatus" role="status" aria-live="polite"></p>
@@ -33244,7 +33430,7 @@
           <div class="approved-tool-launcher" aria-label="Approved dancer tools">
             <button type="button" data-dancer-control-action="edit-profile">
               <strong>Edit profile</strong>
-              <span>Stage name, city, venue, photos, and socials</span>
+              <span>Stage name, city, venue, photos, videos, and socials</span>
             </button>
             <button type="button" data-dancer-control-action="post-schedule">
               <strong>Post schedule</strong>
@@ -34312,8 +34498,15 @@
     let approvedPhotoEditMode = false;
     let approvedSocialEditMode = false;
     let activeApprovedToolDropdown = "";
+    let approvedProfileVideoWorkspace = null;
+    let approvedProfileVideoLoading = false;
+    let approvedProfileVideoSubmitting = false;
+    let approvedProfileVideoRemovingId = "";
+    let approvedProfileVideoStatus = "";
+    let approvedProfileVideoStatusTone = "";
     let shiftCheckInMessage = "";
     const MAX_DANCER_PROFILE_PHOTOS = 5;
+    const MAX_DANCER_PROFILE_VIDEOS = 5;
     console.log("PHOTO_NUMBERING_FIX_VERSION", "2026-07-13-v1");
 
     const stateByCity = {
@@ -40465,6 +40658,297 @@
       return photos.filter((photo) => photo.status === "rejected").length + socialFixes;
     }
 
+    function approvedProfileVideoStatusLabel(status = "") {
+      return ({
+        uploading: "Upload incomplete",
+        moderating: "Safety check",
+        submitted: "Under review",
+        approved: "Live",
+        rejected: "Not approved"
+      })[status] || status || "Saved";
+    }
+
+    function approvedProfileVideoManagerMarkup() {
+      const workspace = approvedProfileVideoWorkspace;
+      const videos = Array.isArray(workspace?.videos)
+        ? workspace.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS)
+        : [];
+      const atLimit = videos.length >= MAX_DANCER_PROFILE_VIDEOS;
+      const emptySlots = Math.max(0, MAX_DANCER_PROFILE_VIDEOS - videos.length);
+      const shifts = Array.isArray(workspace?.shifts) ? workspace.shifts : [];
+      const venues = Array.isArray(workspace?.venues) ? workspace.venues : [];
+      const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
+        ? "Loading your profile videos..."
+        : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
+      return `
+        <section class="approved-profile-video-manager" id="approvedProfileVideoManager" aria-labelledby="approvedProfileVideoTitle">
+          <div class="approved-profile-video-head">
+            <div>
+              <strong id="approvedProfileVideoTitle">Profile videos</strong>
+              <p>Upload up to five vertical videos here. Every video is checked before it can go live.</p>
+            </div>
+            <span class="approved-profile-video-count">${videos.length}/${MAX_DANCER_PROFILE_VIDEOS}</span>
+          </div>
+          <div class="approved-profile-video-slots" aria-label="Profile video slots">
+            ${videos.map((video, index) => `
+              <article class="approved-profile-video-slot">
+                ${video.videoUrl
+                  ? `<video src="${displayText(video.videoUrl)}" controls playsinline preload="metadata" aria-label="Profile video ${index + 1}"></video>`
+                  : '<div class="approved-profile-video-empty"><small>Video preview unavailable</small></div>'}
+                <div class="approved-profile-video-slot-copy">
+                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status))}</span>
+                  <strong title="${displayText(video.caption || "Profile video")}">${displayText(video.caption || "Profile video")}</strong>
+                </div>
+                <button class="approved-profile-video-remove" type="button" data-approved-profile-video-remove="${displayText(video.id)}" ${approvedProfileVideoRemovingId === video.id ? "disabled" : ""}>
+                  ${approvedProfileVideoRemovingId === video.id ? "Removing..." : "Remove"}
+                </button>
+              </article>
+            `).join("")}
+            ${Array.from({ length: emptySlots }, (_, index) => `
+              <button class="approved-profile-video-slot approved-profile-video-empty" type="button" data-approved-profile-video-add ${approvedProfileVideoLoading ? "disabled" : ""} aria-label="Upload profile video ${videos.length + index + 1}">
+                <span aria-hidden="true">+</span>
+                <small>Video ${videos.length + index + 1}</small>
+              </button>
+            `).join("")}
+          </div>
+          ${!workspace && approvedProfileVideoLoading ? "" : workspace && workspace.profileEligible === false
+            ? '<p class="approved-profile-video-limit">Your dancer profile must be approved before videos can be submitted.</p>'
+            : atLimit
+              ? '<p class="approved-profile-video-limit">All five video slots are filled. Remove a video above before uploading another.</p>'
+              : `
+                <form class="approved-profile-video-form" id="approvedProfileVideoUploadForm">
+                  <label>
+                    Video file
+                    <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm" required>
+                    <small>Vertical or square MP4/WebM · 1–10 seconds · 75 MB maximum</small>
+                  </label>
+                  <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline hidden></video>
+                  <label class="approved-profile-video-caption">
+                    Caption
+                    <textarea id="approvedProfileVideoCaption" maxlength="500" placeholder="Tell customers what this video is about." required></textarea>
+                    <small>Required · 500 characters maximum</small>
+                  </label>
+                  <label>
+                    Connect a posted shift
+                    <select id="approvedProfileVideoShift">
+                      <option value="">No shift attached</option>
+                      ${shifts.map((shift) => `<option value="${displayText(shift.id)}" data-venue-id="${displayText(shift.venueId || "")}">${displayText(shift.venueName || "Venue")} · ${displayText(new Date(shift.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</option>`).join("")}
+                    </select>
+                  </label>
+                  <label>
+                    Connect a venue
+                    <select id="approvedProfileVideoVenue">
+                      <option value="">No venue attached</option>
+                      ${venues.map((venue) => `<option value="${displayText(venue.id)}">${displayText(venue.name)}</option>`).join("")}
+                    </select>
+                    <small>A venue-only tag must be confirmed by that venue.</small>
+                  </label>
+                  <label class="approved-profile-video-check">
+                    <input id="approvedProfileVideoConsent" type="checkbox" required>
+                    <span>I have permission from every identifiable person shown.</span>
+                  </label>
+                  <label class="approved-profile-video-check">
+                    <input id="approvedProfileVideoRights" type="checkbox" required>
+                    <span>I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains.</span>
+                  </label>
+                  <button type="submit" ${approvedProfileVideoSubmitting ? "disabled" : ""}>
+                    ${approvedProfileVideoSubmitting ? "Uploading and checking..." : "Upload profile video"}
+                  </button>
+                </form>
+              `}
+          <div class="approved-profile-video-message ${approvedProfileVideoStatusTone ? `is-${approvedProfileVideoStatusTone}` : ""}" id="approvedProfileVideoStatus" role="status" aria-live="polite">${displayText(message)}</div>
+        </section>
+      `;
+    }
+
+    function renderApprovedProfileVideoManager() {
+      const current = document.getElementById("approvedProfileVideoManager");
+      if (!current) return;
+      const holder = document.createElement("div");
+      holder.innerHTML = approvedProfileVideoManagerMarkup();
+      current.replaceWith(holder.firstElementChild);
+    }
+
+    async function loadApprovedProfileVideos({ force = false } = {}) {
+      if (!isDancerSession() || approvedProfileVideoLoading) return approvedProfileVideoWorkspace;
+      if (approvedProfileVideoWorkspace && !force) return approvedProfileVideoWorkspace;
+      const headers = authenticatedRequestHeaders();
+      if (!headers) return null;
+      approvedProfileVideoLoading = true;
+      approvedProfileVideoStatus = "Loading your profile videos...";
+      approvedProfileVideoStatusTone = "";
+      renderApprovedProfileVideoManager();
+      try {
+        const response = await fetch("/api/dancer/tv/videos", { headers, cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) {
+          throw new Error(normalizeRequestError(data.error || data.message, "Unable to load profile videos."));
+        }
+        applyResponseSession(data);
+        approvedProfileVideoWorkspace = data;
+        approvedProfileVideoStatus = "";
+        approvedProfileVideoStatusTone = "";
+        return data;
+      } catch (error) {
+        approvedProfileVideoStatus = error?.message || "Unable to load profile videos.";
+        approvedProfileVideoStatusTone = "error";
+        return null;
+      } finally {
+        approvedProfileVideoLoading = false;
+        renderApprovedProfileVideoManager();
+      }
+    }
+
+    async function readApprovedProfileVideoMetadata(file) {
+      if (!["video/mp4", "video/webm"].includes(file?.type)) {
+        throw new Error("Upload an MP4 or WebM video.");
+      }
+      if (!Number.isSafeInteger(file.size) || file.size < 1 || file.size > 75 * 1024 * 1024) {
+        throw new Error("Video files must be 75 MB or smaller.");
+      }
+      const previewUrl = URL.createObjectURL(file);
+      try {
+        const metadata = await new Promise((resolve, reject) => {
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          video.onloadedmetadata = () => resolve({
+            duration: video.duration,
+            width: video.videoWidth,
+            height: video.videoHeight
+          });
+          video.onerror = () => reject(new Error("This video could not be read. Try a different MP4 or WebM file."));
+          video.src = previewUrl;
+        });
+        if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 10) {
+          throw new Error("Videos must be between 1 and 10 seconds.");
+        }
+        if (!Number.isSafeInteger(metadata.width) || metadata.width < 240 || metadata.height < metadata.width) {
+          throw new Error("Use a vertical or square video at least 240 pixels wide.");
+        }
+        return metadata;
+      } finally {
+        URL.revokeObjectURL(previewUrl);
+      }
+    }
+
+    async function submitApprovedProfileVideo(form) {
+      const headers = authenticatedRequestHeaders("application/json");
+      if (!headers) throw new Error("Sign in as a dancer to upload profile videos.");
+      const fileInput = form.querySelector("#approvedProfileVideoInput");
+      const file = fileInput?.files?.[0];
+      if (!file) throw new Error("Choose an MP4 or WebM video first.");
+      if ((approvedProfileVideoWorkspace?.videos?.length || 0) >= MAX_DANCER_PROFILE_VIDEOS) {
+        throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
+      }
+      const caption = form.querySelector("#approvedProfileVideoCaption")?.value?.trim() || "";
+      if (!caption) throw new Error("Add a caption before uploading.");
+      const consentConfirmed = form.querySelector("#approvedProfileVideoConsent")?.checked === true;
+      const rightsConfirmed = form.querySelector("#approvedProfileVideoRights")?.checked === true;
+      if (!consentConfirmed || !rightsConfirmed) {
+        throw new Error("Confirm consent and content rights before uploading.");
+      }
+      const metadata = await readApprovedProfileVideoMetadata(file);
+      const shiftId = form.querySelector("#approvedProfileVideoShift")?.value || null;
+      const venueId = shiftId ? null : form.querySelector("#approvedProfileVideoVenue")?.value || null;
+      let preparedVideoId = "";
+      let submissionStarted = false;
+      try {
+        const prepareResponse = await fetch("/api/dancer/tv/videos", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            caption,
+            mimeType: file.type,
+            fileSize: file.size,
+            durationSeconds: metadata.duration,
+            width: metadata.width,
+            height: metadata.height,
+            shiftId,
+            venueId,
+            consentConfirmed,
+            rightsConfirmed
+          })
+        });
+        const prepared = await prepareResponse.json().catch(() => ({}));
+        if (!prepareResponse.ok || prepared.ok === false || !prepared.upload?.uploadUrl) {
+          throw new Error(normalizeRequestError(prepared.error || prepared.message, "Unable to prepare the secure video upload."));
+        }
+        applyResponseSession(prepared);
+        preparedVideoId = prepared.upload.videoId;
+        approvedProfileVideoStatus = "Uploading securely...";
+        renderApprovedProfileVideoManager();
+
+        const storageBody = new FormData();
+        storageBody.append("cacheControl", "3600");
+        storageBody.append("", file);
+        const uploadResponse = await fetch(prepared.upload.uploadUrl, {
+          method: "PUT",
+          headers: { "x-upsert": "false" },
+          body: storageBody
+        });
+        if (!uploadResponse.ok) {
+          const uploadError = await uploadResponse.json().catch(() => ({}));
+          throw new Error(uploadError.message || uploadError.error || "Secure video upload failed.");
+        }
+
+        approvedProfileVideoStatus = "Running the complete-video safety check...";
+        renderApprovedProfileVideoManager();
+        submissionStarted = true;
+        const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ action: "submit" })
+        });
+        const submitted = await submitResponse.json().catch(() => ({}));
+        if (!submitResponse.ok || submitted.ok === false) {
+          throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
+        }
+        applyResponseSession(submitted);
+        const completionMessage = submitted.message || "Your video completed automated safety review.";
+        const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
+        fileInput.value = "";
+        form.reset();
+        const preview = document.getElementById("approvedProfileVideoPreview");
+        if (preview?.src) URL.revokeObjectURL(preview.src);
+        if (preview) {
+          preview.removeAttribute("src");
+          preview.load();
+          preview.hidden = true;
+        }
+        await loadApprovedProfileVideos({ force: true });
+        approvedProfileVideoStatus = completionMessage;
+        approvedProfileVideoStatusTone = completionTone;
+        renderApprovedProfileVideoManager();
+        showToast("Profile video saved");
+      } catch (error) {
+        if (preparedVideoId && !submissionStarted) {
+          fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
+            method: "DELETE",
+            headers: authenticatedRequestHeaders()
+          }).catch(() => {});
+        }
+        throw error;
+      }
+    }
+
+    async function removeApprovedProfileVideo(videoId) {
+      const headers = authenticatedRequestHeaders();
+      if (!headers) throw new Error("Sign in as a dancer to remove profile videos.");
+      const response = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(videoId)}`, {
+        method: "DELETE",
+        headers
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        throw new Error(normalizeRequestError(data.error || data.message, "Unable to remove the video."));
+      }
+      applyResponseSession(data);
+      await loadApprovedProfileVideos({ force: true });
+      approvedProfileVideoStatus = data.message || "Video removed.";
+      approvedProfileVideoStatusTone = "success";
+      renderApprovedProfileVideoManager();
+    }
+
     function approvedVisualProfileEditorMarkup(profile) {
       const photos = approvedVisualPhotoItems(profile);
       const selectedPhoto = photos.find((photo) => photo.target === activeApprovedVisualPhotoTarget || photo.id === activeApprovedVisualPhotoTarget) || photos[0];
@@ -40591,6 +41075,7 @@
                 <button type="button" data-approved-visual-photo-add="gallery-add">Add gallery photo</button>
               </div>
               <div class="meta" id="approvedPhotoUploadStatus" aria-live="polite">Choose a photo button to upload a new picture.</div>
+              ${approvedProfileVideoManagerMarkup()}
               ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity(), socialMarkup: approvedEditableSocialMarkup })}
               <div class="modal-actions">
                 <button class="approved-visual-save action-btn secondary" type="button" data-dancer-control-action="save-profile">
@@ -40611,6 +41096,9 @@
       if (!mount) return;
       const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       mount.innerHTML = approvedVisualProfileEditorMarkup(profile);
+      if (activeApprovedToolDropdown === "edit" && !approvedProfileVideoWorkspace && !approvedProfileVideoLoading) {
+        void loadApprovedProfileVideos();
+      }
     }
 
     function releaseEditProfileMobileFocus(trigger = null) {
@@ -49989,6 +50477,7 @@
         if (panel) panel.open = true;
         const willOpen = activeApprovedToolDropdown !== "edit";
         setApprovedToolDropdown("edit");
+        if (willOpen) void loadApprovedProfileVideos({ force: true });
         setResult(willOpen ? "Edit profile tools opened." : "Edit profile tools collapsed.");
         return;
       }
@@ -50102,6 +50591,24 @@
     }
 
     dancerDashboard.addEventListener("change", async (event) => {
+      if (event.target?.id === "approvedProfileVideoInput") {
+        const input = event.target;
+        const preview = document.getElementById("approvedProfileVideoPreview");
+        if (preview?.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+        const file = input.files?.[0];
+        if (preview && file) {
+          const objectUrl = URL.createObjectURL(file);
+          preview.dataset.objectUrl = objectUrl;
+          preview.src = objectUrl;
+          preview.hidden = false;
+        } else if (preview) {
+          preview.removeAttribute("src");
+          preview.hidden = true;
+        }
+        const status = document.getElementById("approvedProfileVideoStatus");
+        if (status) status.textContent = file ? "Add a caption and confirm both permissions, then upload." : "Choose a video file.";
+        return;
+      }
       if (event.target?.id !== "approvedPhotoUploadInput") return;
       const input = event.target;
       const file = input.files?.[0];
@@ -50147,6 +50654,34 @@
     });
 
     dancerDashboard.addEventListener("click", async (event) => {
+      const addProfileVideo = event.target.closest("[data-approved-profile-video-add]");
+      if (addProfileVideo) {
+        event.preventDefault();
+        document.getElementById("approvedProfileVideoInput")?.click();
+        return;
+      }
+      const removeProfileVideo = event.target.closest("[data-approved-profile-video-remove]");
+      if (removeProfileVideo) {
+        event.preventDefault();
+        const videoId = removeProfileVideo.dataset.approvedProfileVideoRemove || "";
+        if (!videoId || !window.confirm("Remove this video from your profile and MyDancr TV?")) return;
+        approvedProfileVideoRemovingId = videoId;
+        approvedProfileVideoStatus = "Removing video...";
+        approvedProfileVideoStatusTone = "";
+        renderApprovedProfileVideoManager();
+        try {
+          await removeApprovedProfileVideo(videoId);
+          showToast("Profile video removed");
+        } catch (error) {
+          approvedProfileVideoStatus = error?.message || "Unable to remove the video.";
+          approvedProfileVideoStatusTone = "error";
+          showToast(approvedProfileVideoStatus);
+        } finally {
+          approvedProfileVideoRemovingId = "";
+          renderApprovedProfileVideoManager();
+        }
+        return;
+      }
       const profileEditorClose = event.target.closest("[data-approved-profile-editor-close]");
       if (profileEditorClose) {
         event.preventDefault();
@@ -50446,6 +50981,14 @@
     });
 
     dancerDashboard.addEventListener("change", (event) => {
+      if (event.target?.id === "approvedProfileVideoShift") {
+        const venue = document.getElementById("approvedProfileVideoVenue");
+        if (venue) {
+          if (event.target.value) venue.value = "";
+          venue.disabled = Boolean(event.target.value);
+        }
+        return;
+      }
       if (event.target.closest("#shiftDate, #shiftStart, #shiftEnd")) {
         renderShiftDisplayPreview();
         return;
@@ -50456,6 +50999,30 @@
     });
 
     dancerDashboard.addEventListener("submit", async (event) => {
+      const profileVideoForm = event.target.closest("#approvedProfileVideoUploadForm");
+      if (profileVideoForm) {
+        event.preventDefault();
+        if (approvedProfileVideoSubmitting) return;
+        approvedProfileVideoSubmitting = true;
+        approvedProfileVideoStatus = "Checking your video...";
+        approvedProfileVideoStatusTone = "";
+        const submit = profileVideoForm.querySelector('button[type="submit"]');
+        if (submit) {
+          submit.disabled = true;
+          submit.textContent = "Uploading and checking...";
+        }
+        try {
+          await submitApprovedProfileVideo(profileVideoForm);
+        } catch (error) {
+          approvedProfileVideoStatus = error?.message || "Unable to upload the profile video.";
+          approvedProfileVideoStatusTone = "error";
+          showToast(approvedProfileVideoStatus);
+        } finally {
+          approvedProfileVideoSubmitting = false;
+          renderApprovedProfileVideoManager();
+        }
+        return;
+      }
       const shiftForm = event.target.closest("#shiftPostForm");
       if (shiftForm) {
         event.preventDefault();

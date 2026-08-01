@@ -13,6 +13,8 @@ type Workspace = {
   };
   profileEligible: boolean;
   profileVisible: boolean;
+  maxVideos: number;
+  remainingVideoSlots: number;
   videos: ManagedVideo[];
   shifts: Array<{
     id: string;
@@ -61,6 +63,9 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     () => workspace?.shifts.find((shift) => shift.id === shiftId) || null,
     [shiftId, workspace?.shifts],
   );
+  const maxVideos = workspace?.maxVideos || 5;
+  const currentVideoCount = workspace?.videos.length || 0;
+  const atVideoLimit = currentVideoCount >= maxVideos;
 
   useEffect(() => {
     loadWorkspace();
@@ -104,6 +109,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     event.preventDefault();
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in as a dancer to upload.");
+    if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
     if (!file) return setStatus("Choose an MP4 or WebM video first.");
     if (!caption.trim()) return setStatus("Add a caption before submitting.");
     if (!consentConfirmed || !rightsConfirmed) {
@@ -186,7 +192,11 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove video.");
       setWorkspace((current) => current
-        ? { ...current, videos: current.videos.filter((video) => video.id !== videoId) }
+        ? {
+          ...current,
+          videos: current.videos.filter((video) => video.id !== videoId),
+          remainingVideoSlots: Math.min(current.maxVideos, current.remainingVideoSlots + 1),
+        }
         : current);
       setStatus(data.message || "Video removed from MyDancr TV.");
     } catch (error) {
@@ -237,7 +247,14 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         </div>
       ) : null}
 
-      {workspace?.profileEligible ? (
+      {workspace?.profileEligible && atVideoLimit ? (
+        <div className="tv-studio-limit" role="status">
+          <strong>All {maxVideos} profile video slots are filled</strong>
+          <p>Remove a video below before uploading another.</p>
+        </div>
+      ) : null}
+
+      {workspace?.profileEligible && !atVideoLimit ? (
         <form className="tv-upload-form" onSubmit={submitVideo}>
           <label className="tv-file-picker">
             Video file
@@ -319,7 +336,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       <section className="tv-video-manager">
         <div className="tv-manager-title">
           <h3>My videos</h3>
-          <span>{workspace?.videos.length || 0}</span>
+          <span>{currentVideoCount}/{maxVideos}</span>
         </div>
         <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
@@ -456,9 +473,9 @@ function DancerTvStudioStyles() {
       .tv-shift-confirmation span { color: #a9dce8; font-size: 12px; }
       .tv-upload-form > button { min-height: 50px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
       .tv-upload-form > button:disabled { opacity: .65; cursor: wait; }
-      .tv-studio-status, .tv-studio-lock, .tv-studio-incognito { margin-top: 12px; padding: 12px 14px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; background: rgba(34,199,255,.07); color: #b5f1ff; line-height: 1.5; }
-      .tv-studio-lock, .tv-studio-incognito { display: grid; gap: 4px; }
-      .tv-studio-lock p, .tv-studio-incognito p { margin: 0; color: #cfc5de; }
+      .tv-studio-status, .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { margin-top: 12px; padding: 12px 14px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; background: rgba(34,199,255,.07); color: #b5f1ff; line-height: 1.5; }
+      .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { display: grid; gap: 4px; }
+      .tv-studio-lock p, .tv-studio-incognito p, .tv-studio-limit p { margin: 0; color: #cfc5de; }
       .tv-studio-incognito { border-color: rgba(255,200,90,.3); background: rgba(255,200,90,.07); color: #ffe19d; }
       .tv-video-manager { margin-top: 22px; display: grid; gap: 12px; }
       .tv-manager-title { display: flex; align-items: center; justify-content: space-between; }

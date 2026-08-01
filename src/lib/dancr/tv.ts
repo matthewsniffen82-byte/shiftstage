@@ -14,7 +14,16 @@ export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
 export const MYDANCR_TV_MAX_DURATION_SECONDS = 10;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
+export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = 5;
 export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm"]);
+
+const MYDANCR_TV_PROFILE_SLOT_STATUSES = [
+  "uploading",
+  "moderating",
+  "submitted",
+  "approved",
+  "rejected",
+] as const;
 
 export const MYDANCR_TV_FILTERS = new Set(["for-you", "following", "tonight", "new"]);
 export const MYDANCR_TV_EVENT_TYPES = new Set([
@@ -476,6 +485,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
         .from("mydancr_tv_videos")
         .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
         .eq("dancer_id", dancer.id)
+        .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
         .order("created_at", { ascending: false }),
       admin
         .from("shifts")
@@ -513,6 +523,8 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     },
     profileEligible: isPublicDancerProfileEligible(dancer),
     profileVisible: dancer.is_public !== false,
+    maxVideos: MYDANCR_TV_PROFILE_VIDEO_LIMIT,
+    remainingVideoSlots: Math.max(0, MYDANCR_TV_PROFILE_VIDEO_LIMIT - signedVideos.length),
     videos: signedVideos,
     shifts: (shifts || []).map((shift: any) => ({
       id: shift.id,
@@ -576,6 +588,16 @@ export async function createMyDancrTvUpload(
     throw new Error("Confirm consent and content rights before uploading.");
   }
 
+  const { count: activeVideoCount, error: countError } = await admin
+    .from("mydancr_tv_videos")
+    .select("id", { count: "exact", head: true })
+    .eq("dancer_id", dancer.id)
+    .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
+  if (countError) throw countError;
+  if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
+    throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
+  }
+
   const videoId = crypto.randomUUID();
   const extension = input.mimeType === "video/webm" ? "webm" : "mp4";
   const storagePath = `${userId}/${dancer.id}/${videoId}.${extension}`;
@@ -614,6 +636,7 @@ export async function createMyDancrTvUpload(
     videoId: video.id,
     path: upload.path || storagePath,
     token: upload.token,
+    uploadUrl: upload.signedUrl,
   };
 }
 
