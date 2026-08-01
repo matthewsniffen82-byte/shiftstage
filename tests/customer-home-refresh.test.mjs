@@ -44,5 +44,8 @@ test("saved customer queries support the deployed schema until is_public migrati
   assert.match(customerServiceSource, /relation: "follows"/);
   assert.match(customerServiceSource, /relation: "favorites"/);
   assert.match(customerServiceSource, /relation: "going_signals"/);
-  assert.match(customerServiceSource, /dancer_profiles\(id, slug, stage_name, city, status\)/);
+  assert.match(
+    customerServiceSource,
+    /dancer_profiles\(id, slug, stage_name, city, status, dancer_photos\(storage_path, is_primary, review_status, sort_order\)\)/,
+  );
 });

@@ -11,42 +11,83 @@ import VenueTvPanel from "./VenueTvPanel";
 type DashboardRole = "customer" | "dancer" | "venue";
 type CustomerDashboardSection = "offers" | "saved";
 
-type SavedDancerSummary = {
-  slug?: string | null;
-  stageName?: string | null;
-  city?: string | null;
+type SavedImageSummary = {
+  imageUrl?: string | null;
+  imageSrcSet?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
 };
 
-type SavedVenueSummary = {
+type SavedVenueSummary = SavedImageSummary & {
+  id?: string | null;
   slug?: string | null;
   name?: string | null;
   city?: string | null;
   state?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+type SavedShiftSummary = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  timezone?: string | null;
+  status: string;
+  locationStatus?: string | null;
+  checkedInAt?: string | null;
+  checkedOutAt?: string | null;
+  venue: SavedVenueSummary;
+};
+
+type SavedDancerSummary = SavedImageSummary & {
+  id?: string | null;
+  slug?: string | null;
+  stageName?: string | null;
+  city?: string | null;
+  nextShift?: SavedShiftSummary | null;
+};
+
+type CustomerGoingSignal = {
+  shiftId: string;
+  createdAt?: string | null;
+  shift?: (SavedShiftSummary & { dancer: SavedDancerSummary }) | null;
+};
+
+type CustomerSavedState = {
+  follows?: Array<{
+    dancerId?: string | null;
+    notificationsEnabled?: boolean;
+    dancer?: SavedDancerSummary | null;
+  }>;
+  favorites?: Array<{
+    dancerId?: string | null;
+    dancer?: SavedDancerSummary | null;
+  }>;
+  venueFollows?: Array<{
+    venueId?: string | null;
+    notificationsEnabled?: boolean;
+    venue?: SavedVenueSummary | null;
+  }>;
+  goingSignals?: CustomerGoingSignal[];
+  dealRedemptions?: Array<{
+    id: string;
+    redemptionToken: string;
+    sourceType: string;
+    status: string;
+    generatedAt: string;
+    expiresAt: string;
+    redeemedAt?: string | null;
+    venue?: { name?: string; slug?: string } | null;
+    deal?: { title?: string; terms?: string | null } | null;
+  }>;
 };
 
 type LoadState = {
   account?: { displayName?: string | null; email?: string | null; role?: string; accountState?: string } | null;
   profile?: Record<string, unknown> | null;
-  saved?: {
-    follows?: Array<{
-      notificationsEnabled?: boolean;
-      dancer?: SavedDancerSummary | null;
-    }>;
-    favorites?: Array<{ dancer?: SavedDancerSummary | null }>;
-    venueFollows?: Array<{ venue?: SavedVenueSummary | null }>;
-    goingSignals?: unknown[];
-    dealRedemptions?: Array<{
-      id: string;
-      redemptionToken: string;
-      sourceType: string;
-      status: string;
-      generatedAt: string;
-      expiresAt: string;
-      redeemedAt?: string | null;
-      venue?: { name?: string; slug?: string } | null;
-      deal?: { title?: string; terms?: string | null } | null;
-    }>;
-  } | null;
+  saved?: CustomerSavedState | null;
   analytics?: Record<string, unknown> | null;
   deals?: Record<string, unknown> | null;
   reviews?: Array<Record<string, unknown>>;
@@ -152,6 +193,10 @@ export default function DashboardClient({
     setState((current) => ({ ...current, profile }));
   }
 
+  function updateSaved(update: (saved: CustomerSavedState) => CustomerSavedState) {
+    setState((current) => ({ ...current, saved: update(current.saved || {}) }));
+  }
+
   const title = useMemo(() => {
     if (role === "dancer") return "Dancer dashboard";
     if (role === "venue") return "Venue dashboard";
@@ -163,39 +208,68 @@ export default function DashboardClient({
   return (
     <main className="dashboard-shell">
       <DashboardStyles />
-      <nav className="top-nav" aria-label="Primary">
+      <nav className={role === "customer" ? "top-nav customer-top-nav" : "top-nav"} aria-label="Primary">
         <Link className="brand" href="/">
-          Dancr
+          mydancr
         </Link>
-        <div className="nav-links">
-          <Link href={homeDiscoveryHref("tonight")}>Now</Link>
-          <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
-          <Link href={homeDiscoveryHref("venues")}>Venues</Link>
-          <Link href={homeDiscoveryHref("trending")}>Trending</Link>
-          <Link href="/tv">MyDancr TV</Link>
-          <Link href="/account">Account</Link>
-        </div>
+        {role === "customer" ? (
+          <Link className="dashboard-close" href={homeDiscoveryHref("tonight")} aria-label="Close customer dashboard and return to MyDancr">
+            ×
+          </Link>
+        ) : (
+          <div className="nav-links">
+            <Link href={homeDiscoveryHref("tonight")}>Now</Link>
+            <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
+            <Link href={homeDiscoveryHref("venues")}>Venues</Link>
+            <Link href={homeDiscoveryHref("trending")}>Trending</Link>
+            <Link href="/tv">MyDancr TV</Link>
+            <Link href="/account">Account</Link>
+          </div>
+        )}
       </nav>
 
-      <section className="dashboard-head">
-        <span className="eyebrow">Live account</span>
-        <h1>{title}</h1>
-        <p>{isLoading ? "Loading your live account..." : state.error ? state.error : `Welcome back, ${displayName}.`}</p>
+      <section className={role === "customer" ? "dashboard-head customer-dashboard-head" : "dashboard-head"}>
+        <span className="eyebrow">{role === "customer" ? "Your MyDancr" : "Live account"}</span>
+        <h1>{role === "customer" ? (isLoading ? "Your night" : `Welcome back, ${displayName}`) : title}</h1>
+        <p>{isLoading ? "Loading your live account..." : state.error ? state.error : role === "customer" ? "Your plans, saved profiles, Club Deals, and alerts in one place." : `Welcome back, ${displayName}.`}</p>
         {state.error ? <Link className="primary-link" href={`/account?role=${role}`}>Sign in</Link> : null}
       </section>
 
       {!state.error ? (
-        <section className="dashboard-grid">
-          <InfoPanel title="Account">
-            <Metric label="Status" value={String(state.account?.accountState || "active")} />
-            <Metric label="Email" value={String(state.account?.email || "Private")} />
-            <Metric label="Role" value={String(state.account?.role || role)} />
-          </InfoPanel>
-          <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
-          <NotificationPanel />
-          {role !== "venue" ? <SupportInboxPanel initialThreads={state.supportThreads || []} /> : null}
-
-          {role === "customer" ? <CustomerPanel saved={state.saved} profile={state.profile} /> : null}
+        <section className={role === "customer" ? "dashboard-grid customer-dashboard-grid" : "dashboard-grid"}>
+          {role === "customer" ? (
+            <>
+              <CustomerDashboardTabs />
+              <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={isLoading} />
+              <NotificationPanel saved={state.saved} customerMode />
+              <section className="customer-settings-section" id="customer-settings" tabIndex={-1}>
+                <div className="customer-section-heading">
+                  <span>Account and preferences</span>
+                  <h2>Settings</h2>
+                </div>
+                <div className="customer-settings-grid">
+                  <InfoPanel title="Account">
+                    <Metric label="Email" value={String(state.account?.email || "Private")} />
+                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
+                  </InfoPanel>
+                  <CustomerPreferencesPanel profile={state.profile} onProfileChange={updateProfile} />
+                  <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" />
+                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+                </div>
+              </section>
+            </>
+          ) : (
+            <>
+              <InfoPanel title="Account">
+                <Metric label="Status" value={String(state.account?.accountState || "active")} />
+                <Metric label="Email" value={String(state.account?.email || "Private")} />
+                <Metric label="Role" value={String(state.account?.role || role)} />
+              </InfoPanel>
+              <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+              <NotificationPanel />
+              {role !== "venue" ? <SupportInboxPanel initialThreads={state.supportThreads || []} /> : null}
+            </>
+          )}
           {role === "dancer" ? (
             <DancerPanel
               accountState={state.account?.accountState}
@@ -224,7 +298,25 @@ export default function DashboardClient({
   );
 }
 
-function NotificationPanel() {
+function CustomerDashboardTabs() {
+  return (
+    <nav className="customer-dashboard-tabs" aria-label="Customer dashboard sections">
+      <a href="#customer-tonight">Tonight</a>
+      <a href="#customer-saved">Saved</a>
+      <a href="#customer-offers">Deals</a>
+      <a href="#customer-alerts">Alerts</a>
+      <a href="#customer-settings">Settings</a>
+    </nav>
+  );
+}
+
+function NotificationPanel({
+  saved,
+  customerMode = false,
+}: {
+  saved?: LoadState["saved"];
+  customerMode?: boolean;
+} = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
   const [status, setStatus] = useState("");
 
@@ -302,37 +394,80 @@ function NotificationPanel() {
   const unreadCount = notifications.filter((item) => !item.readAt).length;
 
   return (
-    <article className="info-panel notification-panel">
-      <h2>Notifications</h2>
+    <article className="info-panel notification-panel" id={customerMode ? "customer-alerts" : undefined} tabIndex={customerMode ? -1 : undefined}>
+      <div className="notification-title-row">
+        <div>
+          {customerMode ? <span>Updates that matter</span> : null}
+          <h2>{customerMode ? "Alerts" : "Notifications"}</h2>
+        </div>
+        {customerMode ? <strong>{unreadCount}</strong> : null}
+      </div>
       <div className="notification-head">
         <Metric label="Unread" value={String(unreadCount)} />
-        <button type="button" onClick={markAllRead}>
+        <button type="button" onClick={markAllRead} disabled={!unreadCount}>
           Mark all read
         </button>
       </div>
       <div className="notification-list">
-        {notifications.slice(0, 6).map((notification) => (
-          <button
-            className={notification.readAt ? "notification-row read" : "notification-row"}
-            key={String(notification.id)}
-            type="button"
-            onClick={() => markRead(String(notification.id))}
-          >
-            <strong>{String(notification.title || "Notification")}</strong>
-            <span>{String(notification.body || "")}</span>
-          </button>
-        ))}
-        {!notifications.length ? <p>No notifications yet.</p> : null}
+        {notifications.slice(0, customerMode ? 10 : 6).map((notification) => {
+          const notificationId = String(notification.id);
+          const destination = customerMode ? customerNotificationHref(notification, saved) : "";
+          const content = (
+            <>
+              <span className="notification-row-meta">
+                <b>{notificationCategory(notification)}</b>
+                <time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time>
+              </span>
+              <strong>{String(notification.title || "Notification")}</strong>
+              <span>{String(notification.body || "")}</span>
+              {destination ? <em>Open details →</em> : null}
+            </>
+          );
+          return destination ? (
+            <Link
+              className={notification.readAt ? "notification-row read" : "notification-row"}
+              href={destination}
+              key={notificationId}
+              onClick={() => void markRead(notificationId)}
+            >
+              {content}
+            </Link>
+          ) : (
+            <button
+              className={notification.readAt ? "notification-row read" : "notification-row"}
+              key={notificationId}
+              type="button"
+              onClick={() => void markRead(notificationId)}
+            >
+              {content}
+            </button>
+          );
+        })}
+        {!notifications.length ? (
+          <div className="customer-empty-state compact">
+            <strong>No alerts yet</strong>
+            <p>Follow dancers and clubs to receive schedule and venue updates here.</p>
+            {customerMode ? <Link href={homeDiscoveryHref("dancers")}>Browse dancers</Link> : null}
+          </div>
+        ) : null}
       </div>
-      <button className="notification-clear-button" type="button" onClick={clearNotifications}>
-        Clear notifications
-      </button>
-      {status ? <p>{status}</p> : null}
+      {notifications.length ? (
+        <button className="notification-clear-button" type="button" onClick={clearNotifications}>
+          Clear notifications
+        </button>
+      ) : null}
+      {status ? <p role="status">{status}</p> : null}
     </article>
   );
 }
 
-function SupportInboxPanel({ initialThreads }: { initialThreads: Array<Record<string, unknown>> }) {
+function SupportInboxPanel({
+  initialThreads,
+  panelId,
+}: {
+  initialThreads: Array<Record<string, unknown>>;
+  panelId?: string;
+}) {
   const [threads, setThreads] = useState(initialThreads);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -397,7 +532,7 @@ function SupportInboxPanel({ initialThreads }: { initialThreads: Array<Record<st
   }
 
   return (
-    <article className="info-panel support-panel">
+    <article className="info-panel support-panel" id={panelId}>
       <h2>Contact Admin</h2>
       <form onSubmit={startThread}>
         <label>
@@ -539,30 +674,273 @@ function AccountControlsPanel({ accountState }: { accountState: string }) {
   );
 }
 
-function CustomerPanel({ saved, profile }: { saved?: LoadState["saved"]; profile?: LoadState["profile"] }) {
+function CustomerPanel({
+  isLoading,
+  onSavedChange,
+  saved,
+}: {
+  isLoading: boolean;
+  onSavedChange: (update: (saved: CustomerSavedState) => CustomerSavedState) => void;
+  saved?: LoadState["saved"];
+}) {
+  const [pendingAction, setPendingAction] = useState("");
+  const [actionStatus, setActionStatus] = useState("");
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState("");
+  const [isLocating, setIsLocating] = useState(false);
+
+  async function runCustomerAction(
+    actionKey: string,
+    path: string,
+    body: Record<string, unknown>,
+    apply: (current: CustomerSavedState) => CustomerSavedState,
+    successMessage: string,
+  ) {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setActionStatus("Sign in required.");
+      return;
+    }
+    setPendingAction(actionKey);
+    setActionStatus("");
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update your dashboard.");
+      onSavedChange(apply);
+      setActionStatus(successMessage);
+    } catch (error) {
+      setActionStatus(error instanceof Error ? error.message : "Unable to update your dashboard.");
+    } finally {
+      setPendingAction("");
+    }
+  }
+
+  function updateDancerFollow(dancerId: string, following: boolean, notificationsEnabled: boolean) {
+    return runCustomerAction(
+      `dancer-${dancerId}`,
+      "/api/customer/follows",
+      { dancerId, following, notificationsEnabled },
+      (current) => ({
+        ...current,
+        follows: following
+          ? (current.follows || []).map((item) => item.dancerId === dancerId ? { ...item, notificationsEnabled } : item)
+          : (current.follows || []).filter((item) => item.dancerId !== dancerId),
+      }),
+      following ? (notificationsEnabled ? "Dancer alerts turned on." : "Dancer alerts turned off.") : "Dancer unfollowed.",
+    );
+  }
+
+  function removeFavorite(dancerId: string) {
+    return runCustomerAction(
+      `favorite-${dancerId}`,
+      "/api/customer/favorites",
+      { dancerId, favorite: false },
+      (current) => ({
+        ...current,
+        favorites: (current.favorites || []).filter((item) => item.dancerId !== dancerId),
+      }),
+      "Favorite removed.",
+    );
+  }
+
+  function updateVenueFollow(venueId: string, following: boolean, notificationsEnabled: boolean) {
+    return runCustomerAction(
+      `venue-${venueId}`,
+      "/api/customer/venue-follows",
+      { venueId, following, notificationsEnabled },
+      (current) => ({
+        ...current,
+        venueFollows: following
+          ? (current.venueFollows || []).map((item) => item.venueId === venueId ? { ...item, notificationsEnabled } : item)
+          : (current.venueFollows || []).filter((item) => item.venueId !== venueId),
+      }),
+      following ? (notificationsEnabled ? "Club alerts turned on." : "Club alerts turned off.") : "Club unfollowed.",
+    );
+  }
+
+  function cancelGoing(shiftId: string) {
+    return runCustomerAction(
+      `going-${shiftId}`,
+      "/api/customer/going",
+      { shiftId, going: false },
+      (current) => ({
+        ...current,
+        goingSignals: (current.goingSignals || []).filter((item) => item.shiftId !== shiftId),
+      }),
+      "Removed from Your Night.",
+    );
+  }
+
+  async function openDirections(venue: SavedVenueSummary, dancerId?: string | null) {
+    const venueId = String(venue.id || "");
+    const session = readSession();
+    if (!venueId || !session?.accessToken) {
+      setActionStatus(session?.accessToken ? "Venue directions are unavailable." : "Sign in required.");
+      return;
+    }
+    setPendingAction(`directions-${venueId}`);
+    setActionStatus("");
+    try {
+      const response = await fetch("/api/customer/directions", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ venueId, dancerIds: dancerId ? [dancerId] : [] }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to open directions.");
+      window.location.assign(customerDirectionsHref(venue));
+    } catch (error) {
+      setActionStatus(error instanceof Error ? error.message : "Unable to open directions.");
+    } finally {
+      setPendingAction("");
+    }
+  }
+
+  function requestLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus("Location is not available in this browser.");
+      return;
+    }
+    setIsLocating(true);
+    setLocationStatus("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        setLocationStatus("Distances updated from your current location.");
+        setIsLocating(false);
+      },
+      () => {
+        setLocationStatus("Allow location access to show venue distances.");
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: false, maximumAge: 300_000, timeout: 10_000 },
+    );
+  }
+
   return (
     <>
-      <InfoPanel title="Preferences">
-        <Metric label="City" value={String(profile?.city || "Las Vegas")} />
-        <Metric label="Followed dancers" value={String(saved?.follows?.length || 0)} />
-        <Metric label="Favorite dancers" value={String(saved?.favorites?.length || 0)} />
-      </InfoPanel>
-      <InfoPanel title="Now">
-        <Metric label="Followed venues" value={String(saved?.venueFollows?.length || 0)} />
-        <Metric
-          label="Notifications"
-          value={String(saved?.follows?.filter((item) => item.notificationsEnabled).length || 0)}
-        />
-        <Metric label="Going" value={String(saved?.goingSignals?.length || 0)} />
-      </InfoPanel>
-      <CustomerSavedPanel saved={saved} />
+      {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
+      <CustomerNightPanel
+        isLoading={isLoading}
+        onCancelGoing={cancelGoing}
+        onDirections={openDirections}
+        pendingAction={pendingAction}
+        signals={saved?.goingSignals || []}
+      />
+      <CustomerSavedPanel
+        isLoading={isLoading}
+        isLocating={isLocating}
+        location={location}
+        locationStatus={locationStatus}
+        onDancerFollowChange={updateDancerFollow}
+        onDirections={openDirections}
+        onFavoriteRemove={removeFavorite}
+        onRequestLocation={requestLocation}
+        onVenueFollowChange={updateVenueFollow}
+        pendingAction={pendingAction}
+        saved={saved}
+      />
       <CustomerDealPassPanel deals={saved?.dealRedemptions || []} />
-      <CustomerPreferencesPanel profile={profile} />
     </>
   );
 }
 
-function CustomerSavedPanel({ saved }: { saved?: LoadState["saved"] }) {
+function CustomerNightPanel({
+  isLoading,
+  onCancelGoing,
+  onDirections,
+  pendingAction,
+  signals,
+}: {
+  isLoading: boolean;
+  onCancelGoing: (shiftId: string) => void;
+  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
+  pendingAction: string;
+  signals: CustomerGoingSignal[];
+}) {
+  const now = useCustomerMinuteClock();
+  const plans = signals
+    .filter((item) => item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now)
+    .sort((left, right) => new Date(left.shift?.startsAt || 0).getTime() - new Date(right.shift?.startsAt || 0).getTime());
+
+  return (
+    <article className="info-panel customer-night-panel" id="customer-tonight" tabIndex={-1}>
+      <div className="customer-section-heading split">
+        <div>
+          <span>Plans you confirmed</span>
+          <h2>Your Night</h2>
+        </div>
+        <strong>{plans.length}</strong>
+      </div>
+      <div className="customer-night-list">
+        {plans.map((item) => {
+          const shift = item.shift!;
+          const dancer = shift.dancer;
+          const venue = shift.venue;
+          return (
+            <article className="customer-night-card" key={item.shiftId}>
+              <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} />
+              <div className="customer-night-copy">
+                <span>{customerShiftLabel(shift)}</span>
+                <h3>{dancer.stageName || "Dancer"}</h3>
+                <p>{venue.name || "Venue"} · {[venue.city, venue.state].filter(Boolean).join(", ")}</p>
+                <div className="customer-card-actions">
+                  {dancer.slug ? <Link href={customerDancerHref(dancer)}>Profile</Link> : null}
+                  {venue.slug ? <Link href={customerVenueHref(venue)}>Venue</Link> : null}
+                  <button type="button" disabled={Boolean(pendingAction)} onClick={() => void onDirections(venue, dancer.id)}>
+                    Directions
+                  </button>
+                  <button className="customer-text-action" type="button" disabled={Boolean(pendingAction)} onClick={() => void onCancelGoing(item.shiftId)}>
+                    Cancel Going
+                  </button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+        {!plans.length && !isLoading ? (
+          <div className="customer-empty-state">
+            <strong>No plans yet</strong>
+            <p>Choose I’m Going on a dancer’s next shift and it will appear here with the venue and directions.</p>
+            <Link href={homeDiscoveryHref("dancers")}>Find dancers</Link>
+          </div>
+        ) : null}
+        {isLoading ? <div className="customer-loading-state">Loading your plans…</div> : null}
+      </div>
+    </article>
+  );
+}
+
+function CustomerSavedPanel({
+  isLoading,
+  isLocating,
+  location,
+  locationStatus,
+  onDancerFollowChange,
+  onDirections,
+  onFavoriteRemove,
+  onRequestLocation,
+  onVenueFollowChange,
+  pendingAction,
+  saved,
+}: {
+  isLoading: boolean;
+  isLocating: boolean;
+  location: { latitude: number; longitude: number } | null;
+  locationStatus: string;
+  onDancerFollowChange: (dancerId: string, following: boolean, notificationsEnabled: boolean) => void;
+  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
+  onFavoriteRemove: (dancerId: string) => void;
+  onRequestLocation: () => void;
+  onVenueFollowChange: (venueId: string, following: boolean, notificationsEnabled: boolean) => void;
+  pendingAction: string;
+  saved?: LoadState["saved"];
+}) {
   const followedDancers = saved?.follows || [];
   const favoriteDancers = saved?.favorites || [];
   const followedVenues = saved?.venueFollows || [];
@@ -574,57 +952,76 @@ function CustomerSavedPanel({ saved }: { saved?: LoadState["saved"] }) {
       tabIndex={-1}
     >
       <div className="customer-saved-head">
-        <span>Live account data</span>
-        <h2>Saved</h2>
+        <div>
+          <span>People and clubs you chose</span>
+          <h2>Saved</h2>
+        </div>
+        <button type="button" onClick={onRequestLocation} disabled={isLocating}>
+          {isLocating ? "Finding you…" : location ? "Refresh distance" : "Show distance"}
+        </button>
       </div>
+      {locationStatus ? <p className="customer-location-status" role="status">{locationStatus}</p> : null}
       <div className="customer-saved-grid">
         <SavedLinkGroup title="Following">
           {followedDancers.map((item, index) => {
             const dancer = item.dancer;
-            if (!dancer?.slug || !dancer.stageName) return null;
+            const dancerId = String(item.dancerId || dancer?.id || "");
+            if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
             return (
-              <Link href={`/dancers/${encodeURIComponent(dancer.slug)}`} key={`${dancer.slug}-${index}`}>
-                <strong>{dancer.stageName}</strong>
-                <small>
-                  {dancer.city || "City unavailable"}
-                  {item.notificationsEnabled ? " · Alerts on" : ""}
-                </small>
-              </Link>
+              <SavedDancerCard
+                dancer={dancer}
+                distance={customerVenueDistance(location, dancer.nextShift?.venue)}
+                key={`${dancer.slug}-${index}`}
+                onDirections={onDirections}
+                onFollowChange={(following, notificationsEnabled) => void onDancerFollowChange(dancerId, following, notificationsEnabled)}
+                pending={Boolean(pendingAction)}
+                notificationsEnabled={Boolean(item.notificationsEnabled)}
+                variant="following"
+              />
             );
           })}
-          {!followedDancers.length ? <p>No followed dancers yet.</p> : null}
+          {!followedDancers.length && !isLoading ? <CustomerSavedEmpty label="No followed dancers yet" href={homeDiscoveryHref("dancers")} cta="Browse dancers" /> : null}
         </SavedLinkGroup>
         <SavedLinkGroup title="Favorites">
           {favoriteDancers.map((item, index) => {
             const dancer = item.dancer;
-            if (!dancer?.slug || !dancer.stageName) return null;
+            const dancerId = String(item.dancerId || dancer?.id || "");
+            if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
             return (
-              <Link href={`/dancers/${encodeURIComponent(dancer.slug)}`} key={`${dancer.slug}-${index}`}>
-                <strong>{dancer.stageName}</strong>
-                <small>{dancer.city || "City unavailable"}</small>
-              </Link>
+              <SavedDancerCard
+                dancer={dancer}
+                distance={customerVenueDistance(location, dancer.nextShift?.venue)}
+                key={`${dancer.slug}-${index}`}
+                onDirections={onDirections}
+                onFavoriteRemove={() => void onFavoriteRemove(dancerId)}
+                pending={Boolean(pendingAction)}
+                variant="favorite"
+              />
             );
           })}
-          {!favoriteDancers.length ? <p>No favorite dancers yet.</p> : null}
+          {!favoriteDancers.length && !isLoading ? <CustomerSavedEmpty label="No favorite dancers yet" href={homeDiscoveryHref("dancers")} cta="Find favorites" /> : null}
         </SavedLinkGroup>
         <SavedLinkGroup title="Clubs">
           {followedVenues.map((item, index) => {
             const venue = item.venue;
-            if (!venue?.slug || !venue.name) return null;
-            const location = [venue.city, venue.state].filter(Boolean).join(", ");
+            const venueId = String(item.venueId || venue?.id || "");
+            if (!venue?.slug || !venue.name || !venueId) return null;
             return (
-              <Link
-                href={`/venues/${encodeURIComponent(venue.slug)}`}
+              <SavedVenueCard
+                distance={customerVenueDistance(location, venue)}
                 key={`${venue.slug}-${index}`}
-              >
-                <strong>{venue.name}</strong>
-                <small>{location || "Location unavailable"}</small>
-              </Link>
+                notificationsEnabled={Boolean(item.notificationsEnabled)}
+                onDirections={onDirections}
+                onFollowChange={(following, notificationsEnabled) => void onVenueFollowChange(venueId, following, notificationsEnabled)}
+                pending={Boolean(pendingAction)}
+                venue={venue}
+              />
             );
           })}
-          {!followedVenues.length ? <p>No followed clubs yet.</p> : null}
+          {!followedVenues.length && !isLoading ? <CustomerSavedEmpty label="No followed clubs yet" href={homeDiscoveryHref("venues")} cta="Browse clubs" /> : null}
         </SavedLinkGroup>
       </div>
+      {isLoading ? <div className="customer-loading-state">Loading your saved profiles…</div> : null}
     </article>
   );
 }
@@ -638,11 +1035,130 @@ function SavedLinkGroup({ title, children }: { title: string; children: React.Re
   );
 }
 
+function SavedDancerCard({
+  dancer,
+  distance,
+  notificationsEnabled = false,
+  onDirections,
+  onFavoriteRemove,
+  onFollowChange,
+  pending,
+  variant,
+}: {
+  dancer: SavedDancerSummary;
+  distance: string;
+  notificationsEnabled?: boolean;
+  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
+  onFavoriteRemove?: () => void;
+  onFollowChange?: (following: boolean, notificationsEnabled: boolean) => void;
+  pending: boolean;
+  variant: "following" | "favorite";
+}) {
+  const shift = dancer.nextShift;
+  return (
+    <article className="customer-saved-card">
+      <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} />
+      <div className="customer-saved-card-copy">
+        <span>{shift ? customerShiftLabel(shift) : "No upcoming shift"}</span>
+        <Link href={customerDancerHref(dancer)}><strong>{dancer.stageName}</strong></Link>
+        <small>
+          {shift?.venue.name || dancer.city || "City unavailable"}
+          {distance ? ` · ${distance}` : ""}
+        </small>
+        <div className="customer-card-actions">
+          <Link href={customerDancerHref(dancer)}>Profile</Link>
+          {shift?.venue.id ? <button type="button" disabled={pending} onClick={() => void onDirections(shift.venue, dancer.id)}>Directions</button> : null}
+          {variant === "following" && onFollowChange ? (
+            <>
+              <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
+                {notificationsEnabled ? "Alerts on" : "Alerts off"}
+              </button>
+              <button className="customer-text-action" type="button" disabled={pending} onClick={() => onFollowChange(false, false)}>Unfollow</button>
+            </>
+          ) : null}
+          {variant === "favorite" && onFavoriteRemove ? (
+            <button className="customer-text-action" type="button" disabled={pending} onClick={onFavoriteRemove}>Remove favorite</button>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function SavedVenueCard({
+  distance,
+  notificationsEnabled,
+  onDirections,
+  onFollowChange,
+  pending,
+  venue,
+}: {
+  distance: string;
+  notificationsEnabled: boolean;
+  onDirections: (venue: SavedVenueSummary) => void;
+  onFollowChange: (following: boolean, notificationsEnabled: boolean) => void;
+  pending: boolean;
+  venue: SavedVenueSummary;
+}) {
+  return (
+    <article className="customer-saved-card">
+      <SavedCardImage image={venue} name={String(venue.name || "Club")} />
+      <div className="customer-saved-card-copy">
+        <span>Followed club</span>
+        <Link href={customerVenueHref(venue)}><strong>{venue.name}</strong></Link>
+        <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}{distance ? ` · ${distance}` : ""}</small>
+        <div className="customer-card-actions">
+          <Link href={customerVenueHref(venue)}>Profile</Link>
+          <button type="button" disabled={pending} onClick={() => void onDirections(venue)}>Directions</button>
+          <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
+            {notificationsEnabled ? "Alerts on" : "Alerts off"}
+          </button>
+          <button className="customer-text-action" type="button" disabled={pending} onClick={() => onFollowChange(false, false)}>Unfollow</button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function SavedCardImage({ image, name }: { image: SavedImageSummary; name: string }) {
+  if (image.imageUrl) {
+    return (
+      <img
+        className="customer-saved-card-image"
+        src={image.imageUrl}
+        srcSet={image.imageSrcSet || undefined}
+        sizes="(max-width: 860px) calc(100vw - 72px), (max-width: 1200px) 30vw, 340px"
+        width={image.imageWidth || undefined}
+        height={image.imageHeight || undefined}
+        alt=""
+      />
+    );
+  }
+  return <span className="customer-saved-card-image fallback" aria-hidden="true">{customerInitials(name)}</span>;
+}
+
+function CustomerSavedEmpty({ cta, href, label }: { cta: string; href: string; label: string }) {
+  return (
+    <div className="customer-empty-state compact">
+      <strong>{label}</strong>
+      <Link href={href}>{cta}</Link>
+    </div>
+  );
+}
+
 function CustomerDealPassPanel({
   deals,
 }: {
   deals: NonNullable<NonNullable<LoadState["saved"]>["dealRedemptions"]>;
 }) {
+  const now = useCustomerMinuteClock();
+  const activeDeals = deals
+    .filter((item) => item.status === "generated" && new Date(item.expiresAt).getTime() > now)
+    .sort((left, right) => new Date(left.expiresAt).getTime() - new Date(right.expiresAt).getTime());
+  const pastDeals = deals
+    .filter((item) => !activeDeals.some((active) => active.id === item.id))
+    .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
+
   return (
     <article className="info-panel saved-deal-panel" id="customer-offers" tabIndex={-1}>
       <div className="saved-deal-head">
@@ -650,28 +1166,47 @@ function CustomerDealPassPanel({
           <span>Saved QR wallet</span>
           <h2>Club Deals</h2>
         </div>
-        <strong>{deals.length}</strong>
+        <strong>{activeDeals.length}</strong>
       </div>
       <div className="saved-deal-list">
-        {deals.map((item) => {
-          const expired = new Date(item.expiresAt).getTime() <= Date.now();
-          const available = item.status === "generated" && !expired;
-          return (
-            <Link
-              className={available ? "saved-deal-item" : "saved-deal-item unavailable"}
-              href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}
-              key={item.id}
-            >
-              <span>
-                <strong>{item.deal?.title || "Club Deal"}</strong>
-                <small>{item.venue?.name || "Venue"} · {dealPassStatus(item.status, expired)}</small>
-              </span>
-              <em>{available ? "Open QR" : "View"}</em>
-            </Link>
-          );
-        })}
-        {!deals.length ? (
-          <p>Get a Club Deal from a venue page or a verified Working Now dancer to save its QR here.</p>
+        {activeDeals.map((item) => (
+          <Link
+            className="saved-deal-item"
+            href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}
+            key={item.id}
+          >
+            <span>
+              <strong>{item.deal?.title || "Club Deal"}</strong>
+              <small>{item.venue?.name || "Venue"} · {dealExpiryLabel(item.expiresAt, now)}</small>
+            </span>
+            <em>Open QR</em>
+          </Link>
+        ))}
+        {!activeDeals.length ? (
+          <div className="customer-empty-state">
+            <strong>No active Club Deals</strong>
+            <p>Get a Club Deal from a venue page or a verified Working Now dancer and its QR will stay here until it expires.</p>
+            <Link href={homeDiscoveryHref("venues")}>Browse venues</Link>
+          </div>
+        ) : null}
+        {pastDeals.length ? (
+          <details className="past-deal-history">
+            <summary>Past deals <span>{pastDeals.length}</span></summary>
+            <div>
+              {pastDeals.map((item) => {
+                const expired = new Date(item.expiresAt).getTime() <= now;
+                return (
+                  <Link className="saved-deal-item unavailable" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
+                    <span>
+                      <strong>{item.deal?.title || "Club Deal"}</strong>
+                      <small>{item.venue?.name || "Venue"} · {dealPassStatus(item.status, expired)}</small>
+                    </span>
+                    <em>View</em>
+                  </Link>
+                );
+              })}
+            </div>
+          </details>
         ) : null}
       </div>
     </article>
@@ -683,6 +1218,142 @@ function dealPassStatus(status: string, expired: boolean) {
   if (status === "voided") return "Ended";
   if (status === "expired" || expired) return "Expired";
   return "Ready";
+}
+
+function useCustomerMinuteClock() {
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return now;
+}
+
+function dealExpiryLabel(expiresAt: string, now: number) {
+  const remainingMinutes = Math.max(0, Math.ceil((new Date(expiresAt).getTime() - now) / 60_000));
+  if (remainingMinutes < 60) return `Expires in ${remainingMinutes} min`;
+  const hours = Math.floor(remainingMinutes / 60);
+  const minutes = remainingMinutes % 60;
+  if (hours < 24) return `Expires in ${hours}h${minutes ? ` ${minutes}m` : ""}`;
+  const days = Math.ceil(hours / 24);
+  return `Expires in ${days} day${days === 1 ? "" : "s"}`;
+}
+
+function customerShiftLabel(shift: Pick<SavedShiftSummary, "startsAt" | "endsAt" | "timezone" | "checkedInAt" | "checkedOutAt">) {
+  const now = Date.now();
+  const startsAt = new Date(shift.startsAt).getTime();
+  const endsAt = new Date(shift.endsAt).getTime();
+  if (shift.checkedInAt && !shift.checkedOutAt && startsAt <= now && endsAt > now) return "Working now";
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: shift.timezone || undefined,
+    }).format(new Date(shift.startsAt));
+  } catch {
+    return new Date(shift.startsAt).toLocaleString();
+  }
+}
+
+function customerDancerHref(dancer: SavedDancerSummary) {
+  const city = String(dancer.city || "Las Vegas");
+  const slug = String(dancer.slug || "");
+  return `/?city=${encodeURIComponent(city)}&profile=${encodeURIComponent(slug)}`;
+}
+
+function customerVenueHref(venue: SavedVenueSummary) {
+  const city = String(venue.city || "Las Vegas");
+  const slug = String(venue.slug || "");
+  return `/?city=${encodeURIComponent(city)}&venue=${encodeURIComponent(slug)}`;
+}
+
+function customerDirectionsHref(venue: SavedVenueSummary) {
+  const latitude = Number(venue.latitude);
+  const longitude = Number(venue.longitude);
+  const query = Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? `${latitude},${longitude}`
+    : [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function customerVenueDistance(
+  location: { latitude: number; longitude: number } | null,
+  venue?: SavedVenueSummary | null,
+) {
+  if (!location || !venue) return "";
+  const venueLatitude = Number(venue.latitude);
+  const venueLongitude = Number(venue.longitude);
+  if (!Number.isFinite(venueLatitude) || !Number.isFinite(venueLongitude)) return "";
+  const toRadians = (degrees: number) => degrees * Math.PI / 180;
+  const latitudeDelta = toRadians(venueLatitude - location.latitude);
+  const longitudeDelta = toRadians(venueLongitude - location.longitude);
+  const startLatitude = toRadians(location.latitude);
+  const endLatitude = toRadians(venueLatitude);
+  const haversine = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(startLatitude) * Math.cos(endLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+  const miles = 3958.8 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  return `${miles < 10 ? miles.toFixed(1) : Math.round(miles)} mi`;
+}
+
+function customerInitials(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "M";
+}
+
+function customerNotificationHref(notification: Record<string, unknown>, saved?: LoadState["saved"]) {
+  const payload = notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
+    ? notification.payload as Record<string, unknown>
+    : {};
+  if (payload.threadId || notification.type === "support_message") return "/dashboard/customer#customer-support";
+
+  const dancerId = String(payload.dancerId || "");
+  if (dancerId) {
+    const dancer = [
+      ...(saved?.follows || []).map((item) => item.dancer),
+      ...(saved?.favorites || []).map((item) => item.dancer),
+      ...(saved?.goingSignals || []).map((item) => item.shift?.dancer),
+    ].find((item) => String(item?.id || "") === dancerId);
+    if (dancer?.slug) return customerDancerHref(dancer);
+  }
+
+  const venueId = String(payload.venueId || "");
+  if (venueId) {
+    const venue = [
+      ...(saved?.venueFollows || []).map((item) => item.venue),
+      ...(saved?.goingSignals || []).map((item) => item.shift?.venue),
+    ].find((item) => String(item?.id || "") === venueId);
+    if (venue?.slug) return customerVenueHref(venue);
+  }
+  return "";
+}
+
+function notificationCategory(notification: Record<string, unknown>) {
+  const type = String(notification.type || "");
+  if (type.includes("shift")) return "Schedule";
+  if (type.includes("support")) return "Support";
+  if (type.includes("venue") || type.includes("club")) return "Club";
+  if (type.includes("deal")) return "Club Deal";
+  return "MyDancr";
+}
+
+function formatNotificationTimestamp(value: unknown) {
+  const date = new Date(String(value || ""));
+  if (Number.isNaN(date.getTime())) return "Recent";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function VenuePanel({
@@ -1168,7 +1839,13 @@ function venueFieldLabel(key: string) {
   return ({ name: "Venue name", city: "City", state: "State", address: "Address", phone: "Phone", website: "Website" } as Record<string, string>)[key] || key;
 }
 
-function CustomerPreferencesPanel({ profile }: { profile?: LoadState["profile"] }) {
+function CustomerPreferencesPanel({
+  onProfileChange,
+  profile,
+}: {
+  onProfileChange?: (profile: Record<string, unknown> | null | undefined) => void;
+  profile?: LoadState["profile"];
+}) {
   const [city, setCity] = useState("Las Vegas");
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState("");
@@ -1206,6 +1883,7 @@ function CustomerPreferencesPanel({ profile }: { profile?: LoadState["profile"] 
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to save preferences.");
+      onProfileChange?.(data.profile);
       setStatus("Preferences saved.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save preferences.");
@@ -2953,14 +3631,25 @@ function DashboardStyles() {
       .top-nav, .dashboard-head, .dashboard-grid { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .top-nav { margin-bottom: 42px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #cfc5de; }
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .customer-top-nav { margin-bottom: 24px; }
+      .customer-top-nav .brand { min-height: 44px; display: inline-flex; align-items: center; padding: 0 16px; border: 1px solid rgba(139,92,246,.38); border-radius: 14px; background: rgba(7,7,11,.76); letter-spacing: -.03em; text-transform: lowercase; }
+      .dashboard-close { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: #fff; background: rgba(255,255,255,.06); font-size: 28px; line-height: 1; text-decoration: none; }
+      .dashboard-close:focus-visible, .customer-dashboard-tabs a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
       .nav-links a, .primary-link { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); font-weight: 850; }
       .dashboard-head { display: grid; gap: 14px; margin-bottom: 24px; }
+      .customer-dashboard-head { gap: 9px; margin-bottom: 18px; }
+      .customer-dashboard-head h1 { max-width: 900px; font-size: clamp(34px, 6vw, 62px); line-height: 1; }
+      .customer-dashboard-head p { font-size: clamp(15px, 2.4vw, 18px); }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; font-size: clamp(40px, 7vw, 76px); line-height: .94; letter-spacing: 0; }
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .customer-dashboard-tabs { position: sticky; z-index: 20; top: max(8px, env(safe-area-inset-top)); grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
+      .customer-dashboard-tabs a { min-width: 0; min-height: 42px; display: grid; place-items: center; padding: 0 8px; border-radius: 11px; color: #d8cfeb; font-size: 13px; font-weight: 900; text-align: center; text-decoration: none; }
+      .customer-dashboard-tabs a:hover { color: #fff; background: rgba(126,234,255,.08); }
+      .customer-action-status { grid-column: 1 / -1; max-width: none; padding: 11px 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 10px; color: #aaf2ff; background: rgba(11,87,110,.16); font-size: 14px; }
       .info-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
@@ -3049,10 +3738,18 @@ function DashboardStyles() {
       .account-actions p { color: #94e5ff; font-size: 14px; }
       .notification-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
       .notification-head button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
+      .notification-head button:disabled, .notification-clear-button:disabled { opacity: .55; cursor: not-allowed; }
+      .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
+      .notification-title-row > div { display: grid; gap: 4px; }
       .notification-list { display: grid; gap: 10px; }
-      .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; }
+      .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; text-decoration: none; }
+      .notification-row:hover { border-color: rgba(126,234,255,.25); background: rgba(126,234,255,.06); }
       .notification-row.read { opacity: .58; }
       .notification-row span { color: #b9accd; }
+      .notification-row .notification-row-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #7eeaff; font-size: 11px; }
+      .notification-row-meta b { letter-spacing: .08em; text-transform: uppercase; }
+      .notification-row-meta time { color: #a99fba; font-variant-numeric: tabular-nums; }
+      .notification-row em { color: #7eeaff; font-size: 11px; font-style: normal; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
       .notification-clear-button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 14px; }
       .notification-panel p { color: #94e5ff; font-size: 14px; }
       .support-panel form, .support-thread { display: grid; gap: 10px; }
@@ -3072,20 +3769,46 @@ function DashboardStyles() {
       .support-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
       .support-message p, .support-panel p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
-      .customer-saved-panel { grid-column: span 3; scroll-margin-top: 20px; }
-      .customer-saved-panel:focus, .saved-deal-panel:focus { outline: 2px solid rgba(126,234,255,.72); outline-offset: 4px; }
-      .customer-saved-head { display: grid; gap: 4px !important; }
-      .customer-saved-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .customer-night-panel, .customer-saved-panel, .saved-deal-panel, .customer-dashboard-grid > .notification-panel, .customer-settings-section { grid-column: 1 / -1; scroll-margin-top: 82px; }
+      .customer-night-panel:focus, .customer-saved-panel:focus, .saved-deal-panel:focus, .customer-dashboard-grid > .notification-panel:focus, .customer-settings-section:focus { outline: 2px solid rgba(126,234,255,.72); outline-offset: 4px; }
+      .customer-section-heading { display: grid; gap: 4px; }
+      .customer-section-heading > span, .customer-section-heading > div > span, .customer-saved-head span, .notification-title-row > div > span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .customer-section-heading h2, .customer-saved-head h2, .notification-title-row h2 { margin: 0; }
+      .customer-section-heading.split { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+      .customer-section-heading.split > div { display: grid; gap: 4px; }
+      .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .customer-night-list { display: grid; gap: 12px !important; }
+      .customer-night-card { min-width: 0; display: grid; grid-template-columns: 132px minmax(0, 1fr); overflow: hidden; border: 1px solid rgba(126,234,255,.18); border-radius: 14px; background: linear-gradient(135deg, rgba(109,40,217,.14), rgba(34,199,255,.05)); }
+      .customer-night-card > .customer-saved-card-image { width: 132px; height: 100%; min-height: 172px; border-radius: 0; }
+      .customer-night-copy { min-width: 0; display: grid; align-content: center; gap: 7px; padding: 16px; }
+      .customer-night-copy > span, .customer-saved-card-copy > span { color: #8deeff; font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .customer-night-copy h3 { margin: 0; color: #fff; font-size: 24px; }
+      .customer-night-copy p { color: #cfc5de; font-size: 14px; }
+      .customer-saved-head { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
+      .customer-saved-head > div { display: grid; gap: 4px; }
+      .customer-saved-head > button { min-height: 42px; padding: 0 13px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #fff; background: rgba(126,234,255,.08); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+      .customer-saved-head > button:disabled { opacity: .6; cursor: wait; }
+      .customer-location-status { max-width: none; color: #aaf2ff; font-size: 13px; }
       .customer-saved-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px !important; }
       .customer-saved-group { min-width: 0; display: grid; align-content: start; gap: 10px; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.035); }
       .customer-saved-group h3 { margin: 0; color: #fff; font-size: 15px; }
       .customer-saved-group > div { display: grid; gap: 8px; }
-      .customer-saved-group a { min-width: 0; display: grid; gap: 3px; padding: 9px 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 8px; color: #fff; background: rgba(126,234,255,.06); text-decoration: none; }
-      .customer-saved-group a strong, .customer-saved-group a small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .customer-saved-group a small { color: #b9accd; font-size: 12px; }
-      .customer-saved-group p { color: #b9accd; font-size: 14px; }
-      .saved-deal-panel { grid-column: span 2; }
-      .saved-deal-panel { scroll-margin-top: 20px; }
+      .customer-saved-card { min-width: 0; overflow: hidden; border: 1px solid rgba(126,234,255,.16); border-radius: 12px; background: rgba(5,5,9,.7); }
+      .customer-saved-card-image { width: 100%; height: 148px; display: grid; place-items: center; object-fit: cover; background: linear-gradient(145deg, #201338, #091927); color: #fff; font-size: 24px; font-weight: 950; }
+      .customer-saved-card-copy { min-width: 0; display: grid; gap: 6px; padding: 12px; }
+      .customer-saved-card-copy > a { min-width: 0; color: #fff; text-decoration: none; }
+      .customer-saved-card-copy > a strong { display: block; overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+      .customer-saved-card-copy > small { overflow: hidden; color: #b9accd; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .customer-card-actions { display: flex !important; flex-wrap: wrap; gap: 7px !important; margin-top: 4px; }
+      .customer-card-actions a, .customer-card-actions button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 9px; color: #fff; background: rgba(255,255,255,.06); font: inherit; font-size: 12px; font-weight: 900; text-decoration: none; cursor: pointer; }
+      .customer-card-actions button:disabled { opacity: .55; cursor: wait; }
+      .customer-card-actions .customer-text-action { color: #cfc5de; background: transparent; }
+      .customer-empty-state { min-height: 138px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(126,234,255,.24); border-radius: 12px; background: rgba(126,234,255,.035); }
+      .customer-empty-state.compact { min-height: 106px; padding: 12px; }
+      .customer-empty-state strong { color: #fff; }
+      .customer-empty-state p { color: #b9accd; font-size: 13px; line-height: 1.45; }
+      .customer-empty-state a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 9px; color: #071014; background: #7eeaff; font-size: 12px; font-weight: 950; text-decoration: none; }
+      .customer-loading-state { min-height: 112px; display: grid; place-items: center; color: #b9accd; }
       .saved-deal-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .saved-deal-head > div { display: grid; gap: 4px; }
       .saved-deal-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
@@ -3099,6 +3822,15 @@ function DashboardStyles() {
       .saved-deal-item small { color: #b9accd; font-size: 12px; }
       .saved-deal-item em { color: #7eeaff; font-size: 12px; font-style: normal; font-weight: 950; }
       .saved-deal-item.unavailable { opacity: .62; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); }
+      .past-deal-history { margin-top: 4px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; }
+      .past-deal-history summary { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #d8cfeb; font-weight: 900; cursor: pointer; list-style: none; }
+      .past-deal-history summary::-webkit-details-marker { display: none; }
+      .past-deal-history summary span { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.08); }
+      .past-deal-history > div { display: grid; gap: 8px; padding-top: 8px; }
+      .customer-settings-section { display: grid; gap: 14px; padding: 16px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: rgba(7,7,11,.62); }
+      .customer-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .customer-settings-grid > .info-panel { grid-column: auto; }
+      .customer-settings-grid > .customer-settings-panel, .customer-settings-grid > .support-panel, .customer-settings-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .venue-profile-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .venue-profile-panel label, .venue-cover-panel label, .venue-qr-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
@@ -3149,8 +3881,9 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .venue-deal-panel form, .venue-deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
+      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .customer-top-nav { align-items: center; flex-direction: row; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-dashboard-head h1 { font-size: 34px; } .notification-title-row { align-items: flex-start; } }
     `}</style>
   );
 }

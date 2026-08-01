@@ -6,6 +6,8 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function POST(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
@@ -14,8 +16,8 @@ export async function POST(request: Request) {
     const following = body?.following !== false;
     const notificationsEnabled = body?.notificationsEnabled !== false;
 
-    if (!venueId) {
-      return NextResponse.json({ ok: false, error: "Missing venueId." }, { status: 400 });
+    if (typeof venueId !== "string" || !UUID_PATTERN.test(venueId)) {
+      return NextResponse.json({ ok: false, error: "Invalid venueId." }, { status: 400 });
     }
 
     if (!following) {
