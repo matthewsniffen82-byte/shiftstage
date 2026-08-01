@@ -30,10 +30,14 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   );
 });
 
-test("the mobile utility header uses the same Safari-safe violet perimeter on every device", () => {
+test("the mobile utility header uses a neutral divider and retained glow on every device", () => {
   assert.match(
     liveApp,
-    /Mobile utility chrome is deliberately device-neutral[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 1px solid rgba\(124, 58, 237, 0\.34\) !important;[\s\S]*?inset 0 -1px 0 rgba\(152, 95, 255, 0\.14\),[\s\S]*?0 0 22px rgba\(109, 40, 217, 0\.16\) !important;/,
+    /Mobile utility chrome is deliberately device-neutral[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(248, 250, 252, 0\.12\) !important;[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.4\),[\s\S]*?0 8px 18px rgba\(91, 19, 255, 0\.08\) !important;/,
+  );
+  assert.doesNotMatch(
+    liveApp,
+    /Mobile utility chrome is deliberately device-neutral[\s\S]{0,900}border: 1px solid rgba\(124, 58, 237/,
   );
   const androidSurfaceOverrides = liveApp.match(
     /\.is-android \.controls,[\s\S]*?backdrop-filter: none !important;\s*\}/,
