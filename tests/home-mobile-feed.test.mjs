@@ -164,7 +164,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
 });
 
-test("Dancers uses a three-column scrolling profile directory with larger mobile cards", () => {
+test("Dancers uses larger three-column mobile cards with a scrollbar-safe right rail", () => {
   assert.match(
     homeSource,
     /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 8px !important;/,
@@ -175,7 +175,7 @@ test("Dancers uses a three-column scrolling profile directory with larger mobile
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?gap: 4px !important;/,
+    /@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?gap: 4px !important;/,
   );
   assert.match(
     homeSource,
