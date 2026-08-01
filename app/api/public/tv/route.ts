@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     const selectedVideoId = cleanUuid(url.searchParams.get("video"));
     const dancerId = cleanUuid(url.searchParams.get("dancer"));
     const venueId = cleanUuid(url.searchParams.get("venue"));
+    const preferredVenueId = cleanUuid(url.searchParams.get("preferredVenue"));
     const limit = Math.min(24, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "12", 10) || 12));
     const admin = createAdminSupabaseClient();
     const followingDancerIds = filter === "following"
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
       selectedVideoId,
       dancerId,
       venueId,
+      preferredVenueId,
       followingDancerIds,
       limit,
     });

@@ -5,6 +5,7 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
 import type { ClubDeal } from "./types";
+import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
 import {
   moderateStoredMyDancrTvVideo,
   type MyDancrTvModerationResult,
@@ -63,6 +64,7 @@ type FeedOptions = {
   selectedVideoId?: string;
   dancerId?: string;
   venueId?: string;
+  preferredVenueId?: string;
   limit?: number;
 };
 
@@ -137,24 +139,26 @@ export async function getPublicMyDancrTvFeed(
   const selectedVideoId = options.selectedVideoId && UUID_PATTERN.test(options.selectedVideoId)
     ? options.selectedVideoId
     : "";
-
-  let query = admin
-    .from("mydancr_tv_videos")
-    .select(PUBLIC_TV_SELECT)
-    .eq("status", "approved")
-    .lte("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS)
-    .lte("published_at", nowIso)
-    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-    .order("published_at", { ascending: false })
-    .limit(queryLimit);
-
-  if (city) query = query.ilike("dancer_profiles.city", city);
-  if (options.dancerId) query = query.eq("dancer_id", options.dancerId);
-  if (options.venueId) {
-    query = query
-      .eq("venue_id", options.venueId)
-      .eq("venue_tag_status", "confirmed");
-  }
+  const preferredVenueId =
+    !options.venueId && options.preferredVenueId && UUID_PATTERN.test(options.preferredVenueId)
+      ? options.preferredVenueId
+      : "";
+  const query = publicTvRowsQuery(admin, {
+    nowIso,
+    city,
+    dancerId: options.dancerId,
+    venueId: options.venueId,
+    limit: queryLimit,
+  });
+  const preferredVenueQuery = preferredVenueId
+    ? publicTvRowsQuery(admin, {
+        nowIso,
+        city,
+        dancerId: options.dancerId,
+        venueId: preferredVenueId,
+        limit: queryLimit,
+      })
+    : Promise.resolve({ data: [], error: null });
 
   const selectedQuery = selectedVideoId
     ? admin
@@ -167,14 +171,26 @@ export async function getPublicMyDancrTvFeed(
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
         .maybeSingle()
     : Promise.resolve({ data: null, error: null });
-  const [{ data, error }, selectedResult] = await Promise.all([query, selectedQuery]);
+  const [{ data, error }, selectedResult, preferredVenueResult] = await Promise.all([
+    query,
+    selectedQuery,
+    preferredVenueQuery,
+  ]);
   if (error) throw error;
   if (selectedResult.error) throw selectedResult.error;
+  if (preferredVenueResult.error) throw preferredVenueResult.error;
 
   const following = new Set(options.followingDancerIds || []);
   const tonightEndsAt = now.getTime() + 24 * 60 * 60 * 1000;
   const selectedRowCandidate = normalizeFeedRow(selectedResult.data, now.getTime());
-  const normalizedRows = (data || [])
+  const preferredRows = (preferredVenueResult.data || []) as any[];
+  const cityRows = (data || []) as any[];
+  const mergedRowsById = new Map<string, any>();
+  for (const row of [...preferredRows, ...cityRows]) {
+    if (row?.id && !mergedRowsById.has(row.id)) mergedRowsById.set(row.id, row);
+  }
+  const mergedRows = [...mergedRowsById.values()];
+  const normalizedRows = mergedRows
     .map((row: any) => normalizeFeedRow(row, now.getTime()))
     .filter((row: NormalizedFeedRow | null): row is NormalizedFeedRow => Boolean(row));
   const shiftContexts = await getPublicTvShiftContexts(
@@ -210,7 +226,13 @@ export async function getPublicMyDancrTvFeed(
     );
   }
 
-  const deduped = diversifyFeed(rows, selectedVideoId).slice(
+  const diversified = diversifyFeed(rows, selectedVideoId);
+  const venuePrioritized = prioritizeMyDancrTvVenue(
+    diversified,
+    preferredVenueId,
+    selectedVideoId,
+  );
+  const deduped = venuePrioritized.slice(
     0,
     Math.min(24, Math.max(1, options.limit || 12)),
   );
@@ -236,6 +258,36 @@ export async function getPublicMyDancrTvFeed(
         : null,
     };
   });
+}
+
+function publicTvRowsQuery(
+  admin: AdminClient,
+  options: {
+    nowIso: string;
+    city: string;
+    dancerId?: string;
+    venueId?: string;
+    limit: number;
+  },
+) {
+  let query = admin
+    .from("mydancr_tv_videos")
+    .select(PUBLIC_TV_SELECT)
+    .eq("status", "approved")
+    .lte("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS)
+    .lte("published_at", options.nowIso)
+    .or(`expires_at.is.null,expires_at.gt.${options.nowIso}`)
+    .order("published_at", { ascending: false })
+    .limit(options.limit);
+
+  if (options.city) query = query.ilike("dancer_profiles.city", options.city);
+  if (options.dancerId) query = query.eq("dancer_id", options.dancerId);
+  if (options.venueId) {
+    query = query
+      .eq("venue_id", options.venueId)
+      .eq("venue_tag_status", "confirmed");
+  }
+  return query;
 }
 
 function normalizeTvCity(value: string | undefined) {

@@ -35080,6 +35080,7 @@
     let homeTvLaunchCity = "";
     let homeTvFeedRequest = 0;
     let homeTvFeedCity = "";
+    let homeTvFeedPreferredVenueId = "";
     let homeTvFeedStatus = "idle";
     let homeTvFeedVideos = [];
     let homeTvFeedObserver = null;
@@ -39390,6 +39391,13 @@
 
     function selectedVenueFilter() {
       return venueSelect?.value || "all";
+    }
+
+    function selectedHomeTvVenuePreference(city = selectedCity()) {
+      const venueName = selectedVenueFilter();
+      if (venueName === "all") return null;
+      const venue = resolveVenueByName(venueName, city);
+      return venue?.id ? { id: String(venue.id), name: String(venue.name || venueName) } : null;
     }
 
     function profileMatchesVenueFilter(profile) {
@@ -49448,7 +49456,7 @@
       retry.addEventListener("click", () => {
         homeTvFeedStatus = "loading";
         renderHomeTvFeed(retryCity);
-        void loadHomeTvFeed(retryCity);
+        void loadHomeTvFeed(retryCity, homeTvFeedPreferredVenueId);
       });
       results.appendChild(retry);
     }
@@ -49472,11 +49480,14 @@
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
       results.classList.add("home-tv-feed");
 
-      if (homeTvFeedCity !== city) {
+      const venuePreference = selectedHomeTvVenuePreference(city);
+      const preferredVenueId = venuePreference?.id || "";
+      if (homeTvFeedCity !== city || homeTvFeedPreferredVenueId !== preferredVenueId) {
         homeTvFeedCity = city;
+        homeTvFeedPreferredVenueId = preferredVenueId;
         homeTvFeedStatus = "loading";
         homeTvFeedVideos = [];
-        void loadHomeTvFeed(city);
+        void loadHomeTvFeed(city, preferredVenueId);
       }
       if (homeTvFeedStatus === "loading") {
         tabCount.textContent = "Loading videos…";
@@ -49497,12 +49508,18 @@
         return;
       }
 
-      tabCount.textContent = `${homeTvFeedVideos.length} video${homeTvFeedVideos.length === 1 ? "" : "s"}`;
+      const preferredVideoCount = preferredVenueId
+        ? homeTvFeedVideos.filter((item) => item?.venue?.id === preferredVenueId).length
+        : 0;
+      const venuePriorityLabel = venuePreference && preferredVideoCount
+        ? `, with ${venuePreference.name} videos first`
+        : "";
+      tabCount.textContent = `${homeTvFeedVideos.length} citywide`;
       results.setAttribute(
         "aria-label",
-        `Swipe through ${homeTvFeedVideos.length} MyDancr TV video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}`
+        `Swipe through ${homeTvFeedVideos.length} citywide MyDancr TV video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}${venuePriorityLabel}`
       );
-      const feedKey = `${city}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
+      const feedKey = `${city}:${preferredVenueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
       if (results.dataset.homeTvFeedKey === feedKey) return;
       homeTvFeedObserver?.disconnect();
       results.replaceChildren(
@@ -49515,19 +49532,29 @@
       window.requestAnimationFrame(setupHomeTvFeedObserver);
     }
 
-    async function loadHomeTvFeed(city) {
+    async function loadHomeTvFeed(city, preferredVenueId = "") {
       const requestId = ++homeTvFeedRequest;
       try {
-        const response = await fetch(`/api/public/tv?city=${encodeURIComponent(city)}&limit=24`, { cache: "no-store" });
+        const params = new URLSearchParams({ city, limit: "24" });
+        if (preferredVenueId) params.set("preferredVenue", preferredVenueId);
+        const response = await fetch(`/api/public/tv?${params.toString()}`, { cache: "no-store" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
-        if (requestId !== homeTvFeedRequest || homeTvFeedCity !== city) return;
+        if (
+          requestId !== homeTvFeedRequest ||
+          homeTvFeedCity !== city ||
+          homeTvFeedPreferredVenueId !== preferredVenueId
+        ) return;
         homeTvFeedVideos = Array.isArray(payload.videos)
           ? payload.videos.filter((item) => item?.id && item?.videoUrl && item?.dancer?.stageName)
           : [];
         homeTvFeedStatus = "ready";
       } catch {
-        if (requestId !== homeTvFeedRequest || homeTvFeedCity !== city) return;
+        if (
+          requestId !== homeTvFeedRequest ||
+          homeTvFeedCity !== city ||
+          homeTvFeedPreferredVenueId !== preferredVenueId
+        ) return;
         homeTvFeedVideos = [];
         homeTvFeedStatus = "error";
       }

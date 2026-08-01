@@ -52,7 +52,7 @@ test("the Home TV button renders a real page-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive|requestHomeDestinationFullscreen|focusAndLockHomeTvFeed/);
   assert.match(
     homeSource,
-    /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(city\)\}&limit=24`[^]*?payload\.videos\.filter\(\(item\) => item\?\.id && item\?\.videoUrl && item\?\.dancer\?\.stageName\)/,
+    /const params = new URLSearchParams\(\{ city, limit: "24" \}\);[^]*?fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`[^]*?payload\.videos\.filter\(\(item\) => item\?\.id && item\?\.videoUrl && item\?\.dancer\?\.stageName\)/,
   );
   assert.match(
     homeSource,
