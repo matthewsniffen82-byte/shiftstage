@@ -28248,6 +28248,173 @@
       }
     }
 
+    /* Canonical mobile utility header: compact, neutral glass with violet reserved for interaction. */
+    @media (max-width: 720px) {
+      header {
+        padding: calc(4px + env(safe-area-inset-top)) 12px 4px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background:
+          linear-gradient(180deg, rgba(8, 8, 12, 0.94), rgba(4, 4, 7, 0.88)) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+        backdrop-filter: blur(18px) saturate(1.08) !important;
+      }
+
+      header .topbar {
+        width: 100% !important;
+        min-height: 48px !important;
+        padding: 0 !important;
+        gap: 10px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      header #brandHome.brand,
+      header #brandHome.brand.dancr-home-logo.logo-image-button {
+        width: 94px !important;
+        min-width: 94px !important;
+        max-width: 94px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+        flex: 0 0 94px !important;
+        aspect-ratio: auto !important;
+        padding: 0 7px !important;
+        border: 1px solid rgba(124, 58, 237, 0.38) !important;
+        border-radius: 14px !important;
+        color: #fff !important;
+        background:
+          linear-gradient(180deg, rgba(18, 18, 25, 0.88), rgba(7, 7, 11, 0.9)) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.045),
+          0 8px 22px rgba(0, 0, 0, 0.3),
+          0 0 14px rgba(109, 40, 217, 0.12) !important;
+        clip-path: inset(0 round 14px) !important;
+      }
+
+      header #brandHome .mydancr-live-logo {
+        font-size: 18px !important;
+        letter-spacing: -0.06em !important;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.32) !important;
+      }
+
+      header #brandHome .mydancr-live-logo .violet-r {
+        color: #8730f5 !important;
+        text-shadow:
+          0 0 7px rgba(135, 48, 245, 0.68),
+          0 0 14px rgba(109, 40, 217, 0.34) !important;
+      }
+
+      header #brandHome:hover,
+      header #brandHome:focus-visible,
+      header #brandHome:active {
+        border-color: rgba(124, 58, 237, 0.72) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.06),
+          0 0 20px rgba(109, 40, 217, 0.28),
+          0 8px 22px rgba(0, 0, 0, 0.32) !important;
+      }
+
+      header .menu {
+        margin-left: auto !important;
+        gap: 8px !important;
+      }
+
+      header .customer-quick-actions {
+        gap: 8px !important;
+      }
+
+      header .customer-quick-btn,
+      header #accountBtn.account-icon-btn {
+        width: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        padding: 0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        border-radius: 999px !important;
+        color: rgba(255, 255, 255, 0.82) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+          rgba(12, 12, 17, 0.84) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.055),
+          0 8px 22px rgba(0, 0, 0, 0.3) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(1.06) !important;
+        backdrop-filter: blur(14px) saturate(1.06) !important;
+        clip-path: inset(0 round 999px) !important;
+        transform: none !important;
+      }
+
+      header .customer-quick-btn .action-icon,
+      header #accountBtn.account-icon-btn .account-icon {
+        width: 21px !important;
+        height: 21px !important;
+        stroke: currentColor !important;
+        filter: none !important;
+      }
+
+      header .customer-quick-btn:hover,
+      header .customer-quick-btn:focus-visible,
+      header .customer-quick-btn.active,
+      header #accountBtn.account-icon-btn:hover,
+      header #accountBtn.account-icon-btn:focus-visible,
+      header #accountBtn.account-icon-btn.active {
+        color: #fff !important;
+        border-color: rgba(124, 58, 237, 0.78) !important;
+        background:
+          radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.28), transparent 68%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02)),
+          rgba(12, 9, 22, 0.9) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          0 0 20px rgba(109, 40, 217, 0.34),
+          0 8px 22px rgba(0, 0, 0, 0.3) !important;
+        transform: translateY(-1px) !important;
+      }
+
+      header .customer-quick-count {
+        top: -2px !important;
+        right: -2px !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        padding: 0 5px !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        color: #fff !important;
+        background: #6d28d9 !important;
+        box-shadow: 0 0 12px rgba(109, 40, 217, 0.48) !important;
+      }
+
+      header #accountBtn:not(.account-icon-btn) {
+        width: auto !important;
+        min-width: 88px !important;
+        max-width: 104px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding-inline: 12px !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        background: rgba(12, 12, 17, 0.84) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 8px 22px rgba(0, 0, 0, 0.28) !important;
+      }
+
+      header .utility-menu-panel,
+      header .customer-quick-panel {
+        top: calc(100% + 8px) !important;
+      }
+
+      main.stack {
+        padding-top: 8px !important;
+      }
+    }
+
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
@@ -28438,6 +28605,7 @@
         .home-tv-launch-count { min-width: 58px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #baf5ff; background: #12062f; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
         .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
         #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
+        /* Keep the late-rendered discovery shell aligned with the canonical mobile utility header. */
         @media (max-width: 720px) {
           .content-head,
           #results {
@@ -30473,32 +30641,45 @@
             z-index: 120 !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: calc(8px + env(safe-area-inset-top)) 12px 8px !important;
+            padding: calc(4px + env(safe-area-inset-top)) 12px 4px !important;
+            border: 0 !important;
             border-radius: 0 !important;
-            background: rgba(5,5,8,.96) !important;
-            backdrop-filter: blur(20px) saturate(1.25);
+            background:
+              linear-gradient(180deg, rgba(8,8,12,.94), rgba(4,4,7,.88)) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,.24) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+            backdrop-filter: blur(18px) saturate(1.08) !important;
           }
           header .utility-menu-panel {
             max-height: calc(100dvh - 150px) !important;
           }
           header .topbar {
-            min-height: 48px;
+            width: 100% !important;
+            min-height: 48px !important;
             display: flex !important;
             grid-template-columns: none !important;
             flex-wrap: nowrap !important;
-            gap: 7px !important;
+            gap: 10px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
           }
           header #brandHome.brand {
             display: flex !important;
-            width: 96px !important;
-            max-width: 96px !important;
-            flex: 0 0 96px !important;
-            min-height: 40px !important;
-            padding-inline: 5px !important;
+            width: 94px !important;
+            min-width: 94px !important;
+            max-width: 94px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            max-height: 44px !important;
+            flex: 0 0 94px !important;
+            padding-inline: 7px !important;
             order: 1;
           }
           header #brandHome .mydancr-live-logo {
-            font-size: clamp(17px, 4.8vw, 20px) !important;
+            font-size: 18px !important;
           }
           header .menu {
             flex: 0 0 auto;
@@ -30518,7 +30699,7 @@
           }
           main.stack {
             gap: 12px !important;
-            padding: 10px 0 24px !important;
+            padding: 8px 0 24px !important;
           }
           main.stack > * {
             width: auto !important;
