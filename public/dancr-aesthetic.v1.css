@@ -476,13 +476,13 @@ body > .app main.stack > .hero.reference-hero {
   border-radius: 0 !important;
   background: transparent !important;
   -webkit-box-shadow:
-    0 18px 38px rgba(0, 0, 0, 0.36),
-    0 0 12px rgba(91, 19, 255, 0.1),
-    0 0 30px rgba(91, 19, 255, 0.08) !important;
+    0 18px 38px rgba(0, 0, 0, 0.38),
+    0 0 12px rgba(248, 250, 252, 0.045),
+    0 0 30px rgba(148, 163, 184, 0.035) !important;
   box-shadow:
-    0 18px 38px rgba(0, 0, 0, 0.36),
-    0 0 12px rgba(91, 19, 255, 0.1),
-    0 0 30px rgba(91, 19, 255, 0.08) !important;
+    0 18px 38px rgba(0, 0, 0, 0.38),
+    0 0 12px rgba(248, 250, 252, 0.045),
+    0 0 30px rgba(148, 163, 184, 0.035) !important;
   filter: none !important;
   -webkit-filter: none !important;
 }

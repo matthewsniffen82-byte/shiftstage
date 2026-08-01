@@ -26,14 +26,14 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=29" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=30" rel="stylesheet">/,
   );
 });
 
-test("the mobile utility header is borderless with the same glow on iPhone and Android", () => {
+test("the mobile utility header is borderless with the same neutral glow on iPhone and Android", () => {
   assert.match(
     liveApp,
-    /Mobile utility chrome is deliberately device-neutral and borderless[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 0 !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.4\),[\s\S]*?0 0 12px rgba\(91, 19, 255, 0\.1\),[\s\S]*?0 0 28px rgba\(91, 19, 255, 0\.08\) !important;[\s\S]*?box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.4\),[\s\S]*?0 0 12px rgba\(91, 19, 255, 0\.1\),[\s\S]*?0 0 28px rgba\(91, 19, 255, 0\.08\) !important;/,
+    /Mobile utility chrome is deliberately device-neutral and borderless[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 0 !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.44\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.055\),[\s\S]*?0 0 28px rgba\(148, 163, 184, 0\.04\) !important;[\s\S]*?box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.44\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.055\),[\s\S]*?0 0 28px rgba\(148, 163, 184, 0\.04\) !important;/,
   );
   assert.doesNotMatch(
     liveApp,
@@ -252,7 +252,7 @@ test("the homepage hero keeps the exact supplied artwork borderless with ambient
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.36\),[\s\S]*?0 0 12px rgba\(91, 19, 255, 0\.1\),[\s\S]*?0 0 30px rgba\(91, 19, 255, 0\.08\) !important;[\s\S]*?box-shadow:[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.36\),[\s\S]*?0 0 12px rgba\(91, 19, 255, 0\.1\),[\s\S]*?0 0 30px rgba\(91, 19, 255, 0\.08\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.38\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.045\),[\s\S]*?0 0 30px rgba\(148, 163, 184, 0\.035\) !important;[\s\S]*?box-shadow:[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.38\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.045\),[\s\S]*?0 0 30px rgba\(148, 163, 184, 0\.035\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
   );
   assert.match(
     aesthetic,
