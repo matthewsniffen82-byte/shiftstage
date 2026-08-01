@@ -19358,7 +19358,7 @@
 
     header .topbar {
       border: 0 !important;
-      border-bottom: 1px solid rgba(248, 250, 252, 0.1) !important;
+      border-bottom: 0 !important;
       box-shadow:
         0 14px 34px rgba(0, 0, 0, 0.34),
         0 8px 18px rgba(91, 19, 255, 0.06) !important;
@@ -28928,7 +28928,7 @@
         gap: 10px !important;
         overflow: visible !important;
         border: 0 !important;
-        border-bottom: 1px solid rgba(248, 250, 252, 0.12) !important;
+        border-bottom: 0 !important;
         border-radius: 16px !important;
         background:
           linear-gradient(180deg, rgba(8, 8, 12, 0.96), rgba(4, 4, 7, 0.94)) !important;
@@ -31350,7 +31350,7 @@
             padding: 4px 6px !important;
             overflow: visible !important;
             border: 0 !important;
-            border-bottom: 1px solid rgba(248,250,252,.12) !important;
+            border-bottom: 0 !important;
             border-radius: 16px !important;
             background:
               linear-gradient(180deg, rgba(8,8,12,.96), rgba(4,4,7,.94)) !important;
@@ -33546,24 +33546,24 @@
           -webkit-tap-highlight-color: transparent;
         }
 
-        /* One restrained neutral divider with a faint brand glow. */
+        /* Borderless utility chrome with a restrained brand glow. */
         header .topbar {
           border: 0 !important;
-          border-bottom: 1px solid rgba(248, 250, 252, 0.1) !important;
+          border-bottom: 0 !important;
           box-shadow:
             0 10px 26px rgba(0, 0, 0, 0.3),
             0 8px 18px rgba(91, 19, 255, 0.06) !important;
         }
 
         /*
-         * Mobile utility chrome is deliberately device-neutral. A neutral
-         * lower divider replaces the old violet perimeter while a faint violet
-         * shadow preserves the brand atmosphere on iPhone and Android.
+         * Mobile utility chrome is deliberately device-neutral and borderless.
+         * The layered violet shadow preserves the same brand atmosphere on
+         * iPhone and Android without producing a Safari perimeter line.
          */
         @media (max-width: 720px) {
           body.dancr-button-system header .topbar {
             border: 0 !important;
-            border-bottom: 1px solid rgba(248, 250, 252, 0.12) !important;
+            border-bottom: 0 !important;
             background:
               linear-gradient(180deg, rgba(8, 8, 12, 0.98), rgba(4, 4, 7, 0.96)) !important;
             -webkit-box-shadow:
