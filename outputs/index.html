@@ -48037,8 +48037,12 @@
     }
 
     function homeDancerGridQrMarkup(profile) {
+      const state = dancerClubDealState(profile);
       const qr = homeDiscoveryFeedLiveQrData(profile);
-      if (!qr) return "";
+      if (!qr || state.key !== "available") {
+        const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
+        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal QR: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "QR")}</button>`;
+      }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
       return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open the Club Deal QR for ${venueName}">${actionButtonLabel("qr", "QR")}</button>`;

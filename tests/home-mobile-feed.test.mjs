@@ -474,7 +474,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?if \(!qr\) return "";[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr[\s\S]*?actionButtonLabel\("qr", "QR"\)/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?dancerClubDealState\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?state\.key !== "available"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable is-\$\{state\.key\}"[\s\S]*?data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?actionButtonLabel\("qr", "QR"\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr/,
   );
   assert.match(
     homeSource,
@@ -491,7 +491,11 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   const dancerQrMarkup = homeSource.match(
     /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,
   )?.[0] || "";
-  assert.doesNotMatch(dancerQrMarkup, /is-unavailable|data-card-qr-label|data-card-qr-message/);
+  assert.match(
+    dancerQrMarkup,
+    /state\.key === "available-when-working" \? "Unlocks when working" : state\.label/,
+  );
+  assert.match(dancerQrMarkup, /aria-disabled="true"[\s\S]*?aria-expanded="false"/);
   assert.match(
     homeSource,
     /function showCardQrNotice\(trigger, label, message\)[\s\S]*?closest\("\.home-dancer-grid-card, \.home-venue-discovery-slide"\)[\s\S]*?role", "status"[\s\S]*?--home-card-qr-notice-top[\s\S]*?--home-card-qr-notice-right[\s\S]*?aria-expanded", "true"/,

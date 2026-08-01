@@ -21,6 +21,10 @@ test("dancer and venue scrolling cards keep QR directly below Profile", () => {
     /data-open-venue-profile="\$\{venueValue\}"[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"/,
   );
   assert.match(homeSource, /data-card-action-slot="qr"/);
+  assert.match(
+    homeSource,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?is-unavailable is-\$\{state\.key\}[\s\S]*?data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?aria-disabled="true"/,
+  );
   assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
   assert.match(
     homeSource,

@@ -179,13 +179,17 @@ test("homepage live profiles use the server-generated revenue QR only while Work
   assert.match(liveApp, /sourceType: "dancer_profile"/);
 });
 
-test("dancer scroll cards show only live Club Deals while full profiles reserve every truthful state", () => {
+test("dancer scroll cards reserve the QR slot while only live Club Deals remain actionable", () => {
   const gridDealMarkup =
     liveApp.match(
       /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,
     )?.[0] || "";
-  assert.match(gridDealMarkup, /const qr = homeDiscoveryFeedLiveQrData\(profile\);[\s\S]*?if \(!qr\) return "";/);
-  assert.doesNotMatch(gridDealMarkup, /is-unavailable|data-card-qr-label|data-card-qr-message|aria-disabled/);
+  assert.match(
+    gridDealMarkup,
+    /const state = dancerClubDealState\(profile\);[\s\S]*?const qr = homeDiscoveryFeedLiveQrData\(profile\);[\s\S]*?if \(!qr \|\| state\.key !== "available"\)/,
+  );
+  assert.match(gridDealMarkup, /is-unavailable is-\$\{state\.key\}/);
+  assert.match(gridDealMarkup, /data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?aria-disabled="true"/);
   assert.match(gridDealMarkup, /class="feed-card-action home-card-qr-rail-action is-available"/);
   assert.match(gridDealMarkup, /data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr/);
   assert.match(gridDealMarkup, /actionButtonLabel\("qr", "QR"\)/);
