@@ -31686,6 +31686,59 @@
           cursor: wait;
         }
 
+        .home-card-qr-notice {
+          position: absolute;
+          z-index: 9;
+          top: var(--home-card-qr-notice-top, 150px);
+          right: var(--home-card-qr-notice-right, 72px);
+          left: 12px;
+          min-height: 58px;
+          display: grid;
+          align-content: center;
+          gap: 3px;
+          padding: 10px 12px;
+          border: 1px solid rgba(126,234,255,.42);
+          border-radius: 13px;
+          color: #f8fafc;
+          background: rgba(5,7,12,.96);
+          box-shadow: 0 14px 34px rgba(0,0,0,.48), 0 0 18px rgba(34,199,255,.12), inset 0 1px 0 rgba(255,255,255,.06);
+          opacity: 0;
+          transform: translateX(8px) scale(.98);
+          transform-origin: right center;
+          transition: opacity .16s ease, transform .16s ease;
+          pointer-events: none;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+        }
+        .home-card-qr-notice::after {
+          content: "";
+          position: absolute;
+          top: 23px;
+          right: -6px;
+          width: 10px;
+          height: 10px;
+          border-top: 1px solid rgba(126,234,255,.42);
+          border-right: 1px solid rgba(126,234,255,.42);
+          background: rgba(5,7,12,.96);
+          transform: rotate(45deg);
+        }
+        .home-card-qr-notice.is-visible {
+          opacity: 1;
+          transform: translateX(0) scale(1);
+        }
+        .home-card-qr-notice strong {
+          color: #b7f4ff;
+          font-size: 11px;
+          font-weight: 950;
+          line-height: 1.15;
+        }
+        .home-card-qr-notice span {
+          color: rgba(245,245,255,.78);
+          font-size: 10px;
+          font-weight: 760;
+          line-height: 1.3;
+        }
+
         /* Shared scrolling-card QR rail state; rail geometry remains unchanged. */
         .dancr-button-system .home-dancer-grid-action-rail .home-card-qr-rail-action.is-available {
           border-color: rgba(77,236,157,.78) !important;
@@ -31698,7 +31751,7 @@
           color: rgba(245,245,255,.68);
           background: rgba(18,15,28,.88) !important;
           box-shadow: 0 8px 22px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.05) !important;
-          cursor: default;
+          cursor: pointer;
         }
         @media (max-width: 679px) {
           #results.home-dancer-grid,
@@ -34387,6 +34440,50 @@
       toast.classList.add("show");
       window.clearTimeout(showToast.timer);
       showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1900);
+    }
+
+    function showCardQrNotice(trigger, label, message) {
+      const card = trigger?.closest(".home-dancer-grid-card, .home-venue-discovery-slide");
+      if (!card) {
+        showToast(message || label || "No Club Deal is available right now.");
+        return;
+      }
+
+      window.clearTimeout(showCardQrNotice.timer);
+      window.clearTimeout(showCardQrNotice.removeTimer);
+      document.querySelectorAll(".home-card-qr-notice").forEach((notice) => notice.remove());
+      document.querySelectorAll('[data-card-action-slot="qr"][aria-expanded="true"]').forEach((button) => {
+        button.setAttribute("aria-expanded", "false");
+      });
+
+      const notice = document.createElement("div");
+      const heading = document.createElement("strong");
+      const detail = document.createElement("span");
+      const cardRect = card.getBoundingClientRect();
+      const triggerRect = trigger.getBoundingClientRect();
+      notice.className = "home-card-qr-notice";
+      notice.setAttribute("role", "status");
+      notice.setAttribute("aria-live", "polite");
+      heading.textContent = label || "Club Deal QR";
+      detail.textContent = message || "No Club Deal is available right now.";
+      notice.append(heading, detail);
+      notice.style.setProperty(
+        "--home-card-qr-notice-top",
+        `${Math.max(12, Math.round(triggerRect.top - cardRect.top - 4))}px`
+      );
+      notice.style.setProperty(
+        "--home-card-qr-notice-right",
+        `${Math.max(68, Math.round(cardRect.right - triggerRect.left + 8))}px`
+      );
+      card.append(notice);
+      trigger.setAttribute("aria-expanded", "true");
+      window.requestAnimationFrame(() => notice.classList.add("is-visible"));
+
+      showCardQrNotice.timer = window.setTimeout(() => {
+        notice.classList.remove("is-visible");
+        trigger.setAttribute("aria-expanded", "false");
+        showCardQrNotice.removeTimer = window.setTimeout(() => notice.remove(), 180);
+      }, 3200);
     }
 
     function adminPreviewIsImage(url) {
@@ -46614,7 +46711,7 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
         const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
-        return `<span class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" data-card-action-slot="qr" data-club-deal-state="${state.key}" role="img" aria-disabled="true" aria-label="Club Deal QR: ${escapeHtml(cardLabel)}" title="${escapeHtml(cardLabel)}">${actionButtonLabel("qr", "QR")}</span>`;
+        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal QR: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "QR")}</button>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
@@ -46648,7 +46745,7 @@
         `;
       }
       if (rail) {
-        return `<span class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" data-card-action-slot="qr" data-club-deal-state="unavailable" role="img" aria-disabled="true" aria-label="No Club Deal QR available at ${venueName}" title="No Club Deal available">${actionButtonLabel("qr", "QR")}</span>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="No Club Deal available" data-card-qr-message="This venue has not published a tracked Club Deal. Check back later." aria-disabled="true" aria-expanded="false" aria-label="No Club Deal QR available at ${venueName}. Tap for details.">${actionButtonLabel("qr", "QR")}</button>`;
       }
       return `
         <div class="home-venue-discovery-club-deal is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="No Club Deal available at ${venueName}">
@@ -48143,7 +48240,11 @@
       if (unavailableCardQr) {
         event.preventDefault();
         event.stopPropagation();
-        showToast(unavailableCardQr.title || "No Club Deal is available right now.");
+        showCardQrNotice(
+          unavailableCardQr,
+          unavailableCardQr.dataset.cardQrLabel || "Club Deal QR",
+          unavailableCardQr.dataset.cardQrMessage || "No Club Deal is available right now."
+        );
         return;
       }
       const externalVenueQr = event.target.closest("[data-external-venue-qr]");

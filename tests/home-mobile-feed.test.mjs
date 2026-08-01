@@ -483,6 +483,23 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
     homeSource,
     /Shared scrolling-card QR rail state[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
   );
+  assert.match(
+    homeSource,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?<button class="feed-card-action home-card-qr-rail-action is-unavailable[^"]*"[\s\S]*?data-card-qr-label="\$\{escapeOptionValue\(cardLabel\)\}"[\s\S]*?data-card-qr-message="\$\{escapeOptionValue\(state\.detail\)\}"[\s\S]*?aria-expanded="false"/,
+  );
+  assert.match(
+    homeSource,
+    /function showCardQrNotice\(trigger, label, message\)[\s\S]*?closest\("\.home-dancer-grid-card, \.home-venue-discovery-slide"\)[\s\S]*?role", "status"[\s\S]*?--home-card-qr-notice-top[\s\S]*?--home-card-qr-notice-right[\s\S]*?aria-expanded", "true"/,
+  );
+  assert.match(
+    homeSource,
+    /const unavailableCardQr = event\.target\.closest[\s\S]*?showCardQrNotice\([\s\S]*?unavailableCardQr\.dataset\.cardQrLabel[\s\S]*?unavailableCardQr\.dataset\.cardQrMessage/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-card-qr-notice \{[\s\S]*?position: absolute[\s\S]*?right: var\(--home-card-qr-notice-right, 72px\)[\s\S]*?pointer-events: none/,
+  );
+  assert.doesNotMatch(homeSource, /unavailableCardQr\.title/);
   assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
 });
 
