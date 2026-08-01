@@ -210,7 +210,7 @@ test("dancer scroll cards reserve the QR slot while only live Club Deals remain 
   assert.match(liveApp, /label: "Not available now"/);
   assert.match(
     liveApp,
-    /function shiftsMarkup\(profile[\s\S]*?if \(isWorkingTonight\(profile\)[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?if \(profile\.scheduled\)[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?No shift posted[\s\S]*?profileDealTileMarkup\(profile\)/,
+    /function profileModalGridMarkup\(profile, options = \{\}\)[\s\S]*?const dealMarkup = options\.preview[\s\S]*?profileDealTileMarkup\(profile[\s\S]*?\$\{dealMarkup\}[\s\S]*?liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?shiftsMarkup\(profile, status/,
   );
 
   assert.match(

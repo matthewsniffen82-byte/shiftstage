@@ -23,6 +23,6 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   );
   assert.match(
     homeSource,
-    /<button class="action-btn secondary[^"]*" id="reportBtn"[^>]*>\$\{profileActionButtonMarkup\("report", "Report", "public"\)\}<\/button>/,
+    /data-profile-more-menu role="menu" hidden>[\s\S]*?<button id="reportBtn" type="button" role="menuitem"[^>]*>Report profile<\/button>/,
   );
 });

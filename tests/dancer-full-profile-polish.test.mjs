@@ -46,23 +46,75 @@ test("profile media is a compact horizontal filmstrip with stable geometry", () 
 test("profile actions have a clear hierarchy and preserve every real action", () => {
   assert.match(
     liveApp,
+    /<div class="modal-actions" aria-label="Customer actions">\s*\$\{goingButton\}/,
+  );
+  assert.match(
+    liveApp,
     /class="action-btn follow-primary[\s\S]*?id="followBtn"/,
   );
   assert.match(liveApp, /id="notifyBtn"/);
   assert.match(liveApp, /id="goingBtn"/);
   assert.match(
     liveApp,
-    /class="action-btn secondary profile-share-action"[\s\S]*?data-native-share=/,
+    /class="action-btn secondary profile-share-action"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /id="reportBtn"/);
+  assert.match(liveApp, /data-profile-more-actions aria-haspopup="menu" aria-expanded="false"/);
+  assert.match(liveApp, /data-profile-more-menu role="menu" hidden/);
+  assert.match(liveApp, /id="reportBtn" type="button" role="menuitem"/);
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.modal-actions \.going-btn \{\s*grid-column: 1 \/ -1 !important;/,
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: 1 \/ -1 !important;/,
+    /#profileBackdrop \.modal-actions \.profile-share-action \{\s*grid-column: auto !important;/,
   );
+});
+
+test("home profile overlay mirrors the public profile information hierarchy", () => {
+  const gridFunction = liveApp.match(
+    /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+  const dealIndex = gridFunction.indexOf("${dealMarkup}");
+  const actionsIndex = gridFunction.indexOf("liveProfileModalActionsMarkup");
+  const metricsIndex = gridFunction.indexOf("profileActivityMetricsMarkup");
+  const socialIndex = gridFunction.indexOf("${socialMarkup}");
+  const scheduleIndex = gridFunction.indexOf("shiftsMarkup");
+
+  assert.ok(dealIndex > -1);
+  assert.ok(actionsIndex > dealIndex);
+  assert.ok(metricsIndex > actionsIndex);
+  assert.ok(socialIndex > metricsIndex);
+  assert.ok(scheduleIndex > socialIndex);
+  assert.match(liveApp, /id="modalShiftStatus">No shift posted<\/span>/);
+  assert.match(liveApp, /id="modalShiftVenue" type="button" hidden/);
+  assert.match(liveApp, /modalShiftStatus\.textContent = workingNow/);
+  assert.match(liveApp, /modalShiftVenue\.dataset\.openVenue = profile\.venue/);
+});
+
+test("home profile TV previews expose inline playback, sound, progress, and duration controls", () => {
+  assert.match(liveApp, /id="modalVideoPlayback" type="button" aria-label="Play TV video"/);
+  assert.match(liveApp, /id="modalVideoSound" type="button" aria-label="Turn TV video sound on"/);
+  assert.match(liveApp, /id="modalVideoProgress" type="range"/);
+  assert.match(liveApp, /function syncModalVideoControls\(\)/);
+  assert.match(liveApp, /modalVideoProgress\?\.addEventListener\("input"/);
+  assert.match(liveApp, /formatProfileTvDuration\(currentTime\)/);
+});
+
+test("profile overlay mobile geometry is shared by Android and iPhone", () => {
+  assert.match(
+    profilePolishBlock,
+    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.profile-modal \{[\s\S]*?width: 100vw !important;[\s\S]*?padding-inline: 12px !important;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 46px minmax\(0, 1fr\);[\s\S]*?margin-inline: -12px;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important;/,
+  );
+  assert.doesNotMatch(profilePolishBlock, /\.is-android|\.is-ios|SamsungBrowser|iPhone/);
 });
 
 test("profile-only polish does not restyle or reposition the bottom navigation", () => {

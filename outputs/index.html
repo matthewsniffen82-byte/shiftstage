@@ -32877,14 +32877,24 @@
             linear-gradient(180deg, #08080e, #040406 60%) !important;
         }
         #profileBackdrop .profile-modal-summary {
+          position: sticky;
+          top: 0;
+          z-index: 210;
           display: grid;
-          grid-template-columns: 92px minmax(0, 1fr);
+          grid-template-columns: 50px minmax(0, 1fr);
           align-items: center;
-          gap: 15px;
-          padding: max(18px, calc(env(safe-area-inset-top, 0px) + 14px)) 58px 10px 2px;
+          gap: 11px;
+          min-height: 72px;
+          margin-inline: -14px;
+          padding: max(10px, calc(env(safe-area-inset-top, 0px) + 8px)) 68px 10px 14px;
+          border-bottom: 1px solid rgba(126,234,255,.1);
+          background: rgba(5,5,9,.9);
+          box-shadow: 0 10px 28px rgba(0,0,0,.22);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
         }
         #profileBackdrop .profile-modal-avatar {
-          width: 92px;
+          width: 50px;
           aspect-ratio: 1;
           display: grid;
           place-items: center;
@@ -32898,7 +32908,7 @@
           background-repeat: no-repeat;
           background-size: cover;
           box-shadow: 0 16px 40px rgba(0,0,0,.42), 0 0 26px rgba(124,58,237,.2);
-          font-size: 28px;
+          font-size: 16px;
           font-weight: 950;
         }
         #profileBackdrop .profile-modal-summary .modal-identity-stack {
@@ -32922,7 +32932,7 @@
           position: static !important;
           min-width: 0;
           display: grid !important;
-          gap: 7px !important;
+          gap: 5px !important;
           padding: 0 !important;
           border: 0 !important;
           background: transparent !important;
@@ -32933,17 +32943,52 @@
           margin: 0 !important;
           overflow: hidden;
           color: #fff !important;
-          font-size: clamp(25px, 5vw, 36px) !important;
+          font-size: clamp(20px, 4vw, 27px) !important;
           line-height: 1 !important;
           letter-spacing: -.035em !important;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
-        #profileBackdrop .profile-modal-summary .pill-row {
+        #profileBackdrop .profile-modal-name-row,
+        #profileBackdrop .profile-modal-context {
           display: flex !important;
           align-items: center !important;
-          gap: 7px !important;
+          min-width: 0;
+          gap: 6px !important;
           margin: 0 !important;
+        }
+        #profileBackdrop .profile-modal-name-row h2 { min-width: 0; }
+        #profileBackdrop .profile-modal-context {
+          overflow: hidden;
+          color: #b9accd;
+          font-size: 11px;
+          font-weight: 850;
+          line-height: 1.2;
+          white-space: nowrap;
+        }
+        #profileBackdrop .profile-modal-shift-status {
+          flex: 0 0 auto;
+          color: #9fefff;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+        #profileBackdrop .profile-modal-shift-status.is-live { color: #8dffc2; }
+        #profileBackdrop .profile-modal-shift-status.is-empty { color: #9b91a8; }
+        #profileBackdrop .profile-modal-venue-link {
+          min-width: 0;
+          overflow: hidden;
+          padding: 0;
+          border: 0;
+          color: #d7cce6;
+          background: transparent;
+          font: inherit;
+          text-align: left;
+          text-decoration: underline;
+          text-decoration-color: rgba(126,234,255,.5);
+          text-underline-offset: 3px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          cursor: pointer;
         }
         #profileBackdrop .profile-modal-verified {
           width: 21px;
@@ -32966,7 +33011,7 @@
           border: 0 !important;
           color: #b9accd !important;
           background: transparent !important;
-          font-size: 12px !important;
+          font-size: 10px !important;
           text-overflow: ellipsis !important;
           white-space: nowrap !important;
         }
@@ -32981,8 +33026,9 @@
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 0;
-          margin: 0 0 14px;
+          margin: 0;
           padding: 10px 0 9px;
+          border-top: 1px solid rgba(126,234,255,.08);
         }
         #profileBackdrop .profile-activity-metrics > div {
           min-width: 0;
@@ -33108,6 +33154,50 @@
           width: 100% !important;
           height: 100% !important;
           object-fit: cover !important;
+        }
+        #profileBackdrop .profile-modal-video-controls {
+          position: absolute;
+          z-index: 7;
+          right: 12px;
+          bottom: 54px;
+          left: 12px;
+          display: grid;
+          grid-template-columns: auto auto minmax(52px, 1fr) auto;
+          align-items: center;
+          gap: 7px;
+          padding: 7px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 13px;
+          background: rgba(4,4,8,.76);
+          box-shadow: 0 10px 28px rgba(0,0,0,.34);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+        #profileBackdrop .profile-modal-video-controls[hidden] { display: none !important; }
+        #profileBackdrop .profile-modal-video-controls button {
+          min-height: 34px;
+          padding: 0 9px;
+          border: 1px solid rgba(126,234,255,.26);
+          border-radius: 9px;
+          color: #fff;
+          background: rgba(126,234,255,.08);
+          font: inherit;
+          font-size: 10px;
+          font-weight: 900;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+        #profileBackdrop .profile-modal-video-controls input {
+          width: 100%;
+          min-width: 48px;
+          accent-color: #7eeaff;
+          cursor: pointer;
+        }
+        #profileBackdrop .profile-modal-video-controls output {
+          color: #d8d0e4;
+          font-size: 9px;
+          font-weight: 850;
+          white-space: nowrap;
         }
         #profileBackdrop .profile-modal-media {
           display: grid;
@@ -33328,8 +33418,9 @@
           text-transform: uppercase !important;
         }
         #profileBackdrop .modal-actions {
+          position: relative !important;
           display: grid !important;
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
           gap: 8px !important;
           margin: 0 !important;
           padding: 0 0 max(12px, env(safe-area-inset-bottom, 0px)) !important;
@@ -33350,25 +33441,69 @@
           grid-column: 1 / -1 !important;
           min-height: 54px !important;
         }
+        #profileBackdrop .modal-actions .going-btn.is-primary-action {
+          border-color: rgba(126,234,255,.48) !important;
+          background: linear-gradient(135deg, rgba(109,40,217,.86), rgba(11,148,201,.74)) !important;
+          box-shadow: 0 12px 30px rgba(49,46,129,.2), 0 0 18px rgba(34,199,255,.08) !important;
+        }
         #profileBackdrop .modal-actions .going-btn.is-unavailable:disabled {
           opacity: .72 !important;
         }
         #profileBackdrop .modal-actions .profile-share-action {
-          grid-column: 1 / -1 !important;
-          min-height: 44px !important;
+          grid-column: auto !important;
+          min-height: 50px !important;
         }
-        #profileBackdrop .modal-actions #reportBtn {
-          grid-column: 1 / -1 !important;
-          justify-self: end !important;
-          width: fit-content !important;
-          min-height: 32px !important;
-          padding-inline: 4px !important;
-          border: 0 !important;
-          color: #958aa4 !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          font-size: 11px !important;
-          text-decoration: underline !important;
+        #profileBackdrop .profile-action-overflow {
+          position: relative;
+          min-width: 0;
+        }
+        #profileBackdrop .profile-action-overflow-toggle {
+          width: 100%;
+          min-height: 50px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 7px 9px;
+          border: 1px solid rgba(148,229,255,.18);
+          border-radius: 14px;
+          color: #d8d0e4;
+          background: rgba(255,255,255,.04);
+          font: inherit;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        #profileBackdrop .profile-action-overflow-toggle > span:first-child {
+          color: #9fefff;
+          letter-spacing: .08em;
+        }
+        #profileBackdrop .profile-action-overflow-menu {
+          position: absolute;
+          z-index: 30;
+          right: 0;
+          bottom: calc(100% + 7px);
+          width: min(220px, 74vw);
+          display: grid;
+          padding: 8px;
+          border: 1px solid rgba(126,234,255,.28);
+          border-radius: 13px;
+          background: rgba(10,8,16,.98);
+          box-shadow: 0 18px 48px rgba(0,0,0,.56), 0 0 20px rgba(34,199,255,.08);
+        }
+        #profileBackdrop .profile-action-overflow-menu[hidden] { display: none !important; }
+        #profileBackdrop .profile-action-overflow-menu #reportBtn {
+          min-height: 44px;
+          padding: 0 12px;
+          border: 1px solid rgba(255,255,255,.08);
+          border-radius: 10px;
+          color: #d8d0e4;
+          background: rgba(255,255,255,.035);
+          font: inherit;
+          font-size: 12px;
+          font-weight: 850;
+          text-align: left;
+          cursor: pointer;
         }
         @media (max-width: 520px) {
           #profileBackdrop .profile-modal {
@@ -33377,19 +33512,34 @@
             padding-inline: 12px !important;
           }
           #profileBackdrop .profile-modal-summary {
-            grid-template-columns: 80px minmax(0, 1fr);
-            gap: 12px;
-            padding-right: 56px;
+            grid-template-columns: 46px minmax(0, 1fr);
+            gap: 10px;
+            margin-inline: -12px;
+            padding-right: 64px;
+            padding-left: 12px;
           }
           #profileBackdrop .profile-modal-avatar {
-            width: 80px;
+            width: 46px;
           }
           #profileBackdrop .profile-modal-summary .modal-identity h2 {
-            font-size: clamp(23px, 7vw, 31px) !important;
+            font-size: clamp(19px, 5.5vw, 25px) !important;
           }
           #profileBackdrop .modal-actions {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
+          #profileBackdrop .profile-modal-video-controls {
+            right: 9px;
+            bottom: 52px;
+            left: 9px;
+            gap: 5px;
+            padding: 6px;
+          }
+          #profileBackdrop .profile-modal-video-controls button {
+            min-height: 32px;
+            padding-inline: 7px;
+            font-size: 9px;
+          }
+          #profileBackdrop .profile-modal-video-controls output { font-size: 8px; }
           #profileBackdrop .working-now-tile > .meta {
             grid-template-columns: 1fr !important;
           }
@@ -35100,11 +35250,15 @@
           <div class="profile-modal-avatar" id="modalProfileAvatar" role="img" aria-label="Dancer profile photo"></div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
-              <h2 id="modalName">Profile</h2>
-              <div class="pill-row">
+              <div class="profile-modal-name-row">
+                <h2 id="modalName">Profile</h2>
                 <span class="profile-modal-verified" id="modalVerified" aria-label="Verified dancer">✓</span>
-                <span class="pill" id="modalCity">Las Vegas</span>
                 <span class="badge" id="modalStatus">Verified</span>
+              </div>
+              <div class="profile-modal-context" aria-live="polite">
+                <span class="profile-modal-shift-status" id="modalShiftStatus">No shift posted</span>
+                <button class="profile-modal-venue-link" id="modalShiftVenue" type="button" hidden></button>
+                <span class="pill" id="modalCity">Las Vegas</span>
               </div>
             </div>
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
@@ -35124,24 +35278,16 @@
             <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
             <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
             <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile media full screen">View full screen</button>
+            <div class="profile-modal-video-controls" id="modalVideoControls" data-modal-video-controls hidden>
+              <button id="modalVideoPlayback" type="button" aria-label="Play TV video">Play</button>
+              <button id="modalVideoSound" type="button" aria-label="Turn TV video sound on">Sound on</button>
+              <input id="modalVideoProgress" type="range" min="0" max="0.1" step="0.1" value="0" aria-label="TV video progress" aria-valuetext="0:00 of 0:00">
+              <output id="modalVideoTime" for="modalVideoProgress">0:00 / 0:00</output>
+            </div>
           </div>
           <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel"></div>
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
         </section>
-        <dl class="profile-activity-metrics" aria-label="Profile activity">
-          <div>
-            <dd id="modalFollowerCount" aria-live="polite">0</dd>
-            <dt>Followers</dt>
-          </div>
-          <div>
-            <dd id="tonightInterestCount" aria-live="polite">0</dd>
-            <dt>Going</dt>
-          </div>
-          <div>
-            <dd id="modalProfileViews" aria-live="polite">0</dd>
-            <dt>Views today</dt>
-          </div>
-        </dl>
         <div class="modal-body" id="modalBody"></div>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
@@ -35267,6 +35413,8 @@
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
     const modalCity = document.getElementById("modalCity");
+    const modalShiftStatus = document.getElementById("modalShiftStatus");
+    const modalShiftVenue = document.getElementById("modalShiftVenue");
     const modalRank = document.getElementById("modalRank");
     const modalGallery = document.getElementById("modalGallery");
     const modalMediaPhotoTab = document.getElementById("modalMediaPhotoTab");
@@ -35279,6 +35427,11 @@
     const modalMediaPrevious = document.getElementById("modalMediaPrevious");
     const modalMediaNext = document.getElementById("modalMediaNext");
     const modalMediaExpand = document.getElementById("modalMediaExpand");
+    const modalVideoControls = document.getElementById("modalVideoControls");
+    const modalVideoPlayback = document.getElementById("modalVideoPlayback");
+    const modalVideoSound = document.getElementById("modalVideoSound");
+    const modalVideoProgress = document.getElementById("modalVideoProgress");
+    const modalVideoTime = document.getElementById("modalVideoTime");
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
     const cityCoordinates = {
@@ -43173,6 +43326,43 @@
       modalImage.querySelector(".modal-media-video-preview")?.remove();
       modalImage.classList.remove("is-video-media");
       delete modalImage.dataset.activeVideoIndex;
+      modalVideoControls.hidden = true;
+      modalVideoPlayback.textContent = "Play";
+      modalVideoPlayback.setAttribute("aria-label", "Play TV video");
+      modalVideoSound.textContent = "Sound on";
+      modalVideoSound.setAttribute("aria-label", "Turn TV video sound on");
+      modalVideoProgress.value = "0";
+      modalVideoProgress.max = "0.1";
+      modalVideoProgress.setAttribute("aria-valuetext", "0:00 of 0:00");
+      modalVideoTime.textContent = "0:00 / 0:00";
+    }
+
+    function activeModalVideo() {
+      return modalImage.querySelector(".modal-media-video-preview > video");
+    }
+
+    function syncModalVideoControls() {
+      const video = activeModalVideo();
+      if (!video || modalImage.dataset.activeMediaType !== "video") {
+        modalVideoControls.hidden = true;
+        return;
+      }
+      const videos = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
+      const item = videos[Number(modalImage.dataset.activeVideoIndex)] || {};
+      const duration = Number.isFinite(video.duration) && video.duration > 0
+        ? video.duration
+        : Math.max(0, Number(item.durationSeconds) || 0);
+      const currentTime = Math.min(Math.max(0, video.currentTime || 0), Math.max(0, duration));
+      modalVideoControls.hidden = false;
+      modalVideoPlayback.textContent = video.paused ? "Play" : "Pause";
+      modalVideoPlayback.setAttribute("aria-label", video.paused ? "Play TV video" : "Pause TV video");
+      modalVideoSound.textContent = video.muted ? "Sound on" : "Sound off";
+      modalVideoSound.setAttribute("aria-label", video.muted ? "Turn TV video sound on" : "Turn TV video sound off");
+      modalVideoProgress.max = String(Math.max(0.1, duration));
+      modalVideoProgress.value = String(currentTime);
+      const timeLabel = `${formatProfileTvDuration(currentTime)} of ${formatProfileTvDuration(duration)}`;
+      modalVideoProgress.setAttribute("aria-valuetext", timeLabel);
+      modalVideoTime.textContent = `${formatProfileTvDuration(currentTime)} / ${formatProfileTvDuration(duration)}`;
     }
 
     function setProfileMediaTab(requestedTab) {
@@ -43259,8 +43449,13 @@
       video.preload = "metadata";
       video.setAttribute("autoplay", "");
       video.setAttribute("aria-hidden", "true");
+      ["loadedmetadata", "durationchange", "timeupdate", "play", "pause", "volumechange"].forEach((eventName) => {
+        video.addEventListener(eventName, syncModalVideoControls);
+      });
       preview.appendChild(video);
       modalImage.appendChild(preview);
+      modalVideoControls.hidden = false;
+      syncModalVideoControls();
       void video.play().catch(() => undefined);
 
       const thumbs = [...modalGallery.querySelectorAll(".thumb")];
@@ -43515,7 +43710,6 @@
               <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Venue &amp; directions</button>
             </div>
           </div>
-          ${isEditorPreview ? profileDealTileMarkup(profile, { preview: true }) : profileDealTileMarkup(profile)}
           <div class="info-tile">
             <strong>Next shift</strong>
             <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
@@ -43534,7 +43728,6 @@
             </div>
             <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to customers." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
           </div>
-          ${isEditorPreview ? profileDealTileMarkup(profile, { preview: true }) : profileDealTileMarkup(profile)}
           ${shiftNotesMarkup(profile)}
         `;
       }
@@ -43544,7 +43737,25 @@
           <div class="profile-schedule-primary">No shift posted</div>
           <p class="profile-schedule-explanation">${isEditorPreview ? "Post a shift from your dashboard to show customers when and where you're working." : "This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update."}</p>
         </div>
-        ${isEditorPreview ? profileDealTileMarkup(profile, { preview: true }) : profileDealTileMarkup(profile)}
+      `;
+    }
+
+    function profileActivityMetricsMarkup(profile, city = selectedCity()) {
+      return `
+        <dl class="profile-activity-metrics" aria-label="Profile activity">
+          <div>
+            <dd id="modalFollowerCount" aria-live="polite">${followerNumber(profile, city).toLocaleString()}</dd>
+            <dt>Followers</dt>
+          </div>
+          <div>
+            <dd id="tonightInterestCount" aria-live="polite">${tonightInterestCount(profile).toLocaleString()}</dd>
+            <dt>Going</dt>
+          </div>
+          <div>
+            <dd id="modalProfileViews" aria-live="polite">${profileViewsToday(profile, city).toLocaleString()}</dd>
+            <dt>Views today</dt>
+          </div>
+        </dl>
       `;
     }
 
@@ -43552,11 +43763,17 @@
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
       const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
+      const dealMarkup = options.preview
+        ? profileDealTileMarkup(profile, { preview: true })
+        : profileDealTileMarkup(profile);
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${dealMarkup}
+          ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
+          ${profileActivityMetricsMarkup(profile, city)}
+          ${socialMarkup}
           ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
           ${profileLocationStatusTile(profile)}
-          ${socialMarkup}
         </div>
       `;
     }
@@ -43577,18 +43794,24 @@
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const canMarkGoing = Boolean(profile.shiftId);
+      const hasPrimaryDeal = dancerClubDealState(profile).key === "available";
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="posted">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
+        ? `<button class="action-btn going-btn ${hasPrimaryDeal ? "secondary" : "is-primary-action"} ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="posted">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : `<button class="action-btn going-btn is-unavailable" id="goingBtn" type="button" disabled aria-disabled="true">${profileActionButtonMarkup("clock", goingCopy.idle)}<small class="profile-action-requirement">No shift posted</small></button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
-        <div class="modal-actions">
+        <div class="modal-actions" aria-label="Customer actions">
+          ${goingButton}
           <button class="action-btn follow-primary ${isFollowed ? "is-following" : ""} ${accountRequirementClass}" id="followBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow", "account")}</button>
           <button class="action-btn secondary ${isNotified ? "is-following" : ""} ${accountRequirementClass}" id="notifyBtn" data-profile="${profile.name}">${profileActionButtonMarkup(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify Me", "account")}</button>
-          ${goingButton}
           <button class="action-btn secondary profile-share-action" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share Profile")}</button>
-          <button class="action-btn secondary ${accountRequirementClass}" id="reportBtn" data-profile="${profile.name}">${profileActionButtonMarkup("report", "Report", "public")}</button>
+          <div class="profile-action-overflow">
+            <button class="profile-action-overflow-toggle" type="button" data-profile-more-actions aria-haspopup="menu" aria-expanded="false"><span aria-hidden="true">•••</span><span>More</span></button>
+            <div class="profile-action-overflow-menu" data-profile-more-menu role="menu" hidden>
+              <button id="reportBtn" type="button" role="menuitem" data-profile="${profile.name}">Report profile</button>
+            </div>
+          </div>
         </div>
       `;
     }
@@ -43652,6 +43875,8 @@
       const isPending = profile.status === "Pending";
       const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
+      const status = shiftStatus(profile);
+      const workingNow = isWorkingTonight(profile);
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
@@ -43662,9 +43887,26 @@
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
-      document.getElementById("modalFollowerCount").textContent = followerNumber(profile, city).toLocaleString();
-      document.getElementById("modalProfileViews").textContent = profileViewsToday(profile, city).toLocaleString();
-      document.getElementById("tonightInterestCount").textContent = tonightInterestCount(profile).toLocaleString();
+      modalCity.hidden = Boolean(profile.scheduled && profile.venue);
+      modalShiftStatus.textContent = workingNow
+        ? "Working now"
+        : profile.scheduled
+          ? "Upcoming"
+          : "No shift posted";
+      modalShiftStatus.className = `profile-modal-shift-status ${workingNow ? "is-live" : profile.scheduled ? "is-upcoming" : "is-empty"}`;
+      if (profile.scheduled && profile.venue) {
+        const publishedTime = displayShiftTime(profile.time);
+        const shiftTime = workingNow
+          ? (/\d{1,2}(?::\d{2})?\s*(?:a|p|am|pm)/i.test(publishedTime) ? publishedTime : "Current shift")
+          : displayPublicShiftTime(profile.time, profile) || "Schedule posted";
+        modalShiftVenue.textContent = `${shiftTime ? `${shiftTime} · ` : ""}${profile.venue}`;
+        modalShiftVenue.dataset.openVenue = profile.venue;
+        modalShiftVenue.hidden = false;
+      } else {
+        modalShiftVenue.textContent = "";
+        modalShiftVenue.removeAttribute("data-open-venue");
+        modalShiftVenue.hidden = true;
+      }
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
       modalRank.hidden = true;
@@ -43704,11 +43946,7 @@
           </div>
         `;
       } else {
-        const status = shiftStatus(profile);
-        modalBody.innerHTML = `
-          ${profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city })}
-          ${liveProfileModalActionsMarkup(profile, status)}
-        `;
+        modalBody.innerHTML = profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city });
         void loadProfileMyDancrTv(profile);
       }
 
@@ -44122,6 +44360,7 @@
 
     function closeProfileModal() {
       modalImage?.querySelector("video")?.pause();
+      clearModalVideoPreview();
       [
         closeProfileTvViewer,
         closeProfilePhotoViewer,
@@ -50526,6 +50765,38 @@
       });
     });
 
+    modalVideoPlayback?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const video = activeModalVideo();
+      if (!video) return;
+      if (video.paused) {
+        void video.play().catch(() => syncModalVideoControls());
+      } else {
+        video.pause();
+      }
+    });
+    modalVideoSound?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const video = activeModalVideo();
+      if (!video) return;
+      video.muted = !video.muted;
+      syncModalVideoControls();
+    });
+    modalVideoProgress?.addEventListener("input", (event) => {
+      event.stopPropagation();
+      const video = activeModalVideo();
+      const requestedTime = Number(event.currentTarget.value);
+      if (!video || !Number.isFinite(requestedTime)) return;
+      const duration = Number.isFinite(video.duration) && video.duration > 0
+        ? video.duration
+        : Number(event.currentTarget.max) || 0;
+      video.currentTime = Math.min(Math.max(0, requestedTime), Math.max(0, duration));
+      syncModalVideoControls();
+    });
+    modalVideoControls?.addEventListener("pointerdown", (event) => event.stopPropagation());
+
     bindHorizontalProfilePhotoSwipe(modalImage);
     bindHorizontalProfilePhotoSwipe(profilePhotoViewerImage, { syncViewer: true });
 
@@ -50556,7 +50827,7 @@
       openSelectedModalMediaViewer();
     });
     modalImage?.addEventListener("click", (event) => {
-      if (event.target.closest("button")) return;
+      if (event.target.closest("button, input, [data-modal-video-controls]")) return;
       openSelectedModalMediaViewer();
     });
 
@@ -50856,6 +51127,20 @@
       if (handleShareClick(event)) return;
       if (!event.target.closest("[data-qr-popover]")) closeQrPopovers();
       if (!event.target.closest("[data-share-popover]")) closeSharePopovers();
+      const moreActionsToggle = event.target.closest("[data-profile-more-actions]");
+      if (moreActionsToggle) {
+        const menu = moreActionsToggle.parentElement?.querySelector("[data-profile-more-menu]");
+        const willOpen = Boolean(menu?.hidden);
+        modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
+        modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
+        if (menu) menu.hidden = !willOpen;
+        moreActionsToggle.setAttribute("aria-expanded", String(willOpen));
+        return;
+      }
+      if (!event.target.closest(".profile-action-overflow")) {
+        modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
+        modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
+      }
       const socialLink = event.target.closest(".social-link[data-profile]");
       if (socialLink) {
         recordUniqueTrendEvent("socialClicks", citySelect.value, socialLink.dataset.profile);
@@ -50890,11 +51175,16 @@
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
+        const overflow = actionButton.closest(".profile-action-overflow");
+        const overflowMenu = overflow?.querySelector("[data-profile-more-menu]");
+        const overflowToggle = overflow?.querySelector("[data-profile-more-actions]");
+        if (overflowMenu) overflowMenu.hidden = true;
+        overflowToggle?.setAttribute("aria-expanded", "false");
         const city = citySelect.value;
         const profileName = actionButton.dataset.profile;
         const profile = findProfile(profileName);
         actionButton.disabled = true;
-        actionButton.innerHTML = profileActionButtonMarkup("clock", "Submitting", "public");
+        actionButton.textContent = "Submitting report";
         try {
           const data = await postOptionalAuthJson("/api/reports", {
             targetType: "dancer_profile",
@@ -50904,12 +51194,12 @@
             details: `Reported from ${city} profile modal.`
           });
           if (!data?.report) throw new Error("The report could not be confirmed.");
-          actionButton.innerHTML = profileActionButtonMarkup("check", "Reported", "public");
+          actionButton.textContent = "Profile reported";
           recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
           showToast("Report submitted for review");
         } catch (error) {
           actionButton.disabled = false;
-          actionButton.innerHTML = profileActionButtonMarkup("report", "Report", "public");
+          actionButton.textContent = "Report profile";
           showToast(error.message || "Could not submit report");
         }
       }
@@ -50956,6 +51246,15 @@
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target.closest?.("#profilePhotoViewer")) return;
       if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
+      if (!event.target.closest(".profile-action-overflow")) {
+        modalBody.querySelectorAll("[data-profile-more-menu]").forEach((item) => { item.hidden = true; });
+        modalBody.querySelectorAll("[data-profile-more-actions]").forEach((item) => item.setAttribute("aria-expanded", "false"));
+      }
+      const venueLink = event.target.closest(".profile-modal-summary [data-open-venue]");
+      if (venueLink) {
+        closeProfileModal();
+        openVenueFromName(venueLink.dataset.openVenue);
+      }
     });
 
     adminPreviewClose?.addEventListener("click", closeAdminPreview);
@@ -52523,6 +52822,13 @@
       if (event.key === "Escape" && profileBackdrop.classList.contains("show")) {
         if (profilePhotoViewer && !profilePhotoViewer.hidden) {
           closeProfilePhotoViewer();
+          return;
+        }
+        const openMoreMenu = modalBody.querySelector("[data-profile-more-menu]:not([hidden])");
+        if (openMoreMenu) {
+          openMoreMenu.hidden = true;
+          openMoreMenu.closest(".profile-action-overflow")?.querySelector("[data-profile-more-actions]")?.setAttribute("aria-expanded", "false");
+          event.preventDefault();
           return;
         }
         event.preventDefault();

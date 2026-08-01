@@ -188,7 +188,7 @@ test("public profiles keep Going visible for the next posted shift and gate only
   assert.match(profilePageSource, /\.profile-action-requirement \{/);
 });
 
-test("the live mobile profile labels protected actions before the tap and labels Going and Report as public", () => {
+test("the live mobile profile labels protected actions, keeps Going public, and places public reporting under More", () => {
   assert.match(homeSource, /function profileActionRequirementMarkup\(requirement\)/);
   assert.match(homeSource, /Sign in required/);
   assert.match(homeSource, /No sign-in needed/);
@@ -198,7 +198,7 @@ test("the live mobile profile labels protected actions before the tap and labels
   );
   assert.match(
     homeSource,
-    /id="reportBtn"[^>]*>\$\{profileActionButtonMarkup\("report", "Report", "public"\)\}/,
+    /data-profile-more-menu role="menu" hidden>[\s\S]*?id="reportBtn" type="button" role="menuitem"[\s\S]*?Report profile/,
   );
   assert.match(
     homeSource,
