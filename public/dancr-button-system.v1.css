@@ -528,6 +528,35 @@
   }
 }
 
+/* Mobile touch controls use one explicit compositor path. Safari otherwise
+ * applies the prefixed glass filter more heavily than mobile Chromium, making
+ * the same video and profile controls look thicker on iPhone. Navigation keeps
+ * its independently frozen treatment, and this rule changes no geometry. */
+@media (max-width: 899px) and (hover: none) and (pointer: coarse) {
+  .dancr-button-system :where(
+    button:not(.tab):not(.home-bottom-tv),
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"]:not(.tab):not(.home-bottom-tv),
+    a[class*="button"],
+    a[class*="-btn"],
+    a[class$="-action"],
+    a.primary-action,
+    a.secondary-action,
+    .nav-links a,
+    .profile-status-links a,
+    .empty-state a
+  ) {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-font-smoothing: antialiased;
+    text-shadow: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dancr-button-system :where(
     button,

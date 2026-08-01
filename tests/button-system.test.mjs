@@ -107,3 +107,34 @@ test("profile media thumbnails and play controls retain their gallery-specific s
   );
   assert.doesNotMatch(buttonCss, /modal-media-video-play/);
 });
+
+test("iPhone and Android touch controls share one lightweight compositor treatment", () => {
+  const mobileTouchParity = buttonCss.match(
+    /\/\* Mobile touch controls use one explicit compositor path\.[\s\S]*?(?=@media \(prefers-reduced-motion: reduce\))/,
+  )?.[0] || "";
+
+  assert.ok(mobileTouchParity, "shared mobile touch-control normalization must exist");
+  assert.match(
+    mobileTouchParity,
+    /@media \(max-width: 899px\) and \(hover: none\) and \(pointer: coarse\)/,
+  );
+  assert.match(
+    mobileTouchParity,
+    /button:not\(\.tab\):not\(\.home-bottom-tv\)[\s\S]*?\[role="button"\]:not\(\.tab\):not\(\.home-bottom-tv\)/,
+  );
+  assert.match(mobileTouchParity, /-webkit-appearance: none !important;/);
+  assert.match(mobileTouchParity, /appearance: none !important;/);
+  assert.match(mobileTouchParity, /-webkit-backdrop-filter: none !important;/);
+  assert.match(mobileTouchParity, /backdrop-filter: none !important;/);
+  assert.match(mobileTouchParity, /-webkit-font-smoothing: antialiased;/);
+  assert.match(mobileTouchParity, /text-shadow: none !important;/);
+  assert.doesNotMatch(mobileTouchParity, /@supports \(-webkit-touch-callout/);
+  const mobileDeclarations = mobileTouchParity.match(
+    /\r?\n  \) \{\r?\n([\s\S]*?)\r?\n  \}\r?\n\}/,
+  )?.[1] || "";
+  assert.ok(mobileDeclarations, "mobile parity declarations must be isolated");
+  assert.doesNotMatch(
+    mobileDeclarations,
+    /\b(?:width|height|padding|margin|position|transform|font-size|font-weight|box-shadow|background)\s*:/,
+  );
+});
