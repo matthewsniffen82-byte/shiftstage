@@ -67,7 +67,7 @@ test("venue-card QR revenue actions use the semantic emerald success treatment",
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)/,
+    /\.home-venue-discovery-context-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)[\s\S]*?0 0 18px var\(--dancr-color-success-soft\)/,
   );
   assert.match(
     buttonCss,

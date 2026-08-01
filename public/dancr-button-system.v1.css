@@ -167,6 +167,7 @@
     ) !important;
   box-shadow:
     0 10px 28px var(--dancr-color-black-medium),
+    0 0 18px var(--dancr-color-success-soft),
     inset 0 1px 0 var(--dancr-color-white-medium) !important;
   text-shadow: none !important;
 }
@@ -180,6 +181,7 @@
   border-color: var(--dancr-color-success) !important;
   box-shadow:
     0 12px 30px var(--dancr-color-black-medium),
+    0 0 20px var(--dancr-color-success-soft),
     inset 0 1px 0 var(--dancr-color-white-medium) !important;
 }
 
