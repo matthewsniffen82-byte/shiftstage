@@ -34584,9 +34584,10 @@
           <div class="stat"><strong id="adminActiveSubscriptionCount">0</strong><span>Active billing</span></div>
         </div>
         <div class="auth-card">
-          <h3>MyDancr TV moderation</h3>
-          <p>Review real dancer video submissions, approve publication, reject with feedback, and confirm what is live.</p>
-          <a class="action-btn" href="/admin/operations" style="text-decoration:none">Open MyDancr TV moderation</a>
+          <h3>Operations center</h3>
+          <p>See every queue needing attention, live check-ins, QR activity, revenue health, audit history, accounts, system status, and analytics.</p>
+          <div class="status-grid" id="adminOperationsSummary" aria-live="polite"></div>
+          <a class="action-btn" href="/admin/operations" style="text-decoration:none">Open full operations center</a>
         </div>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
           <summary><span class="dashboard-collapse-title"><strong>Platform monitoring</strong><span>Expand to view live system checks, approval queue health, reports, billing, and support activity.</span></span></summary>
@@ -35191,6 +35192,7 @@
     let liveAdminSubscriptions = [];
     let liveAdminReports = [];
     let liveAdminMonitoring = null;
+    let liveAdminOperations = null;
     let liveAdminImageModeration = [];
     let liveCustomerProfile = null;
     let liveNotifications = [];
@@ -37891,14 +37893,16 @@
       }
       if (status) status.textContent = "Loading live admin data...";
       try {
-        const [approvalData, venueData, subscriptionData, monitoringData, imageModerationData] = await Promise.all([
+        const [approvalData, venueData, subscriptionData, monitoringData, imageModerationData, operationsData] = await Promise.all([
           getAuthenticatedJson("/api/admin/approvals"),
           getAuthenticatedJson("/api/admin/venues"),
           getAuthenticatedJson("/api/admin/subscriptions"),
           getAuthenticatedJson("/api/admin/monitoring"),
-          getAuthenticatedJson("/api/admin/image-moderation?decision=review&pageSize=50")
+          getAuthenticatedJson("/api/admin/image-moderation?decision=review&pageSize=50"),
+          getAuthenticatedJson("/api/admin/operations")
         ]);
         liveAdminMonitoring = monitoringData.monitoring || null;
+        liveAdminOperations = operationsData.operations || null;
         liveAdminImageModeration = imageModerationData.records || [];
         try {
           const reportData = await getAuthenticatedJson("/api/admin/reports");
@@ -37915,7 +37919,7 @@
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${queue.length} live approval${queue.length === 1 ? "" : "s"}, ${liveAdminImageModeration.length} pending photo review${liveAdminImageModeration.length === 1 ? "" : "s"}, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");
@@ -47115,6 +47119,32 @@
       `;
     }
 
+    function renderAdminOperationsSummary() {
+      const host = document.getElementById("adminOperationsSummary");
+      if (!host) return;
+      const operations = liveAdminOperations;
+      if (!operations) {
+        host.innerHTML = '<div class="locked">Live operations data is unavailable. Open the operations center for system details.</div>';
+        return;
+      }
+      const attention = operations.attention || {};
+      const live = operations.live || {};
+      const revenue = operations.revenue || {};
+      const items = [
+        ["Needs attention", attention.total || 0],
+        ["Overdue", attention.overdue || 0],
+        ["Checked in now", (live.checkedInDancers || []).length],
+        ["Active venues", live.activeVenueCount || 0],
+        ["QR today", live.qrGeneratedToday || 0],
+        ["QR redeemed", live.qrRedeemedToday || 0],
+        ["Suspicious QR", live.suspiciousQrToday || 0],
+        ["Deal conversion", `${Number(revenue.conversionRate || 0).toFixed(1)}%`]
+      ];
+      host.innerHTML = items.map(([label, value]) => `
+        <div class="stat"><strong>${displayText(value)}</strong><span>${displayText(label)}</span></div>
+      `).join("");
+    }
+
     function renderAdminDashboard() {
       if (!isAdminSession()) {
         showAdminAuthPage("Admin username and password required.");
@@ -47137,6 +47167,7 @@
       document.getElementById("adminPendingCount").textContent = pendingProfiles.length + pendingImageReviews.length;
       document.getElementById("adminSubscriptionCount").textContent = liveAdminSubscriptions.length;
       document.getElementById("adminActiveSubscriptionCount").textContent = activeSubscriptions.length;
+      renderAdminOperationsSummary();
       document.getElementById("adminMonitoring").innerHTML = adminMonitoringMarkup();
 
       const adminUserRows = [
@@ -47263,6 +47294,7 @@
       });
       [
         "adminMonitoring",
+        "adminOperationsSummary",
         "adminUsers",
         "adminDancers",
         "adminApprovedDancers",

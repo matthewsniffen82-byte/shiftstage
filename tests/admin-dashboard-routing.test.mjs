@@ -24,7 +24,7 @@ test("/admin opens the production app's real platform admin dashboard", () => {
 test("advanced admin operations stay available without replacing the real dashboard", () => {
   assert.match(operationsRoute, /import AdminClient from "\.\.\/AdminClient"/);
   assert.match(operationsRoute, /return <AdminClient \/>/);
-  assert.match(liveApp, /href="\/admin\/operations"[^>]*>Open MyDancr TV moderation<\/a>/);
+  assert.match(liveApp, /href="\/admin\/operations"[^>]*>Open full operations center<\/a>/);
   assert.match(
     adminClient,
     /return_to=\$\{encodeURIComponent\("\/admin\/operations"\)\}/,

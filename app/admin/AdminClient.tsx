@@ -3,6 +3,7 @@
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminTvPanel from "./AdminTvPanel";
 
@@ -16,6 +17,7 @@ type AdminState = {
   deals?: Array<Record<string, unknown>>;
   supportThreads?: Array<Record<string, unknown>>;
   imageModeration?: Array<Record<string, unknown>>;
+  operations?: AdminOperationsCenter | null;
   authRequired?: boolean;
   warnings?: string[];
   error?: string;
@@ -28,6 +30,7 @@ type AdminActionNotice = {
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
+type AdminWorkspace = "overview" | "approvals" | "activity" | "accounts" | "system";
 
 export default function AdminClient() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -41,6 +44,7 @@ export default function AdminClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
   const [openApprovalIds, setOpenApprovalIds] = useState<Record<string, boolean>>({});
+  const [workspace, setWorkspace] = useState<AdminWorkspace>("overview");
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -166,6 +170,7 @@ export default function AdminClient() {
         apply: (data: any) => Partial<AdminState>;
       }> = [
         { label: "Monitoring", path: "/api/admin/monitoring", apply: (data) => ({ monitoring: data.monitoring }) },
+        { label: "Live operations", path: "/api/admin/operations", apply: (data) => ({ operations: data.operations }) },
         {
           label: "Dancer approvals",
           path: "/api/admin/approvals",
@@ -207,6 +212,7 @@ export default function AdminClient() {
       const nextState: AdminState = {
         authRequired: false,
         monitoring: null,
+        operations: null,
         queue: [],
         dancers: [],
         venues: [],
@@ -360,14 +366,42 @@ export default function AdminClient() {
               <button type="button" onClick={() => loadAdmin()}>Retry unavailable sections</button>
             </aside>
           ) : null}
+          <nav className="admin-workspace-nav" aria-label="Admin workspaces">
+            {(["overview", "approvals", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={workspace === item ? "active" : ""}
+                aria-current={workspace === item ? "page" : undefined}
+                onClick={() => {
+                  setWorkspace(item);
+                  window.requestAnimationFrame(() => document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+                }}
+              >
+                {labelize(item)}
+                {item === "approvals" && state.operations?.attention.total
+                  ? <span>{state.operations.attention.total}</span>
+                  : null}
+              </button>
+            ))}
+          </nav>
+          {workspace === "overview" ? (
+            <OperationsOverview
+              operations={state.operations || null}
+              monitoring={state.monitoring || null}
+              onOpenWorkspace={setWorkspace}
+            />
+          ) : null}
+          {workspace === "activity" ? <ActivityTimeline operations={state.operations || null} /> : null}
+          {workspace === "accounts" ? <AccountOverview operations={state.operations || null} /> : null}
           <section className="admin-grid">
-          <Panel title="Monitoring">
+          {workspace === "system" ? <Panel title="Monitoring">
             {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
               <Metric key={key} label={labelize(key)} value={formatValue(value)} />
             ))}
             {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
-          </Panel>
-          <Panel
+          </Panel> : null}
+          {workspace === "approvals" ? <Panel
             title="Dancer approvals"
             badge={`${pendingDancerApprovalCount} needed`}
           >
@@ -410,8 +444,8 @@ export default function AdminClient() {
                 setApprovalOpen(dancerId, false);
               }}
             />
-          </Panel>
-          <Panel title="Dancer Directory">
+          </Panel> : null}
+          {workspace === "accounts" ? <Panel title="Dancer Directory">
             <Metric label="Approved dancers" value={String(state.dancers?.filter((item) => String(item.status) === "approved").length || 0)} />
             <DancerDirectory
               items={state.dancers || []}
@@ -436,61 +470,322 @@ export default function AdminClient() {
                 setApprovalOpen(dancerId, false);
               }}
             />
-          </Panel>
-          <Panel title="Venues">
+          </Panel> : null}
+          {workspace === "accounts" ? <Panel title="Venues">
             <Metric label="Managed venues" value={String(state.venues?.length || 0)} />
             <VenueManager
               venues={state.venues || []}
               onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
             />
-          </Panel>
-          <Panel title="Subscriptions">
+          </Panel> : null}
+          {workspace === "accounts" ? <Panel title="Subscriptions">
             <Metric label="Tracked subscriptions" value={String(state.subscriptions?.length || 0)} />
             <ListPreview items={state.subscriptions} empty="No subscriptions returned." />
-          </Panel>
-          <Panel title="Reports">
+          </Panel> : null}
+          {workspace === "approvals" ? <Panel title="Reports">
             <Metric label="Open reports" value={String(state.reports?.length || 0)} />
             <ReportManager
               reports={state.reports || []}
               onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
             />
-          </Panel>
-          <Panel title="Image Moderation">
+          </Panel> : null}
+          {workspace === "approvals" ? <Panel title="Image Moderation">
             <Metric label="Needs review" value={String(state.imageModeration?.filter((item) => String(item.decision) === "review").length || 0)} />
             <ImageModerationQueue
               records={state.imageModeration || []}
               onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
               onActionConfirmed={confirmAdminAction}
             />
-          </Panel>
-          <Panel title="MyDancr TV">
+          </Panel> : null}
+          {workspace === "approvals" ? <Panel title="MyDancr TV">
             <AdminTvPanel />
-          </Panel>
-          <Panel title="Copyright / DMCA">
+          </Panel> : null}
+          {workspace === "approvals" ? <Panel title="Copyright / DMCA">
             <AdminDmcaPanel />
-          </Panel>
-          <Panel title="Deal QR Attribution">
+          </Panel> : null}
+          {workspace === "activity" ? <Panel title="Deal QR Attribution">
             <Metric label="Tracked redemptions" value={String(state.deals?.length || 0)} />
             <DealActivityManager
               activity={state.deals || []}
               onActivityChange={(deals) => setState((current) => ({ ...current, deals }))}
             />
-          </Panel>
-          <Panel title="Support Inbox">
+          </Panel> : null}
+          {workspace === "activity" ? <Panel title="Support Inbox">
             <Metric label="Open conversations" value={String(state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0)} />
             <AdminSupportInbox
               threads={state.supportThreads || []}
               onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
             />
-          </Panel>
-          <Panel title="Rankings">
+          </Panel> : null}
+          {workspace === "system" ? <Panel title="Rankings">
             <RankingManager />
-          </Panel>
+          </Panel> : null}
           </section>
         </>
       )}
     </main>
   );
+}
+
+function OperationsOverview({
+  operations,
+  monitoring,
+  onOpenWorkspace,
+}: {
+  operations: AdminOperationsCenter | null;
+  monitoring: Record<string, unknown> | null;
+  onOpenWorkspace: (workspace: AdminWorkspace) => void;
+}) {
+  if (!operations) {
+    return (
+      <section className="operations-center" aria-live="polite">
+        <Panel title="Live operations"><p className="empty">Live operational data is temporarily unavailable. Use System to inspect the affected connection.</p></Panel>
+      </section>
+    );
+  }
+
+  const attention = operations.attention;
+  const attentionItems = [
+    ["Dancer profiles", attention.dancerProfiles],
+    ["Photos", attention.photos],
+    ["Videos", attention.videos],
+    ["Social links", attention.socialLinks],
+    ["Reports", attention.reports],
+    ["DMCA", attention.dmca],
+    ["Support", attention.support],
+    ["Venues", attention.venues],
+  ] as const;
+
+  return (
+    <section className="operations-center">
+      <header className="operations-status-line">
+        <div>
+          <span className="eyebrow">Command center</span>
+          <h2>What needs attention now</h2>
+        </div>
+        <span className={attention.overdue ? "health-pill warning" : "health-pill healthy"}>
+          {attention.overdue ? `${attention.overdue} overdue` : "No overdue queues"}
+        </span>
+      </header>
+
+      <div className="attention-grid">
+        {attentionItems.map(([label, value]) => (
+          <button key={label} type="button" onClick={() => onOpenWorkspace(label === "Support" ? "activity" : label === "Venues" ? "accounts" : "approvals")}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <small>{value === 1 ? "item" : "items"}</small>
+          </button>
+        ))}
+      </div>
+
+      <div className="operations-layout">
+        <Panel title="Live operations" badge={`${operations.live.checkedInDancers.length} checked in`}>
+          <div className="operations-metric-grid">
+            <Metric label="Operating venues" value={String(operations.live.activeVenueCount)} />
+            <Metric label="QR generated / 24h" value={String(operations.live.qrGeneratedToday)} />
+            <Metric label="QR redeemed / 24h" value={String(operations.live.qrRedeemedToday)} />
+            <Metric label="Suspicious QR / 24h" value={String(operations.live.suspiciousQrToday)} />
+          </div>
+          <OperationsList
+            items={operations.live.checkedInDancers}
+            empty="No dancers are currently checked in."
+            render={(item) => ({
+              title: relationLabel(item.dancer_profiles, "stage_name", "Dancer"),
+              detail: `${relationLabel(item.venues, "name", "Venue")} · checked in ${relativeTime(item.checked_in_at)}`,
+              status: asText(item.location_status) || "checked in",
+            })}
+          />
+          {operations.live.missedCheckIns.length ? (
+            <div className="exception-block">
+              <strong>{operations.live.missedCheckIns.length} missed check-in{operations.live.missedCheckIns.length === 1 ? "" : "s"}</strong>
+              <OperationsList
+                items={operations.live.missedCheckIns}
+                empty=""
+                render={(item) => ({
+                  title: relationLabel(item.dancer_profiles, "stage_name", "Dancer"),
+                  detail: `${relationLabel(item.venues, "name", "Venue")} · shift began ${relativeTime(item.starts_at)}`,
+                  status: "needs review",
+                })}
+              />
+            </div>
+          ) : null}
+          <div className="quick-links">
+            <button type="button" onClick={() => onOpenWorkspace("activity")}>Review QR activity</button>
+            <button type="button" onClick={() => onOpenWorkspace("accounts")}>Open accounts</button>
+          </div>
+        </Panel>
+
+        <Panel title="Revenue & deal health" badge={`${operations.revenue.conversionRate}% conversion`}>
+          <div className="operations-metric-grid">
+            <Metric label="Gross commission" value={formatAdminCents(operations.revenue.grossCommissionCents)} />
+            <Metric label="Platform share" value={formatAdminCents(operations.revenue.platformCommissionCents)} />
+            <Metric label="Dancer share" value={formatAdminCents(operations.revenue.dancerCommissionCents)} />
+            <Metric label="Awaiting venue payment" value={formatAdminCents(operations.revenue.pendingVenuePaymentCents)} />
+            <Metric label="Payable to dancers" value={formatAdminCents(operations.revenue.payableCents)} />
+            <Metric label="Settled" value={formatAdminCents(operations.revenue.settledCents)} />
+          </div>
+          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("activity")}>Open deal settlement workspace</button>
+        </Panel>
+
+        <Panel title="Growth & engagement">
+          <div className="operations-metric-grid">
+            <Metric label="Total accounts" value={operations.analytics.totalAccounts.toLocaleString()} />
+            <Metric label="Approved dancers" value={operations.analytics.activeDancers.toLocaleString()} />
+            <Metric label="New accounts / 7d" value={operations.analytics.newAccounts7d.toLocaleString()} />
+            <Metric label="Profile views / 7d" value={operations.analytics.profileViews7d.toLocaleString()} />
+            <Metric label="Profile views / 30d" value={operations.analytics.profileViews30d.toLocaleString()} />
+            <Metric label="Directions / 7d" value={operations.analytics.directionRequests7d.toLocaleString()} />
+            <Metric label="New follows / 7d" value={operations.analytics.newFollows7d.toLocaleString()} />
+            <Metric label="Published TV / 30d" value={operations.analytics.publishedVideos30d.toLocaleString()} />
+          </div>
+        </Panel>
+
+        <SystemHealthSummary monitoring={monitoring} warnings={operations.warnings} onOpenSystem={() => onOpenWorkspace("system")} />
+      </div>
+      <small className="data-freshness">Live data checked {relativeTime(operations.checkedAt)}.</small>
+    </section>
+  );
+}
+
+function SystemHealthSummary({
+  monitoring,
+  warnings,
+  onOpenSystem,
+}: {
+  monitoring: Record<string, unknown> | null;
+  warnings: Array<{ section: string; message: string }>;
+  onOpenSystem: () => void;
+}) {
+  const integrations = asRecordArray(monitoring?.integrations);
+  const database = asRecordArray(monitoring?.database);
+  const disconnected = integrations.filter((item) => item.configured === false || item.status === "missing");
+  const databaseErrors = database.filter((item) => Boolean(item.error));
+  const issues = warnings.length + disconnected.length + databaseErrors.length;
+  return (
+    <Panel title="Platform health" badge={issues ? `${issues} issues` : "Healthy"}>
+      <div className="health-row">
+        <span className={issues ? "health-dot warning" : "health-dot healthy"} aria-hidden="true" />
+        <div>
+          <strong>{issues ? "Degraded services need review" : "Core services are operational"}</strong>
+          <small>{integrations.length} integrations · {database.length} database checks</small>
+        </div>
+      </div>
+      {warnings.slice(0, 4).map((warning) => (
+        <div className="health-warning" key={`${warning.section}-${warning.message}`}>
+          <strong>{warning.section}</strong>
+          <span>{warning.message}</span>
+        </div>
+      ))}
+      <button className="panel-link-button" type="button" onClick={onOpenSystem}>Inspect system status</button>
+    </Panel>
+  );
+}
+
+function ActivityTimeline({ operations }: { operations: AdminOperationsCenter | null }) {
+  const activity = operations?.activity || [];
+  return (
+    <section className="workspace-lead">
+      <header>
+        <span className="eyebrow">Audit trail</span>
+        <h2>Recent admin activity</h2>
+        <p>Every approval, moderation decision, account change, ranking action, and legal action recorded by the production system.</p>
+      </header>
+      <div className="activity-timeline">
+        {activity.length ? activity.map((item) => (
+          <article key={asText(item.id)}>
+            <span className="timeline-marker" aria-hidden="true" />
+            <div>
+              <strong>{labelize(asText(item.action) || "admin action")}</strong>
+              <span>{labelize(asText(item.target_type) || "record")} {shortId(item.target_id)}</span>
+              {asText(item.notes) ? <p>{asText(item.notes)}</p> : null}
+              <small>{formatDate(item.created_at)}</small>
+            </div>
+          </article>
+        )) : <p className="empty">No admin actions have been recorded yet.</p>}
+      </div>
+    </section>
+  );
+}
+
+function AccountOverview({ operations }: { operations: AdminOperationsCenter | null }) {
+  const [query, setQuery] = useState("");
+  const accounts = (operations?.accounts || []).filter((item) => {
+    const search = query.trim().toLowerCase();
+    if (!search) return true;
+    return [item.display_name, item.email, item.role, item.account_state, relationLabel(item.dancer_profiles, "stage_name", "")]
+      .some((value) => asText(value).toLowerCase().includes(search));
+  });
+  return (
+    <section className="workspace-lead">
+      <header>
+        <span className="eyebrow">Account directory</span>
+        <h2>Dancers, customers, venues & admins</h2>
+        <p>Search the latest production accounts, then use the full dancer and venue records below for operational changes.</p>
+      </header>
+      <label className="admin-search">
+        <span>Search accounts</span>
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, email, role, or status" type="search" />
+      </label>
+      <div className="account-table" role="table" aria-label="Recent accounts">
+        {accounts.length ? accounts.map((item) => (
+          <div role="row" key={asText(item.id)}>
+            <span role="cell"><strong>{asText(item.display_name) || relationLabel(item.dancer_profiles, "stage_name", "Unnamed account")}</strong><small>{asText(item.email) || "No email displayed"}</small></span>
+            <span role="cell">{labelize(asText(item.role) || "account")}</span>
+            <span role="cell" className={`account-state ${asText(item.account_state)}`}>{labelize(asText(item.account_state) || "unknown")}</span>
+            <span role="cell"><small>{formatDate(item.created_at)}</small></span>
+          </div>
+        )) : <p className="empty">No accounts match this search.</p>}
+      </div>
+    </section>
+  );
+}
+
+function OperationsList({
+  items,
+  empty,
+  render,
+}: {
+  items: Array<Record<string, unknown>>;
+  empty: string;
+  render: (item: Record<string, unknown>) => { title: string; detail: string; status: string };
+}) {
+  if (!items.length) return empty ? <p className="empty">{empty}</p> : null;
+  return (
+    <div className="operations-list">
+      {items.slice(0, 8).map((item, index) => {
+        const row = render(item);
+        return (
+          <div key={asText(item.id) || index}>
+            <span><strong>{row.title}</strong><small>{row.detail}</small></span>
+            <em>{labelize(row.status)}</em>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function relationLabel(value: unknown, key: string, fallback: string) {
+  const record = readFirst(value);
+  return record ? asText(record[key]) || fallback : fallback;
+}
+
+function relativeTime(value: unknown) {
+  const date = new Date(asText(value));
+  if (Number.isNaN(date.getTime())) return "just now";
+  const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  if (Math.abs(seconds) < 60) return formatter.format(seconds, "second");
+  const minutes = Math.round(seconds / 60);
+  if (Math.abs(minutes) < 60) return formatter.format(minutes, "minute");
+  const hours = Math.round(minutes / 60);
+  if (Math.abs(hours) < 24) return formatter.format(hours, "hour");
+  return formatter.format(Math.round(hours / 24), "day");
+}
+
+function shortId(value: unknown) {
+  const id = asText(value);
+  return id ? `#${id.slice(0, 8)}` : "";
 }
 
 function DealActivityManager({
@@ -2553,6 +2848,67 @@ function AdminStyles() {
       .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
       .deal-settlement-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
       .deal-settlement-action input { min-height: 38px; border: 1px solid rgba(148,229,255,.22); border-radius: 8px; color: #fff; background: rgba(148,229,255,.06); padding: 0 10px; font: inherit; }
+      .admin-grid:empty { display: none; }
+      .admin-workspace-nav { position: sticky; z-index: 30; top: 8px; max-width: 1120px; margin: 0 auto 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(8,8,12,.9); backdrop-filter: blur(18px); box-shadow: 0 16px 50px rgba(0,0,0,.38); }
+      .admin-workspace-nav button { position: relative; min-height: 46px; padding: 8px 12px; color: #b9accd; background: transparent; border: 1px solid transparent; }
+      .admin-workspace-nav button.active { color: #fff; border-color: rgba(148,229,255,.28); background: linear-gradient(135deg, rgba(139,92,246,.36), rgba(34,199,255,.14)); box-shadow: inset 0 0 22px rgba(139,92,246,.14); }
+      .admin-workspace-nav button span { position: absolute; top: 3px; right: 5px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; color: #071016; background: #94e5ff; font-size: 10px; font-weight: 950; }
+      .operations-center, .workspace-lead { max-width: 1120px; margin: 0 auto 18px; display: grid; gap: 14px; }
+      .operations-status-line, .workspace-lead > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; padding: 8px 2px 2px; }
+      .workspace-lead > header { display: grid; justify-content: stretch; }
+      .operations-status-line > div, .workspace-lead > header { gap: 7px; }
+      .operations-status-line h2, .workspace-lead h2 { font-size: clamp(24px, 5vw, 38px); }
+      .health-pill { flex: 0 0 auto; padding: 8px 11px; border-radius: 999px; font-size: 12px; font-weight: 950; }
+      .health-pill.healthy { color: #8dffc4; border: 1px solid rgba(50,255,164,.3); background: rgba(50,255,164,.09); }
+      .health-pill.warning { color: #ffd19a; border: 1px solid rgba(255,180,84,.34); background: rgba(255,180,84,.1); }
+      .attention-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+      .attention-grid button { min-height: 102px; display: grid; align-content: center; justify-items: start; gap: 2px; padding: 12px; text-align: left; color: #fff; border: 1px solid rgba(255,255,255,.1); background: rgba(16,16,23,.88); }
+      .attention-grid button:hover, .attention-grid button:focus-visible { border-color: rgba(148,229,255,.44); background: rgba(21,23,31,.96); }
+      .attention-grid span { color: #b9accd; font-size: 11px; font-weight: 850; }
+      .attention-grid strong { font-size: 27px; line-height: 1; }
+      .attention-grid small { color: #70667f; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+      .operations-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .operations-metric-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px !important; }
+      .operations-list { display: grid; gap: 7px; }
+      .operations-list > div { min-height: 50px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; background: rgba(255,255,255,.035); }
+      .operations-list span { display: grid; gap: 2px; }
+      .operations-list strong { color: #fff; font-size: 13px; overflow-wrap: anywhere; }
+      .operations-list small { color: #9c90b3; font-size: 11px; overflow-wrap: anywhere; }
+      .operations-list em { color: #94e5ff; font-size: 10px; font-style: normal; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+      .exception-block { display: grid; gap: 8px; padding: 10px; border: 1px solid rgba(255,180,84,.28); border-radius: 8px; background: rgba(255,180,84,.06); }
+      .exception-block > strong { color: #ffd19a; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+      .quick-links { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; }
+      .quick-links button, .panel-link-button { min-height: 40px; padding: 8px 11px; color: #f7f2ff; border: 1px solid rgba(148,229,255,.24); background: rgba(148,229,255,.07); }
+      .data-freshness { justify-self: end; color: #70667f; font-size: 11px; }
+      .health-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
+      .health-row > div { display: grid; gap: 3px; }
+      .health-row strong { color: #fff; }
+      .health-row small { color: #9c90b3; }
+      .health-dot { width: 12px; height: 12px; border-radius: 999px; }
+      .health-dot.healthy { background: #32ffa4; box-shadow: 0 0 16px rgba(50,255,164,.55); }
+      .health-dot.warning { background: #ffb454; box-shadow: 0 0 16px rgba(255,180,84,.5); }
+      .health-warning { display: grid; gap: 2px; padding: 9px 10px; border-radius: 8px; border: 1px solid rgba(255,180,84,.25); background: rgba(255,180,84,.06); }
+      .health-warning strong { color: #ffd19a; font-size: 12px; }
+      .health-warning span { color: #f0d1aa; font-size: 11px; overflow-wrap: anywhere; }
+      .activity-timeline { display: grid; gap: 0; padding: 6px 14px 14px; border: 1px solid rgba(139,92,246,.24); border-radius: 10px; background: rgba(12,12,18,.86); }
+      .activity-timeline article { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .activity-timeline article:last-child { border-bottom: 0; }
+      .timeline-marker { width: 10px; height: 10px; margin-top: 4px; border-radius: 999px; background: #94e5ff; box-shadow: 0 0 15px rgba(148,229,255,.4); }
+      .activity-timeline article > div { display: grid; gap: 3px; }
+      .activity-timeline strong { color: #fff; }
+      .activity-timeline span, .activity-timeline small { color: #9c90b3; font-size: 12px; }
+      .activity-timeline p { color: #d8cfeb; font-size: 13px; }
+      .admin-search { display: grid; gap: 7px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
+      .account-table { display: grid; padding: 0 14px; border: 1px solid rgba(139,92,246,.24); border-radius: 10px; background: rgba(12,12,18,.86); }
+      .account-table [role="row"] { min-height: 68px; display: grid; grid-template-columns: 2fr .7fr .7fr 1fr; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .account-table [role="row"]:last-child { border-bottom: 0; }
+      .account-table [role="cell"] { color: #d8cfeb; font-size: 12px; overflow-wrap: anywhere; }
+      .account-table [role="cell"]:first-child { display: grid; gap: 3px; }
+      .account-table strong { color: #fff; }
+      .account-table small { color: #9c90b3; }
+      .account-state { justify-self: start; padding: 5px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); }
+      .account-state.active { color: #8dffc4 !important; border-color: rgba(50,255,164,.28); background: rgba(50,255,164,.07); }
+      .account-state.disabled { color: #ffd19a !important; border-color: rgba(255,180,84,.3); background: rgba(255,180,84,.08); }
       @media (max-width: 1020px) { .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 680px) {
         .admin-grid, .venue-admin-row, .deal-filters, .submission-grid, .submission-media-grid, .image-moderation-row, .image-moderation-filters, .dmca-agent-settings form, .dmca-case-actions { grid-template-columns: 1fr; }
@@ -2576,6 +2932,17 @@ function AdminStyles() {
         .submission-thumb img { max-height: 260px; object-fit: contain; }
         h1, h2, h3, p, small, span, strong { overflow-wrap: anywhere; }
         .admin-head { gap: 10px; margin-bottom: 18px; }
+        .admin-workspace-nav { top: 4px; grid-template-columns: repeat(5, minmax(72px, 1fr)); overflow-x: auto; scroll-snap-type: x mandatory; }
+        .admin-workspace-nav button { min-height: 43px; padding: 7px 8px; font-size: 11px; scroll-snap-align: start; }
+        .operations-status-line { align-items: flex-start; flex-direction: column; }
+        .attention-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .attention-grid button { min-height: 82px; }
+        .operations-layout, .operations-metric-grid, .quick-links { grid-template-columns: 1fr; }
+        .operations-list > div { grid-template-columns: 1fr; }
+        .operations-list em { justify-self: start; }
+        .account-table { padding: 0 10px; }
+        .account-table [role="row"] { grid-template-columns: 1fr auto; gap: 7px; }
+        .account-table [role="cell"]:first-child, .account-table [role="cell"]:last-child { grid-column: 1 / -1; }
       }
     `}</style>
   );
