@@ -71,9 +71,16 @@ test("venue pages and directory cards promote real active deals", () => {
     )?.[0] || "";
   assert.match(
     venueQrHelper,
-    /venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action/,
+    /if \(rail\) return "";[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-venue-discovery-club-deal home-venue-discovery-deal-action is-available/,
   );
-  assert.match(venueQrHelper, /actionButtonLabel\("qr", "Get Club Deal"\)/);
+  assert.match(
+    venueQrHelper,
+    /clubDealQrSymbolMarkup\("home-venue-discovery-qr-symbol"\)[\s\S]*?<strong>Get Club Deal<\/strong>[\s\S]*?Open unique QR/,
+  );
+  assert.match(
+    venueQrHelper,
+    /home-venue-discovery-club-deal is-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?<strong>No Club Deal<\/strong>[\s\S]*?Check back later/,
+  );
   assert.doesNotMatch(
     venueQrHelper,
     /safeExternalHref\(venue\.qrCodeUrl\)|data-external-venue-qr|data-venue-profile-qr|publishedVenueQrPass|data-deal-pass/,

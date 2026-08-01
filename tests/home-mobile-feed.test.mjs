@@ -283,7 +283,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?if \(rail\) return "";[\s\S]*?home-venue-discovery-deal-action[\s\S]*?Get Club Deal[\s\S]*?return "";/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?if \(rail\) return "";[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-venue-discovery-club-deal[\s\S]*?Get Club Deal[\s\S]*?home-venue-discovery-club-deal is-unavailable[\s\S]*?Check back later/,
   );
   const venueQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
@@ -330,7 +330,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 58px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 58px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1\.55fr\) minmax\(0, \.85fr\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-venue-discovery-club-deal \{[\s\S]*?grid-template-columns: 48px minmax\(0, 1fr\)[\s\S]*?\.home-venue-discovery-club-deal \.home-venue-discovery-qr-symbol \{[\s\S]*?width: 48px;[\s\S]*?\.home-venue-discovery-club-deal-copy strong \{[\s\S]*?font-size: 12px;/,
   );
   assert.match(
     homeSource,
@@ -338,7 +342,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border-radius: 18px;[\s\S]*?backdrop-filter: blur\(15px\)/,
+    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?bottom: 90px;[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border-radius: 18px;[\s\S]*?backdrop-filter: blur\(15px\)/,
   );
   assert.match(
     homeSource,

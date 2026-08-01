@@ -29877,7 +29877,7 @@
         }
         .home-venue-discovery-slide .home-discovery-feed-copy {
           right: 72px;
-          bottom: 70px;
+          bottom: 90px;
           left: 12px;
           gap: 9px;
           padding: 12px;
@@ -29979,7 +29979,7 @@
           left: 12px;
           width: auto;
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: minmax(0, 1.55fr) minmax(0, .85fr);
           gap: 8px;
         }
         .home-venue-discovery-context-actions > :only-child {
@@ -30007,6 +30007,113 @@
           border-color: rgba(77,255,157,.86);
           background: linear-gradient(135deg,rgba(18,139,80,.98),rgba(7,92,77,.98));
           box-shadow: 0 10px 26px rgba(10,116,78,.38), inset 0 1px 0 rgba(255,255,255,.2);
+        }
+        .home-venue-discovery-club-deal {
+          width: 100%;
+          min-width: 0;
+          min-height: 70px;
+          display: grid;
+          grid-template-columns: 48px minmax(0, 1fr);
+          align-items: center;
+          gap: 9px;
+          padding: 8px 10px 8px 8px;
+          overflow: hidden;
+          border: 1px solid rgba(77,255,157,.76);
+          border-radius: 15px;
+          color: #fff;
+          text-align: left;
+        }
+        button.home-venue-discovery-club-deal {
+          font: inherit;
+          cursor: pointer;
+        }
+        .home-venue-discovery-club-deal .home-venue-discovery-qr-symbol {
+          box-sizing: border-box;
+          width: 48px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          padding: 6px;
+          border: 1px solid rgba(204,255,226,.74);
+          border-radius: 9px;
+          color: #fff;
+          background: rgba(3,54,37,.74);
+          box-shadow: 0 7px 18px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.13);
+        }
+        .home-venue-discovery-club-deal .home-venue-discovery-qr-symbol svg {
+          width: 100%;
+          height: 100%;
+        }
+        .home-venue-discovery-club-deal-copy {
+          min-width: 0;
+          display: grid;
+          gap: 2px;
+        }
+        .home-venue-discovery-club-deal-copy small {
+          overflow: hidden;
+          color: rgba(194,255,220,.88);
+          font-size: 8px;
+          font-weight: 950;
+          letter-spacing: .1em;
+          line-height: 1;
+          text-overflow: ellipsis;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .home-venue-discovery-club-deal-copy strong {
+          overflow: hidden;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 950;
+          line-height: 1.05;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-venue-discovery-club-deal-copy span {
+          overflow: hidden;
+          color: rgba(239,255,246,.78);
+          font-size: 8.5px;
+          font-weight: 800;
+          line-height: 1.1;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-venue-discovery-club-deal:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
+        }
+        .home-venue-discovery-club-deal.is-unavailable {
+          border-color: rgba(196,181,253,.28);
+          color: rgba(245,245,255,.78);
+          background: linear-gradient(145deg,rgba(33,29,47,.94),rgba(8,8,14,.92));
+          box-shadow: 0 9px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        .home-venue-discovery-club-deal.is-unavailable .home-venue-discovery-qr-symbol {
+          border-color: rgba(196,181,253,.3);
+          color: rgba(245,245,255,.62);
+          background: rgba(31,27,44,.82);
+        }
+        .home-venue-discovery-club-deal.is-unavailable .home-venue-discovery-club-deal-copy small,
+        .home-venue-discovery-club-deal.is-unavailable .home-venue-discovery-club-deal-copy span {
+          color: rgba(221,214,254,.64);
+        }
+        .home-venue-discovery-context-actions .home-discovery-feed-directions {
+          min-height: 70px;
+        }
+        @media (max-width: 360px) {
+          .home-venue-discovery-club-deal {
+            grid-template-columns: 42px minmax(0, 1fr);
+            gap: 7px;
+            padding-inline: 7px;
+          }
+          .home-venue-discovery-club-deal .home-venue-discovery-qr-symbol {
+            width: 42px;
+            height: 42px;
+            padding: 5px;
+          }
+          .home-venue-discovery-club-deal-copy strong {
+            font-size: 11px;
+          }
         }
         .home-discovery-feed-position {
           position: absolute;
@@ -30398,7 +30505,7 @@
           }
           #results.home-venue-discovery-feed .home-discovery-feed-copy {
             right: 72px;
-            bottom: 70px;
+            bottom: 90px;
             left: 12px;
             padding: 12px;
           }
@@ -46150,10 +46257,10 @@
     }
 
     function homeVenueDiscoveryQrMarkup(venue, presentation = "primary") {
-      if (!venue?.id) return "";
       const rail = presentation === "rail";
-      if (venue.activeDeal?.id) {
-        if (rail) return "";
+      if (rail) return "";
+      const venueName = escapeHtml(venue?.name || "this venue");
+      if (venue?.id && venue.activeDeal?.id) {
         const config = {
           deal: venue.activeDeal,
           venueId: venue.id,
@@ -46161,9 +46268,28 @@
           venueName: venue.name,
           sourceType: "club_page"
         };
-        return `<button class="feed-card-action home-venue-discovery-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${escapeHtml(venue.activeDeal.dealTitle)} Club Deal">${actionButtonLabel("qr", "Get Club Deal")}</button>`;
+        const dealTitle = escapeHtml(venue.activeDeal.dealTitle || "Tonight's venue offer");
+        return `
+          <button class="home-venue-discovery-club-deal home-venue-discovery-deal-action is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${dealTitle} Club Deal at ${venueName}">
+            ${clubDealQrSymbolMarkup("home-venue-discovery-qr-symbol")}
+            <span class="home-venue-discovery-club-deal-copy">
+              <small>MyDancr Club Deal</small>
+              <strong>Get Club Deal</strong>
+              <span>${dealTitle} · Open unique QR</span>
+            </span>
+          </button>
+        `;
       }
-      return "";
+      return `
+        <div class="home-venue-discovery-club-deal is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="No Club Deal available at ${venueName}">
+          ${clubDealQrSymbolMarkup("home-venue-discovery-qr-symbol")}
+          <span class="home-venue-discovery-club-deal-copy">
+            <small>MyDancr Club Deal</small>
+            <strong>No Club Deal</strong>
+            <span>Check back later</span>
+          </span>
+        </div>
+      `;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
