@@ -27239,9 +27239,9 @@
     }
 
     #dancerDashboard .page-head {
-      position: relative !important;
-      top: auto !important;
-      z-index: 4 !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 34 !important;
       min-height: 72px !important;
       height: auto !important;
       margin-bottom: 0 !important;
@@ -27312,6 +27312,360 @@
 
       #dancerDashboard .approval-command {
         padding: 17px 16px !important;
+      }
+    }
+
+    /* Approved dancer dashboard: daily control center. */
+    #dancerDashboard .approval-command.has-actionable-review .approval-command-summary {
+      margin-bottom: 16px;
+      padding: 14px;
+      border: 1px solid rgba(255,104,124,.38);
+      background: rgba(84,18,36,.3);
+      box-shadow: inset 3px 0 0 rgba(255,104,124,.86);
+    }
+
+    .dancer-daily-center {
+      display: grid;
+      gap: 14px;
+    }
+
+    .dancer-daily-center[hidden] {
+      display: none !important;
+    }
+
+    .dancer-live-heading {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .dancer-live-heading > div {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .dancer-live-heading strong,
+    .dancer-live-heading span {
+      display: block;
+    }
+
+    .dancer-live-heading strong {
+      color: #fff;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    .dancer-live-heading > div > span {
+      color: rgba(218,214,230,.82);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .dancer-live-pill {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border: 1px solid rgba(53,216,255,.48);
+      border-radius: 999px;
+      color: #dffaff;
+      background: rgba(10,92,115,.32);
+      box-shadow: 0 0 18px rgba(53,216,255,.12);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .dancer-live-pill.is-incognito {
+      border-color: rgba(255,104,124,.42);
+      color: #ffe9ee;
+      background: rgba(98,24,44,.36);
+      box-shadow: 0 0 18px rgba(255,104,124,.1);
+    }
+
+    .dancer-next-shift {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(148px, auto);
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid rgba(124,58,237,.54);
+      border-radius: 17px;
+      background:
+        radial-gradient(circle at 92% 10%, rgba(100,38,255,.28), transparent 15rem),
+        linear-gradient(145deg, rgba(41,20,88,.78), rgba(7,7,12,.94));
+      box-shadow: inset 0 0 24px rgba(106,44,255,.08), 0 16px 34px rgba(0,0,0,.3);
+    }
+
+    .dancer-next-shift-copy {
+      min-width: 0;
+    }
+
+    .dancer-next-shift h3 {
+      margin: 5px 0 0;
+      color: #fff;
+      font-size: clamp(21px, 4vw, 27px);
+      line-height: 1.08;
+      overflow-wrap: anywhere;
+    }
+
+    .dancer-next-shift p {
+      margin: 6px 0 0;
+      color: rgba(226,221,239,.8);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.4;
+    }
+
+    .dancer-shift-primary {
+      min-height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      border: 1px solid rgba(195,169,255,.76);
+      border-radius: 14px;
+      color: #fff;
+      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8);
+      box-shadow: 0 0 24px rgba(104,44,255,.38), inset 0 0 14px rgba(255,255,255,.12);
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .dancer-shift-primary:hover,
+    .dancer-shift-primary:focus-visible {
+      border-color: #fff;
+      box-shadow: 0 0 34px rgba(104,44,255,.58), inset 0 0 16px rgba(255,255,255,.16);
+      transform: translateY(-1px);
+    }
+
+    .dancer-shift-primary:disabled {
+      cursor: wait;
+      opacity: .68;
+    }
+
+    .dancer-shift-primary svg,
+    .dancer-quick-actions svg {
+      width: 21px;
+      height: 21px;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dancer-quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .dancer-quick-actions button,
+    .dancer-quick-actions a {
+      min-width: 0;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(139,92,246,.24);
+      border-radius: 14px;
+      color: #f5f1ff;
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)), rgba(8,8,13,.88);
+      box-shadow: inset 0 0 16px rgba(139,92,246,.035);
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .dancer-quick-actions button:hover,
+    .dancer-quick-actions button:focus-visible,
+    .dancer-quick-actions a:hover,
+    .dancer-quick-actions a:focus-visible {
+      border-color: rgba(124,58,237,.72);
+      color: #fff;
+      background: linear-gradient(145deg, rgba(78,34,180,.3), rgba(8,8,13,.92));
+      box-shadow: 0 0 20px rgba(104,44,255,.15), inset 0 0 16px rgba(139,92,246,.06);
+    }
+
+    .dancer-quick-actions > * > span {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .dancer-quick-actions strong,
+    .dancer-quick-actions small {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .dancer-quick-actions strong {
+      font-size: 13px;
+      line-height: 1.15;
+    }
+
+    .dancer-quick-actions small {
+      color: rgba(201,194,216,.72);
+      font-size: 10px;
+      font-weight: 760;
+      line-height: 1.2;
+    }
+
+    .dancer-glance-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .dancer-glance-metrics > div {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+      padding: 11px 12px;
+      border: 1px solid rgba(53,216,255,.14);
+      border-radius: 13px;
+      background: rgba(7,10,15,.62);
+    }
+
+    .dancer-glance-metrics strong {
+      color: #fff;
+      font-size: 20px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .dancer-glance-metrics span {
+      color: rgba(190,184,204,.78);
+      font-size: 10px;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+
+    .dashboard-summary-count {
+      flex: 0 0 auto;
+      min-width: 28px;
+      height: 28px;
+      display: inline-grid;
+      place-items: center;
+      padding: 0 8px;
+      border: 1px solid rgba(124,58,237,.34);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(63,28,136,.34);
+      font-size: 11px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #dancerCommissionSection {
+      order: 1 !important;
+    }
+
+    #dancerNotificationSection {
+      order: 2 !important;
+    }
+
+    #dancerSupportSection {
+      order: 3 !important;
+    }
+
+    .dancer-visibility-section {
+      order: 4 !important;
+    }
+
+    #dancerDashboard.is-approved [data-account-panel="dancer"] {
+      order: 5 !important;
+    }
+
+    .dancer-visibility-control {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(170px, auto);
+      align-items: center;
+      gap: 14px;
+    }
+
+    .dancer-visibility-control > div {
+      min-width: 0;
+    }
+
+    .dancer-visibility-control > div > strong {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .dancer-visibility-control .dancer-incognito-status {
+      margin-top: 6px;
+      padding: 0;
+      border: 0;
+      color: rgba(205,199,218,.8);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    #dancerIncognitoToggle {
+      min-height: 50px;
+      display: grid;
+      gap: 3px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,104,124,.36);
+      border-radius: 13px;
+      color: #fff;
+      background: rgba(63,18,33,.35);
+      text-align: center;
+      cursor: pointer;
+    }
+
+    #dancerIncognitoToggle strong,
+    #dancerIncognitoToggle span {
+      display: block;
+    }
+
+    #dancerIncognitoToggle strong {
+      font-size: 13px;
+    }
+
+    #dancerIncognitoToggle span {
+      color: rgba(225,211,218,.76);
+      font-size: 10px;
+      font-weight: 760;
+    }
+
+    #dancerIncognitoToggle.is-incognito {
+      border-color: rgba(53,216,255,.48);
+      background: rgba(10,76,96,.34);
+      box-shadow: 0 0 18px rgba(53,216,255,.1);
+    }
+
+    @media (max-width: 760px) {
+      .dancer-quick-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .dancer-next-shift,
+      .dancer-visibility-control {
+        grid-template-columns: 1fr;
+      }
+
+      .dancer-shift-primary,
+      #dancerIncognitoToggle {
+        width: 100%;
+      }
+
+      .dancer-quick-actions button,
+      .dancer-quick-actions a {
+        min-height: 68px;
+      }
+
+      details.dashboard-collapse > summary {
+        align-items: flex-start;
       }
     }
     .fix-count-inline {
@@ -33299,21 +33653,49 @@
                 <span class="approval-expand" id="dancerApprovalExpand">Show steps</span>
               </div>
             </div>
-            <div class="approval-tool-actions" id="dancerApprovedTopTools" aria-label="Approved dancer tools">
-              <button type="button" data-dancer-control-action="edit-profile">
-                <strong>Edit profile</strong>
-                <span>Profile, photos, videos, and socials</span>
-              </button>
-              <button type="button" data-dancer-control-action="post-schedule">
-                <strong>Post schedule</strong>
-                <span>Add or update your shift</span>
-              </button>
-              <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
-                <strong>Go incognito</strong>
-                <span>Hide profile from site</span>
-              </button>
+            <div class="dancer-daily-center" id="dancerApprovedTopTools" aria-label="Dancer daily controls" hidden>
+              <div class="dancer-live-heading">
+                <span class="dancer-live-pill" id="dancerDashboardVisibilityPill">Live</span>
+                <div>
+                  <strong id="dancerDashboardOverviewTitle">Your profile is live</strong>
+                  <span id="dancerDashboardOverviewCopy">Keep your next shift current so customers know where to find you.</span>
+                </div>
+              </div>
+              <section class="dancer-next-shift" aria-labelledby="dancerDashboardShiftTitle">
+                <div class="dancer-next-shift-copy">
+                  <span class="eyebrow" id="dancerDashboardShiftKicker">Next shift</span>
+                  <h3 id="dancerDashboardShiftTitle">No shift posted</h3>
+                  <p id="dancerDashboardShiftDetail">Post your schedule so customers can find you at the right venue.</p>
+                </div>
+                <button class="dancer-shift-primary" id="dancerDashboardShiftAction" type="button" data-dancer-control-action="dashboard-primary" data-dashboard-shift-action="post-schedule">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"></path></svg>
+                  <span>Post schedule</span>
+                </button>
+              </section>
+              <div class="dancer-quick-actions" aria-label="Profile shortcuts">
+                <button type="button" data-dancer-control-action="edit-profile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"></path><path d="m14 7 3 3"></path></svg>
+                  <span><strong>Edit profile</strong><small>Profile, photos, videos, and socials</small></span>
+                </button>
+                <button type="button" data-dancer-control-action="preview-profile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+                  <span><strong>View profile</strong><small>Customer view</small></span>
+                </button>
+                <button type="button" data-dancer-control-action="share-profile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"></circle><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="19" r="2"></circle><path d="m8 11 8-5M8 13l8 5"></path></svg>
+                  <span><strong>Share profile</strong><small>Link and QR</small></span>
+                </button>
+                <a href="/dashboard/dancer/tv">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m10 9 5 3-5 3V9Z"></path></svg>
+                  <span><strong>MyDancr TV</strong><small>Manage videos</small></span>
+                </a>
+              </div>
+              <div class="dancer-glance-metrics" aria-label="Last 30 days at a glance">
+                <div><strong id="dancerDashboardProfileViews">0</strong><span>Profile views</span></div>
+                <div><strong id="dancerDashboardFollowers">0</strong><span>Followers</span></div>
+                <div><strong id="dancerDashboardDirections">0</strong><span>Directions</span></div>
+              </div>
             </div>
-            <p class="dancer-incognito-status" id="dancerIncognitoStatus" role="status" aria-live="polite"></p>
             <div class="approved-tool-dropdown" id="approvedEditProfileDropdown" hidden>
               <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -33361,7 +33743,7 @@
           <summary>
             <span class="dashboard-collapse-title">
               <strong>Dancer analytics</strong>
-              <span>Expand to view profile traffic, rank movement, social clicks, notifications, and customer intent.</span>
+              <span id="dancerAnalyticsSummary">Expand to view profile traffic, rank movement, social clicks, notifications, and customer intent.</span>
             </span>
           </summary>
           <div class="dancer-analytics-body">
@@ -33412,16 +33794,16 @@
             </div>
           </div>
         </details>
-        <details class="auth-card dashboard-collapse approved-analytics">
-          <summary><span class="dashboard-collapse-title"><strong>QR commissions</strong><span>Expand to see commissions earned from customer QR scans and redeemed profile deals.</span></span></summary>
+        <details class="auth-card dashboard-collapse approved-analytics" id="dancerCommissionSection">
+          <summary><span class="dashboard-collapse-title"><strong>QR commissions</strong><span>Expand to see commissions earned from customer QR scans and redeemed profile deals.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
             <p class="value-message" id="dancerCommissionSummary">QR commissions appear after customers scan and redeem deals from your profile.</p>
             <div class="metric-grid" id="dancerCommissionMetrics" aria-label="QR commission metrics"></div>
             <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
           </div>
         </details>
-        <details class="auth-card dashboard-collapse approved-analytics">
-          <summary><span class="dashboard-collapse-title"><strong>Notification center</strong><span>Expand to read approval updates, review notes, shift alerts, and admin notifications.</span></span></summary>
+        <details class="auth-card dashboard-collapse approved-analytics" id="dancerNotificationSection">
+          <summary><span class="dashboard-collapse-title"><strong>Notification center</strong><span>Expand to read approval updates, review notes, shift alerts, and admin notifications.</span></span><span class="dashboard-summary-count" id="dancerNotificationSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
             <div class="section-title-row">
               <h3 class="section-title">Notification center</h3>
@@ -33431,8 +33813,8 @@
             <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
           </div>
         </details>
-        <details class="auth-card dashboard-collapse support-inbox-card" data-support-panel="dancer">
-          <summary><span class="dashboard-collapse-title"><strong>Message admin</strong><span>Send a private message directly to the Dancr admin team.</span></span></summary>
+        <details class="auth-card dashboard-collapse support-inbox-card" id="dancerSupportSection" data-support-panel="dancer">
+          <summary><span class="dashboard-collapse-title"><strong>Message admin</strong><span>Send a private message directly to the Dancr admin team.</span></span><span class="dashboard-summary-count" id="dancerSupportSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
             <form class="auth-form support-contact-form" data-support-form="dancer">
               <div class="field"><label for="dancerSupportSubject">Subject</label><input id="dancerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
@@ -33694,7 +34076,22 @@
           </details>
           </div>
         </details>
-        <details class="auth-card dashboard-collapse">
+        <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
+          <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to customers</span></span></summary>
+          <div class="dashboard-collapse-body">
+            <div class="dancer-visibility-control">
+              <div>
+                <strong id="dancerVisibilityTitle">Your profile is live</strong>
+                <p class="dancer-incognito-status show" id="dancerIncognitoStatus" role="status" aria-live="polite">Customers can discover your profile, schedules, and venue directions.</p>
+              </div>
+              <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
+                <strong>Go incognito</strong>
+                <span>Hide profile from customers</span>
+              </button>
+            </div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse" id="dancerBillingSection" hidden>
           <summary><span class="dashboard-collapse-title"><strong>Payment authorization</strong><span>Expand to view subscription status and manage Stripe billing when billing is active.</span></span></summary>
           <div class="dashboard-collapse-body">
             <div class="rule-note">Stripe checkout starts after platform approval. Public profile billing is managed from this dashboard.</div>
@@ -33705,7 +34102,7 @@
             <button class="action-btn secondary" id="billingPortalBtn">Manage subscription</button>
           </div>
         </details>
-        <details class="auth-card dashboard-collapse">
+        <details class="auth-card dashboard-collapse" id="dancerApprovalStatusSection">
           <summary><span class="dashboard-collapse-title"><strong>Approval status</strong><span>Expand to see whether the profile is pending, approved, or needs fixes.</span></span></summary>
           <div class="dashboard-collapse-body">
             <div class="lock-row" id="dancerApprovalStatusPrimary">Complete the four verification steps so Dancr can review your profile.</div>
@@ -36728,6 +37125,10 @@
       const markup = notificationCenterMarkup();
       if (customerNotificationList) customerNotificationList.innerHTML = markup;
       if (dancerNotificationList) dancerNotificationList.innerHTML = markup;
+      const dancerNotificationSummaryCount = document.getElementById("dancerNotificationSummaryCount");
+      if (dancerNotificationSummaryCount) {
+        dancerNotificationSummaryCount.textContent = String(liveNotifications.filter((notification) => !notification.readAt).length);
+      }
       renderCustomerQuickActions();
     }
 
@@ -37117,6 +37518,8 @@
       if (!container) return;
       const threads = ownSupportThreads(role);
       container.innerHTML = threads.length ? threads.map((thread) => supportThreadMarkup(thread)).join("") : "No support conversations yet.";
+      const summaryCount = document.getElementById(`${role}SupportSummaryCount`);
+      if (summaryCount) summaryCount.textContent = String(threads.length);
     }
 
     function renderAdminSupportInbox() {
@@ -45128,6 +45531,8 @@
     function syncDancerIncognitoToggle(profile = activeDancerProfile(), approved = false) {
       const button = document.getElementById("dancerIncognitoToggle");
       const status = document.getElementById("dancerIncognitoStatus");
+      const title = document.getElementById("dancerVisibilityTitle");
+      const summary = document.getElementById("dancerVisibilitySummary");
       if (!button) return;
       const isHidden = dancerProfileIsHidden(profile);
       button.hidden = !approved;
@@ -45138,12 +45543,112 @@
       const helper = button.querySelector("span");
       if (label) label.textContent = isHidden ? "Turn profile back on" : "Go incognito";
       if (helper) helper.textContent = isHidden ? "Incognito on · Profile hidden" : "Hide profile from customers";
+      if (title) title.textContent = isHidden ? "Your profile is hidden" : "Your profile is live";
+      if (summary) summary.textContent = isHidden ? "Incognito · Hidden from customers" : "Visible to customers";
       if (status) {
         status.classList.toggle("show", approved);
         status.classList.toggle("is-incognito", isHidden);
         status.textContent = isHidden
-          ? "Incognito is on. Your profile is hidden from customers. Press Turn profile back on whenever you want customers to see it again."
-          : "Your profile is live. Press Go incognito to hide it from customers.";
+          ? "Customers cannot discover your profile, schedule, or venue details. Turn it back on whenever you are ready."
+          : "Customers can discover your profile, schedules, and venue directions.";
+      }
+    }
+
+    function dancerDashboardPostedShifts(profile, city = activeDancerCity()) {
+      if (!profile) return [];
+      const today = todayValue(city);
+      const shifts = profilePostedShifts(profile).filter((shift) => {
+        if (!shift || shift.status === "cancelled" || shift.workingStatus === "ended" || shift.endedAt) return false;
+        if (shift.shiftEndsAt) {
+          const endTime = Date.parse(shift.shiftEndsAt);
+          if (Number.isFinite(endTime)) return endTime >= Date.now();
+        }
+        return !shift.shiftDate || shift.shiftDate >= today;
+      });
+      return shifts.sort((left, right) => {
+        const leftTime = Date.parse(left.shiftStartsAt || `${left.shiftDate || today}T${left.shiftStart || "23:59"}:00`);
+        const rightTime = Date.parse(right.shiftStartsAt || `${right.shiftDate || today}T${right.shiftStart || "23:59"}:00`);
+        return (Number.isFinite(leftTime) ? leftTime : Number.MAX_SAFE_INTEGER) - (Number.isFinite(rightTime) ? rightTime : Number.MAX_SAFE_INTEGER);
+      });
+    }
+
+    function renderDancerDailyOverview(profile, approved, dashboardMetrics, optionalProfileFixes = false) {
+      const overview = document.getElementById("dancerApprovedTopTools");
+      if (!overview) return;
+      overview.hidden = !approved;
+      overview.classList.toggle("show", approved);
+      if (!approved) return;
+
+      const city = activeDancerCity();
+      const isHidden = dancerProfileIsHidden(profile);
+      const visibilityPill = document.getElementById("dancerDashboardVisibilityPill");
+      const overviewTitle = document.getElementById("dancerDashboardOverviewTitle");
+      const overviewCopy = document.getElementById("dancerDashboardOverviewCopy");
+      if (visibilityPill) {
+        visibilityPill.textContent = optionalProfileFixes ? "Action needed" : isHidden ? "Incognito" : "Live";
+        visibilityPill.classList.toggle("is-incognito", isHidden || optionalProfileFixes);
+      }
+      if (overviewTitle) overviewTitle.textContent = optionalProfileFixes
+        ? "Your profile is live, with an item to fix"
+        : isHidden
+          ? "Your profile is hidden"
+          : `You're live in ${city}`;
+      if (overviewCopy) overviewCopy.textContent = optionalProfileFixes
+        ? "Open Edit profile to replace or remove the item flagged for changes."
+        : isHidden
+          ? "Your tools remain available while customers cannot see your profile."
+          : "Keep your next shift current so customers know where to find you.";
+
+      const views = liveMetricNumber(dashboardMetrics?.profileViews30, 0);
+      const followers = liveMetricNumber(dashboardMetrics?.followers, 0);
+      const directions = liveMetricNumber(dashboardMetrics?.directionRequests30, 0);
+      const metricValues = {
+        dancerDashboardProfileViews: views,
+        dancerDashboardFollowers: followers,
+        dancerDashboardDirections: directions
+      };
+      Object.entries(metricValues).forEach(([id, value]) => {
+        const target = document.getElementById(id);
+        if (target) target.textContent = value.toLocaleString();
+      });
+      const analyticsSummary = document.getElementById("dancerAnalyticsSummary");
+      if (analyticsSummary) analyticsSummary.textContent = `${views.toLocaleString()} profile views · ${followers.toLocaleString()} followers · ${directions.toLocaleString()} directions in the last 30 days.`;
+      const qrSummaryCount = document.getElementById("dancerQrSummaryCount");
+      if (qrSummaryCount) qrSummaryCount.textContent = String(liveMetricNumber(liveDancerDeals?.redeemed, 0));
+
+      const kicker = document.getElementById("dancerDashboardShiftKicker");
+      const title = document.getElementById("dancerDashboardShiftTitle");
+      const detail = document.getElementById("dancerDashboardShiftDetail");
+      const action = document.getElementById("dancerDashboardShiftAction");
+      const actionLabel = action?.querySelector("span");
+      const checkedIn = Boolean(profile && isCheckedInShift(profile) && profile.workingStatus !== "ended" && !profile.endedAt);
+      const canCheckIn = Boolean(profile?.scheduled && !checkedIn && profile.workingStatus !== "ended" && !profile.endedAt && checkInWindowOpen(profile));
+      const nextShift = dancerDashboardPostedShifts(profile, city)[0] || null;
+
+      if (checkedIn) {
+        if (kicker) kicker.textContent = "Working now";
+        if (title) title.textContent = profile.venue || "Current shift";
+        if (detail) detail.textContent = `${displayShiftTime(profile.time) || "Posted shift"} · Check-in verified and QR tracking active.`;
+        if (action) action.dataset.dashboardShiftAction = "post-schedule";
+        if (actionLabel) actionLabel.textContent = "Manage shift";
+      } else if (canCheckIn) {
+        if (kicker) kicker.textContent = "Shift starting";
+        if (title) title.textContent = profile.venue || "Posted shift";
+        if (detail) detail.textContent = `${postedShiftDateTimeLabel(profile, city)} · Verify your location to appear in Working Now.`;
+        if (action) action.dataset.dashboardShiftAction = "check-in";
+        if (actionLabel) actionLabel.textContent = "Check in now";
+      } else if (nextShift) {
+        if (kicker) kicker.textContent = "Next shift";
+        if (title) title.textContent = nextShift.venue || "Posted shift";
+        if (detail) detail.textContent = postedShiftDateTimeLabel(nextShift, city);
+        if (action) action.dataset.dashboardShiftAction = "post-schedule";
+        if (actionLabel) actionLabel.textContent = "Edit schedule";
+      } else {
+        if (kicker) kicker.textContent = "Schedule";
+        if (title) title.textContent = "No shift posted";
+        if (detail) detail.textContent = "Post your schedule so customers can find you at the right venue.";
+        if (action) action.dataset.dashboardShiftAction = "post-schedule";
+        if (actionLabel) actionLabel.textContent = "Post schedule";
       }
     }
 
@@ -45184,10 +45689,13 @@
       const approvalCommand = document.getElementById("dancerApprovalCommand");
       if (approvalCommand) {
         approvalCommand.classList.toggle("approved", approved && !rejected);
+        approvalCommand.classList.toggle("has-actionable-review", approved && optionalProfileFixes);
       }
       const approvalCommandToggle = approvalCommand?.querySelector("[data-setup-checklist-toggle]");
-      if (approvalCommandToggle) approvalCommandToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
-      document.getElementById("dancerApprovedTopTools")?.classList.toggle("show", approved);
+      if (approvalCommandToggle) {
+        approvalCommandToggle.setAttribute("aria-expanded", setupChecklistExpanded ? "true" : "false");
+        approvalCommandToggle.hidden = approved && !optionalProfileFixes;
+      }
       const dancerApprovalStatus = document.getElementById("dancerApprovalStatus");
       if (dancerApprovalStatus) dancerApprovalStatus.textContent = approvalStateLabel;
       document.getElementById("dancerApprovalEyebrow").textContent = approved ? "Profile live" : "Profile setup";
@@ -45196,7 +45704,7 @@
         : optionalProfileFixes
           ? "Approved with fixes needed"
         : approved
-          ? "Approved. Start posting shifts."
+          ? "Your profile is live"
         : reviewSubmitted
           ? "Submitted for Dancr review"
           : "Finish verification to go live";
@@ -45205,9 +45713,7 @@
         : optionalProfileFixes
           ? "Your required verification is approved. Only pictures and/or social links need fixes. You can replace them and submit again, or leave them blank."
         : approved
-          ? (liveIdentityVerificationMode === "auto_approve"
-            ? "Your dancer account is automatically approved. Complete your public details, post shifts, and track how Dancr sends customers to you. Photos and videos publish only after separate media moderation."
-            : "Your public profile is live. Post shifts, share your profile, and track how Dancr sends customers to you.")
+          ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
         : reviewSubmitted
           ? "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email and in your site notifications when review is complete."
           : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
@@ -45235,12 +45741,17 @@
       document.getElementById("dancerSubscriptionDetail").textContent = billingSummary.detail;
       const billingButton = document.getElementById("billingPortalBtn");
       if (billingButton) billingButton.textContent = billingSummary.action;
+      const billingSection = document.getElementById("dancerBillingSection");
+      if (billingSection) billingSection.hidden = !Boolean(liveDancerBilling?.subscription?.hasStripeSubscription);
+      const approvalStatusSection = document.getElementById("dancerApprovalStatusSection");
+      if (approvalStatusSection) approvalStatusSection.hidden = approved && !optionalProfileFixes && !rejected;
       document.getElementById("dancerPublicDetail").textContent = approved
         ? (profileIncognito
           ? "Your approved tools stay available. Press Reactivate profile any time to show your profile on Dancr again."
           : "Customers can discover this profile, follow it, view schedules, and request venue directions.")
         : "Complete and save your stage name and city to finish your public profile setup.";
       syncDancerIncognitoToggle(activeProfile, approved);
+      renderDancerDailyOverview(activeProfile, approved, dashboardMetrics, optionalProfileFixes);
       const approvalStatusPrimary = document.getElementById("dancerApprovalStatusPrimary");
       const approvalStatusSecondary = document.getElementById("dancerApprovalStatusSecondary");
       if (approvalStatusPrimary && approvalStatusSecondary) {
@@ -45254,9 +45765,7 @@
           approvalStatusPrimary.textContent = liveIdentityVerificationMode === "auto_approve"
             ? "Automatically approved. Your dancer account and public profile tools are unlocked."
             : "Approved. Your public profile, gallery, and shift posting are unlocked.";
-          approvalStatusSecondary.textContent = liveIdentityVerificationMode === "auto_approve"
-            ? "Photos and videos are moderated separately and appear publicly only after their own approval."
-            : "Keep your schedule updated so customers can find you when you are working.";
+          approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
           approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
           approvalStatusSecondary.textContent = "You will be notified by email and in your site notifications when review is complete.";
@@ -50535,6 +51044,20 @@
         return;
       }
 
+      if (action === "dashboard-primary") {
+        if (trigger?.dataset.dashboardShiftAction === "check-in") {
+          await handleShiftVerificationAction("check-in", trigger);
+          renderDancerSetup();
+          return;
+        }
+        const panel = document.getElementById("approvedDancerPanel");
+        panel?.removeAttribute("hidden");
+        if (panel) panel.open = true;
+        setApprovedToolDropdown("schedule");
+        setResult("Schedule posting form opened.");
+        return;
+      }
+
       if (action === "toggle-incognito") {
         const profile = activeDancerProfile(city);
         if (!profile) {
@@ -50547,6 +51070,9 @@
           return;
         }
         const nextPublic = dancerProfileIsHidden(profile);
+        if (!nextPublic && !window.confirm("Go incognito? Your profile, posted schedule, and venue details will be hidden from customers until you turn the profile back on.")) {
+          return;
+        }
         if (trigger) {
           trigger.disabled = true;
           trigger.setAttribute("aria-busy", "true");
