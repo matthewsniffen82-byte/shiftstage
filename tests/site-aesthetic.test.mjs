@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=13" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=14" rel="stylesheet">/,
   );
 });
 
@@ -96,6 +96,18 @@ test("venue detail and full dancer profiles use the same near-black foundation a
     /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?(?=#profileBackdrop \.profile-modal :is)/,
   )?.[0] || "";
   assert.doesNotMatch(profileFoundation, /radial-gradient|linear-gradient/);
+  assert.match(
+    liveApp,
+    /#results\.venue-profile-overlay \{[\s\S]*?background: #050507 !important;[\s\S]*?background-image: none !important;[\s\S]*?#results\.venue-profile-overlay \.venue-detail \{[\s\S]*?background: #050507 !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.venue-profile-overlay :is\([\s\S]*?\.venue-hero,[\s\S]*?\.venue-sign,[\s\S]*?\.venue-quick-stat,[\s\S]*?\.venue-info \.info-tile,[\s\S]*?\.venue-shift-row,[\s\S]*?\.locked[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.venue-profile-overlay :is\([\s\S]*?\.venue-main-photo,[\s\S]*?\.venue-art[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
+  );
 });
 
 test("the shared aesthetic covers public content, accounts, and operations surfaces", () => {

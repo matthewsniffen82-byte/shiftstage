@@ -615,6 +615,51 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail {
   box-shadow: none !important;
 }
 
+/* Venue details use the same neutral hierarchy as a full dancer profile:
+ * near-black page and gutters, charcoal content panels, and no ambient color
+ * wash. Real profile media and semantic deal/action colors remain untouched. */
+body.dancr-button-system #results.venue-profile-overlay :is(
+  .venue-hero,
+  .venue-sign,
+  .venue-quick-stat,
+  .venue-info .info-tile,
+  .venue-shift-row,
+  .locked
+) {
+  background-color: var(--dancr-color-surface-subtle) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay :is(
+  .venue-main-photo,
+  .venue-art
+) {
+  background-color: var(--dancr-color-background) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-main-photo::before,
+body.dancr-button-system #results.venue-profile-overlay .venue-main-photo::after,
+body.dancr-button-system #results.venue-profile-overlay .venue-art::before,
+body.dancr-button-system #results.venue-profile-overlay .venue-art::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay :is(
+  .venue-hero-body,
+  .venue-shift-list,
+  .list.card-grid
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 #profileBackdrop .profile-modal,
 #results.venue-profile-overlay .venue-detail,
 .modal-card {
