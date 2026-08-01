@@ -32,9 +32,9 @@ test("dancer and venue scrolling cards keep QR directly below Profile", () => {
   );
 });
 
-test("TV inserts a real live-deal QR in the matching second rail slot only", () => {
+test("TV keeps the real live-deal QR inside the compact actions menu only", () => {
   const tvActions = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
 
   assert.match(
@@ -43,11 +43,11 @@ test("TV inserts a real live-deal QR in the matching second rail slot only", () 
   );
   assert.match(
     tvActions,
-    /if \(hasLiveDeal\)[\s\S]*?home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?<span>QR<\/span>[\s\S]*?deal\.dataset\.cardActionSlot = "qr"/,
+    /if \(hasLiveDeal\)[\s\S]*?home-tv-feed-primary-action home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?"Club Deal QR"[\s\S]*?deal\.dataset\.cardActionSlot = "qr"/,
   );
   assert.match(
     tvActions,
-    /actions\.appendChild\(applause\);\s*if \(deal\) actions\.appendChild\(deal\);\s*actions\.append\(share, report, reportMenu\);/,
+    /menu\.append\(applause, share, follow, fullscreen\);\s*if \(deal\) menu\.appendChild\(deal\);\s*menu\.append\(report, reportMenu\);/,
   );
   assert.doesNotMatch(tvActions, /else\s*\{[\s\S]*?cardActionSlot = "qr"/);
 });

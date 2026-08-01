@@ -29262,10 +29262,10 @@
           min-height: 500px;
           max-height: 680px;
           overflow: hidden;
-          border: 1px solid rgba(139,92,246,.34);
+          border: 1px solid rgba(248,250,252,.12);
           border-radius: 18px;
           background: #000;
-          box-shadow: 0 20px 54px rgba(0,0,0,.5), 0 0 30px rgba(124,58,237,.14);
+          box-shadow: 0 20px 54px rgba(0,0,0,.48), 0 0 18px rgba(124,58,237,.07);
           contain: layout paint style;
           isolation: isolate;
         }
@@ -29364,10 +29364,9 @@
           pointer-events: none;
         }
         .home-tv-feed-copy a,
-        .home-tv-feed-dancer-action,
         .home-tv-feed-sound,
-        .home-tv-feed-fullscreen,
         .home-tv-feed-action,
+        .home-tv-feed-menu-action,
         .home-tv-feed-report-option,
         .home-feed-return-home {
           pointer-events: auto;
@@ -29483,47 +29482,6 @@
           font-weight: 900;
           text-shadow: 0 2px 12px rgba(0,0,0,.9);
         }
-        .home-tv-feed-dancer-actions {
-          width: fit-content;
-          max-width: calc(100% - 54px);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-left: 54px;
-        }
-        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action {
-          width: auto;
-          min-width: 92px;
-          min-height: 34px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 0 12px;
-          border: 1px solid rgba(255,255,255,.24);
-          border-radius: 999px;
-          color: #fff;
-          background: rgba(5,5,10,.7);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-          font-size: 10px;
-          font-weight: 950;
-          line-height: 1;
-          text-decoration: none;
-          backdrop-filter: blur(12px);
-          touch-action: manipulation;
-        }
-        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action .action-icon {
-          width: 16px;
-          height: 16px;
-          flex: 0 0 auto;
-        }
-        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action:hover,
-        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action:focus-visible,
-        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action.is-active {
-          border-color: rgba(126,234,255,.62);
-          color: #e9fbff;
-          background: rgba(25,57,75,.82);
-        }
         .home-tv-feed-venue svg {
           width: 17px;
           height: 17px;
@@ -29610,46 +29568,6 @@
         .home-tv-feed-sound.is-muted .home-tv-feed-sound-muted {
           display: initial;
         }
-        .home-tv-feed-fullscreen {
-          position: absolute;
-          z-index: 6;
-          top: 66px;
-          right: 14px;
-          width: 44px;
-          min-width: 44px;
-          max-width: 44px;
-          height: 44px;
-          min-height: 44px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          border: 1px solid rgba(255,255,255,.18);
-          border-radius: 999px;
-          color: rgba(255,255,255,.92);
-          background: rgba(4,4,8,.38);
-          box-shadow: 0 6px 18px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06);
-          font-size: 10px;
-          font-weight: 900;
-          backdrop-filter: blur(14px) saturate(1.1);
-          -webkit-backdrop-filter: blur(14px) saturate(1.1);
-          touch-action: manipulation;
-        }
-        .home-tv-feed-fullscreen:hover,
-        .home-tv-feed-fullscreen[aria-pressed="true"] {
-          border-color: rgba(126,234,255,.42);
-          color: #fff;
-          background: rgba(20,20,28,.52);
-        }
-        .home-tv-feed-fullscreen svg {
-          width: 18px;
-          height: 18px;
-          fill: none;
-          stroke: currentColor;
-          stroke-width: 2;
-          stroke-linecap: round;
-          stroke-linejoin: round;
-        }
         .home-tv-feed-playback {
           position: absolute;
           z-index: 5;
@@ -29713,9 +29631,7 @@
           z-index: 7;
           right: 12px;
           bottom: 24px;
-          display: grid;
-          justify-items: end;
-          gap: 9px;
+          display: block;
         }
         .home-tv-feed-action {
           width: 44px;
@@ -29726,8 +29642,8 @@
           border: 1px solid rgba(255,255,255,.2);
           border-radius: 999px;
           color: #fff;
-          background: rgba(5,5,10,.64);
-          box-shadow: 0 8px 24px rgba(0,0,0,.3), 0 0 16px rgba(124,58,237,.12);
+          background: rgba(5,5,10,.58);
+          box-shadow: 0 8px 22px rgba(0,0,0,.28);
           backdrop-filter: blur(12px);
           touch-action: manipulation;
         }
@@ -29736,8 +29652,8 @@
         .home-tv-feed-action[aria-expanded="true"] {
           border-color: rgba(126,234,255,.58);
           color: #e9fbff;
-          background: rgba(54,24,93,.78);
-          box-shadow: 0 0 20px rgba(124,58,237,.26);
+          background: rgba(35,22,58,.82);
+          box-shadow: 0 0 16px rgba(124,58,237,.18);
         }
         .home-tv-feed-action svg {
           width: 20px;
@@ -29748,13 +29664,86 @@
           stroke-linecap: round;
           stroke-linejoin: round;
         }
+        .home-tv-feed-action-menu {
+          position: absolute;
+          right: 0;
+          bottom: 52px;
+          width: min(210px, calc(100vw - 48px));
+          display: grid;
+          gap: 4px;
+          padding: 7px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 15px;
+          background: rgba(8,8,12,.92);
+          box-shadow: 0 16px 38px rgba(0,0,0,.5);
+          backdrop-filter: blur(18px) saturate(1.08);
+          -webkit-backdrop-filter: blur(18px) saturate(1.08);
+        }
+        .home-tv-feed-action-menu[hidden] {
+          display: none;
+        }
+        .home-tv-feed-menu-action {
+          width: 100%;
+          min-height: 42px;
+          display: grid;
+          grid-template-columns: 22px minmax(0, 1fr);
+          align-items: center;
+          gap: 10px;
+          padding: 0 11px;
+          border: 1px solid transparent;
+          border-radius: 10px;
+          color: rgba(255,255,255,.9);
+          background: transparent;
+          font-size: 12px;
+          font-weight: 900;
+          line-height: 1;
+          text-align: left;
+          touch-action: manipulation;
+        }
+        .home-tv-feed-menu-action[hidden] {
+          display: none;
+        }
+        .home-tv-feed-menu-action:hover,
+        .home-tv-feed-menu-action:focus-visible,
+        .home-tv-feed-menu-action.is-active,
+        .home-tv-feed-menu-action[aria-pressed="true"],
+        .home-tv-feed-menu-action[aria-expanded="true"] {
+          border-color: rgba(126,234,255,.32);
+          color: #fff;
+          background: rgba(126,234,255,.08);
+        }
+        .home-tv-feed-menu-action svg,
+        .home-tv-feed-menu-action .action-icon {
+          width: 20px;
+          height: 20px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-tv-feed-menu-action .action-label {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-tv-feed-menu-action > span:last-child {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .home-tv-feed-menu-action .action-auth-marker {
+          display: none;
+        }
         .home-tv-feed-deal-action {
-          width: 52px;
-          height: 54px;
-          align-content: center;
-          gap: 2px;
+          width: 100%;
+          height: auto;
+          min-height: 42px;
           border-color: var(--dancr-color-success-strong);
-          border-radius: 18px;
+          border-radius: 10px;
           color: var(--dancr-color-text-primary);
           background:
             radial-gradient(circle at 50% -20%, var(--dancr-color-success-medium), transparent 58%),
@@ -29762,15 +29751,14 @@
           box-shadow: 0 8px 24px var(--dancr-color-black-medium), 0 0 20px var(--dancr-color-success-soft);
         }
         .home-tv-feed-deal-action svg {
-          width: 18px;
-          height: 18px;
+          width: 20px;
+          height: 20px;
         }
         .home-tv-feed-deal-action > span {
-          font-size: 8px;
-          font-weight: 950;
-          letter-spacing: .1em;
-          line-height: 1;
-          text-transform: uppercase;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0;
+          text-transform: none;
         }
         .home-tv-feed-deal-action.is-loading,
         .home-tv-feed-deal-action:disabled {
@@ -29786,26 +29774,21 @@
           box-shadow: 0 10px 28px var(--dancr-color-black-medium), 0 0 22px var(--dancr-color-success-soft);
         }
         .home-tv-feed-report-menu {
-          position: absolute;
-          right: 52px;
-          bottom: 0;
-          width: min(242px, calc(100vw - 90px));
           display: grid;
           gap: 5px;
-          padding: 10px;
-          border: 1px solid rgba(167,139,250,.34);
-          border-radius: 14px;
-          background: rgba(7,7,12,.96);
-          box-shadow: 0 16px 44px rgba(0,0,0,.56), 0 0 24px rgba(124,58,237,.18);
-          backdrop-filter: blur(18px);
+          margin-top: 3px;
+          padding-top: 8px;
+          border-top: 1px solid rgba(255,255,255,.1);
         }
         .home-tv-feed-report-menu[hidden] {
           display: none;
         }
         .home-tv-feed-report-menu strong {
           padding: 3px 5px 6px;
-          color: #fff;
-          font-size: 12px;
+          color: rgba(255,255,255,.72);
+          font-size: 10px;
+          letter-spacing: .08em;
+          text-transform: uppercase;
         }
         .home-tv-feed-report-option {
           min-height: 38px;
@@ -31460,10 +31443,6 @@
           .home-tv-feed-media-position {
             top: calc(106px + env(safe-area-inset-top));
           }
-          .home-tv-feed-fullscreen {
-            top: calc(66px + env(safe-area-inset-top));
-            right: 12px;
-          }
           .home-tv-feed-actions {
             right: 10px;
             bottom: calc(98px + env(safe-area-inset-bottom));
@@ -32384,6 +32363,11 @@
             --home-card-drop-shadow: rgba(0,0,0,.38);
             --home-card-glow: rgba(91,19,255,.1);
           }
+          #results.home-tv-feed {
+            --home-card-edge-neutral: rgba(248,250,252,.11);
+            --home-card-inner-edge: rgba(255,255,255,.025);
+            --home-card-glow: rgba(91,19,255,.055);
+          }
           #results.home-dancer-grid > .home-dancer-grid-card,
           #results.home-tv-feed > .home-tv-feed-loading,
           #results.home-tv-feed > .home-tv-feed-slide,
@@ -32516,9 +32500,7 @@
           .home-dancer-grid-context-actions .feed-card-action,
           .home-venue-discovery-context-actions .feed-card-action,
           .home-venue-discovery-context-actions .home-discovery-feed-directions,
-          .home-tv-feed-dancer-actions .home-tv-feed-dancer-action,
-          .home-tv-feed-sound,
-          .home-tv-feed-fullscreen {
+          .home-tv-feed-sound {
             font-family: var(--font-ui);
             font-size: 9px;
             font-weight: 950;
@@ -48967,6 +48949,8 @@
         button.setAttribute("aria-label", label);
         button.setAttribute("title", label);
         button.setAttribute("aria-pressed", String(isFullscreen));
+        const text = button.querySelector("[data-home-tv-fullscreen-label]");
+        if (text) text.textContent = isFullscreen ? "Exit full screen" : "Full screen";
       });
     }
 
@@ -49075,9 +49059,9 @@
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to submit report.");
         void trackHomeTvFeedEvent(videoId, "report");
         showHomeTvFeedFeedback(slide, "Report submitted");
-        const menu = button.closest(".home-tv-feed-report-menu");
-        menu.hidden = true;
-        slide.querySelector("[data-home-tv-report]")?.setAttribute("aria-expanded", "false");
+        const reportMenu = button.closest(".home-tv-feed-report-menu");
+        reportMenu.hidden = true;
+        closeHomeTvFeedActionMenus();
       } catch (error) {
         showHomeTvFeedFeedback(
           slide,
@@ -49090,6 +49074,7 @@
 
     function activateHomeTvFeedVideo(videoId) {
       if (activeTab !== "tv" || !videoId) return;
+      closeHomeTvFeedActionMenus();
       homeTvFeedActiveVideoId = videoId;
       results.querySelectorAll(".home-tv-feed-slide").forEach((slide) => {
         const slideVideoId = String(slide.dataset.videoId || "");
@@ -49431,29 +49416,8 @@
 
       const meta = document.createElement("span");
       meta.className = "home-tv-feed-meta";
-      meta.textContent = `Dancer · ${dancerCity}`;
+      meta.textContent = dancerCity;
       copy.appendChild(meta);
-
-      const dancerActions = document.createElement("div");
-      dancerActions.className = "home-tv-feed-dancer-actions";
-      dancerActions.setAttribute("aria-label", `${dancerName} actions`);
-      const profileAction = document.createElement("a");
-      profileAction.className = "home-tv-feed-dancer-action home-tv-feed-profile-action";
-      profileAction.href = profileHref;
-      profileAction.setAttribute("aria-label", `Open ${dancerName}'s full profile`);
-      profileAction.innerHTML = actionButtonLabel("star", "Profile");
-      profileAction.addEventListener("click", openDancerProfile);
-      const isFollowed = isFollowingProfile(dancerCity, dancerName);
-      const followAction = document.createElement("button");
-      followAction.className = `home-tv-feed-dancer-action feed-card-action ${isFollowed ? "is-active" : ""}`;
-      followAction.type = "button";
-      followAction.dataset.feedAction = "follow";
-      followAction.dataset.profile = dancerName;
-      followAction.dataset.homeTvVideoId = videoId;
-      followAction.setAttribute("aria-pressed", String(isFollowed));
-      followAction.innerHTML = actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow");
-      dancerActions.append(profileAction, followAction);
-      copy.appendChild(dancerActions);
 
       if (scheduleContext) {
         const context = document.createElement("div");
@@ -49494,26 +49458,89 @@
       return button;
     }
 
-    function createHomeTvFeedActions(item, slide) {
+    function createHomeTvFeedMenuAction(className, label, iconMarkup) {
+      const button = document.createElement("button");
+      button.className = `home-tv-feed-menu-action ${className}`;
+      button.type = "button";
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", label);
+      button.innerHTML = `${iconMarkup}<span>${label}</span>`;
+      return button;
+    }
+
+    function closeHomeTvFeedActionMenus(exceptMenu = null) {
+      results.querySelectorAll(".home-tv-feed-action-menu").forEach((menu) => {
+        if (menu === exceptMenu) return;
+        menu.hidden = true;
+        const slide = menu.closest(".home-tv-feed-slide");
+        slide?.querySelector("[data-home-tv-more]")?.setAttribute("aria-expanded", "false");
+        slide?.querySelector("[data-home-tv-report]")?.setAttribute("aria-expanded", "false");
+        const reportMenu = menu.querySelector(".home-tv-feed-report-menu");
+        if (reportMenu) reportMenu.hidden = true;
+        menu.querySelectorAll(".home-tv-feed-primary-action").forEach((button) => {
+          button.hidden = false;
+        });
+      });
+    }
+
+    function createHomeTvFeedActions(item, slide, video) {
+      const videoId = String(item.id);
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      const dancerCity = String(item?.dancer?.city || citySelect.value).trim() || "Las Vegas";
       const actions = document.createElement("div");
       actions.className = "home-tv-feed-actions";
       actions.setAttribute("aria-label", "Video actions");
 
-      const applause = createHomeTvFeedActionButton(
-        "home-tv-feed-applause-action",
-        "Applaud this video",
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg>'
+      const menuId = `homeTvActions${videoId.replaceAll("-", "")}`;
+      const more = createHomeTvFeedActionButton(
+        "home-tv-feed-more-action",
+        "More video actions",
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>'
+      );
+      more.dataset.homeTvMore = "true";
+      more.setAttribute("aria-expanded", "false");
+      more.setAttribute("aria-controls", menuId);
+
+      const menu = document.createElement("div");
+      menu.className = "home-tv-feed-action-menu";
+      menu.id = menuId;
+      menu.hidden = true;
+      menu.setAttribute("role", "menu");
+      menu.setAttribute("aria-label", "More video actions");
+
+      const applause = createHomeTvFeedMenuAction(
+        "home-tv-feed-primary-action home-tv-feed-applause-action",
+        "Applaud",
+        actionIconMarkup("star")
       );
       applause.dataset.homeTvApplause = "true";
-      applause.setAttribute("aria-pressed", String(homeTvFeedApplaudedVideos.has(String(item.id))));
-      applause.addEventListener("click", () => applaudHomeTvFeedVideo(item, slide));
+      applause.setAttribute("aria-pressed", String(homeTvFeedApplaudedVideos.has(videoId)));
+      applause.addEventListener("click", () => {
+        applaudHomeTvFeedVideo(item, slide);
+        closeHomeTvFeedActionMenus();
+      });
 
-      const share = createHomeTvFeedActionButton(
-        "home-tv-feed-share-action",
-        "Share this video",
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"></path></svg>'
+      const share = createHomeTvFeedMenuAction(
+        "home-tv-feed-primary-action home-tv-feed-share-action",
+        "Share",
+        actionIconMarkup("share")
       );
-      share.addEventListener("click", () => void shareHomeTvFeedVideo(item, slide, share));
+      share.addEventListener("click", () => {
+        closeHomeTvFeedActionMenus();
+        void shareHomeTvFeedVideo(item, slide, share);
+      });
+
+      const isFollowed = isFollowingProfile(dancerCity, dancerName);
+      const follow = document.createElement("button");
+      follow.className = `home-tv-feed-menu-action home-tv-feed-primary-action feed-card-action ${isFollowed ? "is-active" : ""}`;
+      follow.type = "button";
+      follow.dataset.feedAction = "follow";
+      follow.dataset.profile = dancerName;
+      follow.dataset.homeTvVideoId = videoId;
+      follow.setAttribute("role", "menuitem");
+      follow.setAttribute("aria-pressed", String(isFollowed));
+      follow.innerHTML = actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow");
+      follow.addEventListener("click", () => closeHomeTvFeedActionMenus());
 
       const hasLiveDeal = item?.shift?.isActive === true &&
         item?.venue?.id && item?.deal?.id && item?.dealAttributionToken;
@@ -49521,11 +49548,12 @@
       if (hasLiveDeal) {
         const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
         const venueName = String(item.venue.name || "this venue").trim() || "this venue";
-        deal = createHomeTvFeedActionButton(
-          "home-tv-feed-deal-action home-card-qr-rail-action",
-          `Get ${dealTitle} QR for ${venueName}`,
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2"></path></svg><span>QR</span>'
+        deal = createHomeTvFeedMenuAction(
+          "home-tv-feed-primary-action home-tv-feed-deal-action home-card-qr-rail-action",
+          "Club Deal QR",
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2"></path></svg>'
         );
+        deal.setAttribute("aria-label", `Get ${dealTitle} QR for ${venueName}`);
         deal.dataset.cardActionSlot = "qr";
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
@@ -49538,12 +49566,15 @@
           attributionToken: item.dealAttributionToken
         });
         deal.dataset.feedLiveQr = "true";
+        deal.addEventListener("click", () => closeHomeTvFeedActionMenus());
       }
 
-      const report = createHomeTvFeedActionButton(
-        "home-tv-feed-report-action",
-        "Report this video",
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4m0 1h11l-1.6 3L16 11H5"></path></svg>'
+      const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
+
+      const report = createHomeTvFeedMenuAction(
+        "home-tv-feed-primary-action home-tv-feed-report-action",
+        "Report",
+        actionIconMarkup("report")
       );
       report.dataset.homeTvReport = "true";
       report.setAttribute("aria-expanded", "false");
@@ -49572,15 +49603,49 @@
         option.addEventListener("click", () => void reportHomeTvFeedVideo(item, reason, slide, option));
         reportMenu.appendChild(option);
       });
+
+      const reportBack = document.createElement("button");
+      reportBack.className = "home-tv-feed-report-option home-tv-feed-report-back";
+      reportBack.type = "button";
+      reportBack.setAttribute("role", "menuitem");
+      reportBack.textContent = "Back to video actions";
+      reportBack.addEventListener("click", () => {
+        reportMenu.hidden = true;
+        report.setAttribute("aria-expanded", "false");
+        menu.querySelectorAll(".home-tv-feed-primary-action").forEach((button) => {
+          button.hidden = false;
+        });
+        report.focus({ preventScroll: true });
+      });
+      reportMenu.appendChild(reportBack);
       report.addEventListener("click", () => {
         const open = reportMenu.hidden;
+        menu.querySelectorAll(".home-tv-feed-primary-action").forEach((button) => {
+          button.hidden = open;
+        });
         reportMenu.hidden = !open;
         report.setAttribute("aria-expanded", String(open));
         if (open) reportMenu.querySelector("button")?.focus({ preventScroll: true });
       });
-      actions.appendChild(applause);
-      if (deal) actions.appendChild(deal);
-      actions.append(share, report, reportMenu);
+
+      menu.append(applause, share, follow, fullscreen);
+      if (deal) menu.appendChild(deal);
+      menu.append(report, reportMenu);
+
+      more.addEventListener("click", () => {
+        const open = menu.hidden;
+        closeHomeTvFeedActionMenus(open ? menu : null);
+        menu.hidden = !open;
+        more.setAttribute("aria-expanded", String(open));
+        if (open) menu.querySelector(".home-tv-feed-menu-action")?.focus({ preventScroll: true });
+      });
+      actions.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || menu.hidden) return;
+        event.preventDefault();
+        closeHomeTvFeedActionMenus();
+        more.focus({ preventScroll: true });
+      });
+      actions.append(more, menu);
       return actions;
     }
 
@@ -49606,11 +49671,15 @@
 
     function createHomeTvFeedFullscreenButton(slide, video) {
       const button = document.createElement("button");
-      button.className = "home-tv-feed-fullscreen";
+      button.className = "home-tv-feed-menu-action home-tv-feed-primary-action home-tv-feed-fullscreen";
       button.type = "button";
+      button.setAttribute("role", "menuitem");
       button.dataset.homeTvFullscreen = "true";
-      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></svg>';
-      button.addEventListener("click", () => void toggleHomeTvFeedFullscreen(slide, video));
+      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></svg><span data-home-tv-fullscreen-label>Full screen</span>';
+      button.addEventListener("click", () => {
+        closeHomeTvFeedActionMenus();
+        void toggleHomeTvFeedFullscreen(slide, video);
+      });
       return button;
     }
 
@@ -49656,8 +49725,7 @@
         playback,
         position,
         createHomeTvFeedSoundButton(slide),
-        createHomeTvFeedFullscreenButton(slide, video),
-        createHomeTvFeedActions(item, slide),
+        createHomeTvFeedActions(item, slide, video),
         createHomeTvFeedCopy(item, scheduleContext),
         createHomeTvFeedProgress(),
         applause,
@@ -49887,6 +49955,7 @@
     }
 
     results.addEventListener("click", async (event) => {
+      if (!event.target.closest(".home-tv-feed-actions")) closeHomeTvFeedActionMenus();
       const dancerFilterButton = event.target.closest("[data-dancer-directory-filter]");
       if (dancerFilterButton) {
         event.preventDefault();
