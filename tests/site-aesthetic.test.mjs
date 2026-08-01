@@ -26,15 +26,19 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=22" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=23" rel="stylesheet">/,
   );
 });
 
-test("the utility header uses one restrained violet bottom thread", () => {
+test("the mobile utility header uses the same Safari-safe violet perimeter on every device", () => {
   assert.match(
     liveApp,
-    /One restrained brand thread:[\s\S]*?header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(152, 95, 255, 0\.22\) !important;[\s\S]*?inset 0 -1px 0 rgba\(152, 95, 255, 0\.07\)[\s\S]*?0 8px 18px rgba\(91, 19, 255, 0\.06\) !important;/,
+    /Mobile utility chrome is deliberately device-neutral[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 1px solid rgba\(124, 58, 237, 0\.34\) !important;[\s\S]*?inset 0 -1px 0 rgba\(152, 95, 255, 0\.14\),[\s\S]*?0 0 22px rgba\(109, 40, 217, 0\.16\) !important;/,
   );
+  const androidSurfaceOverrides = liveApp.match(
+    /\.is-android \.controls,[\s\S]*?backdrop-filter: none !important;\s*\}/,
+  )?.[0] || "";
+  assert.doesNotMatch(androidSurfaceOverrides, /\.topbar|\.dancer-card/);
 });
 
 test("profile violet side beams are limited to live, upcoming, and active deals", () => {
@@ -76,7 +80,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
 });
 
-test("scrolling card feeds have neutral gutters and clear card separation", () => {
+test("scrolling card feeds have shared violet gutters and clear card separation", () => {
   assert.match(
     liveApp,
     /<main class="stack">[\s\S]*?<section class="stack" aria-live="polite">[\s\S]*?<div class="list" id="results"><\/div>/,
@@ -91,7 +95,7 @@ test("scrolling card feeds have neutral gutters and clear card separation", () =
   );
   assert.match(
     aesthetic,
-    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
+    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(152, 95, 255, 0\.24\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.4\),[\s\S]*?0 0 22px rgba\(91, 19, 255, 0\.12\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.04\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     aesthetic,
@@ -113,10 +117,13 @@ test("scrolling card feeds have neutral gutters and clear card separation", () =
     liveApp,
     /html\.is-android \.app,[\s\S]{0,360}linear-gradient/,
   );
-  assert.equal(
-    (liveApp.match(/--home-card-glow: transparent;/g) || []).length,
-    2,
-    "Android/Chrome and iPhone/Safari must both suppress violet gutter glow",
+  assert.match(
+    liveApp,
+    /#results \{[\s\S]*?--home-card-edge: rgba\(152,95,255,\.24\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,\.04\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,\.4\);[\s\S]*?--home-card-glow: rgba\(91,19,255,\.12\);/,
+  );
+  assert.doesNotMatch(
+    liveApp,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]{0,500}--home-card-/,
   );
 });
 

@@ -63,14 +63,14 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
 });
 
-test("the TV loading card keeps the final neutral edge during destination swipes", () => {
+test("the TV loading card participates in the shared feed perimeter during destination swipes", () => {
   assert.match(
     homeSource,
     /\.home-tv-feed-loading \{[\s\S]*?border: 1px solid rgba\(248,250,252,\.15\);/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge\),var\(--home-card-edge\)\) border-box !important;[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
   );
   assert.doesNotMatch(
     homeSource.match(/\.home-tv-feed-loading \{[\s\S]*?\}/)?.[0] || "",

@@ -432,22 +432,22 @@ test("mobile Dancers and Venues share the same scrollbar-safe results track", ()
   );
 });
 
-test("all five mobile destinations share a neutral card border without coloring the gutters", () => {
+test("all five mobile destinations share one device-neutral violet card perimeter", () => {
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-items: stretch !important;[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?margin: 0 !important;[\s\S]*?justify-self: center !important;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.36\);[\s\S]*?--home-card-glow: transparent;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge: rgba\(152,95,255,.24\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.04\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.4\);[\s\S]*?--home-card-glow: rgba\(91,19,255,.12\);/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]{0,500}--home-card-/,
   );
   assert.match(
     homeSource,
-    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.025\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.34\);[\s\S]*?--home-card-glow: transparent;/,
-  );
-  assert.match(
-    homeSource,
-    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 14px 32px var\(--home-card-drop-shadow\),[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge\),var\(--home-card-edge\)\) border-box !important;[\s\S]*?0 14px 32px var\(--home-card-drop-shadow\),[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
   );
   assert.doesNotMatch(homeSource, /--home-card-edge-violet/);
   assert.doesNotMatch(homeSource, /--home-card-edge-cyan/);

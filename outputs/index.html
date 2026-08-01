@@ -23590,11 +23590,9 @@
       background: var(--matte-black) !important;
     }
 
-    .is-android .topbar,
     .is-android .controls,
     .is-android .city-panel,
     .is-android .tabs,
-    .is-android .dancer-card,
     .is-android .profile-modal {
       background-color: var(--charcoal) !important;
       border-color: rgba(124, 58, 237, 0.34) !important;
@@ -28978,7 +28976,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=22" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=23" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -32371,18 +32369,10 @@
             contain: layout paint style;
           }
           #results {
-            --home-card-edge-neutral: rgba(248,250,252,.15);
-            --home-card-inner-edge: rgba(255,255,255,.035);
-            --home-card-drop-shadow: rgba(0,0,0,.36);
-            --home-card-glow: transparent;
-          }
-          @supports (-webkit-touch-callout: none) {
-            #results {
-              --home-card-edge-neutral: rgba(248,250,252,.15);
-              --home-card-inner-edge: rgba(255,255,255,.025);
-              --home-card-drop-shadow: rgba(0,0,0,.34);
-              --home-card-glow: transparent;
-            }
+            --home-card-edge: rgba(152,95,255,.24);
+            --home-card-inner-edge: rgba(255,255,255,.04);
+            --home-card-drop-shadow: rgba(0,0,0,.4);
+            --home-card-glow: rgba(91,19,255,.12);
           }
           #results.home-dancer-grid > .home-dancer-grid-card,
           #results.home-tv-feed > .home-tv-feed-loading,
@@ -32393,7 +32383,7 @@
             border: 1px solid transparent !important;
             background:
               linear-gradient(#050507,#050507) padding-box,
-              linear-gradient(145deg,var(--home-card-edge-neutral),var(--home-card-edge-neutral)) border-box !important;
+              linear-gradient(145deg,var(--home-card-edge),var(--home-card-edge)) border-box !important;
             box-shadow:
               inset 0 0 0 1px var(--home-card-inner-edge),
               0 14px 32px var(--home-card-drop-shadow),
@@ -33292,7 +33282,7 @@
           -webkit-tap-highlight-color: transparent;
         }
 
-        /* One restrained brand thread: the header glows only along its lower edge. */
+        /* One restrained brand thread for desktop utility headers. */
         header .topbar {
           border: 0 !important;
           border-bottom: 1px solid rgba(152, 95, 255, 0.22) !important;
@@ -33300,6 +33290,24 @@
             inset 0 -1px 0 rgba(152, 95, 255, 0.07),
             0 10px 26px rgba(0, 0, 0, 0.3),
             0 8px 18px rgba(91, 19, 255, 0.06) !important;
+        }
+
+        /*
+         * Mobile utility chrome is deliberately device-neutral. These solid
+         * border and shadow layers do not depend on WebKit backdrop rendering,
+         * so iPhone and Android receive the same violet perimeter and glow.
+         */
+        @media (max-width: 720px) {
+          body.dancr-button-system header .topbar {
+            border: 1px solid rgba(124, 58, 237, 0.34) !important;
+            background:
+              linear-gradient(180deg, rgba(8, 8, 12, 0.98), rgba(4, 4, 7, 0.96)) !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.04),
+              inset 0 -1px 0 rgba(152, 95, 255, 0.14),
+              0 14px 36px rgba(0, 0, 0, 0.4),
+              0 0 22px rgba(109, 40, 217, 0.16) !important;
+          }
         }
 
         /* Profile color is reserved for truthful live, upcoming, and active-deal states. */
