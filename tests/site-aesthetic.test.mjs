@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=17" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=18" rel="stylesheet">/,
   );
 });
 
@@ -207,7 +207,11 @@ test("the homepage hero renders exactly one clean frame", () => {
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?transform: scale\(1\.026\) !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?mix-blend-mode: normal !important;[\s\S]*?opacity: 1 !important;[\s\S]*?transform: none !important/,
   );
   assert.doesNotMatch(
     aesthetic,
