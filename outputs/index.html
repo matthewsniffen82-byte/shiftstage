@@ -28619,7 +28619,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=19" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=20" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -28696,22 +28696,37 @@
       <section class="controls home-discovery-controls" aria-label="Discovery filters">
         <div class="field home-city-filter">
           <label for="citySelect">City</label>
-          <select id="citySelect">
-            <option>Las Vegas</option>
-            <option>Miami</option>
-            <option>Atlanta</option>
-            <option>New York</option>
-          </select>
+          <div class="home-city-select-shell">
+            <svg class="home-city-select-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+              <circle cx="12" cy="10" r="2.5"></circle>
+            </svg>
+            <select id="citySelect">
+              <option>Las Vegas</option>
+              <option>Miami</option>
+              <option>Atlanta</option>
+              <option>New York</option>
+            </select>
+          </div>
         </div>
         <button
           class="home-filter-toggle"
           id="homeFilterToggle"
           type="button"
+          aria-label="Filters"
           aria-expanded="false"
           aria-controls="homeAdvancedFilters"
         >
+          <svg class="home-filter-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10"></path>
+            <path d="M18 7h2"></path>
+            <circle cx="16" cy="7" r="2"></circle>
+            <path d="M4 17h2"></path>
+            <path d="M10 17h10"></path>
+            <circle cx="8" cy="17" r="2"></circle>
+          </svg>
           <span>Filters</span>
-          <span class="home-filter-toggle-symbol" aria-hidden="true">+</span>
+          <span class="home-filter-toggle-count" id="homeFilterCount" hidden>0</span>
         </button>
         <div class="home-advanced-filters" id="homeAdvancedFilters">
           <div class="field">
@@ -28737,8 +28752,8 @@
       </section>
 
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
-        <span id="homeLiveCity">Las Vegas</span>
         <span id="homeLiveRadius">25 mi radius · All venues</span>
+        <span class="home-live-summary-divider" aria-hidden="true">·</span>
         <strong id="homeLiveWorking">0 working now</strong>
       </div>
 
@@ -28783,7 +28798,6 @@
         .home-advanced-filters > * { min-width: 0; max-width: 100%; }
         .home-advanced-filters { width: 100%; max-width: 100%; display: grid; grid-template-columns: minmax(120px, .75fr) minmax(170px, 1fr) minmax(190px, .9fr); align-items: end; gap: 10px; min-width: 0; overflow: hidden; }
         .home-filter-toggle { display: none; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 0 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(88,48,173,.36), rgba(17,94,117,.3)); font: inherit; font-weight: 950; cursor: pointer; }
-        .home-filter-toggle-symbol { width: 20px; height: 20px; display: inline-grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #7eeaff; font-size: 18px; line-height: 1; }
         .home-discovery-controls select,
         .home-discovery-controls .location-btn { width: 100% !important; min-width: 0 !important; max-width: 100% !important; min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
         .home-live-summary { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; overflow: hidden; }
@@ -46990,11 +47004,28 @@
       const workingNowCount = getItems(city, "tonight").length;
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All venues" : venueName;
-      document.getElementById("homeLiveCity").textContent = city;
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
       document.getElementById("homeLiveWorking").textContent = liveDiscoveryIsLoading(city)
         ? "Loading live schedule…"
         : `${workingNowCount} working now`;
+      syncHomeFilterToggleState();
+    }
+
+    function syncHomeFilterToggleState() {
+      if (!homeFilterToggle) return;
+      const activeFilterCount = Number(distanceSelect?.value !== "25 mi") + Number(selectedVenueFilter() !== "all");
+      const count = document.getElementById("homeFilterCount");
+      if (count) {
+        count.textContent = String(activeFilterCount);
+        count.hidden = activeFilterCount === 0;
+      }
+      homeFilterToggle.classList.toggle("has-active-filters", activeFilterCount > 0);
+      homeFilterToggle.setAttribute(
+        "aria-label",
+        activeFilterCount > 0
+          ? `Filters, ${activeFilterCount} active`
+          : "Filters"
+      );
     }
 
     function homeDiscoveryFeedUsesInlineLayout() {
@@ -51419,17 +51450,15 @@
     homeFilterToggle?.addEventListener("click", () => {
       const expanded = homeFilterToggle.getAttribute("aria-expanded") === "true";
       homeFilterToggle.setAttribute("aria-expanded", String(!expanded));
+      homeFilterToggle.classList.toggle("is-open", !expanded);
       homeAdvancedFilters?.classList.toggle("is-open", !expanded);
-      const symbol = homeFilterToggle.querySelector(".home-filter-toggle-symbol");
-      if (symbol) symbol.textContent = expanded ? "+" : "−";
     });
 
     homeAdvancedFilters?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || homeFilterToggle?.getAttribute("aria-expanded") !== "true") return;
       homeFilterToggle.setAttribute("aria-expanded", "false");
+      homeFilterToggle.classList.remove("is-open");
       homeAdvancedFilters.classList.remove("is-open");
-      const symbol = homeFilterToggle.querySelector(".home-filter-toggle-symbol");
-      if (symbol) symbol.textContent = "+";
       homeFilterToggle.focus();
     });
 

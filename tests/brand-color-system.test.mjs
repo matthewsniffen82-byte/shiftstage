@@ -160,7 +160,11 @@ test("the beam glow is reserved for active, selected, and keyboard-focused UI", 
   );
   assert.match(
     aesthetic,
-    /\.home-filter-toggle\[aria-expanded="true"\],[\s\S]*?#profileBackdrop \.gallery \.thumb\.active,[\s\S]*?\.profile-media-grid-item\.active[\s\S]*?var\(--dancr-shadow-beam-active\)/,
+    /#profileBackdrop \.gallery \.thumb\.active,[\s\S]*?\.profile-media-grid-item\.active[\s\S]*?var\(--dancr-shadow-beam-active\)/,
+  );
+  assert.doesNotMatch(
+    aesthetic,
+    /\.home-filter-toggle\[aria-expanded="true"\][\s\S]{0,500}var\(--dancr-shadow-beam-active\)/,
   );
   assert.match(
     aesthetic,

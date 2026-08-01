@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=19" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=20" rel="stylesheet">/,
   );
 });
 
@@ -211,6 +211,34 @@ test("the mobile homepage keeps the complete hero artwork inside the page gutter
   assert.match(
     aesthetic,
     /@media \(max-width: 720px\)[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?width: auto !important;[\s\S]*?margin-inline: 12px !important;/,
+  );
+});
+
+test("the city selector is compact, neutral, and reports only real active filters", () => {
+  assert.match(
+    liveApp,
+    /class="home-city-select-shell"[\s\S]*?class="home-city-select-icon"[\s\S]*?<select id="citySelect">/,
+  );
+  assert.match(
+    liveApp,
+    /class="home-filter-toggle-icon"[\s\S]*?class="home-filter-toggle-count" id="homeFilterCount" hidden>0<\/span>/,
+  );
+  assert.doesNotMatch(liveApp, /home-filter-toggle-symbol|id="homeLiveCity"/);
+  assert.match(
+    liveApp,
+    /function syncHomeFilterToggleState\(\)[\s\S]*?distanceSelect\?\.value !== "25 mi"[\s\S]*?selectedVenueFilter\(\) !== "all"[\s\S]*?`Filters, \$\{activeFilterCount\} active`/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.home-discovery-controls \{[\s\S]*?padding: 0 !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important[\s\S]*?box-shadow: none !important/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.home-live-summary \{[\s\S]*?display: flex !important[\s\S]*?min-height: 20px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-filter-toggle-count \{[\s\S]*?color: var\(--dancr-color-info\)[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-info\) 13%, transparent\)/,
   );
 });
 

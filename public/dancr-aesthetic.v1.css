@@ -501,12 +501,13 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
 }
 
 body > .app main.stack > .home-discovery-controls {
-  border: 1px solid var(--dancr-color-border-subtle) !important;
-  border-radius: 20px !important;
-  background: var(--dancr-color-surface-translucent) !important;
-  box-shadow:
-    var(--dancr-shadow-surface),
-    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body > .app main.stack > .home-discovery-controls label {
@@ -516,13 +517,93 @@ body > .app main.stack > .home-discovery-controls label {
   letter-spacing: 0.16em !important;
 }
 
+body > .app main.stack > .home-discovery-controls .home-city-filter {
+  gap: 7px !important;
+}
+
+body > .app main.stack > .home-discovery-controls .home-city-select-shell {
+  position: relative;
+  min-width: 0;
+}
+
+body > .app main.stack > .home-discovery-controls .home-city-select-icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  z-index: 1;
+  width: 19px;
+  height: 19px;
+  color: var(--dancr-color-text-secondary);
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 body > .app main.stack > .home-discovery-controls :is(select, button) {
-  border: 1px solid var(--dancr-color-border) !important;
+  min-height: 48px !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 14px !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;
   text-shadow: none !important;
+}
+
+body > .app main.stack > .home-discovery-controls #citySelect {
+  padding-left: 44px !important;
+  font-weight: 850 !important;
+}
+
+body > .app main.stack > .home-discovery-controls .home-filter-toggle {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 112px;
+  padding-inline: 14px !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+}
+
+body > .app main.stack > .home-discovery-controls .home-filter-toggle-icon {
+  width: 19px;
+  height: 19px;
+  color: var(--dancr-color-text-secondary);
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+body > .app main.stack > .home-discovery-controls .home-filter-toggle-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 5px;
+  border: 1px solid var(--dancr-color-info-soft);
+  border-radius: 999px;
+  color: var(--dancr-color-info);
+  background: color-mix(in srgb, var(--dancr-color-info) 13%, transparent);
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+body > .app main.stack > .home-discovery-controls .home-filter-toggle-count[hidden] {
+  display: none !important;
+}
+
+body > .app main.stack > .home-discovery-controls .home-advanced-filters.is-open {
+  padding: 12px !important;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 14px;
+  background: var(--dancr-color-surface-translucent);
+  box-shadow: none;
 }
 
 body > .app main.stack > .home-discovery-controls :is(select, button):focus-visible {
@@ -532,10 +613,47 @@ body > .app main.stack > .home-discovery-controls :is(select, button):focus-visi
 }
 
 body > .app main.stack > .home-live-summary {
-  border: 1px solid var(--dancr-color-border-subtle) !important;
-  border-radius: 999px !important;
-  background: var(--dancr-color-surface-soft) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  min-height: 20px !important;
+  padding: 0 2px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: transparent !important;
   box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+body > .app main.stack > .home-live-summary :is(span, strong) {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit !important;
+  text-overflow: ellipsis;
+  text-shadow: none !important;
+  white-space: nowrap;
+}
+
+body > .app main.stack > .home-live-summary .home-live-summary-divider {
+  flex: 0 0 auto;
+  color: var(--dancr-color-text-disabled) !important;
+}
+
+body > .app main.stack > .home-live-summary #homeLiveRadius {
+  flex: 1 1 auto;
+  text-align: left !important;
+}
+
+body > .app main.stack > .home-live-summary #homeLiveWorking {
+  flex: 0 1 auto;
+  color: var(--dancr-color-text-primary) !important;
+  font-weight: 900 !important;
 }
 
 body > .app main.stack > .home-tv-launch {
@@ -801,7 +919,6 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   }
 
   body > .app main.stack > .hero.reference-hero,
-  body > .app main.stack > .home-discovery-controls,
   body > .app main.stack > #results :is(
     .home-feed-card,
     .dancer-card,
@@ -956,7 +1073,6 @@ body.dancr-button-system #results.venue-profile-overlay :is(
 }
 
 /* The hero beam is a state signal, reserved for active, selected, and keyboard-focused UI. */
-.home-filter-toggle[aria-expanded="true"],
 #profileBackdrop .profile-modal-media-tabs button.active,
 #profileBackdrop .gallery .thumb.active,
 .profile-tv-viewer-gallery button.active,
@@ -966,7 +1082,6 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   box-shadow: var(--dancr-shadow-beam-active) !important;
 }
 
-.home-filter-toggle[aria-expanded="true"],
 #profileBackdrop .profile-modal-media-tabs button.active {
   color: var(--dancr-color-text-primary) !important;
   background:
