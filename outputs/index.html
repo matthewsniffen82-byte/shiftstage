@@ -31459,93 +31459,19 @@
           cursor: wait;
         }
 
-        .home-dancer-grid-qr {
-          position: absolute;
-          z-index: 4;
-          top: 8px;
-          right: 8px;
-          width: 90px;
-          min-height: 82px;
-          display: grid;
-          justify-items: center;
-          gap: 5px;
-          padding: 0;
-          border: 0;
+        /* Shared scrolling-card QR rail state; rail geometry remains unchanged. */
+        .dancr-button-system .home-dancer-grid-action-rail .home-card-qr-rail-action.is-available {
+          border-color: rgba(77,236,157,.78) !important;
           color: #fff;
-          background: transparent;
-          box-shadow: none;
-          font: inherit;
-          cursor: pointer;
+          background: linear-gradient(135deg,rgba(19,139,80,.96),rgba(9,88,75,.96)) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.42), 0 0 16px rgba(77,236,157,.2), inset 0 1px 0 rgba(255,255,255,.12) !important;
         }
-        .home-dancer-grid-qr .club-deal-qr-symbol {
-          box-sizing: border-box;
-          width: 52px;
-          height: 52px;
-          display: grid;
-          place-items: center;
-          padding: 6px;
-          border: 1px solid rgba(77,236,157,.72);
-          border-radius: 9px;
-          color: #fff;
-          background: linear-gradient(145deg,rgba(7,92,77,.98),rgba(16,128,74,.96));
-          box-shadow: 0 8px 20px rgba(0,0,0,.38), 0 0 18px rgba(77,236,157,.24), inset 0 1px 0 rgba(255,255,255,.1);
-        }
-        .home-dancer-grid-qr .club-deal-qr-symbol svg {
-          width: 100%;
-          height: 100%;
-        }
-        .home-dancer-grid-qr .club-deal-qr-status {
-          width: 90px;
-          display: grid;
-          gap: 1px;
-          color: rgba(255,255,255,.94);
-          text-align: center;
-          text-shadow: 0 2px 7px rgba(0,0,0,.98);
-        }
-        .home-dancer-grid-qr .club-deal-qr-status strong {
-          font-size: 9px;
-          font-weight: 950;
-          letter-spacing: .06em;
-          line-height: 1.1;
-          text-transform: uppercase;
-        }
-        .home-dancer-grid-qr .club-deal-qr-status span {
-          color: rgba(245,245,255,.78);
-          font-size: 8.5px;
-          font-weight: 850;
-          line-height: 1.15;
-        }
-        .home-dancer-grid-qr:focus-visible {
-          outline: none;
-        }
-        .home-dancer-grid-qr:focus-visible .club-deal-qr-symbol {
-          outline: 2px solid #7eeaff;
-          outline-offset: 2px;
-        }
-        .dancr-button-system button.home-dancer-grid-qr.is-available {
-          border: 0 !important;
-          border-radius: 0 !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          filter: none !important;
-          -webkit-backdrop-filter: none !important;
-          backdrop-filter: none !important;
-          opacity: 1 !important;
-        }
-        .home-dancer-grid-qr.is-unavailable .club-deal-qr-symbol {
-          border-color: rgba(196,181,253,.34);
-          color: rgba(245,245,255,.82);
-          background: linear-gradient(145deg,rgba(35,30,51,.96),rgba(8,8,15,.94));
-          box-shadow: 0 8px 20px rgba(0,0,0,.38), 0 0 13px rgba(124,58,237,.12), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        .home-dancer-grid-qr.is-unavailable {
+        .dancr-button-system .home-dancer-grid-action-rail .home-card-qr-rail-action.is-unavailable {
+          border-color: rgba(196,181,253,.3) !important;
+          color: rgba(245,245,255,.68);
+          background: rgba(18,15,28,.88) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.05) !important;
           cursor: default;
-        }
-        .home-dancer-grid-qr.is-unavailable .club-deal-qr-status strong {
-          color: rgba(245,245,255,.9);
-        }
-        .home-dancer-grid-qr.is-unavailable .club-deal-qr-status span {
-          color: rgba(221,214,254,.76);
         }
         @media (max-width: 679px) {
           #results.home-dancer-grid,
@@ -46430,16 +46356,15 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
         const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
-        return `<span class="home-dancer-grid-qr is-unavailable is-${state.key}" data-club-deal-state="${state.key}" role="img" aria-label="Club Deal: ${escapeHtml(cardLabel)}">${clubDealQrSymbolMarkup()}<span class="club-deal-qr-status"><strong>Club Deal</strong><span>${escapeHtml(cardLabel)}</span></span></span>`;
+        return `<span class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" data-card-action-slot="qr" data-club-deal-state="${state.key}" role="img" aria-disabled="true" aria-label="Club Deal QR: ${escapeHtml(cardLabel)}" title="${escapeHtml(cardLabel)}">${actionButtonLabel("qr", "QR")}</span>`;
       }
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
-      return `<button class="home-dancer-grid-qr is-available" type="button" ${qr.triggerAttribute} data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Get the Club Deal for ${venueName}">${clubDealQrSymbolMarkup()}<span class="club-deal-qr-status"><strong>Club Deal</strong><span>Get deal</span></span></button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open the Club Deal QR for ${venueName}">${actionButtonLabel("qr", "QR")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue, presentation = "primary") {
       const rail = presentation === "rail";
-      if (rail) return "";
       const venueName = escapeHtml(venue?.name || "this venue");
       if (venue?.id && venue.activeDeal?.id) {
         const config = {
@@ -46450,6 +46375,9 @@
           sourceType: "club_page"
         };
         const dealTitle = escapeHtml(venue.activeDeal.dealTitle || "Tonight's venue offer");
+        if (rail) {
+          return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open the ${dealTitle} Club Deal QR at ${venueName}">${actionButtonLabel("qr", "QR")}</button>`;
+        }
         return `
           <button class="home-venue-discovery-club-deal home-venue-discovery-deal-action is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Get the ${dealTitle} Club Deal at ${venueName}">
             ${clubDealQrSymbolMarkup("home-venue-discovery-qr-symbol")}
@@ -46460,6 +46388,9 @@
             </span>
           </button>
         `;
+      }
+      if (rail) {
+        return `<span class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable" data-card-action-slot="qr" data-club-deal-state="unavailable" role="img" aria-disabled="true" aria-label="No Club Deal QR available at ${venueName}" title="No Club Deal available">${actionButtonLabel("qr", "QR")}</span>`;
       }
       return `
         <div class="home-venue-discovery-club-deal is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="No Club Deal available at ${venueName}">
@@ -46560,6 +46491,7 @@
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
             <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
+            ${homeDancerGridQrMarkup(profile)}
             <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
@@ -46602,7 +46534,6 @@
               <span class="home-dancer-grid-status ${status.className}">${escapeHtml(status.label)}</span>
             </span>
           </a>
-          ${homeDancerGridQrMarkup(profile)}
           ${homeDancerGridActionsMarkup(profile, city)}
         </article>
       `;
@@ -47570,10 +47501,11 @@
         const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
         const venueName = String(item.venue.name || "this venue").trim() || "this venue";
         deal = createHomeTvFeedActionButton(
-          "home-tv-feed-deal-action",
+          "home-tv-feed-deal-action home-card-qr-rail-action",
           `Get ${dealTitle} QR for ${venueName}`,
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2"></path></svg><span>Deal</span>'
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-6v-2h4zM14 18h2"></path></svg><span>QR</span>'
         );
+        deal.dataset.cardActionSlot = "qr";
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           venueId: item.venue.id,
@@ -47625,9 +47557,9 @@
         report.setAttribute("aria-expanded", String(open));
         if (open) reportMenu.querySelector("button")?.focus({ preventScroll: true });
       });
-      actions.append(applause, share);
+      actions.appendChild(applause);
       if (deal) actions.appendChild(deal);
-      actions.append(report, reportMenu);
+      actions.append(share, report, reportMenu);
       return actions;
     }
 
@@ -47926,6 +47858,13 @@
         event.preventDefault();
         event.stopPropagation();
         openVenueFromName(venueProfileLink.dataset.openVenueProfile);
+        return;
+      }
+      const unavailableCardQr = event.target.closest('[data-card-action-slot="qr"][aria-disabled="true"]');
+      if (unavailableCardQr) {
+        event.preventDefault();
+        event.stopPropagation();
+        showToast(unavailableCardQr.title || "No Club Deal is available right now.");
         return;
       }
       const externalVenueQr = event.target.closest("[data-external-venue-qr]");

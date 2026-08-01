@@ -63,7 +63,7 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
 test("venue-card QR revenue actions use the semantic emerald success treatment", () => {
   assert.match(
     liveSource,
-    /if \(rail\) return "";[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?"home-venue-discovery-club-deal home-venue-discovery-deal-action is-available"[\s\S]*?data-feed-venue-qr/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?if \(rail\)[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?"home-venue-discovery-club-deal home-venue-discovery-deal-action is-available"[\s\S]*?data-feed-venue-qr/,
   );
   assert.match(
     buttonCss,

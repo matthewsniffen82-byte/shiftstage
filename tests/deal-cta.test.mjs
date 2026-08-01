@@ -71,7 +71,7 @@ test("venue pages and directory cards promote real active deals", () => {
     )?.[0] || "";
   assert.match(
     venueQrHelper,
-    /if \(rail\) return "";[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-venue-discovery-club-deal home-venue-discovery-deal-action is-available/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?if \(rail\)[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-card-action-slot="qr"[\s\S]*?home-venue-discovery-club-deal home-venue-discovery-deal-action is-available/,
   );
   assert.match(
     venueQrHelper,
@@ -185,12 +185,12 @@ test("dancer scroll cards and full profiles reserve a truthful Club Deal state",
       /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,
     )?.[0] || "";
   assert.match(gridDealMarkup, /state\.key !== "available"/);
-  assert.match(gridDealMarkup, /data-club-deal-state="\$\{state\.key\}" role="img"/);
-  assert.doesNotMatch(gridDealMarkup, /is-unavailable[^>]*disabled/);
+  assert.match(gridDealMarkup, /data-card-action-slot="qr" data-club-deal-state="\$\{state\.key\}" role="img"/);
+  assert.doesNotMatch(gridDealMarkup, /is-unavailable[^>]*\sdisabled(?:\s|>)/);
   assert.match(gridDealMarkup, /cardLabel = state\.key === "available-when-working" \? "Unlocks when working" : state\.label/);
-  assert.match(gridDealMarkup, /class="club-deal-qr-status"><strong>Club Deal<\/strong>/);
-  assert.match(gridDealMarkup, /data-club-deal-state="available" data-feed-live-qr/);
-  assert.match(gridDealMarkup, /clubDealQrSymbolMarkup\(\)/);
+  assert.match(gridDealMarkup, /class="feed-card-action home-card-qr-rail-action is-available"/);
+  assert.match(gridDealMarkup, /data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr/);
+  assert.match(gridDealMarkup, /actionButtonLabel\("qr", "QR"\)/);
 
   const profileDealMarkup =
     liveApp.match(

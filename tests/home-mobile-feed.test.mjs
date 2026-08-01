@@ -283,7 +283,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?if \(rail\) return "";[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-venue-discovery-club-deal[\s\S]*?Get Club Deal[\s\S]*?home-venue-discovery-club-deal is-unavailable[\s\S]*?Check back later/,
+    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?if \(rail\)[\s\S]*?data-card-action-slot="qr"[\s\S]*?home-venue-discovery-club-deal[\s\S]*?Get Club Deal[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?home-venue-discovery-club-deal is-unavailable[\s\S]*?Check back later/,
   );
   const venueQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
@@ -357,7 +357,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
 test("Now and Dancers grid cards place all profile context and production actions on the photo", () => {
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDancerGridActionsMarkup\(profile, city\)/,
+    /function homeDancerGridCard\(profile, city\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridActionsMarkup\(profile, city\)/,
   );
   assert.match(
     homeSource,
@@ -365,7 +365,7 @@ test("Now and Dancers grid cards place all profile context and production action
   );
   assert.match(
     homeSource,
-    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?data-grid-profile-action="\$\{profileValue\}"[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
+    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?data-grid-profile-action="\$\{profileValue\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
   );
   const dancerGridActions = homeSource.match(
     /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
@@ -469,7 +469,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="home-dancer-grid-qr[^\"]*"[\s\S]*?data-feed-live-qr[\s\S]*?class="club-deal-qr-status"><strong>Club Deal<\/strong><span>Get deal<\/span>/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable[^\"]*"[\s\S]*?data-card-action-slot="qr"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr[\s\S]*?actionButtonLabel\("qr", "QR"\)/,
   );
   assert.match(
     homeSource,
@@ -481,8 +481,9 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-qr \{[\s\S]*?position: absolute[\s\S]*?background: transparent[\s\S]*?\.home-dancer-grid-qr \.club-deal-qr-symbol \{[\s\S]*?background: linear-gradient[\s\S]*?\.home-dancer-grid-qr:focus-visible \{/,
+    /Shared scrolling-card QR rail state[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
   );
+  assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
 });
 
 test("bottom navigation keeps every destination on one uniform baseline", () => {
