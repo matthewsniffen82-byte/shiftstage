@@ -14,7 +14,7 @@ export function FloatingProfileHomeLink({
     <Link
       aria-label={`Return from this full ${profileType} profile to the ${selectedCity} city screen`}
       className={styles.control}
-      href={`/?city=${encodeURIComponent(selectedCity)}&view=tonight`}
+      href={`/?city=${encodeURIComponent(selectedCity)}&view=dancers`}
       title={`Back to ${selectedCity}`}
     >
       <svg aria-hidden="true" viewBox="0 0 24 24">

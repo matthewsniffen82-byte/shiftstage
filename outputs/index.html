@@ -29132,8 +29132,7 @@
       </a>
 
       <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
-        <button class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now</button>
-        <button class="tab" data-tab="dancers" data-tab-label="Dancers" aria-current="false">Dancers</button>
+        <button class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers</button>
         <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
           <span class="home-bottom-tv-icon" aria-hidden="true">
             <span class="mobile-nav-selection-halo"></span>
@@ -29145,7 +29144,6 @@
           <span>TV</span>
         </button>
         <button class="tab" data-tab="venues" data-tab-label="Venues" aria-current="false">Venues</button>
-        <button class="tab" data-tab="trending" data-tab-label="Trending" aria-current="false">Trending</button>
       </nav>
 
       <style>
@@ -31488,7 +31486,7 @@
             height: 64px;
             min-height: 64px;
             display: grid !important;
-            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             align-items: center !important;
             gap: 0 !important;
             margin: 0 !important;
@@ -32551,8 +32549,64 @@
           align-items: start !important;
           gap: 8px !important;
         }
-        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading {
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading,
+        #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
+        #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filter-empty {
           grid-column: 1 / -1;
+        }
+        .dancer-directory-filters {
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 7px;
+          margin-bottom: 4px;
+        }
+        .dancer-directory-filter {
+          min-width: 0;
+          min-height: 38px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          padding: 0 7px;
+          border: 1px solid rgba(148, 163, 184, .34);
+          border-radius: 999px;
+          color: #cbd5e1;
+          background: #111118;
+          font-family: var(--font-ui);
+          font-size: clamp(9px, 2.45vw, 12px);
+          font-weight: 900;
+          line-height: 1;
+          cursor: pointer;
+        }
+        .dancer-directory-filter span {
+          color: #94a3b8;
+          font-size: .86em;
+        }
+        .dancer-directory-filter.is-active {
+          border-color: #7c3aed;
+          color: #f8fafc;
+          background: #2d106f;
+          box-shadow: 0 0 18px rgba(124, 58, 237, .22);
+        }
+        .dancer-directory-filter.is-active span {
+          color: #f8fafc;
+        }
+        .dancer-directory-filter:focus-visible {
+          outline: 2px solid #7c3aed;
+          outline-offset: 2px;
+        }
+        .dancer-directory-filter-empty {
+          min-height: 92px;
+          display: grid;
+          place-items: center;
+          padding: 18px;
+          border: 1px solid rgba(148, 163, 184, .24);
+          border-radius: 14px;
+          color: #cbd5e1;
+          background: #111118;
+          text-align: center;
+          font-weight: 800;
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
           width: 100% !important;
@@ -35179,7 +35233,8 @@
     const customerBrowseTonight = document.getElementById("customerBrowseTonight");
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     const homeFeedReturnHomeBtn = document.getElementById("homeFeedReturnHomeBtn");
-    let activeTab = "tonight";
+    let activeTab = "dancers";
+    let dancerDirectoryFilter = "all";
     let homeTvLaunchRequest = 0;
     let homeTvLaunchCity = "";
     let homeTvFeedRequest = 0;
@@ -39825,21 +39880,38 @@
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
+      const trending = profiles
+        .filter((profile) => (
+          !isWorkingTonight(profile, city) &&
+          Number.isInteger(Number(profile.trendRank)) &&
+          Number(profile.trendRank) > 0 &&
+          Number(profile.trendRank) <= 10
+        ))
+        .sort((a, b) => Number(a.trendRank) - Number(b.trendRank));
+      const trendingNames = new Set(trending.map((profile) => profile.name));
       const upcoming = profiles
-        .filter((profile) => profile.scheduled && !isWorkingTonight(profile, city))
+        .filter((profile) => (
+          profile.scheduled &&
+          !isWorkingTonight(profile, city) &&
+          !trendingNames.has(profile.name)
+        ))
         .sort((a, b) => (
           upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
       const noSchedule = profiles
-        .filter((profile) => !profile.scheduled && !isWorkingTonight(profile, city))
+        .filter((profile) => (
+          !profile.scheduled &&
+          !isWorkingTonight(profile, city) &&
+          !trendingNames.has(profile.name)
+        ))
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      return { workingNow, upcoming, noSchedule };
+      return { workingNow, trending, upcoming, noSchedule };
     }
 
     function dancerDirectoryProfiles(profiles, city = selectedCity()) {
       const groups = dancerDirectoryGroups(profiles, city);
-      return [...groups.workingNow, ...groups.upcoming, ...groups.noSchedule];
+      return [...groups.workingNow, ...groups.trending, ...groups.upcoming, ...groups.noSchedule];
     }
 
     function daysFromToday(date, city = selectedCity()) {
@@ -48409,24 +48481,88 @@
       `;
     }
 
-    function renderHomeDancerGrid(city, profiles, tab) {
+    function isTrendingDirectoryProfile(profile) {
+      return (
+        Number.isInteger(Number(profile?.trendRank)) &&
+        Number(profile.trendRank) > 0 &&
+        Number(profile.trendRank) <= 10
+      );
+    }
+
+    function dancerDirectoryFilterMarkup(profiles, city) {
+      const counts = {
+        all: profiles.length,
+        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
+        trending: profiles.filter(isTrendingDirectoryProfile).length,
+        upcoming: profiles.filter((profile) => profile.scheduled && !isWorkingTonight(profile, city)).length
+      };
+      const filters = [
+        { id: "all", label: "All" },
+        { id: "now", label: "Now" },
+        { id: "trending", label: "Trending" },
+        { id: "upcoming", label: "Upcoming" }
+      ];
+      return `
+        <div class="dancer-directory-filters" role="group" aria-label="Filter dancers">
+          ${filters.map((filter) => {
+            const active = dancerDirectoryFilter === filter.id;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}" type="button" data-dancer-directory-filter="${filter.id}" aria-pressed="${active}">${filter.label}<span>${counts[filter.id]}</span></button>`;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function dancerDirectorySections(profiles, city) {
       const groups = dancerDirectoryGroups(profiles, city);
-      const sections = tab === "tonight"
-        ? [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }]
-        : [
-            { label: "Working Now", className: "is-now", profiles: groups.workingNow },
-            { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
-            { label: "No Shift Posted", className: "is-open", profiles: groups.noSchedule }
-          ];
-      const compactDirectory = tab === "dancers";
+      if (dancerDirectoryFilter === "now") {
+        return [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }];
+      }
+      if (dancerDirectoryFilter === "trending") {
+        return [{
+          label: "Trending",
+          className: "is-trending",
+          profiles: profiles
+            .filter(isTrendingDirectoryProfile)
+            .sort((a, b) => Number(a.trendRank) - Number(b.trendRank))
+        }];
+      }
+      if (dancerDirectoryFilter === "upcoming") {
+        return [{
+          label: "Upcoming",
+          className: "is-upcoming",
+          profiles: profiles
+            .filter((profile) => profile.scheduled && !isWorkingTonight(profile, city))
+            .sort((a, b) => (
+              upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
+              dailyRotationScore(a, city) - dailyRotationScore(b, city)
+            ))
+        }];
+      }
+      return [
+        { label: "Working Now", className: "is-now", profiles: groups.workingNow },
+        { label: "Trending", className: "is-trending", profiles: groups.trending },
+        { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
+        { label: "No Shift Posted", className: "is-open", profiles: groups.noSchedule }
+      ];
+    }
+
+    function renderHomeDancerGrid(city, profiles) {
+      const sections = dancerDirectorySections(profiles, city);
+      const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
+      const emptyLabels = {
+        now: `No dancers are working now in ${city}.`,
+        trending: `No dancers are trending in ${city} yet.`,
+        upcoming: `No dancers have an upcoming shift in ${city}.`
+      };
       results.classList.add("card-grid", "home-dancer-grid");
-      results.classList.toggle("home-dancer-three-column", compactDirectory);
-      results.setAttribute("aria-label", tab === "tonight"
-        ? `Dancers working now in ${city}`
-        : `All approved dancers in ${city}, ordered by shift status`);
-      results.innerHTML = sections
-        .map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city, compactDirectory))
-        .join("");
+      results.classList.add("home-dancer-three-column");
+      results.setAttribute("aria-label", `Approved dancers in ${city}, grouped by live status, popularity, and schedule`);
+      results.innerHTML = `
+        ${dancerDirectoryFilterMarkup(profiles, city)}
+        ${visibleCount
+          ? sections.map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city, true)).join("")
+          : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available in ${city} yet.`)}</div>`}
+      `;
     }
 
     function homeDiscoveryFeedSlide(profile, index, total, tab) {
@@ -48621,15 +48757,13 @@
       }
       deactivateHomeTvFeed();
 
-      const loadingLiveProfiles = liveDiscoveryIsLoading(city) && ["tonight", "dancers", "trending"].includes(activeTab);
+      const loadingLiveProfiles = liveDiscoveryIsLoading(city) && activeTab === "dancers";
       const allItems = getItems(city, activeTab);
       const items = allItems;
       const venueFilter = selectedVenueFilter();
       const titles = {
-        tonight: venueFilter === "all" ? `Working Now in ${city}` : `Working Now at ${venueFilter}`,
         dancers: venueFilter === "all" ? `Dancers in ${city}` : `Dancers at ${venueFilter}`,
-        venues: `Venues in ${city}`,
-        trending: `Trending Dancers in ${city}`
+        venues: `Venues in ${city}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
         ? resolveVenueByName(selectedVenueName, city)
@@ -48656,11 +48790,7 @@
       }
       const resultCountLabel = activeTab === "venues"
         ? `${allItems.length} venue${allItems.length === 1 ? "" : "s"}`
-        : activeTab === "tonight"
-          ? `${allItems.length} working`
-          : activeTab === "dancers"
-            ? `${allItems.length} total`
-            : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
+        : `${allItems.length} total`;
       tabCount.textContent = loadingLiveProfiles
         ? "Loading live profiles..."
         : selectedVenue
@@ -48696,17 +48826,6 @@
         results.innerHTML = '<div class="locked">Loading live profiles from Dancr...</div>';
         return;
       }
-      if (activeTab === "tonight" && !items.length) {
-        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
-        results.innerHTML = `
-          <section class="home-discovery-empty" aria-labelledby="homeNowEmptyTitle">
-            <strong id="homeNowEmptyTitle">No dancers are working now ${scope}.</strong>
-            <p>See approved dancers with upcoming shifts first, followed by dancers with no schedule posted.</p>
-            <button class="home-discovery-empty-action" type="button" data-show-dancers>See All Dancers</button>
-          </section>
-        `;
-        return;
-      }
       if (activeTab === "dancers" && !items.length) {
         const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
         results.innerHTML = `
@@ -48726,15 +48845,11 @@
         `;
         return;
       }
-      if (activeTab === "tonight" || activeTab === "dancers") {
-        renderHomeDancerGrid(city, items, activeTab);
+      if (activeTab === "dancers") {
+        renderHomeDancerGrid(city, items);
         return;
       }
-      results.innerHTML = items.map((item, index) => (
-        activeTab === "venues"
-          ? venueCard(item)
-          : profileCard(item, index, { tonight: activeTab === "tonight", trendingContext: activeTab === "trending", feedActions: true })
-      )).join("");
+      results.innerHTML = items.map((item) => venueCard(item)).join("");
     }
 
     async function renderHomeTvLaunch(city) {
@@ -49057,7 +49172,7 @@
 
     function returnToHomeDiscoveryMain() {
       if (profileBackdrop.classList.contains("show")) return false;
-      activateHomeDestination("tonight", { scroll: false });
+      activateHomeDestination("dancers", { dancerFilter: "all", scroll: false });
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });
@@ -49757,6 +49872,17 @@
     }
 
     results.addEventListener("click", async (event) => {
+      const dancerFilterButton = event.target.closest("[data-dancer-directory-filter]");
+      if (dancerFilterButton) {
+        event.preventDefault();
+        const nextFilter = dancerFilterButton.dataset.dancerDirectoryFilter;
+        if (!["all", "now", "trending", "upcoming"].includes(nextFilter)) return;
+        dancerDirectoryFilter = nextFilter;
+        syncHomeDestinationLocation("dancers");
+        render();
+        results.querySelector(`[data-dancer-directory-filter="${nextFilter}"]`)?.focus({ preventScroll: true });
+        return;
+      }
       const venueProfileClose = event.target.closest("[data-close-venue-profile]");
       if (venueProfileClose) {
         event.preventDefault();
@@ -49815,13 +49941,7 @@
       }
       const showDancersButton = event.target.closest("[data-show-dancers]");
       if (showDancersButton) {
-        activeTab = "dancers";
-        tonightExpanded = false;
-        dancersExpanded = false;
-        document.querySelectorAll(".tab").forEach((tab) => {
-          tab.classList.toggle("active", tab.dataset.tab === "dancers");
-        });
-        render();
+        activateHomeDestination("dancers", { dancerFilter: "all", scroll: false });
         document.querySelector('.tab[data-tab="dancers"]')?.focus({ preventScroll: true });
         return;
       }
@@ -52248,16 +52368,28 @@
     });
 
     const homeBottomTv = document.getElementById("homeBottomTv");
-    const homeDestinationOrder = ["tonight", "dancers", "tv", "venues", "trending"];
+    const homeDestinationOrder = ["dancers", "tv", "venues"];
+    const dancerDirectoryFilters = ["all", "now", "trending", "upcoming"];
+
+    function dancerDirectoryFilterFromLocation() {
+      const params = new URLSearchParams(window.location.search);
+      const requestedFilter = params.get("dancer_filter");
+      if (dancerDirectoryFilters.includes(requestedFilter)) return requestedFilter;
+      const requestedView = params.get("view");
+      if (requestedView === "tonight") return "now";
+      if (requestedView === "trending") return "trending";
+      return "all";
+    }
 
     function homeDestinationFromLocation() {
       const requestedView = new URLSearchParams(window.location.search).get("view");
-      return homeDestinationOrder.includes(requestedView) ? requestedView : "tonight";
+      if (requestedView === "tonight" || requestedView === "trending") return "dancers";
+      return homeDestinationOrder.includes(requestedView) ? requestedView : "dancers";
     }
 
     function homeDestinationWasRequested() {
       const requestedView = new URLSearchParams(window.location.search).get("view");
-      return homeDestinationOrder.includes(requestedView);
+      return homeDestinationOrder.includes(requestedView) || requestedView === "tonight" || requestedView === "trending";
     }
 
     function syncHomeDestinationLocation(nextTab) {
@@ -52265,6 +52397,11 @@
       const url = new URL(window.location.href);
       url.searchParams.set("city", citySelect.value);
       url.searchParams.set("view", nextTab);
+      if (nextTab === "dancers" && dancerDirectoryFilter !== "all") {
+        url.searchParams.set("dancer_filter", dancerDirectoryFilter);
+      } else {
+        url.searchParams.delete("dancer_filter");
+      }
       url.searchParams.delete("profile");
       url.searchParams.delete("venue");
       const search = url.searchParams.toString();
@@ -52278,6 +52415,7 @@
     function clearHomeDestinationLocation() {
       const url = new URL(window.location.href);
       url.searchParams.delete("view");
+      url.searchParams.delete("dancer_filter");
       url.searchParams.delete("profile");
       url.searchParams.delete("venue");
       const search = url.searchParams.toString();
@@ -52290,6 +52428,14 @@
 
     function activateHomeDestination(nextTab, options = {}) {
       if (!homeDestinationOrder.includes(nextTab)) return false;
+      const leavingAnotherDestination = activeTab !== "dancers";
+      if (nextTab === "dancers") {
+        dancerDirectoryFilter = dancerDirectoryFilters.includes(options.dancerFilter)
+          ? options.dancerFilter
+          : leavingAnotherDestination
+            ? "all"
+            : dancerDirectoryFilter;
+      }
       if (profileBackdrop.classList.contains("show")) closeProfileModal();
       deactivateHomeTvFeed();
       deactivateHomeDiscoveryFeed();
@@ -52582,7 +52728,7 @@
 
       document.querySelectorAll("[data-jump-tonight]").forEach((button) => {
         button.addEventListener("click", () => {
-          document.querySelector('[data-tab="tonight"]')?.click();
+          activateHomeDestination("dancers", { dancerFilter: "now" });
           document.getElementById("tabTitle")?.scrollIntoView({ behavior: "smooth", block: "start" });
         });
       });
@@ -52685,6 +52831,7 @@
     }
     const initialHomeDestinationRequested = homeDestinationWasRequested();
     const initialHomeDestination = homeDestinationFromLocation();
+    dancerDirectoryFilter = dancerDirectoryFilterFromLocation();
     if (initialHomeDestination) {
       activeTab = initialHomeDestination;
       homeDiscoveryFeedOpen =
@@ -52698,6 +52845,9 @@
       const initialIsTv = initialHomeDestination === "tv";
       homeBottomTv?.classList.toggle("active", initialIsTv);
       homeBottomTv?.setAttribute("aria-current", initialIsTv ? "page" : "false");
+    }
+    if (initialHomeDestinationRequested) {
+      syncHomeDestinationLocation(initialHomeDestination);
     }
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();

@@ -12,16 +12,16 @@ const [layoutSource, navigationSource, tvSource, homeSource] = await Promise.all
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
-test("every Next page receives the shared five-destination mobile navigation", () => {
+test("every Next page receives the shared consolidated mobile navigation", () => {
   assert.match(layoutSource, /import \{ GlobalMobileBottomNav \}/);
   assert.match(layoutSource, /<GlobalMobileBottomNav \/>/);
   assert.match(
     navigationSource,
-    /id: "tonight"[\s\S]*?id: "dancers"[\s\S]*?id: "tv"[\s\S]*?id: "venues"[\s\S]*?id: "trending"/,
+    /id: "dancers"[\s\S]*?id: "tv"[\s\S]*?id: "venues"/,
   );
   assert.match(
     navigationSource,
-    /view: "tonight"[\s\S]*?view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"[\s\S]*?view: "trending"/,
+    /view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"/,
   );
   assert.match(
     navigationSource,
@@ -29,11 +29,11 @@ test("every Next page receives the shared five-destination mobile navigation", (
   );
   assert.match(
     navigationSource,
-    /className="global-mobile-bottom-nav"[\s\S]*?grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/,
+    /className="global-mobile-bottom-nav"[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
   );
   assert.match(
     navigationSource,
-    /pathname === `\/\$\{destination\}` \|\| pathname\.startsWith\(`\/\$\{destination\}\/`\)/,
+    /pathname === "\/tonight"[\s\S]*?pathname === "\/trending"[\s\S]*?pathname === "\/dancers"[\s\S]*?pathname\.startsWith\("\/dancers\/"\)/,
   );
   assert.doesNotMatch(tvSource, /className="tv-mobile-nav"/);
 });

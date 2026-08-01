@@ -386,7 +386,7 @@ export default function TvFeedClient({
   const unreadNotificationCount = notifications.filter(
     (notification) => !notification.readAt,
   ).length;
-  const homepageHref = `/?city=${encodeURIComponent(city)}&view=tonight`;
+  const homepageHref = `/?city=${encodeURIComponent(city)}&view=dancers`;
 
   return (
     <main className="tv-shell">

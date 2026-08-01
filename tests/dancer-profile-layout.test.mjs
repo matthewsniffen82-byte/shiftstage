@@ -113,9 +113,8 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
   assert.match(liveApp, /openPhotoViewerFromElement\(modalImage\)/);
   assert.match(liveApp, /openProfileTvViewer\(item, modalGallery\.profileTvProfileName/);
 
-  assert.match(bottomNavigation, /Now/);
   assert.match(bottomNavigation, /Dancers/);
   assert.match(bottomNavigation, /TV/);
   assert.match(bottomNavigation, /Venues/);
-  assert.match(bottomNavigation, /Trending/);
+  assert.doesNotMatch(bottomNavigation, /label: "(?:Now|Trending)"/);
 });

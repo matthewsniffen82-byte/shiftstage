@@ -4,14 +4,14 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("the Now destination contains only approved dancers with confirmed active check-ins", () => {
+test("the Now dancer filter contains only approved dancers with confirmed active check-ins", () => {
   assert.match(
     homeSource,
     /function workingNowItems\(city\)[\s\S]*isApprovedPublicProfile\(profile\)[\s\S]*isWorkingTonight\(profile, city\)[\s\S]*profileMatchesVenueFilter\(profile\)/,
   );
   assert.match(
     homeSource,
-    /if \(tab === "tonight"\) return workingNowItems\(city\)/,
+    /if \(dancerDirectoryFilter === "now"\)[\s\S]*?profiles: groups\.workingNow/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -19,14 +19,14 @@ test("the Now destination contains only approved dancers with confirmed active c
   );
 });
 
-test("the Dancers directory lists Working Now, upcoming, and no-schedule profiles in that order", () => {
+test("the Dancers directory groups every profile once as Working Now, Trending, Upcoming, or No Shift", () => {
   assert.match(
     homeSource,
-    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*isWorkingTonight\(profile, city\)[\s\S]*const upcoming = profiles[\s\S]*profile\.scheduled && !isWorkingTonight\(profile, city\)[\s\S]*upcomingSortValue\(a, city\)[\s\S]*const noSchedule = profiles[\s\S]*!profile\.scheduled && !isWorkingTonight\(profile, city\)[\s\S]*return \{ workingNow, upcoming, noSchedule \}/,
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const trending = profiles[\s\S]*!isWorkingTonight\(profile, city\)[\s\S]*profile\.trendRank[\s\S]*const trendingNames = new Set[\s\S]*const upcoming = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*const noSchedule = profiles[\s\S]*!trendingNames\.has\(profile\.name\)[\s\S]*return \{ workingNow, trending, upcoming, noSchedule \}/,
   );
   assert.match(
     homeSource,
-    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*dancerDirectoryGroups\(profiles, city\)[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.upcoming, \.\.\.groups\.noSchedule\]/,
+    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.trending, \.\.\.groups\.upcoming, \.\.\.groups\.noSchedule\]/,
   );
   assert.match(
     homeSource,
@@ -34,35 +34,29 @@ test("the Dancers directory lists Working Now, upcoming, and no-schedule profile
   );
   assert.match(
     homeSource,
-    /function renderHomeDancerGrid\(city, profiles, tab\)[\s\S]*label: "Working Now"[\s\S]*label: "Upcoming"[\s\S]*label: "No Shift Posted"/,
+    /function dancerDirectorySections\(profiles, city\)[\s\S]*label: "Working Now"[\s\S]*label: "Trending"[\s\S]*label: "Upcoming"[\s\S]*label: "No Shift Posted"/,
   );
 });
 
-test("the homepage exposes an honest Now empty state that opens the Dancers directory", () => {
+test("the consolidated Dancers destination exposes working, trending, and schedule filters", () => {
   assert.match(
     homeSource,
-    /class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now<\/button>/,
-  );
-  assert.match(
-    homeSource,
-    /tonight: '<svg viewBox="0 0 24 24"><rect x="3\.5" y="5\.5" width="17" height="15" rx="2"><\/rect>[\s\S]*?<circle cx="15\.5" cy="15\.5" r="3"><\/circle>/,
+    /class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
   );
   assert.match(homeSource, /const label = tab\.dataset\.tabLabel \|\| tab\.textContent\.trim\(\)/);
   assert.doesNotMatch(homeSource, /Now &amp; Next|Now & Next in|Up Next Tonight in/);
   assert.doesNotMatch(homeSource, /class="home-app-bottom-nav"/);
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
-  assert.match(homeSource, /tonight: venueFilter === "all" \? `Working Now in \$\{city\}` : `Working Now at \$\{venueFilter\}`/);
-  assert.match(homeSource, /No dancers are working now \$\{scope\}\./);
-  assert.match(homeSource, /data-show-dancers>See All Dancers<\/button>/);
   assert.match(
     homeSource,
-    /const showDancersButton = event\.target\.closest\("\[data-show-dancers\]"\)[\s\S]*activeTab = "dancers"[\s\S]*tab\.dataset\.tab === "dancers"[\s\S]*render\(\)/,
+    /filters = \[[\s\S]*id: "all", label: "All"[\s\S]*id: "now", label: "Now"[\s\S]*id: "trending", label: "Trending"[\s\S]*id: "upcoming", label: "Upcoming"/,
   );
-  assert.match(homeSource, /\.home-discovery-empty-action \{[\s\S]*?min-height: 46px/);
   assert.match(
     homeSource,
-    /\.home-discovery-empty \{[\s\S]*?max-width: 100%[\s\S]*?overflow: hidden[\s\S]*?\.home-discovery-empty strong \{[\s\S]*?overflow-wrap: anywhere[\s\S]*?white-space: normal/,
+    /data-dancer-directory-filter="\$\{filter\.id\}" aria-pressed="\$\{active\}"/,
   );
+  assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
+  assert.match(homeSource, /No dancers are working now in \$\{city\}\./);
   assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);
 });
 

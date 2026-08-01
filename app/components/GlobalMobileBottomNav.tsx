@@ -33,18 +33,6 @@ const MOBILE_SWIPE_BLOCKED_SELECTOR = [
 
 const destinations = [
   {
-    id: "tonight",
-    label: "Now",
-    view: "tonight",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 11.2 12 4l8 7.2" />
-        <path d="M6.5 10.5V20h11v-9.5" />
-        <path d="M9.5 20v-5.5h5V20" />
-      </svg>
-    ),
-  },
-  {
     id: "dancers",
     label: "Dancers",
     view: "dancers",
@@ -75,17 +63,6 @@ const destinations = [
         <path d="M5 20V7l7-3 7 3v13" />
         <path d="M3 20h18" />
         <path d="M9 10h6M9 14h6" />
-      </svg>
-    ),
-  },
-  {
-    id: "trending",
-    label: "Trending",
-    view: "trending",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m4 17 5-5 3.5 3.5L20 8" />
-        <path d="M15 8h5v5" />
       </svg>
     ),
   },
@@ -389,7 +366,7 @@ export function GlobalMobileBottomNav() {
             width: min(calc(100% - 16px), 700px);
             height: 64px;
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: center;
             gap: 0;
             padding: 3px 4px;
@@ -666,7 +643,14 @@ function isActiveDestination(
   pathname: string,
   destination: (typeof destinations)[number]["id"],
 ) {
-  if (destination === "tonight") return pathname === "/tonight";
+  if (destination === "dancers") {
+    return (
+      pathname === "/tonight" ||
+      pathname === "/trending" ||
+      pathname === "/dancers" ||
+      pathname.startsWith("/dancers/")
+    );
+  }
   return pathname === `/${destination}` || pathname.startsWith(`/${destination}/`);
 }
 

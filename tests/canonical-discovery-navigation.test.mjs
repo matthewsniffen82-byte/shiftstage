@@ -70,8 +70,9 @@ test("all shared navigation targets canonical homepage views directly", () => {
   );
   assert.match(
     globalNavigation,
-    /view: "tonight"[\s\S]*?view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"[\s\S]*?view: "trending"/,
+    /view: "dancers"[\s\S]*?path: "\/tv"[\s\S]*?view: "venues"/,
   );
+  assert.doesNotMatch(globalNavigation, /view: "(?:tonight|trending)"/);
   assert.match(
     globalNavigation,
     /"view" in destination[\s\S]*?homeDiscoveryHref\(destination\.view, city\)/,
@@ -96,15 +97,19 @@ test("all shared navigation targets canonical homepage views directly", () => {
 test("canonical homepage deep links select and retain the requested destination", () => {
   assert.match(
     homeSource,
-    /function homeDestinationFromLocation\(\)[\s\S]*?new URLSearchParams\(window\.location\.search\)\.get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\) \? requestedView : "tonight"/,
+    /function homeDestinationFromLocation\(\)[\s\S]*?requestedView === "tonight" \|\| requestedView === "trending"\) return "dancers"[\s\S]*?homeDestinationOrder\.includes\(requestedView\) \? requestedView : "dancers"/,
   );
   assert.match(
     homeSource,
-    /function syncHomeDestinationLocation\(nextTab\)[\s\S]*?searchParams\.set\("city", citySelect\.value\)[\s\S]*?searchParams\.set\("view", nextTab\)[\s\S]*?history\.replaceState/,
+    /function dancerDirectoryFilterFromLocation\(\)[\s\S]*?requestedView === "tonight"\) return "now"[\s\S]*?requestedView === "trending"\) return "trending"/,
   );
   assert.match(
     homeSource,
-    /const initialHomeDestination = homeDestinationFromLocation\(\)[\s\S]*?activeTab = initialHomeDestination[\s\S]*?item\.dataset\.tab === initialHomeDestination[\s\S]*?render\(\)/,
+    /function syncHomeDestinationLocation\(nextTab\)[\s\S]*?searchParams\.set\("city", citySelect\.value\)[\s\S]*?searchParams\.set\("view", nextTab\)[\s\S]*?searchParams\.set\("dancer_filter", dancerDirectoryFilter\)[\s\S]*?history\.replaceState/,
+  );
+  assert.match(
+    homeSource,
+    /const initialHomeDestination = homeDestinationFromLocation\(\)[\s\S]*?dancerDirectoryFilter = dancerDirectoryFilterFromLocation\(\)[\s\S]*?activeTab = initialHomeDestination[\s\S]*?item\.dataset\.tab === initialHomeDestination[\s\S]*?syncHomeDestinationLocation\(initialHomeDestination\)[\s\S]*?render\(\)/,
   );
   assert.match(
     homeSource,

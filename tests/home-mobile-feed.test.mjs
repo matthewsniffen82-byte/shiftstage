@@ -4,22 +4,22 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("mobile discovery uses a persistent five-destination app navigation", () => {
+test("mobile discovery uses one consolidated Dancers destination beside TV and Venues", () => {
   const navigation = homeSource.match(
     /<nav class="tabs" id="discoveryTabs"[\s\S]*?<\/nav>/,
   )?.[0] || "";
   assert.match(
     navigation,
-    /data-tab="tonight"[\s\S]*data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"[\s\S]*data-tab="trending"/,
+    /data-tab="dancers"[\s\S]*id="homeBottomTv"[\s\S]*data-tab="venues"/,
   );
   assert.match(
     navigation,
-    /class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page"/,
+    /class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page"/,
   );
-  assert.doesNotMatch(navigation, /class="tab active" data-tab="(?:dancers|venues|trending)"/);
+  assert.doesNotMatch(navigation, /data-tab="(?:tonight|trending)"/);
   assert.match(navigation, /id="homeBottomTv"[^>]*aria-controls="results"[^>]*aria-current="false"/);
   assert.doesNotMatch(navigation, /id="homeBottomTv"[^>]*href=/);
-  assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(5/);
+  assert.match(homeSource, /#discoveryTabs \{[\s\S]*position: fixed !important[\s\S]*grid-template-columns: repeat\(3/);
   assert.match(
     homeSource,
     /\.home-bottom-tv-icon \{[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
@@ -97,15 +97,15 @@ test("the Home TV button renders a real page-scroll video feed without leaving H
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
 });
 
-test("the homepage selects Now on first load and keeps destination navigation authoritative", () => {
-  assert.match(homeSource, /let activeTab = "tonight";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
+test("the homepage selects Dancers on first load and keeps destination navigation authoritative", () => {
+  assert.match(homeSource, /let activeTab = "dancers";[\s\S]*?let dancerDirectoryFilter = "all";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
   assert.match(
     homeSource,
-    /<button class="tab active" data-tab="tonight" data-tab-label="Now" aria-current="page">Now<\/button>/,
+    /<button class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
   );
   assert.match(
     homeSource,
-    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("tonight", \{ scroll: false \}\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
+    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("dancers", \{ dancerFilter: "all", scroll: false \}\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
   );
   assert.match(
     homeSource,
@@ -113,7 +113,7 @@ test("the homepage selects Now on first load and keeps destination navigation au
   );
   assert.match(
     homeSource,
-    /function homeDestinationFromLocation\(\) \{[\s\S]*?get\("view"\)[\s\S]*?homeDestinationOrder\.includes\(requestedView\) \? requestedView : "tonight"[\s\S]*?const initialHomeDestinationRequested = homeDestinationWasRequested\(\);[\s\S]*?const initialHomeDestination = homeDestinationFromLocation\(\);[\s\S]*?const isActive = item\.dataset\.tab === initialHomeDestination;[\s\S]*?setAttribute\("aria-current", isActive \? "page" : "false"\)/,
+    /function homeDestinationFromLocation\(\) \{[\s\S]*?requestedView === "tonight" \|\| requestedView === "trending"[\s\S]*?return "dancers"[\s\S]*?homeDestinationOrder\.includes\(requestedView\) \? requestedView : "dancers"[\s\S]*?const initialHomeDestinationRequested = homeDestinationWasRequested\(\);[\s\S]*?const initialHomeDestination = homeDestinationFromLocation\(\);[\s\S]*?const isActive = item\.dataset\.tab === initialHomeDestination;[\s\S]*?setAttribute\("aria-current", isActive \? "page" : "false"\)/,
   );
   assert.match(
     homeSource,
@@ -125,10 +125,10 @@ test("the homepage selects Now on first load and keeps destination navigation au
   );
 });
 
-test("all five discovery destinations stay in one continuously scrollable homepage", () => {
+test("all three discovery destinations stay in one continuously scrollable homepage", () => {
   assert.match(
     homeSource,
-    /const homeDestinationOrder = \["tonight", "dancers", "tv", "venues", "trending"\];/,
+    /const homeDestinationOrder = \["dancers", "tv", "venues"\];/,
   );
   assert.match(
     homeSource,
@@ -145,19 +145,7 @@ test("all five discovery destinations stay in one continuously scrollable homepa
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
 
-test("Now and Venues retain natural one-column browsing on phones", () => {
-  assert.match(
-    homeSource,
-    /#results\.home-dancer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?@media \(min-width: 680px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 900px\) \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 1100px\) \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/,
-  );
-  assert.match(
-    homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-photo \{[\s\S]*?aspect-ratio: 1 \/ 1;/,
-  );
-  assert.match(
-    homeSource,
-    /#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?aspect-ratio: auto !important;/,
-  );
+test("Dancers uses grouped grid browsing while Venues retains its inline feed", () => {
   assert.match(
     homeSource,
     /activeTab = nextTab;[\s\S]*?homeDiscoveryFeedOpen =\s*nextTab === "venues" &&\s*homeDiscoveryFeedUsesInlineLayout\(\)/,
@@ -168,11 +156,11 @@ test("Now and Venues retain natural one-column browsing on phones", () => {
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "tonight" \|\| activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items, activeTab\);\s*return;/,
+    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*return;/,
   );
   assert.match(
     homeSource,
-    /function renderHomeDancerGrid\(city, profiles, tab\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"[\s\S]*?results\.classList\.add\("card-grid", "home-dancer-grid"\)/,
+    /function dancerDirectorySections\(profiles, city\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Trending"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"/,
   );
 });
 
@@ -191,7 +179,7 @@ test("Dancers uses a three-column scrolling profile directory at every app width
   );
   assert.match(
     homeSource,
-    /const compactDirectory = tab === "dancers";[\s\S]*?results\.classList\.toggle\("home-dancer-three-column", compactDirectory\)[\s\S]*?homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, compactDirectory\)/,
+    /function renderHomeDancerGrid\(city, profiles\)[\s\S]*?results\.classList\.add\("home-dancer-three-column"\)[\s\S]*?homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, true\)/,
   );
 });
 
@@ -542,7 +530,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   );
   assert.match(
     homeSource,
-    /const resultCountLabel = activeTab === "venues"[\s\S]*?activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} total`[\s\S]*?`\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/,
+    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} venue\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} total`/,
   );
   assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);
   assert.match(homeSource, /\.home-dancer-grid-venue span \{[\s\S]*?-webkit-line-clamp: 2;/);
@@ -649,17 +637,14 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
   );
 });
 
-test("mobile homepage cards form a single-column production action feed", () => {
-  assert.match(homeSource, /#results\.card-grid \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) !important/);
-  assert.match(homeSource, /#results \.home-feed-card \.portrait \{[\s\S]*aspect-ratio: 4 \/ 5/);
+test("the Dancers grid is profile-first while production action handlers remain wired", () => {
+  assert.match(homeSource, /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important/);
+  assert.match(homeSource, /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"/);
   assert.match(
     homeSource,
     /options\.feedActions[\s\S]*data-feed-action="follow"[\s\S]*data-feed-action="notify"[\s\S]*data-feed-action="going"/,
   );
-  assert.match(
-    homeSource,
-    /feedActions: true/,
-  );
+  assert.match(homeSource, /homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, true\)/);
   assert.match(
     homeSource,
     /const feedActionButton = event\.target\.closest\("\[data-feed-action\]"\)[\s\S]*saveProfileFollow\(feedActionButton\)[\s\S]*saveProfileNotifications\(feedActionButton\)[\s\S]*saveProfileGoing\(feedActionButton\)/,
@@ -717,14 +702,14 @@ test("mobile dancer headings keep the selected city on one clean line", () => {
   assert.match(homeSource, /#tabTitle \.tab-title-city \{[\s\S]*?white-space: nowrap;/);
 });
 
-test("all five discovery titles use one typography system and consistent city wording", () => {
+test("the consolidated discovery titles use one typography system and consistent city wording", () => {
   assert.match(
     homeSource,
     /\.content-head h2,[\s\S]*?#tabTitle \{[\s\S]*?font-family: var\(--font-display\) !important;[\s\S]*?font-size: clamp\(24px, 6\.4vw, 30px\) !important;[\s\S]*?font-weight: 800 !important;[\s\S]*?line-height: 1\.02 !important;[\s\S]*?letter-spacing: -0\.01em !important;/,
   );
   assert.match(
     homeSource,
-    /tonight: venueFilter === "all" \? `Working Now in \$\{city\}` : `Working Now at \$\{venueFilter\}`,[\s\S]*?dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Venues in \$\{city\}`,[\s\S]*?trending: `Trending Dancers in \$\{city\}`/,
+    /dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Venues in \$\{city\}`/,
   );
   assert.match(homeSource, /tabTitle\.textContent = `MyDancr TV in \$\{city\}`;/);
   const dancerTitleStyle = homeSource.match(/#tabTitle\.dancers-city-title \{[\s\S]*?\n      \}/)?.[0] || "";

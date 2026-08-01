@@ -7,11 +7,12 @@ const navigationSource = fs.readFileSync(
   "utf8",
 );
 
-test("Next pages use the same five-destination full-screen swipe order", () => {
+test("Next pages use the same consolidated three-destination full-screen swipe order", () => {
   assert.match(
     navigationSource,
-    /id: "tonight"[\s\S]*?id: "dancers"[\s\S]*?id: "tv"[\s\S]*?id: "venues"[\s\S]*?id: "trending"/,
+    /id: "dancers"[\s\S]*?id: "tv"[\s\S]*?id: "venues"/,
   );
+  assert.doesNotMatch(navigationSource, /id: "(?:tonight|trending)"/);
   assert.match(
     navigationSource,
     /destinations\.findIndex[\s\S]*?isActiveDestination\(pathname, destination\.id\)/,

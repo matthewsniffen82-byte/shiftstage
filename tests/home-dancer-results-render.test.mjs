@@ -12,6 +12,6 @@ test("populated Dancers results render without the removed list-limit state", ()
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "tonight" \|\| activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items, activeTab\);\s*return;/,
+    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*return;/,
   );
 });

@@ -7,7 +7,7 @@ const homeSource = fs.readFileSync(new URL("../outputs/index.html", import.meta.
 test("mobile destinations can be changed with an easy deliberate horizontal swipe", () => {
   assert.match(
     homeSource,
-    /const homeDestinationOrder = \["tonight", "dancers", "tv", "venues", "trending"\]/,
+    /const homeDestinationOrder = \["dancers", "tv", "venues"\]/,
   );
   assert.match(
     homeSource,

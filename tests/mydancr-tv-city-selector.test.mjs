@@ -16,7 +16,7 @@ test("MyDancr TV keeps the homepage-selected city without another city control",
 test("the TV exit returns to the homepage with the selected city", () => {
   assert.match(
     client,
-    /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}&view=tonight`/,
+    /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}&view=dancers`/,
   );
   assert.match(
     client,

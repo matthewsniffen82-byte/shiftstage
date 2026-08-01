@@ -87,14 +87,13 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /\{ value: "new", label: "New" \}/);
   assert.doesNotMatch(feedClient, /className="tv-city"/);
   assert.doesNotMatch(feedClient, /id="tv-city"/);
-  assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}&view=tonight`/);
+  assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}&view=dancers`/);
   assert.match(feedClient, /className="tv-header"[\s\S]*?<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(globalNavigation, /view: "tonight"/);
   assert.match(globalNavigation, /view: "dancers"/);
   assert.match(globalNavigation, /path: "\/tv"/);
   assert.match(globalNavigation, /view: "venues"/);
-  assert.match(globalNavigation, /view: "trending"/);
+  assert.doesNotMatch(globalNavigation, /view: "(?:tonight|trending)"/);
   assert.match(feedClient, /className="tv-global-header"/);
   assert.match(feedClient, /className="tv-global-logo" href=\{homepageHref\} aria-label="Go to Mydancr home"/);
   assert.doesNotMatch(feedClient, /className="tv-global-search"|className="tv-site-nav"/);
@@ -152,8 +151,8 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(liveApp, /verifiedCheckMarkup/);
   assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && markets\[initialProfileCity\]\)[\s\S]*?citySelect\.value = initialProfileCity/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
-  assert.match(globalNavigation, /label: "Now"[\s\S]*?label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Venues"[\s\S]*?label: "Trending"/);
-  assert.match(globalNavigation, /\.global-mobile-bottom-nav \{[\s\S]*?grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
+  assert.match(globalNavigation, /label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Venues"/);
+  assert.match(globalNavigation, /\.global-mobile-bottom-nav \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(feedClient, /className="tv-card-venue-line"[\s\S]*?className="tv-card-venue-name"[\s\S]*?video\.venue\.name/);
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
   assert.match(
