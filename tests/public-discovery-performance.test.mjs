@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, rootRouteSource, discoveryRouteSource, publicServiceSource] = await Promise.all([
+const [homeSource, rootRouteSource, discoveryRouteSource, publicServiceSource, heroAsset] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
+  readFile(new URL("../outputs/dancr-hero.png", import.meta.url)),
 ]);
 
 test("the production home shell is statically generated without a release-stale CDN lifetime", () => {
@@ -42,14 +44,17 @@ test("the consolidated tonight list still requires a confirmed active check-in",
   assert.match(publicServiceSource, /endsAt >= now/);
 });
 
-test("the home hero is preloaded and rendered as a resilient high-priority image", () => {
-  assert.match(homeSource, /href="\/outputs\/dancr-hero\.webp" type="image\/webp" fetchpriority="high"/);
+test("the exact supplied PNG is the preloaded high-priority home hero", () => {
+  assert.equal(
+    createHash("sha256").update(heroAsset).digest("hex"),
+    "b27abece499a05b4fc22b170e8e3da1ea5a4171cfd3ed05c85482af87b08e72b",
+  );
+  assert.match(homeSource, /href="\/outputs\/dancr-hero\.png" type="image\/png" fetchpriority="high"/);
   assert.match(
     homeSource,
-    /class="hero-art"[\s\S]*?src="\/outputs\/dancr-hero\.webp"[\s\S]*?width="1672"[\s\S]*?height="941"[\s\S]*?loading="eager"[\s\S]*?fetchpriority="high"/
+    /class="hero-art"[\s\S]*?src="\/outputs\/dancr-hero\.png"[\s\S]*?width="1672"[\s\S]*?height="941"[\s\S]*?loading="eager"[\s\S]*?fetchpriority="high"/
   );
-  assert.match(homeSource, /onerror="this\.onerror=null;this\.src='\/outputs\/dancr-hero\.png';"/);
-  assert.match(homeSource, /background-image: url\("\/outputs\/dancr-hero\.webp"\) !important/);
-  assert.doesNotMatch(homeSource, /url\("\.\/dancr-hero\.webp"\)/);
+  assert.match(homeSource, /background-image: url\("\/outputs\/dancr-hero\.png"\) !important/);
+  assert.doesNotMatch(homeSource, /dancr-hero\.webp/);
   assert.doesNotMatch(homeSource, /href="\.\/dancr-hero\.png"/);
 });
