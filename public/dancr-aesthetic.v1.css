@@ -460,10 +460,12 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-disco
 body > .app main.stack > .hero.reference-hero {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 24px !important;
   background: var(--dancr-color-background) !important;
-  box-shadow: none !important;
+  box-shadow:
+    0 14px 32px rgba(5, 5, 7, 0.38),
+    inset 0 1px 0 rgba(248, 250, 252, 0.035) !important;
 }
 
 /* The artwork includes its own inset stroke. Crop that stroke just beyond the
