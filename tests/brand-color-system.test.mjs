@@ -38,10 +38,10 @@ const requiredTokens = new Map([
   ["--dancr-color-beam-blue", "#346eff"],
   ["--dancr-color-text-primary", "#f8fafc"],
   ["--dancr-color-background", "#050507"],
-  ["--dancr-color-surface", "#111118"],
+  ["--dancr-color-surface", "#0f0f12"],
   ["--dancr-color-text-secondary", "#cbd5e1"],
   ["--dancr-color-text-muted", "#94a3b8"],
-  ["--dancr-color-border", "#334155"],
+  ["--dancr-color-border", "#303038"],
   ["--dancr-color-info", "#22d3ee"],
   ["--dancr-color-success", "#10b981"],
   ["--dancr-color-featured", "#fbbf24"],
@@ -77,12 +77,12 @@ test("brand text and status combinations meet normal-text contrast", () => {
   const combinations = [
     ["#f8fafc", "#7c3aed"],
     ["#f8fafc", "#050507"],
-    ["#cbd5e1", "#111118"],
+    ["#cbd5e1", "#0f0f12"],
     ["#94a3b8", "#050507"],
-    ["#22d3ee", "#111118"],
-    ["#10b981", "#111118"],
-    ["#fbbf24", "#111118"],
-    ["#ef4444", "#111118"],
+    ["#22d3ee", "#0f0f12"],
+    ["#10b981", "#0f0f12"],
+    ["#fbbf24", "#0f0f12"],
+    ["#ef4444", "#0f0f12"],
   ];
 
   for (const [foreground, background] of combinations) {

@@ -20,6 +20,25 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   );
 });
 
+test("Android and iPhone share the same near-black and charcoal content foundation", () => {
+  assert.match(
+    aesthetic,
+    /body\.dancr-button-system,[\s\S]*?body > \.app,[\s\S]*?body > \.app main\.stack \{[\s\S]*?background: var\(--dancr-color-background\) !important/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > #results :is\([\s\S]*?\.home-feed-card,[\s\S]*?\.dancer-card,[\s\S]*?\.venue-card,[\s\S]*?\.empty-state,[\s\S]*?\.home-discovery-feed-slide,[\s\S]*?\.home-tv-feed-slide[\s\S]*?background: var\(--dancr-color-surface-translucent\) !important/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-art,[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
+  );
+  const foundation = aesthetic.match(
+    /One device-neutral foundation[\s\S]*?(?=body > \.app main\.stack > \.hero\.reference-hero)/,
+  )?.[0] || "";
+  assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
+});
+
 test("the shared aesthetic covers public content, accounts, and operations surfaces", () => {
   assert.match(aesthetic, /\.account-shell/);
   assert.match(aesthetic, /\.dashboard-shell/);

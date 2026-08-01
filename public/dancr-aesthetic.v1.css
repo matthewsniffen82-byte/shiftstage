@@ -391,6 +391,16 @@
  * outside every selector in this section.
  */
 
+/*
+ * One device-neutral foundation is shared by iPhone, Android, and desktop.
+ * Media and semantic status colors remain untouched above these neutral layers.
+ */
+body.dancr-button-system,
+body > .app,
+body > .app main.stack {
+  background: var(--dancr-color-background) !important;
+}
+
 body > .app main.stack > .hero.reference-hero {
   position: relative;
   overflow: hidden;
@@ -480,7 +490,9 @@ body > .app main.stack > #results :is(
   .home-feed-card,
   .dancer-card,
   .venue-card,
-  .empty-state
+  .empty-state,
+  .home-discovery-feed-slide,
+  .home-tv-feed-slide
 ) {
   border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 20px !important;
@@ -488,6 +500,15 @@ body > .app main.stack > #results :is(
   box-shadow:
     var(--dancr-shadow-surface),
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+body > .app main.stack > #results .home-venue-discovery-art,
+body > .app main.stack > #results .home-discovery-feed-photo.is-photo-unavailable {
+  background:
+    radial-gradient(circle at 72% 18%, rgba(248, 250, 252, 0.055), transparent 34%),
+    linear-gradient(145deg, var(--dancr-color-surface-raised), var(--dancr-color-background) 72%) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 body > .app main.stack > #results :is(
@@ -606,7 +627,9 @@ body > .app main.stack > #results :is(
     .home-feed-card,
     .dancer-card,
     .venue-card,
-    .empty-state
+    .empty-state,
+    .home-discovery-feed-slide,
+    .home-tv-feed-slide
   ) {
     border-radius: 18px !important;
   }

@@ -27,16 +27,16 @@
   --dancr-color-text-on-bright: #050507;
 
   --dancr-color-background: #050507;
-  --dancr-color-surface: #111118;
-  --dancr-color-surface-raised: #171721;
-  --dancr-color-surface-soft: rgba(17, 17, 24, 0.84);
-  --dancr-color-surface-translucent: rgba(17, 17, 24, 0.94);
+  --dancr-color-surface: #0f0f12;
+  --dancr-color-surface-raised: #18181c;
+  --dancr-color-surface-soft: rgba(15, 15, 18, 0.88);
+  --dancr-color-surface-translucent: rgba(15, 15, 18, 0.96);
   --dancr-color-surface-subtle: rgba(248, 250, 252, 0.045);
-  --dancr-color-overlay: rgba(5, 5, 7, 0.82);
+  --dancr-color-overlay: rgba(5, 5, 7, 0.88);
 
-  --dancr-color-border: #334155;
-  --dancr-color-border-subtle: rgba(51, 65, 85, 0.58);
-  --dancr-color-border-strong: rgba(51, 65, 85, 0.9);
+  --dancr-color-border: #303038;
+  --dancr-color-border-subtle: rgba(248, 250, 252, 0.12);
+  --dancr-color-border-strong: rgba(248, 250, 252, 0.22);
 
   --dancr-color-info: #22d3ee;
   --dancr-color-info-soft: rgba(34, 211, 238, 0.1);
