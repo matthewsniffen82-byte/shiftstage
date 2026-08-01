@@ -32545,6 +32545,110 @@
           }
         }
 
+        /* Dancers is a compact three-column directory at every app width. */
+        #results.home-dancer-grid.home-dancer-three-column {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          align-items: start !important;
+          gap: 8px !important;
+        }
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading {
+          grid-column: 1 / -1;
+        }
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: none !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          justify-self: stretch !important;
+          aspect-ratio: 3 / 4 !important;
+          border-radius: 12px !important;
+          contain: layout paint style;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: block;
+          overflow: hidden;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          aspect-ratio: auto;
+          background-position: center top !important;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo::after {
+          background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
+          position: absolute;
+          z-index: 2;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          gap: 3px;
+          padding: 24px 7px 7px;
+          background: linear-gradient(180deg,transparent,rgba(5,5,8,.94) 48%);
+          text-shadow: 0 2px 7px rgba(0,0,0,.96);
+          pointer-events: none;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-name {
+          font-family: var(--font-ui);
+          font-size: clamp(11px, 3vw, 15px);
+          font-weight: 950;
+          letter-spacing: -.02em;
+          line-height: 1.05;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-name .verified-mark {
+          width: 13px;
+          height: 13px;
+          margin-left: 2px;
+          font-size: 7px;
+          vertical-align: 1px;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-venue {
+          gap: 3px;
+          font-size: clamp(8px, 2.15vw, 10px);
+          font-weight: 800;
+          line-height: 1.1;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-venue svg {
+          width: 10px;
+          height: 10px;
+          flex-basis: 10px;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-venue span {
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-status {
+          min-height: 18px;
+          max-width: 100%;
+          padding: 0 5px;
+          font-size: clamp(7px, 1.9vw, 9px);
+        }
+
+        @media (max-width: 420px) {
+          #results.home-dancer-grid.home-dancer-three-column {
+            gap: 6px !important;
+          }
+          #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
+            padding: 20px 5px 5px;
+          }
+          #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-status {
+            min-height: 17px;
+          }
+        }
+
         /* Keep the full profile closable and its final safety action reachable. */
         #profileBackdrop.modal-backdrop.show {
           z-index: 140 !important;
@@ -48255,7 +48359,7 @@
       `;
     }
 
-    function homeDancerGridCard(profile, city) {
+    function homeDancerGridCard(profile, city, compactDirectory = false) {
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
@@ -48280,7 +48384,7 @@
           ? "is-upcoming"
           : "is-open";
       return `
-        <article class="dancer-card home-dancer-grid-card ${groupClass}" data-profile="${profileValue}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
+        <article class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
@@ -48289,19 +48393,19 @@
               <span class="home-dancer-grid-status ${status.className}">${escapeHtml(scheduleLabel)}</span>
             </span>
           </a>
-          ${homeDancerGridActionsMarkup(profile, city)}
+          ${compactDirectory ? "" : homeDancerGridActionsMarkup(profile, city)}
         </article>
       `;
     }
 
-    function homeDancerGridSectionMarkup(label, className, profiles, city) {
+    function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false) {
       if (!profiles.length) return "";
       return `
         <div class="home-dancer-grid-heading ${className}" role="heading" aria-level="3">
           <strong>${label}</strong>
           <span>${profiles.length}</span>
         </div>
-        ${profiles.map((profile) => homeDancerGridCard(profile, city)).join("")}
+        ${profiles.map((profile) => homeDancerGridCard(profile, city, compactDirectory)).join("")}
       `;
     }
 
@@ -48314,12 +48418,14 @@
             { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
             { label: "No Shift Posted", className: "is-open", profiles: groups.noSchedule }
           ];
+      const compactDirectory = tab === "dancers";
       results.classList.add("card-grid", "home-dancer-grid");
+      results.classList.toggle("home-dancer-three-column", compactDirectory);
       results.setAttribute("aria-label", tab === "tonight"
         ? `Dancers working now in ${city}`
         : `All approved dancers in ${city}, ordered by shift status`);
       results.innerHTML = sections
-        .map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city))
+        .map((section) => homeDancerGridSectionMarkup(section.label, section.className, section.profiles, city, compactDirectory))
         .join("");
     }
 

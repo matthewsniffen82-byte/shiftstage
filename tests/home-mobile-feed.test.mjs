@@ -145,7 +145,7 @@ test("all five discovery destinations stay in one continuously scrollable homepa
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
 
-test("Now, Dancers, and Venues use natural one-column browsing on phones", () => {
+test("Now and Venues retain natural one-column browsing on phones", () => {
   assert.match(
     homeSource,
     /#results\.home-dancer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important[\s\S]*?@media \(min-width: 680px\) \{[\s\S]*?#results\.home-dancer-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 900px\) \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)[\s\S]*?@media \(min-width: 1100px\) \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/,
@@ -173,6 +173,25 @@ test("Now, Dancers, and Venues use natural one-column browsing on phones", () =>
   assert.match(
     homeSource,
     /function renderHomeDancerGrid\(city, profiles, tab\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Shift Posted"[\s\S]*?results\.classList\.add\("card-grid", "home-dancer-grid"\)/,
+  );
+});
+
+test("Dancers uses a three-column scrolling profile directory at every app width", () => {
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 8px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 3 \/ 4 !important;/,
+  );
+  assert.match(
+    homeSource,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?\$\{compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)\}/,
+  );
+  assert.match(
+    homeSource,
+    /const compactDirectory = tab === "dancers";[\s\S]*?results\.classList\.toggle\("home-dancer-three-column", compactDirectory\)[\s\S]*?homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, compactDirectory\)/,
   );
 });
 
@@ -354,10 +373,10 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
 });
 
-test("Now and Dancers grid cards place all profile context and production actions on the photo", () => {
+test("Now grid cards keep production actions while Dancers directory cards link to profiles", () => {
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="dancer-card home-dancer-grid-card \$\{groupClass\}"[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?homeDancerGridActionsMarkup\(profile, city\)/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?publicProfilePhotoUrl\(profile\)[\s\S]*?class="home-dancer-grid-link" href="\$\{profileHref\}"[\s\S]*?compactDirectory \? "" : homeDancerGridActionsMarkup\(profile, city\)/,
   );
   assert.match(
     homeSource,
@@ -519,7 +538,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   );
   assert.match(
     homeSource,
-    /function homeDancerGridCard\(profile, city\)[\s\S]*?const scheduleLabel = homeDancerGridScheduleLabel\(profile, city\);[\s\S]*?home-dancer-grid-status \$\{status\.className\}">\$\{escapeHtml\(scheduleLabel\)\}/,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?const scheduleLabel = homeDancerGridScheduleLabel\(profile, city\);[\s\S]*?home-dancer-grid-status \$\{status\.className\}">\$\{escapeHtml\(scheduleLabel\)\}/,
   );
   assert.match(
     homeSource,
