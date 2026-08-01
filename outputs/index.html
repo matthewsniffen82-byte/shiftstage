@@ -31664,6 +31664,61 @@
             backdrop-filter: blur(12px) saturate(1.2);
             -webkit-backdrop-filter: blur(12px) saturate(1.2);
           }
+
+          /* Shared mobile card typography hierarchy. */
+          .home-dancer-grid-name,
+          .home-tv-feed-dancer,
+          .home-venue-discovery-name {
+            font-family: var(--font-display);
+            font-size: 23px;
+            font-weight: 950;
+            letter-spacing: 0;
+            line-height: 1.05;
+          }
+          .home-dancer-grid-venue,
+          .home-tv-feed-meta,
+          .home-tv-feed-venue,
+          .home-venue-discovery-location {
+            font-family: var(--font-ui);
+            font-size: 14px;
+            font-weight: 850;
+            letter-spacing: .01em;
+            line-height: 1.25;
+          }
+          .home-dancer-grid-status,
+          .home-tv-feed-schedule,
+          .home-discovery-feed-status,
+          .home-venue-discovery-hours,
+          .home-venue-discovery-next {
+            font-family: var(--font-ui);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0;
+            line-height: 1;
+          }
+          .home-venue-discovery-kicker {
+            font-family: var(--font-ui);
+            font-size: 10px;
+            font-weight: 950;
+            letter-spacing: .14em;
+            line-height: 1;
+            text-transform: uppercase;
+          }
+          .dancr-button-system .home-dancer-grid-action-rail .feed-card-action,
+          .dancr-button-system .home-dancer-grid-action-rail .home-dancer-grid-profile-button,
+          .home-dancer-grid-context-actions .feed-card-action,
+          .home-venue-discovery-context-actions .feed-card-action,
+          .home-venue-discovery-context-actions .home-discovery-feed-directions,
+          .home-tv-feed-profile-hint,
+          .home-tv-feed-sound,
+          .home-tv-feed-fullscreen {
+            font-family: var(--font-ui);
+            font-size: 9px;
+            font-weight: 950;
+            letter-spacing: 0;
+            line-height: 1;
+          }
+          /* End shared mobile card typography hierarchy. */
         }
         @media (min-width: 680px) {
           #results.home-dancer-grid {
