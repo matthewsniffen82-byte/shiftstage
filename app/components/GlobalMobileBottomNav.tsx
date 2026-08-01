@@ -394,7 +394,7 @@ export function GlobalMobileBottomNav() {
             gap: 0;
             padding: 3px 4px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(124, 58, 237, 0.34);
             border-radius: 23px;
             background:
               linear-gradient(
@@ -405,11 +405,11 @@ export function GlobalMobileBottomNav() {
               ),
               rgba(9, 9, 12, 0.82);
             box-shadow:
-              0 16px 36px rgba(0, 0, 0, 0.48),
-              0 0 0 1px rgba(255, 255, 255, 0.04),
-              inset 0 1px 0 rgba(255, 255, 255, 0.09);
-            backdrop-filter: blur(24px) saturate(1.15);
-            -webkit-backdrop-filter: blur(24px) saturate(1.15);
+              0 18px 46px rgba(0, 0, 0, 0.46),
+              0 0 22px rgba(109, 40, 217, 0.16),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.026);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
             isolation: isolate;
             transform: translateX(-50%);
           }
@@ -466,6 +466,10 @@ export function GlobalMobileBottomNav() {
             text-decoration: none;
             text-shadow: none;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
             transition:
               color 180ms ease,
               text-shadow 180ms ease;

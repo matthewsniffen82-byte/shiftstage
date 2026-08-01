@@ -38,14 +38,26 @@ test("every Next page receives the shared five-destination mobile navigation", (
   assert.doesNotMatch(tvSource, /className="tv-mobile-nav"/);
 });
 
-test("homepage and Next pages share the same floating glass mobile dock", () => {
+test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.14\)[\s\S]*?rgba\(9, 9, 12, 0\.82\)[\s\S]*?blur\(24px\) saturate\(1\.15\)/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(124, 58, 237, 0\.34\)[\s\S]*?rgba\(9, 9, 12, 0\.82\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?0 0 22px rgba\(109, 40, 217, 0\.16\)[\s\S]*?backdrop-filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(255,255,255,\.14\)[\s\S]*?rgba\(9,9,12,\.82\)[\s\S]*?blur\(24px\) saturate\(1\.15\)/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(124,58,237,\.34\) !important[\s\S]*?rgba\(9,9,12,\.82\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?0 0 22px rgba\(109,40,217,\.16\)[\s\S]*?backdrop-filter: none !important;/,
+  );
+  assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav a \{[\s\S]*?touch-action: manipulation;[\s\S]*?-webkit-tap-highlight-color: transparent;[\s\S]*?-webkit-touch-callout: none;[\s\S]*?user-select: none;/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab,[\s\S]*?#discoveryTabs \.home-bottom-tv \{[\s\S]*?touch-action: manipulation;[\s\S]*?-webkit-backdrop-filter: none !important;[\s\S]*?-webkit-appearance: none !important;[\s\S]*?-webkit-tap-highlight-color: transparent;[\s\S]*?-webkit-touch-callout: none;[\s\S]*?user-select: none;/,
+  );
+  assert.match(
+    homeSource,
+    /The Android floating dock is the[\s\S]*?navigation source of truth for every mobile browser, including Safari/,
   );
   assert.match(
     navigationSource,
