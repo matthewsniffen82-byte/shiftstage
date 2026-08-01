@@ -14,6 +14,7 @@ const [
   publicVenuePage,
   venueDirectory,
   homeSource,
+  aestheticSource,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202607300001_venue_cover_images.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
@@ -26,6 +27,7 @@ const [
   readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
 test("venue cover storage is owner-scoped and public only after publication", () => {
@@ -95,7 +97,7 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
   assert.doesNotMatch(visualHelper, /publicProfilePhotoUrl|featuredProfile|has-lineup-photo/);
   assert.match(
     visualHelper,
-    /const sourceClass = venueCoverUrl \? " has-venue-cover" : " is-venue-artwork"/,
+    /const hasVenueCover = Boolean\(attrs\.style\)[\s\S]*?const sourceClass = hasVenueCover \? " has-venue-cover" : " is-venue-artwork"/,
   );
   assert.match(
     homeSource,
@@ -117,5 +119,18 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
   assert.doesNotMatch(
     homeSource.match(/function homeVenueDiscoveryFeedSlide[\s\S]*?\n    \}/)?.[0] || "",
     /home-discovery-feed-profile-button/,
+  );
+});
+
+test("venue detail heroes use approved cover media and retain the generated sign fallback", () => {
+  const venueDetail =
+    homeSource.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
+
+  assert.match(venueDetail, /const visual = venueVisualAttrs\(venue\)/);
+  assert.match(venueDetail, /venue-main-photo\$\{visual\.attrs\.className\}[\s\S]*?\$\{visual\.attrs\.style\}[\s\S]*?data-venue-visual-source="\$\{visual\.source\}"/);
+  assert.match(venueDetail, /visual\.source === "venue_cover" \? "" : `[\s\S]*?venue-sign-name/);
+  assert.match(
+    aestheticSource,
+    /\.venue-main-photo\.has-custom-photo\.has-venue-cover \{[\s\S]*?var\(--custom-photo\) !important;[\s\S]*?background-size: cover !important;/,
   );
 });

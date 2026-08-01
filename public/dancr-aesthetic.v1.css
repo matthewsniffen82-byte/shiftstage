@@ -819,6 +819,24 @@ body.dancr-button-system #results.venue-profile-overlay .venue-art::after {
   box-shadow: none !important;
 }
 
+/* Approved venue media replaces the generated sign on the detail hero. The
+ * gradient preserves text contrast while the artwork remains the safe fallback. */
+body.dancr-button-system #results.venue-profile-overlay
+  .venue-main-photo.has-custom-photo.has-venue-cover {
+  background-color: var(--dancr-color-background) !important;
+  background-image:
+    linear-gradient(180deg, rgba(5, 5, 7, .04) 0%, rgba(5, 5, 7, .08) 52%, rgba(5, 5, 7, .56) 100%),
+    var(--custom-photo) !important;
+  background-position: center 38% !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay
+  .venue-main-photo.has-custom-photo.has-venue-cover .venue-art {
+  background-color: transparent !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay :is(
   .venue-hero-body,
   .venue-shift-list,

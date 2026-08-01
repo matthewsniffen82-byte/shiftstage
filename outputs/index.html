@@ -1138,6 +1138,13 @@
       gap: 6px;
     }
 
+    .venue-address-distance {
+      color: rgba(215, 210, 225, .72);
+      font-size: .78rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
     .venue-address-directions {
       min-height: 42px;
       display: inline-flex;
@@ -24437,7 +24444,7 @@
     }
 
     .venue-detail .venue-club-deal-unavailable {
-      padding: 10px;
+      padding: 9px 10px;
       border-color: rgba(139, 92, 246, .3);
       background:
         radial-gradient(circle at 12% 50%, rgba(139, 92, 246, .13), transparent 42%),
@@ -24450,8 +24457,34 @@
       grid-template-columns: 58px minmax(0, 1fr);
       gap: 11px;
       padding: 7px 10px 7px 7px;
-      border-color: rgba(196, 181, 253, .2);
-      background: rgba(24, 20, 34, .62);
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .venue-detail .venue-hero-body {
+      gap: 9px;
+      padding: 12px 14px 14px;
+    }
+
+    .venue-detail .venue-quick-stats,
+    .venue-detail .venue-info {
+      gap: 7px;
+    }
+
+    .venue-detail .follow-venue-btn {
+      min-height: 52px !important;
+      color: rgba(245, 242, 250, .9) !important;
+      border-color: rgba(139, 92, 246, .3) !important;
+      background: rgba(15, 13, 22, .9) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 8px 20px rgba(0, 0, 0, .28) !important;
+    }
+
+    .venue-detail .follow-venue-btn.is-following {
+      border-color: rgba(34, 199, 255, .34) !important;
+      background: linear-gradient(135deg, rgba(15, 18, 27, .94), rgba(20, 25, 39, .9)) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 16px rgba(34, 199, 255, .1) !important;
     }
 
     .venue-club-deal-unavailable .venue-detail-club-deal-symbol {
@@ -42974,14 +43007,15 @@
     function venueVisualAttrs(venue) {
       const venueCoverUrl = String(venue.coverImageUrl || "").trim();
       const attrs = customPhotoAttrs(venueCoverUrl, venue.coverImageSrcSet);
-      const sourceClass = venueCoverUrl ? " has-venue-cover" : " is-venue-artwork";
+      const hasVenueCover = Boolean(attrs.style);
+      const sourceClass = hasVenueCover ? " has-venue-cover" : " is-venue-artwork";
       return {
         attrs: {
           ...attrs,
           className: `${attrs.className}${sourceClass}`
         },
-        visualUrl: venueCoverUrl,
-        source: venueCoverUrl ? "venue_cover" : "artwork"
+        visualUrl: hasVenueCover ? venueCoverUrl : "",
+        source: hasVenueCover ? "venue_cover" : "artwork"
       };
     }
 
@@ -43086,6 +43120,7 @@
     function venueDetailPage(venue) {
       const city = citySelect.value;
       const details = venueDetails(venue, city);
+      const visual = venueVisualAttrs(venue);
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
@@ -43108,12 +43143,14 @@
             </button>
           </div>
           <article class="venue-hero">
-            <div class="venue-main-photo">
+            <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
               <div class="venue-art">
-                <div class="venue-sign">
-                  <div class="venue-sign-name">${details.name}</div>
-                  <div class="venue-sign-meta">${details.city} nightlife</div>
-                </div>
+                ${visual.source === "venue_cover" ? "" : `
+                  <div class="venue-sign">
+                    <div class="venue-sign-name">${details.name}</div>
+                    <div class="venue-sign-meta">${details.city} nightlife</div>
+                  </div>
+                `}
               </div>
             </div>
             <div class="venue-hero-body">
@@ -43132,15 +43169,18 @@
               <div class="venue-info">
                 ${details.address ? `
                   <div class="info-tile venue-address-tile">
-                    <span class="venue-address-copy"><strong>Address</strong><span class="meta">${escapeHtml(details.address)}</span></span>
+                    <span class="venue-address-copy">
+                      <strong>Address</strong>
+                      <span class="meta">${escapeHtml(details.address)}</span>
+                      <span class="venue-address-distance">${escapeHtml(details.distanceLabel)} away</span>
+                    </span>
                     <a class="venue-address-directions" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${escapeHtml(venue.name)}" aria-label="Get directions to ${escapeHtml(details.name)}">${actionButtonLabel("pin", "Directions")}</a>
                   </div>
-                ` : ""}
+                ` : `<div class="info-tile venue-address-tile venue-address-tile-no-address"><span class="venue-address-copy"><strong>Distance</strong><span class="meta">${escapeHtml(details.distanceLabel)}</span></span></div>`}
                 ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
                 ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
-                <div class="info-tile"><strong>Distance</strong><div class="meta">${details.distanceLabel}</div></div>
               </div>
-              <button class="action-btn follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
+              <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
             </div>

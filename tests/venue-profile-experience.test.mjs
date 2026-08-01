@@ -31,10 +31,11 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /recordVenuePageEvent\(\{ venueId: venue\.id, eventType: "page_view", source: "venue_page" \}\)/);
   assert.match(venueDetail, /venueOfferMarkup\(venue\)/);
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
-  assert.match(venueDetail, /data-venue-follow="\$\{venue\.name\}"/);
+  assert.match(venueDetail, /class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venue\.name\}"/);
   assert.match(venueDetail, /https:\/\/maps\.google\.com\/\?q=/);
-  assert.match(venueDetail, /class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?class="venue-address-directions"/);
+  assert.match(venueDetail, /class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?venue-address-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="venue-address-directions"/);
   assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 1);
+  assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);
   assert.match(venueDetail, /Working now at \$\{details\.name\}/);
@@ -71,8 +72,14 @@ test("venue profiles keep every Club Deal QR state prominent without an oversize
     venueOffer,
     /venue-club-deal-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?<strong>Club Deal QR<\/strong>/,
   );
-  assert.match(liveApp, /\.venue-detail \.venue-club-deal-unavailable \{[\s\S]*?padding: 10px;/);
-  assert.match(liveApp, /\.venue-club-deal-unavailable \.venue-detail-club-deal-qr-state \{[\s\S]*?grid-template-columns: 58px minmax\(0, 1fr\);/);
+  assert.match(liveApp, /\.venue-detail \.venue-club-deal-unavailable \{[\s\S]*?padding: 9px 10px;/);
+  assert.match(liveApp, /\.venue-club-deal-unavailable \.venue-detail-club-deal-qr-state \{[\s\S]*?grid-template-columns: 58px minmax\(0, 1fr\);[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
+});
+
+test("venue profile hierarchy stays compact and keeps Club Deals stronger than following", () => {
+  assert.match(liveApp, /\.venue-detail \.venue-hero-body \{[\s\S]*?gap: 9px;[\s\S]*?padding: 12px 14px 14px;/);
+  assert.match(liveApp, /\.venue-detail \.venue-quick-stats,[\s\S]*?\.venue-detail \.venue-info \{[\s\S]*?gap: 7px;/);
+  assert.match(liveApp, /\.venue-detail \.follow-venue-btn \{[\s\S]*?min-height: 52px !important;[\s\S]*?background: rgba\(15, 13, 22, \.9\) !important;/);
 });
 
 test("venue profiles stay full-screen with X dismissal and the shared floating navigation", () => {

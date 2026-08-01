@@ -168,7 +168,7 @@ test("venue detail and full dancer profiles use the same near-black foundation a
     /#profileBackdrop \.profile-modal :is\(\.info-tile, \.social-tile, \.modal-actions\),[\s\S]*?#results\.venue-profile-overlay \.venue-detail :is\(\.info-tile, \.venue-section, \.venue-offer\) \{[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;/,
   );
   const profileFoundation = aesthetic.match(
-    /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?(?=#profileBackdrop \.profile-modal :is)/,
+    /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?(?=\/\* Approved venue media)/,
   )?.[0] || "";
   assert.doesNotMatch(profileFoundation, /radial-gradient|linear-gradient/);
   assert.match(
