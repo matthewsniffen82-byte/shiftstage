@@ -28254,22 +28254,30 @@
         padding: calc(4px + env(safe-area-inset-top)) 12px 4px !important;
         border: 0 !important;
         border-radius: 0 !important;
-        background:
-          linear-gradient(180deg, rgba(8, 8, 12, 0.94), rgba(4, 4, 7, 0.88)) !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24) !important;
-        -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
-        backdrop-filter: blur(18px) saturate(1.08) !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
       }
 
       header .topbar {
         width: 100% !important;
-        min-height: 48px !important;
-        padding: 0 !important;
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        padding: 4px 6px !important;
         gap: 10px !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
+        overflow: visible !important;
+        border: 1px solid rgba(124, 58, 237, 0.16) !important;
+        border-radius: 16px !important;
+        background:
+          linear-gradient(180deg, rgba(8, 8, 12, 0.96), rgba(4, 4, 7, 0.94)) !important;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.035),
+          0 8px 24px rgba(0, 0, 0, 0.24) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+        backdrop-filter: blur(18px) saturate(1.08) !important;
+        box-sizing: border-box !important;
       }
 
       header #brandHome.brand,
@@ -28343,8 +28351,7 @@
           linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
           rgba(12, 12, 17, 0.84) !important;
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.055),
-          0 8px 22px rgba(0, 0, 0, 0.3) !important;
+          inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
         -webkit-backdrop-filter: blur(14px) saturate(1.06) !important;
         backdrop-filter: blur(14px) saturate(1.06) !important;
         clip-path: inset(0 round 999px) !important;
@@ -28373,9 +28380,8 @@
           rgba(12, 9, 22, 0.9) !important;
         box-shadow:
           inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          0 0 20px rgba(109, 40, 217, 0.34),
-          0 8px 22px rgba(0, 0, 0, 0.3) !important;
-        transform: translateY(-1px) !important;
+          inset 0 0 15px rgba(109, 40, 217, 0.22) !important;
+        transform: none !important;
       }
 
       header .customer-quick-count {
@@ -30644,27 +30650,35 @@
             padding: calc(4px + env(safe-area-inset-top)) 12px 4px !important;
             border: 0 !important;
             border-radius: 0 !important;
-            background:
-              linear-gradient(180deg, rgba(8,8,12,.94), rgba(4,4,7,.88)) !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,.24) !important;
-            -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
-            backdrop-filter: blur(18px) saturate(1.08) !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
           }
           header .utility-menu-panel {
             max-height: calc(100dvh - 150px) !important;
           }
           header .topbar {
             width: 100% !important;
-            min-height: 48px !important;
+            height: 58px !important;
+            min-height: 58px !important;
+            max-height: 58px !important;
             display: flex !important;
             grid-template-columns: none !important;
             flex-wrap: nowrap !important;
             gap: 10px !important;
-            padding: 0 !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
+            padding: 4px 6px !important;
+            overflow: visible !important;
+            border: 1px solid rgba(124,58,237,.16) !important;
+            border-radius: 16px !important;
+            background:
+              linear-gradient(180deg, rgba(8,8,12,.96), rgba(4,4,7,.94)) !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,.035),
+              0 8px 24px rgba(0,0,0,.24) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+            backdrop-filter: blur(18px) saturate(1.08) !important;
+            box-sizing: border-box !important;
           }
           header #brandHome.brand {
             display: flex !important;
