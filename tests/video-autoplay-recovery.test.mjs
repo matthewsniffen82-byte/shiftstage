@@ -42,13 +42,28 @@ test("profile and venue video strips autoplay only their visible muted preview",
   );
 });
 
-test("the production home shell loads autoplay recovery for dynamically rendered videos", () => {
-  assert.match(rootRoute, /script src="\/video-autoplay-recovery\.js\?v=2" defer/);
+test("the production home shell loads Safari-safe autoplay recovery for dynamically rendered videos", () => {
+  assert.match(rootRoute, /script src="\/video-autoplay-recovery\.js\?v=3" defer/);
   assert.match(homeRecovery, /const HOME_FEED_VIDEO_SELECTOR = "\.home-tv-feed-video"/);
   assert.match(homeRecovery, /slide\.dataset\.userPaused === "true"/);
   assert.match(homeRecovery, /video\.defaultMuted = true/);
+  assert.match(homeRecovery, /video\.setAttribute\("muted", ""\)/);
+  assert.match(homeRecovery, /video\.setAttribute\("playsinline", ""\)/);
+  assert.match(homeRecovery, /video\.setAttribute\("webkit-playsinline", ""\)/);
+  assert.match(homeRecovery, /video\.addEventListener\("loadedmetadata"/);
   assert.match(homeRecovery, /video\.addEventListener\("canplay"/);
   assert.match(homeRecovery, /video\.addEventListener\("loadeddata"/);
   assert.match(homeRecovery, /new MutationObserver\(queueHomeFeedVideoScan\)/);
   assert.match(homeRecovery, /window\.addEventListener\("pageshow", queueHomeFeedVideoScan\)/);
+});
+
+test("the immersive TV feed reapplies iPhone inline autoplay requirements before playback", () => {
+  assert.match(
+    feedClient,
+    /element\.autoplay = true[\s\S]*?element\.setAttribute\("autoplay", ""\)[\s\S]*?element\.playsInline = true[\s\S]*?element\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?element\.defaultMuted = mutedRef\.current/,
+  );
+  assert.match(
+    feedClient,
+    /onLoadedMetadata=\{\(event\) => \{[\s\S]*?attemptVideoPlayback\(video\.id, event\.currentTarget\)/,
+  );
 });

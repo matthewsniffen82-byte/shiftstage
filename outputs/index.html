@@ -46862,7 +46862,14 @@
         slide.classList.toggle("is-active", isActive);
         if (isActive) {
           slide.setAttribute("aria-current", "true");
+          video.autoplay = true;
+          video.setAttribute("autoplay", "");
+          video.playsInline = true;
+          video.setAttribute("playsinline", "");
+          video.setAttribute("webkit-playsinline", "");
           video.muted = homeTvFeedMuted;
+          video.defaultMuted = homeTvFeedMuted;
+          if (homeTvFeedMuted) video.setAttribute("muted", "");
           if (!homeTvFeedImpressions.has(videoId)) {
             homeTvFeedImpressions.add(videoId);
             trackHomeTvFeedEvent(videoId, "impression");
@@ -46881,6 +46888,8 @@
         } else {
           slide.removeAttribute("aria-current");
           clearHomeTvFeedEngagedTimer(slideVideoId);
+          video.autoplay = false;
+          video.removeAttribute("autoplay");
           video.pause();
           slide.classList.add("is-paused");
         }
@@ -46900,6 +46909,8 @@
       }
       clearHomeTvFeedEngagedTimer(videoId);
       slide.dataset.userPaused = "true";
+      video.autoplay = false;
+      video.removeAttribute("autoplay");
       video.pause();
       slide.classList.add("is-paused");
       showHomeTvFeedFeedback(slide, "Paused");
@@ -47019,13 +47030,17 @@
       const videoId = String(item.id);
       const video = document.createElement("video");
       video.className = "home-tv-feed-video";
-      video.src = item.videoUrl;
       const posterUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
       if (posterUrl) video.poster = posterUrl;
       video.loop = true;
+      video.autoplay = index === 0;
       video.muted = homeTvFeedMuted;
-      video.defaultMuted = true;
+      video.defaultMuted = homeTvFeedMuted;
       video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      if (homeTvFeedMuted) video.setAttribute("muted", "");
+      if (index === 0) video.setAttribute("autoplay", "");
       video.preload = index === 0 ? "auto" : "metadata";
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
@@ -47110,6 +47125,7 @@
           trackHomeTvFeedEvent(videoId, "completed");
         }
       });
+      video.src = item.videoUrl;
       return video;
     }
 
@@ -47320,6 +47336,9 @@
         homeTvFeedMuted = !homeTvFeedMuted;
         results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
           feedVideo.muted = homeTvFeedMuted;
+          feedVideo.defaultMuted = homeTvFeedMuted;
+          if (homeTvFeedMuted) feedVideo.setAttribute("muted", "");
+          else feedVideo.removeAttribute("muted");
         });
         syncHomeTvFeedSoundButtons();
         showHomeTvFeedFeedback(slide, homeTvFeedMuted ? "Sound off" : "Sound on");

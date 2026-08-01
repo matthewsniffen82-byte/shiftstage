@@ -260,6 +260,9 @@ test("administrator and venue controls persist confirmed decisions", () => {
 });
 
 test("approved videos appear on full dancer and venue profiles", () => {
+  const profileTvLoader = liveApp.match(
+    /async function loadProfileMyDancrTv\(profile\) \{[\s\S]*?(?=\n    function formatProfileTvShift)/,
+  )?.[0] || "";
   assert.match(dancerPage, /getPublicMyDancrTvFeed/);
   assert.match(dancerPage, /dancerId: profile\.id/);
   assert.match(dancerPage, /videos=\{tvVideos\.map\(/);
@@ -285,7 +288,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(videoStrip, /overflow-x: auto;[\s\S]*?scroll-snap-type: x proximity/);
   assert.doesNotMatch(videoStrip, /requestFullscreen\(\)|:fullscreen|<video[\s\S]*?\scontrols(?:\s|>)/);
   assert.match(videoStrip, /`\/tv\/\$\{encodeURIComponent\(video\.id\)\}`[\s\S]*?navigator\.share[\s\S]*?navigator\.clipboard\.writeText/);
-  assert.doesNotMatch(liveApp, /loadProfileMyDancrTv[\s\S]*?video\.autoplay = true/);
+  assert.doesNotMatch(profileTvLoader, /video\.autoplay = true/);
   assert.match(liveApp, /const videos = payload\.videos\.slice\(0, 4\)/);
   assert.match(liveApp, /modalGallery\.profileTvVideos = videos/);
   assert.match(liveApp, /thumb\.className = "thumb profile-media-thumb is-video"/);

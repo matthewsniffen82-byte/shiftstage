@@ -187,3 +187,14 @@ test("intentional pauses persist and every TV card exposes immersive fullscreen"
     /\.home-tv-feed-slide:fullscreen,[\s\S]*?height: 100dvh;[\s\S]*?border-radius: 0;/,
   );
 });
+
+test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
+  assert.match(
+    homeSource,
+    /const video = document\.createElement\("video"\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)[\s\S]*?video\.src = item\.videoUrl/,
+  );
+  assert.match(
+    homeSource,
+    /function activateHomeTvFeedVideo\(videoId\)[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.play\(\)/,
+  );
+});

@@ -105,7 +105,13 @@ export default function TvFeedClient({
     }
 
     element.autoplay = true;
+    element.setAttribute("autoplay", "");
+    element.playsInline = true;
+    element.setAttribute("playsinline", "");
+    element.setAttribute("webkit-playsinline", "");
     element.muted = mutedRef.current;
+    element.defaultMuted = mutedRef.current;
+    if (mutedRef.current) element.setAttribute("muted", "");
     try {
       await element.play();
       setAutoplayBlockedVideoId((current) => current === videoId ? "" : current);
@@ -280,6 +286,7 @@ export default function TvFeedClient({
         }, 3000);
       } else {
         element.autoplay = false;
+        element.removeAttribute("autoplay");
         element.pause();
         window.clearTimeout(engagedTimers.current[videoId]);
       }
@@ -532,6 +539,11 @@ export default function TvFeedClient({
                   preload={video.id === activeVideoId ? "auto" : "metadata"}
                   src={video.videoUrl}
                   onCanPlay={(event) => {
+                    if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {
+                      void attemptVideoPlayback(video.id, event.currentTarget);
+                    }
+                  }}
+                  onLoadedMetadata={(event) => {
                     if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {
                       void attemptVideoPlayback(video.id, event.currentTarget);
                     }
