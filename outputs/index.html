@@ -34497,6 +34497,7 @@
     let pendingApprovedPhotoAutoSubmit = false;
     let approvedPhotoEditMode = false;
     let approvedSocialEditMode = false;
+    let approvedProfileSaveConfirmed = false;
     let activeApprovedToolDropdown = "";
     let approvedProfileVideoWorkspace = null;
     let approvedProfileVideoLoading = false;
@@ -41078,8 +41079,8 @@
               ${approvedProfileVideoManagerMarkup()}
               ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity(), socialMarkup: approvedEditableSocialMarkup })}
               <div class="modal-actions">
-                <button class="approved-visual-save action-btn secondary" type="button" data-dancer-control-action="save-profile">
-                  ${actionButtonLabel("save", "Save Profile")}
+                <button class="approved-visual-save action-btn secondary ${approvedProfileSaveConfirmed ? "is-saved" : ""}" type="button" data-dancer-control-action="save-profile">
+                  ${approvedProfileSaveConfirmed ? actionButtonLabel("check", "Saved Profile") : actionButtonLabel("save", "Save Profile")}
                 </button>
               </div>
             </div>
@@ -41113,6 +41114,8 @@
       const visualStatus = document.getElementById("approvedPhotoUploadStatus");
       const controlResult = document.getElementById("dancerControlResult");
       const saveButtons = document.querySelectorAll('[data-dancer-control-action="save-profile"]');
+      if (options.saving === true) approvedProfileSaveConfirmed = false;
+      if (options.saved === true) approvedProfileSaveConfirmed = true;
       if (profileResult) {
         profileResult.hidden = false;
         profileResult.textContent = message;
@@ -41120,25 +41123,30 @@
       if (visualStatus) visualStatus.textContent = message;
       if (controlResult) controlResult.textContent = message;
       saveButtons.forEach((button) => {
-        button.classList.toggle("is-saved", options.saved === true);
+        const wasConfirmed = button.classList.contains("is-saved");
+        if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = "Save Profile";
+        if (!button.dataset.saveProfileIdleHtml) {
+          button.dataset.saveProfileIdleHtml = wasConfirmed
+            ? actionButtonLabel("save", "Save Profile")
+            : button.innerHTML || button.textContent || "Save Profile";
+        }
+        button.classList.toggle("is-saved", approvedProfileSaveConfirmed && options.saving !== true);
         button.classList.toggle("is-saving", options.saving === true);
         button.setAttribute("aria-busy", options.saving ? "true" : "false");
-        if (!button.dataset.saveProfileIdleText) button.dataset.saveProfileIdleText = button.textContent || "Save Profile";
-        if (!button.dataset.saveProfileIdleHtml) button.dataset.saveProfileIdleHtml = button.innerHTML || button.textContent || "Save Profile";
         if (options.saving) button.innerHTML = actionButtonLabel("save", "Saving...");
-        else if (options.saved) button.innerHTML = actionButtonLabel("check", "Saved Profile");
+        else if (approvedProfileSaveConfirmed) button.innerHTML = actionButtonLabel("check", "Saved Profile");
         else button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save Profile";
       });
       if (options.toast !== false) showToast(message);
-      if (options.saved) {
-        window.clearTimeout(setApprovedProfileSaveFeedback.savedTimer);
-        setApprovedProfileSaveFeedback.savedTimer = window.setTimeout(() => {
-          document.querySelectorAll('[data-dancer-control-action="save-profile"].is-saved').forEach((button) => {
-            button.classList.remove("is-saved");
-            button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save Profile";
-          });
-        }, 2200);
-      }
+    }
+
+    function clearApprovedProfileSaveConfirmation() {
+      if (!approvedProfileSaveConfirmed) return;
+      approvedProfileSaveConfirmed = false;
+      document.querySelectorAll('[data-dancer-control-action="save-profile"]').forEach((button) => {
+        button.classList.remove("is-saved");
+        button.innerHTML = button.dataset.saveProfileIdleHtml || button.dataset.saveProfileIdleText || "Save Profile";
+      });
     }
 
     function closeApprovedVisualEditPopover() {
@@ -41424,6 +41432,7 @@
 
     function syncApprovedProfileSubmitState() {
       const state = approvedProfileChangeState();
+      if (state.hasAnyChange) clearApprovedProfileSaveConfirmation();
       const submitButtons = [];
       submitButtons.forEach((button) => {
         button.disabled = !state.needsApproval;
@@ -41655,8 +41664,7 @@
           ? "Profile saved. Changed social links were sent to admin."
           : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved.");
         if (result) result.textContent = successMessage;
-        setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: true });
-        window.requestAnimationFrame(() => setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: false }));
+        setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: false });
         releaseEditProfileMobileFocus(trigger);
         return { saved: true, needsApproval: submittedSocialPlatforms.length > 0 };
       } catch (error) {

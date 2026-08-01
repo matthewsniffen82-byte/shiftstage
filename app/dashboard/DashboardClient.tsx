@@ -1492,7 +1492,6 @@ function DancerSetupPanel({
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
   const saveInFlightRef = useRef(false);
-  const savedResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");
@@ -1511,12 +1510,6 @@ function DancerSetupPanel({
       setSaveStatus("idle");
     }
   }, [deletedPhotoIds, deletedPhotoStoragePaths, saveStatus]);
-
-  useEffect(() => {
-    return () => {
-      if (savedResetTimerRef.current !== null) window.clearTimeout(savedResetTimerRef.current);
-    };
-  }, []);
 
   async function hardResetProfile() {
     if (isResetting || saveInFlightRef.current) return;
@@ -1636,11 +1629,6 @@ function DancerSetupPanel({
       setStatus(hasPendingPhotos
         ? "Saved Profile. Photos awaiting review will appear on your live profile after approval."
         : "Saved Profile");
-      if (savedResetTimerRef.current !== null) window.clearTimeout(savedResetTimerRef.current);
-      savedResetTimerRef.current = window.setTimeout(() => {
-        setSaveStatus((current) => current === "saved" ? "idle" : current);
-        savedResetTimerRef.current = null;
-      }, 2000);
     } catch (error) {
       console.error("EDIT_PROFILE_SAVE_FAILED", error);
       setSaveStatus("error");
@@ -1656,15 +1644,24 @@ function DancerSetupPanel({
       <form onSubmit={saveProfile}>
         <label>
           Stage name
-          <input value={stageName} onChange={(event) => setStageName(event.target.value)} required />
+          <input value={stageName} onChange={(event) => {
+            setStageName(event.target.value);
+            setSaveStatus("idle");
+          }} required />
         </label>
         <label>
           City
-          <input value={city} onChange={(event) => setCity(event.target.value)} required />
+          <input value={city} onChange={(event) => {
+            setCity(event.target.value);
+            setSaveStatus("idle");
+          }} required />
         </label>
         <label>
           Bio
-          <textarea value={bio} onChange={(event) => setBio(event.target.value)} rows={4} />
+          <textarea value={bio} onChange={(event) => {
+            setBio(event.target.value);
+            setSaveStatus("idle");
+          }} rows={4} />
         </label>
         <button type="submit" disabled={saveStatus === "saving"}>
           {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved Profile" : "Save Profile"}

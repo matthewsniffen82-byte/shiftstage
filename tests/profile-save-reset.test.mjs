@@ -216,6 +216,21 @@ test("save verifies affected rows, deletion, stages, and public state", () => {
   assert.match(dashboardSource, /Saving\.\.\.[\s\S]*Saved Profile[\s\S]*Save Profile/);
 });
 
+test("confirmed profile saves stay visible on the save button until another edit", () => {
+  assert.match(mobileAppSource, /let approvedProfileSaveConfirmed = false/);
+  assert.match(mobileAppSource, /if \(options\.saved === true\) approvedProfileSaveConfirmed = true/);
+  assert.match(mobileAppSource, /approvedProfileSaveConfirmed \? actionButtonLabel\("check", "Saved Profile"\)/);
+  assert.match(mobileAppSource, /if \(state\.hasAnyChange\) clearApprovedProfileSaveConfirmation\(\)/);
+  assert.match(mobileAppSource, /setApprovedProfileSaveFeedback\(successMessage, \{ saved: true, toast: false \}\)/);
+  assert.doesNotMatch(mobileAppSource, /setApprovedProfileSaveFeedback\.savedTimer/);
+
+  assert.match(dashboardSource, /setSaveStatus\("saved"\)/);
+  assert.match(dashboardSource, /setStageName\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
+  assert.match(dashboardSource, /setCity\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
+  assert.match(dashboardSource, /setBio\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
+  assert.doesNotMatch(dashboardSource, /savedResetTimerRef/);
+});
+
 test("existing dancer signup cannot reset approval or visibility", () => {
   const existingProfileBranch = authRouteSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
   assert.match(existingProfileBranch, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP/);
