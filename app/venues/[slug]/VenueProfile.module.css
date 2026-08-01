@@ -507,6 +507,25 @@
   line-height: 1;
 }
 
+.sectionHeading h2 {
+  position: relative;
+  padding-left: 12px;
+}
+
+.sectionHeading h2::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--dancr-gradient-hero-thread);
+  box-shadow: var(--dancr-shadow-hero-thread);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
 .sectionCount,
 .viewAllLink {
   min-height: 34px;

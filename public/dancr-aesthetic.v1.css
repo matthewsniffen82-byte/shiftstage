@@ -13,15 +13,14 @@
 }
 
 /*
- * The trust mark comes directly from the hero: white against the electric-blue
- * pole light, with a restrained violet halo. Sizes remain owned by each
- * surface so dense cards, TV, and full profiles retain their existing layout.
+ * Verification is a trust signal, not another decorative outline: every
+ * surface gets the same solid cyan disc, white check, and very small halo.
  */
 
 /*
  * Repeating each class gives this shared rule enough specificity to supersede
- * the legacy device-targeted badge colors in the live shell. It changes no
- * geometry and keeps the same treatment on iOS, Android, and desktop.
+ * the legacy device-targeted badge colors in the live shell and keeps the same
+ * geometry and treatment on iOS, Android, and desktop.
  */
 :root :is(
   .verified-mark.verified-mark.verified-mark,
@@ -31,15 +30,100 @@
   .profile-verified.profile-verified.profile-verified,
   .tv-verified-mark.tv-verified-mark.tv-verified-mark
 ) {
-  border: 1px solid var(--dancr-color-info-strong) !important;
+  box-sizing: border-box !important;
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  display: inline-grid !important;
+  flex: 0 0 20px !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 50% !important;
   color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-info) 24%,
-    var(--dancr-color-surface)
-  ) !important;
-  box-shadow: inset 0 0 0 1px var(--dancr-color-info-soft) !important;
+  background: var(--dancr-color-info-solid) !important;
+  box-shadow: var(--dancr-shadow-verified) !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
   text-shadow: none !important;
+}
+
+/*
+ * The hero's beam reappears as a two-pixel identity thread, never as a card
+ * perimeter. It is intentionally limited to names and major section labels.
+ */
+:is(
+  .home-dancer-grid-name,
+  .home-discovery-feed-name,
+  .home-tv-feed-dancer-name-row,
+  .dancer-card .profile-body h3,
+  .venue.venue-card .profile-body h3,
+  .tv-shell .tv-card-stage-row,
+  .public-profile-shell .profile-titlebar-identity > div,
+  #profileBackdrop .modal-identity
+) {
+  position: relative !important;
+  padding-left: 10px !important;
+}
+
+:is(
+  .home-dancer-grid-name,
+  .home-discovery-feed-name,
+  .home-tv-feed-dancer-name-row,
+  .dancer-card .profile-body h3,
+  .venue.venue-card .profile-body h3,
+  .tv-shell .tv-card-stage-row,
+  .public-profile-shell .profile-titlebar-identity > div,
+  #profileBackdrop .modal-identity
+)::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--dancr-gradient-hero-thread);
+  box-shadow: var(--dancr-shadow-hero-thread);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+:is(
+  #profileBackdrop .profile-schedule-card > strong,
+  #profileBackdrop .social-tile-head > strong,
+  .public-profile-shell .profile-working-head h2,
+  .public-profile-shell .profile-media-heading h2,
+  .public-profile-shell .profile-section-heading h2,
+  .public-profile-shell .social-list-heading h2,
+  #results.venue-profile-overlay .venue-detail .section-title
+) {
+  position: relative !important;
+  padding-left: 10px !important;
+  border-left: 0 !important;
+}
+
+:is(
+  #profileBackdrop .profile-schedule-card > strong,
+  #profileBackdrop .social-tile-head > strong,
+  .public-profile-shell .profile-working-head h2,
+  .public-profile-shell .profile-media-heading h2,
+  .public-profile-shell .profile-section-heading h2,
+  .public-profile-shell .social-list-heading h2,
+  #results.venue-profile-overlay .venue-detail .section-title
+)::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--dancr-gradient-hero-thread);
+  box-shadow: var(--dancr-shadow-hero-thread);
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 :is(
@@ -1014,19 +1098,6 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   border-color: var(--dancr-color-danger-medium) !important;
   color: var(--dancr-color-danger) !important;
   background-color: var(--dancr-color-danger-soft) !important;
-}
-
-.tv-shell :is(.tv-verified-mark, .verified-mark),
-.public-profile-shell :is(.profile-verified, .verified-mark) {
-  border-color: var(--dancr-color-info-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-info) 24%,
-    var(--dancr-color-surface)
-  ) !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
 }
 
 .tv-shell :is(.tv-card-venue-name, .tv-card-schedule-text.upcoming) {

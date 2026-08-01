@@ -157,6 +157,18 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /className="tv-card-venue-line"[\s\S]*?className="tv-card-venue-name"[\s\S]*?video\.venue\.name/);
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
   assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);
+  assert.match(
+    feedClient,
+    /className="tv-player-progress"[\s\S]*?role="progressbar"[\s\S]*?aria-valuenow=\{0\}/,
+  );
+  assert.match(
+    feedClient,
+    /onTimeUpdate=\{\(event\) => \{[\s\S]*?\.tv-player-progress[\s\S]*?fill\.style\.width[\s\S]*?aria-valuenow/,
+  );
+  assert.match(
+    feedClient,
+    /\.tv-player-progress > span \{[\s\S]*?var\(--dancr-gradient-hero-progress\)[\s\S]*?var\(--dancr-color-beam-violet-soft\)/,
+  );
   assert.match(tvSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("is_primary", true\)[\s\S]*?\.eq\("review_status", "approved"\)/);
   assert.match(tvSource, /dancer: \{ \.\.\.publicVideo\.dancer, primaryPhotoUrl \}/);
   assert.match(feedClient, /className=\{`tv-profile-photo\$\{video\.dancer\.primaryPhotoUrl \? " has-photo" : ""\}`\}/);

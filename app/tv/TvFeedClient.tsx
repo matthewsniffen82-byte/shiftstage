@@ -559,9 +559,27 @@ export default function TvFeedClient({
                   }}
                   onTimeUpdate={(event) => {
                     const element = event.currentTarget;
+                    const ratio = element.duration > 0
+                      ? Math.min(1, Math.max(0, element.currentTime / element.duration))
+                      : 0;
+                    const progress = element.parentElement?.querySelector<HTMLElement>(
+                      ".tv-player-progress",
+                    );
+                    const fill = progress?.querySelector<HTMLElement>("span");
+                    if (progress && fill) {
+                      const percent = Math.round(ratio * 100);
+                      fill.style.width = `${ratio * 100}%`;
+                      progress.setAttribute("aria-valuenow", String(percent));
+                      progress.setAttribute(
+                        "aria-valuetext",
+                        element.duration > 0
+                          ? `${Math.round(element.currentTime)} of ${Math.round(element.duration)} seconds`
+                          : "Video loading",
+                      );
+                    }
                     if (
                       element.duration > 0 &&
-                      element.currentTime / element.duration >= 0.95 &&
+                      ratio >= 0.95 &&
                       !completedVideos.current.has(video.id)
                     ) {
                       completedVideos.current.add(video.id);
@@ -569,6 +587,17 @@ export default function TvFeedClient({
                     }
                   }}
                 />
+                <div
+                  className="tv-player-progress"
+                  role="progressbar"
+                  aria-label="Video playback progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={0}
+                  aria-valuetext="Video loading"
+                >
+                  <span />
+                </div>
                 {autoplayBlockedVideoId === video.id ? (
                   <button
                     className="tv-playback-retry"
@@ -859,6 +888,8 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
+      .tv-player-progress { position: absolute; z-index: 7; right: 14px; bottom: 7px; left: 14px; height: 4px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.26); pointer-events: none; }
+      .tv-player-progress > span { width: 0; height: 100%; display: block; border-radius: inherit; background: var(--dancr-gradient-hero-progress); box-shadow: 0 0 7px var(--dancr-color-beam-violet-soft); transition: width .1s linear; }
       .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; min-height: 46px; padding: 0 18px; border: 1px solid rgba(126,234,255,.58); border-radius: 999px; color: #fff; background: rgba(3,3,7,.82); box-shadow: 0 0 28px rgba(34,199,255,.2); font-weight: 950; transform: translate(-50%, -50%); cursor: pointer; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); font-size: 12px; font-weight: 900; cursor: pointer; }
@@ -928,6 +959,7 @@ function TvStyles() {
       }
       @media (prefers-reduced-motion: reduce) {
         .tv-feed { scroll-behavior: auto; }
+        .tv-player-progress > span { transition: none; }
       }
     `}</style>
   );
