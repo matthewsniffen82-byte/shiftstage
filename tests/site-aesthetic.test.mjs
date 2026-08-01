@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=10" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=11" rel="stylesheet">/,
   );
 });
 
@@ -90,10 +90,10 @@ test("verified check marks use the centralized informational cyan treatment", ()
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
 });
 
-test("the homepage hero redraws its inset artwork edge without a heavy frame", () => {
+test("the homepage hero renders exactly one clean frame", () => {
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?border: 0 !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?border: 1px solid var\(--dancr-color-brand-primary-medium\) !important/,
   );
   assert.match(
     aesthetic,
@@ -105,23 +105,15 @@ test("the homepage hero redraws its inset artwork edge without a heavy frame", (
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?border: 1px solid var\(--dancr-color-brand-primary-medium\) !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?inset: 4px !important/,
-  );
-  assert.match(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?0 0 0 2px var\(--dancr-color-background\),[\s\S]*?inset 0 0 0 2px var\(--dancr-color-background\) !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?transform: scale\(1\.026\) !important/,
   );
   assert.doesNotMatch(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?inset 0 0 0 6px/,
-  );
-  assert.doesNotMatch(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art[\s\S]*?transform:/,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{[^}]*(?:border|box-shadow):/,
   );
 });
 

@@ -449,29 +449,22 @@ body.dancr-button-system > .app main.stack > #results.venue-card-grid > .venue-c
 body > .app main.stack > .hero.reference-hero {
   position: relative;
   overflow: hidden;
-  border: 0 !important;
+  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
   border-radius: 24px !important;
   background: var(--dancr-color-background) !important;
   box-shadow: none !important;
 }
 
-/*
- * The supplied artwork has a thin inset edge. Redraw only that edge so its
- * scaled corner arcs stay continuous; do not fill the space between the edge
- * and the hero boundary, which would read as a heavy frame on mobile.
- */
+/* The artwork includes its own inset stroke. Crop that stroke just beyond the
+ * clipped edge and let the hero element provide the only visible frame. */
 body > .app main.stack > .hero.reference-hero::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: 4px !important;
-  z-index: 3 !important;
-  display: block !important;
-  border: 1px solid var(--dancr-color-brand-primary-medium) !important;
-  border-radius: clamp(14px, 2.2vw, 20px) !important;
-  box-shadow:
-    0 0 0 2px var(--dancr-color-background),
-    inset 0 0 0 2px var(--dancr-color-background) !important;
-  pointer-events: none;
+  content: none !important;
+  display: none !important;
+}
+
+body > .app main.stack > .hero.reference-hero > .hero-art {
+  transform: scale(1.026) !important;
+  transform-origin: center center !important;
 }
 
 body > .app main.stack > .home-discovery-controls {
