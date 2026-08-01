@@ -48,19 +48,19 @@ test("the consolidated tonight list still requires a confirmed active check-in",
 test("the exact supplied PNG is the preloaded high-priority home hero", () => {
   assert.equal(
     createHash("sha256").update(heroAsset).digest("hex"),
-    "b27abece499a05b4fc22b170e8e3da1ea5a4171cfd3ed05c85482af87b08e72b",
+    "d16974879eb78003a180034ad5a87bb17b02baa52fb32d92ef62a9385d7eae02",
   );
   assert.equal(
     createHash("sha256").update(publicHeroAsset).digest("hex"),
-    "b27abece499a05b4fc22b170e8e3da1ea5a4171cfd3ed05c85482af87b08e72b",
+    "d16974879eb78003a180034ad5a87bb17b02baa52fb32d92ef62a9385d7eae02",
   );
   assert.deepEqual(publicHeroAsset, heroAsset);
-  assert.match(homeSource, /href="\/outputs\/dancr-hero\.png\?v=hero-header-exact-20260731" type="image\/png" fetchpriority="high"/);
+  assert.match(homeSource, /href="\/outputs\/dancr-hero\.png\?v=untitled-design-4-exact-20260731" type="image\/png" fetchpriority="high"/);
   assert.match(
     homeSource,
-    /class="hero-art"[\s\S]*?src="\/outputs\/dancr-hero\.png\?v=hero-header-exact-20260731"[\s\S]*?width="1672"[\s\S]*?height="941"[\s\S]*?loading="eager"[\s\S]*?fetchpriority="high"/
+    /class="hero-art"[\s\S]*?src="\/outputs\/dancr-hero\.png\?v=untitled-design-4-exact-20260731"[\s\S]*?width="1590"[\s\S]*?height="889"[\s\S]*?loading="eager"[\s\S]*?fetchpriority="high"/
   );
-  assert.match(homeSource, /background-image: url\("\/outputs\/dancr-hero\.png\?v=hero-header-exact-20260731"\) !important/);
+  assert.match(homeSource, /background-image: url\("\/outputs\/dancr-hero\.png\?v=untitled-design-4-exact-20260731"\) !important/);
   assert.doesNotMatch(homeSource, /dancr-hero\.webp/);
   assert.doesNotMatch(homeSource, /href="\.\/dancr-hero\.png"/);
 });
