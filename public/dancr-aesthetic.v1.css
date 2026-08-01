@@ -435,6 +435,17 @@ body > .app main.stack > #results:is(
   display: none !important;
 }
 
+/* Keep the vertical gutters purely near-black. Card artwork and borders stay
+ * intact, but no inactive card halo may bleed into the space between cards. */
+body.dancr-button-system > .app main.stack > #results.home-dancer-grid > .home-dancer-grid-card,
+body.dancr-button-system > .app main.stack > #results.home-tv-feed > .home-tv-feed-slide,
+body.dancr-button-system > .app main.stack > #results.home-discovery-feed > .home-discovery-feed-slide,
+body.dancr-button-system > .app main.stack > #results.card-grid > .dancer-card,
+body.dancr-button-system > .app main.stack > #results.venue-card-grid > .venue-card {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 body > .app main.stack > .hero.reference-hero {
   position: relative;
   overflow: hidden;

@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=9" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=10" rel="stylesheet">/,
   );
 });
 
@@ -47,6 +47,10 @@ test("scrolling card feeds have neutral gutters without a violet backdrop", () =
   assert.match(
     aesthetic,
     /#results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?\)::before,[\s\S]*?\)::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /body\.dancr-button-system > \.app main\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;/,
   );
 });
 
