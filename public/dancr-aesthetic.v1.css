@@ -682,10 +682,50 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   box-shadow: none !important;
 }
 
+/* Full profiles keep one quiet, device-independent edge system. Persistent
+ * purple/cyan outlines are reserved for focus and real semantic states. */
+#profileBackdrop .profile-modal :is(
+  .modal-identity,
+  .profile-modal-summary,
+  .social-link,
+  .modal-actions .action-btn,
+  .profile-share-trigger
+),
+#results.venue-profile-overlay .venue-detail :is(
+  .venue-hero,
+  .venue-sign,
+  .venue-main-photo,
+  .venue-art,
+  .venue-quick-stat,
+  .venue-info .info-tile,
+  .venue-section,
+  .venue-shift-row,
+  .venue-offer,
+  .locked,
+  .action-btn:not(.venue-directions-btn):not(.venue-qr-launcher)
+) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  box-shadow: none !important;
+}
+
+#profileBackdrop .profile-modal :is(
+  .social-link,
+  .modal-actions .action-btn,
+  .profile-share-trigger
+):focus-visible,
+#results.venue-profile-overlay .venue-detail :is(
+  a,
+  button
+):focus-visible {
+  border-color: var(--dancr-color-beam-violet-medium) !important;
+  outline-color: var(--dancr-color-beam-violet) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
 #profileBackdrop .profile-modal :is(.close-btn, button[class*="close"]),
 #results.venue-profile-overlay .venue-detail :is(.close-btn, button[class*="close"]),
 .modal-card :is(.close-btn, button[class*="close"]) {
-  border: 1px solid var(--dancr-color-border) !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 999px !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-soft) !important;
@@ -790,40 +830,52 @@ body.dancr-button-system #results.venue-profile-overlay :is(
 }
 
 .public-profile-shell :is(
+  .profile-titlebar,
+  .profile-titlebar-avatar,
   .profile-media,
   .profile-working-card,
   .profile-social-card,
+  .profile-social-section,
   .profile-info-card,
   .club-deal-card,
+  .profile-deal-availability .venue-qr-unavailable,
+  .profile-media-tabs,
+  .profile-media-feature,
+  .profile-schedule-section,
+  .shift-row,
   .profile-account-gate,
   .profile-share-panel
 ),
 .tv-shell :is(.tv-header, .tv-player, .tv-empty, .tv-status, .tv-loading) {
-  border-color: var(--dancr-color-border) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   background: var(--dancr-color-surface-translucent) !important;
-  box-shadow: var(--dancr-shadow-surface) !important;
+  box-shadow: none !important;
 }
 
 .public-profile-shell :is(.profile-metrics, .social-list a, .live-actions > button),
 .tv-shell :is(.tv-sound, .tv-playback-retry, .tv-empty button, .tv-empty a) {
-  border-color: var(--dancr-color-border) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
 }
 
-.public-profile-shell :is(
-  .live-actions .profile-action-primary,
-  .club-deal-action > button,
-  .venue-qr-launcher
-) {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+.public-profile-shell .live-actions .profile-action-primary {
+  border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
   background: linear-gradient(
     135deg,
     var(--dancr-color-brand-primary),
     var(--dancr-color-brand-primary-deep)
   ) !important;
-  box-shadow: var(--dancr-shadow-brand-control) !important;
+  box-shadow: none !important;
+}
+
+.public-profile-shell :is(.club-deal-action > button, .venue-qr-launcher) {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-success-soft) !important;
+  box-shadow: none !important;
 }
 
 .public-profile-shell :is(
@@ -831,7 +883,7 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   .social-list-toggle,
   .profile-action-share-slot .profile-share button
 ) {
-  border-color: var(--dancr-color-border) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-raised) !important;
   box-shadow: none !important;

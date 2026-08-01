@@ -2,12 +2,22 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [aesthetic, layout, liveApp, mobileNavigation] = await Promise.all([
+const [
+  aesthetic,
+  layout,
+  liveApp,
+  mobileNavigation,
+  venueProfileAesthetic,
+] = await Promise.all([
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(
     new URL("../app/components/GlobalMobileBottomNav.tsx", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../app/venues/[slug]/VenueProfile.module.css", import.meta.url),
     "utf8",
   ),
 ]);
@@ -16,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=15" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=16" rel="stylesheet">/,
   );
 });
 
@@ -111,6 +121,30 @@ test("venue detail and full dancer profiles use the same near-black foundation a
   assert.match(
     aesthetic,
     /#results\.venue-profile-overlay :is\([\s\S]*?\.venue-main-photo,[\s\S]*?\.venue-art[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /Full profiles keep one quiet, device-independent edge system[\s\S]*?#profileBackdrop \.profile-modal :is\([\s\S]*?\.social-link,[\s\S]*?\.modal-actions \.action-btn,[\s\S]*?\.profile-share-trigger[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.public-profile-shell :is\([\s\S]*?\.profile-titlebar,[\s\S]*?\.profile-social-section,[\s\S]*?\.profile-media-feature,[\s\S]*?\.profile-schedule-section,[\s\S]*?\.shift-row[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    venueProfileAesthetic,
+    /--line: var\(--dancr-color-border-subtle, rgba\(248, 250, 252, 0\.12\)\)/,
+  );
+  assert.match(
+    venueProfileAesthetic,
+    /\.shell :global\(\.venue-profile-actions button\),[\s\S]*?border-color: var\(--dancr-color-border-subtle\);/,
+  );
+  assert.match(
+    venueProfileAesthetic,
+    /\.primaryActions > :global\(\.directions-link\),[\s\S]*?border-color: var\(--dancr-color-info-strong\);/,
+  );
+  assert.match(
+    venueProfileAesthetic,
+    /\.primaryActions > :global\(\.club-deal-launcher\),[\s\S]*?border-color: var\(--dancr-color-success-medium\);/,
   );
 });
 

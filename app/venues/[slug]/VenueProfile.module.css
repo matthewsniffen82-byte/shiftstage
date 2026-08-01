@@ -1,7 +1,7 @@
 .shell {
   --surface: rgba(12, 10, 19, 0.88);
   --surface-strong: rgba(15, 12, 24, 0.97);
-  --line: rgba(174, 145, 236, 0.24);
+  --line: var(--dancr-color-border-subtle, rgba(248, 250, 252, 0.12));
   --muted: #aaa1b7;
   min-height: 100vh;
   box-sizing: border-box;
@@ -48,11 +48,11 @@
   align-items: center;
   justify-content: center;
   padding: 0 15px;
-  border: 1px solid rgba(139, 92, 246, 0.72);
+  border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 15px;
   color: #fff;
   background: #050507;
-  box-shadow: 0 0 18px rgba(132, 50, 255, 0.24);
+  box-shadow: none;
   font-size: 27px;
   font-weight: 950;
   letter-spacing: -0.07em;
@@ -89,11 +89,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(139, 92, 246, 0.48);
+  border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 999px;
   color: #fff;
   background: rgba(10, 10, 14, 0.92);
-  box-shadow: 0 0 18px rgba(124, 58, 237, 0.16);
+  box-shadow: none;
   text-decoration: none;
   cursor: pointer;
 }
@@ -171,7 +171,7 @@
   gap: 10px;
   padding: 14px;
   overflow: auto;
-  border: 1px solid rgba(139, 92, 246, 0.42);
+  border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 14px;
   color: #f7f4ff;
   background: rgba(5, 5, 9, 0.99);
@@ -225,10 +225,10 @@
 
 .shell :global(.profile-notification-clear) {
   min-height: 38px;
-  border: 1px solid rgba(139, 92, 246, 0.32);
+  border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 999px;
   color: #fff;
-  background: rgba(109, 40, 217, 0.16);
+  background: var(--dancr-color-surface-raised);
   font-weight: 900;
   cursor: pointer;
 }
@@ -461,9 +461,9 @@
   gap: 6px;
   margin-top: 4px;
   padding: 15px;
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  border: 1px solid var(--dancr-color-success-medium);
   border-radius: 15px;
-  background: linear-gradient(135deg, rgba(109, 40, 217, 0.2), rgba(34, 199, 255, 0.06));
+  background: var(--dancr-color-success-soft);
 }
 
 .dealSummary > span {
@@ -619,7 +619,7 @@
   align-items: center;
   gap: 15px;
   padding: 21px;
-  border: 1px dashed rgba(167, 139, 250, 0.26);
+  border: 1px dashed var(--dancr-color-border-subtle);
   border-radius: 18px;
   background: rgba(11, 9, 17, 0.58);
 }
@@ -970,6 +970,19 @@
   box-shadow: var(--dancr-shadow-surface);
 }
 
+.shell :global(.profile-notification-list button),
+.tonightStats a,
+.dancerPhoto,
+.dancerPhoto.hasPhoto,
+.calendarIcon,
+.relatedCard > span,
+.shell :global(.venue-qr-dialog-close),
+.shell :global(.venue-account-gate-close),
+.shell :global(.venue-account-gate-dialog a.secondary) {
+  border-color: var(--dancr-color-border-subtle);
+  box-shadow: none;
+}
+
 .heroCopy :is(p, small),
 .tonightCard :is(p, small, span),
 .dancerCopy > span,
@@ -998,26 +1011,38 @@
 }
 
 .primaryActions > :global(.directions-link),
+.infoCard :global(.directions-link) {
+  border-color: var(--dancr-color-info-strong);
+  color: var(--dancr-color-text-primary);
+  background: var(--dancr-color-info-soft);
+  box-shadow: none;
+}
+
 .primaryActions > :global(.club-deal-launcher),
 .primaryActions > :global(.venue-qr-launcher),
+.shell :global(.venue-qr-launcher) {
+  border-color: var(--dancr-color-success-medium);
+  color: var(--dancr-color-text-primary);
+  background: var(--dancr-color-success-soft);
+  box-shadow: none;
+}
+
 .shell :global(.venue-profile-actions button[aria-pressed="true"]),
-.infoCard :global(.directions-link),
-.shell :global(.venue-qr-launcher),
 .shell :global(.venue-account-gate-dialog a:not(.secondary)) {
-  border-color: var(--dancr-color-brand-primary-strong);
+  border-color: var(--dancr-color-border-subtle);
   color: var(--dancr-color-text-primary);
   background: linear-gradient(
     135deg,
     var(--dancr-color-brand-primary),
     var(--dancr-color-brand-primary-deep)
   );
-  box-shadow: var(--dancr-shadow-brand-control);
+  box-shadow: none;
 }
 
 .shell :global(.venue-profile-actions button),
 .sectionCount,
 .viewAllLink {
-  border-color: var(--dancr-color-border);
+  border-color: var(--dancr-color-border-subtle);
   color: var(--dancr-color-text-primary);
   background: var(--dancr-color-surface-raised);
   box-shadow: none;
@@ -1040,7 +1065,7 @@
 
 .shell :global(.venue-qr-dialog),
 .shell :global(.venue-account-gate-dialog) {
-  border-color: var(--dancr-color-border);
+  border-color: var(--dancr-color-border-subtle);
   color: var(--dancr-color-text-primary);
   background: var(--dancr-color-surface-translucent);
   box-shadow: var(--dancr-shadow-modal);
