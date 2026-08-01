@@ -28621,6 +28621,7 @@
           pointer-events: none;
         }
         .home-tv-feed-copy a,
+        .home-tv-feed-dancer-action,
         .home-tv-feed-sound,
         .home-tv-feed-fullscreen,
         .home-tv-feed-action,
@@ -28714,28 +28715,6 @@
           font-size: 11px;
           line-height: 1;
         }
-        .home-tv-feed-profile-hint {
-          width: fit-content;
-          display: inline-flex;
-          align-items: center;
-          gap: 3px;
-          color: var(--dancr-color-info);
-          font-size: 9px;
-          font-weight: 950;
-          letter-spacing: .11em;
-          line-height: 1;
-          text-shadow: 0 2px 10px rgba(0,0,0,.88);
-          text-transform: uppercase;
-        }
-        .home-tv-feed-profile-chevron {
-          display: inline-block;
-          color: rgba(255,255,255,.9);
-          font-size: 15px;
-          font-weight: 800;
-          line-height: 1;
-          text-shadow: 0 2px 12px rgba(0,0,0,.9);
-          transform: translateY(-.5px);
-        }
         .home-tv-feed-meta {
           width: fit-content;
           max-width: calc(100% - 54px);
@@ -28761,6 +28740,47 @@
           font-weight: 900;
           text-shadow: 0 2px 12px rgba(0,0,0,.9);
         }
+        .home-tv-feed-dancer-actions {
+          width: fit-content;
+          max-width: calc(100% - 54px);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-left: 54px;
+        }
+        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action {
+          width: auto;
+          min-width: 92px;
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 0 12px;
+          border: 1px solid rgba(255,255,255,.24);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(5,5,10,.7);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+          font-size: 10px;
+          font-weight: 950;
+          line-height: 1;
+          text-decoration: none;
+          backdrop-filter: blur(12px);
+          touch-action: manipulation;
+        }
+        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action .action-icon {
+          width: 16px;
+          height: 16px;
+          flex: 0 0 auto;
+        }
+        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action:hover,
+        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action:focus-visible,
+        .home-tv-feed-dancer-actions .home-tv-feed-dancer-action.is-active {
+          border-color: rgba(126,234,255,.62);
+          color: #e9fbff;
+          background: rgba(25,57,75,.82);
+        }
         .home-tv-feed-venue svg {
           width: 17px;
           height: 17px;
@@ -28773,6 +28793,14 @@
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+        .home-tv-feed-context {
+          width: fit-content;
+          max-width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          overflow: hidden;
         }
         .home-tv-feed-schedule {
           width: fit-content;
@@ -31636,7 +31664,7 @@
           .home-dancer-grid-context-actions .feed-card-action,
           .home-venue-discovery-context-actions .feed-card-action,
           .home-venue-discovery-context-actions .home-discovery-feed-directions,
-          .home-tv-feed-profile-hint,
+          .home-tv-feed-dancer-actions .home-tv-feed-dancer-action,
           .home-tv-feed-sound,
           .home-tv-feed-fullscreen {
             font-family: var(--font-ui);
@@ -42010,11 +42038,10 @@
     }
 
     function profileTvScheduleLabel(item) {
-      return item.shift?.isActive
-        ? "Working now"
-        : item.shift
-          ? formatProfileTvShift(item.shift.startsAt, item.shift.timezone)
-          : "No shift posted";
+      if (item.shift?.isActive) return "Working Now";
+      if (!item.shift) return "No shift posted";
+      const dateLabel = formatProfileTvShift(item.shift.startsAt, item.shift.timezone);
+      return dateLabel ? `Upcoming · ${dateLabel}` : "Upcoming";
     }
 
     function formatProfileTvDuration(durationSeconds) {
@@ -42236,24 +42263,18 @@
 
     function formatProfileTvShift(startsAt, timeZone) {
       const date = new Date(startsAt);
-      if (!Number.isFinite(date.getTime())) return "Soon";
+      if (!Number.isFinite(date.getTime())) return "";
       const options = {
         weekday: "short",
-        month: "numeric",
+        month: "short",
         day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
         ...(timeZone ? { timeZone } : {})
       };
       try {
-        return new Intl.DateTimeFormat(undefined, options).format(date)
-          .replace(",", "")
-          .replace(", ", " · ");
+        return new Intl.DateTimeFormat(undefined, options).format(date);
       } catch {
         delete options.timeZone;
-        return new Intl.DateTimeFormat(undefined, options).format(date)
-          .replace(",", "")
-          .replace(", ", " · ");
+        return new Intl.DateTimeFormat(undefined, options).format(date);
       }
     }
 
@@ -47195,10 +47216,11 @@
     }
 
     function homeTvFeedSchedule(item) {
-      if (item.shift?.isActive) return { label: "Working now", className: "is-now" };
+      if (item.shift?.isActive) return { label: "Working Now", className: "is-now" };
       if (item.shift) {
+        const dateLabel = formatProfileTvShift(item.shift.startsAt, item.shift.timezone);
         return {
-          label: `Upcoming ${formatProfileTvShift(item.shift.startsAt, item.shift.timezone)}`,
+          label: dateLabel ? `Upcoming · ${dateLabel}` : "Upcoming",
           className: "is-upcoming"
         };
       }
@@ -47373,16 +47395,13 @@
       const dancerPhotoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
       const venueName = String(item?.venue?.name || "").trim();
       const venueSlug = String(item?.venue?.slug || "").trim();
+      const profileHref = dancerSlug
+        ? `/?city=${encodeURIComponent(dancerCity)}&profile=${encodeURIComponent(dancerSlug)}`
+        : "#";
       const copy = document.createElement("div");
       copy.className = "home-tv-feed-copy";
 
-      const dancer = document.createElement("a");
-      dancer.className = "home-tv-feed-dancer";
-      dancer.href = dancerSlug
-        ? `/?city=${encodeURIComponent(dancerCity)}&profile=${encodeURIComponent(dancerSlug)}`
-        : "#";
-      dancer.setAttribute("aria-label", `Open ${dancerName}'s live profile`);
-      dancer.addEventListener("click", (event) => {
+      const openDancerProfile = (event) => {
         trackHomeTvFeedEvent(videoId, "profile_click");
         if (!dancerSlug) {
           event.preventDefault();
@@ -47394,7 +47413,13 @@
         if (!profile) return;
         event.preventDefault();
         openProfileModal(profile.name);
-      });
+      };
+
+      const dancer = document.createElement("a");
+      dancer.className = "home-tv-feed-dancer";
+      dancer.href = profileHref;
+      dancer.setAttribute("aria-label", `Open ${dancerName}'s live profile`);
+      dancer.addEventListener("click", openDancerProfile);
       const dancerPhoto = document.createElement("span");
       dancerPhoto.className = "home-tv-feed-dancer-photo";
       dancerPhoto.textContent = dancerName.charAt(0).toLocaleUpperCase();
@@ -47420,16 +47445,8 @@
       verified.setAttribute("aria-label", "Verified");
       const dancerCopy = document.createElement("span");
       dancerCopy.className = "home-tv-feed-dancer-copy";
-      const profileHint = document.createElement("span");
-      profileHint.className = "home-tv-feed-profile-hint";
-      profileHint.textContent = "View profile";
-      const profileChevron = document.createElement("span");
-      profileChevron.className = "home-tv-feed-profile-chevron";
-      profileChevron.textContent = "›";
-      profileChevron.setAttribute("aria-hidden", "true");
       nameRow.append(dancerLabel, verified);
-      profileHint.appendChild(profileChevron);
-      dancerCopy.append(nameRow, profileHint);
+      dancerCopy.appendChild(nameRow);
       dancer.append(dancerPhoto, dancerCopy);
       copy.appendChild(dancer);
 
@@ -47438,27 +47455,52 @@
       meta.textContent = `Dancer · ${dancerCity}`;
       copy.appendChild(meta);
 
-      if (venueName && venueSlug) {
-        const venue = document.createElement("a");
-        venue.className = "home-tv-feed-venue";
-        venue.href = venueExperienceHref(
-          { slug: venueSlug, name: venueName },
-          item?.dancer?.city || citySelect.value
-        );
-        venue.setAttribute("aria-label", `Open ${venueName} venue profile`);
-        venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
-        venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
-        const venueLabel = document.createElement("span");
-        venueLabel.textContent = venueName;
-        venue.appendChild(venueLabel);
-        copy.appendChild(venue);
-      }
+      const dancerActions = document.createElement("div");
+      dancerActions.className = "home-tv-feed-dancer-actions";
+      dancerActions.setAttribute("aria-label", `${dancerName} actions`);
+      const profileAction = document.createElement("a");
+      profileAction.className = "home-tv-feed-dancer-action home-tv-feed-profile-action";
+      profileAction.href = profileHref;
+      profileAction.setAttribute("aria-label", `Open ${dancerName}'s full profile`);
+      profileAction.innerHTML = actionButtonLabel("star", "Profile");
+      profileAction.addEventListener("click", openDancerProfile);
+      const isFollowed = isFollowingProfile(dancerCity, dancerName);
+      const followAction = document.createElement("button");
+      followAction.className = `home-tv-feed-dancer-action feed-card-action ${isFollowed ? "is-active" : ""}`;
+      followAction.type = "button";
+      followAction.dataset.feedAction = "follow";
+      followAction.dataset.profile = dancerName;
+      followAction.dataset.homeTvVideoId = videoId;
+      followAction.setAttribute("aria-pressed", String(isFollowed));
+      followAction.innerHTML = actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow");
+      dancerActions.append(profileAction, followAction);
+      copy.appendChild(dancerActions);
 
       if (scheduleContext) {
+        const context = document.createElement("div");
+        context.className = "home-tv-feed-context";
         const schedule = document.createElement("span");
         schedule.className = `home-tv-feed-schedule ${scheduleContext.className}`;
         schedule.textContent = scheduleContext.label;
-        copy.appendChild(schedule);
+        context.appendChild(schedule);
+        if (venueName) {
+          const venue = document.createElement(venueSlug ? "a" : "span");
+          venue.className = "home-tv-feed-venue";
+          if (venueSlug) {
+            venue.href = venueExperienceHref(
+              { slug: venueSlug, name: venueName },
+              item?.dancer?.city || citySelect.value
+            );
+            venue.setAttribute("aria-label", `Open ${venueName} venue profile`);
+            venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
+          }
+          venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
+          const venueLabel = document.createElement("span");
+          venueLabel.textContent = venueName;
+          venue.appendChild(venueLabel);
+          context.appendChild(venue);
+        }
+        copy.appendChild(context);
       }
       return copy;
     }
@@ -48520,6 +48562,9 @@
         });
         if (!data) throw new Error("Sign in required.");
         const { following } = applyConfirmedProfileFollow(profile, city, data);
+        if (following && actionButton.dataset.homeTvVideoId) {
+          trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
+        }
         recordLiveEvent("profile_action", {
           dancerName: profileName,
           source: following ? "follow_added" : "follow_removed"

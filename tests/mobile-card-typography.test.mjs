@@ -28,7 +28,7 @@ test("mobile dancer, TV, and venue cards share one typography hierarchy", () => 
   );
   assert.match(
     typographyBlock,
-    /\.home-dancer-grid-action-rail[\s\S]*?\.home-venue-discovery-context-actions[\s\S]*?\.home-tv-feed-profile-hint,[\s\S]*?\.home-tv-feed-sound,[\s\S]*?\.home-tv-feed-fullscreen \{[\s\S]*?font-size: 9px;[\s\S]*?font-weight: 950;/,
+    /\.home-dancer-grid-action-rail[\s\S]*?\.home-venue-discovery-context-actions[\s\S]*?\.home-tv-feed-dancer-actions \.home-tv-feed-dancer-action,[\s\S]*?\.home-tv-feed-sound,[\s\S]*?\.home-tv-feed-fullscreen \{[\s\S]*?font-size: 9px;[\s\S]*?font-weight: 950;/,
   );
 });
 

@@ -30,9 +30,13 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /profileHint\.className = "home-tv-feed-profile-hint"[\s\S]*?profileHint\.textContent = "View profile"[\s\S]*?profileChevron\.textContent = "›"[\s\S]*?dancerCopy\.append\(nameRow, profileHint\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)[\s\S]*?meta\.textContent = `Dancer · \$\{dancerCity\}`/,
+    /dancerCopy\.appendChild\(nameRow\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)[\s\S]*?meta\.textContent = `Dancer · \$\{dancerCity\}`/,
   );
-  assert.doesNotMatch(homeSource, /home-tv-feed-profile-cue|View profile →/);
+  assert.doesNotMatch(homeSource, /home-tv-feed-profile-hint|home-tv-feed-profile-cue|View profile →/);
+  assert.match(
+    homeSource,
+    /dancerActions\.className = "home-tv-feed-dancer-actions"[\s\S]*?profileAction\.innerHTML = actionButtonLabel\("star", "Profile"\)[\s\S]*?followAction\.dataset\.feedAction = "follow"[\s\S]*?followAction\.dataset\.profile = dancerName[\s\S]*?followAction\.dataset\.homeTvVideoId = videoId[\s\S]*?actionButtonLabel\(isFollowed \? "check" : "heart", isFollowed \? "Following" : "Follow"\)/,
+  );
   assert.match(
     homeSource,
     /const dancerPhotoUrl = String\(item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
@@ -110,13 +114,18 @@ test("empty schedules are hidden while real city, venue, and shift context remai
     homeSource.match(
       /function homeTvFeedSchedule\(item\) \{[\s\S]*?(?=\n    function createHomeTvFeedMediaFallback)/,
     )?.[0] || "";
-  assert.match(scheduleFunction, /"Working now"/);
-  assert.match(scheduleFunction, /`Upcoming \$\{formatProfileTvShift/);
+  assert.match(scheduleFunction, /"Working Now"/);
+  assert.match(scheduleFunction, /dateLabel \? `Upcoming · \$\{dateLabel\}` : "Upcoming"/);
   assert.match(scheduleFunction, /return null/);
   assert.doesNotMatch(scheduleFunction, /No shift posted/);
+  const shiftDateFormatter = homeSource.match(
+    /function formatProfileTvShift\(startsAt, timeZone\) \{[\s\S]*?(?=\n    function clearProfileDeepLink)/,
+  )?.[0] || "";
+  assert.match(shiftDateFormatter, /weekday: "short"[\s\S]*?month: "short"[\s\S]*?day: "numeric"/);
+  assert.doesNotMatch(shiftDateFormatter, /hour:|minute:|toLocaleTimeString|formatClock/);
   assert.match(
     homeSource,
-    /if \(venueName && venueSlug\)[\s\S]*?home-tv-feed-venue[\s\S]*?if \(scheduleContext\)/,
+    /if \(scheduleContext\)[\s\S]*?context\.className = "home-tv-feed-context"[\s\S]*?context\.appendChild\(schedule\)[\s\S]*?if \(venueName\)[\s\S]*?venue\.className = "home-tv-feed-venue"[\s\S]*?context\.appendChild\(venue\)[\s\S]*?copy\.appendChild\(context\)/,
   );
 });
 
@@ -161,6 +170,10 @@ test("applause is recorded through the constrained production TV analytics path"
   assert.match(
     applauseMigration,
     /drop constraint if exists mydancr_tv_event_type_check[\s\S]*?event_type in \([\s\S]*?'applause'/,
+  );
+  assert.match(
+    homeSource,
+    /if \(following && actionButton\.dataset\.homeTvVideoId\)[\s\S]*?trackHomeTvFeedEvent\(actionButton\.dataset\.homeTvVideoId, "follow"\)/,
   );
 });
 

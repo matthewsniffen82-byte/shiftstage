@@ -56,14 +56,14 @@ test("the Home TV button renders a real page-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /dancer\.href = dancerSlug[\s\S]*?`\/\?city=\$\{encodeURIComponent\(dancerCity\)\}&profile=\$\{encodeURIComponent\(dancerSlug\)\}`[\s\S]*?: "#"/,
+    /const profileHref = dancerSlug[\s\S]*?`\/\?city=\$\{encodeURIComponent\(dancerCity\)\}&profile=\$\{encodeURIComponent\(dancerSlug\)\}`[\s\S]*?: "#"[\s\S]*?dancer\.href = profileHref/,
   );
   assert.match(
     homeSource,
-    /dancer\.addEventListener\("click", \(event\) => \{[\s\S]*?markets\[dancerCity\]\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profile\.name\)/,
+    /const openDancerProfile = \(event\) => \{[\s\S]*?markets\[dancerCity\]\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profile\.name\)[\s\S]*?dancer\.addEventListener\("click", openDancerProfile\)/,
   );
   assert.match(homeSource, /venue\.href = venueExperienceHref\([\s\S]*?\{ slug: venueSlug, name: venueName \}[\s\S]*?item\?\.dancer\?\.city \|\| citySelect\.value/);
-  assert.match(homeSource, /"Working now"[\s\S]*?`Upcoming \$\{formatProfileTvShift/);
+  assert.match(homeSource, /"Working Now"[\s\S]*?dateLabel \? `Upcoming · \$\{dateLabel\}` : "Upcoming"/);
   assert.match(
     homeSource,
     /new IntersectionObserver\([\s\S]*?activateHomeTvFeedVideo/,
