@@ -33339,6 +33339,165 @@
           box-shadow: 0 0 14px var(--dancr-color-beam-violet-soft);
           pointer-events: none;
         }
+
+        /* Edit Profile is a preview workspace: make its phone hierarchy compact and legible. */
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview {
+          gap: 10px !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview > .info-tile {
+          min-width: 0 !important;
+          min-height: 0 !important;
+          border-color: rgba(255,255,255,.11) !important;
+          background: linear-gradient(145deg, rgba(15,15,23,.96), rgba(6,6,11,.98)) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 12px 30px rgba(0,0,0,.24) !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-schedule-card {
+          position: relative !important;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) auto !important;
+          align-items: center !important;
+          gap: 9px 12px !important;
+          overflow: hidden !important;
+          border-color: rgba(139,92,246,.28) !important;
+          background:
+            radial-gradient(circle at 92% 0%, rgba(139,92,246,.14), transparent 11rem),
+            linear-gradient(145deg, rgba(14,11,25,.98), rgba(5,6,11,.98)) !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-schedule-card::before {
+          content: "";
+          position: absolute;
+          top: 14px;
+          bottom: 14px;
+          left: 0;
+          width: 2px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #8b5cf6, #35d8ff);
+          box-shadow: 0 0 14px rgba(139,92,246,.44);
+          pointer-events: none;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-schedule-card > strong,
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-copy > strong {
+          color: #f7f3ff !important;
+          font-size: 10px !important;
+          font-weight: 950 !important;
+          letter-spacing: .16em !important;
+          text-transform: uppercase !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-schedule-primary {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          width: fit-content !important;
+          padding: 6px 9px !important;
+          border: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 999px !important;
+          color: rgba(245,242,251,.78) !important;
+          background: rgba(255,255,255,.045) !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          line-height: 1 !important;
+          white-space: nowrap !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .schedule-stack {
+          grid-column: 1 / -1 !important;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) auto !important;
+          align-items: start !important;
+          gap: 8px 14px !important;
+          min-width: 0 !important;
+          padding: 11px 0 2px !important;
+          border-top: 1px solid rgba(255,255,255,.08) !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .schedule-stack :is(.detail-line, .schedule-text-row) {
+          min-width: 0 !important;
+          margin: 0 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .venue-inline-link {
+          color: #fff !important;
+          font-weight: 900 !important;
+          line-height: 1.2 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .modal-schedule-text {
+          color: #bda4ff !important;
+          font-weight: 950 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-schedule-explanation {
+          grid-column: 1 / -1 !important;
+          margin: 0 !important;
+          color: rgba(232,226,241,.72) !important;
+          font-size: 11px !important;
+          font-weight: 720 !important;
+          line-height: 1.4 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview :is(.profile-qr-tile, [data-club-deal-state]) {
+          grid-column: 1 / -1 !important;
+          grid-template-columns: minmax(0, 1fr) 72px !important;
+          align-items: center !important;
+          gap: 14px !important;
+          min-height: 0 !important;
+          padding: 14px 15px !important;
+          border-style: solid !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-copy {
+          min-width: 0 !important;
+          display: grid !important;
+          gap: 6px !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-main {
+          color: #f7f3ff !important;
+          font-size: 14px !important;
+          font-weight: 950 !important;
+          line-height: 1.18 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-note {
+          display: block !important;
+          color: rgba(232,226,241,.7) !important;
+          font-size: 10px !important;
+          font-weight: 720 !important;
+          line-height: 1.35 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-placeholder {
+          width: 68px !important;
+          min-width: 68px !important;
+          height: 68px !important;
+          padding: 8px !important;
+          border-color: rgba(139,92,246,.34) !important;
+          color: rgba(218,206,246,.72) !important;
+          background: linear-gradient(145deg, rgba(139,92,246,.11), rgba(53,216,255,.045)) !important;
+        }
+
+        @media (max-width: 560px) {
+          #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
+          #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview > .info-tile {
+            grid-column: 1 / -1 !important;
+            padding: 14px 15px !important;
+          }
+
+          #approvedEditProfileDropdown.show #approvedVisualProfileEditor #approvedProfileVideoStatus {
+            width: auto !important;
+            margin-right: 62px !important;
+            padding: 10px 12px !important;
+            font-size: 11px !important;
+            line-height: 1.35 !important;
+          }
+        }
       </style>
 
       <section class="stack" aria-live="polite">
@@ -40253,7 +40412,11 @@
     }
 
     function profileDealTileMarkup(profile) {
+      const options = arguments[1] || {};
       const state = dancerClubDealState(profile);
+      const stateDetail = options.preview && state.key === "available-when-working"
+        ? "Unlocks after you verify you're working and the venue has an active offer."
+        : state.detail;
       if (state.key === "available") {
         const config = {
           deal: profile.activeDeal,
@@ -40284,7 +40447,7 @@
             <strong>Club Deal</strong>
             <div class="meta profile-deal-meta">
               <span class="profile-deal-main">${escapeHtml(state.label)}</span>
-              <span class="profile-deal-note">${escapeHtml(state.detail)}</span>
+              <span class="profile-deal-note">${escapeHtml(stateDetail)}</span>
             </div>
           </div>
           ${clubDealQrSymbolMarkup("profile-deal-placeholder")}
@@ -43016,7 +43179,8 @@
       `;
     }
 
-    function shiftsMarkup(profile, status = shiftStatus(profile)) {
+    function shiftsMarkup(profile, status = shiftStatus(profile), options = {}) {
+      const isEditorPreview = Boolean(options.preview);
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
           <div class="info-tile working-now-tile">
@@ -43028,7 +43192,7 @@
               <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Venue &amp; directions</button>
             </div>
           </div>
-          ${profileDealTileMarkup(profile)}
+          ${isEditorPreview ? profileDealTileMarkup(profile, { preview: true }) : profileDealTileMarkup(profile)}
           <div class="info-tile">
             <strong>Next shift</strong>
             <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
@@ -43045,9 +43209,9 @@
               <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${displayPublicShiftTime(profile.time, profile)}</span></div>
             </div>
-            <p class="profile-schedule-explanation">This is the dancer's next posted shift. Follow or turn on notifications for schedule updates.</p>
+            <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to customers." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
           </div>
-          ${profileDealTileMarkup(profile)}
+          ${isEditorPreview ? profileDealTileMarkup(profile, { preview: true }) : profileDealTileMarkup(profile)}
           ${shiftNotesMarkup(profile)}
         `;
       }
@@ -43055,9 +43219,9 @@
           <div class="info-tile profile-schedule-card schedule-empty">
           <strong>Schedule</strong>
           <div class="profile-schedule-primary">No shift posted</div>
-          <p class="profile-schedule-explanation">This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update.</p>
+          <p class="profile-schedule-explanation">${isEditorPreview ? "Post a shift from your dashboard to show customers when and where you're working." : "This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update."}</p>
         </div>
-        ${profileDealTileMarkup(profile)}
+        ${isEditorPreview ? profileDealTileMarkup(profile, { preview: true }) : profileDealTileMarkup(profile)}
       `;
     }
 
@@ -43066,8 +43230,8 @@
       const city = options.city || selectedCity();
       const socialMarkup = options.socialMarkup || socialLinksMarkup(profile, { preview: Boolean(options.preview) });
       return `
-        <div class="modal-grid">
-          ${shiftsMarkup(profile, status)}
+        <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
           ${profileLocationStatusTile(profile)}
           ${socialMarkup}
         </div>
