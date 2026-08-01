@@ -521,7 +521,10 @@ test("dancer grid hierarchy stays readable without changing the production card 
     homeSource,
     /function homeDancerGridCard\(profile, city\)[\s\S]*?const scheduleLabel = homeDancerGridScheduleLabel\(profile, city\);[\s\S]*?home-dancer-grid-status \$\{status\.className\}">\$\{escapeHtml\(scheduleLabel\)\}/,
   );
-  assert.match(homeSource, /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/);
+  assert.match(
+    homeSource,
+    /const resultCountLabel = activeTab === "venues"[\s\S]*?activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} total`[\s\S]*?`\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/,
+  );
   assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);
   assert.match(homeSource, /\.home-dancer-grid-venue span \{[\s\S]*?-webkit-line-clamp: 2;/);
   assert.match(homeSource, /\.home-dancer-grid-name \{[\s\S]*?font-family: var\(--font-ui\);[\s\S]*?font-size: 25px;[\s\S]*?font-weight: 900;/);
@@ -707,4 +710,24 @@ test("all five discovery titles use one typography system and consistent city wo
   assert.match(homeSource, /tabTitle\.textContent = `MyDancr TV in \$\{city\}`;/);
   const dancerTitleStyle = homeSource.match(/#tabTitle\.dancers-city-title \{[\s\S]*?\n      \}/)?.[0] || "";
   assert.doesNotMatch(dancerTitleStyle, /font-size|font-family|font-weight|line-height|letter-spacing/);
+});
+
+test("the mobile dancer heading is compact and consistent across Android and iPhone", () => {
+  assert.match(
+    homeSource,
+    /tabTitle\.closest\("\.content-head"\)\?\.classList\.toggle\("dancers-directory-head", keepDancerCityOnOneLine\)/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 720px\) \{[\s\S]*?\.content-head\.dancers-directory-head \{[\s\S]*?gap: 6px !important;[\s\S]*?margin-top: 4px !important;[\s\S]*?padding: 2px 0 0 !important;[\s\S]*?font-size: clamp\(22px, 5\.8vw, 27px\) !important;[\s\S]*?\.content-head\.dancers-directory-head \+ #results\.home-dancer-grid \{[\s\S]*?margin-top: -6px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-dancer-grid-heading\.is-upcoming strong \{[\s\S]*?color: #b9f6ff;[\s\S]*?text-shadow: none;/,
+  );
+  assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} total`/);
+  assert.match(
+    homeSource,
+    /function renderHomeTvFeed\(city\)[\s\S]*?classList\.remove\("dancers-directory-head"\)/,
+  );
 });

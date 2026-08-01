@@ -33502,6 +33502,39 @@
             line-height: 1.35 !important;
           }
         }
+        /* Compact dancer-directory hierarchy shared by Android and iPhone. */
+        @media (max-width: 720px) {
+          .content-head.dancers-directory-head {
+            gap: 6px !important;
+            margin-top: 4px !important;
+            padding: 2px 0 0 !important;
+          }
+
+          .content-head.dancers-directory-head #tabTitle {
+            font-size: clamp(22px, 5.8vw, 27px) !important;
+            line-height: 1.04 !important;
+          }
+
+          .content-head.dancers-directory-head .count {
+            min-height: 26px !important;
+            padding: 0 9px !important;
+            font-size: 11px !important;
+          }
+
+          .content-head.dancers-directory-head + #results.home-dancer-grid {
+            margin-top: -6px !important;
+          }
+
+          .content-head.dancers-directory-head + #results.home-dancer-grid > .home-dancer-grid-heading:first-child {
+            margin-top: 0;
+            padding: 7px 0 2px;
+          }
+
+          .home-dancer-grid-heading.is-upcoming strong {
+            color: #b9f6ff;
+            text-shadow: none;
+          }
+        }
       </style>
 
       <section class="stack" aria-live="polite">
@@ -48466,6 +48499,7 @@
       const keepDancerCityOnOneLine =
         !selectedVenue && activeTab === "dancers" && venueFilter === "all";
       tabTitle.classList.toggle("dancers-city-title", keepDancerCityOnOneLine);
+      tabTitle.closest(".content-head")?.classList.toggle("dancers-directory-head", keepDancerCityOnOneLine);
       if (keepDancerCityOnOneLine) {
         const cityTitle = document.createElement("span");
         cityTitle.className = "tab-title-city";
@@ -48478,7 +48512,9 @@
         ? `${allItems.length} venue${allItems.length === 1 ? "" : "s"}`
         : activeTab === "tonight"
           ? `${allItems.length} working`
-          : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
+          : activeTab === "dancers"
+            ? `${allItems.length} total`
+            : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
       tabCount.textContent = loadingLiveProfiles
         ? "Loading live profiles..."
         : selectedVenue
@@ -49398,6 +49434,7 @@
       bottomTv?.classList.add("active");
       bottomTv?.setAttribute("aria-current", "page");
       tabTitle.classList.remove("dancers-city-title");
+      tabTitle.closest(".content-head")?.classList.remove("dancers-directory-head");
       tabTitle.textContent = `MyDancr TV in ${city}`;
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
