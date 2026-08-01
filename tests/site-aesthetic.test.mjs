@@ -137,11 +137,11 @@ test("the compact dancer directory reserves glow for active controls", () => {
   )?.[0] || "";
   assert.match(
     compactDirectoryRule,
-    /border-color: rgba\(248, 250, 252, 0\.11\) !important;/,
+    /border-color: rgba\(248, 250, 252, 0\.16\) !important;/,
   );
   assert.match(
     compactDirectoryRule,
-    /0 8px 18px rgba\(5, 5, 7, 0\.3\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.025\) !important;/,
+    /0 8px 18px rgba\(5, 5, 7, 0\.34\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.04\) !important;/,
   );
   assert.doesNotMatch(compactDirectoryRule, /91, 19, 255|violet halo[^.]*rgba|beam-card/);
   assert.match(

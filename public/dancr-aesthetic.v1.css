@@ -457,10 +457,10 @@ body.dancr-button-system > .app main.stack > section.stack > #results.venue-card
  * inactive cards use a quiet neutral edge without an ambient violet halo.
  * Selection glow remains reserved for the active filter and navigation. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
-  border-color: rgba(248, 250, 252, 0.11) !important;
+  border-color: rgba(248, 250, 252, 0.16) !important;
   box-shadow:
-    0 8px 18px rgba(5, 5, 7, 0.3),
-    inset 0 1px 0 rgba(248, 250, 252, 0.025) !important;
+    0 8px 18px rgba(5, 5, 7, 0.34),
+    inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
 }
 
 /* The venue identity panel stays quieter than the card perimeter so nested

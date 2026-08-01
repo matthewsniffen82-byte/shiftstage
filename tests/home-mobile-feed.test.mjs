@@ -167,7 +167,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
 test("Dancers uses larger three-column mobile cards with a scrollbar-safe right rail", () => {
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 8px !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 10px !important;/,
   );
   assert.match(
     homeSource,
@@ -175,7 +175,7 @@ test("Dancers uses larger three-column mobile cards with a scrollbar-safe right 
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?gap: 4px !important;/,
+    /@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?scroll-padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,

@@ -32625,7 +32625,7 @@
         #results.home-dancer-grid.home-dancer-three-column {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           align-items: start !important;
-          gap: 8px !important;
+          gap: 10px !important;
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
@@ -32774,7 +32774,9 @@
             width: calc(100% + 16px) !important;
             margin-inline: -8px !important;
             padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
-            gap: 4px !important;
+            padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px)) !important;
+            gap: 6px !important;
+            scroll-padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
           }
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
             padding: 20px 5px 5px;
