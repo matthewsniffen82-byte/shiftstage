@@ -39,7 +39,19 @@ test("mobile utility header is rounded, compact, and aligned with the page", () 
 test("the brand remains a restrained Home control", () => {
   assert.match(
     mobileHeader,
-    /header #brandHome\.brand,[\s\S]*?width: 94px !important;[\s\S]*?height: 44px !important;[\s\S]*?border: 1px solid rgba\(124, 58, 237, 0\.38\) !important;[\s\S]*?0 0 14px rgba\(109, 40, 217, 0\.12\) !important;/,
+    /header #brandHome\.brand,[\s\S]*?width: 108px !important;[\s\S]*?height: 44px !important;[\s\S]*?justify-content: flex-start !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    mobileHeader,
+    /header #brandHome \.mydancr-live-logo \{[\s\S]*?font-size: 20px !important;[\s\S]*?letter-spacing: -0\.07em !important;[\s\S]*?rgba\(255, 255, 255, 0\.18\)/,
+  );
+  assert.match(
+    mobileHeader,
+    /header #brandHome \.mydancr-live-logo \.violet-r \{[\s\S]*?color: #8b5cf6 !important;[\s\S]*?rgba\(139, 92, 246, 0\.58\)/,
+  );
+  assert.match(
+    lateMobileHeader,
+    /header #brandHome\.brand \{[\s\S]*?width: 108px !important;[\s\S]*?flex: 0 0 108px !important;[\s\S]*?header #brandHome \.mydancr-live-logo \{\s*font-size: 20px !important;/,
   );
   assert.match(homeSource, /brandHome\.addEventListener\("click", returnToHomeDiscoveryMain\)/);
 });
