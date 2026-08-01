@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=12" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=13" rel="stylesheet">/,
   );
 });
 
@@ -77,6 +77,25 @@ test("scrolling card feeds have neutral gutters without a violet backdrop", () =
     2,
     "Android/Chrome and iPhone/Safari must both suppress violet gutter glow",
   );
+});
+
+test("venue detail and full dancer profiles use the same near-black foundation and gutters", () => {
+  assert.match(
+    aesthetic,
+    /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?body\.dancr-button-system #profileBackdrop\.modal-backdrop\.show,[\s\S]*?body\.dancr-button-system #profileBackdrop \.profile-modal,[\s\S]*?body\.dancr-button-system #results\.venue-profile-overlay,[\s\S]*?body\.dancr-button-system #results\.venue-profile-overlay \.venue-detail,[\s\S]*?\.public-profile-shell \{[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?body\.dancr-button-system #profileBackdrop \.profile-modal,[\s\S]*?body\.dancr-button-system #results\.venue-profile-overlay,[\s\S]*?body\.dancr-button-system #results\.venue-profile-overlay \.venue-detail \{[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop \.profile-modal :is\(\.info-tile, \.social-tile, \.modal-actions\),[\s\S]*?#results\.venue-profile-overlay \.venue-detail :is\(\.info-tile, \.venue-section, \.venue-offer\) \{[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;/,
+  );
+  const profileFoundation = aesthetic.match(
+    /body\.dancr-button-system #profileBackdrop\.modal-backdrop,[\s\S]*?(?=#profileBackdrop \.profile-modal :is)/,
+  )?.[0] || "";
+  assert.doesNotMatch(profileFoundation, /radial-gradient|linear-gradient/);
 });
 
 test("the shared aesthetic covers public content, accounts, and operations surfaces", () => {
