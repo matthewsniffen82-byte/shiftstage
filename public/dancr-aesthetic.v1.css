@@ -401,6 +401,40 @@ body > .app main.stack {
   background: var(--dancr-color-background) !important;
 }
 
+/*
+ * Scrolling discovery gutters are part of the neutral foundation, not a brand
+ * accent. This removes legacy violet washes between cards on iOS and Android.
+ */
+body > .app main.stack > #results:is(
+  .home-dancer-grid,
+  .home-discovery-feed,
+  .home-tv-feed,
+  .card-grid,
+  .venue-card-grid
+) {
+  background-color: var(--dancr-color-background) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body > .app main.stack > #results:is(
+  .home-dancer-grid,
+  .home-discovery-feed,
+  .home-tv-feed,
+  .card-grid,
+  .venue-card-grid
+)::before,
+body > .app main.stack > #results:is(
+  .home-dancer-grid,
+  .home-discovery-feed,
+  .home-tv-feed,
+  .card-grid,
+  .venue-card-grid
+)::after {
+  content: none !important;
+  display: none !important;
+}
+
 body > .app main.stack > .hero.reference-hero {
   position: relative;
   overflow: hidden;

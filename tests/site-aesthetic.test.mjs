@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=8" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=9" rel="stylesheet">/,
   );
 });
 
@@ -37,6 +37,17 @@ test("Android and iPhone share the same near-black and charcoal content foundati
     /One device-neutral foundation[\s\S]*?(?=body > \.app main\.stack > \.hero\.reference-hero)/,
   )?.[0] || "";
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
+});
+
+test("scrolling card feeds have neutral gutters without a violet backdrop", () => {
+  assert.match(
+    aesthetic,
+    /#results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?\)::before,[\s\S]*?\)::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
 });
 
 test("the shared aesthetic covers public content, accounts, and operations surfaces", () => {
