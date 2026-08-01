@@ -429,6 +429,65 @@
   border-radius: 999px !important;
 }
 
+/* Media paging stays visually quiet while preserving a full mobile tap target. */
+.dancr-button-system :is(
+  .profile-modal-media-previous,
+  .profile-modal-media-next,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next
+) {
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9) !important;
+  filter: none !important;
+}
+
+.dancr-button-system :is(
+  .profile-modal-media-previous,
+  .profile-modal-media-next,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next
+):hover {
+  border: 0 !important;
+  background: rgba(0, 0, 0, 0.16) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.dancr-button-system :is(
+  .profile-modal-media-previous,
+  .profile-modal-media-next,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next
+):focus-visible {
+  border: 0 !important;
+  background: rgba(0, 0, 0, 0.22) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+  filter: none !important;
+}
+
+.dancr-button-system :is(
+  .profile-modal-media-previous,
+  .profile-modal-media-next
+):disabled {
+  opacity: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.dancr-button-system :is(
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next
+):disabled {
+  opacity: 0.22 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 .dancr-button-system input[type="file"]::file-selector-button {
   margin-inline-end: 10px;
   border: 1px solid var(--dancr-color-brand-primary-strong);

@@ -94,7 +94,11 @@ test("live profile thumbnails stay idle while the selected preview autoplays wit
   assert.match(liveApp, /Select View full screen for immersive playback/);
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-modal-media-previous,[\s\S]*?background: rgba\(8,8,12,\.18\)[\s\S]*?backdrop-filter: blur\(16px\) saturate\(1\.1\)/,
+    /#profileBackdrop \.profile-modal-media-previous,[\s\S]*?width: 44px;[\s\S]*?border: 0;[\s\S]*?background: rgba\(0,0,0,\.06\);[\s\S]*?box-shadow: none;[\s\S]*?font-size: 22px;[\s\S]*?opacity: \.64;[\s\S]*?backdrop-filter: none/,
+  );
+  assert.match(
+    liveApp,
+    /\.profile-tv-viewer-previous,[\s\S]*?width: 44px;[\s\S]*?background: rgba\(0,0,0,\.06\);[\s\S]*?box-shadow: none;[\s\S]*?font-size: 22px;[\s\S]*?opacity: \.64;[\s\S]*?backdrop-filter: none/,
   );
   assert.match(
     liveApp,

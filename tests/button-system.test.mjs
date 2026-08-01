@@ -96,5 +96,14 @@ test("profile media thumbnails and play controls retain their gallery-specific s
     buttonCss,
     /\.dancr-button-system \.public-profile-play \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: var\(--dancr-color-text-primary\) !important;/,
   );
+  assert.match(buttonCss, /Media paging stays visually quiet while preserving a full mobile tap target/);
+  assert.match(
+    buttonCss,
+    /\.profile-modal-media-previous,[\s\S]*?\.profile-tv-viewer-next[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 12px !important;[\s\S]*?background: rgba\(0, 0, 0, 0\.06\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/,
+  );
+  assert.match(
+    buttonCss,
+    /\.profile-modal-media-previous,[\s\S]*?\.profile-modal-media-next[\s\S]*?:disabled \{[\s\S]*?opacity: 0 !important;[\s\S]*?box-shadow: none !important;/,
+  );
   assert.doesNotMatch(buttonCss, /modal-media-video-play/);
 });
