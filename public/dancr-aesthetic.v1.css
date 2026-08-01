@@ -454,12 +454,14 @@ body.dancr-button-system > .app main.stack > section.stack > #results.venue-card
 }
 
 /* The compact dancer directory repeats many cards in a small area, so its
- * inactive cards use a quiet neutral edge without an ambient violet halo.
- * Selection glow remains reserved for the active filter and navigation. */
+ * inactive cards use a quiet neutral edge and a smaller neutral halo than the
+ * header or hero. Violet remains reserved for active filters and navigation. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
   border-color: rgba(248, 250, 252, 0.16) !important;
   box-shadow:
     0 8px 18px rgba(5, 5, 7, 0.34),
+    0 0 10px rgba(248, 250, 252, 0.045),
+    0 0 18px rgba(148, 163, 184, 0.03),
     inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
 }
 
