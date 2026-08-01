@@ -451,7 +451,7 @@ test("mobile Dancers and Venues share the same scrollbar-safe results track", ()
   );
 });
 
-test("all five mobile destinations share a neutral card edge with a restrained ambient glow", () => {
+test("all five mobile destinations share a neutral card edge while TV omits the violet perimeter glow", () => {
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-items: stretch !important;[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?margin: 0 !important;[\s\S]*?justify-self: center !important;/,
@@ -459,6 +459,10 @@ test("all five mobile destinations share a neutral card edge with a restrained a
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.38\);[\s\S]*?--home-card-glow: rgba\(91,19,255,.1\);/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.11\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.025\);[\s\S]*?--home-card-glow: transparent;/,
   );
   assert.doesNotMatch(
     homeSource,
