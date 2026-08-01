@@ -29576,13 +29576,15 @@
           z-index: 6;
           top: 14px;
           right: 14px;
-          min-width: 74px;
-          min-height: 36px;
+          width: 44px;
+          min-width: 44px;
+          max-width: 44px;
+          height: 44px;
+          min-height: 44px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 0 10px;
+          padding: 0;
           border: 1px solid rgba(255,255,255,.22);
           border-radius: 999px;
           color: #fff;
@@ -29593,25 +29595,37 @@
           backdrop-filter: blur(12px);
         }
         .home-tv-feed-sound svg {
-          width: 15px;
-          height: 15px;
+          width: 19px;
+          height: 19px;
           fill: none;
           stroke: currentColor;
           stroke-width: 2;
           stroke-linecap: round;
           stroke-linejoin: round;
         }
+        .home-tv-feed-sound-muted {
+          display: none;
+        }
+        .home-tv-feed-sound.is-muted .home-tv-feed-sound-waves {
+          display: none;
+        }
+        .home-tv-feed-sound.is-muted .home-tv-feed-sound-muted {
+          display: initial;
+        }
         .home-tv-feed-fullscreen {
           position: absolute;
           z-index: 6;
-          top: 58px;
+          top: 66px;
           right: 14px;
-          min-height: 32px;
+          width: 44px;
+          min-width: 44px;
+          max-width: 44px;
+          height: 44px;
+          min-height: 44px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 0 10px;
+          padding: 0;
           border: 1px solid rgba(255,255,255,.18);
           border-radius: 999px;
           color: rgba(255,255,255,.92);
@@ -29630,8 +29644,8 @@
           background: rgba(20,20,28,.52);
         }
         .home-tv-feed-fullscreen svg {
-          width: 14px;
-          height: 14px;
+          width: 18px;
+          height: 18px;
           fill: none;
           stroke: currentColor;
           stroke-width: 2;
@@ -31443,7 +31457,7 @@
             top: calc(106px + env(safe-area-inset-top));
           }
           .home-tv-feed-fullscreen {
-            top: calc(58px + env(safe-area-inset-top));
+            top: calc(66px + env(safe-area-inset-top));
             right: 12px;
           }
           .home-tv-feed-actions {
@@ -48473,9 +48487,10 @@
 
     function syncHomeTvFeedSoundButtons() {
       document.querySelectorAll("[data-home-tv-sound]").forEach((button) => {
-        const label = button.querySelector("[data-home-tv-sound-label]");
-        if (label) label.textContent = homeTvFeedMuted ? "Sound off" : "Sound on";
-        button.setAttribute("aria-label", homeTvFeedMuted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV");
+        const label = homeTvFeedMuted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV";
+        button.classList.toggle("is-muted", homeTvFeedMuted);
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
         button.setAttribute("aria-pressed", String(!homeTvFeedMuted));
       });
     }
@@ -48490,9 +48505,9 @@
         const slide = button.closest(".home-tv-feed-slide");
         const video = slide?.querySelector("video");
         const isFullscreen = fullscreenElement === slide || Boolean(video?.webkitDisplayingFullscreen);
-        const label = button.querySelector("[data-home-tv-fullscreen-label]");
-        if (label) label.textContent = isFullscreen ? "Exit full screen" : "View full screen";
-        button.setAttribute("aria-label", isFullscreen ? "Exit full-screen video" : "View this video full screen");
+        const label = isFullscreen ? "Exit full-screen video" : "View this video full screen";
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
         button.setAttribute("aria-pressed", String(isFullscreen));
       });
     }
@@ -49116,7 +49131,7 @@
       sound.className = "home-tv-feed-sound";
       sound.type = "button";
       sound.dataset.homeTvSound = "true";
-      sound.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"></path><path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"></path></svg><span data-home-tv-sound-label></span>';
+      sound.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"></path><path class="home-tv-feed-sound-waves" d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"></path><path class="home-tv-feed-sound-muted" d="m16 9 5 5m0-5-5 5"></path></svg>';
       sound.addEventListener("click", () => {
         homeTvFeedMuted = !homeTvFeedMuted;
         results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
@@ -49136,7 +49151,7 @@
       button.className = "home-tv-feed-fullscreen";
       button.type = "button";
       button.dataset.homeTvFullscreen = "true";
-      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></svg><span data-home-tv-fullscreen-label>View full screen</span>';
+      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"></path></svg>';
       button.addEventListener("click", () => void toggleHomeTvFeedFullscreen(slide, video));
       return button;
     }

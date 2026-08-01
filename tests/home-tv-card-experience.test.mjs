@@ -109,7 +109,7 @@ test("the mobile TV identity and progress sit low without moving actions or navi
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-fullscreen \{\s*top: calc\(58px \+ env\(safe-area-inset-top\)\);\s*right: 12px;/,
+    /\.home-tv-feed-fullscreen \{\s*top: calc\(66px \+ env\(safe-area-inset-top\)\);\s*right: 12px;/,
   );
 });
 
@@ -212,7 +212,7 @@ test("intentional pauses persist and every TV card exposes immersive fullscreen"
   );
   assert.match(
     homeSource,
-    /function createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?View full screen[\s\S]*?toggleHomeTvFeedFullscreen\(slide, video\)/,
+    /function createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?aria-hidden="true"[\s\S]*?toggleHomeTvFeedFullscreen\(slide, video\)/,
   );
   assert.match(
     homeSource,
@@ -221,6 +221,41 @@ test("intentional pauses persist and every TV card exposes immersive fullscreen"
   assert.match(
     homeSource,
     /\.home-tv-feed-slide:fullscreen,[\s\S]*?height: 100dvh;[\s\S]*?border-radius: 0;/,
+  );
+});
+
+test("TV sound and fullscreen utilities are compact icon-only controls with accessible names", () => {
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-sound \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?padding: 0;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-fullscreen \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?padding: 0;/,
+  );
+  const soundFactory = homeSource.match(
+    /function createHomeTvFeedSoundButton\(slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedFullscreenButton)/,
+  )?.[0] || "";
+  const fullscreenFactory = homeSource.match(
+    /function createHomeTvFeedFullscreenButton\(slide, video\) \{[\s\S]*?(?=\n    function renderHomeTvFeedSlide)/,
+  )?.[0] || "";
+  assert.match(soundFactory, /sound\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
+  assert.match(fullscreenFactory, /button\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
+  assert.doesNotMatch(
+    soundFactory.match(/sound\.innerHTML = '[^']*'/)?.[0] || "",
+    /<span|Sound off|Sound on/,
+  );
+  assert.doesNotMatch(
+    fullscreenFactory.match(/button\.innerHTML = '[^']*'/)?.[0] || "",
+    /<span|View full screen|Exit full screen/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeTvFeedFullscreenButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)/,
   );
 });
 

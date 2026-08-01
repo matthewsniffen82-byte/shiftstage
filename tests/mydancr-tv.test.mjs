@@ -156,6 +156,12 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(globalNavigation, /\.global-mobile-bottom-nav \{[\s\S]*?grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(feedClient, /className="tv-card-venue-line"[\s\S]*?className="tv-card-venue-name"[\s\S]*?video\.venue\.name/);
   assert.match(feedClient, /className="tv-card-stage-name"[\s\S]*?video\.dancer\.stageName/);
+  assert.match(
+    feedClient,
+    /className="tv-sound"[\s\S]*?aria-label=\{muted \? "Turn sound on" : "Mute video"\}[\s\S]*?title=\{muted \? "Turn sound on" : "Mute video"\}[\s\S]*?<SoundIcon muted=\{muted\} \/>/,
+  );
+  assert.match(feedClient, /function SoundIcon\(\{ muted \}: \{ muted: boolean \}\)[\s\S]*?aria-hidden="true"/);
+  assert.doesNotMatch(feedClient, /\{muted \? "Sound off" : "Sound on"\}/);
   assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);
   assert.match(tvSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("is_primary", true\)[\s\S]*?\.eq\("review_status", "approved"\)/);
   assert.match(tvSource, /dancer: \{ \.\.\.publicVideo\.dancer, primaryPhotoUrl \}/);
