@@ -370,6 +370,10 @@ test("Now and Dancers grid cards place all profile context and production action
   const dancerGridActions = homeSource.match(
     /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
   )?.[0] || "";
+  assert.match(
+    dancerGridActions,
+    /publicProfilePhotoUrl\(profile\)[\s\S]*?customPhotoAttrs\(profilePhotoUrl, publicProfilePhotoSrcSet\(profile\)\)[\s\S]*?home-dancer-grid-profile-avatar[\s\S]*?actionIconMarkup\("profile"\)/,
+  );
   assert.doesNotMatch(dancerGridActions, /data-profile-qr|home-dancer-grid-profile-qr/);
   assert.match(
     homeSource,
@@ -385,19 +389,19 @@ test("Now and Dancers grid cards place all profile context and production action
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-action-rail \{[\s\S]*?position: absolute;[\s\S]*?right: 10px;[\s\S]*?width: 52px;[\s\S]*?grid-template-columns: minmax\(0,1fr\)[\s\S]*?background: transparent !important;[\s\S]*?\.home-dancer-grid-context-actions \{[\s\S]*?repeat\(auto-fit,minmax\(104px,1fr\)\)/,
+    /\.home-dancer-grid-action-rail \{[\s\S]*?position: absolute;[\s\S]*?right: 10px;[\s\S]*?width: 48px;[\s\S]*?grid-template-columns: minmax\(0,1fr\)[\s\S]*?background: transparent !important;[\s\S]*?\.home-dancer-grid-context-actions \{[\s\S]*?repeat\(auto-fit,minmax\(104px,1fr\)\)/,
   );
   assert.match(
     homeSource,
-    /\.dancr-button-system \.home-dancer-grid-action-rail \.feed-card-action,[\s\S]*?border: 1px solid rgba\(255,255,255,.3\) !important;[\s\S]*?background: rgba\(5,5,9,.88\) !important;[\s\S]*?-webkit-appearance: none;[\s\S]*?backdrop-filter: none !important;/,
+    /\.dancr-button-system \.home-dancer-grid-action-rail \.feed-card-action,[\s\S]*?border: 1px solid rgba\(248,250,252,.18\) !important;[\s\S]*?background: rgba\(8,8,13,.68\) !important;[\s\S]*?-webkit-appearance: none;[\s\S]*?backdrop-filter: blur\(14px\) saturate\(1.08\) !important;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-link \{[\s\S]*?position: relative;[\s\S]*?display: block;[\s\S]*?\.home-dancer-grid-copy \{[\s\S]*?position: absolute;[\s\S]*?right: 70px;[\s\S]*?bottom: 68px;[\s\S]*?background: transparent;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-link \{[\s\S]*?position: relative;[\s\S]*?display: block;[\s\S]*?\.home-dancer-grid-copy \{[\s\S]*?position: absolute;[\s\S]*?right: 64px;[\s\S]*?bottom: 58px;[\s\S]*?background: transparent;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-context-actions \{[\s\S]*?position: absolute;[\s\S]*?right: 70px;[\s\S]*?bottom: 0;[\s\S]*?background: linear-gradient\(180deg,transparent,rgba\(5,5,8,.94\) 34%\);/,
+    /@media \(max-width: 679px\) \{[\s\S]*?\.home-dancer-grid-context-actions \{[\s\S]*?position: absolute;[\s\S]*?right: 64px;[\s\S]*?bottom: 0;[\s\S]*?background: linear-gradient\(180deg,transparent,rgba\(5,5,8,.94\) 34%\);/,
   );
   assert.match(
     homeSource,
@@ -469,7 +473,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable[^\"]*"[\s\S]*?data-card-action-slot="qr"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr[\s\S]*?actionButtonLabel\("qr", "QR"\)/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?if \(!qr\) return "";[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr[\s\S]*?actionButtonLabel\("qr", "QR"\)/,
   );
   assert.match(
     homeSource,
@@ -483,10 +487,10 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
     homeSource,
     /Shared scrolling-card QR rail state[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-available[\s\S]*?\.home-dancer-grid-action-rail \.home-card-qr-rail-action\.is-unavailable/,
   );
-  assert.match(
-    homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?<button class="feed-card-action home-card-qr-rail-action is-unavailable[^"]*"[\s\S]*?data-card-qr-label="\$\{escapeOptionValue\(cardLabel\)\}"[\s\S]*?data-card-qr-message="\$\{escapeOptionValue\(state\.detail\)\}"[\s\S]*?aria-expanded="false"/,
-  );
+  const dancerQrMarkup = homeSource.match(
+    /function homeDancerGridQrMarkup\(profile\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryQrMarkup)/,
+  )?.[0] || "";
+  assert.doesNotMatch(dancerQrMarkup, /is-unavailable|data-card-qr-label|data-card-qr-message/);
   assert.match(
     homeSource,
     /function showCardQrNotice\(trigger, label, message\)[\s\S]*?closest\("\.home-dancer-grid-card, \.home-venue-discovery-slide"\)[\s\S]*?role", "status"[\s\S]*?--home-card-qr-notice-top[\s\S]*?--home-card-qr-notice-right[\s\S]*?aria-expanded", "true"/,
@@ -501,6 +505,22 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.doesNotMatch(homeSource, /unavailableCardQr\.title/);
   assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
+});
+
+test("dancer grid hierarchy stays readable without changing the production card footprint", () => {
+  assert.match(
+    homeSource,
+    /function homeDancerGridScheduleLabel\(profile, city = selectedCity\(\)\)[\s\S]*?if \(isWorkingTonight\(profile, city\)\) return "Working now";[\s\S]*?if \(!profile\?\.scheduled\) return "No upcoming shift posted";[\s\S]*?month: "short"[\s\S]*?return `Upcoming · \$\{dateLabel\}`/,
+  );
+  assert.match(
+    homeSource,
+    /function homeDancerGridCard\(profile, city\)[\s\S]*?const scheduleLabel = homeDancerGridScheduleLabel\(profile, city\);[\s\S]*?home-dancer-grid-status \$\{status\.className\}">\$\{escapeHtml\(scheduleLabel\)\}/,
+  );
+  assert.match(homeSource, /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/);
+  assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);
+  assert.match(homeSource, /\.home-dancer-grid-venue span \{[\s\S]*?-webkit-line-clamp: 2;/);
+  assert.match(homeSource, /\.home-dancer-grid-name \{[\s\S]*?font-family: var\(--font-ui\);[\s\S]*?font-size: 25px;[\s\S]*?font-weight: 900;/);
+  assert.match(homeSource, /height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;/);
 });
 
 test("bottom navigation keeps every destination on one uniform baseline", () => {

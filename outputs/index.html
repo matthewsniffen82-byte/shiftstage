@@ -25805,13 +25805,18 @@
 
     #homeLiveRadius {
       overflow: hidden;
+      color: rgba(248, 250, 252, 0.72);
       text-overflow: ellipsis;
       text-align: center;
     }
 
     .home-live-summary strong {
       color: #FFFFFF;
-      text-shadow: 0 0 12px rgba(124, 58, 237, 0.34);
+      text-shadow: none;
+    }
+
+    #homeLiveWorking.is-empty {
+      color: rgba(248, 250, 252, 0.58);
     }
 
     @media (max-width: 899px) {
@@ -31928,10 +31933,10 @@
           min-width: 0;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 12px;
+          justify-content: flex-start;
+          gap: 8px;
           margin: 4px 0 0;
-          padding: 10px 2px 3px;
+          padding: 9px 2px 3px;
           color: #fff;
         }
         .home-dancer-grid-heading:not(:first-child) {
@@ -31941,34 +31946,36 @@
         .home-dancer-grid-heading strong {
           min-width: 0;
           overflow: hidden;
-          font-size: clamp(17px, 4.8vw, 22px);
-          font-weight: 950;
+          font-family: var(--font-ui);
+          font-size: clamp(17px, 4.6vw, 20px);
+          font-weight: 900;
+          letter-spacing: -.01em;
           line-height: 1.05;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
-        .home-dancer-grid-heading span {
-          min-width: 28px;
-          height: 26px;
+        .home-dancer-grid-heading > span {
+          min-width: 25px;
+          height: 24px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           flex: 0 0 auto;
-          padding: 0 8px;
-          border: 1px solid rgba(167,139,250,.28);
+          padding: 0 7px;
+          border: 1px solid rgba(248,250,252,.14);
           border-radius: 999px;
-          color: #ddd6fe;
-          background: rgba(43,28,76,.62);
+          color: rgba(248,250,252,.76);
+          background: rgba(12,12,17,.74);
           font-size: 10px;
-          font-weight: 950;
+          font-weight: 900;
         }
         .home-dancer-grid-heading.is-now strong {
           color: #9af7c5;
-          text-shadow: 0 0 16px rgba(77,236,157,.2);
+          text-shadow: none;
         }
         .home-dancer-grid-heading.is-upcoming strong {
-          color: #b7f4ff;
-          text-shadow: 0 0 16px rgba(34,199,255,.2);
+          color: #f8fafc;
+          text-shadow: none;
         }
         .home-dancer-grid-heading.is-open strong {
           color: #d4c8e4;
@@ -32083,10 +32090,9 @@
         .home-dancer-grid-venue {
           min-width: 0;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 5px;
-          overflow: hidden;
-          color: #c9c3d4;
+          color: rgba(248,250,252,.86);
           font-size: 10px;
           font-weight: 800;
           line-height: 1.2;
@@ -32097,9 +32103,12 @@
           flex: 0 0 13px;
         }
         .home-dancer-grid-venue span {
+          display: -webkit-box;
           overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          line-height: 1.24;
+          white-space: normal;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
         }
         .home-dancer-grid-status {
           width: fit-content;
@@ -32141,10 +32150,10 @@
           z-index: 6;
           top: 96px;
           right: 10px;
-          width: 52px;
+          width: 48px;
           display: grid;
           grid-template-columns: minmax(0,1fr);
-          gap: 7px;
+          gap: 6px;
           background: transparent !important;
           box-shadow: none !important;
           filter: none !important;
@@ -32185,30 +32194,30 @@
         }
         .dancr-button-system .home-dancer-grid-action-rail .feed-card-action,
         .dancr-button-system .home-dancer-grid-action-rail .home-dancer-grid-profile-button {
-          width: 52px;
-          min-width: 52px;
-          min-height: 50px;
+          width: 48px;
+          min-width: 48px;
+          min-height: 48px;
           display: grid;
-          grid-template-rows: 22px auto;
+          grid-template-rows: 23px auto;
           place-items: center;
           gap: 2px;
           padding: 5px 2px 4px;
-          border: 1px solid rgba(255,255,255,.3) !important;
-          border-radius: 999px;
+          border: 1px solid rgba(248,250,252,.18) !important;
+          border-radius: 16px;
           color: rgba(255,255,255,.94);
-          background: rgba(5,5,9,.88) !important;
-          box-shadow: 0 8px 22px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.06) !important;
+          background: rgba(8,8,13,.68) !important;
+          box-shadow: 0 7px 18px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.045) !important;
           font-size: 8px;
           -webkit-appearance: none;
           appearance: none;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
+          backdrop-filter: blur(14px) saturate(1.08) !important;
+          -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
           touch-action: manipulation;
         }
         .dancr-button-system .home-dancer-grid-action-rail .feed-card-action.is-active {
-          border-color: rgba(126,234,255,.68) !important;
-          background: linear-gradient(135deg,rgba(84,56,160,.96),rgba(151,51,129,.92)) !important;
-          box-shadow: 0 8px 22px rgba(0,0,0,.42), 0 0 16px rgba(124,58,237,.22), inset 0 1px 0 rgba(255,255,255,.12) !important;
+          border-color: rgba(126,234,255,.62) !important;
+          background: rgba(8,70,88,.84) !important;
+          box-shadow: 0 7px 18px rgba(0,0,0,.34), 0 0 12px rgba(34,199,255,.12), inset 0 1px 0 rgba(255,255,255,.08) !important;
         }
         .home-dancer-grid-actions .action-icon {
           width: 17px;
@@ -32216,9 +32225,22 @@
           flex: 0 0 17px;
         }
         .home-dancer-grid-action-rail .action-icon {
-          width: 21px;
-          height: 21px;
-          flex-basis: 21px;
+          width: 20px;
+          height: 20px;
+          flex-basis: 20px;
+        }
+        .home-dancer-grid-profile-avatar {
+          width: 24px;
+          height: 24px;
+          display: block;
+          overflow: hidden;
+          border: 1px solid rgba(248,250,252,.34);
+          border-radius: 50%;
+          background: rgba(248,250,252,.08);
+          background-image: var(--custom-photo);
+          background-position: center top;
+          background-repeat: no-repeat;
+          background-size: cover;
         }
         .home-dancer-grid-actions .feed-card-action:focus-visible,
         .home-dancer-grid-actions .home-dancer-grid-profile-button:focus-visible {
@@ -32226,8 +32248,8 @@
           outline-offset: 2px;
         }
         .home-dancer-grid-actions .home-dancer-grid-profile-button {
-          border-color: rgba(126,234,255,.4) !important;
-          background: rgba(5,33,44,.92) !important;
+          border-color: rgba(248,250,252,.22) !important;
+          background: rgba(8,8,13,.72) !important;
         }
         .home-dancer-grid-actions .home-dancer-grid-profile-qr.is-open {
           border-color: rgba(126,234,255,.72) !important;
@@ -32236,7 +32258,7 @@
           box-shadow: 0 0 16px rgba(34,199,255,.14), inset 0 1px 0 rgba(255,255,255,.08) !important;
         }
         .home-dancer-grid-actions .home-dancer-grid-share {
-          border-color: rgba(192,132,252,.42) !important;
+          border-color: rgba(248,250,252,.18) !important;
         }
         .home-dancer-grid-actions .home-dancer-grid-venue-action,
         .home-dancer-grid-actions .home-dancer-grid-directions {
@@ -32402,8 +32424,8 @@
           .home-dancer-grid-copy {
             position: absolute;
             z-index: 5;
-            right: 70px;
-            bottom: 68px;
+            right: 64px;
+            bottom: 58px;
             left: 0;
             gap: 6px;
             padding: 12px 12px 9px;
@@ -32412,26 +32434,37 @@
             pointer-events: none;
           }
           .home-dancer-grid-venue {
-            color: rgba(255,255,255,.88);
+            color: rgba(248,250,252,.9);
           }
           .home-dancer-grid-context-actions {
             position: absolute;
             z-index: 7;
-            right: 70px;
+            right: 64px;
             bottom: 0;
             left: 0;
             grid-template-columns: repeat(auto-fit,minmax(96px,1fr));
             gap: 6px;
-            padding: 8px 8px 9px;
+            padding: 6px 8px 8px;
             background: linear-gradient(180deg,transparent,rgba(5,5,8,.94) 34%);
           }
           .home-dancer-grid-context-actions .feed-card-action {
-            min-height: 50px;
-            border-color: rgba(255,255,255,.24);
-            background: rgba(8,8,13,.76);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.06),0 8px 20px rgba(0,0,0,.28);
-            backdrop-filter: blur(12px) saturate(1.2);
-            -webkit-backdrop-filter: blur(12px) saturate(1.2);
+            min-height: 44px;
+            border-color: rgba(248,250,252,.18);
+            background: rgba(8,8,13,.66);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.24);
+            backdrop-filter: blur(14px) saturate(1.08);
+            -webkit-backdrop-filter: blur(14px) saturate(1.08);
+          }
+          .home-dancer-grid-context-actions .home-dancer-grid-venue-action {
+            border-color: rgba(248,250,252,.18) !important;
+            color: rgba(248,250,252,.9);
+            background: rgba(8,8,13,.68) !important;
+          }
+          .home-dancer-grid-context-actions .home-dancer-grid-directions {
+            border-color: rgba(34,199,255,.46) !important;
+            color: #dff9ff;
+            background: rgba(5,54,70,.72) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.06),0 7px 18px rgba(0,0,0,.26) !important;
           }
 
           /* Shared mobile card typography hierarchy. */
@@ -32443,6 +32476,12 @@
             font-weight: 950;
             letter-spacing: 0;
             line-height: 1.05;
+          }
+          .home-dancer-grid-name {
+            font-family: var(--font-ui);
+            font-size: 25px;
+            font-weight: 900;
+            letter-spacing: -.02em;
           }
           .home-dancer-grid-venue,
           .home-tv-feed-meta,
@@ -32488,6 +32527,11 @@
             line-height: 1;
           }
           /* End shared mobile card typography hierarchy. */
+          #tabTitle.dancers-city-title {
+            font-family: var(--font-ui) !important;
+            font-weight: 900 !important;
+            letter-spacing: -.025em !important;
+          }
         }
         @media (min-width: 680px) {
           #results.home-dancer-grid {
@@ -39579,6 +39623,8 @@
       const icons = {
         heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>',
         star: '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.4 4.2 1.1 6-5.5-3-5.5 3 1.1-6-4.4-4.2 6.1-.8L12 3Z"></path></svg>',
+        profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>',
+        venue: '<svg viewBox="0 0 24 24"><path d="M4 20V8.5L12 4l8 4.5V20"></path><path d="M8 20v-5h8v5"></path><path d="M8 10h.01M12 10h.01M16 10h.01"></path></svg>',
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
         pin: '<svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>',
@@ -47517,10 +47563,13 @@
       const workingNowCount = getItems(city, "tonight").length;
       const radiusLabel = distanceSelect?.value || "25 mi";
       const venueLabel = venueName === "all" ? "All venues" : venueName;
+      const loading = liveDiscoveryIsLoading(city);
+      const workingSummary = document.getElementById("homeLiveWorking");
       document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
-      document.getElementById("homeLiveWorking").textContent = liveDiscoveryIsLoading(city)
+      workingSummary.textContent = loading
         ? "Loading live schedule…"
         : `${workingNowCount} working now`;
+      workingSummary.classList.toggle("is-empty", !loading && workingNowCount === 0);
       syncHomeFilterToggleState();
     }
 
@@ -47700,6 +47749,32 @@
       };
     }
 
+    function homeDancerGridScheduleLabel(profile, city = selectedCity()) {
+      if (isWorkingTonight(profile, city)) return "Working now";
+      if (!profile?.scheduled) return "No upcoming shift posted";
+
+      if (profile.shiftStartsAt) {
+        const start = new Date(profile.shiftStartsAt);
+        if (!Number.isNaN(start.getTime())) {
+          const dateLabel = new Intl.DateTimeFormat("en-US", {
+            month: "short",
+            day: "numeric",
+            timeZone: cityTimeZone(city)
+          }).format(start);
+          return `Upcoming · ${dateLabel}`;
+        }
+      }
+
+      const compactDate = compactUpcomingDateLabel(profile, city);
+      const match = compactDate.match(/^(\d{1,2})\/(\d{1,2})$/);
+      if (match) {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthName = monthNames[Number(match[1]) - 1];
+        if (monthName) return `Upcoming · ${monthName} ${Number(match[2])}`;
+      }
+      return "Upcoming";
+    }
+
     function homeDiscoveryFeedLiveQrData(profile) {
       if (!isWorkingTonight(profile) || !profile.venueId) return null;
       if (profile.activeDeal?.id && profile.dealAttributionToken) {
@@ -47747,12 +47822,8 @@
     }
 
     function homeDancerGridQrMarkup(profile) {
-      const state = dancerClubDealState(profile);
       const qr = homeDiscoveryFeedLiveQrData(profile);
-      if (!qr || state.key !== "available") {
-        const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
-        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deal QR: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "QR")}</button>`;
-      }
+      if (!qr) return "";
       const saveOnOpen = qr.saveOnOpen ? " data-save-deal-pass-on-open" : "";
       const venueName = escapeHtml(qr.venueName || "this venue");
       return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr${saveOnOpen} aria-label="Open the Club Deal QR for ${venueName}">${actionButtonLabel("qr", "QR")}</button>`;
@@ -47847,7 +47918,7 @@
             <span class="home-venue-discovery-meta">${hoursMarkup}${workingNowMarkup}</span>
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
-            <button class="feed-card-action home-dancer-grid-profile-button" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("star", "Profile")}</button>
+            <button class="feed-card-action home-dancer-grid-profile-button" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("venue", "Profile")}</button>
             ${railQrMarkup}
             <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
@@ -47872,8 +47943,13 @@
       const venueName = String(profile.venue || "").trim();
       const venueValue = escapeOptionValue(venueName);
       const venue = resolveVenueByName(venueName, city);
+      const profilePhotoUrl = publicProfilePhotoUrl(profile);
+      const profilePhotoAttrs = customPhotoAttrs(profilePhotoUrl, publicProfilePhotoSrcSet(profile));
+      const profileActionVisual = profilePhotoUrl
+        ? `<span class="home-dancer-grid-profile-avatar${profilePhotoAttrs.className}"${profilePhotoAttrs.style} aria-hidden="true"></span>`
+        : actionIconMarkup("profile");
       const venueActionMarkup = venue
-        ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} venue profile">${actionButtonLabel("pin", "Venue")}</button>`
+        ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} venue profile">${actionButtonLabel("venue", "Venue")}</button>`
         : "";
       const directionsMarkup = venue?.address
         ? `<a class="feed-card-action home-dancer-grid-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${escapeHtml(venueName)}">${actionButtonLabel("pin", "Directions")}</a>`
@@ -47885,7 +47961,7 @@
       return `
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
-            <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${actionButtonLabel("star", "Profile")}</button>
+            <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${profileActionVisual}<span>Profile</span></button>
             ${homeDancerGridQrMarkup(profile)}
             <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
@@ -47908,6 +47984,7 @@
       const venueName = String(profile.venue || "").trim();
       const distanceLabel = profileCardDistanceLabel(profile);
       const status = homeDiscoveryFeedStatus(profile);
+      const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const verifiedMark = profile.status === "Verified"
         ? '<span class="verified-mark" aria-label="Verified">✓</span>'
         : "";
@@ -47920,13 +47997,13 @@
           ? "is-upcoming"
           : "is-open";
       return `
-        <article class="dancer-card home-dancer-grid-card ${groupClass}" data-profile="${profileValue}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+        <article class="dancer-card home-dancer-grid-card ${groupClass}" data-profile="${profileValue}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
               <h3 class="home-dancer-grid-name">${safeName}${verifiedMark}</h3>
               ${venueMarkup}
-              <span class="home-dancer-grid-status ${status.className}">${escapeHtml(status.label)}</span>
+              <span class="home-dancer-grid-status ${status.className}">${escapeHtml(scheduleLabel)}</span>
             </span>
           </a>
           ${homeDancerGridActionsMarkup(profile, city)}
@@ -48187,11 +48264,16 @@
       } else {
         tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
       }
+      const resultCountLabel = activeTab === "venues"
+        ? `${allItems.length} venue${allItems.length === 1 ? "" : "s"}`
+        : activeTab === "tonight"
+          ? `${allItems.length} working`
+          : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
       tabCount.textContent = loadingLiveProfiles
         ? "Loading live profiles..."
         : selectedVenue
         ? city
-        : `${allItems.length} result${allItems.length === 1 ? "" : "s"}`;
+        : resultCountLabel;
       const usesDiscoveryFeed =
         homeDiscoveryFeedOpen &&
         activeTab === "venues" &&
