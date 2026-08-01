@@ -87,3 +87,22 @@ test("the unread badge stays a contained circle at the bell's top-right", () => 
   assert.match(unreadBadge, /padding: 0 !important;/);
   assert.match(unreadBadge, /transform: none !important;/);
 });
+
+test("the mobile notification panel opens inside the visible viewport", () => {
+  assert.match(
+    homeSource,
+    /@media \(max-width: 640px\) \{[\s\S]*?header \.customer-quick-panel \{[\s\S]*?position: fixed !important;[\s\S]*?top: calc\(env\(safe-area-inset-top, 0px\) \+ 104px\) !important;[\s\S]*?left: 12px !important;[\s\S]*?right: 12px !important;[\s\S]*?max-height: calc\(100dvh - env\(safe-area-inset-top, 0px\) - 124px\) !important;/,
+  );
+  assert.match(
+    mobileHeader,
+    /header \.utility-menu-panel \{\s*top: calc\(100% \+ 8px\) !important;/,
+  );
+  assert.doesNotMatch(
+    mobileHeader,
+    /header \.utility-menu-panel,\s*header \.customer-quick-panel/,
+  );
+  assert.match(
+    homeSource,
+    /customerNotificationQuickBtn\.addEventListener\("click",[\s\S]*?toggleCustomerQuickPanel\("notifications"\)/,
+  );
+});
