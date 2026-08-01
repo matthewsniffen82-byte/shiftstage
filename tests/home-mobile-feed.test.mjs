@@ -423,7 +423,7 @@ test("mobile dancer and venue discovery cards use the same stable viewport footp
 test("mobile Dancers and Venues share the same scrollbar-safe results track", () => {
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?position: relative !important;[\s\S]*?box-sizing: border-box !important;[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 0 0 24px !important;[\s\S]*?overflow: visible !important;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?position: relative !important;[\s\S]*?box-sizing: border-box !important;[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?max-width: none !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 0 0 calc\(116px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-padding-bottom: calc\(116px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
 });
 
@@ -434,15 +434,15 @@ test("all five mobile destinations share a neutral card border without coloring 
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.12\);[\s\S]*?--home-card-glow: transparent;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.36\);[\s\S]*?--home-card-glow: transparent;/,
   );
   assert.match(
     homeSource,
-    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.12\);[\s\S]*?--home-card-glow: transparent;/,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.025\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.34\);[\s\S]*?--home-card-glow: transparent;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 14px 32px var\(--home-card-drop-shadow\),[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
   );
   assert.doesNotMatch(homeSource, /--home-card-edge-violet/);
   assert.doesNotMatch(homeSource, /--home-card-edge-cyan/);

@@ -49,7 +49,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
 });
 
-test("scrolling card feeds have neutral gutters without a violet backdrop", () => {
+test("scrolling card feeds have neutral gutters and clear card separation", () => {
   assert.match(
     liveApp,
     /<main class="stack">[\s\S]*?<section class="stack" aria-live="polite">[\s\S]*?<div class="list" id="results"><\/div>/,
@@ -64,7 +64,11 @@ test("scrolling card feeds have neutral gutters without a violet backdrop", () =
   );
   assert.match(
     aesthetic,
-    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;/,
+    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.home-discovery-feed > \.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?border-color: rgba\(248, 250, 252, 0\.07\) !important;/,
   );
   assert.match(
     liveApp,

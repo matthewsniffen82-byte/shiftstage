@@ -436,16 +436,25 @@ body > .app main.stack > section.stack > #results:is(
   display: none !important;
 }
 
-/* Keep the vertical gutters purely near-black. Card artwork and neutral borders
- * stay intact, but no inactive card halo may bleed between cards. */
+/* Keep the vertical gutters purely near-black while giving each feed item one
+ * readable neutral edge and a small downward lift. The shadow is black-only so
+ * inactive cards never create a brand-colored halo between items. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-card,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-discovery-feed > .home-discovery-feed-slide,
 body.dancr-button-system > .app main.stack > section.stack > #results.card-grid > .dancer-card,
 body.dancr-button-system > .app main.stack > section.stack > #results.venue-card-grid > .venue-card {
-  border: 1px solid var(--dancr-color-border-subtle) !important;
-  box-shadow: none !important;
+  border: 1px solid rgba(248, 250, 252, 0.15) !important;
+  box-shadow:
+    0 14px 32px rgba(5, 5, 7, 0.38),
+    inset 0 1px 0 rgba(248, 250, 252, 0.035) !important;
   filter: none !important;
+}
+
+/* The venue identity panel stays quieter than the card perimeter so nested
+ * boxes cannot compete with the boundary between one venue and the next. */
+body.dancr-button-system > .app main.stack > section.stack > #results.home-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-copy {
+  border-color: rgba(248, 250, 252, 0.07) !important;
 }
 
 body > .app main.stack > .hero.reference-hero {
