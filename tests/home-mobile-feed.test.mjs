@@ -183,7 +183,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(460px, calc\(100vh - 180px\), 580px\) !important[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important[\s\S]*?scroll-snap-align: none !important/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important[\s\S]*?height: clamp\(420px, calc\(100vh - 230px\), 540px\) !important[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important[\s\S]*?scroll-snap-align: none !important/,
   );
   assert.match(
     homeSource,
@@ -236,7 +236,7 @@ test("TV and discovery cards both use natural page scrolling", () => {
   );
   assert.match(
     homeSource,
-    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(460px, calc\(100vh - 180px\), 580px\);[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\);[\s\S]*?min-height: 460px;[\s\S]*?max-height: 580px;[\s\S]*?contain: layout paint style;/,
+    /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(420px, calc\(100vh - 230px\), 540px\);[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\);[\s\S]*?min-height: 420px;[\s\S]*?max-height: 540px;[\s\S]*?contain: layout paint style;/,
   );
   assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(homeSource, /\}, \{ root: null, rootMargin: "-72px 0px -88px", threshold: \[\.25, \.6, \.72\] \}\);/);
@@ -408,11 +408,11 @@ test("Now and Dancers grid cards place all profile context and production action
 test("mobile dancer and venue discovery cards use the same stable viewport footprint", () => {
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?min-height: 460px !important;[\s\S]*?max-height: 580px !important;[\s\S]*?border-radius: 20px !important;/,
+    /#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?min-height: 420px !important;[\s\S]*?max-height: 540px !important;[\s\S]*?border-radius: 20px !important;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?box-sizing: border-box !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?min-height: 460px !important;[\s\S]*?max-height: 580px !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 0 !important;[\s\S]*?flex: none !important;[\s\S]*?aspect-ratio: auto !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?contain: layout paint style;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?box-sizing: border-box !important;[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?min-height: 420px !important;[\s\S]*?max-height: 540px !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 0 !important;[\s\S]*?flex: none !important;[\s\S]*?aspect-ratio: auto !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?contain: layout paint style;/,
   );
   assert.match(
     homeSource,

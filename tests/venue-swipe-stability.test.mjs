@@ -11,7 +11,7 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   );
   assert.match(
     homeSource,
-    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: clamp\(460px, calc\(100vh - 180px\), 580px\) !important;[\s\S]*?height: clamp\(460px, calc\(100svh - 180px\), 580px\) !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?scroll-snap-align: none !important;/,
+    /#results\.home-discovery-feed > \.home-discovery-feed-slide \{[\s\S]*?height: clamp\(420px, calc\(100vh - 230px\), 540px\) !important;[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\) !important;[\s\S]*?border-radius: 20px !important;[\s\S]*?scroll-snap-align: none !important;/,
   );
   assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
   assert.match(
