@@ -19,7 +19,7 @@ test("mobile navigation cannot cover the fixed profile video viewer", () => {
   );
   assert.match(
     homeSource,
-    /const overlayOpen = !!document\.querySelector\("\.page-panel\.show, \.modal-backdrop\.show,[^"]+"\);\s+document\.body\.classList\.toggle\("overlay-open", overlayOpen\);/,
+    /const overlayOpen = !!document\.querySelector\("\.page-panel\.show, \.modal-backdrop\.show,[^"]+"\);[\s\S]*?document\.body\.classList\.toggle\("overlay-open", overlayOpen\);/,
   );
   assert.match(
     homeSource,

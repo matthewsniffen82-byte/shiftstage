@@ -116,6 +116,11 @@
       overflow: hidden;
     }
 
+    body.dashboard-overlay-open .app > header,
+    body.dashboard-overlay-open #discoveryTabs {
+      display: none !important;
+    }
+
     body.profile-tv-viewer-open #discoveryTabs {
       visibility: hidden !important;
       pointer-events: none !important;
@@ -42555,7 +42560,11 @@
     function syncOverlayScrollLock() {
       const profileFullViewOpen = profileBackdrop.classList.contains("show");
       const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .profile-tv-viewer.show, .deal-pass-overlay.show, .profile-qr-overlay.show, .account-required-popover:not([hidden])");
+      const dashboardOverlayOpen = !!document.querySelector(
+        "#customerDashboard.show, #dancerDashboard.show, #venueDashboard.show, #adminDashboard.show"
+      );
       document.body.classList.toggle("overlay-open", overlayOpen);
+      document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
       syncProfileDestinationNavigation();
     }
