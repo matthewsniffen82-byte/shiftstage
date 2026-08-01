@@ -78,10 +78,15 @@ export function DancerPhotoCarousel({
   const [viewer, setViewer] = useState<{ kind: MediaTab; index: number } | null>(
     null,
   );
+  const [inlineMuted, setInlineMuted] = useState(true);
+  const [inlinePlaying, setInlinePlaying] = useState(false);
+  const [inlineCurrentTime, setInlineCurrentTime] = useState(0);
+  const [inlineDuration, setInlineDuration] = useState(0);
   const inlineGesture = useRef<SwipeGesture>(emptyGesture());
   const gesture = useRef<SwipeGesture>(emptyGesture());
   const inlineTrackpadLockedUntil = useRef(0);
   const trackpadLockedUntil = useRef(0);
+  const inlineUserPaused = useRef(false);
   const inlineVideo = useRef<HTMLVideoElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const activeItems: ProfileMedia[] =
@@ -91,6 +96,8 @@ export function DancerPhotoCarousel({
     Math.max(0, activeItems.length - 1),
   );
   const selectedItem = activeItems[selectedIndex];
+  const selectedVideoDuration =
+    selectedItem?.kind === "video" ? selectedItem.durationSeconds : 0;
   const viewerItems: ProfileMedia[] = viewer?.kind === "video"
     ? videoMedia
     : photoMedia;
@@ -119,12 +126,19 @@ export function DancerPhotoCarousel({
   }, [activeIndex, activeItems.length]);
 
   useEffect(() => {
+    inlineUserPaused.current = false;
+    setInlinePlaying(false);
+    setInlineCurrentTime(0);
+    setInlineDuration(selectedVideoDuration);
+  }, [selectedItem?.id, selectedItem?.kind, selectedVideoDuration]);
+
+  useEffect(() => {
     const video = inlineVideo.current;
     if (!video || selectedItem?.kind !== "video") return;
-    video.muted = true;
+    video.muted = inlineMuted;
     video.defaultMuted = true;
     const playWhenVisible = (visible: boolean) => {
-      if (visible) {
+      if (visible && !inlineUserPaused.current) {
         void video.play().catch(() => undefined);
       } else {
         video.pause();
@@ -143,7 +157,7 @@ export function DancerPhotoCarousel({
       observer.disconnect();
       video.pause();
     };
-  }, [selectedItem]);
+  }, [inlineMuted, selectedItem]);
 
   useEffect(() => {
     if (!viewer) return;
@@ -164,6 +178,37 @@ export function DancerPhotoCarousel({
 
   function openViewer(kind: MediaTab, index: number) {
     setViewer({ kind, index });
+  }
+
+  function toggleInlinePlayback() {
+    const video = inlineVideo.current;
+    if (!video) return;
+    if (video.paused) {
+      inlineUserPaused.current = false;
+      void video.play().catch(() => setInlinePlaying(false));
+      return;
+    }
+    inlineUserPaused.current = true;
+    video.pause();
+  }
+
+  function toggleInlineSound() {
+    const video = inlineVideo.current;
+    if (!video) return;
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    setInlineMuted(nextMuted);
+  }
+
+  function seekInlineVideo(value: number) {
+    const video = inlineVideo.current;
+    if (!video || !Number.isFinite(value)) return;
+    const duration = Number.isFinite(video.duration) && video.duration > 0
+      ? video.duration
+      : inlineDuration;
+    const nextTime = Math.min(Math.max(0, value), Math.max(0, duration));
+    video.currentTime = nextTime;
+    setInlineCurrentTime(nextTime);
   }
 
   function showRelativeInlineItem(direction: -1 | 1) {
@@ -367,7 +412,11 @@ export function DancerPhotoCarousel({
           className={`profile-media-feature is-${selectedItem.kind}`}
           data-profile-inline-media-swipe-surface
           onClick={(event) => {
-            if ((event.target as HTMLElement).closest("button")) return;
+            if (
+              (event.target as HTMLElement).closest(
+                "button, input, [data-profile-media-control]",
+              )
+            ) return;
             openViewer(selectedItem.kind, selectedIndex);
           }}
           onKeyDown={(event) => {
@@ -397,10 +446,23 @@ export function DancerPhotoCarousel({
             />
           ) : (
             <video
-              aria-label={`${stageName} muted TV preview ${selectedIndex + 1} of ${activeItems.length}`}
+              aria-label={`${stageName} TV preview ${selectedIndex + 1} of ${activeItems.length}`}
               key={selectedItem.id}
               loop
               muted
+              onDurationChange={(event) => {
+                if (Number.isFinite(event.currentTarget.duration)) {
+                  setInlineDuration(event.currentTarget.duration);
+                }
+              }}
+              onLoadedMetadata={(event) => {
+                if (Number.isFinite(event.currentTarget.duration)) {
+                  setInlineDuration(event.currentTarget.duration);
+                }
+              }}
+              onPause={() => setInlinePlaying(false)}
+              onPlay={() => setInlinePlaying(true)}
+              onTimeUpdate={(event) => setInlineCurrentTime(event.currentTarget.currentTime)}
               playsInline
               preload="auto"
               ref={inlineVideo}
@@ -410,6 +472,42 @@ export function DancerPhotoCarousel({
           <span className="profile-media-feature-position">
             {selectedItem.kind === "photo" ? "Photo" : "TV"} {selectedIndex + 1} of {activeItems.length}
           </span>
+          {selectedItem.kind === "video" ? (
+            <div
+              className="profile-media-video-controls"
+              data-profile-media-control
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <button
+                aria-label={inlinePlaying ? "Pause TV video" : "Play TV video"}
+                onClick={toggleInlinePlayback}
+                type="button"
+              >
+                {inlinePlaying ? "Pause" : "Play"}
+              </button>
+              <button
+                aria-label={inlineMuted ? "Turn TV video sound on" : "Turn TV video sound off"}
+                onClick={toggleInlineSound}
+                type="button"
+              >
+                {inlineMuted ? "Sound on" : "Sound off"}
+              </button>
+              <input
+                aria-label="TV video progress"
+                aria-valuetext={`${formatDuration(inlineCurrentTime)} of ${formatDuration(inlineDuration || selectedItem.durationSeconds)}`}
+                max={Math.max(0.1, inlineDuration || selectedItem.durationSeconds)}
+                min="0"
+                onChange={(event) => seekInlineVideo(Number(event.currentTarget.value))}
+                step="0.1"
+                type="range"
+                value={Math.min(inlineCurrentTime, Math.max(0.1, inlineDuration || selectedItem.durationSeconds))}
+              />
+              <output>
+                {formatDuration(inlineCurrentTime)} / {formatDuration(inlineDuration || selectedItem.durationSeconds)}
+              </output>
+            </div>
+          ) : null}
           <button
             aria-label={`Open ${stageName} ${selectedItem.kind} ${selectedIndex + 1} full screen`}
             className="profile-media-feature-expand"
@@ -534,6 +632,7 @@ export function DancerPhotoCarousel({
                 disablePictureInPicture
                 key={activeViewerItem.id}
                 loop
+                muted
                 playsInline
                 preload="auto"
                 src={activeViewerItem.videoUrl}

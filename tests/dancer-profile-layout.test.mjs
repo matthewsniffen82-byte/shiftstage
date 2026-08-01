@@ -80,11 +80,11 @@ test("profile actions expose live customer actions and nest profile QR inside Sh
 });
 
 test("Working Now profiles promote the checked-in venue, directions, and Club QR", () => {
-  assert.match(profilePage, /className="profile-working-card"/);
+  assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /Verified check-in · until/);
   assert.match(profilePage, /Venue &amp; directions/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
-  assert.match(profilePage, /ctaLabel="Get Club Deal"/);
+  assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);

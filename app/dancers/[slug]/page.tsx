@@ -52,6 +52,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const upcomingShifts = profile.upcomingShifts.filter(
     (shift) => shift.id !== activeShift?.id,
   );
+  const nextShift = upcomingShifts[0] || null;
   const [activeDeal, tvVideos] = await Promise.all([
     activeShift?.venueId
       ? getActiveClubDealForVenue(client, activeShift.venueId)
@@ -111,7 +112,32 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 ✓
               </span>
             </div>
-            <span>{profile.city}</span>
+            <div className="profile-titlebar-context">
+              {activeShift ? (
+                <>
+                  <span className="profile-titlebar-status is-live">Working now</span>
+                  <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
+                    {activeShift.venueName} · until{" "}
+                    {formatShiftTime(activeShift.endsAt, activeShift.timezone)}
+                  </Link>
+                </>
+              ) : nextShift ? (
+                <>
+                  <span className="profile-titlebar-status is-upcoming">
+                    Upcoming {formatShiftDate(nextShift.startsAt, nextShift.timezone)}
+                  </span>
+                  <Link href={`/venues/${encodeURIComponent(nextShift.venueSlug)}`}>
+                    {nextShift.venueName} ·{" "}
+                    {formatShiftTime(nextShift.startsAt, nextShift.timezone)}
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <span className="profile-titlebar-status is-empty">No shift posted</span>
+                  <span className="profile-titlebar-city">{profile.city}</span>
+                </>
+              )}
+            </div>
           </div>
           <ProfileCloseButton
             fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
@@ -134,43 +160,23 @@ export default async function DancerPublicPage({ params }: PageProps) {
           stageName={profile.stageName}
         />
 
-        <section className="profile-overview" aria-label={`${profile.stageName} profile summary`}>
-          <dl className="profile-metrics" aria-label="Profile activity">
-            <div>
-              <dd><DancerFollowerCount /></dd>
-              <dt>Followers</dt>
-            </div>
-            <div>
-              <dd><DancerGoingCount /></dd>
-              <dt>Going</dt>
-            </div>
-            <div>
-              <dd>{profile.profileViewsToday || 0}</dd>
-              <dt>Views today</dt>
-            </div>
-          </dl>
-        </section>
-
-        <DancerProfileActions
-          dancerId={profile.id}
-          profileName={profile.stageName}
-          shareControl={<ProfileShareButton stageName={profile.stageName} />}
-          shifts={profile.upcomingShifts.map((shift) => ({
-            id: shift.id,
-            label: shortShiftLabel(shift.startsAt, shift.timezone),
-            isActive: isActiveNow(shift),
-          }))}
-        />
-
         {activeShift ? (
-          <section className="profile-working-card" aria-labelledby="profile-working-title">
+          <section
+            className={`profile-working-card${activeDeal ? " has-club-deal" : ""}`}
+            aria-labelledby="profile-working-title"
+          >
             <div className="profile-working-head">
               <div>
-                <span className="profile-live-state">Working now</span>
-                <h2 id="profile-working-title">{activeShift.venueName}</h2>
+                <span className="profile-live-state">
+                  {activeDeal ? "Club Deal unlocked" : "Working now"}
+                </span>
+                <h2 id="profile-working-title">
+                  {activeDeal ? `Club Deal at ${activeShift.venueName}` : activeShift.venueName}
+                </h2>
                 <p>
-                  Verified check-in · until{" "}
-                  {formatShiftTime(activeShift.endsAt, activeShift.timezone)}
+                  {activeDeal
+                    ? `Open a dancer-attributed QR during this verified check-in, available until ${formatShiftTime(activeShift.endsAt, activeShift.timezone)}.`
+                    : `Verified check-in · until ${formatShiftTime(activeShift.endsAt, activeShift.timezone)}`}
                 </p>
               </div>
               <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
@@ -187,7 +193,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
                   dancerId={profile.id}
                   attributionToken={dealAttributionToken}
                   dancerNote
-                  ctaLabel="Get Club Deal"
+                  presentation="launcher"
+                  ctaLabel="Get Club Deal QR"
                   sectionId="club-deal"
                 />
               ) : (
@@ -203,6 +210,35 @@ export default async function DancerPublicPage({ params }: PageProps) {
             />
           </section>
         )}
+
+        <DancerProfileActions
+          dancerId={profile.id}
+          hasPrimaryDeal={Boolean(activeShift && activeDeal)}
+          profileName={profile.stageName}
+          shareControl={<ProfileShareButton stageName={profile.stageName} />}
+          shifts={profile.upcomingShifts.map((shift) => ({
+            id: shift.id,
+            label: shortShiftLabel(shift.startsAt, shift.timezone),
+            isActive: isActiveNow(shift),
+          }))}
+        />
+
+        <section className="profile-overview" aria-label={`${profile.stageName} profile summary`}>
+          <dl className="profile-metrics" aria-label="Profile activity">
+            <div>
+              <dd><DancerFollowerCount /></dd>
+              <dt>Followers</dt>
+            </div>
+            <div>
+              <dd><DancerGoingCount /></dd>
+              <dt>Going</dt>
+            </div>
+            <div>
+              <dd>{profile.profileViewsToday || 0}</dd>
+              <dt>Views today</dt>
+            </div>
+          </dl>
+        </section>
 
         {profile.socialLinks.length ? (
           <section className="profile-social-section" aria-labelledby="profile-social-heading">
@@ -321,19 +357,24 @@ function PublicProfileStyles() {
       .profile-titlebar-avatar { width: 46px; height: 46px; display: grid; flex: 0 0 46px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 0 20px rgba(124,58,237,.18); font-size: 14px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-titlebar-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
-      .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 2px; }
+      .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 5px; }
       .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(21px, 4vw, 29px); line-height: 1; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-titlebar-identity > span { overflow: hidden; color: #b9accd; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-titlebar-identity > .profile-titlebar-context { gap: 6px; overflow: hidden; }
+      .profile-titlebar-status { min-height: 20px; display: inline-flex; flex: 0 0 auto; align-items: center; padding: 0 7px; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #b9f6ff; background: rgba(126,234,255,.08); font-size: 8px; font-weight: 950; letter-spacing: .04em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+      .profile-titlebar-status.is-live { border-color: rgba(77,236,157,.54); color: #b7ffd8; background: rgba(23,137,82,.18); box-shadow: 0 0 14px rgba(77,236,157,.12); }
+      .profile-titlebar-status.is-empty { border-color: rgba(180,169,196,.2); color: #a99eb7; background: rgba(255,255,255,.035); }
+      .profile-titlebar-context a, .profile-titlebar-city { min-width: 0; overflow: hidden; color: #c8bfd6; font-size: 10px; font-weight: 850; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+      .profile-titlebar-context a:hover, .profile-titlebar-context a:focus-visible { color: #9fefff; outline: none; text-decoration: underline; text-underline-offset: 3px; }
       .profile-verified { width: 22px; height: 22px; flex: 0 0 22px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 17px rgba(126,234,255,.34); font-size: 13px; font-weight: 950; }
       .public-profile-close { width: 44px; min-height: 44px; display: inline-grid; flex: 0 0 44px; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.36); border-radius: 50%; color: #fff; background: rgba(10,10,14,.84); box-shadow: 0 0 18px rgba(124,58,237,.16); font-size: 28px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
       .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-deal-availability, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
-      .profile-overview { display: block; padding: 14px 0 12px; }
+      .profile-overview { display: block; margin-top: 4px; padding: 12px 0 4px; border-top: 1px solid rgba(126,234,255,.08); }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
-      .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 10px 4px; }
-      .profile-metrics dd { margin: 0; color: #fff; font-size: clamp(20px, 4vw, 28px); font-weight: 950; line-height: 1; }
-      .profile-metrics dt { color: #afa5bd; font-size: clamp(9px, 2.2vw, 12px); font-weight: 850; text-align: center; }
+      .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 8px 4px; }
+      .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(18px, 3.5vw, 24px); font-weight: 950; line-height: 1; }
+      .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; text-align: center; }
       .profile-social-section { display: grid; margin-top: 20px; margin-bottom: 18px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%, rgba(126,234,255,.08), transparent 11rem), rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 38px rgba(0,0,0,.2); }
       .social-links-control { display: grid; justify-items: center; gap: 12px; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
@@ -347,11 +388,13 @@ function PublicProfileStyles() {
       .social-list a.social-link-instagram svg, .social-list a.social-link-x svg { fill: none; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-bottom: 20px; }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 14px 0 12px; }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 7px 10px; border: 1px solid rgba(148,229,255,.24); border-radius: 12px; color: #fff; background: rgba(148,229,255,.075); cursor: pointer; font-size: 12px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
-      .live-actions .profile-action-primary { flex-direction: column; gap: 2px; border-color: rgba(126,234,255,.48); background: linear-gradient(135deg, rgba(109,40,217,.86), rgba(11,148,201,.74)); }
+      .live-actions .profile-action-going { grid-column: 1 / -1; min-height: 54px; flex-direction: column; gap: 2px; }
+      .live-actions .profile-action-primary { border-color: rgba(126,234,255,.48); background: linear-gradient(135deg, rgba(109,40,217,.86), rgba(11,148,201,.74)); box-shadow: 0 12px 30px rgba(49,46,129,.2), 0 0 18px rgba(34,199,255,.08); }
       .live-actions .profile-action-primary.profile-action-unavailable { border-color: rgba(148,137,166,.3); color: #bdb4ca; background: rgba(255,255,255,.055); }
+      .live-actions .profile-action-going.profile-action-secondary { border-color: rgba(148,229,255,.26); background: linear-gradient(135deg, rgba(38,31,56,.82), rgba(18,33,44,.76)); box-shadow: none; }
       .profile-action-requires-account { flex-direction: column; gap: 1px; }
       .profile-action-requirement { color: #c7bbd8; font-size: 8px; font-weight: 850; line-height: 1.1; }
       .profile-action-share-slot { min-width: 0; }
@@ -375,9 +418,15 @@ function PublicProfileStyles() {
       .profile-action-share-slot .profile-share-dialog-actions button.primary { border-color: transparent; background: linear-gradient(135deg, #6d28d9, #0b94c9); }
       .profile-share-dialog-actions svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; }
       .profile-share-dialog-status { min-height: 16px; color: #9fefff; font-size: 11px; font-weight: 850; text-align: center; }
-      .live-actions .profile-action-report { grid-column: 1 / -1; min-height: 30px; justify-self: end; width: fit-content; padding-inline: 4px; border: 0; color: #958aa4; background: transparent; font-size: 11px; text-decoration: underline; }
+      .profile-action-overflow { position: relative; min-width: 0; }
+      .profile-action-overflow-toggle { width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 10px; border: 1px solid rgba(148,229,255,.18); border-radius: 12px; color: #d8d0e4; background: rgba(255,255,255,.04); cursor: pointer; font-size: 12px; font-weight: 900; }
+      .profile-action-overflow-toggle > span:first-child { color: #9fefff; font-size: 15px; letter-spacing: .08em; line-height: 1; }
+      .profile-action-overflow-menu { position: absolute; z-index: 30; right: 0; top: calc(100% + 7px); width: min(220px, 74vw); display: grid; gap: 6px; padding: 8px; border: 1px solid rgba(126,234,255,.28); border-radius: 13px; background: rgba(10,8,16,.98); box-shadow: 0 18px 48px rgba(0,0,0,.56), 0 0 20px rgba(34,199,255,.08); }
+      .profile-action-overflow-menu button { min-height: 44px; padding: 0 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #d8d0e4; background: rgba(255,255,255,.035); font-size: 12px; font-weight: 850; text-align: left; cursor: pointer; }
+      .profile-action-overflow-menu button:disabled { opacity: .6; cursor: wait; }
       .profile-action-status { grid-column: 1 / -1; color: #94e5ff; font-size: 12px; font-weight: 850; }
-      .profile-working-card { display: grid; gap: 16px; padding: 20px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
+      .profile-working-card { display: grid; gap: 14px; margin-top: 14px; padding: 18px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
+      .profile-working-card.has-club-deal { border-color: rgba(77,236,157,.48); background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.16), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.94), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.13); }
       .profile-working-head { display: flex; align-items: end; justify-content: space-between; gap: 14px; }
       .profile-working-head > div { min-width: 0; display: grid; gap: 7px; }
       .profile-live-state, .eyebrow { width: fit-content; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -392,7 +441,8 @@ function PublicProfileStyles() {
       .club-deal-copy p, .club-deal-copy small { color: #b9accd; font-size: 11px; line-height: 1.4; }
       .club-deal-action { display: grid; justify-items: end; gap: 8px; }
       .club-deal-action > button, .venue-qr-launcher { min-height: 44px; padding: 0 15px; border: 1px solid rgba(126,234,255,.4); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
-      .profile-working-card .club-deal-action > button { border-color: rgba(77,236,157,.7); background: linear-gradient(135deg, #075c4d, #10804a); box-shadow: 0 0 22px rgba(77,236,157,.15); }
+      .profile-working-card .club-deal-launcher { width: 100%; min-height: 56px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-color: rgba(77,236,157,.78); background: linear-gradient(135deg, #075c4d, #10804a); box-shadow: 0 0 26px rgba(77,236,157,.2); }
+      .profile-working-card .club-deal-launcher strong { max-width: none; padding: 8px 12px; border-radius: 10px; color: #062015; background: #b7ffd8; }
       .deal-qr-frame { display: grid; justify-items: center; gap: 6px; }
       .deal-qr-frame img { width: 116px; aspect-ratio: 1; border-radius: 10px; background: #fff; }
       .deal-qr-frame span, .club-deal-action em { color: #9fefff; font-size: 10px; font-style: normal; }
@@ -423,6 +473,10 @@ function PublicProfileStyles() {
       .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; user-select: none; }
       .profile-media-feature > img { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-media-feature:focus-visible { border-color: #7eeaff; outline: 3px solid rgba(126,234,255,.2); outline-offset: 3px; }
+      .profile-media-video-controls { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 54px; display: grid; grid-template-columns: auto auto minmax(52px, 1fr) auto; align-items: center; gap: 7px; padding: 7px; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: rgba(4,4,8,.74); box-shadow: 0 10px 28px rgba(0,0,0,.32); backdrop-filter: blur(12px); cursor: default; }
+      .profile-media-video-controls button { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 9px; border: 1px solid rgba(126,234,255,.26); border-radius: 9px; color: #fff; background: rgba(126,234,255,.08); font-size: 10px; font-weight: 900; cursor: pointer; white-space: nowrap; }
+      .profile-media-video-controls input { width: 100%; min-width: 48px; accent-color: #7eeaff; cursor: pointer; }
+      .profile-media-video-controls output { color: #d8d0e4; font-size: 9px; font-weight: 850; white-space: nowrap; }
       .profile-media-feature-position, .profile-media-feature-expand { position: absolute; z-index: 2; display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(4,4,8,.68); backdrop-filter: blur(12px); font-size: 10px; font-weight: 900; }
       .profile-media-feature-position { top: 12px; left: 12px; }
       .profile-media-feature-expand { right: 12px; bottom: 12px; cursor: pointer; }
@@ -474,9 +528,8 @@ function PublicProfileStyles() {
       .profile-report-error { color: #ffb4c8; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px 32px; }
-        .profile-titlebar { min-height: 66px; }
+        .profile-titlebar { min-height: 72px; }
         .profile-titlebar-avatar { width: 42px; height: 42px; flex-basis: 42px; }
-        .profile-overview { padding-top: 12px; }
         .live-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
         .profile-working-card { padding: 16px; }
@@ -485,6 +538,9 @@ function PublicProfileStyles() {
         .club-deal-action { justify-items: stretch; }
         .deal-qr-frame { justify-items: center; }
         .profile-media-feature { max-height: min(64dvh, 540px); border-radius: 17px; }
+        .profile-media-video-controls { left: 9px; right: 9px; bottom: 52px; gap: 5px; padding: 6px; }
+        .profile-media-video-controls button { min-height: 32px; padding-inline: 7px; font-size: 9px; }
+        .profile-media-video-controls output { font-size: 8px; }
         .profile-media-feature-previous, .profile-media-feature-next { width: 38px; height: 48px; font-size: 28px; }
         .profile-media-feature-expand { right: 10px; bottom: 10px; }
         .profile-media-viewer-previous, .profile-media-viewer-next { width: 40px; height: 50px; font-size: 30px; }

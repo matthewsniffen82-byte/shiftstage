@@ -10,6 +10,11 @@ export function ProfileCloseButton({
   fallbackHref: string;
   profileType?: "dancer" | "venue";
 }) {
+  function navigateToFallback() {
+    const destination = new URL(fallbackHref, window.location.origin);
+    window.location.assign(destination.toString());
+  }
+
   function closeProfile() {
     const referrer = document.referrer;
     if (referrer) {
@@ -20,6 +25,12 @@ export function ProfileCloseButton({
           previousUrl.href !== window.location.href &&
           window.history.length > 1
         ) {
+          const fallbackTimer = window.setTimeout(navigateToFallback, 900);
+          window.addEventListener(
+            "pagehide",
+            () => window.clearTimeout(fallbackTimer),
+            { once: true },
+          );
           window.history.back();
           return;
         }
@@ -27,12 +38,12 @@ export function ProfileCloseButton({
         // Use the homepage fallback below.
       }
     }
-    window.location.assign(fallbackHref);
+    navigateToFallback();
   }
 
   return (
     <button
-      aria-label={`Close full ${profileType} profile and return to the previous page`}
+      aria-label={`Close full ${profileType} profile and return to the previous page or discovery results`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"

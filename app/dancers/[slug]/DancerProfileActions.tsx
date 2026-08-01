@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type PropsWithChildren,
@@ -112,11 +113,13 @@ export function DancerNotificationCount() {
 
 export function DancerProfileActions({
   dancerId,
+  hasPrimaryDeal = false,
   profileName,
   shifts,
   shareControl,
 }: {
   dancerId: string;
+  hasPrimaryDeal?: boolean;
   profileName: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
@@ -141,8 +144,10 @@ export function DancerProfileActions({
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportError, setReportError] = useState("");
+  const [moreActionsOpen, setMoreActionsOpen] = useState(false);
   const [accountRequiredAction, setAccountRequiredAction] = useState<AccountAction | null>(null);
   const [status, setStatus] = useState("");
+  const moreActionsRef = useRef<HTMLDivElement | null>(null);
   const actionShift = useMemo(
     () => shifts.find((shift) => shift.isActive) || shifts[0] || null,
     [shifts],
@@ -230,6 +235,24 @@ export function DancerProfileActions({
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [accountRequiredAction, reportDialogOpen]);
+
+  useEffect(() => {
+    if (!moreActionsOpen) return;
+    const closeMoreActions = (event: PointerEvent) => {
+      if (!moreActionsRef.current?.contains(event.target as Node)) {
+        setMoreActionsOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreActionsOpen(false);
+    };
+    document.addEventListener("pointerdown", closeMoreActions);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMoreActions);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [moreActionsOpen]);
 
   function requireCustomerAccount(action: AccountAction) {
     if (token) return true;
@@ -336,6 +359,7 @@ export function DancerProfileActions({
 
   function submitReport() {
     if (reportSaving || reportSubmitted) return;
+    setMoreActionsOpen(false);
     setReportError("");
     setReportDialogOpen(true);
   }
@@ -411,6 +435,21 @@ export function DancerProfileActions({
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
+          className={`${hasPrimaryDeal ? "profile-action-secondary" : "profile-action-primary profile-action-public"} profile-action-going${actionShift ? "" : " profile-action-unavailable"}`}
+          type="button"
+          onClick={() => {
+            if (actionShift) updateGoing(actionShift.id);
+          }}
+          disabled={!actionShift || !savedLoaded || goingSaving}
+        >
+          {actionShift && saved.goingShiftIds.includes(actionShift.id) ? "Going" : "I’m Going"}
+          <small className="profile-action-requirement">
+            {actionShift
+              ? `${actionShift.isActive ? "Working now" : actionShift.label} · No sign-in needed`
+              : "No shift posted"}
+          </small>
+        </button>
+        <button
           className={`profile-action-secondary${showSignedOutRequirements ? " profile-action-requires-account" : ""}`}
           type="button"
           onClick={() => {
@@ -436,30 +475,31 @@ export function DancerProfileActions({
             <small className="profile-action-requirement">Sign in required</small>
           ) : null}
         </button>
-        <button
-          className={`profile-action-primary profile-action-public${actionShift ? "" : " profile-action-unavailable"}`}
-          type="button"
-          onClick={() => {
-            if (actionShift) updateGoing(actionShift.id);
-          }}
-          disabled={!actionShift || !savedLoaded || goingSaving}
-        >
-          {actionShift && saved.goingShiftIds.includes(actionShift.id) ? "Going" : "I’m Going"}
-          <small className="profile-action-requirement">
-            {actionShift
-              ? `${actionShift.isActive ? "Working now" : actionShift.label} · No sign-in needed`
-              : "No shift posted"}
-          </small>
-        </button>
         {shareControl ? <div className="profile-action-share-slot">{shareControl}</div> : null}
-        <button
-          className="profile-action-report"
-          type="button"
-          onClick={submitReport}
-          disabled={reportSaving || reportSubmitted}
-        >
-          {reportSubmitted ? "Reported" : reportSaving ? "Submitting" : "Report"}
-        </button>
+        <div className="profile-action-overflow" ref={moreActionsRef}>
+          <button
+            aria-expanded={moreActionsOpen}
+            aria-haspopup="menu"
+            className="profile-action-overflow-toggle"
+            onClick={() => setMoreActionsOpen((current) => !current)}
+            type="button"
+          >
+            <span aria-hidden="true">•••</span>
+            <span>More</span>
+          </button>
+          {moreActionsOpen ? (
+            <div className="profile-action-overflow-menu" role="menu">
+              <button
+                disabled={reportSaving || reportSubmitted}
+                onClick={submitReport}
+                role="menuitem"
+                type="button"
+              >
+                {reportSubmitted ? "Profile reported" : reportSaving ? "Submitting report" : "Report profile"}
+              </button>
+            </div>
+          ) : null}
+        </div>
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>
       {accountRequiredAction ? (

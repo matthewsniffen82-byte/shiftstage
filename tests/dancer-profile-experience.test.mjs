@@ -11,6 +11,7 @@ const [
   navigationActions,
   socialLinks,
   tvStrip,
+  profileCarousel,
 ] = await Promise.all([
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(
@@ -32,35 +33,45 @@ const [
     "utf8",
   ),
   readFile(new URL("../app/components/TvVideoStrip.tsx", import.meta.url), "utf8"),
+  readFile(
+    new URL("../app/dancers/[slug]/DancerPhotoCarousel.tsx", import.meta.url),
+    "utf8",
+  ),
 ]);
 
-test("the public dancer profile keeps identity, verification, city, and close control at the top", () => {
+test("the public dancer profile keeps identity, verification, shift context, and close control at the top", () => {
   assert.match(profilePage, /<header className="profile-titlebar">/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
   assert.match(profilePage, /className="profile-verified" aria-label="Verified dancer"/);
-  assert.match(profilePage, /<span>\{profile\.city\}<\/span>/);
+  assert.match(profilePage, /className="profile-titlebar-context"/);
+  assert.match(profilePage, /className="profile-titlebar-status is-live">Working now/);
+  assert.match(profilePage, /Upcoming \{formatShiftDate\(nextShift\.startsAt, nextShift\.timezone\)\}/);
+  assert.match(profilePage, /className="profile-titlebar-status is-empty">No shift posted/);
+  assert.match(profilePage, /\{activeShift\.venueName\} · until/);
+  assert.match(profilePage, /\{nextShift\.venueName\} ·/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: sticky;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
-test("the mobile profile is ordered around identity, featured media, activity, actions, live revenue, socials, and schedule", () => {
+test("the mobile profile is ordered around identity, media, revenue, actions, lower-priority activity, socials, and schedule", () => {
   const identityIndex = profilePage.indexOf('className="profile-titlebar"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const dealIndex = profilePage.indexOf('className="profile-working-card"');
+  const dealIndex = profilePage.indexOf('className={`profile-working-card');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
   const scheduleIndex = profilePage.indexOf('className="profile-schedule-section"');
 
   assert.ok(identityIndex > -1);
   assert.ok(mediaIndex > identityIndex);
-  assert.ok(overviewIndex > mediaIndex);
-  assert.ok(actionsIndex > overviewIndex);
-  assert.ok(dealIndex > actionsIndex);
+  assert.ok(dealIndex > mediaIndex);
+  assert.ok(actionsIndex > dealIndex);
+  assert.ok(overviewIndex > actionsIndex);
   assert.ok(socialIndex > dealIndex);
+  assert.ok(socialIndex > overviewIndex);
   assert.ok(scheduleIndex > socialIndex);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
@@ -72,15 +83,24 @@ test("the mobile profile is ordered around identity, featured media, activity, a
   assert.match(profilePage, /Verified check-in · until/);
   assert.match(profilePage, /Venue &amp; directions/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
+  assert.match(profilePage, /sourceType="dancer_profile"/);
+  assert.match(profilePage, /presentation="launcher"/);
+  assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
+  assert.match(profilePage, /hasPrimaryDeal=\{Boolean\(activeShift && activeDeal\)\}/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
 });
 
 test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {
   assert.match(
     profileActions,
-    /className=\{`profile-action-primary profile-action-public\$\{actionShift \? "" : " profile-action-unavailable"\}`\}/,
+    /className=\{`\$\{hasPrimaryDeal \? "profile-action-secondary" : "profile-action-primary profile-action-public"\} profile-action-going/,
   );
-  assert.match(profileActions, /className="profile-action-report"/);
+  const goingIndex = profileActions.indexOf('className={`${hasPrimaryDeal');
+  const followIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
+  assert.ok(goingIndex > -1 && goingIndex < followIndex);
+  assert.match(profileActions, /className="profile-action-overflow-toggle"/);
+  assert.match(profileActions, /className="profile-action-overflow-menu" role="menu"/);
+  assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{submitReport\}/);
   assert.match(profileActions, /className="profile-report-dialog"/);
   assert.match(profileActions, /<select[\s\S]*required[\s\S]*value=\{reportReason\}/);
@@ -128,7 +148,22 @@ test("profiles can be shared and close back to the referring site page", () => {
   assert.match(navigationActions, /navigator\.clipboard\.writeText\(url\)/);
   assert.match(navigationActions, /previousUrl\.origin === window\.location\.origin/);
   assert.match(navigationActions, /window\.history\.back\(\)/);
-  assert.match(navigationActions, /window\.location\.assign\(fallbackHref\)/);
+  assert.match(navigationActions, /new URL\(fallbackHref, window\.location\.origin\)/);
+  assert.match(navigationActions, /window\.setTimeout\(navigateToFallback, 900\)/);
+  assert.match(navigationActions, /window\.addEventListener\([\s\S]*?"pagehide"/);
+  assert.match(navigationActions, /window\.location\.assign\(destination\.toString\(\)\)/);
+});
+
+test("inline profile TV has complete play, sound, progress, and duration controls", () => {
+  assert.match(profileCarousel, /function toggleInlinePlayback\(\)/);
+  assert.match(profileCarousel, /function toggleInlineSound\(\)/);
+  assert.match(profileCarousel, /function seekInlineVideo\(value: number\)/);
+  assert.match(profileCarousel, /aria-label="TV video progress"/);
+  assert.match(profileCarousel, /type="range"/);
+  assert.match(profileCarousel, /\{inlinePlaying \? "Pause" : "Play"\}/);
+  assert.match(profileCarousel, /\{inlineMuted \? "Sound on" : "Sound off"\}/);
+  assert.match(profileCarousel, /formatDuration\(inlineCurrentTime\)/);
+  assert.match(profilePage, /\.profile-media-video-controls \{ position: absolute;/);
 });
 
 test("official social icons stay centered without publishing handles", () => {

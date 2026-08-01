@@ -95,9 +95,11 @@ test("the live dancer profile close control exits shared links and remains touch
   assert.match(profileNavigationSource, /className="public-profile-close"/);
   assert.match(
     profileNavigationSource,
-    /profileType = "dancer"[\s\S]*?aria-label={`Close full \$\{profileType\} profile and return to the previous page`}/,
+    /profileType = "dancer"[\s\S]*?aria-label={`Close full \$\{profileType\} profile and return to the previous page or discovery results`}/,
   );
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
+  assert.match(profileNavigationSource, /window\.setTimeout\(navigateToFallback, 900\)/);
+  assert.match(profileNavigationSource, /window\.location\.assign\(destination\.toString\(\)\)/);
   assert.match(profileNavigationSource, />\s*×\s*<\/button>/);
   assert.match(
     homeSource,
