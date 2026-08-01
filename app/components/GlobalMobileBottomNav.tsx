@@ -394,7 +394,7 @@ export function GlobalMobileBottomNav() {
             gap: 0;
             padding: 3px 4px;
             overflow: hidden;
-            border: 1px solid rgba(124, 58, 237, 0.34);
+            border: 1px solid rgba(248, 250, 252, 0.09);
             border-radius: 23px;
             background:
               linear-gradient(
@@ -406,7 +406,6 @@ export function GlobalMobileBottomNav() {
               rgba(9, 9, 12, 0.82);
             box-shadow:
               0 18px 46px rgba(0, 0, 0, 0.46),
-              0 0 22px rgba(109, 40, 217, 0.16),
               inset 0 0 0 1px rgba(255, 255, 255, 0.026);
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
