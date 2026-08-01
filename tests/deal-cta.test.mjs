@@ -90,6 +90,16 @@ test("venue pages and directory cards promote real active deals", () => {
       /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
     )?.[0] || "";
   assert.match(venueOffer, /No active Club Deal/);
+  assert.match(
+    venueOffer,
+    /data-club-deal-state="available"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?Unique tracked QR[\s\S]*?Opens after you tap Get Club Deal/,
+  );
+  assert.match(
+    venueOffer,
+    /data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?QR unavailable[\s\S]*?Check back later/,
+  );
+  assert.match(liveApp, /\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(190px, 230px\);/);
+  assert.match(liveApp, /@media \(max-width: 520px\) \{[\s\S]*?\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: 1fr;/);
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR/);
   const venueSlide =
     liveApp.match(

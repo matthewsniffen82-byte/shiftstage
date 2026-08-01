@@ -24126,6 +24126,88 @@
       font-size: 22px;
     }
 
+    .venue-detail-club-deal-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(190px, 230px);
+      align-items: stretch;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .venue-detail-club-deal-qr-state {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px 10px 10px;
+      border: 1px solid rgba(77, 255, 157, .42);
+      border-radius: 18px;
+      color: #ffffff;
+      background: linear-gradient(145deg, rgba(7, 92, 77, .3), rgba(5, 20, 17, .8));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    .venue-detail-club-deal-symbol {
+      box-sizing: border-box;
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      padding: 9px;
+      border: 1px solid rgba(204, 255, 226, .56);
+      border-radius: 12px;
+      color: #c9ffe0;
+      background: rgba(3, 54, 37, .68);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .26), inset 0 1px 0 rgba(255, 255, 255, .1);
+    }
+
+    .venue-detail-club-deal-symbol svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .venue-detail-club-deal-qr-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .venue-detail-club-deal-qr-copy strong {
+      font-size: .9rem;
+      line-height: 1.1;
+    }
+
+    .venue-detail-club-deal-qr-copy small {
+      color: rgba(226, 255, 238, .7);
+      font-size: .72rem;
+      font-weight: 780;
+      line-height: 1.25;
+    }
+
+    .venue-detail-club-deal-qr-state.is-unavailable {
+      max-width: 420px;
+      border-color: rgba(196, 181, 253, .24);
+      color: rgba(245, 245, 255, .76);
+      background: linear-gradient(145deg, rgba(33, 29, 47, .76), rgba(8, 8, 14, .72));
+    }
+
+    .venue-detail-club-deal-qr-state.is-unavailable .venue-detail-club-deal-symbol {
+      border-color: rgba(196, 181, 253, .26);
+      color: rgba(245, 245, 255, .5);
+      background: rgba(31, 27, 44, .72);
+    }
+
+    .venue-detail-club-deal-qr-state.is-unavailable .venue-detail-club-deal-qr-copy small {
+      color: rgba(221, 214, 254, .58);
+    }
+
+    .venue-detail .venue-club-deal-cta {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+    }
+
     .venue-profile-qr-card {
       border-color: rgba(77, 255, 157, .48);
       background:
@@ -24288,6 +24370,22 @@
       .venue-club-deal-cta {
         width: 100%;
         max-width: none;
+      }
+
+      .venue-detail-club-deal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .venue-detail-club-deal-qr-state {
+        grid-template-columns: 60px minmax(0, 1fr);
+        gap: 10px;
+        padding: 9px 10px 9px 9px;
+      }
+
+      .venue-detail-club-deal-symbol {
+        width: 60px;
+        height: 60px;
+        padding: 8px;
       }
     }
 
@@ -39063,7 +39161,16 @@
                 <h3>${escapeHtml(venue.activeDeal.dealTitle)}</h3>
                 <p>${escapeHtml(venue.activeDeal.dealDescription || "Get a unique QR and show it at the venue.")}</p>
               </div>
-              ${clubDealCtaMarkup(config, "venue-club-deal-cta")}
+              <div class="venue-detail-club-deal-actions">
+                <div class="venue-detail-club-deal-qr-state is-available" data-club-deal-state="available" role="img" aria-label="A unique tracked Club Deal QR opens after Get Club Deal is selected">
+                  ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
+                  <span class="venue-detail-club-deal-qr-copy">
+                    <strong>Unique tracked QR</strong>
+                    <small>Opens after you tap Get Club Deal</small>
+                  </span>
+                </div>
+                ${clubDealCtaMarkup(config, "venue-club-deal-cta")}
+              </div>
             </div>
           </article>
         `;
@@ -39076,6 +39183,13 @@
               <span class="eyebrow">Club Deal</span>
               <h3>No active Club Deal</h3>
               <p>${escapeHtml(venue.name)} has not published a tracked customer offer. Use Share to send this venue profile.</p>
+            </div>
+            <div class="venue-detail-club-deal-qr-state is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="No Club Deal QR is available at ${escapeHtml(venue.name)}">
+              ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
+              <span class="venue-detail-club-deal-qr-copy">
+                <strong>QR unavailable</strong>
+                <small>Check back later</small>
+              </span>
             </div>
           </div>
         </article>
