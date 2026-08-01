@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=6" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=7" rel="stylesheet">/,
   );
 });
 
@@ -56,7 +56,7 @@ test("verified check marks use the centralized informational cyan treatment", ()
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
 });
 
-test("the homepage hero keeps only the artwork's native violet edge", () => {
+test("the homepage hero masks the broken bitmap edge behind one continuous frame", () => {
   assert.match(
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?border: 0 !important/,
@@ -69,9 +69,17 @@ test("the homepage hero keeps only the artwork's native violet edge", () => {
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero::before/,
   );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?border: 1px solid var\(--dancr-color-brand-primary-medium\) !important/,
+  );
+  assert.match(
+    aesthetic,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?box-shadow: inset 0 0 0 6px var\(--dancr-color-background\) !important/,
+  );
   assert.doesNotMatch(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after/,
+    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art[\s\S]*?transform:/,
   );
 });
 
