@@ -425,18 +425,26 @@ test("mobile Dancers and Venues share the same scrollbar-safe results track", ()
   );
 });
 
-test("mobile dancer cards clone the centered venue shell with a platform-consistent subtle border", () => {
+test("all five mobile destinations share the Android dancer-card border across Android and iPhone", () => {
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-items: stretch !important;[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?margin: 0 !important;[\s\S]*?justify-self: center !important;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?border: 1px solid transparent !important;[\s\S]*?linear-gradient\(145deg,rgba\(126,234,255,.72\),rgba\(139,92,246,.82\) 56%,rgba\(236,72,153,.58\)\) border-box !important;[\s\S]*?0 0 22px rgba\(124,58,237,.18\) !important;/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-cyan: rgba\(126,234,255,.72\);[\s\S]*?--home-card-edge-violet: rgba\(139,92,246,.82\);[\s\S]*?--home-card-edge-pink: rgba\(236,72,153,.58\);[\s\S]*?--home-card-glow: rgba\(124,58,237,.18\);/,
   );
   assert.match(
     homeSource,
-    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?linear-gradient\(145deg,rgba\(126,234,255,.26\),rgba\(139,92,246,.34\) 56%,rgba\(236,72,153,.22\)\) border-box !important;[\s\S]*?0 0 12px rgba\(124,58,237,.07\) !important;/,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-cyan: rgba\(126,234,255,.26\);[\s\S]*?--home-card-edge-violet: rgba\(139,92,246,.34\);[\s\S]*?--home-card-edge-pink: rgba\(236,72,153,.22\);[\s\S]*?--home-card-glow: rgba\(124,58,237,.07\);/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-cyan\),var\(--home-card-edge-violet\) 56%,var\(--home-card-edge-pink\)\) border-box !important;[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed > \.home-tv-feed-slide:fullscreen,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide:-webkit-full-screen \{[\s\S]*?border: 0 !important;[\s\S]*?box-shadow: none !important;/,
   );
   const dancerShellOverride = homeSource.match(
     /#results\.home-dancer-grid > \.home-dancer-grid-card \{\s*border: 1px solid transparent !important;[\s\S]*?\n          \}/,

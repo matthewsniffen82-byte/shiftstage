@@ -31377,26 +31377,43 @@
             border-radius: 20px !important;
             contain: layout paint style;
           }
-          #results.home-dancer-grid > .home-dancer-grid-card {
+          #results {
+            --home-card-edge-cyan: rgba(126,234,255,.72);
+            --home-card-edge-violet: rgba(139,92,246,.82);
+            --home-card-edge-pink: rgba(236,72,153,.58);
+            --home-card-inner-edge: rgba(255,255,255,.05);
+            --home-card-drop-shadow: rgba(0,0,0,.48);
+            --home-card-glow: rgba(124,58,237,.18);
+          }
+          @supports (-webkit-touch-callout: none) {
+            #results {
+              --home-card-edge-cyan: rgba(126,234,255,.26);
+              --home-card-edge-violet: rgba(139,92,246,.34);
+              --home-card-edge-pink: rgba(236,72,153,.22);
+              --home-card-inner-edge: rgba(255,255,255,.035);
+              --home-card-drop-shadow: rgba(0,0,0,.46);
+              --home-card-glow: rgba(124,58,237,.07);
+            }
+          }
+          #results.home-dancer-grid > .home-dancer-grid-card,
+          #results.home-tv-feed > .home-tv-feed-slide,
+          #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
+          #results.card-grid > .dancer-card.trending-card,
+          #results.venue-card-grid > .venue.venue-card {
             border: 1px solid transparent !important;
             background:
               linear-gradient(#050507,#050507) padding-box,
-              linear-gradient(145deg,rgba(126,234,255,.72),rgba(139,92,246,.82) 56%,rgba(236,72,153,.58)) border-box !important;
+              linear-gradient(145deg,var(--home-card-edge-cyan),var(--home-card-edge-violet) 56%,var(--home-card-edge-pink)) border-box !important;
             box-shadow:
-              inset 0 0 0 1px rgba(255,255,255,.05),
-              0 18px 42px rgba(0,0,0,.48),
-              0 0 22px rgba(124,58,237,.18) !important;
+              inset 0 0 0 1px var(--home-card-inner-edge),
+              0 18px 42px var(--home-card-drop-shadow),
+              0 0 22px var(--home-card-glow) !important;
           }
-          @supports (-webkit-touch-callout: none) {
-            #results.home-dancer-grid > .home-dancer-grid-card {
-              background:
-                linear-gradient(#050507,#050507) padding-box,
-                linear-gradient(145deg,rgba(126,234,255,.26),rgba(139,92,246,.34) 56%,rgba(236,72,153,.22)) border-box !important;
-              box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,.035),
-                0 16px 38px rgba(0,0,0,.46),
-                0 0 12px rgba(124,58,237,.07) !important;
-            }
+          #results.home-tv-feed > .home-tv-feed-slide:fullscreen,
+          #results.home-tv-feed > .home-tv-feed-slide:-webkit-full-screen {
+            border: 0 !important;
+            background: #000 !important;
+            box-shadow: none !important;
           }
           .home-dancer-grid-link {
             position: relative;
