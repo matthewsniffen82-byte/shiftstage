@@ -23,7 +23,7 @@ test("mobile utility header is rounded, compact, and aligned with the page", () 
   );
   assert.match(
     mobileHeader,
-    /header \.topbar \{[\s\S]*?height: 58px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?max-height: 58px !important;[\s\S]*?padding: 4px 6px !important;[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(248, 250, 252, 0\.12\) !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?linear-gradient\(180deg, rgba\(8, 8, 12, 0\.96\), rgba\(4, 4, 7, 0\.94\)\) !important;[\s\S]*?0 8px 18px rgba\(91, 19, 255, 0\.07\) !important;[\s\S]*?blur\(18px\) saturate\(1\.08\) !important;/,
+    /header \.topbar \{[\s\S]*?height: 58px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?max-height: 58px !important;[\s\S]*?padding: 4px 6px !important;[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(248, 250, 252, 0\.12\) !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?linear-gradient\(180deg, rgba\(8, 8, 12, 0\.96\), rgba\(4, 4, 7, 0\.94\)\) !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.4\),[\s\S]*?0 0 12px rgba\(91, 19, 255, 0\.1\),[\s\S]*?0 0 28px rgba\(91, 19, 255, 0\.08\) !important;[\s\S]*?box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.4\),[\s\S]*?0 0 12px rgba\(91, 19, 255, 0\.1\),[\s\S]*?0 0 28px rgba\(91, 19, 255, 0\.08\) !important;[\s\S]*?blur\(18px\) saturate\(1\.08\) !important;/,
   );
   assert.match(mobileHeader, /main\.stack \{\s*padding-top: 8px !important;/);
   assert.match(
@@ -32,7 +32,7 @@ test("mobile utility header is rounded, compact, and aligned with the page", () 
   );
   assert.match(
     lateMobileHeader,
-    /header \.topbar \{[\s\S]*?height: 58px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?max-height: 58px !important;[\s\S]*?gap: 10px !important;[\s\S]*?padding: 4px 6px !important;[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(248,250,252,.12\) !important;[\s\S]*?border-radius: 16px !important;/,
+    /header \.topbar \{[\s\S]*?height: 58px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?max-height: 58px !important;[\s\S]*?gap: 10px !important;[\s\S]*?padding: 4px 6px !important;[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(248,250,252,.12\) !important;[\s\S]*?border-radius: 16px !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 14px 36px rgba\(0,0,0,.4\),[\s\S]*?0 0 12px rgba\(91,19,255,.1\),[\s\S]*?0 0 28px rgba\(91,19,255,.08\) !important;[\s\S]*?box-shadow:[\s\S]*?0 14px 36px rgba\(0,0,0,.4\),[\s\S]*?0 0 12px rgba\(91,19,255,.1\),[\s\S]*?0 0 28px rgba\(91,19,255,.08\) !important;/,
   );
 });
 
