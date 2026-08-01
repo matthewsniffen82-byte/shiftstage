@@ -12,6 +12,10 @@ import {
   evaluateDancrImageModeration,
   type DancrImageModerationDecision,
 } from "./moderation-policy";
+import {
+  getDistributedVideoFrameSampling,
+  parseFfmpegDuration,
+} from "./video-frame-sampling";
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -34,6 +38,8 @@ export type MyDancrTvModerationResult = {
     policyDecision: DancrImageModerationDecision;
     policyConfidence: number;
     audioChecked: boolean;
+    videoDurationSeconds: number;
+    frameSampling: "distributed_across_video";
   };
 };
 
@@ -78,7 +84,8 @@ export async function moderateStoredMyDancrTvVideo(
   try {
     const videoBuffer = await downloadVideo(admin, input.storagePath);
     await writeFile(videoPath, videoBuffer);
-    const frames = await extractVideoFrames(videoPath, workspace);
+    const videoDurationSeconds = await probeVideoDurationSeconds(videoPath);
+    const frames = await extractVideoFrames(videoPath, workspace, videoDurationSeconds);
     const audioPath = await extractOptionalAudio(videoPath, workspace);
     const transcript = audioPath ? await transcribeAudio(openai, audioPath) : "";
     const frameResults = await moderateFrames(openai, frames);
@@ -111,6 +118,8 @@ export async function moderateStoredMyDancrTvVideo(
         policyDecision: policyDecision.decision,
         policyConfidence: policyDecision.confidence,
         audioChecked: Boolean(audioPath),
+        videoDurationSeconds: Number(videoDurationSeconds.toFixed(3)),
+        frameSampling: "distributed_across_video" as const,
       },
     } satisfies MyDancrTvModerationResult;
 
@@ -122,6 +131,8 @@ export async function moderateStoredMyDancrTvVideo(
       reasonCodes: result.reasonCodes,
       providerFlagged: result.providerFlagged,
       audioChecked: result.details.audioChecked,
+      videoDurationSeconds: result.details.videoDurationSeconds,
+      frameSampling: result.details.frameSampling,
       moderationModel: result.moderationModel,
     }));
     return result;
@@ -154,16 +165,44 @@ async function downloadVideo(admin: AdminClient, storagePath: string) {
   return Buffer.from(await data.arrayBuffer());
 }
 
-async function extractVideoFrames(videoPath: string, workspace: string) {
+async function probeVideoDurationSeconds(videoPath: string) {
+  const { stdout, stderr } = await runFfmpeg([
+    "-hide_banner",
+    "-loglevel",
+    "info",
+    "-nostats",
+    "-progress",
+    "pipe:1",
+    "-i",
+    videoPath,
+    "-map",
+    "0:v:0",
+    "-c:v",
+    "copy",
+    "-f",
+    "null",
+    "-",
+  ], { captureStdout: true });
+  const durationSeconds = parseFfmpegDuration(`${stdout}\n${stderr}`);
+  if (!durationSeconds) {
+    throw new Error("The uploaded video duration could not be determined for moderation.");
+  }
+  return durationSeconds;
+}
+
+async function extractVideoFrames(videoPath: string, workspace: string, durationSeconds: number) {
+  const sampling = getDistributedVideoFrameSampling(durationSeconds, MAX_VIDEO_FRAMES);
   const outputPattern = path.join(workspace, "frame-%02d.jpg");
   await runFfmpeg([
     "-hide_banner",
     "-loglevel",
     "error",
+    "-ss",
+    sampling.startOffsetSeconds.toFixed(6),
     "-i",
     videoPath,
     "-vf",
-    "fps=1,scale=720:-2:force_original_aspect_ratio=decrease",
+    `fps=${sampling.frameRate.toFixed(8)},scale=720:-2:force_original_aspect_ratio=decrease`,
     "-frames:v",
     String(MAX_VIDEO_FRAMES),
     "-q:v",
@@ -351,21 +390,25 @@ function uniqueReasonCodes(reasons: string[]) {
   return [...new Set(reasons.filter(Boolean))].slice(0, 80);
 }
 
-function runFfmpeg(args: string[], options: { allowNoOutput?: boolean } = {}) {
+function runFfmpeg(args: string[], options: { allowNoOutput?: boolean; captureStdout?: boolean } = {}) {
   const executable = ffmpegPath;
   if (!executable) return Promise.reject(new Error("Video moderation decoder is unavailable."));
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(executable, ["-y", ...args], {
       windowsHide: true,
-      stdio: ["ignore", "ignore", "pipe"],
+      stdio: ["ignore", options.captureStdout ? "pipe" : "ignore", "pipe"],
     });
+    let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
       child.kill();
       reject(new Error("Video moderation decoding timed out."));
     }, FFMPEG_TIMEOUT_MS);
-    child.stderr.on("data", (chunk) => {
+    child.stderr?.on("data", (chunk) => {
       stderr = `${stderr}${String(chunk)}`.slice(-4000);
+    });
+    child.stdout?.on("data", (chunk) => {
+      stdout = `${stdout}${String(chunk)}`.slice(-8000);
     });
     child.once("error", (error) => {
       clearTimeout(timer);
@@ -374,7 +417,7 @@ function runFfmpeg(args: string[], options: { allowNoOutput?: boolean } = {}) {
     child.once("close", (code) => {
       clearTimeout(timer);
       if (code === 0 || options.allowNoOutput) {
-        resolve();
+        resolve({ stdout, stderr });
         return;
       }
       reject(new Error(`Video moderation decoding failed: ${stderr.slice(-600) || `exit ${code}`}`));

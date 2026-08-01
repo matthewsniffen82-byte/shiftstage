@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { evaluateDancrImageModeration } from "../src/lib/dancr/moderation-policy.ts";
+import {
+  getDistributedVideoFrameSampling,
+  parseFfmpegDuration,
+} from "../src/lib/dancr/video-frame-sampling.ts";
 
 const [
   videoModeration,
@@ -65,7 +69,10 @@ test("shared Dancr moderation thresholds approve promotional content and escalat
 
 test("video moderation checks server-decoded frames, caption, and spoken audio", () => {
   assert.match(videoModeration, /from "ffmpeg-static"/);
-  assert.match(videoModeration, /fps=1,scale=720:-2:force_original_aspect_ratio=decrease/);
+  assert.match(videoModeration, /frameSampling: "distributed_across_video"/);
+  assert.match(videoModeration, /"-progress",\s*"pipe:1"/);
+  assert.match(videoModeration, /sampling\.startOffsetSeconds\.toFixed\(6\)/);
+  assert.match(videoModeration, /fps=\$\{sampling\.frameRate\.toFixed\(8\)\}/);
   assert.match(videoModeration, /const MAX_VIDEO_FRAMES = 10/);
   assert.match(videoModeration, /openai\.moderations\.create\([\s\S]*?input/);
   assert.match(videoModeration, /openai\.audio\.transcriptions\.create/);
@@ -77,6 +84,34 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
   assert.match(videoModeration, /policyDecision\.confidence >= 0\.9 \? "rejected" : "review"/);
   assert.match(videoModeration, /policyDecision\.confidence >= 0\.86 \? "approved" : "review"/);
   assert.match(videoModeration, /await rm\(workspace, \{ recursive: true, force: true \}\)/);
+});
+
+test("video moderation distributes frames through the full decoded timeline", () => {
+  assert.deepEqual(getDistributedVideoFrameSampling(1, 10), {
+    startOffsetSeconds: 0.05,
+    frameRate: 10,
+  });
+  assert.deepEqual(getDistributedVideoFrameSampling(10, 10), {
+    startOffsetSeconds: 0.5,
+    frameRate: 1,
+  });
+  assert.deepEqual(getDistributedVideoFrameSampling(60, 10), {
+    startOffsetSeconds: 3,
+    frameRate: 1 / 6,
+  });
+  assert.throws(() => getDistributedVideoFrameSampling(0, 10), /duration could not be determined/);
+  assert.throws(() => getDistributedVideoFrameSampling(Number.NaN, 10), /duration could not be determined/);
+
+  const progressAndMetadata = [
+    "Duration: 00:00:10.000000, start: 0.000000, bitrate: 1000 kb/s",
+    "out_time=00:00:00.500000",
+    "progress=continue",
+    "out_time=00:00:09.900000",
+    "progress=end",
+  ].join("\n");
+  assert.equal(parseFfmpegDuration(progressAndMetadata), 10);
+  assert.equal(parseFfmpegDuration("Duration: 01:02:03.500000"), 3723.5);
+  assert.equal(parseFfmpegDuration("out_time=N/A\nprogress=end"), null);
 });
 
 test("video submission persists exactly approve, human-review, or reject outcomes", () => {
