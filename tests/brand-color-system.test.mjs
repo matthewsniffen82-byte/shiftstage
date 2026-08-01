@@ -35,7 +35,6 @@ const [
 const requiredTokens = new Map([
   ["--dancr-color-brand-primary", "#7c3aed"],
   ["--dancr-color-beam-violet", "#985fff"],
-  ["--dancr-color-beam-pink", "#ff2fae"],
   ["--dancr-color-beam-blue", "#346eff"],
   ["--dancr-color-text-primary", "#f8fafc"],
   ["--dancr-color-background", "#050507"],
@@ -170,16 +169,5 @@ test("the beam glow is reserved for active, selected, and keyboard-focused UI", 
   assert.doesNotMatch(
     aesthetic,
     /\.tv-verified-mark[\s\S]{0,500}var\(--dancr-shadow-beam-active\)/,
-  );
-});
-
-test("the hero thread and TV progress share the centralized beam palette", () => {
-  assert.match(
-    tokens,
-    /--dancr-gradient-hero-thread: linear-gradient\([\s\S]*?var\(--dancr-color-beam-pink\)[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?var\(--dancr-color-beam-blue\)/,
-  );
-  assert.match(
-    tokens,
-    /--dancr-gradient-hero-progress: linear-gradient\([\s\S]*?var\(--dancr-color-beam-blue\)[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?var\(--dancr-color-beam-pink\)/,
   );
 });

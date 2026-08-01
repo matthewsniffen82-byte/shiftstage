@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=17" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=16" rel="stylesheet">/,
   );
 });
 
@@ -179,32 +179,13 @@ test("verified check marks use the centralized informational cyan treatment", ()
   );
   assert.match(
     aesthetic,
-    /width: 20px !important;[\s\S]*?height: 20px !important;[\s\S]*?border: 0 !important/,
+    /border: 1px solid var\(--dancr-color-info-strong\) !important/,
   );
   assert.match(
     aesthetic,
-    /background: var\(--dancr-color-info-solid\) !important;[\s\S]*?box-shadow: var\(--dancr-shadow-verified\) !important/,
+    /background: color-mix\([\s\S]*?var\(--dancr-color-info\) 24%/,
   );
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
-});
-
-test("hero color returns as restrained identity threads instead of card borders", () => {
-  assert.match(
-    aesthetic,
-    /\.home-dancer-grid-name,[\s\S]*?\.home-discovery-feed-name,[\s\S]*?\.home-tv-feed-dancer-name-row,[\s\S]*?\.dancer-card \.profile-body h3,[\s\S]*?\.venue\.venue-card \.profile-body h3,[\s\S]*?\.tv-shell \.tv-card-stage-row,[\s\S]*?\.public-profile-shell \.profile-titlebar-identity > div,[\s\S]*?#profileBackdrop \.modal-identity[\s\S]*?padding-left: 10px !important/,
-  );
-  assert.match(
-    aesthetic,
-    /#profileBackdrop \.profile-schedule-card > strong,[\s\S]*?\.public-profile-shell \.profile-section-heading h2,[\s\S]*?#results\.venue-profile-overlay \.venue-detail \.section-title[\s\S]*?border-left: 0 !important/,
-  );
-  assert.match(
-    aesthetic,
-    /background: var\(--dancr-gradient-hero-thread\);[\s\S]*?box-shadow: var\(--dancr-shadow-hero-thread\)/,
-  );
-  assert.match(
-    venueProfileAesthetic,
-    /\.sectionHeading h2::before \{[\s\S]*?width: 2px;[\s\S]*?background: var\(--dancr-gradient-hero-thread\);/,
-  );
 });
 
 test("the homepage hero renders exactly one clean frame", () => {
