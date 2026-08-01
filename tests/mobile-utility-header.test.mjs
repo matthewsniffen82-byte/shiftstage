@@ -71,3 +71,19 @@ test("utility interaction and real unread state use electric violet", () => {
   assert.match(homeSource, /customerNotificationQuickBtn\.addEventListener\("click"/);
   assert.match(homeSource, /accountBtn\.addEventListener\("click"/);
 });
+
+test("the unread badge stays a contained circle at the bell's top-right", () => {
+  const unreadBadge = mobileHeader.match(
+    /header \.customer-quick-count \{[\s\S]*?\n      \}/,
+  )?.[0] || "";
+
+  assert.ok(unreadBadge, "the mobile notification badge override must exist");
+  assert.match(unreadBadge, /top: 3px !important;/);
+  assert.match(unreadBadge, /right: 3px !important;/);
+  assert.match(unreadBadge, /left: auto !important;/);
+  assert.match(unreadBadge, /width: 16px !important;/);
+  assert.match(unreadBadge, /max-width: 16px !important;/);
+  assert.match(unreadBadge, /height: 16px !important;/);
+  assert.match(unreadBadge, /padding: 0 !important;/);
+  assert.match(unreadBadge, /transform: none !important;/);
+});
