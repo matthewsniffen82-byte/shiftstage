@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=24" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=25" rel="stylesheet">/,
   );
 });
 
@@ -226,14 +226,14 @@ test("verified check marks use the centralized informational cyan treatment", ()
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
 });
 
-test("the homepage hero renders the exact supplied artwork without a second frame", () => {
+test("the homepage hero keeps the exact supplied artwork borderless with ambient depth", () => {
   assert.match(
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero::before,[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.36\),[\s\S]*?0 0 30px rgba\(91, 19, 255, 0\.08\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
   );
   assert.match(
     aesthetic,
