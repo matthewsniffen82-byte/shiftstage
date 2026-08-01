@@ -40153,6 +40153,39 @@
       }
     }
 
+    async function persistQueuedApprovedPhotoDeletionsBeforeUpload(profile) {
+      const deletedPayload = photoDeletedPayloadFromProfile(profile);
+      const requestedPhotoIds = deletedPayload.deletedPhotoIds;
+      if (!requestedPhotoIds.length && !deletedPayload.deletedPhotoStoragePaths.length) return profile;
+
+      setApprovedPhotoUploadStatus("Saving deleted photo slots before upload...", "moderating");
+      const data = await patchAuthenticatedJson("/api/dancer/profile", deletedPayload);
+      if (!data?.profile) {
+        throw new Error("Unable to save deleted photos before upload.");
+      }
+
+      const remainingDeletedPhotos = deletedPhotosStillInServerProfile(data.profile, deletedPayload);
+      if (remainingDeletedPhotos.length) {
+        throw new Error("The deleted photo slots could not be released. Please try again.");
+      }
+
+      const confirmedPhotoIds = new Set(
+        (Array.isArray(data.deletedPhotoIds) ? data.deletedPhotoIds : [])
+          .map(normalizeDancerPhotoKey)
+          .filter(Boolean)
+      );
+      const unconfirmedPhotoIds = requestedPhotoIds.filter((photoId) => !confirmedPhotoIds.has(photoId));
+      if (unconfirmedPhotoIds.length) {
+        throw new Error("The deleted photo slots could not be confirmed. Please try again.");
+      }
+
+      clearDeletedDancerPhotos(profile);
+      applyDancerVerificationProfile(data.profile);
+      const refreshedProfile = activeDancerProfile(data.profile.city || data.profile.cityName || activeDancerCity()) || profile;
+      clearDeletedDancerPhotos(refreshedProfile);
+      return refreshedProfile;
+    }
+
     function normalizeLocalDancerPhotos(profile) {
       if (!profile) return;
       const activeRows = activeDancerPhotoRows(profile);
@@ -43503,7 +43536,8 @@
 
     async function uploadApprovedDancerPhoto(file, target) {
       if (!isDancerSession()) throw new Error("Sign in as a dancer to upload live photos.");
-      const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
+      let profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
+      profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload(profile);
       const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;
       const galleryIndex = String(target || "").startsWith("gallery:") ? Number(String(target).split(":")[1]) : -1;
       const requestedAddSortOrder = String(target || "").startsWith("gallery-add:")

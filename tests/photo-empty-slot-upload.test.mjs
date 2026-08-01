@@ -38,6 +38,25 @@ test("the edit-profile UI uses the server-confirmed slot after an add upload", (
   assert.match(uploadHandler, /normalizeLocalDancerPhotos\(profile\)/);
 });
 
+test("deleted live photo slots are persisted before a replacement upload", () => {
+  const persistHelper =
+    liveSource.match(/async function persistQueuedApprovedPhotoDeletionsBeforeUpload\(profile\) \{[\s\S]*?\r?\n    \}/)?.[0] || "";
+  const uploadHandler =
+    liveSource.match(/async function uploadApprovedDancerPhoto\(file, target\) \{[\s\S]*?\r?\n    \}/)?.[0] || "";
+
+  assert.match(persistHelper, /photoDeletedPayloadFromProfile\(profile\)/);
+  assert.match(persistHelper, /patchAuthenticatedJson\("\/api\/dancer\/profile", deletedPayload\)/);
+  assert.match(persistHelper, /deletedPhotosStillInServerProfile\(data\.profile, deletedPayload\)/);
+  assert.match(persistHelper, /unconfirmedPhotoIds\.length/);
+  assert.match(persistHelper, /applyDancerVerificationProfile\(data\.profile\)/);
+  assert.match(persistHelper, /clearDeletedDancerPhotos\(refreshedProfile\)/);
+  assert.match(uploadHandler, /profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload\(profile\)/);
+  assert.ok(
+    uploadHandler.indexOf("persistQueuedApprovedPhotoDeletionsBeforeUpload") < uploadHandler.indexOf("assertDancerProfilePhotoLimit"),
+    "server-side deletions must release slots before the upload limit check",
+  );
+});
+
 test("the general gallery-photo action is also treated as an addition", () => {
   assert.match(
     liveSource,
