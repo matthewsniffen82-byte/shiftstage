@@ -125,7 +125,7 @@ test("the homepage selects Dancers on first load and keeps destination navigatio
   );
 });
 
-test("all three discovery destinations stay in one continuously scrollable homepage", () => {
+test("all three destinations stay scrollable and TV lands with its title at the viewport start", () => {
   assert.match(
     homeSource,
     /const homeDestinationOrder = \["dancers", "tv", "venues"\];/,
@@ -141,6 +141,10 @@ test("all three discovery destinations stay in one continuously scrollable homep
   assert.match(
     homeSource,
     /\.content-head \{[\s\S]*?scroll-margin-top: calc\(14px \+ env\(safe-area-inset-top\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 720px\) \{[\s\S]*?#results\.home-tv-feed \{[\s\S]*?margin: 0 0 calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-type: y mandatory;/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
