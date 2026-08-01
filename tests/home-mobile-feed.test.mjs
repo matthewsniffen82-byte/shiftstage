@@ -423,18 +423,18 @@ test("mobile Dancers and Venues share the same scrollbar-safe results track", ()
   );
 });
 
-test("all five mobile destinations share a cyan-violet dancer-card border without magenta", () => {
+test("all five mobile destinations share a cyan-violet card border without coloring the gutters", () => {
   assert.match(
     homeSource,
     /@media \(max-width: 679px\) \{[\s\S]*?#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-items: stretch !important;[\s\S]*?#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?margin: 0 !important;[\s\S]*?justify-self: center !important;/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-cyan: rgba\(126,234,255,.72\);[\s\S]*?--home-card-edge-violet: rgba\(139,92,246,.82\);[\s\S]*?--home-card-glow: rgba\(124,58,237,.18\);/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-cyan: rgba\(126,234,255,.72\);[\s\S]*?--home-card-edge-violet: rgba\(139,92,246,.82\);[\s\S]*?--home-card-glow: transparent;/,
   );
   assert.match(
     homeSource,
-    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-cyan: rgba\(126,234,255,.26\);[\s\S]*?--home-card-edge-violet: rgba\(139,92,246,.34\);[\s\S]*?--home-card-glow: rgba\(124,58,237,.07\);/,
+    /@supports \(-webkit-touch-callout: none\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-cyan: rgba\(126,234,255,.26\);[\s\S]*?--home-card-edge-violet: rgba\(139,92,246,.34\);[\s\S]*?--home-card-glow: transparent;/,
   );
   assert.match(
     homeSource,

@@ -405,7 +405,8 @@ body > .app main.stack {
  * Scrolling discovery gutters are part of the neutral foundation, not a brand
  * accent. This removes legacy violet washes between cards on iOS and Android.
  */
-body > .app main.stack > #results:is(
+body > .app main.stack > section.stack,
+body > .app main.stack > section.stack > #results:is(
   .home-dancer-grid,
   .home-discovery-feed,
   .home-tv-feed,
@@ -417,14 +418,14 @@ body > .app main.stack > #results:is(
   box-shadow: none !important;
 }
 
-body > .app main.stack > #results:is(
+body > .app main.stack > section.stack > #results:is(
   .home-dancer-grid,
   .home-discovery-feed,
   .home-tv-feed,
   .card-grid,
   .venue-card-grid
 )::before,
-body > .app main.stack > #results:is(
+body > .app main.stack > section.stack > #results:is(
   .home-dancer-grid,
   .home-discovery-feed,
   .home-tv-feed,
@@ -437,11 +438,11 @@ body > .app main.stack > #results:is(
 
 /* Keep the vertical gutters purely near-black. Card artwork and borders stay
  * intact, but no inactive card halo may bleed into the space between cards. */
-body.dancr-button-system > .app main.stack > #results.home-dancer-grid > .home-dancer-grid-card,
-body.dancr-button-system > .app main.stack > #results.home-tv-feed > .home-tv-feed-slide,
-body.dancr-button-system > .app main.stack > #results.home-discovery-feed > .home-discovery-feed-slide,
-body.dancr-button-system > .app main.stack > #results.card-grid > .dancer-card,
-body.dancr-button-system > .app main.stack > #results.venue-card-grid > .venue-card {
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-card,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-discovery-feed > .home-discovery-feed-slide,
+body.dancr-button-system > .app main.stack > section.stack > #results.card-grid > .dancer-card,
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-card-grid > .venue-card {
   box-shadow: none !important;
   filter: none !important;
 }

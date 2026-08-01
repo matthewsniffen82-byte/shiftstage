@@ -16,7 +16,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=11" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=12" rel="stylesheet">/,
   );
 });
 
@@ -41,8 +41,12 @@ test("Android and iPhone share the same near-black and charcoal content foundati
 
 test("scrolling card feeds have neutral gutters without a violet backdrop", () => {
   assert.match(
+    liveApp,
+    /<main class="stack">[\s\S]*?<section class="stack" aria-live="polite">[\s\S]*?<div class="list" id="results"><\/div>/,
+  );
+  assert.match(
     aesthetic,
-    /#results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+    /main\.stack > section\.stack,[\s\S]*?main\.stack > section\.stack > #results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     aesthetic,
@@ -50,7 +54,28 @@ test("scrolling card feeds have neutral gutters without a violet backdrop", () =
   );
   assert.match(
     aesthetic,
-    /body\.dancr-button-system > \.app main\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;/,
+    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;/,
+  );
+  assert.match(
+    liveApp,
+    /\.is-android body,[\s\S]*?\.is-android \.app \{\s*background: var\(--matte-black\) !important;/,
+  );
+  assert.match(
+    liveApp,
+    /html\.is-android \.app,[\s\S]*?body\.android-rendering \.app \{\s*background: #050507 !important;/,
+  );
+  assert.doesNotMatch(
+    liveApp,
+    /\.is-android body,[\s\S]{0,240}radial-gradient/,
+  );
+  assert.doesNotMatch(
+    liveApp,
+    /html\.is-android \.app,[\s\S]{0,360}linear-gradient/,
+  );
+  assert.equal(
+    (liveApp.match(/--home-card-glow: transparent;/g) || []).length,
+    2,
+    "Android/Chrome and iPhone/Safari must both suppress violet gutter glow",
   );
 });
 
