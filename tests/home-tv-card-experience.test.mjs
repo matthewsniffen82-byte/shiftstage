@@ -35,7 +35,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(homeSource, /home-tv-feed-profile-hint|home-tv-feed-profile-cue|View profile →/);
   assert.match(
     homeSource,
-    /menu\.className = "home-tv-feed-action-menu"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?follow\.dataset\.profile = dancerName[\s\S]*?follow\.dataset\.homeTvVideoId = videoId[\s\S]*?actionButtonLabel\(isFollowed \? "check" : "heart", isFollowed \? "Following" : "Follow"\)/,
+    /actions\.className = "home-tv-feed-actions"[\s\S]*?follow\.className = `home-tv-feed-action home-tv-feed-follow-action feed-card-action[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?follow\.dataset\.profile = dancerName[\s\S]*?follow\.dataset\.homeTvVideoId = videoId[\s\S]*?follow\.dataset\.iconOnlyAction = "true"[\s\S]*?follow\.innerHTML = actionIconMarkup\(isFollowed \? "check" : "heart"\)/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-dancer-actions|home-tv-feed-profile-action/);
   assert.match(
@@ -64,22 +64,22 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
 });
 
-test("TV cards collapse secondary controls into one contained actions menu", () => {
+test("TV cards expose separate right-side action icons with fullscreen anchored lower right", () => {
   const actionsFactory = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+    /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
   const renderFactory = homeSource.match(
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /"More video actions"[\s\S]*?more\.dataset\.homeTvMore = "true"/);
-  assert.match(actionsFactory, /menu\.className = "home-tv-feed-action-menu"[\s\S]*?menu\.hidden = true/);
-  assert.match(actionsFactory, /menu\.append\(applause, share, follow, fullscreen\)[\s\S]*?menu\.append\(report, reportMenu\)[\s\S]*?actions\.append\(more, menu\)/);
-  assert.match(actionsFactory, /share[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?"Report"/);
-  assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedActionMenus\(\)/);
-  assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedActionMenus\(\)/);
-  assert.match(renderFactory, /position,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide, video\),[\s\S]*?createHomeTvFeedCopy/);
-  assert.doesNotMatch(renderFactory, /createHomeTvFeedFullscreenButton\(slide, video\),\s*createHomeTvFeedActions/);
+  assert.match(actionsFactory, /createHomeTvFeedActionButton\([\s\S]*?"Applaud"[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?"Report"/);
+  assert.match(actionsFactory, /actions\.append\(applause, share, follow\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(report, reportMenu\)/);
+  assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
+  assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
+  assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
+  assert.match(renderFactory, /position,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedCopy/);
+  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
+  assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
   assert.match(homeSource, /#results\.home-tv-feed \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,\.11\);[\s\S]*?--home-card-glow: rgba\(91,19,255,\.055\);/);
 });
 
@@ -98,14 +98,14 @@ test("the TV loading card participates in the shared feed perimeter during desti
   );
 });
 
-test("the mobile TV identity, compact actions control, and progress sit above navigation", () => {
+test("the mobile TV identity, action rail, fullscreen icon, and progress sit above navigation", () => {
   assert.match(
     homeSource,
     /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 calc\(66px \+ env\(safe-area-inset-bottom\)\) 14px;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-actions \{[\s\S]*?bottom: calc\(98px \+ env\(safe-area-inset-bottom\)\);/,
+    /\.home-tv-feed-actions \{[\s\S]*?bottom: calc\(150px \+ env\(safe-area-inset-bottom\)\);/,
   );
   assert.match(
     homeSource,
@@ -127,7 +127,7 @@ test("the mobile TV identity, compact actions control, and progress sit above na
     homeSource,
     /\.home-tv-feed-position \{\s*top: calc\(14px \+ env\(safe-area-inset-top\)\);\s*left: 12px;/,
   );
-  assert.doesNotMatch(homeSource, /\.home-tv-feed-fullscreen \{\s*position: absolute/);
+  assert.match(homeSource, /\.home-tv-feed-fullscreen \{\s*right: 10px;\s*bottom: calc\(98px \+ env\(safe-area-inset-bottom\)\);/);
 });
 
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
@@ -179,7 +179,7 @@ test("every uploaded video gets a vertically scrollable card with playback, appl
   assert.match(homeSource, /Sexual or unsafe content[\s\S]*?Other safety concern/);
   assert.doesNotMatch(
     homeSource.match(
-      /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+      /function createHomeTvFeedActions\(item, slide\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
     )?.[0] || "",
     /save|bookmark/i,
   );
@@ -241,7 +241,7 @@ test("intentional pauses persist and every TV card exposes immersive fullscreen"
   );
 });
 
-test("TV sound stays compact while fullscreen moves into the accessible actions menu", () => {
+test("TV sound and lower-right fullscreen controls stay compact and icon-only", () => {
   assert.match(
     homeSource,
     /\.home-tv-feed-sound \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?padding: 0;/,
@@ -253,8 +253,9 @@ test("TV sound stays compact while fullscreen moves into the accessible actions 
     /function createHomeTvFeedFullscreenButton\(slide, video\) \{[\s\S]*?(?=\n    function renderHomeTvFeedSlide)/,
   )?.[0] || "";
   assert.match(soundFactory, /sound\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
-  assert.match(fullscreenFactory, /button\.className = "home-tv-feed-menu-action home-tv-feed-primary-action home-tv-feed-fullscreen"/);
-  assert.match(fullscreenFactory, /button\.innerHTML = '<svg[\s\S]*?<\/svg><span data-home-tv-fullscreen-label>Full screen<\/span>'/);
+  assert.match(fullscreenFactory, /button\.className = "home-tv-feed-action home-tv-feed-fullscreen"/);
+  assert.match(fullscreenFactory, /button\.innerHTML = '<svg[\s\S]*?<\/svg>'/);
+  assert.doesNotMatch(fullscreenFactory, /<span|Full screen<\/span>/);
   assert.doesNotMatch(
     soundFactory.match(/sound\.innerHTML = '[^']*'/)?.[0] || "",
     /<span|Sound off|Sound on/,
