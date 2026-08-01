@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=23" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=24" rel="stylesheet">/,
   );
 });
 
@@ -80,7 +80,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
 });
 
-test("scrolling card feeds have shared violet gutters and clear card separation", () => {
+test("scrolling card feeds have neutral edges, retained glow, and clear separation", () => {
   assert.match(
     liveApp,
     /<main class="stack">[\s\S]*?<section class="stack" aria-live="polite">[\s\S]*?<div class="list" id="results"><\/div>/,
@@ -95,7 +95,7 @@ test("scrolling card feeds have shared violet gutters and clear card separation"
   );
   assert.match(
     aesthetic,
-    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(152, 95, 255, 0\.24\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.4\),[\s\S]*?0 0 22px rgba\(91, 19, 255, 0\.12\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.04\) !important;[\s\S]*?filter: none !important;/,
+    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?0 0 22px rgba\(91, 19, 255, 0\.1\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     aesthetic,
@@ -119,7 +119,7 @@ test("scrolling card feeds have shared violet gutters and clear card separation"
   );
   assert.match(
     liveApp,
-    /#results \{[\s\S]*?--home-card-edge: rgba\(152,95,255,\.24\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,\.04\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,\.4\);[\s\S]*?--home-card-glow: rgba\(91,19,255,\.12\);/,
+    /#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,\.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,\.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,\.38\);[\s\S]*?--home-card-glow: rgba\(91,19,255,\.1\);/,
   );
   assert.doesNotMatch(
     liveApp,

@@ -436,19 +436,20 @@ body > .app main.stack > section.stack > #results:is(
   display: none !important;
 }
 
-/* Keep the vertical gutters near-black while giving every feed item the same
- * restrained violet perimeter and ambient lift on iPhone and Android. These
- * solid border/shadow layers avoid device-specific backdrop-filter rendering. */
+/* Keep the vertical gutters near-black while giving every feed item one
+ * readable neutral edge. A restrained violet ambient lift preserves the brand
+ * without turning every inactive card into a selected state. These solid
+ * border/shadow layers render consistently on iPhone and Android. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-card,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-discovery-feed > .home-discovery-feed-slide,
 body.dancr-button-system > .app main.stack > section.stack > #results.card-grid > .dancer-card,
 body.dancr-button-system > .app main.stack > section.stack > #results.venue-card-grid > .venue-card {
-  border: 1px solid rgba(152, 95, 255, 0.24) !important;
+  border: 1px solid rgba(248, 250, 252, 0.15) !important;
   box-shadow:
-    0 14px 32px rgba(5, 5, 7, 0.4),
-    0 0 22px rgba(91, 19, 255, 0.12),
-    inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+    0 14px 32px rgba(5, 5, 7, 0.38),
+    0 0 22px rgba(91, 19, 255, 0.1),
+    inset 0 1px 0 rgba(248, 250, 252, 0.035) !important;
   filter: none !important;
 }
 
