@@ -26,7 +26,34 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=21" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=22" rel="stylesheet">/,
+  );
+});
+
+test("the utility header uses one restrained violet bottom thread", () => {
+  assert.match(
+    liveApp,
+    /One restrained brand thread:[\s\S]*?header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 1px solid rgba\(152, 95, 255, 0\.22\) !important;[\s\S]*?inset 0 -1px 0 rgba\(152, 95, 255, 0\.07\)[\s\S]*?0 8px 18px rgba\(91, 19, 255, 0\.06\) !important;/,
+  );
+});
+
+test("profile violet side beams are limited to live, upcoming, and active deals", () => {
+  const profileAccentBlock = liveApp.match(
+    /\/\* Profile color is reserved[\s\S]*?(?=\s*<\/style>)/,
+  )?.[0] || "";
+
+  assert.ok(profileAccentBlock, "profile accent CSS must exist");
+  assert.match(
+    profileAccentBlock,
+    /Profile color is reserved[\s\S]*?#profileBackdrop :is\([\s\S]*?\.working-now-tile,[\s\S]*?\.profile-schedule-card\.schedule-upcoming,[\s\S]*?\.profile-club-deal-tile[\s\S]*?\)::before \{[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?var\(--dancr-color-beam-blue\)[\s\S]*?pointer-events: none;/,
+  );
+  assert.match(
+    aesthetic,
+    /Full profiles carry one quiet violet side beam[\s\S]*?\.public-profile-shell :is\([\s\S]*?\.profile-working-card,[\s\S]*?\.profile-schedule-section,[\s\S]*?\.profile-working-card \.club-deal-card[\s\S]*?\)::before \{[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?pointer-events: none;/,
+  );
+  assert.doesNotMatch(
+    profileAccentBlock,
+    /\.schedule-empty|\.social-tile|\.profile-qr-unavailable/,
   );
 });
 

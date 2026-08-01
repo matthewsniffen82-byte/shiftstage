@@ -28982,7 +28982,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=21" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=22" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -33293,6 +33293,50 @@
           pointer-events: auto !important;
           touch-action: manipulation !important;
           -webkit-tap-highlight-color: transparent;
+        }
+
+        /* One restrained brand thread: the header glows only along its lower edge. */
+        header .topbar {
+          border: 0 !important;
+          border-bottom: 1px solid rgba(152, 95, 255, 0.22) !important;
+          box-shadow:
+            inset 0 -1px 0 rgba(152, 95, 255, 0.07),
+            0 10px 26px rgba(0, 0, 0, 0.3),
+            0 8px 18px rgba(91, 19, 255, 0.06) !important;
+        }
+
+        /* Profile color is reserved for truthful live, upcoming, and active-deal states. */
+        #profileBackdrop :is(
+          .working-now-tile,
+          .profile-schedule-card.schedule-upcoming,
+          .profile-club-deal-tile
+        ) {
+          position: relative !important;
+          overflow: hidden !important;
+          border-color: rgba(248, 250, 252, 0.1) !important;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        #profileBackdrop :is(
+          .working-now-tile,
+          .profile-schedule-card.schedule-upcoming,
+          .profile-club-deal-tile
+        )::before {
+          content: "";
+          position: absolute;
+          z-index: 1;
+          top: 14px;
+          bottom: 14px;
+          left: 0;
+          width: 2px;
+          border-radius: 999px;
+          background: linear-gradient(
+            180deg,
+            var(--dancr-color-beam-violet),
+            color-mix(in srgb, var(--dancr-color-beam-violet) 62%, var(--dancr-color-beam-blue))
+          );
+          box-shadow: 0 0 14px var(--dancr-color-beam-violet-soft);
+          pointer-events: none;
         }
       </style>
 

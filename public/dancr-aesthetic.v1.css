@@ -1180,3 +1180,41 @@ body.dancr-button-system #results.venue-profile-overlay :is(
     var(--dancr-color-background) 100%
   ) !important;
 }
+
+/* Full profiles carry one quiet violet side beam only on meaningful state cards. */
+.public-profile-shell :is(
+  .profile-working-card,
+  .profile-schedule-section,
+  .profile-working-card .club-deal-card
+) {
+  position: relative !important;
+  overflow: hidden !important;
+  border-color: var(--dancr-color-border-subtle) !important;
+  box-shadow: none !important;
+}
+
+.public-profile-shell :is(
+  .profile-working-card,
+  .profile-schedule-section,
+  .profile-working-card .club-deal-card
+)::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--dancr-color-beam-violet),
+    color-mix(
+      in srgb,
+      var(--dancr-color-beam-violet) 62%,
+      var(--dancr-color-beam-blue)
+    )
+  );
+  box-shadow: 0 0 14px var(--dancr-color-beam-violet-soft);
+  pointer-events: none;
+}
