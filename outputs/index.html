@@ -32245,19 +32245,6 @@
           height: 20px;
           flex-basis: 20px;
         }
-        .home-dancer-grid-profile-avatar {
-          width: 24px;
-          height: 24px;
-          display: block;
-          overflow: hidden;
-          border: 1px solid rgba(248,250,252,.34);
-          border-radius: 50%;
-          background: rgba(248,250,252,.08);
-          background-image: var(--custom-photo);
-          background-position: center top;
-          background-repeat: no-repeat;
-          background-size: cover;
-        }
         .home-dancer-grid-actions .feed-card-action:focus-visible,
         .home-dancer-grid-actions .home-dancer-grid-profile-button:focus-visible {
           outline: 2px solid #7eeaff;
@@ -48007,11 +47994,7 @@
       const venueName = String(profile.venue || "").trim();
       const venueValue = escapeOptionValue(venueName);
       const venue = resolveVenueByName(venueName, city);
-      const profilePhotoUrl = publicProfilePhotoUrl(profile);
-      const profilePhotoAttrs = customPhotoAttrs(profilePhotoUrl, publicProfilePhotoSrcSet(profile));
-      const profileActionVisual = profilePhotoUrl
-        ? `<span class="home-dancer-grid-profile-avatar${profilePhotoAttrs.className}"${profilePhotoAttrs.style} aria-hidden="true"></span>`
-        : actionIconMarkup("profile");
+      const profileActionVisual = actionIconMarkup("profile");
       const venueActionMarkup = venue
         ? `<button class="feed-card-action home-dancer-grid-venue-action" type="button" data-card-venue="${venueValue}" aria-label="Open ${escapeHtml(venueName)} venue profile">${actionButtonLabel("venue", "Venue")}</button>`
         : "";

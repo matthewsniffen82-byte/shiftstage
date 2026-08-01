@@ -372,8 +372,9 @@ test("Now and Dancers grid cards place all profile context and production action
   )?.[0] || "";
   assert.match(
     dancerGridActions,
-    /publicProfilePhotoUrl\(profile\)[\s\S]*?customPhotoAttrs\(profilePhotoUrl, publicProfilePhotoSrcSet\(profile\)\)[\s\S]*?home-dancer-grid-profile-avatar[\s\S]*?actionIconMarkup\("profile"\)/,
+    /const profileActionVisual = actionIconMarkup\("profile"\)/,
   );
+  assert.doesNotMatch(dancerGridActions, /publicProfilePhotoUrl|customPhotoAttrs|home-dancer-grid-profile-avatar/);
   assert.doesNotMatch(dancerGridActions, /data-profile-qr|home-dancer-grid-profile-qr/);
   assert.match(
     homeSource,
