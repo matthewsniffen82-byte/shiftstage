@@ -411,19 +411,21 @@ body > .app main.stack > .hero.reference-hero {
 }
 
 /*
- * The supplied hero artwork contains an inset legacy edge whose corner arcs
- * separate when the bitmap is scaled. Cover only those outer pixels and draw
- * one continuous frame without zooming or repositioning the artwork.
+ * The supplied artwork has a thin inset edge. Redraw only that edge so its
+ * scaled corner arcs stay continuous; do not fill the space between the edge
+ * and the hero boundary, which would read as a heavy frame on mobile.
  */
 body > .app main.stack > .hero.reference-hero::after {
   content: "" !important;
   position: absolute !important;
-  inset: 0 !important;
+  inset: 4px !important;
   z-index: 3 !important;
   display: block !important;
   border: 1px solid var(--dancr-color-brand-primary-medium) !important;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 6px var(--dancr-color-background) !important;
+  border-radius: clamp(14px, 2.2vw, 20px) !important;
+  box-shadow:
+    0 0 0 2px var(--dancr-color-background),
+    inset 0 0 0 2px var(--dancr-color-background) !important;
   pointer-events: none;
 }
 
