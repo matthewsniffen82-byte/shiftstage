@@ -483,8 +483,12 @@ body > .app main.stack > .hero.reference-hero {
     0 18px 38px rgba(0, 0, 0, 0.36),
     0 0 12px rgba(91, 19, 255, 0.1),
     0 0 30px rgba(91, 19, 255, 0.08) !important;
-  filter: none !important;
-  -webkit-filter: none !important;
+  -webkit-filter:
+    drop-shadow(0 0 8px rgba(91, 19, 255, 0.22))
+    drop-shadow(0 0 20px rgba(91, 19, 255, 0.13)) !important;
+  filter:
+    drop-shadow(0 0 8px rgba(91, 19, 255, 0.22))
+    drop-shadow(0 0 20px rgba(91, 19, 255, 0.13)) !important;
 }
 
 /* Preserve the supplied hero pixels exactly. Device-specific brightness,
