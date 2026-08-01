@@ -74,6 +74,14 @@ test("the mobile TV identity and progress sit low without moving actions or navi
   );
   assert.match(
     homeSource,
+    /\.home-tv-feed-progress > span \{[\s\S]*?background: var\(--dancr-color-text-primary\);[\s\S]*?box-shadow: 0 0 9px rgba\(248,250,252,\.52\);/,
+  );
+  assert.doesNotMatch(
+    homeSource.match(/\.home-tv-feed-progress > span \{[\s\S]*?\}/)?.[0] || "",
+    /#a855f7|#22d3ee|linear-gradient/,
+  );
+  assert.match(
+    homeSource,
     /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
   );
   assert.match(
