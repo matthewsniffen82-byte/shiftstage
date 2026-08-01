@@ -453,6 +453,16 @@ body.dancr-button-system > .app main.stack > section.stack > #results.venue-card
   filter: none !important;
 }
 
+/* The compact dancer directory repeats many cards in a small area, so its
+ * inactive cards use a quiet neutral edge without an ambient violet halo.
+ * Selection glow remains reserved for the active filter and navigation. */
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
+  border-color: rgba(248, 250, 252, 0.11) !important;
+  box-shadow:
+    0 8px 18px rgba(5, 5, 7, 0.3),
+    inset 0 1px 0 rgba(248, 250, 252, 0.025) !important;
+}
+
 /* The venue identity panel stays quieter than the card perimeter so nested
  * boxes cannot compete with the boundary between one venue and the next. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-copy {

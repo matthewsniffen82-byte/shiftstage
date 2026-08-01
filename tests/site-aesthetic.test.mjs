@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=26" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=27" rel="stylesheet">/,
   );
 });
 
@@ -128,6 +128,25 @@ test("scrolling card feeds have neutral edges, retained glow, and clear separati
   assert.doesNotMatch(
     liveApp,
     /@supports \(-webkit-touch-callout: none\) \{[\s\S]{0,500}--home-card-/,
+  );
+});
+
+test("the compact dancer directory reserves glow for active controls", () => {
+  const compactDirectoryRule = aesthetic.match(
+    /The compact dancer directory repeats many cards[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+  assert.match(
+    compactDirectoryRule,
+    /border-color: rgba\(248, 250, 252, 0\.11\) !important;/,
+  );
+  assert.match(
+    compactDirectoryRule,
+    /0 8px 18px rgba\(5, 5, 7, 0\.3\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.025\) !important;/,
+  );
+  assert.doesNotMatch(compactDirectoryRule, /91, 19, 255|violet halo[^.]*rgba|beam-card/);
+  assert.match(
+    liveApp,
+    /\.dancer-directory-filter\.is-active \{[\s\S]*?box-shadow: 0 0 18px rgba\(124, 58, 237, \.22\);/,
   );
 });
 
