@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=18" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=19" rel="stylesheet">/,
   );
 });
 
@@ -188,30 +188,18 @@ test("verified check marks use the centralized informational cyan treatment", ()
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
 });
 
-test("the homepage hero renders exactly one clean frame", () => {
+test("the homepage hero renders the exact supplied artwork without a second frame", () => {
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\) !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero::before,[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important/,
-  );
-  assert.doesNotMatch(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::before/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
-  );
-  assert.match(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
-  );
-  assert.match(
-    aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?mix-blend-mode: normal !important;[\s\S]*?opacity: 1 !important;[\s\S]*?transform: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?position: static !important;[\s\S]*?width: 100% !important;[\s\S]*?height: auto !important;[\s\S]*?object-fit: contain !important;[\s\S]*?clip-path: none !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?mix-blend-mode: normal !important;[\s\S]*?opacity: 1 !important;[\s\S]*?transform: none !important/,
   );
   assert.doesNotMatch(
     aesthetic,

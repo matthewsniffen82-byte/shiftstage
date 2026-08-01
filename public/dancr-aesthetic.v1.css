@@ -459,25 +459,39 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-disco
 
 body > .app main.stack > .hero.reference-hero {
   position: relative;
-  overflow: hidden;
-  border: 1px solid var(--dancr-color-border-subtle) !important;
-  border-radius: 24px !important;
-  background: var(--dancr-color-background) !important;
-  box-shadow:
-    0 14px 32px rgba(5, 5, 7, 0.38),
-    inset 0 1px 0 rgba(248, 250, 252, 0.035) !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   filter: none !important;
   -webkit-filter: none !important;
 }
 
 /* Preserve the supplied hero pixels exactly. Device-specific brightness,
  * contrast, saturation, blending, or zoom must never recolor or crop it. */
+body > .app main.stack > .hero.reference-hero::before,
 body > .app main.stack > .hero.reference-hero::after {
   content: none !important;
   display: none !important;
 }
 
 body > .app main.stack > .hero.reference-hero > .hero-art {
+  position: static !important;
+  inset: auto !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
   filter: none !important;
   -webkit-filter: none !important;
   mix-blend-mode: normal !important;
