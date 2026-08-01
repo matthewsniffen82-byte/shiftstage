@@ -29348,7 +29348,7 @@
         #results.home-tv-feed {
           position: relative;
           width: 100%;
-          max-width: 640px;
+          max-width: 720px;
           height: auto;
           min-height: 0;
           margin-inline: auto;
@@ -29372,7 +29372,7 @@
           position: relative;
           z-index: 3;
           width: 100%;
-          min-height: clamp(460px, calc(100svh - 180px), 580px);
+          min-height: clamp(520px, calc(100svh - 140px), 760px);
           display: grid;
           place-items: center;
           overflow: hidden;
@@ -29400,10 +29400,10 @@
           position: relative;
           box-sizing: border-box;
           width: 100%;
-          height: clamp(500px, calc(100vh - 180px), 680px);
-          height: clamp(500px, calc(100svh - 180px), 680px);
-          min-height: 500px;
-          max-height: 680px;
+          height: clamp(560px, calc(100vh - 140px), 760px);
+          height: clamp(560px, calc(100svh - 140px), 760px);
+          min-height: 560px;
+          max-height: 760px;
           overflow: hidden;
           border: 1px solid rgba(248,250,252,.12);
           border-radius: 18px;
@@ -31406,21 +31406,37 @@
             inset: auto !important;
             width: 100% !important;
             max-width: none !important;
-            height: auto !important;
-            min-height: 0;
-            max-height: none;
+            height: clamp(500px, calc(100vh - 180px), 840px) !important;
+            height: clamp(500px, calc(100svh - 180px), 840px) !important;
+            min-height: 500px;
+            max-height: 840px;
             margin: 0 !important;
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) !important;
-            gap: 16px !important;
-            padding-bottom: 24px;
-            overflow: visible !important;
+            grid-auto-rows: 100%;
+            gap: 12px !important;
+            padding: 0;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            overscroll-behavior-y: auto;
+            overflow-anchor: none;
             border: 0 !important;
             border-radius: 0;
             background: transparent;
             box-shadow: none;
-            scroll-snap-type: none;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
             touch-action: pan-y;
+          }
+          #results.home-tv-feed > .home-tv-feed-loading,
+          #results.home-tv-feed > .home-tv-feed-slide {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
           }
           #results.home-discovery-feed {
             position: relative !important;
@@ -35333,6 +35349,7 @@
     let homeTvFeedObserver = null;
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
+    const homeTvFeedSnapMedia = window.matchMedia("(max-width: 720px)");
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -49227,6 +49244,10 @@
       showHomeTvFeedFeedback(slide, "Paused");
     }
 
+    function homeTvFeedUsesSnapViewport() {
+      return homeTvFeedSnapMedia.matches;
+    }
+
     function setupHomeTvFeedObserver() {
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
@@ -49236,12 +49257,17 @@
         activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
         return;
       }
+      const snapViewport = homeTvFeedUsesSnapViewport();
       homeTvFeedObserver = new IntersectionObserver((entries) => {
         const visible = entries
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (visible) activateHomeTvFeedVideo(String(visible.target.dataset.videoId || ""));
-      }, { root: null, rootMargin: "-72px 0px -88px", threshold: [.25, .6, .72] });
+      }, {
+        root: snapViewport ? results : null,
+        rootMargin: snapViewport ? "0px" : "-72px 0px -88px",
+        threshold: [.25, .6, .72]
+      });
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
       activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
     }
@@ -49332,7 +49358,11 @@
         return;
       }
       const nextSlide = slides[nextIndex];
-      nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
+      if (homeTvFeedUsesSnapViewport()) {
+        results.scrollTo({ top: nextSlide.offsetTop, behavior: "smooth" });
+      } else {
+        nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
+      }
       activateHomeTvFeedVideo(String(nextSlide.dataset.videoId || ""));
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
     }
@@ -49779,6 +49809,15 @@
     ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
       document.addEventListener(eventName, syncHomeTvFeedFullscreenButtons);
     });
+    const refreshHomeTvFeedViewportMode = () => {
+      if (activeTab !== "tv" || !results.classList.contains("home-tv-feed")) return;
+      window.requestAnimationFrame(setupHomeTvFeedObserver);
+    };
+    if (typeof homeTvFeedSnapMedia.addEventListener === "function") {
+      homeTvFeedSnapMedia.addEventListener("change", refreshHomeTvFeedViewportMode);
+    } else {
+      homeTvFeedSnapMedia.addListener(refreshHomeTvFeedViewportMode);
+    }
 
     function renderHomeTvFeedMessage(message, retryCity = "") {
       const state = document.createElement("div");

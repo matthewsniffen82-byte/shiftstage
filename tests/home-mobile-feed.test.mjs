@@ -31,11 +31,11 @@ test("mobile discovery uses one consolidated Dancers destination beside TV and V
   );
 });
 
-test("the Home TV button renders a real page-scroll video feed without leaving Home", () => {
+test("the Home TV button renders a larger mobile snap-scroll feed without leaving Home", () => {
   assert.match(homeSource, /name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/);
   assert.match(
     homeSource,
-    /#results\.home-tv-feed \{[\s\S]*?display: grid[\s\S]*?overflow: visible[\s\S]*?scroll-snap-type: none[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 680px\)[\s\S]*?border-radius: 18px/,
+    /#results\.home-tv-feed \{[\s\S]*?max-width: 720px[\s\S]*?display: grid[\s\S]*?overflow: visible[\s\S]*?scroll-snap-type: none[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: clamp\(560px, calc\(100svh - 140px\), 760px\)[\s\S]*?border-radius: 18px/,
   );
   assert.match(
     homeSource,
@@ -43,7 +43,7 @@ test("the Home TV button renders a real page-scroll video feed without leaving H
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed \{[\s\S]*?position: relative !important[\s\S]*?width: 100% !important[\s\S]*?height: auto !important[\s\S]*?overflow: visible !important/,
+    /@media \(max-width: 720px\) \{[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 840px\) !important;[\s\S]*?grid-auto-rows: 100%;[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: 100% !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
   assert.match(
     homeSource,
@@ -232,7 +232,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
-test("TV and discovery cards both use natural page scrolling", () => {
+test("TV uses an isolated mobile snap viewport while discovery cards keep natural page scrolling", () => {
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?display: grid;[\s\S]*?overflow: visible;[\s\S]*?scroll-snap-type: none;/,
@@ -243,15 +243,23 @@ test("TV and discovery cards both use natural page scrolling", () => {
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 680px\);[\s\S]*?min-height: 500px;[\s\S]*?max-height: 680px;[\s\S]*?contain: layout paint style;/,
+    /\.home-tv-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(560px, calc\(100svh - 140px\), 760px\);[\s\S]*?min-height: 560px;[\s\S]*?max-height: 760px;[\s\S]*?contain: layout paint style;/,
   );
   assert.match(
     homeSource,
     /\.home-discovery-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(420px, calc\(100vh - 230px\), 540px\);[\s\S]*?height: clamp\(420px, calc\(100svh - 230px\), 540px\);[\s\S]*?min-height: 420px;[\s\S]*?max-height: 540px;[\s\S]*?contain: layout paint style;/,
   );
-  assert.doesNotMatch(homeSource, /calc\(100dvh - 180px\)/);
-  assert.match(homeSource, /\}, \{ root: null, rootMargin: "-72px 0px -88px", threshold: \[\.25, \.6, \.72\] \}\);/);
-  assert.match(homeSource, /function showRelativeHomeTvFeedSlide[\s\S]*?nextSlide\.scrollIntoView\(\{ block: "start", behavior: "smooth" \}\)/);
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 840px\) !important;[\s\S]*?overflow-y: auto !important;[\s\S]*?overscroll-behavior-y: auto;[\s\S]*?scroll-snap-type: y mandatory;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: 100% !important;[\s\S]*?min-height: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
+  );
+  assert.match(homeSource, /const homeTvFeedSnapMedia = window\.matchMedia\("\(max-width: 720px\)"\)/);
+  assert.match(homeSource, /root: snapViewport \? results : null,[\s\S]*?rootMargin: snapViewport \? "0px" : "-72px 0px -88px"/);
+  assert.match(homeSource, /function showRelativeHomeTvFeedSlide[\s\S]*?results\.scrollTo\(\{ top: nextSlide\.offsetTop, behavior: "smooth" \}\)[\s\S]*?nextSlide\.scrollIntoView\(\{ block: "start", behavior: "smooth" \}\)/);
   assert.doesNotMatch(homeSource, /function syncHomeDiscoveryFeedViewport\(\)/);
   assert.doesNotMatch(
     homeSource,
