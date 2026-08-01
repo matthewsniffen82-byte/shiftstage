@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=20" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=21" rel="stylesheet">/,
   );
 });
 
@@ -235,6 +235,14 @@ test("the city selector is compact, neutral, and reports only real active filter
   assert.match(
     aesthetic,
     /body > \.app main\.stack > \.home-live-summary \{[\s\S]*?display: flex !important[\s\S]*?min-height: 20px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-discovery-controls :is\(select, button\) \{[\s\S]*?min-height: 44px !important[\s\S]*?\.home-filter-toggle \{[\s\S]*?min-width: 104px[\s\S]*?padding-inline: 12px !important/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-live-summary #homeLiveRadius \{[\s\S]*?flex: 0 1 auto[\s\S]*?text-align: left !important/,
   );
   assert.match(
     aesthetic,

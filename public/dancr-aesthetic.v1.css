@@ -544,7 +544,7 @@ body > .app main.stack > .home-discovery-controls .home-city-select-icon {
 }
 
 body > .app main.stack > .home-discovery-controls :is(select, button) {
-  min-height: 48px !important;
+  min-height: 44px !important;
   border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 14px !important;
   color: var(--dancr-color-text-primary) !important;
@@ -562,8 +562,8 @@ body > .app main.stack > .home-discovery-controls .home-filter-toggle {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-width: 112px;
-  padding-inline: 14px !important;
+  min-width: 104px;
+  padding-inline: 12px !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface-subtle) !important;
 }
@@ -616,7 +616,7 @@ body > .app main.stack > .home-live-summary {
   display: flex !important;
   align-items: center;
   justify-content: flex-start;
-  gap: 7px;
+  gap: 5px;
   min-height: 20px !important;
   padding: 0 2px !important;
   overflow: visible !important;
@@ -646,7 +646,7 @@ body > .app main.stack > .home-live-summary .home-live-summary-divider {
 }
 
 body > .app main.stack > .home-live-summary #homeLiveRadius {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   text-align: left !important;
 }
 
