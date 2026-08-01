@@ -7,7 +7,6 @@ const SESSION_KEY = "dancrAuthSessionV1";
 
 type AdminTvVideo = {
   id: string;
-  caption: string;
   videoUrl: string;
   status: string;
   venueTagStatus: string;
@@ -146,7 +145,6 @@ export default function AdminTvPanel() {
             <div className="admin-tv-copy">
               <span>{video.status.replaceAll("_", " ")}</span>
               <h3>{video.dancer?.stageName || "Dancer"}</h3>
-              <p>{video.caption}</p>
               <small>
                 {video.dancer?.city || "City unavailable"}
                 {video.venue ? ` · ${video.venue.name}` : " · No venue attached"}

@@ -27,7 +27,6 @@ export async function POST(request: Request) {
     const shiftId = cleanOptionalUuid(body?.shiftId, "shift");
     const venueId = cleanOptionalUuid(body?.venueId, "venue");
     const upload = await createMyDancrTvUpload(createAdminSupabaseClient(), user.id, {
-      caption: typeof body?.caption === "string" ? body.caption : "",
       mimeType: typeof body?.mimeType === "string" ? body.mimeType : "",
       fileSize: Number(body?.fileSize),
       durationSeconds: Number(body?.durationSeconds),

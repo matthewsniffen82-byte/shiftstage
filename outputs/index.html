@@ -2288,13 +2288,11 @@
     }
 
     .approved-profile-video-form > label:first-child,
-    .approved-profile-video-form .approved-profile-video-caption,
     .approved-profile-video-form .approved-profile-video-check,
     .approved-profile-video-form > button,
     .approved-profile-video-preview { grid-column: 1 / -1; }
 
     .approved-profile-video-form input[type="file"],
-    .approved-profile-video-form textarea,
     .approved-profile-video-form select {
       width: 100%;
       min-height: 44px;
@@ -2307,7 +2305,6 @@
     }
 
     .approved-profile-video-form select option { color: #111; }
-    .approved-profile-video-form textarea { min-height: 82px; resize: vertical; }
     .approved-profile-video-form small { color: #9e92b2; font-size: 10px; font-weight: 700; line-height: 1.4; }
     .approved-profile-video-preview { width: min(230px, 100%); max-height: 360px; justify-self: center; border-radius: 12px; background: #000; }
     .approved-profile-video-preview[hidden] { display: none; }
@@ -41379,7 +41376,6 @@
                   : '<div class="approved-profile-video-empty"><small>Video preview unavailable</small></div>'}
                 <div class="approved-profile-video-slot-copy">
                   <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status))}</span>
-                  <strong title="${displayText(video.caption || "Profile video")}">${displayText(video.caption || "Profile video")}</strong>
                 </div>
                 <button class="approved-profile-video-remove" type="button" data-approved-profile-video-remove="${displayText(video.id)}" ${approvedProfileVideoRemovingId === video.id ? "disabled" : ""}>
                   ${approvedProfileVideoRemovingId === video.id ? "Removing..." : "Remove"}
@@ -41405,11 +41401,6 @@
                     <small>Vertical or square MP4/WebM · 1–10 seconds · 75 MB maximum</small>
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline hidden></video>
-                  <label class="approved-profile-video-caption">
-                    Caption
-                    <textarea id="approvedProfileVideoCaption" maxlength="500" placeholder="Tell customers what this video is about." required></textarea>
-                    <small>Required · 500 characters maximum</small>
-                  </label>
                   <label>
                     Connect a posted shift
                     <select id="approvedProfileVideoShift">
@@ -41522,8 +41513,6 @@
       if ((approvedProfileVideoWorkspace?.videos?.length || 0) >= MAX_DANCER_PROFILE_VIDEOS) {
         throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
       }
-      const caption = form.querySelector("#approvedProfileVideoCaption")?.value?.trim() || "";
-      if (!caption) throw new Error("Add a caption before uploading.");
       const consentConfirmed = form.querySelector("#approvedProfileVideoConsent")?.checked === true;
       const rightsConfirmed = form.querySelector("#approvedProfileVideoRights")?.checked === true;
       if (!consentConfirmed || !rightsConfirmed) {
@@ -41539,7 +41528,6 @@
           method: "POST",
           headers,
           body: JSON.stringify({
-            caption,
             mimeType: file.type,
             fileSize: file.size,
             durationSeconds: metadata.duration,
@@ -51473,7 +51461,7 @@
           preview.hidden = true;
         }
         const status = document.getElementById("approvedProfileVideoStatus");
-        if (status) status.textContent = file ? "Add a caption and confirm both permissions, then upload." : "Choose a video file.";
+        if (status) status.textContent = file ? "Confirm both permissions, then upload." : "Choose a video file.";
         return;
       }
       if (event.target?.id !== "approvedPhotoUploadInput") return;

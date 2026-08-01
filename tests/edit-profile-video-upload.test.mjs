@@ -36,6 +36,13 @@ test("Edit Profile video slots use authenticated production storage and moderati
   assert.doesNotMatch(liveApp, /sample profile video|placeholder video|mock video/i);
 });
 
+test("video uploads never offer or collect captions", () => {
+  assert.doesNotMatch(liveApp, /approvedProfileVideoCaption|approved-profile-video-caption|Add a caption before uploading/);
+  assert.doesNotMatch(dancerStudio, /setCaption|Add a caption before submitting|placeholder="Tell customers what this video is about\."/);
+  assert.doesNotMatch(tvSource, /caption:\s*string;[\s\S]*?mimeType:\s*string;/);
+  assert.match(tvSource, /caption: videoId/);
+});
+
 test("five-video limit is enforced by the service and serialized in Postgres", () => {
   assert.match(tvSource, /MYDANCR_TV_PROFILE_VIDEO_LIMIT = 5/);
   assert.match(

@@ -29,7 +29,6 @@ type Workspace = {
 
 type ManagedVideo = {
   id: string;
-  caption: string;
   videoUrl: string;
   status: string;
   venueTagStatus: string;
@@ -49,7 +48,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [caption, setCaption] = useState("");
   const [shiftId, setShiftId] = useState("");
   const [venueId, setVenueId] = useState("");
   const [consentConfirmed, setConsentConfirmed] = useState(false);
@@ -111,7 +109,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     if (!session?.accessToken) return setStatus("Sign in as a dancer to upload.");
     if (atVideoLimit) return setStatus(`You can upload up to ${maxVideos} profile videos. Remove one before adding another.`);
     if (!file) return setStatus("Choose an MP4 or WebM video first.");
-    if (!caption.trim()) return setStatus("Add a caption before submitting.");
     if (!consentConfirmed || !rightsConfirmed) {
       return setStatus("Confirm consent and content rights before submitting.");
     }
@@ -124,7 +121,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         method: "POST",
         headers: { ...authHeaders(session), "content-type": "application/json" },
         body: JSON.stringify({
-          caption,
           mimeType: file.type,
           fileSize: file.size,
           durationSeconds: metadata.duration,
@@ -162,7 +158,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
       setStatus(submitted.message || "Your video completed automated safety review.");
       setFile(null);
-      setCaption("");
       setShiftId("");
       setVenueId("");
       setConsentConfirmed(false);
@@ -269,18 +264,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           </label>
           {previewUrl ? <video className="tv-upload-preview" controls playsInline src={previewUrl} /> : null}
           <label>
-            Caption
-            <textarea
-              value={caption}
-              maxLength={500}
-              rows={4}
-              placeholder="Tell customers what this video is about."
-              onChange={(event) => setCaption(event.target.value)}
-              required
-            />
-            <small>{caption.length}/500</small>
-          </label>
-          <label>
             Connect a posted shift
             <select value={shiftId} onChange={(event) => {
               setShiftId(event.target.value);
@@ -344,7 +327,6 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               {video.videoUrl ? <video controls playsInline preload="metadata" src={video.videoUrl} /> : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
-                <strong>{video.caption}</strong>
                 {video.venue ? <small>{video.venue.name} · venue tag {video.venueTagStatus}</small> : null}
                 {video.moderationDecision ? (
                   <small className="tv-moderation-summary">
@@ -462,9 +444,8 @@ function DancerTvStudioStyles() {
       .tv-studio-head > a, .tv-managed-video a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(34,199,255,.38); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-weight: 900; text-decoration: none; white-space: nowrap; }
       .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; border: 1px solid rgba(139,92,246,.3); border-radius: 12px; background: rgba(11,11,16,.84); }
       .tv-upload-form > label { display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
-      .tv-file-picker, .tv-upload-preview, .tv-upload-form > label:nth-of-type(2), .tv-upload-form > button { grid-column: 1 / -1; }
-      .tv-upload-form input[type="file"], .tv-upload-form textarea, .tv-upload-form select { width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; }
-      .tv-upload-form textarea { resize: vertical; }
+      .tv-file-picker, .tv-upload-preview, .tv-upload-form > button { grid-column: 1 / -1; }
+      .tv-upload-form input[type="file"], .tv-upload-form select { width: 100%; min-height: 44px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 10px 12px; font: inherit; }
       .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
       .tv-upload-preview { width: min(360px, 100%); max-height: 560px; justify-self: center; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: #000; }
       .tv-check { grid-column: 1 / -1; grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
@@ -486,7 +467,6 @@ function DancerTvStudioStyles() {
       .tv-managed-video > video, .tv-video-unavailable { width: 180px; aspect-ratio: 9 / 16; max-height: 310px; object-fit: contain; border-radius: 8px; background: #000; }
       .tv-video-unavailable { display: grid; place-items: center; color: #9f94b3; font-size: 12px; }
       .tv-managed-video > div { display: grid; align-content: start; gap: 8px; }
-      .tv-managed-video strong { overflow-wrap: anywhere; }
       .tv-managed-video small { color: #a99ebc; }
       .tv-managed-video p { margin: 0; padding: 9px; border: 1px solid rgba(255,91,116,.22); border-radius: 8px; color: #ffc2cc; background: rgba(255,91,116,.06); }
       .tv-video-status { width: fit-content; padding: 5px 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #d8d0e8; font-size: 10px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }

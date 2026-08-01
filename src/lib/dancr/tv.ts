@@ -544,7 +544,6 @@ export async function createMyDancrTvUpload(
   admin: AdminClient,
   userId: string,
   input: {
-    caption: string;
     mimeType: string;
     fileSize: number;
     durationSeconds: number;
@@ -566,8 +565,6 @@ export async function createMyDancrTvUpload(
     throw new Error("An approved dancer profile is required before posting to MyDancr TV.");
   }
 
-  const caption = input.caption.trim();
-  if (!caption || caption.length > 500) throw new Error("Enter a caption of 500 characters or fewer.");
   if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4 or WebM video.");
   if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 1 || input.fileSize > MYDANCR_TV_MAX_BYTES) {
     throw new Error("Video files must be 75 MB or smaller.");
@@ -609,7 +606,7 @@ export async function createMyDancrTvUpload(
       submitted_by: userId,
       venue_id: input.venueId || null,
       shift_id: input.shiftId || null,
-      caption,
+      caption: videoId,
       storage_path: storagePath,
       storage_mime: input.mimeType,
       file_size_bytes: input.fileSize,

@@ -7,7 +7,6 @@ const SESSION_KEY = "dancrAuthSessionV1";
 
 type VenueTvVideo = {
   id: string;
-  caption: string;
   videoUrl: string;
   status: string;
   venueTagStatus: string;
@@ -107,7 +106,6 @@ export default function VenueTvPanel() {
             <div>
               <span>{video.status} · venue tag {video.venueTagStatus}</span>
               <strong>{video.dancer?.stageName || "Dancer"}</strong>
-              <p>{video.caption}</p>
               {video.shift ? <small>Posted shift · {formatDate(video.shift.startsAt)}</small> : null}
               <dl>
                 <div><dt>Engaged views</dt><dd>{video.metrics?.engaged_view || 0}</dd></div>
