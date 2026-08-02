@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=35" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=36" rel="stylesheet">/,
   );
 });
 
@@ -107,7 +107,7 @@ test("discovery feeds retain neutral edges while TV media is completely borderle
   );
   assert.match(
     aesthetic,
-    /#results\.home-discovery-feed > \.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?border-color: rgba\(248, 250, 252, 0\.07\) !important;/,
+    /#results\.home-discovery-feed > \.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?border: 0 !important;/,
   );
   assert.match(
     liveApp,

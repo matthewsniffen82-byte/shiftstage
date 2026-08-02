@@ -63,23 +63,23 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
 test("venue-card QR revenue actions use the semantic emerald success treatment", () => {
   assert.match(
     liveSource,
-    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?if \(rail\)[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?"home-venue-discovery-club-deal home-venue-discovery-deal-action is-available"[\s\S]*?data-feed-venue-qr/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-club-deal-cta[\s\S]*?data-feed-venue-qr[\s\S]*?actionButtonLabel\("qr", "Get Deal"\)/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions\s+\.home-venue-discovery-deal-action \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)[\s\S]*?0 0 18px var\(--dancr-color-success-soft\)/,
+    /\.home-venue-discovery-action-rail\s+\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)[\s\S]*?0 0 18px var\(--dancr-color-success-soft\)/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:hover \{[\s\S]*?border-color: var\(--dancr-color-success\) !important/,
+    /\.home-venue-discovery-action-rail[\s\S]*?\.home-venue-discovery-rail-qr\.is-available:hover \{[\s\S]*?border-color: var\(--dancr-color-success\) !important/,
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-context-actions[\s\S]*?\.home-venue-discovery-deal-action:active \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important/,
+    /\.home-venue-discovery-action-rail[\s\S]*?\.home-venue-discovery-rail-qr\.is-available:active \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important/,
   );
   assert.match(
     buttonCss,
-    /\[data-feed-venue-qr\],[\s\S]*?\.home-venue-discovery-deal-action[\s\S]*?:focus-visible \{[\s\S]*?outline-color: var\(--dancr-color-success\)[\s\S]*?0 0 0 4px var\(--dancr-color-success-medium\)/,
+    /\[data-feed-venue-qr\],[\s\S]*?:focus-visible \{[\s\S]*?outline-color: var\(--dancr-color-success\)[\s\S]*?0 0 0 4px var\(--dancr-color-success-medium\)/,
   );
 });
 

@@ -114,8 +114,8 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
   assert.match(homeSource, /\.home-venue-discovery-monogram \{[\s\S]*?width: 112px;[\s\S]*?height: 112px;/);
   assert.doesNotMatch(homeSource, /\.home-venue-discovery-art\.has-lineup-photo/);
   assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo\.has-venue-cover::before/);
-  assert.match(homeSource, /\.home-venue-discovery-context-actions[\s\S]*?grid-template-columns: repeat\(2/);
-  assert.match(homeSource, /home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile[\s\S]*?data-share-venue/);
+  assert.match(homeSource, /\.home-venue-discovery-context-actions[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(homeSource, /home-venue-discovery-name-row[\s\S]*?data-open-venue-profile[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-share-venue/);
   assert.doesNotMatch(
     homeSource.match(/function homeVenueDiscoveryFeedSlide[\s\S]*?\n    \}/)?.[0] || "",
     /home-discovery-feed-profile-button/,

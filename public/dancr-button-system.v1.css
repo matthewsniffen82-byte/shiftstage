@@ -142,11 +142,8 @@
 }
 
 .dancr-button-system
-  .home-discovery-feed-actions
-  .home-venue-discovery-deal-action,
-.dancr-button-system
-  .home-venue-discovery-context-actions
-  .home-venue-discovery-deal-action {
+  .home-venue-discovery-action-rail
+  .home-venue-discovery-rail-qr.is-available {
   border-color: var(--dancr-color-success-strong) !important;
   color: var(--dancr-color-text-primary) !important;
   background:
@@ -173,11 +170,8 @@
 }
 
 .dancr-button-system
-  .home-discovery-feed-actions
-  .home-venue-discovery-deal-action:hover,
-.dancr-button-system
-  .home-venue-discovery-context-actions
-  .home-venue-discovery-deal-action:hover {
+  .home-venue-discovery-action-rail
+  .home-venue-discovery-rail-qr.is-available:hover {
   border-color: var(--dancr-color-success) !important;
   box-shadow:
     0 12px 30px var(--dancr-color-black-medium),
@@ -186,11 +180,8 @@
 }
 
 .dancr-button-system
-  .home-discovery-feed-actions
-  .home-venue-discovery-deal-action:active,
-.dancr-button-system
-  .home-venue-discovery-context-actions
-  .home-venue-discovery-deal-action:active {
+  .home-venue-discovery-action-rail
+  .home-venue-discovery-rail-qr.is-available:active {
   border-color: var(--dancr-color-success-strong) !important;
   box-shadow:
     0 7px 20px var(--dancr-color-black-medium),
@@ -256,8 +247,7 @@
   [data-feed-venue-qr],
   [data-club-deal-cta],
   .venue-qr-launcher,
-  .home-discovery-feed-qr-prompt,
-  .home-venue-discovery-deal-action
+  .home-discovery-feed-qr-prompt
 ):focus-visible {
   outline-color: var(--dancr-color-success) !important;
   border-color: var(--dancr-color-success-strong) !important;

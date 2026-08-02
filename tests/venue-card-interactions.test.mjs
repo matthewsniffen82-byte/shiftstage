@@ -48,12 +48,13 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue, "rail"\)[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow/,
   );
   assert.match(
     venueSwipeRenderer,
-    /home-venue-discovery-context-actions[\s\S]*?\$\{qrMarkup\}[\s\S]*?\$\{directionsMarkup\}/,
+    /home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
   );
+  assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
     venueSwipeRenderer,
     /const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?<span class="home-discovery-feed-status is-now">\$\{escapeHtml\(workingLabel\)\}<\/span>[\s\S]*?: "";/,
@@ -61,10 +62,10 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?data-club-deal-cta[\s\S]*?Get Club Deal[\s\S]*?return "";/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Get Deal"\)[\s\S]*?data-card-qr-label="Club Deal unavailable"/,
   );
   const venueSwipeQrHelper = homeSource.match(
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+    /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
   )?.[0] || "";
   assert.doesNotMatch(
     venueSwipeQrHelper,

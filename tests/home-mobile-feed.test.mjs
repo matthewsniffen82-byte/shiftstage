@@ -374,10 +374,10 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?const rail = presentation === "rail"[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?if \(rail\)[\s\S]*?data-card-action-slot="qr"[\s\S]*?home-venue-discovery-club-deal[\s\S]*?Get Club Deal[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?home-venue-discovery-club-deal is-unavailable[\s\S]*?Check back later/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Get Deal"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?actionButtonLabel\("qr", "Club QR"\)/,
   );
   const venueQrHelper = homeSource.match(
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+    /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
   )?.[0] || "";
   assert.doesNotMatch(
     venueQrHelper,
@@ -391,13 +391,13 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue, "rail"\)[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{qrMarkup\}[\s\S]*?\$\{directionsMarkup\}/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-profile-cta[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
   );
   assert.match(
     venueSlide,
-    /home-venue-discovery-identity[\s\S]*?home-venue-discovery-identity-mark[\s\S]*?home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
+    /home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
   );
-  assert.doesNotMatch(venueSlide, /dealMarkup|home-venue-discovery-deal/);
+  assert.doesNotMatch(venueSlide, /qrMarkup|dealMarkup|home-venue-discovery-deal|Mydancr venue|home-venue-discovery-identity/);
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
@@ -417,15 +417,23 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-deal-action \{[\s\S]*?linear-gradient/,
+    /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-profile-cta \{[\s\S]*?box-shadow: none !important/,
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 58px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1\.55fr\) minmax\(0, \.85fr\)/,
+    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 68px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-club-deal \{[\s\S]*?grid-template-columns: 48px minmax\(0, 1fr\)[\s\S]*?\.home-venue-discovery-club-deal \.home-venue-discovery-qr-symbol \{[\s\S]*?width: 48px;[\s\S]*?\.home-venue-discovery-club-deal-copy strong \{[\s\S]*?font-size: 12px;/,
+    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px;[\s\S]*?box-shadow: none;/,
+  );
+  assert.match(
+    homeSource,
+    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?border-color: rgba\(248,250,252,\.1\) !important;[\s\S]*?box-shadow: 0 6px 16px rgba\(0,0,0,\.25\) !important;/,
   );
   assert.match(
     homeSource,
@@ -433,15 +441,18 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?bottom: 90px;[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border-radius: 18px;[\s\S]*?backdrop-filter: blur\(15px\)/,
+    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?bottom: 78px;[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border: 0;[\s\S]*?backdrop-filter: blur\(12px\)/,
   );
   assert.match(
     homeSource,
     /\.home-venue-discovery-lineup-slot:empty \{[\s\S]*?display: none;[\s\S]*?\.home-venue-discovery-meta:empty \{[\s\S]*?display: none;/,
   );
+  const venueActionVisualRule = homeSource.match(
+    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?\n        \}/,
+  )?.[0] || "";
   assert.doesNotMatch(
-    homeSource,
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{/,
+    venueActionVisualRule,
+    /(?:^|\s)(?:width|height|min-height|max-height|padding|margin|position|display|grid|flex|top|right|bottom|left|overflow):/,
   );
 });
 

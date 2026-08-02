@@ -164,10 +164,10 @@ test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr 
   );
   assert.match(venueOfferHelper, /venue-club-deal-unavailable[\s\S]*?Club Deal QR[\s\S]*?Unavailable/);
   assert.doesNotMatch(venueOfferHelper, /data-venue-profile-qr|Show venue QR/);
-  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?return "";/);
+  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?data-card-qr-label="Club Deal unavailable"/);
   const venueQrHelper =
     liveApp.match(
-      /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+      /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
     )?.[0] || "";
   assert.doesNotMatch(
     venueQrHelper,

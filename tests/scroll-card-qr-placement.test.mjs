@@ -4,7 +4,7 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("dancer and venue scrolling cards keep QR directly below Profile", () => {
+test("dancer cards keep QR below Profile while venue cards elevate QR as the rail CTA", () => {
   const dancerActions = homeSource.match(
     /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
   )?.[0] || "";
@@ -18,8 +18,9 @@ test("dancer and venue scrolling cards keep QR directly below Profile", () => {
   );
   assert.match(
     venueSlide,
-    /data-open-venue-profile="\$\{venueValue\}"[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"/,
+    /home-venue-discovery-name-row[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"/,
   );
+  assert.doesNotMatch(venueSlide, /home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile/);
   assert.match(homeSource, /data-card-action-slot="qr"/);
   assert.match(
     homeSource,
@@ -28,7 +29,7 @@ test("dancer and venue scrolling cards keep QR directly below Profile", () => {
   assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
   assert.match(
     homeSource,
-    /const unavailableCardQr = event\.target\.closest\('\[data-card-action-slot="qr"\]\[aria-disabled="true"\]'\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?event\.stopPropagation\(\)[\s\S]*?showToast/,
+    /const unavailableCardQr = event\.target\.closest\('\[data-card-action-slot="qr"\]\[data-card-qr-label\]'\)[\s\S]*?event\.preventDefault\(\)[\s\S]*?event\.stopPropagation\(\)[\s\S]*?showCardQrNotice/,
   );
 });
 

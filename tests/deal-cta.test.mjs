@@ -63,24 +63,21 @@ test("venue pages and directory cards promote real active deals", () => {
   assert.doesNotMatch(venueDirectory, /getActiveClubDealsForVenues|venue-card-deal/);
   assert.match(
     liveApp,
-    /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta/,
   );
   const venueQrHelper =
     liveApp.match(
-      /function homeVenueDiscoveryQrMarkup\(venue, presentation = "primary"\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
+      /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
     )?.[0] || "";
   assert.match(
     venueQrHelper,
-    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?if \(rail\)[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-card-action-slot="qr"[\s\S]*?home-venue-discovery-club-deal home-venue-discovery-deal-action is-available/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Get Deal"\)/,
   );
   assert.match(
     venueQrHelper,
-    /clubDealQrSymbolMarkup\("home-venue-discovery-qr-symbol"\)[\s\S]*?<strong>Get Club Deal<\/strong>[\s\S]*?Open unique QR/,
+    /home-venue-discovery-rail-qr is-unavailable[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?data-card-qr-message="This venue has not published a tracked Club Deal\. Check back later\."/,
   );
-  assert.match(
-    venueQrHelper,
-    /home-venue-discovery-club-deal is-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?<strong>No Club Deal<\/strong>[\s\S]*?Check back later/,
-  );
+  assert.doesNotMatch(venueQrHelper, /home-venue-discovery-club-deal|aria-disabled="true"/);
   assert.doesNotMatch(
     venueQrHelper,
     /safeExternalHref\(venue\.qrCodeUrl\)|data-external-venue-qr|data-venue-profile-qr|publishedVenueQrPass|data-deal-pass/,
@@ -105,8 +102,8 @@ test("venue pages and directory cards promote real active deals", () => {
     liveApp.match(
       /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
     )?.[0] || "";
-  assert.match(venueSlide, /const qrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
-  assert.doesNotMatch(venueSlide, /dealMarkup|home-venue-discovery-deal/);
+  assert.match(venueSlide, /const railQrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
+  assert.doesNotMatch(venueSlide, /const qrMarkup|dealMarkup|home-venue-discovery-deal/);
 });
 
 test("deal generation produces a durable pass with save and share actions", () => {

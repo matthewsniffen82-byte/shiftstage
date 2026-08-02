@@ -22,10 +22,10 @@ test("mobile dancer, TV, and venue cards share one typography hierarchy", () => 
     typographyBlock,
     /\.home-dancer-grid-status,[\s\S]*?\.home-tv-feed-schedule,[\s\S]*?\.home-discovery-feed-status,[\s\S]*?\.home-venue-discovery-hours,[\s\S]*?\.home-venue-discovery-next \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 900;[\s\S]*?line-height: 1;/,
   );
-  assert.match(
-    typographyBlock,
-    /\.home-venue-discovery-kicker \{[\s\S]*?font-size: 10px;[\s\S]*?letter-spacing: \.14em;[\s\S]*?text-transform: uppercase;/,
-  );
+  const venueSlide = homeSource.match(
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
+  )?.[0] || "";
+  assert.doesNotMatch(venueSlide, /home-venue-discovery-kicker|Mydancr venue/);
   assert.match(
     typographyBlock,
     /\.home-dancer-grid-action-rail[\s\S]*?\.home-venue-discovery-context-actions[\s\S]*?\.home-tv-feed-sound \{[\s\S]*?font-size: 9px;[\s\S]*?font-weight: 950;/,
