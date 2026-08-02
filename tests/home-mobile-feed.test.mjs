@@ -823,7 +823,7 @@ test("mobile discovery headings share a compact divided hierarchy across Android
   );
   assert.match(
     homeSource,
-    /\.content-head\.discovery-section-head \{[\s\S]*?padding-bottom: 13px !important;[\s\S]*?border-bottom: 1px solid rgba\(148, 163, 184, \.14\);[\s\S]*?\.content-head\.discovery-section-head \+ #results \{[\s\S]*?margin-top: -7px !important;/,
+    /\.content-head\.discovery-section-head \{[\s\S]*?padding-bottom: 13px !important;[\s\S]*?border-bottom: 1px solid rgba\(255, 255, 255, \.1\);[\s\S]*?\.content-head\.discovery-section-head \+ #results \{[\s\S]*?margin-top: -7px !important;/,
   );
   assert.match(
     homeSource,
