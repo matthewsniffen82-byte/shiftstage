@@ -16,7 +16,7 @@ const [homeSource, tvSource, applauseMigration, aestheticSource, fullTvFeedSourc
 test("the homepage TV card uses a resilient, readable media-first presentation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-video \{[\s\S]*?object-fit: cover[\s\S]*?\.home-tv-feed-media-fallback \{[\s\S]*?background-size: cover/,
+    /\.home-tv-feed-video \{[\s\S]*?object-fit: cover[\s\S]*?\.home-tv-feed-media-fallback \{[\s\S]*?background: var\(--dancr-color-background, #050507\);/,
   );
   assert.match(
     homeSource,
@@ -52,10 +52,16 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
     homeSource,
     /\.home-tv-feed-deal-action \{[\s\S]*?border-color: var\(--dancr-color-success-strong\)[\s\S]*?var\(--dancr-color-success\)/,
   );
-  assert.match(
-    homeSource,
-    /const posterUrl = String\(item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?if \(posterUrl\) video\.poster = posterUrl[\s\S]*?video\.addEventListener\("error"[\s\S]*?"Video unavailable"/,
-  );
+  const mediaFallbackFactory = homeSource.match(
+    /function createHomeTvFeedMediaFallback\(\) \{[\s\S]*?return fallback;\s*\}/,
+  )?.[0] || "";
+  const videoFactory = homeSource.match(
+    /function createHomeTvFeedVideo\(item, index, slide, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedCopy)/,
+  )?.[0] || "";
+  assert.doesNotMatch(mediaFallbackFactory, /primaryPhotoUrl|backgroundImage|url\(/);
+  assert.doesNotMatch(videoFactory, /primaryPhotoUrl|\.poster\s*=/);
+  assert.match(videoFactory, /video\.addEventListener\("loadeddata"[\s\S]*?classList\.remove\("is-media-loading", "is-media-unavailable"\)/);
+  assert.match(videoFactory, /video\.addEventListener\("error"[\s\S]*?"Video unavailable"/);
   assert.match(
     homeSource,
     /function createHomeTvFeedProgress\(\)[\s\S]*?role", "progressbar"/,

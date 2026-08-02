@@ -29454,18 +29454,15 @@
           display: grid;
           place-items: center;
           overflow: hidden;
-          background-color: #050507;
-          background-position: center;
-          background-repeat: no-repeat;
-          background-size: cover;
+          background: var(--dancr-color-background, #050507);
         }
         .home-tv-feed-media-fallback::before {
           content: "";
           position: absolute;
-          inset: -24px;
-          background: inherit;
-          filter: blur(22px) brightness(.46);
-          transform: scale(1.08);
+          inset: 0;
+          background: linear-gradient(180deg, var(--dancr-color-white-soft), transparent 42%);
+          filter: none;
+          transform: none;
         }
         .home-tv-feed-media-status {
           position: relative;
@@ -49624,12 +49621,10 @@
       return null;
     }
 
-    function createHomeTvFeedMediaFallback(item) {
+    function createHomeTvFeedMediaFallback() {
       const fallback = document.createElement("div");
       fallback.className = "home-tv-feed-media-fallback";
       fallback.setAttribute("aria-hidden", "true");
-      const photoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
-      if (photoUrl) fallback.style.backgroundImage = `url("${photoUrl.replaceAll('"', "%22")}")`;
       const status = document.createElement("span");
       status.className = "home-tv-feed-media-status";
       status.textContent = "Loading video";
@@ -49685,8 +49680,6 @@
       const videoId = String(item.id);
       const video = document.createElement("video");
       video.className = "home-tv-feed-video";
-      const posterUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
-      if (posterUrl) video.poster = posterUrl;
       video.loop = true;
       video.autoplay = index === 0;
       video.muted = homeTvFeedMuted;
@@ -50073,7 +50066,7 @@
           scheduleContext?.label || "no shift currently posted"
         }`
       );
-      const fallback = createHomeTvFeedMediaFallback(item);
+      const fallback = createHomeTvFeedMediaFallback();
       const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
       const shade = document.createElement("div");
       shade.className = "home-tv-feed-shade";
