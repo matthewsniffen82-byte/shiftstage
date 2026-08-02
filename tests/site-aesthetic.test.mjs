@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=54" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=55" rel="stylesheet">/,
   );
 });
 
@@ -74,6 +74,48 @@ test("the violet hero beam continues through content without recoloring trust or
     aesthetic,
     /\.profile-verified\.profile-verified\.profile-verified,[\s\S]*?\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark[\s\S]*?var\(--dancr-color-info\) 24%/,
   );
+});
+
+test("dancer discovery follows the neutral brand and semantic state hierarchy", () => {
+  const discoveryPalette = aesthetic.match(
+    /Dancer discovery uses brand violet only for identity[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(discoveryPalette, "the dancer discovery palette must exist");
+  assert.match(
+    discoveryPalette,
+    /#citySelect,[\s\S]*?border-color: var\(--dancr-color-border\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    discoveryPalette,
+    /#citySelect:focus,[\s\S]*?border-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?box-shadow: var\(--dancr-focus-ring\) !important;/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.dancer-directory-filter\.is-active \{[\s\S]*?background: var\(--dancr-color-brand-primary\) !important;[\s\S]*?var\(--dancr-shadow-brand-subtle\)/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.home-dancer-grid-heading\.is-now > strong,[\s\S]*?var\(--dancr-color-success\)[\s\S]*?\.home-dancer-grid-heading\.is-upcoming > strong,[\s\S]*?var\(--dancr-color-info\)[\s\S]*?\.home-dancer-grid-heading\.is-trending > strong,[\s\S]*?var\(--dancr-color-featured\)/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.home-dancer-grid-heading\.is-open > strong,[\s\S]*?var\(--dancr-color-text-muted\)/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.home-dancer-grid-card \{[\s\S]*?border-color: transparent !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.home-dancer-grid-venue\.is-pending,[\s\S]*?color: var\(--dancr-color-featured\) !important;/,
+  );
+  assert.doesNotMatch(discoveryPalette, /home-bottom|home-nav-|global-mobile-bottom-nav/);
+  assert.doesNotMatch(discoveryPalette, /\.hero|reference-hero|hero-art/);
+
+  assert.match(liveApp, /classList\.toggle\("is-active", !loading && workingNowCount > 0\)/);
+  assert.match(liveApp, /const empty = counts\[filter\.id\] === 0;/);
+  assert.match(liveApp, /venueStateClass[\s\S]*?venue pending[\s\S]*?home-dancer-grid-venue\$\{venueStateClass\}/);
 });
 
 test("large dancer profile media frames use a neutral edge without a colored halo", () => {

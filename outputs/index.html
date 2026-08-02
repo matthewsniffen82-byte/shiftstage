@@ -29063,12 +29063,12 @@
       }
 
       header #brandHome .mydancr-live-logo .violet-r {
-        color: #8b5cf6 !important;
-        -webkit-text-fill-color: #8b5cf6 !important;
+        color: var(--dancr-color-brand-primary) !important;
+        -webkit-text-fill-color: var(--dancr-color-brand-primary) !important;
         background: none !important;
         text-shadow:
-          0 0 8px rgba(139, 92, 246, 0.58),
-          0 0 16px rgba(124, 58, 237, 0.22) !important;
+          0 0 8px var(--dancr-color-brand-primary-medium),
+          0 0 16px var(--dancr-color-brand-glow-soft) !important;
       }
 
       header #brandHome:hover,
@@ -29182,7 +29182,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=54" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=55" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -48740,6 +48740,7 @@
         ? "Loading live schedule…"
         : `${workingNowCount} working now`;
       workingSummary.classList.toggle("is-empty", !loading && workingNowCount === 0);
+      workingSummary.classList.toggle("is-active", !loading && workingNowCount > 0);
       syncHomeFilterToggleState();
     }
 
@@ -49124,6 +49125,7 @@
         ? `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
+      const venueStateClass = venueName.toLowerCase() === "venue pending" ? " is-pending" : "";
       const distanceLabel = profileCardDistanceLabel(profile);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
@@ -49131,7 +49133,7 @@
         ? '<span class="verified-mark" aria-label="Verified">✓</span>'
         : "";
       const venueMarkup = venueName
-        ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
+        ? `<span class="home-dancer-grid-venue${venueStateClass}">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
         : "";
       const groupClass = status.className === "is-now"
         ? "is-now"
@@ -49189,7 +49191,8 @@
         <div class="dancer-directory-filters" role="group" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}" type="button" data-dancer-directory-filter="${filter.id}" aria-pressed="${active}">${filter.label}<span>${counts[filter.id]}</span></button>`;
+            const empty = counts[filter.id] === 0;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" data-dancer-directory-filter="${filter.id}" aria-pressed="${active}">${filter.label}<span>${counts[filter.id]}</span></button>`;
           }).join("")}
         </div>
       `;

@@ -2726,3 +2726,144 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-off
     inset 0 1px 0 var(--dancr-color-white-soft),
     0 0 20px color-mix(in srgb, var(--dancr-color-success) 14%, transparent) !important;
 }
+
+/* Dancer discovery uses brand violet only for identity, focus, and selected
+ * controls. Schedule, trust, and availability remain semantic; cards and
+ * idle controls stay neutral. This section intentionally excludes the hero
+ * artwork and every floating or bottom-navigation selector. */
+body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelect,
+body.dancr-button-system > .app main.stack > .home-discovery-controls .home-filter-toggle:not([aria-expanded="true"]) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelect:focus,
+body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelect:focus-visible,
+body.dancr-button-system > .app main.stack > .home-discovery-controls .home-filter-toggle[aria-expanded="true"],
+body.dancr-button-system > .app main.stack > .home-discovery-controls .home-filter-toggle:focus-visible {
+  border-color: var(--dancr-color-brand-primary) !important;
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system > .app main.stack > .home-live-summary #homeLiveWorking {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system > .app main.stack > .home-live-summary #homeLiveWorking.is-active {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head > #tabTitle {
+  color: var(--dancr-color-text-primary) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head > #tabCount {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: var(--dancr-color-surface-glass) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter:not(.is-active) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter:not(.is-active) > span,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter.is-empty:not(.is-active),
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter.is-empty:not(.is-active) > span {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter.is-active {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
+  box-shadow:
+    inset 0 1px 0 var(--dancr-color-brand-core-soft),
+    var(--dancr-shadow-brand-subtle) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter.is-active > span {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter:focus-visible {
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading:not(:first-child) {
+  border-color: var(--dancr-color-border-subtle) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading > span {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: var(--dancr-color-surface-glass) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-now > strong,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-now > span {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-upcoming > strong,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-upcoming > span {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-trending > strong,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-trending > span {
+  color: var(--dancr-color-featured) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-open > strong,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-open > span {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-card {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-name {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-name .verified-mark {
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-info) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue > svg {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue.is-pending,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue.is-pending > svg {
+  color: var(--dancr-color-featured) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-status:not(.is-now):not(.is-upcoming) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: color-mix(in srgb, var(--dancr-color-text-muted) 7%, var(--dancr-color-surface)) !important;
+  box-shadow: none !important;
+}

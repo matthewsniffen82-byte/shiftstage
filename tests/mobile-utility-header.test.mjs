@@ -47,7 +47,7 @@ test("the brand remains a restrained Home control", () => {
   );
   assert.match(
     mobileHeader,
-    /header #brandHome \.mydancr-live-logo \.violet-r \{[\s\S]*?color: #8b5cf6 !important;[\s\S]*?rgba\(139, 92, 246, 0\.58\)/,
+    /header #brandHome \.mydancr-live-logo \.violet-r \{[\s\S]*?color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?var\(--dancr-color-brand-primary-medium\)/,
   );
   assert.match(
     lateMobileHeader,
