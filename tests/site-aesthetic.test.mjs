@@ -26,26 +26,39 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=43" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=44" rel="stylesheet">/,
   );
 });
 
-test("venue discovery keeps real photography while artificial color stays out of idle cards", () => {
+test("venue discovery keeps real photography beneath a premium black-metal material system", () => {
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-art:not\(\.has-custom-photo\),[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
+    /\.home-venue-discovery-art:not\(\.has-custom-photo\) \{[\s\S]*?repeating-linear-gradient\(115deg,[\s\S]*?linear-gradient\(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%\)/,
   );
   assert.match(
     aesthetic,
-    /Venue discovery uses one neutral cinematic layer[\s\S]*?\.home-venue-discovery-art::before,[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+    /Venue discovery uses a premium black-metal material system[\s\S]*?> \.home-venue-discovery-slide \{[\s\S]*?linear-gradient\(155deg, #15161a, #050608\) padding-box,[\s\S]*?rgba\(248, 250, 252, 0\.38\)[\s\S]*?0 16px 30px rgba\(0, 0, 0, 0\.42\) !important;/,
   );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-art::before,[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?content: "" !important;[\s\S]*?display: block !important;[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?repeating-linear-gradient\(104deg/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-monogram \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.3\) !important;[\s\S]*?linear-gradient\(145deg, #25262b 0%, #090a0c 54%, #17181c 100%\)[\s\S]*?inset 1px 1px 0 rgba\(255, 255, 255, 0\.16\)/,
+  );
+  assert.doesNotMatch(liveApp, /home-venue-discovery-identity|MYDANCR VENUE/);
   assert.match(
     aesthetic,
     /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-profile-cta,[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\),[\s\S]*?\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(248, 250, 252, 0\.14\) !important;[\s\S]*?background-color: rgba\(18, 18, 22, 0\.72\) !important;[\s\S]*?box-shadow: none !important;/,
+    /\.home-venue-discovery-profile-cta,[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\),[\s\S]*?\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.22\) !important;[\s\S]*?linear-gradient\(180deg, rgba\(255, 255, 255, 0\.07\), transparent 46%\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.08\)/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.28\) !important;[\s\S]*?linear-gradient\(145deg, rgba\(20, 21, 24, 0\.96\), rgba\(5, 6, 8, 0\.96\)\)[\s\S]*?0 10px 22px rgba\(0, 0, 0, 0\.28\) !important;/,
   );
   assert.match(
     aesthetic,
@@ -99,7 +112,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-art:not\(\.has-custom-photo\),[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
+    /\.home-discovery-feed-photo\.is-photo-unavailable \{[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
   );
   const foundation = aesthetic.match(
     /One device-neutral foundation[\s\S]*?(?=body > \.app main\.stack > \.hero\.reference-hero)/,
@@ -131,6 +144,8 @@ test("Android and Samsung Browser cannot reintroduce device-only glow or media f
   )?.[0] || "";
   assert.match(neutralSurfaceRule, /background-image: none !important;/);
   assert.match(neutralSurfaceRule, /box-shadow: none !important;/);
+  assert.match(neutralSurfaceRule, /\.home-discovery-feed-slide:not\(\.home-venue-discovery-slide\)/);
+  assert.doesNotMatch(neutralSurfaceRule, /\n  \.home-venue-discovery-slide,/);
   assert.doesNotMatch(neutralSurfaceRule, /radial-gradient|91, 19, 255|124, 58, 237/);
 
   const androidTvGlassRule = parityLayer.match(

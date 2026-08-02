@@ -110,7 +110,7 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
     /#results\.venue-card-grid \.venue-card \.venue-art\.has-custom-photo[\s\S]*?var\(--custom-photo\) !important/,
   );
   assert.match(homeSource, /\.home-venue-discovery-art\.has-custom-photo[\s\S]*?var\(--custom-photo\)/);
-  assert.match(homeSource, /\.home-venue-discovery-art\.is-venue-artwork \{[\s\S]*?radial-gradient\(circle at 50% 38%[\s\S]*?linear-gradient\(145deg, #151519/);
+  assert.match(homeSource, /\.home-venue-discovery-art\.is-venue-artwork \{[\s\S]*?repeating-linear-gradient\(115deg[\s\S]*?radial-gradient\(circle at 50% 36%[\s\S]*?linear-gradient\(145deg, #1d1e22/);
   assert.match(homeSource, /\.home-venue-discovery-monogram \{[\s\S]*?width: 112px;[\s\S]*?height: 112px;/);
   assert.doesNotMatch(homeSource, /\.home-venue-discovery-art\.has-lineup-photo/);
   assert.doesNotMatch(homeSource, /\.home-venue-discovery-art\.has-custom-photo\.has-venue-cover::before/);

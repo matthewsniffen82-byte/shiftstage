@@ -29137,7 +29137,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=43" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=44" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -30309,7 +30309,7 @@
           }
         }
         .home-venue-discovery-slide {
-          background: #050507;
+          background: #07080a;
         }
         .home-venue-discovery-art {
           position: absolute;
@@ -30320,8 +30320,9 @@
           overflow: hidden;
           color: rgba(255,255,255,.16);
           background:
-            radial-gradient(circle at 70% 22%, rgba(255,255,255,.055), transparent 32%),
-            linear-gradient(145deg, #151519 0%, #0c0c10 52%, #050507 100%);
+            repeating-linear-gradient(115deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+            radial-gradient(circle at 68% 20%, rgba(255,255,255,.11), transparent 31%),
+            linear-gradient(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%);
           font-size: clamp(118px, 43vw, 250px);
           font-weight: 950;
           letter-spacing: -.08em;
@@ -30331,9 +30332,25 @@
         }
         .home-venue-discovery-art::before,
         .home-venue-discovery-art::after {
-          content: none;
-          display: none;
+          content: "";
+          position: absolute;
+          z-index: 2;
+          inset: 0;
+          display: block;
           pointer-events: none;
+        }
+        .home-venue-discovery-art::before {
+          background: linear-gradient(112deg, transparent 8%, rgba(255,255,255,.07) 27%, transparent 43%);
+          mix-blend-mode: screen;
+          opacity: .28;
+        }
+        .home-venue-discovery-art::after {
+          border-radius: inherit;
+          background: repeating-linear-gradient(104deg, rgba(255,255,255,.018) 0 1px, transparent 1px 5px);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.16),
+            inset 0 -1px 0 rgba(255,255,255,.04);
+          opacity: .58;
         }
         .home-venue-discovery-art span {
           position: relative;
@@ -30377,11 +30394,15 @@
           justify-content: center;
           gap: 4px;
           padding: 6px 9px;
-          border: 1px solid rgba(255,255,255,.14) !important;
+          border: 1px solid rgba(226,232,240,.24) !important;
           border-radius: 999px;
-          color: rgba(255,255,255,.9);
-          background: rgba(8,8,13,.62) !important;
-          box-shadow: none !important;
+          color: rgba(248,250,252,.94);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.07), transparent 46%),
+            rgba(8,9,11,.76) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.09),
+            0 8px 18px rgba(0,0,0,.22) !important;
           font: inherit;
           font-size: 9px;
           font-weight: 950;
@@ -30759,33 +30780,37 @@
 
         .home-venue-discovery-art.has-custom-photo {
           background-image:
-            linear-gradient(180deg, rgba(5,5,9,.08) 0%, transparent 34%, rgba(5,5,9,.18) 52%, rgba(5,5,9,.96) 100%),
+            linear-gradient(180deg, rgba(3,4,5,.1) 0%, transparent 32%, rgba(3,4,5,.2) 51%, rgba(3,4,5,.97) 100%),
             var(--custom-photo);
           background-position: center 38%;
           background-size: cover;
         }
         .home-venue-discovery-art.is-venue-artwork {
           background:
-            radial-gradient(circle at 50% 38%, rgba(255,255,255,.07), transparent 28%),
-            linear-gradient(145deg, #151519 0%, #0c0c10 52%, #050507 100%);
+            repeating-linear-gradient(115deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+            radial-gradient(circle at 50% 36%, rgba(255,255,255,.12), transparent 29%),
+            linear-gradient(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%);
         }
         .home-venue-discovery-monogram {
           width: 112px;
           height: 112px;
           display: grid;
           place-items: center;
-          border: 1px solid rgba(255,255,255,.14);
+          border: 1px solid rgba(226,232,240,.3);
           border-radius: 34px;
           color: #fff;
           background:
-            radial-gradient(circle at 32% 20%, rgba(255,255,255,.1), transparent 32%),
-            rgba(18,18,23,.84);
+            linear-gradient(145deg, rgba(255,255,255,.12), transparent 34%),
+            linear-gradient(145deg, #25262b 0%, #090a0c 54%, #17181c 100%);
           box-shadow:
-            0 24px 54px rgba(0,0,0,.42),
-            0 0 0 10px rgba(5,5,9,.22);
+            inset 1px 1px 0 rgba(255,255,255,.16),
+            inset -1px -1px 0 rgba(0,0,0,.78),
+            0 24px 54px rgba(0,0,0,.48),
+            0 0 0 10px rgba(5,6,8,.28);
           font-size: 31px;
           font-weight: 950;
-          letter-spacing: -.04em;
+          letter-spacing: .035em;
+          text-shadow: 0 1px 0 rgba(255,255,255,.16), 0 -1px 0 rgba(0,0,0,.92);
           backdrop-filter: blur(18px);
         }
         .home-venue-discovery-art.has-custom-photo .home-venue-discovery-monogram {
@@ -30793,8 +30818,8 @@
         }
         .home-venue-discovery-slide .home-discovery-feed-shade {
           background:
-            linear-gradient(180deg, rgba(0,0,0,.14) 0%, transparent 34%, rgba(0,0,0,.08) 47%, rgba(0,0,0,.98) 88%),
-            linear-gradient(90deg, transparent 56%, rgba(0,0,0,.3) 100%);
+            linear-gradient(180deg, rgba(2,3,4,.12) 0%, transparent 32%, rgba(2,3,4,.1) 46%, rgba(2,3,4,.985) 88%),
+            linear-gradient(90deg, transparent 54%, rgba(2,3,4,.34) 100%);
         }
         .home-venue-discovery-slide .home-discovery-feed-copy {
           right: 72px;
@@ -30826,10 +30851,12 @@
           align-items: center;
           padding: 2px 9px 2px 3px;
           overflow: hidden;
-          border: 1px solid rgba(255,255,255,.14);
+          border: 1px solid rgba(226,232,240,.18);
           border-radius: 999px;
-          background: rgba(4,4,9,.64);
-          box-shadow: 0 7px 18px rgba(0,0,0,.26);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.055), transparent 48%),
+            rgba(6,7,9,.72);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 7px 18px rgba(0,0,0,.3);
           backdrop-filter: blur(12px);
         }
         .home-venue-discovery-lineup-avatar {
@@ -30840,8 +30867,8 @@
           border: 2px solid rgba(7,7,12,.94);
           border-radius: 50%;
           background:
-            radial-gradient(circle at 50% 32%, rgba(126,234,255,.28), transparent 34%),
-            #181224;
+            radial-gradient(circle at 50% 32%, rgba(255,255,255,.16), transparent 34%),
+            #111216;
           background-image: var(--custom-photo);
           background-position: center top;
           background-size: cover;
@@ -30890,15 +30917,18 @@
           color: rgba(255,255,255,.78);
           background: transparent;
           backdrop-filter: none;
+          letter-spacing: .035em;
         }
         .home-dancer-grid-action-rail.home-venue-discovery-action-rail {
           top: 68px;
         }
         .dancr-button-system .home-venue-discovery-action-rail .feed-card-action {
-          border-color: rgba(255,255,255,.12) !important;
-          color: rgba(255,255,255,.84) !important;
-          background: rgba(8,8,13,.64) !important;
-          box-shadow: none !important;
+          border-color: rgba(226,232,240,.2) !important;
+          color: rgba(248,250,252,.9) !important;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.065), transparent 44%),
+            rgba(7,8,10,.76) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 9px 20px rgba(0,0,0,.25) !important;
         }
         .home-venue-discovery-context-actions {
           position: absolute;
@@ -30930,10 +30960,17 @@
         }
         .home-venue-discovery-context-actions .home-discovery-feed-directions {
           min-height: 58px;
-          border-color: rgba(255,255,255,.14);
-          color: rgba(255,255,255,.9);
-          background: rgba(8,8,13,.7);
-          box-shadow: none;
+          border-color: rgba(226,232,240,.28);
+          color: rgba(248,250,252,.96);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.075), transparent 47%),
+            linear-gradient(145deg, rgba(20,21,24,.96), rgba(5,6,8,.96));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 10px 22px rgba(0,0,0,.28);
+        }
+        .home-venue-discovery-context-actions .home-discovery-feed-directions svg {
+          color: rgba(248,250,252,.9) !important;
+          stroke: currentColor !important;
+          filter: none !important;
         }
         .home-discovery-feed-position {
           position: absolute;
@@ -30951,9 +30988,11 @@
         }
         .home-venue-discovery-slide .home-discovery-feed-position {
           padding: 4px 8px;
-          border-color: rgba(255,255,255,.1);
-          color: rgba(255,255,255,.76);
-          background: rgba(0,0,0,.5);
+          border-color: rgba(226,232,240,.16);
+          color: rgba(248,250,252,.8);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.06), transparent 48%),
+            rgba(5,6,8,.68);
           font-size: 9px;
           backdrop-filter: blur(9px);
           -webkit-backdrop-filter: blur(9px);
@@ -32341,18 +32380,26 @@
         }
 
         .dancr-button-system .home-dancer-grid-action-rail.home-venue-discovery-action-rail .feed-card-action {
-          border-color: rgba(255,255,255,.12) !important;
-          color: rgba(255,255,255,.84) !important;
-          background: rgba(8,8,13,.64) !important;
-          box-shadow: none !important;
+          border-color: rgba(226,232,240,.2) !important;
+          color: rgba(248,250,252,.9) !important;
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.065),transparent 44%),
+            rgba(7,8,10,.76) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.07),0 9px 20px rgba(0,0,0,.25) !important;
         }
         #results.home-venue-discovery-feed .home-venue-discovery-context-actions .home-discovery-feed-directions {
           min-height: 58px !important;
-          border-color: rgba(255,255,255,.14) !important;
-          color: rgba(255,255,255,.9) !important;
-          background: rgba(8,8,13,.72) !important;
-          background-image: none !important;
-          box-shadow: none !important;
+          border-color: rgba(226,232,240,.28) !important;
+          color: rgba(248,250,252,.96) !important;
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.075),transparent 47%),
+            linear-gradient(145deg,rgba(20,21,24,.96),rgba(5,6,8,.96)) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.09),0 10px 22px rgba(0,0,0,.28) !important;
+        }
+        #results.home-venue-discovery-feed .home-venue-discovery-context-actions .home-discovery-feed-directions svg {
+          color: rgba(248,250,252,.9) !important;
+          stroke: currentColor !important;
+          filter: none !important;
         }
 
         /* Shared scrolling-card QR rail state; rail geometry remains unchanged. */
@@ -32425,6 +32472,16 @@
             box-shadow:
               inset 0 0 0 1px var(--home-card-inner-edge),
               0 10px 24px var(--home-card-drop-shadow) !important;
+          }
+          #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
+            border: 1px solid transparent !important;
+            background:
+              linear-gradient(155deg,#15161a,#050608) padding-box,
+              linear-gradient(145deg,rgba(248,250,252,.38),rgba(148,154,166,.08) 43%,rgba(248,250,252,.24)) border-box !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,.11),
+              inset 0 -1px 0 rgba(255,255,255,.035),
+              0 16px 30px rgba(0,0,0,.42) !important;
           }
           #results.home-tv-feed > .home-tv-feed-loading,
           #results.home-tv-feed > .home-tv-feed-slide {

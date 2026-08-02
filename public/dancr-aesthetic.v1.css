@@ -808,7 +808,15 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-fe
   outline-offset: -4px !important;
 }
 
-body > .app main.stack > #results .home-venue-discovery-art:not(.has-custom-photo),
+body > .app main.stack > #results .home-venue-discovery-art:not(.has-custom-photo) {
+  background:
+    repeating-linear-gradient(115deg, rgba(248, 250, 252, 0.018) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 68% 20%, rgba(248, 250, 252, 0.11), transparent 31%),
+    linear-gradient(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
 body > .app main.stack > #results .home-discovery-feed-photo.is-photo-unavailable {
   background:
     radial-gradient(circle at 72% 18%, rgba(248, 250, 252, 0.055), transparent 34%),
@@ -817,29 +825,69 @@ body > .app main.stack > #results .home-discovery-feed-photo.is-photo-unavailabl
   text-shadow: none !important;
 }
 
-/* Venue discovery uses one neutral cinematic layer. Real cover photography is
- * preserved, while artificial venue colors and nested glass panels stay out
- * of the card hierarchy. Green remains reserved for a published Club Deal. */
+/* Venue discovery uses a premium black-metal material system. Real cover
+ * photography stays intact beneath a restrained titanium grain, and green
+ * remains reserved for a published Club Deal. Geometry is intentionally left
+ * to the shared discovery-card layout. */
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide {
+  --venue-card-platinum: rgba(248, 250, 252, 0.9);
+  --venue-card-platinum-muted: rgba(226, 232, 240, 0.72);
+  border-color: transparent !important;
+  background:
+    linear-gradient(155deg, #15161a, #050608) padding-box,
+    linear-gradient(145deg, rgba(248, 250, 252, 0.38), rgba(148, 154, 166, 0.08) 43%, rgba(248, 250, 252, 0.24)) border-box !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.035),
+    0 16px 30px rgba(0, 0, 0, 0.42) !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-art::before,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-art::after {
-  content: none !important;
-  display: none !important;
+  content: "" !important;
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: 0 !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-art::before {
+  background: linear-gradient(112deg, transparent 8%, rgba(248, 250, 252, 0.07) 27%, transparent 43%) !important;
+  mix-blend-mode: screen !important;
+  opacity: 0.28 !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-art::after {
+  border-radius: inherit !important;
+  background: repeating-linear-gradient(104deg, rgba(248, 250, 252, 0.018) 0 1px, transparent 1px 5px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04) !important;
+  opacity: 0.58 !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-monogram {
-  border-color: rgba(248, 250, 252, 0.14) !important;
+  border-color: rgba(226, 232, 240, 0.3) !important;
+  color: var(--dancr-color-text-primary) !important;
   background:
-    radial-gradient(circle at 32% 20%, rgba(248, 250, 252, 0.1), transparent 32%),
-    rgba(24, 24, 28, 0.84) !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), transparent 34%),
+    linear-gradient(145deg, #25262b 0%, #090a0c 54%, #17181c 100%) !important;
   box-shadow:
-    0 24px 54px rgba(0, 0, 0, 0.42),
-    0 0 0 10px rgba(5, 5, 7, 0.22) !important;
+    inset 1px 1px 0 rgba(255, 255, 255, 0.16),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.78),
+    0 24px 54px rgba(0, 0, 0, 0.48),
+    0 0 0 10px rgba(5, 6, 8, 0.28) !important;
+  letter-spacing: 0.035em !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.16), 0 -1px 0 rgba(0, 0, 0, 0.92) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-shade {
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.14) 0%, transparent 34%, rgba(0, 0, 0, 0.08) 47%, rgba(0, 0, 0, 0.98) 88%),
-    linear-gradient(90deg, transparent 56%, rgba(0, 0, 0, 0.3) 100%) !important;
+    linear-gradient(180deg, rgba(2, 3, 4, 0.12) 0%, transparent 32%, rgba(2, 3, 4, 0.1) 46%, rgba(2, 3, 4, 0.985) 88%),
+    linear-gradient(90deg, transparent 54%, rgba(2, 3, 4, 0.34) 100%) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-copy {
@@ -854,27 +902,60 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-venue
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-profile-cta,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-action-rail .feed-card-action:not(.home-venue-discovery-rail-qr.is-available),
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-context-actions .home-discovery-feed-directions {
-  border-color: rgba(248, 250, 252, 0.14) !important;
-  color: rgba(248, 250, 252, 0.9) !important;
-  background-color: rgba(18, 18, 22, 0.72) !important;
-  background-image: none !important;
-  box-shadow: none !important;
+  border-color: rgba(226, 232, 240, 0.22) !important;
+  color: rgba(248, 250, 252, 0.94) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 46%),
+    rgba(7, 8, 10, 0.76) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 9px 20px rgba(0, 0, 0, 0.25) !important;
   text-shadow: none !important;
 }
 
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-context-actions .home-discovery-feed-directions {
+  border-color: rgba(226, 232, 240, 0.28) !important;
+  color: rgba(248, 250, 252, 0.96) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 47%),
+    linear-gradient(145deg, rgba(20, 21, 24, 0.96), rgba(5, 6, 8, 0.96)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 10px 22px rgba(0, 0, 0, 0.28) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-context-actions .home-discovery-feed-directions svg {
+  color: rgba(248, 250, 252, 0.9) !important;
+  stroke: currentColor !important;
+  filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-name {
+  color: #f8fafc !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.94) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-location {
+  color: var(--venue-card-platinum) !important;
+  letter-spacing: 0.015em !important;
+}
+
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-action-rail [data-venue-follow][aria-pressed="true"] {
-  border-color: rgba(248, 250, 252, 0.2) !important;
-  background-color: rgba(24, 24, 28, 0.82) !important;
-  box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.06) !important;
+  border-color: rgba(226, 232, 240, 0.32) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 46%),
+    rgba(19, 20, 24, 0.88) !important;
+  box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.08) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-hours {
   min-height: 0 !important;
   padding: 0 !important;
   border: 0 !important;
-  color: rgba(248, 250, 252, 0.78) !important;
+  color: var(--venue-card-platinum-muted) !important;
   background: transparent !important;
   box-shadow: none !important;
+  letter-spacing: 0.035em !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -882,8 +963,34 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-venue
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-status.is-now {
   border-color: rgba(248, 250, 252, 0.14) !important;
   color: rgba(248, 250, 252, 0.88) !important;
-  background: rgba(18, 18, 22, 0.68) !important;
-  box-shadow: none !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 48%),
+    rgba(7, 8, 10, 0.74) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup {
+  border-color: rgba(226, 232, 240, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 48%),
+    rgba(6, 7, 9, 0.72) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 7px 18px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-avatar {
+  border-color: rgba(7, 8, 10, 0.96) !important;
+  background-color: #111216 !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-position {
+  border-color: rgba(226, 232, 240, 0.16) !important;
+  color: rgba(248, 250, 252, 0.8) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 48%),
+    rgba(5, 6, 8, 0.68) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
 }
 
 body > .app main.stack > #results :is(
@@ -1652,8 +1759,7 @@ body.dancr-button-system .home-tv-feed-action:not(
   .home-feed-card,
   .dancer-card,
   .venue-card,
-  .home-discovery-feed-slide,
-  .home-venue-discovery-slide,
+  .home-discovery-feed-slide:not(.home-venue-discovery-slide),
   .profile-titlebar,
   .profile-social-section,
   .profile-media-feature,
