@@ -26,14 +26,14 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=37" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=38" rel="stylesheet">/,
   );
 });
 
-test("the mobile utility header is borderless with the same neutral glow on iPhone and Android", () => {
+test("the mobile utility header is borderless with one neutral elevation shadow on iPhone and Android", () => {
   assert.match(
     liveApp,
-    /Mobile utility chrome is deliberately device-neutral and borderless[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 0 !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.44\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.055\),[\s\S]*?0 0 28px rgba\(148, 163, 184, 0\.04\) !important;[\s\S]*?box-shadow:[\s\S]*?0 14px 36px rgba\(0, 0, 0, 0\.44\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.055\),[\s\S]*?0 0 28px rgba\(148, 163, 184, 0\.04\) !important;/,
+    /Mobile utility chrome is deliberately device-neutral and borderless[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?body\.dancr-button-system header \.topbar \{[\s\S]*?border: 0 !important;[\s\S]*?border-bottom: 0 !important;[\s\S]*?-webkit-box-shadow: 0 12px 28px rgba\(0, 0, 0, 0\.42\) !important;[\s\S]*?box-shadow: 0 12px 28px rgba\(0, 0, 0, 0\.42\) !important;/,
   );
   assert.doesNotMatch(
     liveApp,
@@ -99,7 +99,7 @@ test("discovery feeds retain neutral edges while TV media is completely borderle
   );
   assert.match(
     aesthetic,
-    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?0 0 22px rgba\(91, 19, 255, 0\.1\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
+    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 10px 24px rgba\(5, 5, 7, 0\.32\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     aesthetic,
@@ -127,8 +127,9 @@ test("discovery feeds retain neutral edges while TV media is completely borderle
   );
   assert.match(
     liveApp,
-    /#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,\.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,\.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,\.38\);[\s\S]*?--home-card-glow: rgba\(91,19,255,\.1\);/,
+    /#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,\.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,\.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,\.32\);/,
   );
+  assert.doesNotMatch(liveApp, /--home-card-glow/);
   assert.doesNotMatch(
     liveApp,
     /@supports \(-webkit-touch-callout: none\) \{[\s\S]{0,500}--home-card-/,
@@ -137,7 +138,7 @@ test("discovery feeds retain neutral edges while TV media is completely borderle
 
 test("the compact dancer directory uses restrained cards and clearly branded active filters", () => {
   const compactDirectoryRule = aesthetic.match(
-    /The compact dancer directory repeats many cards[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
+    /Compact directory cards stay crisp without repeated halos[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
   )?.[0] || "";
   assert.match(
     compactDirectoryRule,
@@ -145,7 +146,7 @@ test("the compact dancer directory uses restrained cards and clearly branded act
   );
   assert.match(
     compactDirectoryRule,
-    /0 8px 18px rgba\(5, 5, 7, 0\.34\),[\s\S]*?0 0 10px rgba\(248, 250, 252, 0\.045\),[\s\S]*?0 0 18px rgba\(148, 163, 184, 0\.03\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.04\) !important;/,
+    /0 8px 18px rgba\(5, 5, 7, 0\.34\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.04\) !important;/,
   );
   assert.doesNotMatch(compactDirectoryRule, /91, 19, 255|violet halo[^.]*rgba|beam-card/);
   assert.match(
@@ -158,7 +159,7 @@ test("the compact dancer directory uses restrained cards and clearly branded act
   );
   assert.match(
     aesthetic,
-    /\.dancer-directory-filter\.is-active,[\s\S]*?\.filter-pill\.active,[\s\S]*?border-color: var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?background: var\(--dancr-color-brand-primary\) !important;[\s\S]*?var\(--dancr-shadow-brand-subtle\) !important;/,
+    /\.dancer-directory-filter\.is-active,[\s\S]*?\.filter-pill\.active,[\s\S]*?border-color: var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?background: color-mix\([\s\S]*?var\(--dancr-color-brand-primary\) 18%,[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?box-shadow: inset 0 0 0 1px var\(--dancr-color-brand-primary-medium\) !important;/,
   );
 });
 
@@ -257,14 +258,14 @@ test("verified check marks use the centralized informational cyan treatment", ()
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
 });
 
-test("the homepage hero keeps the exact supplied artwork borderless with ambient depth", () => {
+test("the homepage hero keeps the exact supplied artwork borderless without an ambient halo", () => {
   assert.match(
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero::before,[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow:[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.38\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.045\),[\s\S]*?0 0 30px rgba\(148, 163, 184, 0\.035\) !important;[\s\S]*?box-shadow:[\s\S]*?0 18px 38px rgba\(0, 0, 0, 0\.38\),[\s\S]*?0 0 12px rgba\(248, 250, 252, 0\.045\),[\s\S]*?0 0 30px rgba\(148, 163, 184, 0\.035\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow: 0 16px 34px rgba\(0, 0, 0, 0\.36\) !important;[\s\S]*?box-shadow: 0 16px 34px rgba\(0, 0, 0, 0\.36\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
   );
   assert.match(
     aesthetic,

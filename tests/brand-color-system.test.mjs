@@ -167,7 +167,7 @@ test("the shared palette does not target the frozen navigation systems", () => {
   );
 });
 
-test("the beam glow is reserved for active, selected, and keyboard-focused UI", () => {
+test("brand emphasis is crisp on stateful and keyboard-focused UI", () => {
   assert.match(
     buttons,
     /button\[type="submit"\][\s\S]*?var\(--dancr-shadow-brand-control\)/,
@@ -175,11 +175,7 @@ test("the beam glow is reserved for active, selected, and keyboard-focused UI", 
   assert.match(tokens, /--dancr-shadow-beam-active:[\s\S]*?--dancr-shadow-beam-card:/);
   assert.match(
     aesthetic,
-    /\.profile-media-tabs button\.active,[\s\S]*?var\(--dancr-shadow-beam-active\)/,
-  );
-  assert.match(
-    aesthetic,
-    /#profileBackdrop \.gallery \.thumb\.active,[\s\S]*?\.profile-media-grid-item\.active[\s\S]*?var\(--dancr-shadow-beam-active\)/,
+    /#profileBackdrop \.gallery \.thumb\.active,[\s\S]*?\.profile-media-grid-item\.active[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?0 0 0 1px var\(--dancr-color-white-medium\) !important;/,
   );
   assert.doesNotMatch(
     aesthetic,

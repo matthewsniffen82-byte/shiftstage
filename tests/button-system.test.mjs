@@ -67,7 +67,7 @@ test("venue-card QR revenue actions use the semantic emerald success treatment",
   );
   assert.match(
     buttonCss,
-    /\.home-venue-discovery-action-rail\s+\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)[\s\S]*?0 0 18px var\(--dancr-color-success-soft\)/,
+    /\.home-venue-discovery-action-rail\s+\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)[\s\S]*?0 8px 18px var\(--dancr-color-black-soft\)/,
   );
   assert.match(
     buttonCss,
@@ -90,7 +90,7 @@ test("profile media thumbnails and play controls retain their gallery-specific s
   );
   assert.match(
     buttonCss,
-    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: var\(--dancr-color-beam-violet\) !important;[\s\S]*?0 0 0 5px var\(--dancr-color-beam-violet-medium\)[\s\S]*?var\(--dancr-shadow-beam-active\)/,
+    /\.public-media-thumbnail\.is-selected \{[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?box-shadow: 0 0 0 1px var\(--dancr-color-white-medium\) !important;/,
   );
   assert.match(
     buttonCss,

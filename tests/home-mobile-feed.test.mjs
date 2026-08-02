@@ -541,7 +541,7 @@ test("mobile discovery cards use neutral edges while TV is completely borderless
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.38\);[\s\S]*?--home-card-glow: rgba\(91,19,255,.1\);/,
+    /@media \(max-width: 679px\) \{[\s\S]*?#results \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,.15\);[\s\S]*?--home-card-inner-edge: rgba\(255,255,255,.035\);[\s\S]*?--home-card-drop-shadow: rgba\(0,0,0,.32\);/,
   );
   assert.doesNotMatch(homeSource, /#results\.home-tv-feed \{[\s\S]{0,240}--home-card-(?:edge|inner|glow)/);
   assert.doesNotMatch(
@@ -550,8 +550,9 @@ test("mobile discovery cards use neutral edges while TV is completely borderless
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 14px 32px var\(--home-card-drop-shadow\),[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed\.home-venue-discovery-feed > \.home-venue-discovery-slide,[\s\S]*?#results\.card-grid > \.dancer-card\.trending-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 10px 24px var\(--home-card-drop-shadow\) !important;/,
   );
+  assert.doesNotMatch(homeSource, /--home-card-glow/);
   assert.match(
     homeSource,
     /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;[\s\S]*?box-shadow: 0 14px 32px rgba\(0,0,0,.38\) !important;/,

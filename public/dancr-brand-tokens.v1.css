@@ -64,20 +64,17 @@
   --dancr-color-black-medium: rgba(5, 5, 7, 0.48);
   --dancr-color-black-strong: rgba(5, 5, 7, 0.72);
 
-  --dancr-shadow-surface: 0 20px 52px rgba(5, 5, 7, 0.46);
-  --dancr-shadow-modal: 0 30px 90px rgba(5, 5, 7, 0.72);
-  --dancr-shadow-brand-subtle: 0 0 20px rgba(124, 58, 237, 0.2);
+  --dancr-shadow-surface: 0 10px 24px rgba(5, 5, 7, 0.3);
+  --dancr-shadow-modal: 0 24px 72px rgba(5, 5, 7, 0.72);
+  --dancr-shadow-brand-subtle: 0 0 10px rgba(124, 58, 237, 0.12);
   --dancr-shadow-brand-control:
-    0 14px 32px rgba(5, 5, 7, 0.42),
-    0 0 20px rgba(124, 58, 237, 0.24);
-  --dancr-shadow-beam-active:
-    0 0 10px var(--dancr-color-beam-violet-medium),
-    0 0 22px var(--dancr-color-beam-violet-soft);
+    0 8px 18px rgba(5, 5, 7, 0.34),
+    0 0 10px rgba(124, 58, 237, 0.12);
+  --dancr-shadow-beam-active: 0 0 0 2px var(--dancr-color-beam-violet-medium);
   --dancr-shadow-beam-card:
-    0 18px 44px rgba(5, 5, 7, 0.48),
-    0 0 18px rgba(124, 58, 237, 0.2);
+    0 12px 28px rgba(5, 5, 7, 0.34),
+    inset 0 0 0 1px var(--dancr-color-beam-violet-medium);
   --dancr-focus-ring:
     0 0 0 2px var(--dancr-color-background),
-    0 0 0 4px var(--dancr-color-beam-violet-medium),
-    0 0 18px var(--dancr-color-beam-violet-soft);
+    0 0 0 4px var(--dancr-color-beam-violet-medium);
 }

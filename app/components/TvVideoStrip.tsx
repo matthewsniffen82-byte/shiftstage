@@ -460,7 +460,7 @@ function TvVideoStripStyles() {
       .tv-video-viewer-footer p { min-height: 16px; grid-column: 1 / -1; margin: 0; color: #a7f3d0; font-size: 11px; font-weight: 800; }
       .tv-video-viewer-gallery { grid-column: 1 / -1; display: grid; grid-auto-flow: column; grid-auto-columns: 72px; gap: 8px; padding-bottom: 3px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; }
       .tv-video-viewer-gallery button { position: relative; width: 72px; height: 78px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 9px; background: #000; scroll-snap-align: center; cursor: pointer; }
-      .tv-video-viewer-gallery button.active { border-color: #7eeaff; box-shadow: 0 0 14px rgba(126,234,255,.28); }
+      .tv-video-viewer-gallery button.active { border-color: var(--dancr-color-text-secondary); box-shadow: 0 0 0 1px var(--dancr-color-white-medium); }
       .tv-video-viewer-gallery video { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
       .tv-video-viewer-gallery span { position: absolute; right: 4px; bottom: 4px; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; color: #fff; background: rgba(0,0,0,.76); font-size: 10px; font-weight: 950; }
       @media (max-width: 620px) {

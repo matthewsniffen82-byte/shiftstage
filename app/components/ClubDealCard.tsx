@@ -306,27 +306,27 @@ function formatExpiry(value: string) {
 function ClubDealInteractionStyles() {
   return (
     <style>{`
-      .club-deal-launcher { width: fit-content; max-width: 100%; min-height: 48px; display: grid; gap: 1px; justify-items: start; padding: 7px 16px; border: 1px solid rgba(126,234,255,.56); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); box-shadow: 0 12px 30px rgba(35,114,178,.3), 0 0 20px rgba(126,234,255,.12); font: inherit; text-align: left; cursor: pointer; }
+      .club-deal-launcher { width: fit-content; max-width: 100%; min-height: 48px; display: grid; gap: 1px; justify-items: start; padding: 7px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 999px; color: #fff; background: color-mix(in srgb, var(--dancr-color-success) 14%, var(--dancr-color-surface)); box-shadow: 0 8px 18px var(--dancr-color-black-soft); font: inherit; text-align: left; cursor: pointer; }
       .club-deal-launcher span { color: #d8f7ff; font-size: 9px; font-weight: 950; letter-spacing: .14em; line-height: 1; text-transform: uppercase; }
       .club-deal-launcher strong { max-width: 230px; overflow: hidden; font-size: 13px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
       .club-deal-launcher:disabled, .club-deal-sticky:disabled { opacity: .72; cursor: wait; }
       .club-deal-pass-actions { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .club-deal-pass-actions button, .club-deal-pass-actions a { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid rgba(126,234,255,.28); border-radius: 999px; color: #fff; background: rgba(126,234,255,.08); font: inherit; font-size: 12px; font-weight: 900; text-decoration: none; cursor: pointer; }
       .club-deal-dialog-backdrop { position: fixed; z-index: 1700; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.82); backdrop-filter: blur(12px); }
-      .club-deal-dialog { position: relative; width: min(430px, 100%); max-height: min(86dvh, 760px); display: grid; gap: 18px; overflow-y: auto; box-sizing: border-box; padding: 24px; border: 1px solid rgba(126,234,255,.42); border-radius: 18px; color: #f7f2ff; background: radial-gradient(circle at 82% 5%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, #0d0a18, #050507); box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 36px rgba(109,40,217,.2); }
+      .club-deal-dialog { position: relative; width: min(430px, 100%); max-height: min(86dvh, 760px); display: grid; gap: 18px; overflow-y: auto; box-sizing: border-box; padding: 24px; border: 1px solid var(--dancr-color-border-subtle); border-radius: 18px; color: #f7f2ff; background: var(--dancr-color-surface-translucent); box-shadow: var(--dancr-shadow-modal); }
       .club-deal-dialog-close { position: absolute; z-index: 2; top: 10px; right: 10px; width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.38); border-radius: 50%; color: #fff; background: rgba(5,5,7,.82); font: inherit; font-size: 26px; cursor: pointer; }
       .club-deal-dialog .club-deal-copy { padding-right: 34px; }
       .club-deal-dialog .club-deal-copy h2 { margin: 0; font-size: clamp(23px, 6vw, 32px); }
       .club-deal-dialog .club-deal-copy p { color: #cfc5de; font-size: 15px; line-height: 1.45; }
       .club-deal-dialog .club-deal-copy small, .club-deal-dialog .club-deal-action em { color: #b9accd; font-size: 12px; line-height: 1.4; font-style: normal; }
       .club-deal-dialog .club-deal-action { display: grid; gap: 12px; }
-      .club-deal-dialog .club-deal-action > button { min-height: 48px; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font: inherit; font-weight: 950; cursor: pointer; }
+      .club-deal-dialog .club-deal-action > button { min-height: 48px; border: 1px solid var(--dancr-color-success-medium); border-radius: 999px; color: #fff; background: color-mix(in srgb, var(--dancr-color-success) 18%, var(--dancr-color-surface)); font: inherit; font-weight: 950; cursor: pointer; }
       .club-deal-dialog .deal-qr-frame { display: grid; justify-items: center; gap: 8px; padding: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(0,0,0,.34); }
       .club-deal-dialog .deal-qr-frame img { width: min(240px, 70vw); aspect-ratio: 1; border-radius: 10px; background: #fff; }
       .club-deal-dialog .deal-qr-frame span { color: #d8f7ff; font-size: 12px; font-weight: 900; }
       .club-deal-sticky { display: none; }
       @media (max-width: 760px) {
-        .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid rgba(126,234,255,.58); border-radius: 16px; color: #fff; background: linear-gradient(135deg, rgba(50,18,115,.98), rgba(5,126,165,.98)); box-shadow: 0 18px 50px rgba(0,0,0,.68), 0 0 28px rgba(34,199,255,.22); font: inherit; text-align: left; cursor: pointer; }
+        .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }
         .club-deal-sticky span { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
         .club-deal-sticky strong { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 12px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; white-space: nowrap; }
         .club-deal-pass-actions { grid-template-columns: 1fr; }

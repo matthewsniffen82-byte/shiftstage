@@ -29133,7 +29133,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=37" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=38" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -32429,8 +32429,7 @@
           #results {
             --home-card-edge-neutral: rgba(248,250,252,.15);
             --home-card-inner-edge: rgba(255,255,255,.035);
-            --home-card-drop-shadow: rgba(0,0,0,.38);
-            --home-card-glow: rgba(91,19,255,.1);
+            --home-card-drop-shadow: rgba(0,0,0,.32);
           }
           #results.home-dancer-grid > .home-dancer-grid-card,
           #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
@@ -32442,8 +32441,7 @@
               linear-gradient(145deg,var(--home-card-edge-neutral),var(--home-card-edge-neutral)) border-box !important;
             box-shadow:
               inset 0 0 0 1px var(--home-card-inner-edge),
-              0 14px 32px var(--home-card-drop-shadow),
-              0 0 22px var(--home-card-glow) !important;
+              0 10px 24px var(--home-card-drop-shadow) !important;
           }
           #results.home-tv-feed > .home-tv-feed-loading,
           #results.home-tv-feed > .home-tv-feed-slide {
@@ -33699,20 +33697,17 @@
           -webkit-tap-highlight-color: transparent;
         }
 
-        /* Borderless utility chrome with restrained neutral depth. */
+        /* Borderless utility chrome with one restrained elevation shadow. */
         header .topbar {
           border: 0 !important;
           border-bottom: 0 !important;
-          box-shadow:
-            0 10px 26px rgba(0, 0, 0, 0.34),
-            0 8px 18px rgba(148, 163, 184, 0.035) !important;
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34) !important;
         }
 
         /*
          * Mobile utility chrome is deliberately device-neutral and borderless.
-         * The layered neutral shadow provides the same depth on iPhone and
-         * Android without producing a Safari perimeter line or competing with
-         * violet interaction states.
+         * One black elevation shadow provides the same depth on iPhone and
+         * Android without producing a Safari perimeter line.
          */
         @media (max-width: 720px) {
           body.dancr-button-system header .topbar {
@@ -33720,14 +33715,8 @@
             border-bottom: 0 !important;
             background:
               linear-gradient(180deg, rgba(8, 8, 12, 0.98), rgba(4, 4, 7, 0.96)) !important;
-            -webkit-box-shadow:
-              0 14px 36px rgba(0, 0, 0, 0.44),
-              0 0 12px rgba(248, 250, 252, 0.055),
-              0 0 28px rgba(148, 163, 184, 0.04) !important;
-            box-shadow:
-              0 14px 36px rgba(0, 0, 0, 0.44),
-              0 0 12px rgba(248, 250, 252, 0.055),
-              0 0 28px rgba(148, 163, 184, 0.04) !important;
+            -webkit-box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42) !important;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42) !important;
           }
         }
 
