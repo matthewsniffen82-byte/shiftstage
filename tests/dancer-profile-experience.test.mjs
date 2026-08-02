@@ -39,24 +39,21 @@ const [
   ),
 ]);
 
-test("the public dancer profile keeps identity, verification, shift context, and close control at the top", () => {
+test("the public dancer profile keeps only identity, verification, city, and close control at the top", () => {
   assert.match(profilePage, /<header className="profile-titlebar">/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
   assert.match(profilePage, /className="profile-verified" aria-label="Verified dancer"/);
   assert.match(profilePage, /className="profile-titlebar-context"/);
-  assert.match(profilePage, /className="profile-titlebar-status is-live">Working now/);
-  assert.match(profilePage, /Upcoming \{formatShiftDate\(nextShift\.startsAt, nextShift\.timezone\)\}/);
-  assert.match(profilePage, /className="profile-titlebar-status is-empty">No shift posted/);
-  assert.match(profilePage, /\{activeShift\.venueName\} · until/);
-  assert.match(profilePage, /\{nextShift\.venueName\} ·/);
+  assert.match(profilePage, /className="profile-titlebar-city">\{profile\.city\}<\/span>/);
+  assert.doesNotMatch(profilePage, /const nextShift =/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: sticky;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
-test("the mobile profile is ordered around identity, media, revenue, actions, lower-priority activity, socials, and schedule", () => {
+test("the mobile profile places schedule directly after media, before revenue and actions", () => {
   const identityIndex = profilePage.indexOf('className="profile-titlebar"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
@@ -67,12 +64,12 @@ test("the mobile profile is ordered around identity, media, revenue, actions, lo
 
   assert.ok(identityIndex > -1);
   assert.ok(mediaIndex > identityIndex);
-  assert.ok(dealIndex > mediaIndex);
+  assert.ok(scheduleIndex > mediaIndex);
+  assert.ok(dealIndex > scheduleIndex);
   assert.ok(actionsIndex > dealIndex);
   assert.ok(overviewIndex > actionsIndex);
   assert.ok(socialIndex > dealIndex);
   assert.ok(socialIndex > overviewIndex);
-  assert.ok(scheduleIndex > socialIndex);
   assert.match(profilePage, /<DancerFollowerCount \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /\{profile\.profileViewsToday \|\| 0\}[\s\S]*?<dt>Views today<\/dt>/);

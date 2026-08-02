@@ -81,15 +81,18 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   const socialIndex = gridFunction.indexOf("${socialMarkup}");
   const scheduleIndex = gridFunction.indexOf("shiftsMarkup");
 
-  assert.ok(dealIndex > -1);
+  assert.ok(scheduleIndex > -1);
+  assert.ok(dealIndex > scheduleIndex);
   assert.ok(actionsIndex > dealIndex);
   assert.ok(metricsIndex > actionsIndex);
   assert.ok(socialIndex > metricsIndex);
-  assert.ok(scheduleIndex > socialIndex);
-  assert.match(liveApp, /id="modalShiftStatus">No shift posted<\/span>/);
-  assert.match(liveApp, /id="modalShiftVenue" type="button" hidden/);
-  assert.match(liveApp, /modalShiftStatus\.textContent = workingNow/);
-  assert.match(liveApp, /modalShiftVenue\.dataset\.openVenue = profile\.venue/);
+  assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
+  assert.doesNotMatch(liveApp, /id="modalShiftStatus"|id="modalShiftVenue"/);
+  assert.match(liveApp, /modalCity\.hidden = false/);
+  assert.match(
+    liveApp,
+    /class="info-tile profile-schedule-card schedule-upcoming">[\s\S]*?<div class="profile-schedule-primary">\$\{displayPublicShiftTime\(profile\.time, profile\)\}<\/div>/,
+  );
 });
 
 test("home profile TV previews expose inline playback, sound, progress, and duration controls", () => {
@@ -113,6 +116,10 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) !important;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?padding-bottom: 0 !important;[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
   );
   assert.doesNotMatch(profilePolishBlock, /\.is-android|\.is-ios|SamsungBrowser|iPhone/);
 });

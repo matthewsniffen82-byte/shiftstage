@@ -52,7 +52,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const upcomingShifts = profile.upcomingShifts.filter(
     (shift) => shift.id !== activeShift?.id,
   );
-  const nextShift = upcomingShifts[0] || null;
   const [activeDeal, tvVideos] = await Promise.all([
     activeShift?.venueId
       ? getActiveClubDealForVenue(client, activeShift.venueId)
@@ -113,30 +112,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
               </span>
             </div>
             <div className="profile-titlebar-context">
-              {activeShift ? (
-                <>
-                  <span className="profile-titlebar-status is-live">Working now</span>
-                  <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
-                    {activeShift.venueName} · until{" "}
-                    {formatShiftTime(activeShift.endsAt, activeShift.timezone)}
-                  </Link>
-                </>
-              ) : nextShift ? (
-                <>
-                  <span className="profile-titlebar-status is-upcoming">
-                    Upcoming {formatShiftDate(nextShift.startsAt, nextShift.timezone)}
-                  </span>
-                  <Link href={`/venues/${encodeURIComponent(nextShift.venueSlug)}`}>
-                    {nextShift.venueName} ·{" "}
-                    {formatShiftTime(nextShift.startsAt, nextShift.timezone)}
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <span className="profile-titlebar-status is-empty">No shift posted</span>
-                  <span className="profile-titlebar-city">{profile.city}</span>
-                </>
-              )}
+              <span className="profile-titlebar-city">{profile.city}</span>
             </div>
           </div>
           <ProfileCloseButton
@@ -159,6 +135,39 @@ export default async function DancerPublicPage({ params }: PageProps) {
           }))}
           stageName={profile.stageName}
         />
+
+        {upcomingShifts.length ? (
+          <section
+            className="profile-schedule-section"
+            aria-labelledby="profile-schedule-title"
+          >
+            <div className="profile-section-heading">
+              <div>
+                <span className="eyebrow">Schedule</span>
+                <h2 id="profile-schedule-title">Upcoming shifts</h2>
+              </div>
+              <span>{upcomingShifts.length} posted</span>
+            </div>
+            <div className="shift-list">
+              {upcomingShifts.map((shift) => (
+                <Link
+                  className="shift-row"
+                  href={`/venues/${encodeURIComponent(shift.venueSlug)}`}
+                  key={shift.id}
+                >
+                  <span className="shift-date">
+                    {formatShiftDate(shift.startsAt, shift.timezone)}
+                  </span>
+                  <strong>{shift.venueName}</strong>
+                  <span className="shift-time">
+                    {formatShiftTime(shift.startsAt, shift.timezone)} · Posted shift
+                  </span>
+                  <em>Venue</em>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {activeShift ? (
           <section
@@ -246,38 +255,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
           </section>
         ) : null}
 
-        {upcomingShifts.length ? (
-          <section
-            className="profile-schedule-section"
-            aria-labelledby="profile-schedule-title"
-          >
-            <div className="profile-section-heading">
-              <div>
-                <span className="eyebrow">Schedule</span>
-                <h2 id="profile-schedule-title">Upcoming shifts</h2>
-              </div>
-              <span>{upcomingShifts.length} posted</span>
-            </div>
-            <div className="shift-list">
-              {upcomingShifts.map((shift) => (
-                <Link
-                  className="shift-row"
-                  href={`/venues/${encodeURIComponent(shift.venueSlug)}`}
-                  key={shift.id}
-                >
-                  <span className="shift-date">
-                    {formatShiftDate(shift.startsAt, shift.timezone)}
-                  </span>
-                  <strong>{shift.venueName}</strong>
-                  <span className="shift-time">
-                    {formatShiftTime(shift.startsAt, shift.timezone)} · Posted shift
-                  </span>
-                  <em>Venue</em>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ) : null}
       </main>
     </DancerFollowStateProvider>
   );

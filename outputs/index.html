@@ -32980,30 +32980,6 @@
           line-height: 1.2;
           white-space: nowrap;
         }
-        #profileBackdrop .profile-modal-shift-status {
-          flex: 0 0 auto;
-          color: #9fefff;
-          text-transform: uppercase;
-          letter-spacing: .08em;
-        }
-        #profileBackdrop .profile-modal-shift-status.is-live { color: #8dffc2; }
-        #profileBackdrop .profile-modal-shift-status.is-empty { color: #9b91a8; }
-        #profileBackdrop .profile-modal-venue-link {
-          min-width: 0;
-          overflow: hidden;
-          padding: 0;
-          border: 0;
-          color: #d7cce6;
-          background: transparent;
-          font: inherit;
-          text-align: left;
-          text-decoration: underline;
-          text-decoration-color: rgba(126,234,255,.5);
-          text-underline-offset: 3px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          cursor: pointer;
-        }
         #profileBackdrop .profile-modal-verified {
           width: 21px;
           height: 21px;
@@ -33569,7 +33545,10 @@
             padding-bottom: 0 !important;
           }
           #profileBackdrop .modal-actions {
-            scroll-margin-bottom: var(--profile-report-clearance) !important;
+            scroll-margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+          }
+          #profileBackdrop .modal-grid {
             padding-bottom: var(--profile-report-clearance) !important;
           }
         }
@@ -35284,8 +35263,6 @@
                 <span class="badge" id="modalStatus">Verified</span>
               </div>
               <div class="profile-modal-context" aria-live="polite">
-                <span class="profile-modal-shift-status" id="modalShiftStatus">No shift posted</span>
-                <button class="profile-modal-venue-link" id="modalShiftVenue" type="button" hidden></button>
                 <span class="pill" id="modalCity">Las Vegas</span>
               </div>
             </div>
@@ -35441,8 +35418,6 @@
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
     const modalCity = document.getElementById("modalCity");
-    const modalShiftStatus = document.getElementById("modalShiftStatus");
-    const modalShiftVenue = document.getElementById("modalShiftVenue");
     const modalRank = document.getElementById("modalRank");
     const modalGallery = document.getElementById("modalGallery");
     const modalMediaPhotoTab = document.getElementById("modalMediaPhotoTab");
@@ -43750,10 +43725,9 @@
         return `
           <div class="info-tile profile-schedule-card schedule-upcoming">
             <strong>Upcoming shift</strong>
-            <div class="profile-schedule-primary">Not working now</div>
+            <div class="profile-schedule-primary">${displayPublicShiftTime(profile.time, profile)}</div>
             <div class="schedule-stack">
               <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="schedule-text-row upcoming-time-row">${clockIconMarkup()}<span class="modal-schedule-text upcoming">${displayPublicShiftTime(profile.time, profile)}</span></div>
             </div>
             <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to customers." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
           </div>
@@ -43797,11 +43771,11 @@
         : profileDealTileMarkup(profile);
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
           ${dealMarkup}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           ${profileActivityMetricsMarkup(profile, city)}
           ${socialMarkup}
-          ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
           ${profileLocationStatusTile(profile)}
         </div>
       `;
@@ -43905,7 +43879,6 @@
       const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
-      const workingNow = isWorkingTonight(profile);
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
@@ -43916,26 +43889,7 @@
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
-      modalCity.hidden = Boolean(profile.scheduled && profile.venue);
-      modalShiftStatus.textContent = workingNow
-        ? "Working now"
-        : profile.scheduled
-          ? "Upcoming"
-          : "No shift posted";
-      modalShiftStatus.className = `profile-modal-shift-status ${workingNow ? "is-live" : profile.scheduled ? "is-upcoming" : "is-empty"}`;
-      if (profile.scheduled && profile.venue) {
-        const publishedTime = displayShiftTime(profile.time);
-        const shiftTime = workingNow
-          ? (/\d{1,2}(?::\d{2})?\s*(?:a|p|am|pm)/i.test(publishedTime) ? publishedTime : "Current shift")
-          : displayPublicShiftTime(profile.time, profile) || "Schedule posted";
-        modalShiftVenue.textContent = `${shiftTime ? `${shiftTime} · ` : ""}${profile.venue}`;
-        modalShiftVenue.dataset.openVenue = profile.venue;
-        modalShiftVenue.hidden = false;
-      } else {
-        modalShiftVenue.textContent = "";
-        modalShiftVenue.removeAttribute("data-open-venue");
-        modalShiftVenue.hidden = true;
-      }
+      modalCity.hidden = false;
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
       modalRank.hidden = true;
