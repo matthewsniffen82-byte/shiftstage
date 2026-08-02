@@ -308,6 +308,29 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
   );
 });
 
+test("mobile TV places a synced page-scroll thumb at the outer safe edge", () => {
+  assert.match(
+    homeSource,
+    /html\.home-tv-page-snap \{[\s\S]*?scrollbar-width: none;[\s\S]*?html\.home-tv-page-snap::-webkit-scrollbar,[\s\S]*?html\.home-tv-page-snap body::-webkit-scrollbar \{[\s\S]*?width: 0;[\s\S]*?display: none;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-page-scroll-rail \{[\s\S]*?position: fixed;[\s\S]*?right: max\(1px, env\(safe-area-inset-right, 0px\)\);[\s\S]*?width: 3px;[\s\S]*?pointer-events: none;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-page-scroll-thumb \{[\s\S]*?min-height: 48px;[\s\S]*?border-radius: 999px;[\s\S]*?background: rgba\(226, 232, 240, \.62\);/,
+  );
+  assert.match(
+    homeSource,
+    /function syncHomeTvPageScrollIndicator\(\) \{[\s\S]*?document\.scrollingElement \|\| document\.documentElement;[\s\S]*?scroller\.scrollHeight[\s\S]*?scroller\.scrollTop \/ maxScroll[\s\S]*?translate3d\(0, \$\{thumbOffset\}px, 0\)/,
+  );
+  assert.match(
+    homeSource,
+    /window\.addEventListener\("scroll", queueHomeTvPageScrollIndicatorSync, \{ passive: true \}\);[\s\S]*?window\.visualViewport\?\.addEventListener\("resize", queueHomeTvPageScrollIndicatorSync, \{ passive: true \}\);/,
+  );
+});
+
 test("venue inline cards use production venue, schedule, revenue, and customer action data", () => {
   assert.match(
     homeSource,

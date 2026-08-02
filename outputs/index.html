@@ -31404,6 +31404,35 @@
             scroll-snap-type: y proximity;
             scroll-padding-top: calc(14px + env(safe-area-inset-top, 0px));
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+            scrollbar-width: none;
+          }
+          html.home-tv-page-snap::-webkit-scrollbar,
+          html.home-tv-page-snap body::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+          }
+          .home-tv-page-scroll-rail {
+            position: fixed;
+            z-index: 115;
+            top: max(2px, env(safe-area-inset-top, 0px));
+            right: max(1px, env(safe-area-inset-right, 0px));
+            bottom: max(2px, env(safe-area-inset-bottom, 0px));
+            width: 3px;
+            pointer-events: none;
+          }
+          .home-tv-page-scroll-rail[hidden] {
+            display: none !important;
+          }
+          .home-tv-page-scroll-thumb {
+            position: absolute;
+            inset: 0 0 auto;
+            width: 3px;
+            min-height: 48px;
+            border-radius: 999px;
+            background: rgba(226, 232, 240, .62);
+            box-shadow: 0 0 6px rgba(255, 255, 255, .12);
+            will-change: height, transform;
           }
           html.home-tv-page-snap .hero.reference-hero,
           html.home-tv-page-snap .content-head,
@@ -35531,6 +35560,10 @@
     let homeTvFeedMuted = true;
     let homeTvFeedLandingPending = false;
     const homeTvFeedSnapMedia = window.matchMedia("(max-width: 720px)");
+    let homeTvPageScrollRail = null;
+    let homeTvPageScrollThumb = null;
+    let homeTvPageScrollFrame = 0;
+    let homeTvPageScrollResizeObserver = null;
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
     const homeTvFeedCompletedViews = new Set();
@@ -49499,9 +49532,61 @@
       return homeTvFeedSnapMedia.matches;
     }
 
+    function ensureHomeTvPageScrollIndicator() {
+      if (homeTvPageScrollRail?.isConnected && homeTvPageScrollThumb?.isConnected) return;
+      homeTvPageScrollRail = document.createElement("div");
+      homeTvPageScrollRail.className = "home-tv-page-scroll-rail";
+      homeTvPageScrollRail.hidden = true;
+      homeTvPageScrollRail.setAttribute("aria-hidden", "true");
+      homeTvPageScrollThumb = document.createElement("span");
+      homeTvPageScrollThumb.className = "home-tv-page-scroll-thumb";
+      homeTvPageScrollRail.appendChild(homeTvPageScrollThumb);
+      document.body.appendChild(homeTvPageScrollRail);
+      if ("ResizeObserver" in window) {
+        homeTvPageScrollResizeObserver = new ResizeObserver(queueHomeTvPageScrollIndicatorSync);
+        homeTvPageScrollResizeObserver.observe(document.body);
+      }
+    }
+
+    function syncHomeTvPageScrollIndicator() {
+      if (!document.documentElement.classList.contains("home-tv-page-snap")) {
+        if (homeTvPageScrollRail) homeTvPageScrollRail.hidden = true;
+        return;
+      }
+      ensureHomeTvPageScrollIndicator();
+      const scroller = document.scrollingElement || document.documentElement;
+      const trackHeight = homeTvPageScrollRail.clientHeight;
+      const viewportHeight = Math.max(1, document.documentElement.clientHeight || window.innerHeight);
+      const scrollHeight = Math.max(viewportHeight, scroller.scrollHeight);
+      const maxScroll = Math.max(0, scrollHeight - viewportHeight);
+      if (!trackHeight || maxScroll <= 1) {
+        homeTvPageScrollRail.hidden = true;
+        return;
+      }
+      const thumbHeight = Math.min(
+        trackHeight,
+        Math.max(48, Math.round(trackHeight * (viewportHeight / scrollHeight))),
+      );
+      const progress = Math.min(1, Math.max(0, scroller.scrollTop / maxScroll));
+      const thumbOffset = Math.round((trackHeight - thumbHeight) * progress);
+      homeTvPageScrollThumb.style.height = `${thumbHeight}px`;
+      homeTvPageScrollThumb.style.transform = `translate3d(0, ${thumbOffset}px, 0)`;
+      homeTvPageScrollRail.hidden = false;
+    }
+
+    function queueHomeTvPageScrollIndicatorSync() {
+      if (homeTvPageScrollFrame) return;
+      homeTvPageScrollFrame = window.requestAnimationFrame(() => {
+        homeTvPageScrollFrame = 0;
+        syncHomeTvPageScrollIndicator();
+      });
+    }
+
     function syncHomeTvPageSnapState() {
       const shouldSnap = activeTab === "tv" && homeTvFeedUsesSnapViewport();
       document.documentElement.classList.toggle("home-tv-page-snap", shouldSnap);
+      if (shouldSnap) ensureHomeTvPageScrollIndicator();
+      queueHomeTvPageScrollIndicatorSync();
     }
 
     function setupHomeTvFeedObserver() {
@@ -50072,6 +50157,10 @@
     } else {
       homeTvFeedSnapMedia.addListener(refreshHomeTvFeedViewportMode);
     }
+    window.addEventListener("scroll", queueHomeTvPageScrollIndicatorSync, { passive: true });
+    window.addEventListener("resize", queueHomeTvPageScrollIndicatorSync, { passive: true });
+    window.addEventListener("orientationchange", queueHomeTvPageScrollIndicatorSync, { passive: true });
+    window.visualViewport?.addEventListener("resize", queueHomeTvPageScrollIndicatorSync, { passive: true });
 
     function renderHomeTvFeedMessage(message, retryCity = "") {
       const state = document.createElement("div");
