@@ -229,6 +229,10 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
     homeSource,
     /function renderHomeDancerGrid\(city, profiles\)[\s\S]*?results\.classList\.add\("home-dancer-three-column"\)[\s\S]*?homeDancerGridSectionMarkup\(section\.label, section\.className, section\.profiles, city, true\)/,
   );
+  assert.match(
+    homeSource,
+    /#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-venue \{[\s\S]*?gap: 2px;[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \.home-dancer-grid-venue > \.venue-dot \{[\s\S]*?width: 10px;[\s\S]*?flex: 0 0 10px;[\s\S]*?margin-right: 0;/,
+  );
 });
 
 test("Venues uses natural one-column cards with a visible next-card continuation", () => {
