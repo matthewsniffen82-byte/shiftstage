@@ -102,7 +102,7 @@ test("large dancer profile media frames use a neutral edge without a colored hal
   );
 });
 
-test("venue discovery and detail use restrained brand actions without recoloring deals or navigation", () => {
+test("venue discovery keeps restrained brand actions while venue-detail outlines stay neutral", () => {
   const venueAccents = aesthetic.match(
     /Venue discovery keeps its premium black-metal cards neutral[\s\S]*?(?=\/\* Venue identity and operational hierarchy refinements)/,
   )?.[0] || "";
@@ -124,16 +124,18 @@ test("venue discovery and detail use restrained brand actions without recoloring
   );
   assert.match(
     venueAccents,
-    /:is\(#venueDetailName, \.section-title\)::before[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-brand-primary\) 24%/,
+    /The venue-detail surface uses quiet slate framing[\s\S]*?\.venue-sign\.venue-sign \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     venueAccents,
-    /\.venue-sign\.venue-sign \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?0 0 22px var\(--dancr-color-brand-primary-soft\)/,
+    /\.follow-venue-btn \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)[\s\S]*?0 10px 24px rgba\(0, 0, 0, 0\.34\)/,
   );
   assert.match(
-    venueAccents,
-    /\.follow-venue-btn \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
+    aesthetic,
+    /#results\.venue-profile-overlay :is\([\s\S]*?\.venue-offer-card,[\s\S]*?\) \{[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;/,
   );
+  assert.doesNotMatch(venueAccents, /:is\(#venueDetailName, \.section-title\)::before/);
+  assert.doesNotMatch(venueAccents, /\.venue-sign\.venue-sign \{[\s\S]*?border-color: var\(--dancr-color-brand-primary/);
   assert.doesNotMatch(venueAccents, /home-bottom-tv|home-nav-|global-mobile-bottom-nav/);
   assert.doesNotMatch(venueAccents, /venue-club-deal-cta|data-club-deal-cta|\.is-available/);
   assert.doesNotMatch(venueAccents, /\.tv-player|\.home-tv-feed-slide/);

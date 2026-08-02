@@ -1061,6 +1061,7 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   .venue-sign,
   .venue-quick-stat,
   .venue-info .info-tile,
+  .venue-offer-card,
   .venue-shift-row,
   .locked
 ) {
@@ -1165,6 +1166,7 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   .venue-section,
   .venue-shift-row,
   .venue-offer,
+  .venue-offer-card,
   .locked,
   .action-btn:not(.venue-directions-btn):not(.venue-qr-launcher)
 ) {
@@ -2185,41 +2187,17 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-dir
   filter: none !important;
 }
 
-/* A venue detail is already the profile, so its name and Follow action become
- * the two restrained violet identity cues. Section geometry and the floating
- * navigation remain owned by the existing production layout. */
-#results.venue-profile-overlay .venue-detail :is(#venueDetailName, .section-title) {
-  position: relative !important;
-}
-
-#results.venue-profile-overlay .venue-detail :is(#venueDetailName, .section-title)::before {
-  content: "";
-  position: absolute;
-  top: 0.16em;
-  bottom: 0.16em;
-  left: -9px;
-  width: 2px;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    var(--dancr-color-brand-primary) 24%,
-    var(--dancr-color-brand-primary) 76%,
-    transparent
-  );
-  box-shadow: 0 0 10px var(--dancr-color-brand-primary-medium);
-  pointer-events: none;
-}
-
+/* The venue-detail surface uses quiet slate framing. Brand violet remains in
+ * the primary Follow fill, but never traces the card, sign, sections, or
+ * control edges. Semantic deal, directions, focus, and navigation colors are
+ * preserved by their dedicated rules. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sign.venue-sign {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
-  box-shadow:
-    0 0 0 2px var(--dancr-color-brand-primary-soft),
-    0 0 22px var(--dancr-color-brand-primary-soft) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .action-btn.follow-venue-btn {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
   background: linear-gradient(
     135deg,
@@ -2227,18 +2205,18 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .action-bt
     var(--dancr-color-brand-primary-deep)
   ) !important;
   box-shadow:
-    var(--dancr-shadow-brand-control),
+    0 10px 24px rgba(0, 0, 0, 0.34),
     inset 0 1px 0 var(--dancr-color-white-medium) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .action-btn.follow-venue-btn.is-following {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   background: color-mix(
     in srgb,
     var(--dancr-color-brand-primary) 24%,
     var(--dancr-color-surface-raised)
   ) !important;
-  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+  box-shadow: inset 0 1px 0 var(--dancr-color-white-medium) !important;
 }
 
 /* Venue identity and operational hierarchy refinements keep the card shell
