@@ -211,7 +211,7 @@ test("Dancers uses larger three-column mobile cards with a scrollbar-safe right 
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?scroll-padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /Tight phone spacing enlarges each card[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 4px !important;[\s\S]*?scroll-padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,

@@ -29125,7 +29125,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=33" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=34" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -32799,13 +32799,15 @@
           font-size: clamp(7px, 1.9vw, 9px);
         }
 
+        /* Tight phone spacing enlarges each card without reducing the outer
+           expansion or the scrollbar-safe right rail. */
         @media (max-width: 420px) {
           #results.home-dancer-grid.home-dancer-three-column {
             width: calc(100% + 16px) !important;
             margin-inline: -8px !important;
             padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
             padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px)) !important;
-            gap: 6px !important;
+            gap: 4px !important;
             scroll-padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
           }
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
