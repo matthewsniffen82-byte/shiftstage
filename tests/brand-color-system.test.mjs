@@ -76,14 +76,14 @@ test("the exact production palette is centralized in one shared token file", () 
   }
 });
 
-test("legacy beam aliases resolve to Electric Violet only", () => {
+test("legacy beam aliases resolve to the Electric Violet beam and its deep-indigo glow", () => {
   assert.match(
     tokens,
     /--dancr-color-beam-violet: var\(--dancr-color-brand-primary\);/,
   );
   assert.match(
     tokens,
-    /--dancr-color-beam-blue: var\(--dancr-color-brand-primary\);/,
+    /--dancr-color-beam-blue: var\(--dancr-color-beam-glow\);/,
   );
   assert.doesNotMatch(tokens, /#985fff|#346eff/);
 });

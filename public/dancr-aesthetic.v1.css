@@ -8,8 +8,8 @@
 :root {
   --mydancr-verified-cyan: var(--dancr-color-info);
   --mydancr-verified-blue: var(--dancr-color-info);
-  --mydancr-verified-violet: var(--dancr-color-brand-primary);
-  --mydancr-verified-magenta: var(--dancr-color-brand-primary);
+  --mydancr-verified-violet: var(--dancr-color-info);
+  --mydancr-verified-magenta: var(--dancr-color-info);
 }
 
 /*
@@ -46,6 +46,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -56,7 +57,7 @@
   --mydancr-surface: var(--dancr-color-surface-translucent);
   --mydancr-surface-raised: var(--dancr-color-surface-raised);
   --mydancr-line: var(--dancr-color-border-subtle);
-  --mydancr-line-accent: var(--dancr-color-brand-primary-medium);
+  --mydancr-line-accent: var(--dancr-color-border-strong);
   --mydancr-text: var(--dancr-color-text-primary);
   --mydancr-muted: var(--dancr-color-text-muted);
   --mydancr-cyan: var(--dancr-color-info);
@@ -66,10 +67,20 @@
   background: var(--mydancr-bg) !important;
 }
 
+/* The live shell owns a legacy admin overlay outside the Next.js admin shell.
+ * Keep its frame in the same neutral operations hierarchy while preserving
+ * violet for the actual submit action and focus state. */
+#adminDashboard {
+  border-color: var(--dancr-color-border) !important;
+  background-image: none !important;
+  box-shadow: var(--dancr-shadow-surface) !important;
+}
+
 :is(
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -86,6 +97,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -101,6 +113,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -114,6 +127,7 @@
   .account-shell .account-panel,
   .dashboard-shell .info-panel,
   .admin-shell .admin-panel,
+  #adminDashboard :is(.admin-login-form, .admin-panel),
   .dmca-shell .dmca-card,
   .counter-shell .counter-card,
   .redeem-shell .scanner-card,
@@ -149,6 +163,18 @@
   .admin-shell .report-row,
   .admin-shell .support-inbox-thread,
   .admin-shell .support-inbox-message,
+  #adminDashboard :is(
+    .approval-row,
+    .dancer-directory-row,
+    .submission-section,
+    .submission-value,
+    .submission-review-card,
+    .submitted-social-review,
+    .venue-admin-row,
+    .report-row,
+    .support-inbox-thread,
+    .support-inbox-message
+  ),
   .account-shell .signup-benefits,
   .account-shell .dancer-signup-note,
   .account-shell .customer-benefit-tile
@@ -163,6 +189,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -180,6 +207,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -195,6 +223,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -219,6 +248,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -248,6 +278,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -261,6 +292,7 @@
 :is(
   .account-shell .segmented,
   .admin-shell .segmented,
+  #adminDashboard .segmented,
   .dashboard-shell .segmented
 ) {
   gap: 4px !important;
@@ -273,6 +305,7 @@
 :is(
   .account-shell .segmented,
   .admin-shell .segmented,
+  #adminDashboard .segmented,
   .dashboard-shell .segmented
 ) button {
   border: 0 !important;
@@ -282,6 +315,7 @@
 :is(
   .account-shell .segmented,
   .admin-shell .segmented,
+  #adminDashboard .segmented,
   .dashboard-shell .segmented
 ) button.active {
   color: var(--dancr-color-text-primary) !important;
@@ -297,6 +331,7 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -377,6 +412,21 @@
   background-image: none !important;
   box-shadow: none !important;
   filter: none !important;
+}
+
+.dashboard-shell .customer-dashboard-tabs a {
+  color: var(--dancr-color-text-secondary) !important;
+  background: transparent !important;
+}
+
+.dashboard-shell .customer-dashboard-tabs a:is(:hover, :focus-visible) {
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 14%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
 }
 
 .dashboard-shell :is(
@@ -1963,7 +2013,7 @@ body.dancr-button-system > .app main.stack > section.stack > .content-head.disco
   ) !important;
 }
 
-/* Major content headings carry a two-pixel violet beam without taking up
+/* Major content headings carry a two-pixel hero beam without taking up
  * layout space or widening long mobile titles. */
 :is(
   body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head > h2,
@@ -2008,11 +2058,14 @@ body.dancr-button-system > .app main.stack > section.stack > .content-head.disco
   background: linear-gradient(
     180deg,
     transparent,
-    var(--dancr-color-brand-primary) 24%,
-    var(--dancr-color-brand-primary) 76%,
+    var(--dancr-color-beam-glow) 18%,
+    var(--dancr-color-brand-primary) 44%,
+    var(--dancr-color-beam-core) 50%,
+    var(--dancr-color-brand-primary) 56%,
+    var(--dancr-color-beam-glow) 82%,
     transparent
   );
-  box-shadow: 0 0 10px var(--dancr-color-brand-primary-medium);
+  box-shadow: 0 0 10px var(--dancr-color-beam-glow-soft);
   pointer-events: none;
 }
 
@@ -2046,7 +2099,7 @@ body.dancr-button-system :is(
   ) !important;
   box-shadow:
     var(--dancr-shadow-brand-control),
-    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+    inset 0 1px 0 var(--dancr-color-brand-core-soft) !important;
 }
 
 /* Schedule and popularity chips use semantic colors; violet remains reserved
@@ -2101,15 +2154,15 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
   text-shadow: none !important;
 }
 
-/* Profile photos receive a quiet violet halo. Their pixels remain untouched,
- * and the adjacent verified mark stays informational cyan. */
+/* Profile avatars use the same neutral framing as the photo grid. Brand color
+ * stays on actions and selection while the adjacent verified mark remains
+ * informational cyan. */
 #profileBackdrop .profile-modal-avatar,
 .public-profile-shell .profile-titlebar-avatar {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
+  border-color: var(--dancr-color-border-strong) !important;
   box-shadow:
     0 10px 26px var(--dancr-color-black-medium),
-    0 0 0 2px var(--dancr-color-brand-primary-soft),
-    0 0 22px var(--dancr-color-brand-primary-soft) !important;
+    0 0 0 2px var(--dancr-color-border-subtle) !important;
 }
 
 #profileBackdrop .profile-modal-avatar:not(.has-photo),
@@ -2117,8 +2170,8 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
   background-color: var(--dancr-color-surface-raised) !important;
   background-image: linear-gradient(
     145deg,
-    color-mix(in srgb, var(--dancr-color-brand-primary) 42%, var(--dancr-color-surface-raised)),
-    color-mix(in srgb, var(--dancr-color-brand-primary) 12%, var(--dancr-color-surface-raised))
+    color-mix(in srgb, var(--dancr-color-brand-primary) 18%, var(--dancr-color-surface-raised)),
+    var(--dancr-color-surface-raised)
   ) !important;
 }
 

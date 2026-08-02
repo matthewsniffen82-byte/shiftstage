@@ -2,24 +2,38 @@
  * Production color tokens for MyDancr.
  *
  * Components consume semantic tokens from this file so the brand palette has
- * one source of truth. Navigation keeps its existing, independently owned
- * visual contract.
+ * one source of truth. The intended UI-chrome balance is 84% neutral, 10%
+ * hero-beam brand, and 6% semantic state color. Approved media and the supplied
+ * hero artwork are excluded from that visual-weight target. Navigation keeps
+ * its existing, independently owned visual contract.
  */
 
 :root {
   color-scheme: dark;
 
+  --dancr-visual-weight-neutral: 84;
+  --dancr-visual-weight-brand: 10;
+  --dancr-visual-weight-semantic: 6;
+
+  --dancr-color-brand-core: #f5f3ff;
   --dancr-color-brand-primary: #7c3aed;
-  --dancr-color-brand-primary-deep: #5b21b6;
+  --dancr-color-brand-primary-deep: #4c1d95;
+  --dancr-color-brand-glow: #312e81;
+  --dancr-color-brand-core-soft: rgba(245, 243, 255, 0.18);
   --dancr-color-brand-primary-soft: rgba(124, 58, 237, 0.14);
   --dancr-color-brand-primary-medium: rgba(124, 58, 237, 0.34);
   --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
+  --dancr-color-brand-glow-soft: rgba(49, 46, 129, 0.18);
+  --dancr-color-brand-glow-medium: rgba(49, 46, 129, 0.42);
 
+  --dancr-color-beam-core: var(--dancr-color-brand-core);
   --dancr-color-beam-violet: var(--dancr-color-brand-primary);
   --dancr-color-beam-violet-medium: rgba(124, 58, 237, 0.58);
   --dancr-color-beam-violet-soft: rgba(124, 58, 237, 0.2);
-  --dancr-color-beam-blue: var(--dancr-color-brand-primary);
-  --dancr-color-beam-blue-soft: rgba(124, 58, 237, 0.14);
+  --dancr-color-beam-glow: var(--dancr-color-brand-glow);
+  --dancr-color-beam-glow-soft: var(--dancr-color-brand-glow-soft);
+  --dancr-color-beam-blue: var(--dancr-color-beam-glow);
+  --dancr-color-beam-blue-soft: var(--dancr-color-beam-glow-soft);
 
   --dancr-color-text-primary: #f8fafc;
   --dancr-color-text-secondary: #cbd5e1;
@@ -66,11 +80,13 @@
 
   --dancr-shadow-surface: 0 10px 24px rgba(5, 5, 7, 0.3);
   --dancr-shadow-modal: 0 24px 72px rgba(5, 5, 7, 0.72);
-  --dancr-shadow-brand-subtle: 0 0 10px rgba(124, 58, 237, 0.12);
+  --dancr-shadow-brand-subtle: 0 0 10px var(--dancr-color-brand-glow-soft);
   --dancr-shadow-brand-control:
     0 8px 18px rgba(5, 5, 7, 0.34),
-    0 0 10px rgba(124, 58, 237, 0.12);
-  --dancr-shadow-beam-active: 0 0 0 2px var(--dancr-color-beam-violet-medium);
+    0 0 10px var(--dancr-color-brand-glow-soft);
+  --dancr-shadow-beam-active:
+    0 0 0 2px var(--dancr-color-beam-violet-medium),
+    0 0 10px var(--dancr-color-beam-glow-soft);
   --dancr-shadow-beam-card:
     0 12px 28px rgba(5, 5, 7, 0.34),
     inset 0 0 0 1px var(--dancr-color-beam-violet-medium);

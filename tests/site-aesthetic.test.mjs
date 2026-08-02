@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=50" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=51" rel="stylesheet">/,
   );
 });
 
@@ -46,7 +46,7 @@ test("the violet hero beam continues through content without recoloring trust or
   );
   assert.match(
     violetRhythm,
-    /Major content headings carry a two-pixel violet beam[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-brand-primary\) 24%/,
+    /Major content headings carry a two-pixel hero beam[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-beam-glow\) 18%[\s\S]*?var\(--dancr-color-beam-core\) 50%/,
   );
   assert.match(
     violetRhythm,
@@ -66,7 +66,7 @@ test("the violet hero beam continues through content without recoloring trust or
   );
   assert.match(
     violetRhythm,
-    /\.profile-modal-avatar,[\s\S]*?\.profile-titlebar-avatar[\s\S]*?0 0 22px var\(--dancr-color-brand-primary-soft\)/,
+    /Profile avatars use the same neutral framing[\s\S]*?\.profile-modal-avatar,[\s\S]*?\.profile-titlebar-avatar[\s\S]*?border-color: var\(--dancr-color-border-strong\)[\s\S]*?var\(--dancr-color-border-subtle\)/,
   );
   assert.doesNotMatch(violetRhythm, /home-bottom-tv|home-nav-|global-mobile-bottom-nav/);
   assert.doesNotMatch(violetRhythm, /\.tv-player|\.home-tv-feed-slide/);
@@ -419,6 +419,7 @@ test("the shared aesthetic covers public content, accounts, and operations surfa
   assert.match(aesthetic, /\.account-shell/);
   assert.match(aesthetic, /\.dashboard-shell/);
   assert.match(aesthetic, /\.admin-shell/);
+  assert.match(aesthetic, /#adminDashboard/);
   assert.match(aesthetic, /\.dmca-shell/);
   assert.match(aesthetic, /\.tv-studio-page/);
   assert.match(aesthetic, /body > \.app main\.stack > \.hero\.reference-hero/);
