@@ -122,7 +122,7 @@ test("TV cards are completely borderless without a violet perimeter", () => {
 test("mobile TV controls stay inside the stable card that snaps above navigation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 22px 14px;/,
+    /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 34px 14px;/,
   );
   assert.match(
     homeSource,
@@ -134,7 +134,7 @@ test("mobile TV controls stay inside the stable card that snaps above navigation
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-progress \{[\s\S]*?height: 5px;[\s\S]*?background: rgba\(255,255,255,\.36\);[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: var\(--dancr-color-text-primary\);[\s\S]*?box-shadow: 0 0 4px rgba\(248,250,252,\.96\), 0 0 12px rgba\(248,250,252,\.78\);/,
+    /\.home-tv-feed-progress \{[\s\S]*?height: 6px;[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 58%, transparent\);[\s\S]*?box-shadow: 0 1px 5px var\(--dancr-color-black-strong\);[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: var\(--dancr-color-text-primary\);[\s\S]*?box-shadow: none;/,
   );
   assert.doesNotMatch(
     homeSource.match(/\.home-tv-feed-progress > span \{[\s\S]*?\}/)?.[0] || "",

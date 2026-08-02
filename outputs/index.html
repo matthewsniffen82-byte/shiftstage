@@ -29889,10 +29889,11 @@
           right: 14px;
           bottom: 7px;
           left: 14px;
-          height: 5px;
+          height: 6px;
           overflow: hidden;
           border-radius: 999px;
-          background: rgba(255,255,255,.36);
+          background: color-mix(in srgb, var(--dancr-color-text-primary) 58%, transparent);
+          box-shadow: 0 1px 5px var(--dancr-color-black-strong);
           pointer-events: none;
         }
         .home-tv-feed-progress > span {
@@ -29901,7 +29902,7 @@
           display: block;
           border-radius: inherit;
           background: var(--dancr-color-text-primary);
-          box-shadow: 0 0 4px rgba(248,250,252,.96), 0 0 12px rgba(248,250,252,.78);
+          box-shadow: none;
           transition: width .1s linear;
         }
         .home-tv-feed-feedback {
@@ -31574,7 +31575,7 @@
           .home-tv-feed-copy {
             right: 68px;
             gap: 6px;
-            padding: 96px 0 22px 14px;
+            padding: 96px 0 34px 14px;
           }
           .home-tv-feed-dancer {
             font-size: clamp(22px, 6.2vw, 28px);
