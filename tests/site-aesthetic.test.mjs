@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=31" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=32" rel="stylesheet">/,
   );
 });
 
@@ -131,7 +131,7 @@ test("scrolling card feeds have neutral edges, retained glow, and clear separati
   );
 });
 
-test("the compact dancer directory uses a restrained neutral glow", () => {
+test("the compact dancer directory uses restrained cards and neutral inactive filters", () => {
   const compactDirectoryRule = aesthetic.match(
     /The compact dancer directory repeats many cards[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
   )?.[0] || "";
@@ -146,7 +146,15 @@ test("the compact dancer directory uses a restrained neutral glow", () => {
   assert.doesNotMatch(compactDirectoryRule, /91, 19, 255|violet halo[^.]*rgba|beam-card/);
   assert.match(
     liveApp,
-    /\.dancer-directory-filter\.is-active \{[\s\S]*?box-shadow: 0 0 18px rgba\(124, 58, 237, \.22\);/,
+    /\.dancer-directory-filter \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, \.12\);[\s\S]*?background: #18181c;[\s\S]*?box-shadow: none;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.dancer-directory-filter:not\(\.is-active\),[\s\S]*?\.filter-pill:not\(\.active\),[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.dancer-directory-filter\.is-active,[\s\S]*?\.filter-pill\.active,[\s\S]*?border-color: var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?var\(--dancr-color-brand-primary-soft\)[\s\S]*?0 0 12px rgba\(124, 58, 237, 0\.12\) !important;/,
   );
 });
 

@@ -1097,18 +1097,77 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   color: var(--dancr-color-text-muted) !important;
 }
 
+/* Filter and media-tab controls stay neutral until selected. The shared
+ * button system intentionally gives ordinary actions a branded glass fill;
+ * these repeated choice controls need a quieter hierarchy so one active
+ * selection is unmistakable without adding color noise across the screen. */
+body.dancr-button-system :is(
+  .dancer-directory-filter:not(.is-active),
+  .filter-pill:not(.active),
+  #profileBackdrop .profile-modal-media-tabs button:not(.active)
+),
+.public-profile-shell .profile-media-tabs button:not(.active),
+.tv-shell .tv-filters button:not(.active) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  .dancer-directory-filter:not(.is-active),
+  .filter-pill:not(.active),
+  #profileBackdrop .profile-modal-media-tabs button:not(.active)
+) :is(span, small),
+.public-profile-shell .profile-media-tabs button:not(.active) :is(span, small),
+.tv-shell .tv-filters button:not(.active) :is(span, small) {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system :is(
+  .dancer-directory-filter:not(.is-active),
+  .filter-pill:not(.active),
+  #profileBackdrop .profile-modal-media-tabs button:not(.active)
+):hover,
+.public-profile-shell .profile-media-tabs button:not(.active):hover,
+.tv-shell .tv-filters button:not(.active):hover {
+  border-color: var(--dancr-color-border-strong) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: 0 8px 18px var(--dancr-color-black-soft) !important;
+}
+
+body.dancr-button-system :is(
+  .dancer-directory-filter.is-active,
+  .filter-pill.active,
+  #profileBackdrop .profile-modal-media-tabs button.active
+),
 .public-profile-shell .profile-media-tabs button.active,
 .tv-shell .tv-filters button.active {
-  border-color: var(--dancr-color-beam-violet-medium) !important;
+  border-color: var(--dancr-color-brand-primary-medium) !important;
   color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--dancr-color-beam-violet) 62%, var(--dancr-color-surface)),
-      color-mix(in srgb, var(--dancr-color-beam-blue) 34%, var(--dancr-color-surface))
-    ) !important;
-  box-shadow: var(--dancr-shadow-beam-active) !important;
+      var(--dancr-color-brand-primary-soft),
+      var(--dancr-color-brand-primary-soft)
+    ),
+    var(--dancr-color-surface-raised) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--dancr-color-brand-primary-soft),
+    0 0 12px rgba(124, 58, 237, 0.12) !important;
   text-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  .dancer-directory-filter.is-active,
+  .filter-pill.active,
+  #profileBackdrop .profile-modal-media-tabs button.active
+) :is(span, small),
+.public-profile-shell .profile-media-tabs button.active :is(span, small),
+.tv-shell .tv-filters button.active :is(span, small) {
+  color: var(--dancr-color-text-primary) !important;
 }
 
 /* The hero beam is a state signal, reserved for active, selected, and keyboard-focused UI. */
