@@ -232,6 +232,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
           }))}
         />
 
+        {profile.socialLinks.length ? (
+          <section className="profile-social-section" aria-labelledby="profile-social-heading">
+            <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
+          </section>
+        ) : null}
+
         <section className="profile-overview" aria-label={`${profile.stageName} profile summary`}>
           <dl className="profile-metrics" aria-label="Profile activity">
             <div>
@@ -248,12 +254,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </div>
           </dl>
         </section>
-
-        {profile.socialLinks.length ? (
-          <section className="profile-social-section" aria-labelledby="profile-social-heading">
-            <SocialLinks dancerId={profile.id} links={profile.socialLinks} />
-          </section>
-        ) : null}
 
       </main>
     </DancerFollowStateProvider>
@@ -330,7 +330,7 @@ function PublicProfileStyles() {
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       button, input, select, textarea { font: inherit; }
       .public-profile-shell { min-height: 100vh; padding: 0 clamp(18px, 4vw, 56px) 64px; background: radial-gradient(circle at 78% 8%, rgba(139,92,246,.22), transparent 28rem), linear-gradient(180deg, #090911, #050507 62%); }
-      .profile-titlebar { position: relative; z-index: 1; max-width: 760px; min-height: 64px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 0 8px; border-bottom: 1px solid rgba(126,234,255,.1); background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
+      .profile-titlebar { position: relative; z-index: 1; max-width: 760px; min-height: 64px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 0 8px; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
       .profile-titlebar-avatar { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
       .profile-titlebar-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
@@ -348,12 +348,12 @@ function PublicProfileStyles() {
       .public-profile-close { width: 40px; min-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
       .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-deal-availability, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
-      .profile-overview { display: block; margin-top: 4px; padding: 12px 0 4px; border-top: 1px solid rgba(126,234,255,.08); }
+      .profile-overview { display: block; margin-top: 0; padding: 10px 0 4px; border-top: 1px solid rgba(126,234,255,.08); }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 8px 4px; }
       .profile-metrics dd { margin: 0; color: #eee9f5; font-size: clamp(18px, 3.5vw, 24px); font-weight: 950; line-height: 1; }
       .profile-metrics dt { color: #8f849c; font-size: clamp(9px, 2.1vw, 11px); font-weight: 850; text-align: center; }
-      .profile-social-section { display: grid; margin-top: 20px; margin-bottom: 18px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%, rgba(126,234,255,.08), transparent 11rem), rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 38px rgba(0,0,0,.2); }
+      .profile-social-section { display: grid; margin-top: 20px; margin-bottom: 8px; padding: 15px 14px 14px; border: 1px solid rgba(126,234,255,.18); border-radius: 18px; background: radial-gradient(circle at 50% 0%, rgba(126,234,255,.08), transparent 11rem), rgba(13,10,23,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 16px 38px rgba(0,0,0,.2); }
       .social-links-control { display: grid; justify-items: center; gap: 12px; text-align: center; }
       .social-list-heading { display: grid; justify-items: center; gap: 3px; }
       .social-list-heading > span { color: #94e5ff; font-size: 9px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -427,21 +427,22 @@ function PublicProfileStyles() {
       .venue-qr-launcher { width: 100%; display: flex; align-items: center; justify-content: space-between; }
       .venue-qr-launcher span { color: #d8f7ff; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
       .profile-deal-availability { margin-top: 0; }
-      .venue-qr-unavailable { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; padding: 14px; border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; background: rgba(0,0,0,.2); }
+      .venue-qr-unavailable { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; background: rgba(0,0,0,.2); }
       .profile-deal-availability .venue-qr-unavailable { border-color: rgba(167,139,250,.22); background: linear-gradient(135deg, rgba(34,29,47,.58), rgba(8,8,13,.82)); }
-      .venue-qr-placeholder-icon { width: 58px; height: 58px; display: grid; place-items: center; padding: 7px; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; color: rgba(245,245,255,.52); background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+      .venue-qr-placeholder-icon { width: 48px; height: 48px; display: grid; place-items: center; padding: 6px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; color: rgba(245,245,255,.52); background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
       .venue-qr-placeholder-icon svg { width: 100%; height: 100%; }
       .venue-qr-placeholder-icon .qr-finder { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: miter; }
       .venue-qr-placeholder-icon .qr-module { fill: currentColor; stroke: none; }
       .venue-qr-unavailable-copy { min-width: 0; display: grid; gap: 4px; }
       .venue-qr-unavailable-copy strong { color: #f5f2ff; font-size: 14px; }
       .venue-qr-unavailable-copy p { color: #a99eb7; font-size: 11px; }
+      .venue-qr-explanation { color: #a99eb7; font-size: 10px; }
+      .venue-qr-explanation summary { width: fit-content; color: #9fefff; font-size: 10px; font-weight: 850; cursor: pointer; list-style-position: inside; }
+      .venue-qr-explanation p { margin-top: 5px; }
       .profile-schedule-section { margin-top: 24px; }
-      .profile-media-section { display: grid; gap: 9px; margin-top: 12px; }
-      .profile-media-heading, .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-      .profile-media-heading > div, .profile-section-heading > div { display: grid; gap: 5px; }
-      .profile-media-heading h2 { font-size: clamp(20px, 4.5vw, 27px); }
-      .profile-media-heading > span { min-height: 24px; display: inline-flex; align-items: center; padding: 0 9px; border: 1px solid rgba(180,169,196,.14); border-radius: 999px; color: #aaa0b8; background: rgba(255,255,255,.03); font-size: 9px; font-weight: 900; letter-spacing: .03em; white-space: nowrap; }
+      .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
+      .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+      .profile-section-heading > div { display: grid; gap: 5px; }
       .profile-section-heading > span { color: #9487a5; font-size: 11px; font-weight: 850; }
       .profile-media-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 4px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(255,255,255,.025); }
       .profile-media-tabs button { min-height: 44px; border: 1px solid transparent; border-radius: 10px; color: #91869f; background: transparent; font-weight: 950; cursor: pointer; }

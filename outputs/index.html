@@ -32943,7 +32943,7 @@
           min-height: 64px;
           margin-inline: -14px;
           padding: max(8px, calc(env(safe-area-inset-top, 0px) + 6px)) 62px 8px 14px;
-          border-bottom: 1px solid rgba(126,234,255,.1);
+          border-bottom: 0;
           background:
             radial-gradient(circle at 16% 0%, rgba(126,234,255,.055), transparent 11rem),
             rgba(5,5,9,.94);
@@ -33247,30 +33247,6 @@
           gap: 8px;
           margin: 0 0 12px;
         }
-        #profileBackdrop .profile-modal-media-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 3px 4px 0;
-        }
-        #profileBackdrop .profile-modal-media-head strong {
-          font-size: 19px;
-          letter-spacing: -.015em;
-        }
-        #profileBackdrop .profile-modal-media-head span {
-          min-height: 24px;
-          display: inline-flex;
-          align-items: center;
-          padding: 0 9px;
-          border: 1px solid rgba(180,169,196,.14);
-          border-radius: 999px;
-          color: #aaa0b8;
-          background: rgba(255,255,255,.03);
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: .03em;
-        }
         #profileBackdrop .profile-modal-media-tabs {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -33458,6 +33434,43 @@
         #profileBackdrop .profile-qr-tile,
         #profileBackdrop .profile-qr-unavailable {
           grid-column: 1 / -1 !important;
+        }
+        #profileBackdrop .profile-qr-unavailable {
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) 48px !important;
+          align-items: center !important;
+          gap: 10px !important;
+          padding: 10px 12px !important;
+          border-style: solid !important;
+        }
+        #profileBackdrop .profile-qr-unavailable .profile-deal-copy,
+        #profileBackdrop .profile-qr-unavailable .profile-deal-meta {
+          min-width: 0;
+        }
+        #profileBackdrop .profile-deal-placeholder {
+          width: 48px !important;
+          min-width: 48px !important;
+          height: 48px !important;
+          padding: 6px !important;
+          border-radius: 10px !important;
+        }
+        #profileBackdrop .profile-deal-disclosure {
+          color: #a99eb7;
+          font-size: 10px;
+        }
+        #profileBackdrop .profile-deal-disclosure summary {
+          width: fit-content;
+          color: #9fefff;
+          font-size: 10px;
+          font-weight: 850;
+          cursor: pointer;
+          list-style-position: inside;
+        }
+        #profileBackdrop .profile-deal-disclosure .profile-deal-note {
+          display: block;
+          margin-top: 5px;
+          color: #a99eb7;
+          line-height: 1.4;
         }
         #profileBackdrop .social-tile {
           grid-column: 1 / -1 !important;
@@ -35331,11 +35344,7 @@
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
         </div>
-        <section class="profile-modal-media" aria-labelledby="profileModalMediaTitle">
-          <div class="profile-modal-media-head">
-            <strong id="profileModalMediaTitle">Photos &amp; TV</strong>
-            <span id="profileModalMediaCount">0 approved</span>
-          </div>
+        <section class="profile-modal-media" aria-label="Dancer profile media">
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
             <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">Photos <span id="modalMediaPhotoCount">0</span></button>
             <button id="modalMediaTvTab" type="button" role="tab" aria-selected="false" aria-controls="modalGallery" data-profile-media-tab="video" disabled>TV <span id="modalMediaTvCount">0</span></button>
@@ -35486,7 +35495,6 @@
     const modalMediaTvTab = document.getElementById("modalMediaTvTab");
     const modalMediaPhotoCount = document.getElementById("modalMediaPhotoCount");
     const modalMediaTvCount = document.getElementById("modalMediaTvCount");
-    const profileModalMediaCount = document.getElementById("profileModalMediaCount");
     const modalMediaEmpty = document.getElementById("modalMediaEmpty");
     const modalMediaPosition = document.getElementById("modalMediaPosition");
     const modalMediaPrevious = document.getElementById("modalMediaPrevious");
@@ -40983,7 +40991,10 @@
               <strong>Working Now Club Deal</strong>
               <div class="meta profile-deal-meta">
                 <span class="profile-deal-main">${escapeHtml(profile.activeDeal.dealTitle)}</span>
-                <span class="profile-deal-note">Dancer credit locks when this QR is issued and stays attached when saved or shared.</span>
+                <details class="profile-deal-disclosure">
+                  <summary>How credit works</summary>
+                  <span class="profile-deal-note">Dancer credit locks when this QR is issued and stays attached when saved or shared.</span>
+                </details>
               </div>
             </div>
             ${clubDealCtaMarkup(config, "profile-club-deal-cta")}
@@ -40996,7 +41007,10 @@
             <strong>Club Deal</strong>
             <div class="meta profile-deal-meta">
               <span class="profile-deal-main">${escapeHtml(state.label)}</span>
-              <span class="profile-deal-note">${escapeHtml(stateDetail)}</span>
+              <details class="profile-deal-disclosure">
+                <summary>How Club Deals work</summary>
+                <span class="profile-deal-note">${escapeHtml(stateDetail)}</span>
+              </details>
             </div>
           </div>
           ${clubDealQrSymbolMarkup("profile-deal-placeholder")}
@@ -43841,8 +43855,8 @@
           ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
           ${dealMarkup}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
-          ${profileActivityMetricsMarkup(profile, city)}
           ${socialMarkup}
+          ${profileActivityMetricsMarkup(profile, city)}
           ${profileLocationStatusTile(profile)}
         </div>
       `;
@@ -43981,7 +43995,6 @@
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo`);
       modalMediaPhotoCount.textContent = String(photoCount);
       modalMediaTvCount.textContent = "0";
-      profileModalMediaCount.textContent = `${photoCount} approved`;
       modalMediaTvTab.disabled = true;
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
@@ -44373,7 +44386,6 @@
         modalMediaTvCount.textContent = String(videos.length);
         modalMediaTvTab.disabled = false;
         const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
-        profileModalMediaCount.textContent = `${photoCount + videos.length} approved`;
       } catch {
         // The live profile remains fully usable if optional profile videos cannot load.
       }

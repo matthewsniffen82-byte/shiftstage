@@ -147,7 +147,10 @@ export function VenueQrUnavailable({
       <div className="venue-qr-unavailable-copy">
         <span className="eyebrow">Club Deal</span>
         <strong>{status.label}</strong>
-        <p>{status.detail}</p>
+        <details className="venue-qr-explanation">
+          <summary>How Club Deals work</summary>
+          <p>{status.detail}</p>
+        </details>
       </div>
     </aside>
   );

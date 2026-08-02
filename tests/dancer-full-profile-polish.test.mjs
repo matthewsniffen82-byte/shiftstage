@@ -84,8 +84,8 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.ok(scheduleIndex > -1);
   assert.ok(dealIndex > scheduleIndex);
   assert.ok(actionsIndex > dealIndex);
-  assert.ok(metricsIndex > actionsIndex);
-  assert.ok(socialIndex > metricsIndex);
+  assert.ok(socialIndex > actionsIndex);
+  assert.ok(metricsIndex > socialIndex);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
   assert.doesNotMatch(liveApp, /id="modalShiftStatus"|id="modalShiftVenue"/);
   assert.match(liveApp, /modalCity\.hidden = false/);
@@ -205,12 +205,26 @@ test("profile identity and media controls form a compact balanced top section", 
     profilePolishBlock,
     /#profileBackdrop #modalCity \{[\s\S]*?min-height: 22px !important;[\s\S]*?border-radius: 999px !important;/,
   );
-  assert.match(
-    profilePolishBlock,
-    /#profileBackdrop \.profile-modal-media-head span \{[\s\S]*?min-height: 24px;[\s\S]*?border-radius: 999px;/,
-  );
+  assert.match(profilePolishBlock, /#profileBackdrop \.profile-modal-summary \{[\s\S]*?border-bottom: 0;/);
+  assert.doesNotMatch(liveApp, /profileModalMediaTitle|profileModalMediaCount|profile-modal-media-head/);
+  assert.match(liveApp, /<section class="profile-modal-media" aria-label="Dancer profile media">\s*<div class="profile-modal-media-tabs"/);
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?min-height: 44px;/,
+  );
+});
+
+test("Club Deal explanations stay compact until a customer asks for more detail", () => {
+  assert.match(
+    liveApp,
+    /<details class="profile-deal-disclosure">\s*<summary>How Club Deals work<\/summary>/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 48px !important;[\s\S]*?padding: 10px 12px !important;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?width: 48px !important;[\s\S]*?min-width: 48px !important;[\s\S]*?height: 48px !important;/,
   );
 });

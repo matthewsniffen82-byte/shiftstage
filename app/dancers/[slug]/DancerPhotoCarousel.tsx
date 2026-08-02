@@ -371,13 +371,6 @@ export function DancerPhotoCarousel({
       className="profile-media-section"
       data-dancer-media-tabs
     >
-      <div className="profile-media-heading">
-        <div>
-          <span className="eyebrow">Media</span>
-          <h2>Photos &amp; TV</h2>
-        </div>
-        <span>{photoMedia.length + videoMedia.length} approved</span>
-      </div>
       <div
         aria-label={`${stageName} media type`}
         className="profile-media-tabs"
