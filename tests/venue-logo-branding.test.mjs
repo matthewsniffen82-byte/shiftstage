@@ -66,6 +66,18 @@ test("cards and detail pages use one contain-fit venue logo with neutral fallbac
   assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
   assert.match(
     aesthetic,
+    /\.home-venue-discovery-logo,[\s\S]*?\.venue-detail-logo \{[\s\S]*?width: 92%;[\s\S]*?height: 86%;/,
+  );
+  assert.match(
+    aesthetic,
     /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?position: absolute;[\s\S]*?transform: translate\(-50%, -50%\);/,
+  );
+  assert.match(
+    aesthetic,
+    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo-shell \{[\s\S]*?top: 38%;[\s\S]*?width: min\(78%, 320px\);[\s\S]*?height: 178px;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.venue-detail-logo-shell \{[\s\S]*?width: min\(86%, 360px\);[\s\S]*?height: 180px;/,
   );
 });
