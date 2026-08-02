@@ -2541,6 +2541,92 @@
       line-height: 1.4;
     }
 
+    .approved-avatar-editor {
+      margin: 0 0 14px;
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid rgba(126,234,255,.25);
+      border-radius: 16px;
+      background: linear-gradient(145deg, rgba(8,22,27,.96), rgba(7,7,12,.98));
+      box-shadow: 0 14px 34px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.035);
+    }
+
+    .approved-avatar-preview {
+      width: 82px;
+      height: 82px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 2px solid rgba(126,234,255,.72);
+      border-radius: 50%;
+      color: #fff;
+      background-color: #16111f;
+      background-position: var(--custom-photo-position, center);
+      background-repeat: no-repeat;
+      background-size: cover;
+      box-shadow: 0 0 0 4px rgba(139,92,246,.16), 0 10px 26px rgba(0,0,0,.42);
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .approved-avatar-preview.has-custom-photo {
+      background-image: var(--custom-photo);
+    }
+
+    .approved-avatar-copy {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .approved-avatar-copy strong {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .approved-avatar-copy p,
+    .approved-avatar-status {
+      margin: 0;
+      color: #aaa2b8;
+      font-size: 11px;
+      font-weight: 720;
+      line-height: 1.4;
+    }
+
+    .approved-avatar-status.is-live { color: #8ff7c7; }
+    .approved-avatar-status.is-pending { color: #9fefff; }
+
+    .approved-avatar-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .approved-avatar-actions button {
+      min-height: 44px;
+      flex: 1 1 150px;
+      border: 1px solid rgba(126,234,255,.32);
+      border-radius: 12px;
+      color: #fff;
+      background: rgba(64,42,94,.58);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .approved-avatar-actions .approved-avatar-remove {
+      border-color: rgba(255,111,161,.3);
+      background: rgba(67,20,42,.5);
+    }
+
+    @media (max-width: 380px) {
+      .approved-avatar-editor { grid-template-columns: 70px minmax(0, 1fr); gap: 11px; padding: 12px; }
+      .approved-avatar-preview { width: 70px; height: 70px; }
+    }
+
     .approved-visual-profile .profile-modal {
       position: relative;
       width: 100%;
@@ -14609,6 +14695,7 @@
       border-color: rgba(124, 58, 237, .26);
       background:
         radial-gradient(circle at 70% 10%, rgba(255, 47, 174, .18), transparent 0 48%),
+    .dancew0% 10%, rgba(255, 47, 174, .18), transparent 0 48%),
         linear-gradient(135deg, rgba(17, 17, 24, .96), rgba(5, 5, 7, .98));
       box-shadow: 0 16px 38px rgba(0, 0, 0, .48), 0 0 18px rgba(124, 58, 237, .10);
     }
@@ -34843,6 +34930,7 @@
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
                     <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
                     <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
+                    <input id="approvedAvatarUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
                   </div>
                 </section>
 
@@ -35866,6 +35954,7 @@
     let savedAdminContentReviews = loadSavedAdminContentReviews();
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
+    let pendingAvatarObjectUrl = "";
     let activeApprovedVisualPhotoTarget = "";
     let pendingApprovedPhotoAutoSubmit = false;
     let approvedPhotoEditMode = false;
@@ -37671,6 +37760,10 @@
         mainPhotoFocalX: item.primaryPhotoFocalX ?? 50,
         mainPhotoFocalY: item.primaryPhotoFocalY ?? 50,
         mainPhotoSrcSet: item.primaryPhotoSrcSet || "",
+        avatarPhotoUrl: item.avatarPhotoUrl || item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
+        avatarPhotoFocalX: item.avatarPhotoFocalX ?? item.primaryPhotoFocalX ?? 50,
+        avatarPhotoFocalY: item.avatarPhotoFocalY ?? item.primaryPhotoFocalY ?? 50,
+        avatarPhotoSrcSet: item.avatarPhotoSrcSet || item.primaryPhotoSrcSet || "",
         galleryPhotoUrls,
         galleryPhotoSrcSets: Array.isArray(item.galleryPhotoSrcSets) ? item.galleryPhotoSrcSets : [],
         socialLinks,
@@ -38936,6 +39029,10 @@
         mainPhotoUrl: ownProfile.mainPhotoUrl || liveDancers[ownIndex].mainPhotoUrl || "",
         mainPhotoFocalX: ownProfile.mainPhotoFocalX ?? liveDancers[ownIndex].mainPhotoFocalX ?? 50,
         mainPhotoFocalY: ownProfile.mainPhotoFocalY ?? liveDancers[ownIndex].mainPhotoFocalY ?? 50,
+        avatarPhotoUrl: ownProfile.avatarPhotoUrl || liveDancers[ownIndex].avatarPhotoUrl || ownProfile.mainPhotoUrl || liveDancers[ownIndex].mainPhotoUrl || "",
+        avatarPhotoFocalX: ownProfile.avatarPhotoFocalX ?? liveDancers[ownIndex].avatarPhotoFocalX ?? ownProfile.mainPhotoFocalX ?? 50,
+        avatarPhotoFocalY: ownProfile.avatarPhotoFocalY ?? liveDancers[ownIndex].avatarPhotoFocalY ?? ownProfile.mainPhotoFocalY ?? 50,
+        avatarPhotoSrcSet: ownProfile.avatarPhotoSrcSet || liveDancers[ownIndex].avatarPhotoSrcSet || ownProfile.mainPhotoSrcSet || "",
         galleryPhotoUrls: Array.isArray(ownProfile.galleryPhotoUrls) && ownProfile.galleryPhotoUrls.length
           ? ownProfile.galleryPhotoUrls
           : liveDancers[ownIndex].galleryPhotoUrls || []
@@ -42447,6 +42544,29 @@
       `;
       const changeState = approvedProfileChangeState(profile);
       const editableStageName = approvedProfileFieldValue("profileStageName", "approvedControlStageName") || profile?.name || activeDancerName();
+      const pendingAvatarReview = profile?.pendingAvatarReview || profile?.pending_avatar_review || null;
+      const dedicatedAvatarPath = String(profile?.avatarStoragePath || profile?.avatar_storage_path || "").trim();
+      const liveAvatarUrl = String(profile?.avatarPhotoUrl || profile?.avatar_photo_url || "").trim();
+      const pendingAvatarUrl = String(pendingAvatarReview?.previewUrl || pendingAvatarReview?.preview_url || "").trim();
+      const avatarPreviewUrl = pendingAvatarUrl || liveAvatarUrl || mainPhoto.imageUrl || "";
+      const avatarPreviewAttrs = customAvatarPhotoAttrs(
+        avatarPreviewUrl,
+        profile?.avatarPhotoSrcSet || profile?.avatar_photo_src_set || "",
+        profile?.avatarPhotoFocalX ?? profile?.avatar_photo_focal_x ?? profile?.mainPhotoFocalX ?? 50,
+        profile?.avatarPhotoFocalY ?? profile?.avatar_photo_focal_y ?? profile?.mainPhotoFocalY ?? 50
+      );
+      const avatarInitials = String(editableStageName || "D")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join("")
+        .toUpperCase();
+      const avatarStatus = pendingAvatarReview
+        ? "Replacement awaiting review. Your current live avatar stays visible until approval."
+        : dedicatedAvatarPath
+          ? "Live in dancer avatar circles across MyDancr."
+          : "Your main photo is used until you upload a dedicated avatar.";
       const visibleSocials = socials.filter((social) => !social.deleted && social.value);
       const approvedEditableSocialMarkup = `
         <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
@@ -42506,6 +42626,20 @@
                 </label>
                 <small id="approvedVisualStageNameHelp">This is the public name customers see on dancer cards, MyDancr TV, schedules, and your full profile.</small>
               </div>
+              <section class="approved-avatar-editor" aria-labelledby="approvedAvatarEditorTitle">
+                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} role="img" aria-label="Avatar preview">
+                  ${avatarPreviewUrl ? "" : displayText(avatarInitials)}
+                </div>
+                <div class="approved-avatar-copy">
+                  <strong id="approvedAvatarEditorTitle">Face avatar</strong>
+                  <p>Upload a clear photo where your face is easy to see. MyDancr automatically centers its face-aware crop in live avatar circles.</p>
+                  <span class="approved-avatar-status ${pendingAvatarReview ? "is-pending" : dedicatedAvatarPath ? "is-live" : ""}" id="approvedAvatarUploadStatus" aria-live="polite">${displayText(avatarStatus)}</span>
+                </div>
+                <div class="approved-avatar-actions">
+                  <button type="button" data-approved-avatar-upload>${dedicatedAvatarPath || pendingAvatarReview ? "Replace avatar" : "Upload avatar"}</button>
+                  ${dedicatedAvatarPath || pendingAvatarReview ? '<button class="approved-avatar-remove" type="button" data-approved-avatar-remove>Remove avatar</button>' : ""}
+                </div>
+              </section>
               <div class="approved-visual-photo-actions">
                 <button type="button" data-approved-visual-photo-add="main">Add main photo</button>
                 <button type="button" data-approved-visual-photo-add="gallery-add">Add gallery photo</button>
@@ -43478,10 +43612,10 @@
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
       const avatars = profiles.map((profile) => {
         const attrs = customAvatarPhotoAttrs(
-          publicProfilePhotoUrl(profile),
-          publicProfilePhotoSrcSet(profile),
-          profile.mainPhotoFocalX,
-          profile.mainPhotoFocalY
+          publicAvatarPhotoUrl(profile),
+          publicAvatarPhotoSrcSet(profile),
+          profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
+          profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
         );
         return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
       }).join("");
@@ -44052,6 +44186,14 @@
       return profilePhotoSrcSet(profile, publicProfilePhotoUrl(profile));
     }
 
+    function publicAvatarPhotoUrl(profile) {
+      return String(profile?.avatarPhotoUrl || profile?.avatar_photo_url || publicProfilePhotoUrl(profile) || "").trim();
+    }
+
+    function publicAvatarPhotoSrcSet(profile) {
+      return String(profile?.avatarPhotoSrcSet || profile?.avatar_photo_src_set || publicProfilePhotoSrcSet(profile) || "").trim();
+    }
+
     function galleryMarkup(profile, baseIndex, options = {}) {
       const isPrivatePreview = Boolean(options.preview);
       const uploadedUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
@@ -44275,6 +44417,7 @@
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
+      const avatarPhotoUrl = publicAvatarPhotoUrl(profile) || basePhotoUrl;
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
@@ -44297,13 +44440,16 @@
       }
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
-      modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${basePhotoUrl ? " has-photo" : ""}`;
-      modalProfileAvatar.textContent = basePhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-      if (basePhotoUrl) {
-        modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(basePhotoUrl)}')`;
+      modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
+      modalProfileAvatar.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+      if (avatarPhotoUrl) {
+        modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(avatarPhotoUrl)}')`;
         modalProfileAvatar.style.setProperty(
           "--custom-photo-position",
-          avatarPhotoPosition(profile.mainPhotoFocalX, profile.mainPhotoFocalY)
+          avatarPhotoPosition(
+            profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
+            profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
+          )
         );
       } else {
         modalProfileAvatar.style.removeProperty("background-image");
@@ -46119,6 +46265,12 @@
           mainPhotoUrl: photos[0] || "",
           mainPhotoFocalX: dancerPhotos[0]?.focalX ?? dancerPhotos[0]?.imageFocalX ?? 50,
           mainPhotoFocalY: dancerPhotos[0]?.focalY ?? dancerPhotos[0]?.imageFocalY ?? 50,
+          avatarPhotoUrl: profile.avatarPhotoUrl || profile.avatar_photo_url || photos[0] || "",
+          avatarPhotoFocalX: profile.avatarPhotoFocalX ?? profile.avatar_photo_focal_x ?? dancerPhotos[0]?.focalX ?? 50,
+          avatarPhotoFocalY: profile.avatarPhotoFocalY ?? profile.avatar_photo_focal_y ?? dancerPhotos[0]?.focalY ?? 50,
+          avatarPhotoSrcSet: profile.avatarPhotoSrcSet || profile.avatar_photo_src_set || "",
+          avatarStoragePath: profile.avatar_storage_path || profile.avatarStoragePath || "",
+          pendingAvatarReview: profile.pending_avatar_review || profile.pendingAvatarReview || null,
           galleryPhotoUrls: photos.slice(1),
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
           photoStatus: reviewStatusLabel(profile.photo_review_status || profile.photoReviewStatus, "Approved", dancerSetup.photos ? "Pending" : localProfile.photoStatus),
@@ -46647,6 +46799,91 @@
       }
       input.value = "";
       input.click();
+    }
+
+    function openApprovedAvatarUploadPicker() {
+      const input = document.getElementById("approvedAvatarUploadInput");
+      const message = "Choose a clear face photo for your avatar.";
+      setApprovedAvatarUploadStatus(message);
+      showToast(message);
+      if (!input) {
+        setApprovedAvatarUploadStatus("Avatar uploader is still loading. Close Edit Profile, open it again, and try once more.", "error");
+        return;
+      }
+      input.value = "";
+      input.click();
+    }
+
+    function setApprovedAvatarUploadStatus(message, state = "") {
+      const status = document.getElementById("approvedAvatarUploadStatus");
+      if (status) {
+        status.textContent = message;
+        status.classList.toggle("is-live", state === "success");
+        status.classList.toggle("is-pending", state === "pending" || state === "moderating");
+        status.setAttribute("aria-busy", state === "moderating" ? "true" : "false");
+      }
+      const result = document.getElementById("dancerControlResult");
+      if (result) result.textContent = message;
+    }
+
+    function startApprovedAvatarModerationProgress(fileName) {
+      const steps = [
+        `Uploading ${fileName} securely...`,
+        "Checking the avatar image...",
+        "Finding the best face-aware crop...",
+        "Saving the avatar status..."
+      ];
+      let index = 0;
+      setApprovedAvatarUploadStatus(steps[index], "moderating");
+      return window.setInterval(() => {
+        index = Math.min(index + 1, steps.length - 1);
+        setApprovedAvatarUploadStatus(steps[index], "moderating");
+      }, 1400);
+    }
+
+    async function uploadApprovedDancerAvatar(file) {
+      if (!isDancerSession()) throw new Error("Sign in as a dancer to upload an avatar.");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:avatar:${Date.now()}:${Math.random().toString(36).slice(2)}`);
+      const headers = authenticatedRequestHeaders();
+      if (!headers) throw new Error("Sign in required");
+      const response = await fetch("/api/dancer/avatar", {
+        method: "POST",
+        headers,
+        body: formData
+      });
+      const data = await response.json().catch(() => ({}));
+      const decision = normalizedReviewStatus(data?.decision);
+      if (decision === "rejected") return data;
+      if (!response.ok || data.ok === false) {
+        throw new Error(normalizeRequestError(data.message || data.error, "Avatar upload failed"));
+      }
+      applyResponseSession(data);
+      return data;
+    }
+
+    async function hydrateApprovedDancerAvatar(uploadResult) {
+      const data = await getAuthenticatedJson("/api/dancer/profile");
+      if (!data?.profile) throw new Error("The avatar was saved but could not be reloaded. Please refresh and try again.");
+      const uploadedPath = String(uploadResult?.photo?.storage_path || uploadResult?.photo?.storagePath || "").trim();
+      const confirmedPath = String(data.profile.avatar_storage_path || data.profile.avatarStoragePath || "").trim();
+      if (!uploadedPath || confirmedPath !== uploadedPath || !data.profile.avatarPhotoUrl) {
+        throw new Error("The avatar was saved but could not be verified on your live profile. Please try again.");
+      }
+      applyDancerVerificationProfile(data.profile);
+      await loadLiveDiscovery(data.profile.city || activeDancerCity(), { force: true });
+      return data.profile;
+    }
+
+    async function removeApprovedDancerAvatar() {
+      const data = await deleteAuthenticatedJson("/api/dancer/avatar");
+      if (!data?.ok) throw new Error(data?.error || "Avatar could not be removed.");
+      const refreshed = await getAuthenticatedJson("/api/dancer/profile");
+      if (!refreshed?.profile) throw new Error("Avatar was removed but the profile could not be refreshed.");
+      applyDancerVerificationProfile(refreshed.profile);
+      await loadLiveDiscovery(refreshed.profile.city || activeDancerCity(), { force: true });
+      return refreshed.profile;
     }
 
     function setApprovedPhotoUploadStatus(message, state = "") {
@@ -50177,10 +50414,10 @@
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const dancerSlug = String(item?.dancer?.slug || "").trim();
       const dancerCity = String(item?.dancer?.city || citySelect.value).trim() || "Las Vegas";
-      const dancerPhotoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
+      const dancerPhotoUrl = String(item?.dancer?.avatarPhotoUrl || item?.dancer?.primaryPhotoUrl || "").trim();
       const dancerPhotoPosition = avatarPhotoPosition(
-        item?.dancer?.primaryPhotoFocalX,
-        item?.dancer?.primaryPhotoFocalY
+        item?.dancer?.avatarPhotoFocalX ?? item?.dancer?.primaryPhotoFocalX,
+        item?.dancer?.avatarPhotoFocalY ?? item?.dancer?.primaryPhotoFocalY
       );
       const venueName = String(item?.venue?.name || "").trim();
       const venueSlug = String(item?.venue?.slug || "").trim();
@@ -52769,6 +53006,57 @@
         if (status) status.textContent = file ? "Confirm both permissions, then upload." : "Choose a video file.";
         return;
       }
+      if (event.target?.id === "approvedAvatarUploadInput") {
+        const input = event.target;
+        const file = input.files?.[0];
+        if (!file) return;
+        const progressTimer = startApprovedAvatarModerationProgress(file.name || "avatar");
+        showToast("Checking your avatar...");
+        input.disabled = true;
+        try {
+          const uploadResult = await uploadApprovedDancerAvatar(file);
+          const decision = normalizedReviewStatus(uploadResult?.decision);
+          if (decision === "approved") {
+            await hydrateApprovedDancerAvatar(uploadResult);
+            if (pendingAvatarObjectUrl) URL.revokeObjectURL(pendingAvatarObjectUrl);
+            pendingAvatarObjectUrl = "";
+          } else if (["review", "moderation_retry", "moderation_error"].includes(decision)) {
+            if (pendingAvatarObjectUrl) URL.revokeObjectURL(pendingAvatarObjectUrl);
+            pendingAvatarObjectUrl = URL.createObjectURL(file);
+            const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
+            if (profile) {
+              profile.pendingAvatarReview = {
+                id: uploadResult?.moderationRecordId || uploadResult?.photo?.id || "",
+                previewUrl: pendingAvatarObjectUrl,
+                status: "pending"
+              };
+            }
+          }
+          renderApprovedVisualProfileEditor();
+          renderDancerManagement();
+          if (decision === "approved") {
+            setApprovedAvatarUploadStatus(uploadResult?.message || "Avatar is live across MyDancr.", "success");
+            showToast("Avatar is live");
+          } else if (["review", "moderation_retry", "moderation_error"].includes(decision)) {
+            setApprovedAvatarUploadStatus(uploadResult?.message || "Avatar awaiting review. Your current live avatar stays visible.", "pending");
+            showToast("Avatar awaiting review");
+          } else if (decision === "rejected") {
+            setApprovedAvatarUploadStatus(uploadResult?.message || "This avatar was not approved. Choose a different image.", "error");
+            showToast(uploadResult?.message || "Avatar not approved");
+          } else {
+            throw new Error("Dancr could not confirm the avatar upload status. Please try again.");
+          }
+        } catch (error) {
+          const message = normalizeRequestError(error, "Could not upload avatar");
+          setApprovedAvatarUploadStatus(message, "error");
+          showToast(message);
+        } finally {
+          window.clearInterval(progressTimer);
+          input.value = "";
+          input.disabled = false;
+        }
+        return;
+      }
       if (event.target?.id !== "approvedPhotoUploadInput") return;
       const input = event.target;
       const file = input.files?.[0];
@@ -52814,6 +53102,38 @@
     });
 
     dancerDashboard.addEventListener("click", async (event) => {
+      const avatarUpload = event.target.closest("[data-approved-avatar-upload]");
+      if (avatarUpload) {
+        event.preventDefault();
+        openApprovedAvatarUploadPicker();
+        return;
+      }
+      const avatarRemove = event.target.closest("[data-approved-avatar-remove]");
+      if (avatarRemove) {
+        event.preventDefault();
+        avatarRemove.disabled = true;
+        avatarRemove.setAttribute("aria-busy", "true");
+        setApprovedAvatarUploadStatus("Removing avatar...", "moderating");
+        try {
+          await removeApprovedDancerAvatar();
+          if (pendingAvatarObjectUrl) URL.revokeObjectURL(pendingAvatarObjectUrl);
+          pendingAvatarObjectUrl = "";
+          renderApprovedVisualProfileEditor();
+          renderDancerManagement();
+          setApprovedAvatarUploadStatus("Avatar removed. Your main photo is now used in avatar circles.");
+          showToast("Avatar removed");
+        } catch (error) {
+          const message = normalizeRequestError(error, "Could not remove avatar");
+          setApprovedAvatarUploadStatus(message, "error");
+          showToast(message);
+        } finally {
+          if (avatarRemove.isConnected) {
+            avatarRemove.disabled = false;
+            avatarRemove.removeAttribute("aria-busy");
+          }
+        }
+        return;
+      }
       const addProfileVideo = event.target.closest("[data-approved-profile-video-add]");
       if (addProfileVideo) {
         event.preventDefault();

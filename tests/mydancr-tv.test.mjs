@@ -165,11 +165,11 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(tvSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("is_primary", true\)[\s\S]*?\.eq\("review_status", "approved"\)/);
   assert.match(
     tvSource,
-    /dancer: \{[\s\S]*?\.\.\.publicVideo\.dancer,[\s\S]*?primaryPhotoUrl: primaryPhoto\?\.imageUrl \|\| null,[\s\S]*?primaryPhotoFocalX: primaryPhoto\?\.imageFocalX \?\? 50,[\s\S]*?primaryPhotoFocalY: primaryPhoto\?\.imageFocalY \?\? 50/,
+    /dancer: \{[\s\S]*?\.\.\.publicVideo\.dancer,[\s\S]*?avatarPhotoUrl: avatarPhoto\?\.imageUrl \|\| null,[\s\S]*?avatarPhotoFocalX: avatarPhoto\?\.imageFocalX \?\? 50,[\s\S]*?avatarPhotoFocalY: avatarPhoto\?\.imageFocalY \?\? 50/,
   );
-  assert.match(feedClient, /className=\{`tv-profile-photo\$\{video\.dancer\.primaryPhotoUrl \? " has-photo" : ""\}`\}/);
-  assert.match(feedClient, /backgroundImage: `url\(\$\{JSON\.stringify\(video\.dancer\.primaryPhotoUrl\)\}\)`/);
-  assert.match(feedClient, /video\.dancer\.primaryPhotoUrl \? null : dancerInitials\(video\.dancer\.stageName\)/);
+  assert.match(feedClient, /className=\{`tv-profile-photo\$\{video\.dancer\.avatarPhotoUrl \? " has-photo" : ""\}`\}/);
+  assert.match(feedClient, /backgroundImage: `url\(\$\{JSON\.stringify\(video\.dancer\.avatarPhotoUrl\)\}\)`/);
+  assert.match(feedClient, /video\.dancer\.avatarPhotoUrl \? null : dancerInitials\(video\.dancer\.stageName\)/);
   assert.match(feedClient, /\.tv-profile-photo \{[^}]*width: 58px[^}]*height: 58px[^}]*background-size: cover/);
   assert.match(feedClient, /className=\{video\.shift\.isActive \? "tv-schedule-row is-tonight" : "tv-schedule-row is-upcoming"\}/);
   assert.doesNotMatch(feedClient, /className="tv-details"|className="tv-mobile-actions"|<p>\{video\.caption\}<\/p>/);

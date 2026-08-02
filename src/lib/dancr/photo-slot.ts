@@ -1,11 +1,16 @@
 const PROFILE_MAIN_CONTEXT = "profile_main";
 const PROFILE_GALLERY_CONTEXT = "profile_gallery";
+export const PROFILE_AVATAR_CONTEXT = "profile_avatar";
 
 export type ProfilePhotoSlot = {
   isPrimary: boolean;
   sortOrder: number | null;
   key: string;
 };
+
+export function isProfileAvatarUploadContext(value: unknown) {
+  return String(value || "").trim().toLowerCase() === PROFILE_AVATAR_CONTEXT;
+}
 
 export function profilePhotoUploadContext(isPrimary: boolean, sortOrder: number) {
   if (isPrimary) return PROFILE_MAIN_CONTEXT;

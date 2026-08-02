@@ -218,7 +218,7 @@ test("public image responses expose responsive sources with legacy fallbacks", (
 });
 
 test("profile surfaces use responsive sources and explain how to retain upload quality", () => {
-  assert.match(dancerProfile, /srcSet=\{heroPhotoSrcSet \|\| undefined\}/);
+  assert.match(dancerProfile, /srcSet=\{avatarPhotoSrcSet \|\| undefined\}/);
   assert.match(dancerCarousel, /srcSet=\{item\.imageSrcSet \|\| undefined\}/);
   assert.match(
     dancerCarousel,

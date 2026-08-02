@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
-import { APPROVED_PHOTO_BUCKET, MODERATION_REVIEW_BUCKET, MODERATION_TEMP_BUCKET } from "@/src/lib/dancr/image-moderation";
+import {
+  APPROVED_PHOTO_BUCKET,
+  MODERATION_REVIEW_BUCKET,
+  MODERATION_TEMP_BUCKET,
+  restoreDancerAvatar,
+  setApprovedDancerAvatar,
+} from "@/src/lib/dancr/image-moderation";
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
-import { profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
+import { isProfileAvatarUploadContext, profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
 import {
   removeResponsiveImage,
   responsiveImageStoragePaths,
@@ -105,15 +111,49 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
   if (downloadError || !file) throw downloadError || new Error("Unable to read review image.");
 
   const image = await validateAndPrepareDancrImage(file);
+  const isAvatar = isProfileAvatarUploadContext(record.upload_context);
   const uploadedImage = await uploadResponsiveImage(
     admin,
     APPROVED_PHOTO_BUCKET,
-    `${record.user_id}/${profile.id}`,
+    isAvatar
+      ? `${record.user_id}/${profile.id}/avatar`
+      : `${record.user_id}/${profile.id}`,
     image,
   );
   const finalPath = uploadedImage.storagePath;
+  let previousAvatarPath: string | null = null;
+  let avatarWasSwitched = false;
 
   try {
+    if (isAvatar) {
+      previousAvatarPath = await setApprovedDancerAvatar(admin, profile.id, finalPath);
+      avatarWasSwitched = true;
+      const update = {
+        image_id: null,
+        final_storage_path: finalPath,
+        decision: "approved",
+        status: "approved",
+        reviewed_by: reviewerId,
+        reviewed_at: new Date().toISOString(),
+        review_decision: "approved",
+        review_notes: notes || null,
+        updated_at: new Date().toISOString(),
+      };
+      const { data: updated, error: updateError } = await admin
+        .from("image_moderation_records")
+        .update(update)
+        .eq("id", record.id)
+        .select("*")
+        .single();
+      if (updateError) throw updateError;
+      await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
+      if (previousAvatarPath && previousAvatarPath !== finalPath) {
+        await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, previousAvatarPath).catch(() => null);
+      }
+      console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved", target: "avatar" }));
+      return updated;
+    }
+
     const requestedSlot = profilePhotoSlotFromUploadContext(record.upload_context);
     const isPrimary = requestedSlot.isPrimary;
     const sortOrder = isPrimary ? 0 : requestedSlot.sortOrder || await nextPhotoSortOrder(admin, profile.id);
@@ -182,6 +222,9 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
     return updated;
   } catch (error) {
+    if (avatarWasSwitched) {
+      await restoreDancerAvatar(admin, profile.id, previousAvatarPath).catch(() => null);
+    }
     await removeResponsiveImage(
       admin,
       APPROVED_PHOTO_BUCKET,

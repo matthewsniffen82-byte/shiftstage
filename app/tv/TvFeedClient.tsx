@@ -586,19 +586,19 @@ export default function TvFeedClient({
                 <div className="tv-player-shade" />
                 <div className="tv-profile-body">
                   <span
-                    className={`tv-profile-photo${video.dancer.primaryPhotoUrl ? " has-photo" : ""}`}
-                    style={video.dancer.primaryPhotoUrl
+                    className={`tv-profile-photo${video.dancer.avatarPhotoUrl ? " has-photo" : ""}`}
+                    style={video.dancer.avatarPhotoUrl
                       ? {
-                          backgroundImage: `url(${JSON.stringify(video.dancer.primaryPhotoUrl)})`,
+                          backgroundImage: `url(${JSON.stringify(video.dancer.avatarPhotoUrl)})`,
                           backgroundPosition: imageFocalPointCss(
-                            video.dancer.primaryPhotoFocalX,
-                            video.dancer.primaryPhotoFocalY,
+                            video.dancer.avatarPhotoFocalX,
+                            video.dancer.avatarPhotoFocalY,
                           ),
                         }
                       : undefined}
                     aria-hidden="true"
                   >
-                    {video.dancer.primaryPhotoUrl ? null : dancerInitials(video.dancer.stageName)}
+                    {video.dancer.avatarPhotoUrl ? null : dancerInitials(video.dancer.stageName)}
                   </span>
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">

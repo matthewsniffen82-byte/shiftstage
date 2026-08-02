@@ -40,20 +40,22 @@ test("uploaded photos persist a content-aware focal point in their storage manif
 });
 
 test("public dancer and TV payloads carry the stored avatar focal point", () => {
-  assert.match(publicService, /primaryPhotoFocalX: primaryPhoto\?\.imageFocalX \?\? 50/);
-  assert.match(publicService, /primaryPhotoFocalY: primaryPhoto\?\.imageFocalY \?\? 50/);
+  assert.match(publicService, /avatarPhotoFocalX: avatarPhoto\?\.imageFocalX \?\? 50/);
+  assert.match(publicService, /avatarPhotoFocalY: avatarPhoto\?\.imageFocalY \?\? 50/);
   assert.match(publicService, /focalX: image\?\.imageFocalX \?\? 50/);
-  assert.match(tvService, /primaryPhotoFocalX: primaryPhoto\?\.imageFocalX \?\? 50/);
-  assert.match(tvService, /primaryPhotoFocalY: primaryPhoto\?\.imageFocalY \?\? 50/);
+  assert.match(tvService, /avatarPhotoFocalX: avatarPhoto\?\.imageFocalX \?\? 50/);
+  assert.match(tvService, /avatarPhotoFocalY: avatarPhoto\?\.imageFocalY \?\? 50/);
 });
 
 test("every public avatar surface uses the face-aware position without changing full-card media", () => {
   assert.match(dancerProfile, /height: "100%"[\s\S]*?objectFit: "cover"/);
-  assert.match(dancerProfile, /objectPosition: imageFocalPointCss\(heroPhotoFocalX, heroPhotoFocalY\)/);
+  assert.match(dancerProfile, /const avatarPhoto = profile\.avatarPhotoUrl \|\| heroPhoto/);
+  assert.match(dancerProfile, /objectPosition: imageFocalPointCss\(avatarPhotoFocalX, avatarPhotoFocalY\)/);
   assert.match(dancerProfile, /objectPosition:[\s\S]*?width: "100%"/);
-  assert.match(tvFeed, /backgroundPosition: imageFocalPointCss\([\s\S]*?primaryPhotoFocalX,[\s\S]*?primaryPhotoFocalY/);
+  assert.match(tvFeed, /backgroundPosition: imageFocalPointCss\([\s\S]*?avatarPhotoFocalX,[\s\S]*?avatarPhotoFocalY/);
   assert.match(liveShell, /function avatarPhotoPosition\(focalX, focalY\)/);
   assert.match(liveShell, /function customAvatarPhotoAttrs\(/);
+  assert.match(liveShell, /function publicAvatarPhotoUrl\(profile\)/);
   assert.match(liveShell, /dancerPhotoImage\.style\.objectPosition = dancerPhotoPosition/);
   assert.match(liveShell, /modalProfileAvatar\.style\.setProperty\([\s\S]*?"--custom-photo-position"/);
   assert.match(

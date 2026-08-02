@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
+import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
 import { removeResponsiveImage } from "./responsive-image";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
@@ -262,6 +263,74 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     deletedIds,
     remainingPhotoIds: remainingIds,
     photoReviewStatusMayChange: true,
+  };
+}
+
+export async function deleteOwnDancerAvatar(
+  client: DancrClient,
+  userId: string,
+  adminClient: DancrClient = client,
+) {
+  const profile = await getOwnDancerProfile(client, userId);
+  const { data: currentProfile, error: profileError } = await adminClient
+    .from("dancer_profiles")
+    .select("avatar_storage_path")
+    .eq("id", profile.id)
+    .maybeSingle();
+  if (profileError) throw profileError;
+  if (!currentProfile) throw new Error("Dancer profile not found.");
+
+  const { data: moderationRecords, error: moderationError } = await (adminClient as any)
+    .from("image_moderation_records")
+    .select("id, temporary_storage_path, final_storage_path")
+    .eq("user_id", userId)
+    .eq("upload_context", PROFILE_AVATAR_CONTEXT);
+  if (moderationError) throw moderationError;
+
+  const recordIds = (moderationRecords || []).map((record: any) => String(record.id || "")).filter(Boolean);
+  if (recordIds.length) {
+    const { error: deleteError } = await (adminClient as any)
+      .from("image_moderation_records")
+      .delete()
+      .eq("user_id", userId)
+      .in("id", recordIds);
+    if (deleteError) throw deleteError;
+  }
+
+  const { error: updateError } = await adminClient
+    .from("dancer_profiles")
+    .update({
+      avatar_storage_path: null,
+      avatar_updated_at: new Date().toISOString(),
+    })
+    .eq("id", profile.id);
+  if (updateError) throw updateError;
+
+  const temporaryPaths: string[] = [...new Set<string>((moderationRecords || [])
+    .map((record: any) => String(record.temporary_storage_path || "").trim())
+    .filter(Boolean))];
+  if (temporaryPaths.length) {
+    await adminClient.storage.from("dancr-image-moderation-temp").remove(temporaryPaths).catch(() => null);
+    await adminClient.storage.from("dancr-image-moderation-review").remove(temporaryPaths).catch(() => null);
+  }
+
+  const currentPath = String((currentProfile as any).avatar_storage_path || "").trim();
+  const approvedPaths: string[] = [...new Set<string>([
+    currentPath,
+    ...(moderationRecords || []).map((record: any) => String(record.final_storage_path || "").trim()),
+  ].filter(Boolean))];
+  await Promise.all(approvedPaths.map((storagePath) =>
+    removeResponsiveImage(adminClient, "dancer-photos", storagePath).catch(() => null),
+  ));
+
+  console.info(JSON.stringify({
+    event: "dancer.avatar_deleted",
+    dancerId: profile.id,
+    clearedModerationRecords: recordIds.length,
+  }));
+  return {
+    deleted: Boolean(currentPath || recordIds.length),
+    moderationRecordIds: recordIds,
   };
 }
 

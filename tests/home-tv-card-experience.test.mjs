@@ -58,7 +58,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(homeSource, /home-tv-feed-dancer-actions|home-tv-feed-profile-action/);
   assert.match(
     homeSource,
-    /const dancerPhotoUrl = String\(item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
+    /const dancerPhotoUrl = String\(item\?\.dancer\?\.avatarPhotoUrl \|\| item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
   );
   assert.match(
     homeSource,

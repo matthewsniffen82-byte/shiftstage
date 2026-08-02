@@ -78,6 +78,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         verification_status,
         ${IDENTITY_SELECT}
         photo_review_status,
+        avatar_storage_path,
         is_public,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
@@ -108,6 +109,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           verification_status,
           ${IDENTITY_SELECT}
           photo_review_status,
+          avatar_storage_path,
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
@@ -152,6 +154,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         verification_status,
         ${IDENTITY_SELECT}
         photo_review_status,
+        avatar_storage_path,
         is_public,
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
@@ -186,6 +189,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           verification_status,
           ${IDENTITY_SELECT}
           photo_review_status,
+          avatar_storage_path,
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
@@ -226,6 +230,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         verification_status,
         ${IDENTITY_SELECT}
         photo_review_status,
+        avatar_storage_path,
         is_public,
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
@@ -256,6 +261,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           verification_status,
           ${IDENTITY_SELECT}
           photo_review_status,
+          avatar_storage_path,
           trending_scores(rank),
           dancer_photos(id, storage_path, is_primary, sort_order, review_status),
           social_links(id, platform, handle, url, is_active),
@@ -458,6 +464,12 @@ function buildDancerCard(
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
   const approvedPhotos = approvedDancerPhotoSources(client, row);
   const primaryPhoto = approvedPhotos[0] || null;
+  const dedicatedAvatar = responsivePublicImage(
+    client,
+    "dancer-photos",
+    row.avatar_storage_path,
+  );
+  const avatarPhoto = dedicatedAvatar || primaryPhoto;
 
   return {
     shift,
@@ -473,6 +485,12 @@ function buildDancerCard(
       primaryPhotoSrcSet: primaryPhoto?.imageSrcSet || null,
       primaryPhotoWidth: primaryPhoto?.imageWidth || null,
       primaryPhotoHeight: primaryPhoto?.imageHeight || null,
+      avatarPhotoUrl: avatarPhoto?.imageUrl || null,
+      avatarPhotoFocalX: avatarPhoto?.imageFocalX ?? 50,
+      avatarPhotoFocalY: avatarPhoto?.imageFocalY ?? 50,
+      avatarPhotoSrcSet: avatarPhoto?.imageSrcSet || null,
+      avatarPhotoWidth: avatarPhoto?.imageWidth || null,
+      avatarPhotoHeight: avatarPhoto?.imageHeight || null,
       galleryPhotoUrls: approvedPhotos.map((photo) => photo.imageUrl),
       galleryPhotoSrcSets: approvedPhotos.map(
         (photo) => photo.imageSrcSet || null,

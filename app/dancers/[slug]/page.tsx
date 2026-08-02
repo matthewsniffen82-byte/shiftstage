@@ -48,6 +48,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
     profile.primaryPhotoFocalX ?? profile.photos[0]?.focalX ?? 50;
   const heroPhotoFocalY =
     profile.primaryPhotoFocalY ?? profile.photos[0]?.focalY ?? 50;
+  const avatarPhoto = profile.avatarPhotoUrl || heroPhoto;
+  const avatarPhotoSrcSet = profile.avatarPhotoSrcSet || heroPhotoSrcSet;
+  const avatarPhotoWidth = profile.avatarPhotoWidth || heroPhotoWidth;
+  const avatarPhotoHeight = profile.avatarPhotoHeight || heroPhotoHeight;
+  const avatarPhotoFocalX = profile.avatarPhotoFocalX ?? heroPhotoFocalX;
+  const avatarPhotoFocalY = profile.avatarPhotoFocalY ?? heroPhotoFocalY;
   const gallery = profile.photos.length
     ? profile.photos
     : heroPhoto
@@ -93,25 +99,25 @@ export default async function DancerPublicPage({ params }: PageProps) {
         <header className="profile-titlebar">
           <div
             aria-label={`${profile.stageName} profile photo`}
-            className={`profile-titlebar-avatar${heroPhoto ? " has-photo" : ""}`}
+            className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
             role="img"
           >
-            {heroPhoto ? (
+            {avatarPhoto ? (
               <img
                 alt=""
                 aria-hidden="true"
                 decoding="async"
-                height={heroPhotoHeight || undefined}
+                height={avatarPhotoHeight || undefined}
                 sizes="46px"
-                src={heroPhoto}
-                srcSet={heroPhotoSrcSet || undefined}
+                src={avatarPhoto}
+                srcSet={avatarPhotoSrcSet || undefined}
                 style={{
                   height: "100%",
                   objectFit: "cover",
-                  objectPosition: imageFocalPointCss(heroPhotoFocalX, heroPhotoFocalY),
+                  objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
                   width: "100%",
                 }}
-                width={heroPhotoWidth || undefined}
+                width={avatarPhotoWidth || undefined}
               />
             ) : initials(profile.stageName)}
           </div>

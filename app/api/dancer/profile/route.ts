@@ -7,7 +7,11 @@ import {
   getIdentityVerificationMode,
   isVerifyMyIdentityMode,
 } from "@/src/lib/dancr/identity-mode";
-import { profilePhotoSlotFromUploadContext, profilePhotoSlotKey } from "@/src/lib/dancr/photo-slot";
+import {
+  PROFILE_AVATAR_CONTEXT,
+  profilePhotoSlotFromUploadContext,
+  profilePhotoSlotKey,
+} from "@/src/lib/dancr/photo-slot";
 import {
   responsiveImageStoragePaths,
   responsivePublicImage,
@@ -214,13 +218,17 @@ export async function GET(request: Request) {
     }
 
     const profileWithPhotos = withPhotoUrls(client, data);
-    const pendingPhotoReviews = await loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos);
+    const [pendingPhotoReviews, pendingAvatarReview] = await Promise.all([
+      loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
+      loadPendingAvatarReview(user.id),
+    ]);
 
     return withProfileSaveVersion(NextResponse.json({
       ok: true,
       profile: {
         ...profileWithPhotos,
         pending_photo_reviews: pendingPhotoReviews,
+        pending_avatar_review: pendingAvatarReview,
       },
     }));
   } catch (error) {
@@ -235,6 +243,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
     .select("id, decision, status, upload_context, temporary_storage_path, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
+    .neq("upload_context", PROFILE_AVATAR_CONTEXT)
     .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
     .order("created_at", { ascending: false })
     .limit(25);
@@ -284,6 +293,31 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   }));
 }
 
+async function loadPendingAvatarReview(userId: string) {
+  const admin = createAdminSupabaseClient() as any;
+  const { data, error } = await admin
+    .from("image_moderation_records")
+    .select("id, decision, status, upload_context, temporary_storage_path, created_at")
+    .eq("user_id", userId)
+    .eq("upload_context", PROFILE_AVATAR_CONTEXT)
+    .eq("decision", "review")
+    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const storagePath = String(data.temporary_storage_path || "").trim();
+  if (!storagePath) return { ...data, previewUrl: "" };
+  const bucket = data.status === "pending_review" ? MODERATION_REVIEW_BUCKET : MODERATION_TEMP_BUCKET;
+  const { data: signed, error: signedError } = await admin.storage.from(bucket).createSignedUrl(storagePath, 60 * 60);
+  return {
+    ...data,
+    previewUrl: signedError ? "" : String(signed?.signedUrl || ""),
+  };
+}
+
 function withPhotoUrls(client: any, profile: any) {
   const photos = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
   const bySlot = new Map<string, any>();
@@ -305,8 +339,19 @@ function withPhotoUrls(client: any, profile: any) {
     if (Boolean(left.is_primary) !== Boolean(right.is_primary)) return left.is_primary ? -1 : 1;
     return Number(left.sort_order || 0) - Number(right.sort_order || 0);
   });
+  const avatar = responsivePublicImage(
+    client,
+    APPROVED_PHOTO_BUCKET,
+    profile?.avatar_storage_path,
+  );
   return {
     ...profile,
+    avatarPhotoUrl: avatar?.imageUrl || "",
+    avatarPhotoSrcSet: avatar?.imageSrcSet || null,
+    avatarPhotoWidth: avatar?.imageWidth || null,
+    avatarPhotoHeight: avatar?.imageHeight || null,
+    avatarPhotoFocalX: avatar?.imageFocalX ?? 50,
+    avatarPhotoFocalY: avatar?.imageFocalY ?? 50,
     dancer_photos: activePhotos
       .slice(0, MAX_DANCER_PROFILE_PHOTOS)
       .map((photo: any) => {

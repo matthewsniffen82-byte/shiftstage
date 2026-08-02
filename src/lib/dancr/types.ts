@@ -70,6 +70,8 @@ export type DancerAccountProfile = {
   status: DancerStatus;
   verificationStatus: string;
   photoReviewStatus: string;
+  avatarStoragePath: string | null;
+  avatarUpdatedAt: string | null;
   isPublic: boolean;
 };
 
@@ -155,6 +157,12 @@ export type DancerCard = {
   primaryPhotoSrcSet?: string | null;
   primaryPhotoWidth?: number | null;
   primaryPhotoHeight?: number | null;
+  avatarPhotoUrl?: string | null;
+  avatarPhotoFocalX?: number;
+  avatarPhotoFocalY?: number;
+  avatarPhotoSrcSet?: string | null;
+  avatarPhotoWidth?: number | null;
+  avatarPhotoHeight?: number | null;
   galleryPhotoUrls?: string[];
   galleryPhotoSrcSets?: Array<string | null>;
   socialLinks?: SocialLink[];

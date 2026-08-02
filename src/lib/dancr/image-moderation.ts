@@ -11,6 +11,8 @@ import {
   type DancrImageModerationEvaluation,
 } from "./moderation-policy";
 import {
+  isProfileAvatarUploadContext,
+  PROFILE_AVATAR_CONTEXT,
   profilePhotoSlotFromUploadContext,
   profilePhotoSlotKey,
   profilePhotoUploadContext,
@@ -53,6 +55,7 @@ type ModeratedPhotoResult = {
     focalX?: number;
     focalY?: number;
     reviewStatus: string;
+    kind?: "avatar" | "profile_photo";
     isPrimary?: boolean;
     sortOrder?: number;
   };
@@ -64,8 +67,11 @@ let openAITextDiagnosticPromise: Promise<void> | null = null;
 export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: DancrClient, input: ModeratedPhotoInput): Promise<ModeratedPhotoResult> {
   enforceUploadRateLimit(input.userId, input.ipAddress);
   const profile = await getOwnDancerProfile(client, input.userId);
-  if (!input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id, input.userId);
-  const resolvedSortOrder = input.isPrimary
+  const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
+  if (!isAvatar && !input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id, input.userId);
+  const resolvedSortOrder = isAvatar
+    ? 0
+    : input.isPrimary
     ? 0
     : await resolveDancerPhotoSortOrder(
         admin,
@@ -84,7 +90,9 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   }
 
   const tempPath = `${input.userId}/${profile.id}/${Date.now()}-${image.storageFileName}`;
-  const uploadContext = input.uploadContext?.startsWith("profile_")
+  const uploadContext = isAvatar
+    ? PROFILE_AVATAR_CONTEXT
+    : input.uploadContext?.startsWith("profile_")
     ? profilePhotoUploadContext(Boolean(input.isPrimary), resolvedSortOrder)
     : input.uploadContext || profilePhotoUploadContext(Boolean(input.isPrimary), resolvedSortOrder);
   logModeration("moderation_started", { userId: input.userId, uploadContext });
@@ -194,6 +202,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       image,
       tempPath,
       uploadContext,
+      isAvatar,
       isPrimary: Boolean(input.isPrimary),
       sortOrder: resolvedSortOrder,
       altText: input.altText || null,
@@ -259,6 +268,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
 
   const profile = await getOwnDancerProfile(admin, record.user_id);
   const uploadContext = record.upload_context || "profile_gallery";
+  const isAvatar = isProfileAvatarUploadContext(uploadContext);
   const uploadSlot = profilePhotoSlotFromUploadContext(uploadContext);
   const attemptCount = Number(record.attempt_count || 0) + 1;
   await updateModerationRecord(admin, record.id, {
@@ -291,8 +301,11 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         image: moderationImageFromPrivateObject(downloaded),
         tempPath,
         uploadContext,
+        isAvatar,
         isPrimary: uploadSlot.isPrimary,
-        sortOrder: uploadSlot.isPrimary
+        sortOrder: isAvatar
+          ? 0
+          : uploadSlot.isPrimary
           ? 0
           : await resolveDancerPhotoSortOrder(
               admin,
@@ -422,6 +435,7 @@ async function approveModeratedUpload(
     image: ValidatedDancrImage;
     tempPath: string;
     uploadContext: string;
+    isAvatar: boolean;
     isPrimary: boolean;
     sortOrder: number;
     altText: string | null;
@@ -432,12 +446,55 @@ async function approveModeratedUpload(
   const uploadedImage = await uploadResponsiveImage(
     admin,
     APPROVED_PHOTO_BUCKET,
-    `${input.userId}/${input.profileId}`,
+    input.isAvatar
+      ? `${input.userId}/${input.profileId}/avatar`
+      : `${input.userId}/${input.profileId}`,
     input.image,
   );
   const finalPath = uploadedImage.storagePath;
+  let previousAvatarPath: string | null = null;
+  let avatarWasSwitched = false;
 
   try {
+    if (input.isAvatar) {
+      previousAvatarPath = await setApprovedDancerAvatar(admin, input.profileId, finalPath);
+      avatarWasSwitched = true;
+      await updateModerationRecord(admin, input.recordId, {
+        imageId: null,
+        finalStoragePath: finalPath,
+        decision: "approved",
+        status: "approved",
+        reasonCodes: input.evaluation.reasonCodes,
+        categoryFlags: input.categoryFlags,
+        categoryScores: input.evaluation.categoryScores,
+        providerFlagged: input.evaluation.providerFlagged,
+        completedAt: new Date().toISOString(),
+      });
+      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
+      if (previousAvatarPath && previousAvatarPath !== finalPath) {
+        await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, previousAvatarPath).catch(() => null);
+      }
+      logModeration("approved", { recordId: input.recordId, avatar: true });
+      logModeration("database_status_written", { recordId: input.recordId, avatar: true, databaseStatus: "approved" });
+      await logStoredModerationStatus(admin, input.recordId, "approved");
+      return {
+        decision: "approved",
+        moderationRecordId: input.recordId,
+        reasonCodes: input.evaluation.reasonCodes,
+        providerFlagged: input.evaluation.providerFlagged,
+        message: "Avatar uploaded successfully.",
+        photo: {
+          id: input.recordId,
+          storage_path: finalPath,
+          focalX: uploadedImage.focalX,
+          focalY: uploadedImage.focalY,
+          imageUrl: getDancerPhotoUrl(admin, finalPath),
+          reviewStatus: "approved",
+          kind: "avatar",
+        },
+      };
+    }
+
     const photo = await insertApprovedDancerPhoto(admin, {
       dancerId: input.profileId,
       storagePath: finalPath,
@@ -472,9 +529,13 @@ async function approveModeratedUpload(
         focalY: uploadedImage.focalY,
         imageUrl: getDancerPhotoUrl(admin, photo.storage_path),
         reviewStatus: "approved",
+        kind: "profile_photo",
       },
     };
   } catch (error) {
+    if (avatarWasSwitched) {
+      await restoreDancerAvatar(admin, input.profileId, previousAvatarPath).catch(() => null);
+    }
     await removeResponsiveImage(
       admin,
       APPROVED_PHOTO_BUCKET,
@@ -493,6 +554,46 @@ async function approveModeratedUpload(
     logModeration("storage_error", { recordId: input.recordId, errorCode: "database_after_storage_error" });
     throw error;
   }
+}
+
+export async function setApprovedDancerAvatar(
+  client: DancrClient,
+  dancerId: string,
+  storagePath: string,
+) {
+  const { data: profile, error: profileError } = await client
+    .from("dancer_profiles")
+    .select("avatar_storage_path")
+    .eq("id", dancerId)
+    .maybeSingle();
+  if (profileError) throw profileError;
+  if (!profile) throw new Error("Dancer profile not found.");
+
+  const previousPath = String((profile as any).avatar_storage_path || "").trim() || null;
+  const { error: updateError } = await client
+    .from("dancer_profiles")
+    .update({
+      avatar_storage_path: storagePath,
+      avatar_updated_at: new Date().toISOString(),
+    })
+    .eq("id", dancerId);
+  if (updateError) throw updateError;
+  return previousPath;
+}
+
+export async function restoreDancerAvatar(
+  client: DancrClient,
+  dancerId: string,
+  storagePath: string | null,
+) {
+  const { error } = await client
+    .from("dancer_profiles")
+    .update({
+      avatar_storage_path: storagePath,
+      avatar_updated_at: new Date().toISOString(),
+    })
+    .eq("id", dancerId);
+  if (error) throw error;
 }
 
 export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
@@ -994,7 +1095,8 @@ async function findExistingModerationRecord(client: DancrClient, userId: string,
 
 async function moderationRecordToUploadResponse(client: DancrClient, record: any): Promise<ModeratedPhotoResult> {
   const slot = profilePhotoSlotFromUploadContext(record.upload_context);
-  if (record.decision === "approved" && record.image_id) {
+  const isAvatar = isProfileAvatarUploadContext(record.upload_context);
+  if (record.decision === "approved" && (record.image_id || (isAvatar && record.final_storage_path))) {
     const publicImage = responsivePublicImage(
       client,
       APPROVED_PHOTO_BUCKET,
@@ -1005,14 +1107,15 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
       moderationRecordId: record.id,
       reasonCodes: record.reason_codes || [],
       providerFlagged: Boolean(record.provider_flagged),
-      message: "Photo uploaded successfully.",
+      message: isAvatar ? "Avatar uploaded successfully." : "Photo uploaded successfully.",
       photo: {
-        id: record.image_id,
+        id: record.image_id || record.id,
         storage_path: record.final_storage_path,
         imageUrl: publicImage?.imageUrl || "",
         focalX: publicImage?.imageFocalX ?? 50,
         focalY: publicImage?.imageFocalY ?? 50,
         reviewStatus: "approved",
+        kind: isAvatar ? "avatar" : "profile_photo",
         isPrimary: slot.isPrimary,
         sortOrder: slot.isPrimary ? 0 : slot.sortOrder ?? undefined,
       },
@@ -1032,6 +1135,7 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
 
 function pendingModerationPhoto(recordId: string, uploadContext: unknown): NonNullable<ModeratedPhotoResult["photo"]> {
   const slot = profilePhotoSlotFromUploadContext(uploadContext);
+  const isAvatar = isProfileAvatarUploadContext(uploadContext);
   return {
     id: recordId,
     storage_path: "",
@@ -1039,6 +1143,7 @@ function pendingModerationPhoto(recordId: string, uploadContext: unknown): NonNu
     focalX: 50,
     focalY: 50,
     reviewStatus: "pending",
+    kind: isAvatar ? "avatar" : "profile_photo",
     isPrimary: slot.isPrimary,
     sortOrder: slot.isPrimary ? 0 : slot.sortOrder ?? undefined,
   };

@@ -85,6 +85,9 @@ export type MyDancrTvVideo = {
     primaryPhotoUrl: string | null;
     primaryPhotoFocalX: number;
     primaryPhotoFocalY: number;
+    avatarPhotoUrl: string | null;
+    avatarPhotoFocalX: number;
+    avatarPhotoFocalY: number;
   };
   venue: {
     id: string;
@@ -343,6 +346,9 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
       primaryPhotoUrl: null,
       primaryPhotoFocalX: 50,
       primaryPhotoFocalY: 50,
+      avatarPhotoUrl: null,
+      avatarPhotoFocalX: 50,
+      avatarPhotoFocalY: 50,
     },
     venue: venueConfirmed && venue
       ? {
@@ -456,7 +462,11 @@ async function signPublicVideos(
 ): Promise<MyDancrTvVideo[]> {
   if (!rows.length) return [];
   const dancerIds = [...new Set(rows.map((row) => row.dancer.id))];
-  const [{ data: signed, error: signedError }, { data: photos, error: photoError }] = await Promise.all([
+  const [
+    { data: signed, error: signedError },
+    { data: photos, error: photoError },
+    { data: avatars, error: avatarError },
+  ] = await Promise.all([
     admin.storage
       .from(MYDANCR_TV_BUCKET)
       .createSignedUrls(rows.map((row) => row.storagePath), MYDANCR_TV_SIGNED_URL_SECONDS),
@@ -466,15 +476,23 @@ async function signPublicVideos(
       .in("dancer_id", dancerIds)
       .eq("is_primary", true)
       .eq("review_status", "approved"),
+    admin
+      .from("dancer_profiles")
+      .select("id, avatar_storage_path")
+      .in("id", dancerIds),
   ]);
   if (signedError) throw signedError;
   if (photoError) throw photoError;
+  if (avatarError) throw avatarError;
 
   const signedByPath = new Map(
     (signed || []).map((item: any) => [item.path, item.signedUrl || ""]),
   );
   const photoByDancer = new Map(
     (photos || []).map((photo: any) => [photo.dancer_id, photo.storage_path]),
+  );
+  const avatarByDancer = new Map(
+    (avatars || []).map((dancer: any) => [dancer.id, dancer.avatar_storage_path]),
   );
 
   return rows.map((row) => {
@@ -484,6 +502,10 @@ async function signPublicVideos(
     const primaryPhoto = photoPath
       ? responsivePublicImage(admin, "dancer-photos", photoPath)
       : null;
+    const avatarPath = avatarByDancer.get(row.dancer.id);
+    const avatarPhoto = avatarPath
+      ? responsivePublicImage(admin, "dancer-photos", avatarPath)
+      : primaryPhoto;
     const { storagePath: _storagePath, dancerPhotoPath: _dancerPhotoPath, ...publicVideo } = row;
     return {
       ...publicVideo,
@@ -493,6 +515,9 @@ async function signPublicVideos(
         primaryPhotoUrl: primaryPhoto?.imageUrl || null,
         primaryPhotoFocalX: primaryPhoto?.imageFocalX ?? 50,
         primaryPhotoFocalY: primaryPhoto?.imageFocalY ?? 50,
+        avatarPhotoUrl: avatarPhoto?.imageUrl || null,
+        avatarPhotoFocalX: avatarPhoto?.imageFocalX ?? 50,
+        avatarPhotoFocalY: avatarPhoto?.imageFocalY ?? 50,
       },
     };
   });
