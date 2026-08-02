@@ -303,7 +303,7 @@ test("card controls expose accessible labels, keyboard alternatives, and feedbac
   );
 });
 
-test("intentional pauses persist and every TV card exposes immersive fullscreen", () => {
+test("intentional pauses persist between cards while fullscreen explicitly resumes playback", () => {
   assert.match(
     homeSource,
     /function toggleHomeTvFeedPlayback\(video\)[\s\S]*?delete slide\.dataset\.userPaused[\s\S]*?slide\.dataset\.userPaused = "true"[\s\S]*?video\.pause\(\)/,
@@ -318,7 +318,7 @@ test("intentional pauses persist and every TV card exposes immersive fullscreen"
   );
   assert.match(
     homeSource,
-    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?slide\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?video\.webkitEnterFullscreen\(\)/,
+    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?delete slide\.dataset\.userPaused;[\s\S]*?activateHomeTvFeedVideo\(videoId\);[\s\S]*?slide\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?video\.webkitEnterFullscreen\(\)/,
   );
   assert.match(
     homeSource,

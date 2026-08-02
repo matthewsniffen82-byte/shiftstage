@@ -49697,6 +49697,9 @@
           }
           return;
         }
+        const videoId = String(slide.dataset.videoId || "");
+        delete slide.dataset.userPaused;
+        if (videoId) activateHomeTvFeedVideo(videoId);
         if (typeof slide.requestFullscreen === "function") {
           await slide.requestFullscreen({ navigationUI: "hide" });
         } else if (typeof slide.webkitRequestFullscreen === "function") {
