@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=40" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=41" rel="stylesheet">/,
   );
 });
 
@@ -105,6 +105,40 @@ test("Android and iPhone share the same near-black and charcoal content foundati
     /One device-neutral foundation[\s\S]*?(?=body > \.app main\.stack > \.hero\.reference-hero)/,
   )?.[0] || "";
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
+});
+
+test("Android and Samsung Browser cannot reintroduce device-only glow or media filters", () => {
+  const parityLayer = aesthetic.match(
+    /Android and Samsung Browser are visual peers of iPhone[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(parityLayer, "the final Android parity layer must exist");
+  assert.match(
+    parityLayer,
+    /\.is-android,[\s\S]*?\.android-rendering,[\s\S]*?\.is-samsung-browser,[\s\S]*?\.samsung-rendering/,
+  );
+  assert.match(
+    parityLayer,
+    /#results\.home-dancer-grid,[\s\S]*?#results\.home-discovery-feed,[\s\S]*?#results\.home-tv-feed,[\s\S]*?#results\.venue-card-grid,[\s\S]*?\.public-profile-shell,[\s\S]*?\.dashboard-shell,[\s\S]*?\.admin-shell,[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;[\s\S]*?filter: none !important;/,
+  );
+  assert.match(
+    parityLayer,
+    /The supplied hero file and approved user media must never be color-corrected[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.dancer-card \.portrait,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-feature video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
+  );
+
+  const neutralSurfaceRule = parityLayer.match(
+    /\) :is\(\s*\.controls,[\s\S]*?\n\}/,
+  )?.[0] || "";
+  assert.match(neutralSurfaceRule, /background-image: none !important;/);
+  assert.match(neutralSurfaceRule, /box-shadow: none !important;/);
+  assert.doesNotMatch(neutralSurfaceRule, /radial-gradient|91, 19, 255|124, 58, 237/);
+
+  const stateRule = parityLayer.match(
+    /Stateful selection keeps one restrained brand cue[\s\S]*$/,
+  )?.[0] || "";
+  assert.match(stateRule, /background: color-mix\(/);
+  assert.match(stateRule, /box-shadow: inset 0 0 0 1px/);
+  assert.doesNotMatch(stateRule, /0 0 1[6-9]px|0 0 2\dpx|radial-gradient/);
 });
 
 test("discovery feeds retain neutral edges while TV media is completely borderless", () => {

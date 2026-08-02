@@ -358,7 +358,7 @@ test("idle TV utility controls use neutral charcoal while selected reactions kee
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=40/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=41/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {

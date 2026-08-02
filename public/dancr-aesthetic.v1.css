@@ -1573,3 +1573,201 @@ body.dancr-button-system .home-tv-feed-action:not(
   box-shadow: none;
   pointer-events: none;
 }
+
+/* Android and Samsung Browser are visual peers of iPhone. Legacy inline
+ * device rules once increased brightness, saturation, violet surface washes,
+ * and ambient glow to compensate for older mobile rendering engines. Modern
+ * browsers no longer need those mutations, and they caused the same page to
+ * look like a different theme on Android. This final layer deliberately wins
+ * the cascade for device-only styling while leaving layout and browser chrome
+ * behavior untouched. */
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) {
+  background-color: var(--dancr-color-background) !important;
+  background-image: none !important;
+  color-scheme: dark !important;
+}
+
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) :is(
+  body,
+  .app,
+  main.stack,
+  main.stack > section.stack,
+  #results,
+  #results.home-dancer-grid,
+  #results.home-discovery-feed,
+  #results.home-tv-feed,
+  #results.card-grid,
+  #results.venue-card-grid,
+  #results.venue-profile-overlay,
+  #results.venue-profile-overlay .venue-detail,
+  #profileBackdrop.modal-backdrop,
+  #profileBackdrop .profile-modal,
+  .public-profile-shell,
+  .venue-profile-page,
+  .account-shell,
+  .dashboard-shell,
+  .admin-shell,
+  .tv-shell,
+  .tv-studio-page
+) {
+  background-color: var(--dancr-color-background) !important;
+  background-image: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) :is(
+  .controls,
+  .city-panel,
+  .tabs,
+  .profile-modal,
+  .home-discovery-controls,
+  .home-feed-card,
+  .dancer-card,
+  .venue-card,
+  .home-discovery-feed-slide,
+  .home-venue-discovery-slide,
+  .profile-titlebar,
+  .profile-social-section,
+  .profile-media-feature,
+  .profile-schedule-section,
+  .venue-detail,
+  .venue-section,
+  .dashboard-card,
+  .dashboard-panel,
+  .customer-night-card,
+  .customer-saved-card,
+  .customer-empty-state,
+  .venue-cover-panel,
+  .tv-managed-video
+) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface-subtle) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* The supplied hero file and approved user media must never be color-corrected
+ * by device. Overlays used for text legibility remain in their shared rules. */
+body > .app main.stack > .hero.reference-hero,
+body > .app main.stack > .hero.reference-hero > .hero-art,
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) :is(
+  .hero.reference-hero,
+  .hero.reference-hero > .hero-art,
+  .dancer-card .portrait,
+  .profile-modal .modal-image,
+  .profile-modal .thumb .portrait,
+  .home-dancer-grid-photo,
+  .home-discovery-feed-photo,
+  .home-tv-feed-video,
+  .tv-video,
+  .profile-media-feature img,
+  .profile-media-feature video,
+  .venue-main-photo,
+  .venue-art,
+  .venue-cover-panel > img,
+  .venue-tv-video,
+  .tv-managed-video
+) {
+  filter: none !important;
+  -webkit-filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) :is(
+  .verified-mark,
+  .verified-check,
+  .dancer-card .verified-mark,
+  .profile-modal .verified-mark,
+  .profile-verified,
+  .tv-verified-mark
+) {
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  text-shadow: none !important;
+}
+
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) :is(
+  .tab,
+  .menu-btn,
+  .location-btn,
+  .badge,
+  .pill,
+  .dancer-directory-filter,
+  .filter-pill,
+  .home-tv-feed-sound,
+  .home-tv-feed-action:not(.home-tv-feed-deal-action)
+) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  text-shadow: none !important;
+}
+
+/* Stateful selection keeps one restrained brand cue. The floating dock's
+ * position, scrolling behavior, and Samsung's browser-provided arrow remain
+ * outside this visual parity layer. */
+:is(html, body):is(
+  .is-android,
+  .android-rendering,
+  .is-samsung-browser,
+  .samsung-rendering
+) :is(
+  .tab.active,
+  .tab[aria-selected="true"],
+  .dancer-directory-filter.is-active,
+  .filter-pill.active
+) {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 18%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
