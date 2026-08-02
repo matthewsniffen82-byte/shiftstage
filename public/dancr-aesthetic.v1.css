@@ -1129,11 +1129,20 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   box-shadow: var(--dancr-shadow-modal) !important;
 }
 
-#profileBackdrop .profile-modal :is(.info-tile, .social-tile, .modal-actions),
+#profileBackdrop .profile-modal :is(.info-tile, .social-tile),
 #results.venue-profile-overlay .venue-detail :is(.info-tile, .venue-section, .venue-offer) {
   border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 15px !important;
   background: var(--dancr-color-surface-subtle) !important;
+  box-shadow: none !important;
+}
+
+/* The customer actions are already defined by five individually bordered
+ * controls. Keep their grid unframed so it does not read as a nested card. */
+#profileBackdrop .profile-modal .modal-actions {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   box-shadow: none !important;
 }
 
