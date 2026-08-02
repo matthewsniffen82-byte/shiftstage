@@ -15,11 +15,11 @@
   --dancr-color-brand-primary-medium: rgba(124, 58, 237, 0.34);
   --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
 
-  --dancr-color-beam-violet: #985fff;
-  --dancr-color-beam-violet-medium: rgba(152, 95, 255, 0.58);
-  --dancr-color-beam-violet-soft: rgba(91, 19, 255, 0.24);
-  --dancr-color-beam-blue: #346eff;
-  --dancr-color-beam-blue-soft: rgba(52, 110, 255, 0.18);
+  --dancr-color-beam-violet: var(--dancr-color-brand-primary);
+  --dancr-color-beam-violet-medium: rgba(124, 58, 237, 0.58);
+  --dancr-color-beam-violet-soft: rgba(124, 58, 237, 0.2);
+  --dancr-color-beam-blue: var(--dancr-color-brand-primary);
+  --dancr-color-beam-blue-soft: rgba(124, 58, 237, 0.14);
 
   --dancr-color-text-primary: #f8fafc;
   --dancr-color-text-secondary: #cbd5e1;
@@ -27,16 +27,16 @@
   --dancr-color-text-on-bright: #050507;
 
   --dancr-color-background: #050507;
-  --dancr-color-surface: #0f0f12;
-  --dancr-color-surface-raised: #18181c;
-  --dancr-color-surface-soft: rgba(15, 15, 18, 0.88);
-  --dancr-color-surface-translucent: rgba(15, 15, 18, 0.96);
+  --dancr-color-surface: #111118;
+  --dancr-color-surface-raised: #111118;
+  --dancr-color-surface-soft: rgba(17, 17, 24, 0.88);
+  --dancr-color-surface-translucent: rgba(17, 17, 24, 0.96);
   --dancr-color-surface-subtle: rgba(248, 250, 252, 0.045);
   --dancr-color-overlay: rgba(5, 5, 7, 0.88);
 
-  --dancr-color-border: #303038;
-  --dancr-color-border-subtle: rgba(248, 250, 252, 0.12);
-  --dancr-color-border-strong: rgba(248, 250, 252, 0.22);
+  --dancr-color-border: #334155;
+  --dancr-color-border-subtle: rgba(51, 65, 85, 0.64);
+  --dancr-color-border-strong: rgba(51, 65, 85, 0.92);
 
   --dancr-color-info: #22d3ee;
   --dancr-color-info-soft: rgba(34, 211, 238, 0.1);
@@ -72,12 +72,10 @@
     0 0 20px rgba(124, 58, 237, 0.24);
   --dancr-shadow-beam-active:
     0 0 10px var(--dancr-color-beam-violet-medium),
-    0 0 22px var(--dancr-color-beam-violet-soft),
-    0 0 32px var(--dancr-color-beam-blue-soft);
+    0 0 22px var(--dancr-color-beam-violet-soft);
   --dancr-shadow-beam-card:
     0 18px 44px rgba(5, 5, 7, 0.48),
-    0 0 18px rgba(152, 95, 255, 0.28),
-    0 0 30px rgba(52, 110, 255, 0.14);
+    0 0 18px rgba(124, 58, 237, 0.2);
   --dancr-focus-ring:
     0 0 0 2px var(--dancr-color-background),
     0 0 0 4px var(--dancr-color-beam-violet-medium),

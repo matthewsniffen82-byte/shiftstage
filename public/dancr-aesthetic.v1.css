@@ -1011,6 +1011,24 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   color: var(--dancr-color-text-primary);
 }
 
+:is(.public-profile-shell, .tv-shell) :is(
+  .profile-global-logo,
+  .tv-global-logo
+) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-brand-primary) !important;
+  background: var(--dancr-color-background) !important;
+  box-shadow: var(--dancr-shadow-brand-subtle) !important;
+}
+
+:is(.public-profile-shell, .tv-shell) :is(
+  .profile-global-logo,
+  .tv-global-logo
+) :is(span, em) {
+  color: var(--dancr-color-brand-primary) !important;
+  text-shadow: 0 0 12px var(--dancr-color-brand-primary-soft) !important;
+}
+
 .public-profile-shell :is(p, small, .profile-action-requirement),
 .tv-shell :is(.tv-card-venue-line, .tv-no-shifts-state, .tv-empty p) {
   color: var(--dancr-color-text-secondary) !important;
@@ -1148,15 +1166,10 @@ body.dancr-button-system :is(
 .tv-shell .tv-filters button.active {
   border-color: var(--dancr-color-brand-primary-medium) !important;
   color: var(--dancr-color-text-primary) !important;
-  background:
-    linear-gradient(
-      var(--dancr-color-brand-primary-soft),
-      var(--dancr-color-brand-primary-soft)
-    ),
-    var(--dancr-color-surface-raised) !important;
+  background: var(--dancr-color-brand-primary) !important;
   box-shadow:
-    inset 0 0 0 1px var(--dancr-color-brand-primary-soft),
-    0 0 12px rgba(124, 58, 237, 0.12) !important;
+    inset 0 0 0 1px var(--dancr-color-brand-primary-medium),
+    var(--dancr-shadow-brand-subtle) !important;
   text-shadow: none !important;
 }
 
@@ -1233,12 +1246,7 @@ body.dancr-button-system .home-tv-feed-action:not(
 
 #profileBackdrop .profile-modal-media-tabs button.active {
   color: var(--dancr-color-text-primary) !important;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(91, 19, 255, 0.48),
-      rgba(52, 110, 255, 0.24)
-    ) !important;
+  background: var(--dancr-color-brand-primary) !important;
 }
 
 :is(

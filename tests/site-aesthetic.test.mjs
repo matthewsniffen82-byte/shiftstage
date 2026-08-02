@@ -131,7 +131,7 @@ test("scrolling card feeds have neutral edges, retained glow, and clear separati
   );
 });
 
-test("the compact dancer directory uses restrained cards and neutral inactive filters", () => {
+test("the compact dancer directory uses restrained cards and clearly branded active filters", () => {
   const compactDirectoryRule = aesthetic.match(
     /The compact dancer directory repeats many cards[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
   )?.[0] || "";
@@ -154,7 +154,7 @@ test("the compact dancer directory uses restrained cards and neutral inactive fi
   );
   assert.match(
     aesthetic,
-    /\.dancer-directory-filter\.is-active,[\s\S]*?\.filter-pill\.active,[\s\S]*?border-color: var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?var\(--dancr-color-brand-primary-soft\)[\s\S]*?0 0 12px rgba\(124, 58, 237, 0\.12\) !important;/,
+    /\.dancer-directory-filter\.is-active,[\s\S]*?\.filter-pill\.active,[\s\S]*?border-color: var\(--dancr-color-brand-primary-medium\) !important;[\s\S]*?background: var\(--dancr-color-brand-primary\) !important;[\s\S]*?var\(--dancr-shadow-brand-subtle\) !important;/,
   );
 });
 
