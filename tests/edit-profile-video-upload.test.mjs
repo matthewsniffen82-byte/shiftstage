@@ -16,10 +16,10 @@ test("Edit Profile owns dancer video uploads and the redundant TV dashboard card
   assert.match(liveApp, /const MAX_DANCER_PROFILE_VIDEOS = 5/);
   assert.match(liveApp, /Profile videos/);
   assert.match(liveApp, /\$\{videos\.length\}\/\$\{MAX_DANCER_PROFILE_VIDEOS\}/);
-  assert.doesNotMatch(
-    liveApp,
-    /onclick="window\.location\.href='\/dashboard\/dancer\/tv'"[\s\S]*?Post and manage videos/,
-  );
+  const dashboardShortcuts = liveApp.match(
+    /<div class="dancer-quick-actions" aria-label="Profile shortcuts">[\s\S]*?<\/div>/,
+  )?.[0] || "";
+  assert.doesNotMatch(dashboardShortcuts, /MyDancr TV|Manage videos|\/dashboard\/dancer\/tv/);
 });
 
 test("Edit Profile video slots use authenticated production storage and moderation APIs", () => {

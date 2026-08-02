@@ -10,7 +10,12 @@ test("approved dancer dashboard leads with a real daily control center", () => {
   assert.match(page, /data-dancer-control-action="edit-profile"/);
   assert.match(page, /data-dancer-control-action="preview-profile"/);
   assert.match(page, /data-dancer-control-action="share-profile"/);
-  assert.match(page, /href="\/dashboard\/dancer\/tv"/);
+  const shortcuts = page.match(
+    /<div class="dancer-quick-actions" aria-label="Profile shortcuts">[\s\S]*?<\/div>/,
+  )?.[0] || "";
+  assert.doesNotMatch(shortcuts, /MyDancr TV|Manage videos|\/dashboard\/dancer\/tv/);
+  assert.match(page, /\.dancer-quick-actions \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/s);
+  assert.match(page, /\.dancer-quick-actions > \[data-dancer-control-action="share-profile"\] \{\s*grid-column: 1 \/ -1;/);
   assert.match(page, /function renderDancerDailyOverview\(/);
   assert.match(page, /handleShiftVerificationAction\("check-in", trigger\)/);
 });
