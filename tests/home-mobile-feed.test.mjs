@@ -397,11 +397,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     venueSlide,
     /home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
   );
-  assert.doesNotMatch(venueSlide, /qrMarkup|dealMarkup|home-venue-discovery-deal|Mydancr venue/);
-  assert.match(
-    venueSlide,
-    /class="home-venue-discovery-identity" aria-hidden="true">[\s\S]*?class="home-venue-discovery-identity-mark">\$\{escapeHtml\(initials\)\}[\s\S]*?MYDANCR VENUE/,
-  );
+  assert.doesNotMatch(venueSlide, /qrMarkup|dealMarkup|home-venue-discovery-deal|Mydancr venue|home-venue-discovery-identity/);
   assert.doesNotMatch(venueSlide, /const accent|--venue-accent/);
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
