@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, tvSource, applauseMigration, aestheticSource] = await Promise.all([
+const [homeSource, tvSource, applauseMigration, aestheticSource, fullTvFeedSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(
@@ -10,6 +10,7 @@ const [homeSource, tvSource, applauseMigration, aestheticSource] = await Promise
     "utf8",
   ),
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("the homepage TV card uses a resilient, readable media-first presentation", () => {
@@ -117,6 +118,33 @@ test("TV cards are completely borderless without a violet perimeter", () => {
     /body > \.app main\.stack > #results :is\([\s\S]*?\.home-discovery-feed-slide[\s\S]*?\) \{[\s\S]*?inset 0 1px 0 var\(--dancr-color-white-soft\) !important;[\s\S]*?\}/,
   )?.[0] || "";
   assert.doesNotMatch(sharedAestheticSurfaceShell, /home-tv-feed/);
+  const fullTvPlayerRule = fullTvFeedSource.match(
+    /\.tv-player \{[\s\S]*?filter: none; \}/,
+  )?.[0] || "";
+  assert.match(fullTvPlayerRule, /border: 0;/);
+  assert.match(fullTvPlayerRule, /outline: 0;/);
+  assert.match(fullTvPlayerRule, /background: #000;/);
+  assert.doesNotMatch(fullTvPlayerRule, /139,92,246|124,58,237|109,40,217|violet/);
+  const fullTvPerimeterOverride = aestheticSource.match(
+    /\/\* Full-page TV cards stay perimeter-free[\s\S]*?(?=\r?\n\r?\n\.public-profile-shell)/,
+  )?.[0] || "";
+  assert.match(fullTvPerimeterOverride, /\.tv-player:focus-within/);
+  assert.match(fullTvPerimeterOverride, /\.tv-slide:is\(\.is-active, \[aria-current="true"\]\) \.tv-player/);
+  assert.match(fullTvPerimeterOverride, /border: 0 !important;/);
+  assert.match(fullTvPerimeterOverride, /outline: 0 !important;/);
+  assert.match(fullTvPerimeterOverride, /background: #000 !important;/);
+  assert.match(fullTvPerimeterOverride, /\.tv-player video:focus-visible/);
+  assert.match(fullTvPerimeterOverride, /outline: 2px solid var\(--dancr-color-info\) !important;/);
+  assert.match(fullTvPerimeterOverride, /outline-offset: -4px !important;/);
+  assert.doesNotMatch(fullTvPerimeterOverride, /beam-violet|brand-primary|109, 40, 217/);
+  const sharedFullTvSurfaceRule = aestheticSource.match(
+    /\.tv-shell :is\(\.tv-header,[\s\S]*?box-shadow: none !important;\n\}/,
+  )?.[0] || "";
+  assert.doesNotMatch(sharedFullTvSurfaceRule, /\.tv-player/);
+  const sharedVioletFocusRule = aestheticSource.match(
+    /\.public-profile-shell :is\(\r?\n  \.public-profile-close,[\s\S]*?\):focus-visible,\r?\n\.tv-shell :is\([\s\S]*?box-shadow: var\(--dancr-focus-ring\) !important;\r?\n\}/,
+  )?.[0] || "";
+  assert.doesNotMatch(sharedVioletFocusRule, /\.tv-player video/);
 });
 
 test("mobile TV controls stay inside the stable card that snaps above navigation", () => {

@@ -1057,9 +1057,38 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   .profile-account-gate,
   .profile-share-panel
 ),
-.tv-shell :is(.tv-header, .tv-player, .tv-empty, .tv-status, .tv-loading) {
+.tv-shell :is(.tv-header, .tv-empty, .tv-status, .tv-loading) {
   border-color: var(--dancr-color-border-subtle) !important;
   background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: none !important;
+}
+
+/* Full-page TV cards stay perimeter-free as the snap feed changes videos.
+ * Active, focused, and current states must never paint a violet card edge. */
+.tv-shell :is(
+  .tv-player,
+  .tv-player:hover,
+  .tv-player:focus,
+  .tv-player:focus-visible,
+  .tv-player:focus-within
+),
+.tv-shell .tv-slide:is(.is-active, [aria-current="true"]) .tv-player {
+  border: 0 !important;
+  outline: 0 !important;
+  background: #000 !important;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.56) !important;
+  filter: none !important;
+}
+
+.tv-shell .tv-player video {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.tv-shell .tv-player video:focus-visible {
+  border: 0 !important;
+  outline: 2px solid var(--dancr-color-info) !important;
+  outline-offset: -4px !important;
   box-shadow: none !important;
 }
 
@@ -1107,7 +1136,6 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   .profile-media-grid-item
 ):focus-visible,
 .tv-shell :is(
-  .tv-player video,
   .tv-card-stage-link,
   .tv-card-venue-line,
   .tv-playback-retry
