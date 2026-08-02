@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, tvSource, applauseMigration] = await Promise.all([
+const [homeSource, tvSource, applauseMigration, aestheticSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(
     new URL("../supabase/migrations/202607300003_mydancr_tv_applause_events.sql", import.meta.url),
     "utf8",
   ),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
 test("the homepage TV card uses a resilient, readable media-first presentation", () => {
@@ -276,6 +277,28 @@ test("TV sound and lower-right fullscreen controls stay compact and icon-only", 
     homeSource,
     /function syncHomeTvFeedFullscreenButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)/,
   );
+});
+
+test("idle TV utility controls use neutral charcoal while selected reactions keep restrained violet", () => {
+  const neutralControls = aestheticSource.match(
+    /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active applause and follow states)/,
+  )?.[0] || "";
+  const activeControls = aestheticSource.match(
+    /\/\* Active applause and follow states[\s\S]*?(?=\/\* The hero beam is a state signal)/,
+  )?.[0] || "";
+
+  assert.match(neutralControls, /\.home-tv-feed-sound/);
+  assert.match(neutralControls, /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\)/);
+  assert.match(neutralControls, /\.tv-shell \.tv-sound/);
+  assert.match(neutralControls, /background-color: var\(--dancr-color-surface-raised\) !important;/);
+  assert.match(neutralControls, /background-image: none !important;/);
+  assert.match(neutralControls, /color: var\(--dancr-color-text-secondary\) !important;/);
+  assert.doesNotMatch(neutralControls, /radial-gradient|brand-primary|beam-violet/);
+
+  assert.match(activeControls, /\.home-tv-feed-report-action/);
+  assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
+  assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=33/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {

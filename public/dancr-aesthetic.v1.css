@@ -1170,6 +1170,57 @@ body.dancr-button-system :is(
   color: var(--dancr-color-text-primary) !important;
 }
 
+/* TV utility controls remain neutral until the viewer makes a stateful
+ * selection. The shared button system adds a violet wash to ordinary actions,
+ * so the video action rail needs an explicit charcoal glass treatment across
+ * the embedded Home feed and the routed TV player. */
+body.dancr-button-system :is(
+  .home-tv-feed-sound,
+  .home-tv-feed-action:not(.home-tv-feed-deal-action)
+),
+.tv-shell .tv-sound {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: 0 10px 24px var(--dancr-color-black-medium) !important;
+  filter: none !important;
+  text-shadow: none !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+body.dancr-button-system :is(
+  .home-tv-feed-sound,
+  .home-tv-feed-action:not(.home-tv-feed-deal-action)
+):hover,
+.tv-shell .tv-sound:hover {
+  border-color: var(--dancr-color-border-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: 0 12px 28px var(--dancr-color-black-medium) !important;
+}
+
+/* Active applause and follow states keep one restrained violet cue. Opening
+ * the report menu is not an endorsement state, so it deliberately stays in
+ * the neutral rule above. */
+body.dancr-button-system .home-tv-feed-action:not(
+  .home-tv-feed-deal-action,
+  .home-tv-feed-report-action
+):is(.is-active, [aria-pressed="true"]) {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: linear-gradient(
+    var(--dancr-color-brand-primary-soft),
+    var(--dancr-color-brand-primary-soft)
+  ) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--dancr-color-brand-primary-soft),
+    0 0 12px rgba(124, 58, 237, 0.12) !important;
+}
+
 /* The hero beam is a state signal, reserved for active, selected, and keyboard-focused UI. */
 #profileBackdrop .profile-modal-media-tabs button.active,
 #profileBackdrop .gallery .thumb.active,
