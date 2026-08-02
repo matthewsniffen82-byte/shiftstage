@@ -441,7 +441,6 @@ body > .app main.stack > section.stack > #results:is(
  * without turning every inactive card into a selected state. These solid
  * border/shadow layers render consistently on iPhone and Android. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-card,
-body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-discovery-feed > .home-discovery-feed-slide,
 body.dancr-button-system > .app main.stack > section.stack > #results.card-grid > .dancer-card,
 body.dancr-button-system > .app main.stack > section.stack > #results.venue-card-grid > .venue-card {
@@ -703,8 +702,7 @@ body > .app main.stack > #results :is(
   .dancer-card,
   .venue-card,
   .empty-state,
-  .home-discovery-feed-slide,
-  .home-tv-feed-slide
+  .home-discovery-feed-slide
 ) {
   border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 20px !important;
@@ -712,6 +710,18 @@ body > .app main.stack > #results :is(
   box-shadow:
     var(--dancr-shadow-surface),
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+/* TV media must meet the black page without any neutral or violet perimeter.
+ * Keep this selector at full production-shell specificity so the shared card
+ * system can never reintroduce a border, inset edge, or colored ambient glow. */
+body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-loading,
+body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide {
+  border: 0 !important;
+  outline: 0 !important;
+  background: #000 !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.38) !important;
+  filter: none !important;
 }
 
 body > .app main.stack > #results .home-venue-discovery-art,

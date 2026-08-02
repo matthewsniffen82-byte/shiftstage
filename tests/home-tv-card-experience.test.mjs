@@ -105,6 +105,18 @@ test("TV cards are completely borderless without a violet perimeter", () => {
     homeSource.match(/\.home-tv-feed-loading \{[\s\S]*?\}/)?.[0] || "",
     /139,92,246|124,58,237|violet/,
   );
+  assert.match(
+    aestheticSource,
+    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: #000 !important;[\s\S]*?box-shadow: 0 14px 32px rgba\(0, 0, 0, 0\.38\) !important;/,
+  );
+  const sharedAestheticCardShell = aestheticSource.match(
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?filter: none !important;[\s\S]*?\}/,
+  )?.[0] || "";
+  assert.doesNotMatch(sharedAestheticCardShell, /home-tv-feed/);
+  const sharedAestheticSurfaceShell = aestheticSource.match(
+    /body > \.app main\.stack > #results :is\([\s\S]*?\.home-discovery-feed-slide[\s\S]*?\) \{[\s\S]*?inset 0 1px 0 var\(--dancr-color-white-soft\) !important;[\s\S]*?\}/,
+  )?.[0] || "";
+  assert.doesNotMatch(sharedAestheticSurfaceShell, /home-tv-feed/);
 });
 
 test("mobile TV controls stay inside the stable card that snaps above navigation", () => {
@@ -298,7 +310,7 @@ test("idle TV utility controls use neutral charcoal while selected reactions kee
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=34/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=35/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {

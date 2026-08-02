@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=34" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=35" rel="stylesheet">/,
   );
 });
 
@@ -72,7 +72,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > #results :is\([\s\S]*?\.home-feed-card,[\s\S]*?\.dancer-card,[\s\S]*?\.venue-card,[\s\S]*?\.empty-state,[\s\S]*?\.home-discovery-feed-slide,[\s\S]*?\.home-tv-feed-slide[\s\S]*?background: var\(--dancr-color-surface-translucent\) !important/,
+    /body > \.app main\.stack > #results :is\([\s\S]*?\.home-feed-card,[\s\S]*?\.dancer-card,[\s\S]*?\.venue-card,[\s\S]*?\.empty-state,[\s\S]*?\.home-discovery-feed-slide[\s\S]*?background: var\(--dancr-color-surface-translucent\) !important/,
   );
   assert.match(
     aesthetic,
@@ -84,7 +84,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
 });
 
-test("scrolling card feeds have neutral edges, retained glow, and clear separation", () => {
+test("discovery feeds retain neutral edges while TV media is completely borderless", () => {
   assert.match(
     liveApp,
     /<main class="stack">[\s\S]*?<section class="stack" aria-live="polite">[\s\S]*?<div class="list" id="results"><\/div>/,
@@ -99,7 +99,11 @@ test("scrolling card feeds have neutral edges, retained glow, and clear separati
   );
   assert.match(
     aesthetic,
-    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?0 0 22px rgba\(91, 19, 255, 0\.1\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
+    /body\.dancr-button-system > \.app main\.stack > section\.stack > #results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-discovery-feed > \.home-discovery-feed-slide,[\s\S]*?#results\.card-grid > \.dancer-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.15\) !important;[\s\S]*?0 14px 32px rgba\(5, 5, 7, 0\.38\),[\s\S]*?0 0 22px rgba\(91, 19, 255, 0\.1\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.035\) !important;[\s\S]*?filter: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: #000 !important;[\s\S]*?box-shadow: 0 14px 32px rgba\(0, 0, 0, 0\.38\) !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     aesthetic,
