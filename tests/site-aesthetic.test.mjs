@@ -26,13 +26,13 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=59" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=60" rel="stylesheet">/,
   );
 });
 
 test("the violet hero beam continues through content without recoloring trust or TV media", () => {
   const violetRhythm = aesthetic.match(
-    /The supplied hero's violet beam now continues through the content[\s\S]*$/,
+    /The supplied hero's violet beam now continues through the content[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
 
   assert.ok(violetRhythm, "the shared violet rhythm must exist");

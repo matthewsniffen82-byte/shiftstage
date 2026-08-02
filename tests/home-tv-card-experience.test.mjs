@@ -377,7 +377,34 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=59/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=60/);
+});
+
+test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
+  const brandedCards = aestheticSource.match(
+    /\/\* Production TV-card branding keeps the moving media as the visual hero\.[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.match(brandedCards, /\.home-tv-feed-slide/);
+  assert.match(brandedCards, /\.tv-shell :is\(/);
+  assert.match(brandedCards, /border: 0 !important;/);
+  assert.match(brandedCards, /\.home-tv-feed-dancer-photo/);
+  assert.match(brandedCards, /border-color: var\(--dancr-color-brand-primary\) !important;/);
+  assert.match(brandedCards, /\.home-tv-feed-progress > span/);
+  assert.match(brandedCards, /background: var\(--dancr-color-brand-primary\) !important;/);
+  assert.match(brandedCards, /\.home-tv-feed-verified/);
+  assert.match(brandedCards, /var\(--dancr-color-info\) 24%/);
+  assert.match(brandedCards, /\.home-tv-feed-schedule\.is-now/);
+  assert.match(brandedCards, /var\(--dancr-color-success\)/);
+  assert.match(brandedCards, /\.home-tv-feed-schedule\.is-upcoming/);
+  assert.match(brandedCards, /\.home-tv-feed-report-action\[aria-expanded="true"\]/);
+  assert.match(brandedCards, /var\(--dancr-color-danger\)/);
+  assert.doesNotMatch(brandedCards, /home-bottom|global-mobile-bottom-nav|discoveryTabs|home-nav/);
+  assert.doesNotMatch(brandedCards, /\.home-tv-feed-video|\.tv-player video/);
+  assert.doesNotMatch(
+    brandedCards,
+    /\b(?:width|height|padding|margin|position|inset|display|grid|flex|gap|overflow|transform|transition|animation):/,
+  );
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
