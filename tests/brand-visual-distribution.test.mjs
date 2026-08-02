@@ -22,14 +22,17 @@ test("every named production surface consumes the shared neutral foundation", ()
   assert.match(aesthetic, /\.account-shell/);
   assert.match(aesthetic, /\.dashboard-shell \.info-panel/);
   assert.match(aesthetic, /\.admin-shell \.admin-panel/);
-  assert.match(aesthetic, /#adminDashboard :is\(\.admin-login-form, \.admin-panel\)/);
   assert.match(
     aesthetic,
-    /#adminDashboard \{[\s\S]*?border-color: var\(--dancr-color-border\)[\s\S]*?background-image: none[\s\S]*?var\(--dancr-shadow-surface\)/,
+    /#customerDashboard,[\s\S]*?#dancerDashboard,[\s\S]*?#venueDashboard,[\s\S]*?#adminDashboard/,
   );
   assert.match(
     aesthetic,
-    /#adminDashboard,[\s\S]*?:is\([\s\S]*?button\[type="submit"\][\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
+    /body\.dancr-button-system \.page-panel \{[\s\S]*?--cyan: var\(--dancr-color-info\)[\s\S]*?--magenta: var\(--dancr-color-brand-primary\)[\s\S]*?--green: var\(--dancr-color-success\)[\s\S]*?border-color: var\(--dancr-color-border\)[\s\S]*?background-image: none[\s\S]*?var\(--dancr-shadow-surface\)/,
+  );
+  assert.match(
+    aesthetic,
+    /body\.dancr-button-system \.page-panel :is\([\s\S]*?button\[type="submit"\],[\s\S]*?\.admin-login,[\s\S]*?\.dancer-shift-primary[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
   );
   assert.match(aesthetic, /\.tv-studio-page \.tv-video-manager/);
   assert.match(aesthetic, /:is\(\.public-profile-shell, \.tv-shell\)/);
@@ -61,4 +64,24 @@ test("brand and semantic color stay assigned to interaction and real state", () 
   assert.match(aesthetic, /\.photo-review-card\.is-approved[\s\S]*?var\(--dancr-color-success\)/);
   assert.match(aesthetic, /\.submission-review-card\.is-rejected[\s\S]*?var\(--dancr-color-danger\)/);
   assert.match(aesthetic, /\.profile-verified[\s\S]*?var\(--dancr-color-info\) 24%/);
+});
+
+test("the production live-shell dashboards receive the palette without layout or navigation changes", () => {
+  const livePanelSystem = aesthetic.match(
+    /\/\* The production homepage owns[\s\S]*?(?=\r?\n:is\(\r?\n  \.account-shell)/,
+  )?.[0] ?? "";
+
+  assert.match(livePanelSystem, /body\.dancr-button-system \.page-panel/);
+  assert.match(livePanelSystem, /\.customer-summary/);
+  assert.match(livePanelSystem, /\.approval-command/);
+  assert.match(livePanelSystem, /\.admin-login-form/);
+  assert.match(livePanelSystem, /\.dancer-shift-primary/);
+  assert.match(livePanelSystem, /var\(--dancr-color-featured\)/);
+  assert.match(livePanelSystem, /var\(--dancr-color-success\)/);
+  assert.match(livePanelSystem, /var\(--dancr-color-danger\)/);
+  assert.doesNotMatch(
+    livePanelSystem,
+    /(?:^|\s)(?:padding|margin|gap|border-radius|font-size|line-height|position|display|animation|transform)\s*:/m,
+  );
+  assert.doesNotMatch(livePanelSystem, /home-bottom|home-nav|global-mobile-bottom-nav/);
 });

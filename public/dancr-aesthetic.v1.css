@@ -46,6 +46,9 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
+  #customerDashboard,
+  #dancerDashboard,
+  #venueDashboard,
   #adminDashboard,
   .dmca-shell,
   .counter-shell,
@@ -67,20 +70,315 @@
   background: var(--mydancr-bg) !important;
 }
 
-/* The live shell owns a legacy admin overlay outside the Next.js admin shell.
- * Keep its frame in the same neutral operations hierarchy while preserving
- * violet for the actual submit action and focus state. */
-#adminDashboard {
+/* The production homepage owns full-screen account and operations panels
+ * outside the Next.js shells. Rebind their legacy color variables to the same
+ * brand system without changing their geometry, typography, or behavior. */
+body.dancr-button-system .page-panel {
+  --bg: var(--dancr-color-background);
+  --panel: var(--dancr-color-surface);
+  --panel-2: var(--dancr-color-surface-raised);
+  --line: var(--dancr-color-border-subtle);
+  --text: var(--dancr-color-text-primary);
+  --muted: var(--dancr-color-text-muted);
+  --cyan: var(--dancr-color-info);
+  --cyan-blue: var(--dancr-color-info);
+  --magenta: var(--dancr-color-brand-primary);
+  --gold: var(--dancr-color-featured);
+  --green: var(--dancr-color-success);
+  --amber: var(--dancr-color-featured);
+  --danger: var(--dancr-color-danger);
+  --shadow: var(--dancr-shadow-modal);
   border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-background) !important;
   background-image: none !important;
   box-shadow: var(--dancr-shadow-surface) !important;
+}
+
+body.dancr-button-system .page-panel :is(h1, h2, h3, strong) {
+  color: var(--dancr-color-text-primary) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  p,
+  small,
+  .meta,
+  .muted,
+  .rule-note,
+  .value-message,
+  .customer-card-copy,
+  .section-context,
+  .dashboard-collapse-title > span,
+  .account-control-copy
+) {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system .page-panel :is(.eyebrow, label, legend) {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .auth-card,
+  .admin-login-form,
+  .customer-summary,
+  .stat,
+  .approval-command,
+  .dancer-next-shift,
+  .dancer-quick-actions > button,
+  .dancer-glance-metrics > div,
+  .status-chip,
+  .approved-tool-dropdown,
+  .setup-panel,
+  .approved-analytics,
+  .metric-card,
+  .rank-notification-list,
+  .dancer-control-card,
+  .account-center,
+  .account-center-section,
+  .info-tile,
+  .lock-row,
+  .customer-notification-card,
+  .customer-venue-list .venue-card,
+  .saved-deal-pass,
+  .venue-offer-qr,
+  .admin-grid > *,
+  .submission-section,
+  .submission-value,
+  .submission-review-card,
+  .submitted-social-review,
+  .venue-admin-row,
+  .report-row,
+  .support-inbox-thread,
+  .support-inbox-message
+) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface-translucent) !important;
+  background-image: none !important;
+  box-shadow: inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+/* The live dashboards have legacy ID-scoped declarations. Repeat the neutral
+ * surface rule with matching ID specificity so those old cyan/violet borders
+ * cannot outrank the shared palette. */
+body.dancr-button-system :is(
+  #customerDashboard,
+  #dancerDashboard,
+  #venueDashboard,
+  #adminDashboard
+) :is(
+  .auth-card,
+  .admin-login-form,
+  .customer-summary,
+  .stat,
+  .approval-command,
+  .dancer-next-shift,
+  .dancer-quick-actions > button,
+  .dancer-glance-metrics > div,
+  .status-chip,
+  .approved-tool-dropdown,
+  .setup-panel,
+  .approved-analytics,
+  .metric-card,
+  .rank-notification-list,
+  .dancer-control-card,
+  .account-center,
+  .account-center-section,
+  .info-tile,
+  .lock-row,
+  .customer-notification-card,
+  .customer-venue-list .venue-card,
+  .saved-deal-pass,
+  .venue-offer-qr,
+  .admin-grid > *,
+  .submission-section,
+  .submission-value,
+  .submission-review-card,
+  .submitted-social-review,
+  .venue-admin-row,
+  .report-row,
+  .support-inbox-thread,
+  .support-inbox-message
+) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface-translucent) !important;
+  background-image: none !important;
+  box-shadow: inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+body.dancr-button-system .page-panel :is(input, select, textarea) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system .page-panel :is(input, select, textarea):focus {
+  border-color: var(--dancr-color-brand-primary) !important;
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .ghost,
+  .view-all,
+  .auth-tab,
+  .password-toggle,
+  .close-btn,
+  .action-btn.secondary,
+  .dancer-quick-actions > button,
+  .approved-tool-launcher > button,
+  .control-action-row > button,
+  .social-edit-field > button,
+  .notification-clear-btn,
+  .account-control-actions button,
+  .customer-summary-actions button
+) {
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  button[type="submit"],
+  .action-btn:not(.secondary):not(.danger),
+  .admin-login,
+  .dancer-shift-primary,
+  .continue-signup
+) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-brand-primary) !important;
+  background-image: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
+  box-shadow:
+    var(--dancr-shadow-brand-control),
+    inset 0 1px 0 var(--dancr-color-brand-core-soft) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .auth-tab.active,
+  .tabs button.active,
+  button[aria-pressed="true"]
+) {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 18%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  background-image: none !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  summary[tabindex]
+):focus-visible {
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .section-title-row,
+  .customer-summary
+)::before {
+  background: linear-gradient(
+    180deg,
+    var(--dancr-color-beam-glow),
+    var(--dancr-color-brand-primary) 42%,
+    var(--dancr-color-beam-core) 50%,
+    var(--dancr-color-brand-primary) 58%,
+    var(--dancr-color-beam-glow)
+  ) !important;
+  box-shadow: 0 0 10px var(--dancr-color-beam-glow-soft) !important;
+}
+
+body.dancr-button-system :is(
+  #customerDashboard,
+  #dancerDashboard,
+  #venueDashboard,
+  #adminDashboard
+) :is(.section-title-row, .customer-summary)::before {
+  background: linear-gradient(
+    180deg,
+    var(--dancr-color-beam-glow),
+    var(--dancr-color-brand-primary) 42%,
+    var(--dancr-color-beam-core) 50%,
+    var(--dancr-color-brand-primary) 58%,
+    var(--dancr-color-beam-glow)
+  ) !important;
+  box-shadow: 0 0 10px var(--dancr-color-beam-glow-soft) !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .dancer-live-pill,
+  .badge.approved,
+  .badge.live,
+  .is-success
+) {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-success) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--dancr-color-success) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .badge.pending,
+  .pending-badge,
+  .is-pending
+) {
+  border-color: var(--dancr-color-featured-medium) !important;
+  color: var(--dancr-color-featured) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--dancr-color-featured) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system .page-panel :is(
+  .action-btn.danger,
+  .badge.rejected,
+  .is-rejected,
+  .error
+) {
+  border-color: var(--dancr-color-danger-medium) !important;
+  color: var(--dancr-color-danger) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--dancr-color-danger) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 :is(
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -97,7 +395,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -113,7 +410,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -127,7 +423,6 @@
   .account-shell .account-panel,
   .dashboard-shell .info-panel,
   .admin-shell .admin-panel,
-  #adminDashboard :is(.admin-login-form, .admin-panel),
   .dmca-shell .dmca-card,
   .counter-shell .counter-card,
   .redeem-shell .scanner-card,
@@ -163,18 +458,6 @@
   .admin-shell .report-row,
   .admin-shell .support-inbox-thread,
   .admin-shell .support-inbox-message,
-  #adminDashboard :is(
-    .approval-row,
-    .dancer-directory-row,
-    .submission-section,
-    .submission-value,
-    .submission-review-card,
-    .submitted-social-review,
-    .venue-admin-row,
-    .report-row,
-    .support-inbox-thread,
-    .support-inbox-message
-  ),
   .account-shell .signup-benefits,
   .account-shell .dancer-signup-note,
   .account-shell .customer-benefit-tile
@@ -189,7 +472,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -207,7 +489,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -223,7 +504,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -248,7 +528,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -278,7 +557,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
@@ -292,7 +570,6 @@
 :is(
   .account-shell .segmented,
   .admin-shell .segmented,
-  #adminDashboard .segmented,
   .dashboard-shell .segmented
 ) {
   gap: 4px !important;
@@ -305,7 +582,6 @@
 :is(
   .account-shell .segmented,
   .admin-shell .segmented,
-  #adminDashboard .segmented,
   .dashboard-shell .segmented
 ) button {
   border: 0 !important;
@@ -315,7 +591,6 @@
 :is(
   .account-shell .segmented,
   .admin-shell .segmented,
-  #adminDashboard .segmented,
   .dashboard-shell .segmented
 ) button.active {
   color: var(--dancr-color-text-primary) !important;
@@ -331,7 +606,6 @@
   .account-shell,
   .dashboard-shell,
   .admin-shell,
-  #adminDashboard,
   .dmca-shell,
   .counter-shell,
   .redeem-shell,
