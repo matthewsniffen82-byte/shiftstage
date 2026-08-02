@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=63" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=64" rel="stylesheet">/,
   );
 });
 
@@ -264,6 +264,50 @@ test("venue discovery keeps real photography beneath a premium black-metal mater
   assert.match(
     aesthetic,
     /\.home-venue-discovery-hours \{[\s\S]*?padding: 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/,
+  );
+});
+
+test("venue scroll cards use the complete neutral-first brand and semantic hierarchy", () => {
+  const venueScrollBrand = aesthetic.match(
+    /Production venue scroll-card branding follows the shared 84\/10\/6 system[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(venueScrollBrand, "the production venue scroll-card brand layer must exist");
+  assert.match(
+    venueScrollBrand,
+    /> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?var\(--dancr-color-surface-raised\),[\s\S]*?var\(--dancr-color-background\) 72%[\s\S]*?var\(--dancr-color-border\),[\s\S]*?var\(--dancr-color-border-subtle\)/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-venue-discovery-art::before,[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?background: none !important;[\s\S]*?opacity: 0 !important;/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-discovery-feed-shade \{[\s\S]*?var\(--dancr-color-background\) 76%[\s\S]*?var\(--dancr-color-background\) 98%/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)[\s\S]*?var\(--dancr-color-brand-glow-soft\)/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?var\(--dancr-color-success\)[\s\S]*?var\(--dancr-color-success-soft\)/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-discovery-feed-directions \{[\s\S]*?var\(--dancr-color-info\) 10%/,
+  );
+  assert.match(
+    venueScrollBrand,
+    /\.home-venue-discovery-hours \{[\s\S]*?color: var\(--dancr-color-text-muted\) !important;/,
+  );
+  assert.doesNotMatch(
+    venueScrollBrand,
+    /global-mobile-bottom-nav|home-bottom-tv|home-nav-|venue-profile-overlay|\.venue-detail|\.tv-player/,
+  );
+  assert.doesNotMatch(
+    venueScrollBrand,
+    /(?:width|height|padding|margin|position|inset|overflow|display|grid-template-columns|gap):/,
   );
 });
 
