@@ -24,11 +24,11 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: 64px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 64px;[\s\S]*?height: 64px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
+    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: 64px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 64px;[\s\S]*?height: 64px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?overflow-wrap: anywhere/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-meta \{[\s\S]*?max-width: calc\(100% - 74px\);[\s\S]*?margin-left: 74px;/,
+    /\.home-tv-feed-meta \{[\s\S]*?width: 100%;[\s\S]*?overflow-wrap: anywhere;[\s\S]*?white-space: normal;/,
   );
   assert.match(
     homeSource,
@@ -36,7 +36,19 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /dancerCopy\.appendChild\(nameRow\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)[\s\S]*?meta\.textContent = dancerCity/,
+    /meta\.textContent = dancerCity[\s\S]*?dancerCopy\.append\(nameRow, meta\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-context \{[\s\S]*?width: calc\(100% - 74px\);[\s\S]*?display: grid;[\s\S]*?margin-left: 74px;[\s\S]*?overflow: visible;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-venue span \{[\s\S]*?overflow-wrap: anywhere;[\s\S]*?text-overflow: clip;[\s\S]*?white-space: normal;/,
+  );
+  assert.doesNotMatch(
+    homeSource.match(/\.home-tv-feed-dancer-name \{[\s\S]*?\}/)?.[0] || "",
+    /text-overflow: ellipsis|white-space: nowrap/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-profile-hint|home-tv-feed-profile-cue|View profile →/);
   assert.match(

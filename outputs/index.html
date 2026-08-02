@@ -29616,14 +29616,15 @@
         .home-tv-feed-dancer-name-row {
           min-width: 0;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 6px;
         }
         .home-tv-feed-dancer-name {
           min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          overflow: visible;
+          overflow-wrap: anywhere;
+          text-overflow: clip;
+          white-space: normal;
         }
         .home-tv-feed-dancer:hover,
         .home-tv-feed-dancer:focus-visible,
@@ -29654,28 +29655,30 @@
           line-height: 1;
         }
         .home-tv-feed-meta {
-          width: fit-content;
-          max-width: calc(100% - 74px);
-          margin-left: 74px;
-          overflow: hidden;
+          width: 100%;
+          max-width: 100%;
+          overflow: visible;
+          overflow-wrap: anywhere;
           color: rgba(247,244,255,.86);
           font-size: 12px;
           font-weight: 850;
           letter-spacing: .025em;
-          text-overflow: ellipsis;
+          line-height: 1.25;
+          text-overflow: clip;
           text-shadow: 0 2px 12px rgba(0,0,0,.9);
-          white-space: nowrap;
+          white-space: normal;
         }
         .home-tv-feed-venue {
-          width: fit-content;
+          width: 100%;
           max-width: 100%;
           display: inline-flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 7px;
-          overflow: hidden;
+          overflow: visible;
           color: #fff;
           font-size: 14px;
           font-weight: 900;
+          line-height: 1.25;
           text-shadow: 0 2px 12px rgba(0,0,0,.9);
         }
         .home-tv-feed-venue svg {
@@ -29687,17 +29690,20 @@
           stroke-width: 2;
         }
         .home-tv-feed-venue span {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          min-width: 0;
+          overflow: visible;
+          overflow-wrap: anywhere;
+          text-overflow: clip;
+          white-space: normal;
         }
         .home-tv-feed-context {
-          width: fit-content;
-          max-width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          overflow: hidden;
+          width: calc(100% - 74px);
+          max-width: calc(100% - 74px);
+          display: grid;
+          align-items: start;
+          gap: 7px;
+          margin-left: 74px;
+          overflow: visible;
         }
         .home-tv-feed-schedule {
           width: fit-content;
@@ -29705,13 +29711,17 @@
           min-height: 32px;
           display: inline-flex;
           align-items: center;
-          padding: 0 11px;
+          padding: 7px 11px;
           border: 1px solid rgba(255,255,255,.24);
           border-radius: 999px;
           color: #d7d3df;
           background: rgba(0,0,0,.62);
           font-size: 11px;
           font-weight: 900;
+          line-height: 1.15;
+          overflow-wrap: anywhere;
+          text-align: left;
+          white-space: normal;
         }
         .home-tv-feed-schedule.is-now {
           border-color: rgba(77,236,157,.5);
@@ -50205,15 +50215,13 @@
       verified.setAttribute("aria-label", "Verified");
       const dancerCopy = document.createElement("span");
       dancerCopy.className = "home-tv-feed-dancer-copy";
-      nameRow.append(dancerLabel, verified);
-      dancerCopy.appendChild(nameRow);
-      dancer.append(dancerPhoto, dancerCopy);
-      copy.appendChild(dancer);
-
       const meta = document.createElement("span");
       meta.className = "home-tv-feed-meta";
       meta.textContent = dancerCity;
-      copy.appendChild(meta);
+      nameRow.append(dancerLabel, verified);
+      dancerCopy.append(nameRow, meta);
+      dancer.append(dancerPhoto, dancerCopy);
+      copy.appendChild(dancer);
 
       if (scheduleContext) {
         const context = document.createElement("div");
