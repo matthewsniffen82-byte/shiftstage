@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=62" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=63" rel="stylesheet">/,
   );
 });
 
@@ -36,6 +36,10 @@ test("venue detail branding is neutral first with scoped brand and semantic acti
   )?.[0] || "";
 
   assert.ok(venueDetailBranding, "the production venue-detail brand layer must exist");
+  assert.match(
+    venueDetailBranding,
+    /The hero\/card supplies the venue detail's single visible frame[\s\S]*?#results\.venue-profile-overlay \.venue-detail \{[\s\S]*?border-color: transparent !important;/,
+  );
   assert.match(
     venueDetailBranding,
     /\.venue-quick-stat,[\s\S]*?\.venue-info \.info-tile,[\s\S]*?\.venue-offer-card,[\s\S]*?\.locked[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;/,

@@ -3639,6 +3639,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail {
   box-shadow: none !important;
 }
 
+/* The hero/card supplies the venue detail's single visible frame. Keep the
+ * wrapper's border geometry so removing the duplicate line cannot shift it. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail {
+  border-color: transparent !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay :is(
     .venue-hero,
     .venue-sign,
