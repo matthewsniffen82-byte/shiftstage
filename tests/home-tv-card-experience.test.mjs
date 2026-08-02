@@ -40,7 +40,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-context \{[\s\S]*?width: calc\(100% - 74px\);[\s\S]*?display: grid;[\s\S]*?margin-left: 74px;[\s\S]*?overflow: visible;/,
+    /\.home-tv-feed-context \{[\s\S]*?width: 100%;[\s\S]*?display: grid;[\s\S]*?margin-left: 0;[\s\S]*?overflow: visible;/,
   );
   assert.match(
     homeSource,
