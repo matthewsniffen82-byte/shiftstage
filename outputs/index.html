@@ -2496,6 +2496,51 @@
       font-size: 13px;
     }
 
+    .approved-stage-name-editor {
+      display: grid;
+      gap: 7px;
+      margin: 2px 0 14px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      background: linear-gradient(145deg, rgba(17,17,23,.96), rgba(7,7,11,.98));
+      box-shadow: 0 14px 34px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.035);
+    }
+
+    .approved-stage-name-editor label {
+      display: grid;
+      gap: 7px;
+      color: #f7f2ff;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .approved-stage-name-editor input {
+      width: 100%;
+      min-height: 50px;
+      padding: 11px 13px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      outline: 0;
+      color: #fff;
+      background: rgba(255,255,255,.065);
+      font: inherit;
+      font-size: 17px;
+      font-weight: 850;
+    }
+
+    .approved-stage-name-editor input:focus {
+      border-color: rgba(53,216,255,.78);
+      box-shadow: 0 0 0 3px rgba(53,216,255,.13), 0 0 20px rgba(53,216,255,.1);
+    }
+
+    .approved-stage-name-editor small {
+      color: #a9a0b8;
+      font-size: 11px;
+      font-weight: 720;
+      line-height: 1.4;
+    }
+
     .approved-visual-profile .profile-modal {
       position: relative;
       width: 100%;
@@ -34769,7 +34814,7 @@
                   <div class="control-field-grid" id="approvedProfileEditFields">
                     <label>
                       Stage name
-                      <input id="approvedControlStageName" type="text" value="" aria-label="Stage name shown publicly">
+                      <input id="approvedControlStageName" type="text" value="" minlength="2" maxlength="40" autocomplete="nickname" aria-label="Stage name shown publicly">
                     </label>
                     <label>
                       Verification name
@@ -34938,7 +34983,7 @@
                 <div class="profile-edit-grid">
                   <div class="field">
                     <label for="profileStageName">Stage name</label>
-                    <input id="profileStageName" type="text">
+                    <input id="profileStageName" type="text" minlength="2" maxlength="40" autocomplete="nickname">
                     <div class="field-note"><strong>Shown publicly:</strong> Customers see this name on profile cards, schedules, search, and your full profile.</div>
                   </div>
                   <div class="field">
@@ -42389,6 +42434,7 @@
         </button>
       `;
       const changeState = approvedProfileChangeState(profile);
+      const editableStageName = approvedProfileFieldValue("profileStageName", "approvedControlStageName") || profile?.name || activeDancerName();
       const visibleSocials = socials.filter((social) => !social.deleted && social.value);
       const approvedEditableSocialMarkup = `
         <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
@@ -42421,7 +42467,7 @@
               <button class="modal-image ${mainPhotoClass}${mainPhotoAttrs.className} ${photoStatusClass} ${approvedPhotoEditMode ? "is-photo-editing" : ""}"${mainPhotoAttrs.style} type="button" data-fix-anchor="${displayText(`dancer-photo-${mainPhoto.id}`)}" data-profile-visual-edit="photo" data-photo-id="${displayText(mainPhoto.id || "")}" data-photo-target="${displayText(mainPhoto.target)}" data-photo-url="${displayText(mainPhoto.imageUrl || "")}" data-photo-storage-path="${displayText(mainPhoto.storagePath || mainPhoto.storage_path || "")}" data-photo-label="${displayText(mainPhoto.label || "Main Photo")}" data-review-status="${displayText(mainPhoto.status || "")}" data-review-notes="${displayText(mainPhoto.notes || "")}">
                 <div class="modal-identity-stack">
                   <div class="modal-identity">
-                    <h2>${displayText(profile?.name || activeDancerName())}<span class="verified-mark" aria-label="Verified">✓</span></h2>
+                    <h2><span data-approved-stage-name-preview>${displayText(editableStageName)}</span><span class="verified-mark" aria-label="Verified">✓</span></h2>
                     <div class="pill-row">
                       <span class="pill" id="modalCity">${displayText(activeDancerCity())}</span>
                     </div>
@@ -42441,6 +42487,13 @@
                 ${emptyPhotoSlots}
             </div>
             <div class="modal-body">
+              <div class="approved-stage-name-editor">
+                <label for="approvedVisualStageName">
+                  Stage name
+                  <input id="approvedVisualStageName" data-approved-stage-name-input type="text" value="${escapeHtml(editableStageName)}" minlength="2" maxlength="40" autocomplete="nickname" spellcheck="false" aria-describedby="approvedVisualStageNameHelp">
+                </label>
+                <small id="approvedVisualStageNameHelp">This is the public name customers see on dancer cards, MyDancr TV, schedules, and your full profile.</small>
+              </div>
               <div class="approved-visual-photo-actions">
                 <button type="button" data-approved-visual-photo-add="main">Add main photo</button>
                 <button type="button" data-approved-visual-photo-add="gallery-add">Add gallery photo</button>
@@ -42773,6 +42826,17 @@
       };
     }
 
+    function validateDancerStageName(value) {
+      const stageName = String(value || "").trim().replace(/\s+/gu, " ");
+      const characterCount = [...stageName].length;
+      if (!stageName) return { valid: false, value: "", error: "Stage name is required." };
+      if (characterCount < 2) return { valid: false, value: stageName, error: "Stage name must be at least 2 characters." };
+      if (characterCount > 40) return { valid: false, value: stageName, error: "Stage name must be 40 characters or fewer." };
+      if (/[\u0000-\u001f\u007f<>]/u.test(stageName)) return { valid: false, value: stageName, error: "Stage name contains unsupported characters." };
+      if (!/[\p{L}\p{N}]/u.test(stageName)) return { valid: false, value: stageName, error: "Stage name must include a letter or number." };
+      return { valid: true, value: stageName, error: "" };
+    }
+
     function approvedProfileChangeState(profile = activeDancerProfile()) {
       if (!profile) return { hasAnyChange: false, needsApproval: false, hasDeletesOnly: false };
       const values = readApprovedProfileEditValues();
@@ -42903,7 +42967,14 @@
       const changeStateBeforeSave = approvedProfileChangeState(oldProfile);
       const existingSocialsBeforeSave = normalizeSubmittedSocials(oldProfile).map((social) => ({ ...social }));
       const editValues = readApprovedProfileEditValues();
-      const stageName = editValues.stageName || oldName;
+      const stageNameValidation = validateDancerStageName(approvedProfileFieldValue("profileStageName", "approvedControlStageName"));
+      if (!stageNameValidation.valid) {
+        showToast(stageNameValidation.error);
+        const stageNameInput = document.getElementById("approvedVisualStageName");
+        stageNameInput?.focus();
+        return false;
+      }
+      const stageName = stageNameValidation.value;
       const newCity = editValues.city || oldCity;
       const targetMarket = markets[newCity] || oldMarket;
       const venueName = editValues.venue || oldProfile.venue;
@@ -47165,7 +47236,7 @@
         <form class="auth-form" data-setup-form="profile">
           <div class="field">
             <label for="setupStageName">Stage name</label>
-            <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}">
+            <input id="setupStageName" data-setup-profile-field="stageName" type="text" value="${escapeHtml(document.getElementById("dancerStageName").value || "")}" minlength="2" maxlength="40" autocomplete="nickname">
             <div class="stage-name-note"><strong>Displayed on profile cards:</strong> This is the name customers see on Dancr profiles, schedules, and search results.</div>
           </div>
           <div class="field"><label for="setupCity">City</label><input id="setupCity" data-setup-profile-field="city" type="text" value="${escapeHtml(document.getElementById("dancerCity")?.value || "")}"></div>
@@ -52972,6 +53043,19 @@
         return;
       }
 
+      const approvedStageNameInput = event.target.closest("[data-approved-stage-name-input]");
+      if (approvedStageNameInput) {
+        ["profileStageName", "approvedControlStageName"].forEach((fieldId) => {
+          const field = document.getElementById(fieldId);
+          if (field && field.value !== approvedStageNameInput.value) field.value = approvedStageNameInput.value;
+        });
+        document.querySelectorAll("[data-approved-stage-name-preview]").forEach((preview) => {
+          preview.textContent = approvedStageNameInput.value.trim() || "Stage name";
+        });
+        syncApprovedProfileSubmitState();
+        return;
+      }
+
       if (event.target.closest("#publicProfileForm, #approvedProfileEditFields, .social-control-grid")) {
         mirrorApprovedProfileEditField(event.target);
         return;
@@ -53072,7 +53156,8 @@
       const form = event.target.closest("[data-setup-form='profile']");
       if (!form) return;
       event.preventDefault();
-      const stageName = document.getElementById("setupStageName").value.trim();
+      const stageNameValidation = validateDancerStageName(document.getElementById("setupStageName").value);
+      const stageName = stageNameValidation.value;
       const city = document.getElementById("setupCity").value.trim();
       const rawSocials = {
         instagram: document.getElementById("setupInstagram").value.trim(),
@@ -53081,8 +53166,13 @@
         onlyfans: document.getElementById("setupOnlyfans").value.trim(),
         x: document.getElementById("setupX").value.trim()
       };
-      if (!stageName || !city) {
-        showToast("Stage name and city required");
+      if (!stageNameValidation.valid) {
+        showToast(stageNameValidation.error);
+        document.getElementById("setupStageName").focus();
+        return;
+      }
+      if (!city) {
+        showToast("City required");
         return;
       }
       if (hasBlockedSocialLink(Object.values(rawSocials))) {

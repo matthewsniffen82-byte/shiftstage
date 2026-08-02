@@ -27,6 +27,8 @@ function withProfileSaveVersion(response: NextResponse) {
   return response;
 }
 const MAX_DANCER_PROFILE_PHOTOS = 5;
+const MIN_DANCER_STAGE_NAME_LENGTH = 2;
+const MAX_DANCER_STAGE_NAME_LENGTH = 40;
 const APPROVED_PHOTO_BUCKET = "dancer-photos";
 const MODERATION_TEMP_BUCKET = "dancr-image-moderation-temp";
 const MODERATION_REVIEW_BUCKET = "dancr-image-moderation-review";
@@ -41,6 +43,32 @@ type ProfileSaveStage =
   | "persist_photo_order"
   | "submit_for_review"
   | "verify_saved_profile";
+
+class ProfileInputError extends Error {
+  readonly code = "INVALID_PROFILE_INPUT";
+}
+
+function normalizeDancerStageName(value: unknown) {
+  if (typeof value !== "string") throw new ProfileInputError("Stage name must be text.");
+
+  const stageName = value.trim().replace(/\s+/gu, " ");
+  const characterCount = [...stageName].length;
+  if (!stageName) throw new ProfileInputError("Stage name is required.");
+  if (characterCount < MIN_DANCER_STAGE_NAME_LENGTH) {
+    throw new ProfileInputError(`Stage name must be at least ${MIN_DANCER_STAGE_NAME_LENGTH} characters.`);
+  }
+  if (characterCount > MAX_DANCER_STAGE_NAME_LENGTH) {
+    throw new ProfileInputError(`Stage name must be ${MAX_DANCER_STAGE_NAME_LENGTH} characters or fewer.`);
+  }
+  if (/[\u0000-\u001f\u007f<>]/u.test(stageName)) {
+    throw new ProfileInputError("Stage name contains unsupported characters.");
+  }
+  if (!/[\p{L}\p{N}]/u.test(stageName)) {
+    throw new ProfileInputError("Stage name must include a letter or number.");
+  }
+
+  return stageName;
+}
 
 function logProfileSaveStage(stage: ProfileSaveStage) {
   console.log("PROFILE_SAVE_STAGE", { stage });
@@ -325,7 +353,9 @@ export async function PATCH(request: Request) {
     console.log("PUBLIC_PROFILE_STATE_BEFORE_SAVE", protectedFieldsBefore);
 
     const update: Record<string, string | boolean> = {};
-    if (typeof body.stageName === "string") update.stage_name = body.stageName.trim();
+    if (Object.prototype.hasOwnProperty.call(body, "stageName")) {
+      update.stage_name = normalizeDancerStageName(body.stageName);
+    }
     if (typeof body.city === "string") update.city = body.city.trim();
     if (typeof body.bio === "string") update.bio = body.bio.trim();
     if (typeof body.isPublic === "boolean") {
@@ -614,12 +644,13 @@ export async function PATCH(request: Request) {
     if (error instanceof Error && (error.message === "Sign in required." || error.message === "Dancer profile not found.")) {
       return withProfileSaveVersion(apiError(error, "Unable to update dancer profile."));
     }
+    const status = error instanceof ProfileInputError ? 400 : 500;
     return withProfileSaveVersion(NextResponse.json({
       ok: false,
-      error: safeProfileSaveError(saveStage, error),
+      error: error instanceof ProfileInputError ? error.message : safeProfileSaveError(saveStage, error),
       saveStage,
       errorCode: typeof error?.code === "string" ? error.code : null,
-    }, { status: 500 }));
+    }, { status }));
   }
 }
 

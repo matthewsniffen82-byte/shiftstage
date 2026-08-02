@@ -2322,7 +2322,7 @@ function DancerSetupPanel({
       <form onSubmit={saveProfile}>
         <label>
           Stage name
-          <input value={stageName} onChange={(event) => {
+          <input value={stageName} minLength={2} maxLength={40} autoComplete="nickname" onChange={(event) => {
             setStageName(event.target.value);
             setSaveStatus("idle");
           }} required />
