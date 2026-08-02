@@ -2119,3 +2119,12 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
     color-mix(in srgb, var(--dancr-color-brand-primary) 12%, var(--dancr-color-surface-raised))
   ) !important;
 }
+
+/* The large dancer-profile media frame stays neutral so the approved photo is
+ * the focal point. This rule intentionally excludes avatars, media tabs,
+ * thumbnails, verified marks, and navigation. */
+#profileBackdrop .profile-modal .modal-image,
+.public-profile-shell .profile-media-feature {
+  border: 1px solid var(--dancr-color-border-subtle) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3) !important;
+}

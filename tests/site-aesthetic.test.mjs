@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=46" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=47" rel="stylesheet">/,
   );
 });
 
@@ -73,6 +73,32 @@ test("the violet hero beam continues through content without recoloring trust or
   assert.match(
     aesthetic,
     /\.profile-verified\.profile-verified\.profile-verified,[\s\S]*?\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark[\s\S]*?var\(--dancr-color-info\) 24%/,
+  );
+});
+
+test("large dancer profile media frames use a neutral edge without a colored halo", () => {
+  const mediaFrameRule = aesthetic.match(
+    /The large dancer-profile media frame stays neutral[\s\S]*?\n\}/,
+  )?.[0] || "";
+
+  assert.ok(mediaFrameRule, "the neutral dancer profile media frame rule must exist");
+  assert.match(mediaFrameRule, /#profileBackdrop \.profile-modal \.modal-image/);
+  assert.match(mediaFrameRule, /\.public-profile-shell \.profile-media-feature/);
+  assert.match(
+    mediaFrameRule,
+    /border: 1px solid var\(--dancr-color-border-subtle\) !important;/,
+  );
+  assert.match(
+    mediaFrameRule,
+    /box-shadow: 0 12px 28px rgba\(0, 0, 0, 0\.3\) !important;/,
+  );
+  assert.doesNotMatch(
+    mediaFrameRule,
+    /beam-violet|brand-primary|126,\s*234,\s*255|124,\s*58,\s*237/,
+  );
+  assert.doesNotMatch(
+    mediaFrameRule,
+    /profile-titlebar-avatar|profile-media-tabs|profile-media-grid-item|home-bottom|home-nav/,
   );
 });
 
