@@ -80,22 +80,26 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   assert.match(renderFactory, /position,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedCopy/);
   assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
-  assert.match(homeSource, /#results\.home-tv-feed \{[\s\S]*?--home-card-edge-neutral: rgba\(248,250,252,\.11\);[\s\S]*?--home-card-glow: transparent;/);
+  assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
 });
 
-test("TV cards retain a neutral perimeter without a violet outline", () => {
+test("TV cards are completely borderless without a violet perimeter", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-loading \{[\s\S]*?border: 1px solid rgba\(248,250,252,\.15\);/,
+    /\.home-tv-feed-loading \{[\s\S]*?border: 0;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide,[\s\S]*?linear-gradient\(145deg,var\(--home-card-edge-neutral\),var\(--home-card-edge-neutral\)\) border-box !important;[\s\S]*?0 0 22px var\(--home-card-glow\) !important;/,
+    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;[\s\S]*?box-shadow: 0 14px 32px rgba\(0,0,0,\.38\) !important;/,
   );
   const tvSlideShell = homeSource.match(/\.home-tv-feed-slide \{[\s\S]*?contain: layout paint style;[\s\S]*?\}/)?.[0] || "";
-  assert.match(tvSlideShell, /border: 1px solid rgba\(248,250,252,\.12\);/);
+  assert.match(tvSlideShell, /border: 0;/);
   assert.match(tvSlideShell, /box-shadow: 0 20px 54px rgba\(0,0,0,\.48\);/);
   assert.doesNotMatch(tvSlideShell, /139,92,246|124,58,237|91,19,255|violet/);
+  const sharedMobileCardShell = homeSource.match(
+    /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?0 0 22px var\(--home-card-glow\) !important;[\s\S]*?\}/,
+  )?.[0] || "";
+  assert.doesNotMatch(sharedMobileCardShell, /home-tv-feed/);
   assert.doesNotMatch(
     homeSource.match(/\.home-tv-feed-loading \{[\s\S]*?\}/)?.[0] || "",
     /139,92,246|124,58,237|violet/,
