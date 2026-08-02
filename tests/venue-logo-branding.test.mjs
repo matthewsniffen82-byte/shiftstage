@@ -1,26 +1,34 @@
 import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 
 const supportedLogos = {
   "centerfolds-cabaret-las-vegas": "centerfolds-cabaret-las-vegas.png",
   "chicas-bonitas": "chicas-bonitas.jpg",
   "crazy-horse-3": "crazy-horse-3.png",
-  "deja-vu-showgirls": "deja-vu-showgirls-las-vegas.png",
-  "deja-vu-showgirls-las-vegas": "deja-vu-showgirls-las-vegas.png",
+  "deja-vu-showgirls": "deja-vu-showgirls-las-vegas-dark.png",
+  "deja-vu-showgirls-las-vegas": "deja-vu-showgirls-las-vegas-dark.png",
   "hustler-club-las-vegas": "hustler-club-las-vegas.png",
-  "little-darlings": "little-darlings-las-vegas.png",
-  "little-darlings-las-vegas": "little-darlings-las-vegas.png",
+  "little-darlings": "little-darlings-las-vegas-dark.png",
+  "little-darlings-las-vegas": "little-darlings-las-vegas-dark.png",
   "palomino-club": "palomino-club.svg",
   "peppermint-hippo-las-vegas": "peppermint-hippo-las-vegas.svg",
   "play-it-again-sams": "play-it-again-sams.svg",
   "sapphire-las-vegas": "sapphire-las-vegas.png",
   "spearmint-rhino": "spearmint-rhino-las-vegas.png",
   "spearmint-rhino-las-vegas": "spearmint-rhino-las-vegas.png",
-  "talk-of-the-town": "talk-of-the-town.png",
+  "talk-of-the-town": "talk-of-the-town-dark.png",
   "the-library-gentlemens-club": "the-library-gentlemens-club.png",
   "treasures-las-vegas": "treasures-las-vegas.png",
 };
+
+const darkCardLogoFiles = [
+  "deja-vu-showgirls-las-vegas-dark.png",
+  "little-darlings-las-vegas-dark.png",
+  "talk-of-the-town-dark.png",
+];
 
 const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic] =
   await Promise.all([
@@ -43,6 +51,32 @@ test("every currently listed Las Vegas venue slug resolves to a local verified l
 
   assert.equal(new Set(Object.values(supportedLogos)).size, 14);
   assert.match(branding, /return VENUE_LOGO_BY_SLUG\[normalizedSlug\] \|\| null/);
+});
+
+test("monochrome venue marks remain readable on the production dark card", async () => {
+  for (const fileName of darkCardLogoFiles) {
+    const { data, info } = await sharp(
+      fileURLToPath(new URL(`../public/venue-logos/${fileName}`, import.meta.url)),
+    )
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    let visiblePixels = 0;
+    let visibleLuminance = 0;
+    for (let offset = 0; offset < data.length; offset += info.channels) {
+      if (data[offset + 3] <= 24) continue;
+      visiblePixels += 1;
+      visibleLuminance +=
+        0.2126 * data[offset] + 0.7152 * data[offset + 1] + 0.0722 * data[offset + 2];
+    }
+
+    assert.ok(visiblePixels > 1_000, `${fileName} must retain its visible source mark`);
+    assert.ok(
+      visibleLuminance / visiblePixels >= 220,
+      `${fileName} must remain high contrast on a near-black card`,
+    );
+  }
 });
 
 test("verified logo identity flows through every public venue response", () => {
