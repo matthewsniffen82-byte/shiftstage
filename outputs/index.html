@@ -33961,11 +33961,25 @@
             color: #b9f6ff;
             text-shadow: none;
           }
+
+          /* Keep the active destination visible while its results use the page scroll. */
+          .app {
+            overflow: visible !important;
+          }
+
+          .discovery-sticky-head {
+            position: sticky;
+            top: calc(66px + env(safe-area-inset-top, 0px));
+            z-index: 70;
+            scroll-margin-top: calc(74px + env(safe-area-inset-top, 0px));
+            background: var(--lux-bg, var(--bg));
+            isolation: isolate;
+          }
         }
       </style>
 
       <section class="stack" aria-live="polite">
-        <div class="content-head">
+        <div class="content-head discovery-sticky-head">
           <h2 id="tabTitle">Working Now in Las Vegas</h2>
           <div class="count" id="tabCount">0 results</div>
         </div>

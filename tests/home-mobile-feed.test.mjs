@@ -162,6 +162,25 @@ test("all three destinations stay scrollable and loaded TV lands with its title 
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
 
+test("mobile discovery keeps the active title and destination dock visible while results scroll", () => {
+  assert.match(
+    homeSource,
+    /<div class="content-head discovery-sticky-head">\s*<h2 id="tabTitle">/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 720px\) \{[\s\S]*?\.app \{\s*overflow: visible !important;[\s\S]*?\.discovery-sticky-head \{[\s\S]*?position: sticky;[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top, 0px\)\);[\s\S]*?z-index: 70;[\s\S]*?scroll-margin-top: calc\(74px \+ env\(safe-area-inset-top, 0px\)\);/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \{[\s\S]*?position: fixed !important;[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /\.discovery-sticky-head \{[\s\S]*?position: fixed;/,
+  );
+});
+
 test("Dancers uses grouped grid browsing while Venues retains its inline feed", () => {
   assert.match(
     homeSource,
