@@ -2667,6 +2667,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   -webkit-backdrop-filter: blur(14px);
 }
 
+/* The feed artwork applies a relative offset to its legacy monogram span.
+ * Keep the verified logo shell anchored to the artwork center instead. */
+.home-venue-discovery-art .home-venue-discovery-logo-shell {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+}
+
 .venue-card-logo,
 .home-venue-discovery-logo,
 .venue-detail-logo {

@@ -64,4 +64,8 @@ test("cards and detail pages use one contain-fit venue logo with neutral fallbac
   assert.match(liveApp, /logoMarkup \|\| `[\s\S]*?class="venue-sign"/);
   assert.match(aesthetic, /\.venue-card-logo,[\s\S]*?\.venue-detail-logo \{[\s\S]*?object-fit: contain;/);
   assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?position: absolute;[\s\S]*?transform: translate\(-50%, -50%\);/,
+  );
 });
