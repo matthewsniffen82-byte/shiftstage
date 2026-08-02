@@ -33899,30 +33899,41 @@
             line-height: 1.35 !important;
           }
         }
-        /* Compact dancer-directory hierarchy shared by Android and iPhone. */
+        /* One discovery-heading divider across every viewport. */
+        .content-head.discovery-section-head {
+          padding-bottom: 13px !important;
+          border-bottom: 1px solid rgba(148, 163, 184, .14);
+        }
+
+        .content-head.discovery-section-head + #results {
+          margin-top: -7px !important;
+        }
+
+        /* One compact discovery-heading hierarchy shared by Android and iPhone. */
         @media (max-width: 720px) {
-          .content-head.dancers-directory-head {
-            gap: 6px !important;
+          .content-head.discovery-section-head {
+            gap: 8px !important;
             margin-top: 4px !important;
-            padding: 2px 0 0 !important;
+            padding: 2px 0 13px !important;
           }
 
-          .content-head.dancers-directory-head #tabTitle {
+          .content-head.discovery-section-head #tabTitle {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-family: var(--font-ui) !important;
             font-size: clamp(22px, 5.8vw, 27px) !important;
+            font-weight: 900 !important;
             line-height: 1.04 !important;
+            letter-spacing: -.025em !important;
           }
 
-          .content-head.dancers-directory-head .count {
+          .content-head.discovery-section-head .count {
             min-height: 26px !important;
             padding: 0 9px !important;
             font-size: 11px !important;
           }
 
-          .content-head.dancers-directory-head + #results.home-dancer-grid {
-            margin-top: -6px !important;
-          }
-
-          .content-head.dancers-directory-head + #results.home-dancer-grid > .home-dancer-grid-heading:first-child {
+          .content-head.discovery-section-head + #results.home-dancer-grid > .home-dancer-grid-heading:first-child {
             margin-top: 0;
             padding: 7px 0 2px;
           }
@@ -49111,8 +49122,10 @@
       results.classList.toggle("venue-profile-overlay", venueProfileOpen);
       const keepDancerCityOnOneLine =
         !selectedVenue && activeTab === "dancers" && venueFilter === "all";
+      const usesDiscoverySectionHeader =
+        !selectedVenue && (activeTab === "dancers" || activeTab === "venues");
       tabTitle.classList.toggle("dancers-city-title", keepDancerCityOnOneLine);
-      tabTitle.closest(".content-head")?.classList.toggle("dancers-directory-head", keepDancerCityOnOneLine);
+      tabTitle.closest(".content-head")?.classList.toggle("discovery-section-head", usesDiscoverySectionHeader);
       if (keepDancerCityOnOneLine) {
         const cityTitle = document.createElement("span");
         cityTitle.className = "tab-title-city";
@@ -50155,7 +50168,7 @@
       bottomTv?.classList.add("active");
       bottomTv?.setAttribute("aria-current", "page");
       tabTitle.classList.remove("dancers-city-title");
-      tabTitle.closest(".content-head")?.classList.remove("dancers-directory-head");
+      tabTitle.closest(".content-head")?.classList.add("discovery-section-head");
       tabTitle.textContent = `MyDancr TV in ${city}`;
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");

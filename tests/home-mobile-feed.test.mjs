@@ -816,14 +816,18 @@ test("the consolidated discovery titles use one typography system and consistent
   assert.doesNotMatch(dancerTitleStyle, /font-size|font-family|font-weight|line-height|letter-spacing/);
 });
 
-test("the mobile dancer heading is compact and consistent across Android and iPhone", () => {
+test("mobile discovery headings share a compact divided hierarchy across Android and iPhone", () => {
   assert.match(
     homeSource,
-    /tabTitle\.closest\("\.content-head"\)\?\.classList\.toggle\("dancers-directory-head", keepDancerCityOnOneLine\)/,
+    /const usesDiscoverySectionHeader =\s*!selectedVenue && \(activeTab === "dancers" \|\| activeTab === "venues"\);[\s\S]*?classList\.toggle\("discovery-section-head", usesDiscoverySectionHeader\)/,
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?\.content-head\.dancers-directory-head \{[\s\S]*?gap: 6px !important;[\s\S]*?margin-top: 4px !important;[\s\S]*?padding: 2px 0 0 !important;[\s\S]*?font-size: clamp\(22px, 5\.8vw, 27px\) !important;[\s\S]*?\.content-head\.dancers-directory-head \+ #results\.home-dancer-grid \{[\s\S]*?margin-top: -6px !important;/,
+    /\.content-head\.discovery-section-head \{[\s\S]*?padding-bottom: 13px !important;[\s\S]*?border-bottom: 1px solid rgba\(148, 163, 184, \.14\);[\s\S]*?\.content-head\.discovery-section-head \+ #results \{[\s\S]*?margin-top: -7px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /@media \(max-width: 720px\) \{[\s\S]*?\.content-head\.discovery-section-head \{[\s\S]*?gap: 8px !important;[\s\S]*?margin-top: 4px !important;[\s\S]*?padding: 2px 0 13px !important;[\s\S]*?font-family: var\(--font-ui\) !important;[\s\S]*?font-size: clamp\(22px, 5\.8vw, 27px\) !important;[\s\S]*?font-weight: 900 !important;/,
   );
   assert.match(
     homeSource,
@@ -832,6 +836,6 @@ test("the mobile dancer heading is compact and consistent across Android and iPh
   assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} total`/);
   assert.match(
     homeSource,
-    /function renderHomeTvFeed\(city\)[\s\S]*?classList\.remove\("dancers-directory-head"\)/,
+    /function renderHomeTvFeed\(city\)[\s\S]*?classList\.add\("discovery-section-head"\)/,
   );
 });
