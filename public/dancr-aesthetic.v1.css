@@ -3594,6 +3594,15 @@ body.dancr-button-system .home-tv-feed-feedback {
     0 0 12px var(--dancr-color-brand-glow-soft) !important;
 }
 
+body.dancr-button-system .home-tv-feed-feedback.is-neutral {
+  border-color: var(--dancr-color-white-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-black-medium) !important;
+  background-image: none !important;
+  box-shadow: 0 12px 34px var(--dancr-color-black-strong) !important;
+  text-shadow: none !important;
+}
+
 body.dancr-button-system .home-tv-feed-schedule.is-now {
   border-color: var(--dancr-color-success-medium) !important;
   color: var(--dancr-color-success) !important;

@@ -295,6 +295,10 @@ test("card controls expose accessible labels, keyboard alternatives, and feedbac
   );
   assert.match(
     homeSource,
+    /function showHomeTvFeedFeedback\(slide, message, tone = "default"\)[\s\S]*?feedback\.classList\.toggle\("is-neutral", tone === "neutral"\)[\s\S]*?feedback\.classList\.remove\("show", "is-neutral"\)/,
+  );
+  assert.match(
+    homeSource,
     /reportMenu\.setAttribute\("role", "menu"\)[\s\S]*?option\.setAttribute\("role", "menuitem"\)/,
   );
   assert.match(
@@ -318,7 +322,7 @@ test("intentional pauses persist between cards while fullscreen explicitly resum
   );
   assert.match(
     homeSource,
-    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?delete slide\.dataset\.userPaused;[\s\S]*?activateHomeTvFeedVideo\(videoId\);[\s\S]*?slide\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?video\.webkitEnterFullscreen\(\)/,
+    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?delete slide\.dataset\.userPaused;[\s\S]*?activateHomeTvFeedVideo\(videoId\);[\s\S]*?slide\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?video\.webkitEnterFullscreen\(\)[\s\S]*?showHomeTvFeedFeedback\(slide, "Full screen", "neutral"\)[\s\S]*?showHomeTvFeedFeedback\(slide, "Full screen unavailable", "neutral"\)/,
   );
   assert.match(
     homeSource,
@@ -415,6 +419,13 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(playbackControl, /background-color: var\(--dancr-color-black-medium\) !important;/);
   assert.match(playbackControl, /background-image: none !important;/);
   assert.doesNotMatch(playbackControl, /brand-|beam-|gradient|glow/);
+  const neutralFullscreenFeedback = brandedCards.match(
+    /\.home-tv-feed-feedback\.is-neutral \{[\s\S]*?\}/,
+  )?.[0] || "";
+  assert.match(neutralFullscreenFeedback, /border-color: var\(--dancr-color-white-medium\) !important;/);
+  assert.match(neutralFullscreenFeedback, /background-color: var\(--dancr-color-black-medium\) !important;/);
+  assert.match(neutralFullscreenFeedback, /box-shadow: 0 12px 34px var\(--dancr-color-black-strong\) !important;/);
+  assert.doesNotMatch(neutralFullscreenFeedback, /brand-|beam-|gradient|glow/);
   assert.match(brandedCards, /\.home-tv-feed-verified/);
   assert.match(brandedCards, /var\(--dancr-color-info\) 24%/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-now/);
