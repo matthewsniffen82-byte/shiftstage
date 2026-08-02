@@ -33154,29 +33154,43 @@
           display: grid;
           grid-template-columns: repeat(2, 44px);
           justify-self: center;
-          gap: 5px;
-          padding: 3px;
-          border: 1px solid rgba(255,255,255,.08);
-          border-radius: 999px;
-          background: rgba(255,255,255,.025);
+          gap: 0;
+          padding: 0;
+          border: 0;
+          background: transparent;
         }
-        #profileBackdrop .profile-modal-media-tabs button {
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button {
+          position: relative;
+          isolation: isolate;
           width: 44px;
           height: 44px;
           min-height: 44px;
           display: grid;
           place-items: center;
           padding: 0;
-          border: 1px solid transparent;
-          border-radius: 50%;
+          border: 0 !important;
+          border-radius: 50% !important;
           color: #8f849e;
-          background: transparent;
+          background: transparent !important;
+          box-shadow: none !important;
           font: inherit;
           cursor: pointer;
         }
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button::before {
+          position: absolute;
+          z-index: 0;
+          inset: 3px;
+          content: "";
+          border: 1px solid rgba(255,255,255,.11);
+          border-radius: 50%;
+          background: rgba(255,255,255,.055);
+          box-sizing: border-box;
+        }
         #profileBackdrop .profile-media-tab-icon {
-          width: 22px;
-          height: 22px;
+          position: relative;
+          z-index: 1;
+          width: 19px;
+          height: 19px;
           display: block;
           fill: none;
           stroke: currentColor;
@@ -33185,12 +33199,17 @@
           stroke-linejoin: round;
         }
         #profileBackdrop .profile-media-tab-play { fill: currentColor; stroke: none; }
-        #profileBackdrop .profile-modal-media-tabs button.active {
-          border-color: rgba(126,234,255,.42);
-          color: #fff;
-          background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(11,148,201,.2));
-          box-shadow: 0 0 20px rgba(124,58,237,.12);
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active {
+          border-color: transparent !important;
+          color: #fff !important;
+          background: transparent !important;
+          box-shadow: none !important;
           text-shadow: none;
+        }
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active::before {
+          border-color: rgba(126,234,255,.42);
+          background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.34));
+          box-shadow: var(--dancr-shadow-beam-active);
         }
         #profileBackdrop .profile-modal-media-tabs button:disabled {
           opacity: .4;
