@@ -35518,6 +35518,7 @@
     let homeTvFeedObserver = null;
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
+    let homeTvFeedLandingPending = false;
     const homeTvFeedSnapMedia = window.matchMedia("(max-width: 720px)");
     const homeTvFeedImpressions = new Set();
     const homeTvFeedEngagedViews = new Set();
@@ -49085,6 +49086,12 @@
       });
     }
 
+    function settleHomeTvFeedLanding({ complete = false } = {}) {
+      if (!homeTvFeedLandingPending) return;
+      focusHomeResults();
+      if (complete) homeTvFeedLandingPending = false;
+    }
+
     function handleHomeDiscoveryFeedViewportChange() {
       const shouldUseInlineLayout =
         activeTab === "venues" &&
@@ -49539,6 +49546,7 @@
       results.querySelectorAll(".home-tv-feed-video").forEach((video) => video.pause());
       results.classList.remove("home-tv-feed");
       document.documentElement.classList.remove("home-tv-page-snap");
+      homeTvFeedLandingPending = false;
       delete results.dataset.homeTvFeedKey;
       const bottomTv = document.getElementById("homeBottomTv");
       bottomTv?.classList.remove("active");
@@ -50127,17 +50135,20 @@
         results.removeAttribute("aria-label");
         results.setAttribute("aria-busy", "true");
         renderHomeTvFeedLoading();
+        settleHomeTvFeedLanding();
         return;
       }
       results.removeAttribute("aria-busy");
       if (homeTvFeedStatus === "error") {
         tabCount.textContent = "Unavailable";
         renderHomeTvFeedMessage("MyDancr TV videos are temporarily unavailable.", city);
+        settleHomeTvFeedLanding({ complete: true });
         return;
       }
       if (!homeTvFeedVideos.length) {
         tabCount.textContent = "0 videos";
         renderHomeTvFeedMessage(`No approved MyDancr TV videos are available in ${city} yet.`);
+        settleHomeTvFeedLanding({ complete: true });
         return;
       }
 
@@ -50153,7 +50164,10 @@
         `Swipe through ${homeTvFeedVideos.length} citywide MyDancr TV video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}${venuePriorityLabel}`
       );
       const feedKey = `${city}:${preferredVenueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
-      if (results.dataset.homeTvFeedKey === feedKey) return;
+      if (results.dataset.homeTvFeedKey === feedKey) {
+        settleHomeTvFeedLanding({ complete: true });
+        return;
+      }
       homeTvFeedObserver?.disconnect();
       results.replaceChildren(
         ...homeTvFeedVideos.map((item, index) => (
@@ -50163,6 +50177,7 @@
       results.dataset.homeTvFeedKey = feedKey;
       syncHomeTvFeedSoundButtons();
       window.requestAnimationFrame(setupHomeTvFeedObserver);
+      settleHomeTvFeedLanding({ complete: true });
     }
 
     async function loadHomeTvFeed(city, preferredVenueId = "") {
@@ -52930,6 +52945,7 @@
         selectedVenueName = null;
       }
       activeTab = nextTab;
+      homeTvFeedLandingPending = nextTab === "tv" && options.scroll !== false;
       homeDiscoveryFeedOpen =
         nextTab === "venues" &&
         homeDiscoveryFeedUsesInlineLayout();
@@ -52946,7 +52962,7 @@
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
       syncHomeDestinationLocation(nextTab);
       render();
-      if (options.scroll !== false) {
+      if (options.scroll !== false && nextTab !== "tv") {
         focusHomeResults();
       }
       return true;
@@ -53336,9 +53352,10 @@
     if (initialHomeDestinationRequested) {
       syncHomeDestinationLocation(initialHomeDestination);
     }
+    homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
-    if (initialHomeDestinationRequested) {
+    if (initialHomeDestinationRequested && initialHomeDestination !== "tv") {
       focusHomeResults();
     }
     async function refreshVisibleHomeDiscovery() {

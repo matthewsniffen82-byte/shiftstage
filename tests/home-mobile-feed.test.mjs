@@ -125,7 +125,7 @@ test("the homepage selects Dancers on first load and keeps destination navigatio
   );
 });
 
-test("all three destinations stay scrollable and TV lands with its title at the viewport start", () => {
+test("all three destinations stay scrollable and loaded TV lands with its title at the viewport start", () => {
   assert.match(
     homeSource,
     /const homeDestinationOrder = \["dancers", "tv", "venues"\];/,
@@ -136,7 +136,20 @@ test("all three destinations stay scrollable and TV lands with its title at the 
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?classList\.toggle\("active", isActive\)[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?focusHomeResults\(\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?homeTvFeedLandingPending = nextTab === "tv" && options\.scroll !== false;[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false && nextTab !== "tv"[\s\S]*?focusHomeResults\(\)/,
+  );
+  assert.match(homeSource, /let homeTvFeedLandingPending = false;/);
+  assert.match(
+    homeSource,
+    /function settleHomeTvFeedLanding\(\{ complete = false \} = \{\}\) \{[\s\S]*?if \(!homeTvFeedLandingPending\) return;[\s\S]*?focusHomeResults\(\);[\s\S]*?if \(complete\) homeTvFeedLandingPending = false;/,
+  );
+  assert.match(
+    homeSource,
+    /homeTvFeedStatus === "loading"[\s\S]*?renderHomeTvFeedLoading\(\);[\s\S]*?settleHomeTvFeedLanding\(\);[\s\S]*?results\.replaceChildren\([\s\S]*?settleHomeTvFeedLanding\(\{ complete: true \}\);/,
+  );
+  assert.match(
+    homeSource,
+    /homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";[\s\S]*?render\(\);/,
   );
   assert.match(
     homeSource,
