@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=42" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=43" rel="stylesheet">/,
   );
 });
 
@@ -148,6 +148,17 @@ test("Android and Samsung Browser cannot reintroduce device-only glow or media f
   assert.match(neutralSurfaceRule, /background-image: none !important;/);
   assert.match(neutralSurfaceRule, /box-shadow: none !important;/);
   assert.doesNotMatch(neutralSurfaceRule, /radial-gradient|91, 19, 255|124, 58, 237/);
+
+  const androidTvGlassRule = parityLayer.match(
+    /The final Android\/Samsung parity layer[\s\S]*?(?=\/\* Stateful selection keeps one restrained brand cue)/,
+  )?.[0] || "";
+  assert.match(androidTvGlassRule, /\.home-tv-feed-sound/);
+  assert.match(androidTvGlassRule, /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\)/);
+  assert.match(androidTvGlassRule, /border-color: var\(--dancr-color-white-medium\) !important;/);
+  assert.match(androidTvGlassRule, /background-color: var\(--dancr-color-black-soft\) !important;/);
+  assert.match(androidTvGlassRule, /backdrop-filter: blur\(14px\) saturate\(1\.08\) !important;/);
+  assert.match(androidTvGlassRule, /drop-shadow\(0 1px 2px var\(--dancr-color-black-strong\)\)/);
+  assert.doesNotMatch(androidTvGlassRule, /\.tab|\.home-bottom-tv|#discoveryTabs/);
 
   const stateRule = parityLayer.match(
     /Stateful selection keeps one restrained brand cue[\s\S]*$/,

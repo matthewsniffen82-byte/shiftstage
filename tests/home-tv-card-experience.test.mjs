@@ -339,7 +339,7 @@ test("TV sound and lower-right fullscreen controls stay compact and icon-only", 
   );
 });
 
-test("idle TV utility controls use neutral charcoal while selected reactions keep restrained violet", () => {
+test("idle TV utility controls use frosted-clear glass while selected reactions keep restrained violet", () => {
   const neutralControls = aestheticSource.match(
     /\/\* TV utility controls remain neutral[\s\S]*?(?=\/\* Active applause and follow states)/,
   )?.[0] || "";
@@ -350,15 +350,18 @@ test("idle TV utility controls use neutral charcoal while selected reactions kee
   assert.match(neutralControls, /\.home-tv-feed-sound/);
   assert.match(neutralControls, /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\)/);
   assert.match(neutralControls, /\.tv-shell \.tv-sound/);
-  assert.match(neutralControls, /background-color: var\(--dancr-color-surface-raised\) !important;/);
+  assert.match(neutralControls, /border-color: var\(--dancr-color-white-medium\) !important;/);
+  assert.match(neutralControls, /background-color: var\(--dancr-color-black-soft\) !important;/);
   assert.match(neutralControls, /background-image: none !important;/);
-  assert.match(neutralControls, /color: var\(--dancr-color-text-secondary\) !important;/);
+  assert.match(neutralControls, /color: var\(--dancr-color-text-primary\) !important;/);
+  assert.match(neutralControls, /backdrop-filter: blur\(14px\) saturate\(1\.08\) !important;/);
+  assert.match(neutralControls, /drop-shadow\(0 1px 2px var\(--dancr-color-black-strong\)\)/);
   assert.doesNotMatch(neutralControls, /radial-gradient|brand-primary|beam-violet/);
 
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=42/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=43/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
