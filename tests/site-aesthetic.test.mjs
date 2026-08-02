@@ -26,7 +26,51 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=61" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=62" rel="stylesheet">/,
+  );
+});
+
+test("venue detail branding is neutral first with scoped brand and semantic actions", () => {
+  const venueDetailBranding = aesthetic.match(
+    /Production venue-detail branding is neutral first[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(venueDetailBranding, "the production venue-detail brand layer must exist");
+  assert.match(
+    venueDetailBranding,
+    /\.venue-quick-stat,[\s\S]*?\.venue-info \.info-tile,[\s\S]*?\.venue-offer-card,[\s\S]*?\.locked[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;/,
+  );
+  assert.match(
+    venueDetailBranding,
+    /\.venue-quick-stat strong,[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?text-shadow: none !important;/,
+  );
+  assert.match(
+    venueDetailBranding,
+    /\.follow-venue-btn \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)[\s\S]*?var\(--dancr-shadow-brand-control\)/,
+  );
+  assert.match(
+    venueDetailBranding,
+    /\.venue-operating-status\.is-open \{[\s\S]*?var\(--dancr-color-success\)/,
+  );
+  assert.match(
+    venueDetailBranding,
+    /\.venue-address-directions, \.venue-directions-btn\)[\s\S]*?var\(--dancr-color-info\) 10%/,
+  );
+  assert.match(
+    venueDetailBranding,
+    /#results\.venue-profile-overlay \{[\s\S]*?scrollbar-color: var\(--dancr-color-border\) transparent !important;[\s\S]*?::-webkit-scrollbar-thumb \{[\s\S]*?background: var\(--dancr-color-border\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.doesNotMatch(
+    venueDetailBranding,
+    /global-mobile-bottom-nav|#discoveryTabs|home-bottom-tv|home-nav-/,
+  );
+  assert.doesNotMatch(
+    venueDetailBranding,
+    /(?:width|height|padding|margin|position|inset|overflow|display|grid-template-columns|gap):/,
+  );
+  assert.doesNotMatch(
+    venueDetailBranding,
+    /\.venue-main-photo(?:\.|\s|,|\{)|\.venue-detail-logo(?:\.|\s|,|\{)/,
   );
 });
 

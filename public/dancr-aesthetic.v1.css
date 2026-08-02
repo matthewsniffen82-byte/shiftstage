@@ -3612,3 +3612,180 @@ body.dancr-button-system .home-tv-feed-deal-action {
   ) !important;
   box-shadow: 0 0 10px var(--dancr-color-success-soft) !important;
 }
+
+/* Production venue-detail branding is neutral first. The venue's approved
+ * artwork remains untouched; Electric Violet is reserved for the primary
+ * follow action and focus, while operational meaning uses semantic tokens. */
+body.dancr-button-system #results.venue-profile-overlay,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail {
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-background) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay :is(
+    .venue-hero,
+    .venue-sign,
+    .venue-detail-logo-shell,
+    .venue-quick-stat,
+    .venue-info .info-tile,
+    .venue-offer-card,
+    .venue-detail-club-deal-qr-state.is-unavailable,
+    .venue-detail-club-deal-qr-state.is-unavailable .venue-detail-club-deal-symbol,
+    .venue-shift-row,
+    .locked
+  ) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface-subtle) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail :is(
+    #venueDetailName,
+    .venue-sign-name,
+    .venue-quick-stat strong,
+    .venue-info strong,
+    .venue-offer-card h3,
+    .venue-detail-club-deal-qr-copy strong,
+    .section-title,
+    .venue-shift-copy strong
+  ) {
+  color: var(--dancr-color-text-primary) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail :is(
+    .venue-sign-meta,
+    .venue-quick-stat span,
+    .venue-info .meta,
+    .venue-address-distance,
+    .venue-offer-card p,
+    .venue-detail-club-deal-qr-copy small,
+    .locked
+  ) {
+  color: var(--dancr-color-text-muted) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-club-deal-unavailable,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-qr-state.is-unavailable {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background-color: var(--dancr-color-surface-subtle) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-club-deal-unavailable .eyebrow {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-status,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-pill {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-operating-status.is-open {
+  border-color: var(--dancr-color-success-strong) !important;
+  color: var(--dancr-color-success) !important;
+  background: var(--dancr-color-success-soft) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail :is(
+    .venue-offer-card.revenue-offer-card,
+    .venue-detail-club-deal-qr-state.is-available
+  ) {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-success-soft) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-qr-state.is-available :is(strong, small, svg) {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .action-btn.follow-venue-btn {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .action-btn.follow-venue-btn.is-following {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  color: var(--dancr-color-brand-core) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 24%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-address-directions, .venue-directions-btn) {
+  border-color: var(--dancr-color-info-medium) !important;
+  color: var(--dancr-color-info) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 10%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(a, button):focus-visible {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close {
+  border-color: var(--dancr-color-border-strong) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay {
+  scrollbar-color: var(--dancr-color-border) transparent !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay::-webkit-scrollbar-track {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay::-webkit-scrollbar-thumb {
+  border-color: transparent !important;
+  background: var(--dancr-color-border) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay::-webkit-scrollbar-thumb:is(:hover, :active) {
+  background: var(--dancr-color-text-muted) !important;
+  box-shadow: none !important;
+}

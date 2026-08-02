@@ -377,7 +377,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=61/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=62/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
