@@ -4,6 +4,7 @@ import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
+import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import type { ShiftSummary } from "@/src/lib/dancr/types";
@@ -43,6 +44,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
     profile.primaryPhotoWidth || profile.photos[0]?.imageWidth || null;
   const heroPhotoHeight =
     profile.primaryPhotoHeight || profile.photos[0]?.imageHeight || null;
+  const heroPhotoFocalX =
+    profile.primaryPhotoFocalX ?? profile.photos[0]?.focalX ?? 50;
+  const heroPhotoFocalY =
+    profile.primaryPhotoFocalY ?? profile.photos[0]?.focalY ?? 50;
   const gallery = profile.photos.length
     ? profile.photos
     : heroPhoto
@@ -100,6 +105,12 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 sizes="46px"
                 src={heroPhoto}
                 srcSet={heroPhotoSrcSet || undefined}
+                style={{
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: imageFocalPointCss(heroPhotoFocalX, heroPhotoFocalY),
+                  width: "100%",
+                }}
                 width={heroPhotoWidth || undefined}
               />
             ) : initials(profile.stageName)}
@@ -336,9 +347,9 @@ function PublicProfileStyles() {
       html:has(.public-profile-shell)::-webkit-scrollbar-thumb, body:has(.public-profile-shell)::-webkit-scrollbar-thumb { border: 0; border-radius: 999px; background: rgba(255,255,255,.28); box-shadow: none; }
       html:has(.public-profile-shell)::-webkit-scrollbar-thumb:hover, html:has(.public-profile-shell)::-webkit-scrollbar-thumb:active, body:has(.public-profile-shell)::-webkit-scrollbar-thumb:hover, body:has(.public-profile-shell)::-webkit-scrollbar-thumb:active { background: rgba(255,255,255,.42); box-shadow: none; }
       .profile-titlebar { position: relative; z-index: 1; max-width: 760px; min-height: 64px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 0 8px; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
-      .profile-titlebar-avatar { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
+      .profile-titlebar-avatar { width: 42px; height: 42px; position: relative; display: grid; flex: 0 0 42px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
-      .profile-titlebar-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(1.08) contrast(1.02); }
+      .profile-titlebar-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(1.08) contrast(1.02); }
       .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 6px; }
       .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px, 4vw, 26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }

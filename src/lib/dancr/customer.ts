@@ -345,6 +345,8 @@ function toDancerSummary(client: DancrClient, value: any) {
     stageName: dancer.stage_name,
     city: dancer.city,
     status: dancer.status,
+    imageFocalX: image?.imageFocalX ?? 50,
+    imageFocalY: image?.imageFocalY ?? 50,
     imageUrl: image?.imageUrl || null,
     imageSrcSet: image?.imageSrcSet || null,
     imageWidth: image?.imageWidth || null,

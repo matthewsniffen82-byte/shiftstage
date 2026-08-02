@@ -83,6 +83,8 @@ export type MyDancrTvVideo = {
     stageName: string;
     city: string;
     primaryPhotoUrl: string | null;
+    primaryPhotoFocalX: number;
+    primaryPhotoFocalY: number;
   };
   venue: {
     id: string;
@@ -339,6 +341,8 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
       stageName: dancer.stage_name,
       city: dancer.city,
       primaryPhotoUrl: null,
+      primaryPhotoFocalX: 50,
+      primaryPhotoFocalY: 50,
     },
     venue: venueConfirmed && venue
       ? {
@@ -477,14 +481,19 @@ async function signPublicVideos(
     const videoUrl = signedByPath.get(row.storagePath);
     if (!videoUrl) throw new Error("Unable to prepare MyDancr TV playback.");
     const photoPath = photoByDancer.get(row.dancer.id);
-    const primaryPhotoUrl = photoPath
-      ? responsivePublicImage(admin, "dancer-photos", photoPath)?.imageUrl || null
+    const primaryPhoto = photoPath
+      ? responsivePublicImage(admin, "dancer-photos", photoPath)
       : null;
     const { storagePath: _storagePath, dancerPhotoPath: _dancerPhotoPath, ...publicVideo } = row;
     return {
       ...publicVideo,
       videoUrl,
-      dancer: { ...publicVideo.dancer, primaryPhotoUrl },
+      dancer: {
+        ...publicVideo.dancer,
+        primaryPhotoUrl: primaryPhoto?.imageUrl || null,
+        primaryPhotoFocalX: primaryPhoto?.imageFocalX ?? 50,
+        primaryPhotoFocalY: primaryPhoto?.imageFocalY ?? 50,
+      },
     };
   });
 }

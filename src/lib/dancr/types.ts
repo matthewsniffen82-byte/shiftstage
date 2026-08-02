@@ -149,6 +149,8 @@ export type DancerCard = {
   verified: boolean;
   distanceMiles?: number;
   primaryPhotoUrl: string | null;
+  primaryPhotoFocalX?: number;
+  primaryPhotoFocalY?: number;
   primaryPhotoSrcSet?: string | null;
   primaryPhotoWidth?: number | null;
   primaryPhotoHeight?: number | null;
@@ -188,6 +190,8 @@ export type DancerProfile = DancerCard & {
 export type DancerPhoto = {
   id: string;
   imageUrl: string;
+  focalX?: number;
+  focalY?: number;
   imageSrcSet?: string | null;
   imageWidth?: number | null;
   imageHeight?: number | null;

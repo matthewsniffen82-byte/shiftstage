@@ -30743,7 +30743,7 @@
             radial-gradient(circle at 50% 32%, rgba(126,234,255,.28), transparent 34%),
             #181224;
           background-image: var(--custom-photo);
-          background-position: center top;
+          background-position: var(--custom-photo-position, center);
           background-size: cover;
         }
         .venue-card-lineup-avatar:first-child {
@@ -30915,7 +30915,7 @@
             radial-gradient(circle at 50% 32%, rgba(255,255,255,.16), transparent 34%),
             #111216;
           background-image: var(--custom-photo);
-          background-position: center top;
+          background-position: var(--custom-photo-position, center);
           background-size: cover;
           box-shadow: 0 7px 18px rgba(0,0,0,.32);
         }
@@ -32982,7 +32982,7 @@
           color: #fff;
           background:
             linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.34));
-          background-position: center;
+          background-position: var(--custom-photo-position, center);
           background-repeat: no-repeat;
           background-size: cover;
           box-shadow: 0 10px 26px rgba(0,0,0,.38), 0 0 18px rgba(124,58,237,.16);
@@ -37612,6 +37612,24 @@
       } : { className: "", style: "" };
     }
 
+    function avatarPhotoPosition(focalX, focalY) {
+      const normalize = (value) => {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) return 50;
+        return Math.min(100, Math.max(0, Math.round(parsed)));
+      };
+      return `${normalize(focalX)}% ${normalize(focalY)}%`;
+    }
+
+    function customAvatarPhotoAttrs(url, srcSet = "", focalX = 50, focalY = 50) {
+      const attrs = customPhotoAttrs(url, srcSet);
+      if (!attrs.style) return attrs;
+      return {
+        ...attrs,
+        style: attrs.style.replace(/"$/, `; --custom-photo-position: ${avatarPhotoPosition(focalX, focalY)}"`)
+      };
+    }
+
     function formatLiveDistance(value) {
       const distance = Number(value);
       return Number.isFinite(distance) ? `${distance.toFixed(1)} mi` : "";
@@ -37664,6 +37682,8 @@
         trendRank: item.currentRank || null,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
+        mainPhotoFocalX: item.primaryPhotoFocalX ?? 50,
+        mainPhotoFocalY: item.primaryPhotoFocalY ?? 50,
         mainPhotoSrcSet: item.primaryPhotoSrcSet || "",
         galleryPhotoUrls,
         galleryPhotoSrcSets: Array.isArray(item.galleryPhotoSrcSets) ? item.galleryPhotoSrcSets : [],
@@ -38927,6 +38947,8 @@
         deletedPhotoStoragePaths: Array.isArray(ownProfile.deletedPhotoStoragePaths) ? ownProfile.deletedPhotoStoragePaths : [],
         deletedPhotoUrls: Array.isArray(ownProfile.deletedPhotoUrls) ? ownProfile.deletedPhotoUrls : [],
         mainPhotoUrl: ownProfile.mainPhotoUrl || liveDancers[ownIndex].mainPhotoUrl || "",
+        mainPhotoFocalX: ownProfile.mainPhotoFocalX ?? liveDancers[ownIndex].mainPhotoFocalX ?? 50,
+        mainPhotoFocalY: ownProfile.mainPhotoFocalY ?? liveDancers[ownIndex].mainPhotoFocalY ?? 50,
         galleryPhotoUrls: Array.isArray(ownProfile.galleryPhotoUrls) && ownProfile.galleryPhotoUrls.length
           ? ownProfile.galleryPhotoUrls
           : liveDancers[ownIndex].galleryPhotoUrls || []
@@ -41916,6 +41938,8 @@
       const approvedGallery = approvedRows.filter((photo) => photo !== primary);
       const photoUrl = (photo) => photo?.imageUrl || photo?.image_url || photo?.url || photo?.storage_path || "";
       profile.mainPhotoUrl = photoUrl(primary);
+      profile.mainPhotoFocalX = primary?.focalX ?? primary?.imageFocalX ?? 50;
+      profile.mainPhotoFocalY = primary?.focalY ?? primary?.imageFocalY ?? 50;
       profile.galleryPhotoUrls = approvedGallery.map(photoUrl).filter(Boolean);
       profile.submittedPhotos = editableRows
         .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "pending")
@@ -43431,9 +43455,11 @@
       const profiles = venueVisualProfiles(city, venue.name).slice(0, 3);
       if (!profiles.length) return "";
       const avatars = profiles.map((profile) => {
-        const attrs = customPhotoAttrs(
+        const attrs = customAvatarPhotoAttrs(
           publicProfilePhotoUrl(profile),
-          publicProfilePhotoSrcSet(profile)
+          publicProfilePhotoSrcSet(profile),
+          profile.mainPhotoFocalX,
+          profile.mainPhotoFocalY
         );
         return `<span class="${options.mobile ? "home-venue-discovery-lineup-avatar" : "venue-card-lineup-avatar"}${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
       }).join("");
@@ -44250,8 +44276,13 @@
       modalProfileAvatar.textContent = basePhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (basePhotoUrl) {
         modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(basePhotoUrl)}')`;
+        modalProfileAvatar.style.setProperty(
+          "--custom-photo-position",
+          avatarPhotoPosition(profile.mainPhotoFocalX, profile.mainPhotoFocalY)
+        );
       } else {
         modalProfileAvatar.style.removeProperty("background-image");
+        modalProfileAvatar.style.removeProperty("--custom-photo-position");
       }
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo`);
       modalMediaTvTab.disabled = true;
@@ -45789,6 +45820,8 @@
           const galleryUrls = Array.isArray(profile.galleryPhotoUrls) ? profile.galleryPhotoUrls.filter(Boolean) : [];
           if (isPrimary) {
             profile.mainPhotoUrl = imageUrl;
+            profile.mainPhotoFocalX = uploaded.focalX ?? uploaded.imageFocalX ?? 50;
+            profile.mainPhotoFocalY = uploaded.focalY ?? uploaded.imageFocalY ?? 50;
             profile.galleryPhotoUrls = [...new Set(galleryUrls.filter((url) => url !== imageUrl))].slice(0, MAX_DANCER_PROFILE_PHOTOS - 1);
             uploadedPhotoTarget = "main";
           } else {
@@ -46059,6 +46092,8 @@
           name: stageName || localProfile.name,
           city: city || localProfile.city || citySelect.value || "Las Vegas",
           mainPhotoUrl: photos[0] || "",
+          mainPhotoFocalX: dancerPhotos[0]?.focalX ?? dancerPhotos[0]?.imageFocalX ?? 50,
+          mainPhotoFocalY: dancerPhotos[0]?.focalY ?? dancerPhotos[0]?.imageFocalY ?? 50,
           galleryPhotoUrls: photos.slice(1),
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
           photoStatus: reviewStatusLabel(profile.photo_review_status || profile.photoReviewStatus, "Approved", dancerSetup.photos ? "Pending" : localProfile.photoStatus),
@@ -50111,6 +50146,10 @@
       const dancerSlug = String(item?.dancer?.slug || "").trim();
       const dancerCity = String(item?.dancer?.city || citySelect.value).trim() || "Las Vegas";
       const dancerPhotoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
+      const dancerPhotoPosition = avatarPhotoPosition(
+        item?.dancer?.primaryPhotoFocalX,
+        item?.dancer?.primaryPhotoFocalY
+      );
       const venueName = String(item?.venue?.name || "").trim();
       const venueSlug = String(item?.venue?.slug || "").trim();
       const profileHref = dancerSlug
@@ -50149,6 +50188,7 @@
         dancerPhotoImage.loading = "lazy";
         dancerPhotoImage.decoding = "async";
         dancerPhotoImage.referrerPolicy = "no-referrer";
+        dancerPhotoImage.style.objectPosition = dancerPhotoPosition;
         dancerPhotoImage.addEventListener("error", () => dancerPhotoImage.remove());
         dancerPhoto.appendChild(dancerPhotoImage);
       }

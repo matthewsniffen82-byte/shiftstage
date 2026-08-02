@@ -289,6 +289,8 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
       );
       return {
         id: photo.id,
+        focalX: image?.imageFocalX ?? 50,
+        focalY: image?.imageFocalY ?? 50,
         imageUrl: image?.imageUrl || "",
         imageSrcSet: image?.imageSrcSet || null,
         imageWidth: image?.imageWidth || null,
@@ -464,6 +466,8 @@ function buildDancerCard(
       city: row.city,
       verified: true,
       primaryPhotoUrl: primaryPhoto?.imageUrl || null,
+      primaryPhotoFocalX: primaryPhoto?.imageFocalX ?? 50,
+      primaryPhotoFocalY: primaryPhoto?.imageFocalY ?? 50,
       primaryPhotoSrcSet: primaryPhoto?.imageSrcSet || null,
       primaryPhotoWidth: primaryPhoto?.imageWidth || null,
       primaryPhotoHeight: primaryPhoto?.imageHeight || null,

@@ -3,6 +3,7 @@ import type { ValidatedDancrImage } from "./image-validation";
 
 export const DANCR_RESPONSIVE_IMAGE_WIDTHS = [640, 1280, 2048] as const;
 export const DANCR_RESPONSIVE_IMAGE_QUALITY = 90;
+const DEFAULT_IMAGE_FOCAL_PERCENT = 50;
 
 type DancrClient = SupabaseClient<any, any, any>;
 
@@ -14,6 +15,8 @@ export type ResponsiveImageVariant = {
 };
 
 export type PreparedResponsiveImage = {
+  focalX: number;
+  focalY: number;
   height: number;
   master: ValidatedDancrImage;
   variants: ResponsiveImageVariant[];
@@ -21,6 +24,8 @@ export type PreparedResponsiveImage = {
 };
 
 export type UploadedResponsiveImage = {
+  focalX: number;
+  focalY: number;
   height: number;
   responsiveWidths: number[];
   storagePath: string;
@@ -28,6 +33,8 @@ export type UploadedResponsiveImage = {
 };
 
 export type ResponsivePublicImage = {
+  imageFocalX: number;
+  imageFocalY: number;
   imageHeight: number | null;
   imageSrcSet: string | null;
   imageUrl: string;
@@ -36,13 +43,15 @@ export type ResponsivePublicImage = {
 };
 
 type ResponsiveImageManifest = {
+  focalX: number;
+  focalY: number;
   height: number;
   responsiveWidths: number[];
   width: number;
 };
 
 const RESPONSIVE_MANIFEST_PATTERN =
-  /\.r(0|[1-9]\d*(?:-[1-9]\d*)*)\.m([1-9]\d*)x([1-9]\d*)\.[a-z0-9]+$/i;
+  /\.r(0|[1-9]\d*(?:-[1-9]\d*)*)\.m([1-9]\d*)x([1-9]\d*)(?:\.f(\d{1,3})x(\d{1,3}))?\.[a-z0-9]+$/i;
 
 export async function prepareResponsiveImage(
   master: ValidatedDancrImage,
@@ -57,6 +66,12 @@ export async function prepareResponsiveImage(
   if (!width || !height) {
     throw new Error("Unable to read the uploaded photo dimensions.");
   }
+  const { focalX, focalY } = await detectImageFocalPoint(
+    sharp,
+    master.buffer,
+    width,
+    height,
+  );
 
   const requestedWidths = DANCR_RESPONSIVE_IMAGE_WIDTHS.filter(
     (candidateWidth) => candidateWidth < width,
@@ -93,6 +108,8 @@ export async function prepareResponsiveImage(
   );
 
   return {
+    focalX,
+    focalY,
     height,
     master: {
       ...master,
@@ -146,6 +163,8 @@ export async function uploadResponsiveImage(
   }
 
   return {
+    focalX: prepared.focalX,
+    focalY: prepared.focalY,
     height: prepared.height,
     responsiveWidths: prepared.variants.map((variant) => variant.width),
     storagePath,
@@ -187,6 +206,8 @@ export function responsivePublicImage(
   if (!normalizedPath) return null;
   if (/^https?:\/\//i.test(normalizedPath)) {
     return {
+      imageFocalX: DEFAULT_IMAGE_FOCAL_PERCENT,
+      imageFocalY: DEFAULT_IMAGE_FOCAL_PERCENT,
       imageHeight: null,
       imageSrcSet: null,
       imageUrl: normalizedPath,
@@ -199,6 +220,8 @@ export function responsivePublicImage(
   const manifest = parseResponsiveImageManifest(normalizedPath);
   if (!manifest) {
     return {
+      imageFocalX: DEFAULT_IMAGE_FOCAL_PERCENT,
+      imageFocalY: DEFAULT_IMAGE_FOCAL_PERCENT,
       imageHeight: null,
       imageSrcSet: null,
       imageUrl: masterImageUrl,
@@ -223,6 +246,8 @@ export function responsivePublicImage(
   ].join(", ");
 
   return {
+    imageFocalX: manifest.focalX,
+    imageFocalY: manifest.focalY,
     imageHeight: manifest.height,
     imageSrcSet: sourceSet,
     imageUrl: fallbackSource,
@@ -250,7 +275,7 @@ function responsiveMasterStoragePath(
     extensionIndex > 0 ? fileName.slice(extensionIndex + 1) : image.master.extension;
   const responsiveWidths =
     image.variants.map((variant) => variant.width).join("-") || "0";
-  return `${normalizedDirectory}/${stem}.r${responsiveWidths}.m${image.width}x${image.height}.${extension}`;
+  return `${normalizedDirectory}/${stem}.r${responsiveWidths}.m${image.width}x${image.height}.f${image.focalX}x${image.focalY}.${extension}`;
 }
 
 function parseResponsiveImageManifest(
@@ -268,7 +293,66 @@ function parseResponsiveImageManifest(
   const width = Number.parseInt(match[2], 10);
   const height = Number.parseInt(match[3], 10);
   if (!width || !height) return null;
-  return { height, responsiveWidths, width };
+  return {
+    focalX: normalizeImageFocalPercent(match[4]),
+    focalY: normalizeImageFocalPercent(match[5]),
+    height,
+    responsiveWidths,
+    width,
+  };
+}
+
+async function detectImageFocalPoint(
+  sharp: any,
+  buffer: Buffer,
+  width: number,
+  height: number,
+) {
+  if (width === height) {
+    return {
+      focalX: DEFAULT_IMAGE_FOCAL_PERCENT,
+      focalY: DEFAULT_IMAGE_FOCAL_PERCENT,
+    };
+  }
+
+  try {
+    const targetSize = Math.min(width, height, 512);
+    const result = await sharp(buffer, {
+      failOn: "error",
+      limitInputPixels: false,
+    })
+      .resize({
+        width: targetSize,
+        height: targetSize,
+        fit: "cover",
+        position: sharp.strategy.attention,
+        withoutEnlargement: true,
+      })
+      .webp({ effort: 1, quality: 60 })
+      .toBuffer({ resolveWithObject: true });
+    const attentionX = Number(result.info.attentionX);
+    const attentionY = Number(result.info.attentionY);
+    if (
+      Number.isFinite(attentionX) &&
+      Number.isFinite(attentionY) &&
+      attentionX >= 0 &&
+      attentionX <= width &&
+      attentionY >= 0 &&
+      attentionY <= height
+    ) {
+      return {
+        focalX: normalizeImageFocalPercent((attentionX / width) * 100),
+        focalY: normalizeImageFocalPercent((attentionY / height) * 100),
+      };
+    }
+  } catch {
+    // A centered crop keeps uploads usable if content-aware analysis cannot run.
+  }
+
+  return {
+    focalX: DEFAULT_IMAGE_FOCAL_PERCENT,
+    focalY: DEFAULT_IMAGE_FOCAL_PERCENT,
+  };
 }
 
 function publicStorageUrl(
@@ -282,6 +366,12 @@ function publicStorageUrl(
 function positiveDimension(value: unknown) {
   const dimension = Number(value || 0);
   return Number.isInteger(dimension) && dimension > 0 ? dimension : 0;
+}
+
+function normalizeImageFocalPercent(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return DEFAULT_IMAGE_FOCAL_PERCENT;
+  return Math.min(100, Math.max(0, Math.round(parsed)));
 }
 
 async function loadSharp(): Promise<any> {

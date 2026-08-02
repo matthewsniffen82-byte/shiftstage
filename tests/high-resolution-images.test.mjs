@@ -79,6 +79,9 @@ test("responsive image processing preserves the master and creates production di
     /buffer: prepared\.master\.buffer[\s\S]*?contentType: prepared\.master\.contentType/,
   );
   assert.match(responsiveImages, /responsiveVariantStoragePath/);
+  assert.match(responsiveImages, /position: sharp\.strategy\.attention/);
+  assert.match(responsiveImages, /result\.info\.attentionX/);
+  assert.match(responsiveImages, /result\.info\.attentionY/);
   assert.match(responsiveImages, /imageSrcSet: sourceSet/);
   assert.match(responsiveImages, /fallbackSource[\s\S]*?masterImageUrl/);
 });
@@ -151,8 +154,10 @@ test("responsive image processing preserves bytes, emits real WebP variants, and
   );
   assert.match(
     uploaded.storagePath,
-    /^user\/profile\/profile\.r640-1280-2048\.m2500x1600\.jpg$/,
+    /^user\/profile\/profile\.r640-1280-2048\.m2500x1600\.f\d{1,3}x\d{1,3}\.jpg$/,
   );
+  assert.ok(uploaded.focalX >= 0 && uploaded.focalX <= 100);
+  assert.ok(uploaded.focalY >= 0 && uploaded.focalY <= 100);
   assert.equal(uploads.length, 4);
   assert.equal(uploads[0].buffer, masterBuffer);
   assert.deepEqual(
@@ -169,7 +174,30 @@ test("responsive image processing preserves bytes, emits real WebP variants, and
   assert.match(publicImage.imageSrcSet, /\.w1280\.webp 1280w/);
   assert.match(publicImage.imageSrcSet, /\.w2048\.webp 2048w/);
   assert.match(publicImage.imageSrcSet, /\.jpg 2500w$/);
+  assert.equal(publicImage.imageFocalX, uploaded.focalX);
+  assert.equal(publicImage.imageFocalY, uploaded.focalY);
   assert.deepEqual(removals, []);
+});
+
+test("legacy responsive photos retain a centered avatar fallback", () => {
+  const storageClient = {
+    storage: {
+      from(bucket) {
+        return {
+          getPublicUrl(path) {
+            return { data: { publicUrl: `https://images.example/${bucket}/${path}` } };
+          },
+        };
+      },
+    },
+  };
+  const publicImage = responsivePublicImage(
+    storageClient,
+    "dancer-photos",
+    "user/profile/legacy.r640.m1200x1800.jpg",
+  );
+  assert.equal(publicImage.imageFocalX, 50);
+  assert.equal(publicImage.imageFocalY, 50);
 });
 
 test("dancer and venue uploads publish and clean up complete responsive image sets", () => {

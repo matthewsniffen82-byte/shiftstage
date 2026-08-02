@@ -163,7 +163,10 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /\{muted \? "Sound off" : "Sound on"\}/);
   assert.match(feedClient, /className="tv-verified-mark" aria-label="Verified">✓/);
   assert.match(tvSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("is_primary", true\)[\s\S]*?\.eq\("review_status", "approved"\)/);
-  assert.match(tvSource, /dancer: \{ \.\.\.publicVideo\.dancer, primaryPhotoUrl \}/);
+  assert.match(
+    tvSource,
+    /dancer: \{[\s\S]*?\.\.\.publicVideo\.dancer,[\s\S]*?primaryPhotoUrl: primaryPhoto\?\.imageUrl \|\| null,[\s\S]*?primaryPhotoFocalX: primaryPhoto\?\.imageFocalX \?\? 50,[\s\S]*?primaryPhotoFocalY: primaryPhoto\?\.imageFocalY \?\? 50/,
+  );
   assert.match(feedClient, /className=\{`tv-profile-photo\$\{video\.dancer\.primaryPhotoUrl \? " has-photo" : ""\}`\}/);
   assert.match(feedClient, /backgroundImage: `url\(\$\{JSON\.stringify\(video\.dancer\.primaryPhotoUrl\)\}\)`/);
   assert.match(feedClient, /video\.dancer\.primaryPhotoUrl \? null : dancerInitials\(video\.dancer\.stageName\)/);

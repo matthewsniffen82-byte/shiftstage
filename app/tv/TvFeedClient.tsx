@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 
@@ -587,7 +588,13 @@ export default function TvFeedClient({
                   <span
                     className={`tv-profile-photo${video.dancer.primaryPhotoUrl ? " has-photo" : ""}`}
                     style={video.dancer.primaryPhotoUrl
-                      ? { backgroundImage: `url(${JSON.stringify(video.dancer.primaryPhotoUrl)})` }
+                      ? {
+                          backgroundImage: `url(${JSON.stringify(video.dancer.primaryPhotoUrl)})`,
+                          backgroundPosition: imageFocalPointCss(
+                            video.dancer.primaryPhotoFocalX,
+                            video.dancer.primaryPhotoFocalY,
+                          ),
+                        }
                       : undefined}
                     aria-hidden="true"
                   >

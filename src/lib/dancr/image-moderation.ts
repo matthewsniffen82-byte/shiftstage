@@ -50,6 +50,8 @@ type ModeratedPhotoResult = {
     id: string;
     storage_path: string;
     imageUrl: string;
+    focalX?: number;
+    focalY?: number;
     reviewStatus: string;
     isPrimary?: boolean;
     sortOrder?: number;
@@ -466,6 +468,8 @@ async function approveModeratedUpload(
       message: "Photo uploaded successfully.",
       photo: {
         ...photo,
+        focalX: uploadedImage.focalX,
+        focalY: uploadedImage.focalY,
         imageUrl: getDancerPhotoUrl(admin, photo.storage_path),
         reviewStatus: "approved",
       },
@@ -991,6 +995,11 @@ async function findExistingModerationRecord(client: DancrClient, userId: string,
 async function moderationRecordToUploadResponse(client: DancrClient, record: any): Promise<ModeratedPhotoResult> {
   const slot = profilePhotoSlotFromUploadContext(record.upload_context);
   if (record.decision === "approved" && record.image_id) {
+    const publicImage = responsivePublicImage(
+      client,
+      APPROVED_PHOTO_BUCKET,
+      record.final_storage_path,
+    );
     return {
       decision: "approved",
       moderationRecordId: record.id,
@@ -1000,7 +1009,9 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
       photo: {
         id: record.image_id,
         storage_path: record.final_storage_path,
-        imageUrl: getDancerPhotoUrl(client, record.final_storage_path),
+        imageUrl: publicImage?.imageUrl || "",
+        focalX: publicImage?.imageFocalX ?? 50,
+        focalY: publicImage?.imageFocalY ?? 50,
         reviewStatus: "approved",
         isPrimary: slot.isPrimary,
         sortOrder: slot.isPrimary ? 0 : slot.sortOrder ?? undefined,
@@ -1025,6 +1036,8 @@ function pendingModerationPhoto(recordId: string, uploadContext: unknown): NonNu
     id: recordId,
     storage_path: "",
     imageUrl: "",
+    focalX: 50,
+    focalY: 50,
     reviewStatus: "pending",
     isPrimary: slot.isPrimary,
     sortOrder: slot.isPrimary ? 0 : slot.sortOrder ?? undefined,

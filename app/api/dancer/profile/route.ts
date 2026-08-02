@@ -317,6 +317,8 @@ function withPhotoUrls(client: any, profile: any) {
         );
         return {
           ...photo,
+          focalX: image?.imageFocalX ?? 50,
+          focalY: image?.imageFocalY ?? 50,
           imageHeight: image?.imageHeight || null,
           imageSrcSet: image?.imageSrcSet || null,
           imageUrl: image?.imageUrl || "",
