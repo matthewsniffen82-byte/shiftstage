@@ -24,7 +24,11 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-dancer \{[\s\S]*?grid-template-columns: 46px minmax\(0, 1fr\)[\s\S]*?gap: 8px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
+    /\.home-tv-feed-dancer \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: 64px minmax\(0, 1fr\)[\s\S]*?gap: 10px;[\s\S]*?\.home-tv-feed-dancer-photo \{[\s\S]*?width: 64px;[\s\S]*?height: 64px;[\s\S]*?border-radius: 999px;[\s\S]*?\.home-tv-feed-dancer-photo img \{[\s\S]*?object-fit: cover;[\s\S]*?\.home-tv-feed-dancer-copy \{[\s\S]*?\.home-tv-feed-dancer-name \{[\s\S]*?text-overflow: ellipsis/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-meta \{[\s\S]*?max-width: calc\(100% - 74px\);[\s\S]*?margin-left: 74px;/,
   );
   assert.match(
     homeSource,
