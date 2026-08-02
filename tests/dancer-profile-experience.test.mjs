@@ -50,6 +50,11 @@ test("the public dancer profile keeps only identity, verification, city, and clo
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: sticky;/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?gap: 10px;/);
+  assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 42px; height: 42px;/);
+  assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
+  assert.match(profilePage, /\.public-profile-close \{ width: 40px; min-height: 40px;/);
+  assert.match(profilePage, /\.profile-media-heading > span \{ min-height: 24px;[\s\S]*?border-radius: 999px;/);
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 

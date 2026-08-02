@@ -111,7 +111,7 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 46px minmax\(0, 1fr\);[\s\S]*?margin-inline: -12px;/,
+    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 42px minmax\(0, 1fr\);[\s\S]*?min-height: 60px;[\s\S]*?margin-inline: -12px;/,
   );
   assert.match(
     profilePolishBlock,
@@ -178,6 +178,29 @@ test("profile polish preserves the existing site color system", () => {
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop #modalClose \{\s*width: 46px !important;\s*height: 46px !important;\s*\}/,
+    /#profileBackdrop #modalClose \{[\s\S]*?width: 42px !important;[\s\S]*?height: 42px !important;[\s\S]*?min-height: 42px !important;[\s\S]*?border-color: rgba\(180,169,196,\.2\) !important;/,
+  );
+});
+
+test("profile identity and media controls form a compact balanced top section", () => {
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\);[\s\S]*?min-height: 64px;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal-avatar \{[\s\S]*?width: 44px;[\s\S]*?border: 1px solid rgba\(126,234,255,\.46\);/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop #modalCity \{[\s\S]*?min-height: 22px !important;[\s\S]*?border-radius: 999px !important;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal-media-head span \{[\s\S]*?min-height: 24px;[\s\S]*?border-radius: 999px;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?min-height: 44px;/,
   );
 });

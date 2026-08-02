@@ -46,7 +46,7 @@ test("standalone dancers keep only the X with an active Dancers fallback while l
   );
   assert.match(
     dancerPage,
-    /@media \(max-width: 600px\)[\s\S]*?\.profile-titlebar \{ min-height: 72px; \}/,
+    /@media \(max-width: 600px\)[\s\S]*?\.profile-titlebar \{ min-height: 60px; \}/,
   );
   assert.match(
     venuePage,
