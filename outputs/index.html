@@ -29137,7 +29137,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=39" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=40" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -32576,11 +32576,13 @@
           }
         }
 
-        /* Dancers is a compact three-column directory at every app width. */
+        /* Dancers is a dense, media-first three-column directory at every app
+           width. A two-pixel gutter separates tap targets without visually
+           breaking the grid into repeated cards. */
         #results.home-dancer-grid.home-dancer-three-column {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           align-items: start !important;
-          gap: 10px !important;
+          gap: 2px !important;
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
@@ -32657,7 +32659,11 @@
           padding: 0 !important;
           justify-self: stretch !important;
           aspect-ratio: 3 / 4 !important;
-          border-radius: 12px !important;
+          border: 0 !important;
+          border-radius: 2px !important;
+          background: #050507 !important;
+          box-shadow: none !important;
+          filter: none !important;
           contain: layout paint style;
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link {
@@ -32666,6 +32672,7 @@
           height: 100%;
           display: block;
           overflow: hidden;
+          border-radius: inherit;
         }
         #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-photo {
           position: absolute;
@@ -32729,15 +32736,15 @@
           font-size: clamp(7px, 1.9vw, 9px);
         }
 
-        /* Tight phone spacing enlarges each card without reducing the outer
-           expansion or the scrollbar-safe right rail. */
+        /* The phone grid keeps the same near-seamless gutter while retaining
+           the outer expansion and scrollbar-safe right rail. */
         @media (max-width: 420px) {
           #results.home-dancer-grid.home-dancer-three-column {
             width: calc(100% + 16px) !important;
             margin-inline: -8px !important;
             padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
             padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px)) !important;
-            gap: 4px !important;
+            gap: 2px !important;
             scroll-padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
           }
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {

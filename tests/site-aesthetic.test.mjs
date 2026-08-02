@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=39" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=40" rel="stylesheet">/,
   );
 });
 
@@ -159,18 +159,13 @@ test("discovery feeds retain neutral edges while TV media is completely borderle
   );
 });
 
-test("the compact dancer directory uses restrained cards and clearly branded active filters", () => {
+test("the compact dancer directory is near-seamless with clearly branded active filters", () => {
   const compactDirectoryRule = aesthetic.match(
-    /Compact directory cards stay crisp without repeated halos[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
+    /compact dancer directory reads as one continuous discovery surface[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?\n\}/,
   )?.[0] || "";
-  assert.match(
-    compactDirectoryRule,
-    /border-color: rgba\(248, 250, 252, 0\.16\) !important;/,
-  );
-  assert.match(
-    compactDirectoryRule,
-    /0 8px 18px rgba\(5, 5, 7, 0\.34\),[\s\S]*?inset 0 1px 0 rgba\(248, 250, 252, 0\.04\) !important;/,
-  );
+  assert.match(compactDirectoryRule, /border: 0 !important;/);
+  assert.match(compactDirectoryRule, /border-radius: 2px !important;/);
+  assert.match(compactDirectoryRule, /box-shadow: none !important;/);
   assert.doesNotMatch(compactDirectoryRule, /91, 19, 255|violet halo[^.]*rgba|beam-card/);
   assert.match(
     liveApp,

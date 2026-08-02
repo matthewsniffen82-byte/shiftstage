@@ -208,18 +208,18 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
 });
 
-test("Dancers uses larger three-column mobile cards with a scrollbar-safe right rail", () => {
+test("Dancers uses a near-seamless three-column media grid with a scrollbar-safe right rail", () => {
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 10px !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 2px !important;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 3 \/ 4 !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 3 \/ 4 !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 2px !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     homeSource,
-    /Tight phone spacing enlarges each card[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 4px !important;[\s\S]*?scroll-padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /phone grid keeps the same near-seamless gutter[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 2px !important;[\s\S]*?scroll-padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,

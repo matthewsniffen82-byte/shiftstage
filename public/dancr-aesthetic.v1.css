@@ -523,12 +523,13 @@ body.dancr-button-system > .app main.stack > section.stack > #results.venue-card
   filter: none !important;
 }
 
-/* Compact directory cards stay crisp without repeated halos. */
+/* The compact dancer directory reads as one continuous discovery surface.
+ * The grid itself supplies the two-pixel separator; repeated card edges and
+ * shadows would make the profile tiles look smaller and less scannable. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
-  border-color: rgba(248, 250, 252, 0.16) !important;
-  box-shadow:
-    0 8px 18px rgba(5, 5, 7, 0.34),
-    inset 0 1px 0 rgba(248, 250, 252, 0.04) !important;
+  border: 0 !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
 }
 
 /* Venue identity stays legible without adding another visible card boundary. */
