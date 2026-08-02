@@ -105,6 +105,14 @@ test("TV cards retain a neutral perimeter without a violet outline", () => {
 test("the mobile TV identity, action rail, fullscreen icon, and progress sit above navigation", () => {
   assert.match(
     homeSource,
+    /body\.home-tv-immersive #results\.home-tv-feed \{[\s\S]*?inset: 0 0 calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\) 0 !important;/,
+  );
+  assert.match(
+    homeSource,
+    /body\.home-tv-immersive \.home-tv-feed-actions \{[\s\S]*?bottom: 76px;[\s\S]*?body\.home-tv-immersive \.home-tv-feed-fullscreen \{[\s\S]*?bottom: 20px;[\s\S]*?body\.home-tv-immersive \.home-tv-feed-progress \{[\s\S]*?bottom: 12px;/,
+  );
+  assert.match(
+    homeSource,
     /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 calc\(66px \+ env\(safe-area-inset-bottom\)\) 14px;/,
   );
   assert.match(
@@ -203,7 +211,7 @@ test("applause is recorded through the constrained production TV analytics path"
 });
 
 test("card controls expose accessible labels, keyboard alternatives, and feedback", () => {
-  assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
+  assert.doesNotMatch(homeSource, /home-tv-feed-locked|requestHomeDestinationFullscreen/);
   assert.match(
     homeSource,
     /Tap to play or pause, double tap to applaud[\s\S]*?scroll up or down for another video[\s\S]*?event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"[\s\S]*?event\.key === "a" \|\| event\.key === "A"/,
