@@ -26,7 +26,30 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=38" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=39" rel="stylesheet">/,
+  );
+});
+
+test("venue discovery keeps real photography while artificial color stays out of idle cards", () => {
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-art:not\(\.has-custom-photo\),[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
+  );
+  assert.match(
+    aesthetic,
+    /Venue discovery uses one neutral cinematic layer[\s\S]*?\.home-venue-discovery-art::before,[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?background: transparent !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?backdrop-filter: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-profile-cta,[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\),[\s\S]*?\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(248, 250, 252, 0\.14\) !important;[\s\S]*?background-color: rgba\(18, 18, 22, 0\.72\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-hours \{[\s\S]*?padding: 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/,
   );
 });
 
@@ -76,7 +99,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-art,[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
+    /\.home-venue-discovery-art:not\(\.has-custom-photo\),[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
   );
   const foundation = aesthetic.match(
     /One device-neutral foundation[\s\S]*?(?=body > \.app main\.stack > \.hero\.reference-hero)/,
@@ -232,6 +255,25 @@ test("the shared aesthetic covers public content, accounts, and operations surfa
   assert.match(aesthetic, /body > \.app main\.stack > #results/);
   assert.match(aesthetic, /#profileBackdrop \.profile-modal/);
   assert.match(aesthetic, /\.venue-detail/);
+});
+
+test("customer, dancer, and venue dashboards keep idle content neutral", () => {
+  assert.match(
+    aesthetic,
+    /dashboards share the same quiet content[\s\S]*?\.customer-night-card,[\s\S]*?\.customer-saved-card,[\s\S]*?\.customer-empty-state,[\s\S]*?\.shift-checkin-card:not\(\.ready\),[\s\S]*?\.venue-cover-panel > img,[\s\S]*?\.venue-tv-video,[\s\S]*?\.tv-managed-video[\s\S]*?background-color: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.customer-section-heading\.split > strong,[\s\S]*?\.notification-title-row > strong,[\s\S]*?\.saved-deal-head > strong[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.customer-empty-state a,[\s\S]*?\.tv-studio-head > a,[\s\S]*?\.venue-tv-title > a,[\s\S]*?\.venue-tv-actions a[\s\S]*?background-color: var\(--dancr-color-surface-raised\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.dashboard-shell :is\([\s\S]*?\.photo-review-card\.is-approved,[\s\S]*?\.shift-checkin-card\.ready,[\s\S]*?\.deal-state\.active[\s\S]*?background-color: var\(--dancr-color-success-soft\) !important;/,
+  );
 });
 
 test("verified check marks use the centralized informational cyan treatment", () => {

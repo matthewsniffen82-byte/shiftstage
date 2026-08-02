@@ -398,6 +398,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     /home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
   );
   assert.doesNotMatch(venueSlide, /qrMarkup|dealMarkup|home-venue-discovery-deal|Mydancr venue|home-venue-discovery-identity/);
+  assert.doesNotMatch(venueSlide, /const accent|--venue-accent/);
   assert.match(venueSlide, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
@@ -415,9 +416,14 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     homeSource,
     /const venueButton = event\.target\.closest\("\[data-share-venue\]"\)[\s\S]*?runVenueShareAction\([\s\S]*?venueButton\.dataset\.shareVenue/,
   );
+  const venueArtRule = homeSource.match(
+    /\.home-venue-discovery-art \{[\s\S]*?\n        \}/,
+  )?.[0] || "";
+  assert.match(venueArtRule, /linear-gradient\(145deg, #151519 0%, #0c0c10 52%, #050507 100%\)/);
+  assert.doesNotMatch(venueArtRule, /--venue-accent|124,58,237/);
   assert.match(
     homeSource,
-    /\.home-venue-discovery-art \{[\s\S]*?radial-gradient[\s\S]*?\.home-venue-discovery-profile-cta \{[\s\S]*?box-shadow: none !important/,
+    /\.home-venue-discovery-profile-cta \{[\s\S]*?border: 1px solid rgba\(255,255,255,\.14\) !important;[\s\S]*?background: rgba\(8,8,13,\.62\) !important;[\s\S]*?box-shadow: none !important/,
   );
   assert.match(
     homeSource,
@@ -425,15 +431,15 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px;[\s\S]*?box-shadow: none;/,
+    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px;[\s\S]*?border-color: rgba\(255,255,255,\.14\);[\s\S]*?background: rgba\(8,8,13,\.7\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px !important;[\s\S]*?border-color: rgba\(255,255,255,\.14\) !important;[\s\S]*?background: rgba\(8,8,13,\.72\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     homeSource,
-    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?border-color: rgba\(248,250,252,\.1\) !important;[\s\S]*?box-shadow: 0 6px 16px rgba\(0,0,0,\.25\) !important;/,
+    /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \.feed-card-action \{[\s\S]*?border-color: rgba\(255,255,255,\.12\) !important;[\s\S]*?background: rgba\(8,8,13,\.64\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     homeSource,
@@ -441,7 +447,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?bottom: 78px;[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border: 0;[\s\S]*?backdrop-filter: blur\(12px\)/,
+    /\.home-venue-discovery-slide \.home-discovery-feed-copy \{[\s\S]*?bottom: 78px;[\s\S]*?left: 12px;[\s\S]*?padding: 12px;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;[\s\S]*?backdrop-filter: none/,
   );
   assert.match(
     homeSource,
