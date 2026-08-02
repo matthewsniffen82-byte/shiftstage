@@ -26,18 +26,30 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=41" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=42" rel="stylesheet">/,
   );
 });
 
-test("venue discovery keeps real photography while artificial color stays out of idle cards", () => {
+test("venue discovery keeps real photography in a premium black and platinum card hierarchy", () => {
   assert.match(
     aesthetic,
     /\.home-venue-discovery-art:not\(\.has-custom-photo\),[\s\S]*?\.home-discovery-feed-photo\.is-photo-unavailable[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?var\(--dancr-color-background\)/,
   );
   assert.match(
     aesthetic,
-    /Venue discovery uses one neutral cinematic layer[\s\S]*?\.home-venue-discovery-art::before,[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+    /Venue discovery uses a premium black-card hierarchy[\s\S]*?\.home-venue-discovery-art::before,[\s\S]*?\.home-venue-discovery-art::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?border: 1px solid transparent !important;[\s\S]*?linear-gradient\([\s\S]*?rgba\(242, 240, 230, 0\.42\)[\s\S]*?border-box !important;[\s\S]*?box-shadow: 0 18px 42px rgba\(0, 0, 0, 0\.46\) !important;/,
+  );
+  assert.match(
+    liveApp,
+    /function homeVenueDiscoveryFeedSlide[\s\S]*?class="home-venue-discovery-identity"[\s\S]*?class="home-venue-discovery-identity-mark">\$\{escapeHtml\(initials\)\}<\/span>[\s\S]*?MYDANCR VENUE/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-identity \{[\s\S]*?repeating-linear-gradient\([\s\S]*?letter-spacing: 0\.16em;[\s\S]*?backdrop-filter: blur\(12px\) saturate\(0\.75\);/,
   );
   assert.match(
     aesthetic,
@@ -45,7 +57,11 @@ test("venue discovery keeps real photography while artificial color stays out of
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-profile-cta,[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\),[\s\S]*?\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(248, 250, 252, 0\.14\) !important;[\s\S]*?background-color: rgba\(18, 18, 22, 0\.72\) !important;[\s\S]*?box-shadow: none !important;/,
+    /\.home-venue-discovery-profile-cta,[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\) \{[\s\S]*?border-color: rgba\(238, 236, 226, 0\.13\) !important;[\s\S]*?repeating-linear-gradient\([\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.065\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(96, 217, 255, 0\.36\) !important;[\s\S]*?color: #a7edff !important;[\s\S]*?background-color: rgba\(3, 17, 23, 0\.9\) !important;/,
   );
   assert.match(
     aesthetic,
