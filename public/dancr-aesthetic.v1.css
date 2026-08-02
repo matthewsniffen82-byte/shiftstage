@@ -2948,3 +2948,411 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
   background: color-mix(in srgb, var(--dancr-color-text-muted) 7%, var(--dancr-color-surface)) !important;
   box-shadow: none !important;
 }
+
+/* Dancer full profiles keep an 84/10/6 neutral, brand, and semantic color
+ * balance across both the live overlay and canonical profile route. The layer
+ * is color-only: it intentionally excludes profile media, page geometry,
+ * scrolling behavior, and every floating or bottom-navigation selector. */
+body.dancr-button-system #profileBackdrop .profile-modal,
+body.dancr-button-system .public-profile-shell {
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-background) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-summary,
+body.dancr-button-system .public-profile-shell .profile-titlebar {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background: var(--dancr-color-background) !important;
+  box-shadow: 0 8px 24px var(--dancr-color-black-soft) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-avatar,
+body.dancr-button-system .public-profile-shell .profile-titlebar-avatar {
+  border-color: var(--dancr-color-border-strong) !important;
+  background-color: var(--dancr-color-surface) !important;
+  box-shadow:
+    0 10px 26px var(--dancr-color-black-medium),
+    0 0 0 2px var(--dancr-color-border-subtle) !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalName,
+body.dancr-button-system .public-profile-shell .profile-titlebar h1 {
+  color: var(--dancr-color-text-primary) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-verified,
+body.dancr-button-system .public-profile-shell .profile-verified {
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-info) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalCity,
+body.dancr-button-system .public-profile-shell .profile-titlebar-city {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalClose,
+body.dancr-button-system .public-profile-shell .public-profile-close {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: 0 10px 24px var(--dancr-color-black-medium) !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalClose:is(:hover, :focus-visible),
+body.dancr-button-system .public-profile-shell .public-profile-close:is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-brand-primary) !important;
+  color: var(--dancr-color-text-primary) !important;
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button::before,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button::before {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button:not(.active),
+body.dancr-button-system .public-profile-shell .profile-media-tabs button:not(.active) {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button.active {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active::before,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::before {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  background: linear-gradient(
+    145deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--dancr-color-brand-core-soft),
+    var(--dancr-shadow-brand-subtle) !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-image,
+body.dancr-button-system .public-profile-shell .profile-media-feature {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface) !important;
+  box-shadow: 0 12px 28px var(--dancr-color-black-medium) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-media-position,
+body.dancr-button-system #profileBackdrop .profile-modal-media-expand,
+body.dancr-button-system .public-profile-shell :is(.profile-media-position, .profile-media-expand) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-black-strong) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .gallery .thumb.active,
+body.dancr-button-system .public-profile-shell .profile-media-grid-item.active {
+  border-color: var(--dancr-color-brand-primary) !important;
+  outline-color: var(--dancr-color-brand-primary-medium) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
+
+body.dancr-button-system #profileBackdrop :is(.info-tile, .social-tile),
+body.dancr-button-system .public-profile-shell :is(
+    .profile-schedule-section,
+    .shift-row,
+    .profile-working-card,
+    .profile-deal-availability,
+    .profile-social-section,
+    .profile-overview
+  ) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop :is(
+    .profile-schedule-card.schedule-upcoming,
+    .profile-club-deal-tile,
+    .social-tile,
+    .profile-activity-metrics
+  ),
+body.dancr-button-system .public-profile-shell :is(
+    .profile-schedule-section,
+    .profile-working-card,
+    .profile-social-section,
+    .profile-metrics
+  ) {
+  position: relative;
+}
+
+body.dancr-button-system #profileBackdrop :is(
+    .profile-schedule-card.schedule-upcoming,
+    .social-tile,
+    .profile-activity-metrics
+  )::before,
+body.dancr-button-system .public-profile-shell :is(
+    .profile-schedule-section,
+    .profile-social-section,
+    .profile-metrics
+  )::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  bottom: 16px;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--dancr-color-brand-core),
+    var(--dancr-color-brand-primary) 38%,
+    var(--dancr-color-brand-glow)
+  );
+  box-shadow: 0 0 10px var(--dancr-color-brand-glow-soft);
+  pointer-events: none;
+}
+
+body.dancr-button-system #profileBackdrop .profile-schedule-card.schedule-upcoming > strong,
+body.dancr-button-system .public-profile-shell .profile-schedule-section .eyebrow,
+body.dancr-button-system .public-profile-shell .profile-schedule-section .shift-date {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-schedule-primary,
+body.dancr-button-system .public-profile-shell .profile-schedule-section h2,
+body.dancr-button-system .public-profile-shell .profile-schedule-section .shift-row strong {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-schedule-explanation,
+body.dancr-button-system .public-profile-shell .profile-schedule-section :is(p, .shift-time),
+body.dancr-button-system .public-profile-shell .profile-section-heading > span {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system #profileBackdrop :is(.upcoming-venue-line, .profile-working-directions),
+body.dancr-button-system .public-profile-shell :is(.shift-row svg, .profile-working-head > a) {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #profileBackdrop .working-now-tile,
+body.dancr-button-system .public-profile-shell .profile-working-card:not(.has-club-deal) {
+  border-color: var(--dancr-color-success-medium) !important;
+  background: color-mix(in srgb, var(--dancr-color-success) 8%, var(--dancr-color-surface)) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .working-now-tile > strong,
+body.dancr-button-system #profileBackdrop .working-now-tile :is(svg, .status-dot),
+body.dancr-button-system .public-profile-shell .profile-live-state {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-success) !important;
+  background: var(--dancr-color-success-soft) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-club-deal-tile,
+body.dancr-button-system .public-profile-shell .profile-working-card.has-club-deal,
+body.dancr-button-system .public-profile-shell .club-deal-card {
+  border-color: var(--dancr-color-success-medium) !important;
+  background: color-mix(in srgb, var(--dancr-color-success) 8%, var(--dancr-color-surface)) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-club-deal-tile::before,
+body.dancr-button-system .public-profile-shell .profile-working-card.has-club-deal::before {
+  background: var(--dancr-color-success) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-club-deal-tile :is(.profile-deal-label, .profile-deal-main),
+body.dancr-button-system .public-profile-shell :is(.profile-working-card.has-club-deal .profile-live-state, .club-deal-copy h2) {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-qr-unavailable,
+body.dancr-button-system .public-profile-shell :is(.venue-qr-unavailable, .profile-deal-availability) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-qr-unavailable :is(.profile-deal-label, .profile-deal-main, .profile-deal-meta),
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable :is(
+    .eyebrow,
+    strong,
+    p,
+    .venue-qr-placeholder-icon,
+    .venue-qr-explanation
+  ) {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-deal-disclosure summary,
+body.dancr-button-system .public-profile-shell .venue-qr-explanation summary {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop, .public-profile-shell)
+  :is(.modal-actions, .live-actions)
+  :is(
+    .going-btn.going-btn.is-primary-action:not(.is-unavailable),
+    .profile-action-primary:not(.profile-action-unavailable)
+  ) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
+  box-shadow:
+    inset 0 1px 0 var(--dancr-color-brand-core-soft),
+    var(--dancr-shadow-brand-subtle) !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions :is(
+    .action-btn.secondary,
+    .profile-action-overflow-toggle,
+    .going-btn:not(.is-primary-action)
+  ),
+body.dancr-button-system .public-profile-shell .live-actions :is(
+    .profile-action-secondary,
+    .profile-action-share-slot .profile-share button,
+    .profile-action-overflow-toggle
+  ) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions :is(.action-btn, .profile-action-overflow-toggle) :is(svg, span),
+body.dancr-button-system .public-profile-shell .live-actions :is(
+    .profile-action-secondary,
+    .profile-action-share-slot,
+    .profile-action-overflow-toggle
+  ) :is(svg, span) {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions :is(.action-btn.is-following, .action-btn[aria-pressed="true"]),
+body.dancr-button-system .public-profile-shell .live-actions :is(.profile-action-secondary, .profile-action-going)[aria-pressed="true"] {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-brand-primary-soft) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
+
+body.dancr-button-system #profileBackdrop .modal-actions .profile-action-overflow-toggle > span:first-child,
+body.dancr-button-system .public-profile-shell .profile-action-overflow-toggle > span:first-child {
+  color: var(--dancr-color-text-secondary) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-action-overflow-menu,
+body.dancr-button-system .public-profile-shell .profile-action-overflow-menu {
+  border-color: var(--dancr-color-border-strong) !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: var(--dancr-color-surface-translucent) !important;
+  box-shadow: 0 18px 48px var(--dancr-color-black-strong) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-action-requirement,
+body.dancr-button-system .public-profile-shell .profile-action-requirement {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-action-requirement.is-public,
+body.dancr-button-system .public-profile-shell :is(
+    .profile-action-primary:not(.profile-action-unavailable),
+    .profile-action-going:not(.profile-action-unavailable)
+  ) .profile-action-requirement {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile,
+body.dancr-button-system .public-profile-shell .profile-social-section {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background: var(--dancr-color-surface) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tile .social-tile-head strong,
+body.dancr-button-system .public-profile-shell .social-list-heading h2 {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-link,
+body.dancr-button-system .public-profile-shell .social-link {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background-color: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-instagram,
+body.dancr-button-system .public-profile-shell .social-link-instagram {
+  color: #e4405f !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-tiktok,
+body.dancr-button-system .public-profile-shell .social-link-tiktok {
+  color: #25f4ee !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-snapchat,
+body.dancr-button-system .public-profile-shell .social-link-snapchat {
+  color: #fffc00 !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-onlyfans,
+body.dancr-button-system .public-profile-shell .social-link-onlyfans {
+  color: #00aff0 !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-x,
+body.dancr-button-system .public-profile-shell .social-link-x {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .social-link:focus-visible,
+body.dancr-button-system .public-profile-shell .social-link:focus-visible,
+body.dancr-button-system #profileBackdrop .modal-actions :is(.action-btn, .profile-action-overflow-toggle):focus-visible,
+body.dancr-button-system .public-profile-shell .live-actions button:focus-visible {
+  border-color: var(--dancr-color-brand-primary) !important;
+  outline: 0 !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics,
+body.dancr-button-system .public-profile-shell .profile-overview {
+  border-color: var(--dancr-color-border-subtle) !important;
+  background: var(--dancr-color-surface) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics > div + div,
+body.dancr-button-system .public-profile-shell .profile-metrics > div + div {
+  box-shadow: inset 1px 0 0 var(--dancr-color-border-subtle) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics dd,
+body.dancr-button-system .public-profile-shell .profile-metrics dd {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-activity-metrics dt,
+body.dancr-button-system .public-profile-shell .profile-metrics dt {
+  color: var(--dancr-color-text-muted) !important;
+}

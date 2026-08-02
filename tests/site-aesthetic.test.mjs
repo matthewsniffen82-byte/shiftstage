@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=57" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=58" rel="stylesheet">/,
   );
 });
 
@@ -454,6 +454,61 @@ test("venue detail and full dancer profiles use the same near-black foundation a
   assert.match(
     venueProfileAesthetic,
     /\.primaryActions > :global\(\.club-deal-launcher\),[\s\S]*?border-color: var\(--dancr-color-success-medium\);/,
+  );
+});
+
+test("dancer full profiles use the complete neutral-first brand and semantic palette", () => {
+  const fullProfilePalette = aesthetic.match(
+    /Dancer full profiles keep an 84\/10\/6 neutral, brand, and semantic color[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop \.profile-modal,[\s\S]*?\.public-profile-shell \{[\s\S]*?background-color: var\(--dancr-color-background\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop \.profile-modal-verified,[\s\S]*?\.profile-verified \{[\s\S]*?background: var\(--dancr-color-info\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /\.profile-modal-media-tabs button\.active::before,[\s\S]*?\.profile-media-tabs button\.active::before \{[\s\S]*?var\(--dancr-color-brand-primary\)[\s\S]*?var\(--dancr-shadow-brand-subtle\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop \.modal-image,[\s\S]*?\.profile-media-feature \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: 0 12px 28px var\(--dancr-color-black-medium\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop \.working-now-tile,[\s\S]*?\.profile-working-card:not\(\.has-club-deal\) \{[\s\S]*?var\(--dancr-color-success\)/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop \.profile-qr-unavailable,[\s\S]*?\.venue-qr-unavailable,[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /body\.dancr-button-system :is\(#profileBackdrop, \.public-profile-shell\)[\s\S]*?:is\(\.modal-actions, \.live-actions\)[\s\S]*?\.profile-action-primary:not\(\.profile-action-unavailable\)[\s\S]*?background: var\(--dancr-color-brand-primary\) !important;[\s\S]*?var\(--dancr-shadow-brand-subtle\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /\.profile-action-requirement\.is-public,[\s\S]*?\.profile-action-going:not\(\.profile-action-unavailable\)[\s\S]*?color: var\(--dancr-color-info\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /\.profile-social-section \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(fullProfilePalette, /\.social-link-instagram \{[\s\S]*?color: #e4405f !important;/);
+  assert.match(fullProfilePalette, /\.social-link-tiktok \{[\s\S]*?color: #25f4ee !important;/);
+  assert.match(fullProfilePalette, /\.social-link-snapchat \{[\s\S]*?color: #fffc00 !important;/);
+  assert.match(fullProfilePalette, /\.social-link-onlyfans \{[\s\S]*?color: #00aff0 !important;/);
+  assert.match(
+    fullProfilePalette,
+    /\.profile-activity-metrics > div \+ div,[\s\S]*?\.profile-metrics > div \+ div \{[\s\S]*?var\(--dancr-color-border-subtle\)/,
+  );
+  assert.doesNotMatch(
+    fullProfilePalette,
+    /global-mobile-bottom-nav|#discoveryTabs|home-bottom-tv|home-nav-|reference-hero|hero-art/,
   );
 });
 
