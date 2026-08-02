@@ -31400,43 +31400,53 @@
           .home-tv-launch {
             display: none !important;
           }
+          html.home-tv-page-snap {
+            scroll-snap-type: y proximity;
+            scroll-padding-top: calc(14px + env(safe-area-inset-top, 0px));
+            scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+          }
+          html.home-tv-page-snap .hero.reference-hero,
+          html.home-tv-page-snap .content-head,
+          html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-loading,
+          html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-slide {
+            scroll-snap-align: start;
+            scroll-snap-stop: normal;
+          }
           #results.home-tv-feed {
             position: relative !important;
             z-index: auto;
             inset: auto !important;
             width: 100% !important;
             max-width: none !important;
-            height: clamp(500px, calc(100vh - 180px), 840px) !important;
-            height: clamp(500px, calc(100svh - 180px), 840px) !important;
-            min-height: 500px;
-            max-height: 840px;
+            height: auto !important;
+            min-height: 0;
+            max-height: none;
             margin: 0 0 calc(112px + env(safe-area-inset-bottom, 0px)) !important;
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) !important;
-            grid-auto-rows: 100%;
+            grid-auto-rows: auto;
             gap: 12px !important;
             padding: 0;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
+            overflow: visible !important;
             overscroll-behavior-y: auto;
             overflow-anchor: none;
             border: 0 !important;
             border-radius: 0;
             background: transparent;
             box-shadow: none;
-            scroll-snap-type: y mandatory;
-            scrollbar-width: none;
+            scroll-snap-type: none;
             touch-action: pan-y;
           }
           #results.home-tv-feed > .home-tv-feed-loading,
           #results.home-tv-feed > .home-tv-feed-slide {
             width: 100% !important;
-            height: 100% !important;
-            min-height: 100% !important;
-            max-height: 100% !important;
+            height: clamp(500px, calc(100vh - 180px), 840px) !important;
+            height: clamp(500px, calc(100svh - 180px), 840px) !important;
+            min-height: 500px !important;
+            max-height: 840px !important;
             margin: 0 !important;
             scroll-snap-align: start;
-            scroll-snap-stop: always;
+            scroll-snap-stop: normal;
           }
           #results.home-discovery-feed {
             position: relative !important;
@@ -31525,7 +31535,7 @@
           .home-tv-feed-copy {
             right: 68px;
             gap: 6px;
-            padding: 96px 0 calc(66px + env(safe-area-inset-bottom)) 14px;
+            padding: 96px 0 22px 14px;
           }
           .home-tv-feed-dancer {
             font-size: clamp(22px, 6.2vw, 28px);
@@ -31543,15 +31553,15 @@
           }
           .home-tv-feed-actions {
             right: 10px;
-            bottom: calc(150px + env(safe-area-inset-bottom));
+            bottom: 76px;
           }
           .home-tv-feed-fullscreen {
             right: 10px;
-            bottom: calc(98px + env(safe-area-inset-bottom));
+            bottom: 20px;
           }
           .home-tv-feed-progress {
             right: 12px;
-            bottom: calc(52px + env(safe-area-inset-bottom));
+            bottom: 7px;
             left: 12px;
           }
           .home-discovery-feed-copy {
@@ -49068,7 +49078,6 @@
     }
 
     function focusHomeResults() {
-      alignHomeResultsTitle();
       if (homeResultsFocusFrame) window.cancelAnimationFrame(homeResultsFocusFrame);
       homeResultsFocusFrame = window.requestAnimationFrame(() => {
         homeResultsFocusFrame = 0;
@@ -49084,7 +49093,7 @@
       homeDiscoveryFeedOpen = shouldUseInlineLayout;
       deactivateHomeDiscoveryFeed();
       render();
-      if (shouldUseInlineLayout) window.requestAnimationFrame(focusHomeResults);
+      if (shouldUseInlineLayout) focusHomeResults();
     }
 
     function render() {
@@ -49493,6 +49502,11 @@
       return homeTvFeedSnapMedia.matches;
     }
 
+    function syncHomeTvPageSnapState() {
+      const shouldSnap = activeTab === "tv" && homeTvFeedUsesSnapViewport();
+      document.documentElement.classList.toggle("home-tv-page-snap", shouldSnap);
+    }
+
     function setupHomeTvFeedObserver() {
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
@@ -49502,15 +49516,14 @@
         activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
         return;
       }
-      const snapViewport = homeTvFeedUsesSnapViewport();
       homeTvFeedObserver = new IntersectionObserver((entries) => {
         const visible = entries
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (visible) activateHomeTvFeedVideo(String(visible.target.dataset.videoId || ""));
       }, {
-        root: snapViewport ? results : null,
-        rootMargin: snapViewport ? "0px" : "-72px 0px -88px",
+        root: null,
+        rootMargin: "-72px 0px -88px",
         threshold: [.25, .6, .72]
       });
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
@@ -49525,6 +49538,7 @@
       homeTvFeedEngagedTimers.clear();
       results.querySelectorAll(".home-tv-feed-video").forEach((video) => video.pause());
       results.classList.remove("home-tv-feed");
+      document.documentElement.classList.remove("home-tv-page-snap");
       delete results.dataset.homeTvFeedKey;
       const bottomTv = document.getElementById("homeBottomTv");
       bottomTv?.classList.remove("active");
@@ -49603,11 +49617,7 @@
         return;
       }
       const nextSlide = slides[nextIndex];
-      if (homeTvFeedUsesSnapViewport()) {
-        results.scrollTo({ top: nextSlide.offsetTop, behavior: "smooth" });
-      } else {
-        nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
-      }
+      nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
       activateHomeTvFeedVideo(String(nextSlide.dataset.videoId || ""));
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
     }
@@ -50056,6 +50066,7 @@
     });
     const refreshHomeTvFeedViewportMode = () => {
       if (activeTab !== "tv" || !results.classList.contains("home-tv-feed")) return;
+      syncHomeTvPageSnapState();
       window.requestAnimationFrame(setupHomeTvFeedObserver);
     };
     if (typeof homeTvFeedSnapMedia.addEventListener === "function") {
@@ -50100,6 +50111,7 @@
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
       results.classList.add("home-tv-feed");
+      syncHomeTvPageSnapState();
 
       const venuePreference = selectedHomeTvVenuePreference(city);
       const preferredVenueId = venuePreference?.id || "";
@@ -52935,7 +52947,7 @@
       syncHomeDestinationLocation(nextTab);
       render();
       if (options.scroll !== false) {
-        window.requestAnimationFrame(focusHomeResults);
+        focusHomeResults();
       }
       return true;
     }
@@ -53327,9 +53339,7 @@
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
     if (initialHomeDestinationRequested) {
-      window.requestAnimationFrame(() => {
-        focusHomeResults();
-      });
+      focusHomeResults();
     }
     async function refreshVisibleHomeDiscovery() {
       if (document.visibilityState !== "visible") return;

@@ -11,7 +11,7 @@ test("mobile destinations can be changed with an easy deliberate horizontal swip
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?requestAnimationFrame\(focusHomeResults\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?activeTab = nextTab;[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false[\s\S]*?focusHomeResults\(\)/,
   );
   assert.match(
     homeSource,

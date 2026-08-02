@@ -102,18 +102,18 @@ test("TV cards retain a neutral perimeter without a violet outline", () => {
   );
 });
 
-test("the mobile TV identity, action rail, fullscreen icon, and progress sit above navigation", () => {
+test("mobile TV controls stay inside the stable card that snaps above navigation", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 calc\(66px \+ env\(safe-area-inset-bottom\)\) 14px;/,
+    /\.home-tv-feed-copy \{[\s\S]*?padding: 96px 0 22px 14px;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-actions \{[\s\S]*?bottom: calc\(150px \+ env\(safe-area-inset-bottom\)\);/,
+    /\.home-tv-feed-actions \{[\s\S]*?bottom: 76px;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-progress \{[\s\S]*?bottom: calc\(52px \+ env\(safe-area-inset-bottom\)\);/,
+    /\.home-tv-feed-fullscreen \{[\s\S]*?bottom: 20px;[\s\S]*?\.home-tv-feed-progress \{[\s\S]*?bottom: 7px;/,
   );
   assert.match(
     homeSource,
@@ -131,7 +131,7 @@ test("the mobile TV identity, action rail, fullscreen icon, and progress sit abo
     homeSource,
     /\.home-tv-feed-position \{\s*top: calc\(14px \+ env\(safe-area-inset-top\)\);\s*left: 12px;/,
   );
-  assert.match(homeSource, /\.home-tv-feed-fullscreen \{\s*right: 10px;\s*bottom: calc\(98px \+ env\(safe-area-inset-bottom\)\);/);
+  assert.match(homeSource, /\.home-tv-feed-fullscreen \{\s*right: 10px;\s*bottom: 20px;/);
 });
 
 test("empty schedules are hidden while real city, venue, and shift context remains", () => {
