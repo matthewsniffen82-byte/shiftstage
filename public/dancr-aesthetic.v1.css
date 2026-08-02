@@ -3373,8 +3373,8 @@ body.dancr-button-system .public-profile-shell .profile-metrics dt {
 }
 
 /* Production TV-card branding keeps the moving media as the visual hero.
- * Card framing, idle utilities, and playback progress stay neutral; the beam
- * violet is reserved for profile identity, selection, and keyboard focus.
+ * Card framing, idle utilities, playback controls, and progress stay neutral;
+ * the beam violet is reserved for profile identity, selection, and keyboard focus.
  * Verification and schedule states retain their semantic production colors. */
 body.dancr-button-system :is(
     .home-tv-feed-slide,
@@ -3562,14 +3562,17 @@ body.dancr-button-system .home-tv-feed-report-option:is(:hover, :focus-visible) 
 }
 
 body.dancr-button-system .home-tv-feed-playback {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
-  color: var(--dancr-color-brand-core) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-brand-primary) 22%,
-    var(--dancr-color-overlay)
-  ) !important;
-  box-shadow: var(--dancr-shadow-brand-control) !important;
+  border-color: var(--dancr-color-white-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-black-medium) !important;
+  background-image: none !important;
+  box-shadow:
+    0 10px 30px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  filter: none !important;
+  text-shadow: none !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+  backdrop-filter: blur(14px) saturate(1.08) !important;
 }
 
 body.dancr-button-system .home-tv-feed-progress {

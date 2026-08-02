@@ -407,6 +407,14 @@ test("production TV cards use the neutral-first brand palette without changing m
     brandedCards.match(/\.home-tv-feed-progress > span \{[\s\S]*?\}/)?.[0] || "",
     /brand-primary|brand-glow|linear-gradient/,
   );
+  const playbackControl = brandedCards.match(
+    /\.home-tv-feed-playback \{[\s\S]*?\}/,
+  )?.[0] || "";
+  assert.match(playbackControl, /border-color: var\(--dancr-color-white-medium\) !important;/);
+  assert.match(playbackControl, /color: var\(--dancr-color-text-primary\) !important;/);
+  assert.match(playbackControl, /background-color: var\(--dancr-color-black-medium\) !important;/);
+  assert.match(playbackControl, /background-image: none !important;/);
+  assert.doesNotMatch(playbackControl, /brand-|beam-|gradient|glow/);
   assert.match(brandedCards, /\.home-tv-feed-verified/);
   assert.match(brandedCards, /var\(--dancr-color-info\) 24%/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-now/);
