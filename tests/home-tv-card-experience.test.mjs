@@ -116,6 +116,20 @@ test("TV cards are completely borderless without a violet perimeter", () => {
     aestheticSource,
     /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?outline: 0 !important;[\s\S]*?background: #000 !important;[\s\S]*?box-shadow: 0 14px 32px rgba\(0, 0, 0, 0\.38\) !important;/,
   );
+  const homepageTvMediaOverride = aestheticSource.match(
+    /\/\* The feed video intentionally exposes role="button"[\s\S]*?(?=\r?\n\r?\nbody > \.app main\.stack > #results \.home-venue-discovery-art)/,
+  )?.[0] || "";
+  assert.match(homepageTvMediaOverride, /> video\.home-tv-feed-video \{/);
+  assert.match(homepageTvMediaOverride, /border: 0 !important;/);
+  assert.match(homepageTvMediaOverride, /border-radius: 0 !important;/);
+  assert.match(homepageTvMediaOverride, /outline: 0 !important;/);
+  assert.match(homepageTvMediaOverride, /background: #000 !important;/);
+  assert.match(homepageTvMediaOverride, /background-image: none !important;/);
+  assert.match(homepageTvMediaOverride, /box-shadow: none !important;/);
+  assert.match(homepageTvMediaOverride, /filter: none !important;/);
+  assert.match(homepageTvMediaOverride, /> video\.home-tv-feed-video:focus-visible/);
+  assert.match(homepageTvMediaOverride, /outline: 2px solid var\(--dancr-color-info\) !important;/);
+  assert.doesNotMatch(homepageTvMediaOverride, /beam-violet|brand-primary|109, 40, 217/);
   const sharedAestheticCardShell = aestheticSource.match(
     /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.venue-card-grid > \.venue-card \{[\s\S]*?filter: none !important;[\s\S]*?\}/,
   )?.[0] || "";
@@ -344,7 +358,7 @@ test("idle TV utility controls use neutral charcoal while selected reactions kee
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=36/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=37/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {

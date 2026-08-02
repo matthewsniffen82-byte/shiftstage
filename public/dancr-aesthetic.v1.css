@@ -723,6 +723,29 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-fe
   filter: none !important;
 }
 
+/* The feed video intentionally exposes role="button" for keyboard playback,
+ * but it is media rather than a button surface. Keep the global button theme
+ * from painting a rounded border, inner highlight, or violet fill inside the
+ * otherwise perimeter-free TV card. */
+body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide > video.home-tv-feed-video {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: #000 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-tv-feed > .home-tv-feed-slide > video.home-tv-feed-video:focus-visible {
+  outline: 2px solid var(--dancr-color-info) !important;
+  outline-offset: -4px !important;
+}
+
 body > .app main.stack > #results .home-venue-discovery-art,
 body > .app main.stack > #results .home-discovery-feed-photo.is-photo-unavailable {
   background:
