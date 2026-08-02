@@ -391,8 +391,9 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-profile-cta[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
   );
+  assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
     venueSlide,
     /home-venue-discovery-lineup-slot[\s\S]*?\$\{lineupMarkup\}/,
@@ -425,10 +426,6 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.match(venueArtRule, /repeating-linear-gradient\(115deg/);
   assert.match(venueArtRule, /linear-gradient\(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%\)/);
   assert.doesNotMatch(venueArtRule, /--venue-accent|124,58,237/);
-  assert.match(
-    homeSource,
-    /\.home-venue-discovery-profile-cta \{[\s\S]*?border: 1px solid rgba\(226,232,240,\.24\) !important;[\s\S]*?linear-gradient\(180deg, rgba\(255,255,255,\.07\), transparent 46%\),[\s\S]*?rgba\(8,9,11,\.76\) !important;[\s\S]*?inset 0 1px 0 rgba\(255,255,255,\.09\)/,
-  );
   assert.match(
     homeSource,
     /\.home-dancer-grid-action-rail\.home-venue-discovery-action-rail \{[\s\S]*?top: 68px;[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/,

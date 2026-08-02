@@ -50,6 +50,6 @@ test("venue hierarchy emphasizes identity and active deals without touching navi
   assert.match(refinements, /\.venue-operating-status:is\(\.is-closed, \.is-unknown\) \{[\s\S]*?var\(--dancr-color-text-muted\)/);
   assert.match(refinements, /\.venue-address-copy \.meta \{[\s\S]*?-webkit-line-clamp: 2;/);
   assert.match(refinements, /\.venue-offer-card\.revenue-offer-card \{[\s\S]*?var\(--dancr-color-success\) 9%/);
-  assert.match(refinements, /\.feed-card-action:not\(\.is-active\):not\(\[aria-pressed="true"\]\):not\(\.home-venue-discovery-rail-qr\.is-available\) \{[\s\S]*?opacity: 0\.76;/);
+  assert.match(refinements, /\.feed-card-action:not\(\.is-active\):not\(\[aria-pressed="true"\]\):not\(\.home-venue-discovery-rail-qr\.is-available\):not\(\.home-venue-discovery-profile-action\) \{[\s\S]*?opacity: 0\.76;/);
   assert.doesNotMatch(refinements, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });

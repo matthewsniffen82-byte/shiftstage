@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=51" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=53" rel="stylesheet">/,
   );
 });
 
@@ -116,7 +116,7 @@ test("venue discovery keeps restrained brand actions while venue-detail outlines
   assert.doesNotMatch(venueMonogram, /brand-primary/);
   assert.match(
     venueAccents,
-    /\.home-venue-discovery-profile-cta \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
+    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)[\s\S]*?opacity: 1;[\s\S]*?filter: none;/,
   );
   assert.match(
     venueAccents,
@@ -165,7 +165,7 @@ test("venue discovery keeps real photography beneath a premium black-metal mater
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-profile-cta,[\s\S]*?\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\),[\s\S]*?\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.22\) !important;[\s\S]*?linear-gradient\(180deg, rgba\(255, 255, 255, 0\.07\), transparent 46%\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.08\)/,
+    /\.home-venue-discovery-action-rail \.feed-card-action:not\(\.home-venue-discovery-rail-qr\.is-available\):not\(\.home-venue-discovery-profile-action\),[\s\S]*?\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.22\) !important;[\s\S]*?linear-gradient\(180deg, rgba\(255, 255, 255, 0\.07\), transparent 46%\)[\s\S]*?inset 0 1px 0 rgba\(255, 255, 255, 0\.08\)/,
   );
   assert.match(
     aesthetic,

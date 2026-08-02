@@ -4,12 +4,15 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("dancer cards keep QR below Profile while venue cards elevate QR as the rail CTA", () => {
+test("dancer cards keep QR below Profile while venue cards keep QR first and Profile in the rail", () => {
   const dancerActions = homeSource.match(
     /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
   )?.[0] || "";
   const venueSlide = homeSource.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
+  )?.[0] || "";
+  const venueNameRow = venueSlide.match(
+    /<div class="home-venue-discovery-name-row">[\s\S]*?<\/div>/,
   )?.[0] || "";
 
   assert.match(
@@ -18,9 +21,9 @@ test("dancer cards keep QR below Profile while venue cards elevate QR as the rai
   );
   assert.match(
     venueSlide,
-    /home-venue-discovery-name-row[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"/,
+    /home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?data-share-venue="\$\{venueValue\}"/,
   );
-  assert.doesNotMatch(venueSlide, /home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile/);
+  assert.doesNotMatch(venueNameRow, /data-open-venue-profile|home-venue-discovery-profile-cta/);
   assert.match(homeSource, /data-card-action-slot="qr"/);
   assert.match(
     homeSource,
