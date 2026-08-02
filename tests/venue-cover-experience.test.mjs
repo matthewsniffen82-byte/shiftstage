@@ -99,10 +99,6 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
     visualHelper,
     /const hasVenueCover = Boolean\(attrs\.style\)[\s\S]*?const sourceClass = hasVenueCover \? " has-venue-cover" : " is-venue-artwork"/,
   );
-  assert.match(
-    homeSource,
-    /function venueVisualProfiles\(city, venueName\)[\s\S]*?venueDancers\(city, venueName\)[\s\S]*?publicProfilePhotoUrl\(profile\)/,
-  );
   assert.match(homeSource, /home-venue-discovery-art\$\{visual\.attrs\.className\}/);
   assert.match(homeSource, /home-venue-discovery-lineup/);
   assert.match(
@@ -119,6 +115,32 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
   assert.doesNotMatch(
     homeSource.match(/function homeVenueDiscoveryFeedSlide[\s\S]*?\n    \}/)?.[0] || "",
     /home-discovery-feed-profile-button/,
+  );
+});
+
+test("venue lineups show only dancers working now as compact avatar stacks", () => {
+  const lineupHelper = homeSource.match(
+    /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
+  )?.[0] || "";
+  const venueSlide = homeSource.match(
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
+
+  assert.match(
+    lineupHelper,
+    /venueDancers\(city, venue\.name\)[\s\S]*?filter\(\(profile\) => isWorkingTonight\(profile, city\)\)/,
+  );
+  assert.match(lineupHelper, /const visibleLimit = options\.mobile \? 3 : 4/);
+  assert.match(lineupHelper, /const remaining = liveProfiles\.length - profiles\.length/);
+  assert.match(lineupHelper, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
+  assert.match(lineupHelper, /role="group" aria-label="\$\{liveLabel\}"/);
+  assert.doesNotMatch(lineupHelper, /on the lineup|<strong>/);
+  assert.match(venueSlide, /venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow \}\)/);
+  assert.match(venueSlide, /home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/);
+  assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
+  assert.match(
+    aestheticSource,
+    /home-venue-discovery-slide\.has-live-lineup[\s\S]*?home-venue-discovery-logo-shell \{[\s\S]*?top: 31%;/,
   );
 });
 

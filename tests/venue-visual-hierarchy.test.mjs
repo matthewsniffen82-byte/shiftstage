@@ -34,7 +34,8 @@ test("venue cards and venue detail render the same semantic operating state", ()
   assert.match(venueDetail, /venue-status-pill[\s\S]*?operatingStatus\.hoursLabel/);
   assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city\)/);
   assert.match(venueSlide, /home-venue-discovery-operating-status is-\$\{operatingStatus\.state\}/);
-  assert.match(venueSlide, /home-venue-discovery-meta">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}\$\{workingNowMarkup\}/);
+  assert.match(venueSlide, /home-venue-discovery-meta">\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/);
+  assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
 });
 
 test("venue hierarchy emphasizes identity and active deals without touching navigation", () => {

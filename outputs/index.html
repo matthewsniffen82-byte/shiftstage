@@ -29182,7 +29182,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=58" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=59" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -30722,14 +30722,19 @@
         .venue-card-lineup-avatar:first-child {
           margin-left: 0;
         }
-        .venue-card-lineup strong {
-          min-width: 0;
-          margin-left: 7px;
-          overflow: hidden;
-          color: #b9accd;
+        .venue-card-lineup-count {
+          width: 25px;
+          height: 25px;
+          margin-left: -6px;
+          display: grid;
+          flex: 0 0 auto;
+          place-items: center;
+          border: 2px solid #0c0b12;
+          border-radius: 50%;
+          color: #fff;
+          background: #18191d;
           font-size: 9px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          font-weight: 950;
         }
         .venue-card-follow {
           position: absolute;
@@ -30867,15 +30872,8 @@
           min-height: 32px;
           display: flex;
           align-items: center;
-          padding: 2px 9px 2px 3px;
-          overflow: hidden;
-          border: 1px solid rgba(226,232,240,.18);
-          border-radius: 999px;
-          background:
-            linear-gradient(180deg, rgba(255,255,255,.055), transparent 48%),
-            rgba(6,7,9,.72);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 7px 18px rgba(0,0,0,.3);
-          backdrop-filter: blur(12px);
+          padding: 0;
+          overflow: visible;
         }
         .home-venue-discovery-lineup-avatar {
           width: 28px;
@@ -30895,16 +30893,20 @@
         .home-venue-discovery-lineup-avatar:first-child {
           margin-left: 0;
         }
-        .home-venue-discovery-lineup strong {
-          min-width: 0;
-          margin-left: 8px;
-          overflow: hidden;
+        .home-venue-discovery-lineup-count {
+          width: 28px;
+          height: 28px;
+          margin-left: -7px;
+          display: grid;
+          flex: 0 0 auto;
+          place-items: center;
+          border: 2px solid rgba(7,7,12,.94);
+          border-radius: 50%;
           color: #fff;
-          font-size: 11px;
-          font-weight: 900;
-          text-overflow: ellipsis;
-          text-shadow: 0 2px 12px rgba(0,0,0,1);
-          white-space: nowrap;
+          background: #18191d;
+          box-shadow: 0 7px 18px rgba(0,0,0,.32);
+          font-size: 9px;
+          font-weight: 950;
         }
         .home-venue-discovery-meta {
           width: fit-content;
@@ -43436,18 +43438,6 @@
       return palette[index % palette.length];
     }
 
-    function venueVisualProfiles(city, venueName) {
-      return venueDancers(city, venueName)
-        .filter((profile) => publicProfilePhotoUrl(profile))
-        .sort((left, right) => {
-          const liveDifference = Number(isWorkingTonight(right, city)) - Number(isWorkingTonight(left, city));
-          if (liveDifference) return liveDifference;
-          const scheduledDifference = Number(Boolean(right.scheduled)) - Number(Boolean(left.scheduled));
-          if (scheduledDifference) return scheduledDifference;
-          return upcomingSortValue(left, city) - upcomingSortValue(right, city);
-        });
-    }
-
     function venueVisualAttrs(venue) {
       const venueCoverUrl = String(venue.coverImageUrl || "").trim();
       const attrs = customPhotoAttrs(venueCoverUrl, venue.coverImageSrcSet);
@@ -43470,8 +43460,16 @@
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
-      const profiles = venueVisualProfiles(city, venue.name).slice(0, 3);
-      if (!profiles.length) return "";
+      const liveProfiles = (Array.isArray(options.profiles)
+        ? options.profiles
+        : venueDancers(city, venue.name))
+        .filter((profile) => isWorkingTonight(profile, city))
+        .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
+      if (!liveProfiles.length) return "";
+      const visibleLimit = options.mobile ? 3 : 4;
+      const profiles = liveProfiles.slice(0, visibleLimit);
+      const remaining = liveProfiles.length - profiles.length;
+      const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
       const avatars = profiles.map((profile) => {
         const attrs = customAvatarPhotoAttrs(
           publicProfilePhotoUrl(profile),
@@ -43479,12 +43477,13 @@
           profile.mainPhotoFocalX,
           profile.mainPhotoFocalY
         );
-        return `<span class="${options.mobile ? "home-venue-discovery-lineup-avatar" : "venue-card-lineup-avatar"}${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
+        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
       }).join("");
-      const label = profiles.length === 1
-        ? `${profiles[0].name} on the lineup`
-        : `${profiles.length} dancers on the lineup`;
-      return `<span class="${options.mobile ? "home-venue-discovery-lineup" : "venue-card-lineup"}">${avatars}<strong>${escapeHtml(label)}</strong></span>`;
+      const remainingMarkup = remaining > 0
+        ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
+        : "";
+      const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
+      return `<span class="${classPrefix}-lineup" role="group" aria-label="${liveLabel}">${avatars}${remainingMarkup}</span>`;
     }
 
     function venueCardQrMarkup(venue) {
@@ -43511,13 +43510,10 @@
       const venueHref = venueExperienceHref(venue, city);
       const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
-      const workingNowCount = venueDancers(city, venue.name)
+      const workingNow = venueDancers(city, venue.name)
         .filter((profile) => isWorkingTonight(profile, city))
-        .length;
+        .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       const followsVenue = isFollowingVenue(city, venue.name);
-      const workingNowMarkup = workingNowCount
-        ? `<span class="venue-card-live">${workingNowCount} working now</span>`
-        : "";
       const dealMarkup = venue.activeDeal?.dealTitle
         ? `<span class="venue-card-offer"><small>Tonight's offer</small><strong>${escapeHtml(venue.activeDeal.dealTitle)}</strong></span>`
         : "";
@@ -43530,10 +43526,9 @@
             <div class="venue-art${visual.attrs.className}"${visual.attrs.style}>
               <span class="venue-card-kicker">Mydancr venue</span>
               ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
-              ${workingNowMarkup}
             </div>
             <div class="profile-body">
-              ${venueLineupMarkup(venue, city)}
+              ${venueLineupMarkup(venue, city, { profiles: workingNow })}
               <h3>${safeName}</h3>
               <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""} · ${escapeHtml(details.distanceLabel)}</div>
               <div class="pill-row">
@@ -49053,20 +49048,17 @@
         : "";
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
-      const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true });
+      const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow });
       const directionsMarkup = details.address
         ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
       const workingLabel = `${workingNow.length} working now`;
-      const workingNowMarkup = workingNow.length
-        ? `<span class="home-discovery-feed-status is-now">${escapeHtml(workingLabel)}</span>`
-        : "";
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       const visualLabel = visual.source === "venue_cover"
         ? `${safeName} venue cover`
         : `${safeName} venue artwork`;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
+        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art${visual.attrs.className}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
@@ -49078,7 +49070,7 @@
               <h3 class="home-discovery-feed-name home-venue-discovery-name">${safeName}</h3>
             </div>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
-            <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}${workingNowMarkup}</span>
+            <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
             ${railQrMarkup}

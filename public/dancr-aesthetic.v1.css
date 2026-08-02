@@ -1293,18 +1293,24 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-venue
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup {
-  border-color: rgba(226, 232, 240, 0.18) !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 48%),
-    rgba(6, 7, 9, 0.72) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    0 7px 18px rgba(0, 0, 0, 0.3) !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-avatar {
   border-color: rgba(7, 8, 10, 0.96) !important;
   background-color: #111216 !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-count {
+  border-color: rgba(7, 8, 10, 0.96) !important;
+  color: rgba(248, 250, 252, 0.96) !important;
+  background: #18191d !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-position {
@@ -2702,6 +2708,12 @@ body.dancr-button-system > .app main.stack > section.stack
   border-radius: 34px;
 }
 
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide.has-live-lineup
+  .home-venue-discovery-logo-shell {
+  top: 31%;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
   width: min(88%, 480px);
   height: 200px;
@@ -2716,6 +2728,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
     width: min(78%, 320px);
     height: 178px;
     border-radius: 30px;
+  }
+
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide.has-live-lineup
+    .home-venue-discovery-logo-shell {
+    top: 30%;
   }
 
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {

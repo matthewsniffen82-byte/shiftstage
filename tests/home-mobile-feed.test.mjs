@@ -370,7 +370,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?const workingNowMarkup = workingNow\.length[\s\S]*?<span class="home-discovery-feed-status is-now">[\s\S]*?: "";/,
+    /const workingNow = localProfiles[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/,
   );
   assert.match(
     homeSource,
@@ -452,7 +452,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-lineup-slot \{[\s\S]*?min-height: 34px;[\s\S]*?\.home-venue-discovery-lineup strong \{[\s\S]*?color: #fff;[\s\S]*?font-size: 11px;/,
+    /\.home-venue-discovery-lineup-slot \{[\s\S]*?min-height: 34px;[\s\S]*?\.home-venue-discovery-lineup \{[\s\S]*?padding: 0;[\s\S]*?overflow: visible;[\s\S]*?\.home-venue-discovery-lineup-count \{[\s\S]*?border-radius: 50%;[\s\S]*?font-size: 9px;/,
   );
   assert.match(
     homeSource,

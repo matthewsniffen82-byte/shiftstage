@@ -23,13 +23,13 @@ test("venue cards open the live profile while revenue and customer actions remai
 
   assert.match(
     venueCardRenderer,
-    /const workingNowCount = venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)/,
+    /const workingNow = venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)/,
   );
   assert.match(
     venueCardRenderer,
-    /const workingNowMarkup = workingNowCount[\s\S]*?<span class="venue-card-live">\$\{workingNowCount\} working now<\/span>[\s\S]*?: "";/,
+    /venueLineupMarkup\(venue, city, \{ profiles: workingNow \}\)/,
   );
-  assert.doesNotMatch(venueCardRenderer, /\? "dancer" : "dancers"/);
+  assert.doesNotMatch(venueCardRenderer, /venue-card-live|workingNowMarkup/);
   assert.match(venueCardRenderer, /venue-card-follow[\s\S]*?data-venue-follow="\$\{venueValue\}"/);
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
   assert.match(
@@ -57,8 +57,9 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
     venueSwipeRenderer,
-    /const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?<span class="home-discovery-feed-status is-now">\$\{escapeHtml\(workingLabel\)\}<\/span>[\s\S]*?: "";/,
+    /venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow \}\)[\s\S]*?const workingLabel = `\$\{workingNow\.length\} working now`[\s\S]*?accessibilityLabel = workingNow\.length/,
   );
+  assert.doesNotMatch(venueSwipeRenderer, /home-discovery-feed-status is-now|workingNowMarkup/);
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
