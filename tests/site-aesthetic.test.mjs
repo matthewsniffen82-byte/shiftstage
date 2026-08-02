@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=49" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=50" rel="stylesheet">/,
   );
 });
 
@@ -108,10 +108,12 @@ test("venue discovery and detail use restrained brand actions without recoloring
   )?.[0] || "";
 
   assert.ok(venueAccents, "the venue-specific brand layer must exist");
-  assert.match(
-    venueAccents,
-    /\.home-venue-discovery-monogram \{[\s\S]*?var\(--dancr-color-brand-primary-medium\)[\s\S]*?0 0 22px var\(--dancr-color-brand-primary-soft\)/,
-  );
+  const venueMonogram = venueAccents.match(
+    /\.home-venue-discovery-monogram \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+  assert.match(venueMonogram, /border-color: var\(--dancr-color-border-strong\) !important;/);
+  assert.match(venueMonogram, /0 0 0 2px var\(--dancr-color-border-subtle\) !important;/);
+  assert.doesNotMatch(venueMonogram, /brand-primary/);
   assert.match(
     venueAccents,
     /\.home-venue-discovery-profile-cta \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,

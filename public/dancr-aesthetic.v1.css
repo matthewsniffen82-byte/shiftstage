@@ -2131,18 +2131,17 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
 
 /* Venue discovery keeps its premium black-metal cards neutral while one
  * always-visible Profile action carries the brand. The fallback venue mark
- * receives the same quiet halo as a profile avatar; real cover photography is
- * never filtered or recolored. */
+ * uses a neutral slate edge; real cover photography is never filtered or
+ * recolored. */
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-monogram {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
+  border-color: var(--dancr-color-border-strong) !important;
   box-shadow:
     inset 1px 1px 0 var(--dancr-color-white-medium),
     inset -1px -1px 0 var(--dancr-color-black-strong),
     0 24px 54px var(--dancr-color-black-medium),
-    0 0 0 2px var(--dancr-color-brand-primary-soft),
-    0 0 22px var(--dancr-color-brand-primary-soft) !important;
+    0 0 0 2px var(--dancr-color-border-subtle) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
