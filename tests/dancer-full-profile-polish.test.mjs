@@ -43,6 +43,24 @@ test("profile media is a compact horizontal filmstrip with stable geometry", () 
   assert.match(profilePolishBlock, /overflow-anchor: none;/);
 });
 
+test("full dancer profiles use a quiet neutral vertical scrollbar", () => {
+  const profileScrollbarThumb = profilePolishBlock?.match(
+    /#profileBackdrop \.profile-modal::\-webkit-scrollbar-thumb \{[\s\S]*?\}/,
+  )?.[0] || "";
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal \{[\s\S]*?scrollbar-width: thin;[\s\S]*?scrollbar-color: rgba\(255,255,255,\.28\) transparent;/,
+  );
+  assert.match(
+    profileScrollbarThumb,
+    /background: rgba\(255,255,255,\.28\);[\s\S]*?box-shadow: none;/,
+  );
+  assert.doesNotMatch(
+    profileScrollbarThumb,
+    /rgba\((?:109,40,217|139,92,246)/,
+  );
+});
+
 test("profile actions have a clear hierarchy and preserve every real action", () => {
   assert.match(
     liveApp,

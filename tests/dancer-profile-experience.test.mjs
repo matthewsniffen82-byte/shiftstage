@@ -64,6 +64,17 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.doesNotMatch(profilePage, /<PublicProfileHeader/);
 });
 
+test("standalone dancer profiles keep the document scrollbar neutral", () => {
+  assert.match(
+    profilePage,
+    /html:has\(\.public-profile-shell\), body:has\(\.public-profile-shell\) \{ scrollbar-width: thin; scrollbar-color: rgba\(255,255,255,\.28\) transparent; \}/,
+  );
+  assert.match(
+    profilePage,
+    /html:has\(\.public-profile-shell\)::\-webkit-scrollbar-thumb,[\s\S]*?background: rgba\(255,255,255,\.28\); box-shadow: none;/,
+  );
+});
+
 test("the mobile profile places schedule directly after media, before revenue and actions", () => {
   const identityIndex = profilePage.indexOf('className="profile-titlebar"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");

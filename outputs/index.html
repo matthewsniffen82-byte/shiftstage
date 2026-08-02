@@ -32882,10 +32882,30 @@
           margin-inline: auto !important;
           padding: 0 14px max(18px, env(safe-area-inset-bottom, 0px)) !important;
           overflow-anchor: none;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255,255,255,.28) transparent;
           border-inline: 1px solid rgba(126,234,255,.1) !important;
           background:
             radial-gradient(circle at 76% 4%, rgba(124,58,237,.18), transparent 25rem),
             linear-gradient(180deg, #08080e, #040406 60%) !important;
+        }
+        #profileBackdrop .profile-modal::-webkit-scrollbar {
+          width: 4px;
+        }
+        #profileBackdrop .profile-modal::-webkit-scrollbar-track {
+          border: 0;
+          background: transparent;
+        }
+        #profileBackdrop .profile-modal::-webkit-scrollbar-thumb {
+          border: 0;
+          border-radius: 999px;
+          background: rgba(255,255,255,.28);
+          box-shadow: none;
+        }
+        #profileBackdrop .profile-modal::-webkit-scrollbar-thumb:hover,
+        #profileBackdrop .profile-modal::-webkit-scrollbar-thumb:active {
+          background: rgba(255,255,255,.42);
+          box-shadow: none;
         }
         #profileBackdrop .profile-modal-summary {
           position: relative;
