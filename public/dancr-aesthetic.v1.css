@@ -3563,7 +3563,7 @@ body.dancr-button-system .home-tv-feed-progress {
 }
 
 body.dancr-button-system .home-tv-feed-progress > span {
-  background: var(--dancr-color-text-primary) !important;
+  background: color-mix(in srgb, var(--dancr-color-text-primary) 88%, transparent) !important;
   box-shadow: none !important;
 }
 

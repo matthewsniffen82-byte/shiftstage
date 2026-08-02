@@ -198,7 +198,7 @@ test("mobile TV controls stay inside the stable card that snaps above navigation
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-progress \{[\s\S]*?height: 6px;[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 58%, transparent\);[\s\S]*?box-shadow: 0 1px 5px var\(--dancr-color-black-strong\);[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: var\(--dancr-color-text-primary\);[\s\S]*?box-shadow: none;/,
+    /\.home-tv-feed-progress \{[\s\S]*?height: 6px;[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 58%, transparent\);[\s\S]*?box-shadow: 0 1px 5px var\(--dancr-color-black-strong\);[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 88%, transparent\);[\s\S]*?box-shadow: none;/,
   );
   assert.doesNotMatch(
     homeSource.match(/\.home-tv-feed-progress > span \{[\s\S]*?\}/)?.[0] || "",
@@ -392,7 +392,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /border-color: var\(--dancr-color-brand-primary\) !important;/);
   assert.match(
     brandedCards,
-    /\.home-tv-feed-progress \{[\s\S]*?background: var\(--dancr-color-white-medium\) !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: var\(--dancr-color-text-primary\) !important;[\s\S]*?box-shadow: none !important;/,
+    /\.home-tv-feed-progress \{[\s\S]*?background: var\(--dancr-color-white-medium\) !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 88%, transparent\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.doesNotMatch(
     brandedCards.match(/\.home-tv-feed-progress > span \{[\s\S]*?\}/)?.[0] || "",
