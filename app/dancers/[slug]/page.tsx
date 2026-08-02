@@ -338,7 +338,7 @@ function PublicProfileStyles() {
       .profile-titlebar { position: relative; z-index: 1; max-width: 760px; min-height: 64px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 0 8px; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
       .profile-titlebar-avatar { width: 42px; height: 42px; display: grid; flex: 0 0 42px; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
-      .profile-titlebar-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .profile-titlebar-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; filter: brightness(1.08) contrast(1.02); }
       .profile-titlebar-identity { min-width: 0; display: grid; flex: 1 1 auto; gap: 6px; }
       .profile-titlebar-identity > div { min-width: 0; display: flex; align-items: center; gap: 7px; }
       .profile-titlebar h1 { margin: 0; overflow: hidden; font-size: clamp(20px, 4vw, 26px); line-height: 1.05; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
@@ -460,7 +460,7 @@ function PublicProfileStyles() {
       .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: zoom-in; isolation: isolate; touch-action: pan-y; }
       .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.7)); }
       .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; user-select: none; }
-      .profile-media-feature > img { filter: none; opacity: 1; mix-blend-mode: normal; }
+      .profile-media-feature > img { filter: brightness(1.08) contrast(1.02); opacity: 1; mix-blend-mode: normal; }
       .profile-media-feature:focus-visible { border-color: #7eeaff; outline: 3px solid rgba(126,234,255,.2); outline-offset: 3px; }
       .profile-media-video-controls { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 54px; display: grid; grid-template-columns: auto auto minmax(52px, 1fr) auto; align-items: center; gap: 7px; padding: 7px; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: rgba(4,4,8,.74); box-shadow: 0 10px 28px rgba(0,0,0,.32); backdrop-filter: blur(12px); cursor: default; }
       .profile-media-video-controls button { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 9px; border: 1px solid rgba(126,234,255,.26); border-radius: 9px; color: #fff; background: rgba(126,234,255,.08); font-size: 10px; font-weight: 900; cursor: pointer; white-space: nowrap; }
@@ -476,7 +476,7 @@ function PublicProfileStyles() {
       .profile-media-grid { min-height: 76px; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 6px; scroll-snap-type: x proximity; scrollbar-width: thin; touch-action: pan-x pan-y; }
       .profile-media-grid-item { position: relative; width: 64px; min-width: 64px; aspect-ratio: 4 / 5; display: block; flex: 0 0 64px; padding: 0; overflow: hidden; scroll-snap-align: start; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; background: #0b0b10; cursor: pointer; }
       .profile-media-grid-item img, .profile-media-grid-item video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; }
-      .profile-media-grid-item img { filter: none; opacity: 1; mix-blend-mode: normal; }
+      .profile-media-grid-item img { filter: brightness(1.08) contrast(1.02); opacity: 1; mix-blend-mode: normal; }
       .profile-media-grid-item.active { border-color: #7eeaff; box-shadow: 0 0 0 2px rgba(126,234,255,.16), 0 0 16px rgba(34,199,255,.12); }
       .profile-media-grid-item:focus-visible { z-index: 1; outline: 2px solid #7eeaff; outline-offset: 2px; }
       .profile-media-play { position: absolute; top: 50%; left: 50%; width: 30px; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.86); box-shadow: 0 7px 22px rgba(0,0,0,.36); transform: translate(-50%, -50%); }
@@ -487,7 +487,7 @@ function PublicProfileStyles() {
       .profile-media-viewer-close { position: fixed; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 50px; height: 50px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: rgba(10,10,14,.78); font-size: 30px; cursor: pointer; backdrop-filter: blur(12px); }
       .profile-media-viewer-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; }
       .profile-media-viewer-stage > img, .profile-media-viewer-stage > video { width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: #000; user-select: none; }
-      .profile-media-viewer-stage > img { filter: none; opacity: 1; mix-blend-mode: normal; }
+      .profile-media-viewer-stage > img { filter: brightness(1.08) contrast(1.02); opacity: 1; mix-blend-mode: normal; }
       .profile-media-viewer-previous, .profile-media-viewer-next { position: absolute; top: 50%; width: 46px; height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(5,5,8,.58); font-size: 34px; transform: translateY(-50%); cursor: pointer; backdrop-filter: blur(8px); }
       .profile-media-viewer-previous { left: 12px; }
       .profile-media-viewer-next { right: 12px; }

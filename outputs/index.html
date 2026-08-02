@@ -33790,10 +33790,10 @@
           }
         }
 
-        /* Production dancer photos render at their natural luminance.
-           Current cards place identity copy below the photo, so they need no
-           image-wide veil. Only legacy overlay cards retain a localized text
-           gradient at the very bottom of the portrait. */
+        /* Give approved dancer photography a restrained lift for low-light
+           club imagery while preserving skin-tone contrast and full opacity.
+           Only legacy overlay cards retain a localized text gradient at the
+           very bottom of the portrait. */
         #results .home-dancer-grid-photo.has-custom-photo,
         #results .home-feed-card .portrait.has-custom-photo {
           background-color: #0b0b10 !important;
@@ -33801,8 +33801,8 @@
           background-position: center top !important;
           background-repeat: no-repeat !important;
           background-size: cover !important;
-          filter: none !important;
-          -webkit-filter: none !important;
+          filter: brightness(1.08) contrast(1.02) !important;
+          -webkit-filter: brightness(1.08) contrast(1.02) !important;
           mix-blend-mode: normal !important;
           opacity: 1 !important;
         }
@@ -33818,8 +33818,8 @@
           background-position: center top !important;
           background-repeat: no-repeat !important;
           background-size: cover !important;
-          filter: none !important;
-          -webkit-filter: none !important;
+          filter: brightness(1.08) contrast(1.02) !important;
+          -webkit-filter: brightness(1.08) contrast(1.02) !important;
           mix-blend-mode: normal !important;
           opacity: 1 !important;
         }
@@ -33836,11 +33836,12 @@
           mix-blend-mode: normal !important;
           pointer-events: none !important;
         }
+        #profileBackdrop .modal-image.has-custom-photo,
         #profileBackdrop .profile-modal-avatar.has-photo,
         #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
         .profile-photo-viewer-image {
-          filter: none !important;
-          -webkit-filter: none !important;
+          filter: brightness(1.08) contrast(1.02) !important;
+          -webkit-filter: brightness(1.08) contrast(1.02) !important;
           mix-blend-mode: normal !important;
           opacity: 1 !important;
         }
