@@ -66,8 +66,10 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
 test("the profile promotes approved photos and dancer-only TV videos into one tabbed media stage", () => {
   assert.match(publicPhotoCarousel, /type MediaTab = ProfileMedia\["kind"\]/);
   assert.match(publicPhotoCarousel, /className="profile-media-tabs"/);
-  assert.match(publicPhotoCarousel, /Photos <span>\{photoMedia\.length\}<\/span>/);
-  assert.match(publicPhotoCarousel, /TV <span>\{videoMedia\.length\}<\/span>/);
+  assert.match(publicPhotoCarousel, /aria-label=\{`Photos, \$\{photoMedia\.length\}`\}/);
+  assert.match(publicPhotoCarousel, /aria-label=\{`TV videos, \$\{videoMedia\.length\}`\}/);
+  assert.match(publicPhotoCarousel, /className="profile-media-tab-icon"/);
+  assert.match(publicPhotoCarousel, /className="profile-media-tab-play"/);
   assert.match(publicPhotoCarousel, /activeTab === "photo" \? photoMedia : videoMedia/);
   assert.match(
     publicPhotoCarousel,

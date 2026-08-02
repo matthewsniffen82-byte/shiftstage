@@ -444,9 +444,10 @@ function PublicProfileStyles() {
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .profile-section-heading > div { display: grid; gap: 5px; }
       .profile-section-heading > span { color: #9487a5; font-size: 11px; font-weight: 850; }
-      .profile-media-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 4px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(255,255,255,.025); }
-      .profile-media-tabs button { min-height: 44px; border: 1px solid transparent; border-radius: 10px; color: #91869f; background: transparent; font-weight: 950; cursor: pointer; }
-      .profile-media-tabs button span { color: #6f657c; font-size: 10px; }
+      .profile-media-tabs { width: fit-content; display: grid; grid-template-columns: repeat(2, 44px); justify-self: center; gap: 5px; padding: 3px; border: 1px solid rgba(255,255,255,.08); border-radius: 999px; background: rgba(255,255,255,.025); }
+      .profile-media-tabs button { width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 50%; color: #91869f; background: transparent; cursor: pointer; }
+      .profile-media-tab-icon { width: 22px; height: 22px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-media-tab-play { fill: currentColor; stroke: none; }
       .profile-media-tabs button.active { border-color: rgba(126,234,255,.42); color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.38), rgba(11,148,201,.2)); box-shadow: 0 0 20px rgba(124,58,237,.12); text-shadow: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: zoom-in; isolation: isolate; touch-action: pan-y; }

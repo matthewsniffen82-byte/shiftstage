@@ -210,7 +210,11 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(liveApp, /<section class="profile-modal-media" aria-label="Dancer profile media">\s*<div class="profile-modal-media-tabs"/);
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?min-height: 44px;/,
+    /#profileBackdrop \.profile-modal-media-tabs \{[\s\S]*?grid-template-columns: repeat\(2, 44px\);[\s\S]*?border-radius: 999px;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?border-radius: 50%;/,
   );
 });
 

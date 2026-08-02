@@ -377,26 +377,37 @@ export function DancerPhotoCarousel({
         role="tablist"
       >
         <button
+          aria-label={`Photos, ${photoMedia.length}`}
           aria-controls="dancer-profile-media-grid"
           aria-selected={activeTab === "photo"}
           className={activeTab === "photo" ? "active" : ""}
           disabled={!photoMedia.length}
           onClick={() => setActiveTab("photo")}
           role="tab"
+          title="Photos"
           type="button"
         >
-          Photos <span>{photoMedia.length}</span>
+          <svg aria-hidden="true" className="profile-media-tab-icon" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="16" rx="3" />
+            <circle cx="8.5" cy="9" r="1.5" />
+            <path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17" />
+          </svg>
         </button>
         <button
+          aria-label={`TV videos, ${videoMedia.length}`}
           aria-controls="dancer-profile-media-grid"
           aria-selected={activeTab === "video"}
           className={activeTab === "video" ? "active" : ""}
           disabled={!videoMedia.length}
           onClick={() => setActiveTab("video")}
           role="tab"
+          title="TV"
           type="button"
         >
-          TV <span>{videoMedia.length}</span>
+          <svg aria-hidden="true" className="profile-media-tab-icon" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="14" rx="3" />
+            <path className="profile-media-tab-play" d="m10 9 5 3-5 3Z" />
+          </svg>
         </button>
       </div>
       {selectedItem ? (

@@ -33153,30 +33153,41 @@
           margin: 0 0 12px;
         }
         #profileBackdrop .profile-modal-media-tabs {
+          width: fit-content;
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 6px;
-          padding: 4px;
+          grid-template-columns: repeat(2, 44px);
+          justify-self: center;
+          gap: 5px;
+          padding: 3px;
           border: 1px solid rgba(255,255,255,.08);
-          border-radius: 14px;
+          border-radius: 999px;
           background: rgba(255,255,255,.025);
         }
         #profileBackdrop .profile-modal-media-tabs button {
+          width: 44px;
+          height: 44px;
           min-height: 44px;
-          padding: 0 10px;
+          display: grid;
+          place-items: center;
+          padding: 0;
           border: 1px solid transparent;
-          border-radius: 10px;
+          border-radius: 50%;
           color: #8f849e;
           background: transparent;
           font: inherit;
-          font-size: 12px;
-          font-weight: 900;
           cursor: pointer;
         }
-        #profileBackdrop .profile-modal-media-tabs button span {
-          color: #71667e;
-          font-size: 10px;
+        #profileBackdrop .profile-media-tab-icon {
+          width: 22px;
+          height: 22px;
+          display: block;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
         }
+        #profileBackdrop .profile-media-tab-play { fill: currentColor; stroke: none; }
         #profileBackdrop .profile-modal-media-tabs button.active {
           border-color: rgba(126,234,255,.42);
           color: #fff;
@@ -35257,8 +35268,12 @@
         </div>
         <section class="profile-modal-media" aria-label="Dancer profile media">
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
-            <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">Photos <span id="modalMediaPhotoCount">0</span></button>
-            <button id="modalMediaTvTab" type="button" role="tab" aria-selected="false" aria-controls="modalGallery" data-profile-media-tab="video" disabled>TV <span id="modalMediaTvCount">0</span></button>
+            <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-label="Photos" title="Photos" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">
+              <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17"></path></svg>
+            </button>
+            <button id="modalMediaTvTab" type="button" role="tab" aria-label="TV" title="TV" aria-selected="false" aria-controls="modalGallery" data-profile-media-tab="video" disabled>
+              <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path class="profile-media-tab-play" d="m10 9 5 3-5 3Z"></path></svg>
+            </button>
           </div>
           <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
             <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
@@ -35404,8 +35419,6 @@
     const modalGallery = document.getElementById("modalGallery");
     const modalMediaPhotoTab = document.getElementById("modalMediaPhotoTab");
     const modalMediaTvTab = document.getElementById("modalMediaTvTab");
-    const modalMediaPhotoCount = document.getElementById("modalMediaPhotoCount");
-    const modalMediaTvCount = document.getElementById("modalMediaTvCount");
     const modalMediaEmpty = document.getElementById("modalMediaEmpty");
     const modalMediaPosition = document.getElementById("modalMediaPosition");
     const modalMediaPrevious = document.getElementById("modalMediaPrevious");
@@ -43904,8 +43917,6 @@
         modalProfileAvatar.style.removeProperty("background-image");
       }
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo`);
-      modalMediaPhotoCount.textContent = String(photoCount);
-      modalMediaTvCount.textContent = "0";
       modalMediaTvTab.disabled = true;
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
@@ -44294,7 +44305,6 @@
           thumb.append(video, play, duration);
           modalGallery.appendChild(thumb);
         });
-        modalMediaTvCount.textContent = String(videos.length);
         modalMediaTvTab.disabled = false;
         const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
       } catch {
