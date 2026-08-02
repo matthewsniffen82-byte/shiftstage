@@ -34016,18 +34016,24 @@
             text-shadow: none;
           }
 
-          /* Keep the active destination visible while its results use the page scroll. */
+          /* Keep the active destination visible without reserving space for the
+             utility header after that header has scrolled out of view. */
           .app {
             overflow: visible !important;
           }
 
           .discovery-sticky-head {
             position: sticky;
-            top: calc(66px + env(safe-area-inset-top, 0px));
+            top: calc(18px + env(safe-area-inset-top, 0px));
             z-index: 70;
-            scroll-margin-top: calc(74px + env(safe-area-inset-top, 0px));
+            scroll-margin-top: 0;
             background: var(--lux-bg, var(--bg));
             isolation: isolate;
+          }
+
+          .discovery-sticky-head + #results {
+            min-height: calc(100svh - 112px) !important;
+            align-content: start;
           }
         }
       </style>
@@ -49117,19 +49123,47 @@
     }
 
     let homeResultsFocusFrame = 0;
+    let homeResultsFocusTimer = 0;
+    let homeResultsFocusRun = 0;
+
+    function homeResultsDocumentTop(element) {
+      let top = 0;
+      let node = element;
+      while (node) {
+        top += Number(node.offsetTop) || 0;
+        node = node.offsetParent;
+      }
+      return top;
+    }
 
     function alignHomeResultsTitle() {
       const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
       if (!destinationStart.isConnected) return;
-      destinationStart.scrollIntoView({ block: "start", behavior: "auto" });
+      const stickyTop = Number.parseFloat(window.getComputedStyle(destinationStart).top);
+      const landingTop = Number.isFinite(stickyTop) ? stickyTop : 0;
+      const targetTop = Math.max(0, homeResultsDocumentTop(destinationStart) - landingTop);
+      window.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
     }
 
     function focusHomeResults() {
       if (homeResultsFocusFrame) window.cancelAnimationFrame(homeResultsFocusFrame);
-      homeResultsFocusFrame = window.requestAnimationFrame(() => {
-        homeResultsFocusFrame = 0;
+      if (homeResultsFocusTimer) window.clearTimeout(homeResultsFocusTimer);
+      const focusRun = ++homeResultsFocusRun;
+      const settle = (remainingFrames) => {
+        if (focusRun !== homeResultsFocusRun) return;
         alignHomeResultsTitle();
-      });
+        if (remainingFrames > 0) {
+          homeResultsFocusFrame = window.requestAnimationFrame(() => settle(remainingFrames - 1));
+          return;
+        }
+        homeResultsFocusFrame = 0;
+        homeResultsFocusTimer = window.setTimeout(() => {
+          if (focusRun !== homeResultsFocusRun) return;
+          homeResultsFocusTimer = 0;
+          alignHomeResultsTitle();
+        }, 160);
+      };
+      settle(2);
     }
 
     function settleHomeTvFeedLanding({ complete = false } = {}) {
@@ -53083,7 +53117,7 @@
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
       syncHomeDestinationLocation(nextTab);
       render();
-      if (options.scroll !== false && nextTab !== "tv") {
+      if (options.scroll !== false) {
         focusHomeResults();
       }
       return true;
@@ -53476,7 +53510,7 @@
     homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
-    if (initialHomeDestinationRequested && initialHomeDestination !== "tv") {
+    if (initialHomeDestinationRequested) {
       focusHomeResults();
     }
     async function refreshVisibleHomeDiscovery() {

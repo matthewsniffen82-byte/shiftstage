@@ -125,18 +125,22 @@ test("the homepage selects Dancers on first load and keeps destination navigatio
   );
 });
 
-test("all three destinations stay scrollable and loaded TV lands with its title at the viewport start", () => {
+test("all three destinations land at their title before the cards", () => {
   assert.match(
     homeSource,
     /const homeDestinationOrder = \["dancers", "tv", "venues"\];/,
   );
   assert.match(
     homeSource,
-    /function alignHomeResultsTitle\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?scrollIntoView\(\{ block: "start", behavior: "auto" \}\)[\s\S]*?function focusHomeResults\(\) \{[\s\S]*?cancelAnimationFrame\(homeResultsFocusFrame\)[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?alignHomeResultsTitle\(\)/,
+    /function homeResultsDocumentTop\(element\) \{[\s\S]*?Number\(node\.offsetTop\)[\s\S]*?node = node\.offsetParent[\s\S]*?function alignHomeResultsTitle\(\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?getComputedStyle\(destinationStart\)\.top[\s\S]*?homeResultsDocumentTop\(destinationStart\) - landingTop[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior: "auto" \}\)/,
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?homeTvFeedLandingPending = nextTab === "tv" && options\.scroll !== false;[\s\S]*?render\(\);[\s\S]*?options\.scroll !== false && nextTab !== "tv"[\s\S]*?focusHomeResults\(\)/,
+    /function focusHomeResults\(\) \{[\s\S]*?cancelAnimationFrame\(homeResultsFocusFrame\)[\s\S]*?clearTimeout\(homeResultsFocusTimer\)[\s\S]*?const focusRun = \+\+homeResultsFocusRun[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?requestAnimationFrame\(\(\) => settle\(remainingFrames - 1\)\)[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?160/,
+  );
+  assert.match(
+    homeSource,
+    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?homeTvFeedLandingPending = nextTab === "tv" && options\.scroll !== false;[\s\S]*?render\(\);[\s\S]*?if \(options\.scroll !== false\) \{[\s\S]*?focusHomeResults\(\)/,
   );
   assert.match(homeSource, /let homeTvFeedLandingPending = false;/);
   assert.match(
@@ -149,7 +153,7 @@ test("all three destinations stay scrollable and loaded TV lands with its title 
   );
   assert.match(
     homeSource,
-    /homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";[\s\S]*?render\(\);/,
+    /homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";[\s\S]*?render\(\);[\s\S]*?if \(initialHomeDestinationRequested\) \{[\s\S]*?focusHomeResults\(\)/,
   );
   assert.match(
     homeSource,
@@ -169,7 +173,11 @@ test("mobile discovery keeps the active title and destination dock visible while
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?\.app \{\s*overflow: visible !important;[\s\S]*?\.discovery-sticky-head \{[\s\S]*?position: sticky;[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top, 0px\)\);[\s\S]*?z-index: 70;[\s\S]*?scroll-margin-top: calc\(74px \+ env\(safe-area-inset-top, 0px\)\);/,
+    /@media \(max-width: 720px\) \{[\s\S]*?\.app \{\s*overflow: visible !important;[\s\S]*?\.discovery-sticky-head \{[\s\S]*?position: sticky;[\s\S]*?top: calc\(18px \+ env\(safe-area-inset-top, 0px\)\);[\s\S]*?z-index: 70;[\s\S]*?scroll-margin-top: 0;/,
+  );
+  assert.match(
+    homeSource,
+    /\.discovery-sticky-head \+ #results \{[\s\S]*?min-height: calc\(100svh - 112px\) !important;[\s\S]*?align-content: start;/,
   );
   assert.match(
     homeSource,
