@@ -361,7 +361,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=47/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=48/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
