@@ -1869,7 +1869,8 @@ body.dancr-button-system :is(
  * the neutral rule above. */
 body.dancr-button-system .home-tv-feed-action:not(
   .home-tv-feed-deal-action,
-  .home-tv-feed-report-action
+  .home-tv-feed-report-action,
+  .home-tv-feed-fullscreen
 ):is(.is-active, [aria-pressed="true"]) {
   border-color: var(--dancr-color-brand-primary-medium) !important;
   color: var(--dancr-color-text-primary) !important;
@@ -3485,7 +3486,8 @@ body.dancr-button-system :is(
 
 body.dancr-button-system .home-tv-feed-action:not(
     .home-tv-feed-deal-action,
-    .home-tv-feed-report-action
+    .home-tv-feed-report-action,
+    .home-tv-feed-fullscreen
   ):is(.is-active, [aria-pressed="true"]) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
   color: var(--dancr-color-brand-core) !important;
@@ -3510,6 +3512,19 @@ body.dancr-button-system :is(
   border-color: var(--dancr-color-brand-primary-strong) !important;
   outline: 0 !important;
   box-shadow: var(--dancr-focus-ring) !important;
+}
+
+/* Fullscreen is a viewing mode, not a selected reaction. Keep its control
+ * neutral after touch focus and while the video is expanded. */
+body.dancr-button-system .home-tv-feed-fullscreen[aria-pressed="true"] {
+  border-color: var(--dancr-color-white-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-black-medium) !important;
+  background-image: none !important;
+  outline: 0 !important;
+  box-shadow:
+    0 5px 16px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
 body.dancr-button-system .home-tv-feed-report-action[aria-expanded="true"] {

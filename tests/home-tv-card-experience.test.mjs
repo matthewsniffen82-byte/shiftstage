@@ -375,8 +375,17 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.doesNotMatch(neutralControls, /radial-gradient|brand-primary|beam-violet/);
 
   assert.match(activeControls, /\.home-tv-feed-report-action/);
+  assert.match(activeControls, /\.home-tv-feed-fullscreen/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
+  assert.equal(
+    (aestheticSource.match(/\.home-tv-feed-report-action,\s*\.home-tv-feed-fullscreen/g) || []).length,
+    2,
+  );
+  assert.match(
+    aestheticSource,
+    /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
+  );
   assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=62/);
 });
 
