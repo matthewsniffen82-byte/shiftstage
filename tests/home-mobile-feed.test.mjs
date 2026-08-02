@@ -208,14 +208,14 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
 });
 
-test("Dancers uses a near-seamless three-column media grid with a scrollbar-safe right rail", () => {
+test("Dancers uses larger portrait tiles in a near-seamless three-column grid", () => {
   assert.match(
     homeSource,
     /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 2px !important;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 3 \/ 4 !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 2px !important;[\s\S]*?box-shadow: none !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column > \.home-dancer-grid-card \{[\s\S]*?height: auto !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: 5 \/ 8 !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 2px !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     homeSource,
