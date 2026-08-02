@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=48" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=49" rel="stylesheet">/,
   );
 });
 
@@ -104,7 +104,7 @@ test("large dancer profile media frames use a neutral edge without a colored hal
 
 test("venue discovery and detail use restrained brand actions without recoloring deals or navigation", () => {
   const venueAccents = aesthetic.match(
-    /Venue discovery keeps its premium black-metal cards neutral[\s\S]*$/,
+    /Venue discovery keeps its premium black-metal cards neutral[\s\S]*?(?=\/\* Venue identity and operational hierarchy refinements)/,
   )?.[0] || "";
 
   assert.ok(venueAccents, "the venue-specific brand layer must exist");

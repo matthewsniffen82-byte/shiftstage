@@ -2241,3 +2241,183 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .action-bt
   ) !important;
   box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
 }
+
+/* Venue identity and operational hierarchy refinements keep the card shell
+ * neutral, preserve semantic deal colors, and leave navigation untouched. */
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-monogram {
+  width: 124px !important;
+  height: 124px !important;
+  border-radius: 38px !important;
+  font-size: 34px !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  :is(.home-venue-discovery-name, .home-venue-discovery-location span:last-child) {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-operating-status {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 999px;
+  color: var(--dancr-color-text-muted);
+  background: var(--dancr-color-surface-glass);
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-operating-status.is-open {
+  border-color: var(--dancr-color-success-strong);
+  color: var(--dancr-color-success);
+  background: color-mix(in srgb, var(--dancr-color-success) 13%, var(--dancr-color-surface));
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-operating-status:is(.is-closed, .is-unknown) {
+  border-color: var(--dancr-color-border-subtle);
+  color: var(--dancr-color-text-muted);
+  background: color-mix(in srgb, var(--dancr-color-text-muted) 7%, var(--dancr-color-surface));
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-hours {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  .feed-card-action:not(.is-active):not([aria-pressed="true"]):not(.home-venue-discovery-rail-qr.is-available) {
+  opacity: 0.76;
+  filter: saturate(0.72);
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  [data-venue-follow]:is(.is-active, [aria-pressed="true"]) {
+  opacity: 1;
+  filter: none;
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 22%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo {
+  min-height: clamp(264px, 58vw, 330px) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sign {
+  width: min(84%, 460px) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(#venueDetailName, .venue-sign-name) {
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body > .row {
+  flex-wrap: wrap;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body > .row > div {
+  min-width: min(210px, 100%);
+  flex: 1 1 210px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-summary {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-status {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 999px;
+  color: var(--dancr-color-text-muted);
+  background: var(--dancr-color-surface-glass);
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-status.is-open {
+  border-color: var(--dancr-color-success-strong);
+  color: var(--dancr-color-success);
+  background: color-mix(in srgb, var(--dancr-color-success) 13%, var(--dancr-color-surface));
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-operating-status:is(.is-closed, .is-unknown) {
+  border-color: var(--dancr-color-border-subtle);
+  color: var(--dancr-color-text-muted);
+  background: color-mix(in srgb, var(--dancr-color-text-muted) 7%, var(--dancr-color-surface));
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-pill {
+  border-color: var(--dancr-color-info-medium) !important;
+  color: var(--dancr-color-info) !important;
+  background: color-mix(in srgb, var(--dancr-color-info) 9%, var(--dancr-color-surface)) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-copy .meta {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-info .info-tile .meta {
+  overflow-wrap: anywhere;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-offer-card.revenue-offer-card {
+  border-color: var(--dancr-color-success-strong) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-success) 9%,
+    var(--dancr-color-surface-subtle)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--dancr-color-white-soft),
+    0 0 20px color-mix(in srgb, var(--dancr-color-success) 14%, transparent) !important;
+}

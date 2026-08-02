@@ -29182,7 +29182,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=48" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=49" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -43332,6 +43332,39 @@
       };
     }
 
+    function venueOperatingStatus(hours, city = selectedCity(), now = new Date()) {
+      const hoursLabel = displayShiftTime(hours);
+      const parts = String(hours || "").split(/\s*(?:-|–|—|\bto\b)\s*/i);
+      if (!hoursLabel || parts.length !== 2) {
+        return {
+          state: "unknown",
+          label: "Hours not posted",
+          hoursLabel: ""
+        };
+      }
+      const start = parseClockMinutes(parts[0]);
+      let end = parseClockMinutes(parts[1]);
+      if (start === null || end === null) {
+        return {
+          state: "unknown",
+          label: "Hours not posted",
+          hoursLabel: ""
+        };
+      }
+      const cityNow = cityWallClock(now, city);
+      let currentMinutes = (cityNow.getUTCHours() * 60) + cityNow.getUTCMinutes();
+      if (end <= start) {
+        end += 1440;
+        if (currentMinutes <= end - 1440) currentMinutes += 1440;
+      }
+      const isOpen = currentMinutes >= start && currentMinutes < end;
+      return {
+        state: isOpen ? "open" : "closed",
+        label: isOpen ? "Open now" : "Closed",
+        hoursLabel: `Hours · ${hoursLabel}`
+      };
+    }
+
     function profileCard(profile, index, options = {}) {
       const isPending = profile.status === "Pending";
       const isTrending = !isPending && profile.trendRank;
@@ -43554,6 +43587,7 @@
     function venueDetailPage(venue) {
       const city = citySelect.value;
       const details = venueDetails(venue, city);
+      const operatingStatus = venueOperatingStatus(details.hours, city);
       const visual = venueVisualAttrs(venue);
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
@@ -43593,7 +43627,10 @@
                   <h2 id="venueDetailName">${details.name}</h2>
                   <div class="meta">${details.city}${details.state ? `, ${details.state}` : ""}</div>
                 </div>
-                <span class="venue-status-pill">${details.hours ? `Hours · ${displayShiftTime(details.hours)}` : "Hours not posted"}</span>
+                <span class="venue-operating-summary">
+                  <span class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>
+                  ${operatingStatus.hoursLabel ? `<span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
+                </span>
               </div>
               <div class="venue-quick-stats">
                 <button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>
@@ -49011,6 +49048,7 @@
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
       const details = venueDetails(venue, city);
+      const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.name);
       const initials = venueInitials(venue.name);
@@ -49021,9 +49059,10 @@
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
-      const hoursMarkup = details.hours
-        ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>${escapeHtml(displayShiftTime(details.hours))}</span></span>`
+      const hoursMarkup = operatingStatus.hoursLabel
+        ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
         : "";
+      const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true });
       const directionsMarkup = details.address
@@ -49051,7 +49090,7 @@
               <button class="home-venue-discovery-profile-cta" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile"><span>Profile</span><span aria-hidden="true">›</span></button>
             </div>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
-            <span class="home-venue-discovery-meta">${hoursMarkup}${workingNowMarkup}</span>
+            <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}${workingNowMarkup}</span>
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
             ${railQrMarkup}
