@@ -33058,7 +33058,40 @@
         }
         #profileBackdrop .profile-modal-media-position { top: 12px; left: 12px; }
         #profileBackdrop .profile-modal-media-position { pointer-events: none; }
-        #profileBackdrop .profile-modal-media-expand { right: 12px; bottom: 12px; cursor: pointer; }
+        #profileBackdrop .profile-modal-media-expand {
+          right: 10px;
+          bottom: 10px;
+          z-index: 8;
+          width: 42px;
+          height: 42px;
+          min-height: 42px;
+          justify-content: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 50% !important;
+          color: #fff !important;
+          background: rgba(12,12,20,.72) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.24) !important;
+          backdrop-filter: blur(10px) !important;
+          -webkit-backdrop-filter: blur(10px) !important;
+          cursor: pointer;
+          transition: opacity .18s ease, transform .18s ease, background-color .18s ease !important;
+        }
+        #profileBackdrop .profile-modal-media-control-icon {
+          width: 18px;
+          height: 18px;
+          display: block;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          pointer-events: none;
+        }
+        #profileBackdrop .profile-modal-media-control-icon .is-fill {
+          fill: currentColor;
+          stroke: none;
+        }
         #profileBackdrop .profile-modal-media-previous,
         #profileBackdrop .profile-modal-media-next {
           position: absolute;
@@ -33109,46 +33142,119 @@
         #profileBackdrop .profile-modal-video-controls {
           position: absolute;
           z-index: 7;
-          right: 12px;
-          bottom: 54px;
-          left: 12px;
+          right: 60px;
+          bottom: 10px;
+          left: 10px;
           display: grid;
-          grid-template-columns: auto auto minmax(52px, 1fr) auto;
+          grid-template-columns: 36px 36px minmax(64px, 1fr) auto;
           align-items: center;
-          gap: 7px;
-          padding: 7px;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: 13px;
-          background: rgba(4,4,8,.76);
-          box-shadow: 0 10px 28px rgba(0,0,0,.34);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          gap: 4px;
+          min-height: 42px;
+          padding: 3px 8px 3px 3px;
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 999px;
+          background: rgba(4,4,8,.58);
+          box-shadow: 0 8px 22px rgba(0,0,0,.24);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          opacity: 0;
+          transform: translateY(5px);
+          pointer-events: none;
+          transition: opacity .18s ease, transform .18s ease;
         }
         #profileBackdrop .profile-modal-video-controls[hidden] { display: none !important; }
+        #profileBackdrop .profile-modal-video-controls.is-visible,
+        #profileBackdrop .profile-modal-video-controls:focus-within {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
         #profileBackdrop .profile-modal-video-controls button {
-          min-height: 34px;
-          padding: 0 9px;
-          border: 1px solid rgba(126,234,255,.26);
-          border-radius: 9px;
-          color: #fff;
-          background: rgba(126,234,255,.08);
+          width: 36px;
+          height: 36px;
+          min-height: 36px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 50% !important;
+          color: #fff !important;
+          background: rgba(255,255,255,.06) !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
           font: inherit;
-          font-size: 10px;
-          font-weight: 900;
-          white-space: nowrap;
           cursor: pointer;
         }
         #profileBackdrop .profile-modal-video-controls input {
+          --profile-video-progress: 0%;
+          appearance: none;
+          -webkit-appearance: none;
           width: 100%;
           min-width: 48px;
-          accent-color: #7eeaff;
+          height: 18px;
+          margin: 0;
+          padding: 0;
+          background: transparent;
           cursor: pointer;
+        }
+        #profileBackdrop .profile-modal-video-controls input::-webkit-slider-runnable-track {
+          height: 3px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #7eeaff 0 var(--profile-video-progress), rgba(255,255,255,.26) var(--profile-video-progress) 100%);
+        }
+        #profileBackdrop .profile-modal-video-controls input::-webkit-slider-thumb {
+          appearance: none;
+          -webkit-appearance: none;
+          width: 11px;
+          height: 11px;
+          margin-top: -4px;
+          border: 0;
+          border-radius: 50%;
+          background: #fff;
+          box-shadow: 0 0 0 2px rgba(126,234,255,.3);
+        }
+        #profileBackdrop .profile-modal-video-controls input::-moz-range-track {
+          height: 3px;
+          border: 0;
+          border-radius: 999px;
+          background: rgba(255,255,255,.26);
+        }
+        #profileBackdrop .profile-modal-video-controls input::-moz-range-progress {
+          height: 3px;
+          border-radius: 999px;
+          background: #7eeaff;
+        }
+        #profileBackdrop .profile-modal-video-controls input::-moz-range-thumb {
+          width: 11px;
+          height: 11px;
+          border: 0;
+          border-radius: 50%;
+          background: #fff;
+          box-shadow: 0 0 0 2px rgba(126,234,255,.3);
         }
         #profileBackdrop .profile-modal-video-controls output {
           color: #d8d0e4;
           font-size: 9px;
           font-weight: 850;
           white-space: nowrap;
+        }
+        #profileBackdrop .modal-image.is-video-media .profile-modal-media-expand {
+          opacity: 0;
+          transform: translateY(5px);
+          pointer-events: none;
+        }
+        #profileBackdrop .modal-image.is-video-media.is-video-controls-visible .profile-modal-media-expand,
+        #profileBackdrop .modal-image.is-video-media .profile-modal-media-expand:focus-visible {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          #profileBackdrop .profile-modal-video-controls,
+          #profileBackdrop .profile-modal-media-expand {
+            transition: none;
+          }
         }
         #profileBackdrop .profile-modal-media {
           display: grid;
@@ -33531,16 +33637,16 @@
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
           #profileBackdrop .profile-modal-video-controls {
-            right: 9px;
-            bottom: 52px;
-            left: 9px;
-            gap: 5px;
-            padding: 6px;
+            right: 56px;
+            bottom: 10px;
+            left: 10px;
+            gap: 3px;
+            padding: 3px 6px 3px 3px;
           }
           #profileBackdrop .profile-modal-video-controls button {
-            min-height: 32px;
-            padding-inline: 7px;
-            font-size: 9px;
+            width: 36px;
+            height: 36px;
+            min-height: 36px;
           }
           #profileBackdrop .profile-modal-video-controls output { font-size: 8px; }
           #profileBackdrop .working-now-tile > .meta {
@@ -35308,10 +35414,16 @@
             <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
             <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
             <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
-            <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile media full screen">View full screen</button>
-            <div class="profile-modal-video-controls" id="modalVideoControls" data-modal-video-controls hidden>
-              <button id="modalVideoPlayback" type="button" aria-label="Play TV video">Play</button>
-              <button id="modalVideoSound" type="button" aria-label="Turn TV video sound on">Sound on</button>
+            <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile media full screen" title="View full screen">
+              <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5"></path><path d="M16 3h5v5"></path><path d="M8 21H3v-5"></path><path d="M16 21h5v-5"></path></svg>
+            </button>
+            <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
+              <button id="modalVideoPlayback" type="button" aria-label="Play TV video" title="Play">
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m9 7 8 5-8 5Z"></path></svg>
+              </button>
+              <button id="modalVideoSound" type="button" aria-label="Turn TV video sound on" title="Turn sound on">
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="m17 9 4 6"></path><path d="m21 9-4 6"></path></svg>
+              </button>
               <input id="modalVideoProgress" type="range" min="0" max="0.1" step="0.1" value="0" aria-label="TV video progress" aria-valuetext="0:00 of 0:00">
               <output id="modalVideoTime" for="modalVideoProgress">0:00 / 0:00</output>
             </div>
@@ -35458,6 +35570,7 @@
     const modalVideoSound = document.getElementById("modalVideoSound");
     const modalVideoProgress = document.getElementById("modalVideoProgress");
     const modalVideoTime = document.getElementById("modalVideoTime");
+    let modalVideoControlsHideTimer = 0;
     const modalBody = document.getElementById("modalBody");
     const viewAllBtn = document.getElementById("viewAllBtn");
     const cityCoordinates = {
@@ -43360,17 +43473,54 @@
       return profile ? (profile.status === "Pending" ? profile : withTrendingRank(profile, citySelect.value)) : null;
     }
 
+    function modalVideoPlaybackIcon(paused) {
+      return paused
+        ? '<svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m9 7 8 5-8 5Z"></path></svg>'
+        : '<svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="M7 6h3v12H7zM14 6h3v12h-3z"></path></svg>';
+    }
+
+    function modalVideoSoundIcon(muted) {
+      const soundWaves = muted
+        ? '<path d="m17 9 4 6"></path><path d="m21 9-4 6"></path>'
+        : '<path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.5 7a7.5 7.5 0 0 1 0 10"></path>';
+      return `<svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path>${soundWaves}</svg>`;
+    }
+
+    function clearModalVideoControlsHideTimer() {
+      if (!modalVideoControlsHideTimer) return;
+      window.clearTimeout(modalVideoControlsHideTimer);
+      modalVideoControlsHideTimer = 0;
+    }
+
+    function setModalVideoControlsVisible(visible, options = {}) {
+      clearModalVideoControlsHideTimer();
+      modalVideoControls.classList.toggle("is-visible", visible);
+      modalImage.classList.toggle("is-video-controls-visible", visible);
+      const video = activeModalVideo();
+      if (!visible || !options.autoHide || !video || video.paused) return;
+      modalVideoControlsHideTimer = window.setTimeout(() => {
+        modalVideoControls.classList.remove("is-visible");
+        modalImage.classList.remove("is-video-controls-visible");
+        modalVideoControlsHideTimer = 0;
+      }, 1800);
+    }
+
     function clearModalVideoPreview() {
+      clearModalVideoControlsHideTimer();
       modalImage.querySelector(".modal-media-video-preview")?.remove();
-      modalImage.classList.remove("is-video-media");
+      modalImage.classList.remove("is-video-media", "is-video-controls-visible");
       delete modalImage.dataset.activeVideoIndex;
       modalVideoControls.hidden = true;
-      modalVideoPlayback.textContent = "Play";
+      modalVideoControls.classList.remove("is-visible");
+      modalVideoPlayback.innerHTML = modalVideoPlaybackIcon(true);
       modalVideoPlayback.setAttribute("aria-label", "Play TV video");
-      modalVideoSound.textContent = "Sound on";
+      modalVideoPlayback.title = "Play";
+      modalVideoSound.innerHTML = modalVideoSoundIcon(true);
       modalVideoSound.setAttribute("aria-label", "Turn TV video sound on");
+      modalVideoSound.title = "Turn sound on";
       modalVideoProgress.value = "0";
       modalVideoProgress.max = "0.1";
+      modalVideoProgress.style.setProperty("--profile-video-progress", "0%");
       modalVideoProgress.setAttribute("aria-valuetext", "0:00 of 0:00");
       modalVideoTime.textContent = "0:00 / 0:00";
     }
@@ -43383,6 +43533,7 @@
       const video = activeModalVideo();
       if (!video || modalImage.dataset.activeMediaType !== "video") {
         modalVideoControls.hidden = true;
+        setModalVideoControlsVisible(false);
         return;
       }
       const videos = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
@@ -43392,15 +43543,20 @@
         : Math.max(0, Number(item.durationSeconds) || 0);
       const currentTime = Math.min(Math.max(0, video.currentTime || 0), Math.max(0, duration));
       modalVideoControls.hidden = false;
-      modalVideoPlayback.textContent = video.paused ? "Play" : "Pause";
+      modalVideoPlayback.innerHTML = modalVideoPlaybackIcon(video.paused);
       modalVideoPlayback.setAttribute("aria-label", video.paused ? "Play TV video" : "Pause TV video");
-      modalVideoSound.textContent = video.muted ? "Sound on" : "Sound off";
+      modalVideoPlayback.title = video.paused ? "Play" : "Pause";
+      modalVideoSound.innerHTML = modalVideoSoundIcon(video.muted);
       modalVideoSound.setAttribute("aria-label", video.muted ? "Turn TV video sound on" : "Turn TV video sound off");
+      modalVideoSound.title = video.muted ? "Turn sound on" : "Turn sound off";
       modalVideoProgress.max = String(Math.max(0.1, duration));
       modalVideoProgress.value = String(currentTime);
+      const progressPercent = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
+      modalVideoProgress.style.setProperty("--profile-video-progress", `${progressPercent}%`);
       const timeLabel = `${formatProfileTvDuration(currentTime)} of ${formatProfileTvDuration(duration)}`;
       modalVideoProgress.setAttribute("aria-valuetext", timeLabel);
       modalVideoTime.textContent = `${formatProfileTvDuration(currentTime)} / ${formatProfileTvDuration(duration)}`;
+      if (video.paused) setModalVideoControlsVisible(true);
     }
 
     function setProfileMediaTab(requestedTab) {
@@ -43473,6 +43629,8 @@
       if (!item?.videoUrl) return false;
       clearModalVideoPreview();
       modalImage.className = "modal-image is-video-media";
+      modalImage.dataset.activeMediaType = "video";
+      modalImage.dataset.activeVideoIndex = String(index);
       modalImage.style.removeProperty("--custom-photo");
 
       const preview = document.createElement("div");
@@ -43487,12 +43645,21 @@
       video.preload = "metadata";
       video.setAttribute("autoplay", "");
       video.setAttribute("aria-hidden", "true");
-      ["loadedmetadata", "durationchange", "timeupdate", "play", "pause", "volumechange"].forEach((eventName) => {
+      ["loadedmetadata", "durationchange", "timeupdate", "volumechange"].forEach((eventName) => {
         video.addEventListener(eventName, syncModalVideoControls);
+      });
+      video.addEventListener("play", () => {
+        syncModalVideoControls();
+        setModalVideoControlsVisible(true, { autoHide: true });
+      });
+      video.addEventListener("pause", () => {
+        syncModalVideoControls();
+        setModalVideoControlsVisible(true);
       });
       preview.appendChild(video);
       modalImage.appendChild(preview);
       modalVideoControls.hidden = false;
+      setModalVideoControlsVisible(true);
       syncModalVideoControls();
       void video.play().catch(() => undefined);
 
@@ -43517,7 +43684,7 @@
       modalImage.dataset.activePhotoIndex = String(activeIndex);
       modalImage.setAttribute(
         "aria-label",
-        `${profileName} profile video autoplaying muted, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Select View full screen for immersive playback or swipe left or right to change media.`
+        `${profileName} profile video autoplaying muted, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Tap the video to show or hide playback controls. Use the full-screen button for immersive playback or swipe left or right to change media.`
       );
       syncModalMediaNavigation("video", index, videos.length);
       return true;
@@ -50871,7 +51038,11 @@
       const video = activeModalVideo();
       if (!video) return;
       if (video.paused) {
-        void video.play().catch(() => syncModalVideoControls());
+        setModalVideoControlsVisible(true, { autoHide: true });
+        void video.play().catch(() => {
+          syncModalVideoControls();
+          setModalVideoControlsVisible(true);
+        });
       } else {
         video.pause();
       }
@@ -50883,6 +51054,7 @@
       if (!video) return;
       video.muted = !video.muted;
       syncModalVideoControls();
+      setModalVideoControlsVisible(true, { autoHide: true });
     });
     modalVideoProgress?.addEventListener("input", (event) => {
       event.stopPropagation();
@@ -50894,8 +51066,15 @@
         : Number(event.currentTarget.max) || 0;
       video.currentTime = Math.min(Math.max(0, requestedTime), Math.max(0, duration));
       syncModalVideoControls();
+      setModalVideoControlsVisible(true, { autoHide: true });
     });
-    modalVideoControls?.addEventListener("pointerdown", (event) => event.stopPropagation());
+    modalVideoControls?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      setModalVideoControlsVisible(true);
+    });
+    modalVideoControls?.addEventListener("pointerup", () => {
+      setModalVideoControlsVisible(true, { autoHide: true });
+    });
 
     bindHorizontalProfilePhotoSwipe(modalImage);
     bindHorizontalProfilePhotoSwipe(profilePhotoViewerImage, { syncViewer: true });
@@ -50928,7 +51107,22 @@
     });
     modalImage?.addEventListener("click", (event) => {
       if (event.target.closest("button, input, [data-modal-video-controls]")) return;
+      if (modalImage.dataset.activeMediaType === "video") {
+        const video = activeModalVideo();
+        if (video?.paused) {
+          setModalVideoControlsVisible(true);
+          return;
+        }
+        const controlsAreVisible = modalVideoControls.classList.contains("is-visible");
+        setModalVideoControlsVisible(!controlsAreVisible, { autoHide: !controlsAreVisible });
+        return;
+      }
       openSelectedModalMediaViewer();
+    });
+
+    modalImage?.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch" || modalImage.dataset.activeMediaType !== "video") return;
+      setModalVideoControlsVisible(true, { autoHide: true });
     });
 
     modalImage?.addEventListener("keydown", (event) => {
@@ -50936,6 +51130,15 @@
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
         moveModalPhoto(event.key === "ArrowRight" ? 1 : -1);
+      } else if ((event.key === "Enter" || event.key === " ") && modalImage.dataset.activeMediaType === "video") {
+        event.preventDefault();
+        const video = activeModalVideo();
+        if (video?.paused) {
+          setModalVideoControlsVisible(true);
+          return;
+        }
+        const controlsAreVisible = modalVideoControls.classList.contains("is-visible");
+        setModalVideoControlsVisible(!controlsAreVisible, { autoHide: !controlsAreVisible });
       }
     });
     profilePhotoViewerImage?.addEventListener("keydown", (event) => {

@@ -106,12 +106,24 @@ test("home full-profile identity scrolls with the complete profile", () => {
 });
 
 test("home profile TV previews expose inline playback, sound, progress, and duration controls", () => {
-  assert.match(liveApp, /id="modalVideoPlayback" type="button" aria-label="Play TV video"/);
-  assert.match(liveApp, /id="modalVideoSound" type="button" aria-label="Turn TV video sound on"/);
+  assert.match(liveApp, /id="modalVideoPlayback" type="button" aria-label="Play TV video"[^>]*>[\s\S]*?profile-modal-media-control-icon/);
+  assert.match(liveApp, /id="modalVideoSound" type="button" aria-label="Turn TV video sound on"[^>]*>[\s\S]*?profile-modal-media-control-icon/);
   assert.match(liveApp, /id="modalVideoProgress" type="range"/);
   assert.match(liveApp, /function syncModalVideoControls\(\)/);
   assert.match(liveApp, /modalVideoProgress\?\.addEventListener\("input"/);
   assert.match(liveApp, /formatProfileTvDuration\(currentTime\)/);
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-modal-video-controls \{[\s\S]*?grid-template-columns: 36px 36px minmax\(64px, 1fr\) auto;[\s\S]*?border-radius: 999px;[\s\S]*?opacity: 0;[\s\S]*?pointer-events: none;/,
+  );
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-video-controls\.is-visible,[\s\S]*?opacity: 1;[\s\S]*?pointer-events: auto;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-video-controls button \{[\s\S]*?border-radius: 50% !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(liveApp, /#profileBackdrop \.profile-modal-media-expand \{[\s\S]*?border-radius: 50% !important;[\s\S]*?background: rgba\(12,12,20,\.72\) !important;/);
+  assert.match(liveApp, /--profile-video-progress[\s\S]*?::-webkit-slider-runnable-track[\s\S]*?height: 3px;/);
+  assert.match(liveApp, /function setModalVideoControlsVisible\(visible, options = \{\}\)[\s\S]*?window\.setTimeout[\s\S]*?1800/);
+  assert.match(liveApp, /modalImage\?\.addEventListener\("click"[\s\S]*?modalImage\.dataset\.activeMediaType === "video"[\s\S]*?setModalVideoControlsVisible/);
+  assert.doesNotMatch(liveApp, /id="modalVideoPlayback"[^>]*>\s*Play\s*<\/button>/);
+  assert.doesNotMatch(liveApp, /id="modalVideoSound"[^>]*>\s*Sound on\s*<\/button>/);
 });
 
 test("profile overlay mobile geometry is shared by Android and iPhone", () => {

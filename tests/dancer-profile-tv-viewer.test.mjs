@@ -91,7 +91,7 @@ test("live profile thumbnails stay idle while the selected preview autoplays wit
     /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?video\.autoplay = true[\s\S]*?video\.muted = true[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/,
   );
   assert.doesNotMatch(liveApp, /modal-media-video-play/);
-  assert.match(liveApp, /Select View full screen for immersive playback/);
+  assert.match(liveApp, /Tap the video to show or hide playback controls\. Use the full-screen button for immersive playback/);
   assert.match(
     liveApp,
     /#profileBackdrop \.profile-modal-media-previous,[\s\S]*?width: 44px;[\s\S]*?border: 0;[\s\S]*?background: rgba\(0,0,0,\.06\);[\s\S]*?box-shadow: none;[\s\S]*?font-size: 22px;[\s\S]*?opacity: \.64;[\s\S]*?backdrop-filter: none/,
