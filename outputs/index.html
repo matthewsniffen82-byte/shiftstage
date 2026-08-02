@@ -33002,14 +33002,20 @@
         #profileBackdrop .profile-modal-verified {
           width: 19px;
           height: 19px;
+          min-width: 19px;
+          min-height: 19px;
           display: inline-grid;
+          flex: 0 0 19px;
           place-items: center;
+          padding: 0;
+          aspect-ratio: 1;
           border-radius: 50%;
           color: #061019;
           background: #7eeaff;
           box-shadow: 0 0 16px rgba(126,234,255,.34);
           font-size: 11px;
           font-weight: 950;
+          line-height: 1;
         }
         #profileBackdrop .profile-modal-verified[hidden] {
           display: none !important;

@@ -123,6 +123,20 @@ test("home full-profile identity scrolls with the complete profile", () => {
   assert.doesNotMatch(identityRule, /position: sticky;/);
 });
 
+test("the full-profile verified badge stays circular like scroll-card checks", () => {
+  const verifiedBadgeRule = profilePolishBlock?.match(
+    /#profileBackdrop \.profile-modal-verified \{[\s\S]*?\n        \}/,
+  )?.[0] || "";
+
+  assert.match(verifiedBadgeRule, /width: 19px;/);
+  assert.match(verifiedBadgeRule, /height: 19px;/);
+  assert.match(verifiedBadgeRule, /min-width: 19px;/);
+  assert.match(verifiedBadgeRule, /min-height: 19px;/);
+  assert.match(verifiedBadgeRule, /flex: 0 0 19px;/);
+  assert.match(verifiedBadgeRule, /aspect-ratio: 1;/);
+  assert.match(verifiedBadgeRule, /border-radius: 50%;/);
+});
+
 test("home profile TV previews expose inline playback, sound, progress, and duration controls", () => {
   assert.match(liveApp, /id="modalVideoPlayback" type="button" aria-label="Play TV video"[^>]*>[\s\S]*?profile-modal-media-control-icon/);
   assert.match(liveApp, /id="modalVideoSound" type="button" aria-label="Turn TV video sound on"[^>]*>[\s\S]*?profile-modal-media-control-icon/);
