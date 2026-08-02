@@ -122,13 +122,14 @@ test("venue discovery uses approved venue covers with a branded artwork fallback
   );
 });
 
-test("venue detail heroes use approved cover media and retain the generated sign fallback", () => {
+test("venue detail heroes use approved cover media with verified logo and generated sign fallbacks", () => {
   const venueDetail =
     homeSource.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
 
   assert.match(venueDetail, /const visual = venueVisualAttrs\(venue\)/);
+  assert.match(venueDetail, /const logoMarkup = venueLogoMarkup\(venue, "venue-detail-logo"\)/);
   assert.match(venueDetail, /venue-main-photo\$\{visual\.attrs\.className\}[\s\S]*?\$\{visual\.attrs\.style\}[\s\S]*?data-venue-visual-source="\$\{visual\.source\}"/);
-  assert.match(venueDetail, /visual\.source === "venue_cover" \? "" : `[\s\S]*?venue-sign-name/);
+  assert.match(venueDetail, /\$\{logoMarkup \|\| `[\s\S]*?venue-sign-name/);
   assert.match(
     aestheticSource,
     /\.venue-main-photo\.has-custom-photo\.has-venue-cover \{[\s\S]*?var\(--custom-photo\) !important;[\s\S]*?background-size: cover !important;/,

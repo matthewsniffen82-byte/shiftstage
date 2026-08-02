@@ -1,0 +1,20 @@
+# Las Vegas venue logo sources
+
+These locally served brand assets are used only to identify their respective venue on MyDancr venue cards and venue detail pages. They were retrieved from the venue's official website or, where an active official asset was unavailable, a documented archival or established local-industry source.
+
+| Venue | Local asset | Source |
+| --- | --- | --- |
+| Centerfolds Cabaret Las Vegas | `centerfolds-cabaret-las-vegas.png` | `https://surrealnightlife.com/las-vegas/strip-clubs/images/centerfolds/Centerfolds-logo.png` |
+| Chicas Bonitas | `chicas-bonitas.jpg` | `https://www.bachelorvegas.com/strip-clubs/images/chicas-bonitas/chicas-logo.jpg` |
+| Crazy Horse 3 | `crazy-horse-3.png` | `https://res.cloudinary.com/crazy-horse-3/image/upload/q_100/v1627998198/goldlogo_eb67w0.png` |
+| Deja Vu Showgirls Las Vegas | `deja-vu-showgirls-las-vegas.png` | `https://dvsg.b-cdn.net/deja-vu-showgirls.png` |
+| HUSTLER Club Las Vegas | `hustler-club-las-vegas.png` | `https://hustlerlasvegas.com/wp-content/uploads/2021/07/hustler-logo-H.png` |
+| Little Darlings Las Vegas | `little-darlings-las-vegas.png` | `https://LittleDarlings.b-cdn.net/Little%20Darlings%20Las%20Vegas%20(Long).png` |
+| Palomino Club | `palomino-club.svg` | `https://palominolv.com/wp-content/uploads/2022/06/logo.svg` |
+| Peppermint Hippo Las Vegas | `peppermint-hippo-las-vegas.svg` | `https://cloud-1de12d.becdn.net/media/original/41f1904c52eead3dc9c08866739fd59b/peppermint-hippo-logo.svg` |
+| Play It Again Sam's | `play-it-again-sams.svg` | `https://www.playitagainsams.com/_next/static/media/logo.abeaf9e9.svg` |
+| Sapphire Las Vegas | `sapphire-las-vegas.png` | `https://sapphirelasvegas.com/wp-content/uploads/Sapphire-Las-Vegas-logo_w.png` |
+| Spearmint Rhino Las Vegas | `spearmint-rhino-las-vegas.png` | `https://spearmintrhinolv.com/wp-content/uploads/2025/03/SRLV_Logo_2D_Gold_TransparentBackground_2-1-e1742180493616.png` |
+| Talk of the Town | `talk-of-the-town.png` | `https://web.archive.org/web/20140601125327id_/http://talkofthetownlv.com/images/templatemo_logo2.png` |
+| The Library Gentlemen's Club | `the-library-gentlemens-club.png` | `https://thelibrarygc.com/wp-content/uploads/2022/01/logo.png` |
+| Treasures Las Vegas | `treasures-las-vegas.png` | `http://treasuresvegas.com/wp-content/uploads/2018/12/logo-2.png` |

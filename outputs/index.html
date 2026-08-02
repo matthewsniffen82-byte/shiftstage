@@ -38850,6 +38850,7 @@
         coverImageSrcSet: item.coverImageSrcSet || "",
         coverImageWidth: item.coverImageWidth || null,
         coverImageHeight: item.coverImageHeight || null,
+        logoImageUrl: item.logoImageUrl || "",
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
         activeDeal: item.activeDeal || null
@@ -43462,6 +43463,12 @@
       };
     }
 
+    function venueLogoMarkup(venue, className) {
+      const logoImageUrl = String(venue?.logoImageUrl || "").trim();
+      if (!logoImageUrl) return "";
+      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" src="${escapeHtml(logoImageUrl)}" alt="" decoding="async"></span>`;
+    }
+
     function venueLineupMarkup(venue, city, options = {}) {
       const profiles = venueVisualProfiles(city, venue.name).slice(0, 3);
       if (!profiles.length) return "";
@@ -43503,6 +43510,7 @@
       const venueValue = escapeOptionValue(venue.name);
       const venueHref = venueExperienceHref(venue, city);
       const visual = venueVisualAttrs(venue);
+      const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
       const workingNowCount = venueDancers(city, venue.name)
         .filter((profile) => isWorkingTonight(profile, city))
         .length;
@@ -43521,7 +43529,7 @@
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">
             <div class="venue-art${visual.attrs.className}"${visual.attrs.style}>
               <span class="venue-card-kicker">Mydancr venue</span>
-              <span class="venue-card-mark">${escapeHtml(initials)}</span>
+              ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
               ${workingNowMarkup}
             </div>
             <div class="profile-body">
@@ -43567,6 +43575,7 @@
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const visual = venueVisualAttrs(venue);
+      const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo");
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
@@ -43591,7 +43600,7 @@
           <article class="venue-hero">
             <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
               <div class="venue-art">
-                ${visual.source === "venue_cover" ? "" : `
+                ${logoMarkup || `
                   <div class="venue-sign">
                     <div class="venue-sign-name">${details.name}</div>
                     <div class="venue-sign-meta">${details.city} nightlife</div>
@@ -49032,6 +49041,7 @@
       const venueValue = escapeOptionValue(venue.name);
       const initials = venueInitials(venue.name);
       const visual = venueVisualAttrs(venue);
+      const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo");
       const localProfiles = venueDancers(city, venue.name);
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city))
@@ -49058,7 +49068,7 @@
       return `
         <article class="venue home-discovery-feed-slide home-venue-discovery-slide" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art${visual.attrs.className}"${visual.attrs.style} role="img" aria-label="${visualLabel}">
-            <span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>
+            ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <span class="home-discovery-feed-position">${index + 1} / ${total}</span>

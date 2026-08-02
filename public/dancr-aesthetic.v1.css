@@ -2644,6 +2644,76 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   text-overflow: ellipsis;
 }
 
+/* Verified venue identity stays independent from cover photography. The same
+ * contain-fit source is rendered on discovery cards and the full venue page,
+ * while the existing initials/sign treatment remains the network fallback. */
+.venue-card-logo-shell,
+.home-venue-discovery-logo-shell,
+.venue-detail-logo-shell {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border: 1px solid var(--dancr-color-border-subtle);
+  background: rgba(3, 4, 7, 0.72);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.08),
+    0 22px 54px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.venue-card-logo,
+.home-venue-discovery-logo,
+.venue-detail-logo {
+  display: block;
+  width: 86%;
+  height: 76%;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.52));
+}
+
+.venue-card-logo-shell {
+  width: min(64%, 300px);
+  height: 46%;
+  min-height: 112px;
+  border-radius: 26px;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-logo-shell {
+  width: min(72%, 330px);
+  height: 154px;
+  border-radius: 34px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
+  width: min(78%, 430px);
+  height: 164px;
+  border-radius: 28px;
+}
+
+@media (max-width: 420px) {
+  body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .home-venue-discovery-logo-shell {
+    width: min(68%, 286px);
+    height: 132px;
+    border-radius: 28px;
+  }
+
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
+    height: 144px;
+    border-radius: 24px;
+  }
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName {
   display: -webkit-box;
   -webkit-box-orient: vertical;

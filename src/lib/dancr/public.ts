@@ -4,6 +4,7 @@ import { getTonightWindow } from "./schedule";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
+import { verifiedVenueLogoUrl } from "./venue-branding";
 
 type DancrClient = SupabaseClient;
 
@@ -349,6 +350,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     longitude: data.longitude,
     hoursLabel: formatVenueHours(data.opens_at, data.closes_at),
     ...venueCoverImageFields(client, data.cover_image_storage_path),
+    logoImageUrl: verifiedVenueLogoUrl(data.slug),
     qrCodeUrl: venueQrCodeUrl(client, data.qr_code_storage_path),
     qrCodeLabel: data.qr_code_label || null,
   };

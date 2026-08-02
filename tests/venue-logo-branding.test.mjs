@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import { readFile, stat } from "node:fs/promises";
+import test from "node:test";
+
+const supportedLogos = {
+  "centerfolds-cabaret-las-vegas": "centerfolds-cabaret-las-vegas.png",
+  "chicas-bonitas": "chicas-bonitas.jpg",
+  "crazy-horse-3": "crazy-horse-3.png",
+  "deja-vu-showgirls": "deja-vu-showgirls-las-vegas.png",
+  "deja-vu-showgirls-las-vegas": "deja-vu-showgirls-las-vegas.png",
+  "hustler-club-las-vegas": "hustler-club-las-vegas.png",
+  "little-darlings": "little-darlings-las-vegas.png",
+  "little-darlings-las-vegas": "little-darlings-las-vegas.png",
+  "palomino-club": "palomino-club.svg",
+  "peppermint-hippo-las-vegas": "peppermint-hippo-las-vegas.svg",
+  "play-it-again-sams": "play-it-again-sams.svg",
+  "sapphire-las-vegas": "sapphire-las-vegas.png",
+  "spearmint-rhino": "spearmint-rhino-las-vegas.png",
+  "spearmint-rhino-las-vegas": "spearmint-rhino-las-vegas.png",
+  "talk-of-the-town": "talk-of-the-town.png",
+  "the-library-gentlemens-club": "the-library-gentlemens-club.png",
+  "treasures-las-vegas": "treasures-las-vegas.png",
+};
+
+const [branding, types, discoveryRoute, venuesRoute, publicService, liveApp, aesthetic] =
+  await Promise.all([
+    readFile(new URL("../src/lib/dancr/venue-branding.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/public/venues/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
+    readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
+  ]);
+
+test("every currently listed Las Vegas venue slug resolves to a local verified logo", async () => {
+  for (const [slug, fileName] of Object.entries(supportedLogos)) {
+    assert.match(branding, new RegExp(`"${slug}": "\\/venue-logos\\/${fileName.replaceAll(".", "\\.")}"`));
+    const asset = await stat(new URL(`../public/venue-logos/${fileName}`, import.meta.url));
+    assert.ok(asset.isFile());
+    assert.ok(asset.size > 1_000, `${fileName} must contain a real logo asset`);
+  }
+
+  assert.equal(new Set(Object.values(supportedLogos)).size, 14);
+  assert.match(branding, /return VENUE_LOGO_BY_SLUG\[normalizedSlug\] \|\| null/);
+});
+
+test("verified logo identity flows through every public venue response", () => {
+  assert.match(types, /logoImageUrl\?: string \| null/);
+  for (const source of [discoveryRoute, venuesRoute, publicService]) {
+    assert.match(source, /verifiedVenueLogoUrl/);
+    assert.match(source, /logoImageUrl: verifiedVenueLogoUrl\(/);
+  }
+  assert.match(liveApp, /logoImageUrl: item\.logoImageUrl \|\| ""/);
+});
+
+test("cards and detail pages use one contain-fit venue logo with neutral fallbacks", () => {
+  assert.match(liveApp, /function venueLogoMarkup\(venue, className\)/);
+  assert.match(liveApp, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
+  assert.match(liveApp, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);
+  assert.match(liveApp, /venueLogoMarkup\(venue, "venue-detail-logo"\)/);
+  assert.match(liveApp, /logoMarkup \|\| `<span class="venue-card-mark">/);
+  assert.match(liveApp, /logoMarkup \|\| `<span class="home-venue-discovery-monogram">/);
+  assert.match(liveApp, /logoMarkup \|\| `[\s\S]*?class="venue-sign"/);
+  assert.match(aesthetic, /\.venue-card-logo,[\s\S]*?\.venue-detail-logo \{[\s\S]*?object-fit: contain;/);
+  assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
+});

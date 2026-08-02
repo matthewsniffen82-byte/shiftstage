@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { formatVenueHours } from "@/src/lib/dancr/public";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
+import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
         coverImageSrcSet: coverImage?.imageSrcSet || null,
         coverImageWidth: coverImage?.imageWidth || null,
         coverImageHeight: coverImage?.imageHeight || null,
+        logoImageUrl: verifiedVenueLogoUrl(venue.slug),
         qrCodeUrl: venue.qr_code_storage_path
           ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
           : null,
