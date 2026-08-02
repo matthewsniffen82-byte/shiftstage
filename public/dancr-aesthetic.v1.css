@@ -13,9 +13,9 @@
 }
 
 /*
- * The trust mark comes directly from the hero: white against the electric-blue
- * pole light, with a restrained violet halo. Sizes remain owned by each
- * surface so dense cards, TV, and full profiles retain their existing layout.
+ * Verification stays informational cyan while the hero and brand accents stay
+ * violet. Sizes remain owned by each surface so dense cards, TV, and full
+ * profiles retain their existing layout.
  */
 
 /*
@@ -1929,4 +1929,184 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
     var(--dancr-color-surface-raised)
   ) !important;
   box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+}
+
+/* The supplied hero's violet beam now continues through the content as a
+ * restrained visual rhythm. This layer is color-only: it does not target the
+ * frozen navigation, change component geometry, or add a perimeter to TV. */
+body.dancr-button-system > .app main.stack > .home-discovery-controls {
+  background-color: transparent !important;
+  background-image: radial-gradient(
+    ellipse 92% 120% at 50% -24%,
+    color-mix(in srgb, var(--dancr-color-brand-primary) 11%, transparent),
+    transparent 72%
+  ) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head {
+  background-color: var(--dancr-color-background) !important;
+  background-image: radial-gradient(
+    ellipse 82% 130% at 14% 0%,
+    color-mix(in srgb, var(--dancr-color-brand-primary) 8%, transparent),
+    transparent 74%
+  ) !important;
+}
+
+/* Major content headings carry a two-pixel violet beam without taking up
+ * layout space or widening long mobile titles. */
+:is(
+  body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head > h2,
+  #profileBackdrop .profile-modal :is(.info-tile, .social-tile) > :is(h2, h3),
+  #results.venue-profile-overlay .venue-detail .venue-section > :is(h2, h3),
+  .public-profile-shell :is(.profile-section-heading, .profile-working-head, .social-list-heading) h2,
+  .account-shell .account-panel > h2,
+  .dashboard-shell :is(
+    .customer-section-heading,
+    .notification-title-row,
+    .customer-saved-head,
+    .venue-deal-heading,
+    .shift-list-head
+  ) h2,
+  .admin-shell .admin-panel-head h2
+) {
+  position: relative !important;
+}
+
+:is(
+  body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head > h2,
+  #profileBackdrop .profile-modal :is(.info-tile, .social-tile) > :is(h2, h3),
+  #results.venue-profile-overlay .venue-detail .venue-section > :is(h2, h3),
+  .public-profile-shell :is(.profile-section-heading, .profile-working-head, .social-list-heading) h2,
+  .account-shell .account-panel > h2,
+  .dashboard-shell :is(
+    .customer-section-heading,
+    .notification-title-row,
+    .customer-saved-head,
+    .venue-deal-heading,
+    .shift-list-head
+  ) h2,
+  .admin-shell .admin-panel-head h2
+)::before {
+  content: "";
+  position: absolute;
+  top: 0.16em;
+  bottom: 0.16em;
+  left: -9px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--dancr-color-brand-primary) 24%,
+    var(--dancr-color-brand-primary) 76%,
+    transparent
+  );
+  box-shadow: 0 0 10px var(--dancr-color-brand-primary-medium);
+  pointer-events: none;
+}
+
+/* One true primary action per surface uses the solid violet beam treatment.
+ * Deal, destructive, unavailable, and secondary actions retain their semantic
+ * production colors. */
+body.dancr-button-system :is(
+  #profileBackdrop .modal-actions .going-btn.is-primary-action:not(.is-unavailable),
+  #approvedEditProfileDropdown [data-dancer-control-action="save-profile"],
+  .public-profile-shell .live-actions .profile-action-primary:not(.profile-action-unavailable),
+  .account-shell button[type="submit"],
+  .dashboard-shell button[type="submit"],
+  .dmca-shell button[type="submit"],
+  .counter-shell button[type="submit"],
+  .redeem-shell button[type="submit"],
+  .tv-studio-page button[type="submit"],
+  a.primary-action
+):not(
+  [class*="danger"],
+  [class*="delete"],
+  [class*="remove"],
+  [class*="reject"],
+  [data-club-deal-cta]
+) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
+  box-shadow:
+    var(--dancr-shadow-brand-control),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+}
+
+/* Schedule and popularity chips use semantic colors; violet remains reserved
+ * for brand selection instead of impersonating a live or trending state. */
+body.dancr-button-system :is(
+  .home-dancer-grid-status.is-now,
+  .home-tv-feed-schedule.is-now,
+  .home-discovery-feed-status.is-now,
+  .pill.tonight,
+  .public-profile-shell .profile-live-state,
+  .public-profile-shell .profile-titlebar-status.is-live
+) {
+  border-color: var(--dancr-color-success-medium) !important;
+  color: var(--dancr-color-success) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-success) 13%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  .home-dancer-grid-status.is-upcoming,
+  .home-tv-feed-schedule.is-upcoming,
+  .home-discovery-feed-status.is-upcoming,
+  .pill.upcoming
+) {
+  border-color: var(--dancr-color-info-medium) !important;
+  color: var(--dancr-color-info) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 11%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(.badge.trend, .card-trend-marker) {
+  border-color: var(--dancr-color-featured-medium) !important;
+  color: var(--dancr-color-featured) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-featured) 12%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
+  color: var(--dancr-color-featured) !important;
+  text-shadow: none !important;
+}
+
+/* Profile photos receive a quiet violet halo. Their pixels remain untouched,
+ * and the adjacent verified mark stays informational cyan. */
+#profileBackdrop .profile-modal-avatar,
+.public-profile-shell .profile-titlebar-avatar {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  box-shadow:
+    0 10px 26px var(--dancr-color-black-medium),
+    0 0 0 2px var(--dancr-color-brand-primary-soft),
+    0 0 22px var(--dancr-color-brand-primary-soft) !important;
+}
+
+#profileBackdrop .profile-modal-avatar:not(.has-photo),
+.public-profile-shell .profile-titlebar-avatar:not(.has-photo) {
+  background-color: var(--dancr-color-surface-raised) !important;
+  background-image: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--dancr-color-brand-primary) 42%, var(--dancr-color-surface-raised)),
+    color-mix(in srgb, var(--dancr-color-brand-primary) 12%, var(--dancr-color-surface-raised))
+  ) !important;
 }

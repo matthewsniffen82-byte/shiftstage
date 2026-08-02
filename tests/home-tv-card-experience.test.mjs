@@ -158,7 +158,7 @@ test("TV cards are completely borderless without a violet perimeter", () => {
   assert.match(fullTvPerimeterOverride, /outline-offset: -4px !important;/);
   assert.doesNotMatch(fullTvPerimeterOverride, /beam-violet|brand-primary|109, 40, 217/);
   const sharedFullTvSurfaceRule = aestheticSource.match(
-    /\.tv-shell :is\(\.tv-header,[\s\S]*?box-shadow: none !important;\n\}/,
+    /\.tv-shell :is\(\.tv-header, \.tv-empty, \.tv-status, \.tv-loading\) \{[\s\S]*?\r?\n\}/,
   )?.[0] || "";
   assert.doesNotMatch(sharedFullTvSurfaceRule, /\.tv-player/);
   const sharedVioletFocusRule = aestheticSource.match(
@@ -361,7 +361,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
   assert.match(activeControls, /\.home-tv-feed-report-action/);
   assert.match(activeControls, /:is\(\.is-active, \[aria-pressed="true"\]\)/);
   assert.match(activeControls, /var\(--dancr-color-brand-primary-soft\)/);
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=44/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=45/);
 });
 
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {

@@ -26,7 +26,53 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=44" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=45" rel="stylesheet">/,
+  );
+});
+
+test("the violet hero beam continues through content without recoloring trust or TV media", () => {
+  const violetRhythm = aesthetic.match(
+    /The supplied hero's violet beam now continues through the content[\s\S]*$/,
+  )?.[0] || "";
+
+  assert.ok(violetRhythm, "the shared violet rhythm must exist");
+  assert.match(
+    violetRhythm,
+    /\.home-discovery-controls \{[\s\S]*?var\(--dancr-color-brand-primary\) 11%[\s\S]*?transparent 72%/,
+  );
+  assert.match(
+    violetRhythm,
+    /\.content-head\.discovery-section-head \{[\s\S]*?var\(--dancr-color-brand-primary\) 8%/,
+  );
+  assert.match(
+    violetRhythm,
+    /Major content headings carry a two-pixel violet beam[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-brand-primary\) 24%/,
+  );
+  assert.match(
+    violetRhythm,
+    /One true primary action per surface uses the solid violet beam treatment[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
+  );
+  assert.match(
+    violetRhythm,
+    /\.home-dancer-grid-status\.is-now[\s\S]*?var\(--dancr-color-success\) 13%/,
+  );
+  assert.match(
+    violetRhythm,
+    /\.home-dancer-grid-status\.is-upcoming[\s\S]*?var\(--dancr-color-info\) 11%/,
+  );
+  assert.match(
+    violetRhythm,
+    /\.badge\.trend,[\s\S]*?var\(--dancr-color-featured\) 12%/,
+  );
+  assert.match(
+    violetRhythm,
+    /\.profile-modal-avatar,[\s\S]*?\.profile-titlebar-avatar[\s\S]*?0 0 22px var\(--dancr-color-brand-primary-soft\)/,
+  );
+  assert.doesNotMatch(violetRhythm, /home-bottom-tv|home-nav-|global-mobile-bottom-nav/);
+  assert.doesNotMatch(violetRhythm, /\.tv-player|\.home-tv-feed-slide/);
+  assert.match(
+    aesthetic,
+    /\.profile-verified\.profile-verified\.profile-verified,[\s\S]*?\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark[\s\S]*?var\(--dancr-color-info\) 24%/,
   );
 });
 
@@ -160,7 +206,7 @@ test("Android and Samsung Browser cannot reintroduce device-only glow or media f
   assert.doesNotMatch(androidTvGlassRule, /\.tab|\.home-bottom-tv|#discoveryTabs/);
 
   const stateRule = parityLayer.match(
-    /Stateful selection keeps one restrained brand cue[\s\S]*$/,
+    /Stateful selection keeps one restrained brand cue[\s\S]*?\n\}/,
   )?.[0] || "";
   assert.match(stateRule, /background: color-mix\(/);
   assert.match(stateRule, /box-shadow: inset 0 0 0 1px/);
