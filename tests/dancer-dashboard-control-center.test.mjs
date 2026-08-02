@@ -46,9 +46,13 @@ test("collapsed dashboard sections expose real summary counts", () => {
   assert.match(page, /summaryCount\.textContent = String\(threads\.length\)/);
 });
 
-test("dancer dashboard close control remains sticky while the dashboard scrolls", () => {
+test("dancer dashboard header scrolls with the dashboard content", () => {
   assert.match(
     page,
-    /#dancerDashboard \.page-head\s*\{[^}]*position:\s*sticky\s*!important;[^}]*top:\s*0\s*!important;[^}]*z-index:\s*34\s*!important;/s,
+    /#dancerDashboard \.page-head\s*\{[^}]*position:\s*relative\s*!important;[^}]*top:\s*auto\s*!important;[^}]*z-index:\s*2\s*!important;/s,
+  );
+  assert.doesNotMatch(
+    page,
+    /#dancerDashboard \.page-head\s*\{[^}]*position:\s*sticky\s*!important;/s,
   );
 });

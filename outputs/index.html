@@ -121,6 +121,14 @@
       display: none !important;
     }
 
+    #customerDashboard.page-panel.show,
+    #dancerDashboard.page-panel.show,
+    #venueDashboard.page-panel.show,
+    #adminDashboard.page-panel.show {
+      z-index: 120 !important;
+      isolation: isolate;
+    }
+
     body.profile-tv-viewer-open #discoveryTabs {
       visibility: hidden !important;
       pointer-events: none !important;
@@ -27382,9 +27390,9 @@
     }
 
     #dancerDashboard .page-head {
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 34 !important;
+      position: relative !important;
+      top: auto !important;
+      z-index: 2 !important;
       min-height: 72px !important;
       height: auto !important;
       margin-bottom: 0 !important;
@@ -33978,6 +33986,11 @@
             min-height: calc(100svh - 112px) !important;
             align-content: start;
           }
+        }
+
+        body.dashboard-overlay-open .discovery-sticky-head {
+          visibility: hidden !important;
+          pointer-events: none !important;
         }
       </style>
 

@@ -14,6 +14,24 @@ test("account dashboards hide public navigation and keep their X as the exit to 
   );
   assert.match(
     homeSource,
+    /body\.dashboard-overlay-open \.discovery-sticky-head \{\s*visibility: hidden !important;\s*pointer-events: none !important;\s*\}/,
+  );
+  const dashboardLayer = homeSource.match(
+    /#customerDashboard\.page-panel\.show,\s*#dancerDashboard\.page-panel\.show,\s*#venueDashboard\.page-panel\.show,\s*#adminDashboard\.page-panel\.show \{\s*z-index: (\d+) !important;\s*isolation: isolate;\s*\}/,
+  );
+  const discoveryLayer = homeSource.match(
+    /\.discovery-sticky-head \{[^}]*z-index: (\d+);/s,
+  );
+  const profileLayer = homeSource.match(
+    /#profileBackdrop\.modal-backdrop\.show \{\s*z-index: (\d+) !important;/,
+  );
+  assert.ok(dashboardLayer);
+  assert.ok(discoveryLayer);
+  assert.ok(profileLayer);
+  assert.ok(Number(dashboardLayer[1]) > Number(discoveryLayer[1]));
+  assert.ok(Number(dashboardLayer[1]) < Number(profileLayer[1]));
+  assert.match(
+    homeSource,
     /const dashboardOverlayOpen = !!document\.querySelector\(\s*"#customerDashboard\.show, #dancerDashboard\.show, #venueDashboard\.show, #adminDashboard\.show"\s*\);[\s\S]*?document\.body\.classList\.toggle\("dashboard-overlay-open", dashboardOverlayOpen\);/,
   );
   assert.match(
