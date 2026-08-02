@@ -39,7 +39,7 @@ const [
   ),
 ]);
 
-test("the public dancer profile keeps only identity, verification, city, and close control at the top", () => {
+test("the public dancer profile keeps a compact identity that scrolls with the whole profile", () => {
   assert.match(profilePage, /<header className="profile-titlebar">/);
   assert.match(profilePage, /className=\{`profile-titlebar-avatar/);
   assert.match(profilePage, /<h1>\{profile\.stageName\}<\/h1>/);
@@ -49,7 +49,8 @@ test("the public dancer profile keeps only identity, verification, city, and clo
   assert.doesNotMatch(profilePage, /const nextShift =/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /className="public-profile-close"/);
-  assert.match(profilePage, /\.profile-titlebar \{ position: sticky;/);
+  assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 1;/);
+  assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?gap: 10px;/);
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 42px; height: 42px;/);
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);

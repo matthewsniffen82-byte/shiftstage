@@ -95,6 +95,16 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   );
 });
 
+test("home full-profile identity scrolls with the complete profile", () => {
+  const identityRule = profilePolishBlock?.match(
+    /#profileBackdrop \.profile-modal-summary \{[\s\S]*?\n        \}/,
+  )?.[0] || "";
+
+  assert.match(identityRule, /position: relative;/);
+  assert.match(identityRule, /top: auto;/);
+  assert.doesNotMatch(identityRule, /position: sticky;/);
+});
+
 test("home profile TV previews expose inline playback, sound, progress, and duration controls", () => {
   assert.match(liveApp, /id="modalVideoPlayback" type="button" aria-label="Play TV video"/);
   assert.match(liveApp, /id="modalVideoSound" type="button" aria-label="Turn TV video sound on"/);
