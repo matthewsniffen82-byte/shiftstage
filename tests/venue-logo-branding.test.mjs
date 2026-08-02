@@ -54,7 +54,7 @@ test("verified logo identity flows through every public venue response", () => {
   assert.match(liveApp, /logoImageUrl: item\.logoImageUrl \|\| ""/);
 });
 
-test("cards and detail pages use one contain-fit venue logo with neutral fallbacks", () => {
+test("venue cards use a full-card logo canvas while detail pages retain contain-fit identity", () => {
   assert.match(liveApp, /function venueLogoMarkup\(venue, className\)/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
   assert.match(liveApp, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);
@@ -63,21 +63,22 @@ test("cards and detail pages use one contain-fit venue logo with neutral fallbac
   assert.match(liveApp, /logoMarkup \|\| `<span class="home-venue-discovery-monogram">/);
   assert.match(liveApp, /logoMarkup \|\| `[\s\S]*?class="venue-sign"/);
   assert.match(aesthetic, /\.venue-card-logo,[\s\S]*?\.venue-detail-logo \{[\s\S]*?object-fit: contain;/);
-  assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
+  assert.match(aesthetic, /\.venue-card-logo-shell,[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?border: 1px solid var\(--dancr-color-border-subtle\)/);
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-logo,[\s\S]*?\.venue-detail-logo \{[\s\S]*?width: 92%;[\s\S]*?height: 86%;/,
+    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?inset: 0;[\s\S]*?transform: none;[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?position: absolute;[\s\S]*?transform: translate\(-50%, -50%\);/,
+    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 54px 142px 18px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
   );
   assert.match(
     aesthetic,
-    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo-shell \{[\s\S]*?top: 38%;[\s\S]*?width: min\(78%, 320px\);[\s\S]*?height: 178px;/,
+    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?padding: 40px 50px 138px 16px;/,
   );
   assert.match(
     aesthetic,
     /\.venue-detail-logo-shell \{[\s\S]*?width: min\(86%, 360px\);[\s\S]*?height: 180px;/,
   );
+  assert.doesNotMatch(aesthetic, /home-venue-discovery-logo-shell \{[\s\S]{0,180}border: 1px solid/);
 });

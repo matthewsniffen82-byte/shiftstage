@@ -140,7 +140,7 @@ test("venue lineups show only dancers working now as compact avatar stacks", () 
   assert.doesNotMatch(venueSlide, /workingNowMarkup|home-discovery-feed-status is-now/);
   assert.match(
     aestheticSource,
-    /home-venue-discovery-slide\.has-live-lineup[\s\S]*?home-venue-discovery-logo-shell \{[\s\S]*?top: 31%;/,
+    /home-venue-discovery-art \.home-venue-discovery-logo-shell \{[\s\S]*?inset: 0;[\s\S]*?pointer-events: none;/,
   );
 });
 
