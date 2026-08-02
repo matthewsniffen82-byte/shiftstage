@@ -308,18 +308,22 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
   );
 });
 
-test("mobile TV places a synced page-scroll thumb at the outer safe edge", () => {
+test("mobile TV uses a quiet page-scroll thumb at the true viewport edge", () => {
   assert.match(
     homeSource,
     /html\.home-tv-page-snap \{[\s\S]*?scrollbar-width: none;[\s\S]*?html\.home-tv-page-snap::-webkit-scrollbar,[\s\S]*?html\.home-tv-page-snap body::-webkit-scrollbar \{[\s\S]*?width: 0;[\s\S]*?display: none;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-rail \{[\s\S]*?position: fixed;[\s\S]*?right: max\(1px, env\(safe-area-inset-right, 0px\)\);[\s\S]*?width: 3px;[\s\S]*?pointer-events: none;/,
+    /\.home-tv-page-scroll-rail \{[\s\S]*?position: fixed;[\s\S]*?right: 2px;[\s\S]*?width: 2px;[\s\S]*?pointer-events: none;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-thumb \{[\s\S]*?min-height: 48px;[\s\S]*?border-radius: 999px;[\s\S]*?background: rgba\(226, 232, 240, \.62\);/,
+    /\.home-tv-page-scroll-thumb \{[\s\S]*?width: 2px;[\s\S]*?min-height: 48px;[\s\S]*?background: rgba\(226, 232, 240, \.2\);[\s\S]*?transition: background-color \.18s ease, box-shadow \.18s ease;/,
+  );
+  assert.match(
+    homeSource,
+    /\.home-tv-page-scroll-rail\.is-scrolling \.home-tv-page-scroll-thumb \{[\s\S]*?background: rgba\(226, 232, 240, \.46\);/,
   );
   assert.match(
     homeSource,
@@ -327,7 +331,7 @@ test("mobile TV places a synced page-scroll thumb at the outer safe edge", () =>
   );
   assert.match(
     homeSource,
-    /window\.addEventListener\("scroll", queueHomeTvPageScrollIndicatorSync, \{ passive: true \}\);[\s\S]*?window\.visualViewport\?\.addEventListener\("resize", queueHomeTvPageScrollIndicatorSync, \{ passive: true \}\);/,
+    /function markHomeTvPageScrollIndicatorActive\(\) \{[\s\S]*?classList\.add\("is-scrolling"\)[\s\S]*?window\.setTimeout\([\s\S]*?classList\.remove\("is-scrolling"\);[\s\S]*?\}, 700\);[\s\S]*?window\.addEventListener\("scroll", markHomeTvPageScrollIndicatorActive, \{ passive: true \}\);[\s\S]*?window\.visualViewport\?\.addEventListener\("resize", queueHomeTvPageScrollIndicatorSync, \{ passive: true \}\);/,
   );
 });
 
