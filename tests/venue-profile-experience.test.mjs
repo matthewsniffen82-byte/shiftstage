@@ -92,12 +92,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 10px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
   assert.match(refinement, /\.venue-identity-copy \{[\s\S]*?padding-left: 0;/);
-  const venueIdentityAccent = refinement.match(/\.venue-identity-copy::before \{[\s\S]*?\}/)?.[0] || "";
-  assert.match(venueIdentityAccent, /content: none !important;/);
-  assert.match(venueIdentityAccent, /display: none !important;/);
-  assert.match(venueIdentityAccent, /background: none !important;/);
-  assert.match(venueIdentityAccent, /box-shadow: none !important;/);
-  assert.doesNotMatch(venueIdentityAccent, /beam|linear-gradient/);
+  assert.doesNotMatch(refinement, /\.venue-identity-copy::before/);
   assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
   assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?display: inline-flex !important;[\s\S]*?min-height: 42px !important;/);

@@ -4269,14 +4269,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
   padding-left: 0;
 }
 
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-identity-copy::before {
-  content: none !important;
-  display: none !important;
-  background: none !important;
-  box-shadow: none !important;
-}
-
 body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName {
   overflow: visible !important;
   color: var(--dancr-color-brand-core) !important;
