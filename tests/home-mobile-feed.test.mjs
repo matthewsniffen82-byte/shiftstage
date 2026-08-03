@@ -691,7 +691,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(232,230,238,.74\)[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\)[\s\S]*?--home-nav-active: #fff[\s\S]*?--home-nav-active-fill: rgba\(124,58,237,.8\)[\s\S]*?--home-nav-active-fill-deep: rgba\(91,33,182,.76\)[\s\S]*?--home-nav-active-edge: rgba\(196,181,253,.58\)[\s\S]*?--home-nav-active-glow: rgba\(124,58,237,.18\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(232,230,238,.74\)[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\)[\s\S]*?--home-nav-active: #fff[\s\S]*?--home-nav-active-fill: rgba\(117,9,254,.9\)[\s\S]*?--home-nav-active-fill-deep: rgba\(61,2,252,.84\)[\s\S]*?--home-nav-active-edge: rgba\(224,210,255,.72\)[\s\S]*?--home-nav-active-glow: rgba\(83,5,255,.32\)/,
   );
   assert.match(
     homeSource,

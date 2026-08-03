@@ -92,7 +92,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("neutral mobile glass uses soft-white idle icons and a contained solid active indicator", () => {
+test("neutral mobile glass uses soft-white idle icons and a contained hero-beam active indicator", () => {
   assert.match(
     navigationSource,
     /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 23px;/,
@@ -182,11 +182,11 @@ test("neutral mobile glass uses soft-white idle icons and a contained solid acti
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(124, 58, 237, 0\.8\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(91, 33, 182, 0\.76\);[\s\S]*?--mobile-nav-active-edge: rgba\(196, 181, 253, 0\.58\);[\s\S]*?--mobile-nav-active-glow: rgba\(124, 58, 237, 0\.18\);/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(117, 9, 254, 0\.9\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(61, 2, 252, 0\.84\);[\s\S]*?--mobile-nav-active-edge: rgba\(224, 210, 255, 0\.72\);[\s\S]*?--mobile-nav-active-glow: rgba\(83, 5, 255, 0\.32\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(124,58,237,.8\);[\s\S]*?--home-nav-active-fill-deep: rgba\(91,33,182,.76\);[\s\S]*?--home-nav-active-edge: rgba\(196,181,253,.58\);[\s\S]*?--home-nav-active-glow: rgba\(124,58,237,.18\);/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(117,9,254,.9\);[\s\S]*?--home-nav-active-fill-deep: rgba\(61,2,252,.84\);[\s\S]*?--home-nav-active-edge: rgba\(224,210,255,.72\);[\s\S]*?--home-nav-active-glow: rgba\(83,5,255,.32\);/,
   );
   assert.doesNotMatch(
     navigationSource,

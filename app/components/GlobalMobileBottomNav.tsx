@@ -419,10 +419,10 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
             --mobile-nav-active: #fff;
-            --mobile-nav-active-fill: rgba(124, 58, 237, 0.8);
-            --mobile-nav-active-fill-deep: rgba(91, 33, 182, 0.76);
-            --mobile-nav-active-edge: rgba(196, 181, 253, 0.58);
-            --mobile-nav-active-glow: rgba(124, 58, 237, 0.18);
+            --mobile-nav-active-fill: rgba(117, 9, 254, 0.9);
+            --mobile-nav-active-fill-deep: rgba(61, 2, 252, 0.84);
+            --mobile-nav-active-edge: rgba(224, 210, 255, 0.72);
+            --mobile-nav-active-glow: rgba(83, 5, 255, 0.32);
             width: 100%;
             height: 57px;
             min-width: 0;
