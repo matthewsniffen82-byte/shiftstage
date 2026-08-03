@@ -61,3 +61,18 @@ test("dancer dashboard header scrolls with the dashboard content", () => {
     /#dancerDashboard \.page-head\s*\{[^}]*position:\s*sticky\s*!important;/s,
   );
 });
+
+test("dancer dashboard uses the same quiet neutral scrollbar as profile scrolling", () => {
+  assert.match(
+    page,
+    /#dancerDashboard\s*\{[^}]*scrollbar-color:\s*rgba\(255, 255, 255, 0\.28\) transparent;/s,
+  );
+  assert.match(
+    page,
+    /#dancerDashboard::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*rgba\(255, 255, 255, 0\.28\);[^}]*box-shadow:\s*none;/s,
+  );
+  assert.match(
+    page,
+    /#dancerDashboard::-webkit-scrollbar-thumb:hover,[\s\S]*?#dancerDashboard::-webkit-scrollbar-thumb:active\s*\{[^}]*background:\s*rgba\(255, 255, 255, 0\.42\);[^}]*box-shadow:\s*none;/,
+  );
+});
