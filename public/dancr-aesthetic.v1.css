@@ -3828,6 +3828,30 @@ body.dancr-button-system #results.venue-profile-overlay::-webkit-scrollbar-thumb
  * status color. Approved venue artwork remains unfiltered, card geometry and
  * navigation remain owned by the live discovery layout. */
 body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed {
+  scrollbar-color: var(--dancr-color-border) transparent !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed::-webkit-scrollbar-track {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed::-webkit-scrollbar-thumb {
+  border-color: transparent !important;
+  background: var(--dancr-color-border) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed::-webkit-scrollbar-thumb:is(:hover, :active) {
+  background: var(--dancr-color-text-muted) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide {
   border-color: transparent !important;
   color: var(--dancr-color-text-primary) !important;

@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=64" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=65" rel="stylesheet">/,
   );
 });
 
@@ -273,6 +273,10 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   )?.[0] || "";
 
   assert.ok(venueScrollBrand, "the production venue scroll-card brand layer must exist");
+  assert.match(
+    venueScrollBrand,
+    /> #results\.home-venue-discovery-feed \{[\s\S]*?scrollbar-color: var\(--dancr-color-border\) transparent !important;[\s\S]*?> #results\.home-venue-discovery-feed::-webkit-scrollbar-thumb \{[\s\S]*?background: var\(--dancr-color-border\) !important;[\s\S]*?box-shadow: none !important;/,
+  );
   assert.match(
     venueScrollBrand,
     /> #results\.home-venue-discovery-feed > \.home-venue-discovery-slide \{[\s\S]*?var\(--dancr-color-surface-raised\),[\s\S]*?var\(--dancr-color-background\) 72%[\s\S]*?var\(--dancr-color-border\),[\s\S]*?var\(--dancr-color-border-subtle\)/,
