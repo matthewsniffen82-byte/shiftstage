@@ -41,11 +41,11 @@ test("every Next page receives the shared consolidated mobile navigation", () =>
 test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.09\)[\s\S]*?rgba\(9, 9, 12, 0\.9\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 70px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.09\)[\s\S]*?rgba\(9, 9, 12, 0\.9\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(248,250,252,\.09\) !important[\s\S]*?rgba\(9,9,12,\.9\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 70px[\s\S]*?border: 1px solid rgba\(248,250,252,\.09\) !important[\s\S]*?rgba\(9,9,12,\.9\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     navigationSource,
@@ -95,11 +95,11 @@ test("full dancer and venue profiles retain the shared destination navigation", 
 test("neutral mobile glass uses soft-white idle icons and the original borderless active halo", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 23px;/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 26px;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?overflow: hidden !important;[\s\S]*?border-radius: 23px;/,
+    /#discoveryTabs \{[\s\S]*?overflow: hidden !important;[\s\S]*?border-radius: 26px;/,
   );
   assert.match(
     navigationSource,
