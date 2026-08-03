@@ -92,7 +92,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("neutral mobile glass uses soft-white idle icons and a contained hero-beam active indicator", () => {
+test("neutral mobile glass uses soft-white idle icons and the original borderless active halo", () => {
   assert.match(
     navigationSource,
     /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 23px;/,
@@ -130,11 +130,11 @@ test("neutral mobile glass uses soft-white idle icons and a contained hero-beam 
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /\.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
+    /\.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
   );
   assert.match(
     navigationSource,
-    /\.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--mobile-nav-active-edge\);[\s\S]*?linear-gradient\([\s\S]*?var\(--mobile-nav-active-fill\)[\s\S]*?var\(--mobile-nav-active-fill-deep\)[\s\S]*?0 0 6px var\(--mobile-nav-active-glow\);[\s\S]*?filter: none;/,
+    /\.mobile-nav-selection-halo::before \{[\s\S]*?inset: 8px;[\s\S]*?radial-gradient\([\s\S]*?rgba\(152, 95, 255, 0\.9\)[\s\S]*?rgba\(52, 110, 255, 0\.24\)[\s\S]*?0 0 28px rgba\(52, 110, 255, 0\.28\);[\s\S]*?filter: blur\(2px\);/,
   );
   assert.match(
     navigationSource,
@@ -142,11 +142,11 @@ test("neutral mobile glass uses soft-white idle icons and a contained hero-beam 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--home-nav-active-edge\);[\s\S]*?linear-gradient\(145deg,var\(--home-nav-active-fill\),var\(--home-nav-active-fill-deep\)\)[\s\S]*?0 0 6px var\(--home-nav-active-glow\);[\s\S]*?filter: none;/,
+    /#discoveryTabs \.mobile-nav-selection-halo::before \{[\s\S]*?inset: 8px;[\s\S]*?radial-gradient\(circle,rgba\(152,95,255,.9\)[\s\S]*?rgba\(52,110,255,.24\)[\s\S]*?0 0 28px rgba\(52,110,255,.28\);[\s\S]*?filter: blur\(2px\);/,
   );
   assert.match(
     homeSource,
@@ -166,7 +166,7 @@ test("neutral mobile glass uses soft-white idle icons and a contained hero-beam 
   );
   assert.match(
     navigationSource,
-    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\(0 1px 1px rgba\(0, 0, 0, 0\.5\)\)[\s\S]*?drop-shadow\(0 0 3px var\(--mobile-nav-active-glow\)\)/,
+    /a\.active \.global-mobile-nav-icon > svg \{[\s\S]*?drop-shadow\(0 0 2px var\(--mobile-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--mobile-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--mobile-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     navigationSource,
@@ -174,7 +174,7 @@ test("neutral mobile glass uses soft-white idle icons and a contained hero-beam 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 1px 1px rgba\(0,0,0,.5\)\)[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-active-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--home-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     homeSource,
@@ -182,11 +182,11 @@ test("neutral mobile glass uses soft-white idle icons and a contained hero-beam 
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(117, 9, 254, 0\.9\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(61, 2, 252, 0\.84\);[\s\S]*?--mobile-nav-active-edge: rgba\(224, 210, 255, 0\.72\);[\s\S]*?--mobile-nav-active-glow: rgba\(83, 5, 255, 0\.32\);/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-violet-core: rgba\(152, 95, 255, 0\.98\);[\s\S]*?--mobile-nav-active-violet-glow: rgba\(91, 19, 255, 1\);[\s\S]*?--mobile-nav-active-cyan-glow: rgba\(52, 110, 255, 0\.58\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(117,9,254,.9\);[\s\S]*?--home-nav-active-fill-deep: rgba\(61,2,252,.84\);[\s\S]*?--home-nav-active-edge: rgba\(224,210,255,.72\);[\s\S]*?--home-nav-active-glow: rgba\(83,5,255,.32\);/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-violet-core: rgba\(152,95,255,.98\);[\s\S]*?--home-nav-active-violet-glow: rgba\(91,19,255,1\);[\s\S]*?--home-nav-active-cyan-glow: rgba\(52,110,255,.58\);/,
   );
   assert.doesNotMatch(
     navigationSource,

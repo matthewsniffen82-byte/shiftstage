@@ -31734,10 +31734,9 @@
             --home-nav-accent: rgba(232,230,238,.74);
             --home-nav-accent-soft: rgba(232,230,238,.66);
             --home-nav-active: #fff;
-            --home-nav-active-fill: rgba(117,9,254,.9);
-            --home-nav-active-fill-deep: rgba(61,2,252,.84);
-            --home-nav-active-edge: rgba(224,210,255,.72);
-            --home-nav-active-glow: rgba(83,5,255,.32);
+            --home-nav-active-violet-core: rgba(152,95,255,.98);
+            --home-nav-active-violet-glow: rgba(91,19,255,1);
+            --home-nav-active-cyan-glow: rgba(52,110,255,.58);
             position: relative !important;
             width: 100% !important;
             height: 57px !important;
@@ -31811,8 +31810,8 @@
             z-index: 0;
             top: 50%;
             left: 50%;
-            width: 40px;
-            height: 40px;
+            width: 46px;
+            height: 46px;
             overflow: hidden;
             border-radius: 50%;
             contain: paint;
@@ -31824,12 +31823,11 @@
           #discoveryTabs .mobile-nav-selection-halo::before {
             content: "";
             position: absolute;
-            inset: 1px;
+            inset: 8px;
             border-radius: 50%;
-            border: 1px solid var(--home-nav-active-edge);
-            background: linear-gradient(145deg,var(--home-nav-active-fill),var(--home-nav-active-fill-deep));
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.14),0 3px 8px rgba(49,46,129,.28),0 0 6px var(--home-nav-active-glow);
-            filter: none;
+            background: radial-gradient(circle,rgba(152,95,255,.9) 0%,rgba(91,19,255,.72) 28%,rgba(91,19,255,.42) 48%,rgba(52,110,255,.24) 64%,transparent 78%);
+            box-shadow: 0 0 10px rgba(91,19,255,.76),0 0 20px rgba(91,19,255,.48),0 0 28px rgba(52,110,255,.28);
+            filter: blur(2px);
           }
           #discoveryTabs .tab:not(.active) .home-nav-icon,
           #discoveryTabs .home-bottom-tv:not(.active) .home-bottom-tv-icon {
@@ -31878,7 +31876,10 @@
           }
           #discoveryTabs .tab.active .home-nav-icon svg,
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon .mydancr-tv-mark {
-            filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)) drop-shadow(0 0 3px var(--home-nav-active-glow));
+            filter:
+              drop-shadow(0 0 2px var(--home-nav-active-violet-core))
+              drop-shadow(0 0 6px var(--home-nav-active-violet-glow))
+              drop-shadow(0 0 12px var(--home-nav-active-cyan-glow));
           }
           #discoveryTabs .tab-count {
             position: absolute;

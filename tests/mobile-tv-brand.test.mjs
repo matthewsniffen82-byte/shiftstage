@@ -43,7 +43,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   );
 });
 
-test("homepage active TV state uses icon-only color and the shared solid indicator", () => {
+test("homepage active TV state uses icon-only color and the original borderless halo", () => {
   const activeTvRule =
     homeSource.match(
       /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?\}/,
@@ -56,7 +56,7 @@ test("homepage active TV state uses icon-only color and the shared solid indicat
   assert.doesNotMatch(activeTvRule, /drop-shadow|border-radius: 999px|linear-gradient/);
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 1px 1px rgba\(0,0,0,.5\)\)[\s\S]*?drop-shadow\(0 0 3px var\(--home-nav-active-glow\)\)/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--home-nav-active-cyan-glow\)\)/,
   );
   assert.match(
     homeSource,
@@ -64,6 +64,6 @@ test("homepage active TV state uses icon-only color and the shared solid indicat
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;/,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 46px;[\s\S]*?height: 46px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;/,
   );
 });
