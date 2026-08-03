@@ -5,6 +5,7 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
 import { verifiedVenueLogoUrl } from "./venue-branding";
+import { isCurrentLocationVerification } from "./geofence";
 
 type DancrClient = SupabaseClient;
 
@@ -83,7 +84,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
     )
     .ilike("city", cityName))
@@ -113,7 +114,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
       )
       .ilike("city", cityName))
@@ -159,7 +160,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         trending_scores(rank),
         dancer_photos(storage_path, is_primary, review_status, sort_order),
         social_links(id, platform, handle, url, is_active),
-        shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
     )
     .ilike("city", cityName))
@@ -193,7 +194,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           trending_scores(rank),
           dancer_photos(storage_path, is_primary, review_status, sort_order),
           social_links(id, platform, handle, url, is_active),
-          shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts!inner(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
       )
       .ilike("city", cityName))
@@ -235,7 +236,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, sort_order, review_status),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+        shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
       `,
     )
     .eq("slug", slug))
@@ -265,7 +266,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
           trending_scores(rank),
           dancer_photos(id, storage_path, is_primary, sort_order, review_status),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
+          shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, checkin_distance_feet, location_verification_expires_at, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label))
         `,
       )
       .eq("slug", slug))
@@ -365,7 +366,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
 export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label)")
+    .select("id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, qr_code_storage_path, qr_code_label)")
     .eq("dancer_id", dancerId)
     .eq("status", "posted")
     .gte("starts_at", new Date().toISOString())
@@ -511,6 +512,7 @@ function buildDancerCard(
       checkedInAt: shift?.checked_in_at || null,
       checkedOutAt: shift?.checked_out_at || null,
       checkinDistanceFeet: shift?.checkin_distance_feet ?? null,
+      locationVerificationExpiresAt: shift?.location_verification_expires_at || null,
       followerCount: 0,
       notificationCount: 0,
       profileViewsToday: 0,
@@ -665,6 +667,7 @@ function toShiftSummary(row: any): ShiftSummary {
     locationStatus: publicLocationStatus(row),
     checkedInAt: row.checked_in_at || null,
     checkedOutAt: row.checked_out_at || null,
+    locationVerificationExpiresAt: row.location_verification_expires_at || null,
     venueQrCodeUrl: venue?.is_active === true ? venueQrCodeUrlFromRow(venue) : null,
     venueQrCodeLabel: venue?.is_active === true ? venue?.qr_code_label || null : null,
   };
@@ -709,12 +712,7 @@ function isShiftPubliclyVisible(shift: any, now = Date.now()) {
 function publicLocationStatus(shift: any): "self_reported" | "location_confirmed" | "club_confirmed" {
   if (!shift) return "self_reported";
   if (shift.location_status === "club_confirmed") return "club_confirmed";
-  if (
-    shift.location_status === "location_confirmed" &&
-    shift.checked_in_at &&
-    !shift.checked_out_at &&
-    new Date(shift.ends_at).getTime() >= Date.now()
-  ) {
+  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) {
     return "location_confirmed";
   }
   return "self_reported";

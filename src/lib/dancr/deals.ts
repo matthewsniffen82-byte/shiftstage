@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClubDeal, DealSourceType } from "./types";
+import { isCurrentLocationVerification } from "./geofence";
 
 type DancrClient = SupabaseClient;
 
@@ -83,7 +84,7 @@ export async function getVerifiedActiveCheckInAtVenue(
   const nowIso = now.toISOString();
   const { data, error } = await (client as any)
     .from("shifts")
-    .select("id")
+    .select("id, location_status, checked_in_at, checked_out_at, location_verification_expires_at")
     .eq("dancer_id", dancerId)
     .eq("venue_id", venueId)
     .eq("status", "posted")
@@ -92,11 +93,13 @@ export async function getVerifiedActiveCheckInAtVenue(
     .not("checked_in_at", "is", null)
     .is("checked_out_at", null)
     .in("location_status", ["location_confirmed", "club_confirmed"])
-    .limit(1)
-    .maybeSingle();
+    .limit(5);
 
   if (error) throw error;
-  return data ? { shiftId: String(data.id) } : null;
+  const verified = (data || []).find((shift: Record<string, unknown>) =>
+    isCurrentLocationVerification(shift, now.getTime()),
+  );
+  return verified ? { shiftId: String(verified.id) } : null;
 }
 
 export async function dancerHasVerifiedActiveCheckInAtVenue(

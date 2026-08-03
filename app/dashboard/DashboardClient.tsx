@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
+import {
+  LOCATION_REFRESH_INTERVAL_MS,
+  isCurrentLocationVerification,
+  locationVerificationRefreshDue,
+} from "@/src/lib/dancr/geofence";
 import DancerTvStudio from "./DancerTvStudio";
 import VenueTvPanel from "./VenueTvPanel";
 
@@ -2401,6 +2406,72 @@ function DancerShiftPanel({ city }: { city: string }) {
   const [editStartsAt, setEditStartsAt] = useState("");
   const [editEndsAt, setEditEndsAt] = useState("");
 
+  const loadShifts = useCallback(async (accessToken: string) => {
+    const response = await fetch("/api/dancer/shifts", { headers: { authorization: `Bearer ${accessToken}` } });
+    const data = await response.json();
+    if (response.ok && data.ok) setShifts(data.shifts || []);
+  }, []);
+
+  const refreshShiftLocation = useCallback(async (shiftId: string, silent = false) => {
+    const session = readSession();
+    if (!session?.accessToken || !navigator.geolocation) return;
+
+    if (!silent) setCheckInStatus("Refreshing your verified venue location...");
+    try {
+      const position = await readBrowserLocation();
+      const response = await fetch("/api/dancer/shifts/check-in", {
+        method: "PATCH",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "refresh",
+          shiftId,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          capturedAt: new Date(position.timestamp).toISOString(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(checkInErrorMessage(data));
+      setCheckInStatus("Location verified. Working Now stays active while verification remains current.");
+      await loadShifts(session.accessToken);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to refresh location.";
+      setCheckInStatus(message);
+      if (!silent) setStatus(message);
+    }
+  }, [loadShifts]);
+
+  useEffect(() => {
+    const active = shifts.find((shift) => canCheckOutOfShift(shift));
+    if (!active || active.location_status === "club_confirmed") return;
+
+    let disposed = false;
+    let refreshing = false;
+    const refresh = async (onlyWhenDue = false) => {
+      if (disposed || refreshing || document.visibilityState !== "visible") return;
+      if (onlyWhenDue && !locationVerificationRefreshDue(active)) return;
+      refreshing = true;
+      try {
+        await refreshShiftLocation(String(active.id), true);
+      } finally {
+        refreshing = false;
+      }
+    };
+    const timer = window.setInterval(() => void refresh(false), LOCATION_REFRESH_INTERVAL_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refresh(true);
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    if (locationVerificationRefreshDue(active)) void refresh(true);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [refreshShiftLocation, shifts]);
+
   useEffect(() => {
     const session = readSession();
     if (!session?.accessToken) return;
@@ -2415,13 +2486,7 @@ function DancerShiftPanel({ city }: { city: string }) {
       .catch(() => undefined);
 
     loadShifts(session.accessToken);
-  }, [city]);
-
-  async function loadShifts(accessToken: string) {
-    const response = await fetch("/api/dancer/shifts", { headers: { authorization: `Bearer ${accessToken}` } });
-    const data = await response.json();
-    if (response.ok && data.ok) setShifts(data.shifts || []);
-  }
+  }, [city, loadShifts]);
 
   async function postShift(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -2561,6 +2626,8 @@ function DancerShiftPanel({ city }: { city: string }) {
           shiftId,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          capturedAt: new Date(position.timestamp).toISOString(),
         }),
       });
       const data = await response.json();
@@ -2623,17 +2690,20 @@ function DancerShiftPanel({ city }: { city: string }) {
     checkInReadyShifts[0] ||
     null;
   const isCheckedInToActiveShift = activeShift ? canCheckOutOfShift(activeShift) : false;
+  const activeLocationIsVerified = activeShift ? isCurrentLocationVerification(activeShift) : false;
 
   return (
     <article className="info-panel shift-panel">
       <h2>Post Schedule</h2>
       <div className={activeShift ? "shift-checkin-card ready" : "shift-checkin-card"}>
         <span>
-          <strong>{activeShift ? (isCheckedInToActiveShift ? "Checked in" : canCheckInToShift(activeShift) ? "Check in available" : "Next posted shift") : "No shift ready for check-in"}</strong>
+          <strong>{activeShift ? (isCheckedInToActiveShift ? (activeLocationIsVerified ? "Checked in" : "Location re-verification required") : canCheckInToShift(activeShift) ? "Check in available" : "Next posted shift") : "No shift ready for check-in"}</strong>
           <small>
             {activeShift
               ? isCheckedInToActiveShift
-                ? `${venueName(activeShift)} is live in Now. QR commission eligibility is active until you check out or the shift ends.`
+                ? activeLocationIsVerified
+                  ? `${venueName(activeShift)} is live in Now. Location is rechecked while this dashboard remains active.`
+                  : `${venueName(activeShift)} is not shown in Working Now until the venue location is verified again.`
                 : `${venueName(activeShift)} is posted. Tap Check in now during your posted hours and Dancr will verify your location at the club.`
               : "Post one or more shifts below. Your public cards only show Working Now when checked in, or the nearest upcoming shift when you are not checked in."}
           </small>
@@ -2644,9 +2714,16 @@ function DancerShiftPanel({ city }: { city: string }) {
           </button>
         ) : null}
         {activeShift && canCheckOutOfShift(activeShift) ? (
-          <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkOutShift(String(activeShift.id))}>
-            {activeCheckInId === String(activeShift.id) ? "Saving..." : "Check out"}
-          </button>
+          <>
+            {!activeLocationIsVerified ? (
+              <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => refreshShiftLocation(String(activeShift.id))}>
+                Re-verify location
+              </button>
+            ) : null}
+            <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkOutShift(String(activeShift.id))}>
+              {activeCheckInId === String(activeShift.id) ? "Saving..." : "Check out"}
+            </button>
+          </>
         ) : null}
         {checkInStatus ? <small className="shift-checkin-status">{checkInStatus}</small> : null}
       </div>
@@ -2775,27 +2852,15 @@ function isShiftCheckInWindowOpen(shift: Record<string, any>) {
   const startsAt = new Date(shift.starts_at);
   const endsAt = new Date(shift.ends_at);
   const now = new Date();
-  return isSameCalendarDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= startsAt && now <= endsAt;
-}
-
-function isSameCalendarDay(left: Date, right: Date, timeZone: string) {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-
-  return formatter.format(left) === formatter.format(right);
+  return now >= startsAt && now <= endsAt;
 }
 
 function dashboardShiftStatus(shift: Record<string, any>) {
   if (shift.status === "cancelled") return "Cancelled";
   if (shift.checked_out_at) return "Checked Out";
   if (shift.location_status === "club_confirmed") return "Club Confirmed";
-  if (shift.location_status === "location_confirmed" && shift.checked_in_at && new Date(shift.ends_at).getTime() >= Date.now()) {
-    return "Checked in";
-  }
+  if (isCurrentLocationVerification(shift) && new Date(shift.ends_at).getTime() >= Date.now()) return "Checked in";
+  if (shift.checked_in_at && !shift.checked_out_at) return "Re-verify location";
   return "Not checked in";
 }
 

@@ -6,6 +6,7 @@ import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
 import type { ClubDeal } from "./types";
 import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
+import { isCurrentLocationVerification } from "./geofence";
 import {
   moderateStoredMyDancrTvVideo,
   type MyDancrTvModerationResult,
@@ -51,7 +52,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 
 const IDENTITY_PROFILE_FIELDS = isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : "";
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -387,7 +388,7 @@ async function getPublicTvShiftContexts(
   const { data, error } = await admin
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, venues!inner(id, slug, name, city, is_active)",
+      "id, dancer_id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, slug, name, city, is_active)",
     )
     .in("dancer_id", uniqueDancerIds)
     .eq("status", "posted")
@@ -444,7 +445,7 @@ function applyPublicTvShiftContext(
 
 function isConfirmedActiveTvShift(shift: any, now: number) {
   if (!shift?.checked_in_at || shift.checked_out_at) return false;
-  if (shift.location_status !== "location_confirmed" && shift.location_status !== "club_confirmed") return false;
+  if (!isCurrentLocationVerification(shift, now)) return false;
   const start = new Date(shift.starts_at).getTime();
   const end = new Date(shift.ends_at).getTime();
   return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;

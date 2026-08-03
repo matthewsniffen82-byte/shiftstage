@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deliverNotificationRows } from "@/src/lib/dancr/notification-delivery";
 import { isValidShiftRange } from "@/src/lib/dancr/schedule";
+import { reconcileExpiredDancerShifts } from "@/src/lib/dancr/shift-lifecycle";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -12,9 +13,11 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request);
     const dancer = await getOwnDancerProfile(client as any, user.id);
-    const { data, error } = await (client as any)
+    const admin = createAdminSupabaseClient() as any;
+    await reconcileExpiredDancerShifts(admin, dancer.id);
+    const { data, error } = await admin
       .from("shifts")
-      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
+      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
       .eq("dancer_id", dancer.id)
       .order("starts_at", { ascending: false })
       .limit(25);
@@ -101,23 +104,16 @@ export async function PATCH(request: Request) {
     if (typeof body.endsAt === "string") update.ends_at = body.endsAt;
     if (typeof body.timezone === "string") update.timezone = body.timezone;
     if (["posted", "cancelled", "draft"].includes(body.status)) update.status = body.status;
-    if (["self_reported", "checked_in", "ended", "club_confirmed"].includes(body.workingStatus)) {
-      update.working_status = body.workingStatus;
+
+    if (existingShift.checked_in_at && !existingShift.checked_out_at && Object.keys(update).length) {
+      return NextResponse.json(
+        { ok: false, error: "Check out before editing or cancelling an active shift." },
+        { status: 409 },
+      );
     }
-    if (["self_reported", "location_confirmed", "club_confirmed"].includes(body.locationStatus)) {
-      update.location_status = body.locationStatus;
+    if (!Object.keys(update).length) {
+      return NextResponse.json({ ok: false, error: "No editable shift fields were provided." }, { status: 400 });
     }
-    if (typeof body.checkedInAt === "string" || body.checkedInAt === null) update.checked_in_at = body.checkedInAt;
-    if (typeof body.checkedOutAt === "string" || body.checkedOutAt === null) update.checked_out_at = body.checkedOutAt;
-    if (typeof body.commissionTrackingStartedAt === "string" || body.commissionTrackingStartedAt === null) {
-      update.commission_tracking_started_at = body.commissionTrackingStartedAt;
-    }
-    if (typeof body.commissionTrackingStoppedAt === "string" || body.commissionTrackingStoppedAt === null) {
-      update.commission_tracking_stopped_at = body.commissionTrackingStoppedAt;
-    }
-    if (typeof body.endedAt === "string" || body.endedAt === null) update.ended_at = body.endedAt;
-    if (typeof body.endedReason === "string" || body.endedReason === null) update.ended_reason = body.endedReason;
-    if (body.shiftSummary && typeof body.shiftSummary === "object") update.shift_summary = body.shiftSummary;
 
     const nextStartsAt = typeof update.starts_at === "string" ? update.starts_at : existingShift.starts_at;
     const nextEndsAt = typeof update.ends_at === "string" ? update.ends_at : existingShift.ends_at;
@@ -147,7 +143,7 @@ export async function PATCH(request: Request) {
 async function getOwnShift(client: any, dancerId: string, shiftId: string) {
     const { data, error } = await client
     .from("shifts")
-    .select("id, venue_id, starts_at, ends_at, status, venues(name)")
+    .select("id, venue_id, starts_at, ends_at, status, checked_in_at, checked_out_at, venues(name)")
     .eq("id", shiftId)
     .eq("dancer_id", dancerId)
     .maybeSingle();

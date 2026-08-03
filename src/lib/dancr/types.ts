@@ -181,6 +181,7 @@ export type DancerCard = {
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
   checkinDistanceFeet?: number | null;
+  locationVerificationExpiresAt?: string | null;
   followerCount?: number;
   notificationCount?: number;
   profileViewsToday?: number;
@@ -306,6 +307,7 @@ export type ShiftSummary = {
   locationStatus?: LocationStatus;
   checkedInAt?: string | null;
   checkedOutAt?: string | null;
+  locationVerificationExpiresAt?: string | null;
   venueQrCodeUrl?: string | null;
   venueQrCodeLabel?: string | null;
 };

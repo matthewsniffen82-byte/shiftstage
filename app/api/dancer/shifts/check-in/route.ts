@@ -1,94 +1,48 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { validateClientLocationReading } from "@/src/lib/dancr/geofence";
+import { endDancerShift } from "@/src/lib/dancr/shift-lifecycle";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CHECK_IN_RADIUS_FEET = 300;
-
 export async function POST(request: Request) {
-  try {
-    const { client, user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
-    const shiftId = typeof body?.shiftId === "string" ? body.shiftId.trim() : "";
-    const latitude = Number(body?.latitude);
-    const longitude = Number(body?.longitude);
-
-    if (!shiftId) {
-      return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
-    }
-
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      return NextResponse.json({ ok: false, error: "Location permission is required to check in." }, { status: 400 });
-    }
-
-    const dancer = await getOwnDancerProfile(client as any, user.id);
-    const shift = await getOwnShiftWithVenue(client as any, dancer.id, shiftId);
-
-    if (shift.checked_in_at && shift.working_status !== "ended") {
-      return NextResponse.json({ ok: false, error: "This shift is already checked in." }, { status: 409 });
-    }
-
-    if (!isCheckInWindowOpen(shift)) {
-      return NextResponse.json(
-        { ok: false, error: "Check-in is only available during your posted shift hours." },
-        { status: 403 },
-      );
-    }
-
-    const geofence = verifyGeofence(shift, latitude, longitude, "Outside the club check-in radius. Move closer to the club and try again.");
-    if ("response" in geofence) return geofence.response;
-
-    const checkedInAt = new Date().toISOString();
-    const { data, error } = await (client as any)
-      .from("shifts")
-      .update({
-        checked_in_at: shift.checked_in_at || checkedInAt,
-        checked_out_at: null,
-        checkin_latitude: latitude,
-        checkin_longitude: longitude,
-        checkin_distance_feet: geofence.distanceFeet,
-        location_status: "location_confirmed",
-        working_status: "checked_in",
-        commission_tracking_started_at: shift.commission_tracking_started_at || checkedInAt,
-        commission_tracking_stopped_at: null,
-        ended_at: null,
-        ended_reason: null,
-      })
-      .eq("id", shiftId)
-      .eq("dancer_id", dancer.id)
-      .select(shiftStateSelect())
-      .single();
-
-    if (error) throw error;
-
-    return NextResponse.json({ ok: true, shift: data });
-  } catch (error) {
-    return apiError(error, "Unable to check in.");
-  }
+  return verifyLocation(request, "check_in");
 }
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
-    const action = typeof body?.action === "string" ? body.action : "";
-    const shiftId = typeof body?.shiftId === "string" ? body.shiftId.trim() : "";
+    const { user } = await createRequestSupabaseContext(request);
+    const body = await readJsonBody(request);
+    const action = typeof body.action === "string" ? body.action : "";
+    const shiftId = readShiftId(body);
+    if (!shiftId) return missingShiftIdResponse();
 
-    if (!shiftId) {
-      return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
+    if (action === "refresh") return verifyAuthenticatedLocation(user.id, shiftId, body, "refresh");
+
+    if (action !== "end" && action !== "auto_end") {
+      return NextResponse.json({ ok: false, error: "Unknown shift action." }, { status: 400 });
     }
 
-    const dancer = await getOwnDancerProfile(client as any, user.id);
-    const shift = await getOwnShiftWithVenue(client as any, dancer.id, shiftId);
-
-    if (action === "end" || action === "auto_end") {
-      const endedReason = action === "auto_end" ? "automatic" : "manual";
-      return endShift(client as any, dancer.id, shift, endedReason);
+    const admin = createAdminSupabaseClient() as any;
+    const dancer = await getOwnDancerProfile(admin, user.id);
+    const shift = await getOwnShift(admin, dancer.id, shiftId);
+    if (!shift.checked_in_at) {
+      return NextResponse.json({ ok: false, error: "This shift has not been checked in." }, { status: 400 });
+    }
+    if (shift.checked_out_at || shift.working_status === "ended") {
+      return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
+    }
+    if (action === "auto_end" && new Date(shift.ends_at).getTime() > Date.now()) {
+      return NextResponse.json({ ok: false, error: "This shift has not ended yet." }, { status: 403 });
     }
 
-    return NextResponse.json({ ok: false, error: "Unknown shift action." }, { status: 400 });
+    const ended = await endDancerShift(admin, dancer.id, shift, action === "auto_end" ? "automatic" : "manual");
+    if (!ended) return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
+    console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: action });
+    return NextResponse.json({ ok: true, shift: ended });
   } catch (error) {
     return apiError(error, "Unable to update check-in.");
   }
@@ -96,110 +50,88 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
-    const body = await request.json();
-    const shiftId = typeof body?.shiftId === "string" ? body.shiftId.trim() : "";
+    const { user } = await createRequestSupabaseContext(request);
+    const body = await readJsonBody(request);
+    const shiftId = readShiftId(body);
+    if (!shiftId) return missingShiftIdResponse();
 
-    if (!shiftId) {
-      return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
-    }
-
-    const dancer = await getOwnDancerProfile(client as any, user.id);
-    const shift = await getOwnShiftWithVenue(client as any, dancer.id, shiftId);
-
+    const admin = createAdminSupabaseClient() as any;
+    const dancer = await getOwnDancerProfile(admin, user.id);
+    const shift = await getOwnShift(admin, dancer.id, shiftId);
     if (!shift.checked_in_at) {
       return NextResponse.json({ ok: false, error: "This shift has not been checked in." }, { status: 400 });
     }
-
     if (shift.checked_out_at || shift.working_status === "ended") {
       return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
     }
 
-    return endShift(client as any, dancer.id, shift, "manual");
+    const ended = await endDancerShift(admin, dancer.id, shift, "manual");
+    if (!ended) return NextResponse.json({ ok: false, error: "This shift is already checked out." }, { status: 409 });
+    console.info("Dancer shift ended", { shiftId, dancerId: dancer.id, reason: "manual" });
+    return NextResponse.json({ ok: true, shift: ended });
   } catch (error) {
     return apiError(error, "Unable to check out.");
   }
 }
 
-async function endShift(client: any, dancerId: string, shift: any, reason: string) {
-  const endedAt = new Date().toISOString();
-  const shiftSummary = await buildShiftSummary(client, dancerId, shift, endedAt, reason);
-  const { data, error } = await client
-    .from("shifts")
-    .update({
-      checked_out_at: endedAt,
-      location_status: "self_reported",
-      working_status: "ended",
-      commission_tracking_stopped_at: endedAt,
-      ended_at: endedAt,
-      ended_reason: reason,
-      shift_summary: shiftSummary,
-    })
-    .eq("id", shift.id)
-    .eq("dancer_id", dancerId)
-    .select(shiftStateSelect())
-    .single();
-
-  if (error) throw error;
-  return NextResponse.json({ ok: true, shift: data });
+async function verifyLocation(request: Request, eventType: "check_in" | "refresh") {
+  try {
+    const { user } = await createRequestSupabaseContext(request);
+    const body = await readJsonBody(request);
+    const shiftId = readShiftId(body);
+    if (!shiftId) return missingShiftIdResponse();
+    return verifyAuthenticatedLocation(user.id, shiftId, body, eventType);
+  } catch (error) {
+    return apiError(error, "Unable to check in.");
+  }
 }
 
-async function buildShiftSummary(client: any, dancerId: string, shift: any, endedAt: string, reason: string) {
-  const startedAt = shift.checked_in_at || shift.starts_at;
-  const [profileViews, qrCodeScans, newFollowers, commissionRows] = await Promise.all([
-    countMetricRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", startedAt, endedAt),
-    countMetricRows(client, "qr_redemptions", "dancer_id", dancerId, "created_at", startedAt, endedAt),
-    countMetricRows(client, "follows", "dancer_id", dancerId, "created_at", startedAt, endedAt),
-    getShiftCommissionRows(client, dancerId, startedAt, endedAt),
-  ]);
-  const hoursWorked = Math.max(0, (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 3_600_000);
-  const commissionCents = commissionRows.reduce((sum: number, row: any) => sum + Number(row.amount_cents || 0), 0);
-
-  return {
-    reason,
-    hoursWorked: `${hoursWorked.toFixed(hoursWorked >= 10 ? 0 : 1)}h`,
-    profileViews,
-    qrCodeScans,
-    estimatedCommissions: formatMoneyFromCents(commissionCents),
-    newFollowers,
-  };
-}
-
-async function countMetricRows(
-  client: any,
-  table: string,
-  ownerColumn: string,
-  ownerId: string,
-  timestampColumn: string,
-  startedAt: string,
-  endedAt: string,
+async function verifyAuthenticatedLocation(
+  userId: string,
+  shiftId: string,
+  body: Record<string, unknown>,
+  eventType: "check_in" | "refresh",
 ) {
-  const { count, error } = await client
-    .from(table)
-    .select("*", { count: "exact", head: true })
-    .eq(ownerColumn, ownerId)
-    .gte(timestampColumn, startedAt)
-    .lte(timestampColumn, endedAt);
+  const validation = validateClientLocationReading(body);
+  if (!validation.ok) {
+    return NextResponse.json(
+      { ok: false, code: validation.code, error: validation.error },
+      { status: 400 },
+    );
+  }
 
+  const admin = createAdminSupabaseClient() as any;
+  const { data, error } = await admin.rpc("process_dancer_location_verification", {
+    p_user_id: userId,
+    p_shift_id: shiftId,
+    p_event_type: eventType,
+    p_latitude: validation.reading.latitude,
+    p_longitude: validation.reading.longitude,
+    p_accuracy_meters: validation.reading.accuracyMeters,
+    p_captured_at: validation.reading.capturedAt,
+  });
   if (error) throw error;
-  return count || 0;
-}
 
-async function getShiftCommissionRows(client: any, dancerId: string, startedAt: string, endedAt: string) {
-  const { data, error } = await client
-    .from("commission_events")
-    .select("amount_cents")
-    .eq("dancer_id", dancerId)
-    .in("status", ["pending_club_payment", "payable", "paid"])
-    .gte("created_at", startedAt)
-    .lte("created_at", endedAt);
+  const status = boundedHttpStatus(data?.status);
+  if (data?.ok !== true) {
+    console.warn("Dancer shift geofence rejected", {
+      shiftId,
+      eventType,
+      code: String(data?.code || "verification_failed"),
+      distanceFeet: Number.isFinite(Number(data?.distanceFeet)) ? Number(data.distanceFeet) : undefined,
+      accuracyMeters: validation.reading.accuracyMeters,
+    });
+    const headers = status === 429 ? { "retry-after": "60" } : undefined;
+    return NextResponse.json(data || { ok: false, error: "Unable to verify location." }, { status, headers });
+  }
 
-  if (error) throw error;
-  return data || [];
-}
-
-function formatMoneyFromCents(value: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value / 100);
+  console.info("Dancer shift geofence accepted", {
+    shiftId,
+    eventType,
+    distanceFeet: Number(data?.shift?.checkin_distance_feet || 0),
+    accuracyMeters: validation.reading.accuracyMeters,
+  });
+  return NextResponse.json(data, { status: 200 });
 }
 
 async function getOwnDancerProfile(client: any, userId: string) {
@@ -208,86 +140,45 @@ async function getOwnDancerProfile(client: any, userId: string) {
     .select("id, status")
     .eq("user_id", userId)
     .maybeSingle();
-
   if (error) throw error;
   if (!data) throw new Error("Dancer profile not found.");
   if (data.status !== "approved") throw new Error("Profile approval required before posting shifts.");
-
   return data;
 }
 
-async function getOwnShiftWithVenue(client: any, dancerId: string, shiftId: string) {
+async function getOwnShift(client: any, dancerId: string, shiftId: string) {
   const { data, error } = await client
     .from("shifts")
     .select(
-      "id, dancer_id, starts_at, ends_at, timezone, status, checked_in_at, checked_out_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, venues(id, name, latitude, longitude, timezone)",
+      "id, dancer_id, starts_at, ends_at, status, checked_in_at, checked_out_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at",
     )
     .eq("id", shiftId)
     .eq("dancer_id", dancerId)
     .maybeSingle();
-
   if (error) throw error;
   if (!data) throw new Error("Shift not found.");
   if (data.status !== "posted") throw new Error("Only posted shifts can be checked in.");
-
   return data;
 }
 
-function shiftStateSelect() {
-  return "id, checked_in_at, checked_out_at, checkin_distance_feet, location_status, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary";
-}
-
-function isCheckInWindowOpen(shift: { starts_at: string; ends_at: string; timezone?: string | null }) {
-  const now = new Date();
-  const startsAt = new Date(shift.starts_at);
-  const endsAt = new Date(shift.ends_at);
-
-  return isSameLocalDay(now, startsAt, shift.timezone || "America/Los_Angeles") && now >= startsAt && now <= endsAt;
-}
-
-function verifyGeofence(shift: any, latitude: number, longitude: number, outsideMessage: string) {
-  const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
-
-  if (!Number.isFinite(Number(venue?.latitude)) || !Number.isFinite(Number(venue?.longitude))) {
-    return { response: NextResponse.json({ ok: false, error: "Club location is not set for check-in." }, { status: 400 }) };
+async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+  try {
+    const body = await request.json();
+    return body && typeof body === "object" && !Array.isArray(body) ? body : {};
+  } catch {
+    return {};
   }
-
-  const distanceFeet = distanceInFeet(latitude, longitude, Number(venue.latitude), Number(venue.longitude));
-  if (distanceFeet > CHECK_IN_RADIUS_FEET) {
-    return {
-      response: NextResponse.json(
-        {
-          ok: false,
-          error: outsideMessage,
-          distanceFeet: Math.round(distanceFeet),
-          requiredRadiusFeet: CHECK_IN_RADIUS_FEET,
-        },
-        { status: 403 },
-      ),
-    };
-  }
-
-  return { distanceFeet: Math.round(distanceFeet * 100) / 100 };
 }
 
-function isSameLocalDay(left: Date, right: Date, timeZone: string) {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-
-  return formatter.format(left) === formatter.format(right);
+function readShiftId(body: Record<string, unknown>) {
+  return typeof body.shiftId === "string" ? body.shiftId.trim() : "";
 }
 
-function distanceInFeet(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const earthRadiusFeet = 20902231;
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return earthRadiusFeet * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function missingShiftIdResponse() {
+  return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
+}
+
+function boundedHttpStatus(value: unknown) {
+  const status = Number(value);
+  return Number.isInteger(status) && status >= 400 && status <= 599 ? status : 400;
 }

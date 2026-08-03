@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [legacySource, publicSource, typesSource, goingRouteSource, shiftRouteSource] = await Promise.all([
+const [legacySource, publicSource, typesSource, goingRouteSource, shiftLifecycleSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/going/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/dancer/shifts/check-in/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/shift-lifecycle.ts", import.meta.url), "utf8"),
 ]);
 
 test("public live cards expose the exact database going count for their selected shift", () => {
@@ -47,11 +47,11 @@ test("discovery begins empty and only production venue results populate it", () 
 });
 
 test("completed shift summaries use persisted production event tables", () => {
-  assert.match(shiftRouteSource, /async function buildShiftSummary/);
-  assert.match(shiftRouteSource, /countMetricRows\(client, "profile_views"/);
-  assert.match(shiftRouteSource, /countMetricRows\(client, "qr_redemptions"/);
-  assert.match(shiftRouteSource, /countMetricRows\(client, "follows"/);
-  assert.match(shiftRouteSource, /\.from\("commission_events"\)/);
-  assert.match(shiftRouteSource, /shift_summary: shiftSummary/);
+  assert.match(shiftLifecycleSource, /async function buildShiftSummary/);
+  assert.match(shiftLifecycleSource, /countMetricRows\(client, "profile_views"/);
+  assert.match(shiftLifecycleSource, /countMetricRows\(client, "qr_redemptions"/);
+  assert.match(shiftLifecycleSource, /countMetricRows\(client, "follows"/);
+  assert.match(shiftLifecycleSource, /\.from\("commission_events"\)/);
+  assert.match(shiftLifecycleSource, /shift_summary: shiftSummary/);
   assert.doesNotMatch(legacySource, /shift-summary-views|shift-summary-scans|shift-summary-followers/);
 });

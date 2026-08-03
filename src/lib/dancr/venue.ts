@@ -14,6 +14,7 @@ import {
   getVenueDealForAccount,
   getVenueDealRevenueMetrics,
 } from "./deals";
+import { isCurrentLocationVerification } from "./geofence";
 import type {
   ClubDeal,
   VenueDashboardAnalytics,
@@ -467,7 +468,7 @@ async function countVenueGoingSignals(client: DancrClient, venueId: string, sinc
 async function getWorkingDancers(client: DancrClient, venueId: string, now: Date): Promise<VenueDashboardDancer[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, starts_at, ends_at, location_status, checked_in_at, dancer_profiles(id, slug, stage_name)")
+    .select("id, starts_at, ends_at, location_status, checked_in_at, checked_out_at, location_verification_expires_at, dancer_profiles(id, slug, stage_name)")
     .eq("venue_id", venueId)
     .eq("status", "posted")
     .not("checked_in_at", "is", null)
@@ -478,7 +479,7 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
     .order("checked_in_at", { ascending: false });
   if (error) throw error;
 
-  return (data || []).map((row: any) => {
+  return (data || []).filter((row: any) => isCurrentLocationVerification(row, now.getTime())).map((row: any) => {
     const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
     return {
       shiftId: row.id,

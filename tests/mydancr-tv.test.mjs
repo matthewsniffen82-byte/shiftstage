@@ -180,7 +180,8 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   );
   assert.match(tvSource, /async function getPublicTvShiftContexts/);
   assert.match(tvSource, /\.from\("shifts"\)[\s\S]*?\.in\("dancer_id", uniqueDancerIds\)/);
-  assert.match(tvSource, /shift\.location_status !== "location_confirmed" && shift\.location_status !== "club_confirmed"/);
+  assert.match(tvSource, /isCurrentLocationVerification\(shift, now\)/);
+  assert.match(tvSource, /location_verification_expires_at/);
   assert.match(tvSource, /timezone: row\.timezone \|\| "UTC"/);
   assert.match(feedClient, /formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)/);
   assert.match(feedClient, /function formatShift\(value: string, timeZone: string\)[\s\S]*?timeZone,/);

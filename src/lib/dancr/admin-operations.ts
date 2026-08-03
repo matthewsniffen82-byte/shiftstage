@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isCurrentLocationVerification } from "./geofence";
 
 type DancrClient = SupabaseClient;
 
@@ -91,7 +92,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
     safeCount("Overdue video moderation", () => db.from("mydancr_tv_videos").select("id", { count: "exact", head: true }).eq("status", "submitted").lt("submitted_at", dayAgo)),
     safeRows("Checked-in dancers", () => db.from("shifts")
-      .select("id, starts_at, ends_at, checked_in_at, location_status, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
+      .select("id, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
       .not("checked_in_at", "is", null)
       .is("checked_out_at", null)
       .gt("ends_at", checkedAt)
@@ -161,7 +162,9 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       total: Object.values(attentionCounts).reduce((sum, value) => sum + value, 0),
     },
     live: {
-      checkedInDancers: checkedInDancers.rows || [],
+      checkedInDancers: (checkedInDancers.rows || []).filter((shift) =>
+        isCurrentLocationVerification(shift, now.getTime()),
+      ),
       activeVenueCount: count(activeVenueCount),
       qrGeneratedToday: count(qrGeneratedToday),
       qrRedeemedToday: count(qrRedeemedToday),
