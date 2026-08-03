@@ -571,6 +571,7 @@ export function GlobalMobileBottomNav() {
             z-index: 1;
             width: 20px;
             height: 20px;
+            overflow: visible;
             fill: none;
             filter: none;
             stroke: currentColor;

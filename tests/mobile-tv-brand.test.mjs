@@ -21,6 +21,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
       /active[\s\S]*?stroke:\s*var\(--(?:mobile|home)-nav-active\)/,
     );
     assert.match(source, /mydancr-tv-mark[\s\S]*?width:\s*24px(?:\s*!important)?;[\s\S]*?height:\s*24px(?:\s*!important)?;/);
+    assert.match(source, /(?:global-mobile-bottom-nav|#discoveryTabs)[\s\S]*?svg \{[\s\S]*?overflow: visible;/);
     assert.match(source, /mydancr-tv-play[\s\S]*?transform:\s*scale\(1\.12\)/);
     assert.match(source, /mydancr-tv-r[\s\S]*?stroke-width:\s*2;[\s\S]*?transform:\s*scale\(1\.12\)/);
     assert.match(source, /M17\.05 8\.35V4\.35m0 1\.45c\.72-.95 1\.62-1\.25 2\.7-.91/);

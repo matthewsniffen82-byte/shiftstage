@@ -170,7 +170,7 @@ test("neutral mobile glass uses soft-white idle icons and the original borderles
   );
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav svg \{[\s\S]*?filter: none;/,
+    /\.global-mobile-bottom-nav svg \{[\s\S]*?overflow: visible;[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
@@ -178,7 +178,7 @@ test("neutral mobile glass uses soft-white idle icons and the original borderles
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv svg \{[\s\S]*?filter: none;/,
+    /#discoveryTabs \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv svg \{[\s\S]*?overflow: visible;[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
