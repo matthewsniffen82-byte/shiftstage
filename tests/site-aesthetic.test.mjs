@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=69" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=70" rel="stylesheet">/,
   );
 });
 
@@ -162,16 +162,16 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
     discoveryPalette,
     /\.home-dancer-grid-card \{[\s\S]*?border-color: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
-  assert.match(
-    discoveryPalette,
-    /\.home-dancer-grid-venue\.is-pending,[\s\S]*?color: var\(--dancr-color-featured\) !important;/,
-  );
+  assert.doesNotMatch(discoveryPalette, /\.home-dancer-grid-venue\.is-pending/);
   assert.doesNotMatch(discoveryPalette, /home-bottom|home-nav-|global-mobile-bottom-nav/);
   assert.doesNotMatch(discoveryPalette, /\.hero|reference-hero|hero-art/);
 
   assert.match(liveApp, /classList\.toggle\("is-active", !loading && workingNowCount > 0\)/);
   assert.match(liveApp, /const empty = counts\[filter\.id\] === 0;/);
-  assert.match(liveApp, /venueStateClass[\s\S]*?venue pending[\s\S]*?home-dancer-grid-venue\$\{venueStateClass\}/);
+  assert.match(
+    liveApp,
+    /const hasPublishedVenue = Boolean\([\s\S]*?profile\.scheduled[\s\S]*?venueName\.toLowerCase\(\) !== "venue pending"[\s\S]*?const venueMarkup = hasPublishedVenue/,
+  );
 });
 
 test("large dancer profile media frames use a neutral edge without a colored halo", () => {

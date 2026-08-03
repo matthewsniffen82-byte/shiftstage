@@ -647,6 +647,11 @@ test("dancer grid hierarchy stays readable without changing the production card 
   );
   assert.match(
     homeSource,
+    /const hasPublishedVenue = Boolean\([\s\S]*?profile\.scheduled[\s\S]*?venueName[\s\S]*?venueName\.toLowerCase\(\) !== "venue pending"[\s\S]*?const venueMarkup = hasPublishedVenue/,
+  );
+  assert.doesNotMatch(homeSource, /home-dancer-grid-venue\$\{venueStateClass\}/);
+  assert.match(
+    homeSource,
     /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} venue\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} total`/,
   );
   assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);

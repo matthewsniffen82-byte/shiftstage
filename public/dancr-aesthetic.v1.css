@@ -2987,11 +2987,6 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
   color: var(--dancr-color-text-muted) !important;
 }
 
-body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue.is-pending,
-body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue.is-pending > svg {
-  color: var(--dancr-color-featured) !important;
-}
-
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-status:not(.is-now):not(.is-upcoming) {
   border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-muted) !important;

@@ -29269,7 +29269,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=69" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=70" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -49624,15 +49624,19 @@
         ? `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
-      const venueStateClass = venueName.toLowerCase() === "venue pending" ? " is-pending" : "";
+      const hasPublishedVenue = Boolean(
+        profile.scheduled &&
+        venueName &&
+        venueName.toLowerCase() !== "venue pending"
+      );
       const distanceLabel = profileCardDistanceLabel(profile);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const verifiedMark = profile.status === "Verified"
         ? '<span class="verified-mark" aria-label="Verified">✓</span>'
         : "";
-      const venueMarkup = venueName
-        ? `<span class="home-dancer-grid-venue${venueStateClass}">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
+      const venueMarkup = hasPublishedVenue
+        ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
         : "";
       const groupClass = status.className === "is-now"
         ? "is-now"
