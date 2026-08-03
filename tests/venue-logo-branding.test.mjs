@@ -104,11 +104,11 @@ test("venue cards use a full-card logo canvas while detail pages retain contain-
   );
   assert.match(
     aesthetic,
-    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 54px 142px 18px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
+    /\.home-venue-discovery-logo \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;[\s\S]*?padding: 42px 72px 142px 18px;[\s\S]*?object-fit: contain;[\s\S]*?object-position: center 34%;/,
   );
   assert.match(
     aesthetic,
-    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?padding: 40px 50px 138px 16px;/,
+    /@media \(max-width: 420px\)[\s\S]*?\.home-venue-discovery-logo \{[\s\S]*?padding: 40px 72px 138px 16px;/,
   );
   assert.match(
     aesthetic,
