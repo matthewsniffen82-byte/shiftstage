@@ -307,7 +307,7 @@ test("card controls expose accessible labels, keyboard alternatives, and feedbac
   );
 });
 
-test("intentional pauses persist between cards while fullscreen explicitly resumes playback", () => {
+test("intentional pauses persist while fullscreen resumes playback and keeps vertical snap scrolling", () => {
   assert.match(
     homeSource,
     /function toggleHomeTvFeedPlayback\(video\)[\s\S]*?delete slide\.dataset\.userPaused[\s\S]*?slide\.dataset\.userPaused = "true"[\s\S]*?video\.pause\(\)/,
@@ -322,12 +322,21 @@ test("intentional pauses persist between cards while fullscreen explicitly resum
   );
   assert.match(
     homeSource,
-    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?delete slide\.dataset\.userPaused;[\s\S]*?activateHomeTvFeedVideo\(videoId\);[\s\S]*?slide\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?video\.webkitEnterFullscreen\(\)[\s\S]*?showHomeTvFeedFeedback\(slide, "Full screen", "neutral"\)[\s\S]*?showHomeTvFeedFeedback\(slide, "Full screen unavailable", "neutral"\)/,
+    /function toggleHomeTvFeedFullscreen\(slide, video\)[\s\S]*?delete slide\.dataset\.userPaused;[\s\S]*?activateHomeTvFeedVideo\(videoId\);[\s\S]*?feed\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?feed\.webkitRequestFullscreen\(\)[\s\S]*?setHomeTvFeedFallbackFullscreen\(true\)[\s\S]*?alignHomeTvFeedFullscreenSlide\(slide\)[\s\S]*?showHomeTvFeedFeedback\(slide, "Full screen", "neutral"\)/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-slide:fullscreen,[\s\S]*?height: 100dvh;[\s\S]*?border-radius: 0;/,
+    /#results\.home-tv-feed:fullscreen,[\s\S]*?overflow-y: auto !important;[\s\S]*?scroll-snap-type: y mandatory !important;[\s\S]*?#results\.home-tv-feed:fullscreen > \.home-tv-feed-slide,[\s\S]*?height: 100dvh !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
+  assert.match(
+    homeSource,
+    /const fullscreenRoot = homeTvFeedIsImmersive\(\) \? results : null;[\s\S]*?root: fullscreenRoot,[\s\S]*?rootMargin: fullscreenRoot \? "0px" : "-72px 0px -88px"/,
+  );
+  assert.match(homeSource, /event\.key !== "Escape" \|\| !results\.classList\.contains\("is-fullscreen-feed"\)[\s\S]*?setHomeTvFeedFallbackFullscreen\(false\)/);
+  const fullscreenToggle = homeSource.match(
+    /async function toggleHomeTvFeedFullscreen\(slide, video\) \{[\s\S]*?(?=\n    function showHomeTvFeedFeedback)/,
+  )?.[0] || "";
+  assert.doesNotMatch(fullscreenToggle, /slide\.requestFullscreen|video\.webkitEnterFullscreen/);
 });
 
 test("TV sound and lower-right fullscreen controls stay compact and icon-only", () => {

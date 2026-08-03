@@ -577,7 +577,7 @@ test("mobile discovery cards use neutral edges while TV is completely borderless
   assert.doesNotMatch(homeSource, /--home-card-edge-pink/);
   assert.match(
     homeSource,
-    /#results\.home-tv-feed > \.home-tv-feed-slide:fullscreen,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide:-webkit-full-screen \{[\s\S]*?border: 0 !important;[\s\S]*?box-shadow: none !important;/,
+    /#results\.home-tv-feed:fullscreen > \.home-tv-feed-slide,[\s\S]*?#results\.home-tv-feed:-webkit-full-screen > \.home-tv-feed-slide,[\s\S]*?#results\.home-tv-feed\.is-fullscreen-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?box-shadow: none !important;/,
   );
   const dancerShellOverride = homeSource.match(
     /#results\.home-dancer-grid > \.home-dancer-grid-card \{\s*border: 1px solid transparent !important;[\s\S]*?\n          \}/,

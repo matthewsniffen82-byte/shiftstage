@@ -29556,16 +29556,66 @@
           contain: layout paint style;
           isolation: isolate;
         }
-        .home-tv-feed-slide:fullscreen,
-        .home-tv-feed-slide:-webkit-full-screen {
-          width: 100vw;
-          height: 100vh;
-          height: 100dvh;
-          min-height: 100vh;
-          max-height: none;
-          border: 0;
-          border-radius: 0;
-          background: #000;
+        html.home-tv-feed-immersive-open,
+        body.home-tv-feed-immersive-open {
+          overflow: hidden !important;
+          overscroll-behavior: none;
+        }
+        body.home-tv-feed-immersive-open > .app {
+          overflow: visible !important;
+        }
+        #results.home-tv-feed:fullscreen,
+        #results.home-tv-feed:-webkit-full-screen,
+        #results.home-tv-feed.is-fullscreen-feed {
+          position: fixed !important;
+          z-index: 2147483000 !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          max-width: none !important;
+          height: 100vh !important;
+          height: 100dvh !important;
+          min-height: 100vh !important;
+          max-height: none !important;
+          margin: 0 !important;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          grid-auto-rows: 100vh;
+          grid-auto-rows: 100dvh;
+          gap: 0 !important;
+          padding: 0 !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior-y: contain;
+          scroll-snap-type: y mandatory !important;
+          scroll-behavior: smooth;
+          touch-action: pan-y;
+          transform: none !important;
+          transition: none !important;
+          background: #000 !important;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+        }
+        #results.home-tv-feed:fullscreen::-webkit-scrollbar,
+        #results.home-tv-feed:-webkit-full-screen::-webkit-scrollbar,
+        #results.home-tv-feed.is-fullscreen-feed::-webkit-scrollbar {
+          display: none;
+        }
+        #results.home-tv-feed:fullscreen > .home-tv-feed-slide,
+        #results.home-tv-feed:-webkit-full-screen > .home-tv-feed-slide,
+        #results.home-tv-feed.is-fullscreen-feed > .home-tv-feed-slide {
+          width: 100vw !important;
+          height: 100vh !important;
+          height: 100dvh !important;
+          min-height: 100vh !important;
+          min-height: 100dvh !important;
+          max-height: none !important;
+          margin: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: #000 !important;
+          box-shadow: none !important;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
         }
         .home-tv-feed-video {
           position: absolute;
@@ -32602,9 +32652,11 @@
             background: #000 !important;
             box-shadow: 0 14px 32px rgba(0,0,0,.38) !important;
           }
-          #results.home-tv-feed > .home-tv-feed-slide:fullscreen,
-          #results.home-tv-feed > .home-tv-feed-slide:-webkit-full-screen {
+          #results.home-tv-feed:fullscreen > .home-tv-feed-slide,
+          #results.home-tv-feed:-webkit-full-screen > .home-tv-feed-slide,
+          #results.home-tv-feed.is-fullscreen-feed > .home-tv-feed-slide {
             border: 0 !important;
+            border-radius: 0 !important;
             background: #000 !important;
             box-shadow: none !important;
           }
@@ -35832,6 +35884,8 @@
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
     let homeTvFeedLandingPending = false;
+    let homeTvFeedWasFullscreen = false;
+    let homeTvFeedFullscreenReturnScrollY = 0;
     const homeTvFeedSnapMedia = window.matchMedia("(max-width: 720px)");
     let homeTvPageScrollRail = null;
     let homeTvPageScrollThumb = null;
@@ -49982,50 +50036,111 @@
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
 
+    function homeTvFeedFullscreenSurface() {
+      return results.classList.contains("home-tv-feed") ? results : null;
+    }
+
+    function homeTvFeedIsImmersive() {
+      const feed = homeTvFeedFullscreenSurface();
+      return Boolean(
+        feed &&
+        (homeTvFeedFullscreenElement() === feed || feed.classList.contains("is-fullscreen-feed"))
+      );
+    }
+
+    function setHomeTvFeedFallbackFullscreen(active) {
+      const feed = homeTvFeedFullscreenSurface();
+      feed?.classList.toggle("is-fullscreen-feed", active);
+      document.documentElement.classList.toggle("home-tv-feed-immersive-open", active);
+      document.body.classList.toggle("home-tv-feed-immersive-open", active);
+    }
+
+    function homeTvFeedActiveSlide() {
+      return results.querySelector(
+        `.home-tv-feed-slide[data-video-id="${CSS.escape(homeTvFeedActiveVideoId)}"]`
+      ) || results.querySelector(".home-tv-feed-slide");
+    }
+
+    function alignHomeTvFeedFullscreenSlide(slide) {
+      if (!slide || !homeTvFeedIsImmersive()) return;
+      window.requestAnimationFrame(() => {
+        if (!homeTvFeedIsImmersive()) return;
+        results.scrollTo({ top: slide.offsetTop, left: 0, behavior: "auto" });
+        window.requestAnimationFrame(setupHomeTvFeedObserver);
+      });
+    }
+
     function syncHomeTvFeedFullscreenButtons() {
-      const fullscreenElement = homeTvFeedFullscreenElement();
+      const feedIsFullscreen = homeTvFeedIsImmersive();
       document.querySelectorAll("[data-home-tv-fullscreen]").forEach((button) => {
-        const slide = button.closest(".home-tv-feed-slide");
-        const video = slide?.querySelector("video");
-        const isFullscreen = fullscreenElement === slide || Boolean(video?.webkitDisplayingFullscreen);
-        const label = isFullscreen ? "Exit full-screen video" : "View this video full screen";
+        const label = feedIsFullscreen ? "Exit full-screen videos" : "View videos full screen";
         button.setAttribute("aria-label", label);
         button.setAttribute("title", label);
-        button.setAttribute("aria-pressed", String(isFullscreen));
+        button.setAttribute("aria-pressed", String(feedIsFullscreen));
       });
+    }
+
+    function syncHomeTvFeedFullscreenState() {
+      const feedIsFullscreen = homeTvFeedIsImmersive();
+      if (feedIsFullscreen) {
+        const activeSlide = homeTvFeedActiveSlide();
+        alignHomeTvFeedFullscreenSlide(activeSlide);
+      } else if (homeTvFeedWasFullscreen) {
+        document.documentElement.classList.remove("home-tv-feed-immersive-open");
+        document.body.classList.remove("home-tv-feed-immersive-open");
+        const activeSlide = homeTvFeedActiveSlide();
+        window.requestAnimationFrame(() => {
+          if (activeSlide?.isConnected) {
+            window.scrollTo({ top: homeTvFeedFullscreenReturnScrollY, left: 0, behavior: "auto" });
+            activeSlide.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+          }
+          setupHomeTvFeedObserver();
+        });
+      }
+      homeTvFeedWasFullscreen = feedIsFullscreen;
+      syncHomeTvFeedFullscreenButtons();
     }
 
     async function toggleHomeTvFeedFullscreen(slide, video) {
       if (!slide || !video) return;
-      const fullscreenElement = homeTvFeedFullscreenElement();
-      const isFullscreen = fullscreenElement === slide || Boolean(video.webkitDisplayingFullscreen);
+      const feed = homeTvFeedFullscreenSurface();
+      if (!feed) return;
+      const isFullscreen = homeTvFeedIsImmersive();
       try {
         if (isFullscreen) {
-          if (video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen === "function") {
-            video.webkitExitFullscreen();
-          } else {
+          if (homeTvFeedFullscreenElement() === feed) {
             const exit = document.exitFullscreen || document.webkitExitFullscreen;
             if (typeof exit === "function") await exit.call(document);
+          } else {
+            setHomeTvFeedFallbackFullscreen(false);
+            syncHomeTvFeedFullscreenState();
           }
           return;
         }
         const videoId = String(slide.dataset.videoId || "");
         delete slide.dataset.userPaused;
         if (videoId) activateHomeTvFeedVideo(videoId);
-        if (typeof slide.requestFullscreen === "function") {
-          await slide.requestFullscreen({ navigationUI: "hide" });
-        } else if (typeof slide.webkitRequestFullscreen === "function") {
-          await slide.webkitRequestFullscreen();
-        } else if (typeof video.webkitEnterFullscreen === "function") {
-          video.webkitEnterFullscreen();
-        } else {
-          throw new Error("Fullscreen is unavailable");
+        homeTvFeedFullscreenReturnScrollY = window.scrollY || 0;
+        let enteredNativeFullscreen = false;
+        try {
+          if (typeof feed.requestFullscreen === "function") {
+            await feed.requestFullscreen({ navigationUI: "hide" });
+            enteredNativeFullscreen = true;
+          } else if (typeof feed.webkitRequestFullscreen === "function") {
+            await feed.webkitRequestFullscreen();
+            enteredNativeFullscreen = true;
+          }
+        } catch {
+          enteredNativeFullscreen = false;
         }
+        if (!enteredNativeFullscreen) setHomeTvFeedFallbackFullscreen(true);
+        homeTvFeedWasFullscreen = true;
+        alignHomeTvFeedFullscreenSlide(slide);
         showHomeTvFeedFeedback(slide, "Full screen", "neutral");
       } catch {
         showHomeTvFeedFeedback(slide, "Full screen unavailable", "neutral");
       } finally {
-        syncHomeTvFeedFullscreenButtons();
+        syncHomeTvFeedFullscreenState();
       }
     }
 
@@ -50267,25 +50382,37 @@
       homeTvFeedObserver = null;
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       if (!slides.length) return;
+      const initialSlide = homeTvFeedIsImmersive() ? homeTvFeedActiveSlide() : slides[0];
       if (!("IntersectionObserver" in window)) {
-        activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
+        activateHomeTvFeedVideo(String(initialSlide?.dataset.videoId || ""));
         return;
       }
+      const fullscreenRoot = homeTvFeedIsImmersive() ? results : null;
       homeTvFeedObserver = new IntersectionObserver((entries) => {
         const visible = entries
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
         if (visible) activateHomeTvFeedVideo(String(visible.target.dataset.videoId || ""));
       }, {
-        root: null,
-        rootMargin: "-72px 0px -88px",
+        root: fullscreenRoot,
+        rootMargin: fullscreenRoot ? "0px" : "-72px 0px -88px",
         threshold: [.25, .6, .72]
       });
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
-      activateHomeTvFeedVideo(String(slides[0].dataset.videoId || ""));
+      activateHomeTvFeedVideo(String(initialSlide?.dataset.videoId || ""));
     }
 
     function deactivateHomeTvFeed() {
+      const fullscreenElement = homeTvFeedFullscreenElement();
+      if (fullscreenElement === results) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (typeof exit === "function") {
+          const exitResult = exit.call(document);
+          if (exitResult?.catch) void exitResult.catch(() => {});
+        }
+      }
+      setHomeTvFeedFallbackFullscreen(false);
+      homeTvFeedWasFullscreen = false;
       homeTvFeedObserver?.disconnect();
       homeTvFeedObserver = null;
       homeTvFeedActiveVideoId = "";
@@ -50461,8 +50588,6 @@
         slide.classList.add("is-paused");
         clearHomeTvFeedEngagedTimer(videoId);
       });
-      video.addEventListener("webkitbeginfullscreen", syncHomeTvFeedFullscreenButtons);
-      video.addEventListener("webkitendfullscreen", syncHomeTvFeedFullscreenButtons);
       video.addEventListener("timeupdate", () => {
         syncHomeTvFeedProgress(video, slide);
         if (
@@ -50817,7 +50942,12 @@
     }
 
     ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
-      document.addEventListener(eventName, syncHomeTvFeedFullscreenButtons);
+      document.addEventListener(eventName, syncHomeTvFeedFullscreenState);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !results.classList.contains("is-fullscreen-feed")) return;
+      setHomeTvFeedFallbackFullscreen(false);
+      syncHomeTvFeedFullscreenState();
     });
     const refreshHomeTvFeedViewportMode = () => {
       if (activeTab !== "tv" || !results.classList.contains("home-tv-feed")) return;
