@@ -43840,10 +43840,10 @@
       const followsVenue = isFollowingVenue(city, venue.name);
       const quickStats = [
         tonight.length
-          ? `<button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>`
+          ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>`
           : "",
         upcoming.length
-          ? `<button class="venue-quick-stat" type="button" data-venue-jump="venue-upcoming-shifts"><strong>${upcoming.length}</strong><span>upcoming shifts</span></button>`
+          ? `<button class="venue-quick-stat is-upcoming" type="button" data-venue-jump="venue-upcoming-shifts"><strong>${upcoming.length}</strong><span>upcoming shifts</span></button>`
           : ""
       ].filter(Boolean).join("");
       const activitySections = [

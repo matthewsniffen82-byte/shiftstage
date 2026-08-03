@@ -78,20 +78,26 @@ test("venue profiles keep every Club Deal QR state prominent without an oversize
   assert.match(liveApp, /\.venue-club-deal-unavailable \.venue-detail-club-deal-qr-state \{[\s\S]*?grid-template-columns: 58px minmax\(0, 1fr\);[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
 });
 
-test("venue profile hierarchy stays compact and keeps Club Deals stronger than following", () => {
+test("venue profile hierarchy stays compact and carries the restrained venue brand signature", () => {
   const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
 
   assert.ok(refinement, "the final production venue-detail refinement must exist");
   assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(200px, 46vw, 248px\) !important;/);
-  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?isolation: isolate;/);
+  assert.match(refinement, /\.venue-detail-logo-shell::before \{[\s\S]*?var\(--dancr-color-brand-primary-soft\)[\s\S]*?var\(--dancr-color-brand-glow-soft\)[\s\S]*?filter: blur\(18px\);/);
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 10px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
-  assert.doesNotMatch(refinement, /#venueDetailName::before|padding-left: 13px/);
+  assert.match(refinement, /\.venue-identity-copy \{[\s\S]*?position: relative;[\s\S]*?padding-left: 14px;/);
+  assert.match(refinement, /\.venue-identity-copy::before \{[\s\S]*?var\(--dancr-color-beam-core\)[\s\S]*?var\(--dancr-color-beam-violet\)[\s\S]*?var\(--dancr-color-beam-glow\)/);
   assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
   assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
   assert.match(refinement, /\.venue-address-directions \{[\s\S]*?display: inline-flex !important;[\s\S]*?min-height: 42px !important;/);
   assert.match(refinement, /\.club-deal-primary-cta\.venue-club-deal-cta \{[\s\S]*?var\(--dancr-color-brand-primary\)[\s\S]*?var\(--dancr-shadow-brand-control\)/);
-  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?width: 100% !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(refinement, /\.venue-club-deal-unavailable\.venue-offer-card \{[\s\S]*?background-color: color-mix\([\s\S]*?var\(--dancr-color-surface\) 72%[\s\S]*?var\(--dancr-color-background\)/);
+  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?width: 100% !important;[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)[\s\S]*?var\(--dancr-shadow-brand-control\)/);
+  assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
+  assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
+  assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });
 
@@ -99,6 +105,7 @@ test("venue profiles replace repeated zero sections with one truthful empty expl
   const venueDetail = liveApp.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
 
   assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?upcoming\.length[\s\S]*?filter\(Boolean\)\.join\(""\)/);
+  assert.match(venueDetail, /venue-quick-stat is-working[\s\S]*?venue-quick-stat is-upcoming/);
   assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-trending/);
   assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No dancers active or scheduled[\s\S]*?No dancers are checked in and no upcoming shifts have been posted\. Follow \$\{details\.name\} for updates\./);
   assert.doesNotMatch(venueDetail, /No active shifts now|No upcoming shifts posted|No trending profiles here yet/);

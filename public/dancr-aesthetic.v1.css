@@ -4146,12 +4146,17 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
   overflow: hidden !important;
   border: 1px solid var(--dancr-color-border-subtle) !important;
   border-radius: 20px !important;
-  background: var(--dancr-color-background) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-surface) 18%,
+    var(--dancr-color-background)
+  ) !important;
   box-shadow: 0 18px 36px var(--dancr-color-black-medium) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo {
   position: relative !important;
+  isolation: isolate;
   min-height: clamp(200px, 46vw, 248px) !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -4167,9 +4172,30 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  isolation: isolate;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-logo-shell::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 7% 2%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--dancr-color-brand-primary-soft) 0%,
+    var(--dancr-color-brand-glow-soft) 48%,
+    transparent 76%
+  );
+  filter: blur(18px);
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo {
+  position: relative;
+  z-index: 1;
   width: 100% !important;
   height: 100% !important;
   filter: none !important;
@@ -4180,8 +4206,16 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
   display: grid !important;
   gap: 10px !important;
   padding: 12px 14px 14px !important;
-  border-top: 1px solid var(--dancr-color-border-subtle) !important;
-  background: var(--dancr-color-background) !important;
+  border-top: 1px solid color-mix(
+    in srgb,
+    var(--dancr-color-border-subtle) 72%,
+    transparent
+  ) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-surface) 24%,
+    var(--dancr-color-background)
+  ) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-block,
@@ -4196,7 +4230,28 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-copy {
+  position: relative;
   gap: 4px;
+  padding-left: 14px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-identity-copy::before {
+  content: "";
+  position: absolute;
+  inset: 2px auto 2px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--dancr-color-beam-core) 0%,
+    var(--dancr-color-beam-violet) 46%,
+    var(--dancr-color-beam-glow) 100%
+  );
+  box-shadow:
+    0 0 9px var(--dancr-color-beam-violet-soft),
+    0 0 17px var(--dancr-color-beam-glow-soft);
+  pointer-events: none;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName {
@@ -4213,6 +4268,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
   align-items: center;
   gap: 7px;
   color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-identity-meta > .meta {
+  color: var(--dancr-color-text-muted) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-distance {
@@ -4249,6 +4309,16 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-qui
   border-color: var(--dancr-color-border-subtle) !important;
   background: var(--dancr-color-surface-subtle) !important;
   box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-quick-stat.is-working strong {
+  color: var(--dancr-color-success) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-quick-stat.is-upcoming strong {
+  color: var(--dancr-color-info) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-info .info-tile {
@@ -4295,6 +4365,22 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-club-deal-unavailable.venue-offer-card {
+  background-color: color-mix(
+    in srgb,
+    var(--dancr-color-surface) 72%,
+    var(--dancr-color-background)
+  ) !important;
+  background-image: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-club-deal-unavailable .eyebrow {
+  color: var(--dancr-color-brand-core) !important;
+  opacity: 0.72;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-club-deal-unavailable-icon {
   width: 48px;
   height: 48px;
@@ -4327,10 +4413,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn:not(.is-following) {
   width: 100% !important;
-  border-color: var(--dancr-color-border) !important;
+  border-color: var(--dancr-color-brand-primary-strong) !important;
   color: var(--dancr-color-text-primary) !important;
-  background: var(--dancr-color-surface-raised) !important;
-  box-shadow: none !important;
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-brand-primary),
+    var(--dancr-color-brand-primary-deep)
+  ) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4377,14 +4467,22 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-empty {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 38px minmax(0, 1fr);
   align-items: center;
-  gap: 11px;
-  padding: 14px;
-  border: 1px solid var(--dancr-color-border-subtle);
+  gap: 10px;
+  padding: 12px 13px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--dancr-color-border-subtle) 70%,
+    transparent
+  );
   border-radius: 16px;
   color: var(--dancr-color-text-primary);
-  background: var(--dancr-color-surface-subtle);
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-surface) 62%,
+    var(--dancr-color-background)
+  );
   box-shadow: none;
 }
 
@@ -4400,9 +4498,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
   line-height: 1.4;
 }
 
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-empty strong {
+  font-size: clamp(16px, 4.4vw, 19px);
+  line-height: 1.16;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-empty-icon {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   border: 1px solid var(--dancr-color-border-subtle);
@@ -4412,8 +4515,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-empty-icon .action-icon {
-  width: 21px;
-  height: 21px;
+  width: 18px;
+  height: 18px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close {
