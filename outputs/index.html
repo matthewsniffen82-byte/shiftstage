@@ -31755,8 +31755,9 @@
             --home-nav-accent: rgba(232,230,238,.74);
             --home-nav-accent-soft: rgba(232,230,238,.66);
             --home-nav-active: #fff;
-            --home-nav-active-violet-core: rgba(124,58,237,.76);
-            --home-nav-active-violet-glow: rgba(124,58,237,.34);
+            --home-nav-active-violet-core: rgba(152,95,255,.98);
+            --home-nav-active-violet-glow: rgba(91,19,255,1);
+            --home-nav-active-cyan-glow: rgba(52,110,255,.58);
             position: relative !important;
             width: 100% !important;
             height: 57px !important;
@@ -31845,9 +31846,9 @@
             position: absolute;
             inset: 8px;
             border-radius: 50%;
-            background: radial-gradient(circle,rgba(124,58,237,.62) 0%,rgba(124,58,237,.42) 30%,rgba(76,29,149,.2) 54%,transparent 74%);
-            box-shadow: 0 0 7px rgba(124,58,237,.34),0 0 14px rgba(76,29,149,.18);
-            filter: blur(1px);
+            background: radial-gradient(circle,rgba(152,95,255,.9) 0%,rgba(91,19,255,.72) 28%,rgba(91,19,255,.42) 48%,rgba(52,110,255,.24) 64%,transparent 78%);
+            box-shadow: 0 0 10px rgba(91,19,255,.76),0 0 20px rgba(91,19,255,.48),0 0 28px rgba(52,110,255,.28);
+            filter: blur(2px);
           }
           #discoveryTabs .tab:not(.active) .home-nav-icon,
           #discoveryTabs .home-bottom-tv:not(.active) .home-bottom-tv-icon {
@@ -31898,7 +31899,8 @@
           #discoveryTabs .home-bottom-tv.active .home-bottom-tv-icon .mydancr-tv-mark {
             filter:
               drop-shadow(0 0 2px var(--home-nav-active-violet-core))
-              drop-shadow(0 0 5px var(--home-nav-active-violet-glow));
+              drop-shadow(0 0 6px var(--home-nav-active-violet-glow))
+              drop-shadow(0 0 12px var(--home-nav-active-cyan-glow));
           }
           #discoveryTabs .tab-count {
             position: absolute;
