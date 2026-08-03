@@ -264,18 +264,20 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 19px;[\s\S]*?height: 19px;/);
 });
 
-test("unavailable profile QR messaging stays concise", () => {
+test("unavailable profile QR stays visible in a compact square tile", () => {
   const unavailableDealMarkup = liveApp.match(
     /const unavailableLabel = state\.key === "no-active-offer"[\s\S]*?(?=\n    function profileShareText)/,
   )?.[0] || "";
   assert.match(unavailableDealMarkup, /"Available when dancer is working"/);
+  assert.match(unavailableDealMarkup, /state\.key === "no-active-offer"/);
+  assert.match(unavailableDealMarkup, /clubDealQrSymbolMarkup\("profile-deal-placeholder"\)/);
   assert.doesNotMatch(unavailableDealMarkup, /How Club Deals work|profile-deal-disclosure|profile-deal-note/);
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 48px !important;[\s\S]*?padding: 10px 12px !important;/,
+    /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;[\s\S]*?aspect-ratio: 1 \/ 1;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?justify-self: center !important;/,
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?width: 48px !important;[\s\S]*?min-width: 48px !important;[\s\S]*?height: 48px !important;/,
+    /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?width: 72px !important;[\s\S]*?min-width: 72px !important;[\s\S]*?height: 72px !important;[\s\S]*?justify-self: center !important;/,
   );
 });

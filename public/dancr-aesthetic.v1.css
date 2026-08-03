@@ -3209,6 +3209,45 @@ body.dancr-button-system .public-profile-shell :is(.venue-qr-unavailable, .profi
   box-shadow: none !important;
 }
 
+body.dancr-button-system .public-profile-shell .profile-deal-availability {
+  width: min(168px, 100%) !important;
+  margin-inline: auto !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable {
+  width: min(168px, 100%) !important;
+  min-height: 168px !important;
+  aspect-ratio: 1 / 1;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto auto !important;
+  place-items: center !important;
+  align-content: center !important;
+  justify-self: center !important;
+  gap: 10px !important;
+  padding: 14px !important;
+  border-radius: 16px !important;
+  text-align: center;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-placeholder-icon {
+  width: 72px !important;
+  height: 72px !important;
+  padding: 8px !important;
+  border-radius: 12px !important;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy {
+  justify-items: center;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy strong {
+  max-width: 136px;
+  font-size: 12px !important;
+  line-height: 1.25;
+}
+
 body.dancr-button-system #profileBackdrop .profile-qr-unavailable :is(.profile-deal-label, .profile-deal-main, .profile-deal-meta),
 body.dancr-button-system .public-profile-shell .venue-qr-unavailable :is(
     .eyebrow,

@@ -33715,22 +33715,35 @@
         }
         #profileBackdrop .profile-qr-unavailable {
           display: grid !important;
-          grid-template-columns: minmax(0, 1fr) 48px !important;
-          align-items: center !important;
+          width: min(168px, 100%) !important;
+          min-height: 168px !important;
+          aspect-ratio: 1 / 1;
+          grid-template-columns: minmax(0, 1fr) !important;
+          grid-template-rows: auto auto !important;
+          place-items: center !important;
+          align-content: center !important;
+          justify-self: center !important;
           gap: 10px !important;
-          padding: 10px 12px !important;
+          padding: 14px !important;
           border-style: solid !important;
+          text-align: center;
         }
         #profileBackdrop .profile-qr-unavailable .profile-deal-copy,
         #profileBackdrop .profile-qr-unavailable .profile-deal-meta {
           min-width: 0;
         }
+        #profileBackdrop .profile-qr-unavailable .profile-deal-copy {
+          grid-row: 2;
+          justify-items: center;
+        }
         #profileBackdrop .profile-deal-placeholder {
-          width: 48px !important;
-          min-width: 48px !important;
-          height: 48px !important;
-          padding: 6px !important;
-          border-radius: 10px !important;
+          width: 72px !important;
+          min-width: 72px !important;
+          height: 72px !important;
+          grid-row: 1;
+          justify-self: center !important;
+          padding: 8px !important;
+          border-radius: 12px !important;
         }
         #profileBackdrop .profile-deal-disclosure {
           color: #a99eb7;

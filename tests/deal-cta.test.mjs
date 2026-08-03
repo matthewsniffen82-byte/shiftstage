@@ -222,8 +222,13 @@ test("dancer scroll cards reserve the QR slot while only live Club Deals remain 
   );
   assert.match(venueQrComponent, /type ClubDealAvailability = "no-active-offer" \| "available-when-working" \| "not-available-now"/);
   assert.match(venueQrComponent, /className="venue-qr-placeholder-icon"[\s\S]*?<svg viewBox="0 0 28 28">[\s\S]*?className="qr-finder"[\s\S]*?className="qr-module"/);
-  assert.match(dancerPage, /\.venue-qr-placeholder-icon \{ width: 48px; height: 48px;/);
+  assert.match(
+    dancerPage,
+    /\.venue-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\);[\s\S]*?min-height: 168px;[\s\S]*?aspect-ratio: 1 \/ 1;[\s\S]*?justify-self: center;/,
+  );
+  assert.match(dancerPage, /\.venue-qr-placeholder-icon \{ width: 72px; height: 72px;/);
   assert.match(venueQrComponent, /const label = availability === "no-active-offer"[\s\S]*?"No Club Deal available"[\s\S]*?: "Available when dancer is working"/);
+  assert.match(venueQrComponent, /className=\{`venue-qr-unavailable is-\$\{availability\}`\}[\s\S]*?className="venue-qr-placeholder-icon"/);
   assert.doesNotMatch(venueQrComponent, /venue-qr-explanation|How Club Deals work|status\.detail/);
   assert.doesNotMatch(dancerPage, /\.venue-qr-explanation/);
 });
