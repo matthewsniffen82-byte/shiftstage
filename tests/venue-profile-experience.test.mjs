@@ -76,6 +76,9 @@ test("venue profiles use the dancer full-profile QR box in every Club Deal state
   assert.doesNotMatch(venueOffer, /venue-detail-club-deal-unavailable-icon|actionIconMarkup\("lock"\)/);
   assert.match(liveApp, /Venue details use the same compact QR box geometry as dancer full profiles[\s\S]*?\.venue-detail-club-deal-qr-state \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?padding: 14px !important;[\s\S]*?border-radius: 14px !important;/);
   assert.match(liveApp, /Venue details use the same compact QR box geometry as dancer full profiles[\s\S]*?\.venue-detail-club-deal-symbol \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;[\s\S]*?border-radius: 12px !important;/);
+  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \{[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background: var\(--dancr-color-surface\) !important;/);
+  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \.venue-detail-club-deal-symbol \{[\s\S]*?border-color: rgba\(148, 163, 184, \.14\) !important;[\s\S]*?background: rgba\(148, 163, 184, \.035\) !important;/);
+  assert.match(liveApp, /\.venue-detail-club-deal-qr-state\.is-unavailable \.venue-detail-club-deal-qr-copy :is\(\.eyebrow, strong, small\) \{[\s\S]*?color: inherit !important;/);
   assert.match(liveApp, /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;/);
 });
 

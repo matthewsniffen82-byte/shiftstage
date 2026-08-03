@@ -3790,8 +3790,8 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   text-shadow: none !important;
 }
 
+body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName,
 body.dancr-button-system #results.venue-profile-overlay .venue-detail :is(
-    #venueDetailName,
     .venue-sign-name,
     .venue-quick-stat strong,
     .venue-info strong,
@@ -4423,6 +4423,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-qr-state.is-unavailable {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: var(--dancr-color-surface) !important;
+  background-image: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-club-deal-qr-state.is-available {
   border-color: var(--dancr-color-success-medium) !important;
   color: var(--dancr-color-success) !important;
@@ -4449,6 +4457,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   background: rgba(148, 163, 184, 0.035) !important;
   box-shadow: none !important;
   opacity: 0.62;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-qr-state.is-unavailable
+  .venue-detail-club-deal-symbol {
+  border-color: rgba(148, 163, 184, 0.14) !important;
+  color: rgba(148, 163, 184, 0.58) !important;
+  background: rgba(148, 163, 184, 0.035) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4489,6 +4505,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   font-size: 10.5px;
   line-height: 1.2;
   opacity: 0.72;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-qr-state.is-unavailable
+  .venue-detail-club-deal-qr-copy :is(.eyebrow, strong, small) {
+  color: inherit !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
