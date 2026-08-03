@@ -139,7 +139,19 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /function focusVenueProfileStart\(\) \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?focus\(\{ preventScroll: true \}\);/,
+    /function focusVenueProfileStart\(\{ showFocusRing = false \} = \{\}\) \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileScroll\(\);[\s\S]*?toggleAttribute\("data-auto-focus", !showFocusRing\);[\s\S]*?focus\(\{ preventScroll: true \}\);/,
+  );
+  assert.match(
+    aesthetic,
+    /\.venue-detail-close\[data-auto-focus\]:is\(:focus, :focus-visible\) \{[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.venue-detail-close:focus-visible:not\(\[data-auto-focus\]\) \{[\s\S]*?border-color: var\(--dancr-color-info\) !important;[\s\S]*?outline: 2px solid var\(--dancr-color-info\) !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.venue-detail-close \{[\s\S]*?top: max\([\s\S]*?34px,[\s\S]*?var\(--dancr-viewport-top\)[\s\S]*?\+ 24px\)[\s\S]*?right: max\(24px, calc\(\(100vw - 720px\) \/ 2 \+ 24px\)\) !important;/,
   );
 });
 
@@ -158,7 +170,7 @@ test("venue entry points use the canonical in-app venue profile", () => {
   );
   assert.match(
     liveApp,
-    /const venueProfileLink = event\.target\.closest\("\[data-open-venue-profile\]"\);[\s\S]*?openVenueFromName\(venueProfileLink\.dataset\.openVenueProfile\);/,
+    /const venueProfileLink = event\.target\.closest\("\[data-open-venue-profile\]"\);[\s\S]*?openVenueFromName\(venueProfileLink\.dataset\.openVenueProfile, \{ showFocusRing: event\.detail === 0 \}\);/,
   );
   assert.match(profileRoute, /permanentRedirect/);
 });

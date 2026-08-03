@@ -51080,7 +51080,7 @@
       )) || null;
     }
 
-    function openVenueFromName(venueName) {
+    function openVenueFromName(venueName, options = {}) {
       if (!venueName) return;
       const venue = resolveVenueByName(venueName);
       if (!venue) {
@@ -51110,10 +51110,10 @@
         `${url.pathname}?${url.searchParams.toString()}${url.hash}`
       );
       render();
-      focusVenueProfileStart();
+      focusVenueProfileStart(options);
     }
 
-    function focusVenueProfileStart() {
+    function focusVenueProfileStart({ showFocusRing = false } = {}) {
       const resetProfileScroll = () => {
         results.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
@@ -51122,7 +51122,11 @@
         resetProfileScroll();
         requestAnimationFrame(() => {
           resetProfileScroll();
-          results.querySelector("[data-close-venue-profile]")?.focus({ preventScroll: true });
+          const closeButton = results.querySelector("[data-close-venue-profile]");
+          if (!closeButton) return;
+          closeButton.toggleAttribute("data-auto-focus", !showFocusRing);
+          closeButton.focus({ preventScroll: true });
+          closeButton.addEventListener("blur", () => closeButton.removeAttribute("data-auto-focus"), { once: true });
         });
       });
     }
@@ -51181,7 +51185,7 @@
       if (venueProfileLink) {
         event.preventDefault();
         event.stopPropagation();
-        openVenueFromName(venueProfileLink.dataset.openVenueProfile);
+        openVenueFromName(venueProfileLink.dataset.openVenueProfile, { showFocusRing: event.detail === 0 });
         return;
       }
       const unavailableCardQr = event.target.closest('[data-card-action-slot="qr"][data-card-qr-label]');
@@ -51258,7 +51262,7 @@
       if (cardVenueLink) {
         event.preventDefault();
         event.stopPropagation();
-        openVenueFromName(cardVenueLink.dataset.cardVenue);
+        openVenueFromName(cardVenueLink.dataset.cardVenue, { showFocusRing: event.detail === 0 });
         return;
       }
       const directionsLink = event.target.closest(".venue-directions-btn");
@@ -52079,7 +52083,7 @@
       const venueLink = event.target.closest("[data-open-venue]");
       if (venueLink) {
         closeProfileModal();
-        openVenueFromName(venueLink.dataset.openVenue);
+        openVenueFromName(venueLink.dataset.openVenue, { showFocusRing: event.detail === 0 });
         return;
       }
       const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
@@ -52180,7 +52184,7 @@
       const venueLink = event.target.closest(".profile-modal-summary [data-open-venue]");
       if (venueLink) {
         closeProfileModal();
-        openVenueFromName(venueLink.dataset.openVenue);
+        openVenueFromName(venueLink.dataset.openVenue, { showFocusRing: event.detail === 0 });
       }
     });
 
@@ -53003,7 +53007,7 @@
         event.preventDefault();
         event.stopPropagation();
         closeDashboard();
-        openVenueFromName(cardVenueLink.dataset.cardVenue);
+        openVenueFromName(cardVenueLink.dataset.cardVenue, { showFocusRing: event.detail === 0 });
         return;
       }
       const card = event.target.closest(".dancer-card");
@@ -53810,7 +53814,7 @@
         event.preventDefault();
         event.stopPropagation();
         if (customerDashboard.classList.contains("show")) closeDashboard();
-        openVenueFromName(cardVenueLink.dataset.cardVenue);
+        openVenueFromName(cardVenueLink.dataset.cardVenue, { showFocusRing: true });
         return;
       }
       if (event.key === "Escape") {
