@@ -55,6 +55,10 @@ test("the consolidated Dancers destination exposes working, trending, and schedu
     homeSource,
     /data-dancer-directory-filter="\$\{filter\.id\}" aria-pressed="\$\{active\}"/,
   );
+  assert.match(
+    homeSource,
+    /const empty = counts\[filter\.id\] === 0;[\s\S]*?\$\{empty \? " is-empty" : ""\}/,
+  );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
   assert.match(homeSource, /No dancers are working now in \$\{city\}\./);
   assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);

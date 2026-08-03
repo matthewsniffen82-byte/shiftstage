@@ -2392,11 +2392,11 @@ body.dancr-button-system :is(
   .public-profile-shell .profile-live-state,
   .public-profile-shell .profile-titlebar-status.is-live
 ) {
-  border-color: var(--dancr-color-success-medium) !important;
-  color: var(--dancr-color-success) !important;
+  border-color: var(--dancr-color-live-medium) !important;
+  color: var(--dancr-color-live) !important;
   background: color-mix(
     in srgb,
-    var(--dancr-color-success) 13%,
+    var(--dancr-color-live) 13%,
     var(--dancr-color-surface)
   ) !important;
   box-shadow: none !important;
@@ -2852,7 +2852,7 @@ body.dancr-button-system > .app main.stack > .home-live-summary #homeLiveWorking
 }
 
 body.dancr-button-system > .app main.stack > .home-live-summary #homeLiveWorking.is-active {
-  color: var(--dancr-color-success) !important;
+  color: var(--dancr-color-live) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > .content-head.discovery-section-head > #tabTitle {
@@ -2894,6 +2894,38 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
   color: var(--dancr-color-text-primary) !important;
 }
 
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"]:not(.is-empty):not(.is-active) > span {
+  color: var(--dancr-color-live) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) {
+  border-color: var(--dancr-color-live-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-live) 22%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--dancr-color-live-medium),
+    0 0 12px var(--dancr-color-live-soft) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) > span {
+  color: var(--dancr-color-live) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active.is-empty {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="now"].is-active.is-empty > span {
+  color: var(--dancr-color-text-muted) !important;
+}
+
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .dancer-directory-filter:focus-visible {
   outline: 0 !important;
   box-shadow: var(--dancr-focus-ring) !important;
@@ -2912,7 +2944,7 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-now > strong,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-now > span {
-  color: var(--dancr-color-success) !important;
+  color: var(--dancr-color-live) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-upcoming > strong,
@@ -3646,9 +3678,9 @@ body.dancr-button-system .home-tv-feed-feedback.is-neutral {
 }
 
 body.dancr-button-system .home-tv-feed-schedule.is-now {
-  border-color: var(--dancr-color-success-medium) !important;
-  color: var(--dancr-color-success) !important;
-  background-color: var(--dancr-color-success-soft) !important;
+  border-color: var(--dancr-color-live-medium) !important;
+  color: var(--dancr-color-live) !important;
+  background-color: var(--dancr-color-live-soft) !important;
   text-shadow: none !important;
 }
 

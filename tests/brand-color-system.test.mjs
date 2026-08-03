@@ -42,6 +42,7 @@ const requiredTokens = new Map([
   ["--dancr-color-border", "#334155"],
   ["--dancr-color-info", "#22d3ee"],
   ["--dancr-color-success", "#10b981"],
+  ["--dancr-color-live", "#4dec9d"],
   ["--dancr-color-featured", "#fbbf24"],
   ["--dancr-color-danger", "#ef4444"],
 ]);
@@ -142,13 +143,14 @@ test("Next pages and the live shell load tokens before shared component styling"
   assert.ok(buttonLink < aestheticLink);
 });
 
-test("interactive, informational, success, featured, and danger states consume semantic tokens", () => {
+test("interactive, informational, live, success, featured, and danger states consume semantic tokens", () => {
   assert.match(buttons, /var\(--dancr-color-brand-primary\)/);
   assert.match(buttons, /var\(--dancr-color-success\)/);
   assert.match(buttons, /var\(--dancr-color-featured\)/);
   assert.match(buttons, /var\(--dancr-color-danger\)/);
   assert.match(aesthetic, /var\(--dancr-color-info\)/);
   assert.match(aesthetic, /var\(--dancr-color-success\)/);
+  assert.match(aesthetic, /var\(--dancr-color-live\)/);
   assert.match(aesthetic, /var\(--dancr-color-featured\)/);
   assert.match(aesthetic, /var\(--dancr-color-danger\)/);
   assert.match(venueProfile, /var\(--dancr-color-brand-primary\)/);

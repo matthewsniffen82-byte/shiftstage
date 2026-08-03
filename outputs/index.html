@@ -29862,7 +29862,7 @@
         }
         .home-tv-feed-schedule.is-now {
           border-color: rgba(77,236,157,.5);
-          color: #8af4bb;
+          color: #4dec9d;
           background: rgba(17,107,62,.48);
         }
         .home-tv-feed-schedule.is-upcoming {
@@ -30352,7 +30352,7 @@
         }
         .home-discovery-feed-status.is-now {
           border-color: rgba(77,236,157,.54);
-          color: #8af4bb;
+          color: #4dec9d;
           background: rgba(17,107,62,.52);
         }
         .home-discovery-feed-status.is-upcoming {
@@ -32190,7 +32190,7 @@
           font-weight: 900;
         }
         .home-dancer-grid-heading.is-now strong {
-          color: #9af7c5;
+          color: #4dec9d;
           text-shadow: none;
         }
         .home-dancer-grid-heading.is-upcoming strong {
@@ -32350,7 +32350,7 @@
         }
         .home-dancer-grid-status.is-now {
           border-color: rgba(77,236,157,.48);
-          color: #91f7c0;
+          color: #4dec9d;
           background: rgba(17,107,62,.38);
         }
         .home-dancer-grid-status.is-upcoming {
@@ -32844,6 +32844,31 @@
         }
         .dancer-directory-filter.is-active span {
           color: #f8fafc;
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="now"]:not(.is-empty):not(.is-active) span {
+          color: #4dec9d;
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) {
+          border-color: rgba(77, 236, 157, .78);
+          color: #f8fafc;
+          background:
+            linear-gradient(rgba(77, 236, 157, .22), rgba(77, 236, 157, .22)),
+            #18181c;
+          box-shadow:
+            inset 0 0 0 1px rgba(77, 236, 157, .36),
+            0 0 12px rgba(77, 236, 157, .1);
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="now"].is-active:not(.is-empty) span {
+          color: #4dec9d;
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="now"].is-active.is-empty {
+          border-color: rgba(51, 65, 85, .64);
+          color: #94a3b8;
+          background: #18181c;
+          box-shadow: none;
+        }
+        .dancer-directory-filter[data-dancer-directory-filter="now"].is-active.is-empty span {
+          color: #94a3b8;
         }
         .dancer-directory-filter:focus-visible {
           outline: 2px solid #7c3aed;

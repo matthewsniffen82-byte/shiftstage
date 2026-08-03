@@ -62,6 +62,11 @@
   --dancr-color-success-medium: rgba(16, 185, 129, 0.36);
   --dancr-color-success-strong: rgba(16, 185, 129, 0.78);
 
+  --dancr-color-live: #4dec9d;
+  --dancr-color-live-soft: rgba(77, 236, 157, 0.1);
+  --dancr-color-live-medium: rgba(77, 236, 157, 0.36);
+  --dancr-color-live-strong: rgba(77, 236, 157, 0.78);
+
   --dancr-color-featured: #fbbf24;
   --dancr-color-featured-soft: rgba(251, 191, 36, 0.1);
   --dancr-color-featured-medium: rgba(251, 191, 36, 0.38);

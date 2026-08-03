@@ -144,7 +144,15 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
   assert.match(
     discoveryPalette,
-    /\.home-dancer-grid-heading\.is-now > strong,[\s\S]*?var\(--dancr-color-success\)[\s\S]*?\.home-dancer-grid-heading\.is-upcoming > strong,[\s\S]*?var\(--dancr-color-info\)[\s\S]*?\.home-dancer-grid-heading\.is-trending > strong,[\s\S]*?var\(--dancr-color-featured\)/,
+    /\.home-dancer-grid-heading\.is-now > strong,[\s\S]*?var\(--dancr-color-live\)[\s\S]*?\.home-dancer-grid-heading\.is-upcoming > strong,[\s\S]*?var\(--dancr-color-info\)[\s\S]*?\.home-dancer-grid-heading\.is-trending > strong,[\s\S]*?var\(--dancr-color-featured\)/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.dancer-directory-filter\[data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-live-strong\)[\s\S]*?var\(--dancr-color-live\) 22%[\s\S]*?var\(--dancr-color-live-medium\)/,
+  );
+  assert.match(
+    discoveryPalette,
+    /\.dancer-directory-filter\[data-dancer-directory-filter="now"\]\.is-active\.is-empty \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-text-muted\)[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?box-shadow: none/,
   );
   assert.match(
     discoveryPalette,
