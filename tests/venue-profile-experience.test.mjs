@@ -82,12 +82,16 @@ test("venue profile hierarchy stays compact and keeps Club Deals stronger than f
   const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
 
   assert.ok(refinement, "the final production venue-detail refinement must exist");
-  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?min-height: clamp\(200px, 46vw, 248px\) !important;/);
+  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(200px, 46vw, 248px\) !important;/);
   assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
-  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?gap: 10px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
+  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 10px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
+  assert.match(refinement, /#venueDetailName \{[\s\S]*?padding-left: 13px;[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
+  assert.match(refinement, /#venueDetailName::before \{[\s\S]*?width: 2px;[\s\S]*?var\(--dancr-color-beam-core\)[\s\S]*?var\(--dancr-color-beam-violet\) 48%[\s\S]*?var\(--dancr-color-brand-primary-deep\)[\s\S]*?var\(--dancr-color-beam-glow-soft\)/);
   assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
+  assert.match(refinement, /\.venue-address-tile \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
+  assert.match(refinement, /\.venue-address-directions \{[\s\S]*?display: inline-flex !important;[\s\S]*?min-height: 42px !important;/);
   assert.match(refinement, /\.club-deal-primary-cta\.venue-club-deal-cta \{[\s\S]*?var\(--dancr-color-brand-primary\)[\s\S]*?var\(--dancr-shadow-brand-control\)/);
-  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?width: 100% !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });
 
