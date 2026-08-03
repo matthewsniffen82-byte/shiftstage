@@ -380,7 +380,7 @@ export function GlobalMobileBottomNav() {
                 rgba(255, 255, 255, 0.025) 42%,
                 rgba(255, 255, 255, 0.01)
               ),
-              rgba(9, 9, 12, 0.82);
+              rgba(9, 9, 12, 0.9);
             box-shadow:
               0 18px 46px rgba(0, 0, 0, 0.46),
               inset 0 0 0 1px rgba(255, 255, 255, 0.026);
@@ -404,8 +404,8 @@ export function GlobalMobileBottomNav() {
                 ),
                 linear-gradient(
                   135deg,
-                  rgba(20, 20, 24, 0.56),
-                  rgba(5, 5, 8, 0.44)
+                  rgba(20, 20, 24, 0.78),
+                  rgba(5, 5, 8, 0.7)
                 );
             }
           }
