@@ -75,7 +75,8 @@ test("uploaded venue QR images are isolated as external marketing assets and nev
   assert.match(dancerPage, /Boolean\(shift\.checkedInAt\)/);
   assert.match(dancerPage, /!shift\.checkedOutAt/);
   assert.match(dancerPage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\}/);
-  assert.match(trackingComponent, /No tracked Club Deal is active at this venue\./);
+  assert.match(trackingComponent, /"Available when dancer is working"/);
+  assert.doesNotMatch(trackingComponent, /No tracked Club Deal is active at this venue\.|venue-qr-explanation/);
   assert.match(trackingComponent, /if \(tapToShow && !visible\)/);
   assert.match(trackingComponent, /Show venue QR/);
   assert.match(trackingComponent, /className="venue-qr-dialog"/);
@@ -86,7 +87,10 @@ test("checked-in dancer profiles show only a tracked MyDancr Club Deal or an exp
   assert.match(liveApp, /function dancerClubDealState\(profile\)[\s\S]*?profile\?\.activeDeal\?\.id &&[\s\S]*?profile\?\.dealAttributionToken/);
   assert.match(liveApp, /if \(state\.key === "available"\)/);
   assert.match(liveApp, /label: "No Club Deal available"/);
-  assert.match(liveApp, /profile-qr-unavailable[\s\S]*?<strong>Club Deal<\/strong>/);
+  assert.match(
+    liveApp,
+    /profile-qr-unavailable[\s\S]*?profile-deal-main">\$\{escapeHtml\(unavailableLabel\)\}<\/span>[\s\S]*?profile-deal-placeholder/,
+  );
   assert.match(liveApp, /Saving or sharing keeps your credit attached until that QR expires/);
   assert.doesNotMatch(liveApp, /profile\.venueQrCodeUrl[\s\S]*?data-deal-pass/);
 });

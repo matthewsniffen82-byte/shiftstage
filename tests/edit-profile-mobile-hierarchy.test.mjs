@@ -20,9 +20,10 @@ test("the phone editor uses a full-width, compact schedule and Club Deal hierarc
   assert.match(liveApp, /#approvedProfileVideoStatus \{[\s\S]*?margin-right: 62px !important;/);
 });
 
-test("editor-only guidance is concise while public guidance remains intact", () => {
+test("editor guidance and unavailable profile QR messaging stay concise", () => {
   assert.match(liveApp, /This is how your next shift appears to customers\./);
-  assert.match(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
+  assert.match(liveApp, /Available when dancer is working/);
+  assert.doesNotMatch(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
   assert.match(liveApp, /This is the dancer's next posted shift\. Follow or turn on notifications for schedule updates\./);
   assert.match(liveApp, /This dancer has not posted an upcoming shift yet\. Follow or turn on notifications to see the next update\./);
 });

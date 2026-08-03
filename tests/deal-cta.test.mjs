@@ -197,6 +197,12 @@ test("dancer scroll cards reserve the QR slot while only live Club Deals remain 
     )?.[0] || "";
   assert.match(profileDealMarkup, /data-club-deal-state="\$\{state\.key\}"/);
   assert.match(profileDealMarkup, /clubDealQrSymbolMarkup\("profile-deal-placeholder"\)/);
+  assert.match(profileDealMarkup, /"Available when dancer is working"/);
+  assert.doesNotMatch(profileDealMarkup, /How Club Deals work|stateDetail/);
+  const unavailableProfileDealMarkup = profileDealMarkup.match(
+    /const unavailableLabel[\s\S]*$/,
+  )?.[0] || "";
+  assert.doesNotMatch(unavailableProfileDealMarkup, /profile-deal-disclosure|profile-deal-note/);
   assert.match(
     liveApp,
     /function clubDealQrSymbolMarkup\(className = ""\)[\s\S]*?viewBox="0 0 28 28"[\s\S]*?class="qr-finder"[\s\S]*?class="qr-module"/,
@@ -217,11 +223,9 @@ test("dancer scroll cards reserve the QR slot while only live Club Deals remain 
   assert.match(venueQrComponent, /type ClubDealAvailability = "no-active-offer" \| "available-when-working" \| "not-available-now"/);
   assert.match(venueQrComponent, /className="venue-qr-placeholder-icon"[\s\S]*?<svg viewBox="0 0 28 28">[\s\S]*?className="qr-finder"[\s\S]*?className="qr-module"/);
   assert.match(dancerPage, /\.venue-qr-placeholder-icon \{ width: 48px; height: 48px;/);
-  assert.match(venueQrComponent, /<details className="venue-qr-explanation">\s*<summary>How Club Deals work<\/summary>\s*<p>\{status\.detail\}<\/p>/);
-  assert.match(dancerPage, /\.venue-qr-explanation summary \{[\s\S]*?cursor: pointer;/);
-  assert.match(venueQrComponent, /label: "No Club Deal available"/);
-  assert.match(venueQrComponent, /label: "Available when working"/);
-  assert.match(venueQrComponent, /label: "Not available now"/);
+  assert.match(venueQrComponent, /const label = availability === "no-active-offer"[\s\S]*?"No Club Deal available"[\s\S]*?: "Available when dancer is working"/);
+  assert.doesNotMatch(venueQrComponent, /venue-qr-explanation|How Club Deals work|status\.detail/);
+  assert.doesNotMatch(dancerPage, /\.venue-qr-explanation/);
 });
 
 test("signed-in customer deal passes are attached to the real account dashboard", () => {

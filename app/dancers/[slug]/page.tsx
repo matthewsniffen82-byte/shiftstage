@@ -457,10 +457,6 @@ function PublicProfileStyles() {
       .venue-qr-placeholder-icon .qr-module { fill: currentColor; stroke: none; }
       .venue-qr-unavailable-copy { min-width: 0; display: grid; gap: 4px; }
       .venue-qr-unavailable-copy strong { color: #f5f2ff; font-size: 14px; }
-      .venue-qr-unavailable-copy p { color: #a99eb7; font-size: 11px; }
-      .venue-qr-explanation { color: #a99eb7; font-size: 10px; }
-      .venue-qr-explanation summary { width: fit-content; color: #9fefff; font-size: 10px; font-weight: 850; cursor: pointer; list-style-position: inside; }
-      .venue-qr-explanation p { margin-top: 5px; }
       .profile-schedule-section { margin-top: 24px; }
       .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }

@@ -264,11 +264,12 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 19px;[\s\S]*?height: 19px;/);
 });
 
-test("Club Deal explanations stay compact until a customer asks for more detail", () => {
-  assert.match(
-    liveApp,
-    /<details class="profile-deal-disclosure">\s*<summary>How Club Deals work<\/summary>/,
-  );
+test("unavailable profile QR messaging stays concise", () => {
+  const unavailableDealMarkup = liveApp.match(
+    /const unavailableLabel = state\.key === "no-active-offer"[\s\S]*?(?=\n    function profileShareText)/,
+  )?.[0] || "";
+  assert.match(unavailableDealMarkup, /"Available when dancer is working"/);
+  assert.doesNotMatch(unavailableDealMarkup, /How Club Deals work|profile-deal-disclosure|profile-deal-note/);
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.profile-qr-unavailable \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 48px !important;[\s\S]*?padding: 10px 12px !important;/,

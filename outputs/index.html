@@ -41312,11 +41312,7 @@
     }
 
     function profileDealTileMarkup(profile) {
-      const options = arguments[1] || {};
       const state = dancerClubDealState(profile);
-      const stateDetail = options.preview && state.key === "available-when-working"
-        ? "Unlocks after you verify you're working and the venue has an active offer."
-        : state.detail;
       if (state.key === "available") {
         const config = {
           deal: profile.activeDeal,
@@ -41344,17 +41340,13 @@
           </div>
         `;
       }
+      const unavailableLabel = state.key === "no-active-offer"
+        ? state.label
+        : "Available when dancer is working";
       return `
-        <div class="info-tile profile-qr-unavailable is-${state.key}" data-club-deal-state="${state.key}" aria-label="${escapeHtml(state.label)}">
+        <div class="info-tile profile-qr-unavailable is-${state.key}" data-club-deal-state="${state.key}" aria-label="${escapeHtml(unavailableLabel)}">
           <div class="profile-deal-copy">
-            <strong>Club Deal</strong>
-            <div class="meta profile-deal-meta">
-              <span class="profile-deal-main">${escapeHtml(state.label)}</span>
-              <details class="profile-deal-disclosure">
-                <summary>How Club Deals work</summary>
-                <span class="profile-deal-note">${escapeHtml(stateDetail)}</span>
-              </details>
-            </div>
+            <span class="profile-deal-main">${escapeHtml(unavailableLabel)}</span>
           </div>
           ${clubDealQrSymbolMarkup("profile-deal-placeholder")}
         </div>
