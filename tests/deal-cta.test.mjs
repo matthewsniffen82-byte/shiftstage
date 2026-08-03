@@ -93,7 +93,7 @@ test("venue pages and directory cards promote real active deals", () => {
   );
   assert.match(
     venueOffer,
-    /data-club-deal-state="unavailable"[\s\S]*?actionIconMarkup\("lock"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/,
+    /data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/,
   );
   assert.match(liveApp, /\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(190px, 230px\);/);
   assert.match(liveApp, /@media \(max-width: 520px\) \{[\s\S]*?\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: 1fr;/);

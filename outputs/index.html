@@ -33789,6 +33789,68 @@
           box-shadow: none !important;
           opacity: .62;
         }
+
+        /* Venue details use the same compact QR box geometry as dancer full profiles. */
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state {
+          box-sizing: border-box;
+          display: grid !important;
+          width: min(168px, 100%) !important;
+          min-height: 168px !important;
+          aspect-ratio: 1 / 1;
+          grid-template-columns: minmax(0, 1fr) !important;
+          grid-template-rows: auto auto !important;
+          place-items: center !important;
+          align-content: center !important;
+          justify-self: center !important;
+          gap: 10px !important;
+          padding: 14px !important;
+          border: 1px solid var(--dancr-color-border-subtle) !important;
+          border-radius: 14px !important;
+          color: var(--dancr-color-text-muted) !important;
+          background: var(--dancr-color-surface) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          text-align: center;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-symbol {
+          width: 72px !important;
+          min-width: 72px !important;
+          height: 72px !important;
+          grid-row: 1;
+          justify-self: center !important;
+          padding: 8px !important;
+          border: 1px solid rgba(148, 163, 184, .14) !important;
+          border-radius: 12px !important;
+          color: rgba(148, 163, 184, .58) !important;
+          background: rgba(148, 163, 184, .035) !important;
+          box-shadow: none !important;
+          opacity: .62;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-copy {
+          grid-row: 2;
+          justify-items: center;
+          gap: 7px;
+          text-align: center;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state.is-available {
+          border-color: var(--dancr-color-success-medium) !important;
+          color: var(--dancr-color-success) !important;
+          background: color-mix(in srgb, var(--dancr-color-success) 6%, var(--dancr-color-surface)) !important;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-qr-state.is-available .venue-detail-club-deal-symbol {
+          border-color: var(--dancr-color-success-medium) !important;
+          color: var(--dancr-color-success) !important;
+          background: var(--dancr-color-success-soft) !important;
+          opacity: 1;
+        }
+        #results.venue-profile-overlay .venue-detail .venue-club-deal-unavailable.venue-offer-card {
+          width: min(168px, 100%) !important;
+          justify-self: center !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
         #profileBackdrop .profile-deal-disclosure {
           color: #a99eb7;
           font-size: 10px;
@@ -41319,10 +41381,10 @@
       if (!venue?.id) return "";
       return `
         <article class="venue-offer-card venue-club-deal-unavailable" id="club-deal">
-          <div class="venue-detail-club-deal-qr-state is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="Club Deal unavailable at ${escapeHtml(venue.name)}. Check back later.">
-            <span class="venue-detail-club-deal-unavailable-icon">${actionIconMarkup("lock")}</span>
-            <div class="venue-detail-club-deal-qr-copy">
-              <span class="eyebrow">Club Deal</span>
+          <div class="venue-detail-club-deal-qr-state venue-qr-unavailable is-unavailable is-no-active-offer" data-club-deal-state="unavailable" role="status" aria-label="Club Deal unavailable at ${escapeHtml(venue.name)}. Check back later.">
+            ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol venue-qr-placeholder-icon")}
+            <div class="venue-detail-club-deal-qr-copy venue-qr-unavailable-copy">
+              <span class="eyebrow venue-qr-unavailable-label">Club Deal</span>
               <strong>No active Club Deal</strong>
               <small>Check back later</small>
             </div>

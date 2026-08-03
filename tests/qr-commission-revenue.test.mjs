@@ -164,13 +164,14 @@ test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr 
   );
   assert.match(
     venueOfferHelper,
-    /venue-club-deal-unavailable[\s\S]*?actionIconMarkup\("lock"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/,
+    /venue-club-deal-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/,
   );
   const unavailableVenueOffer =
     venueOfferHelper.match(
       /<article class="venue-offer-card venue-club-deal-unavailable"[\s\S]*?<\/article>/,
     )?.[0] || "";
-  assert.doesNotMatch(unavailableVenueOffer, /clubDealQrSymbolMarkup|Club Deal QR/);
+  assert.match(unavailableVenueOffer, /clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)/);
+  assert.doesNotMatch(unavailableVenueOffer, /data-club-deal-cta|publishedVenueQrPass|data-venue-profile-qr/);
   assert.doesNotMatch(venueOfferHelper, /data-venue-profile-qr|Show venue QR/);
   assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?data-card-qr-label="Club Deal unavailable"/);
   const venueQrHelper =
