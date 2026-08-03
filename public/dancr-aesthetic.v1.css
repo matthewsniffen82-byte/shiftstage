@@ -4110,31 +4110,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName {
-  position: relative;
-  padding-left: 13px;
   overflow: visible !important;
   color: var(--dancr-color-brand-core) !important;
   font-size: clamp(25px, 7vw, 34px) !important;
   line-height: 1.02 !important;
   text-overflow: clip !important;
   -webkit-line-clamp: unset !important;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail #venueDetailName::before {
-  content: "";
-  position: absolute;
-  top: 0.08em;
-  bottom: 0.08em;
-  left: 0;
-  width: 2px;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    var(--dancr-color-beam-core),
-    var(--dancr-color-beam-violet) 48%,
-    var(--dancr-color-brand-primary-deep)
-  );
-  box-shadow: 0 0 8px var(--dancr-color-beam-glow-soft);
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-meta {
