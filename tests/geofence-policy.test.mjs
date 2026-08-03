@@ -65,14 +65,16 @@ test("location-confirmed status expires and becomes due for refresh", () => {
   );
 });
 
-const [checkInRoute, shiftsRoute, migration, dashboard, liveShell, lifecycle, cronRoute] = await Promise.all([
+const [checkInRoute, shiftsRoute, migration, lockMigration, dashboard, liveShell, lifecycle, cronRoute, venueService] = await Promise.all([
   readFile(new URL("../app/api/dancer/shifts/check-in/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/shifts/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608020002_production_geofence_checkins.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608020003_lock_shift_verification_fields.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/shift-lifecycle.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/cron/shift-checkins/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
 ]);
 
 test("check-in and refresh are atomic server-only database operations", () => {
@@ -102,6 +104,19 @@ test("database verification enforces distance, accuracy, freshness, audit, and o
   assert.match(migration, /v_now < v_shift\.starts_at or v_now > v_shift\.ends_at/);
   assert.match(migration, /v_expires_at := least\(v_shift\.ends_at, v_now \+ interval '30 minutes'\)/);
   assert.match(migration, /insert into public\.shift_location_events/);
+});
+
+test("database clients cannot forge verification state or read raw device coordinates", () => {
+  assert.match(lockMigration, /create or replace function public\.enforce_shift_verification_server_only/);
+  assert.match(lockMigration, /if auth\.role\(\) = 'service_role'/);
+  assert.match(lockMigration, /before insert or update on public\.shifts/);
+  assert.match(lockMigration, /new\.checked_in_at is distinct from old\.checked_in_at/);
+  assert.match(lockMigration, /new\.last_location_latitude is distinct from old\.last_location_latitude/);
+  assert.match(lockMigration, /An active checked-in shift cannot be edited or cancelled/);
+  assert.match(lockMigration, /revoke select on public\.shifts from anon, authenticated/);
+  assert.doesNotMatch(lockMigration, /grant select \([\s\S]*?checkin_latitude/);
+  assert.doesNotMatch(lockMigration, /grant select \([\s\S]*?last_location_longitude/);
+  assert.match(venueService, /from\("shifts"\)[\s\S]*?\.select\("id", \{ count: "exact", head: true \}\)/);
 });
 
 test("every client sends GPS quality data and refreshes expiring proof", () => {

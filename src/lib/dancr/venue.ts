@@ -447,7 +447,7 @@ async function countVenueEvents(
 async function countUpcomingShifts(client: DancrClient, venueId: string, now: Date) {
   const { count, error } = await client
     .from("shifts")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("venue_id", venueId)
     .eq("status", "posted")
     .gt("ends_at", now.toISOString());
