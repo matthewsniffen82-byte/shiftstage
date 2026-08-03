@@ -232,7 +232,7 @@ test("profile polish preserves the existing site color system", () => {
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop #modalClose \{[\s\S]*?width: 42px !important;[\s\S]*?height: 42px !important;[\s\S]*?min-height: 42px !important;[\s\S]*?border-color: rgba\(180,169,196,\.2\) !important;/,
+    /#profileBackdrop #modalClose \{[\s\S]*?width: 42px !important;[\s\S]*?height: 42px !important;[\s\S]*?min-height: 42px !important;[\s\S]*?border-color: rgba\(180,169,196,\.2\) !important;[\s\S]*?box-shadow: none !important;/,
   );
 });
 
@@ -243,7 +243,7 @@ test("profile identity and media controls form a compact balanced top section", 
   );
   assert.match(
     profilePolishBlock,
-    /#profileBackdrop \.profile-modal-avatar \{[\s\S]*?width: 44px;[\s\S]*?border: 1px solid rgba\(126,234,255,\.46\);/,
+    /#profileBackdrop \.profile-modal-avatar \{[\s\S]*?width: 44px;[\s\S]*?border: 1px solid rgba\(126,234,255,\.46\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     profilePolishBlock,

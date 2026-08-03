@@ -576,6 +576,22 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
+    /#profileBackdrop \.profile-modal-avatar \{\s*box-shadow: none !important;\s*\}/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop #modalClose \{\s*box-shadow: none !important;\s*\}/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop #modalClose:is\(:hover, :focus-visible\) \{\s*box-shadow: none !important;\s*\}/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /#profileBackdrop #modalClose:focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-text-secondary\) !important;[\s\S]*?outline-offset: 2px !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
     /\.profile-modal-media-tabs button\.active::before,[\s\S]*?\.profile-media-tabs button\.active::before \{[\s\S]*?var\(--dancr-color-brand-primary\)[\s\S]*?var\(--dancr-shadow-brand-subtle\) !important;/,
   );
   assert.match(

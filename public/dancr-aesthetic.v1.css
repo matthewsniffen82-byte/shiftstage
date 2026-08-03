@@ -3025,6 +3025,10 @@ body.dancr-button-system .public-profile-shell .profile-titlebar-avatar {
     0 0 0 2px var(--dancr-color-border-subtle) !important;
 }
 
+body.dancr-button-system #profileBackdrop .profile-modal-avatar {
+  box-shadow: none !important;
+}
+
 body.dancr-button-system #profileBackdrop #modalName,
 body.dancr-button-system .public-profile-shell .profile-titlebar h1 {
   color: var(--dancr-color-text-primary) !important;
@@ -3055,12 +3059,25 @@ body.dancr-button-system .public-profile-shell .public-profile-close {
   box-shadow: 0 10px 24px var(--dancr-color-black-medium) !important;
 }
 
+body.dancr-button-system #profileBackdrop #modalClose {
+  box-shadow: none !important;
+}
+
 body.dancr-button-system #profileBackdrop #modalClose:is(:hover, :focus-visible),
 body.dancr-button-system .public-profile-shell .public-profile-close:is(:hover, :focus-visible) {
   border-color: var(--dancr-color-brand-primary) !important;
   color: var(--dancr-color-text-primary) !important;
   outline: 0 !important;
   box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalClose:is(:hover, :focus-visible) {
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalClose:focus-visible {
+  outline: 2px solid var(--dancr-color-text-secondary) !important;
+  outline-offset: 2px !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button::before,
