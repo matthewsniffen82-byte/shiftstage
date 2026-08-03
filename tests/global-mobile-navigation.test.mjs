@@ -134,7 +134,7 @@ test("neutral mobile glass uses soft-white idle icons and a contained translucen
   );
   assert.match(
     navigationSource,
-    /\.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--mobile-nav-active-edge\);[\s\S]*?rgba\(255, 255, 255, 0\.2\)[\s\S]*?var\(--mobile-nav-active-fill\)[\s\S]*?var\(--mobile-nav-active-fill-deep\)[\s\S]*?0 0 5px var\(--mobile-nav-active-glow\);[\s\S]*?backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?-webkit-backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?filter: none;/,
+    /\.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--mobile-nav-active-edge\);[\s\S]*?rgba\(255, 255, 255, 0\.26\)[\s\S]*?var\(--mobile-nav-active-fill\)[\s\S]*?var\(--mobile-nav-active-fill-deep\)[\s\S]*?0 0 7px var\(--mobile-nav-active-glow\);[\s\S]*?backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?-webkit-backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
@@ -146,7 +146,7 @@ test("neutral mobile glass uses soft-white idle icons and a contained translucen
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--home-nav-active-edge\);[\s\S]*?rgba\(255,255,255,\.2\)[\s\S]*?linear-gradient\(145deg,var\(--home-nav-active-fill\),var\(--home-nav-active-fill-deep\)\)[\s\S]*?0 0 5px var\(--home-nav-active-glow\);[\s\S]*?backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?-webkit-backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?filter: none;/,
+    /#discoveryTabs \.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--home-nav-active-edge\);[\s\S]*?rgba\(255,255,255,\.26\)[\s\S]*?linear-gradient\(145deg,var\(--home-nav-active-fill\),var\(--home-nav-active-fill-deep\)\)[\s\S]*?0 0 7px var\(--home-nav-active-glow\);[\s\S]*?backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?-webkit-backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
@@ -182,11 +182,11 @@ test("neutral mobile glass uses soft-white idle icons and a contained translucen
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(124, 58, 237, 0\.32\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(49, 46, 129, 0\.2\);[\s\S]*?--mobile-nav-active-edge: rgba\(221, 214, 254, 0\.46\);[\s\S]*?--mobile-nav-active-glow: rgba\(124, 58, 237, 0\.12\);/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(124, 58, 237, 0\.52\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(91, 33, 182, 0\.38\);[\s\S]*?--mobile-nav-active-edge: rgba\(221, 214, 254, 0\.66\);[\s\S]*?--mobile-nav-active-glow: rgba\(124, 58, 237, 0\.22\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(124,58,237,.32\);[\s\S]*?--home-nav-active-fill-deep: rgba\(49,46,129,.2\);[\s\S]*?--home-nav-active-edge: rgba\(221,214,254,.46\);[\s\S]*?--home-nav-active-glow: rgba\(124,58,237,.12\);/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(124,58,237,.52\);[\s\S]*?--home-nav-active-fill-deep: rgba\(91,33,182,.38\);[\s\S]*?--home-nav-active-edge: rgba\(221,214,254,.66\);[\s\S]*?--home-nav-active-glow: rgba\(124,58,237,.22\);/,
   );
   assert.doesNotMatch(
     navigationSource,

@@ -419,10 +419,10 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
             --mobile-nav-active: #fff;
-            --mobile-nav-active-fill: rgba(124, 58, 237, 0.32);
-            --mobile-nav-active-fill-deep: rgba(49, 46, 129, 0.2);
-            --mobile-nav-active-edge: rgba(221, 214, 254, 0.46);
-            --mobile-nav-active-glow: rgba(124, 58, 237, 0.12);
+            --mobile-nav-active-fill: rgba(124, 58, 237, 0.52);
+            --mobile-nav-active-fill-deep: rgba(91, 33, 182, 0.38);
+            --mobile-nav-active-edge: rgba(221, 214, 254, 0.66);
+            --mobile-nav-active-glow: rgba(124, 58, 237, 0.22);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -501,8 +501,8 @@ export function GlobalMobileBottomNav() {
             background:
               linear-gradient(
                 145deg,
-                rgba(255, 255, 255, 0.2),
-                rgba(255, 255, 255, 0.05) 36%,
+                rgba(255, 255, 255, 0.26),
+                rgba(255, 255, 255, 0.08) 36%,
                 rgba(255, 255, 255, 0) 62%
               ),
               linear-gradient(
@@ -511,10 +511,10 @@ export function GlobalMobileBottomNav() {
                 var(--mobile-nav-active-fill-deep)
               );
             box-shadow:
-              inset 0 1px 0 rgba(255, 255, 255, 0.3),
-              inset 0 -1px 0 rgba(124, 58, 237, 0.16),
+              inset 0 1px 0 rgba(255, 255, 255, 0.36),
+              inset 0 -1px 0 rgba(124, 58, 237, 0.24),
               0 2px 6px rgba(0, 0, 0, 0.34),
-              0 0 5px var(--mobile-nav-active-glow);
+              0 0 7px var(--mobile-nav-active-glow);
             backdrop-filter: blur(8px) saturate(1.3);
             -webkit-backdrop-filter: blur(8px) saturate(1.3);
             filter: none;
