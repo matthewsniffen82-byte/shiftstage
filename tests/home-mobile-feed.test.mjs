@@ -395,7 +395,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
@@ -436,11 +436,11 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px;[\s\S]*?border-color: rgba\(226,232,240,\.28\);[\s\S]*?linear-gradient\(145deg, rgba\(20,21,24,\.96\), rgba\(5,6,8,\.96\)\);[\s\S]*?0 10px 22px rgba\(0,0,0,\.28\);/,
+    /\.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 58px;[\s\S]*?min-height: 58px;[\s\S]*?max-height: 58px;[\s\S]*?place-content: center;[\s\S]*?border-color: rgba\(226,232,240,\.28\);[\s\S]*?linear-gradient\(145deg, rgba\(20,21,24,\.96\), rgba\(5,6,8,\.96\)\);[\s\S]*?0 10px 22px rgba\(0,0,0,\.28\);/,
   );
   assert.match(
     homeSource,
-    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?min-height: 58px !important;[\s\S]*?border-color: rgba\(226,232,240,\.28\) !important;[\s\S]*?linear-gradient\(145deg,rgba\(20,21,24,\.96\),rgba\(5,6,8,\.96\)\) !important;[\s\S]*?0 10px 22px rgba\(0,0,0,\.28\) !important;/,
+    /#results\.home-venue-discovery-feed \.home-venue-discovery-context-actions \.home-discovery-feed-directions \{[\s\S]*?height: 58px !important;[\s\S]*?min-height: 58px !important;[\s\S]*?max-height: 58px !important;[\s\S]*?place-content: center !important;[\s\S]*?border-color: rgba\(226,232,240,\.28\) !important;[\s\S]*?linear-gradient\(145deg,rgba\(20,21,24,\.96\),rgba\(5,6,8,\.96\)\) !important;[\s\S]*?0 10px 22px rgba\(0,0,0,\.28\) !important;/,
   );
   assert.match(
     homeSource,

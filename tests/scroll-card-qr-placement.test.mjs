@@ -4,7 +4,7 @@ import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
-test("dancer cards keep QR below Profile while venue cards keep QR first and Profile in the rail", () => {
+test("dancer and venue cards keep QR directly below Profile in the right-side rail", () => {
   const dancerActions = homeSource.match(
     /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
   )?.[0] || "";
@@ -21,7 +21,7 @@ test("dancer cards keep QR below Profile while venue cards keep QR first and Pro
   );
   assert.match(
     venueSlide,
-    /home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?data-share-venue="\$\{venueValue\}"/,
+    /home-venue-discovery-name-row[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("profile", "Profile"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(venueNameRow, /data-open-venue-profile|home-venue-discovery-profile-cta/);
   assert.match(homeSource, /data-card-action-slot="qr"/);

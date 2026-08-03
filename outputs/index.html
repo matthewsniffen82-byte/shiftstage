@@ -31100,8 +31100,12 @@
           bottom: 12px;
           left: 12px;
           width: auto;
+          height: 58px;
+          min-height: 58px;
+          max-height: 58px;
           display: grid;
           grid-template-columns: minmax(0, 1fr);
+          align-items: stretch;
         }
         .home-venue-discovery-context-actions .feed-card-action,
         .home-venue-discovery-context-actions .home-discovery-feed-directions {
@@ -31122,7 +31126,12 @@
           height: 21px;
         }
         .home-venue-discovery-context-actions .home-discovery-feed-directions {
+          box-sizing: border-box;
+          height: 58px;
           min-height: 58px;
+          max-height: 58px;
+          place-content: center;
+          align-self: stretch;
           border-color: rgba(226,232,240,.28);
           color: rgba(248,250,252,.96);
           background:
@@ -32549,7 +32558,10 @@
           box-shadow: inset 0 1px 0 rgba(255,255,255,.07),0 9px 20px rgba(0,0,0,.25) !important;
         }
         #results.home-venue-discovery-feed .home-venue-discovery-context-actions .home-discovery-feed-directions {
+          height: 58px !important;
           min-height: 58px !important;
+          max-height: 58px !important;
+          place-content: center !important;
           border-color: rgba(226,232,240,.28) !important;
           color: rgba(248,250,252,.96) !important;
           background:
@@ -49437,8 +49449,8 @@
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail" aria-label="${safeName} actions">
-            ${railQrMarkup}
             <button class="feed-card-action home-venue-discovery-profile-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">${actionButtonLabel("profile", "Profile")}</button>
+            ${railQrMarkup}
             <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
           </div>
