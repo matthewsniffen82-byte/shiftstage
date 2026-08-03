@@ -29269,7 +29269,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=65" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=66" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -33953,7 +33953,7 @@
           padding:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
             max(12px, calc((100vw - 760px) / 2))
-            calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+            calc(132px + env(safe-area-inset-bottom, 0px)) !important;
           display: block !important;
           overflow-x: hidden !important;
           overflow-y: auto !important;
@@ -33961,7 +33961,7 @@
           overscroll-behavior-y: contain;
           scroll-padding-block:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
-            calc(88px + env(safe-area-inset-bottom, 0px));
+            calc(132px + env(safe-area-inset-bottom, 0px));
           touch-action: pan-y;
           -webkit-overflow-scrolling: touch;
           background: #050507 !important;
@@ -40692,7 +40692,8 @@
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
         report: '<svg viewBox="0 0 24 24"><path d="M12 4.2 3.8 18.5a1.4 1.4 0 0 0 1.2 2.1h14a1.4 1.4 0 0 0 1.2-2.1L12 4.2Z"></path><path d="M12 9v4.4"></path><path d="M12 17h.01"></path></svg>',
-        qr: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"></rect><rect x="14" y="4" width="6" height="6" rx="1.2"></rect><rect x="4" y="14" width="6" height="6" rx="1.2"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v6h-6v-2h4z"></path><path d="M14 18h2v2h-2z"></path></svg>'
+        qr: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.2"></rect><rect x="14" y="4" width="6" height="6" rx="1.2"></rect><rect x="4" y="14" width="6" height="6" rx="1.2"></rect><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v6h-6v-2h4z"></path><path d="M14 18h2v2h-2z"></path></svg>',
+        lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>'
       };
       return `<span class="action-icon" aria-hidden="true">${icons[type] || icons.check}</span>`;
     }
@@ -41206,12 +41207,12 @@
       if (!venue?.id) return "";
       return `
         <article class="venue-offer-card venue-club-deal-unavailable" id="club-deal">
-          <div class="venue-detail-club-deal-qr-state is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="Club Deal QR unavailable at ${escapeHtml(venue.name)}. Check back later.">
-            ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
+          <div class="venue-detail-club-deal-qr-state is-unavailable" data-club-deal-state="unavailable" role="status" aria-label="Club Deal unavailable at ${escapeHtml(venue.name)}. Check back later.">
+            <span class="venue-detail-club-deal-unavailable-icon">${actionIconMarkup("lock")}</span>
             <div class="venue-detail-club-deal-qr-copy">
               <span class="eyebrow">Club Deal</span>
-              <strong>Club Deal QR</strong>
-              <small>Unavailable · Check back later</small>
+              <strong>No active Club Deal</strong>
+              <small>Check back later</small>
             </div>
           </div>
         </article>
@@ -43721,8 +43722,44 @@
       const trending = localProfiles
         .filter((profile) => profile.trendRank)
         .sort((a, b) => a.trendRank - b.trendRank);
-      const shiftCount = localProfiles.filter((profile) => profile.scheduled).length;
       const followsVenue = isFollowingVenue(city, venue.name);
+      const quickStats = [
+        tonight.length
+          ? `<button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>`
+          : "",
+        upcoming.length
+          ? `<button class="venue-quick-stat" type="button" data-venue-jump="venue-upcoming-shifts"><strong>${upcoming.length}</strong><span>upcoming shifts</span></button>`
+          : ""
+      ].filter(Boolean).join("");
+      const activitySections = [
+        tonight.length ? `
+          <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
+            <h3 class="section-title" id="venue-working-now">Working now at ${details.name}</h3>
+            <div class="list card-grid">${tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("")}</div>
+          </section>
+        ` : "",
+        upcoming.length ? `
+          <section class="venue-activity-section is-upcoming" aria-labelledby="venue-upcoming-shifts">
+            <h3 class="section-title" id="venue-upcoming-shifts">Upcoming shifts at ${details.name}</h3>
+            <div class="venue-shift-list">${upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("")}</div>
+          </section>
+        ` : "",
+        trending.length ? `
+          <section class="venue-activity-section is-trending" aria-labelledby="venue-trending-dancers">
+            <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
+            <div class="list card-grid">${trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("")}</div>
+          </section>
+        ` : ""
+      ].filter(Boolean).join("");
+      const activityMarkup = activitySections || `
+        <section class="venue-activity-empty" aria-label="No current or upcoming dancer activity at ${details.name}">
+          <span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span>
+          <span>
+            <strong>No dancers active or scheduled</strong>
+            <small>No dancers are checked in and no upcoming shifts have been posted. Follow ${details.name} for updates.</small>
+          </span>
+        </section>
+      `;
       if (venue.id) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
@@ -43744,20 +43781,20 @@
               </div>
             </div>
             <div class="venue-hero-body">
-              <div class="row">
-                <div>
+              <div class="venue-identity-block">
+                <div class="venue-identity-copy">
                   <h2 id="venueDetailName">${details.name}</h2>
-                  <div class="meta">${details.city}${details.state ? `, ${details.state}` : ""}</div>
+                  <div class="venue-identity-meta">
+                    <span class="meta">${details.city}${details.state ? `, ${details.state}` : ""}</span>
+                    <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)} away</span>
+                  </div>
                 </div>
                 <span class="venue-operating-summary">
                   <span class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>
                   ${operatingStatus.hoursLabel ? `<span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </span>
               </div>
-              <div class="venue-quick-stats">
-                <button class="venue-quick-stat" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>
-                <button class="venue-quick-stat" type="button" data-venue-jump="venue-upcoming-shifts"><strong>${shiftCount}</strong><span>upcoming shifts</span></button>
-              </div>
+              ${quickStats ? `<div class="venue-quick-stats">${quickStats}</div>` : ""}
               ${venueOfferMarkup(venue)}
               <div class="venue-info">
                 ${details.address ? `
@@ -43765,7 +43802,6 @@
                     <span class="venue-address-copy">
                       <strong>Address</strong>
                       <span class="meta">${escapeHtml(details.address)}</span>
-                      <span class="venue-address-distance">${escapeHtml(details.distanceLabel)} away</span>
                     </span>
                     <a class="venue-address-directions" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${escapeHtml(venue.name)}" aria-label="Get directions to ${escapeHtml(details.name)}">${actionButtonLabel("pin", "Directions")}</a>
                   </div>
@@ -43779,14 +43815,7 @@
             </div>
           </article>
 
-          <h3 class="section-title" id="venue-working-now">Working now at ${details.name}</h3>
-          <div class="list card-grid">${tonight.length ? tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("") : '<div class="locked">No active shifts now.</div>'}</div>
-
-          <h3 class="section-title" id="venue-upcoming-shifts">Upcoming shifts at ${details.name}</h3>
-          <div class="venue-shift-list">${upcoming.length ? upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("") : '<div class="locked">No upcoming shifts posted.</div>'}</div>
-
-          <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
-          <div class="list card-grid">${trending.length ? trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("") : '<div class="locked">No trending profiles here yet.</div>'}</div>
+          ${activityMarkup}
         </div>
       `;
     }

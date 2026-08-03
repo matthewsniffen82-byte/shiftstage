@@ -88,7 +88,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
   assert.match(
     homeSource,
-    /#results\.venue-profile-overlay \{[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /#results\.venue-profile-overlay \{[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
 });
 

@@ -4,6 +4,7 @@ import test from "node:test";
 
 const profileRoute = await readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8");
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
+const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 
 test("legacy venue URLs resolve real production data before redirecting to the canonical in-app profile", () => {
   assert.match(profileRoute, /getVenueProfile\(createAdminSupabaseClient\(\), slug\)/);
@@ -33,7 +34,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
   assert.match(venueDetail, /class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venue\.name\}"/);
   assert.match(venueDetail, /https:\/\/maps\.google\.com\/\?q=/);
-  assert.match(venueDetail, /class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?venue-address-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="venue-address-directions"/);
+  assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel[\s\S]*?class="info-tile venue-address-tile"[\s\S]*?class="venue-address-copy"[\s\S]*?class="venue-address-directions"/);
   assert.equal((venueDetail.match(/encodeURIComponent\(details\.address\)/g) || []).length, 1);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
@@ -57,7 +58,7 @@ test("venue profiles reserve customer QR language for active Club Deals", () => 
     venueOffer,
     /venue\?\.activeDeal[\s\S]*?clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/,
   );
-  assert.match(venueOffer, /venue-club-deal-unavailable[\s\S]*?Club Deal QR[\s\S]*?Unavailable · Check back later/);
+  assert.match(venueOffer, /venue-club-deal-unavailable[\s\S]*?actionIconMarkup\("lock"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/);
   assert.doesNotMatch(venueOffer, /Use Share to send this venue profile|has not published a tracked customer offer/);
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR|Venue QR/);
 });
@@ -70,16 +71,33 @@ test("venue profiles keep every Club Deal QR state prominent without an oversize
   assert.match(venueOffer, /data-club-deal-state="available"[\s\S]*?Unique tracked QR[\s\S]*?Get Club Deal/);
   assert.match(
     venueOffer,
-    /venue-club-deal-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?<strong>Club Deal QR<\/strong>/,
+    /venue-club-deal-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?venue-detail-club-deal-unavailable-icon[\s\S]*?actionIconMarkup\("lock"\)[\s\S]*?<strong>No active Club Deal<\/strong>/,
   );
+  assert.doesNotMatch(venueOffer.match(/<article class="venue-offer-card venue-club-deal-unavailable"[\s\S]*?<\/article>/)?.[0] || "", /clubDealQrSymbolMarkup|Club Deal QR/);
   assert.match(liveApp, /\.venue-detail \.venue-club-deal-unavailable \{[\s\S]*?padding: 9px 10px;/);
   assert.match(liveApp, /\.venue-club-deal-unavailable \.venue-detail-club-deal-qr-state \{[\s\S]*?grid-template-columns: 58px minmax\(0, 1fr\);[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
 });
 
 test("venue profile hierarchy stays compact and keeps Club Deals stronger than following", () => {
-  assert.match(liveApp, /\.venue-detail \.venue-hero-body \{[\s\S]*?gap: 9px;[\s\S]*?padding: 12px 14px 14px;/);
-  assert.match(liveApp, /\.venue-detail \.venue-quick-stats,[\s\S]*?\.venue-detail \.venue-info \{[\s\S]*?gap: 7px;/);
-  assert.match(liveApp, /\.venue-detail \.follow-venue-btn \{[\s\S]*?min-height: 52px !important;[\s\S]*?background: rgba\(15, 13, 22, \.9\) !important;/);
+  const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
+
+  assert.ok(refinement, "the final production venue-detail refinement must exist");
+  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?min-height: clamp\(200px, 46vw, 248px\) !important;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(refinement, /\.venue-hero-body \{[\s\S]*?gap: 10px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
+  assert.match(refinement, /\.venue-address-copy \.meta \{[\s\S]*?overflow: visible !important;[\s\S]*?-webkit-line-clamp: unset !important;/);
+  assert.match(refinement, /\.club-deal-primary-cta\.venue-club-deal-cta \{[\s\S]*?var\(--dancr-color-brand-primary\)[\s\S]*?var\(--dancr-shadow-brand-control\)/);
+  assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
+  assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
+});
+
+test("venue profiles replace repeated zero sections with one truthful empty explanation", () => {
+  const venueDetail = liveApp.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
+
+  assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?upcoming\.length[\s\S]*?filter\(Boolean\)\.join\(""\)/);
+  assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-trending/);
+  assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No dancers active or scheduled[\s\S]*?No dancers are checked in and no upcoming shifts have been posted\. Follow \$\{details\.name\} for updates\./);
+  assert.doesNotMatch(venueDetail, /No active shifts now|No upcoming shifts posted|No trending profiles here yet/);
 });
 
 test("venue profiles stay full-screen with X dismissal and the shared floating navigation", () => {
@@ -101,7 +119,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /#results\.venue-profile-overlay \{[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(88px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /#results\.venue-profile-overlay \{[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     liveApp,

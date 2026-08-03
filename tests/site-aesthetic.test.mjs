@@ -26,13 +26,13 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=65" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=66" rel="stylesheet">/,
   );
 });
 
 test("venue detail branding is neutral first with scoped brand and semantic actions", () => {
   const venueDetailBranding = aesthetic.match(
-    /Production venue-detail branding is neutral first[\s\S]*$/,
+    /Production venue-detail branding is neutral first[\s\S]*?(?=\/\* Production venue-detail refinement)/,
   )?.[0] || "";
 
   assert.ok(venueDetailBranding, "the production venue-detail brand layer must exist");
@@ -269,7 +269,7 @@ test("venue discovery keeps real photography beneath a premium black-metal mater
 
 test("venue scroll cards use the complete neutral-first brand and semantic hierarchy", () => {
   const venueScrollBrand = aesthetic.match(
-    /Production venue scroll-card branding follows the shared 84\/10\/6 system[\s\S]*$/,
+    /Production venue scroll-card branding follows the shared 84\/10\/6 system[\s\S]*?(?=\/\* Production venue-detail refinement)/,
   )?.[0] || "";
 
   assert.ok(venueScrollBrand, "the production venue scroll-card brand layer must exist");
