@@ -419,9 +419,8 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
             --mobile-nav-active: #fff;
-            --mobile-nav-active-violet-core: rgba(152, 95, 255, 0.98);
-            --mobile-nav-active-violet-glow: rgba(91, 19, 255, 1);
-            --mobile-nav-active-cyan-glow: rgba(52, 110, 255, 0.58);
+            --mobile-nav-active-violet-core: rgba(124, 58, 237, 0.76);
+            --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.34);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -498,17 +497,15 @@ export function GlobalMobileBottomNav() {
             border-radius: 50%;
             background: radial-gradient(
               circle,
-              rgba(152, 95, 255, 0.9) 0%,
-              rgba(91, 19, 255, 0.72) 28%,
-              rgba(91, 19, 255, 0.42) 48%,
-              rgba(52, 110, 255, 0.24) 64%,
-              transparent 78%
+              rgba(124, 58, 237, 0.62) 0%,
+              rgba(124, 58, 237, 0.42) 30%,
+              rgba(76, 29, 149, 0.2) 54%,
+              transparent 74%
             );
             box-shadow:
-              0 0 10px rgba(91, 19, 255, 0.76),
-              0 0 20px rgba(91, 19, 255, 0.48),
-              0 0 28px rgba(52, 110, 255, 0.28);
-            filter: blur(2px);
+              0 0 7px rgba(124, 58, 237, 0.34),
+              0 0 14px rgba(76, 29, 149, 0.18);
+            filter: blur(1px);
           }
 
           .global-mobile-bottom-nav a:not(.active) .global-mobile-nav-icon {
@@ -583,8 +580,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav a.active .global-mobile-nav-icon > svg {
             filter:
               drop-shadow(0 0 2px var(--mobile-nav-active-violet-core))
-              drop-shadow(0 0 6px var(--mobile-nav-active-violet-glow))
-              drop-shadow(0 0 12px var(--mobile-nav-active-cyan-glow));
+              drop-shadow(0 0 5px var(--mobile-nav-active-violet-glow));
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {

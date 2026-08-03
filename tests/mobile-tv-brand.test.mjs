@@ -56,7 +56,7 @@ test("homepage active TV state uses icon-only color and the shared circular halo
   assert.doesNotMatch(activeTvRule, /drop-shadow|border-radius: 999px|linear-gradient/);
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--home-nav-active-cyan-glow\)\)/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 5px var\(--home-nav-active-violet-glow\)\)/,
   );
   assert.match(
     homeSource,
