@@ -92,7 +92,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
 });
 
-test("neutral mobile glass uses soft-white idle icons and a contained solid active indicator", () => {
+test("neutral mobile glass uses soft-white idle icons and a contained translucent active indicator", () => {
   assert.match(
     navigationSource,
     /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 23px;/,
@@ -134,7 +134,7 @@ test("neutral mobile glass uses soft-white idle icons and a contained solid acti
   );
   assert.match(
     navigationSource,
-    /\.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--mobile-nav-active-edge\);[\s\S]*?linear-gradient\([\s\S]*?var\(--mobile-nav-active-fill\)[\s\S]*?var\(--mobile-nav-active-fill-deep\)[\s\S]*?0 0 6px var\(--mobile-nav-active-glow\);[\s\S]*?filter: none;/,
+    /\.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--mobile-nav-active-edge\);[\s\S]*?rgba\(255, 255, 255, 0\.2\)[\s\S]*?var\(--mobile-nav-active-fill\)[\s\S]*?var\(--mobile-nav-active-fill-deep\)[\s\S]*?0 0 5px var\(--mobile-nav-active-glow\);[\s\S]*?backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?-webkit-backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?filter: none;/,
   );
   assert.match(
     navigationSource,
@@ -146,7 +146,7 @@ test("neutral mobile glass uses soft-white idle icons and a contained solid acti
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--home-nav-active-edge\);[\s\S]*?linear-gradient\(145deg,var\(--home-nav-active-fill\),var\(--home-nav-active-fill-deep\)\)[\s\S]*?0 0 6px var\(--home-nav-active-glow\);[\s\S]*?filter: none;/,
+    /#discoveryTabs \.mobile-nav-selection-halo::before \{[\s\S]*?inset: 1px;[\s\S]*?border: 1px solid var\(--home-nav-active-edge\);[\s\S]*?rgba\(255,255,255,\.2\)[\s\S]*?linear-gradient\(145deg,var\(--home-nav-active-fill\),var\(--home-nav-active-fill-deep\)\)[\s\S]*?0 0 5px var\(--home-nav-active-glow\);[\s\S]*?backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?-webkit-backdrop-filter: blur\(8px\) saturate\(1\.3\);[\s\S]*?filter: none;/,
   );
   assert.match(
     homeSource,
@@ -182,11 +182,11 @@ test("neutral mobile glass uses soft-white idle icons and a contained solid acti
   );
   assert.match(
     navigationSource,
-    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(124, 58, 237, 0\.8\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(91, 33, 182, 0\.76\);[\s\S]*?--mobile-nav-active-edge: rgba\(196, 181, 253, 0\.58\);[\s\S]*?--mobile-nav-active-glow: rgba\(124, 58, 237, 0\.18\);/,
+    /--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\);[\s\S]*?--mobile-nav-accent-soft: rgba\(232, 230, 238, 0\.66\);[\s\S]*?--mobile-nav-active: #fff;[\s\S]*?--mobile-nav-active-fill: rgba\(124, 58, 237, 0\.32\);[\s\S]*?--mobile-nav-active-fill-deep: rgba\(49, 46, 129, 0\.2\);[\s\S]*?--mobile-nav-active-edge: rgba\(221, 214, 254, 0\.46\);[\s\S]*?--mobile-nav-active-glow: rgba\(124, 58, 237, 0\.12\);/,
   );
   assert.match(
     homeSource,
-    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(124,58,237,.8\);[\s\S]*?--home-nav-active-fill-deep: rgba\(91,33,182,.76\);[\s\S]*?--home-nav-active-edge: rgba\(196,181,253,.58\);[\s\S]*?--home-nav-active-glow: rgba\(124,58,237,.18\);/,
+    /--home-nav-accent: rgba\(232,230,238,.74\);[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\);[\s\S]*?--home-nav-active: #fff;[\s\S]*?--home-nav-active-fill: rgba\(124,58,237,.32\);[\s\S]*?--home-nav-active-fill-deep: rgba\(49,46,129,.2\);[\s\S]*?--home-nav-active-edge: rgba\(221,214,254,.46\);[\s\S]*?--home-nav-active-glow: rgba\(124,58,237,.12\);/,
   );
   assert.doesNotMatch(
     navigationSource,

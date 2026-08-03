@@ -43,7 +43,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   );
 });
 
-test("homepage active TV state uses icon-only color and the shared solid indicator", () => {
+test("homepage active TV state uses icon-only color and the shared glass indicator", () => {
   const activeTvRule =
     homeSource.match(
       /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?\}/,
