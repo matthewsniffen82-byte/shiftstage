@@ -3258,6 +3258,18 @@ body.dancr-button-system .public-profile-shell :is(.venue-qr-unavailable, .profi
   box-shadow: none !important;
 }
 
+body.dancr-button-system #profileBackdrop .profile-qr-unavailable::before,
+body.dancr-button-system #profileBackdrop .profile-qr-unavailable::after,
+body.dancr-button-system .public-profile-shell .profile-deal-availability::before,
+body.dancr-button-system .public-profile-shell .profile-deal-availability::after,
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable::before,
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable::after {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
 body.dancr-button-system .public-profile-shell .profile-deal-availability {
   width: min(168px, 100%) !important;
   margin-inline: auto !important;

@@ -285,4 +285,8 @@ test("unavailable profile QR stays visible in a compact square tile", () => {
     profilePolishBlock,
     /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?border-color: rgba\(148,163,184,\.14\) !important;[\s\S]*?color: rgba\(148,163,184,\.58\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: \.62;/,
   );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-qr-unavailable::before,[\s\S]*?#profileBackdrop \.profile-qr-unavailable::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?background: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
 });

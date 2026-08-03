@@ -451,6 +451,7 @@ function PublicProfileStyles() {
       .profile-deal-availability { width: min(168px, 100%); margin: 0 auto; border: 0; background: transparent; box-shadow: none; }
       .venue-qr-unavailable { width: min(168px, 100%); min-height: 168px; aspect-ratio: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; place-items: center; align-content: center; justify-self: center; gap: 10px; padding: 14px; border: 1px solid rgba(148,163,184,.13); border-radius: 16px; color: rgba(148,163,184,.72); background: rgba(17,17,24,.82); box-shadow: none; text-align: center; }
       .profile-deal-availability .venue-qr-unavailable { border-color: rgba(148,163,184,.13); background: rgba(17,17,24,.82); }
+      .profile-deal-availability::before, .profile-deal-availability::after, .venue-qr-unavailable::before, .venue-qr-unavailable::after { content: none !important; display: none !important; background: none !important; box-shadow: none !important; }
       .venue-qr-placeholder-icon { width: 72px; height: 72px; display: grid; place-items: center; padding: 8px; border: 1px solid rgba(148,163,184,.14); border-radius: 12px; color: rgba(148,163,184,.58); background: rgba(148,163,184,.035); box-shadow: none; opacity: .62; }
       .venue-qr-placeholder-icon svg { width: 100%; height: 100%; }
       .venue-qr-placeholder-icon .qr-finder { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: miter; }

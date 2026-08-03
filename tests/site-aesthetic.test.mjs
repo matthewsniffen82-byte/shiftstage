@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=68" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=69" rel="stylesheet">/,
   );
 });
 
@@ -355,6 +355,10 @@ test("profile violet side beams are limited to live, upcoming, and active deals"
   assert.doesNotMatch(
     profileAccentBlock,
     /\.schedule-empty|\.social-tile|\.profile-qr-unavailable/,
+  );
+  assert.match(
+    aesthetic,
+    /#profileBackdrop \.profile-qr-unavailable::before,[\s\S]*?\.profile-deal-availability::before,[\s\S]*?\.venue-qr-unavailable::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?background: none !important;[\s\S]*?box-shadow: none !important;/,
   );
 });
 
