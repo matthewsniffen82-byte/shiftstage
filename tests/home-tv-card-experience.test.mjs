@@ -101,7 +101,7 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);
-  assert.match(renderFactory, /position,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedCopy/);
+  assert.match(renderFactory, /playback,[\s\S]*?createHomeTvFeedSoundButton\(slide\),[\s\S]*?createHomeTvFeedActions\(item, slide\),[\s\S]*?createHomeTvFeedFullscreenButton\(slide, video\),[\s\S]*?createHomeTvFeedCopy/);
   assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 12px;[\s\S]*?bottom: 76px;[\s\S]*?display: grid;[\s\S]*?gap: 9px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{[\s\S]*?position: absolute;[\s\S]*?right: 12px;[\s\S]*?bottom: 20px;/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
@@ -208,10 +208,7 @@ test("mobile TV controls stay inside the stable card that snaps above navigation
     homeSource,
     /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\);/,
   );
-  assert.match(
-    homeSource,
-    /\.home-tv-feed-position \{\s*top: calc\(14px \+ env\(safe-area-inset-top\)\);\s*left: 12px;/,
-  );
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-position|position\.textContent = `Video/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{\s*right: 10px;\s*bottom: 20px;/);
 });
 
@@ -246,7 +243,7 @@ test("every uploaded video gets a vertically scrollable card with playback, appl
   );
   assert.match(
     homeSource,
-    /position\.textContent = `Video \$\{videoIndex \+ 1\} of \$\{totalVideos\}`/,
+    /slide\.setAttribute\([\s\S]*?"aria-label",[\s\S]*?MyDancr TV video \$\{videoIndex \+ 1\} of \$\{totalVideos\}/,
   );
   assert.doesNotMatch(homeSource, /groupHomeTvFeedVideos|setupHomeTvFeedMediaGestures|showHomeTvFeedMedia/);
   assert.match(

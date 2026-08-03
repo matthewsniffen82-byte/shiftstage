@@ -29935,23 +29935,6 @@
           opacity: 1;
           transform: translate(-50%,-50%) scale(1);
         }
-        .home-tv-feed-position {
-          position: absolute;
-          z-index: 6;
-          top: 17px;
-          left: 15px;
-          min-height: 30px;
-          display: inline-flex;
-          align-items: center;
-          padding: 0 10px;
-          border: 1px solid rgba(255,255,255,.2);
-          border-radius: 999px;
-          color: #fff;
-          background: rgba(4,4,8,.54);
-          font-size: 10px;
-          font-weight: 900;
-          backdrop-filter: blur(10px);
-        }
         .home-tv-feed-media-position {
           position: absolute;
           z-index: 6;
@@ -31673,10 +31656,6 @@
           .home-tv-feed-sound {
             top: calc(14px + env(safe-area-inset-top));
             right: 12px;
-          }
-          .home-tv-feed-position {
-            top: calc(14px + env(safe-area-inset-top));
-            left: 12px;
           }
           .home-tv-feed-media-position {
             top: calc(106px + env(safe-area-inset-top));
@@ -50916,9 +50895,6 @@
       playback.className = "home-tv-feed-playback";
       playback.textContent = "▶";
       playback.setAttribute("aria-hidden", "true");
-      const position = document.createElement("span");
-      position.className = "home-tv-feed-position";
-      position.textContent = `Video ${videoIndex + 1} of ${totalVideos}`;
       const applause = document.createElement("span");
       applause.className = "home-tv-feed-applause";
       applause.textContent = "★";
@@ -50932,7 +50908,6 @@
         video,
         shade,
         playback,
-        position,
         createHomeTvFeedSoundButton(slide),
         createHomeTvFeedActions(item, slide),
         createHomeTvFeedFullscreenButton(slide, video),
