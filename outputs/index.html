@@ -34478,7 +34478,8 @@
           }
         }
 
-        body.dashboard-overlay-open .discovery-sticky-head {
+        body.dashboard-overlay-open .discovery-sticky-head,
+        body.venue-auth-overlay-open .discovery-sticky-head {
           visibility: hidden !important;
           pointer-events: none !important;
         }
@@ -45189,8 +45190,12 @@
       const dashboardOverlayOpen = !!document.querySelector(
         "#customerDashboard.show, #dancerDashboard.show, #venueDashboard.show, #adminDashboard.show"
       );
+      const venueAuthOverlayOpen =
+        authPage.classList.contains("show") &&
+        !document.getElementById("venueLoginForm").hidden;
       document.body.classList.toggle("overlay-open", overlayOpen);
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
+      document.body.classList.toggle("venue-auth-overlay-open", venueAuthOverlayOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
       syncProfileDestinationNavigation();
     }
