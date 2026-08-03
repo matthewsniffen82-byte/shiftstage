@@ -392,6 +392,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   assert.doesNotMatch(venueSlide, /home-discovery-feed-open-profile/);
+  assert.doesNotMatch(venueSlide, /home-discovery-feed-position|\$\{index \+ 1\} \/ \$\{total\}/);
   assert.doesNotMatch(venueSlide, /const upcoming|nextProfile|nextShiftMarkup|No upcoming dancer shifts posted/);
   assert.match(
     venueSlide,
