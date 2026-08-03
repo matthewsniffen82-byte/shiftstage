@@ -270,6 +270,7 @@ test("unavailable profile QR stays visible in a compact square tile", () => {
   )?.[0] || "";
   assert.match(unavailableDealMarkup, /"Available when dancer is working"/);
   assert.match(unavailableDealMarkup, /state\.key === "no-active-offer"/);
+  assert.match(unavailableDealMarkup, /<span class="profile-deal-label">Club Deal<\/span>/);
   assert.match(unavailableDealMarkup, /clubDealQrSymbolMarkup\("profile-deal-placeholder"\)/);
   assert.doesNotMatch(unavailableDealMarkup, /How Club Deals work|profile-deal-disclosure|profile-deal-note/);
   assert.match(
@@ -279,5 +280,9 @@ test("unavailable profile QR stays visible in a compact square tile", () => {
   assert.match(
     profilePolishBlock,
     /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?width: 72px !important;[\s\S]*?min-width: 72px !important;[\s\S]*?height: 72px !important;[\s\S]*?justify-self: center !important;/,
+  );
+  assert.match(
+    profilePolishBlock,
+    /#profileBackdrop \.profile-deal-placeholder \{[\s\S]*?border-color: rgba\(148,163,184,\.14\) !important;[\s\S]*?color: rgba\(148,163,184,\.58\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: \.62;/,
   );
 });

@@ -134,6 +134,7 @@ export function VenueQrUnavailable({
         </svg>
       </span>
       <div className="venue-qr-unavailable-copy">
+        <span className="venue-qr-unavailable-label">Club Deal</span>
         <strong>{label}</strong>
       </div>
     </aside>

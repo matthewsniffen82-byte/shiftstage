@@ -449,14 +449,15 @@ function PublicProfileStyles() {
       .venue-qr-launcher { width: 100%; display: flex; align-items: center; justify-content: space-between; }
       .venue-qr-launcher span { color: #d8f7ff; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
       .profile-deal-availability { width: min(168px, 100%); margin: 0 auto; border: 0; background: transparent; box-shadow: none; }
-      .venue-qr-unavailable { width: min(168px, 100%); min-height: 168px; aspect-ratio: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; place-items: center; align-content: center; justify-self: center; gap: 10px; padding: 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 16px; background: rgba(0,0,0,.2); text-align: center; }
-      .profile-deal-availability .venue-qr-unavailable { border-color: rgba(255,255,255,.12); background: rgba(10,10,14,.82); }
-      .venue-qr-placeholder-icon { width: 72px; height: 72px; display: grid; place-items: center; padding: 8px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; color: rgba(245,245,255,.52); background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+      .venue-qr-unavailable { width: min(168px, 100%); min-height: 168px; aspect-ratio: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; place-items: center; align-content: center; justify-self: center; gap: 10px; padding: 14px; border: 1px solid rgba(148,163,184,.13); border-radius: 16px; color: rgba(148,163,184,.72); background: rgba(17,17,24,.82); box-shadow: none; text-align: center; }
+      .profile-deal-availability .venue-qr-unavailable { border-color: rgba(148,163,184,.13); background: rgba(17,17,24,.82); }
+      .venue-qr-placeholder-icon { width: 72px; height: 72px; display: grid; place-items: center; padding: 8px; border: 1px solid rgba(148,163,184,.14); border-radius: 12px; color: rgba(148,163,184,.58); background: rgba(148,163,184,.035); box-shadow: none; opacity: .62; }
       .venue-qr-placeholder-icon svg { width: 100%; height: 100%; }
       .venue-qr-placeholder-icon .qr-finder { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: miter; }
       .venue-qr-placeholder-icon .qr-module { fill: currentColor; stroke: none; }
       .venue-qr-unavailable-copy { min-width: 0; display: grid; justify-items: center; gap: 4px; }
-      .venue-qr-unavailable-copy strong { max-width: 136px; color: #f5f2ff; font-size: 12px; line-height: 1.25; }
+      .venue-qr-unavailable-label { color: rgba(148,163,184,.56); font-size: 9px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+      .venue-qr-unavailable-copy strong { max-width: 136px; color: rgba(148,163,184,.72); font-size: 12px; line-height: 1.25; }
       .profile-schedule-section { margin-top: 24px; }
       .profile-media-section { display: grid; gap: 9px; margin-top: 8px; }
       .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }

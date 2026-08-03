@@ -604,7 +604,11 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
-    /#profileBackdrop \.profile-qr-unavailable,[\s\S]*?\.venue-qr-unavailable,[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop \.profile-qr-unavailable,[\s\S]*?\.venue-qr-unavailable,[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /\.public-profile-shell \.venue-qr-placeholder-icon \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?color: var\(--dancr-color-text-muted\) !important;[\s\S]*?background: var\(--dancr-color-surface-subtle\) !important;[\s\S]*?box-shadow: none !important;[\s\S]*?opacity: \.62;/,
   );
   assert.match(
     fullProfilePalette,

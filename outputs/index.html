@@ -33750,7 +33750,12 @@
           justify-self: center !important;
           gap: 10px !important;
           padding: 14px !important;
+          border-color: rgba(148,163,184,.13) !important;
           border-style: solid !important;
+          color: rgba(148,163,184,.72) !important;
+          background: rgba(17,17,24,.82) !important;
+          background-image: none !important;
+          box-shadow: none !important;
           text-align: center;
         }
         #profileBackdrop .profile-qr-unavailable .profile-deal-copy,
@@ -33761,6 +33766,15 @@
           grid-row: 2;
           justify-items: center;
         }
+        #profileBackdrop .profile-qr-unavailable .profile-deal-label {
+          color: rgba(148,163,184,.56) !important;
+          font-size: 9px !important;
+          letter-spacing: .16em !important;
+          text-transform: uppercase;
+        }
+        #profileBackdrop .profile-qr-unavailable .profile-deal-main {
+          color: rgba(148,163,184,.72) !important;
+        }
         #profileBackdrop .profile-deal-placeholder {
           width: 72px !important;
           min-width: 72px !important;
@@ -33768,7 +33782,12 @@
           grid-row: 1;
           justify-self: center !important;
           padding: 8px !important;
+          border-color: rgba(148,163,184,.14) !important;
           border-radius: 12px !important;
+          color: rgba(148,163,184,.58) !important;
+          background: rgba(148,163,184,.035) !important;
+          box-shadow: none !important;
+          opacity: .62;
         }
         #profileBackdrop .profile-deal-disclosure {
           color: #a99eb7;
@@ -41384,6 +41403,7 @@
       return `
         <div class="info-tile profile-qr-unavailable is-${state.key}" data-club-deal-state="${state.key}" aria-label="${escapeHtml(unavailableLabel)}">
           <div class="profile-deal-copy">
+            <span class="profile-deal-label">Club Deal</span>
             <span class="profile-deal-main">${escapeHtml(unavailableLabel)}</span>
           </div>
           ${clubDealQrSymbolMarkup("profile-deal-placeholder")}

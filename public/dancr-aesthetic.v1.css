@@ -3252,7 +3252,7 @@ body.dancr-button-system .public-profile-shell :is(.profile-working-card.has-clu
 body.dancr-button-system #profileBackdrop .profile-qr-unavailable,
 body.dancr-button-system .public-profile-shell :is(.venue-qr-unavailable, .profile-deal-availability) {
   border-color: var(--dancr-color-border-subtle) !important;
-  color: var(--dancr-color-text-secondary) !important;
+  color: var(--dancr-color-text-muted) !important;
   background: var(--dancr-color-surface) !important;
   background-image: none !important;
   box-shadow: none !important;
@@ -3284,11 +3284,22 @@ body.dancr-button-system .public-profile-shell .venue-qr-placeholder-icon {
   width: 72px !important;
   height: 72px !important;
   padding: 8px !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   border-radius: 12px !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  opacity: .62;
 }
 
 body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy {
   justify-items: center;
+}
+
+body.dancr-button-system .public-profile-shell .venue-qr-unavailable-label {
+  color: var(--dancr-color-text-muted) !important;
+  opacity: .72;
 }
 
 body.dancr-button-system .public-profile-shell .venue-qr-unavailable-copy strong {

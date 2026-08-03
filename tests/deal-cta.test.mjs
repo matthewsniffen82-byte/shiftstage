@@ -226,9 +226,13 @@ test("dancer scroll cards reserve the QR slot while only live Club Deals remain 
     dancerPage,
     /\.venue-qr-unavailable \{[\s\S]*?width: min\(168px, 100%\);[\s\S]*?min-height: 168px;[\s\S]*?aspect-ratio: 1 \/ 1;[\s\S]*?justify-self: center;/,
   );
-  assert.match(dancerPage, /\.venue-qr-placeholder-icon \{ width: 72px; height: 72px;/);
+  assert.match(
+    dancerPage,
+    /\.venue-qr-placeholder-icon \{ width: 72px; height: 72px;[\s\S]*?border: 1px solid rgba\(148,163,184,\.14\);[\s\S]*?color: rgba\(148,163,184,\.58\);[\s\S]*?box-shadow: none; opacity: \.62;/,
+  );
   assert.match(venueQrComponent, /const label = availability === "no-active-offer"[\s\S]*?"No Club Deal available"[\s\S]*?: "Available when dancer is working"/);
   assert.match(venueQrComponent, /className=\{`venue-qr-unavailable is-\$\{availability\}`\}[\s\S]*?className="venue-qr-placeholder-icon"/);
+  assert.match(venueQrComponent, /className="venue-qr-unavailable-label">Club Deal<\/span>/);
   assert.doesNotMatch(venueQrComponent, /venue-qr-explanation|How Club Deals work|status\.detail/);
   assert.doesNotMatch(dancerPage, /\.venue-qr-explanation/);
 });
