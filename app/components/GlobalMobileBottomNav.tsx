@@ -419,10 +419,10 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(232, 230, 238, 0.74);
             --mobile-nav-accent-soft: rgba(232, 230, 238, 0.66);
             --mobile-nav-active: #fff;
-            --mobile-nav-active-fill: rgba(124, 58, 237, 0.52);
-            --mobile-nav-active-fill-deep: rgba(91, 33, 182, 0.38);
-            --mobile-nav-active-edge: rgba(221, 214, 254, 0.66);
-            --mobile-nav-active-glow: rgba(124, 58, 237, 0.22);
+            --mobile-nav-active-fill: rgba(124, 58, 237, 0.8);
+            --mobile-nav-active-fill-deep: rgba(91, 33, 182, 0.76);
+            --mobile-nav-active-edge: rgba(196, 181, 253, 0.58);
+            --mobile-nav-active-glow: rgba(124, 58, 237, 0.18);
             width: 100%;
             height: 57px;
             min-width: 0;
@@ -498,25 +498,15 @@ export function GlobalMobileBottomNav() {
             inset: 1px;
             border-radius: 50%;
             border: 1px solid var(--mobile-nav-active-edge);
-            background:
-              linear-gradient(
-                145deg,
-                rgba(255, 255, 255, 0.26),
-                rgba(255, 255, 255, 0.08) 36%,
-                rgba(255, 255, 255, 0) 62%
-              ),
-              linear-gradient(
-                145deg,
-                var(--mobile-nav-active-fill),
-                var(--mobile-nav-active-fill-deep)
-              );
+            background: linear-gradient(
+              145deg,
+              var(--mobile-nav-active-fill),
+              var(--mobile-nav-active-fill-deep)
+            );
             box-shadow:
-              inset 0 1px 0 rgba(255, 255, 255, 0.36),
-              inset 0 -1px 0 rgba(124, 58, 237, 0.24),
-              0 2px 6px rgba(0, 0, 0, 0.34),
-              0 0 7px var(--mobile-nav-active-glow);
-            backdrop-filter: blur(8px) saturate(1.3);
-            -webkit-backdrop-filter: blur(8px) saturate(1.3);
+              inset 0 1px 0 rgba(255, 255, 255, 0.14),
+              0 3px 8px rgba(49, 46, 129, 0.28),
+              0 0 6px var(--mobile-nav-active-glow);
             filter: none;
           }
 
