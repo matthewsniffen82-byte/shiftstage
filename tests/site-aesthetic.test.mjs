@@ -600,6 +600,14 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
+    /button\[data-profile-media-tab="video"\]\.active::before \{[\s\S]*?border-color: var\(--dancr-color-border\) !important;[\s\S]*?var\(--dancr-color-surface-raised\) !important;[\s\S]*?var\(--dancr-color-black-medium\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
+    /\.gallery\[data-media-tab="video"\] \.thumb\.active \{[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?outline-color: var\(--dancr-color-white-soft\) !important;[\s\S]*?var\(--dancr-color-black-medium\) !important;/,
+  );
+  assert.match(
+    fullProfilePalette,
     /#profileBackdrop \.modal-image,[\s\S]*?\.profile-media-feature \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?box-shadow: 0 12px 28px var\(--dancr-color-black-medium\) !important;/,
   );
   assert.match(
