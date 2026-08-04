@@ -36973,7 +36973,7 @@
     }
 
     function buildUberRideUrl(destination) {
-      const fallback = "https://m.uber.com/ul/";
+      const fallback = "https://m.uber.com/looking";
       try {
         const name = String(destination?.name || "").trim();
         const formattedAddress = String(destination?.formattedAddress || "").trim();
@@ -36984,14 +36984,21 @@
         url.searchParams.set("pickup", "my_location");
         url.searchParams.set("dropoff[nickname]", name);
         url.searchParams.set("dropoff[formatted_address]", formattedAddress);
+        const dropoff = {
+          addressLine1: name,
+          addressLine2: formattedAddress
+        };
         const latitude = Number(destination.latitude);
         const longitude = Number(destination.longitude);
         const validLatitude = destination.latitude !== null && destination.latitude !== "" && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90;
         const validLongitude = destination.longitude !== null && destination.longitude !== "" && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
         if (validLatitude && validLongitude) {
+          dropoff.latitude = latitude;
+          dropoff.longitude = longitude;
           url.searchParams.set("dropoff[latitude]", String(latitude));
           url.searchParams.set("dropoff[longitude]", String(longitude));
         }
+        url.searchParams.set("drop[0]", JSON.stringify(dropoff));
         return url.toString();
       } catch (error) {
         return fallback;

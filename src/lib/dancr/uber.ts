@@ -1,4 +1,4 @@
-export const UBER_UNIVERSAL_LINK = "https://m.uber.com/ul/";
+export const UBER_UNIVERSAL_LINK = "https://m.uber.com/looking";
 
 export type UberDestination = {
   name: string;
@@ -30,14 +30,22 @@ export function buildUberRideUrl(destination: UberDestination): string {
   url.searchParams.set("pickup", "my_location");
   url.searchParams.set("dropoff[nickname]", name);
   url.searchParams.set("dropoff[formatted_address]", formattedAddress);
+  const dropoff: Record<string, string | number> = {
+    addressLine1: name,
+    addressLine2: formattedAddress,
+  };
 
   if (
     isValidLatitude(destination.latitude) &&
     isValidLongitude(destination.longitude)
   ) {
+    dropoff.latitude = destination.latitude;
+    dropoff.longitude = destination.longitude;
     url.searchParams.set("dropoff[latitude]", String(destination.latitude));
     url.searchParams.set("dropoff[longitude]", String(destination.longitude));
   }
+
+  url.searchParams.set("drop[0]", JSON.stringify(dropoff));
 
   return url.toString();
 }

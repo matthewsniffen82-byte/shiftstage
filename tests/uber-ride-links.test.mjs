@@ -12,6 +12,10 @@ function parameters(input) {
   return new URL(buildUberRideUrl(input)).searchParams;
 }
 
+function dropoff(input) {
+  return JSON.parse(parameters(input).get("drop[0]"));
+}
+
 test("builds a complete Uber destination with a valid coordinate pair", () => {
   const url = buildUberRideUrl({
     name: "Sapphire Las Vegas",
@@ -20,10 +24,19 @@ test("builds a complete Uber destination with a valid coordinate pair", () => {
     longitude: -115.1716,
   });
   const params = new URL(url).searchParams;
+  const destination = JSON.parse(params.get("drop[0]"));
 
   assert.equal(new URL(url).origin, "https://m.uber.com");
+  assert.equal(new URL(url).pathname, "/looking");
   assert.equal(params.get("action"), "setPickup");
   assert.equal(params.get("pickup"), "my_location");
+  assert.equal(destination.addressLine1, "Sapphire Las Vegas");
+  assert.equal(
+    destination.addressLine2,
+    "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109",
+  );
+  assert.equal(destination.latitude, 36.1352);
+  assert.equal(destination.longitude, -115.1716);
   assert.equal(params.get("dropoff[nickname]"), "Sapphire Las Vegas");
   assert.equal(
     params.get("dropoff[formatted_address]"),
@@ -34,13 +47,20 @@ test("builds a complete Uber destination with a valid coordinate pair", () => {
 });
 
 test("allows an address-only Uber destination", () => {
-  const params = parameters({
+  const destination = dropoff({
     name: "Sapphire",
     formattedAddress: "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109",
   });
-  assert.equal(params.get("dropoff[formatted_address]"), "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109");
-  assert.equal(params.has("dropoff[latitude]"), false);
-  assert.equal(params.has("dropoff[longitude]"), false);
+  assert.equal(destination.addressLine2, "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109");
+  assert.equal("latitude" in destination, false);
+  assert.equal("longitude" in destination, false);
+  assert.equal(
+    parameters({
+      name: "Sapphire",
+      formattedAddress: "3025 S Sammy Davis Jr Dr, Las Vegas, NV 89109",
+    }).has("dropoff[latitude]"),
+    false,
+  );
 });
 
 test("safely encodes special characters in venue names", () => {
@@ -49,7 +69,7 @@ test("safely encodes special characters in venue names", () => {
     formattedAddress: "1 Main St, Las Vegas, NV 89101",
   });
   assert.equal(
-    new URL(url).searchParams.get("dropoff[nickname]"),
+    JSON.parse(new URL(url).searchParams.get("drop[0]")).addressLine1,
     "Jill's Rock & Roll Club + Lounge",
   );
   assert.match(url, /%26/);
@@ -58,7 +78,7 @@ test("safely encodes special characters in venue names", () => {
 
 test("preserves spaces, commas, and suite numbers in formatted addresses", () => {
   const address = "400 W Sunset Rd, Suite 210, Henderson, NV 89014";
-  assert.equal(parameters({ name: "Venue", formattedAddress: address }).get("dropoff[formatted_address]"), address);
+  assert.equal(dropoff({ name: "Venue", formattedAddress: address }).addressLine2, address);
 });
 
 test("missing venue name returns the safe Uber fallback", () => {
@@ -76,35 +96,35 @@ test("missing venue address returns the safe Uber fallback", () => {
 });
 
 test("invalid latitude suppresses the entire coordinate pair", () => {
-  const params = parameters({
+  const destination = dropoff({
     name: "Venue",
     formattedAddress: "1 Main St, Las Vegas, NV 89101",
     latitude: 91,
     longitude: -115.1,
   });
-  assert.equal(params.has("dropoff[latitude]"), false);
-  assert.equal(params.has("dropoff[longitude]"), false);
+  assert.equal("latitude" in destination, false);
+  assert.equal("longitude" in destination, false);
 });
 
 test("invalid longitude suppresses the entire coordinate pair", () => {
-  const params = parameters({
+  const destination = dropoff({
     name: "Venue",
     formattedAddress: "1 Main St, Las Vegas, NV 89101",
     latitude: 36.1,
     longitude: Number.NaN,
   });
-  assert.equal(params.has("dropoff[latitude]"), false);
-  assert.equal(params.has("dropoff[longitude]"), false);
+  assert.equal("latitude" in destination, false);
+  assert.equal("longitude" in destination, false);
 });
 
 test("a single supplied coordinate is never included", () => {
-  const params = parameters({
+  const destination = dropoff({
     name: "Venue",
     formattedAddress: "1 Main St, Las Vegas, NV 89101",
     latitude: 36.1,
   });
-  assert.equal(params.has("dropoff[latitude]"), false);
-  assert.equal(params.has("dropoff[longitude]"), false);
+  assert.equal("latitude" in destination, false);
+  assert.equal("longitude" in destination, false);
 });
 
 test("no destination data returns the safe Uber fallback without throwing", () => {
@@ -165,6 +185,8 @@ test("clicking the reusable control records the typed event and isolates card na
 });
 
 test("eligible live-shell dancer and venue cards expose compact ride links without parent navigation", () => {
+  assert.match(liveShellSource, /const fallback = "https:\/\/m\.uber\.com\/looking"/);
+  assert.match(liveShellSource, /url\.searchParams\.set\("drop\[0\]", JSON\.stringify\(dropoff\)\)/);
   assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Get a Ride"/);
   assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?label: "Get a Ride"[\s\S]*?home-venue-discovery-uber/);
   assert.match(liveShellSource, /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\[data-uber-ride-link\][\s\S]*?event\.stopPropagation\(\)[\s\S]*?recordUberRideLinkClick\(link\)[\s\S]*?\}, true\)/);
