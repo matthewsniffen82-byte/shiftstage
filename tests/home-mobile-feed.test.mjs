@@ -43,7 +43,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 840px\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?scroll-padding-top: 0;[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: calc\(100svh - 72px - env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
   assert.match(
     homeSource,
@@ -125,7 +125,7 @@ test("the homepage selects Dancers on first load and keeps destination navigatio
   );
 });
 
-test("all three destinations land at their title before the cards", () => {
+test("Dancers and Venues land at their title while TV lands on its full-height video viewport", () => {
   assert.match(
     homeSource,
     /const homeDestinationOrder = \["dancers", "tv", "venues"\];/,
@@ -140,12 +140,20 @@ test("all three destinations land at their title before the cards", () => {
   );
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?homeTvFeedLandingPending = nextTab === "tv" && options\.scroll !== false;[\s\S]*?render\(\);[\s\S]*?if \(options\.scroll !== false\) \{[\s\S]*?focusHomeResults\(\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\)[\s\S]*?activeTab = nextTab;[\s\S]*?homeTvFeedLandingPending = nextTab === "tv" && options\.scroll !== false;[\s\S]*?render\(\);[\s\S]*?if \(options\.scroll !== false\) \{[\s\S]*?if \(nextTab === "tv"\) focusHomeTvFeedViewport\(\);[\s\S]*?else focusHomeResults\(\)/,
   );
   assert.match(homeSource, /let homeTvFeedLandingPending = false;/);
   assert.match(
     homeSource,
-    /function settleHomeTvFeedLanding\(\{ complete = false \} = \{\}\) \{[\s\S]*?if \(!homeTvFeedLandingPending\) return;[\s\S]*?focusHomeResults\(\);[\s\S]*?if \(complete\) homeTvFeedLandingPending = false;/,
+    /function alignHomeTvFeedViewport\(\) \{[\s\S]*?results\.querySelector\("\.home-tv-feed-slide, \.home-tv-feed-loading"\) \|\| results;[\s\S]*?homeResultsDocumentTop\(target\)[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior: "auto" \}\)/,
+  );
+  assert.match(
+    homeSource,
+    /function focusHomeTvFeedViewport\(\) \{[\s\S]*?cancelAnimationFrame\(homeTvFeedFocusFrame\)[\s\S]*?alignHomeTvFeedViewport\(\)[\s\S]*?requestAnimationFrame\(\(\) => settle\(remainingFrames - 1\)\)[\s\S]*?alignHomeTvFeedViewport\(\)[\s\S]*?160/,
+  );
+  assert.match(
+    homeSource,
+    /function settleHomeTvFeedLanding\(\{ complete = false \} = \{\}\) \{[\s\S]*?if \(!homeTvFeedLandingPending\) return;[\s\S]*?focusHomeTvFeedViewport\(\);[\s\S]*?if \(complete\) homeTvFeedLandingPending = false;/,
   );
   assert.match(
     homeSource,
@@ -153,7 +161,7 @@ test("all three destinations land at their title before the cards", () => {
   );
   assert.match(
     homeSource,
-    /homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";[\s\S]*?render\(\);[\s\S]*?if \(initialHomeDestinationRequested\) \{[\s\S]*?focusHomeResults\(\)/,
+    /homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";[\s\S]*?render\(\);[\s\S]*?if \(initialHomeDestinationRequested\) \{[\s\S]*?if \(initialHomeDestination === "tv"\) focusHomeTvFeedViewport\(\);[\s\S]*?else focusHomeResults\(\)/,
   );
   assert.match(
     homeSource,
@@ -161,7 +169,7 @@ test("all three destinations land at their title before the cards", () => {
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-top: calc\(14px \+ env\(safe-area-inset-top, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?margin: 0 0 calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-type: none;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?scroll-padding-top: 0;[\s\S]*?html\.home-tv-page-snap \.hero\.reference-hero,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?scroll-snap-stop: always;[\s\S]*?html\.home-tv-page-snap \.discovery-sticky-head \{[\s\S]*?position: static !important;[\s\S]*?scroll-snap-align: none;[\s\S]*?#results\.home-tv-feed \{[\s\S]*?margin: 0 0 calc\(72px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
@@ -299,11 +307,11 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
   );
   assert.match(
     homeSource,
-    /html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-bottom: calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?overflow: visible !important;[\s\S]*?overscroll-behavior-y: auto;[\s\S]*?scroll-snap-type: none;/,
+    /html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?scroll-padding-bottom: calc\(72px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?overflow: visible !important;[\s\S]*?overscroll-behavior-y: auto;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 840px\) !important;[\s\S]*?min-height: 500px !important;[\s\S]*?max-height: 840px !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: calc\(100svh - 72px - env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?min-height: 0 !important;[\s\S]*?max-height: none !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
   assert.match(homeSource, /const homeTvFeedSnapMedia = window\.matchMedia\("\(max-width: 720px\)"\)/);
   assert.match(homeSource, /root: null,[\s\S]*?rootMargin: "-72px 0px -88px"/);

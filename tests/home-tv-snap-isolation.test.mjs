@@ -15,7 +15,7 @@ test("MyDancr TV removes dancer-grid presentation before rendering its page feed
   );
 });
 
-test("MyDancr TV uses one page scroller with stable mobile proximity snapping", () => {
+test("MyDancr TV uses one page scroller with full-height mandatory mobile snapping", () => {
   assert.match(
     homeSource,
     /#results\.home-tv-feed \{[\s\S]*?display: grid;[\s\S]*?overflow: visible;[\s\S]*?scroll-snap-type: none;[\s\S]*?touch-action: pan-y;/,
@@ -26,11 +26,11 @@ test("MyDancr TV uses one page scroller with stable mobile proximity snapping", 
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-bottom: calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?html\.home-tv-page-snap \.hero\.reference-hero,[\s\S]*?html\.home-tv-page-snap \.content-head,[\s\S]*?html\.home-tv-page-snap #results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?scroll-padding-bottom: calc\(72px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?html\.home-tv-page-snap \.hero\.reference-hero,[\s\S]*?html\.home-tv-page-snap #results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 840px\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: calc\(100svh - 72px - env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/,
   );
   assert.match(homeSource, /function syncHomeTvPageSnapState\(\) \{[\s\S]*?activeTab === "tv" && homeTvFeedUsesSnapViewport\(\)[\s\S]*?classList\.toggle\("home-tv-page-snap", shouldSnap\)/);
   assert.match(homeSource, /function deactivateHomeTvFeed\(\) \{[\s\S]*?classList\.remove\("home-tv-page-snap"\)/);
