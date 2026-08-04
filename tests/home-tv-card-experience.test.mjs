@@ -411,7 +411,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /border: 1px solid transparent !important;/);
   assert.match(
     brandedCards,
-    /\.home-tv-feed-dancer-photo::after,[\s\S]*?\.tv-shell \.tv-profile-photo::after \{[\s\S]*?padding: 1\.5px;[\s\S]*?var\(--dancr-color-avatar-ring-magenta\),[\s\S]*?var\(--dancr-color-avatar-ring-violet\)[\s\S]*?mask-composite: exclude;/,
+    /\.home-tv-feed-dancer-photo,[\s\S]*?\.tv-profile-photo[\s\S]*?\)::after \{[\s\S]*?padding: 1\.5px;[\s\S]*?conic-gradient\([\s\S]*?var\(--dancr-color-avatar-ring-magenta\)[\s\S]*?var\(--dancr-color-avatar-ring-violet\)[\s\S]*?var\(--dancr-color-avatar-ring-blue\)[\s\S]*?var\(--dancr-color-avatar-ring-cyan\)[\s\S]*?mask-composite: exclude;/,
   );
   assert.match(
     brandedCards,
@@ -451,7 +451,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.doesNotMatch(brandedCards, /home-bottom|global-mobile-bottom-nav|discoveryTabs|home-nav/);
   assert.doesNotMatch(brandedCards, /\.home-tv-feed-video|\.tv-player video/);
   const brandedCardsWithoutAvatarRing = brandedCards.replace(
-    /body\.dancr-button-system \.home-tv-feed-dancer-photo::after,[\s\S]*?pointer-events: none;\s*\}/,
+    /body\.dancr-button-system :is\([\s\S]*?\)::after \{[\s\S]*?pointer-events: none;\s*\}/,
     "",
   );
   assert.doesNotMatch(

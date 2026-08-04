@@ -3536,8 +3536,19 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-body.dancr-button-system .home-tv-feed-dancer-photo,
-.tv-shell .tv-profile-photo {
+/* Every real circular dancer avatar uses one Dancr story ring. The conic
+ * sequence carries the hero's magenta, electric violet, sapphire, and cyan
+ * around the photo while leaving venue marks, media, and navigation alone. */
+body.dancr-button-system :is(
+    .approved-avatar-preview,
+    .venue-card-lineup-avatar,
+    .home-venue-discovery-lineup-avatar,
+    .profile-modal-avatar,
+    .home-tv-feed-dancer-photo,
+    .profile-titlebar-avatar,
+    .tv-profile-photo
+  ) {
+  position: relative;
   border: 1px solid transparent !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
@@ -3547,22 +3558,37 @@ body.dancr-button-system .home-tv-feed-dancer-photo,
       in srgb,
       var(--dancr-color-avatar-ring-magenta) 18%,
       transparent
+    ),
+    0 0 8px color-mix(
+      in srgb,
+      var(--dancr-color-avatar-ring-cyan) 10%,
+      transparent
     ) !important;
   text-shadow: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-dancer-photo::after,
-.tv-shell .tv-profile-photo::after {
+body.dancr-button-system :is(
+    .approved-avatar-preview,
+    .venue-card-lineup-avatar,
+    .home-venue-discovery-lineup-avatar,
+    .profile-modal-avatar,
+    .home-tv-feed-dancer-photo,
+    .profile-titlebar-avatar,
+    .tv-profile-photo
+  )::after {
   content: "";
   position: absolute;
   z-index: 2;
   inset: 0;
   padding: 1.5px;
   border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    var(--dancr-color-avatar-ring-magenta),
-    var(--dancr-color-avatar-ring-violet)
+  background: conic-gradient(
+    from 205deg,
+    var(--dancr-color-avatar-ring-magenta) 0deg,
+    var(--dancr-color-avatar-ring-violet) 96deg,
+    var(--dancr-color-avatar-ring-blue) 196deg,
+    var(--dancr-color-avatar-ring-cyan) 286deg,
+    var(--dancr-color-avatar-ring-magenta) 360deg
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,

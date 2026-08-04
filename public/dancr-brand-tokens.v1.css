@@ -27,6 +27,8 @@
   --dancr-color-brand-glow-medium: rgba(49, 46, 129, 0.42);
   --dancr-color-avatar-ring-magenta: #c026d3;
   --dancr-color-avatar-ring-violet: var(--dancr-color-brand-primary);
+  --dancr-color-avatar-ring-blue: #2563eb;
+  --dancr-color-avatar-ring-cyan: var(--dancr-color-info);
 
   --dancr-color-beam-core: var(--dancr-color-brand-core);
   --dancr-color-beam-violet: var(--dancr-color-brand-primary);
