@@ -4,9 +4,11 @@ import test from "node:test";
 
 const [
   migration,
+  claimCodeMigration,
   claimService,
   claimRoute,
   adminRoute,
+  adminCodeRoute,
   authRoute,
   venueService,
   claimForm,
@@ -15,9 +17,11 @@ const [
   liveApp,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608030001_venue_ownership_claims.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608030002_venue_claim_codes.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-claims.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/claims/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/venue-claims/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/venue-claim-codes/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/venues/[slug]/claim/VenueClaimForm.tsx", import.meta.url), "utf8"),
@@ -67,11 +71,37 @@ test("an existing venue is claimed instead of duplicated during venue signup", (
   assert.match(claimRoute, /emailRedirectTo/);
 });
 
+test("venue claims require a one-time venue-specific code issued by an administrator", () => {
+  assert.match(claimCodeMigration, /create table if not exists public\.venue_claim_codes/);
+  assert.match(claimCodeMigration, /code_digest text not null unique/);
+  assert.match(claimCodeMigration, /venue_claim_codes_one_unconsumed_idx/);
+  assert.match(claimCodeMigration, /alter table public\.venue_claim_codes enable row level security/);
+  assert.match(claimCodeMigration, /add column if not exists claim_code_id uuid/);
+  assert.match(claimCodeMigration, /new\.claim_code_id is null/);
+  assert.match(claimCodeMigration, /v_claim_code\.venue_id <> new\.venue_id/);
+  assert.match(claimCodeMigration, /set used_at = now\(\), used_by = new\.claimant_user_id/);
+  assert.match(claimCodeMigration, /create or replace function public\.issue_venue_claim_code/);
+  assert.match(claimCodeMigration, /create or replace function public\.revoke_venue_claim_code/);
+  assert.match(claimCodeMigration, /grant execute on function public\.issue_venue_claim_code[\s\S]*to service_role/);
+  assert.match(claimService, /randomBytes\(10\)/);
+  assert.match(claimService, /createHmac\("sha256", secret\)/);
+  assert.match(claimService, /resolveVenueClaimCode/);
+  assert.match(claimService, /claim_code_id: claimCodeId/);
+  assert.ok(claimRoute.indexOf("resolveVenueClaimCode") < claimRoute.indexOf("client.auth.signUp"));
+  assert.match(adminCodeRoute, /requireAdmin\(client, user\.id\)/);
+  assert.match(adminCodeRoute, /action === "issue" \|\| body\?\.action === "revoke"/);
+});
+
 test("the public venue card, venue profile, claim form, and dashboards expose the complete workflow", () => {
   assert.match(publicVenueSource, /isClaimable: !data\.owner_user_id/);
-  assert.match(liveApp, /Manage this venue\? <strong>Claim it<\/strong>/);
-  assert.match(liveApp, /Represent \$\{escapeHtml\(details\.name\)\}\? <strong>Claim this venue<\/strong>/);
+  assert.match(liveApp, /Have a venue code\? <strong>Claim it<\/strong>/);
+  assert.match(liveApp, /Have a venue code\? <strong>Claim this venue<\/strong>/);
   assert.match(liveApp, /reviewLiveAdminVenueClaim/);
+  assert.match(liveApp, /issueLiveAdminVenueClaimCode/);
+  assert.match(liveApp, /revokeLiveAdminVenueClaimCode/);
+  assert.match(liveApp, /Venue claim code copied/);
+  assert.match(claimForm, /name="claimCode"/);
+  assert.match(claimForm, /autoComplete="one-time-code"/);
   assert.match(claimForm, /name="proofFile"/);
   assert.match(claimForm, /accept="application\/pdf,image\/jpeg,image\/png,image\/webp"/);
   assert.match(claimForm, /className=\{styles\.attestation\}/);

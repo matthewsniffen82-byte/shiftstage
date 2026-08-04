@@ -5,6 +5,7 @@ import {
   createVenueOwnershipClaim,
   getLatestVenueOwnershipClaim,
   hashVenueClaimRequestIp,
+  resolveVenueClaimCode,
   validateVenueClaimProof,
   VenueClaimUserError,
 } from "@/src/lib/dancr/venue-claims";
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const venueId = formText(formData, "venueId");
     const venueSlug = formText(formData, "venueSlug");
+    const claimCode = formText(formData, "claimCode");
     const claimantName = formText(formData, "claimantName");
     const claimantTitle = formText(formData, "claimantTitle");
     const claimantPhone = formText(formData, "claimantPhone");
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
     // Validate before account creation so a bad upload cannot leave an orphan login.
     await validateVenueClaimProof(proofFile);
     const targetVenue = await loadClaimableVenue(admin, venueId, venueSlug);
+    const claimCodeId = await resolveVenueClaimCode(admin, targetVenue.id, claimCode);
 
     let userId = "";
     let email = "";
@@ -114,6 +117,7 @@ export async function POST(request: Request) {
 
     const claim = await createVenueOwnershipClaim(admin, {
       venueId: targetVenue.id,
+      claimCodeId,
       userId,
       email,
       claimantName,

@@ -1,4 +1,4 @@
-import { createHmac, randomUUID } from "node:crypto";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows } from "./notification-delivery";
 
@@ -18,6 +18,7 @@ export class VenueClaimUserError extends Error {}
 
 export type VenueOwnershipClaimInput = {
   venueId: string;
+  claimCodeId: string;
   userId: string;
   email: string;
   claimantName: string;
@@ -27,11 +28,113 @@ export type VenueOwnershipClaimInput = {
   requestIpHash: string;
 };
 
+export async function resolveVenueClaimCode(
+  client: DancrClient,
+  venueIdValue: string,
+  rawCode: string,
+) {
+  const venueId = requiredText(venueIdValue, "Venue is required.", 1, 80);
+  const codeDigest = hashVenueClaimCode(rawCode);
+  const { data, error } = await (client as any)
+    .from("venue_claim_codes")
+    .select("id, venue_id, expires_at, used_at, revoked_at")
+    .eq("venue_id", venueId)
+    .eq("code_digest", codeDigest)
+    .maybeSingle();
+  if (error) throw error;
+
+  if (
+    !data
+    || data.used_at
+    || data.revoked_at
+    || new Date(data.expires_at).getTime() <= Date.now()
+  ) {
+    throw new VenueClaimUserError("This venue claim code is invalid or no longer active.");
+  }
+  return data.id as string;
+}
+
+export async function getAdminVenueClaimCodes(client: DancrClient) {
+  const { data, error } = await (client as any)
+    .from("venue_claim_codes")
+    .select(CLAIM_CODE_COLUMNS)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data || []).map(mapClaimCode);
+}
+
+export async function issueVenueClaimCode(
+  client: DancrClient,
+  input: { venueId: string; adminId: string; expiresInDays?: number },
+) {
+  const venueId = requiredText(input.venueId, "Venue is required.", 1, 80);
+  const expiresInDays = Number.isInteger(input.expiresInDays) ? Number(input.expiresInDays) : 7;
+  if (expiresInDays < 1 || expiresInDays > 30) {
+    throw new VenueClaimUserError("Venue claim codes must expire in 1 to 30 days.");
+  }
+
+  const code = createVenueClaimCodeValue();
+  const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await (client as any).rpc("issue_venue_claim_code", {
+    p_venue_id: venueId,
+    p_admin_id: input.adminId,
+    p_code_digest: hashVenueClaimCode(code),
+    p_expires_at: expiresAt,
+  });
+  if (error) {
+    if (/already has a verified manager/i.test(error.message || "")) {
+      throw new VenueClaimUserError("This venue already has a verified manager.");
+    }
+    if (/active venue not found/i.test(error.message || "")) {
+      throw new VenueClaimUserError("This venue is not available for a claim code.");
+    }
+    throw error;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  console.info("VENUE_CLAIM_CODE_ISSUED", {
+    codeId: row.id,
+    venueId,
+    expiresAt,
+    adminId: input.adminId,
+  });
+  return { code, claimCode: mapClaimCode(row) };
+}
+
+export async function revokeVenueClaimCode(
+  client: DancrClient,
+  input: { codeId: string; adminId: string },
+) {
+  const codeId = requiredText(input.codeId, "Venue claim code is required.", 1, 80);
+  const { data, error } = await (client as any).rpc("revoke_venue_claim_code", {
+    p_code_id: codeId,
+    p_admin_id: input.adminId,
+  });
+  if (error) {
+    if (/used venue claim code cannot be revoked/i.test(error.message || "")) {
+      throw new VenueClaimUserError("A used venue claim code cannot be revoked.");
+    }
+    if (/venue claim code not found/i.test(error.message || "")) {
+      throw new VenueClaimUserError("Venue claim code not found.");
+    }
+    throw error;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  console.info("VENUE_CLAIM_CODE_REVOKED", {
+    codeId,
+    venueId: row.venue_id,
+    adminId: input.adminId,
+  });
+  return mapClaimCode(row);
+}
+
 export async function createVenueOwnershipClaim(
   client: DancrClient,
   input: VenueOwnershipClaimInput,
 ) {
   const venueId = requiredText(input.venueId, "Venue is required.", 1, 80);
+  const claimCodeId = requiredText(input.claimCodeId, "A valid venue claim code is required.", 1, 80);
   const email = normalizedEmail(input.email);
   const claimantName = requiredText(input.claimantName, "Your full name is required.", 2, 160);
   const claimantTitle = requiredText(input.claimantTitle, "Your position at the venue is required.", 2, 120);
@@ -94,6 +197,7 @@ export async function createVenueOwnershipClaim(
       .from("venue_ownership_claims")
       .insert({
         venue_id: venueId,
+        claim_code_id: claimCodeId,
         claimant_user_id: input.userId,
         claimant_email: email,
         claimant_name: claimantName,
@@ -107,7 +211,12 @@ export async function createVenueOwnershipClaim(
       })
       .select(CLAIM_COLUMNS)
       .single();
-    if (error) throw error;
+    if (error) {
+      if (/venue claim code|valid venue claim code/i.test(error.message || "")) {
+        throw new VenueClaimUserError("This venue claim code is invalid or no longer active.");
+      }
+      throw error;
+    }
     console.info("VENUE_OWNERSHIP_CLAIM_SUBMITTED", {
       claimId: data.id,
       venueId,
@@ -286,6 +395,7 @@ export async function validateVenueClaimProof(file: File) {
 const CLAIM_COLUMNS = `
   id,
   venue_id,
+  claim_code_id,
   claimant_user_id,
   claimant_email,
   claimant_name,
@@ -302,11 +412,25 @@ const CLAIM_COLUMNS = `
   venues(id, slug, name, city, state, address, owner_user_id)
 `;
 
+const CLAIM_CODE_COLUMNS = `
+  id,
+  venue_id,
+  created_by,
+  created_at,
+  expires_at,
+  used_at,
+  used_by,
+  revoked_at,
+  revoked_by,
+  venues(id, slug, name, city, state, owner_user_id)
+`;
+
 function mapClaim(row: any) {
   const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
   return {
     id: row.id,
     venueId: row.venue_id,
+    claimCodeId: row.claim_code_id || null,
     claimantUserId: row.claimant_user_id,
     claimantEmail: row.claimant_email,
     claimantName: row.claimant_name,
@@ -331,6 +455,51 @@ function mapClaim(row: any) {
         }
       : null,
   };
+}
+
+function mapClaimCode(row: any) {
+  const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
+  const status = row.used_at
+    ? "used"
+    : row.revoked_at
+      ? "revoked"
+      : new Date(row.expires_at).getTime() <= Date.now()
+        ? "expired"
+        : "active";
+  return {
+    id: row.id,
+    venueId: row.venue_id,
+    status,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    usedAt: row.used_at || null,
+    revokedAt: row.revoked_at || null,
+    venue: venue
+      ? {
+          id: venue.id,
+          slug: venue.slug,
+          name: venue.name,
+          city: venue.city,
+          state: venue.state || null,
+          isManaged: Boolean(venue.owner_user_id),
+        }
+      : null,
+  };
+}
+
+function createVenueClaimCodeValue() {
+  const entropy = randomBytes(10).toString("hex").toUpperCase();
+  return `DANCR-${entropy.match(/.{1,4}/g)?.join("-") || entropy}`;
+}
+
+function hashVenueClaimCode(value: string) {
+  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!/^DANCR[0-9A-F]{20}$/.test(normalized)) {
+    throw new VenueClaimUserError("This venue claim code is invalid or no longer active.");
+  }
+  const secret = process.env.VENUE_CLAIM_CODE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("Venue claim code hashing is not configured.");
+  return createHmac("sha256", secret).update(normalized).digest("hex");
 }
 
 function normalizedEmail(value: unknown) {

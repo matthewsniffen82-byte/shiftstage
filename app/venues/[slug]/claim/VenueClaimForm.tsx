@@ -116,7 +116,7 @@ export default function VenueClaimForm({ venue }: { venue: Venue }) {
             ? "You can now manage the existing venue card, Club Deal, QR, working-now lineup, and analytics."
             : claim.status === "pending"
               ? "Confirm your email if you have not already. MyDancr will review the business information and proof before granting access."
-              : claim.reviewNotes || "The claim was not approved. Contact MyDancr support or submit a new claim with updated proof."}
+              : claim.reviewNotes || "The claim was not approved. Contact MyDancr support for a new venue code before submitting updated proof."}
         </p>
         {approved ? <Link className={styles.primaryLink} href="/dashboard/venue">Open venue dashboard</Link> : null}
         {claim.status === "rejected" ? (
@@ -125,7 +125,7 @@ export default function VenueClaimForm({ venue }: { venue: Venue }) {
             type="button"
             onClick={() => {
               setClaim(null);
-              setStatus("Add updated business proof and submit a new claim.");
+              setStatus("Enter the new venue code from MyDancr and add updated business proof.");
             }}
           >
             Submit updated proof
@@ -153,12 +153,26 @@ export default function VenueClaimForm({ venue }: { venue: Venue }) {
   return (
     <form className={styles.card} onSubmit={submitClaim}>
       <div className={styles.formHeading}>
-        <span className={styles.eyebrow}>Verification request</span>
+        <span className={styles.eyebrow}>Invitation required</span>
         <h2>Create or connect a venue account</h2>
-        <p>Use official business details. MyDancr will never publish the proof file.</p>
+        <p>Enter the code provided by MyDancr and use official business details. Proof files remain private.</p>
       </div>
 
       <div className={styles.grid}>
+        <label className={styles.fullWidth}>
+          <span>Venue claim code</span>
+          <input
+            name="claimCode"
+            minLength={25}
+            maxLength={32}
+            autoComplete="one-time-code"
+            autoCapitalize="characters"
+            spellCheck={false}
+            placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX"
+            required
+          />
+          <small>Codes are venue-specific, one-time use, and expire. Ask a MyDancr administrator for a new code if yours is no longer active.</small>
+        </label>
         <label>
           <span>Full legal name</span>
           <input name="claimantName" minLength={2} maxLength={160} autoComplete="name" required />
@@ -202,7 +216,7 @@ export default function VenueClaimForm({ venue }: { venue: Venue }) {
       </label>
 
       <button className={styles.submit} type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Submitting securely…" : `Submit claim for ${venue.name}`}
+        {isSubmitting ? "Submitting securely…" : `Verify code and claim ${venue.name}`}
       </button>
       <p className={styles.privacy}>Proof files are private and removed from storage after the claim is reviewed.</p>
       {status ? <p className={styles.status} role="status">{status}</p> : null}

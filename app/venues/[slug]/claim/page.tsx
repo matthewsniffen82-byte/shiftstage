@@ -40,7 +40,7 @@ export default async function VenueClaimPage({ params }: PageProps) {
           <span className={styles.eyebrow}>Venue ownership</span>
           <h1>Claim {venue.name}</h1>
           <p>
-            Connect a verified venue account to the existing live card. The public card stays online while MyDancr reviews the request.
+            A venue-specific code from MyDancr is required. The existing public card stays online while the authorized claim is reviewed.
           </p>
           <dl className={styles.venueFacts}>
             <div><dt>Venue</dt><dd>{venue.name}</dd></div>

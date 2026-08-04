@@ -3589,6 +3589,26 @@
       gap: 8px;
     }
 
+    .admin-code-reveal {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(53,216,255,.26);
+      border-radius: 12px;
+      background: rgba(53,216,255,.06);
+    }
+
+    .admin-code-reveal code {
+      min-width: 0;
+      color: #bff5ff;
+      font-size: 13px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+      user-select: all;
+    }
+
     .admin-login {
       width: 100%;
       min-height: 54px;
@@ -4976,6 +4996,7 @@
       #adminDashboard .dashboard-stats,
       #adminDashboard .metric-grid,
       #adminDashboard .admin-actions,
+      #adminDashboard .admin-code-reveal,
       #adminDashboard .admin-review-actions,
       #adminDashboard .photo-upload-grid {
         grid-template-columns: 1fr;
@@ -35702,7 +35723,7 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
-          <summary><span class="dashboard-collapse-title"><strong>Venue verification</strong><span>Expand to review venue submissions, approve verified venues, or remove invalid venues.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Venue verification and claim codes</strong><span>Create one-time venue codes, review ownership claims, approve verified venues, or remove invalid venues.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminVenues"></div>
           </div>
@@ -36226,6 +36247,8 @@
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
     let liveAdminVenueClaims = [];
+    let liveAdminVenueClaimCodes = [];
+    let liveAdminRevealedVenueCodes = {};
     let liveAdminReports = [];
     let liveAdminMonitoring = null;
     let liveAdminOperations = null;
@@ -38216,7 +38239,8 @@
         verified: item.is_active !== false,
         featured: Boolean(existing?.featured),
         hidden: item.is_active === false,
-        isActive: item.is_active !== false
+        isActive: item.is_active !== false,
+        ownerUserId: item.owner_user_id || null
       };
     }
 
@@ -38981,6 +39005,7 @@
         const adminDancers = approvalData.dancers || [];
         const venues = venueData.venues || [];
         liveAdminVenueClaims = venueData.claims || [];
+        liveAdminVenueClaimCodes = venueData.claimCodes || [];
         liveAdminSubscriptions = subscriptionData.subscriptions || [];
         applyLiveApprovalQueue(adminDancers);
         applyLiveApprovalQueue(queue);
@@ -43980,7 +44005,7 @@
         ? `<a class="venue-card-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
       const claimMarkup = venue.id && venue.slug && venue.isClaimable !== false
-        ? `<a class="venue-card-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim" aria-label="Claim and manage ${safeName}">Manage this venue? <strong>Claim it</strong></a>`
+        ? `<a class="venue-card-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim" aria-label="Claim and manage ${safeName} with a venue code">Have a venue code? <strong>Claim it</strong></a>`
         : "";
       return `
         <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
@@ -44135,7 +44160,7 @@
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
               ${venue.id && venue.slug && venue.isClaimable !== false
-                ? `<a class="venue-detail-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim">Represent ${escapeHtml(details.name)}? <strong>Claim this venue</strong></a>`
+                ? `<a class="venue-detail-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim">Have a venue code? <strong>Claim this venue</strong></a>`
                 : ""}
             </div>
           </article>
@@ -45510,6 +45535,8 @@
       liveCustomerProfile = null;
       liveVenueDashboard = null;
       liveAdminVenueClaims = [];
+      liveAdminVenueClaimCodes = [];
+      liveAdminRevealedVenueCodes = {};
       liveNotifications = [];
       saveAuthSession(null);
       closeDashboard();
@@ -48782,17 +48809,42 @@
         `;
       }).join("");
       const managedVenueMarkup = Object.entries(markets).flatMap(([city, market]) => (
-        market.venues.filter((venue) => !venue.hidden).map((venue, index) => `
-          <details class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}" ${index === 0 ? "open" : ""}>
-            <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="${venue.verified ? "badge" : "badge pending"}">${venue.verified ? "Verified" : "Pending"}</span></summary>
-            <div class="meta">Verification status: ${venue.verified ? "Approved" : "Needs review"} · Featured: ${venue.featured ? "Yes" : "No"}</div>
-            <div class="admin-actions">
-              <button class="action-btn" data-admin-action="verify-venue">Verify venue</button>
-              <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
-              <button class="action-btn danger" data-admin-action="remove-venue">Remove venue</button>
-            </div>
-          </details>
-        `)
+        market.venues.filter((venue) => !venue.hidden).map((venue, index) => {
+          const activeClaimCode = liveAdminVenueClaimCodes.find((claimCode) => claimCode.venueId === venue.id && claimCode.status === "active");
+          const revealedCode = liveAdminRevealedVenueCodes[venue.id] || "";
+          const claimCodeMarkup = venue.ownerUserId
+            ? '<div class="meta">Venue account connected. Claim codes are disabled.</div>'
+            : `
+              <div class="meta">
+                ${activeClaimCode
+                  ? `One-time claim code active until ${escapeHtml(new Date(activeClaimCode.expiresAt).toLocaleString())}. The code itself is shown only when created.`
+                  : "No active venue claim code. A claim cannot be submitted until an administrator creates one."}
+              </div>
+              ${revealedCode ? `
+                <div class="admin-code-reveal">
+                  <code>${escapeHtml(revealedCode)}</code>
+                  <button class="action-btn secondary" type="button" data-admin-venue-code-copy="${escapeHtml(venue.id)}">Copy code</button>
+                </div>
+              ` : ""}
+              <div class="admin-actions">
+                <button class="action-btn" type="button" data-admin-venue-code-issue="${escapeHtml(venue.id)}">${activeClaimCode ? "Replace claim code" : "Create claim code"}</button>
+                ${activeClaimCode ? `<button class="action-btn danger" type="button" data-admin-venue-code-revoke="${escapeHtml(activeClaimCode.id)}" data-admin-venue-id="${escapeHtml(venue.id)}">Revoke claim code</button>` : ""}
+              </div>
+              <div class="meta" data-venue-code-status="${escapeHtml(venue.id)}" role="status" aria-live="polite"></div>
+            `;
+          return `
+            <details class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}" ${index === 0 ? "open" : ""}>
+              <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="${venue.verified ? "badge" : "badge pending"}">${venue.verified ? "Verified" : "Pending"}</span></summary>
+              <div class="meta">Verification status: ${venue.verified ? "Approved" : "Needs review"} · Featured: ${venue.featured ? "Yes" : "No"}</div>
+              ${claimCodeMarkup}
+              <div class="admin-actions">
+                <button class="action-btn" data-admin-action="verify-venue">Verify venue</button>
+                <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
+                <button class="action-btn danger" data-admin-action="remove-venue">Remove venue</button>
+              </div>
+            </details>
+          `;
+        })
       )).join("");
       document.getElementById("adminVenues").innerHTML = venueClaimMarkup + managedVenueMarkup || '<div class="locked">No venues or ownership claims found.</div>';
     }
@@ -49222,6 +49274,73 @@
         if (statusNode) statusNode.textContent = error.message || "Could not review venue ownership claim.";
         showToast(error.message || "Could not review venue ownership claim");
       }
+    }
+
+    async function issueLiveAdminVenueClaimCode(button) {
+      const venueId = button.dataset.adminVenueCodeIssue || "";
+      if (!venueId || !isAdminSession()) return;
+      const venue = Object.values(markets).flatMap((market) => market.venues).find((item) => item.id === venueId);
+      const venueName = venue?.name || "this venue";
+      if (!confirm(`Create a new one-time claim code for ${venueName}? Any previous unused code will be revoked.`)) return;
+
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Creating code…";
+      const statusNode = document.querySelector(`[data-venue-code-status="${CSS.escape(venueId)}"]`);
+      if (statusNode) statusNode.textContent = "Creating a private one-time code…";
+      try {
+        const data = await postAuthenticatedJson("/api/admin/venue-claim-codes", {
+          action: "issue",
+          venueId,
+          expiresInDays: 7
+        });
+        liveAdminVenueClaimCodes = [
+          data.claimCode,
+          ...liveAdminVenueClaimCodes.filter((item) => !(item.venueId === venueId && item.status === "active"))
+        ];
+        liveAdminRevealedVenueCodes[venueId] = data.code;
+        renderAdminDashboard();
+        showToast("Claim code created. Copy it now; it is shown only once.");
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = originalText;
+        if (statusNode) statusNode.textContent = error.message || "Could not create venue claim code.";
+        showToast(error.message || "Could not create venue claim code");
+      }
+    }
+
+    async function revokeLiveAdminVenueClaimCode(button) {
+      const codeId = button.dataset.adminVenueCodeRevoke || "";
+      const venueId = button.dataset.adminVenueId || "";
+      if (!codeId || !venueId || !isAdminSession()) return;
+      if (!confirm("Revoke this venue claim code immediately? It will no longer authorize a claim.")) return;
+
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = "Revoking…";
+      const statusNode = document.querySelector(`[data-venue-code-status="${CSS.escape(venueId)}"]`);
+      try {
+        const data = await postAuthenticatedJson("/api/admin/venue-claim-codes", { action: "revoke", codeId });
+        liveAdminVenueClaimCodes = liveAdminVenueClaimCodes.map((item) => item.id === codeId ? data.claimCode : item);
+        delete liveAdminRevealedVenueCodes[venueId];
+        renderAdminDashboard();
+        showToast(data.message || "Venue claim code revoked");
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = originalText;
+        if (statusNode) statusNode.textContent = error.message || "Could not revoke venue claim code.";
+        showToast(error.message || "Could not revoke venue claim code");
+      }
+    }
+
+    function copyLiveAdminVenueClaimCode(button) {
+      const venueId = button.dataset.adminVenueCodeCopy || "";
+      const code = liveAdminRevealedVenueCodes[venueId] || "";
+      if (!code) {
+        showToast("This code is no longer available. Create a new claim code.");
+        return;
+      }
+      copyText(code, "Venue claim code copied");
     }
 
     function saveLiveAdminReportAction(reportId, action) {
@@ -52815,6 +52934,24 @@
 
     adminDashboard.addEventListener("click", (event) => {
       if (handleSupportActionClick(event)) return;
+      const venueCodeCopyButton = event.target.closest("[data-admin-venue-code-copy]");
+      if (venueCodeCopyButton) {
+        event.preventDefault();
+        copyLiveAdminVenueClaimCode(venueCodeCopyButton);
+        return;
+      }
+      const venueCodeIssueButton = event.target.closest("[data-admin-venue-code-issue]");
+      if (venueCodeIssueButton) {
+        event.preventDefault();
+        issueLiveAdminVenueClaimCode(venueCodeIssueButton);
+        return;
+      }
+      const venueCodeRevokeButton = event.target.closest("[data-admin-venue-code-revoke]");
+      if (venueCodeRevokeButton) {
+        event.preventDefault();
+        revokeLiveAdminVenueClaimCode(venueCodeRevokeButton);
+        return;
+      }
       const venueClaimReviewButton = event.target.closest("[data-admin-venue-claim-review]");
       if (venueClaimReviewButton) {
         event.preventDefault();
