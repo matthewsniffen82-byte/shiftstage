@@ -3590,9 +3590,9 @@ body.dancr-button-system :is(
     var(--dancr-color-avatar-ring-violet) 118deg,
     var(--dancr-color-avatar-ring-violet) 166deg,
     var(--dancr-color-avatar-ring-blue) 212deg,
-    var(--dancr-color-avatar-ring-blue) 258deg,
-    var(--dancr-color-avatar-ring-core) 304deg,
-    var(--dancr-color-avatar-ring-core) 334deg,
+    var(--dancr-color-avatar-ring-blue) 246deg,
+    var(--dancr-color-avatar-ring-core) 284deg,
+    var(--dancr-color-avatar-ring-core) 346deg,
     var(--dancr-color-avatar-ring-magenta) 360deg
   );
   filter: saturate(1.18) brightness(1.12);
