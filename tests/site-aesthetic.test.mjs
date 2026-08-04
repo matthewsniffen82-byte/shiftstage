@@ -600,7 +600,7 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
-    /button\[data-profile-media-tab="video"\]\.active::before \{[\s\S]*?border-color: var\(--dancr-color-border\) !important;[\s\S]*?var\(--dancr-color-surface-raised\) !important;[\s\S]*?var\(--dancr-color-black-medium\) !important;/,
+    /button\[data-profile-media-tab="video"\]\.active::before \{[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?var\(--dancr-color-text-secondary\) 24%[\s\S]*?var\(--dancr-color-text-secondary\) 58%[\s\S]*?var\(--dancr-color-text-secondary\) 30%[\s\S]*?var\(--dancr-color-black-medium\) !important;/,
   );
   assert.match(
     fullProfilePalette,
