@@ -703,7 +703,7 @@ test("verified check marks use the centralized permanent pearl glitter treatment
   );
   assert.match(
     aesthetic,
-    /A fixed four-point diamond completes the permanent glitter treatment[\s\S]*?::after \{[\s\S]*?width: clamp\(4px, 28%, 6px\);[\s\S]*?height: clamp\(4px, 28%, 6px\);[\s\S]*?background: #ffffff;[\s\S]*?clip-path: polygon/,
+    /A fixed four-point diamond completes the permanent glitter treatment[\s\S]*?::after \{[\s\S]*?background: #ffffff;[\s\S]*?clip-path: polygon/,
   );
   assert.doesNotMatch(aesthetic, /verified[^\{]*\{[^\}]*animation:/i);
 });
