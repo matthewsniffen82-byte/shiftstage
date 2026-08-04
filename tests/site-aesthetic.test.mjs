@@ -681,14 +681,14 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   );
 });
 
-test("verified check marks keep the flat sapphire treatment with a hero-beam outline", () => {
+test("verified check marks use a flat platinum treatment without an outline or glow", () => {
   assert.match(
     aesthetic,
     /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-foreground: var\(--dancr-color-text-primary\)/,
+    /--mydancr-verified-foreground: var\(--dancr-color-verification-foreground\)/,
   );
   assert.match(
     aesthetic,
@@ -696,7 +696,7 @@ test("verified check marks keep the flat sapphire treatment with a hero-beam out
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-beam-violet\) 38%,[\s\S]*?transparent/,
+    /--mydancr-verified-outline: transparent/,
   );
   assert.match(
     aesthetic,
