@@ -24,16 +24,14 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
     assert.match(ringRules, new RegExp(selector.replaceAll(".", "\\.")));
   }
 
-  assert.match(ringRules, /background: conic-gradient\(/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-magenta\) 0deg/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-magenta\) 72deg/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-violet\) 118deg/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-blue\) 212deg/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-core\) 284deg/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-core\) 346deg/);
-  assert.match(ringRules, /padding: 3px;/);
-  assert.match(ringRules, /filter: saturate\(1\.18\) brightness\(1\.12\);/);
-  assert.match(ringRules, /mask-composite: exclude;/);
+  assert.match(ringRules, /border: 3px solid transparent;/);
+  assert.match(ringRules, /border-top-color: var\(--dancr-color-avatar-ring-magenta\);/);
+  assert.match(ringRules, /border-right-color: var\(--dancr-color-avatar-ring-violet\);/);
+  assert.match(ringRules, /border-bottom-color: var\(--dancr-color-avatar-ring-blue\);/);
+  assert.match(ringRules, /border-left-color: var\(--dancr-color-avatar-ring-core\);/);
+  assert.match(ringRules, /drop-shadow\(0 0 2px color-mix\(/);
+  assert.match(ringRules, /transform: rotate\(-14deg\);/);
+  assert.doesNotMatch(ringRules, /mask-composite|conic-gradient/);
   assert.doesNotMatch(ringRules, /venue-shift-avatar|venue-logo|discoveryTabs|home-nav/);
 });
 

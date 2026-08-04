@@ -3536,10 +3536,10 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one Dancr story ring. The brighter,
- * three-pixel conic sequence keeps the hero's magenta, electric violet,
- * sapphire, and the hero's inner light visibly distinct at compact mobile sizes while leaving
- * venue marks, media, and navigation alone. */
+/* Every real circular dancer avatar uses one Dancr story ring. Four physical
+ * border arcs avoid the mask/compositing path that drops the beam-core color in
+ * some Android browsers while preserving the hero palette at compact sizes.
+ * Venue marks, media, and navigation remain untouched. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
@@ -3581,29 +3581,18 @@ body.dancr-button-system :is(
   position: absolute;
   z-index: 2;
   inset: 0;
-  padding: 3px;
+  box-sizing: border-box;
+  border: 3px solid transparent;
+  border-top-color: var(--dancr-color-avatar-ring-magenta);
+  border-right-color: var(--dancr-color-avatar-ring-violet);
+  border-bottom-color: var(--dancr-color-avatar-ring-blue);
+  border-left-color: var(--dancr-color-avatar-ring-core);
   border-radius: inherit;
-  background: conic-gradient(
-    from 215deg,
-    var(--dancr-color-avatar-ring-magenta) 0deg,
-    var(--dancr-color-avatar-ring-magenta) 72deg,
-    var(--dancr-color-avatar-ring-violet) 118deg,
-    var(--dancr-color-avatar-ring-violet) 166deg,
-    var(--dancr-color-avatar-ring-blue) 212deg,
-    var(--dancr-color-avatar-ring-blue) 246deg,
-    var(--dancr-color-avatar-ring-core) 284deg,
-    var(--dancr-color-avatar-ring-core) 346deg,
-    var(--dancr-color-avatar-ring-magenta) 360deg
-  );
-  filter: saturate(1.18) brightness(1.12);
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  background: transparent;
+  filter:
+    saturate(1.16)
+    drop-shadow(0 0 2px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 58%, transparent));
+  transform: rotate(-14deg);
   pointer-events: none;
 }
 
