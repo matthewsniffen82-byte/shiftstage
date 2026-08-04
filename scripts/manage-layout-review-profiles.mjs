@@ -45,6 +45,8 @@ if (mode === "inspect") {
   await inspectEnvironment();
 } else if (mode === "apply") {
   await applyDataset();
+} else if (mode === "sync-deals") {
+  await syncDealsOnly();
 } else {
   await cleanupDataset();
 }
@@ -186,6 +188,26 @@ async function applyDataset() {
     activeQrVenues: reviewQrVenues.map((venue) => venue.name),
     reviewDeals: reviewDeals.length,
     signInDisabled: true,
+  });
+}
+
+async function syncDealsOnly() {
+  const venues = await listReviewVenues();
+  const selectedVenues = await prepareReviewQrVenues(venues);
+  const reviewDeals = await listMarkedReviewDeals();
+
+  writeResult({
+    mode,
+    target,
+    supabaseHost: new URL(env.supabaseUrl).host,
+    environmentFingerprint: environmentFingerprint(),
+    datasetMarker: DATASET_MARKER,
+    reviewDeals: reviewDeals.length,
+    activeReviewVenues: selectedVenues.map((venue) => ({
+      id: venue.id,
+      name: venue.name,
+      slug: venue.slug,
+    })),
   });
 }
 
@@ -725,11 +747,13 @@ function parseArguments(argv) {
 }
 
 function readMode(argumentsMap) {
-  const selected = ["--inspect", "--apply", "--cleanup"].filter((flag) =>
+  const selected = ["--inspect", "--apply", "--sync-deals", "--cleanup"].filter((flag) =>
     argumentsMap.has(flag),
   );
   if (selected.length !== 1) {
-    throw new Error("Choose exactly one mode: --inspect, --apply, or --cleanup.");
+    throw new Error(
+      "Choose exactly one mode: --inspect, --apply, --sync-deals, or --cleanup.",
+    );
   }
   return selected[0].slice(2);
 }

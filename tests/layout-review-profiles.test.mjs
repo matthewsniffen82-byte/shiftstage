@@ -61,11 +61,15 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /if \(!populationFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED[\s\S]*?process\.exit\(0\)/,
+    /const dealSyncFlag = String\(process\.env\.LAYOUT_REVIEW_SYNC_DEALS \|\| ""\)\.trim\(\)/,
   );
   assert.match(
     postbuildSource,
-    /if \(populationFlag !== DATASET_MARKER\)[\s\S]*?must exactly equal/,
+    /if \(!populationFlag && !dealSyncFlag\) \{[\s\S]*?LAYOUT_REVIEW_POPULATION_SKIPPED[\s\S]*?process\.exit\(0\)/,
+  );
+  assert.match(
+    postbuildSource,
+    /const enabledFlag = populationFlag \|\| dealSyncFlag[\s\S]*?if \(enabledFlag !== DATASET_MARKER\)[\s\S]*?must exactly equal/,
   );
   assert.match(
     postbuildSource,
@@ -73,7 +77,7 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /"--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=11"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
+    /dealSyncFlag \? "--sync-deals" : "--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=11"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
   );
 });
 
@@ -198,6 +202,14 @@ test("the population workflow preserves the original six profiles and adds the s
 });
 
 test("selected review dancers and venues receive reversible tracked Club QR states", () => {
+  assert.match(
+    scriptSource,
+    /mode === "sync-deals"[\s\S]*?syncDealsOnly\(\)/,
+  );
+  assert.match(
+    scriptSource,
+    /async function syncDealsOnly\(\) \{[\s\S]*?prepareReviewQrVenues\(venues\)[\s\S]*?activeReviewVenues:/,
+  );
   assert.match(scriptSource, /const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES\.size/);
   assert.match(
     scriptSource,
