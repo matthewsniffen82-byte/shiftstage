@@ -30,7 +30,7 @@ test("MyDancr TV uses one page scroller with stable mobile proximity snapping", 
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(500px, calc\(100svh - 180px\), 840px\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /#results\.home-tv-feed \{[\s\S]*?width: calc\(100% \+ 14px\) !important;[\s\S]*?height: auto !important;[\s\S]*?margin: 0 -7px calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(480px, calc\(100svh - 156px\), 864px\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
   );
   assert.match(homeSource, /function syncHomeTvPageSnapState\(\) \{[\s\S]*?activeTab === "tv" && homeTvFeedUsesSnapViewport\(\)[\s\S]*?classList\.toggle\("home-tv-page-snap", shouldSnap\)/);
   assert.match(homeSource, /function deactivateHomeTvFeed\(\) \{[\s\S]*?classList\.remove\("home-tv-page-snap"\)/);

@@ -31729,12 +31729,12 @@
             position: relative !important;
             z-index: auto;
             inset: auto !important;
-            width: 100% !important;
+            width: calc(100% + 14px) !important;
             max-width: none !important;
             height: auto !important;
             min-height: 0;
             max-height: none;
-            margin: 0 0 calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+            margin: 0 -7px calc(112px + env(safe-area-inset-bottom, 0px)) !important;
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) !important;
             grid-auto-rows: auto;
@@ -31753,10 +31753,10 @@
           #results.home-tv-feed > .home-tv-feed-loading,
           #results.home-tv-feed > .home-tv-feed-slide {
             width: 100% !important;
-            height: clamp(500px, calc(100vh - 180px), 840px) !important;
-            height: clamp(500px, calc(100svh - 180px), 840px) !important;
-            min-height: 500px !important;
-            max-height: 840px !important;
+            height: clamp(480px, calc(100vh - 156px), 864px) !important;
+            height: clamp(480px, calc(100svh - 156px), 864px) !important;
+            min-height: 480px !important;
+            max-height: 864px !important;
             margin: 0 !important;
             scroll-snap-align: start;
             scroll-snap-stop: normal;
