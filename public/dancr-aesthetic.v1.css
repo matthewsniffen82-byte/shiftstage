@@ -3536,8 +3536,8 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one solid electric-white Dancr ring.
- * A single physical white border and slight white glow keep the same appearance
+/* Every real circular dancer avatar uses one thin electric-white Dancr ring.
+ * A single crisp white border and tight white glow keep the same appearance
  * on Android, iPhone, and desktop. Venue marks, media, and navigation remain
  * untouched. */
 body.dancr-button-system #profileBackdrop .profile-modal-avatar,
@@ -3548,10 +3548,10 @@ body.dancr-button-system .profile-modal-avatar,
 body.dancr-button-system .home-tv-feed-dancer-photo,
 body.dancr-button-system .profile-titlebar-avatar,
 body.dancr-button-system .tv-profile-photo {
-  border: 5px solid #ffffff !important;
+  border: 2px solid #ffffff !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.82) !important;
   forced-color-adjust: none !important;
   -webkit-print-color-adjust: exact !important;
   text-shadow: none !important;
@@ -3563,9 +3563,9 @@ body.is-android.dancr-button-system .home-tv-feed-dancer-photo,
 body.android-rendering.dancr-button-system .home-tv-feed-dancer-photo,
 body.is-samsung-browser.dancr-button-system .home-tv-feed-dancer-photo,
 body.samsung-rendering.dancr-button-system .home-tv-feed-dancer-photo {
-  border: 5px solid #ffffff !important;
+  border: 2px solid #ffffff !important;
   border-color: #ffffff !important;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.82) !important;
   opacity: 1 !important;
   -webkit-filter: none !important;
   filter: none !important;

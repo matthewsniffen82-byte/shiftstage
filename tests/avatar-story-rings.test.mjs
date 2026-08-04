@@ -9,7 +9,7 @@ const [aesthetic, tokens] = await Promise.all([
 
 test("every real circular dancer avatar uses the shared Dancr story ring", () => {
   const ringRules = aesthetic.match(
-    /\/\* Every real circular dancer avatar uses one solid electric-white Dancr ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
+    /\/\* Every real circular dancer avatar uses one thin electric-white Dancr ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
   )?.[0] || "";
 
   for (const selector of [
@@ -25,8 +25,8 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
     assert.match(ringRules, new RegExp(selector.replaceAll(".", "\\.")));
   }
 
-  assert.match(ringRules, /border: 5px solid #ffffff !important;/);
-  assert.match(ringRules, /box-shadow: 0 0 8px rgba\(255, 255, 255, 0\.72\) !important;/);
+  assert.match(ringRules, /border: 2px solid #ffffff !important;/);
+  assert.match(ringRules, /box-shadow: 0 0 4px rgba\(255, 255, 255, 0\.82\) !important;/);
   assert.match(ringRules, /\.home-tv-feed-dancer-photo::after,[\s\S]*?content: none !important;/);
   assert.match(ringRules, /\.home-tv-feed-dancer-photo::before,[\s\S]*?content: none !important;/);
   assert.doesNotMatch(ringRules, /body\.dancr-button-system :is\(/);
