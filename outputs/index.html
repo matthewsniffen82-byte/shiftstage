@@ -34908,11 +34908,108 @@
 
         #profileBackdrop .profile-uber-ride {
           grid-column: 1 / -1;
-          width: min(100%, 310px);
-          min-height: 48px;
-          justify-self: start;
-          padding-inline: 15px;
+          width: 100%;
+          height: 52px;
+          min-height: 52px;
+          max-height: 52px;
+          justify-self: stretch;
+          padding: 0 15px;
+          overflow: hidden;
           font-size: 12px;
+        }
+
+        #profileBackdrop .profile-uber-ride > span:last-child {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Compact the live profile essentials while keeping its tracked QR
+           large enough to scan and the fixed navigation clear of content. */
+        #profileBackdrop .modal-grid {
+          gap: 9px !important;
+        }
+
+        #profileBackdrop .modal-grid > .working-now-tile {
+          gap: 8px 12px !important;
+          padding: 12px 14px !important;
+        }
+
+        #profileBackdrop .working-now-tile > .meta {
+          grid-template-columns: minmax(0, 1fr) auto !important;
+          gap: 4px 12px !important;
+          padding-top: 7px !important;
+        }
+
+        #profileBackdrop .working-now-tile .detail-line {
+          min-width: 0 !important;
+          min-height: 30px !important;
+        }
+
+        #profileBackdrop .working-now-tile .venue-inline-link {
+          min-width: 0 !important;
+          min-height: 36px !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-working-directions {
+          grid-column: 2 !important;
+          grid-row: 1 / span 2 !important;
+          min-height: 40px !important;
+          justify-self: end !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile {
+          grid-template-columns: minmax(0, 1fr) 128px !important;
+          gap: 14px !important;
+          padding: 14px 15px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-copy {
+          min-width: 0;
+          display: grid;
+          align-content: center;
+          gap: 7px;
+        }
+
+        #profileBackdrop .profile-club-deal-copy small {
+          color: rgba(248, 250, 252, .62);
+          font-size: 11px;
+          font-weight: 750;
+          line-height: 1.3;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button {
+          width: 128px !important;
+          min-width: 128px !important;
+          max-width: 128px !important;
+        }
+
+        @media (max-width: 720px) {
+          #profileBackdrop .profile-modal {
+            --profile-report-clearance: calc(118px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: 0 !important;
+          }
+
+          #profileBackdrop .modal-grid {
+            padding-bottom: var(--profile-report-clearance) !important;
+          }
+        }
+
+        @media (max-width: 340px) {
+          #profileBackdrop .profile-club-deal-tile {
+            grid-template-columns: minmax(0, 1fr) 112px !important;
+          }
+
+          #profileBackdrop .profile-club-deal-qr-button {
+            width: 112px !important;
+            min-width: 112px !important;
+            max-width: 112px !important;
+          }
         }
 
         .feed-uber-ride {
@@ -42207,7 +42304,10 @@
         };
         return `
           <div class="info-tile profile-qr-tile profile-club-deal-tile" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
-            <strong class="profile-club-deal-label">Club Deal</strong>
+            <div class="profile-club-deal-copy">
+              <strong class="profile-club-deal-label">Club Deal</strong>
+              <small>Scan at the club to redeem</small>
+            </div>
             <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal QR" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
             </button>

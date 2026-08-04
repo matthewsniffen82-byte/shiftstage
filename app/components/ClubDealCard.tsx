@@ -146,7 +146,7 @@ export function ClubDealCard({
         <h2>{deal.dealTitle}</h2>
         {!compact ? <p>{deal.dealDescription}</p> : null}
         {deal.dealTerms && !compact ? <small>{deal.dealTerms}</small> : null}
-        {!compact ? <small>Get your unique QR and show it at the venue. No sign-in is required.</small> : null}
+        {!compact ? <small>Scan at the club to redeem. No sign-in is required.</small> : null}
         {dancerNote ? (
           <small>Dancer credit is locked when the QR is issued during a verified check-in and stays attached when saved or shared.</small>
         ) : null}

@@ -434,19 +434,19 @@ function PublicProfileStyles() {
       .profile-action-overflow-menu button { min-height: 44px; padding: 0 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #d8d0e4; background: rgba(255,255,255,.035); font-size: 12px; font-weight: 850; text-align: left; cursor: pointer; }
       .profile-action-overflow-menu button:disabled { opacity: .6; cursor: wait; }
       .profile-action-status { grid-column: 1 / -1; color: #94e5ff; font-size: 12px; font-weight: 850; }
-      .profile-working-card { display: grid; gap: 14px; margin-top: 14px; padding: 18px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
+      .profile-working-card { display: grid; gap: 10px; margin-top: 12px; padding: 15px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
       .profile-working-card.has-club-deal { border-color: rgba(77,236,157,.48); background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.16), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.94), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.13); }
       .profile-working-card.has-club-deal .profile-live-state, .profile-working-card.has-club-deal h2 { color: #4dec9d; text-shadow: 0 0 10px rgba(77,236,157,.24); }
       .profile-working-card.has-club-deal .profile-live-state { border-color: rgba(77,236,157,.52); background: rgba(77,236,157,.1); }
-      .profile-working-head { display: flex; align-items: end; justify-content: space-between; gap: 14px; }
-      .profile-working-head > div { min-width: 0; display: grid; gap: 7px; }
+      .profile-working-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+      .profile-working-head > div { min-width: 0; display: grid; gap: 5px; }
       .profile-live-state, .eyebrow { width: fit-content; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       .profile-live-state { padding: 6px 10px; border: 1px solid rgba(126,234,255,.48); border-radius: 999px; background: rgba(126,234,255,.1); }
       h2 { margin: 0; font-size: clamp(22px, 5vw, 32px); line-height: 1.05; }
       p { margin: 0; color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .profile-working-head > a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 13px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.09); font-size: 11px; font-weight: 900; text-decoration: none; white-space: nowrap; }
-      .profile-active-deal { display: grid; justify-items: center; margin-top: 14px; }
-      .profile-active-deal.has-club-deal { justify-items: stretch; padding: 18px; border: 1px solid rgba(77,236,157,.48); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.14), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.9), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.12); }
+      .profile-active-deal { display: grid; justify-items: center; margin-top: 12px; }
+      .profile-active-deal.has-club-deal { justify-items: stretch; padding: 14px; border: 1px solid rgba(77,236,157,.48); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.14), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.9), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.12); }
       .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px; border: 1px solid rgba(126,234,255,.22); border-radius: 14px; background: rgba(0,0,0,.24); }
       .club-deal-copy { min-width: 0; display: grid; gap: 7px; }
       .club-deal-copy h2 { font-size: 20px; }
@@ -543,16 +543,18 @@ function PublicProfileStyles() {
       .profile-report-dialog option { color: #111; }
       .profile-report-error { color: #ffb4c8; }
       @media (max-width: 600px) {
-        .public-profile-shell { padding: 0 12px 32px; }
+        .public-profile-shell { padding: 0 12px calc(118px + env(safe-area-inset-bottom, 0px)); }
         .profile-titlebar { min-height: 60px; }
         .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; }
         .live-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
-        .profile-working-card { padding: 16px; }
-        .profile-working-head { align-items: start; flex-direction: column; }
-        .club-deal-card { grid-template-columns: 1fr; }
+        .profile-working-card { padding: 14px; }
+        .profile-working-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 12px; }
+        .profile-working-head > a { grid-column: 2; grid-row: 1; min-height: 36px; padding-inline: 10px; }
+        .club-deal-card { grid-template-columns: minmax(0, 1fr) 128px; gap: 14px; padding: 14px; }
         .club-deal-action { justify-items: stretch; }
         .deal-qr-frame { justify-items: center; }
+        .deal-qr-frame img { width: 128px; }
         .profile-media-feature { max-height: min(64dvh, 540px); border-radius: 17px; }
         .profile-media-video-controls { left: 9px; right: 9px; bottom: 52px; gap: 5px; padding: 6px; }
         .profile-media-video-controls button { min-height: 32px; padding-inline: 7px; font-size: 9px; }
@@ -561,6 +563,9 @@ function PublicProfileStyles() {
         .profile-media-feature-expand { right: 10px; bottom: 10px; }
         .profile-media-viewer-previous, .profile-media-viewer-next { width: 40px; height: 50px; font-size: 30px; }
         .shift-list { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 340px) {
+        .club-deal-card { grid-template-columns: 1fr; }
       }
     `}</style>
   );

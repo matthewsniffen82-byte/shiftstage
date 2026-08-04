@@ -112,10 +112,12 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 112px\) !important;/,
+    /Compact the live profile essentials[\s\S]*?#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 128px !important;[\s\S]*?padding: 14px 15px !important;/,
   );
   assert.match(activeDealMarkup, /data-profile-club-deal-config=/);
+  assert.match(activeDealMarkup, /class="profile-club-deal-copy"/);
   assert.match(activeDealMarkup, /class="profile-club-deal-label">Club Deal<\/strong>/);
+  assert.match(activeDealMarkup, /<small>Scan at the club to redeem<\/small>/);
   assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
@@ -123,6 +125,33 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
     /async function hydrateProfileClubDealQr\(root\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?pass\.qrImageUrl[\s\S]*?<img src=/,
   );
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
+});
+
+test("live dancer essentials stay compact, scannable, and clear of the mobile dock", () => {
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?padding-top: 7px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-uber-ride \{[\s\S]*?height: 52px;[\s\S]*?max-height: 52px;[\s\S]*?overflow: hidden;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 128px !important;[\s\S]*?min-width: 128px !important;[\s\S]*?max-width: 128px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-modal \{[\s\S]*?--profile-report-clearance: calc\(118px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
+  );
+  assert.match(
+    profilePage,
+    /\.public-profile-shell \{ padding: 0 12px calc\(118px \+ env\(safe-area-inset-bottom, 0px\)\); \}/,
+  );
+  assert.match(
+    profilePage,
+    /\.club-deal-card \{ grid-template-columns: minmax\(0, 1fr\) 128px; gap: 14px; padding: 14px; \}/,
+  );
 });
 
 test("Working Now profile details remain tappable without faint inner boxes", () => {
