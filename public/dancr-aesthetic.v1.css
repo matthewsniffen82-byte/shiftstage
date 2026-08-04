@@ -3536,11 +3536,12 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one solid electric-white Dancr story
- * ring. The sparkle stroke sits directly on that physical border so Android
- * cannot composite it over the photo. Venue marks, media, and navigation remain
+/* Every real circular dancer avatar uses one solid electric-white Dancr ring.
+ * A single physical white border and slight white glow keep the same appearance
+ * on Android, iPhone, and desktop. Venue marks, media, and navigation remain
  * untouched. */
 body.dancr-button-system :is(
+    #profileBackdrop .profile-modal-avatar,
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
     .home-venue-discovery-lineup-avatar,
@@ -3549,17 +3550,15 @@ body.dancr-button-system :is(
     .profile-titlebar-avatar,
     .tv-profile-photo
   ) {
-  position: relative;
   border: 5px solid #ffffff !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
-  box-shadow:
-    0 0 4px rgba(255, 255, 255, 0.95),
-    0 0 10px rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.72) !important;
   text-shadow: none !important;
 }
 
 body.dancr-button-system :is(
+    #profileBackdrop .profile-modal-avatar,
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
     .home-venue-discovery-lineup-avatar,
@@ -3569,12 +3568,10 @@ body.dancr-button-system :is(
     .tv-profile-photo
   )::after {
   content: none !important;
-  display: none !important;
 }
 
-/* The white dotted stroke is pulled outward onto the five-pixel border band.
- * Its center has no paint, gradients, or mask, so the avatar remains untouched. */
 body.dancr-button-system :is(
+    #profileBackdrop .profile-modal-avatar,
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
     .home-venue-discovery-lineup-avatar,
@@ -3583,19 +3580,7 @@ body.dancr-button-system :is(
     .profile-titlebar-avatar,
     .tv-profile-photo
   )::before {
-  content: "";
-  position: absolute;
-  z-index: 3;
-  inset: -5px;
-  box-sizing: border-box;
-  border: 3px dotted #ffffff;
-  border-radius: inherit;
-  background: none !important;
-  filter:
-    drop-shadow(0 0 2px rgba(255, 255, 255, 0.95))
-    drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
-  animation: none;
-  pointer-events: none;
+  content: none !important;
 }
 
 body.dancr-button-system .home-tv-feed-dancer-photo:not(:has(img)) {
