@@ -296,7 +296,7 @@ export function GlobalMobileBottomNav() {
 
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+            padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
           }
 
           .global-mobile-swipe-indicator {
@@ -306,7 +306,7 @@ export function GlobalMobileBottomNav() {
             position: fixed;
             z-index: 1499;
             left: 50%;
-            bottom: calc(89px + env(safe-area-inset-bottom));
+            bottom: calc(83px + env(safe-area-inset-bottom));
             min-height: 34px;
             display: inline-flex;
             align-items: center;
@@ -364,7 +364,7 @@ export function GlobalMobileBottomNav() {
             left: 50%;
             bottom: calc(8px + env(safe-area-inset-bottom));
             width: min(calc(100% - 16px), 700px);
-            height: 70px;
+            height: 64px;
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: center;
@@ -372,7 +372,7 @@ export function GlobalMobileBottomNav() {
             padding: 3px 4px;
             overflow: hidden;
             border: 1px solid rgba(248, 250, 252, 0.09);
-            border-radius: 26px;
+            border-radius: 23px;
             background:
               linear-gradient(
                 180deg,
@@ -478,8 +478,8 @@ export function GlobalMobileBottomNav() {
             z-index: 0;
             top: 50%;
             left: 50%;
-            width: 46px;
-            height: 46px;
+            width: 42px;
+            height: 42px;
             overflow: hidden;
             border-radius: 50%;
             contain: paint;

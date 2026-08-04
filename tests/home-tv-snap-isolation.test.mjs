@@ -26,7 +26,7 @@ test("MyDancr TV uses one page scroller with stable mobile proximity snapping", 
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?html\.home-tv-page-snap \.hero\.reference-hero,[\s\S]*?html\.home-tv-page-snap \.content-head,[\s\S]*?html\.home-tv-page-snap #results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-bottom: calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?html\.home-tv-page-snap \.hero\.reference-hero,[\s\S]*?html\.home-tv-page-snap \.content-head,[\s\S]*?html\.home-tv-page-snap #results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
   );
   assert.match(
     homeSource,

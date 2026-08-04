@@ -299,7 +299,7 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
   );
   assert.match(
     homeSource,
-    /html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?overflow: visible !important;[\s\S]*?overscroll-behavior-y: auto;[\s\S]*?scroll-snap-type: none;/,
+    /html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-bottom: calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?height: auto !important;[\s\S]*?overflow: visible !important;[\s\S]*?overscroll-behavior-y: auto;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.match(
     homeSource,
