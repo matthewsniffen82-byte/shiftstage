@@ -7,18 +7,14 @@
 
 :root {
   --mydancr-verified-foreground: var(--dancr-color-text-primary);
-  --mydancr-verified-surface: var(--dancr-color-surface-raised);
-  --mydancr-verified-outline: color-mix(
-    in srgb,
-    var(--dancr-color-beam-violet) 38%,
-    transparent
-  );
+  --mydancr-verified-surface: var(--dancr-color-verification);
+  --mydancr-verified-outline: transparent;
 }
 
 /*
- * Verification uses a quiet neutral badge with a restrained informational
- * outline. Sizes remain owned by each surface so dense cards, TV, and full
- * profiles retain their existing layout.
+ * Verification uses a flat muted-sapphire badge with a crisp white check and
+ * no outline or glow. Sizes remain owned by each surface so dense cards, TV,
+ * and full profiles retain their existing layout.
  */
 
 /*
@@ -1970,12 +1966,8 @@ body.dancr-button-system .home-tv-feed-action:not(
 .tv-shell :is(.tv-verified-mark, .verified-mark),
 .public-profile-shell :is(.profile-verified, .verified-mark) {
   border-color: var(--mydancr-verified-outline) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-info) 24%,
-    var(--dancr-color-surface)
-  ) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
   box-shadow: none !important;
   text-shadow: none !important;
 }
@@ -2169,12 +2161,8 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   .tv-verified-mark
 ) {
   border-color: var(--mydancr-verified-outline) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-info) 24%,
-    var(--dancr-color-surface)
-  ) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
   box-shadow: none !important;
   filter: none !important;
   -webkit-filter: none !important;

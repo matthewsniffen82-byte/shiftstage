@@ -681,7 +681,7 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   );
 });
 
-test("verified check marks keep their flat treatment with a hero-beam outline", () => {
+test("verified check marks use a flat sapphire treatment without an outline or glow", () => {
   assert.match(
     aesthetic,
     /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
@@ -692,11 +692,11 @@ test("verified check marks keep their flat treatment with a hero-beam outline", 
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-surface: var\(--dancr-color-surface-raised\)/,
+    /--mydancr-verified-surface: var\(--dancr-color-verification\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-beam-violet\) 38%,[\s\S]*?transparent/,
+    /--mydancr-verified-outline: transparent/,
   );
   assert.match(
     aesthetic,
@@ -705,7 +705,7 @@ test("verified check marks keep their flat treatment with a hero-beam outline", 
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,1100}(?:box-shadow|text-shadow):\s*0 0/);
   assert.doesNotMatch(
     aesthetic,
-    /(?:tv-verified-mark|profile-verified|verified-mark)[\s\S]{0,260}border-color: var\(--dancr-color-info-strong\)/,
+    /(?:tv-verified-mark|profile-verified|verified-mark)[\s\S]{0,260}border-color: var\(--dancr-color-(?:info|beam)-/,
   );
 });
 
