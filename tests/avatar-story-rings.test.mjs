@@ -29,7 +29,7 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
   assert.match(ringRules, /var\(--dancr-color-avatar-ring-magenta\) 72deg/);
   assert.match(ringRules, /var\(--dancr-color-avatar-ring-violet\) 118deg/);
   assert.match(ringRules, /var\(--dancr-color-avatar-ring-blue\) 212deg/);
-  assert.match(ringRules, /var\(--dancr-color-avatar-ring-cyan\) 304deg/);
+  assert.match(ringRules, /var\(--dancr-color-avatar-ring-core\) 304deg/);
   assert.match(ringRules, /padding: 3px;/);
   assert.match(ringRules, /filter: saturate\(1\.18\) brightness\(1\.12\);/);
   assert.match(ringRules, /mask-composite: exclude;/);
@@ -40,5 +40,5 @@ test("the story ring colors come from the centralized Dancr brand palette", () =
   assert.match(tokens, /--dancr-color-avatar-ring-magenta: #f02bdc;/);
   assert.match(tokens, /--dancr-color-avatar-ring-violet: #8b5cf6;/);
   assert.match(tokens, /--dancr-color-avatar-ring-blue: #3b82f6;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-cyan: var\(--dancr-color-info\);/);
+  assert.match(tokens, /--dancr-color-avatar-ring-core: var\(--dancr-color-beam-core\);/);
 });

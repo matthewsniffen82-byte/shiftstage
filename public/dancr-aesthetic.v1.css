@@ -3538,7 +3538,7 @@ body.dancr-button-system .home-tv-feed-shade,
 
 /* Every real circular dancer avatar uses one Dancr story ring. The brighter,
  * three-pixel conic sequence keeps the hero's magenta, electric violet,
- * sapphire, and cyan visibly distinct at compact mobile sizes while leaving
+ * sapphire, and the hero's inner light visibly distinct at compact mobile sizes while leaving
  * venue marks, media, and navigation alone. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
@@ -3562,7 +3562,7 @@ body.dancr-button-system :is(
     ),
     0 0 10px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-cyan) 24%,
+      var(--dancr-color-avatar-ring-core) 24%,
       transparent
     ) !important;
   text-shadow: none !important;
@@ -3591,8 +3591,8 @@ body.dancr-button-system :is(
     var(--dancr-color-avatar-ring-violet) 166deg,
     var(--dancr-color-avatar-ring-blue) 212deg,
     var(--dancr-color-avatar-ring-blue) 258deg,
-    var(--dancr-color-avatar-ring-cyan) 304deg,
-    var(--dancr-color-avatar-ring-cyan) 334deg,
+    var(--dancr-color-avatar-ring-core) 304deg,
+    var(--dancr-color-avatar-ring-core) 334deg,
     var(--dancr-color-avatar-ring-magenta) 360deg
   );
   filter: saturate(1.18) brightness(1.12);

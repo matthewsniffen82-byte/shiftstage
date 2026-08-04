@@ -133,7 +133,7 @@ test("Next pages and the live shell load tokens before shared component styling"
   assert.ok(buttonImport < aestheticImport);
 
   const tokenLink = liveShell.indexOf(
-    '<link href="/dancr-brand-tokens.v1.css?v=5" rel="stylesheet">',
+    '<link href="/dancr-brand-tokens.v1.css?v=6" rel="stylesheet">',
   );
   const buttonLink = liveShell.indexOf(
     '<link href="/dancr-button-system.v1.css" rel="stylesheet">',
