@@ -4056,16 +4056,26 @@
       width: 100%;
       min-height: 52px;
       justify-content: center;
-      border: 1px solid rgba(53,216,255,.78);
-      color: #f7fdff;
+      border: 1px solid rgba(195,169,255,.48) !important;
+      color: #fff !important;
       background:
-        linear-gradient(135deg, rgba(8,92,110,.96), rgba(92,54,150,.96));
+        linear-gradient(180deg, rgba(255,255,255,.055), transparent 46%),
+        color-mix(in srgb, var(--dancr-color-brand-primary) 15%, var(--dancr-color-surface-raised)) !important;
       box-shadow:
-        0 0 0 1px rgba(255,255,255,.06) inset,
-        0 0 28px rgba(53,216,255,.24),
-        0 16px 36px rgba(0,0,0,.42);
+        0 8px 18px rgba(0,0,0,.26),
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 0 0 1px rgba(139,92,246,.06) !important;
       font-size: 15px;
       letter-spacing: 0;
+    }
+
+    .approved-tool-dropdown-actions button[data-dancer-control-action="collapse-approved-tool"]:hover,
+    .approved-tool-dropdown-actions button[data-dancer-control-action="collapse-approved-tool"]:focus-visible {
+      border-color: rgba(216,201,255,.68) !important;
+      box-shadow:
+        0 9px 20px rgba(0,0,0,.3),
+        inset 0 1px 0 rgba(255,255,255,.1),
+        0 0 0 3px rgba(139,92,246,.12) !important;
     }
 
     .approved-tool-dropdown-actions button[data-dancer-control-action="collapse-approved-tool"]::before {
@@ -4076,8 +4086,9 @@
       height: 24px;
       margin-right: 8px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.28);
-      background: rgba(0,0,0,.24);
+      border: 1px solid rgba(216,201,255,.38);
+      color: #e1d7ff;
+      background: rgba(139,92,246,.18);
       font-size: 20px;
       line-height: 1;
     }

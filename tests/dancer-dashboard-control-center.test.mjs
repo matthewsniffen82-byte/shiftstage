@@ -39,6 +39,20 @@ test("schedule editing expands inside the dashboard schedule card", () => {
     page,
     /function openApprovedScheduleEditor\(\)[\s\S]*?setApprovedToolDropdown\("schedule", \{ force: true \}\)[\s\S]*?approvedScheduleDropdown[\s\S]*?scrollIntoView\(\{ behavior: "smooth", block: "nearest" \}\)/,
   );
+  const collapseButtonRule = page.match(
+    /\.approved-tool-dropdown-actions button\[data-dancer-control-action="collapse-approved-tool"\] \{[^}]*\}/,
+  )?.[0] || "";
+  assert.match(collapseButtonRule, /border: 1px solid rgba\(195,169,255,\.48\) !important;/);
+  assert.match(collapseButtonRule, /var\(--dancr-color-brand-primary\) 15%/);
+  assert.match(collapseButtonRule, /0 8px 18px rgba\(0,0,0,\.26\)/);
+  assert.match(
+    page,
+    /button\[data-dancer-control-action="collapse-approved-tool"\]::before \{[\s\S]*?color: #e1d7ff;[\s\S]*?background: rgba\(139,92,246,\.18\);/,
+  );
+  assert.doesNotMatch(
+    collapseButtonRule,
+    /0 0 28px rgba\(53,216,255,\.24\)/,
+  );
 });
 
 test("dashboard glance metrics are populated only from live analytics fields", () => {
