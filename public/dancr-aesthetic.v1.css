@@ -6,16 +6,16 @@
  */
 
 :root {
-  --mydancr-verified-cyan: var(--dancr-color-verified-pearl);
-  --mydancr-verified-blue: var(--dancr-color-verified-edge);
-  --mydancr-verified-violet: var(--dancr-color-verified-glow);
-  --mydancr-verified-magenta: var(--dancr-color-verified-silver);
+  --mydancr-verified-cyan: var(--dancr-color-info);
+  --mydancr-verified-blue: var(--dancr-color-info);
+  --mydancr-verified-violet: var(--dancr-color-info);
+  --mydancr-verified-magenta: var(--dancr-color-info);
 }
 
 /*
- * Verification uses a pearl-white crystalline badge, a black check, embedded
- * static white glitter, and a restrained blue-violet edge glow. Sizes remain
- * owned by each surface so dense cards, TV, and full profiles retain layout.
+ * Verification stays informational cyan while the hero and brand accents stay
+ * violet. Sizes remain owned by each surface so dense cards, TV, and full
+ * profiles retain their existing layout.
  */
 
 /*
@@ -31,47 +31,15 @@
   .profile-verified.profile-verified.profile-verified,
   .tv-verified-mark.tv-verified-mark.tv-verified-mark
 ) {
-  border: 1px solid var(--dancr-color-verified-edge) !important;
-  color: var(--dancr-color-verified-check) !important;
-  background: var(--dancr-verified-badge-background) !important;
-  box-shadow: var(--dancr-shadow-verified) !important;
+  border: 1px solid var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-info-soft) !important;
   text-shadow: none !important;
-}
-
-:is(
-  .verified-mark,
-  .verified-check,
-  .home-tv-feed-verified,
-  .profile-modal-verified,
-  .profile-verified,
-  .tv-verified-mark
-) {
-  position: relative !important;
-  isolation: isolate;
-  overflow: visible !important;
-}
-
-/* A fixed four-point diamond completes the permanent glitter treatment. */
-:is(
-  .verified-mark,
-  .verified-check,
-  .home-tv-feed-verified,
-  .profile-modal-verified,
-  .profile-verified,
-  .tv-verified-mark
-)::after {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  top: -2px;
-  right: -2px;
-  width: 6px;
-  height: 6px;
-  pointer-events: none;
-  background: #ffffff;
-  -webkit-clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
-  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
-  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 3px var(--dancr-color-verified-glow));
 }
 
 :is(
@@ -2002,10 +1970,14 @@ body.dancr-button-system .home-tv-feed-action:not(
 
 .tv-shell :is(.tv-verified-mark, .verified-mark),
 .public-profile-shell :is(.profile-verified, .verified-mark) {
-  border-color: var(--dancr-color-verified-edge) !important;
-  color: var(--dancr-color-verified-check) !important;
-  background: var(--dancr-verified-badge-background) !important;
-  box-shadow: var(--dancr-shadow-verified) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
   text-shadow: none !important;
 }
 
@@ -2197,10 +2169,14 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   .profile-verified,
   .tv-verified-mark
 ) {
-  border-color: var(--dancr-color-verified-edge) !important;
-  color: var(--dancr-color-verified-check) !important;
-  background: var(--dancr-verified-badge-background) !important;
-  box-shadow: var(--dancr-shadow-verified) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: none !important;
   filter: none !important;
   -webkit-filter: none !important;
   text-shadow: none !important;
@@ -2997,10 +2973,10 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-name .verified-mark {
-  border-color: var(--dancr-color-verified-edge) !important;
-  color: var(--dancr-color-verified-check) !important;
-  background: var(--dancr-verified-badge-background) !important;
-  box-shadow: var(--dancr-shadow-verified) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-info) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-venue {
@@ -3056,10 +3032,10 @@ body.dancr-button-system .public-profile-shell .profile-titlebar h1 {
 
 body.dancr-button-system #profileBackdrop .profile-modal-verified,
 body.dancr-button-system .public-profile-shell .profile-verified {
-  border-color: var(--dancr-color-verified-edge) !important;
-  color: var(--dancr-color-verified-check) !important;
-  background: var(--dancr-verified-badge-background) !important;
-  box-shadow: var(--dancr-shadow-verified) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-info) !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #modalCity,
@@ -3601,10 +3577,14 @@ body.dancr-button-system .home-tv-feed-venue svg,
 
 body.dancr-button-system .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
 .tv-shell .tv-verified-mark.tv-verified-mark.tv-verified-mark {
-  border-color: var(--dancr-color-verified-edge) !important;
-  color: var(--dancr-color-verified-check) !important;
-  background: var(--dancr-verified-badge-background) !important;
-  box-shadow: var(--dancr-shadow-verified) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-info) 24%,
+    var(--dancr-color-surface)
+  ) !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-info-soft) !important;
   text-shadow: none !important;
 }
 

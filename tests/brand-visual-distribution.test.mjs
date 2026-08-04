@@ -63,11 +63,7 @@ test("brand and semantic color stay assigned to interaction and real state", () 
   assert.match(aesthetic, /\.photo-review-card\.is-pending[\s\S]*?var\(--dancr-color-featured\)/);
   assert.match(aesthetic, /\.photo-review-card\.is-approved[\s\S]*?var\(--dancr-color-success\)/);
   assert.match(aesthetic, /\.submission-review-card\.is-rejected[\s\S]*?var\(--dancr-color-danger\)/);
-  assert.match(aesthetic, /\.profile-verified[\s\S]*?var\(--dancr-verified-badge-background\)/);
-  assert.match(tokens, /--dancr-color-verified-pearl: #f8fbff;/);
-  assert.match(tokens, /--dancr-color-verified-check: #050507;/);
-  assert.match(tokens, /--dancr-verified-badge-background:[\s\S]*?radial-gradient[\s\S]*?linear-gradient/);
-  assert.match(tokens, /--dancr-shadow-verified:[\s\S]*?var\(--dancr-color-verified-glow\)/);
+  assert.match(aesthetic, /\.profile-verified[\s\S]*?var\(--dancr-color-info\) 24%/);
 });
 
 test("the production live-shell dashboards receive the palette without layout or navigation changes", () => {
