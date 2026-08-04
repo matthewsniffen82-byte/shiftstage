@@ -43,7 +43,7 @@ test("schedule editing expands inside the dashboard schedule card", () => {
     /\.approved-tool-dropdown-actions button\[data-dancer-control-action="collapse-approved-tool"\] \{[^}]*\}/,
   )?.[0] || "";
   assert.match(collapseButtonRule, /border: 1px solid rgba\(195,169,255,\.48\) !important;/);
-  assert.match(collapseButtonRule, /var\(--dancr-color-brand-primary\) 15%/);
+  assert.match(collapseButtonRule, /var\(--dancr-color-brand-primary\) 12%/);
   assert.match(collapseButtonRule, /0 8px 18px rgba\(0,0,0,\.26\)/);
   assert.match(
     page,
