@@ -3537,9 +3537,9 @@ body.dancr-button-system .home-tv-feed-shade,
 }
 
 /* Every real circular dancer avatar uses one thin electric-white Dancr ring.
- * A single crisp white border and tight white glow keep the same appearance
- * on Android, iPhone, and desktop. Venue marks, media, and navigation remain
- * untouched. */
+ * The host has no painted border. A dedicated inset overlay paints above the
+ * avatar image so Android cannot composite the white edge into gray. Venue
+ * marks, media, and navigation remain untouched. */
 body.dancr-button-system #profileBackdrop .profile-modal-avatar,
 body.dancr-button-system .approved-avatar-preview,
 body.dancr-button-system .venue-card-lineup-avatar,
@@ -3548,10 +3548,12 @@ body.dancr-button-system .profile-modal-avatar,
 body.dancr-button-system .home-tv-feed-dancer-photo,
 body.dancr-button-system .profile-titlebar-avatar,
 body.dancr-button-system .tv-profile-photo {
-  border: 2px solid #ffffff !important;
+  position: relative !important;
+  isolation: isolate !important;
+  border: 0 !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.82) !important;
+  box-shadow: none !important;
   forced-color-adjust: none !important;
   -webkit-print-color-adjust: exact !important;
   text-shadow: none !important;
@@ -3563,9 +3565,9 @@ body.is-android.dancr-button-system .home-tv-feed-dancer-photo,
 body.android-rendering.dancr-button-system .home-tv-feed-dancer-photo,
 body.is-samsung-browser.dancr-button-system .home-tv-feed-dancer-photo,
 body.samsung-rendering.dancr-button-system .home-tv-feed-dancer-photo {
-  border: 2px solid #ffffff !important;
-  border-color: #ffffff !important;
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.82) !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
   opacity: 1 !important;
   -webkit-filter: none !important;
   filter: none !important;
@@ -3583,7 +3585,21 @@ body.dancr-button-system .profile-modal-avatar::after,
 body.dancr-button-system .home-tv-feed-dancer-photo::after,
 body.dancr-button-system .profile-titlebar-avatar::after,
 body.dancr-button-system .tv-profile-photo::after {
-  content: none !important;
+  content: "" !important;
+  position: absolute !important;
+  z-index: 3 !important;
+  inset: 0 !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-shadow:
+    inset 0 0 0 2px #ffffff,
+    inset 0 0 4px rgba(255, 255, 255, 0.96) !important;
+  opacity: 1 !important;
+  -webkit-filter: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  pointer-events: none !important;
 }
 
 body.dancr-button-system #profileBackdrop .profile-modal-avatar::before,
