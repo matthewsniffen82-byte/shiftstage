@@ -34537,6 +34537,47 @@
             line-height: 1.35 !important;
           }
         }
+
+        /* Keep active Club Deal actions contained in full dancer profiles on every phone. */
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile .modal-schedule-text.tonight,
+        #profileBackdrop .working-now-tile .tonight-time-row > .venue-dot {
+          color: #4dec9d !important;
+          text-shadow: 0 0 10px rgba(77, 236, 157, .24) !important;
+        }
+
+        @media (max-width: 720px) {
+          #profileBackdrop .profile-club-deal-tile {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 12px !important;
+            overflow: hidden !important;
+          }
+
+          #profileBackdrop .profile-club-deal-tile > .profile-deal-copy {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+
+          #profileBackdrop .profile-club-deal-tile > .profile-club-deal-cta {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            justify-self: stretch !important;
+          }
+
+          #profileBackdrop .profile-club-deal-tile .profile-deal-main,
+          #profileBackdrop .profile-club-deal-tile .profile-club-deal-cta > strong {
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            text-overflow: clip !important;
+          }
+        }
         /* One discovery-heading divider across every viewport. */
         .content-head.discovery-section-head {
           padding-bottom: 13px !important;

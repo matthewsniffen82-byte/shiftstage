@@ -93,6 +93,21 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
 });
 
+test("active full-profile Club Deals stay contained on mobile and use one live-status color", () => {
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile > strong,[\s\S]*?#profileBackdrop \.working-now-tile \.modal-schedule-text\.tonight,[\s\S]*?color: #4dec9d !important;/,
+  );
+  assert.match(
+    liveApp,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?max-width: 100% !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-tile > \.profile-club-deal-cta \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;/,
+  );
+});
+
 test("the in-profile TV tab is dancer-only, opens full screen, and does not alter global navigation", () => {
   assert.match(
     profilePage,
