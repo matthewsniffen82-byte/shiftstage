@@ -888,3 +888,30 @@ test("mobile discovery headings share a compact divided hierarchy across Android
     /function renderHomeTvFeed\(city\)[\s\S]*?classList\.add\("discovery-section-head", "tv-section-head"\)/,
   );
 });
+
+test("venue search identifies active venues with an emerald NOW badge", () => {
+  assert.match(
+    homeSource,
+    /id="venueSelect"[\s\S]*?id="venueSelectButton"[\s\S]*?id="venueSelectButtonLive"[^>]*>NOW<[\s\S]*?id="venueSelectDialog"[\s\S]*?id="venueSelectOptions"/,
+  );
+  assert.match(
+    homeSource,
+    /function venueWorkingNowCount\(venue, city = selectedCity\(\)\)[\s\S]*?venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)/,
+  );
+  assert.match(
+    homeSource,
+    /data-working-now="\$\{Boolean\(workingNowCount\)\}"[\s\S]*?workingNowCount \? " · NOW"[\s\S]*?venuePickerOptionMarkup\([\s\S]*?workingNowCount/,
+  );
+  assert.match(
+    homeSource,
+    /\.venue-picker-trigger-live,[\s\S]*?\.venue-picker-now \{[\s\S]*?color: #10b981[\s\S]*?background: rgba\(16,185,129,\.12\)/,
+  );
+  assert.match(
+    homeSource,
+    /function applyVenuePickerSelection\(\)[\s\S]*?venueSelect\.value = pendingVenueSelection[\s\S]*?dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/,
+  );
+  assert.match(
+    homeSource,
+    /function closeVenuePicker\(\) \{[\s\S]*?syncVenuePickerSelection\(venueSelect\?\.value \|\| "all"\)/,
+  );
+});

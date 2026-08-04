@@ -29589,17 +29589,32 @@
               <option>50 mi</option>
             </select>
           </div>
-          <div class="field">
-            <label for="venueSelect">Venue</label>
+          <div class="field venue-picker-field" id="venuePickerField">
+            <label id="venueSelectLabel" for="venueSelect">Venue</label>
             <select id="venueSelect">
               <option value="all">All venues</option>
             </select>
+            <button class="venue-picker-trigger" id="venueSelectButton" type="button" aria-haspopup="dialog" aria-controls="venueSelectDialog" aria-expanded="false" aria-labelledby="venueSelectLabel venueSelectButtonText" hidden>
+              <span class="venue-picker-trigger-value" id="venueSelectButtonText">All venues</span>
+              <span class="venue-picker-trigger-live" id="venueSelectButtonLive" hidden>NOW</span>
+              <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </button>
           </div>
           <button class="location-btn" id="locationBtn" type="button">
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
             <span class="location-btn-label">Use my location</span>
           </button>
         </div>
+        <dialog class="venue-picker-dialog" id="venueSelectDialog" aria-labelledby="venueSelectDialogTitle">
+          <div class="venue-picker-panel">
+            <div class="venue-picker-header">
+              <div><span>Venue search</span><strong id="venueSelectDialogTitle">Choose a venue</strong></div>
+              <button class="venue-picker-close" id="venueSelectClose" type="button" aria-label="Close venue search">&times;</button>
+            </div>
+            <div class="venue-picker-options" id="venueSelectOptions" role="listbox" aria-labelledby="venueSelectDialogTitle"></div>
+            <button class="venue-picker-done" id="venueSelectDone" type="button">Done</button>
+          </div>
+        </dialog>
       </section>
 
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
@@ -29649,6 +29664,35 @@
         .home-filter-toggle { display: none; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 0 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(88,48,173,.36), rgba(17,94,117,.3)); font: inherit; font-weight: 950; cursor: pointer; }
         .home-discovery-controls select,
         .home-discovery-controls .location-btn { width: 100% !important; min-width: 0 !important; max-width: 100% !important; min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
+        .venue-picker-field { position: relative; }
+        .venue-picker-trigger[hidden] { display: none !important; }
+        .venue-picker-field.is-enhanced #venueSelect { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 1px !important; padding: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
+        #venueSelect option[data-working-now="true"] { color: #10b981; font-weight: 900; }
+        .venue-picker-trigger { width: 100%; min-width: 0; min-height: 46px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #334155; border-radius: 12px; color: #f8fafc; background: #050507; font: inherit; font-size: clamp(14px, 1.8vw, 17px); font-weight: 850; text-align: left; cursor: pointer; }
+        .venue-picker-trigger:hover { border-color: #64748b; }
+        .venue-picker-trigger:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; border-color: #7c3aed; }
+        .venue-picker-trigger-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .venue-picker-trigger-live, .venue-picker-now { display: inline-flex; align-items: center; justify-content: center; min-height: 22px; padding: 0 8px; border: 1px solid rgba(16,185,129,.55); border-radius: 999px; color: #10b981; background: rgba(16,185,129,.12); font-size: 10px; font-weight: 950; letter-spacing: .08em; line-height: 1; }
+        .venue-picker-chevron { width: 18px; height: 18px; fill: none; stroke: #94a3b8; stroke-width: 1.8; }
+        .venue-picker-dialog { width: min(520px, calc(100vw - 20px)); max-width: none; max-height: calc(100dvh - 20px); margin: auto; padding: 0; overflow: visible; border: 1px solid #334155; border-radius: 20px; color: #f8fafc; background: #111118; box-shadow: 0 28px 80px rgba(0,0,0,.62); }
+        .venue-picker-dialog::backdrop { background: rgba(5,5,7,.82); backdrop-filter: blur(8px); }
+        .venue-picker-panel { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+        .venue-picker-header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 13px; border-bottom: 1px solid #334155; }
+        .venue-picker-header > div { min-width: 0; display: grid; gap: 4px; }
+        .venue-picker-header span { color: #94a3b8; font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+        .venue-picker-header strong { color: #f8fafc; font-size: 20px; }
+        .venue-picker-close { width: 42px; height: 42px; display: grid; place-items: center; padding: 0; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; background: #050507; font-size: 28px; line-height: 1; cursor: pointer; }
+        .venue-picker-close:focus-visible, .venue-picker-option:focus-visible, .venue-picker-done:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+        .venue-picker-options { max-height: calc(100dvh - 198px); padding: 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #64748b transparent; }
+        .venue-picker-option { width: 100%; min-height: 58px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 11px; border: 1px solid transparent; border-radius: 13px; color: #f8fafc; background: transparent; font: inherit; font-size: 16px; font-weight: 780; text-align: left; cursor: pointer; }
+        .venue-picker-option:hover { background: rgba(248,250,252,.055); }
+        .venue-picker-option[aria-selected="true"] { border-color: rgba(124,58,237,.55); background: rgba(124,58,237,.13); }
+        .venue-picker-radio { width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid #64748b; border-radius: 999px; }
+        .venue-picker-option[aria-selected="true"] .venue-picker-radio { border-color: #7c3aed; }
+        .venue-picker-option[aria-selected="true"] .venue-picker-radio::after { content: ""; width: 12px; height: 12px; border-radius: 999px; background: #7c3aed; }
+        .venue-picker-option-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .venue-picker-done { min-height: 50px; margin: 10px 16px 16px; border: 1px solid #7c3aed; border-radius: 13px; color: #f8fafc; background: #7c3aed; font: inherit; font-weight: 950; cursor: pointer; }
+        .venue-picker-done:hover { background: #6d28d9; }
         .home-live-summary { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; overflow: hidden; }
         .home-live-summary span,
         .home-live-summary strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
@@ -36252,6 +36296,17 @@
     const citySelect = document.getElementById("citySelect");
     const distanceSelect = document.getElementById("distanceSelect");
     const venueSelect = document.getElementById("venueSelect");
+    const venuePickerField = document.getElementById("venuePickerField");
+    const venueSelectLabel = document.getElementById("venueSelectLabel");
+    const venueSelectButton = document.getElementById("venueSelectButton");
+    const venueSelectButtonText = document.getElementById("venueSelectButtonText");
+    const venueSelectButtonLive = document.getElementById("venueSelectButtonLive");
+    const venueSelectDialog = document.getElementById("venueSelectDialog");
+    const venueSelectOptions = document.getElementById("venueSelectOptions");
+    const venueSelectClose = document.getElementById("venueSelectClose");
+    const venueSelectDone = document.getElementById("venueSelectDone");
+    let pendingVenueSelection = "all";
+    let venuePickerRestoreFocus = null;
     const homeFilterToggle = document.getElementById("homeFilterToggle");
     const homeAdvancedFilters = document.getElementById("homeAdvancedFilters");
     const results = document.getElementById("results");
@@ -40789,17 +40844,50 @@
       return !venue?.hidden && venueWithinSelectedRadius(venue) && (venueName === "all" || venue.name === venueName);
     }
 
+    function venueWorkingNowCount(venue, city = selectedCity()) {
+      if (!venue?.name || !markets[city]) return 0;
+      return venueDancers(city, venue.name).filter((profile) => isWorkingTonight(profile, city)).length;
+    }
+
+    function venuePickerOptionMarkup(value, label, workingNowCount, selected) {
+      const safeValue = escapeOptionValue(value);
+      const safeLabel = escapeOptionValue(label);
+      const liveLabel = workingNowCount ? `${workingNowCount} ${workingNowCount === 1 ? "dancer" : "dancers"} working now` : "";
+      return `<button class="venue-picker-option" type="button" role="option" data-venue-picker-value="${safeValue}" aria-selected="${selected}" aria-label="${safeLabel}${liveLabel ? `, ${liveLabel}` : ""}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeLabel}</span>${workingNowCount ? '<span class="venue-picker-now" aria-hidden="true">NOW</span>' : ""}</button>`;
+    }
+
+    function syncVenuePickerSelection(value = venueSelect?.value || "all") {
+      pendingVenueSelection = value;
+      venueSelectOptions?.querySelectorAll("[data-venue-picker-value]").forEach((option) => {
+        option.setAttribute("aria-selected", String(option.dataset.venuePickerValue === value));
+      });
+      const city = selectedCity();
+      const venue = value === "all" ? null : resolveVenueByName(value, city);
+      const workingNowCount = venueWorkingNowCount(venue, city);
+      if (venueSelectButtonText) venueSelectButtonText.textContent = venue?.name || "All venues";
+      if (venueSelectButtonLive) venueSelectButtonLive.hidden = !workingNowCount;
+      if (venueSelectButton) venueSelectButton.setAttribute("aria-label", venue ? `${venue.name}${workingNowCount ? `, ${workingNowCount} ${workingNowCount === 1 ? "dancer" : "dancers"} working now` : ""}` : "All venues");
+    }
+
     function populateVenueSelect(city = selectedCity()) {
       if (!venueSelect || !markets[city]) return;
       const previous = venueSelect.value || "all";
       const venues = markets[city].venues
         .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
         .sort((a, b) => compareVenueDistance(a, b, city));
+      const venueOptions = venues.map((venue) => ({ venue, workingNowCount: venueWorkingNowCount(venue, city) }));
       venueSelect.innerHTML = [
         `<option value="all">All venues</option>`,
-        ...venues.map((venue) => `<option value="${escapeOptionValue(venue.name)}">${escapeOptionValue(venue.name)}</option>`)
+        ...venueOptions.map(({ venue, workingNowCount }) => `<option value="${escapeOptionValue(venue.name)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(venue.name)}${workingNowCount ? " · NOW" : ""}</option>`)
       ].join("");
       venueSelect.value = venues.some((venue) => venue.name === previous) ? previous : "all";
+      if (venueSelectOptions) {
+        venueSelectOptions.innerHTML = [
+          venuePickerOptionMarkup("all", "All venues", 0, venueSelect.value === "all"),
+          ...venueOptions.map(({ venue, workingNowCount }) => venuePickerOptionMarkup(venue.name, venue.name, workingNowCount, venueSelect.value === venue.name))
+        ].join("");
+      }
+      syncVenuePickerSelection(venueSelect.value);
     }
 
     function cityTimeZone(city = selectedCity()) {
@@ -55089,6 +55177,33 @@
       render();
     });
 
+    function openVenuePicker() {
+      if (!venueSelectDialog || typeof venueSelectDialog.showModal !== "function") return;
+      venuePickerRestoreFocus = document.activeElement;
+      syncVenuePickerSelection(venueSelect?.value || "all");
+      venueSelectButton?.setAttribute("aria-expanded", "true");
+      venueSelectDialog.showModal();
+      window.requestAnimationFrame(() => venueSelectOptions?.querySelector('[aria-selected="true"]')?.focus());
+    }
+
+    function closeVenuePicker() {
+      syncVenuePickerSelection(venueSelect?.value || "all");
+      if (venueSelectDialog?.open) venueSelectDialog.close();
+      venueSelectButton?.setAttribute("aria-expanded", "false");
+      const focusTarget = venuePickerRestoreFocus instanceof HTMLElement ? venuePickerRestoreFocus : venueSelectButton;
+      window.requestAnimationFrame(() => focusTarget?.focus());
+      venuePickerRestoreFocus = null;
+    }
+
+    function applyVenuePickerSelection() {
+      if (!venueSelect) return closeVenuePicker();
+      const changed = venueSelect.value !== pendingVenueSelection;
+      venueSelect.value = pendingVenueSelection;
+      syncVenuePickerSelection(venueSelect.value);
+      closeVenuePicker();
+      if (changed) venueSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
     distanceSelect.addEventListener("change", () => {
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
@@ -55110,6 +55225,34 @@
       const venueName = selectedVenueFilter();
       showToast(venueName === "all" ? "Showing all venues" : `Showing ${venueName}`);
     });
+
+    if (venuePickerField && venueSelectButton && venueSelectDialog && typeof venueSelectDialog.showModal === "function") {
+      venuePickerField.classList.add("is-enhanced");
+      venueSelectButton.hidden = false;
+    }
+    venueSelectButton?.addEventListener("click", openVenuePicker);
+    venueSelectLabel?.addEventListener("click", (event) => {
+      if (!venuePickerField?.classList.contains("is-enhanced")) return;
+      event.preventDefault();
+      openVenuePicker();
+    });
+    venueSelectDone?.addEventListener("click", applyVenuePickerSelection);
+    venueSelectClose?.addEventListener("click", closeVenuePicker);
+    venueSelectOptions?.addEventListener("click", (event) => {
+      const option = event.target.closest("[data-venue-picker-value]");
+      if (option) syncVenuePickerSelection(option.dataset.venuePickerValue || "all");
+    });
+    venueSelectOptions?.addEventListener("keydown", (event) => {
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+      const options = [...venueSelectOptions.querySelectorAll("[data-venue-picker-value]")];
+      const currentIndex = options.indexOf(document.activeElement);
+      if (!options.length || currentIndex < 0) return;
+      event.preventDefault();
+      const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 : (currentIndex + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+      options[nextIndex]?.focus();
+    });
+    venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
+    venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
