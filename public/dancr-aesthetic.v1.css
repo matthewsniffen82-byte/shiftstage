@@ -6,8 +6,8 @@
  */
 
 :root {
-  --mydancr-verified-foreground: var(--dancr-color-verification-foreground);
-  --mydancr-verified-surface: var(--dancr-color-verification);
+  --mydancr-verified-foreground: var(--dancr-color-text-primary);
+  --mydancr-verified-surface: var(--dancr-color-surface-raised);
   --mydancr-verified-outline: color-mix(
     in srgb,
     var(--dancr-color-beam-violet) 38%,
@@ -16,9 +16,9 @@
 }
 
 /*
- * Verification uses a flat platinum badge with a crisp near-black check and
- * a restrained hero-beam outline without glow. Sizes remain owned by each
- * surface so dense cards, TV, and full profiles retain their existing layout.
+ * Verification uses a flat near-black badge with a crisp white check and a
+ * restrained hero-beam outline without glow. Sizes remain owned by each surface
+ * so dense cards, TV, and full profiles retain their existing layout.
  */
 
 /*
