@@ -136,7 +136,7 @@ test("all three destinations land at their title before the cards", () => {
   );
   assert.match(
     homeSource,
-    /function focusHomeResults\(\) \{[\s\S]*?cancelAnimationFrame\(homeResultsFocusFrame\)[\s\S]*?clearTimeout\(homeResultsFocusTimer\)[\s\S]*?const focusRun = \+\+homeResultsFocusRun[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?requestAnimationFrame\(\(\) => settle\(remainingFrames - 1\)\)[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?160/,
+    /function cancelHomeResultsFocus\(\{ releaseTvLanding = false \} = \{\}\) \{[\s\S]*?cancelAnimationFrame\(homeResultsFocusFrame\)[\s\S]*?clearTimeout\(homeResultsFocusTimer\)[\s\S]*?homeResultsFocusRun \+= 1[\s\S]*?releaseTvLanding\) homeTvFeedLandingPending = false;[\s\S]*?function focusHomeResults\(\) \{[\s\S]*?cancelHomeResultsFocus\(\);[\s\S]*?const focusRun = homeResultsFocusRun[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?requestAnimationFrame\(\(\) => settle\(remainingFrames - 1\)\)[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?160/,
   );
   assert.match(
     homeSource,
@@ -164,6 +164,22 @@ test("all three destinations land at their title before the cards", () => {
     /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-top: calc\(14px \+ env\(safe-area-inset-top, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?margin: 0 0 calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
+});
+
+test("manual scrolling releases the initial title landing without disabling page snap", () => {
+  assert.match(
+    homeSource,
+    /const homeResultsScrollIntentKeys = new Set\(\[[\s\S]*?"ArrowUp"[\s\S]*?"ArrowDown"[\s\S]*?"PageUp"[\s\S]*?"PageDown"[\s\S]*?"Home"[\s\S]*?"End"[\s\S]*?" "[\s\S]*?"Spacebar"[\s\S]*?\]\);/,
+  );
+  assert.match(
+    homeSource,
+    /function releaseHomeResultsLandingForUser\(event\) \{[\s\S]*?event\.type === "keydown"[\s\S]*?homeResultsScrollIntentKeys\.has\(event\.key\)[\s\S]*?cancelHomeResultsFocus\(\{ releaseTvLanding: true \}\);/,
+  );
+  assert.match(
+    homeSource,
+    /window\.addEventListener\("touchstart", releaseHomeResultsLandingForUser, \{ passive: true, capture: true \}\);[\s\S]*?window\.addEventListener\("wheel", releaseHomeResultsLandingForUser, \{ passive: true, capture: true \}\);[\s\S]*?window\.addEventListener\("keydown", releaseHomeResultsLandingForUser, \{ capture: true \}\);/,
+  );
+  assert.match(homeSource, /html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;/);
 });
 
 test("mobile discovery keeps the active title and destination dock visible while results scroll", () => {

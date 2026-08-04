@@ -50373,10 +50373,22 @@
       window.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
     }
 
+    function cancelHomeResultsFocus({ releaseTvLanding = false } = {}) {
+      if (homeResultsFocusFrame) {
+        window.cancelAnimationFrame(homeResultsFocusFrame);
+        homeResultsFocusFrame = 0;
+      }
+      if (homeResultsFocusTimer) {
+        window.clearTimeout(homeResultsFocusTimer);
+        homeResultsFocusTimer = 0;
+      }
+      homeResultsFocusRun += 1;
+      if (releaseTvLanding) homeTvFeedLandingPending = false;
+    }
+
     function focusHomeResults() {
-      if (homeResultsFocusFrame) window.cancelAnimationFrame(homeResultsFocusFrame);
-      if (homeResultsFocusTimer) window.clearTimeout(homeResultsFocusTimer);
-      const focusRun = ++homeResultsFocusRun;
+      cancelHomeResultsFocus();
+      const focusRun = homeResultsFocusRun;
       const settle = (remainingFrames) => {
         if (focusRun !== homeResultsFocusRun) return;
         alignHomeResultsTitle();
@@ -50398,6 +50410,22 @@
       if (!homeTvFeedLandingPending) return;
       focusHomeResults();
       if (complete) homeTvFeedLandingPending = false;
+    }
+
+    const homeResultsScrollIntentKeys = new Set([
+      "ArrowUp",
+      "ArrowDown",
+      "PageUp",
+      "PageDown",
+      "Home",
+      "End",
+      " ",
+      "Spacebar"
+    ]);
+
+    function releaseHomeResultsLandingForUser(event) {
+      if (event.type === "keydown" && !homeResultsScrollIntentKeys.has(event.key)) return;
+      cancelHomeResultsFocus({ releaseTvLanding: true });
     }
 
     function handleHomeDiscoveryFeedViewportChange() {
@@ -54583,6 +54611,9 @@
       event.preventDefault();
       activateHomeDestination("tv");
     });
+    window.addEventListener("touchstart", releaseHomeResultsLandingForUser, { passive: true, capture: true });
+    window.addEventListener("wheel", releaseHomeResultsLandingForUser, { passive: true, capture: true });
+    window.addEventListener("keydown", releaseHomeResultsLandingForUser, { capture: true });
     window.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.addEventListener("orientationchange", handleHomeDiscoveryFeedViewportChange, { passive: true });
     window.visualViewport?.addEventListener("resize", handleHomeDiscoveryFeedViewportChange, { passive: true });
