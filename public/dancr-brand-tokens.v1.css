@@ -57,8 +57,9 @@
   --dancr-color-info-medium: rgba(34, 211, 238, 0.34);
   --dancr-color-info-strong: rgba(34, 211, 238, 0.72);
 
-  --dancr-color-verification: #c7d0da;
-  --dancr-color-verification-foreground: #080a0f;
+  --dancr-color-verification: #2563eb;
+  --dancr-color-verification-foreground: #ffffff;
+  --dancr-color-verification-outline: #1d4ed8;
 
   --dancr-color-success: #10b981;
   --dancr-color-success-soft: rgba(16, 185, 129, 0.1);

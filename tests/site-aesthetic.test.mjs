@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=75" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=76" rel="stylesheet">/,
   );
 });
 
@@ -681,28 +681,29 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   );
 });
 
-test("verified check marks use a flat black-and-white treatment with a hero-beam outline", () => {
+test("verified check marks use a flat sapphire and white treatment without decorative effects", () => {
   assert.match(
     aesthetic,
     /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-foreground: var\(--dancr-color-text-primary\)/,
+    /--mydancr-verified-foreground: var\(--dancr-color-verification-foreground\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-surface: var\(--dancr-color-surface-raised\)/,
+    /--mydancr-verified-surface: var\(--dancr-color-verification\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-beam-violet\) 38%,[\s\S]*?transparent/,
+    /--mydancr-verified-outline: var\(--dancr-color-verification-outline\)/,
   );
   assert.match(
     aesthetic,
-    /border: 1px solid var\(--mydancr-verified-outline\) !important;[\s\S]*?color: var\(--mydancr-verified-foreground\) !important;[\s\S]*?background: var\(--mydancr-verified-surface\) !important;[\s\S]*?box-shadow: none !important;/,
+    /border: 1px solid var\(--mydancr-verified-outline\) !important;[\s\S]*?color: var\(--mydancr-verified-foreground\) !important;[\s\S]*?background: var\(--mydancr-verified-surface\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?font-weight: 800 !important;/,
   );
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,1100}(?:box-shadow|text-shadow):\s*0 0/);
+  assert.doesNotMatch(aesthetic, /--mydancr-verified-(?:surface|outline):[^;]*(?:beam|brand|gradient|color-mix)/);
   assert.doesNotMatch(
     aesthetic,
     /(?:tv-verified-mark|profile-verified|verified-mark)[\s\S]{0,260}border-color: var\(--dancr-color-(?:info|beam)-/,

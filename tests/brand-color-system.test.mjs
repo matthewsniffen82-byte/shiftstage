@@ -41,8 +41,9 @@ const requiredTokens = new Map([
   ["--dancr-color-text-muted", "#94a3b8"],
   ["--dancr-color-border", "#334155"],
   ["--dancr-color-info", "#22d3ee"],
-  ["--dancr-color-verification", "#c7d0da"],
-  ["--dancr-color-verification-foreground", "#080a0f"],
+  ["--dancr-color-verification", "#2563eb"],
+  ["--dancr-color-verification-foreground", "#ffffff"],
+  ["--dancr-color-verification-outline", "#1d4ed8"],
   ["--dancr-color-success", "#10b981"],
   ["--dancr-color-live", "#4dec9d"],
   ["--dancr-color-featured", "#fbbf24"],
@@ -98,7 +99,7 @@ test("brand text and status combinations meet normal-text contrast", () => {
     ["#cbd5e1", "#111118"],
     ["#94a3b8", "#050507"],
     ["#22d3ee", "#111118"],
-    ["#080a0f", "#c7d0da"],
+    ["#ffffff", "#2563eb"],
     ["#10b981", "#111118"],
     ["#fbbf24", "#111118"],
     ["#ef4444", "#111118"],
@@ -132,7 +133,7 @@ test("Next pages and the live shell load tokens before shared component styling"
   assert.ok(buttonImport < aestheticImport);
 
   const tokenLink = liveShell.indexOf(
-    '<link href="/dancr-brand-tokens.v1.css" rel="stylesheet">',
+    '<link href="/dancr-brand-tokens.v1.css?v=2" rel="stylesheet">',
   );
   const buttonLink = liveShell.indexOf(
     '<link href="/dancr-button-system.v1.css" rel="stylesheet">',

@@ -6,18 +6,14 @@
  */
 
 :root {
-  --mydancr-verified-foreground: var(--dancr-color-text-primary);
-  --mydancr-verified-surface: var(--dancr-color-surface-raised);
-  --mydancr-verified-outline: color-mix(
-    in srgb,
-    var(--dancr-color-beam-violet) 38%,
-    transparent
-  );
+  --mydancr-verified-foreground: var(--dancr-color-verification-foreground);
+  --mydancr-verified-surface: var(--dancr-color-verification);
+  --mydancr-verified-outline: var(--dancr-color-verification-outline);
 }
 
 /*
- * Verification uses a flat near-black badge with a crisp white check and a
- * restrained hero-beam outline without glow. Sizes remain owned by each surface
+ * Verification uses a flat sapphire badge with a crisp white check and a darker
+ * sapphire edge. It has no gradient or glow. Sizes remain owned by each surface
  * so dense cards, TV, and full profiles retain their existing layout.
  */
 
@@ -37,7 +33,9 @@
   border: 1px solid var(--mydancr-verified-outline) !important;
   color: var(--mydancr-verified-foreground) !important;
   background: var(--mydancr-verified-surface) !important;
+  background-image: none !important;
   box-shadow: none !important;
+  font-weight: 800 !important;
   text-shadow: none !important;
 }
 
