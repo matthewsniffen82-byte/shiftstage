@@ -31602,9 +31602,9 @@
             display: none !important;
           }
           html.home-tv-page-snap {
-            scroll-snap-type: y mandatory;
-            scroll-padding-top: 0;
-            scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+            scroll-snap-type: y proximity;
+            scroll-padding-top: calc(14px + env(safe-area-inset-top, 0px));
+            scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             scrollbar-width: none;
           }
           html.home-tv-page-snap::-webkit-scrollbar,
@@ -31646,16 +31646,11 @@
             }
           }
           html.home-tv-page-snap .hero.reference-hero,
+          html.home-tv-page-snap .content-head,
           html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-loading,
           html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-slide {
             scroll-snap-align: start;
-            scroll-snap-stop: always;
-          }
-          html.home-tv-page-snap .discovery-sticky-head {
-            position: static !important;
-            top: auto !important;
-            z-index: auto;
-            scroll-snap-align: none;
+            scroll-snap-stop: normal;
           }
           #results.home-tv-feed {
             position: relative !important;
@@ -31666,7 +31661,7 @@
             height: auto !important;
             min-height: 0;
             max-height: none;
-            margin: 0 0 calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+            margin: 0 0 calc(112px + env(safe-area-inset-bottom, 0px)) !important;
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) !important;
             grid-auto-rows: auto;
@@ -31685,13 +31680,13 @@
           #results.home-tv-feed > .home-tv-feed-loading,
           #results.home-tv-feed > .home-tv-feed-slide {
             width: 100% !important;
-            height: calc(100vh - 72px - env(safe-area-inset-bottom, 0px)) !important;
-            height: calc(100svh - 72px - env(safe-area-inset-bottom, 0px)) !important;
-            min-height: 0 !important;
-            max-height: none !important;
+            height: clamp(500px, calc(100vh - 180px), 840px) !important;
+            height: clamp(500px, calc(100svh - 180px), 840px) !important;
+            min-height: 500px !important;
+            max-height: 840px !important;
             margin: 0 !important;
             scroll-snap-align: start;
-            scroll-snap-stop: always;
+            scroll-snap-stop: normal;
           }
           #results.home-discovery-feed {
             position: relative !important;
@@ -50262,9 +50257,6 @@
     let homeResultsFocusFrame = 0;
     let homeResultsFocusTimer = 0;
     let homeResultsFocusRun = 0;
-    let homeTvFeedFocusFrame = 0;
-    let homeTvFeedFocusTimer = 0;
-    let homeTvFeedFocusRun = 0;
 
     function homeResultsDocumentTop(element) {
       let top = 0;
@@ -50306,37 +50298,9 @@
       settle(2);
     }
 
-    function alignHomeTvFeedViewport() {
-      const target = results.querySelector(".home-tv-feed-slide, .home-tv-feed-loading") || results;
-      if (!target.isConnected) return;
-      const targetTop = Math.max(0, homeResultsDocumentTop(target));
-      window.scrollTo({ top: targetTop, left: 0, behavior: "auto" });
-    }
-
-    function focusHomeTvFeedViewport() {
-      if (homeTvFeedFocusFrame) window.cancelAnimationFrame(homeTvFeedFocusFrame);
-      if (homeTvFeedFocusTimer) window.clearTimeout(homeTvFeedFocusTimer);
-      const focusRun = ++homeTvFeedFocusRun;
-      const settle = (remainingFrames) => {
-        if (focusRun !== homeTvFeedFocusRun) return;
-        alignHomeTvFeedViewport();
-        if (remainingFrames > 0) {
-          homeTvFeedFocusFrame = window.requestAnimationFrame(() => settle(remainingFrames - 1));
-          return;
-        }
-        homeTvFeedFocusFrame = 0;
-        homeTvFeedFocusTimer = window.setTimeout(() => {
-          if (focusRun !== homeTvFeedFocusRun) return;
-          homeTvFeedFocusTimer = 0;
-          alignHomeTvFeedViewport();
-        }, 160);
-      };
-      settle(2);
-    }
-
     function settleHomeTvFeedLanding({ complete = false } = {}) {
       if (!homeTvFeedLandingPending) return;
-      focusHomeTvFeedViewport();
+      focusHomeResults();
       if (complete) homeTvFeedLandingPending = false;
     }
 
@@ -50945,11 +50909,6 @@
       results.classList.remove("home-tv-feed");
       document.documentElement.classList.remove("home-tv-page-snap");
       homeTvFeedLandingPending = false;
-      if (homeTvFeedFocusFrame) window.cancelAnimationFrame(homeTvFeedFocusFrame);
-      if (homeTvFeedFocusTimer) window.clearTimeout(homeTvFeedFocusTimer);
-      homeTvFeedFocusFrame = 0;
-      homeTvFeedFocusTimer = 0;
-      homeTvFeedFocusRun += 1;
       delete results.dataset.homeTvFeedKey;
       const bottomTv = document.getElementById("homeBottomTv");
       bottomTv?.classList.remove("active");
@@ -54519,8 +54478,7 @@
       syncHomeDestinationLocation(nextTab);
       render();
       if (options.scroll !== false) {
-        if (nextTab === "tv") focusHomeTvFeedViewport();
-        else focusHomeResults();
+        focusHomeResults();
       }
       return true;
     }
@@ -54923,8 +54881,7 @@
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value);
     render();
     if (initialHomeDestinationRequested) {
-      if (initialHomeDestination === "tv") focusHomeTvFeedViewport();
-      else focusHomeResults();
+      focusHomeResults();
     }
     async function refreshVisibleHomeDiscovery() {
       if (document.visibilityState !== "visible") return;
