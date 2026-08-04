@@ -260,8 +260,8 @@ test("profile identity and media controls form a compact balanced top section", 
     profilePolishBlock,
     /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?border-radius: 50% !important;/,
   );
-  assert.match(profilePolishBlock, /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button::before \{[\s\S]*?inset: 3px;[\s\S]*?border-radius: 50%;/);
-  assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 19px;[\s\S]*?height: 19px;/);
+  assert.match(profilePolishBlock, /body\.dancr-button-system #profileBackdrop \.profile-modal-media-tabs button::before \{[\s\S]*?inset: 4px;[\s\S]*?border-radius: 50%;/);
+  assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 18px;[\s\S]*?height: 18px;/);
 });
 
 test("unavailable profile QR stays visible in a compact square tile", () => {

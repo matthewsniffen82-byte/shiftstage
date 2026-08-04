@@ -598,9 +598,10 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
     fullProfilePalette,
     /\.profile-modal-media-tabs button\.active::before,[\s\S]*?\.profile-media-tabs button\.active::before \{[\s\S]*?var\(--dancr-color-brand-primary\)[\s\S]*?var\(--dancr-shadow-brand-subtle\) !important;/,
   );
-  assert.match(
+  assert.doesNotMatch(
     fullProfilePalette,
-    /button\[data-profile-media-tab="video"\]\.active::before \{[\s\S]*?border-color: var\(--dancr-color-text-secondary\) !important;[\s\S]*?var\(--dancr-color-text-secondary\) 24%[\s\S]*?var\(--dancr-color-text-secondary\) 58%[\s\S]*?var\(--dancr-color-text-secondary\) 30%[\s\S]*?var\(--dancr-color-black-medium\) !important;/,
+    /button\[data-profile-media-tab="video"\]\.active::before/,
+    "the selected TV tab must inherit the same violet active treatment as Photos",
   );
   assert.match(
     fullProfilePalette,
