@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealsForVenues } from "@/src/lib/dancr/deals";
-import { formatVenueHours, getLiveDancerDiscovery } from "@/src/lib/dancr/public";
+import {
+  formatVenueHours,
+  getLiveDancerDiscovery,
+  getPublicVenuePopularity,
+} from "@/src/lib/dancr/public";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -39,10 +43,11 @@ export async function GET(request: Request) {
     ]);
 
     if (venueResult.error) throw venueResult.error;
-    const activeDeals = await getActiveClubDealsForVenues(
-      client,
-      (venueResult.data || []).map((venue) => venue.id),
-    );
+    const venueIds = (venueResult.data || []).map((venue) => venue.id);
+    const [activeDeals, venuePopularityById] = await Promise.all([
+      getActiveClubDealsForVenues(client, venueIds),
+      getPublicVenuePopularity(client, venueIds),
+    ]);
 
     const venues = (venueResult.data || []).map((venue) => {
       const coverImage = responsivePublicImage(
@@ -72,6 +77,11 @@ export async function GET(request: Request) {
           : null,
         qrCodeLabel: venue.qr_code_label || null,
         activeDeal: activeDeals.get(venue.id) || null,
+        popularity: venuePopularityById.get(venue.id) || {
+          followerCount: 0,
+          directionRequests30d: 0,
+          profileViews30d: 0,
+        },
       };
     });
     const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => {

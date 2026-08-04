@@ -604,6 +604,69 @@ async function fetchAllMetricRows(buildQuery: (from: number, to: number) => any)
   }
 }
 
+export type PublicVenuePopularity = {
+  followerCount: number;
+  directionRequests30d: number;
+  profileViews30d: number;
+};
+
+export async function getPublicVenuePopularity(
+  client: DancrClient,
+  venueIds: string[],
+): Promise<Map<string, PublicVenuePopularity>> {
+  const uniqueVenueIds = [...new Set(venueIds.filter(Boolean))];
+  const popularityByVenue = new Map(
+    uniqueVenueIds.map((venueId) => [
+      venueId,
+      { followerCount: 0, directionRequests30d: 0, profileViews30d: 0 },
+    ]),
+  );
+  if (!uniqueVenueIds.length) return popularityByVenue;
+
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const [follows, directionRequests, profileViews] = await Promise.all([
+    fetchAllMetricRows((from, to) =>
+      client
+        .from("venue_follows")
+        .select("venue_id")
+        .in("venue_id", uniqueVenueIds)
+        .range(from, to),
+    ),
+    fetchAllMetricRows((from, to) =>
+      client
+        .from("direction_requests")
+        .select("venue_id")
+        .in("venue_id", uniqueVenueIds)
+        .gte("requested_at", since)
+        .range(from, to),
+    ),
+    fetchAllMetricRows((from, to) =>
+      client
+        .from("venue_page_events")
+        .select("venue_id")
+        .in("venue_id", uniqueVenueIds)
+        .eq("event_type", "page_view")
+        .gte("occurred_at", since)
+        .range(from, to),
+    ),
+  ]);
+
+  for (const follow of follows) {
+    const popularity = popularityByVenue.get(follow.venue_id);
+    if (popularity) popularity.followerCount += 1;
+  }
+  for (const request of directionRequests) {
+    const popularity = popularityByVenue.get(request.venue_id);
+    if (popularity) popularity.directionRequests30d += 1;
+  }
+  for (const view of profileViews) {
+    const popularity = popularityByVenue.get(view.venue_id);
+    if (popularity) popularity.profileViews30d += 1;
+  }
+
+  return popularityByVenue;
+}
+
 async function toDancerCard(client: DancrClient, row: any, options: DancerCardOptions = {}): Promise<DancerCard> {
   const { card, shift } = buildDancerCard(client, row, options);
   const [followerCount, notificationCount, profileViewsToday, goingCount] = await Promise.all([

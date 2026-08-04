@@ -39861,7 +39861,12 @@
         logoImageUrl: item.logoImageUrl || "",
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
-        activeDeal: item.activeDeal || null
+        activeDeal: item.activeDeal || null,
+        popularity: {
+          followerCount: Math.max(0, Number(item.popularity?.followerCount) || 0),
+          directionRequests30d: Math.max(0, Number(item.popularity?.directionRequests30d) || 0),
+          profileViews30d: Math.max(0, Number(item.popularity?.profileViews30d) || 0)
+        }
       };
     }
 
@@ -50325,6 +50330,28 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
+    function venueSchedulePriority(venue, city) {
+      const profiles = venueDancers(city, venue.name);
+      if (profiles.some((profile) => isWorkingTonight(profile, city))) return 0;
+      if (profiles.some((profile) => profile.scheduled)) return 1;
+      return 2;
+    }
+
+    function compareVenuePopularity(left, right) {
+      const leftPopularity = left?.popularity || {};
+      const rightPopularity = right?.popularity || {};
+      return (
+        (Number(rightPopularity.followerCount) || 0) - (Number(leftPopularity.followerCount) || 0) ||
+        (Number(rightPopularity.directionRequests30d) || 0) - (Number(leftPopularity.directionRequests30d) || 0) ||
+        (Number(rightPopularity.profileViews30d) || 0) - (Number(leftPopularity.profileViews30d) || 0)
+      );
+    }
+
+    function compareVenueDiscoveryPriority(left, right, city) {
+      const scheduleDifference = venueSchedulePriority(left, city) - venueSchedulePriority(right, city);
+      return scheduleDifference || compareVenuePopularity(left, right) || compareVenueDistance(left, right, city);
+    }
+
     function getItems(city, tab) {
       const market = markets[city];
       if (["tonight", "dancers", "trending"].includes(tab) && liveMarketState[city] !== "ready") {
@@ -50340,7 +50367,7 @@
       if (tab === "venues") {
         return market.venues
           .filter(venueMatchesCurrentFilter)
-          .sort((a, b) => compareVenueDistance(a, b, city));
+          .sort((a, b) => compareVenueDiscoveryPriority(a, b, city));
       }
       return trendingProfiles(city);
     }
