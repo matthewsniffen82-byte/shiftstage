@@ -3532,13 +3532,41 @@ body.dancr-button-system .home-tv-feed-shade,
 
 body.dancr-button-system .home-tv-feed-dancer-photo,
 .tv-shell .tv-profile-photo {
-  border-color: var(--dancr-color-brand-primary) !important;
+  border: 1px solid transparent !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
   box-shadow:
     0 8px 20px var(--dancr-color-black-medium),
-    0 0 12px var(--dancr-color-brand-glow-soft) !important;
+    0 0 10px color-mix(
+      in srgb,
+      var(--dancr-color-avatar-ring-magenta) 18%,
+      transparent
+    ) !important;
   text-shadow: none !important;
+}
+
+body.dancr-button-system .home-tv-feed-dancer-photo::after,
+.tv-shell .tv-profile-photo::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    var(--dancr-color-avatar-ring-magenta),
+    var(--dancr-color-avatar-ring-violet)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 body.dancr-button-system .home-tv-feed-dancer-photo:not(:has(img)) {

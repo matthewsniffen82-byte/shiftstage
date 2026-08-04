@@ -408,7 +408,11 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /\.tv-shell :is\(/);
   assert.match(brandedCards, /border: 0 !important;/);
   assert.match(brandedCards, /\.home-tv-feed-dancer-photo/);
-  assert.match(brandedCards, /border-color: var\(--dancr-color-brand-primary\) !important;/);
+  assert.match(brandedCards, /border: 1px solid transparent !important;/);
+  assert.match(
+    brandedCards,
+    /\.home-tv-feed-dancer-photo::after,[\s\S]*?\.tv-shell \.tv-profile-photo::after \{[\s\S]*?padding: 1\.5px;[\s\S]*?var\(--dancr-color-avatar-ring-magenta\),[\s\S]*?var\(--dancr-color-avatar-ring-violet\)[\s\S]*?mask-composite: exclude;/,
+  );
   assert.match(
     brandedCards,
     /\.home-tv-feed-progress \{[\s\S]*?background: var\(--dancr-color-white-medium\) !important;[\s\S]*?\.home-tv-feed-progress > span \{[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-text-primary\) 88%, transparent\) !important;[\s\S]*?box-shadow: none !important;/,
@@ -446,8 +450,12 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /var\(--dancr-color-danger\)/);
   assert.doesNotMatch(brandedCards, /home-bottom|global-mobile-bottom-nav|discoveryTabs|home-nav/);
   assert.doesNotMatch(brandedCards, /\.home-tv-feed-video|\.tv-player video/);
+  const brandedCardsWithoutAvatarRing = brandedCards.replace(
+    /body\.dancr-button-system \.home-tv-feed-dancer-photo::after,[\s\S]*?pointer-events: none;\s*\}/,
+    "",
+  );
   assert.doesNotMatch(
-    brandedCards,
+    brandedCardsWithoutAvatarRing,
     /\b(?:width|height|padding|margin|position|inset|display|grid|flex|gap|overflow|transform|transition|animation):/,
   );
 });
