@@ -3536,9 +3536,10 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one Dancr story ring. The conic
- * sequence carries the hero's magenta, electric violet, sapphire, and cyan
- * around the photo while leaving venue marks, media, and navigation alone. */
+/* Every real circular dancer avatar uses one Dancr story ring. The brighter,
+ * three-pixel conic sequence keeps the hero's magenta, electric violet,
+ * sapphire, and cyan visibly distinct at compact mobile sizes while leaving
+ * venue marks, media, and navigation alone. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
@@ -3554,14 +3555,14 @@ body.dancr-button-system :is(
   background-color: var(--dancr-color-surface-raised) !important;
   box-shadow:
     0 8px 20px var(--dancr-color-black-medium),
-    0 0 10px color-mix(
+    0 0 12px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-magenta) 18%,
+      var(--dancr-color-avatar-ring-magenta) 36%,
       transparent
     ),
-    0 0 8px color-mix(
+    0 0 10px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-cyan) 10%,
+      var(--dancr-color-avatar-ring-cyan) 24%,
       transparent
     ) !important;
   text-shadow: none !important;
@@ -3580,16 +3581,21 @@ body.dancr-button-system :is(
   position: absolute;
   z-index: 2;
   inset: 0;
-  padding: 1.5px;
+  padding: 3px;
   border-radius: inherit;
   background: conic-gradient(
-    from 205deg,
+    from 215deg,
     var(--dancr-color-avatar-ring-magenta) 0deg,
-    var(--dancr-color-avatar-ring-violet) 96deg,
-    var(--dancr-color-avatar-ring-blue) 196deg,
-    var(--dancr-color-avatar-ring-cyan) 286deg,
+    var(--dancr-color-avatar-ring-magenta) 72deg,
+    var(--dancr-color-avatar-ring-violet) 118deg,
+    var(--dancr-color-avatar-ring-violet) 166deg,
+    var(--dancr-color-avatar-ring-blue) 212deg,
+    var(--dancr-color-avatar-ring-blue) 258deg,
+    var(--dancr-color-avatar-ring-cyan) 304deg,
+    var(--dancr-color-avatar-ring-cyan) 334deg,
     var(--dancr-color-avatar-ring-magenta) 360deg
   );
+  filter: saturate(1.18) brightness(1.12);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
