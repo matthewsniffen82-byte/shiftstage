@@ -130,6 +130,14 @@ test("every client sends GPS quality data and refreshes expiring proof", () => {
   assert.match(liveShell, /if \(!profile\.shiftId \|\| !isDancerSession\(\)\)[\s\S]*?throw new Error\("Sign in to your dancer account before updating a live shift\."\)/);
 });
 
+test("a server-confirmed check-in remains visible on the check-in button", () => {
+  assert.match(dashboard, /if \(data\.shift\)[\s\S]*?setShifts[\s\S]*?data\.shift\.id[\s\S]*?\.\.\.data\.shift/);
+  assert.match(dashboard, /activeShift && isCheckedInToActiveShift[\s\S]*?className="check-in-confirmation"[\s\S]*?✓ Checked in/);
+  assert.match(dashboard, /canCheckOutOfShift\(shift\)[\s\S]*?className="check-in-confirmation"[\s\S]*?✓ Checked in/);
+  assert.match(liveShell, /checkedIn && !ended \? '<button class="mini-action checked-in-confirmation"[\s\S]*?✓ Checked in<\/button>'/);
+  assert.match(liveShell, /if \(data\?\.shift\) applyShiftState\(profile, data\.shift\)[\s\S]*?Checked in\. Your shift can now appear in Working Now\./);
+});
+
 test("expired checked-in shifts are reconciled by requests and an authenticated cron", () => {
   assert.match(lifecycle, /export async function reconcileExpiredDancerShifts/);
   assert.match(lifecycle, /checked_out_at: endedAt/);

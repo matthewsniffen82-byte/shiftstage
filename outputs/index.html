@@ -2128,6 +2128,16 @@
       color: #bff4ff;
     }
 
+    .shift-action-grid .mini-action.checked-in-confirmation {
+      border-color: var(--dancr-color-success-medium);
+      color: var(--dancr-color-success);
+      background: var(--dancr-color-success-soft);
+      box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft) !important;
+      cursor: default !important;
+      filter: none !important;
+      opacity: 1 !important;
+    }
+
     .shift-bottom-sheet {
       display: grid;
       gap: 10px;
@@ -41943,6 +41953,7 @@
         <div class="shift-verification-copy" id="shiftCheckInStatus" role="status" aria-live="polite">${displayText(shiftCheckInMessage)}</div>
         <div class="shift-action-grid">
           ${canAttemptCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
+          ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Check-in confirmed" aria-live="polite">✓ Checked in</button>' : ""}
           ${checkedIn && !locationVerified && !ended ? '<button class="mini-action primary" type="button" data-shift-verify-action="refresh">Re-verify location</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
         </div>

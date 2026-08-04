@@ -2663,9 +2663,14 @@ function DancerShiftPanel({ city }: { city: string }) {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(checkInErrorMessage(data));
+      if (data.shift) {
+        setShifts((current) => current.map((shift) => (
+          String(shift.id) === String(data.shift.id) ? { ...shift, ...data.shift } : shift
+        )));
+      }
       setCheckInStatus("Checked in. Your shift can now appear in Working Now.");
       setStatus("Checked in.");
-      await loadShifts(session.accessToken);
+      void loadShifts(session.accessToken).catch(() => undefined);
     } catch (error) {
       if ((error as any)?.code === 1) {
         setCheckInStatus("Location permission is required to check in.");
@@ -2742,6 +2747,17 @@ function DancerShiftPanel({ city }: { city: string }) {
         {activeShift && !isCheckedInToActiveShift ? (
           <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkInShift(String(activeShift.id))}>
             {activeCheckInId === String(activeShift.id) ? "Checking location..." : "Check in now"}
+          </button>
+        ) : null}
+        {activeShift && isCheckedInToActiveShift ? (
+          <button
+            type="button"
+            className="check-in-confirmation"
+            disabled
+            aria-label="Check-in confirmed"
+            aria-live="polite"
+          >
+            ✓ Checked in
           </button>
         ) : null}
         {activeShift && canCheckOutOfShift(activeShift) ? (
@@ -2834,9 +2850,14 @@ function DancerShiftPanel({ city }: { city: string }) {
                     </button>
                   ) : null}
                   {canCheckOutOfShift(shift) ? (
-                    <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkOutShift(String(shift.id))}>
-                      {activeCheckInId === String(shift.id) ? "Saving..." : "Check Out"}
-                    </button>
+                    <>
+                      <button type="button" className="check-in-confirmation" disabled aria-label="Check-in confirmed">
+                        ✓ Checked in
+                      </button>
+                      <button type="button" disabled={activeCheckInId === String(shift.id)} onClick={() => checkOutShift(String(shift.id))}>
+                        {activeCheckInId === String(shift.id) ? "Saving..." : "Check Out"}
+                      </button>
+                    </>
                   ) : null}
                   {shift.status !== "cancelled" ? (
                     <>
@@ -3790,6 +3811,7 @@ function DashboardStyles() {
       .shift-checkin-card strong { color: #fff; font-size: 18px; }
       .shift-checkin-card small { color: #cfc5de; line-height: 1.45; }
       .shift-checkin-card button { min-height: 44px; border: 0; border-radius: 8px; color: #050507; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 16px; }
+      .shift-checkin-card button.check-in-confirmation, .shift-actions button.check-in-confirmation { border: 1px solid var(--dancr-color-success-medium); color: var(--dancr-color-success); background: var(--dancr-color-success-soft); box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft) !important; cursor: default !important; filter: none !important; opacity: 1 !important; }
       .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; color: #94e5ff; font-weight: 850; }
       .shift-list-head { display: grid; gap: 4px; padding-top: 4px; }
       .shift-list-head strong { color: #fff; font-size: 18px; }
