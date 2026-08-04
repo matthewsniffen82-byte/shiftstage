@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=71" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=72" rel="stylesheet">/,
   );
 });
 
@@ -681,7 +681,7 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   );
 });
 
-test("verified check marks use the centralized neutral treatment", () => {
+test("verified check marks keep their flat treatment with a hero-beam outline", () => {
   assert.match(
     aesthetic,
     /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
@@ -696,13 +696,17 @@ test("verified check marks use the centralized neutral treatment", () => {
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-info\) 38%,[\s\S]*?transparent/,
+    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-beam-violet\) 38%,[\s\S]*?transparent/,
   );
   assert.match(
     aesthetic,
     /border: 1px solid var\(--mydancr-verified-outline\) !important;[\s\S]*?color: var\(--mydancr-verified-foreground\) !important;[\s\S]*?background: var\(--mydancr-verified-surface\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,1100}(?:box-shadow|text-shadow):\s*0 0/);
+  assert.doesNotMatch(
+    aesthetic,
+    /(?:tv-verified-mark|profile-verified|verified-mark)[\s\S]{0,260}border-color: var\(--dancr-color-info-strong\)/,
+  );
 });
 
 test("the homepage hero keeps the exact supplied artwork borderless without an ambient halo", () => {

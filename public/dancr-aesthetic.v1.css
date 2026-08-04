@@ -10,7 +10,7 @@
   --mydancr-verified-surface: var(--dancr-color-surface-raised);
   --mydancr-verified-outline: color-mix(
     in srgb,
-    var(--dancr-color-info) 38%,
+    var(--dancr-color-beam-violet) 38%,
     transparent
   );
 }
@@ -1969,7 +1969,7 @@ body.dancr-button-system .home-tv-feed-action:not(
 
 .tv-shell :is(.tv-verified-mark, .verified-mark),
 .public-profile-shell :is(.profile-verified, .verified-mark) {
-  border-color: var(--dancr-color-info-strong) !important;
+  border-color: var(--mydancr-verified-outline) !important;
   color: var(--dancr-color-text-primary) !important;
   background: color-mix(
     in srgb,
@@ -2168,7 +2168,7 @@ body > .app main.stack > .hero.reference-hero > .hero-art,
   .profile-verified,
   .tv-verified-mark
 ) {
-  border-color: var(--dancr-color-info-strong) !important;
+  border-color: var(--mydancr-verified-outline) !important;
   color: var(--dancr-color-text-primary) !important;
   background: color-mix(
     in srgb,
