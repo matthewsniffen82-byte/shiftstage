@@ -601,7 +601,7 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav .mydancr-tv-play {
             fill: var(--mobile-nav-accent);
             filter: none;
-            transform: scale(1.12);
+            transform: scale(1.28);
             transform-box: fill-box;
             transform-origin: center;
             transition: fill 180ms ease;
@@ -616,10 +616,10 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav .mydancr-tv-r {
             fill: none;
             stroke: var(--mobile-nav-accent-soft);
-            stroke-width: 2;
+            stroke-width: 2.2;
             stroke-linecap: round;
             filter: none;
-            transform: scale(1.12);
+            transform: scale(1.28);
             transform-box: fill-box;
             transform-origin: center;
             transition: stroke 180ms ease;
