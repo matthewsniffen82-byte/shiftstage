@@ -3540,46 +3540,60 @@ body.dancr-button-system .home-tv-feed-shade,
  * A single physical white border and slight white glow keep the same appearance
  * on Android, iPhone, and desktop. Venue marks, media, and navigation remain
  * untouched. */
-body.dancr-button-system :is(
-    #profileBackdrop .profile-modal-avatar,
-    .approved-avatar-preview,
-    .venue-card-lineup-avatar,
-    .home-venue-discovery-lineup-avatar,
-    .profile-modal-avatar,
-    .home-tv-feed-dancer-photo,
-    .profile-titlebar-avatar,
-    .tv-profile-photo
-  ) {
+body.dancr-button-system #profileBackdrop .profile-modal-avatar,
+body.dancr-button-system .approved-avatar-preview,
+body.dancr-button-system .venue-card-lineup-avatar,
+body.dancr-button-system .home-venue-discovery-lineup-avatar,
+body.dancr-button-system .profile-modal-avatar,
+body.dancr-button-system .home-tv-feed-dancer-photo,
+body.dancr-button-system .profile-titlebar-avatar,
+body.dancr-button-system .tv-profile-photo {
   border: 5px solid #ffffff !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.72) !important;
+  forced-color-adjust: none !important;
+  -webkit-print-color-adjust: exact !important;
   text-shadow: none !important;
 }
 
-body.dancr-button-system :is(
-    #profileBackdrop .profile-modal-avatar,
-    .approved-avatar-preview,
-    .venue-card-lineup-avatar,
-    .home-venue-discovery-lineup-avatar,
-    .profile-modal-avatar,
-    .home-tv-feed-dancer-photo,
-    .profile-titlebar-avatar,
-    .tv-profile-photo
-  )::after {
+/* Android standalone apps and Samsung Browser get a deliberately simple
+ * selector so older engines cannot fall back to the translucent gray border. */
+body.is-android.dancr-button-system .home-tv-feed-dancer-photo,
+body.android-rendering.dancr-button-system .home-tv-feed-dancer-photo,
+body.is-samsung-browser.dancr-button-system .home-tv-feed-dancer-photo,
+body.samsung-rendering.dancr-button-system .home-tv-feed-dancer-photo {
+  border: 5px solid #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.72) !important;
+  opacity: 1 !important;
+  -webkit-filter: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  forced-color-adjust: none !important;
+  -webkit-print-color-adjust: exact !important;
+  color-scheme: dark !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal-avatar::after,
+body.dancr-button-system .approved-avatar-preview::after,
+body.dancr-button-system .venue-card-lineup-avatar::after,
+body.dancr-button-system .home-venue-discovery-lineup-avatar::after,
+body.dancr-button-system .profile-modal-avatar::after,
+body.dancr-button-system .home-tv-feed-dancer-photo::after,
+body.dancr-button-system .profile-titlebar-avatar::after,
+body.dancr-button-system .tv-profile-photo::after {
   content: none !important;
 }
 
-body.dancr-button-system :is(
-    #profileBackdrop .profile-modal-avatar,
-    .approved-avatar-preview,
-    .venue-card-lineup-avatar,
-    .home-venue-discovery-lineup-avatar,
-    .profile-modal-avatar,
-    .home-tv-feed-dancer-photo,
-    .profile-titlebar-avatar,
-    .tv-profile-photo
-  )::before {
+body.dancr-button-system #profileBackdrop .profile-modal-avatar::before,
+body.dancr-button-system .approved-avatar-preview::before,
+body.dancr-button-system .venue-card-lineup-avatar::before,
+body.dancr-button-system .home-venue-discovery-lineup-avatar::before,
+body.dancr-button-system .profile-modal-avatar::before,
+body.dancr-button-system .home-tv-feed-dancer-photo::before,
+body.dancr-button-system .profile-titlebar-avatar::before,
+body.dancr-button-system .tv-profile-photo::before {
   content: none !important;
 }
 

@@ -396,7 +396,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=91/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=92/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -414,7 +414,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   );
   assert.match(
     brandedCards,
-    /#profileBackdrop \.profile-modal-avatar,[\s\S]*?\.home-tv-feed-dancer-photo,[\s\S]*?\.tv-profile-photo[\s\S]*?\) \{[\s\S]*?border: 5px solid #ffffff !important;[\s\S]*?box-shadow: 0 0 8px rgba\(255, 255, 255, 0\.72\) !important;[\s\S]*?\)::after \{\s*content: none !important;\s*\}[\s\S]*?\)::before \{\s*content: none !important;\s*\}/,
+    /body\.dancr-button-system \.home-tv-feed-dancer-photo,[\s\S]*?body\.dancr-button-system \.tv-profile-photo \{[\s\S]*?border: 5px solid #ffffff !important;[\s\S]*?box-shadow: 0 0 8px rgba\(255, 255, 255, 0\.72\) !important;[\s\S]*?body\.is-android\.dancr-button-system \.home-tv-feed-dancer-photo,[\s\S]*?body\.samsung-rendering\.dancr-button-system \.home-tv-feed-dancer-photo \{[\s\S]*?border-color: #ffffff !important;/,
   );
   assert.match(
     brandedCards,

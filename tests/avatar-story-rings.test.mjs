@@ -27,8 +27,16 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
 
   assert.match(ringRules, /border: 5px solid #ffffff !important;/);
   assert.match(ringRules, /box-shadow: 0 0 8px rgba\(255, 255, 255, 0\.72\) !important;/);
-  assert.match(ringRules, /\)::after \{\s*content: none !important;\s*\}/);
-  assert.match(ringRules, /\)::before \{\s*content: none !important;\s*\}/);
+  assert.match(ringRules, /\.home-tv-feed-dancer-photo::after,[\s\S]*?content: none !important;/);
+  assert.match(ringRules, /\.home-tv-feed-dancer-photo::before,[\s\S]*?content: none !important;/);
+  assert.doesNotMatch(ringRules, /body\.dancr-button-system :is\(/);
+  assert.match(ringRules, /body\.is-android\.dancr-button-system \.home-tv-feed-dancer-photo/);
+  assert.match(ringRules, /body\.android-rendering\.dancr-button-system \.home-tv-feed-dancer-photo/);
+  assert.match(ringRules, /body\.is-samsung-browser\.dancr-button-system \.home-tv-feed-dancer-photo/);
+  assert.match(ringRules, /body\.samsung-rendering\.dancr-button-system \.home-tv-feed-dancer-photo/);
+  assert.match(ringRules, /forced-color-adjust: none !important;/);
+  assert.match(ringRules, /-webkit-print-color-adjust: exact !important;/);
+  assert.match(ringRules, /mix-blend-mode: normal !important;/);
   assert.doesNotMatch(ringRules, /dotted|drop-shadow|radial-gradient|linear-gradient|color-mix/);
   assert.doesNotMatch(ringRules, /\b(?:position|display|inset|animation):/);
   assert.doesNotMatch(ringRules, /var\(--dancr-color-avatar-ring-(?:magenta|violet|indigo)\)/);
