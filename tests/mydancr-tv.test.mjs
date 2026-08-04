@@ -314,7 +314,10 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.doesNotMatch(liveApp, /all\.href = `\/tv\?|link\.href = `\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/);
   assert.doesNotMatch(liveApp, /id="homeTvTeaserLink"/);
   assert.match(liveApp, /formatProfileTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)/);
-  assert.match(liveApp, /<strong>Next shift<\/strong>/);
+  assert.match(
+    liveApp,
+    /class="info-tile profile-schedule-card working-now-tile schedule-live"[\s\S]*?<strong>Schedule<\/strong>[\s\S]*?profile-schedule-primary modal-schedule-text tonight">Working now<\/div>/,
+  );
   assert.doesNotMatch(liveApp, /Upcoming interest/);
   assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);
   assert.match(tvPage, /const dancerId = cleanUuid\(params\.dancer\)/);

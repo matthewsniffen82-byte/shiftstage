@@ -153,7 +153,25 @@ export default async function DancerPublicPage({ params }: PageProps) {
           stageName={profile.stageName}
         />
 
-        {upcomingShifts.length ? (
+        {activeShift ? (
+          <section
+            className={`profile-working-card${activeDeal ? " has-club-deal" : ""}`}
+            aria-labelledby="profile-working-title"
+          >
+            <div className="profile-working-head">
+              <div>
+                <span className="profile-live-state">Schedule</span>
+                <h2 id="profile-working-title">Working now</h2>
+                <p>
+                  {activeShift.venueName} · Verified check-in · until {formatShiftTime(activeShift.endsAt, activeShift.timezone)}
+                </p>
+              </div>
+              <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
+                Venue &amp; directions
+              </Link>
+            </div>
+          </section>
+        ) : upcomingShifts.length ? (
           <section
             className="profile-schedule-section"
             aria-labelledby="profile-schedule-title"
@@ -188,45 +206,25 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         {activeShift ? (
           <section
-            className={`profile-working-card${activeDeal ? " has-club-deal" : ""}`}
-            aria-labelledby="profile-working-title"
+            className={`profile-active-deal${activeDeal ? " has-club-deal" : ""}`}
+            aria-label={activeDeal ? "Active Club Deal QR" : "Club Deal status"}
           >
-            <div className="profile-working-head">
-              <div>
-                <span className="profile-live-state">
-                  {activeDeal ? "Club Deal unlocked" : "Working now"}
-                </span>
-                <h2 id="profile-working-title">
-                  {activeDeal ? `Club Deal at ${activeShift.venueName}` : activeShift.venueName}
-                </h2>
-                <p>
-                  {activeDeal
-                    ? `Open a dancer-attributed QR during this verified check-in, available until ${formatShiftTime(activeShift.endsAt, activeShift.timezone)}.`
-                    : `Verified check-in · until ${formatShiftTime(activeShift.endsAt, activeShift.timezone)}`}
-                </p>
-              </div>
-              <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
-                Venue &amp; directions
-              </Link>
-            </div>
-            <div className="profile-working-qr">
-              {activeDeal ? (
-                <ClubDealCard
-                  deal={activeDeal}
-                  venueId={activeShift.venueId}
-                  venueName={activeShift.venueName}
-                  sourceType="dancer_profile"
-                  dancerId={profile.id}
-                  attributionToken={dealAttributionToken}
-                  dancerNote
-                  presentation="launcher"
-                  ctaLabel="Get Club Deal QR"
-                  sectionId="club-deal"
-                />
-              ) : (
-                <VenueQrUnavailable venueName={activeShift.venueName} />
-              )}
-            </div>
+            {activeDeal ? (
+              <ClubDealCard
+                deal={activeDeal}
+                venueId={activeShift.venueId}
+                venueName={activeShift.venueName}
+                sourceType="dancer_profile"
+                dancerId={profile.id}
+                attributionToken={dealAttributionToken}
+                dancerNote
+                presentation="launcher"
+                ctaLabel="Get Club Deal QR"
+                sectionId="club-deal"
+              />
+            ) : (
+              <VenueQrUnavailable venueName={activeShift.venueName} />
+            )}
           </section>
         ) : (
           <section className="profile-deal-availability" aria-label="Club Deal status">
@@ -369,7 +367,7 @@ function PublicProfileStyles() {
       .profile-verified { width: 20px; height: 20px; flex: 0 0 20px; display: inline-grid; place-items: center; border-radius: 50%; color: #051019; background: #7eeaff; box-shadow: 0 0 15px rgba(126,234,255,.3); font-size: 12px; font-weight: 950; }
       .public-profile-close { width: 40px; min-height: 40px; display: inline-grid; flex: 0 0 40px; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
-      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-deal-availability, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
+      .profile-overview, .profile-social-section, .live-actions, .profile-working-card, .profile-active-deal, .profile-deal-availability, .profile-media-section, .profile-schedule-section { width: min(100%, 760px); margin-inline: auto; }
       .profile-overview { display: block; margin-top: 0; padding: 10px 0 4px; border-top: 1px solid rgba(126,234,255,.08); }
       .profile-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
       .profile-metrics > div { min-width: 0; display: grid; gap: 4px; justify-items: center; padding: 8px 4px; }
@@ -427,6 +425,8 @@ function PublicProfileStyles() {
       .profile-action-status { grid-column: 1 / -1; color: #94e5ff; font-size: 12px; font-weight: 850; }
       .profile-working-card { display: grid; gap: 14px; margin-top: 14px; padding: 18px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
       .profile-working-card.has-club-deal { border-color: rgba(77,236,157,.48); background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.16), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.94), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.13); }
+      .profile-working-card.has-club-deal .profile-live-state, .profile-working-card.has-club-deal h2 { color: #4dec9d; text-shadow: 0 0 10px rgba(77,236,157,.24); }
+      .profile-working-card.has-club-deal .profile-live-state { border-color: rgba(77,236,157,.52); background: rgba(77,236,157,.1); }
       .profile-working-head { display: flex; align-items: end; justify-content: space-between; gap: 14px; }
       .profile-working-head > div { min-width: 0; display: grid; gap: 7px; }
       .profile-live-state, .eyebrow { width: fit-content; color: #94e5ff; font-size: 10px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -434,15 +434,16 @@ function PublicProfileStyles() {
       h2 { margin: 0; font-size: clamp(22px, 5vw, 32px); line-height: 1.05; }
       p { margin: 0; color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .profile-working-head > a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 13px; border: 1px solid rgba(126,234,255,.34); border-radius: 999px; color: #fff; background: rgba(34,199,255,.09); font-size: 11px; font-weight: 900; text-decoration: none; white-space: nowrap; }
-      .profile-working-qr { display: grid; gap: 12px; }
+      .profile-active-deal { display: grid; justify-items: center; margin-top: 14px; }
+      .profile-active-deal.has-club-deal { justify-items: stretch; padding: 18px; border: 1px solid rgba(77,236,157,.48); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.14), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.9), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.12); }
       .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px; border: 1px solid rgba(126,234,255,.22); border-radius: 14px; background: rgba(0,0,0,.24); }
       .club-deal-copy { min-width: 0; display: grid; gap: 7px; }
       .club-deal-copy h2 { font-size: 20px; }
       .club-deal-copy p, .club-deal-copy small { color: #b9accd; font-size: 11px; line-height: 1.4; }
       .club-deal-action { display: grid; justify-items: end; gap: 8px; }
       .club-deal-action > button, .venue-qr-launcher { min-height: 44px; padding: 0 15px; border: 1px solid rgba(126,234,255,.4); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
-      .profile-working-card .club-deal-launcher { width: 100%; min-height: 56px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-color: rgba(77,236,157,.78); background: linear-gradient(135deg, #075c4d, #10804a); box-shadow: 0 0 26px rgba(77,236,157,.2); }
-      .profile-working-card .club-deal-launcher strong { max-width: none; padding: 8px 12px; border-radius: 10px; color: #062015; background: #b7ffd8; }
+      .profile-active-deal .club-deal-launcher { width: 100%; min-height: 56px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-color: rgba(77,236,157,.78); background: linear-gradient(135deg, #075c4d, #10804a); box-shadow: 0 0 26px rgba(77,236,157,.2); }
+      .profile-active-deal .club-deal-launcher strong { max-width: none; padding: 8px 12px; border-radius: 10px; color: #062015; background: #b7ffd8; }
       .deal-qr-frame { display: grid; justify-items: center; gap: 6px; }
       .deal-qr-frame img { width: 116px; aspect-ratio: 1; border-radius: 10px; background: #fff; }
       .deal-qr-frame span, .club-deal-action em { color: #9fefff; font-size: 10px; font-style: normal; }

@@ -81,14 +81,23 @@ test("profile actions expose live customer actions and nest profile QR inside Sh
 
 test("Working Now profiles promote the checked-in venue, directions, and Club QR", () => {
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Working now<\/h2>/);
   assert.match(profilePage, /Verified check-in · until/);
   assert.match(profilePage, /Venue &amp; directions/);
+  assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
-  assert.match(liveApp, /class="info-tile working-now-tile"/);
+  const shiftsFunction = liveApp.match(
+    /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
+  )?.[0] || "";
+  const liveScheduleBranch = shiftsFunction.split("if (profile.scheduled)")[0];
+  assert.match(liveScheduleBranch, /class="info-tile profile-schedule-card working-now-tile schedule-live"/);
+  assert.match(liveScheduleBranch, /<strong>Schedule<\/strong>/);
+  assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working now<\/div>/);
+  assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
   assert.match(liveApp, /class="profile-working-directions"/);
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
 });

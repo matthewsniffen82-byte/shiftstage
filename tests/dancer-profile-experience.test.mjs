@@ -80,9 +80,9 @@ test("the mobile profile places schedule directly after media, before revenue an
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const overviewIndex = profilePage.indexOf('className="profile-overview"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const dealIndex = profilePage.indexOf('className={`profile-working-card');
+  const scheduleIndex = profilePage.indexOf('className={`profile-working-card');
+  const dealIndex = profilePage.indexOf('className={`profile-active-deal');
   const socialIndex = profilePage.indexOf('className="profile-social-section"');
-  const scheduleIndex = profilePage.indexOf('className="profile-schedule-section"');
 
   assert.ok(identityIndex > -1);
   assert.ok(mediaIndex > identityIndex);
@@ -106,6 +106,7 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
   assert.match(profilePage, /hasPrimaryDeal=\{Boolean\(activeShift && activeDeal\)\}/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
+  assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
 });
 
 test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {
@@ -153,7 +154,7 @@ test("the primary shift is not repeated and empty profile sections stay hidden",
     profilePage,
     /const upcomingShifts = profile\.upcomingShifts\.filter\([\s\S]*?shift\.id !== activeShift\?\.id/,
   );
-  assert.match(profilePage, /\{upcomingShifts\.length \? \(/);
+  assert.match(profilePage, /upcomingShifts\.length \? \(/);
   assert.match(profilePage, /<h2 id="profile-schedule-title">Upcoming shifts<\/h2>/);
   assert.match(profilePage, /\{upcomingShifts\.map\(\(shift\) =>/);
   assert.doesNotMatch(profilePage, /<p className="muted">No posted shifts right now\.<\/p>/);

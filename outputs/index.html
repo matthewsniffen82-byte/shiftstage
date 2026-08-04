@@ -33909,11 +33909,31 @@
           letter-spacing: .14em !important;
           text-transform: uppercase !important;
         }
+        #profileBackdrop .working-now-tile > .profile-schedule-primary {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          width: fit-content !important;
+          padding: 6px 10px !important;
+          border: 1px solid rgba(77,236,157,.5) !important;
+          border-radius: 999px !important;
+          color: #4dec9d !important;
+          background: rgba(77,236,157,.1) !important;
+          box-shadow: 0 0 14px rgba(77,236,157,.1) !important;
+          font-size: 11px !important;
+          font-weight: 950 !important;
+          line-height: 1 !important;
+          text-shadow: 0 0 10px rgba(77,236,157,.24) !important;
+          text-transform: uppercase !important;
+          white-space: nowrap !important;
+        }
         #profileBackdrop .working-now-tile > .meta {
+          grid-column: 1 / -1 !important;
           display: grid !important;
           grid-template-columns: minmax(0, 1fr) auto !important;
           align-items: center !important;
           gap: 8px 12px !important;
+          padding-top: 10px !important;
+          border-top: 1px solid rgba(77,236,157,.14) !important;
         }
         #profileBackdrop .working-now-tile > .meta > :not(.profile-working-directions) {
           grid-column: 1 !important;
@@ -45000,20 +45020,15 @@
       const isEditorPreview = Boolean(options.preview);
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
-          <div class="info-tile working-now-tile">
-            <strong>Working now</strong>
+          <div class="info-tile profile-schedule-card working-now-tile schedule-live">
+            <strong>Schedule</strong>
+            <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
             <div class="meta">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <div class="detail-line schedule-time tonight-time-row">${clockIconMarkup()}<span class="modal-schedule-text tonight">${displayPublicShiftTime(profile.time, profile)}</span></div>
               ${activeShiftStartedMarkup(profile)}
               <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Venue &amp; directions</button>
             </div>
           </div>
-          <div class="info-tile">
-            <strong>Next shift</strong>
-            <div class="meta"><span class="muted-value">${profile.repeat && profile.repeat !== "No repeat" ? profile.repeat : "No next shift posted"}</span></div>
-          </div>
-          ${shiftNotesMarkup(profile)}
         `;
       }
       if (profile.scheduled) {

@@ -28,6 +28,12 @@ test("empty and upcoming schedules use one explanatory production card", () => {
     liveApp,
     /return `\s*<div class="info-tile">\s*<strong>Now<\/strong>[\s\S]*?<strong>Next shift<\/strong>[\s\S]*?No shift posted/,
   );
+  const shiftsFunction = liveApp.match(
+    /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,
+  )?.[0] || "";
+  const liveScheduleBranch = shiftsFunction.split("if (profile.scheduled)")[0];
+  assert.match(liveScheduleBranch, /profile-schedule-card working-now-tile schedule-live/);
+  assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
 });
 
 test("profile media is a compact horizontal filmstrip with stable geometry", () => {
