@@ -24,16 +24,16 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
     assert.match(ringRules, new RegExp(selector.replaceAll(".", "\\.")));
   }
 
-  assert.match(ringRules, /border: 3px solid var\(--dancr-color-avatar-ring-core\);/);
-  assert.match(ringRules, /border-top-color: var\(--dancr-color-avatar-ring-core\);/);
-  assert.match(ringRules, /border-right-color: color-mix\(/);
-  assert.match(ringRules, /border-bottom-color: color-mix\(/);
-  assert.match(ringRules, /border-left-color: color-mix\(/);
-  assert.match(ringRules, /drop-shadow\(0 0 2px color-mix\(/);
+  assert.match(ringRules, /border: 2px solid var\(--dancr-color-avatar-ring-core\) !important;/);
+  assert.match(ringRules, /0 0 0 2px var\(--dancr-color-surface-base\),/);
+  assert.match(ringRules, /0 0 0 3px var\(--dancr-color-avatar-ring-core\),/);
+  assert.match(ringRules, /\)::after \{[\s\S]*?border: 1px solid var\(--dancr-color-avatar-ring-core\);/);
+  assert.match(ringRules, /drop-shadow\([\s\S]*?var\(--dancr-color-avatar-ring-core\) 42%/);
   assert.match(ringRules, /Four tiny static facet flashes suggest cut crystal/);
   assert.match(ringRules, /\)::before \{[\s\S]*?radial-gradient\(ellipse 1px 4px at 18% 16%/);
   assert.match(ringRules, /radial-gradient\(ellipse 4px 1px at 8% 63%/);
   assert.match(ringRules, /animation: none;/);
+  assert.doesNotMatch(ringRules, /var\(--dancr-color-avatar-ring-(?:magenta|violet|indigo)\)/);
   assert.doesNotMatch(ringRules, /mask-composite|conic-gradient/);
   assert.doesNotMatch(ringRules, /venue-shift-avatar|venue-logo|discoveryTabs|home-nav/);
 });
