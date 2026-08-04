@@ -93,7 +93,6 @@ export type VenueSummary = {
   logoImageUrl?: string | null;
   qrCodeUrl?: string | null;
   qrCodeLabel?: string | null;
-  isClaimable?: boolean;
 };
 
 export type VenueOwnerProfile = {

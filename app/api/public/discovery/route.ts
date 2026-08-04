@@ -71,7 +71,6 @@ export async function GET(request: Request) {
           ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
           : null,
         qrCodeLabel: venue.qr_code_label || null,
-        isClaimable: !venue.owner_user_id,
         activeDeal: activeDeals.get(venue.id) || null,
       };
     });

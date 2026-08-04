@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { assertNewVenueAvailable, ensureVenueForAccount } from "@/src/lib/dancr/venue";
-import { hasVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
+import { getVenueForAccount } from "@/src/lib/dancr/venue";
+import {
+  hasVenueOwnershipClaim,
+  redeemVenueSignupCode,
+  resolveVenueSignupCode,
+} from "@/src/lib/dancr/venue-claims";
 import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -42,12 +46,7 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!data.user) throw new Error("Sign in required.");
 
-      return NextResponse.json(
-        await authResponse(data.user.id, role, data.session, false, {
-          name: readOptional(body.name),
-          city: readOptional(body.city),
-        }),
-      );
+      return NextResponse.json(await authResponse(data.user.id, role, data.session, false));
     }
 
     if (password.length < 8) {
@@ -81,31 +80,29 @@ export async function POST(request: Request) {
       return NextResponse.json(await authResponse(data.user.id, role, sessionData.session, false));
     }
 
-    const city =
-      role === "venue"
-        ? readRequired(body.city, "Venue city is required.")
-        : readOptional(body.city) || "Las Vegas";
+    if (role === "venue") {
+      return NextResponse.json(await createVenueSignupAccount({
+        client,
+        email,
+        password,
+        venueCode: readRequired(body.venueCode, "Venue access code is required."),
+      }));
+    }
+
+    const city = readOptional(body.city) || "Las Vegas";
     const displayName =
       role === "customer"
         ? customerDisplayName(email)
-        : role === "venue"
-          ? readRequired(body.name, "Venue name is required.")
-          : readOptional(body.stageName) || dancerDisplayName(email);
+        : readOptional(body.stageName) || dancerDisplayName(email);
     const metadata =
       role === "customer"
         ? { role, display_name: displayName }
-        : role === "venue"
-          ? { role, display_name: displayName, venue_name: displayName, city }
-          : {
-              role,
-              display_name: displayName,
-              stage_name: readOptional(body.stageName) || null,
-              city,
-            };
-
-    if (role === "venue") {
-      await assertNewVenueAvailable(createAdminSupabaseClient(), displayName);
-    }
+        : {
+            role,
+            display_name: displayName,
+            stage_name: readOptional(body.stageName) || null,
+            city,
+          };
 
     const { data, error } = await client.auth.signUp({
       email,
@@ -141,7 +138,6 @@ async function authResponse(
   expectedRole: AuthRole,
   session: { access_token?: string; refresh_token?: string; expires_at?: number } | null,
   requiresEmailConfirmation: boolean,
-  venueFallback?: { name?: string; city?: string },
 ) {
   const admin = createAdminSupabaseClient();
   const account = await getAccountByUserId(admin, userId);
@@ -149,15 +145,12 @@ async function authResponse(
     throw new Error("Account role does not match this login.");
   }
   if (expectedRole === "venue" && account?.role === "venue") {
-    const hasClaim = await hasVenueOwnershipClaim(admin, userId);
-    if (!hasClaim) {
-      const venueName = venueFallback?.name || account.displayName;
-      if (!venueName) throw new Error("Venue name is required.");
-      await ensureVenueForAccount(admin, {
-        userId,
-        name: venueName,
-        city: venueFallback?.city || "",
-      });
+    const [venue, hasLegacyClaim] = await Promise.all([
+      getVenueForAccount(admin, userId),
+      hasVenueOwnershipClaim(admin, userId),
+    ]);
+    if (!venue && !hasLegacyClaim) {
+      throw new Error("No venue is connected to this account. Use your venue access code during sign up.");
     }
   }
 
@@ -174,6 +167,85 @@ async function authResponse(
         }
       : null,
   };
+}
+
+async function createVenueSignupAccount(input: {
+  client: ReturnType<typeof createServerSupabaseClient>;
+  email: string;
+  password: string;
+  venueCode: string;
+}) {
+  const admin = createAdminSupabaseClient();
+  const access = await resolveVenueSignupCode(admin, input.venueCode);
+  let createdUserId = "";
+  let codeRedeemed = false;
+
+  try {
+    const { data, error } = await admin.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      email_confirm: true,
+      user_metadata: {
+        role: "venue",
+        display_name: access.venue.name,
+        venue_name: access.venue.name,
+        city: access.venue.city,
+        venue_access_invitation: true,
+      },
+    });
+    if (error) throw error;
+    if (!data.user) throw new Error("Unable to create venue account.");
+    createdUserId = data.user.id;
+
+    await upsertAccount(
+      "venue",
+      data.user.id,
+      input.email,
+      access.venue.name,
+      access.venue.city,
+      {},
+    );
+
+    const { data: sessionData, error: sessionError } = await input.client.auth.signInWithPassword({
+      email: input.email,
+      password: input.password,
+    });
+    if (sessionError) throw sessionError;
+    if (!sessionData.session) throw new Error("Unable to start venue dashboard session.");
+
+    const account = await getAccountByUserId(admin, data.user.id);
+    if (!account || account.role !== "venue") throw new Error("Unable to create venue account.");
+
+    await redeemVenueSignupCode(admin, {
+      codeId: access.codeId,
+      userId: data.user.id,
+    });
+    codeRedeemed = true;
+
+    return {
+      ok: true,
+      requiresEmailConfirmation: false,
+      user: { id: data.user.id },
+      account,
+      venue: access.venue,
+      session: {
+        accessToken: sessionData.session.access_token,
+        refreshToken: sessionData.session.refresh_token,
+        expiresAt: sessionData.session.expires_at,
+      },
+    };
+  } catch (error) {
+    if (createdUserId && !codeRedeemed) {
+      const { error: cleanupError } = await admin.auth.admin.deleteUser(createdUserId);
+      if (cleanupError) {
+        console.error("VENUE_SIGNUP_ORPHAN_ACCOUNT_CLEANUP_FAILED", {
+          userId: createdUserId,
+          message: cleanupError.message,
+        });
+      }
+    }
+    throw error;
+  }
 }
 
 async function upsertAccount(
@@ -203,11 +275,6 @@ async function upsertAccount(
   }
 
   if (role === "venue") {
-    await ensureVenueForAccount(admin, {
-      userId,
-      name: displayName,
-      city,
-    });
     return;
   }
 

@@ -54,6 +54,69 @@ export async function resolveVenueClaimCode(
   return data.id as string;
 }
 
+export async function resolveVenueSignupCode(client: DancrClient, rawCode: string) {
+  const codeDigest = hashVenueClaimCode(rawCode);
+  const { data, error } = await (client as any)
+    .from("venue_claim_codes")
+    .select("id, venue_id, expires_at, used_at, revoked_at, venues!inner(id, slug, name, city, state, owner_user_id, is_active)")
+    .eq("code_digest", codeDigest)
+    .maybeSingle();
+  if (error) throw error;
+
+  const venue = Array.isArray(data?.venues) ? data.venues[0] : data?.venues;
+  if (
+    !data
+    || data.used_at
+    || data.revoked_at
+    || new Date(data.expires_at).getTime() <= Date.now()
+    || !venue
+    || venue.is_active === false
+    || venue.owner_user_id
+  ) {
+    throw new VenueClaimUserError("This venue access code is invalid or no longer active.");
+  }
+
+  return {
+    codeId: data.id as string,
+    venue: {
+      id: venue.id as string,
+      slug: venue.slug as string,
+      name: venue.name as string,
+      city: venue.city as string,
+      state: (venue.state as string | null) || null,
+    },
+  };
+}
+
+export async function redeemVenueSignupCode(
+  client: DancrClient,
+  input: { codeId: string; userId: string },
+) {
+  const { data, error } = await (client as any).rpc("redeem_venue_signup_code", {
+    p_code_id: requiredText(input.codeId, "Venue access code is required.", 1, 80),
+    p_user_id: requiredText(input.userId, "Venue account is required.", 1, 80),
+  });
+  if (error) {
+    const message = error.message || "";
+    if (/access code|claim code|already has a manager|already manages/i.test(message)) {
+      throw new VenueClaimUserError(
+        /already has a manager/i.test(message)
+          ? "This venue is already connected to a manager account."
+          : /already manages/i.test(message)
+            ? "This account already manages another venue."
+            : "This venue access code is invalid or no longer active.",
+      );
+    }
+    throw error;
+  }
+  console.info("VENUE_SIGNUP_CODE_REDEEMED", {
+    codeId: input.codeId,
+    userId: input.userId,
+    venueId: data?.id || null,
+  });
+  return data;
+}
+
 export async function getAdminVenueClaimCodes(client: DancrClient) {
   const { data, error } = await (client as any)
     .from("venue_claim_codes")
@@ -71,7 +134,7 @@ export async function issueVenueClaimCode(
   const venueId = requiredText(input.venueId, "Venue is required.", 1, 80);
   const expiresInDays = Number.isInteger(input.expiresInDays) ? Number(input.expiresInDays) : 7;
   if (expiresInDays < 1 || expiresInDays > 30) {
-    throw new VenueClaimUserError("Venue claim codes must expire in 1 to 30 days.");
+    throw new VenueClaimUserError("Venue access codes must expire in 1 to 30 days.");
   }
 
   const code = createVenueClaimCodeValue();
@@ -87,7 +150,7 @@ export async function issueVenueClaimCode(
       throw new VenueClaimUserError("This venue already has a verified manager.");
     }
     if (/active venue not found/i.test(error.message || "")) {
-      throw new VenueClaimUserError("This venue is not available for a claim code.");
+      throw new VenueClaimUserError("This venue is not available for an access code.");
     }
     throw error;
   }
@@ -106,17 +169,17 @@ export async function revokeVenueClaimCode(
   client: DancrClient,
   input: { codeId: string; adminId: string },
 ) {
-  const codeId = requiredText(input.codeId, "Venue claim code is required.", 1, 80);
+  const codeId = requiredText(input.codeId, "Venue access code is required.", 1, 80);
   const { data, error } = await (client as any).rpc("revoke_venue_claim_code", {
     p_code_id: codeId,
     p_admin_id: input.adminId,
   });
   if (error) {
     if (/used venue claim code cannot be revoked/i.test(error.message || "")) {
-      throw new VenueClaimUserError("A used venue claim code cannot be revoked.");
+      throw new VenueClaimUserError("A used venue access code cannot be revoked.");
     }
     if (/venue claim code not found/i.test(error.message || "")) {
-      throw new VenueClaimUserError("Venue claim code not found.");
+      throw new VenueClaimUserError("Venue access code not found.");
     }
     throw error;
   }

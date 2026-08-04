@@ -360,7 +360,6 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     logoImageUrl: verifiedVenueLogoUrl(data.slug),
     qrCodeUrl: venueQrCodeUrl(client, data.qr_code_storage_path),
     qrCodeLabel: data.qr_code_label || null,
-    isClaimable: !data.owner_user_id,
   };
 }
 

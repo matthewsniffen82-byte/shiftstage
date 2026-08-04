@@ -30,18 +30,20 @@ const [
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
-test("venue signup creates an owned venue and routes successful authentication to its dashboard", () => {
-  assert.match(authRoute, /role === "venue"\s*\?\s*readRequired\(body\.name, "Venue name is required\."\)/);
+test("venue signup redeems a private access code and routes successful authentication to its dashboard", () => {
+  assert.match(authRoute, /venueCode: readRequired\(body\.venueCode, "Venue access code is required\."\)/);
   assert.match(authRoute, /if \(password\.length < 8\)/);
-  assert.match(authRoute, /await ensureVenueForAccount\(admin, \{/);
-  assert.match(authRoute, /userId,\s*name: displayName,\s*city,/);
+  assert.match(authRoute, /await resolveVenueSignupCode\(admin, input\.venueCode\)/);
+  assert.match(authRoute, /await redeemVenueSignupCode\(admin, \{/);
+  assert.match(authRoute, /email_confirm: true/);
+  assert.match(authRoute, /admin\.auth\.admin\.deleteUser\(createdUserId\)/);
   assert.match(authRoute, /expectedRole === "venue" && account\?\.role === "venue"/);
-  assert.match(authRoute, /const venueName = venueFallback\?\.name \|\| account\.displayName/);
   assert.match(authHelpers, /if \(role === "venue"\) return "\/dashboard\/venue"/);
   assert.match(liveApp, /document\.getElementById\("venueJoinNowBtn"\)\.addEventListener\("click", async/);
   assert.match(liveApp, /document\.getElementById\("venueLoginForm"\)\.addEventListener\("submit", async/);
-  assert.match(liveApp, /id="venueLoginCity"/);
-  assert.match(liveApp, /city: venueCity/);
+  assert.match(liveApp, /id="venueSignupCode"[^>]*autocomplete="one-time-code"/);
+  assert.match(liveApp, /venueCode,/);
+  assert.doesNotMatch(liveApp, /id="venueLoginName"|id="venueLoginCity"/);
   assert.match(liveApp, /startVenueDashboardSession\("Venue dashboard opened"\)/);
   assert.doesNotMatch(liveApp, /venue@example\.com|venue123|demo venue/i);
 });

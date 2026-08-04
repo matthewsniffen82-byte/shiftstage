@@ -24700,26 +24700,6 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 16px rgba(34, 199, 255, .1) !important;
     }
 
-    .venue-detail-claim {
-      min-height: 42px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      border: 1px solid rgba(192, 132, 255, .2);
-      border-radius: 12px;
-      color: rgba(225, 217, 239, .76);
-      background: rgba(124, 58, 237, .055);
-      font-size: 12px;
-      font-weight: 800;
-      text-decoration: none;
-    }
-
-    .venue-detail-claim strong {
-      color: #cda8ff;
-      font-weight: 950;
-    }
-
     .venue-club-deal-unavailable .venue-detail-club-deal-symbol {
       width: 58px;
       height: 58px;
@@ -31019,24 +30999,6 @@
           width: 21px;
           height: 21px;
         }
-        .venue-card-claim {
-          grid-column: 1 / -1;
-          min-height: 34px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          border-top: 1px solid rgba(192,132,255,.16);
-          color: rgba(224,216,238,.74);
-          font-size: 10px;
-          font-weight: 800;
-          text-decoration: none;
-        }
-        .venue-card-claim strong {
-          color: #cda8ff;
-          font-weight: 950;
-        }
-
         .home-venue-discovery-art.has-custom-photo {
           background-image:
             linear-gradient(180deg, rgba(3,4,5,.1) 0%, transparent 32%, rgba(3,4,5,.2) 51%, rgba(3,4,5,.97) 100%),
@@ -34860,15 +34822,12 @@
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" hidden>
             <div class="auth-form-head">
               <strong>Venue account</strong>
-              <span>Sign in to manage your venue page and analytics, or enter your venue details and choose Join now to create an account.</span>
+              <span>Sign in to manage your venue. New venue owners enter the private access code from MyDancr and choose Create venue account.</span>
             </div>
             <div class="field">
-              <label for="venueLoginName">Venue name</label>
-              <input id="venueLoginName" type="text" autocomplete="organization" minlength="2" maxlength="120">
-            </div>
-            <div class="field">
-              <label for="venueLoginCity">City</label>
-              <input id="venueLoginCity" type="text" autocomplete="address-level2" minlength="2" maxlength="100">
+              <label for="venueSignupCode">Venue access code <small>(sign up only)</small></label>
+              <input id="venueSignupCode" type="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" minlength="25" maxlength="32" placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX">
+              <div class="rule-note">The one-time code connects your account to the correct existing venue page. MyDancr administrators provide access codes privately.</div>
             </div>
             <div class="field">
               <label for="venueLoginEmail">Email</label>
@@ -34885,8 +34844,8 @@
             </div>
             <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button">Forgot password?</button>
             <button class="action-btn" id="venueLoginSubmit" type="submit">Venue login</button>
-            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="button">Join now</button>
-            <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite">Enter your account details to continue.</div>
+            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="button">Create venue account</button>
+            <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite">Existing managers can sign in. New managers need a private venue access code.</div>
           </form>
         </div>
       </div>
@@ -35724,7 +35683,7 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse admin-dashboard-collapse">
-          <summary><span class="dashboard-collapse-title"><strong>Venue verification and claim codes</strong><span>Create one-time venue codes, review ownership claims, approve verified venues, or remove invalid venues.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Venue access codes</strong><span>Create one-time signup codes for existing venue pages, review legacy ownership claims, or remove invalid venues.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="admin-grid" id="adminVenues"></div>
           </div>
@@ -36844,8 +36803,6 @@
       }
 
       if (role === "venue") {
-        state.name = document.getElementById("venueLoginName")?.value || "";
-        state.city = document.getElementById("venueLoginCity")?.value || citySelect.value;
         state.email = document.getElementById("venueLoginEmail")?.value || "";
       }
 
@@ -37266,8 +37223,6 @@
         setTimeout(() => document.getElementById("dancerLoginPassword")?.focus(), 80);
       } else if (state.role === "venue") {
         openAuthRole("venue");
-        document.getElementById("venueLoginName").value = state.name || "";
-        document.getElementById("venueLoginCity").value = state.city || citySelect.value;
         document.getElementById("venueLoginEmail").value = state.email || "";
         showToast("Email confirmed. Sign in to open your venue dashboard.");
         setTimeout(() => document.getElementById("venueLoginPassword")?.focus(), 80);
@@ -37301,7 +37256,7 @@
       }
       const email = normalizeAccountEmail(payload.email);
       if (payload.role && email) persistAccountEmail(payload.role, email);
-      if (data.session && (payload.mode !== "signup" || payload.role === "admin")) {
+      if (data.session && (payload.mode !== "signup" || payload.role === "admin" || payload.role === "venue")) {
         const account = data.account
           ? { ...data.account, email: normalizeAccountEmail(data.account.email) || email || null }
           : { role: payload.role || null, email: email || null, accountState: "active" };
@@ -39269,7 +39224,6 @@
         logoImageUrl: item.logoImageUrl || "",
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
-        isClaimable: item.isClaimable !== false,
         activeDeal: item.activeDeal || null
       };
     }
@@ -44005,9 +43959,6 @@
       const directionsMarkup = details.address
         ? `<a class="venue-card-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
-      const claimMarkup = venue.id && venue.slug && venue.isClaimable !== false
-        ? `<a class="venue-card-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim" aria-label="Claim and manage ${safeName} with a venue code">Have a venue code? <strong>Claim it</strong></a>`
-        : "";
       return `
         <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">
@@ -44029,7 +43980,6 @@
           <div class="venue-card-actions" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
             ${directionsMarkup}
-            ${claimMarkup}
           </div>
         </article>
       `;
@@ -44160,9 +44110,6 @@
               <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
-              ${venue.id && venue.slug && venue.isClaimable !== false
-                ? `<a class="venue-detail-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim">Have a venue code? <strong>Claim this venue</strong></a>`
-                : ""}
             </div>
           </article>
 
@@ -45359,8 +45306,7 @@
       }
 
       if (scope === "all" || scope === "venue") {
-        clearValue("venueLoginName");
-        clearValue("venueLoginCity");
+        clearValue("venueSignupCode");
         clearValue("venueLoginEmail");
         clearValue("venueLoginPassword");
       }
@@ -45388,7 +45334,7 @@
       const isDancer = role === "dancer";
       const isVenue = role === "venue";
       clearAuthFields(role);
-      document.getElementById("authRoleTitle").textContent = isVenue ? "Venue login" : isDancer ? "Dancer login" : "Customer login";
+      document.getElementById("authRoleTitle").textContent = isVenue ? "Venue login or sign up" : isDancer ? "Dancer login" : "Customer login";
       document.getElementById("authRoleSubtitle").textContent = isVenue
         ? "Manage your venue page, published QR code, verified working-now dancers, and live analytics."
         : isDancer
@@ -45397,7 +45343,6 @@
       document.getElementById("authForm").hidden = isDancer || isVenue;
       document.getElementById("dancerLoginForm").hidden = !isDancer;
       document.getElementById("venueLoginForm").hidden = !isVenue;
-      if (isVenue) document.getElementById("venueLoginCity").value = citySelect.value;
       if (!isDancer && !isVenue) setCustomerAuthMode("login");
       openAuthPage();
     }
@@ -48818,12 +48763,12 @@
           const activeClaimCode = liveAdminVenueClaimCodes.find((claimCode) => claimCode.venueId === venue.id && claimCode.status === "active");
           const revealedCode = liveAdminRevealedVenueCodes[venue.id] || "";
           const claimCodeMarkup = venue.ownerUserId
-            ? '<div class="meta">Venue account connected. Claim codes are disabled.</div>'
+            ? '<div class="meta">Venue account connected. Access codes are disabled.</div>'
             : `
               <div class="meta">
                 ${activeClaimCode
-                  ? `One-time claim code active until ${escapeHtml(new Date(activeClaimCode.expiresAt).toLocaleString())}. The code itself is shown only when created.`
-                  : "No active venue claim code. A claim cannot be submitted until an administrator creates one."}
+                  ? `One-time signup access code active until ${escapeHtml(new Date(activeClaimCode.expiresAt).toLocaleString())}. The code itself is shown only when created.`
+                  : "No active venue access code. Create one before inviting this venue owner to sign up."}
               </div>
               ${revealedCode ? `
                 <div class="admin-code-reveal">
@@ -48832,8 +48777,8 @@
                 </div>
               ` : ""}
               <div class="admin-actions">
-                <button class="action-btn" type="button" data-admin-venue-code-issue="${escapeHtml(venue.id)}">${activeClaimCode ? "Replace claim code" : "Create claim code"}</button>
-                ${activeClaimCode ? `<button class="action-btn danger" type="button" data-admin-venue-code-revoke="${escapeHtml(activeClaimCode.id)}" data-admin-venue-id="${escapeHtml(venue.id)}">Revoke claim code</button>` : ""}
+                <button class="action-btn" type="button" data-admin-venue-code-issue="${escapeHtml(venue.id)}">${activeClaimCode ? "Replace access code" : "Create access code"}</button>
+                ${activeClaimCode ? `<button class="action-btn danger" type="button" data-admin-venue-code-revoke="${escapeHtml(activeClaimCode.id)}" data-admin-venue-id="${escapeHtml(venue.id)}">Revoke access code</button>` : ""}
               </div>
               <div class="meta" data-venue-code-status="${escapeHtml(venue.id)}" role="status" aria-live="polite"></div>
             `;
@@ -49286,7 +49231,7 @@
       if (!venueId || !isAdminSession()) return;
       const venue = Object.values(markets).flatMap((market) => market.venues).find((item) => item.id === venueId);
       const venueName = venue?.name || "this venue";
-      if (!confirm(`Create a new one-time claim code for ${venueName}? Any previous unused code will be revoked.`)) return;
+      if (!confirm(`Create a new one-time signup access code for ${venueName}? Any previous unused code will be revoked.`)) return;
 
       const originalText = button.textContent;
       button.disabled = true;
@@ -49305,12 +49250,12 @@
         ];
         liveAdminRevealedVenueCodes[venueId] = data.code;
         renderAdminDashboard();
-        showToast("Claim code created. Copy it now; it is shown only once.");
+        showToast("Access code created. Copy it now; it is shown only once.");
       } catch (error) {
         button.disabled = false;
         button.textContent = originalText;
-        if (statusNode) statusNode.textContent = error.message || "Could not create venue claim code.";
-        showToast(error.message || "Could not create venue claim code");
+        if (statusNode) statusNode.textContent = error.message || "Could not create venue access code.";
+        showToast(error.message || "Could not create venue access code");
       }
     }
 
@@ -49318,7 +49263,7 @@
       const codeId = button.dataset.adminVenueCodeRevoke || "";
       const venueId = button.dataset.adminVenueId || "";
       if (!codeId || !venueId || !isAdminSession()) return;
-      if (!confirm("Revoke this venue claim code immediately? It will no longer authorize a claim.")) return;
+      if (!confirm("Revoke this venue access code immediately? It will no longer authorize venue sign up.")) return;
 
       const originalText = button.textContent;
       button.disabled = true;
@@ -49329,12 +49274,12 @@
         liveAdminVenueClaimCodes = liveAdminVenueClaimCodes.map((item) => item.id === codeId ? data.claimCode : item);
         delete liveAdminRevealedVenueCodes[venueId];
         renderAdminDashboard();
-        showToast(data.message || "Venue claim code revoked");
+        showToast(data.message || "Venue access code revoked");
       } catch (error) {
         button.disabled = false;
         button.textContent = originalText;
-        if (statusNode) statusNode.textContent = error.message || "Could not revoke venue claim code.";
-        showToast(error.message || "Could not revoke venue claim code");
+        if (statusNode) statusNode.textContent = error.message || "Could not revoke venue access code.";
+        showToast(error.message || "Could not revoke venue access code");
       }
     }
 
@@ -49342,10 +49287,10 @@
       const venueId = button.dataset.adminVenueCodeCopy || "";
       const code = liveAdminRevealedVenueCodes[venueId] || "";
       if (!code) {
-        showToast("This code is no longer available. Create a new claim code.");
+        showToast("This code is no longer available. Create a new access code.");
         return;
       }
-      copyText(code, "Venue claim code copied");
+      copyText(code, "Venue access code copied");
     }
 
     function saveLiveAdminReportAction(reportId, action) {
@@ -53260,7 +53205,7 @@
       isDancerLoggedIn = false;
       isVenueLoggedIn = true;
       activeDashboardType = "venue";
-      activeVenueName = document.getElementById("venueLoginName").value.trim() || authSession?.account?.displayName || activeVenueName;
+      activeVenueName = authSession?.account?.displayName || activeVenueName;
       closeAuthPage();
       updateAccountHeader();
       renderVenueDashboard();
@@ -53271,18 +53216,13 @@
     document.getElementById("venueJoinNowBtn").addEventListener("click", async (event) => {
       const button = event.currentTarget;
       const status = document.getElementById("venueAuthStatus");
-      const venueName = document.getElementById("venueLoginName").value.trim();
-      const venueCity = document.getElementById("venueLoginCity").value.trim();
+      const venueCodeInput = document.getElementById("venueSignupCode");
       const emailInput = document.getElementById("venueLoginEmail");
       const passwordInput = document.getElementById("venueLoginPassword");
-      if (venueName.length < 2) {
-        status.textContent = "Enter your venue name to create an account.";
-        document.getElementById("venueLoginName").focus();
-        return;
-      }
-      if (venueCity.length < 2) {
-        status.textContent = "Enter the venue city to create an account.";
-        document.getElementById("venueLoginCity").focus();
+      const venueCode = venueCodeInput.value.trim();
+      if (!venueCode || !venueCodeInput.checkValidity()) {
+        status.textContent = "Enter the private venue access code from MyDancr.";
+        venueCodeInput.focus();
         return;
       }
       if (!emailInput.reportValidity() || !passwordInput.reportValidity()) return;
@@ -53292,11 +53232,9 @@
         const result = await requestAuth({
           mode: "signup",
           role: "venue",
-          name: document.getElementById("venueLoginName").value,
+          venueCode,
           email: document.getElementById("venueLoginEmail").value,
-          password: document.getElementById("venueLoginPassword").value,
-          city: venueCity,
-          emailRedirectTo: saveAuthResume("venue")
+          password: document.getElementById("venueLoginPassword").value
         });
         if (result.requiresEmailConfirmation) {
           status.textContent = "Venue account created. Check your email and tap the confirmation link, then sign in here.";
@@ -53323,10 +53261,8 @@
         await requestAuth({
           mode: "login",
           role: "venue",
-          name: document.getElementById("venueLoginName").value,
           email: document.getElementById("venueLoginEmail").value,
-          password: document.getElementById("venueLoginPassword").value,
-          city: document.getElementById("venueLoginCity").value.trim() || citySelect.value
+          password: document.getElementById("venueLoginPassword").value
         });
         status.textContent = "Signed in. Opening your live venue dashboard…";
         startVenueDashboardSession("Venue dashboard opened");
@@ -54816,6 +54752,16 @@
       return true;
     }
 
+    function handleVenueSignupDeepLink() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("venueSignup") !== "1") return false;
+      window.history.replaceState({}, document.title, "/");
+      openAuthRole("venue");
+      showToast("Enter the private access code from MyDancr to create your venue account.");
+      setTimeout(() => document.getElementById("venueSignupCode")?.focus(), 120);
+      return true;
+    }
+
     installReferenceHomeShell();
     restoreLoggedInSessionState();
     updateAccountHeader();
@@ -54870,7 +54816,7 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleAdminDashboardDeepLink() && !handleDancerDashboardDeepLink()) {
+    if (!restoredAuthResume && !handleAdminDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueSignupDeepLink()) {
       void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
     }
   </script>

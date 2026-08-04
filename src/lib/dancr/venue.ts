@@ -65,7 +65,7 @@ export async function assertNewVenueAvailable(client: DancrClient, name: string)
     throw new Error(
       listedVenue.owner_user_id
         ? `${listedVenue.name} is already managed. Contact MyDancr support if venue access needs to change.`
-        : `${listedVenue.name} is already listed. Open its venue card and choose Claim this venue.`,
+        : `${listedVenue.name} is already listed. Use the private venue access code during venue sign up.`,
     );
   }
 }

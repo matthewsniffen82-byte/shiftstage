@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const claimCodes = await getAdminVenueClaimCodes(createAdminSupabaseClient());
     return NextResponse.json({ ok: true, claimCodes });
   } catch (error) {
-    return apiError(error, "Unable to load venue claim codes.");
+    return apiError(error, "Unable to load venue access codes.");
   }
 }
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         ok: true,
         ...result,
-        message: "One-time venue claim code created. Copy it now; it cannot be retrieved later.",
+        message: "One-time venue signup access code created. Copy it now; it cannot be retrieved later.",
       }, { status: 201 });
     }
 
@@ -54,13 +54,13 @@ export async function POST(request: Request) {
       codeId,
       adminId: user.id,
     });
-    return NextResponse.json({ ok: true, claimCode, message: "Venue claim code revoked." });
+    return NextResponse.json({ ok: true, claimCode, message: "Venue access code revoked." });
   } catch (error) {
     const userMessage = error instanceof VenueClaimUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_CLAIM_CODE_ADMIN_FAILED", error);
     return apiError(
-      new Error(userMessage || "Unable to manage venue claim code."),
-      "Unable to manage venue claim code.",
+      new Error(userMessage || "Unable to manage venue access code."),
+      "Unable to manage venue access code.",
       userMessage ? 400 : 500,
     );
   }
