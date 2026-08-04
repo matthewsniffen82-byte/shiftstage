@@ -50,6 +50,25 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
 });
 
+test("venue upcoming-shift rows show the dancer's approved production avatar", () => {
+  const upcomingShiftRow = liveApp.match(
+    /function venueUpcomingShiftRow\(profile, city\) \{[\s\S]*?(?=\n    function venueDetailPage)/,
+  )?.[0] || "";
+
+  assert.match(
+    upcomingShiftRow,
+    /customAvatarPhotoAttrs\([\s\S]*?publicAvatarPhotoUrl\(profile\)[\s\S]*?publicAvatarPhotoSrcSet\(profile\)[\s\S]*?profile\.avatarPhotoFocalX \?\? profile\.mainPhotoFocalX[\s\S]*?profile\.avatarPhotoFocalY \?\? profile\.mainPhotoFocalY/,
+  );
+  assert.match(
+    upcomingShiftRow,
+    /class="venue-shift-avatar \$\{portraitClass\(Number\(profile\.trend \|\| 1\)\)\}\$\{avatarAttrs\.className\}"\$\{avatarAttrs\.style\} role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}"/,
+  );
+  assert.match(
+    liveApp,
+    /\.venue-shift-avatar\.has-custom-photo \{[\s\S]*?background-image: var\(--custom-photo\);[\s\S]*?background-position: var\(--custom-photo-position, center\);/,
+  );
+});
+
 test("venue profiles reserve customer QR language for active Club Deals", () => {
   const venueOffer = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,

@@ -12104,6 +12104,11 @@
       box-shadow: 0 0 18px rgba(168,85,247,.12);
     }
 
+    .venue-shift-avatar.has-custom-photo {
+      background-image: var(--custom-photo);
+      background-position: var(--custom-photo-position, center);
+    }
+
     .venue-shift-copy {
       display: grid;
       gap: 6px;
@@ -44446,9 +44451,15 @@
 
     function venueUpcomingShiftRow(profile, city) {
       const label = upcomingFullLabel(profile, city);
+      const avatarAttrs = customAvatarPhotoAttrs(
+        publicAvatarPhotoUrl(profile),
+        publicAvatarPhotoSrcSet(profile),
+        profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
+        profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
+      );
       return `
         <button class="venue-shift-row" data-profile="${profile.name}" aria-label="${profile.name} upcoming shift">
-          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}"></div>
+          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></div>
           <div class="venue-shift-copy">
             <strong>${profile.name}${profile.status === "Verified" ? '<span class="verified-mark" aria-label="Verified">✓</span>' : ""}</strong>
             <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
