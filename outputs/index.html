@@ -28050,6 +28050,25 @@
       box-shadow: none !important;
     }
 
+    .dancer-next-shift > #approvedScheduleDropdown {
+      grid-column: 1 / -1;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      margin: 2px 0 0;
+      padding: 16px 0 0;
+      border: 0 !important;
+      border-top: 1px solid rgba(195,169,255,.22) !important;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none !important;
+      box-sizing: border-box;
+    }
+
+    .dancer-next-shift.is-schedule-editor-open > .dancer-shift-primary {
+      display: none;
+    }
+
     #approvedScheduleDropdown #approvedScheduleFormMount {
       display: grid !important;
       gap: 14px !important;
@@ -34960,6 +34979,16 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"></path></svg>
                   <span>Post schedule</span>
                 </button>
+                <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
+                  <div class="approved-tool-dropdown-head">
+                    <strong>Post schedule</strong>
+                    <span>Add or update the shift customers see on your public profile and venue page.</span>
+                  </div>
+                  <div class="approved-tool-dropdown-actions">
+                    <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
+                  </div>
+                  <div id="approvedScheduleFormMount"></div>
+                </div>
               </section>
               <div class="dancer-quick-actions" aria-label="Profile shortcuts">
                 <button type="button" data-dancer-control-action="edit-profile">
@@ -34992,16 +35021,6 @@
               <div id="approvedProfileFixList"></div>
               <div id="approvedVisualProfileEditor"></div>
               <div id="approvedProfileFormMount"></div>
-            </div>
-            <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
-              <div class="approved-tool-dropdown-head">
-                <strong>Post schedule</strong>
-                <span>Add or update the shift customers see on your public profile and venue page.</span>
-              </div>
-              <div class="approved-tool-dropdown-actions">
-                <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
-              </div>
-              <div id="approvedScheduleFormMount"></div>
             </div>
           </div>
           <div id="setupChecklistWrap" class="setup-panel setup-panel-inline" hidden>
@@ -39836,6 +39855,16 @@
       renderApprovedToolDropdowns();
     }
 
+    function openApprovedScheduleEditor() {
+      const panel = document.getElementById("approvedDancerPanel");
+      panel?.removeAttribute("hidden");
+      if (panel) panel.open = true;
+      setApprovedToolDropdown("schedule", { force: true });
+      window.requestAnimationFrame(() => {
+        document.getElementById("approvedScheduleDropdown")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
+
     function renderApprovedToolDropdowns() {
       const editPanel = document.getElementById("approvedEditProfileDropdown");
       const schedulePanel = document.getElementById("approvedScheduleDropdown");
@@ -39845,6 +39874,12 @@
       if (fixList) fixList.innerHTML = editableDancerFixFeedbackMarkup();
       editPanel?.classList.toggle("show", activeApprovedToolDropdown === "edit");
       schedulePanel?.classList.toggle("show", activeApprovedToolDropdown === "schedule");
+      const scheduleExpanded = activeApprovedToolDropdown === "schedule";
+      const scheduleCard = schedulePanel?.closest(".dancer-next-shift");
+      const schedulePrimary = document.getElementById("dancerDashboardShiftAction");
+      scheduleCard?.classList.toggle("is-schedule-editor-open", scheduleExpanded);
+      schedulePrimary?.setAttribute("aria-expanded", scheduleExpanded ? "true" : "false");
+      schedulePrimary?.setAttribute("aria-controls", "approvedScheduleDropdown");
       dancerDashboard?.classList.toggle("is-edit-profile-fullscreen", activeApprovedToolDropdown === "edit");
       document.body.classList.toggle("edit-profile-open", activeApprovedToolDropdown === "edit");
       if (editPanel) editPanel.hidden = activeApprovedToolDropdown !== "edit";
@@ -53471,10 +53506,7 @@
       }
 
       if (action === "post-schedule") {
-        const panel = document.getElementById("approvedDancerPanel");
-        panel?.removeAttribute("hidden");
-        if (panel) panel.open = true;
-        setApprovedToolDropdown("schedule");
+        openApprovedScheduleEditor();
         setResult("Schedule posting form opened.");
         return;
       }
@@ -53485,10 +53517,7 @@
           renderDancerSetup();
           return;
         }
-        const panel = document.getElementById("approvedDancerPanel");
-        panel?.removeAttribute("hidden");
-        if (panel) panel.open = true;
-        setApprovedToolDropdown("schedule");
+        openApprovedScheduleEditor();
         setResult("Schedule posting form opened.");
         return;
       }

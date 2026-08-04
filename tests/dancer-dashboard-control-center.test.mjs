@@ -20,6 +20,27 @@ test("approved dancer dashboard leads with a real daily control center", () => {
   assert.match(page, /handleShiftVerificationAction\("check-in", trigger\)/);
 });
 
+test("schedule editing expands inside the dashboard schedule card", () => {
+  const scheduleCard = page.match(
+    /<section class="dancer-next-shift"[\s\S]*?<\/section>/,
+  )?.[0] || "";
+  assert.match(scheduleCard, /id="dancerDashboardShiftAction"/);
+  assert.match(scheduleCard, /id="approvedScheduleDropdown"[^>]*hidden/);
+  assert.match(scheduleCard, /id="approvedScheduleFormMount"/);
+  assert.match(
+    page,
+    /\.dancer-next-shift > #approvedScheduleDropdown \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?border-top: 1px solid rgba\(195,169,255,\.22\) !important;[\s\S]*?background: transparent;/,
+  );
+  assert.match(
+    page,
+    /function renderApprovedToolDropdowns\(\)[\s\S]*?schedulePanel\?\.closest\("\.dancer-next-shift"\)[\s\S]*?classList\.toggle\("is-schedule-editor-open", scheduleExpanded\)/,
+  );
+  assert.match(
+    page,
+    /function openApprovedScheduleEditor\(\)[\s\S]*?setApprovedToolDropdown\("schedule", \{ force: true \}\)[\s\S]*?approvedScheduleDropdown[\s\S]*?scrollIntoView\(\{ behavior: "smooth", block: "nearest" \}\)/,
+  );
+});
+
 test("dashboard glance metrics are populated only from live analytics fields", () => {
   assert.match(page, /dancerDashboardProfileViews:\s*views/);
   assert.match(page, /dancerDashboardFollowers:\s*followers/);
