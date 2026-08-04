@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=78" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=79" rel="stylesheet">/,
   );
 });
 
@@ -214,7 +214,7 @@ test("venue discovery keeps restrained brand actions while venue-detail outlines
   assert.doesNotMatch(venueMonogram, /brand-primary/);
   assert.match(
     venueAccents,
-    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-brand-primary-strong\)[\s\S]*?var\(--dancr-color-brand-primary\) 18%[\s\S]*?0 0 14px var\(--dancr-color-brand-primary-medium\)[\s\S]*?opacity: 1;[\s\S]*?filter: none;[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?var\(--dancr-color-brand-core\)[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-brand-primary\)\)/,
+    /\.home-venue-discovery-profile-action \{[\s\S]*?border-color: var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-text-primary\) 10%[\s\S]*?0 0 16px color-mix\(in srgb, var\(--dancr-color-text-primary\) 48%, transparent\)[\s\S]*?opacity: 1;[\s\S]*?filter: none;[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-text-primary\)\)/,
   );
   assert.match(
     venueAccents,
@@ -279,8 +279,13 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   const venueScrollBrand = aesthetic.match(
     /Production venue scroll-card branding follows the shared 84\/10\/6 system[\s\S]*?(?=\/\* Production venue-detail refinement)/,
   )?.[0] || "";
+  const venueProfileAction = venueScrollBrand.match(
+    /\.home-venue-discovery-profile-action \{[\s\S]*?\.home-venue-discovery-profile-action:focus-visible \{[\s\S]*?\n\}/,
+  )?.[0] || "";
 
   assert.ok(venueScrollBrand, "the production venue scroll-card brand layer must exist");
+  assert.ok(venueProfileAction, "the venue Profile action hierarchy must exist");
+  assert.doesNotMatch(venueProfileAction, /brand|violet/);
   assert.match(
     venueScrollBrand,
     /> #results\.home-venue-discovery-feed \{[\s\S]*?scrollbar-color: var\(--dancr-color-border\) transparent !important;[\s\S]*?> #results\.home-venue-discovery-feed::-webkit-scrollbar-thumb \{[\s\S]*?background: var\(--dancr-color-border\) !important;[\s\S]*?box-shadow: none !important;/,
@@ -299,7 +304,7 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   );
   assert.match(
     venueScrollBrand,
-    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-brand-primary-strong\)[\s\S]*?var\(--dancr-color-brand-primary\) 18%[\s\S]*?0 0 14px var\(--dancr-color-brand-primary-medium\)[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-brand-primary\)\)[\s\S]*?\.home-venue-discovery-profile-action:active \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
+    /\.home-venue-discovery-profile-action \{[\s\S]*?border-color: var\(--dancr-color-text-primary\)[\s\S]*?var\(--dancr-color-text-primary\) 10%[\s\S]*?0 0 16px color-mix\(in srgb, var\(--dancr-color-text-primary\) 48%, transparent\)[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-text-primary\)\)[\s\S]*?\.home-venue-discovery-profile-action:active \{[\s\S]*?var\(--dancr-color-text-primary\) 22%[\s\S]*?0 0 20px color-mix\(in srgb, var\(--dancr-color-text-primary\) 62%, transparent\)[\s\S]*?\.home-venue-discovery-profile-action:focus-visible \{[\s\S]*?outline-color: var\(--dancr-color-text-primary\)/,
   );
   assert.match(
     venueScrollBrand,

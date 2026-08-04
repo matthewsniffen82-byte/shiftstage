@@ -2464,10 +2464,9 @@ body.dancr-button-system .home-dancer-grid-heading.is-trending > strong {
 }
 
 /* Venue discovery keeps its premium black-metal cards neutral. Profile uses
- * violet-lit dark glass so the primary identity action reads immediately,
- * while the solid brand fill remains reserved for direct press feedback. The
- * fallback venue mark uses a neutral slate edge; real cover photography is
- * never filtered or recolored. */
+ * electric-white dark glass so the primary identity action reads immediately
+ * without adding another violet surface. The fallback venue mark uses a
+ * neutral slate edge; real cover photography is never filtered or recolored. */
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-monogram {
@@ -2482,19 +2481,20 @@ body.dancr-button-system > .app main.stack > section.stack
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-profile-action {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-text-primary) !important;
   color: var(--dancr-color-text-primary) !important;
   background:
-    linear-gradient(180deg, var(--dancr-color-white-soft), transparent 48%),
+    linear-gradient(180deg, var(--dancr-color-white-medium), transparent 50%),
     color-mix(
       in srgb,
-      var(--dancr-color-brand-primary) 18%,
+      var(--dancr-color-text-primary) 10%,
       var(--dancr-color-surface-raised)
     ) !important;
   box-shadow:
-    inset 0 1px 0 var(--dancr-color-white-soft),
-    0 0 14px var(--dancr-color-brand-primary-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium),
+    0 0 16px color-mix(in srgb, var(--dancr-color-text-primary) 48%, transparent),
     0 9px 20px var(--dancr-color-black-medium) !important;
+  text-shadow: 0 0 7px color-mix(in srgb, var(--dancr-color-text-primary) 46%, transparent) !important;
   opacity: 1;
   filter: none;
 }
@@ -2502,8 +2502,8 @@ body.dancr-button-system > .app main.stack > section.stack
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-profile-action .action-icon {
-  color: var(--dancr-color-brand-core) !important;
-  filter: drop-shadow(0 0 7px var(--dancr-color-brand-primary));
+  color: var(--dancr-color-text-primary) !important;
+  filter: drop-shadow(0 0 7px var(--dancr-color-text-primary));
 }
 
 /* Directions remain informational cyan on venue discovery and detail. */
@@ -4137,49 +4137,61 @@ body.dancr-button-system > .app main.stack > section.stack
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-profile-action {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-text-primary) !important;
   color: var(--dancr-color-text-primary) !important;
   background:
-    linear-gradient(180deg, var(--dancr-color-white-soft), transparent 48%),
+    linear-gradient(180deg, var(--dancr-color-white-medium), transparent 50%),
     color-mix(
       in srgb,
-      var(--dancr-color-brand-primary) 18%,
+      var(--dancr-color-text-primary) 10%,
       var(--dancr-color-surface-raised)
     ) !important;
   box-shadow:
-    inset 0 1px 0 var(--dancr-color-white-soft),
-    0 0 14px var(--dancr-color-brand-primary-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium),
+    0 0 16px color-mix(in srgb, var(--dancr-color-text-primary) 48%, transparent),
     0 9px 20px var(--dancr-color-black-medium) !important;
-  text-shadow: none !important;
+  text-shadow: 0 0 7px color-mix(in srgb, var(--dancr-color-text-primary) 46%, transparent) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-profile-action .action-icon {
-  color: var(--dancr-color-brand-core) !important;
-  filter: drop-shadow(0 0 7px var(--dancr-color-brand-primary));
+  color: var(--dancr-color-text-primary) !important;
+  filter: drop-shadow(0 0 7px var(--dancr-color-text-primary));
 }
 
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-profile-action:active {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-text-primary) !important;
   color: var(--dancr-color-text-primary) !important;
-  background: linear-gradient(
-    135deg,
-    var(--dancr-color-brand-primary),
-    var(--dancr-color-brand-primary-deep)
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-text-primary) 22%,
+    var(--dancr-color-surface-raised)
   ) !important;
   box-shadow:
-    var(--dancr-shadow-brand-control),
-    inset 0 1px 0 var(--dancr-color-brand-core-soft) !important;
+    inset 0 1px 0 var(--dancr-color-white-medium),
+    0 0 20px color-mix(in srgb, var(--dancr-color-text-primary) 62%, transparent),
+    0 9px 20px var(--dancr-color-black-medium) !important;
+  text-shadow: 0 0 9px var(--dancr-color-text-primary) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-profile-action:active .action-icon {
   color: var(--dancr-color-text-primary) !important;
-  filter: none;
+  filter: drop-shadow(0 0 9px var(--dancr-color-text-primary));
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-profile-action:focus-visible {
+  outline-color: var(--dancr-color-text-primary) !important;
+  box-shadow:
+    inset 0 1px 0 var(--dancr-color-white-medium),
+    0 0 20px color-mix(in srgb, var(--dancr-color-text-primary) 62%, transparent),
+    0 9px 20px var(--dancr-color-black-medium) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
