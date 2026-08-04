@@ -308,7 +308,7 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   );
   assert.match(
     venueScrollBrand,
-    /\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?var\(--dancr-color-success\)[\s\S]*?var\(--dancr-color-success-soft\)/,
+    /\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\)[\s\S]*?var\(--dancr-color-success\) 18%[\s\S]*?0 0 18px color-mix\(in srgb, var\(--dancr-color-success\) 30%, transparent\)[\s\S]*?\.home-venue-discovery-rail-qr\.is-available \.action-icon \{[\s\S]*?var\(--dancr-color-success\) 44%[\s\S]*?drop-shadow\([\s\S]*?var\(--dancr-color-success\) 72%/,
   );
   assert.match(
     venueScrollBrand,
