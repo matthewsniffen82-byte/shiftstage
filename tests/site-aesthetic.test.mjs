@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=77" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=78" rel="stylesheet">/,
   );
 });
 
@@ -214,7 +214,7 @@ test("venue discovery keeps restrained brand actions while venue-detail outlines
   assert.doesNotMatch(venueMonogram, /brand-primary/);
   assert.match(
     venueAccents,
-    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?opacity: 1;[\s\S]*?filter: none;[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?var\(--dancr-color-brand-core\)[\s\S]*?drop-shadow\(0 0 5px var\(--dancr-color-brand-glow-soft\)\)/,
+    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-brand-primary-strong\)[\s\S]*?var\(--dancr-color-brand-primary\) 18%[\s\S]*?0 0 14px var\(--dancr-color-brand-primary-medium\)[\s\S]*?opacity: 1;[\s\S]*?filter: none;[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?var\(--dancr-color-brand-core\)[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-brand-primary\)\)/,
   );
   assert.match(
     venueAccents,
@@ -299,7 +299,7 @@ test("venue scroll cards use the complete neutral-first brand and semantic hiera
   );
   assert.match(
     venueScrollBrand,
-    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?var\(--dancr-color-surface-raised\)[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?var\(--dancr-color-brand-core\)[\s\S]*?\.home-venue-discovery-profile-action:active \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
+    /\.home-venue-discovery-profile-action \{[\s\S]*?var\(--dancr-color-brand-primary-strong\)[\s\S]*?var\(--dancr-color-brand-primary\) 18%[\s\S]*?0 0 14px var\(--dancr-color-brand-primary-medium\)[\s\S]*?\.home-venue-discovery-profile-action \.action-icon \{[\s\S]*?drop-shadow\(0 0 7px var\(--dancr-color-brand-primary\)\)[\s\S]*?\.home-venue-discovery-profile-action:active \{[\s\S]*?var\(--dancr-color-brand-primary\),[\s\S]*?var\(--dancr-color-brand-primary-deep\)/,
   );
   assert.match(
     venueScrollBrand,
