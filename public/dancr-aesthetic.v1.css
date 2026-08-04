@@ -3536,10 +3536,10 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one Dancr story ring. Four physical
- * border arcs avoid the mask/compositing path that drops the beam-core color in
- * some Android browsers while preserving the hero palette at compact sizes.
- * Venue marks, media, and navigation remain untouched. */
+/* Every real circular dancer avatar uses one Dancr story ring. Its electric-
+ * white diamond-cut edge uses physical borders and static highlights so the
+ * same premium finish survives Android compositing at compact sizes. Venue
+ * marks, media, and navigation remain untouched. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
@@ -3555,14 +3555,19 @@ body.dancr-button-system :is(
   background-color: var(--dancr-color-surface-raised) !important;
   box-shadow:
     0 8px 20px var(--dancr-color-black-medium),
-    0 0 12px color-mix(
+    0 0 8px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-magenta) 28%,
+      var(--dancr-color-avatar-ring-core) 14%,
       transparent
     ),
     0 0 10px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-core) 18%,
+      var(--dancr-color-avatar-ring-violet) 14%,
+      transparent
+    ),
+    0 0 8px color-mix(
+      in srgb,
+      var(--dancr-color-avatar-ring-magenta) 8%,
       transparent
     ) !important;
   text-shadow: none !important;
@@ -3582,22 +3587,33 @@ body.dancr-button-system :is(
   z-index: 2;
   inset: 0;
   box-sizing: border-box;
-  border: 3px solid transparent;
-  border-top-color: var(--dancr-color-avatar-ring-magenta);
-  border-right-color: var(--dancr-color-avatar-ring-violet);
-  border-bottom-color: var(--dancr-color-avatar-ring-blue);
-  border-left-color: var(--dancr-color-avatar-ring-core);
+  border: 3px solid var(--dancr-color-avatar-ring-core);
+  border-top-color: var(--dancr-color-avatar-ring-core);
+  border-right-color: color-mix(
+    in srgb,
+    var(--dancr-color-avatar-ring-core) 86%,
+    var(--dancr-color-avatar-ring-violet)
+  );
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--dancr-color-avatar-ring-core) 84%,
+    var(--dancr-color-avatar-ring-indigo)
+  );
+  border-left-color: color-mix(
+    in srgb,
+    var(--dancr-color-avatar-ring-core) 84%,
+    var(--dancr-color-avatar-ring-magenta)
+  );
   border-radius: inherit;
   background: transparent;
   filter:
-    saturate(1.1)
-    drop-shadow(0 0 2px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 38%, transparent));
-  transform: rotate(-14deg);
+    drop-shadow(0 0 2px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 34%, transparent))
+    drop-shadow(0 0 3px color-mix(in srgb, var(--dancr-color-avatar-ring-violet) 12%, transparent));
   pointer-events: none;
 }
 
-/* Extend the hero-light arc slightly beyond one quadrant without returning to
- * mask compositing, so compact Android and iPhone avatars share the same ring. */
+/* Four tiny static facet flashes suggest cut crystal without turning the ring
+ * into a noisy rhinestone animation or covering the profile photo. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
@@ -3612,10 +3628,20 @@ body.dancr-button-system :is(
   z-index: 3;
   inset: 0;
   box-sizing: border-box;
-  border: 3px solid transparent;
-  border-left-color: var(--dancr-color-avatar-ring-core);
   border-radius: inherit;
-  transform: rotate(6deg);
+  background:
+    radial-gradient(ellipse 1px 4px at 18% 16%, var(--dancr-color-avatar-ring-core) 0 55%, transparent 100%),
+    radial-gradient(ellipse 4px 1px at 18% 16%, var(--dancr-color-avatar-ring-core) 0 55%, transparent 100%),
+    radial-gradient(ellipse 1px 4px at 84% 22%, var(--dancr-color-avatar-ring-core) 0 55%, transparent 100%),
+    radial-gradient(ellipse 4px 1px at 84% 22%, color-mix(in srgb, var(--dancr-color-avatar-ring-core) 84%, var(--dancr-color-avatar-ring-magenta)) 0 55%, transparent 100%),
+    radial-gradient(ellipse 1px 4px at 74% 90%, var(--dancr-color-avatar-ring-core) 0 55%, transparent 100%),
+    radial-gradient(ellipse 4px 1px at 74% 90%, color-mix(in srgb, var(--dancr-color-avatar-ring-core) 84%, var(--dancr-color-avatar-ring-indigo)) 0 55%, transparent 100%),
+    radial-gradient(ellipse 1px 4px at 8% 63%, var(--dancr-color-avatar-ring-core) 0 55%, transparent 100%),
+    radial-gradient(ellipse 4px 1px at 8% 63%, color-mix(in srgb, var(--dancr-color-avatar-ring-core) 84%, var(--dancr-color-avatar-ring-violet)) 0 55%, transparent 100%);
+  filter: drop-shadow(
+    0 0 2px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 48%, transparent)
+  );
+  animation: none;
   pointer-events: none;
 }
 

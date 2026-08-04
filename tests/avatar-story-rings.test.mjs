@@ -24,15 +24,16 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
     assert.match(ringRules, new RegExp(selector.replaceAll(".", "\\.")));
   }
 
-  assert.match(ringRules, /border: 3px solid transparent;/);
-  assert.match(ringRules, /border-top-color: var\(--dancr-color-avatar-ring-magenta\);/);
-  assert.match(ringRules, /border-right-color: var\(--dancr-color-avatar-ring-violet\);/);
-  assert.match(ringRules, /border-bottom-color: var\(--dancr-color-avatar-ring-blue\);/);
-  assert.match(ringRules, /border-left-color: var\(--dancr-color-avatar-ring-core\);/);
+  assert.match(ringRules, /border: 3px solid var\(--dancr-color-avatar-ring-core\);/);
+  assert.match(ringRules, /border-top-color: var\(--dancr-color-avatar-ring-core\);/);
+  assert.match(ringRules, /border-right-color: color-mix\(/);
+  assert.match(ringRules, /border-bottom-color: color-mix\(/);
+  assert.match(ringRules, /border-left-color: color-mix\(/);
   assert.match(ringRules, /drop-shadow\(0 0 2px color-mix\(/);
-  assert.match(ringRules, /transform: rotate\(-14deg\);/);
-  assert.match(ringRules, /Extend the hero-light arc slightly beyond one quadrant/);
-  assert.match(ringRules, /\)::before \{[\s\S]*?border-left-color: var\(--dancr-color-avatar-ring-core\);[\s\S]*?transform: rotate\(6deg\);/);
+  assert.match(ringRules, /Four tiny static facet flashes suggest cut crystal/);
+  assert.match(ringRules, /\)::before \{[\s\S]*?radial-gradient\(ellipse 1px 4px at 18% 16%/);
+  assert.match(ringRules, /radial-gradient\(ellipse 4px 1px at 8% 63%/);
+  assert.match(ringRules, /animation: none;/);
   assert.doesNotMatch(ringRules, /mask-composite|conic-gradient/);
   assert.doesNotMatch(ringRules, /venue-shift-avatar|venue-logo|discoveryTabs|home-nav/);
 });
@@ -40,6 +41,6 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
 test("the story ring colors come from the centralized Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-magenta: #f02bdc;/);
   assert.match(tokens, /--dancr-color-avatar-ring-violet: #8b5cf6;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-blue: #4f46e5;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-indigo: #4f46e5;/);
   assert.match(tokens, /--dancr-color-avatar-ring-core: var\(--dancr-color-beam-core\);/);
 });
