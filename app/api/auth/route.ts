@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { ensureVenueForAccount } from "@/src/lib/dancr/venue";
+import { assertNewVenueAvailable, ensureVenueForAccount } from "@/src/lib/dancr/venue";
+import { hasVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
 import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -102,6 +103,10 @@ export async function POST(request: Request) {
               city,
             };
 
+    if (role === "venue") {
+      await assertNewVenueAvailable(createAdminSupabaseClient(), displayName);
+    }
+
     const { data, error } = await client.auth.signUp({
       email,
       password,
@@ -144,13 +149,16 @@ async function authResponse(
     throw new Error("Account role does not match this login.");
   }
   if (expectedRole === "venue" && account?.role === "venue") {
-    const venueName = venueFallback?.name || account.displayName;
-    if (!venueName) throw new Error("Venue name is required.");
-    await ensureVenueForAccount(admin, {
-      userId,
-      name: venueName,
-      city: venueFallback?.city || "",
-    });
+    const hasClaim = await hasVenueOwnershipClaim(admin, userId);
+    if (!hasClaim) {
+      const venueName = venueFallback?.name || account.displayName;
+      if (!venueName) throw new Error("Venue name is required.");
+      await ensureVenueForAccount(admin, {
+        userId,
+        name: venueName,
+        city: venueFallback?.city || "",
+      });
+    }
   }
 
   return {

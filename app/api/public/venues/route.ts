@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const client = createAdminSupabaseClient();
     const { data, error } = await client
       .from("venues")
-      .select("id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, qr_code_storage_path, qr_code_label")
+      .select("id, slug, name, city, state, address, phone, website, latitude, longitude, opens_at, closes_at, cover_image_storage_path, qr_code_storage_path, qr_code_label, owner_user_id")
       .eq("is_active", true)
       .eq("city", city)
       .order("name", { ascending: true });
@@ -48,6 +48,7 @@ export async function GET(request: Request) {
           ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
           : null,
         qrCodeLabel: venue.qr_code_label || null,
+        isClaimable: !venue.owner_user_id,
       };
     });
 

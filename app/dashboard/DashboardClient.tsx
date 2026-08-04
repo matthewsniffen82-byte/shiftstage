@@ -92,6 +92,7 @@ type CustomerSavedState = {
 type LoadState = {
   account?: { displayName?: string | null; email?: string | null; role?: string; accountState?: string } | null;
   profile?: Record<string, unknown> | null;
+  claim?: Record<string, unknown> | null;
   saved?: CustomerSavedState | null;
   analytics?: Record<string, unknown> | null;
   deals?: Record<string, unknown> | null;
@@ -155,6 +156,7 @@ export default function DashboardClient({
           setState({
             account: account.account,
             profile: profile.profile,
+            claim: secondary.claim || profile.claim || null,
             saved: secondary.saved || null,
             analytics: secondary.analytics || null,
             deals: secondary.deals || null,
@@ -287,7 +289,9 @@ export default function DashboardClient({
               weeklyReport={state.weeklyReport}
             />
           ) : null}
-          {role === "venue" ? (
+          {role === "venue" && state.claim && !state.profile ? (
+            <VenueClaimStatePanel claim={state.claim} />
+          ) : role === "venue" ? (
             <VenuePanel
               analytics={state.analytics}
               deal={state.deal}
@@ -300,6 +304,33 @@ export default function DashboardClient({
         </section>
       ) : null}
     </main>
+  );
+}
+
+function VenueClaimStatePanel({ claim }: { claim: Record<string, unknown> }) {
+  const venue = (claim.venue || {}) as Record<string, unknown>;
+  const status = String(claim.status || "pending").toLowerCase();
+  const venueName = String(venue.name || "this venue");
+  const venueSlug = String(venue.slug || "");
+  const rejected = status === "rejected";
+
+  return (
+    <section className="info-panel" aria-labelledby="venue-claim-status-heading">
+      <span className="eyebrow">Venue ownership</span>
+      <h2 id="venue-claim-status-heading">{rejected ? "Update your claim" : "Claim under review"}</h2>
+      <p>
+        {rejected
+          ? `The ownership claim for ${venueName} needs an update before the venue can be linked to this account.`
+          : `The ownership claim for ${venueName} is being reviewed. Venue management will unlock here after approval.`}
+      </p>
+      {rejected && claim.reviewNotes ? <p><strong>Reviewer note:</strong> {String(claim.reviewNotes)}</p> : null}
+      <Metric label="Status" value={rejected ? "Needs attention" : "Pending review"} />
+      {venueSlug ? (
+        <Link className="primary-link" href={`/venues/${encodeURIComponent(venueSlug)}/claim`}>
+          {rejected ? "Resubmit claim" : "View claim status"}
+        </Link>
+      ) : null}
+    </section>
   );
 }
 

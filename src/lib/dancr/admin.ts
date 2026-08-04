@@ -623,7 +623,7 @@ async function pendingContentReviewDancerIds(db: any): Promise<string[]> {
 export async function getAdminVenues(client: DancrClient, city?: string | null) {
   let query = (client as any)
     .from("venues")
-    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, created_at, updated_at")
+    .select("id, slug, name, city, state, address, phone, website, timezone, opens_at, closes_at, is_active, owner_user_id, created_at, updated_at")
     .order("city", { ascending: true })
     .order("name", { ascending: true });
 

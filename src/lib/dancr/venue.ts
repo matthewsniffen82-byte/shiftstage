@@ -35,13 +35,13 @@ export async function ensureVenueForAccount(
   if (existing) return existing;
 
   const baseSlug = slugify(input.name) || `venue-${input.userId.slice(0, 8)}`;
-  const slug = await uniqueVenueSlug(client, baseSlug);
+  await assertNewVenueAvailable(client, input.name);
   const { data, error } = await client
     .from("venues")
     .insert({
       owner_user_id: input.userId,
       name: requiredText(input.name, "Venue name", 2, 120),
-      slug,
+      slug: baseSlug,
       city: requiredText(input.city, "City", 2, 100),
       timezone: "America/Los_Angeles",
       is_active: true,
@@ -51,6 +51,23 @@ export async function ensureVenueForAccount(
 
   if (error) throw error;
   return toVenueOwnerProfile(client, data);
+}
+
+export async function assertNewVenueAvailable(client: DancrClient, name: string) {
+  const baseSlug = slugify(requiredText(name, "Venue name", 2, 120));
+  const { data: listedVenue, error: listedVenueError } = await client
+    .from("venues")
+    .select("id, name, owner_user_id")
+    .eq("slug", baseSlug)
+    .maybeSingle();
+  if (listedVenueError) throw listedVenueError;
+  if (listedVenue) {
+    throw new Error(
+      listedVenue.owner_user_id
+        ? `${listedVenue.name} is already managed. Contact MyDancr support if venue access needs to change.`
+        : `${listedVenue.name} is already listed. Open its venue card and choose Claim this venue.`,
+    );
+  }
 }
 
 export async function getVenueForAccount(client: DancrClient, userId: string): Promise<VenueOwnerProfile | null> {
@@ -395,18 +412,6 @@ function toVenueOwnerProfile(client: DancrClient, row: any): VenueOwnerProfile {
     qrCodeLabel: row.qr_code_label || null,
     qrCodeUpdatedAt: row.qr_code_updated_at || null,
   };
-}
-
-async function uniqueVenueSlug(client: DancrClient, base: string) {
-  let candidate = base;
-  let suffix = 1;
-  while (true) {
-    const { data, error } = await client.from("venues").select("id").eq("slug", candidate).maybeSingle();
-    if (error) throw error;
-    if (!data) return candidate;
-    suffix += 1;
-    candidate = `${base}-${suffix}`;
-  }
 }
 
 async function countByVenue(client: DancrClient, table: string, venueId: string) {

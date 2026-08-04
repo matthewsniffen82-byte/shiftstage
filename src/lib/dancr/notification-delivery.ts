@@ -155,6 +155,13 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   if (row.notification_type === "dmca_status" && payload.caseId) {
     return `${baseUrl}/dmca/counter/${encodeURIComponent(String(payload.caseId))}`;
   }
+  if (row.notification_type === "venue_claim_status") {
+    if (payload.status === "approved") return `${baseUrl}/dashboard/venue`;
+    if (payload.venueSlug) {
+      return `${baseUrl}/venues/${encodeURIComponent(String(payload.venueSlug))}/claim`;
+    }
+    return `${baseUrl}/`;
+  }
   if (row.notification_type !== "approval_status") return "";
 
   const params = new URLSearchParams({

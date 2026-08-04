@@ -24469,6 +24469,38 @@
       gap: 18px;
     }
 
+    #venueDashboard.claim-review-state .venue-summary,
+    #venueDashboard.claim-review-state .dashboard-stats,
+    #venueDashboard.claim-review-state .venue-dashboard-grid {
+      display: none !important;
+    }
+
+    .venue-claim-dashboard-state {
+      max-width: 680px;
+      margin: 18px auto;
+      display: grid;
+      gap: 12px;
+      padding: clamp(18px, 4vw, 28px);
+      border-color: rgba(168, 85, 247, .42);
+      background:
+        radial-gradient(circle at 88% 0%, rgba(53, 216, 255, .11), transparent 34%),
+        rgba(11, 9, 18, .94);
+    }
+
+    .venue-claim-dashboard-state[hidden] {
+      display: none !important;
+    }
+
+    .venue-claim-dashboard-state h3,
+    .venue-claim-dashboard-state p {
+      margin: 0;
+    }
+
+    .venue-claim-dashboard-state p {
+      color: #cfc5dc;
+      line-height: 1.5;
+    }
+
     .venue-offer-card {
       border: 1px solid rgba(125, 74, 255, .46);
       border-radius: 22px;
@@ -24645,6 +24677,26 @@
       border-color: rgba(34, 199, 255, .34) !important;
       background: linear-gradient(135deg, rgba(15, 18, 27, .94), rgba(20, 25, 39, .9)) !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 16px rgba(34, 199, 255, .1) !important;
+    }
+
+    .venue-detail-claim {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid rgba(192, 132, 255, .2);
+      border-radius: 12px;
+      color: rgba(225, 217, 239, .76);
+      background: rgba(124, 58, 237, .055);
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .venue-detail-claim strong {
+      color: #cda8ff;
+      font-weight: 950;
     }
 
     .venue-club-deal-unavailable .venue-detail-club-deal-symbol {
@@ -30946,6 +30998,23 @@
           width: 21px;
           height: 21px;
         }
+        .venue-card-claim {
+          grid-column: 1 / -1;
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          border-top: 1px solid rgba(192,132,255,.16);
+          color: rgba(224,216,238,.74);
+          font-size: 10px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .venue-card-claim strong {
+          color: #cda8ff;
+          font-weight: 950;
+        }
 
         .home-venue-discovery-art.has-custom-photo {
           background-image:
@@ -35404,6 +35473,12 @@
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
           </button>
         </div>
+        <section class="auth-card venue-claim-dashboard-state" id="venueClaimDashboardState" hidden aria-live="polite">
+          <span class="eyebrow" id="venueClaimDashboardEyebrow">Venue ownership</span>
+          <h3 id="venueClaimDashboardTitle">Claim under review</h3>
+          <p id="venueClaimDashboardCopy">Your existing venue card stays live while MyDancr reviews the ownership request.</p>
+          <a class="action-btn secondary" id="venueClaimDashboardLink" href="/">Review venue claim</a>
+        </section>
         <div class="customer-summary venue-summary">
           <div>
             <span class="eyebrow">Live venue tools</span>
@@ -36150,6 +36225,7 @@
     let liveDancerRankingEvents = [];
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];
+    let liveAdminVenueClaims = [];
     let liveAdminReports = [];
     let liveAdminMonitoring = null;
     let liveAdminOperations = null;
@@ -38904,12 +38980,13 @@
         const queue = approvalData.queue || [];
         const adminDancers = approvalData.dancers || [];
         const venues = venueData.venues || [];
+        liveAdminVenueClaims = venueData.claims || [];
         liveAdminSubscriptions = subscriptionData.subscriptions || [];
         applyLiveApprovalQueue(adminDancers);
         applyLiveApprovalQueue(queue);
         applyLiveAdminVenues(venues);
         renderAdminDashboard();
-        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Loaded ${adminDancers.length} real dancer${adminDancers.length === 1 ? "" : "s"}, ${liveAdminOperations?.attention?.total || queue.length} item${(liveAdminOperations?.attention?.total || queue.length) === 1 ? "" : "s"} needing attention, ${venues.length} venue${venues.length === 1 ? "" : "s"}, ${liveAdminVenueClaims.length} venue claim${liveAdminVenueClaims.length === 1 ? "" : "s"}, ${liveAdminSubscriptions.length} subscription${liveAdminSubscriptions.length === 1 ? "" : "s"}, and ${liveAdminReports.length} report${liveAdminReports.length === 1 ? "" : "s"}.`;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not load live admin data";
         showToast(error.message || "Could not load live admin data");
@@ -39166,6 +39243,7 @@
         logoImageUrl: item.logoImageUrl || "",
         qrCodeUrl: item.qrCodeUrl || "",
         qrCodeLabel: item.qrCodeLabel || "",
+        isClaimable: item.isClaimable !== false,
         activeDeal: item.activeDeal || null
       };
     }
@@ -43901,6 +43979,9 @@
       const directionsMarkup = details.address
         ? `<a class="venue-card-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
+      const claimMarkup = venue.id && venue.slug && venue.isClaimable !== false
+        ? `<a class="venue-card-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim" aria-label="Claim and manage ${safeName}">Manage this venue? <strong>Claim it</strong></a>`
+        : "";
       return `
         <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">
@@ -43922,6 +44003,7 @@
           <div class="venue-card-actions" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
             ${directionsMarkup}
+            ${claimMarkup}
           </div>
         </article>
       `;
@@ -44052,6 +44134,9 @@
               <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
+              ${venue.id && venue.slug && venue.isClaimable !== false
+                ? `<a class="venue-detail-claim" href="/venues/${encodeURIComponent(venue.slug)}/claim">Represent ${escapeHtml(details.name)}? <strong>Claim this venue</strong></a>`
+                : ""}
             </div>
           </article>
 
@@ -45424,6 +45509,7 @@
       liveVerificationDocumentsAuthoritative = false;
       liveCustomerProfile = null;
       liveVenueDashboard = null;
+      liveAdminVenueClaims = [];
       liveNotifications = [];
       saveAuthSession(null);
       closeDashboard();
@@ -45601,7 +45687,28 @@
     function renderVenueDashboard() {
       const profile = liveVenueDashboard?.profile;
       const analytics = liveVenueDashboard?.analytics || {};
+      const claim = liveVenueDashboard?.claim;
+      const claimPanel = document.getElementById("venueClaimDashboardState");
+      if (!profile && claim) {
+        const venueName = claim.venue?.name || "Venue";
+        const claimStatus = claim.status || "pending";
+        venueDashboard.classList.add("claim-review-state");
+        claimPanel.hidden = false;
+        document.getElementById("venueDashName").textContent = venueName;
+        document.getElementById("venueClaimDashboardEyebrow").textContent = claimStatus === "rejected" ? "Claim needs attention" : "Ownership verification";
+        document.getElementById("venueClaimDashboardTitle").textContent = claimStatus === "rejected" ? `${venueName} was not connected` : `${venueName} claim under review`;
+        document.getElementById("venueClaimDashboardCopy").textContent = claimStatus === "rejected"
+          ? (claim.reviewNotes || "Review the decision and submit a new claim with updated venue proof.")
+          : "Your existing venue card stays live. Confirm your email if needed; management tools unlock only after an admin verifies and approves the claim.";
+        const claimLink = document.getElementById("venueClaimDashboardLink");
+        claimLink.href = `/venues/${encodeURIComponent(claim.venue?.slug || "")}/claim`;
+        claimLink.textContent = claimStatus === "rejected" ? "Review claim decision" : "View claim status";
+        document.getElementById("venueDashboardStatus").textContent = claimStatus === "rejected" ? "Venue claim needs attention." : "Venue claim is pending admin review.";
+        return;
+      }
       if (!profile) return;
+      venueDashboard.classList.remove("claim-review-state");
+      if (claimPanel) claimPanel.hidden = true;
       activeVenueName = profile.name;
       document.getElementById("venueDashName").textContent = profile.name;
       document.getElementById("venuePageViewCount").textContent = String(analytics.pageViews30Days || 0);
@@ -48646,7 +48753,35 @@
         `)).join("")}
       `;
 
-      document.getElementById("adminVenues").innerHTML = Object.entries(markets).flatMap(([city, market]) => (
+      const venueClaimMarkup = liveAdminVenueClaims.map((claim, index) => {
+        const claimVenue = claim.venue || {};
+        const claimId = escapeHtml(claim.id || "");
+        const proofLink = claim.proofUrl
+          ? `<a class="action-btn secondary" href="${escapeHtml(claim.proofUrl)}" target="_blank" rel="noreferrer">Review private proof</a>`
+          : '<span class="badge pending">Proof unavailable</span>';
+        return `
+          <details class="admin-item" data-admin-venue-claim="${claimId}" ${index === 0 ? "open" : ""}>
+            <summary class="row">
+              <div><h3>${escapeHtml(claimVenue.name || "Venue claim")}</h3><div class="meta">${escapeHtml(claim.claimantName || "Claimant")} · ${escapeHtml(claim.claimantTitle || "Venue representative")}</div></div>
+              <span class="badge pending">Ownership claim</span>
+            </summary>
+            <div class="meta">${escapeHtml(claim.claimantEmail || "No email")} · ${escapeHtml(claim.claimantPhone || "No phone")}</div>
+            <div class="meta">Email confirmation: ${claim.emailConfirmed ? "Confirmed" : "Required before approval"} · Submitted ${escapeHtml(new Date(claim.submittedAt).toLocaleString())}</div>
+            <div class="meta">Proof file: ${escapeHtml(claim.proofFileName || "Venue proof")}</div>
+            ${proofLink}
+            <label class="admin-search-field">
+              <span>Review notes${claim.emailConfirmed ? "" : " (approval is locked until email confirmation)"}</span>
+              <textarea data-venue-claim-notes="${claimId}" maxlength="2000" placeholder="Required when rejecting"></textarea>
+            </label>
+            <div class="admin-actions">
+              <button class="action-btn" type="button" data-admin-venue-claim-review="approved" ${claim.emailConfirmed ? "" : "disabled"}>Approve and connect account</button>
+              <button class="action-btn danger" type="button" data-admin-venue-claim-review="rejected">Reject claim</button>
+            </div>
+            <div class="meta" data-venue-claim-status="${claimId}" role="status" aria-live="polite"></div>
+          </details>
+        `;
+      }).join("");
+      const managedVenueMarkup = Object.entries(markets).flatMap(([city, market]) => (
         market.venues.filter((venue) => !venue.hidden).map((venue, index) => `
           <details class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}" ${index === 0 ? "open" : ""}>
             <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="${venue.verified ? "badge" : "badge pending"}">${venue.verified ? "Verified" : "Pending"}</span></summary>
@@ -48659,6 +48794,7 @@
           </details>
         `)
       )).join("");
+      document.getElementById("adminVenues").innerHTML = venueClaimMarkup + managedVenueMarkup || '<div class="locked">No venues or ownership claims found.</div>';
     }
 
     function setAdminAuthMode(mode) {
@@ -49050,6 +49186,42 @@
         showToast("Live venue removed");
         loadLiveAdminApprovals();
       }).catch((error) => showToast(error.message || "Could not remove live venue"));
+    }
+
+    async function reviewLiveAdminVenueClaim(button) {
+      const host = button.closest("[data-admin-venue-claim]");
+      const claimId = host?.dataset.adminVenueClaim || "";
+      const status = button.dataset.adminVenueClaimReview || "";
+      const notes = host?.querySelector(`[data-venue-claim-notes="${CSS.escape(claimId)}"]`)?.value.trim() || "";
+      const statusNode = host?.querySelector(`[data-venue-claim-status="${CSS.escape(claimId)}"]`);
+      if (!claimId || !["approved", "rejected"].includes(status)) return;
+      if (status === "rejected" && !notes) {
+        if (statusNode) statusNode.textContent = "Add a clear reason before rejecting this claim.";
+        host?.querySelector(`[data-venue-claim-notes="${CSS.escape(claimId)}"]`)?.focus();
+        return;
+      }
+      const claim = liveAdminVenueClaims.find((item) => item.id === claimId);
+      const venueName = claim?.venue?.name || "this venue";
+      const confirmed = confirm(status === "approved"
+        ? `Connect the verified claimant account to ${venueName}? This grants management access to the existing live venue card.`
+        : `Reject the ownership claim for ${venueName} and notify the claimant?`);
+      if (!confirmed) return;
+
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = status === "approved" ? "Connecting account…" : "Rejecting claim…";
+      if (statusNode) statusNode.textContent = "Saving the venue ownership decision…";
+      try {
+        const data = await postAuthenticatedJson("/api/admin/venue-claims", { claimId, status, notes });
+        liveAdminVenueClaims = liveAdminVenueClaims.filter((item) => item.id !== claimId);
+        showToast(data.message || (status === "approved" ? "Venue account connected" : "Venue claim rejected"));
+        await loadLiveAdminApprovals();
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = originalText;
+        if (statusNode) statusNode.textContent = error.message || "Could not review venue ownership claim.";
+        showToast(error.message || "Could not review venue ownership claim");
+      }
     }
 
     function saveLiveAdminReportAction(reportId, action) {
@@ -52643,6 +52815,12 @@
 
     adminDashboard.addEventListener("click", (event) => {
       if (handleSupportActionClick(event)) return;
+      const venueClaimReviewButton = event.target.closest("[data-admin-venue-claim-review]");
+      if (venueClaimReviewButton) {
+        event.preventDefault();
+        reviewLiveAdminVenueClaim(venueClaimReviewButton);
+        return;
+      }
       const adminPreviewLink = event.target.closest("[data-admin-preview-url]");
       if (adminPreviewLink) {
         event.preventDefault();

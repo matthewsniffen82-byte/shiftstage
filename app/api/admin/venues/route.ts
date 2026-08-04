@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { createAdminVenue, getAdminVenues, requireAdmin, updateAdminVenue } from "@/src/lib/dancr/admin";
+import { getAdminVenueOwnershipClaims } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -13,9 +14,13 @@ export async function GET(request: Request) {
     await requireAdmin(client, user.id);
 
     const city = new URL(request.url).searchParams.get("city");
-    const venues = await getAdminVenues(createAdminSupabaseClient(), city);
+    const admin = createAdminSupabaseClient();
+    const [venues, claims] = await Promise.all([
+      getAdminVenues(admin, city),
+      getAdminVenueOwnershipClaims(admin),
+    ]);
 
-    return NextResponse.json({ ok: true, venues });
+    return NextResponse.json({ ok: true, venues, claims });
   } catch (error) {
     return apiError(error, "Unable to load admin venues.");
   }

@@ -23,6 +23,7 @@ export type NotificationType =
   | "shift_cancelled"
   | "ranking_milestone"
   | "approval_status"
+  | "venue_claim_status"
   | "tv_video_status"
   | "dmca_status"
   | "support_message"
@@ -92,6 +93,7 @@ export type VenueSummary = {
   logoImageUrl?: string | null;
   qrCodeUrl?: string | null;
   qrCodeLabel?: string | null;
+  isClaimable?: boolean;
 };
 
 export type VenueOwnerProfile = {
