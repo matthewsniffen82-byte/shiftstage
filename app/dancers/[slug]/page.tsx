@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import { UberRideButton } from "@/app/components/UberRideButton";
 import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
-import { getDancerProfile } from "@/src/lib/dancr/public";
+import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import type { ShiftSummary } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -63,7 +64,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const upcomingShifts = profile.upcomingShifts.filter(
     (shift) => shift.id !== activeShift?.id,
   );
-  const [activeDeal, tvVideos] = await Promise.all([
+  const [activeDeal, tvVideos, activeVenue] = await Promise.all([
     activeShift?.venueId
       ? getActiveClubDealForVenue(client, activeShift.venueId)
       : Promise.resolve(null),
@@ -72,6 +73,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
       dancerId: profile.id,
       limit: 12,
     }),
+    activeShift?.venueSlug
+      ? getVenueProfile(client, activeShift.venueSlug)
+      : Promise.resolve(null),
   ]);
   const dealAttributionToken = activeShift && activeDeal
     ? createDancerDealAttributionToken({
@@ -170,6 +174,13 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 Venue &amp; directions
               </Link>
             </div>
+            {activeVenue ? (
+              <UberRideButton
+                dancerId={profile.id}
+                source="dancer_profile"
+                venue={{ ...activeVenue, isActive: true, isPublic: true }}
+              />
+            ) : null}
           </section>
         ) : upcomingShifts.length ? (
           <section

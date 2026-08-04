@@ -34847,6 +34847,107 @@
           visibility: hidden !important;
           pointer-events: none !important;
         }
+
+        .uber-ride-link {
+          box-sizing: border-box;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          border: 1px solid rgba(139, 92, 246, .72) !important;
+          border-radius: 14px;
+          color: #fff !important;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.08), transparent 48%),
+            linear-gradient(135deg, #6d28d9, #4c1d95) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.16),
+            0 10px 24px rgba(76,29,149,.28) !important;
+          font-family: var(--font-ui);
+          font-weight: 950;
+          line-height: 1;
+          text-align: center;
+          text-decoration: none !important;
+          touch-action: manipulation;
+          transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .12s ease;
+        }
+
+        .uber-ride-link:hover {
+          border-color: rgba(196, 181, 253, .92) !important;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.12), transparent 48%),
+            linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.2),
+            0 12px 28px rgba(91,33,182,.34) !important;
+        }
+
+        .uber-ride-link:active {
+          transform: translateY(1px) scale(.99);
+        }
+
+        .uber-ride-link:focus-visible {
+          outline: 3px solid #c4b5fd !important;
+          outline-offset: 3px !important;
+        }
+
+        .uber-ride-link .action-icon {
+          width: 20px;
+          height: 20px;
+          flex: 0 0 20px;
+        }
+
+        .venue-detail-uber {
+          width: 100%;
+          min-height: 54px;
+          margin-top: 12px;
+          padding-inline: 18px;
+          font-size: 14px;
+        }
+
+        #profileBackdrop .profile-uber-ride {
+          grid-column: 1 / -1;
+          width: min(100%, 310px);
+          min-height: 48px;
+          justify-self: start;
+          padding-inline: 15px;
+          font-size: 12px;
+        }
+
+        .feed-uber-ride {
+          min-height: 44px !important;
+          padding-inline: 9px !important;
+          border-radius: 12px !important;
+          font-size: 9px !important;
+        }
+
+        .venue-card-actions .venue-card-uber {
+          min-height: 48px !important;
+        }
+
+        .venue-card-actions.with-uber-ride {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .home-dancer-grid-context-actions.with-uber-ride,
+        .home-venue-discovery-context-actions.with-uber-ride {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .home-venue-discovery-context-actions .feed-uber-ride {
+          width: 100%;
+          min-width: 0;
+          height: 58px;
+          min-height: 58px !important;
+          max-height: 58px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .uber-ride-link {
+            transition: none;
+          }
+        }
       </style>
 
       <section class="stack" aria-live="polite">
@@ -36870,6 +36971,72 @@
         }).catch(() => {});
       } catch (error) {}
     }
+
+    function buildUberRideUrl(destination) {
+      const fallback = "https://m.uber.com/ul/";
+      try {
+        const name = String(destination?.name || "").trim();
+        const formattedAddress = String(destination?.formattedAddress || "").trim();
+        if (!name || !formattedAddress) return fallback;
+
+        const url = new URL(fallback);
+        url.searchParams.set("action", "setPickup");
+        url.searchParams.set("pickup", "my_location");
+        url.searchParams.set("dropoff[nickname]", name);
+        url.searchParams.set("dropoff[formatted_address]", formattedAddress);
+        const latitude = Number(destination.latitude);
+        const longitude = Number(destination.longitude);
+        const validLatitude = destination.latitude !== null && destination.latitude !== "" && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90;
+        const validLongitude = destination.longitude !== null && destination.longitude !== "" && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+        if (validLatitude && validLongitude) {
+          url.searchParams.set("dropoff[latitude]", String(latitude));
+          url.searchParams.set("dropoff[longitude]", String(longitude));
+        }
+        return url.toString();
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function publicVenueUberDestination(venue, city = selectedCity()) {
+      if (!venue) return null;
+      const details = venueDetails(venue, city);
+      const name = String(venue.name || details.name || "").trim();
+      const formattedAddress = String(venue.address || details.address || "").trim();
+      if (!name || !formattedAddress) return null;
+      return {
+        name,
+        formattedAddress,
+        latitude: venue.latitude,
+        longitude: venue.longitude
+      };
+    }
+
+    function uberRideLinkMarkup({ venue, source, label, className = "", dancerId = "", city = selectedCity() }) {
+      const destination = publicVenueUberDestination(venue, city);
+      if (!destination) return "";
+      const href = buildUberRideUrl(destination);
+      const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
+      return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(label))}</a>`;
+    }
+
+    function recordUberRideLinkClick(link) {
+      recordLiveEvent("uber_ride_link_clicked", {
+        venueId: link.dataset.uberVenueId || undefined,
+        venueName: link.dataset.uberVenueName || undefined,
+        dancerId: link.dataset.uberDancerId || undefined,
+        source: link.dataset.uberSource || "tonight_feed",
+        city: link.dataset.uberCity || selectedCity(),
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest?.("[data-uber-ride-link]");
+      if (!link) return;
+      event.stopPropagation();
+      recordUberRideLinkClick(link);
+    }, true);
 
     function loadAuthSession() {
       try {
@@ -41368,6 +41535,7 @@
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
         pin: '<svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>',
+        car: '<svg viewBox="0 0 24 24"><path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11"></path><path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1Z"></path><path d="M6.5 15h.01M17.5 15h.01M6 19v2M18 19v2"></path></svg>',
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
@@ -44383,6 +44551,17 @@
         const isNotified = isNotificationOn(citySelect.value, profile.name);
         const isGoing = !!goingTonightSavedByProfile[profile.name];
         const canMarkGoing = Boolean(workingTonight && profile.shiftId);
+        const feedVenue = profile.scheduled ? resolveVenueByName(profile.venue, citySelect.value) : null;
+        const rideMarkup = feedVenue
+          ? uberRideLinkMarkup({
+              venue: feedVenue,
+              source: "tonight_feed",
+              label: "Get a Ride",
+              className: "feed-card-action feed-uber-ride",
+              dancerId: profile.id || "",
+              city: citySelect.value
+            })
+          : "";
         const goingActionMarkup = canMarkGoing
           ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
@@ -44395,6 +44574,7 @@
               <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
               <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
               ${goingActionMarkup}
+              ${rideMarkup}
             </div>
           </article>
         `;
@@ -44505,6 +44685,12 @@
       const directionsMarkup = details.address
         ? `<a class="venue-card-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
+      const rideMarkup = uberRideLinkMarkup({
+        venue,
+        source: "tonight_feed",
+        label: "Get a Ride",
+        className: "venue-card-uber feed-uber-ride"
+      });
       return `
         <article class="card venue venue-card" aria-label="${safeName} venue details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full venue profile">
@@ -44523,9 +44709,10 @@
             </div>
           </a>
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "heart")}</button>
-          <div class="venue-card-actions" aria-label="${safeName} quick actions">
+          <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
             ${directionsMarkup}
+            ${rideMarkup}
           </div>
         </article>
       `;
@@ -44573,6 +44760,12 @@
         .filter((profile) => profile.trendRank)
         .sort((a, b) => a.trendRank - b.trendRank);
       const followsVenue = isFollowingVenue(city, venue.name);
+      const rideMarkup = uberRideLinkMarkup({
+        venue,
+        source: "venue_page",
+        label: "Request Uber",
+        className: "venue-detail-uber"
+      });
       const quickStats = [
         tonight.length
           ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now"><strong>${tonight.length}</strong><span>working now</span></button>`
@@ -44659,6 +44852,7 @@
                 ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
                 ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
               </div>
+              ${rideMarkup}
               <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>
@@ -45171,6 +45365,21 @@
       `;
     }
 
+    function dancerProfileUberRideMarkup(profile, options = {}) {
+      if (options.preview || !profile?.scheduled) return "";
+      const city = options.city || selectedCity();
+      const venue = resolveVenueByName(profile.venue, city);
+      if (!venue) return "";
+      return uberRideLinkMarkup({
+        venue,
+        source: "dancer_profile",
+        label: `Ride to ${venue.name}`,
+        className: "profile-uber-ride",
+        dancerId: profile.id || "",
+        city
+      });
+    }
+
     function profileModalGridMarkup(profile, options = {}) {
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
@@ -45181,6 +45390,7 @@
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
           ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
+          ${dancerProfileUberRideMarkup(profile, { preview: Boolean(options.preview), city })}
           ${dealMarkup}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           ${socialMarkup}
@@ -50366,6 +50576,12 @@
       const directionsMarkup = details.address
         ? `<a class="home-discovery-feed-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
+      const rideMarkup = uberRideLinkMarkup({
+        venue,
+        source: "tonight_feed",
+        label: "Get a Ride",
+        className: "feed-card-action feed-uber-ride home-venue-discovery-uber"
+      });
       const workingLabel = `${workingNow.length} working now`;
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       const visualLabel = visual.source === "venue_cover"
@@ -50391,8 +50607,9 @@
             <button class="feed-card-action home-dancer-grid-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s venue profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following" : "Follow")}</button>
           </div>
-          <div class="home-venue-discovery-context-actions" aria-label="${safeName} primary actions">
+          <div class="home-venue-discovery-context-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
             ${directionsMarkup}
+            ${rideMarkup}
           </div>
         </article>
       `;
@@ -50417,10 +50634,20 @@
       const directionsMarkup = venue?.address
         ? `<a class="feed-card-action home-dancer-grid-directions venue-directions-btn" href="https://maps.google.com/?q=${encodeURIComponent(venue.address)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" aria-label="Get directions to ${escapeHtml(venueName)}">${actionButtonLabel("pin", "Directions")}</a>`
         : "";
+      const rideMarkup = profile.scheduled && venue
+        ? uberRideLinkMarkup({
+            venue,
+            source: "tonight_feed",
+            label: "Get a Ride",
+            className: "feed-card-action feed-uber-ride home-dancer-grid-uber",
+            dancerId: profile.id || "",
+            city
+          })
+        : "";
       const goingMarkup = canMarkGoing
         ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
         : "";
-      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}`;
+      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}${rideMarkup}`;
       return `
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
@@ -50430,7 +50657,7 @@
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
           </div>
-          ${contextActions ? `<div class="home-dancer-grid-context-actions">${contextActions}</div>` : ""}
+          ${contextActions ? `<div class="home-dancer-grid-context-actions${rideMarkup ? " with-uber-ride" : ""}">${contextActions}</div>` : ""}
         </div>
       `;
     }

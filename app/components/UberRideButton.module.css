@@ -1,0 +1,89 @@
+.button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-sizing: border-box;
+  border: 1px solid rgba(139, 92, 246, 0.72);
+  border-radius: 14px;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 48%),
+    linear-gradient(135deg, #6d28d9, #4c1d95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 24px rgba(76, 29, 149, 0.28);
+  font: inherit;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  touch-action: manipulation;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 120ms ease;
+}
+
+.button:hover {
+  border-color: rgba(196, 181, 253, 0.92);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 48%),
+    linear-gradient(135deg, #7c3aed, #5b21b6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 12px 28px rgba(91, 33, 182, 0.34);
+}
+
+.button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.button:focus-visible {
+  outline: 3px solid #c4b5fd;
+  outline-offset: 3px;
+}
+
+.button[aria-disabled="true"] {
+  opacity: 0.46;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.venuePage {
+  width: 100%;
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+.dancerProfile {
+  width: min(100%, 300px);
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.tonightFeed {
+  width: auto;
+  min-width: 112px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}

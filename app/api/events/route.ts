@@ -5,6 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const socialPlatforms = new Set(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
+const uberRideSources = new Set(["venue_page", "dancer_profile", "tonight_feed"]);
 
 type EventBody = Record<string, unknown>;
 type AdminClient = ReturnType<typeof createAdminSupabaseClient>;
@@ -62,6 +63,21 @@ export async function POST(request: Request) {
         session_id: sessionId,
       });
       if (error) throw error;
+    } else if (type === "uber_ride_link_clicked") {
+      const venueId = await resolveVenueId(client, body);
+      const source = text(body.source);
+      if (!venueId) return missing("venueId or venueName");
+      if (!source || !uberRideSources.has(source)) return missing("valid source");
+      const dancerId = text(body.dancerId)
+        ? await resolveDancerId(client, body)
+        : null;
+      const { error } = await client.from("direction_requests").insert({
+        venue_id: venueId,
+        dancer_id: dancerId,
+        requester_id: viewerId,
+        session_id: uberAnalyticsSessionId(source, sessionId, body.timestamp),
+      });
+      if (error) throw error;
     } else {
       return NextResponse.json({ ok: false, error: "Unknown event type." }, { status: 400 });
     }
@@ -77,6 +93,15 @@ export async function POST(request: Request) {
 
 function text(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function uberAnalyticsSessionId(source: string, sessionId: string | null, timestamp: unknown) {
+  const parsed = typeof timestamp === "string" ? Date.parse(timestamp) : Number.NaN;
+  const now = Date.now();
+  const eventTime = Number.isFinite(parsed) && Math.abs(parsed - now) <= 24 * 60 * 60 * 1000
+    ? new Date(parsed).toISOString()
+    : new Date(now).toISOString();
+  return `uber_ride_link_clicked:${source}:${sessionId || "anonymous"}:${eventTime}`.slice(0, 240);
 }
 
 function slugify(value: string) {
