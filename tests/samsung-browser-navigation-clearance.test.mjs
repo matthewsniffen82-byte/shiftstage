@@ -14,7 +14,7 @@ test("homepage navigation stays anchored to the CSS viewport in Samsung Browser"
   assert.match(homeSource, /const isSamsung = \/SamsungBrowser\/i\.test\(ua\)/);
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?body \{[\s\S]*?padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom\)\)/,
+    /@media \(max-width: 720px\) \{[\s\S]*?body \{[\s\S]*?padding-bottom: calc\(94px \+ env\(safe-area-inset-bottom\)\)/,
   );
   assert.match(
     homeSource,
@@ -33,7 +33,7 @@ test("routed-page navigation uses the same viewport-safe bottom offset", () => {
   );
   assert.match(
     globalNavigation,
-    /body \{[\s\S]*?padding-bottom: calc\(86px \+ env\(safe-area-inset-bottom\)\) !important/,
+    /body \{[\s\S]*?padding-bottom: calc\(94px \+ env\(safe-area-inset-bottom\)\) !important/,
   );
   assert.match(
     globalNavigation,

@@ -20,7 +20,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
       source,
       /active[\s\S]*?stroke:\s*var\(--(?:mobile|home)-nav-active\)/,
     );
-    assert.match(source, /mydancr-tv-mark[\s\S]*?width:\s*24px(?:\s*!important)?;[\s\S]*?height:\s*24px(?:\s*!important)?;/);
+    assert.match(source, /mydancr-tv-mark[\s\S]*?width:\s*28px(?:\s*!important)?;[\s\S]*?height:\s*28px(?:\s*!important)?;/);
     assert.match(source, /(?:global-mobile-bottom-nav|#discoveryTabs)[\s\S]*?svg \{[\s\S]*?overflow: visible;/);
     assert.match(source, /mydancr-tv-play[\s\S]*?transform:\s*scale\(1\.12\)/);
     assert.match(source, /mydancr-tv-r[\s\S]*?stroke-width:\s*2;[\s\S]*?transform:\s*scale\(1\.12\)/);
@@ -65,6 +65,6 @@ test("homepage active TV state uses icon-only color and the translucent-violet b
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);/,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 48px;[\s\S]*?height: 48px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);/,
   );
 });

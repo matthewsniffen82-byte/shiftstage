@@ -41,11 +41,11 @@ test("every Next page receives the shared consolidated mobile navigation", () =>
 test("iPhone, Android, and Next pages share the Android floating glass dock", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.09\)[\s\S]*?rgba\(9, 9, 12, 0\.9\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\)[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248, 250, 252, 0\.09\)[\s\S]*?rgba\(9, 9, 12, 0\.9\)[\s\S]*?0 18px 46px rgba\(0, 0, 0, 0\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, 0\.026\)[\s\S]*?backdrop-filter: none;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 64px[\s\S]*?border: 1px solid rgba\(248,250,252,\.09\) !important[\s\S]*?rgba\(9,9,12,\.9\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
+    /#discoveryTabs \{[\s\S]*?bottom: calc\(8px \+ env\(safe-area-inset-bottom\)\)[\s\S]*?width: min\(calc\(100% - 16px\), 700px\) !important[\s\S]*?height: 72px[\s\S]*?border: 1px solid rgba\(248,250,252,\.09\) !important[\s\S]*?rgba\(9,9,12,\.9\)[\s\S]*?0 18px 46px rgba\(0,0,0,\.46\)[\s\S]*?inset 0 0 0 1px rgba\(255,255,255,\.026\) !important[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     navigationSource,
@@ -69,6 +69,33 @@ test("iPhone, Android, and Next pages share the Android floating glass dock", ()
   );
 });
 
+test("mobile destinations use prominent, consistent controls on every app surface", () => {
+  assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav a \{[\s\S]*?height: 65px;[\s\S]*?grid-template-rows: 36px 16px;[\s\S]*?font-size: 11px;[\s\S]*?line-height: 16px;/,
+  );
+  assert.match(
+    navigationSource,
+    /\.global-mobile-nav-icon \{[\s\S]*?width: 36px;[\s\S]*?height: 36px;/,
+  );
+  assert.match(
+    navigationSource,
+    /\.global-mobile-bottom-nav svg \{[\s\S]*?width: 28px;[\s\S]*?height: 28px;/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.tab,[\s\S]*?#discoveryTabs \.home-bottom-tv \{[\s\S]*?height: 65px !important;[\s\S]*?grid-template-rows: 36px 16px !important;[\s\S]*?font-size: 11px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;/,
+  );
+  assert.match(
+    homeSource,
+    /#discoveryTabs \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv svg \{[\s\S]*?width: 28px !important;[\s\S]*?height: 28px !important;/,
+  );
+});
+
 test("full dancer and venue profiles retain the shared destination navigation", () => {
   assert.match(
     homeSource,
@@ -84,22 +111,22 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
   assert.match(
     homeSource,
-    /--profile-report-clearance: calc\(76px \+ env\(safe-area-inset-bottom, 0px\)\)/,
+    /--profile-report-clearance: calc\(84px \+ env\(safe-area-inset-bottom, 0px\)\)/,
   );
   assert.match(
     homeSource,
-    /#results\.venue-profile-overlay \{[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /#results\.venue-profile-overlay \{[\s\S]*?calc\(140px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-block:[\s\S]*?calc\(140px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
 });
 
 test("neutral mobile glass uses soft-white idle icons and a restrained translucent-violet active halo", () => {
   assert.match(
     navigationSource,
-    /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 23px;/,
+    /\.global-mobile-bottom-nav \{[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 25px;/,
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \{[\s\S]*?overflow: hidden !important;[\s\S]*?border-radius: 23px;/,
+    /#discoveryTabs \{[\s\S]*?overflow: hidden !important;[\s\S]*?border-radius: 25px;/,
   );
   assert.match(
     navigationSource,
@@ -130,7 +157,7 @@ test("neutral mobile glass uses soft-white idle icons and a restrained transluce
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /\.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);[\s\S]*?isolation: isolate;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
+    /\.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 48px;[\s\S]*?height: 48px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);[\s\S]*?isolation: isolate;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
   );
   assert.match(
     navigationSource,
@@ -142,7 +169,7 @@ test("neutral mobile glass uses soft-white idle icons and a restrained transluce
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);[\s\S]*?isolation: isolate;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 48px;[\s\S]*?height: 48px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);[\s\S]*?isolation: isolate;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
   );
   assert.match(
     homeSource,

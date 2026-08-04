@@ -296,7 +296,7 @@ export function GlobalMobileBottomNav() {
 
         @media (max-width: 720px) {
           body {
-            padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+            padding-bottom: calc(94px + env(safe-area-inset-bottom)) !important;
           }
 
           .global-mobile-swipe-indicator {
@@ -306,7 +306,7 @@ export function GlobalMobileBottomNav() {
             position: fixed;
             z-index: 1499;
             left: 50%;
-            bottom: calc(83px + env(safe-area-inset-bottom));
+            bottom: calc(91px + env(safe-area-inset-bottom));
             min-height: 34px;
             display: inline-flex;
             align-items: center;
@@ -364,7 +364,7 @@ export function GlobalMobileBottomNav() {
             left: 50%;
             bottom: calc(8px + env(safe-area-inset-bottom));
             width: min(calc(100% - 16px), 700px);
-            height: 64px;
+            height: 72px;
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: center;
@@ -372,7 +372,7 @@ export function GlobalMobileBottomNav() {
             padding: 3px 4px;
             overflow: hidden;
             border: 1px solid rgba(248, 250, 252, 0.09);
-            border-radius: 23px;
+            border-radius: 25px;
             background:
               linear-gradient(
                 180deg,
@@ -423,10 +423,10 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.58);
             --mobile-nav-active-violet-depth: rgba(49, 46, 129, 0.72);
             width: 100%;
-            height: 57px;
+            height: 65px;
             min-width: 0;
             display: grid;
-            grid-template-rows: 30px 14px;
+            grid-template-rows: 36px 16px;
             align-content: center;
             align-items: center;
             justify-items: center;
@@ -435,9 +435,9 @@ export function GlobalMobileBottomNav() {
             color: var(--mobile-nav-accent-soft);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
               sans-serif;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 850;
-            line-height: 14px;
+            line-height: 16px;
             text-align: center;
             text-decoration: none;
             text-shadow: none;
@@ -454,8 +454,8 @@ export function GlobalMobileBottomNav() {
           .global-mobile-nav-icon {
             position: relative;
             isolation: isolate;
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             display: grid;
             place-items: center;
             border: 0;
@@ -478,8 +478,8 @@ export function GlobalMobileBottomNav() {
             z-index: 0;
             top: 50%;
             left: 50%;
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             overflow: hidden;
             border-radius: 999px;
             -webkit-clip-path: circle(50% at 50% 50%);
@@ -571,8 +571,8 @@ export function GlobalMobileBottomNav() {
           .global-mobile-bottom-nav svg {
             position: relative;
             z-index: 1;
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             overflow: visible;
             fill: none;
             filter: none;
@@ -591,8 +591,8 @@ export function GlobalMobileBottomNav() {
           }
 
           .global-mobile-bottom-nav a.tv-destination .mydancr-tv-mark {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             overflow: visible;
             fill: none;
             stroke: none;

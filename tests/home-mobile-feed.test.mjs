@@ -236,7 +236,7 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
   assert.match(
     homeSource,
-    /phone grid keeps the same near-seamless gutter[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 2px !important;[\s\S]*?scroll-padding-bottom: calc\(132px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /phone grid keeps the same near-seamless gutter[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?padding-bottom: calc\(140px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 2px !important;[\s\S]*?scroll-padding-bottom: calc\(140px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,
@@ -680,7 +680,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
 test("bottom navigation keeps every destination on one uniform baseline", () => {
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?height: 57px !important[\s\S]*?grid-template-rows: 30px 14px !important[\s\S]*?background: transparent !important/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?height: 65px !important[\s\S]*?grid-template-rows: 36px 16px !important[\s\S]*?background: transparent !important/,
   );
   assert.match(
     homeSource,
@@ -688,11 +688,11 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab-count \{[\s\S]*?top: 2px !important[\s\S]*?left: calc\(50% \+ 24px\) !important[\s\S]*?max-width: none !important[\s\S]*?overflow: visible !important/,
+    /#discoveryTabs \.tab-count \{[\s\S]*?top: 2px !important[\s\S]*?left: calc\(50% \+ 27px\) !important[\s\S]*?max-width: none !important[\s\S]*?overflow: visible !important/,
   );
   assert.match(
     homeSource,
-    /\.home-bottom-tv-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
+    /\.home-bottom-tv-icon \{[\s\S]*?width: 36px !important[\s\S]*?height: 36px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
   );
   assert.match(
     homeSource,
@@ -704,7 +704,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 30px !important[\s\S]*?height: 30px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
+    /#discoveryTabs \.home-nav-icon \{[\s\S]*?width: 36px !important[\s\S]*?height: 36px !important[\s\S]*?border: 0 !important[\s\S]*?background: transparent !important/,
   );
   assert.match(
     homeSource,
@@ -732,7 +732,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: calc\(50% - 22px\) !important[\s\S]*?left: auto !important[\s\S]*?text-align: right/,
+    /#discoveryTabs \.tab\[data-tab="trending"\] \.tab-count \{[\s\S]*?right: calc\(50% - 25px\) !important[\s\S]*?left: auto !important[\s\S]*?text-align: right/,
   );
 });
 
