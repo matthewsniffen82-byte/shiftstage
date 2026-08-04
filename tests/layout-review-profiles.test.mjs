@@ -86,7 +86,10 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   assert.match(scriptSource, /const AUTH_BAN_DURATION = "876000h"/);
   assert.match(scriptSource, /ban_duration: AUTH_BAN_DURATION/);
   assert.match(scriptSource, /bio: null/);
-  assert.match(scriptSource, /const WORKING_NOW_PROFILE_INDEXES = new Set\(\[6, 8, 10\]\)/);
+  assert.match(
+    scriptSource,
+    /const WORKING_NOW_PROFILE_INDEXES = new Set\(\[5, 6, 7, 8, 9\]\)/,
+  );
   assert.match(
     scriptSource,
     /async function removeProfileSocialLinks[\s\S]*?\.from\("social_links"\)[\s\S]*?\.delete\(\)/,
@@ -211,6 +214,11 @@ test("selected review dancers and venues receive reversible tracked Club QR stat
     /async function syncDealsOnly\(\) \{[\s\S]*?prepareReviewQrVenues\(venues\)[\s\S]*?activeReviewVenues:/,
   );
   assert.match(scriptSource, /const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES\.size/);
+  assert.match(scriptSource, /const WORKING_NOW_REMAINING_HOURS = 10/);
+  assert.match(
+    scriptSource,
+    /now \+ WORKING_NOW_REMAINING_HOURS \* 60 \* 60 \* 1000/,
+  );
   assert.match(
     scriptSource,
     /async function prepareReviewQrVenues[\s\S]*?realDealVenueIds[\s\S]*?syncMarkedReviewDeals\(fallbackVenues\)/,

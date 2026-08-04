@@ -13,8 +13,9 @@ const DEFAULT_COUNT = PROFILE_DEFINITIONS.length;
 const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;
-const WORKING_NOW_PROFILE_INDEXES = new Set([6, 8, 10]);
+const WORKING_NOW_PROFILE_INDEXES = new Set([5, 6, 7, 8, 9]);
 const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES.size;
+const WORKING_NOW_REMAINING_HOURS = 10;
 const REVIEW_DEAL_PAYOUT_CENTS = 1;
 const AUTH_BAN_DURATION = "876000h";
 const STORAGE_BUCKET = "dancer-photos";
@@ -382,10 +383,17 @@ async function replaceProfileSchedule(
   const venue = isWorkingNow
     ? reviewQrVenues[workingNowSlot % reviewQrVenues.length]
     : venues[definition.index % venues.length];
+  const now = Date.now();
   const startsAt = new Date(
-    Date.now() + (isWorkingNow ? -2 : 4 + definition.index * 8) * 60 * 60 * 1000,
+    isWorkingNow
+      ? now - 20 * 60 * 1000
+      : now + (4 + definition.index * 8) * 60 * 60 * 1000,
   );
-  const endsAt = new Date(startsAt.getTime() + 6 * 60 * 60 * 1000);
+  const endsAt = new Date(
+    isWorkingNow
+      ? now + WORKING_NOW_REMAINING_HOURS * 60 * 60 * 1000
+      : startsAt.getTime() + 6 * 60 * 60 * 1000,
+  );
   const { error } = await admin.from("shifts").insert({
     checked_in_at: isWorkingNow
       ? new Date(Date.now() - 20 * 60 * 1000).toISOString()
