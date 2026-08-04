@@ -16,6 +16,30 @@ test("the full-screen dancer Edit Profile experience exposes the public stage na
   assert.match(liveApp, /validateDancerStageName\(approvedProfileFieldValue\("profileStageName", "approvedControlStageName"\)\)/);
 });
 
+test("Edit Profile groups stage name and face avatar before the gallery", () => {
+  const identityStart = liveApp.indexOf(
+    '<section class="approved-profile-identity-editor"',
+  );
+  const photoFrameStart = liveApp.indexOf(
+    '<div class="approved-photo-edit-frame">',
+    identityStart,
+  );
+  const identityMarkup = liveApp.slice(identityStart, photoFrameStart);
+
+  assert.ok(identityStart >= 0);
+  assert.ok(photoFrameStart > identityStart);
+  assert.match(identityMarkup, /id="approvedIdentityEditorTitle">Profile identity/);
+  assert.match(identityMarkup, /class="approved-avatar-preview/);
+  assert.match(identityMarkup, /id="approvedVisualStageName" data-approved-stage-name-input/);
+  assert.match(identityMarkup, /id="approvedAvatarEditorTitle">Face avatar/);
+  assert.match(identityMarkup, /data-approved-avatar-upload/);
+  assert.doesNotMatch(liveApp, /class="approved-avatar-editor"/);
+  assert.match(
+    liveApp,
+    /\.approved-profile-identity-row \{[\s\S]*?grid-template-columns: 82px minmax\(0, 1fr\);/,
+  );
+});
+
 test("all dancer stage-name editors enforce the same production length limits", () => {
   assert.match(liveApp, /id="approvedVisualStageName"[\s\S]*?minlength="2" maxlength="40"/);
   assert.match(liveApp, /id="profileStageName" type="text" minlength="2" maxlength="40"/);
