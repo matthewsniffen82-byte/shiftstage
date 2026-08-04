@@ -433,7 +433,12 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(neutralFullscreenFeedback, /box-shadow: 0 12px 34px var\(--dancr-color-black-strong\) !important;/);
   assert.doesNotMatch(neutralFullscreenFeedback, /brand-|beam-|gradient|glow/);
   assert.match(brandedCards, /\.home-tv-feed-verified/);
-  assert.match(brandedCards, /var\(--dancr-color-info\) 24%/);
+  assert.match(brandedCards, /background: var\(--mydancr-verified-surface\) !important;/);
+  assert.match(brandedCards, /border-color: var\(--mydancr-verified-outline\) !important;/);
+  assert.doesNotMatch(
+    brandedCards.match(/\.home-tv-feed-verified[\s\S]*?\{[\s\S]*?\}/)?.[0] || "",
+    /glow|box-shadow:(?!\s*none)/,
+  );
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-now/);
   assert.match(brandedCards, /var\(--dancr-color-success\)/);
   assert.match(brandedCards, /\.home-tv-feed-schedule\.is-upcoming/);

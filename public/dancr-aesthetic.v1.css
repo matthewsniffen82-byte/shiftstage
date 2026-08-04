@@ -6,15 +6,18 @@
  */
 
 :root {
-  --mydancr-verified-cyan: var(--dancr-color-info);
-  --mydancr-verified-blue: var(--dancr-color-info);
-  --mydancr-verified-violet: var(--dancr-color-info);
-  --mydancr-verified-magenta: var(--dancr-color-info);
+  --mydancr-verified-foreground: var(--dancr-color-text-primary);
+  --mydancr-verified-surface: var(--dancr-color-surface-raised);
+  --mydancr-verified-outline: color-mix(
+    in srgb,
+    var(--dancr-color-info) 38%,
+    transparent
+  );
 }
 
 /*
- * Verification stays informational cyan while the hero and brand accents stay
- * violet. Sizes remain owned by each surface so dense cards, TV, and full
+ * Verification uses a quiet neutral badge with a restrained informational
+ * outline. Sizes remain owned by each surface so dense cards, TV, and full
  * profiles retain their existing layout.
  */
 
@@ -31,14 +34,10 @@
   .profile-verified.profile-verified.profile-verified,
   .tv-verified-mark.tv-verified-mark.tv-verified-mark
 ) {
-  border: 1px solid var(--dancr-color-info-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-info) 24%,
-    var(--dancr-color-surface)
-  ) !important;
-  box-shadow: inset 0 0 0 1px var(--dancr-color-info-soft) !important;
+  border: 1px solid var(--mydancr-verified-outline) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
+  box-shadow: none !important;
   text-shadow: none !important;
 }
 
@@ -2973,9 +2972,9 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid .home-dancer-grid-name .verified-mark {
-  border-color: var(--dancr-color-info-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: var(--dancr-color-info) !important;
+  border-color: var(--mydancr-verified-outline) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
   box-shadow: none !important;
 }
 
@@ -3032,9 +3031,9 @@ body.dancr-button-system .public-profile-shell .profile-titlebar h1 {
 
 body.dancr-button-system #profileBackdrop .profile-modal-verified,
 body.dancr-button-system .public-profile-shell .profile-verified {
-  border-color: var(--dancr-color-info-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: var(--dancr-color-info) !important;
+  border-color: var(--mydancr-verified-outline) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
   box-shadow: none !important;
 }
 
@@ -3492,7 +3491,8 @@ body.dancr-button-system .public-profile-shell .profile-metrics dt {
 /* Production TV-card branding keeps the moving media as the visual hero.
  * Card framing, idle utilities, playback controls, and progress stay neutral;
  * the beam violet is reserved for profile identity, selection, and keyboard focus.
- * Verification and schedule states retain their semantic production colors. */
+ * Verification stays neutral while schedule states retain their semantic
+ * production colors. */
 body.dancr-button-system :is(
     .home-tv-feed-slide,
     .home-tv-feed-slide:hover,
@@ -3566,14 +3566,10 @@ body.dancr-button-system .home-tv-feed-venue svg,
 
 body.dancr-button-system .home-tv-feed-verified.home-tv-feed-verified.home-tv-feed-verified,
 .tv-shell .tv-verified-mark.tv-verified-mark.tv-verified-mark {
-  border-color: var(--dancr-color-info-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: color-mix(
-    in srgb,
-    var(--dancr-color-info) 24%,
-    var(--dancr-color-surface)
-  ) !important;
-  box-shadow: inset 0 0 0 1px var(--dancr-color-info-soft) !important;
+  border-color: var(--mydancr-verified-outline) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
+  box-shadow: none !important;
   text-shadow: none !important;
 }
 

@@ -120,7 +120,7 @@ test("the violet hero beam continues through content without recoloring trust or
   assert.doesNotMatch(violetRhythm, /\.tv-player|\.home-tv-feed-slide/);
   assert.match(
     aesthetic,
-    /\.profile-verified\.profile-verified\.profile-verified,[\s\S]*?\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark[\s\S]*?var\(--dancr-color-info\) 24%/,
+    /\.profile-verified\.profile-verified\.profile-verified,[\s\S]*?\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark[\s\S]*?background: var\(--mydancr-verified-surface\) !important;[\s\S]*?box-shadow: none !important;/,
   );
 });
 
@@ -576,7 +576,7 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
-    /#profileBackdrop \.profile-modal-verified,[\s\S]*?\.profile-verified \{[\s\S]*?background: var\(--dancr-color-info\) !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop \.profile-modal-verified,[\s\S]*?\.profile-verified \{[\s\S]*?background: var\(--mydancr-verified-surface\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     fullProfilePalette,
@@ -681,28 +681,28 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   );
 });
 
-test("verified check marks use the centralized informational cyan treatment", () => {
+test("verified check marks use the centralized neutral treatment", () => {
   assert.match(
     aesthetic,
     /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-cyan: var\(--dancr-color-info\)/,
+    /--mydancr-verified-foreground: var\(--dancr-color-text-primary\)/,
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-blue: var\(--dancr-color-info\)/,
+    /--mydancr-verified-surface: var\(--dancr-color-surface-raised\)/,
   );
   assert.match(
     aesthetic,
-    /border: 1px solid var\(--dancr-color-info-strong\) !important/,
+    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-info\) 38%,[\s\S]*?transparent/,
   );
   assert.match(
     aesthetic,
-    /background: color-mix\([\s\S]*?var\(--dancr-color-info\) 24%/,
+    /border: 1px solid var\(--mydancr-verified-outline\) !important;[\s\S]*?color: var\(--mydancr-verified-foreground\) !important;[\s\S]*?background: var\(--mydancr-verified-surface\) !important;[\s\S]*?box-shadow: none !important;/,
   );
-  assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,800}text-shadow:\s*0 0/);
+  assert.doesNotMatch(aesthetic, /mydancr-verified[\s\S]{0,1100}(?:box-shadow|text-shadow):\s*0 0/);
 });
 
 test("the homepage hero keeps the exact supplied artwork borderless without an ambient halo", () => {
