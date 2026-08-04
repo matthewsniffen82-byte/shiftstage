@@ -34582,12 +34582,106 @@
           }
         }
 
-        /* Keep active Club Deal actions contained in full dancer profiles on every phone. */
+        /* Keep Working Now details clean and active deal QR actions contained on every phone. */
         #profileBackdrop .working-now-tile > strong,
         #profileBackdrop .working-now-tile .modal-schedule-text.tonight,
         #profileBackdrop .working-now-tile .tonight-time-row > .venue-dot {
           color: #4dec9d !important;
           text-shadow: 0 0 10px rgba(77, 236, 157, .24) !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile .detail-line,
+        #profileBackdrop .working-now-tile .venue-inline-link,
+        #profileBackdrop .profile-working-directions {
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile .detail-line {
+          padding: 0 !important;
+        }
+
+        #profileBackdrop .working-now-tile .venue-inline-link,
+        #profileBackdrop .profile-working-directions {
+          width: auto !important;
+          min-width: 0 !important;
+          min-height: 44px !important;
+          padding: 0 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+        }
+
+        #profileBackdrop .working-now-tile .venue-inline-link {
+          text-decoration: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile {
+          box-sizing: border-box !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: 100% !important;
+          grid-template-columns: minmax(0, 1fr) minmax(96px, 112px) !important;
+          align-items: center !important;
+          gap: 16px !important;
+          overflow: hidden !important;
+        }
+
+        #profileBackdrop .profile-club-deal-label {
+          margin: 0 !important;
+          color: #4dec9d !important;
+          font-size: clamp(18px, 5vw, 23px) !important;
+          font-weight: 950 !important;
+          letter-spacing: -.015em !important;
+          line-height: 1.05 !important;
+          text-transform: none !important;
+          text-shadow: 0 0 14px rgba(77, 236, 157, .22) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button {
+          box-sizing: border-box !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          aspect-ratio: 1 / 1;
+          display: grid !important;
+          place-items: center !important;
+          justify-self: end !important;
+          padding: 7px !important;
+          overflow: hidden !important;
+          border: 1px solid rgba(77, 236, 157, .5) !important;
+          border-radius: 14px !important;
+          background: #fff !important;
+          box-shadow: 0 0 24px rgba(77, 236, 157, .16) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button:disabled {
+          opacity: 1 !important;
+          cursor: progress !important;
+        }
+
+        #profileBackdrop .profile-club-deal-loading {
+          width: 24px;
+          height: 24px;
+          border: 3px solid rgba(5, 5, 5, .18);
+          border-top-color: #10804a;
+          border-radius: 50%;
+          animation: dancrQrLoading .8s linear infinite;
+        }
+
+        @keyframes dancrQrLoading {
+          to { transform: rotate(360deg); }
         }
 
         @media (max-width: 720px) {
@@ -34596,30 +34690,10 @@
             width: 100% !important;
             min-width: 0 !important;
             max-width: 100% !important;
-            grid-template-columns: minmax(0, 1fr) !important;
-            gap: 12px !important;
+            grid-template-columns: minmax(0, 1fr) minmax(96px, 108px) !important;
+            gap: 14px !important;
+            padding: 15px 16px !important;
             overflow: hidden !important;
-          }
-
-          #profileBackdrop .profile-club-deal-tile > .profile-deal-copy {
-            box-sizing: border-box !important;
-            width: 100% !important;
-            min-width: 0 !important;
-          }
-
-          #profileBackdrop .profile-club-deal-tile > .profile-club-deal-cta {
-            box-sizing: border-box !important;
-            width: 100% !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            justify-self: stretch !important;
-          }
-
-          #profileBackdrop .profile-club-deal-tile .profile-deal-main,
-          #profileBackdrop .profile-club-deal-tile .profile-club-deal-cta > strong {
-            white-space: normal !important;
-            overflow-wrap: anywhere !important;
-            text-overflow: clip !important;
           }
         }
         /* One discovery-heading divider across every viewport. */
@@ -36349,6 +36423,7 @@
     let dashboardFollowedExpanded = false;
     let dashboardVenuesExpanded = false;
     let savedDealPasses = loadSavedDealPasses();
+    let activeProfileClubDealPassCache = null;
     const goingTonightByProfile = {};
     const goingTonightSavedByProfile = {};
     const trendEventStoreKey = "dancrTrendEventsV1";
@@ -41363,6 +41438,87 @@
       `;
     }
 
+    function profileClubDealPassKey(config) {
+      return [
+        config?.deal?.id || "",
+        config?.venueId || "",
+        config?.dancerId || "",
+        config?.attributionToken || ""
+      ].join(":");
+    }
+
+    function isReusableProfileClubDealPass(entry, key) {
+      if (!entry || entry.key !== key || !entry.pass) return false;
+      const pass = entry.pass;
+      if (!pass.redemptionToken || !/^data:image\/png;base64,/i.test(pass.qrImageUrl || "")) return false;
+      const expiresAt = Date.parse(pass.expiresAt || "");
+      return !Number.isFinite(expiresAt) || expiresAt > Date.now() + 60_000;
+    }
+
+    function readReusableProfileClubDealPass(key) {
+      if (isReusableProfileClubDealPass(activeProfileClubDealPassCache, key)) {
+        return activeProfileClubDealPassCache.pass;
+      }
+      try {
+        const stored = JSON.parse(sessionStorage.getItem("dancrActiveProfileClubDealQrV1") || "null");
+        if (isReusableProfileClubDealPass(stored, key)) {
+          activeProfileClubDealPassCache = stored;
+          return stored.pass;
+        }
+      } catch {
+        // A new server-confirmed QR is generated when the session cache is unavailable.
+      }
+      return null;
+    }
+
+    function cacheProfileClubDealPass(key, pass) {
+      activeProfileClubDealPassCache = { key, pass };
+      try {
+        sessionStorage.setItem("dancrActiveProfileClubDealQrV1", JSON.stringify(activeProfileClubDealPassCache));
+      } catch {
+        // The in-memory cache still prevents duplicate issuance during this page visit.
+      }
+    }
+
+    async function hydrateProfileClubDealQr(root) {
+      const tile = root?.querySelector?.("[data-profile-club-deal-config]");
+      const qrButton = tile?.querySelector?.(".profile-club-deal-qr-button");
+      if (!tile || !qrButton) return;
+      const encodedConfig = tile.dataset.profileClubDealConfig || "";
+      const config = decodeDealPass(encodedConfig);
+      if (!config) return;
+      const key = profileClubDealPassKey(config);
+      tile.setAttribute("aria-busy", "true");
+      try {
+        const pass = readReusableProfileClubDealPass(key) || await createRevenueDealPass(config);
+        cacheProfileClubDealPass(key, pass);
+        if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
+        qrButton.dataset.dealPass = encodeDealPass(pass);
+        qrButton.setAttribute("data-save-deal-pass-on-open", "");
+        qrButton.setAttribute("aria-label", `Open the ${config.venueName || "active"} Club Deal QR`);
+        qrButton.innerHTML = `<img src="${escapeHtml(pass.qrImageUrl)}" alt="Scan the ${escapeHtml(config.venueName || "venue")} Club Deal QR">`;
+        qrButton.disabled = false;
+        tile.classList.add("is-ready");
+        recordVenuePageEvent({
+          venueId: pass.venueId,
+          dancerId: pass.dancerId,
+          eventType: "qr_impression",
+          source: "dancer_profile"
+        });
+      } catch (error) {
+        if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
+        tile.classList.add("is-error");
+        qrButton.hidden = true;
+        const label = tile.querySelector(".profile-club-deal-label");
+        if (label) label.textContent = "Club Deal unavailable";
+        tile.setAttribute("aria-label", error?.message || "Club Deal QR unavailable");
+      } finally {
+        if (tile.isConnected && tile.dataset.profileClubDealConfig === encodedConfig) {
+          tile.removeAttribute("aria-busy");
+        }
+      }
+    }
+
     function recordVenuePageEvent({ venueId, dancerId = null, eventType, source }) {
       if (!venueId) return;
       fetch("/api/public/venue-events", {
@@ -41751,18 +41907,11 @@
           attributionToken: profile.dealAttributionToken
         };
         return `
-          <div class="info-tile profile-qr-tile profile-club-deal-tile">
-            <div class="profile-deal-copy">
-              <strong>Working Now Club Deal</strong>
-              <div class="meta profile-deal-meta">
-                <span class="profile-deal-main">${escapeHtml(profile.activeDeal.dealTitle)}</span>
-                <details class="profile-deal-disclosure">
-                  <summary>How credit works</summary>
-                  <span class="profile-deal-note">Dancer credit locks when this QR is issued and stays attached when saved or shared.</span>
-                </details>
-              </div>
-            </div>
-            ${clubDealCtaMarkup(config, "profile-club-deal-cta")}
+          <div class="info-tile profile-qr-tile profile-club-deal-tile" data-profile-club-deal-config="${encodeDealPass(config)}" aria-label="Active Club Deal">
+            <strong class="profile-club-deal-label">Club Deal</strong>
+            <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal QR" disabled>
+              <span class="profile-club-deal-loading" aria-hidden="true"></span>
+            </button>
           </div>
         `;
       }
@@ -45071,6 +45220,7 @@
         `;
       } else {
         modalBody.innerHTML = profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city });
+        if (!isPrivatePreview) void hydrateProfileClubDealQr(modalBody);
         void loadProfileMyDancrTv(profile);
       }
 

@@ -93,18 +93,37 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
 });
 
-test("active full-profile Club Deals stay contained on mobile and use one live-status color", () => {
+test("active full-profile Club Deals render a real compact QR and use one live-status color", () => {
+  const activeDealMarkup = liveApp.match(
+    /function profileDealTileMarkup\(profile\)[\s\S]*?function profileShareText/,
+  )?.[0] || "";
   assert.match(
     liveApp,
     /#profileBackdrop \.working-now-tile > strong,[\s\S]*?#profileBackdrop \.working-now-tile \.modal-schedule-text\.tonight,[\s\S]*?color: #4dec9d !important;/,
   );
   assert.match(
     liveApp,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?max-width: 100% !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/,
+    /#profileBackdrop \.profile-club-deal-tile \{[\s\S]*?width: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(96px, 112px\) !important;/,
+  );
+  assert.match(activeDealMarkup, /data-profile-club-deal-config=/);
+  assert.match(activeDealMarkup, /class="profile-club-deal-label">Club Deal<\/strong>/);
+  assert.match(activeDealMarkup, /class="profile-club-deal-qr-button"/);
+  assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
+  assert.match(
+    liveApp,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?pass\.qrImageUrl[\s\S]*?<img src=/,
+  );
+  assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
+});
+
+test("Working Now profile details remain tappable without faint inner boxes", () => {
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile > strong,[\s\S]*?#profileBackdrop \.working-now-tile \.detail-line,[\s\S]*?#profileBackdrop \.working-now-tile \.venue-inline-link,[\s\S]*?#profileBackdrop \.profile-working-directions \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-club-deal-tile > \.profile-club-deal-cta \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?max-width: none !important;[\s\S]*?justify-self: stretch !important;/,
+    /#profileBackdrop \.working-now-tile \.venue-inline-link,[\s\S]*?#profileBackdrop \.profile-working-directions \{[\s\S]*?min-height: 44px !important;[\s\S]*?display: inline-flex !important;/,
   );
 });
 
