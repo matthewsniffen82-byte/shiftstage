@@ -147,6 +147,7 @@ test("an out-of-range check-in stays rejected and shows an accessible on-screen 
   for (const source of [dashboard, liveShell]) {
     assert.match(source, /You can't check in yet\. You're outside the club's/);
     assert.match(source, /Move closer to the club and try again/);
+    assert.doesNotMatch(source, /Your phone currently shows you about/);
   }
   assert.match(dashboard, /role=\{checkInTone === "error" \? "alert" : "status"\}/);
   assert.match(dashboard, /aria-live=\{checkInTone === "error" \? "assertive" : "polite"\}/);

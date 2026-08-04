@@ -3749,10 +3749,7 @@ function checkInErrorMessage(data: any) {
     const requiredRadiusFeet = Number.isFinite(Number(data?.requiredRadiusFeet))
       ? Math.round(Number(data.requiredRadiusFeet))
       : 300;
-    const distanceCopy = Number.isFinite(Number(data?.distanceFeet))
-      ? ` Your phone currently shows you about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away.`
-      : "";
-    return `You can't check in yet. You're outside the club's ${requiredRadiusFeet.toLocaleString()} ft check-in area. Move closer to the club and try again.${distanceCopy}`;
+    return `You can't check in yet. You're outside the club's ${requiredRadiusFeet.toLocaleString()} ft check-in area. Move closer to the club and try again.`;
   }
   if (Number.isFinite(Number(data?.distanceFeet)) && Number.isFinite(Number(data?.requiredRadiusFeet))) {
     return `${message} Your location was about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away; check-in requires ${Math.round(Number(data.requiredRadiusFeet)).toLocaleString()} ft or less.`;
