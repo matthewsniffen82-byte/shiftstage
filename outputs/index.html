@@ -2164,6 +2164,13 @@
       opacity: 1 !important;
     }
 
+    .shift-action-grid .mini-action.check-in-rejected {
+      border-color: var(--dancr-color-danger-medium) !important;
+      color: #fecaca !important;
+      background: var(--dancr-color-danger-soft) !important;
+      box-shadow: inset 0 0 0 1px var(--dancr-color-danger-soft) !important;
+    }
+
     .shift-bottom-sheet {
       display: grid;
       gap: 10px;
@@ -36293,6 +36300,7 @@
     let approvedProfileVideoStatusTone = "";
     let shiftCheckInMessage = "";
     let shiftCheckInTone = "";
+    let shiftCheckInCode = "";
     let shiftLocationRefreshTimer = 0;
     let shiftLocationRefreshShiftId = "";
     const SHIFT_LOCATION_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
@@ -37491,6 +37499,14 @@
       return message;
     }
 
+    function apiRequestError(data, fallback = "Request failed") {
+      const error = new Error(apiErrorMessage(data, fallback));
+      error.code = typeof data?.code === "string" ? data.code : "request_failed";
+      if (Number.isFinite(Number(data?.distanceFeet))) error.distanceFeet = Number(data.distanceFeet);
+      if (Number.isFinite(Number(data?.requiredRadiusFeet))) error.requiredRadiusFeet = Number(data.requiredRadiusFeet);
+      return error;
+    }
+
     async function postAuthenticatedJson(url, payload) {
       const headers = authenticatedRequestHeaders("application/json");
       if (!headers) return null;
@@ -37500,7 +37516,7 @@
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(apiErrorMessage(data));
+      if (!response.ok || data.ok === false) throw apiRequestError(data);
       applyResponseSession(data);
       return data;
     }
@@ -37532,7 +37548,7 @@
         body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
+      if (!response.ok || data.ok === false) throw apiRequestError(data);
       applyResponseSession(data);
       return data;
     }
@@ -41968,6 +41984,8 @@
           : "Not checked in";
       const canAttemptCheckIn = !checkedIn && !ended;
       const canCheckInNow = canAttemptCheckIn && checkInWindowOpen(profile);
+      const checkInRejected = canAttemptCheckIn && shiftCheckInTone === "error";
+      const outsideGeofenceRejected = checkInRejected && shiftCheckInCode === "outside_geofence";
       const summary = profile.shiftSummary || (ended ? shiftSummaryForProfile(profile, profile.endedReason || "completed") : null);
       const statusCopy = ended
         ? "This shift has ended. QR commission tracking is stopped."
@@ -41986,13 +42004,13 @@
           <span class="shift-verification-copy">${displayText(displayShiftTime(profile.time) || "Shift time pending")}</span>
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
-        <div class="shift-verification-copy shift-checkin-feedback${shiftCheckInTone ? ` is-${shiftCheckInTone}` : ""}" id="shiftCheckInStatus" role="${shiftCheckInTone === "error" ? "alert" : "status"}" aria-live="${shiftCheckInTone === "error" ? "assertive" : "polite"}">${displayText(shiftCheckInMessage)}</div>
         <div class="shift-action-grid">
-          ${canAttemptCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
+          ${canAttemptCheckIn ? `<button class="mini-action ${checkInRejected ? "check-in-rejected" : "primary"}" type="button" data-shift-verify-action="check-in" aria-describedby="shiftCheckInStatus">${outsideGeofenceRejected ? "Outside club range — try again" : checkInRejected ? "Check-in failed — try again" : "Check in now"}</button>` : ""}
           ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Check-in confirmed" aria-live="polite">✓ Checked in</button>' : ""}
           ${checkedIn && !locationVerified && !ended ? '<button class="mini-action primary" type="button" data-shift-verify-action="refresh">Re-verify location</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action danger" type="button" data-shift-verify-action="end">End Shift</button>' : ""}
         </div>
+        <div class="shift-verification-copy shift-checkin-feedback${shiftCheckInTone ? ` is-${shiftCheckInTone}` : ""}" id="shiftCheckInStatus" role="${shiftCheckInTone === "error" ? "alert" : "status"}" aria-live="${shiftCheckInTone === "error" ? "assertive" : "polite"}">${displayText(shiftCheckInMessage)}</div>
         ${summary ? `
           <div class="shift-bottom-sheet">
             <strong>✓ Shift Completed</strong>
@@ -42042,9 +42060,10 @@
       const profile = activeDancerProfile();
       if (!profile) return;
       const status = document.getElementById("shiftCheckInStatus");
-      const setCheckInStatus = (message = "", tone = "") => {
+      const setCheckInStatus = (message = "", tone = "", code = "") => {
         shiftCheckInMessage = message;
         shiftCheckInTone = tone;
+        shiftCheckInCode = code;
         if (status) {
           status.textContent = message;
           status.className = `shift-verification-copy shift-checkin-feedback${tone ? ` is-${tone}` : ""}`;
@@ -42052,7 +42071,12 @@
           status.setAttribute("aria-live", tone === "error" ? "assertive" : "polite");
         }
       };
-      if (trigger) trigger.disabled = true;
+      let actionSucceeded = false;
+      if (trigger) {
+        trigger.disabled = true;
+        trigger.setAttribute("aria-busy", "true");
+        trigger.textContent = action === "end" ? "Ending shift..." : action === "refresh" ? "Verifying location..." : "Checking location...";
+      }
       try {
         if (!profile.shiftId || !isDancerSession()) {
           throw new Error("Sign in to your dancer account before updating a live shift.");
@@ -42063,6 +42087,7 @@
           if (data?.shift) applyShiftState(profile, data.shift);
           stopShiftLocationRefresh();
           setCheckInStatus("Shift ended. QR commission tracking is stopped.", "success");
+          actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else if (action === "check-in" || action === "refresh") {
           setCheckInStatus(action === "refresh" ? "Refreshing your verified venue location..." : "Checking posted shift hours...", "loading");
@@ -42086,18 +42111,31 @@
           setCheckInStatus(action === "refresh"
             ? "Location verified. Working Now remains active while verification stays current."
             : "Checked in. Your shift can now appear in Working Now.", "success");
+          actionSucceeded = true;
           if (!options.silent) showToast(action === "refresh" ? "Location verified" : "Checked in");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
-        setCheckInStatus(message, "error");
+        setCheckInStatus(message, "error", typeof error?.code === "string" ? error.code : "request_failed");
         if (!options.silent) showToast(message);
       } finally {
-        if (trigger) trigger.disabled = false;
+        if (trigger) {
+          trigger.disabled = false;
+          trigger.setAttribute("aria-busy", "false");
+        }
       }
-      render();
-      renderDancerManagement();
-      if (customerDashboard.classList.contains("show")) renderDashboard();
+      if (actionSucceeded) {
+        render();
+        renderDancerManagement();
+        if (customerDashboard.classList.contains("show")) renderDashboard();
+      } else {
+        renderShiftVerificationPanel();
+        if (!options.silent && shiftCheckInTone === "error") {
+          window.requestAnimationFrame(() => {
+            document.getElementById("shiftCheckInStatus")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          });
+        }
+      }
     }
 
     function renderDancerManagement() {
@@ -43684,6 +43722,7 @@
       if (action === "remove") {
         shiftCheckInMessage = "";
         shiftCheckInTone = "";
+        shiftCheckInCode = "";
         removeLocalPostedShift(activeDancerCity(), profile?.name || activeDancerName(), shiftId);
         if (profile) {
           profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
@@ -43739,6 +43778,7 @@
         : null;
       shiftCheckInMessage = "Shift posted. Tap Check in now when you are ready to verify your location.";
       shiftCheckInTone = "";
+      shiftCheckInCode = "";
       const shiftData = {
         name,
         status: "Verified",

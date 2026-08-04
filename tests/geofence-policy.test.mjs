@@ -154,6 +154,17 @@ test("an out-of-range check-in stays rejected and shows an accessible on-screen 
   assert.match(liveShell, /shiftCheckInTone === "error" \? "alert" : "status"/);
 });
 
+test("the live dashboard keeps a rejected geofence result beside the check-in button", () => {
+  assert.match(liveShell, /function apiRequestError[\s\S]*?error\.code = typeof data\?\.code === "string" \? data\.code : "request_failed"/);
+  assert.match(liveShell, /throw apiRequestError\(data\)/);
+  assert.match(liveShell, /shiftCheckInCode === "outside_geofence"/);
+  assert.match(liveShell, /Outside club range — try again/);
+  assert.match(liveShell, /trigger\.textContent = action === "end" \? "Ending shift\.\.\." : action === "refresh" \? "Verifying location\.\.\." : "Checking location\.\.\."/);
+  assert.match(liveShell, /<div class="shift-action-grid">[\s\S]*?<div class="shift-verification-copy shift-checkin-feedback/);
+  assert.match(liveShell, /if \(actionSucceeded\)[\s\S]*?else \{[\s\S]*?renderShiftVerificationPanel\(\)/);
+  assert.match(liveShell, /getElementById\("shiftCheckInStatus"\)\?\.scrollIntoView/);
+});
+
 test("expired checked-in shifts are reconciled by requests and an authenticated cron", () => {
   assert.match(lifecycle, /export async function reconcileExpiredDancerShifts/);
   assert.match(lifecycle, /checked_out_at: endedAt/);
