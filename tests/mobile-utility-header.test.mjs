@@ -98,6 +98,10 @@ test("the unread badge stays a contained circle at the bell's top-right", () => 
   assert.match(unreadBadge, /height: 16px !important;/);
   assert.match(unreadBadge, /padding: 0 !important;/);
   assert.match(unreadBadge, /transform: none !important;/);
+  assert.match(
+    mobileHeader,
+    /header \.customer-quick-btn \{\s*overflow: visible !important;\s*clip-path: none !important;\s*\}/,
+  );
 });
 
 test("the mobile notification panel opens inside the visible viewport", () => {
