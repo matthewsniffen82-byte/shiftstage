@@ -3536,10 +3536,10 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one Dancr story ring. Its electric-
- * white photo edge and separated outer outline use physical borders and static
- * highlights so the same premium finish survives Android compositing at compact
- * sizes. Venue marks, media, and navigation remain untouched. */
+/* Every real circular dancer avatar uses one solid electric-white Dancr story
+ * ring. The sparkle stroke sits directly on that physical border so Android
+ * cannot composite it over the photo. Venue marks, media, and navigation remain
+ * untouched. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
@@ -3550,18 +3550,12 @@ body.dancr-button-system :is(
     .tv-profile-photo
   ) {
   position: relative;
-  border: 3px solid var(--dancr-color-avatar-ring-core) !important;
+  border: 5px solid #ffffff !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
   box-shadow:
-    0 0 0 2px var(--dancr-color-background),
-    0 0 0 4px var(--dancr-color-avatar-ring-core),
-    0 0 14px color-mix(
-      in srgb,
-      var(--dancr-color-avatar-ring-core) 60%,
-      transparent
-    ),
-    0 8px 20px var(--dancr-color-black-medium) !important;
+    0 0 4px rgba(255, 255, 255, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.72) !important;
   text-shadow: none !important;
 }
 
@@ -3574,23 +3568,12 @@ body.dancr-button-system :is(
     .profile-titlebar-avatar,
     .tv-profile-photo
   )::after {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  box-sizing: border-box;
-  border: 1px solid var(--dancr-color-avatar-ring-core);
-  border-radius: inherit;
-  background: transparent;
-  filter: drop-shadow(
-    0 0 5px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 76%, transparent)
-  );
-  pointer-events: none;
+  content: none !important;
+  display: none !important;
 }
 
-/* Fine static glitter is distributed around the circular edge itself. The
- * center stays completely transparent so no sparkle can read as part of the
- * dancer's photo. */
+/* The white dotted stroke is pulled outward onto the five-pixel border band.
+ * Its center has no paint, gradients, or mask, so the avatar remains untouched. */
 body.dancr-button-system :is(
     .approved-avatar-preview,
     .venue-card-lineup-avatar,
@@ -3603,30 +3586,14 @@ body.dancr-button-system :is(
   content: "";
   position: absolute;
   z-index: 3;
-  inset: 0;
+  inset: -5px;
   box-sizing: border-box;
-  border: 2px dotted var(--dancr-color-avatar-ring-core);
+  border: 3px dotted #ffffff;
   border-radius: inherit;
-  background:
-    radial-gradient(circle 1.8px at 50% 1%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.2px at 69% 5%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.6px at 85% 15%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.1px at 95% 31%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.8px at 99% 50%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.2px at 95% 69%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.6px at 85% 85%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.1px at 69% 95%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.8px at 50% 99%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.2px at 31% 95%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.6px at 15% 85%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.1px at 5% 69%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.8px at 1% 50%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.2px at 5% 31%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.6px at 15% 15%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%),
-    radial-gradient(circle 1.1px at 31% 5%, var(--dancr-color-avatar-ring-core) 0 62%, transparent 100%);
+  background: none !important;
   filter:
-    drop-shadow(0 0 2px var(--dancr-color-avatar-ring-core))
-    drop-shadow(0 0 5px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 64%, transparent));
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 4px rgba(255, 255, 255, 0.7));
   animation: none;
   pointer-events: none;
 }
