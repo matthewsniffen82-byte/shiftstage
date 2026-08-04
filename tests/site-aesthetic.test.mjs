@@ -26,7 +26,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=72" rel="stylesheet">/,
+    /<link href="\/dancr-aesthetic\.v1\.css\?v=73" rel="stylesheet">/,
   );
 });
 
@@ -681,7 +681,7 @@ test("customer, dancer, and venue dashboards keep idle content neutral", () => {
   );
 });
 
-test("verified check marks use a flat sapphire treatment without an outline or glow", () => {
+test("verified check marks keep the flat sapphire treatment with a hero-beam outline", () => {
   assert.match(
     aesthetic,
     /:root :is\(\s*\.verified-mark\.verified-mark\.verified-mark,\s*\.verified-check\.verified-check\.verified-check,\s*\.home-tv-feed-verified\.home-tv-feed-verified\.home-tv-feed-verified,\s*\.profile-modal-verified\.profile-modal-verified\.profile-modal-verified,\s*\.profile-verified\.profile-verified\.profile-verified,\s*\.tv-verified-mark\.tv-verified-mark\.tv-verified-mark\s*\)/,
@@ -696,7 +696,7 @@ test("verified check marks use a flat sapphire treatment without an outline or g
   );
   assert.match(
     aesthetic,
-    /--mydancr-verified-outline: transparent/,
+    /--mydancr-verified-outline: color-mix\([\s\S]*?var\(--dancr-color-beam-violet\) 38%,[\s\S]*?transparent/,
   );
   assert.match(
     aesthetic,

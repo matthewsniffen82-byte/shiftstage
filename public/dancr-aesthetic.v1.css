@@ -8,13 +8,17 @@
 :root {
   --mydancr-verified-foreground: var(--dancr-color-text-primary);
   --mydancr-verified-surface: var(--dancr-color-verification);
-  --mydancr-verified-outline: transparent;
+  --mydancr-verified-outline: color-mix(
+    in srgb,
+    var(--dancr-color-beam-violet) 38%,
+    transparent
+  );
 }
 
 /*
  * Verification uses a flat muted-sapphire badge with a crisp white check and
- * no outline or glow. Sizes remain owned by each surface so dense cards, TV,
- * and full profiles retain their existing layout.
+ * a restrained hero-beam outline without glow. Sizes remain owned by each
+ * surface so dense cards, TV, and full profiles retain their existing layout.
  */
 
 /*
