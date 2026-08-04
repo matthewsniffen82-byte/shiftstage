@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
+const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 
 test("mobile discovery uses one consolidated Dancers destination beside TV and Venues", () => {
   const navigation = homeSource.match(
@@ -850,6 +851,16 @@ test("the consolidated discovery titles use one typography system and consistent
     /dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Venues in \$\{city\}`/,
   );
   assert.match(homeSource, /tabTitle\.textContent = `MyDancr TV in \$\{city\}`;/);
+  assert.match(
+    homeSource,
+    /classList\.add\("discovery-section-head", "tv-section-head"\)/,
+    "the TV heading must retain the compact discovery layout with a dedicated visual state",
+  );
+  assert.match(
+    aesthetic,
+    /\.content-head\.discovery-section-head\.tv-section-head > h2::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;[\s\S]*?background: none !important;[\s\S]*?box-shadow: none !important;/,
+    "the TV heading must not render the violet side beam",
+  );
   const dancerTitleStyle = homeSource.match(/#tabTitle\.dancers-city-title \{[\s\S]*?\n      \}/)?.[0] || "";
   assert.doesNotMatch(dancerTitleStyle, /font-size|font-family|font-weight|line-height|letter-spacing/);
 });
@@ -874,6 +885,6 @@ test("mobile discovery headings share a compact divided hierarchy across Android
   assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} total`/);
   assert.match(
     homeSource,
-    /function renderHomeTvFeed\(city\)[\s\S]*?classList\.add\("discovery-section-head"\)/,
+    /function renderHomeTvFeed\(city\)[\s\S]*?classList\.add\("discovery-section-head", "tv-section-head"\)/,
   );
 });

@@ -50525,7 +50525,9 @@
       const usesDiscoverySectionHeader =
         !selectedVenue && (activeTab === "dancers" || activeTab === "venues");
       tabTitle.classList.toggle("dancers-city-title", keepDancerCityOnOneLine);
-      tabTitle.closest(".content-head")?.classList.toggle("discovery-section-head", usesDiscoverySectionHeader);
+      const contentHead = tabTitle.closest(".content-head");
+      contentHead?.classList.remove("tv-section-head");
+      contentHead?.classList.toggle("discovery-section-head", usesDiscoverySectionHeader);
       if (keepDancerCityOnOneLine) {
         const cityTitle = document.createElement("span");
         cityTitle.className = "tab-title-city";
@@ -51643,7 +51645,7 @@
       bottomTv?.classList.add("active");
       bottomTv?.setAttribute("aria-current", "page");
       tabTitle.classList.remove("dancers-city-title");
-      tabTitle.closest(".content-head")?.classList.add("discovery-section-head");
+      tabTitle.closest(".content-head")?.classList.add("discovery-section-head", "tv-section-head");
       tabTitle.textContent = `MyDancr TV in ${city}`;
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");

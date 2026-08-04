@@ -2348,6 +2348,16 @@ body.dancr-button-system > .app main.stack > section.stack > .content-head.disco
   pointer-events: none;
 }
 
+/* TV keeps the compact discovery-title layout without carrying the decorative
+ * hero beam beside the feed name. */
+body.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head.tv-section-head > h2::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
 /* One true primary action per surface uses the solid violet beam treatment.
  * Deal, destructive, unavailable, and secondary actions retain their semantic
  * production colors. */
