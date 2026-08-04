@@ -691,7 +691,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(232,230,238,.74\)[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\)[\s\S]*?--home-nav-active: #fff[\s\S]*?--home-nav-active-violet-core: rgba\(152,95,255,.98\)[\s\S]*?--home-nav-active-violet-glow: rgba\(91,19,255,1\)[\s\S]*?--home-nav-active-cyan-glow: rgba\(52,110,255,.58\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(232,230,238,.74\)[\s\S]*?--home-nav-accent-soft: rgba\(232,230,238,.66\)[\s\S]*?--home-nav-active: #f5f3ff[\s\S]*?--home-nav-active-violet-core: rgba\(124,58,237,.96\)[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.58\)[\s\S]*?--home-nav-active-violet-depth: rgba\(49,46,129,.72\)/,
   );
   assert.match(
     homeSource,
@@ -703,7 +703,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--home-nav-active-cyan-glow\)\)/,
+    /#discoveryTabs \.tab\.active \.home-nav-icon svg,[\s\S]*?#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 5px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--home-nav-active-violet-depth\)\)/,
   );
   assert.match(
     homeSource,

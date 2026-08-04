@@ -28,7 +28,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   }
   assert.match(
     globalNavigation,
-    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\)[\s\S]*?--mobile-nav-active: #fff/,
+    /\.global-mobile-bottom-nav a \{[\s\S]*?--mobile-nav-accent: rgba\(232, 230, 238, 0\.74\)[\s\S]*?--mobile-nav-active: #f5f3ff/,
   );
   assert.match(
     globalNavigation,
@@ -44,7 +44,7 @@ test("mobile TV navigation uses the compact MyDancr brand mark everywhere", () =
   );
 });
 
-test("homepage active TV state uses icon-only color and the original borderless halo", () => {
+test("homepage active TV state uses icon-only color and the translucent-violet borderless halo", () => {
   const activeTvRule =
     homeSource.match(
       /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[\s\S]*?\}/,
@@ -57,7 +57,7 @@ test("homepage active TV state uses icon-only color and the original borderless 
   assert.doesNotMatch(activeTvRule, /drop-shadow|border-radius: 999px|linear-gradient/);
   assert.match(
     homeSource,
-    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 6px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 12px var\(--home-nav-active-cyan-glow\)\)/,
+    /home-bottom-tv\.active \.home-bottom-tv-icon \.mydancr-tv-mark \{[\s\S]*?drop-shadow\(0 0 2px var\(--home-nav-active-violet-core\)\)[\s\S]*?drop-shadow\(0 0 5px var\(--home-nav-active-violet-glow\)\)[\s\S]*?drop-shadow\(0 0 9px var\(--home-nav-active-violet-depth\)\)/,
   );
   assert.match(
     homeSource,
