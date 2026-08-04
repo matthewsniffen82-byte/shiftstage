@@ -2111,6 +2111,32 @@
       line-height: 1.45;
     }
 
+    .shift-checkin-feedback:empty {
+      display: none;
+    }
+
+    .shift-checkin-feedback.is-loading,
+    .shift-checkin-feedback.is-success,
+    .shift-checkin-feedback.is-error {
+      padding: 10px 12px;
+      border: 1px solid rgba(53,216,255,.3);
+      border-radius: 8px;
+      color: #94e5ff;
+      background: rgba(53,216,255,.08);
+    }
+
+    .shift-checkin-feedback.is-success {
+      border-color: var(--dancr-color-success-medium);
+      color: #a7f3d0;
+      background: var(--dancr-color-success-soft);
+    }
+
+    .shift-checkin-feedback.is-error {
+      border-color: var(--dancr-color-danger-medium);
+      color: #fecaca;
+      background: var(--dancr-color-danger-soft);
+    }
+
     .shift-action-grid {
       display: flex;
       flex-wrap: wrap;
@@ -36266,6 +36292,7 @@
     let approvedProfileVideoStatus = "";
     let approvedProfileVideoStatusTone = "";
     let shiftCheckInMessage = "";
+    let shiftCheckInTone = "";
     let shiftLocationRefreshTimer = 0;
     let shiftLocationRefreshShiftId = "";
     const SHIFT_LOCATION_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
@@ -37449,6 +37476,15 @@
 
     function apiErrorMessage(data, fallback = "Request failed") {
       const message = data?.error || fallback;
+      if (data?.code === "outside_geofence") {
+        const requiredRadiusFeet = Number.isFinite(Number(data?.requiredRadiusFeet))
+          ? Math.round(Number(data.requiredRadiusFeet))
+          : 300;
+        const distanceCopy = Number.isFinite(Number(data?.distanceFeet))
+          ? ` Your phone currently shows you about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away.`
+          : "";
+        return `You can't check in yet. You're outside the club's ${requiredRadiusFeet.toLocaleString()} ft check-in area. Move closer to the club and try again.${distanceCopy}`;
+      }
       if (Number.isFinite(Number(data?.distanceFeet)) && Number.isFinite(Number(data?.requiredRadiusFeet))) {
         return `${message} Your location was about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away; check-in requires ${Math.round(Number(data.requiredRadiusFeet)).toLocaleString()} ft or less.`;
       }
@@ -41950,7 +41986,7 @@
           <span class="shift-verification-copy">${displayText(displayShiftTime(profile.time) || "Shift time pending")}</span>
         </div>
         <div class="shift-verification-copy">${displayText(statusCopy)}</div>
-        <div class="shift-verification-copy" id="shiftCheckInStatus" role="status" aria-live="polite">${displayText(shiftCheckInMessage)}</div>
+        <div class="shift-verification-copy shift-checkin-feedback${shiftCheckInTone ? ` is-${shiftCheckInTone}` : ""}" id="shiftCheckInStatus" role="${shiftCheckInTone === "error" ? "alert" : "status"}" aria-live="${shiftCheckInTone === "error" ? "assertive" : "polite"}">${displayText(shiftCheckInMessage)}</div>
         <div class="shift-action-grid">
           ${canAttemptCheckIn ? '<button class="mini-action primary" type="button" data-shift-verify-action="check-in">Check in now</button>' : ""}
           ${checkedIn && !ended ? '<button class="mini-action checked-in-confirmation" type="button" disabled aria-label="Check-in confirmed" aria-live="polite">✓ Checked in</button>' : ""}
@@ -42006,9 +42042,15 @@
       const profile = activeDancerProfile();
       if (!profile) return;
       const status = document.getElementById("shiftCheckInStatus");
-      const setCheckInStatus = (message = "") => {
+      const setCheckInStatus = (message = "", tone = "") => {
         shiftCheckInMessage = message;
-        if (status) status.textContent = message;
+        shiftCheckInTone = tone;
+        if (status) {
+          status.textContent = message;
+          status.className = `shift-verification-copy shift-checkin-feedback${tone ? ` is-${tone}` : ""}`;
+          status.setAttribute("role", tone === "error" ? "alert" : "status");
+          status.setAttribute("aria-live", tone === "error" ? "assertive" : "polite");
+        }
       };
       if (trigger) trigger.disabled = true;
       try {
@@ -42016,20 +42058,20 @@
           throw new Error("Sign in to your dancer account before updating a live shift.");
         }
         if (action === "end") {
-          setCheckInStatus("Ending shift...");
+          setCheckInStatus("Ending shift...", "loading");
           const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
           if (data?.shift) applyShiftState(profile, data.shift);
           stopShiftLocationRefresh();
-          setCheckInStatus("Shift ended. QR commission tracking is stopped.");
+          setCheckInStatus("Shift ended. QR commission tracking is stopped.", "success");
           if (!options.silent) showToast("Shift ended");
         } else if (action === "check-in" || action === "refresh") {
-          setCheckInStatus(action === "refresh" ? "Refreshing your verified venue location..." : "Checking posted shift hours...");
+          setCheckInStatus(action === "refresh" ? "Refreshing your verified venue location..." : "Checking posted shift hours...", "loading");
           if (!checkInWindowOpen(profile)) {
             throw new Error("Check-in is only available during your posted shift hours.");
           }
-          if (action === "check-in") setCheckInStatus("Asking your phone for location permission...");
+          if (action === "check-in") setCheckInStatus("Asking your phone for location permission...", "loading");
           const coords = await requestShiftPosition();
-          setCheckInStatus("Checking your location against the venue geofence...");
+          setCheckInStatus("Checking your location against the venue geofence...", "loading");
           const payload = {
             shiftId: profile.shiftId,
             latitude: coords.latitude,
@@ -42043,12 +42085,12 @@
           if (data?.shift) applyShiftState(profile, data.shift);
           setCheckInStatus(action === "refresh"
             ? "Location verified. Working Now remains active while verification stays current."
-            : "Checked in. Your shift can now appear in Working Now.");
+            : "Checked in. Your shift can now appear in Working Now.", "success");
           if (!options.silent) showToast(action === "refresh" ? "Location verified" : "Checked in");
         }
       } catch (error) {
         const message = error.message || "Could not update shift";
-        setCheckInStatus(message);
+        setCheckInStatus(message, "error");
         if (!options.silent) showToast(message);
       } finally {
         if (trigger) trigger.disabled = false;
@@ -43641,6 +43683,7 @@
       }
       if (action === "remove") {
         shiftCheckInMessage = "";
+        shiftCheckInTone = "";
         removeLocalPostedShift(activeDancerCity(), profile?.name || activeDancerName(), shiftId);
         if (profile) {
           profile.postedShifts = shifts.filter((shift) => String(shift.shiftId) !== String(shiftId));
@@ -43695,6 +43738,7 @@
         ? profilePostedShifts(existing).find((shift) => String(shift.shiftId) === String(editingShiftId))
         : null;
       shiftCheckInMessage = "Shift posted. Tap Check in now when you are ready to verify your location.";
+      shiftCheckInTone = "";
       const shiftData = {
         name,
         status: "Verified",

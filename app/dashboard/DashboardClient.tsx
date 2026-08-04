@@ -2430,6 +2430,7 @@ function DancerShiftPanel({ city }: { city: string }) {
   const [endsAt, setEndsAt] = useState("");
   const [status, setStatus] = useState("");
   const [checkInStatus, setCheckInStatus] = useState("");
+  const [checkInTone, setCheckInTone] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isSaving, setIsSaving] = useState(false);
   const [activeCheckInId, setActiveCheckInId] = useState("");
   const [editingShiftId, setEditingShiftId] = useState("");
@@ -2447,7 +2448,10 @@ function DancerShiftPanel({ city }: { city: string }) {
     const session = readSession();
     if (!session?.accessToken || !navigator.geolocation) return;
 
-    if (!silent) setCheckInStatus("Refreshing your verified venue location...");
+    if (!silent) {
+      setCheckInStatus("Refreshing your verified venue location...");
+      setCheckInTone("loading");
+    }
     try {
       const position = await readBrowserLocation();
       const response = await fetch("/api/dancer/shifts/check-in", {
@@ -2465,10 +2469,12 @@ function DancerShiftPanel({ city }: { city: string }) {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(checkInErrorMessage(data));
       setCheckInStatus("Location verified. Working Now stays active while verification remains current.");
+      setCheckInTone("success");
       await loadShifts(session.accessToken);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to refresh location.";
       setCheckInStatus(message);
+      setCheckInTone("error");
       if (!silent) setStatus(message);
     }
   }, [loadShifts]);
@@ -2635,11 +2641,15 @@ function DancerShiftPanel({ city }: { city: string }) {
   async function checkInShift(shiftId: string) {
     const session = readSession();
     if (!session?.accessToken) {
+      setCheckInStatus("Sign in to your dancer account before checking in.");
+      setCheckInTone("error");
       setStatus("Sign in required.");
       return;
     }
 
     if (!navigator.geolocation) {
+      setCheckInStatus("This device cannot provide the precise location required for check-in.");
+      setCheckInTone("error");
       setStatus("Location permission is required to check in.");
       return;
     }
@@ -2647,6 +2657,7 @@ function DancerShiftPanel({ city }: { city: string }) {
     setActiveCheckInId(shiftId);
     setStatus("");
     setCheckInStatus("Asking your phone for location permission...");
+    setCheckInTone("loading");
     try {
       const position = await readBrowserLocation();
       setCheckInStatus("Checking your location against the venue geofence...");
@@ -2669,15 +2680,18 @@ function DancerShiftPanel({ city }: { city: string }) {
         )));
       }
       setCheckInStatus("Checked in. Your shift can now appear in Working Now.");
+      setCheckInTone("success");
       setStatus("Checked in.");
       void loadShifts(session.accessToken).catch(() => undefined);
     } catch (error) {
       if ((error as any)?.code === 1) {
         setCheckInStatus("Location permission is required to check in.");
+        setCheckInTone("error");
         setStatus("Location permission is required to check in.");
       } else {
         const message = error instanceof Error ? error.message : "Unable to check in.";
         setCheckInStatus(message);
+        setCheckInTone("error");
         setStatus(message);
       }
     } finally {
@@ -2703,11 +2717,13 @@ function DancerShiftPanel({ city }: { city: string }) {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check out.");
       setCheckInStatus("Checked out. QR commission tracking is stopped.");
+      setCheckInTone("success");
       setStatus("Checked out. This shift is no longer location confirmed.");
       await loadShifts(session.accessToken);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to check out.";
       setCheckInStatus(message);
+      setCheckInTone("error");
       setStatus(message);
     } finally {
       setActiveCheckInId("");
@@ -2746,7 +2762,7 @@ function DancerShiftPanel({ city }: { city: string }) {
         </span>
         {activeShift && !isCheckedInToActiveShift ? (
           <button type="button" disabled={activeCheckInId === String(activeShift.id)} onClick={() => checkInShift(String(activeShift.id))}>
-            {activeCheckInId === String(activeShift.id) ? "Checking location..." : "Check in now"}
+            {activeCheckInId === String(activeShift.id) ? "Checking location..." : checkInTone === "error" ? "Try check in again" : "Check in now"}
           </button>
         ) : null}
         {activeShift && isCheckedInToActiveShift ? (
@@ -2772,7 +2788,15 @@ function DancerShiftPanel({ city }: { city: string }) {
             </button>
           </>
         ) : null}
-        {checkInStatus ? <small className="shift-checkin-status">{checkInStatus}</small> : null}
+        {checkInStatus ? (
+          <small
+            className={`shift-checkin-status is-${checkInTone}`}
+            role={checkInTone === "error" ? "alert" : "status"}
+            aria-live={checkInTone === "error" ? "assertive" : "polite"}
+          >
+            {checkInStatus}
+          </small>
+        ) : null}
       </div>
       <form onSubmit={postShift}>
         <label>
@@ -3721,6 +3745,15 @@ async function readOptionalJson<T>(path: string, headers: Record<string, string>
 
 function checkInErrorMessage(data: any) {
   const message = String(data?.error || "Unable to check in.");
+  if (data?.code === "outside_geofence") {
+    const requiredRadiusFeet = Number.isFinite(Number(data?.requiredRadiusFeet))
+      ? Math.round(Number(data.requiredRadiusFeet))
+      : 300;
+    const distanceCopy = Number.isFinite(Number(data?.distanceFeet))
+      ? ` Your phone currently shows you about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away.`
+      : "";
+    return `You can't check in yet. You're outside the club's ${requiredRadiusFeet.toLocaleString()} ft check-in area. Move closer to the club and try again.${distanceCopy}`;
+  }
   if (Number.isFinite(Number(data?.distanceFeet)) && Number.isFinite(Number(data?.requiredRadiusFeet))) {
     return `${message} Your location was about ${Math.round(Number(data.distanceFeet)).toLocaleString()} ft away; check-in requires ${Math.round(Number(data.requiredRadiusFeet)).toLocaleString()} ft or less.`;
   }
@@ -3812,7 +3845,9 @@ function DashboardStyles() {
       .shift-checkin-card small { color: #cfc5de; line-height: 1.45; }
       .shift-checkin-card button { min-height: 44px; border: 0; border-radius: 8px; color: #050507; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 16px; }
       .shift-checkin-card button.check-in-confirmation, .shift-actions button.check-in-confirmation { border: 1px solid var(--dancr-color-success-medium); color: var(--dancr-color-success); background: var(--dancr-color-success-soft); box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft) !important; cursor: default !important; filter: none !important; opacity: 1 !important; }
-      .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; color: #94e5ff; font-weight: 850; }
+      .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; display: block; padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 8px; color: #94e5ff; background: rgba(148,229,255,.08); font-weight: 850; }
+      .shift-checkin-card .shift-checkin-status.is-error { border-color: var(--dancr-color-danger-medium); color: #fecaca; background: var(--dancr-color-danger-soft); }
+      .shift-checkin-card .shift-checkin-status.is-success { border-color: var(--dancr-color-success-medium); color: #a7f3d0; background: var(--dancr-color-success-soft); }
       .shift-list-head { display: grid; gap: 4px; padding-top: 4px; }
       .shift-list-head strong { color: #fff; font-size: 18px; }
       .shift-list-head small { color: #b9accd; line-height: 1.45; }

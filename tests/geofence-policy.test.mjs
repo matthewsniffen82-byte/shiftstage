@@ -138,6 +138,22 @@ test("a server-confirmed check-in remains visible on the check-in button", () =>
   assert.match(liveShell, /if \(data\?\.shift\) applyShiftState\(profile, data\.shift\)[\s\S]*?Checked in\. Your shift can now appear in Working Now\./);
 });
 
+test("an out-of-range check-in stays rejected and shows an accessible on-screen explanation", () => {
+  assert.match(migration, /if v_distance_feet > 300 then/);
+  assert.match(migration, /'outside_geofence'/);
+  assert.match(migration, /'requiredRadiusFeet', 300/);
+  assert.match(dashboard, /data\?\.code === "outside_geofence"/);
+  assert.match(liveShell, /data\?\.code === "outside_geofence"/);
+  for (const source of [dashboard, liveShell]) {
+    assert.match(source, /You can't check in yet\. You're outside the club's/);
+    assert.match(source, /Move closer to the club and try again/);
+  }
+  assert.match(dashboard, /role=\{checkInTone === "error" \? "alert" : "status"\}/);
+  assert.match(dashboard, /aria-live=\{checkInTone === "error" \? "assertive" : "polite"\}/);
+  assert.match(liveShell, /shift-checkin-feedback\$\{shiftCheckInTone/);
+  assert.match(liveShell, /shiftCheckInTone === "error" \? "alert" : "status"/);
+});
+
 test("expired checked-in shifts are reconciled by requests and an authenticated cron", () => {
   assert.match(lifecycle, /export async function reconcileExpiredDancerShifts/);
   assert.match(lifecycle, /checked_out_at: endedAt/);
