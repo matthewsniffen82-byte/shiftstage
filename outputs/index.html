@@ -31904,8 +31904,11 @@
             width: 40px;
             height: 40px;
             overflow: hidden;
-            border-radius: 50%;
-            contain: paint;
+            border-radius: 999px;
+            -webkit-clip-path: circle(50% at 50% 50%);
+            clip-path: circle(50% at 50% 50%);
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            isolation: isolate;
             opacity: 0;
             pointer-events: none;
             transform: translate(-50%,-50%) scale(.72);

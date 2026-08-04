@@ -130,7 +130,7 @@ test("neutral mobile glass uses soft-white idle icons and the original borderles
   assert.doesNotMatch(homeSource, /#discoveryTabs \.home-bottom-tv\.active \.home-bottom-tv-icon \{[^}]*drop-shadow/);
   assert.match(
     navigationSource,
-    /\.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
+    /\.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);[\s\S]*?isolation: isolate;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%, -50%\) scale\(0\.72\);/,
   );
   assert.match(
     navigationSource,
@@ -142,7 +142,7 @@ test("neutral mobile glass uses soft-white idle icons and the original borderles
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 999px;[\s\S]*?-webkit-clip-path: circle\(50% at 50% 50%\);[\s\S]*?clip-path: circle\(50% at 50% 50%\);[\s\S]*?-webkit-mask-image: -webkit-radial-gradient\(white, black\);[\s\S]*?isolation: isolate;[\s\S]*?opacity: 0;[\s\S]*?transform: translate\(-50%,-50%\) scale\(.72\);/,
   );
   assert.match(
     homeSource,
