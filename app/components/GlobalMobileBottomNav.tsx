@@ -478,8 +478,8 @@ export function GlobalMobileBottomNav() {
             z-index: 0;
             top: 50%;
             left: 50%;
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             overflow: hidden;
             border-radius: 50%;
             contain: paint;

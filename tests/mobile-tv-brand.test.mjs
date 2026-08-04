@@ -65,6 +65,6 @@ test("homepage active TV state uses icon-only color and the original borderless 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 42px;[\s\S]*?height: 42px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;/,
+    /#discoveryTabs \.mobile-nav-selection-halo \{[\s\S]*?width: 40px;[\s\S]*?height: 40px;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;[\s\S]*?contain: paint;/,
   );
 });
