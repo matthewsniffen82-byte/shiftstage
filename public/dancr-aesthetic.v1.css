@@ -3554,7 +3554,7 @@ body.dancr-button-system :is(
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
   box-shadow:
-    0 0 0 2px var(--dancr-color-surface-base),
+    0 0 0 2px var(--dancr-color-background),
     0 0 0 3px var(--dancr-color-avatar-ring-core),
     0 0 9px color-mix(
       in srgb,

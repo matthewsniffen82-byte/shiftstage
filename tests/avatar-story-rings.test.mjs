@@ -25,7 +25,7 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
   }
 
   assert.match(ringRules, /border: 2px solid var\(--dancr-color-avatar-ring-core\) !important;/);
-  assert.match(ringRules, /0 0 0 2px var\(--dancr-color-surface-base\),/);
+  assert.match(ringRules, /0 0 0 2px var\(--dancr-color-background\),/);
   assert.match(ringRules, /0 0 0 3px var\(--dancr-color-avatar-ring-core\),/);
   assert.match(ringRules, /\)::after \{[\s\S]*?border: 1px solid var\(--dancr-color-avatar-ring-core\);/);
   assert.match(ringRules, /drop-shadow\([\s\S]*?var\(--dancr-color-avatar-ring-core\) 42%/);
