@@ -3557,12 +3557,12 @@ body.dancr-button-system :is(
     0 8px 20px var(--dancr-color-black-medium),
     0 0 12px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-magenta) 36%,
+      var(--dancr-color-avatar-ring-magenta) 28%,
       transparent
     ),
     0 0 10px color-mix(
       in srgb,
-      var(--dancr-color-avatar-ring-core) 24%,
+      var(--dancr-color-avatar-ring-core) 18%,
       transparent
     ) !important;
   text-shadow: none !important;
@@ -3590,9 +3590,32 @@ body.dancr-button-system :is(
   border-radius: inherit;
   background: transparent;
   filter:
-    saturate(1.16)
-    drop-shadow(0 0 2px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 58%, transparent));
+    saturate(1.1)
+    drop-shadow(0 0 2px color-mix(in srgb, var(--dancr-color-avatar-ring-core) 38%, transparent));
   transform: rotate(-14deg);
+  pointer-events: none;
+}
+
+/* Extend the hero-light arc slightly beyond one quadrant without returning to
+ * mask compositing, so compact Android and iPhone avatars share the same ring. */
+body.dancr-button-system :is(
+    .approved-avatar-preview,
+    .venue-card-lineup-avatar,
+    .home-venue-discovery-lineup-avatar,
+    .profile-modal-avatar,
+    .home-tv-feed-dancer-photo,
+    .profile-titlebar-avatar,
+    .tv-profile-photo
+  )::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  box-sizing: border-box;
+  border: 3px solid transparent;
+  border-left-color: var(--dancr-color-avatar-ring-core);
+  border-radius: inherit;
+  transform: rotate(6deg);
   pointer-events: none;
 }
 
