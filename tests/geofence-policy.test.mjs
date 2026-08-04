@@ -159,10 +159,22 @@ test("the live dashboard keeps a rejected geofence result beside the check-in bu
   assert.match(liveShell, /throw apiRequestError\(data\)/);
   assert.match(liveShell, /shiftCheckInCode === "outside_geofence"/);
   assert.match(liveShell, /Outside club range — try again/);
-  assert.match(liveShell, /trigger\.textContent = action === "end" \? "Ending shift\.\.\." : action === "refresh" \? "Verifying location\.\.\." : "Checking location\.\.\."/);
+  assert.match(liveShell, /const triggerLabel = trigger\?\.querySelector\("span"\) \|\| trigger/);
+  assert.match(liveShell, /if \(triggerLabel\) triggerLabel\.textContent = action === "end" \? "Ending shift\.\.\." : action === "refresh" \? "Verifying location\.\.\." : "Checking location\.\.\."/);
+  assert.doesNotMatch(liveShell, /trigger\.textContent = action === "end"/);
+  assert.match(liveShell, /action\.classList\.toggle\("is-rejected", checkInRejected\)/);
+  assert.match(liveShell, /if \(detail\) detail\.textContent = checkInRejected[\s\S]*?shiftCheckInMessage/);
   assert.match(liveShell, /<div class="shift-action-grid">[\s\S]*?<div class="shift-verification-copy shift-checkin-feedback/);
   assert.match(liveShell, /if \(actionSucceeded\)[\s\S]*?else \{[\s\S]*?renderShiftVerificationPanel\(\)/);
   assert.match(liveShell, /getElementById\("shiftCheckInStatus"\)\?\.scrollIntoView/);
+});
+
+test("mobile check-in cannot remain pending indefinitely", () => {
+  assert.match(liveShell, /const watchdogId = window\.setTimeout\([\s\S]*?"location_timeout"[\s\S]*?15000\)/);
+  assert.match(liveShell, /Location access is off\. Allow location for mydancr\.com in your browser settings/);
+  assert.match(liveShell, /postAuthenticatedJson\("\/api\/dancer\/shifts\/check-in", payload, \{ timeoutMs: 20000 \}\)/);
+  assert.match(liveShell, /\{ timeoutMs: 20000 \}/);
+  assert.match(liveShell, /timeoutError\.code = "request_timeout"/);
 });
 
 test("expired checked-in shifts are reconciled by requests and an authenticated cron", () => {

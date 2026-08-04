@@ -27846,6 +27846,12 @@
       opacity: .68;
     }
 
+    .dancer-shift-primary.is-rejected {
+      border-color: rgba(255, 113, 133, .9);
+      background: linear-gradient(135deg, #6d1828, #9f2540 58%, #621323);
+      box-shadow: 0 0 24px rgba(255, 70, 104, .28), inset 0 0 14px rgba(255,255,255,.1);
+    }
+
     .dancer-shift-primary svg,
     .dancer-quick-actions svg {
       width: 21px;
@@ -37507,14 +37513,32 @@
       return error;
     }
 
-    async function postAuthenticatedJson(url, payload) {
+    async function fetchWithTimeout(url, options, timeoutMs = 0) {
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return fetch(url, options);
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          const timeoutError = new Error("The check-in request timed out. Check your connection and try again.");
+          timeoutError.code = "request_timeout";
+          throw timeoutError;
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    }
+
+    async function postAuthenticatedJson(url, payload, options = {}) {
       const headers = authenticatedRequestHeaders("application/json");
       if (!headers) return null;
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: "POST",
         headers,
         body: JSON.stringify(payload)
-      });
+      }, options.timeoutMs);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw apiRequestError(data);
       applyResponseSession(data);
@@ -37539,14 +37563,14 @@
       return data;
     }
 
-    async function patchAuthenticatedJson(url, payload) {
+    async function patchAuthenticatedJson(url, payload, options = {}) {
       const headers = authenticatedRequestHeaders("application/json");
       if (!headers) return null;
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: "PATCH",
         headers,
         body: JSON.stringify(payload)
-      });
+      }, options.timeoutMs);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw apiRequestError(data);
       applyResponseSession(data);
@@ -41942,14 +41966,39 @@
           reject(new Error("Location permission is required to check in."));
           return;
         }
+        let settled = false;
+        const finish = (callback, value) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(watchdogId);
+          callback(value);
+        };
+        const locationError = (message, code) => {
+          const error = new Error(message);
+          error.code = code;
+          return error;
+        };
+        const watchdogId = window.setTimeout(() => {
+          finish(reject, locationError("Your phone could not get a location in time. Turn on precise location and try again.", "location_timeout"));
+        }, 15000);
         navigator.geolocation.getCurrentPosition(
-          (position) => resolve({
+          (position) => finish(resolve, {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
             capturedAt: new Date(position.timestamp).toISOString()
           }),
-          () => reject(new Error("Location permission is required to check in.")),
+          (positionError) => {
+            if (positionError?.code === 1) {
+              finish(reject, locationError("Location access is off. Allow location for mydancr.com in your browser settings, then try again.", "location_permission_denied"));
+              return;
+            }
+            if (positionError?.code === 3) {
+              finish(reject, locationError("Your phone could not get a location in time. Turn on precise location and try again.", "location_timeout"));
+              return;
+            }
+            finish(reject, locationError("Your phone could not determine its location. Turn on precise location and try again.", "location_unavailable"));
+          },
           { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
       });
@@ -42072,10 +42121,11 @@
         }
       };
       let actionSucceeded = false;
+      const triggerLabel = trigger?.querySelector("span") || trigger;
       if (trigger) {
         trigger.disabled = true;
         trigger.setAttribute("aria-busy", "true");
-        trigger.textContent = action === "end" ? "Ending shift..." : action === "refresh" ? "Verifying location..." : "Checking location...";
+        if (triggerLabel) triggerLabel.textContent = action === "end" ? "Ending shift..." : action === "refresh" ? "Verifying location..." : "Checking location...";
       }
       try {
         if (!profile.shiftId || !isDancerSession()) {
@@ -42105,8 +42155,8 @@
             capturedAt: coords.capturedAt
           };
           const data = action === "refresh"
-            ? await patchAuthenticatedJson("/api/dancer/shifts/check-in", { ...payload, action: "refresh" })
-            : await postAuthenticatedJson("/api/dancer/shifts/check-in", payload);
+            ? await patchAuthenticatedJson("/api/dancer/shifts/check-in", { ...payload, action: "refresh" }, { timeoutMs: 20000 })
+            : await postAuthenticatedJson("/api/dancer/shifts/check-in", payload, { timeoutMs: 20000 });
           if (data?.shift) applyShiftState(profile, data.shift);
           setCheckInStatus(action === "refresh"
             ? "Location verified. Working Now remains active while verification stays current."
@@ -47552,7 +47602,10 @@
       const actionLabel = action?.querySelector("span");
       const checkedIn = Boolean(profile && isCheckedInShift(profile) && profile.workingStatus !== "ended" && !profile.endedAt);
       const canCheckIn = Boolean(profile?.scheduled && !checkedIn && profile.workingStatus !== "ended" && !profile.endedAt && checkInWindowOpen(profile));
+      const checkInRejected = canCheckIn && shiftCheckInTone === "error";
+      const outsideGeofenceRejected = checkInRejected && shiftCheckInCode === "outside_geofence";
       const nextShift = dancerDashboardPostedShifts(profile, city)[0] || null;
+      if (action) action.classList.toggle("is-rejected", checkInRejected);
 
       if (checkedIn) {
         if (kicker) kicker.textContent = "Working now";
@@ -47563,9 +47616,15 @@
       } else if (canCheckIn) {
         if (kicker) kicker.textContent = "Shift starting";
         if (title) title.textContent = profile.venue || "Posted shift";
-        if (detail) detail.textContent = `${postedShiftDateTimeLabel(profile, city)} · Verify your location to appear in Working Now.`;
+        if (detail) detail.textContent = checkInRejected
+          ? shiftCheckInMessage
+          : `${postedShiftDateTimeLabel(profile, city)} · Verify your location to appear in Working Now.`;
         if (action) action.dataset.dashboardShiftAction = "check-in";
-        if (actionLabel) actionLabel.textContent = "Check in now";
+        if (actionLabel) actionLabel.textContent = outsideGeofenceRejected
+          ? "Outside club range — try again"
+          : checkInRejected
+            ? "Check-in failed — try again"
+            : "Check in now";
       } else if (nextShift) {
         if (kicker) kicker.textContent = "Next shift";
         if (title) title.textContent = nextShift.venue || "Posted shift";
