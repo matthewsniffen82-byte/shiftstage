@@ -97,6 +97,9 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(liveScheduleBranch, /class="info-tile profile-schedule-card working-now-tile schedule-live"/);
   assert.match(liveScheduleBranch, /<strong>Schedule<\/strong>/);
   assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working now<\/div>/);
+  assert.match(liveScheduleBranch, /class="meta profile-working-stack"/);
+  assert.match(liveScheduleBranch, /profile-working-directions[\s\S]*?\$\{rideMarkup\}/);
+  assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
   assert.match(liveApp, /class="profile-working-directions"/);
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
@@ -130,11 +133,15 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
 test("live dancer essentials stay compact, scannable, and clear of the mobile dock", () => {
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?padding-top: 7px !important;/,
+    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 5px !important;[\s\S]*?padding-top: 7px !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-uber-ride \{[\s\S]*?height: 52px;[\s\S]*?max-height: 52px;[\s\S]*?overflow: hidden;/,
+    /#profileBackdrop \.profile-uber-ride \{[\s\S]*?height: 48px;[\s\S]*?max-height: 48px;[\s\S]*?overflow: hidden;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-working-directions \{[\s\S]*?grid-column: 1 !important;[\s\S]*?width: 100% !important;[\s\S]*?min-height: 44px !important;[\s\S]*?justify-content: flex-start !important;/,
   );
   assert.match(
     liveApp,

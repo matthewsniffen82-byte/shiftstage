@@ -6,7 +6,7 @@ const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url)
 
 test("Edit Profile marks its preview grid without changing the public profile grid", () => {
   assert.match(liveApp, /class="modal-grid \$\{options\.preview \? "is-editor-preview" : ""\}"/);
-  assert.match(liveApp, /shiftsMarkup\(profile, status, \{ preview: Boolean\(options\.preview\) \}\)/);
+  assert.match(liveApp, /shiftsMarkup\(profile, status, \{ preview: Boolean\(options\.preview\), city \}\)/);
   assert.match(liveApp, /#approvedEditProfileDropdown\.show #approvedVisualProfileEditor \.modal-grid\.is-editor-preview/);
 });
 

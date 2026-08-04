@@ -34909,9 +34909,9 @@
         #profileBackdrop .profile-uber-ride {
           grid-column: 1 / -1;
           width: 100%;
-          height: 52px;
-          min-height: 52px;
-          max-height: 52px;
+          height: 48px;
+          min-height: 48px;
+          max-height: 48px;
           justify-self: stretch;
           padding: 0 15px;
           overflow: hidden;
@@ -34937,14 +34937,14 @@
         }
 
         #profileBackdrop .working-now-tile > .meta {
-          grid-template-columns: minmax(0, 1fr) auto !important;
-          gap: 4px 12px !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          gap: 5px !important;
           padding-top: 7px !important;
         }
 
         #profileBackdrop .working-now-tile .detail-line {
           min-width: 0 !important;
-          min-height: 30px !important;
+          min-height: 38px !important;
         }
 
         #profileBackdrop .working-now-tile .venue-inline-link {
@@ -34956,11 +34956,21 @@
         }
 
         #profileBackdrop .profile-working-directions {
-          grid-column: 2 !important;
-          grid-row: 1 / span 2 !important;
-          min-height: 40px !important;
-          justify-self: end !important;
+          grid-column: 1 !important;
+          grid-row: auto !important;
+          width: 100% !important;
+          min-height: 44px !important;
+          justify-content: flex-start !important;
+          justify-self: stretch !important;
           white-space: nowrap !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-uber-ride {
+          margin-top: 2px;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-uber-ride {
+          margin-top: 3px;
         }
 
         #profileBackdrop .profile-club-deal-tile {
@@ -41381,12 +41391,6 @@
       return compactStart.replace(/^(\d{1,2})(?::(\d{2}))?([ap])$/i, (_, hour, minute = "00", period) => `${Number(hour)}:${minute} ${period.toLowerCase() === "p" ? "PM" : "AM"}`);
     }
 
-    function activeShiftStartedMarkup(profile) {
-      return profile?.scheduled
-        ? `<div class="detail-line modal-started-line"><span aria-hidden="true"></span><span class="modal-shift-started">Checked in for current shift</span></div>`
-        : "";
-    }
-
     function compactCardShiftTime(timeValue) {
       return shortMeridiemTime(timeValue, true)
         .replace(/\s*-\s*/g, "-")
@@ -45418,15 +45422,17 @@
 
     function shiftsMarkup(profile, status = shiftStatus(profile), options = {}) {
       const isEditorPreview = Boolean(options.preview);
+      const city = options.city || selectedCity();
+      const rideMarkup = dancerProfileUberRideMarkup(profile, { preview: isEditorPreview, city });
       if (isWorkingTonight(profile) && profile.scheduled) {
         return `
           <div class="info-tile profile-schedule-card working-now-tile schedule-live">
             <strong>Schedule</strong>
             <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
-            <div class="meta">
+            <div class="meta profile-working-stack">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              ${activeShiftStartedMarkup(profile)}
               <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Venue &amp; directions</button>
+              ${rideMarkup}
             </div>
           </div>
         `;
@@ -45440,6 +45446,7 @@
               <div class="meta detail-line upcoming-venue-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
             </div>
             <p class="profile-schedule-explanation">${isEditorPreview ? "This is how your next shift appears to customers." : "This is the dancer's next posted shift. Follow or turn on notifications for schedule updates."}</p>
+            ${rideMarkup}
           </div>
           ${shiftNotesMarkup(profile)}
         `;
@@ -45496,8 +45503,7 @@
         : profileDealTileMarkup(profile);
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
-          ${shiftsMarkup(profile, status, { preview: Boolean(options.preview) })}
-          ${dancerProfileUberRideMarkup(profile, { preview: Boolean(options.preview), city })}
+          ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
           ${dealMarkup}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           ${socialMarkup}
