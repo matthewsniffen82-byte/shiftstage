@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import sharp from "sharp";
 import {
+  ADDITIONAL_PROFILE_DEFINITIONS,
+  ADDITIONAL_PROFILE_SHEET_URL,
   createProfilePhoto,
   PROFILE_DEFINITIONS,
   validateProfileSheet,
@@ -71,7 +73,7 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /"--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=6"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
+    /"--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=11"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
   );
 });
 
@@ -80,16 +82,16 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   assert.match(scriptSource, /const AUTH_BAN_DURATION = "876000h"/);
   assert.match(scriptSource, /ban_duration: AUTH_BAN_DURATION/);
   assert.match(scriptSource, /bio: null/);
-  assert.match(scriptSource, /const UPCOMING_SHIFT_COUNT = PROFILE_DEFINITIONS\.length/);
+  assert.match(scriptSource, /const WORKING_NOW_PROFILE_INDEXES = new Set\(\[6, 8, 10\]\)/);
   assert.match(
     scriptSource,
     /async function removeProfileSocialLinks[\s\S]*?\.from\("social_links"\)[\s\S]*?\.delete\(\)/,
   );
   assert.match(
     scriptSource,
-    /checked_in_at: null,[\s\S]*?checked_out_at: null,[\s\S]*?location_status: "self_reported"/,
+    /checked_in_at: isWorkingNow[\s\S]*?checked_out_at: null,[\s\S]*?location_status: isWorkingNow \? "club_confirmed" : "self_reported"/,
   );
-  assert.match(scriptSource, /workingNowShifts: 0/);
+  assert.match(scriptSource, /workingNowShifts: workingNowCount/);
 });
 
 test("layout-review approval supports the deployed auto-approval schema", () => {
@@ -109,7 +111,10 @@ test("layout-review schedules and rollback support the deployed production schem
     /async function replaceProfileSchedule[\s\S]*?\r?\n}\r?\n\r?\nasync function listDatasetProfiles/,
   )?.[0];
   assert.ok(scheduleFunction);
-  assert.match(scheduleFunction, /location_status: "self_reported"/);
+  assert.match(
+    scheduleFunction,
+    /location_status: isWorkingNow \? "club_confirmed" : "self_reported"/,
+  );
   assert.doesNotMatch(scheduleFunction, /working_status/);
   assert.match(
     scriptSource,
@@ -121,10 +126,30 @@ test("layout-review schedules and rollback support the deployed production schem
   );
 });
 
-test("the population workflow uses the supplied five-photo galleries and real venue schedules", async () => {
+test("the population workflow preserves the original six profiles and adds the supplied five", async () => {
   assert.deepEqual(
     PROFILE_DEFINITIONS.map((profile) => profile.stageName),
-    ["Luna", "Ivy", "Kai", "Sienna", "Nova", "Bella"],
+    [
+      "Luna",
+      "Ivy",
+      "Kai",
+      "Sienna",
+      "Nova",
+      "Bella",
+      "Luna",
+      "Jada",
+      "Nikki",
+      "Vanessa",
+      "Sienna",
+    ],
+  );
+  assert.deepEqual(
+    ADDITIONAL_PROFILE_DEFINITIONS.map((profile) => profile.stageName),
+    ["Luna", "Jada", "Nikki", "Vanessa", "Sienna"],
+  );
+  assert.deepEqual(
+    ADDITIONAL_PROFILE_DEFINITIONS.map((profile) => profile.primaryPhotoIndex),
+    [2, 3, 1, 4, 0],
   );
   assert.ok(PROFILE_DEFINITIONS.every((profile) => profile.tiles.length === 5));
   assert.deepEqual(await validateProfileSheet(), {
@@ -132,11 +157,24 @@ test("the population workflow uses the supplied five-photo galleries and real ve
     height: 853,
     width: 1280,
   });
+  assert.deepEqual(await validateProfileSheet(ADDITIONAL_PROFILE_SHEET_URL), {
+    format: "jpeg",
+    height: 1170,
+    width: 1280,
+  });
   const rendered = await createProfilePhoto(PROFILE_DEFINITIONS[0], 0);
   const renderedMetadata = await sharp(rendered).metadata();
   assert.equal(renderedMetadata.format, "jpeg");
   assert.equal(renderedMetadata.width, 1200);
   assert.equal(renderedMetadata.height, 900);
+  const additionalRendered = await createProfilePhoto(
+    ADDITIONAL_PROFILE_DEFINITIONS[0],
+    ADDITIONAL_PROFILE_DEFINITIONS[0].primaryPhotoIndex,
+  );
+  const additionalMetadata = await sharp(additionalRendered).metadata();
+  assert.equal(additionalMetadata.format, "jpeg");
+  assert.equal(additionalMetadata.width, 900);
+  assert.equal(additionalMetadata.height, 1200);
   assert.match(profileSheetSource, /\.extract\(tile\)/);
   assert.doesNotMatch(profileSheetSource, /generate|openai/i);
   assert.match(scriptSource, /const REVIEW_PHOTO_COUNT = 5/);
@@ -156,5 +194,25 @@ test("the population workflow uses the supplied five-photo galleries and real ve
   assert.match(
     scriptSource,
     /\.from\("shifts"\)\.insert\(\{[\s\S]*?status: "posted"[\s\S]*?venue_id: venue\.id/,
+  );
+});
+
+test("selected review dancers and venues receive reversible tracked Club QR states", () => {
+  assert.match(scriptSource, /const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES\.size/);
+  assert.match(
+    scriptSource,
+    /async function prepareReviewQrVenues[\s\S]*?realDealVenueIds[\s\S]*?syncMarkedReviewDeals\(fallbackVenues\)/,
+  );
+  assert.match(
+    scriptSource,
+    /deal_terms:[\s\S]*?Layout-review offer only\. No monetary value and not redeemable\./,
+  );
+  assert.match(
+    scriptSource,
+    /redemption_rules:[\s\S]*?dataset_marker: DATASET_MARKER[\s\S]*?layout_review_only: true/,
+  );
+  assert.match(
+    scriptSource,
+    /async function cleanupDataset[\s\S]*?removeMarkedReviewDeals\(\)/,
   );
 });

@@ -13,7 +13,9 @@ const DEFAULT_COUNT = PROFILE_DEFINITIONS.length;
 const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;
-const UPCOMING_SHIFT_COUNT = PROFILE_DEFINITIONS.length;
+const WORKING_NOW_PROFILE_INDEXES = new Set([6, 8, 10]);
+const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES.size;
+const REVIEW_DEAL_PAYOUT_CENTS = 1;
 const AUTH_BAN_DURATION = "876000h";
 const STORAGE_BUCKET = "dancer-photos";
 const STORAGE_PAGE_SIZE = 100;
@@ -54,11 +56,14 @@ async function inspectEnvironment() {
     countPublicProfiles(),
   ]);
   const profileIds = profiles.map((profile) => profile.id);
-  const [approvedPhotos, socialLinks, upcomingShifts] = await Promise.all([
-    countRowsForProfiles("dancer_photos", profileIds),
-    countRowsForProfiles("social_links", profileIds),
-    countRowsForProfiles("shifts", profileIds),
-  ]);
+  const [approvedPhotos, socialLinks, upcomingShifts, workingNowShifts, reviewDeals] =
+    await Promise.all([
+      countRowsForProfiles("dancer_photos", profileIds),
+      countRowsForProfiles("social_links", profileIds),
+      countRowsForProfiles("shifts", profileIds),
+      countWorkingNowShifts(profileIds),
+      listMarkedReviewDeals(),
+    ]);
 
   writeResult({
     mode,
@@ -71,18 +76,25 @@ async function inspectEnvironment() {
     approvedPhotos,
     socialLinks,
     upcomingShifts,
+    workingNowShifts,
+    reviewDeals: reviewDeals.length,
     publicProfiles,
     activeReviewVenues: venues.length,
   });
 }
 
 async function applyDataset() {
-  await validateProfileSheet();
+  await Promise.all(
+    PROFILE_DEFINITIONS.map((definition) =>
+      validateProfileSheet(definition.sourceUrl),
+    ),
+  );
   await removeOrphanedDatasetStorageObjects();
   const venues = await listReviewVenues();
   if (!venues.length) {
     throw new Error(`No active ${REVIEW_CITY} venues are available for layout-review schedules.`);
   }
+  const reviewQrVenues = await prepareReviewQrVenues(venues);
 
   const authUsers = await listAllAuthUsers();
   const authUsersByEmail = new Map(
@@ -136,7 +148,7 @@ async function applyDataset() {
       const profile = await approveSyntheticProfile(authUser.id, definition);
       await upsertProfilePhotos(profile, definition, authUser.id);
       await removeProfileSocialLinks(profile, definition);
-      await replaceProfileSchedule(profile, definition, venues);
+      await replaceProfileSchedule(profile, definition, venues, reviewQrVenues);
     }
   } catch (error) {
     await rollbackNewUsers(createdUserIds);
@@ -146,10 +158,13 @@ async function applyDataset() {
   await removeProfilesOutsideRequestedSet(count);
   const profiles = await listDatasetProfiles();
   const profileIds = profiles.map((profile) => profile.id);
-  const [photoCount, shiftCount] = await Promise.all([
-    countRowsForProfiles("dancer_photos", profileIds),
-    countRowsForProfiles("shifts", profileIds),
-  ]);
+  const [photoCount, shiftCount, workingNowCount, reviewDeals] =
+    await Promise.all([
+      countRowsForProfiles("dancer_photos", profileIds),
+      countRowsForProfiles("shifts", profileIds),
+      countWorkingNowShifts(profileIds),
+      listMarkedReviewDeals(),
+    ]);
 
   if (profiles.length !== count) {
     throw new Error(`Expected ${count} review profiles but found ${profiles.length}.`);
@@ -167,7 +182,9 @@ async function applyDataset() {
     profiles: profiles.length,
     approvedPhotos: photoCount,
     upcomingShifts: shiftCount,
-    workingNowShifts: 0,
+    workingNowShifts: workingNowCount,
+    activeQrVenues: reviewQrVenues.map((venue) => venue.name),
+    reviewDeals: reviewDeals.length,
     signInDisabled: true,
   });
 }
@@ -191,6 +208,7 @@ async function cleanupDataset() {
   if (remaining.length) {
     throw new Error(`${remaining.length} marked review profiles remain after cleanup.`);
   }
+  await removeMarkedReviewDeals();
   await removeOrphanedDatasetStorageObjects();
 
   writeResult({
@@ -238,6 +256,9 @@ async function approveSyntheticProfile(userId, definition) {
 
 async function upsertProfilePhotos(profile, definition, userId) {
   const expectedPaths = [];
+  const primaryPhotoIndex = Number.isInteger(definition.primaryPhotoIndex)
+    ? definition.primaryPhotoIndex
+    : 0;
 
   for (let photoIndex = 0; photoIndex < REVIEW_PHOTO_COUNT; photoIndex += 1) {
     const storagePath = `${userId}/${profile.id}/${DATASET_MARKER}-${photoIndex + 1}.jpg`;
@@ -261,7 +282,7 @@ async function upsertProfilePhotos(profile, definition, userId) {
 
     const photoValues = {
       alt_text: `${definition.stageName} profile photo ${photoIndex + 1}`,
-      is_primary: photoIndex === 0,
+      is_primary: photoIndex === primaryPhotoIndex,
       review_status: "approved",
       sort_order: photoIndex,
     };
@@ -321,30 +342,161 @@ async function removeProfileSocialLinks(profile, definition) {
   assertSuccess(error, `remove temporary social links for ${definition.slug}`);
 }
 
-async function replaceProfileSchedule(profile, definition, venues) {
+async function replaceProfileSchedule(
+  profile,
+  definition,
+  venues,
+  reviewQrVenues,
+) {
   const { error: deleteError } = await admin
     .from("shifts")
     .delete()
     .eq("dancer_id", profile.id);
   assertSuccess(deleteError, `reset review schedule for ${definition.slug}`);
 
-  if (definition.index >= UPCOMING_SHIFT_COUNT) return;
-
-  const venue = venues[definition.index % venues.length];
-  const startsAt = new Date(Date.now() + (4 + definition.index * 8) * 60 * 60 * 1000);
+  const workingNowIndexes = [...WORKING_NOW_PROFILE_INDEXES];
+  const workingNowSlot = workingNowIndexes.indexOf(definition.index);
+  const isWorkingNow = workingNowSlot >= 0;
+  const venue = isWorkingNow
+    ? reviewQrVenues[workingNowSlot % reviewQrVenues.length]
+    : venues[definition.index % venues.length];
+  const startsAt = new Date(
+    Date.now() + (isWorkingNow ? -2 : 4 + definition.index * 8) * 60 * 60 * 1000,
+  );
   const endsAt = new Date(startsAt.getTime() + 6 * 60 * 60 * 1000);
   const { error } = await admin.from("shifts").insert({
-    checked_in_at: null,
+    checked_in_at: isWorkingNow
+      ? new Date(Date.now() - 20 * 60 * 1000).toISOString()
+      : null,
     checked_out_at: null,
     dancer_id: profile.id,
     ends_at: endsAt.toISOString(),
-    location_status: "self_reported",
+    location_status: isWorkingNow ? "club_confirmed" : "self_reported",
     starts_at: startsAt.toISOString(),
     status: "posted",
     timezone: venue.timezone || "America/Los_Angeles",
     venue_id: venue.id,
   });
-  assertSuccess(error, `insert upcoming shift for ${definition.slug}`);
+  assertSuccess(error, `insert review schedule for ${definition.slug}`);
+}
+
+async function prepareReviewQrVenues(venues) {
+  if (venues.length < ACTIVE_REVIEW_VENUE_COUNT) {
+    throw new Error(
+      `At least ${ACTIVE_REVIEW_VENUE_COUNT} active ${REVIEW_CITY} venues are required for QR review.`,
+    );
+  }
+
+  const activeDeals = await listActiveQrDeals();
+  const realDealVenueIds = new Set(
+    activeDeals
+      .filter((deal) => !isMarkedReviewDeal(deal))
+      .map((deal) => String(deal.venue_id)),
+  );
+  const selected = [
+    ...venues.filter((venue) => realDealVenueIds.has(String(venue.id))),
+    ...venues.filter((venue) => !realDealVenueIds.has(String(venue.id))),
+  ].slice(0, ACTIVE_REVIEW_VENUE_COUNT);
+  const fallbackVenues = selected.filter(
+    (venue) => !realDealVenueIds.has(String(venue.id)),
+  );
+
+  await syncMarkedReviewDeals(fallbackVenues);
+  return selected;
+}
+
+async function listActiveQrDeals() {
+  const { data, error } = await admin
+    .from("club_deals")
+    .select("id, venue_id, redemption_rules")
+    .eq("is_active", true)
+    .eq("payout_type", "flat")
+    .gt("payout_amount_cents", 0)
+    .order("created_at", { ascending: false });
+  assertSuccess(error, "list active QR deals");
+  return data || [];
+}
+
+async function listMarkedReviewDeals() {
+  const { data, error } = await admin
+    .from("club_deals")
+    .select("id, venue_id, redemption_rules")
+    .contains("redemption_rules", { dataset_marker: DATASET_MARKER });
+  assertSuccess(error, "list marked layout-review deals");
+  return data || [];
+}
+
+async function syncMarkedReviewDeals(venues) {
+  const existing = await listMarkedReviewDeals();
+  const retainedIds = new Set();
+
+  for (const venue of venues) {
+    const matching = existing.filter(
+      (deal) => String(deal.venue_id) === String(venue.id),
+    );
+    const values = {
+      deal_description:
+        "Open a tracked MyDancr QR to review the complete Club Deal experience.",
+      deal_terms:
+        "Layout-review offer only. No monetary value and not redeemable.",
+      deal_title: "Tonight's Layout Review Offer",
+      is_active: true,
+      payout_amount_cents: REVIEW_DEAL_PAYOUT_CENTS,
+      payout_type: "flat",
+      redemption_rules: {
+        club_scan_required: true,
+        dataset_marker: DATASET_MARKER,
+        layout_review_only: true,
+        one_per_guest: true,
+      },
+      updated_at: new Date().toISOString(),
+    };
+
+    if (matching.length) {
+      const { data, error } = await admin
+        .from("club_deals")
+        .update(values)
+        .eq("id", matching[0].id)
+        .select("id")
+        .single();
+      assertSuccess(error, `update layout-review deal for ${venue.name}`);
+      retainedIds.add(String(data.id));
+    } else {
+      const { data, error } = await admin
+        .from("club_deals")
+        .insert({
+          ...values,
+          currency: "usd",
+          venue_id: venue.id,
+        })
+        .select("id")
+        .single();
+      assertSuccess(error, `insert layout-review deal for ${venue.name}`);
+      retainedIds.add(String(data.id));
+    }
+  }
+
+  const staleIds = existing
+    .map((deal) => String(deal.id))
+    .filter((id) => !retainedIds.has(id));
+  if (staleIds.length) {
+    const { error } = await admin.from("club_deals").delete().in("id", staleIds);
+    assertSuccess(error, "remove stale layout-review deals");
+  }
+}
+
+async function removeMarkedReviewDeals() {
+  const deals = await listMarkedReviewDeals();
+  if (!deals.length) return;
+  const { error } = await admin
+    .from("club_deals")
+    .delete()
+    .in("id", deals.map((deal) => deal.id));
+  assertSuccess(error, "remove marked layout-review deals");
+}
+
+function isMarkedReviewDeal(deal) {
+  return deal?.redemption_rules?.dataset_marker === DATASET_MARKER;
 }
 
 async function listDatasetProfiles() {
@@ -435,6 +587,23 @@ async function countRowsForProfiles(table, profileIds) {
     .select("id", { count: "exact", head: true })
     .in("dancer_id", profileIds);
   assertSuccess(error, `count ${table}`);
+  return total || 0;
+}
+
+async function countWorkingNowShifts(profileIds) {
+  if (!profileIds.length) return 0;
+  const now = new Date().toISOString();
+  const { count: total, error } = await admin
+    .from("shifts")
+    .select("id", { count: "exact", head: true })
+    .in("dancer_id", profileIds)
+    .eq("status", "posted")
+    .lte("starts_at", now)
+    .gte("ends_at", now)
+    .not("checked_in_at", "is", null)
+    .is("checked_out_at", null)
+    .in("location_status", ["location_confirmed", "club_confirmed"]);
+  assertSuccess(error, "count Working Now layout-review shifts");
   return total || 0;
 }
 
