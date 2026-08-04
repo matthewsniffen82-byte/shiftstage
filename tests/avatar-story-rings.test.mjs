@@ -24,15 +24,16 @@ test("every real circular dancer avatar uses the shared Dancr story ring", () =>
     assert.match(ringRules, new RegExp(selector.replaceAll(".", "\\.")));
   }
 
-  assert.match(ringRules, /border: 2px solid var\(--dancr-color-avatar-ring-core\) !important;/);
+  assert.match(ringRules, /border: 3px solid var\(--dancr-color-avatar-ring-core\) !important;/);
   assert.match(ringRules, /0 0 0 2px var\(--dancr-color-background\),/);
   assert.match(ringRules, /0 0 0 4px var\(--dancr-color-avatar-ring-core\),/);
   assert.match(ringRules, /\)::after \{[\s\S]*?border: 1px solid var\(--dancr-color-avatar-ring-core\);/);
-  assert.match(ringRules, /drop-shadow\([\s\S]*?var\(--dancr-color-avatar-ring-core\) 68%/);
-  assert.match(ringRules, /Four tiny static facet flashes sit fully inside the photo edge/);
-  assert.match(ringRules, /\)::before \{[\s\S]*?inset: 5px;/);
-  assert.match(ringRules, /radial-gradient\(ellipse 1\.5px 5px at 22% 16%/);
-  assert.match(ringRules, /radial-gradient\(ellipse 5px 1\.5px at 14% 64%/);
+  assert.match(ringRules, /drop-shadow\([\s\S]*?var\(--dancr-color-avatar-ring-core\) 76%/);
+  assert.match(ringRules, /Fine static glitter is distributed around the circular edge itself/);
+  assert.match(ringRules, /\)::before \{[\s\S]*?border: 2px dotted var\(--dancr-color-avatar-ring-core\);/);
+  assert.match(ringRules, /radial-gradient\(circle 1\.8px at 50% 1%/);
+  assert.match(ringRules, /radial-gradient\(circle 1\.1px at 31% 5%/);
+  assert.doesNotMatch(ringRules, /radial-gradient\(ellipse/);
   assert.match(ringRules, /animation: none;/);
   assert.doesNotMatch(ringRules, /var\(--dancr-color-avatar-ring-(?:magenta|violet|indigo)\)/);
   assert.doesNotMatch(ringRules, /mask-composite|conic-gradient/);
