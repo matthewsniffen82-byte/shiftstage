@@ -11,6 +11,10 @@ import {
   moderateStoredMyDancrTvVideo,
   type MyDancrTvModerationResult,
 } from "./video-moderation";
+import {
+  removeArchivedOriginalMedia,
+  watermarkStoredVideo,
+} from "./media-watermark";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -727,7 +731,7 @@ export async function createMyDancrTvUpload(
 export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -773,7 +777,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
     })
     .eq("id", video.id)
     .eq("status", "uploading")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
   console.info(JSON.stringify({ event: "mydancr_tv.video_moderation_started", videoId: video.id, userId }));
@@ -783,7 +787,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
 export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "moderating")
     .maybeSingle();
@@ -799,7 +803,7 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
     })
     .eq("id", video.id)
     .eq("status", "moderating")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   return claimed ? finalizeMyDancrTvAutomatedModeration(admin, claimed) : null;
@@ -843,12 +847,31 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   }
 
   const profileEligible = isPublicDancerProfileEligible(one(video.dancer_profiles));
-  const decision = moderation.decision === "approved" && !profileEligible
+  let decision = moderation.decision === "approved" && !profileEligible
     ? "review"
     : moderation.decision;
-  const reasonCodes = moderation.decision === "approved" && !profileEligible
+  let reasonCodes = moderation.decision === "approved" && !profileEligible
     ? [...moderation.reasonCodes, "profile_not_eligible_for_auto_publish"]
     : moderation.reasonCodes;
+  if (decision === "approved") {
+    try {
+      await watermarkStoredVideo(admin, {
+        publicBucket: MYDANCR_TV_BUCKET,
+        storagePath: video.storage_path,
+        storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
+        width: Number(video.width),
+        height: Number(video.height),
+      });
+    } catch (error) {
+      decision = "review";
+      reasonCodes = [...reasonCodes, "public_watermark_processing_failed"];
+      console.error(JSON.stringify({
+        event: "public_media.video_watermark_failed",
+        videoId: video.id,
+        message: error instanceof Error ? error.message.slice(0, 500) : "Unknown watermark failure",
+      }));
+    }
+  }
   const completedAt = new Date().toISOString();
   const expiresAt = myDancrTvExpiry(one(video.shifts)?.ends_at);
   const update = {
@@ -934,6 +957,11 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
   await admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]);
+  await removeArchivedOriginalMedia(
+    admin,
+    MYDANCR_TV_BUCKET,
+    video.storage_path,
+  ).catch(() => null);
   const { data, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({ status: "hidden", venue_featured: false })
@@ -976,7 +1004,7 @@ export async function reviewMyDancrTvVideo(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, status, shift_id, duration_seconds, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, status, shift_id, storage_path, storage_mime, duration_seconds, width, height, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -991,6 +1019,15 @@ export async function reviewMyDancrTvVideo(
   }
   if (decision === "rejected" && notes.trim().length < 3) {
     throw new Error("Add a clear rejection reason for the dancer.");
+  }
+  if (decision === "approved") {
+    await watermarkStoredVideo(admin, {
+      publicBucket: MYDANCR_TV_BUCKET,
+      storagePath: video.storage_path,
+      storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
+      width: Number(video.width),
+      height: Number(video.height),
+    });
   }
 
   const reviewedAt = new Date().toISOString();

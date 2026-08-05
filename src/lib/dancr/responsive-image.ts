@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ValidatedDancrImage } from "./image-validation";
+import {
+  applyDancrImageWatermark,
+  archiveOriginalMedia,
+  removeArchivedOriginalMedia,
+} from "./media-watermark.ts";
 
 export const DANCR_RESPONSIVE_IMAGE_WIDTHS = [640, 1280, 2048] as const;
 export const DANCR_RESPONSIVE_IMAGE_QUALITY = 90;
@@ -50,11 +55,17 @@ type ResponsiveImageManifest = {
   width: number;
 };
 
+export type ResponsiveImageUploadOptions = {
+  archiveOriginal?: boolean;
+  watermark?: boolean;
+};
+
 const RESPONSIVE_MANIFEST_PATTERN =
   /\.r(0|[1-9]\d*(?:-[1-9]\d*)*)\.m([1-9]\d*)x([1-9]\d*)(?:\.f(\d{1,3})x(\d{1,3}))?\.[a-z0-9]+$/i;
 
 export async function prepareResponsiveImage(
   master: ValidatedDancrImage,
+  options: Pick<ResponsiveImageUploadOptions, "watermark"> = {},
 ): Promise<PreparedResponsiveImage> {
   const sharp = await loadSharp();
   const metadata = await sharp(master.buffer, {
@@ -72,13 +83,31 @@ export async function prepareResponsiveImage(
     width,
     height,
   );
+  const publicMaster = options.watermark
+    ? {
+        ...master,
+        buffer: await applyDancrImageWatermark(master.buffer, {
+          contentType: master.contentType,
+          focalX,
+          focalY,
+          height,
+          width,
+        }),
+        height,
+        width,
+      }
+    : {
+        ...master,
+        height,
+        width,
+      };
 
   const requestedWidths = DANCR_RESPONSIVE_IMAGE_WIDTHS.filter(
     (candidateWidth) => candidateWidth < width,
   );
   const variants = await Promise.all(
     requestedWidths.map(async (candidateWidth) => {
-      const result = await sharp(master.buffer, {
+      const result = await sharp(publicMaster.buffer, {
         failOn: "error",
         limitInputPixels: false,
       })
@@ -111,11 +140,7 @@ export async function prepareResponsiveImage(
     focalX,
     focalY,
     height,
-    master: {
-      ...master,
-      height,
-      width,
-    },
+    master: publicMaster,
     variants,
     width,
   };
@@ -127,8 +152,9 @@ export async function uploadResponsiveImage(
   directory: string,
   master: ValidatedDancrImage,
   cacheControl = "31536000",
+  options: ResponsiveImageUploadOptions = {},
 ): Promise<UploadedResponsiveImage> {
-  const prepared = await prepareResponsiveImage(master);
+  const prepared = await prepareResponsiveImage(master, options);
   const storagePath = responsiveMasterStoragePath(directory, prepared);
   const objects = [
     {
@@ -142,6 +168,16 @@ export async function uploadResponsiveImage(
       path: responsiveVariantStoragePath(storagePath, variant.width),
     })),
   ];
+
+  if (options.archiveOriginal) {
+    await archiveOriginalMedia(
+      client,
+      bucket,
+      storagePath,
+      master.buffer,
+      master.contentType,
+    );
+  }
 
   const uploadResults = await Promise.all(
     objects.map(async (object) => ({
@@ -159,6 +195,9 @@ export async function uploadResponsiveImage(
       .from(bucket)
       .remove(objects.map((object) => object.path))
       .catch(() => null);
+    if (options.archiveOriginal) {
+      await removeArchivedOriginalMedia(client, bucket, storagePath).catch(() => null);
+    }
     throw failedUpload.result.error;
   }
 

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
 import { removeResponsiveImage } from "./responsive-image";
+import { removeArchivedOriginalMedia } from "./media-watermark";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 
 type DancrClient = SupabaseClient;
@@ -169,6 +170,11 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
     if (photo.storage_path) {
       await removeResponsiveImage(
+        adminClient,
+        "dancer-photos",
+        photo.storage_path,
+      ).catch(() => null);
+      await removeArchivedOriginalMedia(
         adminClient,
         "dancer-photos",
         photo.storage_path,

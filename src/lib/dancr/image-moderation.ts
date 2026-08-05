@@ -22,6 +22,7 @@ import {
   responsivePublicImage,
   uploadResponsiveImage,
 } from "./responsive-image";
+import { removeArchivedOriginalMedia } from "./media-watermark";
 
 type DancrClient = SupabaseClient;
 
@@ -450,6 +451,10 @@ async function approveModeratedUpload(
       ? `${input.userId}/${input.profileId}/avatar`
       : `${input.userId}/${input.profileId}`,
     input.image,
+    "31536000",
+    input.isAvatar
+      ? {}
+      : { archiveOriginal: true, watermark: true },
   );
   const finalPath = uploadedImage.storagePath;
   let previousAvatarPath: string | null = null;
@@ -541,6 +546,13 @@ async function approveModeratedUpload(
       APPROVED_PHOTO_BUCKET,
       finalPath,
     ).catch(() => null);
+    if (!input.isAvatar) {
+      await removeArchivedOriginalMedia(
+        admin,
+        APPROVED_PHOTO_BUCKET,
+        finalPath,
+      ).catch(() => null);
+    }
     await updateModerationRecord(admin, input.recordId, {
       finalStoragePath: finalPath,
       decision: "review",
@@ -955,13 +967,18 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       throw supersededDeleteError;
     }
     await Promise.all(
-      supersededPhotos.map((photo) =>
+      supersededPhotos.flatMap((photo) => [
         removeResponsiveImage(
           client,
           APPROVED_PHOTO_BUCKET,
           photo.storage_path,
         ).catch(() => null),
-      ),
+        removeArchivedOriginalMedia(
+          client,
+          APPROVED_PHOTO_BUCKET,
+          photo.storage_path,
+        ).catch(() => null),
+      ]),
     );
   }
   if (input.isPrimary) {
@@ -972,7 +989,16 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       .neq("id", data.id);
     if (demoteError) {
       await safeDeleteDancerPhotoRow(client, data.id);
-      await client.storage.from(APPROVED_PHOTO_BUCKET).remove([input.storagePath]).catch(() => null);
+      await removeResponsiveImage(
+        client,
+        APPROVED_PHOTO_BUCKET,
+        input.storagePath,
+      ).catch(() => null);
+      await removeArchivedOriginalMedia(
+        client,
+        APPROVED_PHOTO_BUCKET,
+        input.storagePath,
+      ).catch(() => null);
       throw demoteError;
     }
   }

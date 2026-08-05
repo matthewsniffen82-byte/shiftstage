@@ -31,6 +31,7 @@
     "profiles:layout-review": "node scripts/manage-layout-review-profiles.mjs",
     "test": "node --test tests/*.test.mjs",
     "privacy:purge-legacy-identity": "node scripts/purge-legacy-identity-data.mjs",
+    "media:backfill-watermarks": "node scripts/backfill-public-media-watermarks.mjs",
     "pretypecheck": "npm run generate:live-shell-version",
     "typecheck": "node --test tests/*.test.mjs && tsc --noEmit --incremental false",
     "start": "next start"

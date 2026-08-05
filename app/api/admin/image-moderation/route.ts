@@ -15,6 +15,7 @@ import {
   responsiveImageStoragePaths,
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
+import { removeArchivedOriginalMedia } from "@/src/lib/dancr/media-watermark";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -119,6 +120,10 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       ? `${record.user_id}/${profile.id}/avatar`
       : `${record.user_id}/${profile.id}`,
     image,
+    "31536000",
+    isAvatar
+      ? {}
+      : { archiveOriginal: true, watermark: true },
   );
   const finalPath = uploadedImage.storagePath;
   let previousAvatarPath: string | null = null;
@@ -215,6 +220,15 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
               ),
             )
             .catch(() => null);
+          await Promise.all(
+            supersededPaths.map((storagePath: string) =>
+              removeArchivedOriginalMedia(
+                admin,
+                APPROVED_PHOTO_BUCKET,
+                storagePath,
+              ).catch(() => null),
+            ),
+          );
         }
       }
     }
@@ -230,6 +244,13 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       APPROVED_PHOTO_BUCKET,
       finalPath,
     ).catch(() => null);
+    if (!isAvatar) {
+      await removeArchivedOriginalMedia(
+        admin,
+        APPROVED_PHOTO_BUCKET,
+        finalPath,
+      ).catch(() => null);
+    }
     throw error;
   }
 }

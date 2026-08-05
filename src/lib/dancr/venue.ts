@@ -10,6 +10,7 @@ import {
   responsivePublicImage,
   uploadResponsiveImage,
 } from "./responsive-image";
+import { removeArchivedOriginalMedia } from "./media-watermark";
 import {
   getVenueDealForAccount,
   getVenueDealRevenueMetrics,
@@ -240,6 +241,8 @@ export async function uploadVenueCoverImage(
       COVER_BUCKET,
       venue.id,
       image,
+      "31536000",
+      { archiveOriginal: true, watermark: true },
     );
     finalPath = uploadedImage.storagePath;
     finalUploaded = true;
@@ -262,12 +265,20 @@ export async function uploadVenueCoverImage(
         COVER_BUCKET,
         venue.coverImageStoragePath,
       ).catch(() => null);
+      await removeArchivedOriginalMedia(
+        client,
+        COVER_BUCKET,
+        venue.coverImageStoragePath,
+      ).catch(() => null);
     }
     console.info("VENUE_COVER_PUBLISHED", { venueId: venue.id });
     return toVenueOwnerProfile(client, data);
   } catch (error) {
     if (finalUploaded) {
       await removeResponsiveImage(client, COVER_BUCKET, finalPath).catch(
+        () => null,
+      );
+      await removeArchivedOriginalMedia(client, COVER_BUCKET, finalPath).catch(
         () => null,
       );
     }
@@ -296,6 +307,11 @@ export async function deleteVenueCoverImage(
   if (error) throw error;
   if (venue.coverImageStoragePath) {
     await removeResponsiveImage(
+      client,
+      COVER_BUCKET,
+      venue.coverImageStoragePath,
+    ).catch(() => null);
+    await removeArchivedOriginalMedia(
       client,
       COVER_BUCKET,
       venue.coverImageStoragePath,
