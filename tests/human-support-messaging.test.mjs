@@ -57,6 +57,6 @@ test("existing installed sessions refresh onto the current production shell", ()
   assert.match(serviceWorkerSource, /client\.navigate\(client\.url\)/);
   assert.match(serviceWorkerSource, /caches\.delete\(cacheName\)/);
   assert.match(serviceWorkerSource, /event\.request\.mode === "navigate" \? "no-store"/);
-  assert.match(liveRouteSource, /export const dynamic = "force-static"/);
+  assert.match(liveRouteSource, /export const dynamic = "force-dynamic"/);
   assert.match(liveRouteSource, /public, max-age=0, s-maxage=60, stale-while-revalidate=60/);
 });

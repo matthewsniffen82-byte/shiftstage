@@ -19,6 +19,8 @@ test("the deployed root route is content-addressed to the current live HTML", ()
   assert.match(rootRouteSource, /import \{ LIVE_SHELL_SHA256 \}/);
   assert.match(rootRouteSource, /data-live-shell-version/);
   assert.match(rootRouteSource, /"x-dancr-live-shell-version": LIVE_SHELL_SHA256/);
+  assert.match(rootRouteSource, /export const dynamic = "force-dynamic"/);
+  assert.match(rootRouteSource, /export const revalidate = 0/);
 });
 
 test("development, type checking, and production builds refresh the live shell hash", () => {

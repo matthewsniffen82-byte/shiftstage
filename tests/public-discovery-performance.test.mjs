@@ -12,9 +12,9 @@ const [homeSource, rootRouteSource, discoveryRouteSource, publicServiceSource, h
   readFile(new URL("../public/outputs/dancr-hero.png", import.meta.url)),
 ]);
 
-test("the production home shell is statically generated without a release-stale CDN lifetime", () => {
-  assert.match(rootRouteSource, /export const dynamic = "force-static"/);
-  assert.match(rootRouteSource, /export const revalidate = false/);
+test("the production home shell cannot reuse a stale build artifact and keeps a short edge lifetime", () => {
+  assert.match(rootRouteSource, /export const dynamic = "force-dynamic"/);
+  assert.match(rootRouteSource, /export const revalidate = 0/);
   assert.match(rootRouteSource, /s-maxage=60, stale-while-revalidate=60/);
   assert.doesNotMatch(rootRouteSource, /s-maxage=31536000/);
   assert.doesNotMatch(rootRouteSource, /no-store, no-cache/);

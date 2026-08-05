@@ -3,8 +3,11 @@ import path from "node:path";
 import { LIVE_SHELL_SHA256 } from "@/src/generated/live-shell-version";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
-export const revalidate = false;
+// The live shell is a checked-in production artifact. Rendering this route at
+// request time prevents Vercel's build cache from reusing an older shell while
+// still allowing the response itself to be cached briefly at the edge.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
