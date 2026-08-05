@@ -4548,6 +4548,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-club-deal-qr-state.is-available {
+  appearance: none;
   border-color: var(--dancr-color-success-medium) !important;
   color: var(--dancr-color-success) !important;
   background: color-mix(
@@ -4555,6 +4556,33 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
     var(--dancr-color-success) 6%,
     var(--dancr-color-surface)
   ) !important;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  button.venue-detail-club-deal-qr-state.is-available:hover,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  button.venue-detail-club-deal-qr-state.is-available:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  button.venue-detail-club-deal-qr-state.is-available:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dancr-color-success) 14%, transparent) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  button.venue-detail-club-deal-qr-state.is-available:is(.is-loading, :disabled) {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4646,18 +4674,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   background: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .club-deal-primary-cta.venue-club-deal-cta {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
-  color: var(--dancr-color-text-primary) !important;
-  background: linear-gradient(
-    135deg,
-    var(--dancr-color-brand-primary),
-    var(--dancr-color-brand-primary-deep)
-  ) !important;
-  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail

@@ -55,7 +55,6 @@ test("venue pages and directory cards promote real active deals", () => {
   assert.match(venuePage, /permanentRedirect/);
   assert.doesNotMatch(venuePage, /ClubDealCard|stickyCta/);
   assert.match(liveApp, /function venueOfferMarkup\(venue\)[\s\S]*?venue\?\.activeDeal[\s\S]*?id="club-deal"/);
-  assert.match(liveApp, /clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/);
   assert.match(
     venueDirectory,
     /permanentRedirect\(homeDiscoveryHref\("venues", params\.city\)\)/,
@@ -89,13 +88,15 @@ test("venue pages and directory cards promote real active deals", () => {
   assert.match(venueOffer, /venue-club-deal-unavailable[\s\S]*?Club Deal QR/);
   assert.match(
     venueOffer,
-    /data-club-deal-state="available"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?Unique tracked QR[\s\S]*?Opens after you tap Get Club Deal/,
+    /<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?Click for Club Deal[\s\S]*?Unique tracked QR[\s\S]*?<\/button>/,
   );
+  assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
+  assert.doesNotMatch(venueOffer, /clubDealCtaMarkup|venue-club-deal-cta|Opens after you tap Get Club Deal/);
   assert.match(
     venueOffer,
     /data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/,
   );
-  assert.match(liveApp, /\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(190px, 230px\);/);
+  assert.match(liveApp, /\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?justify-items: center;/);
   assert.match(liveApp, /@media \(max-width: 520px\) \{[\s\S]*?\.venue-detail-club-deal-actions \{[\s\S]*?grid-template-columns: 1fr;/);
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR/);
   const venueSlide =

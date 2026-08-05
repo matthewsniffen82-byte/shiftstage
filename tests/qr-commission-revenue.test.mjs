@@ -160,8 +160,9 @@ test("legacy uploaded QR images cannot masquerade as commission-bearing MyDancr 
     )?.[0] || "";
   assert.match(
     venueOfferHelper,
-    /venue\?\.activeDeal[\s\S]*?clubDealCtaMarkup\(config, "venue-club-deal-cta"\)/,
+    /venue\?\.activeDeal[\s\S]*?<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Click for Club Deal/,
   );
+  assert.doesNotMatch(venueOfferHelper, /clubDealCtaMarkup|venue-club-deal-cta/);
   assert.match(
     venueOfferHelper,
     /venue-club-deal-unavailable[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol venue-qr-placeholder-icon"\)[\s\S]*?No active Club Deal[\s\S]*?Check back later/,

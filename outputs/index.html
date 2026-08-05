@@ -24680,8 +24680,9 @@
 
     .venue-detail-club-deal-actions {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(190px, 230px);
+      grid-template-columns: minmax(0, 1fr);
       align-items: stretch;
+      justify-items: center;
       gap: 12px;
       min-width: 0;
     }
@@ -24698,6 +24699,30 @@
       color: #ffffff;
       background: linear-gradient(145deg, rgba(7, 92, 77, .3), rgba(5, 20, 17, .8));
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available {
+      appearance: none;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color .18s ease, background-color .18s ease, opacity .18s ease, transform .18s ease;
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available:hover,
+    button.venue-detail-club-deal-qr-state.is-available:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available:focus-visible {
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, .14);
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available.is-loading,
+    button.venue-detail-club-deal-qr-state.is-available:disabled {
+      opacity: .72;
+      cursor: wait;
+      transform: none;
     }
 
     .venue-detail-club-deal-symbol {
@@ -24825,12 +24850,6 @@
       font-size: .74rem;
     }
 
-    .venue-detail .venue-club-deal-cta {
-      width: 100%;
-      max-width: none;
-      min-width: 0;
-    }
-
     .venue-profile-qr-card {
       border-color: rgba(77, 255, 157, .48);
       background:
@@ -24910,62 +24929,6 @@
       transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
 
-    .club-deal-primary-cta {
-      width: min(100%, 230px);
-      min-height: 62px;
-      display: grid;
-      align-content: center;
-      justify-items: start;
-      gap: 2px;
-      padding: 9px 15px;
-      border: 1px solid rgba(126, 234, 255, .58);
-      border-radius: 18px;
-      color: #ffffff;
-      background: linear-gradient(135deg, #6d28d9, #0b94c9);
-      box-shadow: 0 14px 36px rgba(35, 114, 178, .28), 0 0 22px rgba(126, 234, 255, .12);
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .club-deal-primary-cta > span {
-      color: #d8f7ff;
-      font-size: .62rem;
-      font-weight: 950;
-      letter-spacing: .14em;
-      line-height: 1;
-      text-transform: uppercase;
-    }
-
-    .club-deal-primary-cta > strong {
-      width: 100%;
-      overflow: hidden;
-      font-size: .9rem;
-      line-height: 1.12;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .club-deal-primary-cta > small {
-      color: rgba(255, 255, 255, .74);
-      font-size: .66rem;
-      font-weight: 800;
-    }
-
-    .club-deal-primary-cta:hover,
-    .club-deal-primary-cta:focus-visible {
-      border-color: #7eeaff;
-      outline: none;
-      transform: translateY(-1px);
-      box-shadow: 0 16px 40px rgba(35, 114, 178, .34), 0 0 0 3px rgba(126, 234, 255, .14);
-    }
-
-    .club-deal-primary-cta.is-loading,
-    .club-deal-primary-cta:disabled {
-      opacity: .72;
-      cursor: wait;
-    }
-
     .profile-club-deal-tile {
       border-color: rgba(77, 236, 157, .42) !important;
       background: linear-gradient(135deg, rgba(7, 92, 77, .28), rgba(16, 128, 74, .12)) !important;
@@ -24988,11 +24951,6 @@
 
       .profile-club-deal-cta > strong {
         font-size: .76rem;
-      }
-
-      .venue-club-deal-cta {
-        width: 100%;
-        max-width: none;
       }
 
       .venue-detail-club-deal-actions {
@@ -41899,16 +41857,6 @@
       };
     }
 
-    function clubDealCtaMarkup(config, className = "") {
-      return `
-        <button class="club-deal-primary-cta ${className}" type="button" data-club-deal-cta="${encodeDealPass(config)}">
-          <span>Get Club Deal</span>
-          <strong>${escapeHtml(config.deal?.dealTitle || "Open QR")}</strong>
-          <small>No sign-in required</small>
-        </button>
-      `;
-    }
-
     function profileClubDealPassKey(config) {
       return [
         config?.deal?.id || "",
@@ -42299,14 +42247,13 @@
                 <p>${escapeHtml(venue.activeDeal.dealDescription || "Get a unique QR and show it at the venue.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <div class="venue-detail-club-deal-qr-state is-available" data-club-deal-state="available" role="img" aria-label="A unique tracked Club Deal QR opens after Get Club Deal is selected">
+                <button class="venue-detail-club-deal-qr-state is-available" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Click for Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}">
                   ${clubDealQrSymbolMarkup("venue-detail-club-deal-symbol")}
                   <span class="venue-detail-club-deal-qr-copy">
-                    <strong>Unique tracked QR</strong>
-                    <small>Opens after you tap Get Club Deal</small>
+                    <strong>Click for Club Deal</strong>
+                    <small>Unique tracked QR</small>
                   </span>
-                </div>
-                ${clubDealCtaMarkup(config, "venue-club-deal-cta")}
+                </button>
               </div>
             </div>
           </article>
