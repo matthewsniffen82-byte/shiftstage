@@ -18,6 +18,7 @@ type AdminState = {
   supportThreads?: Array<Record<string, unknown>>;
   imageModeration?: Array<Record<string, unknown>>;
   operations?: AdminOperationsCenter | null;
+  finance?: Record<string, unknown> | null;
   authRequired?: boolean;
   warnings?: string[];
   error?: string;
@@ -30,7 +31,7 @@ type AdminActionNotice = {
 
 const SESSION_KEY = "dancrAuthSessionV1";
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
-type AdminWorkspace = "overview" | "approvals" | "activity" | "accounts" | "system";
+type AdminWorkspace = "overview" | "approvals" | "finance" | "activity" | "accounts" | "system";
 
 export default function AdminClient() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -171,6 +172,7 @@ export default function AdminClient() {
       }> = [
         { label: "Monitoring", path: "/api/admin/monitoring", apply: (data) => ({ monitoring: data.monitoring }) },
         { label: "Live operations", path: "/api/admin/operations", apply: (data) => ({ operations: data.operations }) },
+        { label: "QR finance", path: "/api/admin/finance", apply: (data) => ({ finance: data.finance }) },
         {
           label: "Dancer approvals",
           path: "/api/admin/approvals",
@@ -213,6 +215,7 @@ export default function AdminClient() {
         authRequired: false,
         monitoring: null,
         operations: null,
+        finance: null,
         queue: [],
         dancers: [],
         venues: [],
@@ -367,7 +370,7 @@ export default function AdminClient() {
             </aside>
           ) : null}
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
-            {(["overview", "approvals", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
+            {(["overview", "approvals", "finance", "activity", "accounts", "system"] as AdminWorkspace[]).map((item) => (
               <button
                 key={item}
                 type="button"
@@ -394,6 +397,13 @@ export default function AdminClient() {
           ) : null}
           {workspace === "activity" ? <ActivityTimeline operations={state.operations || null} /> : null}
           {workspace === "accounts" ? <AccountOverview operations={state.operations || null} /> : null}
+          {workspace === "finance" ? (
+            <FinanceManager
+              finance={state.finance || null}
+              onFinanceChange={(finance) => setState((current) => ({ ...current, finance }))}
+              onActionConfirmed={confirmAdminAction}
+            />
+          ) : null}
           <section className="admin-grid">
           {workspace === "system" ? <Panel title="Monitoring">
             {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
@@ -524,6 +534,164 @@ export default function AdminClient() {
         </>
       )}
     </main>
+  );
+}
+
+function FinanceManager({
+  finance,
+  onFinanceChange,
+  onActionConfirmed,
+}: {
+  finance: Record<string, unknown> | null;
+  onFinanceChange: (finance: Record<string, unknown>) => void;
+  onActionConfirmed: (message: string) => void;
+}) {
+  const [isRunning, setIsRunning] = useState(false);
+  const [status, setStatus] = useState("");
+  const [invoiceId, setInvoiceId] = useState("");
+  const [paymentTotal, setPaymentTotal] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const metrics = (finance?.metrics || {}) as Record<string, unknown>;
+  const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
+  const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
+  const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(asText(invoice.status)));
+
+  async function runAction(action: "run_automation" | "process_payouts") {
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    setIsRunning(true);
+    setStatus(action === "run_automation" ? "Reconciling club invoices and dancer payouts..." : "Processing payable dancer commissions...");
+    try {
+      const response = await fetch("/api/admin/finance", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Finance operation failed.");
+      onFinanceChange(data.finance);
+      const errors = Array.isArray(data.result?.errors) ? data.result.errors.length : 0;
+      const message = errors ? `Finance run completed with ${errors} item requiring attention.` : "Finance reconciliation completed.";
+      setStatus(message);
+      onActionConfirmed(message);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Finance operation failed.");
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  async function recordPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = readToken();
+    if (!token) return setStatus("Admin sign in required.");
+    const totalPaidCents = Math.round(Number(paymentTotal) * 100);
+    if (!invoiceId || !Number.isInteger(totalPaidCents) || totalPaidCents <= 0 || !paymentReference.trim()) {
+      return setStatus("Choose an invoice and enter the cumulative paid total plus a bank or check reference.");
+    }
+    setIsRunning(true);
+    setStatus("Reconciling external payment...");
+    try {
+      const response = await fetch("/api/admin/finance", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "record_manual_payment", invoiceId, totalPaidCents, reference: paymentReference.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to record payment.");
+      onFinanceChange(data.finance);
+      setInvoiceId("");
+      setPaymentTotal("");
+      setPaymentReference("");
+      setStatus("External club payment reconciled.");
+      onActionConfirmed("External club payment reconciled.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to record payment.");
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  return (
+    <section className="operations-center" aria-labelledby="finance-operations-heading">
+      <Panel title="QR finance operations">
+        <span className="eyebrow">Receivables and payouts</span>
+        <h2 id="finance-operations-heading">Commission settlement</h2>
+        <div className="operations-metrics">
+          <Metric label="Club receivables" value={formatAdminCents(Number(metrics.outstandingReceivablesCents || 0))} />
+          <Metric label="Overdue" value={formatAdminCents(Number(metrics.overdueReceivablesCents || 0))} />
+          <Metric label="Club payments received" value={formatAdminCents(Number(metrics.paidClubRevenueCents || 0))} />
+          <Metric label="Dancer payable" value={formatAdminCents(Number(metrics.dancerPayableCents || 0))} />
+          <Metric label="Dancer paid" value={formatAdminCents(Number(metrics.dancerPaidCents || 0))} />
+          <Metric label="MyDancr earned" value={formatAdminCents(Number(metrics.platformEarnedCents || 0))} />
+          <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
+          <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
+        </div>
+        <div className="admin-action-row">
+          <button disabled={isRunning} type="button" onClick={() => runAction("run_automation")}>Run full reconciliation</button>
+          <button disabled={isRunning} type="button" onClick={() => runAction("process_payouts")}>Process payable dancers</button>
+        </div>
+        {status ? <p role="status">{status}</p> : null}
+      </Panel>
+
+      <Panel title="Club invoices" badge={`${openInvoices.length} open`}>
+        <div className="admin-list">
+          {invoices.slice(0, 50).map((invoice) => {
+            const venue = readFirst(invoice.venues);
+            return (
+              <article key={asText(invoice.id)}>
+                <strong>{asText(venue?.name) || "Venue"} · {asText(invoice.period_start).slice(0, 7)}</strong>
+                <p>{asText(invoice.status)} · {formatAdminCents(Number(invoice.amount_paid_cents || 0))} paid of {formatAdminCents(Number(invoice.amount_due_cents || 0))} · due {formatDate(invoice.due_at)}</p>
+                {invoice.last_error ? <p role="alert">{asText(invoice.last_error)}</p> : null}
+                <div className="admin-action-row">
+                  {invoice.hosted_invoice_url ? <a href={asText(invoice.hosted_invoice_url)} target="_blank" rel="noreferrer">Hosted invoice</a> : null}
+                  {invoice.invoice_pdf_url ? <a href={asText(invoice.invoice_pdf_url)} target="_blank" rel="noreferrer">Invoice PDF</a> : null}
+                </div>
+              </article>
+            );
+          })}
+          {!invoices.length ? <p className="empty">No monthly club invoices have been generated yet.</p> : null}
+        </div>
+      </Panel>
+
+      <Panel title="Record bank, ACH, or check payment">
+        <form onSubmit={recordPayment}>
+          <label>
+            Open invoice
+            <select required value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)}>
+              <option value="">Choose invoice</option>
+              {openInvoices.map((invoice) => (
+                <option key={asText(invoice.id)} value={asText(invoice.id)}>
+                  {asText(readFirst(invoice.venues)?.name) || "Venue"} · {asText(invoice.period_start).slice(0, 7)} · {formatAdminCents(Number(invoice.amount_due_cents || 0))}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Cumulative amount paid
+            <input required inputMode="decimal" value={paymentTotal} onChange={(event) => setPaymentTotal(event.target.value)} placeholder="250.00" />
+          </label>
+          <label>
+            Bank, ACH, or check reference
+            <input required maxLength={160} value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} />
+          </label>
+          <button disabled={isRunning} type="submit">Reconcile payment</button>
+        </form>
+      </Panel>
+
+      <Panel title="Dancer payout batches" badge={`${payouts.length} tracked`}>
+        <div className="admin-list">
+          {payouts.slice(0, 50).map((payout) => (
+            <article key={asText(payout.id)}>
+              <strong>{asText(readFirst(payout.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(payout.amount_cents || 0))}</strong>
+              <p>{asText(payout.status)} · {formatDate(payout.paid_at || payout.created_at)}</p>
+              {payout.failure_message ? <p role="alert">{asText(payout.failure_message)}</p> : null}
+            </article>
+          ))}
+          {!payouts.length ? <p className="empty">No dancer payout batches have been created yet.</p> : null}
+        </div>
+      </Panel>
+    </section>
   );
 }
 

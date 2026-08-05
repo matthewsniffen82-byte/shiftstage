@@ -17,6 +17,10 @@
     {
       "path": "/api/cron/shift-checkins",
       "schedule": "45 9 * * *"
+    },
+    {
+      "path": "/api/cron/finance",
+      "schedule": "0 10 * * *"
     }
   ]
 }

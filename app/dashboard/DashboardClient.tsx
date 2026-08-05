@@ -103,6 +103,7 @@ type LoadState = {
   workingNow?: Array<Record<string, unknown>>;
   deal?: Record<string, unknown> | null;
   dealRevenue?: Record<string, unknown> | null;
+  finance?: Record<string, unknown> | null;
   error?: string;
 };
 
@@ -167,6 +168,7 @@ export default function DashboardClient({
             workingNow: secondary.workingNow || [],
             deal: secondary.deal || null,
             dealRevenue: secondary.dealRevenue || null,
+            finance: secondary.finance || null,
           });
           setIsLoading(false);
         }
@@ -282,6 +284,7 @@ export default function DashboardClient({
               accountState={state.account?.accountState}
               analytics={state.analytics}
               deals={state.deals}
+              finance={state.finance}
               profile={state.profile}
               onProfileChange={updateProfile}
               rankingEvents={state.rankingEvents}
@@ -296,6 +299,7 @@ export default function DashboardClient({
               analytics={state.analytics}
               deal={state.deal}
               dealRevenue={state.dealRevenue}
+              finance={state.finance}
               profile={state.profile}
               workingNow={state.workingNow || []}
               onProfileChange={updateProfile}
@@ -1396,6 +1400,7 @@ function VenuePanel({
   analytics,
   deal,
   dealRevenue,
+  finance,
   profile,
   workingNow,
   onProfileChange,
@@ -1403,6 +1408,7 @@ function VenuePanel({
   analytics?: LoadState["analytics"];
   deal?: LoadState["deal"];
   dealRevenue?: LoadState["dealRevenue"];
+  finance?: LoadState["finance"];
   profile?: LoadState["profile"];
   workingNow: Array<Record<string, unknown>>;
   onProfileChange: (profile: Record<string, unknown>) => void;
@@ -1587,7 +1593,7 @@ function VenuePanel({
         <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
         <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
       </InfoPanel>
-      <VenueClubDealPanel initialDeal={deal} revenue={dealRevenue} />
+      <VenueClubDealPanel initialDeal={deal} revenue={dealRevenue} finance={finance} />
       <article className="info-panel venue-profile-panel">
         <h2>Public venue page</h2>
         <form onSubmit={saveProfile}>
@@ -1694,9 +1700,11 @@ function VenuePanel({
 }
 
 function VenueClubDealPanel({
+  finance,
   initialDeal,
   revenue,
 }: {
+  finance?: LoadState["finance"];
   initialDeal?: LoadState["deal"];
   revenue?: LoadState["dealRevenue"];
 }) {
@@ -1859,6 +1867,7 @@ function VenueClubDealPanel({
         <strong>Venue staff redemption</strong>
         <p>Staff scan the customer&apos;s QR with their phone, sign in to this venue account, review the offer, and press Redeem Deal. Only that authenticated confirmation creates revenue and dancer commission.</p>
       </aside>
+      <VenueFinanceSummary finance={finance} />
       {status ? <p role="status">{status}</p> : null}
     </article>
   );
@@ -1869,6 +1878,63 @@ function dollarsToCents(value: string) {
   if (!/^\d{1,4}(?:\.\d{1,2})?$/.test(normalized)) return null;
   const cents = Math.round(Number(normalized) * 100);
   return cents >= 100 && cents <= 100_000 ? cents : null;
+}
+
+function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
+  const [status, setStatus] = useState("");
+  const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
+  const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(String(invoice.status)));
+  const outstandingCents = openInvoices.reduce(
+    (total, invoice) => total + Math.max(0, Number(invoice.amount_due_cents || 0) - Number(invoice.amount_paid_cents || 0)),
+    0,
+  );
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
+  async function downloadStatement() {
+    setStatus("Preparing statement...");
+    try {
+      await downloadDashboardFile(
+        `/api/venue/finance/statement?month=${encodeURIComponent(currentMonth)}`,
+        `mydancr-${currentMonth}-club-statement.csv`,
+      );
+      setStatus("Statement downloaded.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to download statement.");
+    }
+  }
+
+  return (
+    <section className="finance-summary" aria-labelledby="venue-finance-heading">
+      <div className="venue-deal-heading">
+        <div>
+          <span className="eyebrow">Settlement</span>
+          <h3 id="venue-finance-heading">Club invoices</h3>
+        </div>
+        <strong className={openInvoices.some((invoice) => String(invoice.status) === "overdue") ? "deal-state" : "deal-state active"}>
+          {openInvoices.some((invoice) => String(invoice.status) === "overdue") ? "Payment overdue" : `${openInvoices.length} open`}
+        </strong>
+      </div>
+      <div className="deal-metrics">
+        <Metric label="Outstanding" value={formatCents(outstandingCents)} />
+        <Metric label="Payment terms" value={`${String((finance?.account as Record<string, unknown> | undefined)?.payment_terms_days || 15)} days`} />
+      </div>
+      {openInvoices.length ? (
+        <div className="commission-tier-table" aria-label="Open QR commission invoices">
+          {openInvoices.slice(0, 6).map((invoice) => (
+            <div key={String(invoice.id)}>
+              <span>{String(invoice.period_start).slice(0, 7)} · {String(invoice.status)}</span>
+              <b>{formatCents(Number(invoice.amount_due_cents || 0) - Number(invoice.amount_paid_cents || 0))}</b>
+              <span>Due {formatFinanceDate(invoice.due_at)}</span>
+              {invoice.hosted_invoice_url ? <a href={String(invoice.hosted_invoice_url)} rel="noreferrer" target="_blank">Pay securely</a> : null}
+              {invoice.invoice_pdf_url ? <a href={String(invoice.invoice_pdf_url)} rel="noreferrer" target="_blank">PDF</a> : null}
+            </div>
+          ))}
+        </div>
+      ) : <p>No open club invoices.</p>}
+      <button type="button" onClick={downloadStatement}>Download monthly statement</button>
+      {status ? <p role="status">{status}</p> : null}
+    </section>
+  );
 }
 
 function venueFieldLabel(key: string) {
@@ -1979,6 +2045,7 @@ function DancerPanel({
   accountState,
   analytics,
   deals,
+  finance,
   onProfileChange,
   profile,
   rankingEvents,
@@ -1988,6 +2055,7 @@ function DancerPanel({
   accountState?: string;
   analytics?: LoadState["analytics"];
   deals?: LoadState["deals"];
+  finance?: LoadState["finance"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   rankingEvents?: LoadState["rankingEvents"];
@@ -2017,6 +2085,7 @@ function DancerPanel({
             <Metric label="Going signals" value={String(analytics?.goingSignals30Days || 0)} />
           </InfoPanel>
           <DancerDealPanel deals={deals} />
+          <DancerPayoutPanel finance={finance} />
           <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
         </>
       ) : (
@@ -2178,6 +2247,110 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
       </div>
     </article>
   );
+}
+
+function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
+  const [status, setStatus] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const payoutAccount = finance?.payoutAccount as Record<string, unknown> | null | undefined;
+  const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const connected = payoutAccount?.onboarding_complete === true;
+
+  async function startOnboarding() {
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    setIsWorking(true);
+    setStatus("Opening secure payout setup...");
+    try {
+      const response = await fetch("/api/dancer/finance", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: "connect_onboarding" }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || !data.onboarding?.url) throw new Error(data.error || "Unable to start payout setup.");
+      window.location.assign(data.onboarding.url);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to start payout setup.");
+      setIsWorking(false);
+    }
+  }
+
+  async function downloadStatement() {
+    setStatus("Preparing statement...");
+    try {
+      await downloadDashboardFile(
+        `/api/dancer/finance/statement?month=${encodeURIComponent(currentMonth)}`,
+        `mydancr-${currentMonth}-dancer-commission-statement.csv`,
+      );
+      setStatus("Statement downloaded.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to download statement.");
+    }
+  }
+
+  return (
+    <article className="info-panel deal-panel" aria-labelledby="dancer-payout-heading">
+      <div className="venue-deal-heading">
+        <div>
+          <span className="eyebrow">Stripe payouts</span>
+          <h2 id="dancer-payout-heading">Commission settlement</h2>
+        </div>
+        <strong className={connected ? "deal-state active" : "deal-state"}>{connected ? "Ready" : "Setup required"}</strong>
+      </div>
+      <p>Venue-confirmed QR commissions become payable after the club invoice is paid. MyDancr sends payable balances through your verified Stripe payout account.</p>
+      <div className="deal-metrics">
+        <Metric label="Waiting on club" value={formatCents(Number(finance?.pendingClubPaymentCents || 0))} />
+        <Metric label="Ready for payout" value={formatCents(Number(finance?.payableCents || 0))} />
+        <Metric label="Paid" value={formatCents(Number(finance?.paidCents || 0))} />
+      </div>
+      {!connected ? (
+        <button disabled={isWorking} type="button" onClick={startOnboarding}>
+          {isWorking ? "Opening Stripe..." : payoutAccount ? "Finish secure payout setup" : "Connect payout account"}
+        </button>
+      ) : null}
+      {payouts.length ? (
+        <div className="commission-tier-table" aria-label="Recent dancer payouts">
+          {payouts.slice(0, 6).map((payout) => (
+            <div key={String(payout.id)}>
+              <span>{formatFinanceDate(payout.created_at)}</span>
+              <b>{formatCents(Number(payout.amount_cents || 0))}</b>
+              <span>{String(payout.status)}</span>
+            </div>
+          ))}
+        </div>
+      ) : <p>No payout batches yet.</p>}
+      <button type="button" onClick={downloadStatement}>Download monthly statement</button>
+      {payoutAccount?.last_error ? <p role="alert">{String(payoutAccount.last_error)}</p> : null}
+      {status ? <p role="status">{status}</p> : null}
+    </article>
+  );
+}
+
+async function downloadDashboardFile(path: string, filename: string) {
+  const session = readSession();
+  if (!session?.accessToken) throw new Error("Sign in required.");
+  const response = await fetch(path, { headers: { authorization: `Bearer ${session.accessToken}` } });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.error || "Unable to download statement.");
+  }
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function formatFinanceDate(value: unknown) {
+  if (!value) return "Not set";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "Not set";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 function formatCents(value: number) {

@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueFinance } from "@/src/lib/dancr/finance";
-import { getVenueDashboard } from "@/src/lib/dancr/venue";
-import { getLatestVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -17,19 +15,8 @@ export async function GET(request: Request) {
     if (!account || account.role !== "venue" || account.accountState !== "active") {
       return NextResponse.json({ ok: false, error: "Active venue account required." }, { status: 403 });
     }
-
-    const admin = createAdminSupabaseClient();
-    const claim = await getLatestVenueOwnershipClaim(admin, user.id);
-    if (claim?.status === "pending" || claim?.status === "rejected") {
-      return NextResponse.json({ ok: true, profile: null, claim });
-    }
-
-    const [dashboard, finance] = await Promise.all([
-      getVenueDashboard(createAdminSupabaseClient(), user.id),
-      getVenueFinance(admin, user.id),
-    ]);
-    return NextResponse.json({ ok: true, ...dashboard, finance });
+    return NextResponse.json({ ok: true, finance: await getVenueFinance(createAdminSupabaseClient(), user.id) });
   } catch (error) {
-    return apiError(error, "Unable to load venue dashboard.");
+    return apiError(error, "Unable to load venue finance.");
   }
 }
