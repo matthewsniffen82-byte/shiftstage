@@ -203,7 +203,7 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
     liveApp,
     /fetch\(`\/api\/public\/tv\?city=\$\{encodeURIComponent\(citySelect\.value\)\}&dancer=\$\{encodeURIComponent\(profile\.id\)\}&limit=4`/,
   );
-  assert.match(liveApp, /openPhotoViewerFromElement\(modalImage\)/);
+  assert.doesNotMatch(liveApp, /openPhotoViewerFromElement\(modalImage\)/);
   assert.match(liveApp, /openProfileTvViewer\(item, modalGallery\.profileTvProfileName/);
 
   assert.match(bottomNavigation, /Dancers/);

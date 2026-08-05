@@ -222,7 +222,7 @@ test("profile surfaces use responsive sources and explain how to retain upload q
   assert.match(dancerCarousel, /srcSet=\{item\.imageSrcSet \|\| undefined\}/);
   assert.match(
     dancerCarousel,
-    /srcSet=\{activeViewerItem\.imageSrcSet \|\| undefined\}/,
+    /srcSet=\{selectedItem\.imageSrcSet \|\| undefined\}/,
   );
   assert.match(dashboard, /original camera image/);
   assert.match(dashboard, /never enlarges a small/);

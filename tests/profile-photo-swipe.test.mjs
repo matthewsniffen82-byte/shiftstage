@@ -52,8 +52,14 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
   );
   assert.match(
     liveApp,
-    /function openSelectedModalMediaViewer\(\)[\s\S]*?openProfileTvViewer[\s\S]*?openPhotoViewerFromElement\(modalImage\)/,
+    /function openSelectedModalMediaViewer\(\) \{[\s\S]*?activeMediaType !== "video"\) return false;[\s\S]*?openProfileTvViewer[\s\S]*?return true;/,
   );
+  assert.doesNotMatch(liveApp, /openPhotoViewerFromElement\(modalImage\)/);
+  const modalPhotoClickHandler = liveApp.match(
+    /modalImage\?\.addEventListener\("click"[\s\S]*?(?=\n    modalImage\?\.addEventListener\("keydown")/,
+  )?.[0] || "";
+  assert.ok(modalPhotoClickHandler, "the inline media click handler must exist");
+  assert.doesNotMatch(modalPhotoClickHandler, /openSelectedModalMediaViewer|openPhotoViewerFromElement/);
   assert.match(
     liveApp,
     /id="modalMediaExpand"[^>]*aria-label="Open selected profile video full screen"[^>]*hidden/,
@@ -86,11 +92,16 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
     publicPhotoCarousel,
     /onClick=\{\(\) => setActiveIndex\(index\)\}/,
   );
-  assert.match(publicPhotoCarousel, /openViewer\(selectedItem\.kind, selectedIndex\)/);
+  assert.match(
+    publicPhotoCarousel,
+    /if \(selectedItem\.kind === "video"\) \{\s*openViewer\(selectedIndex\);\s*\}/,
+  );
+  assert.doesNotMatch(publicPhotoCarousel, /openViewer\(selectedItem\.kind, selectedIndex\)/);
+  assert.doesNotMatch(publicPhotoCarousel, /setViewer\(\{ kind: "photo", index \}\)/);
   assert.match(publicPhotoCarousel, /profile-media-feature-position/);
   assert.match(
     publicPhotoCarousel,
-    /selectedItem\.kind === "video" \? \([\s\S]*?profile-media-feature-expand[\s\S]*?openViewer\("video", selectedIndex\)/,
+    /selectedItem\.kind === "video" \? \([\s\S]*?profile-media-feature-expand[\s\S]*?openViewer\(selectedIndex\)/,
   );
   assert.doesNotMatch(
     publicPhotoCarousel,
@@ -98,9 +109,9 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   );
   assert.match(publicPhotoCarousel, /IntersectionObserver/);
   assert.match(publicPhotoCarousel, /video\.play\(\)\.catch/);
-  assert.match(
+  assert.doesNotMatch(
     publicPhotoCarousel,
-    /className="profile-media-viewer"[\s\S]*?activeViewerItem\.kind === "photo"/,
+    /activeViewerItem\.kind === "photo"/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -122,6 +133,36 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   assert.match(liveApp, /<dt>Views today<\/dt>/);
   assert.doesNotMatch(`${publicProfilePage}\n${liveApp}`, /<dt>Notifications<\/dt>/);
   assert.doesNotMatch(publicProfilePage, /<TvVideoStrip/);
+});
+
+test("full-profile photo stages expand to the source ratio without cropping", () => {
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.modal-image \{[\s\S]*?max-height: none !important;[\s\S]*?aspect-ratio: var\(--profile-photo-aspect-ratio, 4 \/ 5\) !important;[\s\S]*?background-size: contain !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.modal-image\.has-custom-photo \{[\s\S]*?background-size: contain, cover !important;/,
+  );
+  assert.match(
+    liveApp,
+    /function syncModalPhotoAspectRatio\(photoUrl\)[\s\S]*?new Image\(\)[\s\S]*?image\.naturalWidth[\s\S]*?image\.naturalHeight[\s\S]*?--profile-photo-aspect-ratio/,
+  );
+  assert.match(
+    liveApp,
+    /syncModalPhotoAspectRatio\(safeUrl \? String\(photoUrl \|\| ""\)\.trim\(\) : ""\)/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.modal-grid > \.info-tile:not\(\.working-now-tile\):not\(\.schedule-upcoming\):not\(\.profile-club-deal-tile\)::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
+  );
+  assert.match(
+    publicPhotoCarousel,
+    /style=\{selectedItem\.kind === "photo" && selectedItem\.imageWidth && selectedItem\.imageHeight[\s\S]*?aspectRatio: `\$\{selectedItem\.imageWidth\} \/ \$\{selectedItem\.imageHeight\}`/,
+  );
+  assert.match(publicProfilePage, /\.profile-media-feature\.is-photo \{ max-height: none; \}/);
+  assert.match(publicProfilePage, /\.profile-media-feature > img \{ object-fit: contain;/);
+  assert.match(publicProfilePage, /\.profile-media-feature > video \{ object-fit: cover; \}/);
 });
 
 
