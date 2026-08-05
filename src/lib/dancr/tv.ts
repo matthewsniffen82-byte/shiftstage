@@ -23,7 +23,7 @@ export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
 export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = 5;
 export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm"]);
 
-const MYDANCR_TV_PROFILE_SLOT_STATUSES = [
+export const MYDANCR_TV_PROFILE_SLOT_STATUSES = [
   "uploading",
   "moderating",
   "submitted",
