@@ -21,13 +21,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const stripe = getStripe();
   const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
     return NextResponse.json({ ok: false, error: "Missing Stripe signature." }, { status: 400 });
   }
 
+  const stripe = getStripe();
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(await request.text(), signature, getServerEnv("STRIPE_WEBHOOK_SECRET"));
