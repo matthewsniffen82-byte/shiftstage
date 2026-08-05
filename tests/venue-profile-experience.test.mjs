@@ -109,6 +109,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.ok(refinement, "the final production venue-detail refinement must exist");
   assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(200px, 46vw, 248px\) !important;/);
   assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?isolation: isolate;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(28px, 8vw, 48px\)\) !important;[\s\S]*?height: calc\(100% - clamp\(28px, 8vw, 48px\)\) !important;[\s\S]*?max-width: 480px !important;[\s\S]*?max-height: 216px !important;[\s\S]*?overflow: visible !important;/);
+  assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?width: auto !important;[\s\S]*?height: auto !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
   assert.match(refinement, /\.venue-detail-logo-shell::before \{[\s\S]*?var\(--dancr-color-brand-primary-soft\)[\s\S]*?var\(--dancr-color-brand-glow-soft\)[\s\S]*?filter: blur\(18px\);/);
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 10px !important;[\s\S]*?padding: 12px 14px 14px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
