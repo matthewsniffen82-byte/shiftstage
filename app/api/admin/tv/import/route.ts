@@ -143,6 +143,7 @@ async function prepareImport(body: any) {
 async function finalizeImport(body: any) {
   const batchId = cleanBatchId(body?.batchId);
   const videoId = cleanUuid(body?.videoId);
+  const recoverPreparedVideo = body?.recoverPreparedVideo === true;
   const admin = createAdminSupabaseClient();
   const markerPrefix = importMarker(batchId);
   const { data: row, error: rowError } = await admin
@@ -151,7 +152,7 @@ async function finalizeImport(body: any) {
     .eq("id", videoId)
     .maybeSingle();
   if (rowError) throw rowError;
-  if (!row || !String(row.review_notes || "").startsWith(markerPrefix)) {
+  if (!row || (!String(row.review_notes || "").startsWith(markerPrefix) && !recoverPreparedVideo)) {
     throw new Error("The requested import video does not belong to this batch.");
   }
 

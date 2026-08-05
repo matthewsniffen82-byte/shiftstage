@@ -5,6 +5,7 @@ import test from "node:test";
 const route = await readFile(new URL("../app/api/admin/tv/import/route.ts", import.meta.url), "utf8");
 const tv = await readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8");
 const env = await readFile(new URL("../.env.example", import.meta.url), "utf8");
+const nextConfig = await readFile(new URL("../next.config.mjs", import.meta.url), "utf8");
 
 test("platform TV imports use a constant-time production secret", () => {
   assert.match(route, /DANCR_MEDIA_IMPORT_KEY/);
@@ -33,4 +34,9 @@ test("platform import bookkeeping never becomes a public video caption", () => {
   assert.match(route, /caption: video\.caption/);
   assert.match(route, /review_notes: `\$\{markerPrefix\}/);
   assert.doesNotMatch(route, /caption: `\$\{markerPrefix\}/);
+});
+
+test("platform finalization bundles the real encoder and can resume a prepared moderation failure", () => {
+  assert.match(nextConfig, /"\/api\/admin\/tv\/import".*ffmpeg-static\/ffmpeg/);
+  assert.match(route, /recoverPreparedVideo/);
 });
