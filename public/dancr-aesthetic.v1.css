@@ -3656,6 +3656,18 @@ body.dancr-button-system :is(.home-tv-feed-position, .home-tv-feed-media-positio
   text-shadow: none !important;
 }
 
+.tv-shell .tv-playback-retry:is(:hover, :focus-visible, :active) {
+  border-color: var(--dancr-color-white-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-overlay) !important;
+  background-image: none !important;
+  box-shadow:
+    0 8px 20px var(--dancr-color-black-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
 body.dancr-button-system :is(
     .home-tv-feed-sound,
     .home-tv-feed-action:not(.home-tv-feed-deal-action)

@@ -885,7 +885,7 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
-      .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; min-height: 46px; padding: 0 18px; border: 1px solid rgba(126,234,255,.58); border-radius: 999px; color: #fff; background: rgba(3,3,7,.82); box-shadow: 0 0 28px rgba(34,199,255,.2); font-weight: 950; transform: translate(-50%, -50%); cursor: pointer; }
+      .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; min-height: 46px; padding: 0 18px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); font-weight: 950; transform: translate(-50%, -50%); cursor: pointer; }
       .tv-player-shade { pointer-events: none; position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.24) 38%, rgba(3,3,5,.96) 100%); }
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; width: 44px; min-width: 44px; max-width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); cursor: pointer; }
       .tv-sound svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

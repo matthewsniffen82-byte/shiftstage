@@ -2,6 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
 import OpenAI from "openai";
 import { getServerEnv } from "../env";
+import {
+  isAvatarFaceRequiredError,
+  prepareFaceCenteredAvatar,
+} from "./avatar-face";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-validation";
 import {
@@ -89,6 +93,9 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (existing?.status === "error") {
     idempotencyKey = safeIdempotencyKey(`${input.idempotencyKey || image.sha256}:retry:${Date.now()}`);
   }
+  const publicationImage = isAvatar
+    ? await prepareFaceCenteredAvatar(image)
+    : image;
 
   const tempPath = `${input.userId}/${profile.id}/${Date.now()}-${image.storageFileName}`;
   const uploadContext = isAvatar
@@ -200,7 +207,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       recordId: record.id,
       profileId: profile.id,
       userId: input.userId,
-      image,
+      image: publicationImage,
       tempPath,
       uploadContext,
       isAvatar,
@@ -295,11 +302,14 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
 
     if (evaluation.decision === "approved") {
       const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+      const downloadedImage = moderationImageFromPrivateObject(downloaded);
       return approveModeratedUpload(admin, {
         recordId: record.id,
         profileId: profile.id,
         userId: record.user_id,
-        image: moderationImageFromPrivateObject(downloaded),
+        image: isAvatar
+          ? await prepareFaceCenteredAvatar(downloadedImage)
+          : downloadedImage,
         tempPath,
         uploadContext,
         isAvatar,
@@ -370,6 +380,29 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       message: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
     };
   } catch (error) {
+    if (isAvatar && isAvatarFaceRequiredError(error)) {
+      await updateModerationRecord(admin, record.id, {
+        decision: "rejected",
+        status: "rejected",
+        reasonCodes: ["avatar_face_required"],
+        categoryFlags,
+        categoryScores: {},
+        providerFlagged: false,
+        attemptCount,
+        lockedAt: null,
+        completedAt: new Date().toISOString(),
+      });
+      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+      await createAutoRejectedPhotoNotification(admin, record.user_id, record.id);
+      logModeration("avatar_face_rejected", { recordId: record.id, attemptCount });
+      return {
+        decision: "rejected",
+        moderationRecordId: record.id,
+        reasonCodes: ["avatar_face_required"],
+        providerFlagged: false,
+        message: error instanceof Error ? error.message : "Choose a clear face photo for your avatar.",
+      };
+    }
     errorCode = moderationErrorCode(error);
     const retryable = retryableModerationError(errorCode) && attemptCount < 4;
     await updateModerationRecord(admin, record.id, {

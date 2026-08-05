@@ -569,6 +569,7 @@ export function DancerPhotoCarousel({
             >
               <button
                 aria-label={inlinePlaying ? "Pause TV video" : "Play TV video"}
+                className="profile-media-playback-control"
                 onClick={toggleInlinePlayback}
                 type="button"
               >
