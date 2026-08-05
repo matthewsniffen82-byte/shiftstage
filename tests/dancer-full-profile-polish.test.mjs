@@ -119,7 +119,7 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   );
 });
 
-test("home full-profile identity scrolls with the complete profile", () => {
+test("home full-profile identity scrolls on larger screens and remains fully visible on mobile", () => {
   const identityRule = profilePolishBlock?.match(
     /#profileBackdrop \.profile-modal-summary \{[\s\S]*?\n        \}/,
   )?.[0] || "";
@@ -127,6 +127,10 @@ test("home full-profile identity scrolls with the complete profile", () => {
   assert.match(identityRule, /position: relative;/);
   assert.match(identityRule, /top: auto;/);
   assert.doesNotMatch(identityRule, /position: sticky;/);
+  assert.match(
+    profilePolishBlock,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?overflow-y: hidden !important;[\s\S]*?#profileBackdrop \.profile-modal-summary \{[\s\S]*?position: sticky !important;[\s\S]*?top: 0 !important;[\s\S]*?z-index: 219;/,
+  );
 });
 
 test("the full-profile verified badge stays circular like scroll-card checks", () => {

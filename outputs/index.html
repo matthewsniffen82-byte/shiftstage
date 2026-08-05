@@ -34298,6 +34298,18 @@
           }
         }
         @media (max-width: 720px) {
+          /* The profile itself is the only mobile scroll owner. Keeping the
+             backdrop stationary prevents restored outer scroll offsets from
+             clipping the dancer identity when the profile opens. */
+          #profileBackdrop.modal-backdrop.show {
+            overflow-y: hidden !important;
+          }
+          #profileBackdrop .profile-modal-summary {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 219;
+            flex: 0 0 auto;
+          }
           /* Profile content clears the existing dock; the dock itself is intentionally untouched. */
           #profileBackdrop .profile-modal {
             padding-bottom: 0 !important;
