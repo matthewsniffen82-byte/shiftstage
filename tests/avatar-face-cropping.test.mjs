@@ -18,6 +18,7 @@ const [avatarFaceSource, moderationSource, avatarRouteSource, recenterRouteSourc
 test("avatar face analysis accepts a clear primary face and rejects missing faces", () => {
   const analysis = parseAvatarFaceAnalysis({
     clearFace: true,
+    fullyVisible: true,
     faceCount: 1,
     primaryFace: {
       centerX: 52,
@@ -26,6 +27,12 @@ test("avatar face analysis accepts a clear primary face and rejects missing face
       height: 17,
       confidence: 0.97,
     },
+    landmarks: {
+      leftEye: { x: 48, y: 17 },
+      rightEye: { x: 55, y: 17 },
+      noseTip: { x: 52, y: 20 },
+      mouthCenter: { x: 52, y: 23 },
+    },
     rejectionReason: "",
   });
   assert.equal(analysis.primaryFace.centerY, 19);
@@ -33,9 +40,36 @@ test("avatar face analysis accepts a clear primary face and rejects missing face
     () =>
       parseAvatarFaceAnalysis({
         clearFace: false,
+        fullyVisible: false,
         faceCount: 0,
         primaryFace: { centerX: 0, centerY: 0, width: 0, height: 0, confidence: 0 },
+        landmarks: {
+          leftEye: { x: 0, y: 0 },
+          rightEye: { x: 0, y: 0 },
+          noseTip: { x: 0, y: 0 },
+          mouthCenter: { x: 0, y: 0 },
+        },
         rejectionReason: "No clear face",
+      }),
+    AvatarFaceRequiredError,
+  );
+});
+
+test("avatar face analysis rejects a cropped or landmark-inconsistent face", () => {
+  assert.throws(
+    () =>
+      parseAvatarFaceAnalysis({
+        clearFace: true,
+        fullyVisible: false,
+        faceCount: 1,
+        primaryFace: { centerX: 50, centerY: 4, width: 20, height: 14, confidence: 0.99 },
+        landmarks: {
+          leftEye: { x: 47, y: 1 },
+          rightEye: { x: 53, y: 1 },
+          noseTip: { x: 50, y: 4 },
+          mouthCenter: { x: 50, y: 7 },
+        },
+        rejectionReason: "Top of face is cropped",
       }),
     AvatarFaceRequiredError,
   );
@@ -89,7 +123,8 @@ test("existing approved avatars can be securely reprocessed without account impe
   assert.match(recenterRouteSource, /timingSafeEqual\(expectedBuffer, providedBuffer\)/);
   assert.match(recenterRouteSource, /DANCR_MEDIA_IMPORT_KEY/);
   assert.match(recenterRouteSource, /\.eq\("slug", dancerSlug\)/);
-  assert.match(recenterRouteSource, /\.download\(previousPath\)/);
+  assert.match(recenterRouteSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("review_status", "approved"\)/);
+  assert.match(recenterRouteSource, /\.download\(sourcePath\)/);
   assert.match(recenterRouteSource, /prepareFaceCenteredAvatar\(sourceImage\)/);
   assert.match(recenterRouteSource, /setApprovedDancerAvatar/);
   assert.match(recenterRouteSource, /restoreDancerAvatar/);

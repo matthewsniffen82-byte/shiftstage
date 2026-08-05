@@ -19,10 +19,22 @@ export type AvatarFaceBounds = {
   confidence: number;
 };
 
+export type AvatarFacePoint = {
+  x: number;
+  y: number;
+};
+
 export type AvatarFaceAnalysis = {
   clearFace: boolean;
+  fullyVisible: boolean;
   faceCount: number;
   primaryFace: AvatarFaceBounds;
+  landmarks: {
+    leftEye: AvatarFacePoint;
+    rightEye: AvatarFacePoint;
+    noseTip: AvatarFacePoint;
+    mouthCenter: AvatarFacePoint;
+  };
   rejectionReason: string;
 };
 
@@ -74,8 +86,13 @@ export function parseAvatarFaceAnalysis(value: unknown): AvatarFaceAnalysis {
     candidate.primaryFace && typeof candidate.primaryFace === "object"
       ? (candidate.primaryFace as Record<string, unknown>)
       : {};
+  const landmarks =
+    candidate.landmarks && typeof candidate.landmarks === "object"
+      ? (candidate.landmarks as Record<string, unknown>)
+      : {};
   const analysis: AvatarFaceAnalysis = {
     clearFace: candidate.clearFace === true,
+    fullyVisible: candidate.fullyVisible === true,
     faceCount: finiteInteger(candidate.faceCount),
     primaryFace: {
       centerX: finiteNumber(face.centerX),
@@ -84,26 +101,51 @@ export function parseAvatarFaceAnalysis(value: unknown): AvatarFaceAnalysis {
       height: finiteNumber(face.height),
       confidence: finiteNumber(face.confidence),
     },
+    landmarks: {
+      leftEye: facePoint(landmarks.leftEye),
+      rightEye: facePoint(landmarks.rightEye),
+      noseTip: facePoint(landmarks.noseTip),
+      mouthCenter: facePoint(landmarks.mouthCenter),
+    },
     rejectionReason:
       typeof candidate.rejectionReason === "string"
         ? candidate.rejectionReason.slice(0, 160)
         : "",
   };
 
-  if (!analysis.clearFace || analysis.faceCount < 1) {
+  if (!analysis.clearFace || !analysis.fullyVisible || analysis.faceCount < 1) {
     throw new AvatarFaceRequiredError();
   }
   const { centerX, centerY, width, height, confidence } = analysis.primaryFace;
+  const { leftEye, rightEye, noseTip, mouthCenter } = analysis.landmarks;
+  const left = centerX - width / 2;
+  const right = centerX + width / 2;
+  const top = centerY - height / 2;
+  const bottom = centerY + height / 2;
+  const eyeLine = (leftEye.y + rightEye.y) / 2;
   if (
-    confidence < 0.72 ||
-    width < 4 ||
-    height < 4 ||
+    confidence < 0.82 ||
+    width < 7 ||
+    height < 7 ||
     width > 100 ||
     height > 100 ||
     centerX <= 0 ||
     centerX >= 100 ||
     centerY <= 0 ||
-    centerY >= 100
+    centerY >= 100 ||
+    left < 0.5 ||
+    right > 99.5 ||
+    top < 0.5 ||
+    bottom > 99.5 ||
+    !pointInsideFace(leftEye, left, right, top, bottom) ||
+    !pointInsideFace(rightEye, left, right, top, bottom) ||
+    !pointInsideFace(noseTip, left, right, top, bottom) ||
+    !pointInsideFace(mouthCenter, left, right, top, bottom) ||
+    leftEye.x >= rightEye.x ||
+    rightEye.x - leftEye.x < width * 0.2 ||
+    Math.abs(leftEye.y - rightEye.y) > height * 0.22 ||
+    noseTip.y <= eyeLine + height * 0.06 ||
+    mouthCenter.y <= noseTip.y + height * 0.06
   ) {
     throw new AvatarFaceRequiredError();
   }
@@ -233,7 +275,7 @@ async function detectPrimaryAvatarFace(image: Buffer): Promise<AvatarFaceAnalysi
               {
                 type: "input_text",
                 text:
-                  "Find the clear primary real human face belonging to the main foreground subject. Ignore faces in posters, screens, reflections, and background people. Coordinates must be percentages of the entire image. clearFace is true only when the face has enough visible detail to remain recognizable in a small circular avatar. If there is no sufficiently clear primary face, return clearFace false and zero coordinates.",
+                  "Find the clear primary real human face belonging to the main foreground subject. Ignore faces in posters, screens, reflections, and background people. Coordinates must be percentages of the entire image. Set fullyVisible true only when both eyes, the full nose, full mouth, chin, and the complete outer face are visibly inside the image; hair may extend outside. Never infer or hallucinate hidden facial landmarks. clearFace is true only when this fully visible face has enough detail to remain recognizable in a small circular avatar. If any required facial feature is cropped, obscured, or not clearly visible, return clearFace false and fullyVisible false with zero coordinates.",
               },
               { type: "input_image", image_url: dataUrl, detail: "high" },
             ],
@@ -247,9 +289,10 @@ async function detectPrimaryAvatarFace(image: Buffer): Promise<AvatarFaceAnalysi
             schema: {
               type: "object",
               additionalProperties: false,
-              required: ["clearFace", "faceCount", "primaryFace", "rejectionReason"],
+              required: ["clearFace", "fullyVisible", "faceCount", "primaryFace", "landmarks", "rejectionReason"],
               properties: {
                 clearFace: { type: "boolean" },
+                fullyVisible: { type: "boolean" },
                 faceCount: { type: "integer" },
                 primaryFace: {
                   type: "object",
@@ -261,6 +304,17 @@ async function detectPrimaryAvatarFace(image: Buffer): Promise<AvatarFaceAnalysi
                     width: { type: "number" },
                     height: { type: "number" },
                     confidence: { type: "number" },
+                  },
+                },
+                landmarks: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["leftEye", "rightEye", "noseTip", "mouthCenter"],
+                  properties: {
+                    leftEye: facePointSchema(),
+                    rightEye: facePointSchema(),
+                    noseTip: facePointSchema(),
+                    mouthCenter: facePointSchema(),
                   },
                 },
                 rejectionReason: { type: "string" },
@@ -286,6 +340,30 @@ function finiteNumber(value: unknown) {
 
 function finiteInteger(value: unknown) {
   return Math.max(0, Math.floor(finiteNumber(value)));
+}
+
+function facePoint(value: unknown): AvatarFacePoint {
+  const point = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return { x: finiteNumber(point.x), y: finiteNumber(point.y) };
+}
+
+function pointInsideFace(
+  point: AvatarFacePoint,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+) {
+  return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom;
+}
+
+function facePointSchema() {
+  return {
+    type: "object" as const,
+    additionalProperties: false,
+    required: ["x", "y"],
+    properties: { x: { type: "number" as const }, y: { type: "number" as const } },
+  };
 }
 
 function positiveDimension(value: unknown) {

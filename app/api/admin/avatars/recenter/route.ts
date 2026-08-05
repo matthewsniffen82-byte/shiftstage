@@ -41,9 +41,20 @@ export async function POST(request: Request) {
     if (!previousPath || /^https?:\/\//i.test(previousPath)) {
       throw new Error("The requested dancer does not have a stored avatar to recenter.");
     }
+    const { data: sourcePhoto, error: sourcePhotoError } = await admin
+      .from("dancer_photos")
+      .select("storage_path")
+      .eq("dancer_id", dancer.id)
+      .eq("review_status", "approved")
+      .order("is_primary", { ascending: false })
+      .order("sort_order", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (sourcePhotoError) throw sourcePhotoError;
+    const sourcePath = String(sourcePhoto?.storage_path || previousPath).trim();
     const { data: storedAvatar, error: downloadError } = await admin.storage
       .from(APPROVED_PHOTO_BUCKET)
-      .download(previousPath);
+      .download(sourcePath);
     if (downloadError || !storedAvatar) {
       throw downloadError || new Error("The current avatar could not be downloaded.");
     }
@@ -89,6 +100,7 @@ export async function POST(request: Request) {
         event: "dancer_avatar.platform_recentered",
         dancerId: dancer.id,
         dancerSlug: dancer.slug,
+        sourceKind: sourcePath === previousPath ? "avatar" : "approved_photo",
         sourceWidth: sourceImage.width,
         sourceHeight: sourceImage.height,
         outputWidth: uploaded.width,
