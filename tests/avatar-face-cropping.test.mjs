@@ -19,6 +19,8 @@ test("avatar face analysis accepts a clear primary face and rejects missing face
   const analysis = parseAvatarFaceAnalysis({
     clearFace: true,
     fullyVisible: true,
+    horizontalRegion: "center",
+    verticalRegion: "top",
     faceCount: 1,
     primaryFace: {
       centerX: 52,
@@ -41,6 +43,8 @@ test("avatar face analysis accepts a clear primary face and rejects missing face
       parseAvatarFaceAnalysis({
         clearFace: false,
         fullyVisible: false,
+        horizontalRegion: "center",
+        verticalRegion: "middle",
         faceCount: 0,
         primaryFace: { centerX: 0, centerY: 0, width: 0, height: 0, confidence: 0 },
         landmarks: {
@@ -61,6 +65,8 @@ test("avatar face analysis rejects a cropped or landmark-inconsistent face", () 
       parseAvatarFaceAnalysis({
         clearFace: true,
         fullyVisible: false,
+        horizontalRegion: "center",
+        verticalRegion: "top",
         faceCount: 1,
         primaryFace: { centerX: 50, centerY: 4, width: 20, height: 14, confidence: 0.99 },
         landmarks: {
@@ -88,6 +94,18 @@ test("avatar crop centers the face in a square while staying inside the source",
   assert.ok(crop.top + crop.size <= 1168);
   assert.ok(0.52 * 784 >= crop.left && 0.52 * 784 <= crop.left + crop.size);
   assert.ok(0.19 * 1168 >= crop.top && 0.19 * 1168 <= crop.top + crop.size);
+});
+
+test("avatar crop uses coarse face regions so portrait faces stay in frame", () => {
+  const crop = computeAvatarSquareCrop(
+    { centerX: 50, centerY: 49, width: 40, height: 42, confidence: 0.98 },
+    768,
+    1360,
+    { horizontalRegion: "center", verticalRegion: "top" },
+  );
+  assert.equal(crop.left, 0);
+  assert.equal(crop.top, 0);
+  assert.equal(crop.size, 768);
 });
 
 test("avatar crop refuses a face too small to produce a dependable avatar", () => {

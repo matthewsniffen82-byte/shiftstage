@@ -27,6 +27,8 @@ export type AvatarFacePoint = {
 export type AvatarFaceAnalysis = {
   clearFace: boolean;
   fullyVisible: boolean;
+  horizontalRegion: "left" | "center" | "right";
+  verticalRegion: "top" | "middle" | "bottom";
   faceCount: number;
   primaryFace: AvatarFaceBounds;
   landmarks: {
@@ -93,6 +95,8 @@ export function parseAvatarFaceAnalysis(value: unknown): AvatarFaceAnalysis {
   const analysis: AvatarFaceAnalysis = {
     clearFace: candidate.clearFace === true,
     fullyVisible: candidate.fullyVisible === true,
+    horizontalRegion: faceHorizontalRegion(candidate.horizontalRegion),
+    verticalRegion: faceVerticalRegion(candidate.verticalRegion),
     faceCount: finiteInteger(candidate.faceCount),
     primaryFace: {
       centerX: finiteNumber(face.centerX),
@@ -156,6 +160,7 @@ export function computeAvatarSquareCrop(
   face: AvatarFaceBounds,
   sourceWidth: number,
   sourceHeight: number,
+  region?: Pick<AvatarFaceAnalysis, "horizontalRegion" | "verticalRegion">,
 ): AvatarSquareCrop {
   const width = positiveDimension(sourceWidth);
   const height = positiveDimension(sourceHeight);
@@ -178,10 +183,15 @@ export function computeAvatarSquareCrop(
       ),
     ),
   );
-  const left = Math.round(clamp(faceCenterX - size / 2, 0, width - size));
-  // A face looks natural slightly above center in a circular avatar and leaves room
-  // for the chin and shoulders without ever cropping the face out at the top edge.
-  const top = Math.round(clamp(faceCenterY - size * 0.42, 0, height - size));
+  // Vision-language models are dependable at coarse visual regions but are not
+  // pixel-accurate object detectors. Anchor the crop to the reported third, then
+  // use the numeric face box only when no coarse region was supplied.
+  const left = region
+    ? regionOffset(region.horizontalRegion, width - size)
+    : Math.round(clamp(faceCenterX - size / 2, 0, width - size));
+  const top = region
+    ? regionOffset(region.verticalRegion, height - size)
+    : Math.round(clamp(faceCenterY - size * 0.42, 0, height - size));
 
   return { left, top, size };
 }
@@ -218,7 +228,7 @@ export async function prepareFaceCenteredAvatar(
     .jpeg({ quality: 86, mozjpeg: true })
     .toBuffer();
   const analysis = await detectPrimaryAvatarFace(analysisImage);
-  const crop = computeAvatarSquareCrop(analysis.primaryFace, sourceWidth, sourceHeight);
+  const crop = computeAvatarSquareCrop(analysis.primaryFace, sourceWidth, sourceHeight, analysis);
   const outputSize = Math.min(crop.size, AVATAR_OUTPUT_MAX_DIMENSION);
   const cropped = await sharp(normalized.data, {
     failOn: "error",
@@ -275,7 +285,7 @@ async function detectPrimaryAvatarFace(image: Buffer): Promise<AvatarFaceAnalysi
               {
                 type: "input_text",
                 text:
-                  "Find the clear primary real human face belonging to the main foreground subject. Ignore faces in posters, screens, reflections, and background people. Coordinates must be percentages of the entire image. Set fullyVisible true only when both eyes, the full nose, full mouth, chin, and the complete outer face are visibly inside the image; hair may extend outside. Never infer or hallucinate hidden facial landmarks. clearFace is true only when this fully visible face has enough detail to remain recognizable in a small circular avatar. If any required facial feature is cropped, obscured, or not clearly visible, return clearFace false and fullyVisible false with zero coordinates.",
+                  "Find the clear primary real human face belonging to the main foreground subject. Ignore faces in posters, screens, reflections, and background people. Coordinates must be percentages of the entire image. horizontalRegion and verticalRegion must name the image thirds containing the midpoint between the subject's two eyes; use center for the middle horizontal third and middle for the middle vertical third. Set fullyVisible true only when both eyes, the full nose, full mouth, chin, and the complete outer face are visibly inside the image; hair may extend outside. Never infer or hallucinate hidden facial landmarks. clearFace is true only when this fully visible face has enough detail to remain recognizable in a small circular avatar. If any required facial feature is cropped, obscured, or not clearly visible, return clearFace false and fullyVisible false with zero coordinates.",
               },
               { type: "input_image", image_url: dataUrl, detail: "high" },
             ],
@@ -289,10 +299,12 @@ async function detectPrimaryAvatarFace(image: Buffer): Promise<AvatarFaceAnalysi
             schema: {
               type: "object",
               additionalProperties: false,
-              required: ["clearFace", "fullyVisible", "faceCount", "primaryFace", "landmarks", "rejectionReason"],
+              required: ["clearFace", "fullyVisible", "horizontalRegion", "verticalRegion", "faceCount", "primaryFace", "landmarks", "rejectionReason"],
               properties: {
                 clearFace: { type: "boolean" },
                 fullyVisible: { type: "boolean" },
+                horizontalRegion: { type: "string", enum: ["left", "center", "right"] },
+                verticalRegion: { type: "string", enum: ["top", "middle", "bottom"] },
                 faceCount: { type: "integer" },
                 primaryFace: {
                   type: "object",
@@ -364,6 +376,24 @@ function facePointSchema() {
     required: ["x", "y"],
     properties: { x: { type: "number" as const }, y: { type: "number" as const } },
   };
+}
+
+function faceHorizontalRegion(value: unknown): AvatarFaceAnalysis["horizontalRegion"] {
+  return value === "left" || value === "right" ? value : "center";
+}
+
+function faceVerticalRegion(value: unknown): AvatarFaceAnalysis["verticalRegion"] {
+  return value === "top" || value === "bottom" ? value : "middle";
+}
+
+function regionOffset(
+  region: AvatarFaceAnalysis["horizontalRegion"] | AvatarFaceAnalysis["verticalRegion"],
+  available: number,
+) {
+  if (available <= 0) return 0;
+  if (region === "left" || region === "top") return 0;
+  if (region === "right" || region === "bottom") return Math.round(available);
+  return Math.round(available / 2);
 }
 
 function positiveDimension(value: unknown) {
