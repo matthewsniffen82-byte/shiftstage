@@ -13,7 +13,10 @@ test("the live shell and every Next page load one shared production button syste
     layoutSource,
     /import "\.\.\/public\/dancr-button-system\.v1\.css";/,
   );
-  assert.match(layoutSource, /<body className="dancr-button-system">/);
+  assert.match(
+    layoutSource,
+    /<body className="dancr-button-system"(?: suppressHydrationWarning)?>/,
+  );
   assert.match(
     liveSource,
     /<link href="\/dancr-button-system\.v1\.css" rel="stylesheet">/,

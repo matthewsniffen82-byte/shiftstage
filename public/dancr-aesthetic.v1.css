@@ -3639,6 +3639,34 @@ body.dancr-button-system .tv-profile-photo::before {
   content: none !important;
 }
 
+/* Android-only foreground ring. Routed Next pages mark Android on <html>,
+ * while the legacy live shell marks both <html> and <body>; both forms are
+ * covered explicitly. The ring is painted inside the existing avatar box and
+ * above the photo layer, so overflow clipping cannot hide it and no other
+ * component or non-Android rule changes. */
+html.is-android body.dancr-button-system [data-dancer-avatar]::after,
+html.android-rendering body.dancr-button-system [data-dancer-avatar]::after,
+html.is-samsung-browser body.dancr-button-system [data-dancer-avatar]::after,
+html.samsung-rendering body.dancr-button-system [data-dancer-avatar]::after,
+body.is-android.dancr-button-system [data-dancer-avatar]::after,
+body.android-rendering.dancr-button-system [data-dancer-avatar]::after,
+body.is-samsung-browser.dancr-button-system [data-dancer-avatar]::after,
+body.samsung-rendering.dancr-button-system [data-dancer-avatar]::after {
+  content: "" !important;
+  inset: 0 !important;
+  box-sizing: border-box !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  -webkit-clip-path: none !important;
+  clip-path: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+}
+
 body.dancr-button-system .home-tv-feed-dancer-photo:not(:has(img)) {
   background-image: none !important;
   color: var(--dancr-color-brand-primary-deep) !important;

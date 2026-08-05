@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [aesthetic, tokens, liveShell, publicProfile, tvFeed] = await Promise.all([
+const [aesthetic, tokens, liveShell, publicProfile, tvFeed, rootLayout] = await Promise.all([
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../public/dancr-brand-tokens.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
 ]);
 
 test("every dancer avatar uses the shared electric-white ring", () => {
@@ -30,6 +31,16 @@ test("every dancer avatar uses the shared electric-white ring", () => {
   assert.match(ringRules, /\[data-dancer-avatar\]::before \{[\s\S]*?content: none !important;/);
   assert.match(ringRules, /\.home-tv-feed-dancer-photo::after,[\s\S]*?\.tv-profile-photo::after \{[\s\S]*?content: none !important;/);
   assert.match(ringRules, /\.home-tv-feed-dancer-photo::before,[\s\S]*?\.tv-profile-photo::before \{[\s\S]*?content: none !important;/);
+  assert.match(ringRules, /Android-only foreground ring/);
+  assert.match(ringRules, /html\.is-android body\.dancr-button-system \[data-dancer-avatar\]::after/);
+  assert.match(ringRules, /html\.android-rendering body\.dancr-button-system \[data-dancer-avatar\]::after/);
+  assert.match(ringRules, /html\.is-samsung-browser body\.dancr-button-system \[data-dancer-avatar\]::after/);
+  assert.match(ringRules, /html\.samsung-rendering body\.dancr-button-system \[data-dancer-avatar\]::after/);
+  assert.match(ringRules, /body\.is-android\.dancr-button-system \[data-dancer-avatar\]::after/);
+  assert.match(ringRules, /border: 2px solid #ffffff !important;/);
+  assert.match(ringRules, /border-radius: 50% !important;/);
+  assert.match(ringRules, /-webkit-mask-image: none !important;/);
+  assert.match(ringRules, /transform: translateZ\(0\) !important;/);
   assert.doesNotMatch(ringRules, /body\.dancr-button-system :is\(/);
   assert.match(ringRules, /body\.is-android\.dancr-button-system \[data-dancer-avatar\]/);
   assert.match(ringRules, /body\.android-rendering\.dancr-button-system \[data-dancer-avatar\]/);
@@ -43,6 +54,28 @@ test("every dancer avatar uses the shared electric-white ring", () => {
   assert.doesNotMatch(ringRules, /var\(--dancr-color-avatar-ring-(?:magenta|violet|indigo)\)/);
   assert.doesNotMatch(ringRules, /mask-composite|conic-gradient/);
   assert.doesNotMatch(ringRules, /venue-logo|discoveryTabs|home-nav/);
+});
+
+test("routed pages classify Android before rendering Android-only avatar safeguards", () => {
+  assert.match(rootLayout, /id="dancr-android-device-classes"/);
+  assert.match(rootLayout, /\/Android\/i\.test\(userAgent\)/);
+  assert.match(rootLayout, /\/Linux\.\*Mobile\/i\.test\(userAgent\)/);
+  assert.match(rootLayout, /\/SamsungBrowser\/i\.test\(userAgent\)/);
+  assert.match(rootLayout, /element\.classList\.add\("is-android", "android-rendering"\)/);
+  assert.match(rootLayout, /element\.classList\.add\("is-samsung-browser", "samsung-rendering"\)/);
+  assert.match(rootLayout, /<html lang="en" suppressHydrationWarning>/);
+  assert.match(rootLayout, /<body className="dancr-button-system" suppressHydrationWarning>/);
+});
+
+test("the Android foreground ring cannot alter avatar geometry, shadows, badges, or navigation", () => {
+  const androidRing = aesthetic.match(
+    /\/\* Android-only foreground ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
+  )?.[0] || "";
+
+  assert.ok(androidRing);
+  assert.doesNotMatch(androidRing, /\b(?:width|height|margin|padding|box-shadow|filter|opacity)\s*:/);
+  assert.doesNotMatch(androidRing, /verified|badge|navigation|discoveryTabs|home-nav/);
+  assert.doesNotMatch(androidRing, /\.is-ios|iPhone|iPad/);
 });
 
 test("every production dancer avatar render path carries the semantic ring marker", () => {
