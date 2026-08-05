@@ -250,7 +250,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <DancerProfileActions
           dancerId={profile.id}
-          hasPrimaryDeal={Boolean(activeShift && activeDeal)}
           profileName={profile.stageName}
           shareControl={<ProfileShareButton stageName={profile.stageName} />}
           shifts={profile.upcomingShifts.map((shift) => ({

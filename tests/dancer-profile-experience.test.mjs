@@ -104,7 +104,7 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /presentation="launcher"/);
   assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
-  assert.match(profilePage, /hasPrimaryDeal=\{Boolean\(activeShift && activeDeal\)\}/);
+  assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
 });
@@ -112,9 +112,10 @@ test("the mobile profile places schedule directly after media, before revenue an
 test("profile actions prioritize Going and demote reporting to a complete safety flow", () => {
   assert.match(
     profileActions,
-    /className=\{`\$\{hasPrimaryDeal \? "profile-action-secondary" : "profile-action-primary profile-action-public"\} profile-action-going/,
+    /className=\{`profile-action-primary profile-action-public profile-action-going\$\{isGoing \? " is-going" : ""\}/,
   );
-  const goingIndex = profileActions.indexOf('className={`${hasPrimaryDeal');
+  assert.match(profileActions, /aria-pressed=\{isGoing\}/);
+  const goingIndex = profileActions.indexOf('className={`profile-action-primary');
   const followIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
   assert.ok(goingIndex > -1 && goingIndex < followIndex);
   assert.match(profileActions, /className="profile-action-overflow-toggle"/);

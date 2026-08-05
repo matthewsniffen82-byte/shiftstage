@@ -3424,6 +3424,16 @@ body.dancr-button-system .public-profile-shell :is(
   color: var(--dancr-color-info) !important;
 }
 
+/* The persistent 72px discovery bar remains available inside full profiles.
+ * Give mobile profile actions enough trailing scroll space to clear it so the
+ * Going and overflow actions remain visible and receive the tap. */
+@media (max-width: 759px) {
+  body.dancr-button-system #profileBackdrop .profile-modal .modal-body {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 body.dancr-button-system #profileBackdrop .social-tile,
 body.dancr-button-system .public-profile-shell .profile-social-section {
   border-color: var(--dancr-color-border-subtle) !important;

@@ -113,13 +113,11 @@ export function DancerNotificationCount() {
 
 export function DancerProfileActions({
   dancerId,
-  hasPrimaryDeal = false,
   profileName,
   shifts,
   shareControl,
 }: {
   dancerId: string;
-  hasPrimaryDeal?: boolean;
   profileName: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
@@ -153,6 +151,7 @@ export function DancerProfileActions({
     [shifts],
   );
   const actionShiftId = actionShift?.id || "";
+  const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
   const showSignedOutRequirements = savedLoaded && !token;
 
   useEffect(() => {
@@ -435,14 +434,15 @@ export function DancerProfileActions({
     <>
       <div className="live-actions" aria-label="Customer actions" aria-busy={followSaving || goingSaving || reportSaving}>
         <button
-          className={`${hasPrimaryDeal ? "profile-action-secondary" : "profile-action-primary profile-action-public"} profile-action-going${actionShift ? "" : " profile-action-unavailable"}`}
+          className={`profile-action-primary profile-action-public profile-action-going${isGoing ? " is-going" : ""}${actionShift ? "" : " profile-action-unavailable"}`}
           type="button"
+          aria-pressed={isGoing}
           onClick={() => {
             if (actionShift) updateGoing(actionShift.id);
           }}
           disabled={!actionShift || !savedLoaded || goingSaving}
         >
-          {actionShift && saved.goingShiftIds.includes(actionShift.id) ? "Going" : "I’m Going"}
+          {isGoing ? "Going" : "I’m Going"}
           <small className="profile-action-requirement">
             {actionShift
               ? `${actionShift.isActive ? "Working now" : actionShift.label} · No sign-in needed`

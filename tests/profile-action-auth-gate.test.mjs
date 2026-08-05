@@ -189,7 +189,8 @@ test("public profiles keep Going visible for the next posted shift and gate only
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /if \(actionShift\) updateGoing\(actionShift\.id\)/);
-  assert.match(actionsSource, /actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\) \? "Going" : "I’m Going"/);
+  assert.match(actionsSource, /const isGoing = Boolean\(actionShift && saved\.goingShiftIds\.includes\(actionShift\.id\)\)/);
+  assert.match(actionsSource, /\{isGoing \? "Going" : "I’m Going"\}/);
   assert.match(actionsSource, /disabled=\{!actionShift \|\| !savedLoaded \|\| goingSaving\}/);
   assert.match(actionsSource, /onClick=\{submitReport\}/);
   assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);

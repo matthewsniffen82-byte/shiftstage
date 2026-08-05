@@ -45576,10 +45576,9 @@
       const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const canMarkGoing = Boolean(profile.shiftId);
-      const hasPrimaryDeal = dancerClubDealState(profile).key === "available";
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn ${hasPrimaryDeal ? "secondary" : "is-primary-action"} ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" data-profile="${profile.name}" data-shift-state="posted">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
+        ? `<button class="action-btn going-btn is-primary-action ${isGoingTonight ? "is-going" : ""} ${!isCustomerSession() ? "has-requirement" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle, "public")}</button>`
         : `<button class="action-btn going-btn is-unavailable" id="goingBtn" type="button" disabled aria-disabled="true">${profileActionButtonMarkup("clock", goingCopy.idle)}<small class="profile-action-requirement">No shift posted</small></button>`;
       const accountRequirementClass = !isCustomerSession() ? "has-requirement" : "";
       return `
@@ -45629,6 +45628,7 @@
           countEl.textContent = realCount.toLocaleString();
         }
         actionButton.classList.toggle("is-going", savedGoing);
+        actionButton.setAttribute("aria-pressed", String(savedGoing));
         actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
       } catch {
         // Keep the server-rendered count visible if the latest status cannot be loaded.
@@ -53445,6 +53445,7 @@
         countEl.textContent = optimisticCount.toLocaleString();
       }
       actionButton.classList.toggle("is-going", requestedGoing);
+      actionButton.setAttribute("aria-pressed", String(requestedGoing));
       actionButton.innerHTML = profileActionButtonMarkup(
         requestedGoing ? "check" : "clock",
         requestedGoing ? activeLabel : idleLabel,
@@ -53469,6 +53470,7 @@
           countEl.textContent = realCount.toLocaleString();
         }
         actionButton.classList.toggle("is-going", savedGoing);
+        actionButton.setAttribute("aria-pressed", String(savedGoing));
         actionButton.innerHTML = profileActionButtonMarkup(savedGoing ? "check" : "clock", savedGoing ? activeLabel : idleLabel, "public");
         syncHomeFeedActionButtons(profile, citySelect.value);
         recordLiveEvent("schedule_action", { dancerName: profileName, source: savedGoing ? "going_tonight_added" : "going_removed" });
@@ -53482,6 +53484,7 @@
           countEl.textContent = previousCount.toLocaleString();
         }
         actionButton.classList.toggle("is-going", wasGoing);
+        actionButton.setAttribute("aria-pressed", String(wasGoing));
         actionButton.innerHTML = profileActionButtonMarkup(wasGoing ? "check" : "clock", wasGoing ? activeLabel : idleLabel, "public");
         syncHomeFeedActionButtons(profile, citySelect.value);
         showToast(error.message || "Could not save going status");

@@ -69,6 +69,14 @@ test("follow API returns authoritative follower and notification subscriber coun
 });
 
 test("I'm Going changes the visible count before the request and reconciles or rolls back", () => {
+  assert.match(
+    homeSource,
+    /<button class="action-btn going-btn is-primary-action[\s\S]*?id="goingBtn" type="button"[\s\S]*?aria-pressed="\$\{isGoingTonight\}"/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /hasPrimaryDeal \? "secondary" : "is-primary-action"/,
+  );
   const goingHandler = sourceBetween(
     "async function saveProfileGoing",
     "modalBody\\.addEventListener",
@@ -80,6 +88,9 @@ test("I'm Going changes the visible count before the request and reconciles or r
     "Going must render its optimistic count before waiting for the API",
   );
   assert.match(goingHandler, /profile\.goingCount = realCount/);
+  assert.match(goingHandler, /actionButton\.setAttribute\("aria-pressed", String\(requestedGoing\)\)/);
+  assert.match(goingHandler, /actionButton\.setAttribute\("aria-pressed", String\(savedGoing\)\)/);
+  assert.match(goingHandler, /actionButton\.setAttribute\("aria-pressed", String\(wasGoing\)\)/);
   assert.match(goingHandler, /if \(!Number\.isSafeInteger\(realCount\) \|\| realCount < 0\)/);
   assert.match(goingHandler, /catch \(error\) \{[\s\S]*profile\.goingCount = previousCount/);
   assert.match(

@@ -638,6 +638,10 @@ test("dancer full profiles use the complete neutral-first brand and semantic pal
   );
   assert.match(
     fullProfilePalette,
+    /@media \(max-width: 759px\) \{[\s\S]*?#profileBackdrop \.profile-modal \.modal-body \{[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+  );
+  assert.match(
+    fullProfilePalette,
     /\.profile-social-section \{[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(fullProfilePalette, /\.social-link-instagram \{[\s\S]*?color: #e4405f !important;/);
