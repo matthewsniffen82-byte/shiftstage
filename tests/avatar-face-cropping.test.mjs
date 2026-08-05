@@ -8,10 +8,11 @@ const {
   parseAvatarFaceAnalysis,
 } = await import(new URL("../src/lib/dancr/avatar-face.ts", import.meta.url));
 
-const [avatarFaceSource, moderationSource, avatarRouteSource] = await Promise.all([
+const [avatarFaceSource, moderationSource, avatarRouteSource, recenterRouteSource] = await Promise.all([
   readFile(new URL("../src/lib/dancr/avatar-face.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/avatar/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/admin/avatars/recenter/route.ts", import.meta.url), "utf8"),
 ]);
 
 test("avatar face analysis accepts a clear primary face and rejects missing faces", () => {
@@ -82,4 +83,15 @@ test("avatar uploads use structured face detection and a physical square crop", 
 test("gallery photo processing remains separate from avatar face cropping", () => {
   assert.match(moderationSource, /const publicationImage = isAvatar[\s\S]*?: image/);
   assert.match(moderationSource, /input\.isAvatar[\s\S]*?\? \{\}[\s\S]*?: \{ archiveOriginal: true, watermark: true \}/);
+});
+
+test("existing approved avatars can be securely reprocessed without account impersonation", () => {
+  assert.match(recenterRouteSource, /timingSafeEqual\(expectedBuffer, providedBuffer\)/);
+  assert.match(recenterRouteSource, /DANCR_MEDIA_IMPORT_KEY/);
+  assert.match(recenterRouteSource, /\.eq\("slug", dancerSlug\)/);
+  assert.match(recenterRouteSource, /\.download\(previousPath\)/);
+  assert.match(recenterRouteSource, /prepareFaceCenteredAvatar\(sourceImage\)/);
+  assert.match(recenterRouteSource, /setApprovedDancerAvatar/);
+  assert.match(recenterRouteSource, /restoreDancerAvatar/);
+  assert.match(recenterRouteSource, /removeResponsiveImage/);
 });
