@@ -485,10 +485,12 @@ function PublicProfileStyles() {
       body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { border-color: transparent !important; color: #fff !important; background: transparent !important; box-shadow: none !important; text-shadow: none; }
       body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::before { border-color: rgba(126,234,255,.42); background: linear-gradient(135deg, rgba(109,40,217,.72), rgba(11,148,201,.34)); box-shadow: var(--dancr-shadow-beam-active); }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
-      .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: zoom-in; isolation: isolate; touch-action: pan-y; }
+      .profile-media-feature { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: 660px; overflow: hidden; border: 1px solid rgba(126,234,255,.22); border-radius: 20px; color: #fff; background: #020204; box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12); cursor: default; isolation: isolate; touch-action: pan-y; }
+      .profile-media-feature.is-photo { max-height: none; }
       .profile-media-feature::after { content: ""; position: absolute; z-index: 1; inset: auto 0 0; height: 28%; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.7)); }
-      .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; object-fit: cover; background: #000; pointer-events: none; user-select: none; }
-      .profile-media-feature > img { filter: brightness(1.08) contrast(1.02); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-feature > img, .profile-media-feature > video { width: 100%; height: 100%; display: block; background: #000; pointer-events: none; user-select: none; }
+      .profile-media-feature > img { object-fit: contain; filter: brightness(1.08) contrast(1.02); opacity: 1; mix-blend-mode: normal; }
+      .profile-media-feature > video { object-fit: cover; }
       .profile-media-feature:focus-visible { border-color: #7eeaff; outline: 3px solid rgba(126,234,255,.2); outline-offset: 3px; }
       .profile-media-video-controls { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 54px; display: grid; grid-template-columns: auto auto minmax(52px, 1fr) auto; align-items: center; gap: 7px; padding: 7px; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: rgba(4,4,8,.74); box-shadow: 0 10px 28px rgba(0,0,0,.32); backdrop-filter: blur(12px); cursor: default; }
       .profile-media-video-controls button { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 9px; border: 1px solid rgba(126,234,255,.26); border-radius: 9px; color: #fff; background: rgba(126,234,255,.08); font-size: 10px; font-weight: 900; cursor: pointer; white-space: nowrap; }

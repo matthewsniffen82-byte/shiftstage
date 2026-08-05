@@ -48,7 +48,7 @@ test("profile avatars, gallery thumbnails, and full-screen photos share the rest
   );
   assert.match(
     publicProfileSource,
-    /\.profile-media-feature > img \{ filter: brightness\(1\.08\) contrast\(1\.02\); opacity: 1; mix-blend-mode: normal; \}/,
+    /\.profile-media-feature > img \{ object-fit: contain; filter: brightness\(1\.08\) contrast\(1\.02\); opacity: 1; mix-blend-mode: normal; \}/,
   );
   assert.match(
     publicProfileSource,

@@ -9,10 +9,10 @@ const publicPhotoCarousel = fs.readFileSync(
 );
 const publicProfilePage = fs.readFileSync("app/dancers/[slug]/page.tsx", "utf8");
 
-test("full dancer profiles share the exact photo or TV video being viewed", () => {
+test("full dancer profiles share the exact TV video being viewed", () => {
   assert.match(
     publicPhotoCarousel,
-    /function viewerShareUrl\(item: ProfileMedia, index: number\)[\s\S]*?item\.kind === "video"[\s\S]*?`\/tv\/\$\{encodeURIComponent\(item\.id\)\}`[\s\S]*?url\.searchParams\.set\("media", "photo"\)[\s\S]*?url\.searchParams\.set\("mediaIndex", String\(index\)\)/,
+    /function viewerShareUrl\(item: VideoMedia\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -20,7 +20,7 @@ test("full dancer profiles share the exact photo or TV video being viewed", () =
   );
   assert.match(
     publicPhotoCarousel,
-    /aria-label=\{`Share this \$\{viewer\.kind === "photo" \? "photo" : "TV video"\}`\}[\s\S]*?className="profile-media-viewer-share"[\s\S]*?onClick=\{shareViewerItem\}/,
+    /aria-label="Share this TV video"[\s\S]*?className="profile-media-viewer-share"[\s\S]*?onClick=\{shareViewerItem\}/,
   );
   assert.match(publicPhotoCarousel, /className="profile-media-viewer-share-status"/);
   assert.match(
@@ -29,11 +29,12 @@ test("full dancer profiles share the exact photo or TV video being viewed", () =
   );
 });
 
-test("shared profile-photo links reopen the exact selected photo", () => {
+test("shared profile-photo links select the exact inline photo without opening an enlargement", () => {
   assert.match(
     publicPhotoCarousel,
-    /params\.get\("media"\) !== "photo"[\s\S]*?Number\(params\.get\("mediaIndex"\)\)[\s\S]*?setViewer\(\{ kind: "photo", index \}\)/,
+    /params\.get\("media"\) !== "photo"[\s\S]*?Number\(params\.get\("mediaIndex"\)\)[\s\S]*?setActiveTab\("photo"\);[\s\S]*?setActiveIndex\(index\);/,
   );
+  assert.doesNotMatch(publicPhotoCarousel, /setViewer\(\{ kind: "photo", index \}\)/);
   assert.match(
     liveApp,
     /function profilePhotoShareUrl\(profileName, city = selectedCity\(\), photoIndex = 0\)[\s\S]*?url\.searchParams\.set\("media", "photo"\)[\s\S]*?url\.searchParams\.set\("mediaIndex"/,
@@ -45,8 +46,12 @@ test("shared profile-photo links reopen the exact selected photo", () => {
   );
   assert.match(
     liveApp,
-    /function openSharedProfileMedia\(params\)[\s\S]*?selectModalMediaThumb\(photoThumbs\[photoIndex\], \{ syncViewer: true \}\)[\s\S]*?openPhotoViewerFromElement\(modalImage\)/,
+    /function openSharedProfileMedia\(params\)[\s\S]*?selectModalMediaThumb\(photoThumbs\[photoIndex\]\);/,
   );
+  const sharedPhotoHandler = liveApp.match(
+    /function openSharedProfileMedia\(params\)[\s\S]*?(?=\n    function openSharedProfileFromUrl)/,
+  )?.[0] || "";
+  assert.doesNotMatch(sharedPhotoHandler, /openPhotoViewerFromElement|syncViewer/);
   assert.match(
     liveApp,
     /openProfileModal\(profile\.name\);[\s\S]*?openSharedProfileMedia\(params\);/,

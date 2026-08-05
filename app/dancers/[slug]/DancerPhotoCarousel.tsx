@@ -75,9 +75,7 @@ export function DancerPhotoCarousel({
     photoMedia.length ? "photo" : "video",
   );
   const [activeIndex, setActiveIndex] = useState(0);
-  const [viewer, setViewer] = useState<{ kind: MediaTab; index: number } | null>(
-    null,
-  );
+  const [viewer, setViewer] = useState<{ index: number } | null>(null);
   const [inlineMuted, setInlineMuted] = useState(true);
   const [inlinePlaying, setInlinePlaying] = useState(false);
   const [inlineCurrentTime, setInlineCurrentTime] = useState(0);
@@ -100,9 +98,7 @@ export function DancerPhotoCarousel({
   const selectedItem = activeItems[selectedIndex];
   const selectedVideoDuration =
     selectedItem?.kind === "video" ? selectedItem.durationSeconds : 0;
-  const viewerItems: ProfileMedia[] = viewer?.kind === "video"
-    ? videoMedia
-    : photoMedia;
+  const viewerItems = videoMedia;
   const viewerIndex = viewer
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
@@ -119,7 +115,6 @@ export function DancerPhotoCarousel({
       : 0;
     setActiveTab("photo");
     setActiveIndex(index);
-    setViewer({ kind: "photo", index });
   }, [photoMedia.length]);
 
   useEffect(() => {
@@ -192,9 +187,9 @@ export function DancerPhotoCarousel({
     };
   });
 
-  function openViewer(kind: MediaTab, index: number) {
+  function openViewer(index: number) {
     setShareStatus("");
-    setViewer({ kind, index });
+    setViewer({ index });
   }
 
   function closeViewer() {
@@ -209,14 +204,8 @@ export function DancerPhotoCarousel({
     window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
   }
 
-  function viewerShareUrl(item: ProfileMedia, index: number) {
-    if (item.kind === "video") {
-      return new URL(`/tv/${encodeURIComponent(item.id)}`, window.location.origin).toString();
-    }
-    const url = new URL(window.location.pathname, window.location.origin);
-    url.searchParams.set("media", "photo");
-    url.searchParams.set("mediaIndex", String(index));
-    return url.toString();
+  function viewerShareUrl(item: VideoMedia) {
+    return new URL(`/tv/${encodeURIComponent(item.id)}`, window.location.origin).toString();
   }
 
   async function copyViewerShareUrl(url: string) {
@@ -238,28 +227,23 @@ export function DancerPhotoCarousel({
 
   async function shareViewerItem() {
     if (!activeViewerItem) return;
-    const isVideo = activeViewerItem.kind === "video";
-    const url = viewerShareUrl(activeViewerItem, viewerIndex);
+    const url = viewerShareUrl(activeViewerItem);
     setShareStatus("");
     try {
       if (navigator.share) {
         await navigator.share({
-          title: isVideo
-            ? `${stageName} on MyDancr TV`
-            : `${stageName} on MyDancr`,
-          text: isVideo
-            ? `Watch ${stageName} on MyDancr TV.`
-            : `View ${stageName}'s photo on MyDancr.`,
+          title: `${stageName} on MyDancr TV`,
+          text: `Watch ${stageName} on MyDancr TV.`,
           url,
         });
-        setShareStatus(isVideo ? "Video shared." : "Photo shared.");
+        setShareStatus("Video shared.");
         return;
       }
       await copyViewerShareUrl(url);
-      setShareStatus(isVideo ? "Video link copied." : "Photo link copied.");
+      setShareStatus("Video link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setShareStatus(isVideo ? "Unable to share this video." : "Unable to share this photo.");
+      setShareStatus("Unable to share this video.");
     }
   }
 
@@ -374,9 +358,8 @@ export function DancerPhotoCarousel({
     setShareStatus("");
     setViewer((current) => {
       if (!current) return current;
-      const items = current.kind === "photo" ? photoMedia : videoMedia;
       const nextIndex = current.index + direction;
-      if (nextIndex < 0 || nextIndex >= items.length) return current;
+      if (nextIndex < 0 || nextIndex >= videoMedia.length) return current;
       return { ...current, index: nextIndex };
     });
   }
@@ -496,7 +479,7 @@ export function DancerPhotoCarousel({
       </div>
       {selectedItem ? (
         <div
-          aria-label={`${stageName} ${selectedItem.kind} ${selectedIndex + 1} of ${activeItems.length}. Open full screen.`}
+          aria-label={`${stageName} ${selectedItem.kind} ${selectedIndex + 1} of ${activeItems.length}. ${selectedItem.kind === "video" ? "Open full screen or swipe to change media." : "Swipe to change photos."}`}
           className={`profile-media-feature is-${selectedItem.kind}`}
           data-profile-inline-media-swipe-surface
           onClick={(event) => {
@@ -505,7 +488,9 @@ export function DancerPhotoCarousel({
                 "button, input, [data-profile-media-control]",
               )
             ) return;
-            openViewer(selectedItem.kind, selectedIndex);
+            if (selectedItem.kind === "video") {
+              openViewer(selectedIndex);
+            }
           }}
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -519,6 +504,9 @@ export function DancerPhotoCarousel({
           onPointerUp={handleInlinePointerEnd}
           onWheel={handleInlineWheel}
           role="group"
+          style={selectedItem.kind === "photo" && selectedItem.imageWidth && selectedItem.imageHeight
+            ? { aspectRatio: `${selectedItem.imageWidth} / ${selectedItem.imageHeight}` }
+            : undefined}
           tabIndex={0}
         >
           {selectedItem.kind === "photo" ? (
@@ -600,7 +588,7 @@ export function DancerPhotoCarousel({
             <button
               aria-label={`Open ${stageName} TV video ${selectedIndex + 1} full screen`}
               className="profile-media-feature-expand"
-              onClick={() => openViewer("video", selectedIndex)}
+              onClick={() => openViewer(selectedIndex)}
               type="button"
             >
               View full screen
@@ -679,7 +667,7 @@ export function DancerPhotoCarousel({
       </div>
       {viewer && activeViewerItem ? (
         <div
-          aria-label={`${stageName} ${viewer.kind === "photo" ? "photo" : "TV video"} viewer`}
+          aria-label={`${stageName} TV video viewer`}
           aria-modal="true"
           className="profile-media-viewer"
           role="dialog"
@@ -702,34 +690,21 @@ export function DancerPhotoCarousel({
             onPointerUp={handlePointerEnd}
             onWheel={handleWheel}
           >
-            {activeViewerItem.kind === "photo" ? (
-              <img
-                alt={`${stageName} photo ${viewerIndex + 1} of ${viewerItems.length}`}
-                decoding="async"
-                draggable={false}
-                height={activeViewerItem.imageHeight || undefined}
-                sizes="100vw"
-                src={activeViewerItem.imageUrl}
-                srcSet={activeViewerItem.imageSrcSet || undefined}
-                width={activeViewerItem.imageWidth || undefined}
-              />
-            ) : (
-              <video
-                aria-label={`${stageName} TV video ${viewerIndex + 1} of ${viewerItems.length}`}
-                autoPlay
-                controls
-                controlsList="nofullscreen noremoteplayback nodownload"
-                disablePictureInPicture
-                key={activeViewerItem.id}
-                loop
-                muted
-                playsInline
-                preload="auto"
-                src={activeViewerItem.videoUrl}
-              />
-            )}
+            <video
+              aria-label={`${stageName} TV video ${viewerIndex + 1} of ${viewerItems.length}`}
+              autoPlay
+              controls
+              controlsList="nofullscreen noremoteplayback nodownload"
+              disablePictureInPicture
+              key={activeViewerItem.id}
+              loop
+              muted
+              playsInline
+              preload="auto"
+              src={activeViewerItem.videoUrl}
+            />
             <button
-              aria-label={`Previous ${viewer.kind === "photo" ? "photo" : "TV video"}`}
+              aria-label="Previous TV video"
               className="profile-media-viewer-previous"
               disabled={viewerIndex <= 0}
               onClick={() => showRelativeViewerItem(-1)}
@@ -738,7 +713,7 @@ export function DancerPhotoCarousel({
               ‹
             </button>
             <button
-              aria-label={`Next ${viewer.kind === "photo" ? "photo" : "TV video"}`}
+              aria-label="Next TV video"
               className="profile-media-viewer-next"
               disabled={viewerIndex >= viewerItems.length - 1}
               onClick={() => showRelativeViewerItem(1)}
@@ -751,13 +726,12 @@ export function DancerPhotoCarousel({
             <div className="profile-media-viewer-copy">
               <strong>{stageName}</strong>
               <span>
-                {viewer.kind === "photo" ? "Photo" : "TV"} {viewerIndex + 1} of{" "}
-                {viewerItems.length}
+                TV {viewerIndex + 1} of {viewerItems.length}
               </span>
             </div>
             <div className="profile-media-viewer-actions">
               <button
-                aria-label={`Share this ${viewer.kind === "photo" ? "photo" : "TV video"}`}
+                aria-label="Share this TV video"
                 className="profile-media-viewer-share"
                 onClick={shareViewerItem}
                 type="button"
