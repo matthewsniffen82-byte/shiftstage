@@ -72,6 +72,18 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
+    /function resetProfileModalScroll\(\) \{[\s\S]*?\[profileBackdrop, profileModal\]\.forEach[\s\S]*?element\.scrollTop = 0;[\s\S]*?element\.scrollLeft = 0;[\s\S]*?element\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\);/,
+  );
+  assert.match(
+    homeSource,
+    /function focusProfileModalStart\(\) \{[\s\S]*?resetProfileModalScroll\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?resetProfileModalScroll\(\);[\s\S]*?requestAnimationFrame\(resetProfileModalScroll\);/,
+  );
+  assert.match(
+    homeSource,
+    /function openProfileModal\(profileName, options = \{\}\) \{[\s\S]*?resetProfileModalScroll\(\);\s+profileBackdrop\.classList\.add\("show"\);[\s\S]*?focusProfileModalStart\(\);/,
+  );
+  assert.match(
+    homeSource,
     /#profileBackdrop \.modal-body \{[\s\S]*?flex: 0 0 auto !important;[\s\S]*?overflow: visible !important;[\s\S]*?padding-bottom: max\(16px, env\(safe-area-inset-bottom, 0px\)\) !important;/,
   );
   assert.match(

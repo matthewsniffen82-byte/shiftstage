@@ -45593,6 +45593,28 @@
       }
     }
 
+    function resetProfileModalScroll() {
+      [profileBackdrop, profileModal].forEach((element) => {
+        if (!element) return;
+        element.scrollTop = 0;
+        element.scrollLeft = 0;
+        try {
+          element.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        } catch {
+          element.scrollTop = 0;
+          element.scrollLeft = 0;
+        }
+      });
+    }
+
+    function focusProfileModalStart() {
+      resetProfileModalScroll();
+      requestAnimationFrame(() => {
+        resetProfileModalScroll();
+        requestAnimationFrame(resetProfileModalScroll);
+      });
+    }
+
     function openProfileModal(profileName, options = {}) {
       const city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
@@ -45677,9 +45699,10 @@
         void loadProfileMyDancrTv(profile);
       }
 
+      resetProfileModalScroll();
       profileBackdrop.classList.add("show");
       profileBackdrop.setAttribute("aria-hidden", "false");
-      profileModal?.scrollTo({ top: 0, behavior: "auto" });
+      focusProfileModalStart();
       syncOverlayScrollLock();
       if (!isPending && !isPrivatePreview && profile.shiftId) {
         void refreshProfileGoingState(profile);
