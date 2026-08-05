@@ -396,7 +396,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=97/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=98/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -410,11 +410,11 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /\.home-tv-feed-dancer-photo/);
   assert.match(
     brandedCards,
-    /\.home-tv-feed-dancer-photo,[\s\S]*?\.tv-profile-photo \{[\s\S]*?padding: 2px !important;[\s\S]*?background: #ffffff !important;[\s\S]*?\.home-tv-feed-dancer-photo > img,[\s\S]*?\.tv-profile-photo > \.tv-profile-photo-image \{[\s\S]*?inset: 2px !important;[\s\S]*?width: calc\(100% - 4px\) !important;/,
+    /\[data-dancer-avatar-border\] \{[\s\S]*?border: 2px solid #ffffff !important;[\s\S]*?\[data-dancer-avatar-border\] > img,[\s\S]*?\[data-dancer-avatar-border\] > \.tv-profile-photo-image \{[\s\S]*?inset: 2px !important;[\s\S]*?width: calc\(100% - 4px\) !important;/,
   );
   assert.match(
     brandedCards,
-    /body\.dancr-button-system \[data-dancer-avatar\] \{[\s\S]*?position: relative !important;[\s\S]*?isolation: isolate !important;[\s\S]*?border: 0 !important;[\s\S]*?body\.is-android\.dancr-button-system \[data-dancer-avatar\],[\s\S]*?body\.samsung-rendering\.dancr-button-system \[data-dancer-avatar\] \{[\s\S]*?border-color: transparent !important;/,
+    /body\.dancr-button-system \[data-dancer-avatar\] \{[\s\S]*?position: relative !important;[\s\S]*?isolation: isolate !important;[\s\S]*?border: 0 !important;[\s\S]*?body\.dancr-button-system \[data-dancer-avatar-border\] \{[\s\S]*?border: 2px solid #ffffff !important;/,
   );
   assert.match(
     brandedCards,
@@ -455,7 +455,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.doesNotMatch(brandedCards, /\.home-tv-feed-video|\.tv-player video/);
   const brandedCardsWithoutAvatarRing = brandedCards
     .replace(
-      /\/\* Every real dancer avatar uses one thin electric-white Dancr ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
+      /\/\* Every real dancer avatar keeps its existing outer dimensions[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
       "",
     );
   assert.doesNotMatch(

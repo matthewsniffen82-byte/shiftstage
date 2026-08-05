@@ -590,18 +590,20 @@ export default function TvFeedClient({
                     data-dancer-avatar=""
                     aria-hidden="true"
                   >
-                    {video.dancer.avatarPhotoUrl ? (
-                      <span
-                        className="tv-profile-photo-image"
-                        style={{
-                          backgroundImage: `url(${JSON.stringify(video.dancer.avatarPhotoUrl)})`,
-                          backgroundPosition: imageFocalPointCss(
-                            video.dancer.avatarPhotoFocalX,
-                            video.dancer.avatarPhotoFocalY,
-                          ),
-                        }}
-                      />
-                    ) : dancerInitials(video.dancer.stageName)}
+                    <span data-dancer-avatar-border="">
+                      {video.dancer.avatarPhotoUrl ? (
+                        <span
+                          className="tv-profile-photo-image"
+                          style={{
+                            backgroundImage: `url(${JSON.stringify(video.dancer.avatarPhotoUrl)})`,
+                            backgroundPosition: imageFocalPointCss(
+                              video.dancer.avatarPhotoFocalX,
+                              video.dancer.avatarPhotoFocalY,
+                            ),
+                          }}
+                        />
+                      ) : dancerInitials(video.dancer.stageName)}
+                    </span>
                   </span>
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">

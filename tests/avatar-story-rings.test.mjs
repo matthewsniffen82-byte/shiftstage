@@ -11,86 +11,69 @@ const [aesthetic, tokens, liveShell, publicProfile, tvFeed, rootLayout] = await 
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
 ]);
 
-test("every dancer avatar uses the shared electric-white ring", () => {
-  const ringRules = aesthetic.match(
-    /\/\* Every real dancer avatar uses one thin electric-white Dancr ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
-  )?.[0] || "";
+const wrapperRules = aesthetic.match(
+  /\/\* Every real dancer avatar keeps its existing outer dimensions[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
+)?.[0] || "";
 
-  assert.match(ringRules, /body\.dancr-button-system \[data-dancer-avatar\] \{/);
-  assert.match(ringRules, /position: relative !important;/);
-  assert.match(ringRules, /isolation: isolate !important;/);
-  assert.match(ringRules, /border: 0 !important;/);
-  assert.match(ringRules, /box-shadow: none !important;/);
-  assert.match(ringRules, /\[data-dancer-avatar\]::after \{[\s\S]*?content: "" !important;/);
-  assert.match(ringRules, /\.home-tv-feed-dancer-photo,[\s\S]*?\.tv-profile-photo \{[\s\S]*?padding: 2px !important;[\s\S]*?background: #ffffff !important;/);
-  assert.match(ringRules, /\.home-tv-feed-dancer-photo > img,[\s\S]*?\.tv-profile-photo > \.tv-profile-photo-image \{[\s\S]*?inset: 2px !important;[\s\S]*?width: calc\(100% - 4px\) !important;[\s\S]*?height: calc\(100% - 4px\) !important;/);
-  assert.match(ringRules, /inset 0 0 0 2px #ffffff,/);
-  assert.match(ringRules, /inset 0 0 4px rgba\(255, 255, 255, 0\.96\) !important;/);
-  assert.match(ringRules, /z-index: 3 !important;/);
-  assert.match(ringRules, /pointer-events: none !important;/);
-  assert.match(ringRules, /\[data-dancer-avatar\]::before \{[\s\S]*?content: none !important;/);
-  assert.match(ringRules, /\.home-tv-feed-dancer-photo::after,[\s\S]*?\.tv-profile-photo::after \{[\s\S]*?content: none !important;/);
-  assert.match(ringRules, /\.home-tv-feed-dancer-photo::before,[\s\S]*?\.tv-profile-photo::before \{[\s\S]*?content: none !important;/);
-  assert.match(ringRules, /Android-only foreground ring/);
-  assert.match(ringRules, /html\.is-android body\.dancr-button-system \[data-dancer-avatar\]::after/);
-  assert.match(ringRules, /html\.android-rendering body\.dancr-button-system \[data-dancer-avatar\]::after/);
-  assert.match(ringRules, /html\.is-samsung-browser body\.dancr-button-system \[data-dancer-avatar\]::after/);
-  assert.match(ringRules, /html\.samsung-rendering body\.dancr-button-system \[data-dancer-avatar\]::after/);
-  assert.match(ringRules, /body\.is-android\.dancr-button-system \[data-dancer-avatar\]::after/);
-  assert.match(ringRules, /border: 2px solid #ffffff !important;/);
-  assert.match(ringRules, /border-radius: 50% !important;/);
-  assert.match(ringRules, /-webkit-mask-image: none !important;/);
-  assert.match(ringRules, /transform: translateZ\(0\) !important;/);
-  assert.doesNotMatch(ringRules, /body\.dancr-button-system :is\(/);
-  assert.match(ringRules, /body\.is-android\.dancr-button-system \[data-dancer-avatar\]/);
-  assert.match(ringRules, /body\.android-rendering\.dancr-button-system \[data-dancer-avatar\]/);
-  assert.match(ringRules, /body\.is-samsung-browser\.dancr-button-system \[data-dancer-avatar\]/);
-  assert.match(ringRules, /body\.samsung-rendering\.dancr-button-system \[data-dancer-avatar\]/);
-  assert.match(ringRules, /forced-color-adjust: none !important;/);
-  assert.match(ringRules, /-webkit-print-color-adjust: exact !important;/);
-  assert.match(ringRules, /mix-blend-mode: normal !important;/);
-  assert.doesNotMatch(ringRules, /dotted|drop-shadow|radial-gradient|linear-gradient|color-mix/);
-  assert.doesNotMatch(ringRules, /\b(?:display|animation):/);
-  assert.doesNotMatch(ringRules, /var\(--dancr-color-avatar-ring-(?:magenta|violet|indigo)\)/);
-  assert.doesNotMatch(ringRules, /mask-composite|conic-gradient/);
-  assert.doesNotMatch(ringRules, /venue-logo|discoveryTabs|home-nav/);
+test("every dancer avatar uses one real electric-white border wrapper", () => {
+  assert.ok(wrapperRules);
+  assert.match(wrapperRules, /body\.dancr-button-system \[data-dancer-avatar\] \{/);
+  assert.match(wrapperRules, /position: relative !important;/);
+  assert.match(wrapperRules, /isolation: isolate !important;/);
+  assert.match(wrapperRules, /padding: 0 !important;/);
+  assert.match(wrapperRules, /border: 0 !important;/);
+  assert.match(wrapperRules, /\[data-dancer-avatar-border\] \{/);
+  assert.match(wrapperRules, /position: absolute !important;/);
+  assert.match(wrapperRules, /inset: 0 !important;/);
+  assert.match(wrapperRules, /box-sizing: border-box !important;/);
+  assert.match(wrapperRules, /overflow: hidden !important;/);
+  assert.match(wrapperRules, /border: 2px solid #ffffff !important;/);
+  assert.match(wrapperRules, /border-radius: 50% !important;/);
+  assert.match(wrapperRules, /background-image: inherit !important;/);
+  assert.match(wrapperRules, /pointer-events: none !important;/);
 });
 
-test("routed pages classify Android before rendering Android-only avatar safeguards", () => {
+test("the removed avatar ring implementations cannot render on any platform", () => {
+  assert.doesNotMatch(wrapperRules, /Android-only foreground ring/);
+  assert.doesNotMatch(wrapperRules, /\[data-dancer-avatar\]::after \{[\s\S]*?content: ""/);
+  assert.doesNotMatch(wrapperRules, /inset 0 0 0 2px #ffffff/);
+  assert.doesNotMatch(wrapperRules, /inset 0 0 4px/);
+  assert.doesNotMatch(wrapperRules, /translateZ\(0\)|backface-visibility|mask-image|clip-path/);
+  assert.doesNotMatch(wrapperRules, /\.home-tv-feed-dancer-photo,[\s\S]*?padding: 2px !important;[\s\S]*?background: #ffffff !important;/);
+  assert.doesNotMatch(wrapperRules, /html\.is-android body\.dancr-button-system \[data-dancer-avatar\]::after/);
+  assert.doesNotMatch(wrapperRules, /body\.samsung-rendering\.dancr-button-system \[data-dancer-avatar\]::after/);
+});
+
+test("the border wrapper cannot change avatar size, spacing, shadows, badges, or navigation", () => {
+  const borderWrapper = wrapperRules.match(
+    /body\.dancr-button-system \[data-dancer-avatar-border\] \{[\s\S]*?\n\}/,
+  )?.[0] || "";
+
+  assert.ok(borderWrapper);
+  assert.doesNotMatch(borderWrapper, /\b(?:width|height|margin|padding)\s*:/);
+  assert.match(borderWrapper, /box-shadow: none !important;/);
+  assert.doesNotMatch(borderWrapper, /verified|badge|navigation|discoveryTabs|home-nav/);
+  assert.doesNotMatch(borderWrapper, /\.is-ios|iPhone|iPad/);
+});
+
+test("every production circular avatar contains the new border wrapper", () => {
+  assert.match(liveShell, /class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar[\s\S]*?id="modalProfileAvatarBorder" data-dancer-avatar-border/);
+  assert.match(liveShell, /class="approved-avatar-preview\$\{avatarPreviewAttrs\.className\}"\$\{avatarPreviewAttrs\.style\} data-dancer-avatar[\s\S]*?<span data-dancer-avatar-border/);
+  assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar\$\{attrs\.className\}"\$\{attrs\.style\} data-dancer-avatar[^`]+data-dancer-avatar-border/);
+  assert.match(liveShell, /class="venue-shift-avatar [^\n]+data-dancer-avatar[^\n]+data-dancer-avatar-border/);
+  assert.match(liveShell, /dancerPhoto\.setAttribute\("data-dancer-avatar", ""\)[\s\S]*?dancerPhotoBorder\.setAttribute\("data-dancer-avatar-border", ""\)/);
+  assert.match(liveShell, /modalProfileAvatarBorder\.textContent = avatarPhotoUrl/);
+  assert.match(publicProfile, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
+  assert.match(tvFeed, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
+});
+
+test("routed pages still classify Android without placing device styles on the wrapper", () => {
   assert.match(rootLayout, /id="dancr-android-device-classes"/);
   assert.match(rootLayout, /\/Android\/i\.test\(userAgent\)/);
-  assert.match(rootLayout, /\/Linux\.\*Mobile\/i\.test\(userAgent\)/);
-  assert.match(rootLayout, /\/SamsungBrowser\/i\.test\(userAgent\)/);
   assert.match(rootLayout, /element\.classList\.add\("is-android", "android-rendering"\)/);
-  assert.match(rootLayout, /element\.classList\.add\("is-samsung-browser", "samsung-rendering"\)/);
-  assert.match(rootLayout, /<html lang="en" suppressHydrationWarning>/);
-  assert.match(rootLayout, /<body className="dancr-button-system" suppressHydrationWarning>/);
+  assert.doesNotMatch(wrapperRules, /is-android|android-rendering|is-samsung-browser|samsung-rendering/);
 });
 
-test("the Android foreground ring cannot alter avatar geometry, shadows, badges, or navigation", () => {
-  const androidRing = aesthetic.match(
-    /\/\* Android-only foreground ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
-  )?.[0] || "";
-
-  assert.ok(androidRing);
-  assert.doesNotMatch(androidRing, /\b(?:width|height|margin|padding|box-shadow|filter|opacity)\s*:/);
-  assert.doesNotMatch(androidRing, /verified|badge|navigation|discoveryTabs|home-nav/);
-  assert.doesNotMatch(androidRing, /\.is-ios|iPhone|iPad/);
-});
-
-test("every production dancer avatar render path carries the semantic ring marker", () => {
-  assert.match(liveShell, /class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar/);
-  assert.match(liveShell, /class="approved-avatar-preview\$\{avatarPreviewAttrs\.className\}"\$\{avatarPreviewAttrs\.style\} data-dancer-avatar/);
-  assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar\$\{attrs\.className\}"\$\{attrs\.style\} data-dancer-avatar/);
-  assert.match(liveShell, /class="venue-shift-avatar [^\n]+data-dancer-avatar role="img"/);
-  assert.match(liveShell, /dancerPhoto\.setAttribute\("data-dancer-avatar", ""\)/);
-  assert.match(publicProfile, /className=\{`profile-titlebar-avatar[^\n]+[\s\S]*?data-dancer-avatar=""/);
-  assert.match(tvFeed, /className=\{`tv-profile-photo[^\n]+[\s\S]*?data-dancer-avatar=""/);
-});
-
-test("the story ring colors come from the centralized Dancr brand palette", () => {
-  assert.match(tokens, /--dancr-color-avatar-ring-magenta: #f02bdc;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-violet: #8b5cf6;/);
-  assert.match(tokens, /--dancr-color-avatar-ring-indigo: #4f46e5;/);
+test("the Electric White value remains centralized in the Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-core: #ffffff;/);
 });

@@ -29508,7 +29508,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=9" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=97" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=98" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -36403,7 +36403,9 @@
           </button>
         </div>
         <div class="profile-modal-summary">
-          <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo"></div>
+          <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
+            <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
+          </div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
               <div class="profile-modal-name-row">
@@ -36582,6 +36584,7 @@
     const profileModal = document.getElementById("profileModal");
     const modalImage = document.getElementById("modalImage");
     const modalProfileAvatar = document.getElementById("modalProfileAvatar");
+    const modalProfileAvatarBorder = document.getElementById("modalProfileAvatarBorder");
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
@@ -37097,7 +37100,7 @@
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("/sw.js?v=android-avatar-foreground-ring-v3", { updateViaCache: "none" })
+          .register("/sw.js?v=avatar-wrapper-border-v4", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -43782,7 +43785,7 @@
               </div>
               <div class="approved-profile-identity-row">
                 <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar role="img" aria-label="Avatar preview">
-                  ${avatarPreviewUrl ? "" : displayText(avatarInitials)}
+                  <span data-dancer-avatar-border aria-hidden="true">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
                 </div>
                 <div class="approved-profile-identity-fields">
                   <div class="approved-stage-name-editor">
@@ -44821,7 +44824,7 @@
           profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
           profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
         );
-        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
+        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"><span data-dancer-avatar-border aria-hidden="true"></span></span>`;
       }).join("");
       const remainingMarkup = remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
@@ -44913,7 +44916,7 @@
       );
       return `
         <button class="venue-shift-row" data-profile="${profile.name}" aria-label="${profile.name} upcoming shift">
-          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"></div>
+          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"><span data-dancer-avatar-border aria-hidden="true"></span></div>
           <div class="venue-shift-copy">
             <strong>${profile.name}${profile.status === "Verified" ? '<span class="verified-mark" aria-label="Verified">✓</span>' : ""}</strong>
             <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
@@ -45757,7 +45760,7 @@
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
-      modalProfileAvatar.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+      modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
         modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(avatarPhotoUrl)}')`;
         modalProfileAvatar.style.setProperty(
@@ -52108,8 +52111,10 @@
       const dancerPhoto = document.createElement("span");
       dancerPhoto.className = "home-tv-feed-dancer-photo";
       dancerPhoto.setAttribute("data-dancer-avatar", "");
-      dancerPhoto.textContent = dancerName.charAt(0).toLocaleUpperCase();
       dancerPhoto.setAttribute("aria-hidden", "true");
+      const dancerPhotoBorder = document.createElement("span");
+      dancerPhotoBorder.setAttribute("data-dancer-avatar-border", "");
+      dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();
       if (dancerPhotoUrl) {
         const dancerPhotoImage = document.createElement("img");
         dancerPhotoImage.src = dancerPhotoUrl;
@@ -52119,8 +52124,9 @@
         dancerPhotoImage.referrerPolicy = "no-referrer";
         dancerPhotoImage.style.objectPosition = dancerPhotoPosition;
         dancerPhotoImage.addEventListener("error", () => dancerPhotoImage.remove());
-        dancerPhoto.appendChild(dancerPhotoImage);
+        dancerPhotoBorder.appendChild(dancerPhotoImage);
       }
+      dancerPhoto.appendChild(dancerPhotoBorder);
       const nameRow = document.createElement("span");
       nameRow.className = "home-tv-feed-dancer-name-row";
       const dancerLabel = document.createElement("span");

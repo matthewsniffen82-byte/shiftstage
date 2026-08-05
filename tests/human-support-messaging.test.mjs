@@ -49,9 +49,9 @@ test("live support interfaces use the production API without AI or venue support
 });
 
 test("existing installed sessions refresh onto the current production shell", () => {
-  assert.match(liveAppSource, /register\("\/sw\.js\?v=android-avatar-foreground-ring-v3", \{ updateViaCache: "none" \}\)/);
+  assert.match(liveAppSource, /register\("\/sw\.js\?v=avatar-wrapper-border-v4", \{ updateViaCache: "none" \}\)/);
   assert.match(liveAppSource, /registration\.update\(\)/);
-  assert.match(serviceWorkerSource, /dancr-sw-release: android-avatar-foreground-ring-v3/);
+  assert.match(serviceWorkerSource, /dancr-sw-release: avatar-wrapper-border-v4/);
   assert.match(serviceWorkerSource, /self\.skipWaiting\(\)/);
   assert.match(serviceWorkerSource, /self\.clients\.claim\(\)/);
   assert.match(serviceWorkerSource, /client\.navigate\(client\.url\)/);

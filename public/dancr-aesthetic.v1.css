@@ -3536,14 +3536,13 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real dancer avatar uses one thin electric-white Dancr ring. The
- * semantic marker covers circular identity photos, venue lineup stacks, and
- * schedule portraits without touching venue marks, media, or navigation.
- * Prominent photo avatars use a solid white host and a physically inset image
- * so Android never rasterizes the white ring through a gray shadow layer. */
+/* Every real dancer avatar keeps its existing outer dimensions and layout.
+ * The border is a real child wrapper rather than parent padding, a shadow, or
+ * a pseudo-element, so Android paints one complete circular border. */
 body.dancr-button-system [data-dancer-avatar] {
   position: relative !important;
   isolation: isolate !important;
+  padding: 0 !important;
   border: 0 !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-surface-raised) !important;
@@ -3553,69 +3552,28 @@ body.dancr-button-system [data-dancer-avatar] {
   text-shadow: none !important;
 }
 
-body.dancr-button-system .home-tv-feed-dancer-photo,
-body.dancr-button-system .profile-titlebar-avatar,
-body.dancr-button-system .tv-profile-photo {
-  box-sizing: border-box !important;
-  padding: 2px !important;
-  background: #ffffff !important;
-}
-
-body.dancr-button-system .home-tv-feed-dancer-photo > img,
-body.dancr-button-system .profile-titlebar-avatar > img,
-body.dancr-button-system .tv-profile-photo > .tv-profile-photo-image {
-  position: absolute !important;
-  z-index: 2 !important;
-  inset: 2px !important;
-  width: calc(100% - 4px) !important;
-  height: calc(100% - 4px) !important;
-  border: 0 !important;
-  border-radius: 50% !important;
-  box-shadow: none !important;
-  opacity: 1 !important;
-  -webkit-filter: none !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-}
-
-body.dancr-button-system .home-tv-feed-dancer-photo > img,
-body.dancr-button-system .profile-titlebar-avatar > img {
-  background: #000000 !important;
-}
-
-body.dancr-button-system .tv-profile-photo > .tv-profile-photo-image {
-  background-color: #000000 !important;
-}
-
-/* Android standalone apps and Samsung Browser get deliberately simple
- * selectors so older engines cannot fall back to a translucent gray edge. */
-body.is-android.dancr-button-system [data-dancer-avatar],
-body.android-rendering.dancr-button-system [data-dancer-avatar],
-body.is-samsung-browser.dancr-button-system [data-dancer-avatar],
-body.samsung-rendering.dancr-button-system [data-dancer-avatar] {
-  border: 0 !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  opacity: 1 !important;
-  -webkit-filter: none !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-  forced-color-adjust: none !important;
-  -webkit-print-color-adjust: exact !important;
-  color-scheme: dark !important;
-}
-
+body.dancr-button-system [data-dancer-avatar]::before,
 body.dancr-button-system [data-dancer-avatar]::after {
-  content: "" !important;
+  content: none !important;
+}
+
+body.dancr-button-system [data-dancer-avatar-border] {
   position: absolute !important;
   z-index: 3 !important;
   inset: 0 !important;
-  border: 0 !important;
-  border-radius: inherit !important;
-  background: transparent !important;
-  box-shadow:
-    inset 0 0 0 2px #ffffff,
-    inset 0 0 4px rgba(255, 255, 255, 0.96) !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 50% !important;
+  color: inherit !important;
+  background-color: inherit !important;
+  background-image: inherit !important;
+  background-position: inherit !important;
+  background-repeat: inherit !important;
+  background-size: inherit !important;
+  box-shadow: none !important;
   opacity: 1 !important;
   -webkit-filter: none !important;
   filter: none !important;
@@ -3623,48 +3581,21 @@ body.dancr-button-system [data-dancer-avatar]::after {
   pointer-events: none !important;
 }
 
-body.dancr-button-system [data-dancer-avatar]::before {
-  content: none !important;
-}
-
-body.dancr-button-system .home-tv-feed-dancer-photo::after,
-body.dancr-button-system .profile-titlebar-avatar::after,
-body.dancr-button-system .tv-profile-photo::after {
-  content: none !important;
-}
-
-body.dancr-button-system .home-tv-feed-dancer-photo::before,
-body.dancr-button-system .profile-titlebar-avatar::before,
-body.dancr-button-system .tv-profile-photo::before {
-  content: none !important;
-}
-
-/* Android-only foreground ring. Routed Next pages mark Android on <html>,
- * while the legacy live shell marks both <html> and <body>; both forms are
- * covered explicitly. The ring is painted inside the existing avatar box and
- * above the photo layer, so overflow clipping cannot hide it and no other
- * component or non-Android rule changes. */
-html.is-android body.dancr-button-system [data-dancer-avatar]::after,
-html.android-rendering body.dancr-button-system [data-dancer-avatar]::after,
-html.is-samsung-browser body.dancr-button-system [data-dancer-avatar]::after,
-html.samsung-rendering body.dancr-button-system [data-dancer-avatar]::after,
-body.is-android.dancr-button-system [data-dancer-avatar]::after,
-body.android-rendering.dancr-button-system [data-dancer-avatar]::after,
-body.is-samsung-browser.dancr-button-system [data-dancer-avatar]::after,
-body.samsung-rendering.dancr-button-system [data-dancer-avatar]::after {
-  content: "" !important;
-  inset: 0 !important;
-  box-sizing: border-box !important;
-  border: 2px solid #ffffff !important;
+body.dancr-button-system [data-dancer-avatar-border] > img,
+body.dancr-button-system [data-dancer-avatar-border] > .tv-profile-photo-image {
+  position: absolute !important;
+  z-index: 1 !important;
+  inset: 2px !important;
+  width: calc(100% - 4px) !important;
+  height: calc(100% - 4px) !important;
+  border: 0 !important;
   border-radius: 50% !important;
-  -webkit-clip-path: none !important;
-  clip-path: none !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-  -webkit-transform: translateZ(0) !important;
-  transform: translateZ(0) !important;
-  -webkit-backface-visibility: hidden !important;
-  backface-visibility: hidden !important;
+  background-color: #000000 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  -webkit-filter: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
 }
 
 body.dancr-button-system .home-tv-feed-dancer-photo:not(:has(img)) {

@@ -107,24 +107,25 @@ export default async function DancerPublicPage({ params }: PageProps) {
             data-dancer-avatar=""
             role="img"
           >
-            {avatarPhoto ? (
-              <img
-                alt=""
-                aria-hidden="true"
-                decoding="async"
-                height={avatarPhotoHeight || undefined}
-                sizes="46px"
-                src={avatarPhoto}
-                srcSet={avatarPhotoSrcSet || undefined}
-                style={{
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
-                  width: "100%",
-                }}
-                width={avatarPhotoWidth || undefined}
-              />
-            ) : initials(profile.stageName)}
+            <span aria-hidden="true" data-dancer-avatar-border="">
+              {avatarPhoto ? (
+                <img
+                  alt=""
+                  decoding="async"
+                  height={avatarPhotoHeight || undefined}
+                  sizes="46px"
+                  src={avatarPhoto}
+                  srcSet={avatarPhotoSrcSet || undefined}
+                  style={{
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
+                    width: "100%",
+                  }}
+                  width={avatarPhotoWidth || undefined}
+                />
+              ) : initials(profile.stageName)}
+            </span>
           </div>
           <div className="profile-titlebar-identity">
             <div>

@@ -1,4 +1,4 @@
-/* dancr-sw-release: android-avatar-foreground-ring-v3 */
+/* dancr-sw-release: avatar-wrapper-border-v4 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
