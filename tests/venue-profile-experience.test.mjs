@@ -61,7 +61,7 @@ test("venue upcoming-shift rows show the dancer's approved production avatar", (
   );
   assert.match(
     upcomingShiftRow,
-    /class="venue-shift-avatar \$\{portraitClass\(Number\(profile\.trend \|\| 1\)\)\}\$\{avatarAttrs\.className\}"\$\{avatarAttrs\.style\} role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}"/,
+    /class="venue-shift-avatar \$\{portraitClass\(Number\(profile\.trend \|\| 1\)\)\}\$\{avatarAttrs\.className\}"\$\{avatarAttrs\.style\} data-dancer-avatar role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}"/,
   );
   assert.match(
     liveApp,

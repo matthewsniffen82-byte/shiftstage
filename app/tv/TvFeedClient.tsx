@@ -587,6 +587,7 @@ export default function TvFeedClient({
                 <div className="tv-profile-body">
                   <span
                     className={`tv-profile-photo${video.dancer.avatarPhotoUrl ? " has-photo" : ""}`}
+                    data-dancer-avatar=""
                     style={video.dancer.avatarPhotoUrl
                       ? {
                           backgroundImage: `url(${JSON.stringify(video.dancer.avatarPhotoUrl)})`,

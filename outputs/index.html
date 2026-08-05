@@ -29470,7 +29470,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=9" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=94" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=95" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -36354,7 +36354,7 @@
           </button>
         </div>
         <div class="profile-modal-summary">
-          <div class="profile-modal-avatar" id="modalProfileAvatar" role="img" aria-label="Dancer profile photo"></div>
+          <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo"></div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
               <div class="profile-modal-name-row">
@@ -37041,7 +37041,7 @@
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("/sw.js?v=android-overlay-white-avatar-v1", { updateViaCache: "none" })
+          .register("/sw.js?v=all-dancer-avatar-electric-white-v1", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -43718,7 +43718,7 @@
                 <small>Public name + circular avatar</small>
               </div>
               <div class="approved-profile-identity-row">
-                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} role="img" aria-label="Avatar preview">
+                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar role="img" aria-label="Avatar preview">
                   ${avatarPreviewUrl ? "" : displayText(avatarInitials)}
                 </div>
                 <div class="approved-profile-identity-fields">
@@ -44758,7 +44758,7 @@
           profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
           profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
         );
-        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
+        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"></span>`;
       }).join("");
       const remainingMarkup = remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
@@ -44850,7 +44850,7 @@
       );
       return `
         <button class="venue-shift-row" data-profile="${profile.name}" aria-label="${profile.name} upcoming shift">
-          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} role="img" aria-label="${escapeHtml(profile.name)}"></div>
+          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"></div>
           <div class="venue-shift-copy">
             <strong>${profile.name}${profile.status === "Verified" ? '<span class="verified-mark" aria-label="Verified">✓</span>' : ""}</strong>
             <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
@@ -51990,6 +51990,7 @@
       dancer.addEventListener("click", openDancerProfile);
       const dancerPhoto = document.createElement("span");
       dancerPhoto.className = "home-tv-feed-dancer-photo";
+      dancerPhoto.setAttribute("data-dancer-avatar", "");
       dancerPhoto.textContent = dancerName.charAt(0).toLocaleUpperCase();
       dancerPhoto.setAttribute("aria-hidden", "true");
       if (dancerPhotoUrl) {

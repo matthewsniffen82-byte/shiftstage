@@ -396,7 +396,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=94/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=95/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -410,11 +410,11 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /\.home-tv-feed-dancer-photo/);
   assert.match(
     brandedCards,
-    /\.home-tv-feed-dancer-photo::after,[\s\S]*?inset 0 0 0 2px #ffffff,[\s\S]*?inset 0 0 4px rgba\(255, 255, 255, 0\.96\) !important;/,
+    /\[data-dancer-avatar\]::after \{[\s\S]*?inset 0 0 0 2px #ffffff,[\s\S]*?inset 0 0 4px rgba\(255, 255, 255, 0\.96\) !important;/,
   );
   assert.match(
     brandedCards,
-    /body\.dancr-button-system \.home-tv-feed-dancer-photo,[\s\S]*?body\.dancr-button-system \.tv-profile-photo \{[\s\S]*?position: relative !important;[\s\S]*?isolation: isolate !important;[\s\S]*?border: 0 !important;[\s\S]*?body\.is-android\.dancr-button-system \.home-tv-feed-dancer-photo,[\s\S]*?body\.samsung-rendering\.dancr-button-system \.home-tv-feed-dancer-photo \{[\s\S]*?border-color: transparent !important;/,
+    /body\.dancr-button-system \[data-dancer-avatar\] \{[\s\S]*?position: relative !important;[\s\S]*?isolation: isolate !important;[\s\S]*?border: 0 !important;[\s\S]*?body\.is-android\.dancr-button-system \[data-dancer-avatar\],[\s\S]*?body\.samsung-rendering\.dancr-button-system \[data-dancer-avatar\] \{[\s\S]*?border-color: transparent !important;/,
   );
   assert.match(
     brandedCards,
@@ -455,7 +455,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.doesNotMatch(brandedCards, /\.home-tv-feed-video|\.tv-player video/);
   const brandedCardsWithoutAvatarRing = brandedCards
     .replace(
-      /\/\* Every real circular dancer avatar uses one thin electric-white Dancr ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
+      /\/\* Every real dancer avatar uses one thin electric-white Dancr ring[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
       "",
     );
   assert.doesNotMatch(

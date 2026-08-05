@@ -1,4 +1,4 @@
-/* dancr-sw-release: android-overlay-white-avatar-v1 */
+/* dancr-sw-release: all-dancer-avatar-electric-white-v1 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });

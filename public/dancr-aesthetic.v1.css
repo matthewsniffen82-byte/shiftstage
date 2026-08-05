@@ -3536,18 +3536,12 @@ body.dancr-button-system .home-tv-feed-shade,
   ) !important;
 }
 
-/* Every real circular dancer avatar uses one thin electric-white Dancr ring.
- * The host has no painted border. A dedicated inset overlay paints above the
- * avatar image so Android cannot composite the white edge into gray. Venue
- * marks, media, and navigation remain untouched. */
-body.dancr-button-system #profileBackdrop .profile-modal-avatar,
-body.dancr-button-system .approved-avatar-preview,
-body.dancr-button-system .venue-card-lineup-avatar,
-body.dancr-button-system .home-venue-discovery-lineup-avatar,
-body.dancr-button-system .profile-modal-avatar,
-body.dancr-button-system .home-tv-feed-dancer-photo,
-body.dancr-button-system .profile-titlebar-avatar,
-body.dancr-button-system .tv-profile-photo {
+/* Every real dancer avatar uses one thin electric-white Dancr ring. The
+ * semantic marker covers circular identity photos, venue lineup stacks, and
+ * schedule portraits without touching venue marks, media, or navigation. A
+ * dedicated inset overlay paints above the image so Android cannot composite
+ * the white edge into gray. */
+body.dancr-button-system [data-dancer-avatar] {
   position: relative !important;
   isolation: isolate !important;
   border: 0 !important;
@@ -3559,12 +3553,12 @@ body.dancr-button-system .tv-profile-photo {
   text-shadow: none !important;
 }
 
-/* Android standalone apps and Samsung Browser get a deliberately simple
- * selector so older engines cannot fall back to the translucent gray border. */
-body.is-android.dancr-button-system .home-tv-feed-dancer-photo,
-body.android-rendering.dancr-button-system .home-tv-feed-dancer-photo,
-body.is-samsung-browser.dancr-button-system .home-tv-feed-dancer-photo,
-body.samsung-rendering.dancr-button-system .home-tv-feed-dancer-photo {
+/* Android standalone apps and Samsung Browser get deliberately simple
+ * selectors so older engines cannot fall back to a translucent gray edge. */
+body.is-android.dancr-button-system [data-dancer-avatar],
+body.android-rendering.dancr-button-system [data-dancer-avatar],
+body.is-samsung-browser.dancr-button-system [data-dancer-avatar],
+body.samsung-rendering.dancr-button-system [data-dancer-avatar] {
   border: 0 !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -3577,14 +3571,7 @@ body.samsung-rendering.dancr-button-system .home-tv-feed-dancer-photo {
   color-scheme: dark !important;
 }
 
-body.dancr-button-system #profileBackdrop .profile-modal-avatar::after,
-body.dancr-button-system .approved-avatar-preview::after,
-body.dancr-button-system .venue-card-lineup-avatar::after,
-body.dancr-button-system .home-venue-discovery-lineup-avatar::after,
-body.dancr-button-system .profile-modal-avatar::after,
-body.dancr-button-system .home-tv-feed-dancer-photo::after,
-body.dancr-button-system .profile-titlebar-avatar::after,
-body.dancr-button-system .tv-profile-photo::after {
+body.dancr-button-system [data-dancer-avatar]::after {
   content: "" !important;
   position: absolute !important;
   z-index: 3 !important;
@@ -3602,14 +3589,7 @@ body.dancr-button-system .tv-profile-photo::after {
   pointer-events: none !important;
 }
 
-body.dancr-button-system #profileBackdrop .profile-modal-avatar::before,
-body.dancr-button-system .approved-avatar-preview::before,
-body.dancr-button-system .venue-card-lineup-avatar::before,
-body.dancr-button-system .home-venue-discovery-lineup-avatar::before,
-body.dancr-button-system .profile-modal-avatar::before,
-body.dancr-button-system .home-tv-feed-dancer-photo::before,
-body.dancr-button-system .profile-titlebar-avatar::before,
-body.dancr-button-system .tv-profile-photo::before {
+body.dancr-button-system [data-dancer-avatar]::before {
   content: none !important;
 }
 

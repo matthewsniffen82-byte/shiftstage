@@ -104,6 +104,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
           <div
             aria-label={`${profile.stageName} profile photo`}
             className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
+            data-dancer-avatar=""
             role="img"
           >
             {avatarPhoto ? (
