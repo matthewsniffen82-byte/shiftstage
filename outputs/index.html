@@ -29466,7 +29466,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=9" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=100" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=101" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -44879,12 +44879,13 @@
         profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
       );
       return `
-        <button class="venue-shift-row" data-profile="${profile.name}" aria-label="${profile.name} upcoming shift">
+        <button class="venue-shift-row" type="button" data-profile="${profile.name}" aria-label="Open ${escapeHtml(profile.name)}'s profile. ${escapeHtml(label)}">
           <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"><span data-dancer-avatar-border aria-hidden="true"></span></div>
           <div class="venue-shift-copy">
             <strong>${profile.name}${profile.status === "Verified" ? '<span class="verified-mark" aria-label="Verified">✓</span>' : ""}</strong>
             <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
           </div>
+          <span class="venue-shift-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"></path></svg></span>
         </button>
       `;
     }
@@ -44929,7 +44930,7 @@
         ` : "",
         upcoming.length ? `
           <section class="venue-activity-section is-upcoming" aria-labelledby="venue-upcoming-shifts">
-            <h3 class="section-title" id="venue-upcoming-shifts">Upcoming shifts at ${details.name}</h3>
+            <h3 class="section-title" id="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"} at ${escapeHtml(details.name)}"><span>Upcoming shifts</span><span class="venue-activity-count" aria-hidden="true">${upcoming.length}</span></h3>
             <div class="venue-shift-list">${upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("")}</div>
           </section>
         ` : "",
@@ -44978,27 +44979,32 @@
                     <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)} away</span>
                   </div>
                 </div>
+              </div>
+              <div class="venue-status-grid" aria-label="Venue status">
                 <span class="venue-operating-summary">
-                  <span class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>
+                  <span class="venue-status-kicker">Hours</span>
+                  <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</strong>
                   ${operatingStatus.hoursLabel ? `<span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </span>
+                ${quickStats}
               </div>
-              ${quickStats ? `<div class="venue-quick-stats">${quickStats}</div>` : ""}
               ${venueOfferMarkup(venue)}
-              <div class="venue-info">
+              <div class="venue-info venue-location-section">
                 ${details.address ? `
                   <div class="info-tile venue-address-tile">
                     <span class="venue-address-copy">
                       <strong>Address</strong>
                       <span class="meta">${escapeHtml(details.address)}</span>
                     </span>
-                    <a class="venue-address-directions" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${escapeHtml(venue.name)}" aria-label="Get directions to ${escapeHtml(details.name)}">${actionButtonLabel("pin", "Directions")}</a>
+                    <div class="venue-location-actions">
+                      <a class="venue-address-directions" href="https://maps.google.com/?q=${encodeURIComponent(details.address)}" target="_blank" rel="noreferrer" data-venue="${escapeHtml(venue.name)}" aria-label="Get directions to ${escapeHtml(details.name)}">${actionButtonLabel("pin", "Directions")}</a>
+                      ${rideMarkup}
+                    </div>
                   </div>
                 ` : `<div class="info-tile venue-address-tile venue-address-tile-no-address"><span class="venue-address-copy"><strong>Distance</strong><span class="meta">${escapeHtml(details.distanceLabel)}</span></span></div>`}
                 ${details.phone ? `<div class="info-tile"><strong>Phone</strong><div class="meta">${details.phone}</div></div>` : ""}
                 ${details.website ? `<div class="info-tile"><strong>Website</strong><div class="meta">${details.website.replace(/^https?:\/\//, "")}</div></div>` : ""}
               </div>
-              ${rideMarkup}
               <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venue.name}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
                 ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following venue" : "Follow venue")}
               </button>

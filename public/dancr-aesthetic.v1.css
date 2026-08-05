@@ -4336,8 +4336,8 @@ body.dancr-button-system > .app main.stack > section.stack
  * identity-first hero, truthful live-data sections, and restrained brand and
  * semantic actions. It intentionally excludes all floating navigation. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail {
-  gap: 14px !important;
-  padding-bottom: 18px !important;
+  gap: 10px !important;
+  padding-bottom: 16px !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero {
@@ -4355,7 +4355,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo {
   position: relative !important;
   isolation: isolate;
-  min-height: clamp(200px, 46vw, 248px) !important;
+  min-height: clamp(156px, 35vw, 186px) !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -4364,9 +4364,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-mai
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
   box-sizing: border-box;
   width: calc(100% - clamp(28px, 8vw, 48px)) !important;
-  height: calc(100% - clamp(28px, 8vw, 48px)) !important;
+  height: calc(100% - clamp(24px, 6vw, 38px)) !important;
   max-width: 480px !important;
-  max-height: 216px !important;
+  max-height: 158px !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -4411,7 +4411,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
   display: grid !important;
-  gap: 10px !important;
+  gap: 8px !important;
   padding: 12px 14px 14px !important;
   border-top: 1px solid color-mix(
     in srgb,
@@ -4433,7 +4433,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-block {
-  gap: 8px;
+  gap: 4px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-copy {
@@ -4474,28 +4474,87 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
   color: var(--dancr-color-text-muted);
 }
 
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-status-grid > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-operating-summary, .venue-quick-stat) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 60px !important;
+  display: grid !important;
+  align-content: center;
+  justify-items: start;
+  gap: 3px !important;
+  padding: 9px 11px !important;
+  border: 1px solid var(--dancr-color-border-subtle) !important;
+  border-radius: 14px !important;
+  background: var(--dancr-color-surface-subtle) !important;
+  box-shadow: none !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-summary {
-  justify-content: flex-start !important;
-  gap: 6px !important;
+  flex: initial !important;
+  flex-wrap: initial !important;
+  justify-content: initial !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-kicker,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat span {
+  color: var(--dancr-color-text-muted) !important;
+  font-size: 10.5px;
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   :is(.venue-operating-status, .venue-status-pill) {
-  min-height: 30px !important;
-  padding-inline: 10px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stats {
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)) !important;
-  gap: 7px !important;
-  margin-top: 0 !important;
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-status {
+  justify-content: flex-start !important;
+  color: var(--dancr-color-text-primary);
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-pill {
+  color: var(--dancr-color-text-muted) !important;
+  font-size: 10px;
+  line-height: 1.15;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat {
-  min-height: 52px !important;
+  min-height: 60px !important;
   border-color: var(--dancr-color-border-subtle) !important;
   background: var(--dancr-color-surface-subtle) !important;
   box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat strong {
+  font-size: 17px;
+  line-height: 1;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4520,15 +4579,19 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-inf
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-tile {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
-  gap: 10px !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 9px !important;
 }
 
-body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-directions {
-  display: inline-flex !important;
-  min-height: 42px !important;
-  align-items: center !important;
-  justify-content: center !important;
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-actions > :only-child {
+  grid-column: 1 / -1;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-copy .meta {
@@ -4541,9 +4604,21 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-add
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-directions {
-  width: auto !important;
-  min-height: 42px !important;
-  padding-inline: 12px !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding-inline: 10px !important;
+  font-size: 12.5px !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-uber {
+  width: 100% !important;
+  min-height: 48px !important;
+  margin: 0 !important;
+  padding-inline: 10px !important;
+  font-size: 12.5px !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4710,14 +4785,16 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn:not(.is-following) {
   width: 100% !important;
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-border-subtle) !important;
   color: var(--dancr-color-text-primary) !important;
-  background: linear-gradient(
-    135deg,
-    var(--dancr-color-brand-primary),
-    var(--dancr-color-brand-primary-deep)
-  ) !important;
-  box-shadow: var(--dancr-shadow-brand-control) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .action-btn.follow-venue-btn:not(.is-following) .action-icon {
+  color: var(--dancr-color-brand-core) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4734,8 +4811,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-section {
   display: grid;
-  gap: 9px;
-  padding: 3px 0 8px;
+  gap: 7px;
+  padding: 2px 0 6px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4745,6 +4822,28 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   border-left: 2px solid var(--dancr-color-brand-primary) !important;
   color: var(--dancr-color-text-primary) !important;
   text-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-section.is-upcoming .section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-count {
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 999px;
+  color: var(--dancr-color-info);
+  background: var(--dancr-color-surface-subtle);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -4760,6 +4859,56 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-activity-section.is-trending .section-title {
   border-left-color: var(--dancr-color-featured) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-shift-row {
+  grid-template-columns: 58px minmax(0, 1fr) 32px;
+  min-height: 86px;
+  padding: 9px 11px;
+  border-color: color-mix(
+    in srgb,
+    var(--dancr-color-text-muted) 26%,
+    transparent
+  ) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-shift-row:is(:hover, :focus-visible) {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  box-shadow: var(--dancr-focus-ring) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-shift-copy strong {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-shift-copy > span {
+  color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-shift-chevron {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--dancr-color-border-subtle);
+  border-radius: 999px;
+  color: var(--dancr-color-text-secondary);
+  background: var(--dancr-color-surface);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-shift-chevron svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-empty {
@@ -4841,6 +4990,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   }
 
   body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-directions {
-    justify-self: start;
+    justify-self: stretch;
   }
 }
