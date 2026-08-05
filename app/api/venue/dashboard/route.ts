@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueFinance } from "@/src/lib/dancr/finance";
 import { getVenueDashboard } from "@/src/lib/dancr/venue";
+import { getVenueDancerVerificationState } from "@/src/lib/dancr/venue-affiliations";
 import { getLatestVenueOwnershipClaim } from "@/src/lib/dancr/venue-claims";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -24,11 +25,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, profile: null, claim });
     }
 
-    const [dashboard, finance] = await Promise.all([
+    const [dashboard, finance, verification] = await Promise.all([
       getVenueDashboard(createAdminSupabaseClient(), user.id),
       getVenueFinance(admin, user.id),
+      getVenueDancerVerificationState(admin, user.id),
     ]);
-    return NextResponse.json({ ok: true, ...dashboard, finance });
+    return NextResponse.json({
+      ok: true,
+      ...dashboard,
+      finance,
+      affiliations: verification.affiliations,
+    });
   } catch (error) {
     return apiError(error, "Unable to load venue dashboard.");
   }

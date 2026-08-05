@@ -1,5 +1,6 @@
 declare module "qrcode" {
   type QRCodeOptions = {
+    errorCorrectionLevel?: "L" | "M" | "Q" | "H";
     width?: number;
     margin?: number;
     color?: {

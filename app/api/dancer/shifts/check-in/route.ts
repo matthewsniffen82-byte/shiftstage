@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { validateClientLocationReading } from "@/src/lib/dancr/geofence";
 import { endDancerShift } from "@/src/lib/dancr/shift-lifecycle";
+import {
+  assertDancerVenueAffiliationForShift,
+  VenueAffiliationUserError,
+} from "@/src/lib/dancr/venue-affiliations";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -101,6 +105,19 @@ async function verifyAuthenticatedLocation(
   }
 
   const admin = createAdminSupabaseClient() as any;
+  if (eventType === "check_in") {
+    try {
+      await assertDancerVenueAffiliationForShift(admin, userId, shiftId);
+    } catch (error) {
+      if (error instanceof VenueAffiliationUserError) {
+        return NextResponse.json(
+          { ok: false, code: "venue_verification_required", error: error.message },
+          { status: 403 },
+        );
+      }
+      throw error;
+    }
+  }
   const { data, error } = await admin.rpc("process_dancer_location_verification", {
     p_user_id: userId,
     p_shift_id: shiftId,

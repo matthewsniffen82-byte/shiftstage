@@ -104,6 +104,7 @@ type LoadState = {
   deal?: Record<string, unknown> | null;
   dealRevenue?: Record<string, unknown> | null;
   finance?: Record<string, unknown> | null;
+  affiliations?: Array<Record<string, unknown>>;
   error?: string;
 };
 
@@ -169,6 +170,7 @@ export default function DashboardClient({
             deal: secondary.deal || null,
             dealRevenue: secondary.dealRevenue || null,
             finance: secondary.finance || null,
+            affiliations: secondary.affiliations || [],
           });
           setIsLoading(false);
         }
@@ -302,6 +304,7 @@ export default function DashboardClient({
               finance={state.finance}
               profile={state.profile}
               workingNow={state.workingNow || []}
+              initialAffiliations={state.affiliations || []}
               onProfileChange={updateProfile}
             />
           ) : null}
@@ -1403,6 +1406,7 @@ function VenuePanel({
   finance,
   profile,
   workingNow,
+  initialAffiliations,
   onProfileChange,
 }: {
   analytics?: LoadState["analytics"];
@@ -1411,6 +1415,7 @@ function VenuePanel({
   finance?: LoadState["finance"];
   profile?: LoadState["profile"];
   workingNow: Array<Record<string, unknown>>;
+  initialAffiliations: Array<Record<string, unknown>>;
   onProfileChange: (profile: Record<string, unknown>) => void;
 }) {
   const [form, setForm] = useState({
@@ -1593,6 +1598,7 @@ function VenuePanel({
         <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
         <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
       </InfoPanel>
+      <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
       <VenueClubDealPanel initialDeal={deal} revenue={dealRevenue} finance={finance} />
       <article className="info-panel venue-profile-panel">
         <h2>Public venue page</h2>
@@ -2076,6 +2082,7 @@ function DancerPanel({
       </InfoPanel>
       {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
       {isApproved ? <DancerTvStudio embedded /> : null}
+      {isApproved ? <DancerVenueVerificationPanel /> : null}
       <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
       {isApproved ? (
         <>
@@ -2560,6 +2567,310 @@ function DancerSetupPanel({
       </form>
     </article>
   );
+}
+
+function DancerVenueVerificationPanel() {
+  const [venues, setVenues] = useState<Array<Record<string, unknown>>>([]);
+  const [affiliations, setAffiliations] = useState<Array<Record<string, unknown>>>([]);
+  const [venueId, setVenueId] = useState("");
+  const [verification, setVerification] = useState<Record<string, any> | null>(null);
+  const [status, setStatus] = useState("Loading venue verification...");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in required.");
+      return;
+    }
+    const response = await fetch("/api/dancer/venue-verification", {
+      headers: { authorization: `Bearer ${session.accessToken}` },
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue verification.");
+    setVenues(data.venues || []);
+    setAffiliations(data.affiliations || []);
+    setVenueId((current) => current || String(data.venues?.[0]?.id || ""));
+    setStatus(data.venues?.length
+      ? "Choose your club, then show the personal QR to its verified manager."
+      : "No managed venues are available yet. The venue owner must verify their MyDancr account first.");
+  }, []);
+
+  useEffect(() => {
+    void load().catch((error) => setStatus(error instanceof Error ? error.message : "Unable to load venue verification."));
+  }, [load]);
+
+  async function createVerification() {
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    if (!venueId) return setStatus("Choose a venue first.");
+    setIsSaving(true);
+    setStatus("Creating your private 10-minute QR...");
+    try {
+      const response = await fetch("/api/dancer/venue-verification", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ venueId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to create verification QR.");
+      setVerification(data.verification);
+      setStatus(data.message || "Show this QR to the verified venue manager.");
+    } catch (error) {
+      setVerification(null);
+      setStatus(error instanceof Error ? error.message : "Unable to create verification QR.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function shareVerification() {
+    if (!verification?.verificationUrl) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Verify me at ${String(verification.venue?.name || "this venue")}`,
+          text: "Open this private MyDancr link to approve my venue affiliation.",
+          url: String(verification.verificationUrl),
+        });
+        setStatus("Verification link shared.");
+        return;
+      }
+      await navigator.clipboard.writeText(String(verification.verificationUrl));
+      setStatus("Private verification link copied.");
+    } catch (error) {
+      if ((error as DOMException)?.name !== "AbortError") setStatus("Unable to share the verification link.");
+    }
+  }
+
+  async function removeAffiliation(affiliationId: string) {
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    setIsSaving(true);
+    setStatus("Removing venue verification...");
+    try {
+      const response = await fetch("/api/dancer/venue-verification", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ affiliationId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove venue verification.");
+      setVerification(null);
+      await load();
+      setStatus(data.message || "Venue verification removed.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to remove venue verification.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const activeAffiliations = affiliations.filter((item) => item.status === "active");
+
+  return (
+    <article className="info-panel venue-verification-panel" id="dancer-venue-verification">
+      <span className="eyebrow">Venue authorization</span>
+      <h2>Verify where you work</h2>
+      <p>Your venue&apos;s verified manager scans this personal QR and approves you in one tap. No shared club code or paperwork.</p>
+      <div className="venue-verification-controls">
+        <label>
+          Venue
+          <select value={venueId} onChange={(event) => {
+            setVenueId(event.target.value);
+            setVerification(null);
+          }} disabled={isSaving || !venues.length}>
+            <option value="">Choose a managed venue</option>
+            {venues.map((venue) => (
+              <option key={String(venue.id)} value={String(venue.id)}>
+                {String(venue.name)} · {String(venue.city)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" disabled={isSaving || !venueId} onClick={createVerification}>
+          {isSaving ? "Creating..." : "Show my verification QR"}
+        </button>
+      </div>
+      {verification ? (
+        <section className="dancer-verification-qr" aria-label="Personal venue verification QR">
+          <img src={String(verification.qrDataUrl)} alt={`Verification QR for ${String(verification.venue?.name || "venue")}`} />
+          <div>
+            <strong>{String(verification.venue?.name || "Venue")}</strong>
+            <span>Expires {formatVerificationExpiry(String(verification.expiresAt))}</span>
+            <small>This QR is tied to your profile and this venue. It works once.</small>
+            <button type="button" onClick={shareVerification}>Share private link</button>
+          </div>
+        </section>
+      ) : null}
+      <div className="verified-affiliation-list" aria-label="Verified venues">
+        <strong>Verified venues</strong>
+        {activeAffiliations.map((item) => {
+          const venue = (item.venue || {}) as Record<string, unknown>;
+          return (
+            <div key={String(item.id)}>
+              <span><b>✓ {String(venue.name || "Venue")}</b><small>Approved {formatVerificationDate(item.approvedAt)}</small></span>
+              <button type="button" disabled={isSaving} onClick={() => removeAffiliation(String(item.id))}>Remove</button>
+            </div>
+          );
+        })}
+        {!activeAffiliations.length ? <small>No venue has verified your profile yet.</small> : null}
+      </div>
+      <p role="status" aria-live="polite">{status}</p>
+    </article>
+  );
+}
+
+function VenueDancerVerificationPanel({
+  initialAffiliations,
+}: {
+  initialAffiliations: Array<Record<string, unknown>>;
+}) {
+  const [affiliations, setAffiliations] = useState(initialAffiliations);
+  const [verification, setVerification] = useState<Record<string, any> | null>(null);
+  const [token, setToken] = useState("");
+  const [status, setStatus] = useState("Scan a dancer's personal MyDancr QR to verify her affiliation.");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const load = useCallback(async (verificationToken = "") => {
+    const session = readSession();
+    if (!session?.accessToken) {
+      setStatus("Sign in to the verified venue account to approve dancers.");
+      return;
+    }
+    const query = verificationToken ? `?token=${encodeURIComponent(verificationToken)}` : "";
+    const response = await fetch(`/api/venue/dancer-verifications${query}`, {
+      headers: { authorization: `Bearer ${session.accessToken}` },
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dancer verification.");
+    setAffiliations(data.affiliations || []);
+    setVerification(data.verification || null);
+    setStatus(data.verification
+      ? `Confirm that ${String(data.verification.dancer?.stageName || "this dancer")} works at ${String(data.venue?.name || "your venue")}.`
+      : "Scan a dancer's personal MyDancr QR to verify her affiliation.");
+  }, []);
+
+  useEffect(() => setAffiliations(initialAffiliations), [initialAffiliations]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const verificationToken = params.get("venueVerify") || params.get("verifyDancer") || "";
+    setToken(verificationToken);
+    void load(verificationToken).catch((error) => {
+      setVerification(null);
+      setStatus(error instanceof Error ? error.message : "Unable to load dancer verification.");
+    });
+  }, [load]);
+
+  async function approve() {
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    if (!token) return setStatus("Scan a current dancer verification QR first.");
+    setIsSaving(true);
+    setStatus("Approving dancer affiliation...");
+    try {
+      const response = await fetch("/api/venue/dancer-verifications", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to approve dancer verification.");
+      clearVenueVerificationQuery();
+      setToken("");
+      setVerification(null);
+      await load();
+      setStatus(data.message || "Dancer affiliation approved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to approve dancer verification.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function revoke(affiliationId: string) {
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    setIsSaving(true);
+    setStatus("Removing dancer verification...");
+    try {
+      const response = await fetch("/api/venue/dancer-verifications", {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ affiliationId, reason: "Venue manager removed affiliation." }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to remove dancer verification.");
+      await load();
+      setStatus(data.message || "Dancer verification removed.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to remove dancer verification.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const activeAffiliations = affiliations.filter((item) => item.status === "active");
+  const dancer = (verification?.dancer || {}) as Record<string, unknown>;
+
+  return (
+    <article className="info-panel venue-verification-panel" id="venue-dancer-verification">
+      <span className="eyebrow">Verified roster</span>
+      <h2>Approve dancers</h2>
+      <p>The dancer shows her short-lived personal QR. Scan it, match the profile photo and stage name, then approve once.</p>
+      {verification ? (
+        <section className="venue-verification-preview" aria-label="Dancer verification confirmation">
+          <span className="venue-verification-avatar">
+            {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} alt="" /> : String(dancer.stageName || "D").slice(0, 1)}
+          </span>
+          <div>
+            <strong>{String(dancer.stageName || "Dancer")}</strong>
+            <span>{String(dancer.city || "City unavailable")}</span>
+            <small>{verification.alreadyVerified ? "Already verified" : `Link expires ${formatVerificationExpiry(String(verification.tokenExpiresAt))}`}</small>
+          </div>
+          <button type="button" disabled={isSaving} onClick={approve}>
+            {isSaving ? "Approving..." : verification.alreadyVerified ? "Confirm again" : "Confirm she works here"}
+          </button>
+        </section>
+      ) : null}
+      <div className="verified-affiliation-list" aria-label="Verified dancer roster">
+        <strong>Approved roster</strong>
+        {activeAffiliations.map((item) => {
+          const itemDancer = (item.dancer || {}) as Record<string, unknown>;
+          return (
+            <div key={String(item.id)}>
+              <span><b>✓ {String(itemDancer.stageName || "Dancer")}</b><small>Approved {formatVerificationDate(item.approvedAt)}</small></span>
+              <button type="button" disabled={isSaving} onClick={() => revoke(String(item.id))}>Remove</button>
+            </div>
+          );
+        })}
+        {!activeAffiliations.length ? <small>No dancers have been approved yet.</small> : null}
+      </div>
+      <p role="status" aria-live="polite">{status}</p>
+    </article>
+  );
+}
+
+function clearVenueVerificationQuery() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("venueVerify");
+  url.searchParams.delete("verifyDancer");
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+}
+
+function formatVerificationExpiry(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "soon";
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
+}
+
+function formatVerificationDate(value: unknown) {
+  const date = new Date(String(value || ""));
+  if (Number.isNaN(date.getTime())) return "recently";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
 function DancerBillingPanel() {
@@ -3986,7 +4297,7 @@ function DashboardStyles() {
       .visibility-panel button:disabled { opacity: .62; cursor: wait; }
       .visibility-panel.is-incognito { border-color: rgba(148,229,255,.34); box-shadow: inset 0 0 0 1px rgba(148,229,255,.08); }
       .visibility-copy { display: grid; gap: 10px; }
-      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel { grid-column: span 3; }
+      .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
       .impact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
       .event-list { display: grid; gap: 10px; }
       .event-row { display: grid; gap: 4px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
@@ -4204,7 +4515,29 @@ function DashboardStyles() {
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
+      .venue-verification-panel { display: grid; gap: 14px; border-color: rgba(34,211,238,.24); background: radial-gradient(circle at 100% 0%, rgba(34,211,238,.09), transparent 26rem), rgba(12,12,18,.88); }
+      .venue-verification-panel > p { margin: 0; color: #cfc5de; line-height: 1.5; }
+      .venue-verification-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+      .venue-verification-controls label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
+      .venue-verification-controls select { min-height: 46px; width: 100%; border: 1px solid rgba(34,211,238,.28); border-radius: 8px; color: #fff; background: #11111a; padding: 0 12px; font: inherit; }
+      .venue-verification-controls button, .dancer-verification-qr button, .venue-verification-preview button, .verified-affiliation-list button { min-height: 44px; border: 1px solid rgba(34,211,238,.38); border-radius: 8px; color: #061015; background: linear-gradient(135deg, #67e8f9, #c084fc); padding: 0 16px; font: inherit; font-weight: 950; cursor: pointer; }
+      .venue-verification-controls button:disabled, .venue-verification-preview button:disabled, .verified-affiliation-list button:disabled { opacity: .55; cursor: wait; }
+      .dancer-verification-qr { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 18px; align-items: center; padding: 16px; border: 1px solid rgba(34,211,238,.3); border-radius: 12px; background: rgba(4,8,14,.8); }
+      .dancer-verification-qr > img { display: block; width: 100%; aspect-ratio: 1; border-radius: 8px; background: #fff; }
+      .dancer-verification-qr > div, .venue-verification-preview > div { display: grid; gap: 8px; }
+      .dancer-verification-qr strong, .venue-verification-preview strong { color: #fff; font-size: 20px; }
+      .dancer-verification-qr span, .venue-verification-preview span { color: #94e5ff; font-weight: 850; }
+      .dancer-verification-qr small, .venue-verification-preview small, .verified-affiliation-list small { color: #b9accd; line-height: 1.4; }
+      .verified-affiliation-list { display: grid; gap: 9px; }
+      .verified-affiliation-list > strong { color: #fff; }
+      .verified-affiliation-list > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 9px; background: rgba(255,255,255,.035); }
+      .verified-affiliation-list > div > span { display: grid; gap: 3px; min-width: 0; }
+      .verified-affiliation-list b { color: #78ffc0; overflow-wrap: anywhere; }
+      .verified-affiliation-list button { min-height: 36px; color: #fff; background: rgba(255,255,255,.06); }
+      .venue-verification-preview { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(50,255,164,.3); border-radius: 12px; background: rgba(50,255,164,.055); }
+      .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
+      .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .customer-top-nav { align-items: center; flex-direction: row; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-dashboard-head h1 { font-size: 34px; } .notification-title-row { align-items: flex-start; } }
     `}</style>

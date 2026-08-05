@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClubDeal, DealSourceType } from "./types";
 import { isCurrentLocationVerification } from "./geofence";
+import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 
 type DancrClient = SupabaseClient;
 
@@ -81,6 +82,7 @@ export async function getVerifiedActiveCheckInAtVenue(
   venueId: string,
   now = new Date(),
 ) {
+  if (!await dancerHasActiveVenueAffiliation(client, dancerId, venueId)) return null;
   const nowIso = now.toISOString();
   const { data, error } = await (client as any)
     .from("shifts")
