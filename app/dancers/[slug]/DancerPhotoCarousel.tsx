@@ -512,14 +512,16 @@ export function DancerPhotoCarousel({
               </output>
             </div>
           ) : null}
-          <button
-            aria-label={`Open ${stageName} ${selectedItem.kind} ${selectedIndex + 1} full screen`}
-            className="profile-media-feature-expand"
-            onClick={() => openViewer(selectedItem.kind, selectedIndex)}
-            type="button"
-          >
-            View full screen
-          </button>
+          {selectedItem.kind === "video" ? (
+            <button
+              aria-label={`Open ${stageName} TV video ${selectedIndex + 1} full screen`}
+              className="profile-media-feature-expand"
+              onClick={() => openViewer("video", selectedIndex)}
+              type="button"
+            >
+              View full screen
+            </button>
+          ) : null}
           <button
             aria-label={`Previous ${activeTab === "photo" ? "photo" : "TV video"}`}
             className="profile-media-feature-previous"

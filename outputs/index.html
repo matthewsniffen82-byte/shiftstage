@@ -33584,6 +33584,7 @@
           cursor: pointer;
           transition: opacity .18s ease, transform .18s ease, background-color .18s ease !important;
         }
+        #profileBackdrop .profile-modal-media-expand[hidden] { display: none !important; }
         #profileBackdrop .profile-modal-media-control-icon {
           width: 18px;
           height: 18px;
@@ -36382,7 +36383,7 @@
             <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
             <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
             <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
-            <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile media full screen" title="View full screen">
+            <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile video full screen" title="View video full screen" hidden>
               <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5"></path><path d="M16 3h5v5"></path><path d="M8 21H3v-5"></path><path d="M16 21h5v-5"></path></svg>
             </button>
             <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
@@ -45129,6 +45130,7 @@
       const totalPhotos = Math.max(1, photoThumbs.length);
       modalImage.dataset.activePhotoIndex = String(activeIndex);
       modalImage.dataset.activeMediaType = "photo";
+      modalMediaExpand.hidden = true;
       modalImage.setAttribute(
         "aria-label",
         `${modalName.textContent.trim() || "Dancer"} profile photo, media ${activeIndex + 1} of ${Math.max(1, thumbs.length)}. Swipe left or right to change media.`
@@ -45146,6 +45148,7 @@
       modalImage.className = "modal-image is-video-media";
       modalImage.dataset.activeMediaType = "video";
       modalImage.dataset.activeVideoIndex = String(index);
+      modalMediaExpand.hidden = false;
       modalImage.style.removeProperty("--custom-photo");
 
       const preview = document.createElement("div");

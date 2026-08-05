@@ -54,7 +54,13 @@ test("live profile photos remain accessible with thumbnails and keyboard navigat
     liveApp,
     /function openSelectedModalMediaViewer\(\)[\s\S]*?openProfileTvViewer[\s\S]*?openPhotoViewerFromElement\(modalImage\)/,
   );
-  assert.match(liveApp, /id="modalMediaExpand"[\s\S]*?modalMediaExpand\?\.addEventListener\("click"/);
+  assert.match(
+    liveApp,
+    /id="modalMediaExpand"[^>]*aria-label="Open selected profile video full screen"[^>]*hidden/,
+  );
+  assert.match(liveApp, /modalImage\.dataset\.activeMediaType = "photo";[\s\S]*?modalMediaExpand\.hidden = true/);
+  assert.match(liveApp, /modalImage\.dataset\.activeMediaType = "video";[\s\S]*?modalMediaExpand\.hidden = false/);
+  assert.match(liveApp, /modalMediaExpand\?\.addEventListener\("click"/);
   assert.match(
     liveApp,
     /\.profile-modal \.gallery \{ overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x pan-y; \}/,
@@ -82,7 +88,14 @@ test("the profile promotes approved photos and dancer-only TV videos into one ta
   );
   assert.match(publicPhotoCarousel, /openViewer\(selectedItem\.kind, selectedIndex\)/);
   assert.match(publicPhotoCarousel, /profile-media-feature-position/);
-  assert.match(publicPhotoCarousel, /profile-media-feature-expand/);
+  assert.match(
+    publicPhotoCarousel,
+    /selectedItem\.kind === "video" \? \([\s\S]*?profile-media-feature-expand[\s\S]*?openViewer\("video", selectedIndex\)/,
+  );
+  assert.doesNotMatch(
+    publicPhotoCarousel,
+    /aria-label=\{`Open \$\{stageName\} photo/,
+  );
   assert.match(publicPhotoCarousel, /IntersectionObserver/);
   assert.match(publicPhotoCarousel, /video\.play\(\)\.catch/);
   assert.match(
