@@ -21,11 +21,15 @@ test("every dancer avatar uses the shared electric-white ring", () => {
   assert.match(ringRules, /border: 0 !important;/);
   assert.match(ringRules, /box-shadow: none !important;/);
   assert.match(ringRules, /\[data-dancer-avatar\]::after \{[\s\S]*?content: "" !important;/);
+  assert.match(ringRules, /\.home-tv-feed-dancer-photo,[\s\S]*?\.tv-profile-photo \{[\s\S]*?padding: 2px !important;[\s\S]*?background: #ffffff !important;/);
+  assert.match(ringRules, /\.home-tv-feed-dancer-photo > img,[\s\S]*?\.tv-profile-photo > \.tv-profile-photo-image \{[\s\S]*?inset: 2px !important;[\s\S]*?width: calc\(100% - 4px\) !important;[\s\S]*?height: calc\(100% - 4px\) !important;/);
   assert.match(ringRules, /inset 0 0 0 2px #ffffff,/);
   assert.match(ringRules, /inset 0 0 4px rgba\(255, 255, 255, 0\.96\) !important;/);
   assert.match(ringRules, /z-index: 3 !important;/);
   assert.match(ringRules, /pointer-events: none !important;/);
   assert.match(ringRules, /\[data-dancer-avatar\]::before \{[\s\S]*?content: none !important;/);
+  assert.match(ringRules, /\.home-tv-feed-dancer-photo::after,[\s\S]*?\.tv-profile-photo::after \{[\s\S]*?content: none !important;/);
+  assert.match(ringRules, /\.home-tv-feed-dancer-photo::before,[\s\S]*?\.tv-profile-photo::before \{[\s\S]*?content: none !important;/);
   assert.doesNotMatch(ringRules, /body\.dancr-button-system :is\(/);
   assert.match(ringRules, /body\.is-android\.dancr-button-system \[data-dancer-avatar\]/);
   assert.match(ringRules, /body\.android-rendering\.dancr-button-system \[data-dancer-avatar\]/);

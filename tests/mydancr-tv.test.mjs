@@ -169,8 +169,9 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   );
   assert.match(feedClient, /className=\{`tv-profile-photo\$\{video\.dancer\.avatarPhotoUrl \? " has-photo" : ""\}`\}/);
   assert.match(feedClient, /backgroundImage: `url\(\$\{JSON\.stringify\(video\.dancer\.avatarPhotoUrl\)\}\)`/);
-  assert.match(feedClient, /video\.dancer\.avatarPhotoUrl \? null : dancerInitials\(video\.dancer\.stageName\)/);
-  assert.match(feedClient, /\.tv-profile-photo \{[^}]*width: 58px[^}]*height: 58px[^}]*background-size: cover/);
+  assert.match(feedClient, /video\.dancer\.avatarPhotoUrl \? \([\s\S]*?className="tv-profile-photo-image"[\s\S]*?: dancerInitials\(video\.dancer\.stageName\)/);
+  assert.match(feedClient, /\.tv-profile-photo \{[^}]*width: 58px[^}]*height: 58px[^}]*background: #fff/);
+  assert.match(feedClient, /\.tv-profile-photo-image \{[^}]*inset: 2px[^}]*background-size: cover/);
   assert.match(feedClient, /className=\{video\.shift\.isActive \? "tv-schedule-row is-tonight" : "tv-schedule-row is-upcoming"\}/);
   assert.doesNotMatch(feedClient, /className="tv-details"|className="tv-mobile-actions"|<p>\{video\.caption\}<\/p>/);
   assert.doesNotMatch(feedClient, /function updateFollow|function updateGoing|function shareVideo|function reportVideo/);

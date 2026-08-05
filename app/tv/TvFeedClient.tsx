@@ -588,18 +588,20 @@ export default function TvFeedClient({
                   <span
                     className={`tv-profile-photo${video.dancer.avatarPhotoUrl ? " has-photo" : ""}`}
                     data-dancer-avatar=""
-                    style={video.dancer.avatarPhotoUrl
-                      ? {
+                    aria-hidden="true"
+                  >
+                    {video.dancer.avatarPhotoUrl ? (
+                      <span
+                        className="tv-profile-photo-image"
+                        style={{
                           backgroundImage: `url(${JSON.stringify(video.dancer.avatarPhotoUrl)})`,
                           backgroundPosition: imageFocalPointCss(
                             video.dancer.avatarPhotoFocalX,
                             video.dancer.avatarPhotoFocalY,
                           ),
-                        }
-                      : undefined}
-                    aria-hidden="true"
-                  >
-                    {video.dancer.avatarPhotoUrl ? null : dancerInitials(video.dancer.stageName)}
+                        }}
+                      />
+                    ) : dancerInitials(video.dancer.stageName)}
                   </span>
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">
@@ -886,8 +888,9 @@ function TvStyles() {
       .tv-sound { position: absolute; z-index: 5; top: 12px; right: 12px; width: 44px; min-width: 44px; max-width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #fff; background: rgba(0,0,0,.64); cursor: pointer; }
       .tv-sound svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .tv-profile-body { position: absolute; z-index: 3; inset: auto 0 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: end; gap: 14px; padding: 86px 20px 22px; background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%); }
-      .tv-profile-photo { position: relative; width: 58px; height: 58px; display: grid; place-items: center; overflow: hidden; border: 2px solid rgba(126,234,255,.92); border-radius: 50%; color: #fff; background-color: #24113c; background-position: center; background-repeat: no-repeat; background-size: cover; box-shadow: 0 0 0 3px rgba(139,92,246,.34), 0 10px 28px rgba(0,0,0,.56), 0 0 24px rgba(34,199,255,.28); font-size: 18px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
-      .tv-profile-photo.has-photo { background-color: #08080b; filter: none; opacity: 1; mix-blend-mode: normal; }
+      .tv-profile-photo { position: relative; width: 58px; height: 58px; display: grid; place-items: center; overflow: hidden; padding: 2px; border: 0; border-radius: 50%; color: #fff; background: #fff; box-shadow: none; font-size: 18px; font-weight: 950; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+      .tv-profile-photo.has-photo { background: #fff; filter: none; opacity: 1; mix-blend-mode: normal; }
+      .tv-profile-photo-image { position: absolute; z-index: 2; inset: 2px; display: block; border-radius: 50%; background-color: #08080b; background-position: center; background-repeat: no-repeat; background-size: cover; filter: none; opacity: 1; mix-blend-mode: normal; }
       .tv-profile-details { min-width: 0; display: grid; gap: 5px; }
       .tv-card-info-stack { min-width: 0; display: grid; gap: 3px; }
       .tv-profile-body h2 { min-width: 0; margin: 0 0 2px; display: flex; align-items: center; gap: 6px; color: #fff; font-size: clamp(20px, 3vw, 26px); font-weight: 900; line-height: 1.04; text-shadow: 0 2px 12px rgba(0,0,0,.72); }

@@ -396,7 +396,7 @@ test("idle TV utility controls use frosted-clear glass while selected reactions 
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=95/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=96/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
@@ -410,7 +410,7 @@ test("production TV cards use the neutral-first brand palette without changing m
   assert.match(brandedCards, /\.home-tv-feed-dancer-photo/);
   assert.match(
     brandedCards,
-    /\[data-dancer-avatar\]::after \{[\s\S]*?inset 0 0 0 2px #ffffff,[\s\S]*?inset 0 0 4px rgba\(255, 255, 255, 0\.96\) !important;/,
+    /\.home-tv-feed-dancer-photo,[\s\S]*?\.tv-profile-photo \{[\s\S]*?padding: 2px !important;[\s\S]*?background: #ffffff !important;[\s\S]*?\.home-tv-feed-dancer-photo > img,[\s\S]*?\.tv-profile-photo > \.tv-profile-photo-image \{[\s\S]*?inset: 2px !important;[\s\S]*?width: calc\(100% - 4px\) !important;/,
   );
   assert.match(
     brandedCards,

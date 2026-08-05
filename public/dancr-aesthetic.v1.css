@@ -3538,9 +3538,9 @@ body.dancr-button-system .home-tv-feed-shade,
 
 /* Every real dancer avatar uses one thin electric-white Dancr ring. The
  * semantic marker covers circular identity photos, venue lineup stacks, and
- * schedule portraits without touching venue marks, media, or navigation. A
- * dedicated inset overlay paints above the image so Android cannot composite
- * the white edge into gray. */
+ * schedule portraits without touching venue marks, media, or navigation.
+ * Prominent photo avatars use a solid white host and a physically inset image
+ * so Android never rasterizes the white ring through a gray shadow layer. */
 body.dancr-button-system [data-dancer-avatar] {
   position: relative !important;
   isolation: isolate !important;
@@ -3551,6 +3551,40 @@ body.dancr-button-system [data-dancer-avatar] {
   forced-color-adjust: none !important;
   -webkit-print-color-adjust: exact !important;
   text-shadow: none !important;
+}
+
+body.dancr-button-system .home-tv-feed-dancer-photo,
+body.dancr-button-system .profile-titlebar-avatar,
+body.dancr-button-system .tv-profile-photo {
+  box-sizing: border-box !important;
+  padding: 2px !important;
+  background: #ffffff !important;
+}
+
+body.dancr-button-system .home-tv-feed-dancer-photo > img,
+body.dancr-button-system .profile-titlebar-avatar > img,
+body.dancr-button-system .tv-profile-photo > .tv-profile-photo-image {
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: 2px !important;
+  width: calc(100% - 4px) !important;
+  height: calc(100% - 4px) !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  -webkit-filter: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+body.dancr-button-system .home-tv-feed-dancer-photo > img,
+body.dancr-button-system .profile-titlebar-avatar > img {
+  background: #000000 !important;
+}
+
+body.dancr-button-system .tv-profile-photo > .tv-profile-photo-image {
+  background-color: #000000 !important;
 }
 
 /* Android standalone apps and Samsung Browser get deliberately simple
@@ -3593,12 +3627,26 @@ body.dancr-button-system [data-dancer-avatar]::before {
   content: none !important;
 }
 
+body.dancr-button-system .home-tv-feed-dancer-photo::after,
+body.dancr-button-system .profile-titlebar-avatar::after,
+body.dancr-button-system .tv-profile-photo::after {
+  content: none !important;
+}
+
+body.dancr-button-system .home-tv-feed-dancer-photo::before,
+body.dancr-button-system .profile-titlebar-avatar::before,
+body.dancr-button-system .tv-profile-photo::before {
+  content: none !important;
+}
+
 body.dancr-button-system .home-tv-feed-dancer-photo:not(:has(img)) {
-  background-image: linear-gradient(
-    145deg,
-    var(--dancr-color-brand-primary),
-    var(--dancr-color-brand-primary-deep)
-  ) !important;
+  background-image: none !important;
+  color: var(--dancr-color-brand-primary-deep) !important;
+}
+
+body.dancr-button-system .profile-titlebar-avatar:not(.has-photo),
+body.dancr-button-system .tv-profile-photo:not(.has-photo) {
+  color: var(--dancr-color-brand-primary-deep) !important;
 }
 
 body.dancr-button-system .home-tv-feed-dancer-photo:has(img) {
