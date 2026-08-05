@@ -1,6 +1,6 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { LIVE_SHELL_SHA256 } from "@/src/generated/live-shell-version";
 
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
@@ -12,7 +12,8 @@ export const revalidate = 0;
 export async function GET() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
   const html = await readFile(htmlPath, "utf8");
-  const activeEditProfileMarker = `<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");document.documentElement.setAttribute("data-active-edit-profile-version","canonical-profile-approval-v13");document.documentElement.setAttribute("data-live-shell-version","${LIVE_SHELL_SHA256}");</script>`;
+  const liveShellSha256 = createHash("sha256").update(html).digest("hex");
+  const activeEditProfileMarker = `<script>console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v13");document.documentElement.setAttribute("data-active-edit-profile-version","canonical-profile-approval-v13");document.documentElement.setAttribute("data-live-shell-version","${liveShellSha256}");</script>`;
   const withBase = html.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);
   const withLiveProfileAssets = withBase.replace(
     "</head>",
@@ -23,7 +24,7 @@ export async function GET() {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
-      "x-dancr-live-shell-version": LIVE_SHELL_SHA256,
+      "x-dancr-live-shell-version": liveShellSha256,
     },
   });
 }
