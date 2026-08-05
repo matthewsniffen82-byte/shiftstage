@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import {
+  isAvatarFaceDetectionUnavailableError,
+  isAvatarFaceRequiredError,
+} from "@/src/lib/dancr/avatar-face";
 import { deleteOwnDancerAvatar } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
 import { PROFILE_AVATAR_CONTEXT } from "@/src/lib/dancr/photo-slot";
@@ -34,6 +38,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: result.decision !== "rejected", ...result }, { status });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
+    if (isAvatarFaceRequiredError(error)) {
+      return apiError(error, "Choose a clear face photo for your avatar.", 422);
+    }
+    if (isAvatarFaceDetectionUnavailableError(error)) {
+      return apiError(error, "Avatar face centering is temporarily unavailable.", 503);
+    }
     if (message.startsWith("Image moderation ")) {
       return apiError(error, "Unable to upload dancer avatar.", 503);
     }
