@@ -82,11 +82,13 @@ export function DancerPhotoCarousel({
   const [inlinePlaying, setInlinePlaying] = useState(false);
   const [inlineCurrentTime, setInlineCurrentTime] = useState(0);
   const [inlineDuration, setInlineDuration] = useState(0);
+  const [shareStatus, setShareStatus] = useState("");
   const inlineGesture = useRef<SwipeGesture>(emptyGesture());
   const gesture = useRef<SwipeGesture>(emptyGesture());
   const inlineTrackpadLockedUntil = useRef(0);
   const trackpadLockedUntil = useRef(0);
   const inlineUserPaused = useRef(false);
+  const deepLinkHandled = useRef(false);
   const inlineVideo = useRef<HTMLVideoElement | null>(null);
   const closeButton = useRef<HTMLButtonElement | null>(null);
   const activeItems: ProfileMedia[] =
@@ -105,6 +107,20 @@ export function DancerPhotoCarousel({
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
   const activeViewerItem = viewerItems[viewerIndex];
+
+  useEffect(() => {
+    if (deepLinkHandled.current) return;
+    deepLinkHandled.current = true;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("media") !== "photo" || !photoMedia.length) return;
+    const requestedIndex = Number(params.get("mediaIndex"));
+    const index = Number.isInteger(requestedIndex)
+      ? Math.min(Math.max(requestedIndex, 0), photoMedia.length - 1)
+      : 0;
+    setActiveTab("photo");
+    setActiveIndex(index);
+    setViewer({ kind: "photo", index });
+  }, [photoMedia.length]);
 
   useEffect(() => {
     if (activeTab === "photo" && !photoMedia.length && videoMedia.length) {
@@ -165,7 +181,7 @@ export function DancerPhotoCarousel({
     document.body.style.overflow = "hidden";
     closeButton.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setViewer(null);
+      if (event.key === "Escape") closeViewer();
       if (event.key === "ArrowLeft") showRelativeViewerItem(-1);
       if (event.key === "ArrowRight") showRelativeViewerItem(1);
     };
@@ -177,7 +193,74 @@ export function DancerPhotoCarousel({
   });
 
   function openViewer(kind: MediaTab, index: number) {
+    setShareStatus("");
     setViewer({ kind, index });
+  }
+
+  function closeViewer() {
+    setViewer(null);
+    setShareStatus("");
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("media") && !url.searchParams.has("mediaIndex")) {
+      return;
+    }
+    url.searchParams.delete("media");
+    url.searchParams.delete("mediaIndex");
+    window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function viewerShareUrl(item: ProfileMedia, index: number) {
+    if (item.kind === "video") {
+      return new URL(`/tv/${encodeURIComponent(item.id)}`, window.location.origin).toString();
+    }
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set("media", "photo");
+    url.searchParams.set("mediaIndex", String(index));
+    return url.toString();
+  }
+
+  async function copyViewerShareUrl(url: string) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      return;
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = url;
+    textarea.readOnly = true;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("Unable to copy media link");
+  }
+
+  async function shareViewerItem() {
+    if (!activeViewerItem) return;
+    const isVideo = activeViewerItem.kind === "video";
+    const url = viewerShareUrl(activeViewerItem, viewerIndex);
+    setShareStatus("");
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: isVideo
+            ? `${stageName} on MyDancr TV`
+            : `${stageName} on MyDancr`,
+          text: isVideo
+            ? `Watch ${stageName} on MyDancr TV.`
+            : `View ${stageName}'s photo on MyDancr.`,
+          url,
+        });
+        setShareStatus(isVideo ? "Video shared." : "Photo shared.");
+        return;
+      }
+      await copyViewerShareUrl(url);
+      setShareStatus(isVideo ? "Video link copied." : "Photo link copied.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareStatus(isVideo ? "Unable to share this video." : "Unable to share this photo.");
+    }
   }
 
   function toggleInlinePlayback() {
@@ -288,6 +371,7 @@ export function DancerPhotoCarousel({
   }
 
   function showRelativeViewerItem(direction: -1 | 1) {
+    setShareStatus("");
     setViewer((current) => {
       if (!current) return current;
       const items = current.kind === "photo" ? photoMedia : videoMedia;
@@ -603,7 +687,7 @@ export function DancerPhotoCarousel({
           <button
             aria-label="Close full-screen profile media"
             className="profile-media-viewer-close"
-            onClick={() => setViewer(null)}
+            onClick={closeViewer}
             ref={closeButton}
             type="button"
           >
@@ -664,15 +748,42 @@ export function DancerPhotoCarousel({
             </button>
           </div>
           <div className="profile-media-viewer-footer">
-            <strong>{stageName}</strong>
-            <span>
-              {viewer.kind === "photo" ? "Photo" : "TV"} {viewerIndex + 1} of{" "}
-              {viewerItems.length}
-            </span>
+            <div className="profile-media-viewer-copy">
+              <strong>{stageName}</strong>
+              <span>
+                {viewer.kind === "photo" ? "Photo" : "TV"} {viewerIndex + 1} of{" "}
+                {viewerItems.length}
+              </span>
+            </div>
+            <div className="profile-media-viewer-actions">
+              <button
+                aria-label={`Share this ${viewer.kind === "photo" ? "photo" : "TV video"}`}
+                className="profile-media-viewer-share"
+                onClick={shareViewerItem}
+                type="button"
+              >
+                <ShareIcon />
+                Share
+              </button>
+              <span aria-live="polite" className="profile-media-viewer-share-status">
+                {shareStatus}
+              </span>
+            </div>
           </div>
         </div>
       ) : null}
     </section>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+    </svg>
   );
 }
 

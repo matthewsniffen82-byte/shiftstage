@@ -27492,6 +27492,44 @@
       z-index: 82 !important;
     }
 
+    .profile-photo-viewer-share {
+      position: fixed !important;
+      left: max(18px, env(safe-area-inset-left)) !important;
+      top: max(18px, env(safe-area-inset-top)) !important;
+      z-index: 82 !important;
+      min-height: 46px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 7px !important;
+      padding: 0 16px !important;
+      border: 1px solid rgba(255,255,255,.2) !important;
+      border-radius: 999px !important;
+      color: #fff !important;
+      background: rgba(10,10,14,.76) !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,.3) !important;
+      backdrop-filter: blur(12px) !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+    }
+
+    .profile-photo-viewer-share .icon {
+      width: 18px !important;
+      height: 18px !important;
+    }
+
+    .profile-photo-viewer-status {
+      position: fixed;
+      z-index: 82;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      min-height: 16px;
+      margin: 0;
+      color: #a7f3d0;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
     .profile-modal .thumb {
       position: relative !important;
       flex: 0 0 clamp(82px, 23vw, 108px) !important;
@@ -36413,10 +36451,15 @@
         <div class="modal-body" id="modalBody"></div>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Larger profile photo" hidden>
+        <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
+          <span>Share</span>
+        </button>
         <button class="close-btn profile-photo-viewer-close" id="profilePhotoViewerClose" type="button" aria-label="Close larger profile photo">
           <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
         </button>
         <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="img" tabindex="0" aria-label="Selected profile photo. Swipe left or right to change photos."></div>
+        <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
       </div>
     </div>
 
@@ -36542,6 +36585,8 @@
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
+    const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
+    const profilePhotoViewerStatus = document.getElementById("profilePhotoViewerStatus");
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
@@ -41752,6 +41797,13 @@
       return url.toString();
     }
 
+    function profilePhotoShareUrl(profileName, city = selectedCity(), photoIndex = 0) {
+      const url = new URL(profileShareUrl(profileName, city));
+      url.searchParams.set("media", "photo");
+      url.searchParams.set("mediaIndex", String(Math.max(0, Number(photoIndex) || 0)));
+      return url.toString();
+    }
+
     function qrCodeUrl(value) {
       return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&color=050507&bgcolor=FFFFFF&data=${encodeURIComponent(value)}`;
     }
@@ -45239,6 +45291,7 @@
       profilePhotoViewerImage.style.backgroundPosition = photoStyle.backgroundPosition;
       profilePhotoViewerImage.style.backgroundRepeat = photoStyle.backgroundRepeat;
       profilePhotoViewerImage.style.backgroundSize = photoStyle.backgroundSize;
+      if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
     }
 
     function openPhotoViewerFromElement(element) {
@@ -45250,6 +45303,7 @@
       profilePhotoViewerImage.style.backgroundSize = photoStyle.backgroundSize;
       profilePhotoViewer.style.zIndex = "120";
       profilePhotoViewer.hidden = false;
+      if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
       profilePhotoViewerImage.focus({ preventScroll: true });
     }
 
@@ -45257,6 +45311,31 @@
       if (!profilePhotoViewer) return;
       profilePhotoViewer.hidden = true;
       profilePhotoViewer.style.removeProperty("z-index");
+      if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
+    }
+
+    async function shareProfilePhoto() {
+      const photoThumbs = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")];
+      const activePhotoIndex = Math.max(0, photoThumbs.findIndex((thumb) => thumb.classList.contains("active")));
+      const profileName = modalName.textContent.trim() || "Dancer";
+      const url = profilePhotoShareUrl(profileName, citySelect.value || selectedCity(), activePhotoIndex);
+      if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: `${profileName} on MyDancr`,
+            text: `View ${profileName}'s photo on MyDancr.`,
+            url
+          });
+          if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "Photo shared.";
+          return;
+        }
+        await copyText(url, "Photo link copied");
+        if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "Photo link copied.";
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "Unable to share this photo.";
+      }
     }
 
     function moveModalPhoto(direction, options = {}) {
@@ -46111,6 +46190,8 @@
       const url = new URL(window.location.href);
       if (!url.searchParams.has("profile")) return;
       url.searchParams.delete("profile");
+      url.searchParams.delete("media");
+      url.searchParams.delete("mediaIndex");
       const search = url.searchParams.toString();
       window.history.replaceState(
         {},
@@ -53557,6 +53638,14 @@
       event.preventDefault();
       event.stopPropagation();
     }, { passive: false });
+    profilePhotoViewerShare?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      void shareProfilePhoto();
+    });
+    profilePhotoViewerShare?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    }, { passive: true });
     profilePhotoViewer?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -55743,6 +55832,18 @@
       });
     }
 
+    function openSharedProfileMedia(params) {
+      if (params.get("media") !== "photo") return;
+      const photoThumbs = [...modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])")];
+      if (!photoThumbs.length) return;
+      const requestedIndex = Number(params.get("mediaIndex"));
+      const photoIndex = Number.isInteger(requestedIndex)
+        ? Math.min(Math.max(requestedIndex, 0), photoThumbs.length - 1)
+        : 0;
+      selectModalMediaThumb(photoThumbs[photoIndex], { syncViewer: true });
+      openPhotoViewerFromElement(modalImage);
+    }
+
     function openSharedProfileFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const city = params.get("city");
@@ -55767,7 +55868,10 @@
       const profile = approvedProfiles.find((item) => item.slug === profileSlug)
         || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
       if (profile) {
-        setTimeout(() => openProfileModal(profile.name), 120);
+        setTimeout(() => {
+          openProfileModal(profile.name);
+          openSharedProfileMedia(params);
+        }, 120);
       }
     }
 

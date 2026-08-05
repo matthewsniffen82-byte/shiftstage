@@ -521,7 +521,12 @@ function PublicProfileStyles() {
       .profile-media-viewer-next { right: 12px; }
       .profile-media-viewer-previous:disabled, .profile-media-viewer-next:disabled { opacity: 0; pointer-events: none; }
       .profile-media-viewer-footer { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px max(18px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); border-top: 1px solid rgba(255,255,255,.1); background: #07070a; }
-      .profile-media-viewer-footer span { color: #aaa0b8; font-size: 12px; }
+      .profile-media-viewer-copy { min-width: 0; display: grid; gap: 3px; }
+      .profile-media-viewer-copy span { color: #aaa0b8; font-size: 12px; }
+      .profile-media-viewer-actions { min-width: 92px; display: grid; justify-items: end; gap: 3px; }
+      .profile-media-viewer-share { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
+      .profile-media-viewer-share svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
+      .profile-media-viewer-share-status { min-height: 14px; color: #a7f3d0; font-size: 10px; font-weight: 800; text-align: right; }
       .profile-schedule-section { display: grid; gap: 14px; padding: 18px; border: 1px solid rgba(139,92,246,.27); border-radius: 18px; background: rgba(10,10,16,.84); }
       .shift-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
       .shift-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; border: 1px solid rgba(255,255,255,.085); border-radius: 14px; color: #f7f2ff; background: rgba(255,255,255,.035); text-decoration: none; }
