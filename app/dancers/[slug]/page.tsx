@@ -172,7 +172,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 </p>
               </div>
               <Link href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}>
-                Venue &amp; directions
+                View venue
               </Link>
             </div>
             {activeVenue ? (
@@ -435,7 +435,7 @@ function PublicProfileStyles() {
       .profile-action-overflow-menu button { min-height: 44px; padding: 0 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; color: #d8d0e4; background: rgba(255,255,255,.035); font-size: 12px; font-weight: 850; text-align: left; cursor: pointer; }
       .profile-action-overflow-menu button:disabled { opacity: .6; cursor: wait; }
       .profile-action-status { grid-column: 1 / -1; color: #94e5ff; font-size: 12px; font-weight: 850; }
-      .profile-working-card { display: grid; gap: 10px; margin-top: 12px; padding: 15px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
+      .profile-working-card { display: grid; gap: 8px; margin-top: 12px; padding: 13px; border: 1px solid rgba(126,234,255,.38); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(34,199,255,.14), transparent 16rem), linear-gradient(145deg, rgba(29,11,67,.94), rgba(7,11,18,.96)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 28px rgba(34,199,255,.1); }
       .profile-working-card.has-club-deal { border-color: rgba(77,236,157,.48); background: radial-gradient(circle at 88% 8%, rgba(77,236,157,.16), transparent 16rem), linear-gradient(145deg, rgba(7,52,39,.94), rgba(5,10,13,.97)); box-shadow: 0 22px 70px rgba(0,0,0,.38), 0 0 30px rgba(77,236,157,.13); }
       .profile-working-card.has-club-deal .profile-live-state, .profile-working-card.has-club-deal h2 { color: #4dec9d; text-shadow: 0 0 10px rgba(77,236,157,.24); }
       .profile-working-card.has-club-deal .profile-live-state { border-color: rgba(77,236,157,.52); background: rgba(77,236,157,.1); }
@@ -451,7 +451,7 @@ function PublicProfileStyles() {
       .club-deal-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px; border: 1px solid rgba(126,234,255,.22); border-radius: 14px; background: rgba(0,0,0,.24); }
       .club-deal-copy { min-width: 0; display: grid; gap: 7px; }
       .club-deal-copy h2 { font-size: 20px; }
-      .club-deal-copy p, .club-deal-copy small { color: #b9accd; font-size: 11px; line-height: 1.4; }
+      .club-deal-copy p, .club-deal-copy small { color: #ded6e8; font-size: 11px; font-weight: 750; line-height: 1.4; }
       .club-deal-action { display: grid; justify-items: end; gap: 8px; }
       .club-deal-action > button, .venue-qr-launcher { min-height: 44px; padding: 0 15px; border: 1px solid rgba(126,234,255,.4); border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; cursor: pointer; }
       .profile-active-deal .club-deal-launcher { width: 100%; min-height: 56px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-color: rgba(77,236,157,.78); background: linear-gradient(135deg, #075c4d, #10804a); box-shadow: 0 0 26px rgba(77,236,157,.2); }
@@ -549,7 +549,7 @@ function PublicProfileStyles() {
         .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; }
         .live-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
-        .profile-working-card { padding: 14px; }
+        .profile-working-card { padding: 12px; }
         .profile-working-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 12px; }
         .profile-working-head > a { grid-column: 2; grid-row: 1; min-height: 36px; padding-inline: 10px; }
         .club-deal-card { grid-template-columns: minmax(0, 1fr) 128px; gap: 14px; padding: 14px; }

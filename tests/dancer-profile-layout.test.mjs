@@ -83,7 +83,7 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Working now<\/h2>/);
   assert.match(profilePage, /Verified check-in · until/);
-  assert.match(profilePage, /Venue &amp; directions/);
+  assert.match(profilePage, /View venue/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
@@ -98,6 +98,7 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(liveScheduleBranch, /<strong>Schedule<\/strong>/);
   assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working now<\/div>/);
   assert.match(liveScheduleBranch, /class="meta profile-working-stack"/);
+  assert.match(liveScheduleBranch, />View venue<\/button>/);
   assert.match(liveScheduleBranch, /profile-working-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.doesNotMatch(liveScheduleBranch, /Checked in for current shift|activeShiftStartedMarkup/);
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
@@ -133,11 +134,15 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
 test("live dancer essentials stay compact, scannable, and clear of the mobile dock", () => {
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 5px !important;[\s\S]*?padding-top: 7px !important;/,
+    /#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 6px 12px !important;[\s\S]*?padding: 10px 14px !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-uber-ride \{[\s\S]*?height: 48px;[\s\S]*?max-height: 48px;[\s\S]*?overflow: hidden;/,
+    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 3px !important;[\s\S]*?padding-top: 5px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-uber-ride \{[\s\S]*?height: 44px;[\s\S]*?max-height: 44px;[\s\S]*?overflow: hidden;[\s\S]*?color: #fff !important;[\s\S]*?opacity: 1 !important;/,
   );
   assert.match(
     liveApp,
@@ -146,6 +151,10 @@ test("live dancer essentials stay compact, scannable, and clear of the mobile do
   assert.match(
     liveApp,
     /#profileBackdrop \.profile-club-deal-qr-button \{[\s\S]*?width: 128px !important;[\s\S]*?min-width: 128px !important;[\s\S]*?max-width: 128px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.profile-club-deal-copy small \{[\s\S]*?color: rgba\(248, 250, 252, \.82\);[\s\S]*?font-weight: 800;/,
   );
   assert.match(
     liveApp,

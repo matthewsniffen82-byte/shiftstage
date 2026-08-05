@@ -34910,13 +34910,15 @@
         #profileBackdrop .profile-uber-ride {
           grid-column: 1 / -1;
           width: 100%;
-          height: 48px;
-          min-height: 48px;
-          max-height: 48px;
+          height: 44px;
+          min-height: 44px;
+          max-height: 44px;
           justify-self: stretch;
           padding: 0 15px;
           overflow: hidden;
+          color: #fff !important;
           font-size: 12px;
+          opacity: 1 !important;
         }
 
         #profileBackdrop .profile-uber-ride > span:last-child {
@@ -34924,6 +34926,14 @@
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          color: #fff !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop .profile-uber-ride .action-icon {
+          color: #fff !important;
+          opacity: 1 !important;
+          filter: drop-shadow(0 0 6px rgba(255,255,255,.18));
         }
 
         /* Compact the live profile essentials while keeping its tracked QR
@@ -34933,14 +34943,14 @@
         }
 
         #profileBackdrop .modal-grid > .working-now-tile {
-          gap: 8px 12px !important;
-          padding: 12px 14px !important;
+          gap: 6px 12px !important;
+          padding: 10px 14px !important;
         }
 
         #profileBackdrop .working-now-tile > .meta {
           grid-template-columns: minmax(0, 1fr) !important;
-          gap: 5px !important;
-          padding-top: 7px !important;
+          gap: 3px !important;
+          padding-top: 5px !important;
         }
 
         #profileBackdrop .working-now-tile .detail-line {
@@ -34967,7 +34977,7 @@
         }
 
         #profileBackdrop .working-now-tile .profile-uber-ride {
-          margin-top: 2px;
+          margin-top: 0;
         }
 
         #profileBackdrop .schedule-upcoming .profile-uber-ride {
@@ -34988,9 +34998,9 @@
         }
 
         #profileBackdrop .profile-club-deal-copy small {
-          color: rgba(248, 250, 252, .62);
+          color: rgba(248, 250, 252, .82);
           font-size: 11px;
-          font-weight: 750;
+          font-weight: 800;
           line-height: 1.3;
         }
 
@@ -45439,7 +45449,7 @@
             <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
             <div class="meta profile-working-stack">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
-              <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">Venue &amp; directions</button>
+              <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">View venue</button>
               ${rideMarkup}
             </div>
           </div>

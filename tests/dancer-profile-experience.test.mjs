@@ -99,7 +99,7 @@ test("the mobile profile places schedule directly after media, before revenue an
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
   assert.match(profilePage, /Verified check-in · until/);
-  assert.match(profilePage, /Venue &amp; directions/);
+  assert.match(profilePage, /View venue/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
   assert.match(profilePage, /presentation="launcher"/);
