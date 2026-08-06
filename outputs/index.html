@@ -50941,6 +50941,13 @@
       return 2;
     }
 
+    function venueDiscoveryIsActiveNow(venue, city) {
+      const hasWorkingDancer = venueDancers(city, venue.name)
+        .some((profile) => isWorkingTonight(profile, city));
+      if (hasWorkingDancer) return true;
+      return venueOperatingStatus(venue?.hours || "", city).state === "open";
+    }
+
     function compareVenuePopularity(left, right) {
       const leftPopularity = left?.popularity || {};
       const rightPopularity = right?.popularity || {};
@@ -50952,8 +50959,9 @@
     }
 
     function compareVenueDiscoveryPriority(left, right, city) {
+      const activeDifference = Number(venueDiscoveryIsActiveNow(right, city)) - Number(venueDiscoveryIsActiveNow(left, city));
       const scheduleDifference = venueSchedulePriority(left, city) - venueSchedulePriority(right, city);
-      return scheduleDifference || compareVenuePopularity(left, right) || compareVenueDistance(left, right, city);
+      return activeDifference || scheduleDifference || compareVenuePopularity(left, right) || compareVenueDistance(left, right, city);
     }
 
     function getItems(city, tab) {

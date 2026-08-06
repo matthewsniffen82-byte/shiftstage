@@ -297,7 +297,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });
 
-test("venue cards order schedule groups first and real popularity within each group", () => {
+test("venue cards keep every active venue above inactive venues, then preserve schedule and popularity priority", () => {
   assert.match(
     homeSource,
     /function mapLiveVenue\(item, city, venueShiftCounts\) \{[\s\S]*?popularity: \{[\s\S]*?followerCount: Math\.max\(0, Number\(item\.popularity\?\.followerCount\) \|\| 0\)[\s\S]*?directionRequests30d:[\s\S]*?profileViews30d:/,
@@ -308,11 +308,15 @@ test("venue cards order schedule groups first and real popularity within each gr
   );
   assert.match(
     homeSource,
+    /function venueDiscoveryIsActiveNow\(venue, city\) \{[\s\S]*?venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?if \(hasWorkingDancer\) return true;[\s\S]*?venueOperatingStatus\(venue\?\.hours \|\| "", city\)\.state === "open";/,
+  );
+  assert.match(
+    homeSource,
     /function compareVenuePopularity\(left, right\) \{[\s\S]*?rightPopularity\.followerCount[\s\S]*?leftPopularity\.followerCount[\s\S]*?rightPopularity\.directionRequests30d[\s\S]*?leftPopularity\.directionRequests30d[\s\S]*?rightPopularity\.profileViews30d[\s\S]*?leftPopularity\.profileViews30d/,
   );
   assert.match(
     homeSource,
-    /function compareVenueDiscoveryPriority\(left, right, city\) \{[\s\S]*?venueSchedulePriority\(left, city\) - venueSchedulePriority\(right, city\)[\s\S]*?scheduleDifference \|\| compareVenuePopularity\(left, right\) \|\| compareVenueDistance\(left, right, city\)/,
+    /function compareVenueDiscoveryPriority\(left, right, city\) \{[\s\S]*?Number\(venueDiscoveryIsActiveNow\(right, city\)\) - Number\(venueDiscoveryIsActiveNow\(left, city\)\)[\s\S]*?venueSchedulePriority\(left, city\) - venueSchedulePriority\(right, city\)[\s\S]*?activeDifference \|\| scheduleDifference \|\| compareVenuePopularity\(left, right\) \|\| compareVenueDistance\(left, right, city\)/,
   );
   assert.match(
     homeSource,
