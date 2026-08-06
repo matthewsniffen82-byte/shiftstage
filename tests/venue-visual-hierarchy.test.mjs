@@ -8,10 +8,18 @@ const [liveApp, aesthetic] = await Promise.all([
 ]);
 
 test("venue operating status uses posted hours in the selected city timezone", () => {
+  const clockParserSource = liveApp.match(
+    /function parseClockMinutes\(value\) \{[\s\S]*?\n    \}/,
+  )?.[0] || "";
   const operatingStatus = liveApp.match(
     /function venueOperatingStatus\(hours, city = selectedCity\(\), now = new Date\(\)\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
+  assert.ok(clockParserSource, "the shared clock parser must exist");
+  const parseClock = new Function(`${clockParserSource}; return parseClockMinutes;`)();
+  assert.equal(parseClock("8:00p"), 20 * 60, "production compact PM hours must be recognized");
+  assert.equal(parseClock("4:00a"), 4 * 60, "production compact AM hours must be recognized");
+  assert.equal(parseClock("8:00 PM"), 20 * 60, "full PM hours must remain supported");
   assert.ok(operatingStatus, "the shared venue operating-status helper must exist");
   assert.match(operatingStatus, /parseClockMinutes\(parts\[0\]\)/);
   assert.match(operatingStatus, /cityWallClock\(now, city\)/);

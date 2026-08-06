@@ -41283,13 +41283,13 @@
     }
 
     function parseClockMinutes(value) {
-      const match = String(value || "").match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+      const match = String(value || "").match(/(\d{1,2})(?::(\d{2}))?\s*(A(?:M)?|P(?:M)?)/i);
       if (!match) return null;
       let hours = Number(match[1]);
       const minutes = Number(match[2] || 0);
       const period = match[3].toUpperCase();
-      if (period === "AM" && hours === 12) hours = 0;
-      if (period === "PM" && hours !== 12) hours += 12;
+      if (period.startsWith("A") && hours === 12) hours = 0;
+      if (period.startsWith("P") && hours !== 12) hours += 12;
       return (hours * 60) + minutes;
     }
 
