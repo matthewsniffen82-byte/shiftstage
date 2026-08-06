@@ -394,8 +394,38 @@ test("mobile TV uses a quiet page-scroll thumb at the true viewport edge", () =>
 test("venue inline cards use production venue, schedule, revenue, and customer action data", () => {
   assert.match(
     homeSource,
-    /function dedupePublicVenues\(venues\)[\s\S]*?publicVenueRecordScore\(venue\) > publicVenueRecordScore\(current\)[\s\S]*?return \[\.\.\.uniqueVenues\.values\(\)\]/,
+    /function mergePublicVenueRecords\(preferred, alternate\)[\s\S]*?hours: preferred\?\.hours \|\| alternate\?\.hours \|\| ""[\s\S]*?popularity:[\s\S]*?Math\.max\(Number\(preferredPopularity\.profileViews30d\)[\s\S]*?function dedupePublicVenues\(venues\)[\s\S]*?const preferred = publicVenueRecordScore\(venue\) > publicVenueRecordScore\(current\)[\s\S]*?mergePublicVenueRecords\(preferred, alternate\)[\s\S]*?return \[\.\.\.uniqueVenues\.values\(\)\]/,
   );
+  const venueDedupeSource = homeSource.match(
+    /function publicVenueRecordScore\(venue\) \{[\s\S]*?(?=\n    function mergeLiveVenues)/,
+  )?.[0] || "";
+  assert.ok(venueDedupeSource, "the production venue dedupe helpers must exist");
+  const dedupeVenueRecords = new Function(
+    "slugify",
+    `${venueDedupeSource}; return dedupePublicVenues;`,
+  )((value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+  const mergedVenue = dedupeVenueRecords([
+    {
+      id: "canonical",
+      slug: "little-darlings-las-vegas",
+      name: "Little Darlings Las Vegas",
+      address: "1514 Western Ave, Las Vegas, NV 89102",
+      hours: "",
+      popularity: { followerCount: 0, directionRequests30d: 4, profileViews30d: 18 },
+    },
+    {
+      id: "legacy",
+      slug: "little-darlings",
+      name: "Little Darlings Las Vegas",
+      address: "1514 Western Ave, Las Vegas, NV",
+      hours: "8:00p - 4:00a",
+      popularity: { followerCount: 0, directionRequests30d: 1, profileViews30d: 0 },
+    },
+  ])[0];
+  assert.equal(mergedVenue.id, "canonical", "the canonical production record remains authoritative");
+  assert.equal(mergedVenue.hours, "8:00p - 4:00a", "missing canonical hours are restored from the duplicate record");
+  assert.equal(mergedVenue.popularity.directionRequests30d, 4, "real engagement is retained during deduplication");
+  assert.equal(mergedVenue.popularity.profileViews30d, 18, "real profile views are retained during deduplication");
   assert.match(
     homeSource,
     /function publicVenueRecordScore\(venue\)[\s\S]*?venue\?\.slug === canonicalSlug \? 32 : 0[\s\S]*?venue\?\.activeDeal\?\.id[\s\S]*?venue\?\.qrCodeUrl/,

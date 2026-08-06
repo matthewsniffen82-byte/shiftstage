@@ -40183,6 +40183,38 @@
       );
     }
 
+    function mergePublicVenueRecords(preferred, alternate) {
+      const preferredPopularity = preferred?.popularity || {};
+      const alternatePopularity = alternate?.popularity || {};
+      return {
+        ...alternate,
+        ...preferred,
+        area: preferred?.area || alternate?.area || "",
+        state: preferred?.state || alternate?.state || "",
+        address: preferred?.address || alternate?.address || "",
+        phone: preferred?.phone || alternate?.phone || "",
+        website: preferred?.website || alternate?.website || "",
+        hours: preferred?.hours || alternate?.hours || "",
+        shifts: Math.max(Number(preferred?.shifts) || 0, Number(alternate?.shifts) || 0),
+        distance: preferred?.distance || alternate?.distance || "",
+        latitude: preferred?.latitude ?? alternate?.latitude ?? null,
+        longitude: preferred?.longitude ?? alternate?.longitude ?? null,
+        coverImageUrl: preferred?.coverImageUrl || alternate?.coverImageUrl || "",
+        coverImageSrcSet: preferred?.coverImageSrcSet || alternate?.coverImageSrcSet || "",
+        coverImageWidth: preferred?.coverImageWidth ?? alternate?.coverImageWidth ?? null,
+        coverImageHeight: preferred?.coverImageHeight ?? alternate?.coverImageHeight ?? null,
+        logoImageUrl: preferred?.logoImageUrl || alternate?.logoImageUrl || "",
+        qrCodeUrl: preferred?.qrCodeUrl || alternate?.qrCodeUrl || "",
+        qrCodeLabel: preferred?.qrCodeLabel || alternate?.qrCodeLabel || "",
+        activeDeal: preferred?.activeDeal?.id ? preferred.activeDeal : alternate?.activeDeal || null,
+        popularity: {
+          followerCount: Math.max(Number(preferredPopularity.followerCount) || 0, Number(alternatePopularity.followerCount) || 0),
+          directionRequests30d: Math.max(Number(preferredPopularity.directionRequests30d) || 0, Number(alternatePopularity.directionRequests30d) || 0),
+          profileViews30d: Math.max(Number(preferredPopularity.profileViews30d) || 0, Number(alternatePopularity.profileViews30d) || 0)
+        }
+      };
+    }
+
     function dedupePublicVenues(venues) {
       const uniqueVenues = new Map();
       venues.forEach((venue) => {
@@ -40190,9 +40222,13 @@
         const key = nameKey || String(venue?.id || venue?.slug || "");
         if (!key) return;
         const current = uniqueVenues.get(key);
-        if (!current || publicVenueRecordScore(venue) > publicVenueRecordScore(current)) {
+        if (!current) {
           uniqueVenues.set(key, venue);
+          return;
         }
+        const preferred = publicVenueRecordScore(venue) > publicVenueRecordScore(current) ? venue : current;
+        const alternate = preferred === venue ? current : venue;
+        uniqueVenues.set(key, mergePublicVenueRecords(preferred, alternate));
       });
       return [...uniqueVenues.values()];
     }
