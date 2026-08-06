@@ -4377,6 +4377,17 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   isolation: isolate;
 }
 
+/* Compact venue heroes reserve a clear lane for the fixed close control. Wide
+ * marks stay contain-fit, but shift and scale as one unit instead of running
+ * beneath the X or being cropped. */
+@media (max-width: 650px) {
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-detail-logo-shell {
+    left: calc(50% - clamp(24px, 6vw, 36px)) !important;
+    width: calc(100% - clamp(86px, 22vw, 108px)) !important;
+  }
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-logo-shell::before {
   content: "";
