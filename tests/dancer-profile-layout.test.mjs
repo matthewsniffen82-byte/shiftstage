@@ -80,8 +80,8 @@ test("profile actions expose live customer actions and nest profile QR inside Sh
 });
 
 test("Working Now profiles promote the checked-in venue, directions, and Club QR", () => {
-  assert.match(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
-  assert.doesNotMatch(profilePage, /data-working-now-indicator/);
+  assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
+  assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
   assert.match(profilePage, /className=\{`profile-working-card\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /<span className="profile-live-state">Schedule<\/span>[\s\S]*?<h2 id="profile-working-title">Current shift<\/h2>/);
   assert.match(profilePage, /Verified check-in · until/);

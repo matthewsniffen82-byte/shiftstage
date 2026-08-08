@@ -129,6 +129,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 />
               ) : initials(profile.stageName)}
             </span>
+            {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
           </div>
           <div className="profile-titlebar-identity">
             <div>
@@ -139,9 +140,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </div>
             <div className="profile-titlebar-context">
               <span className="profile-titlebar-city">{profile.city}</span>
-              {activeShift ? (
-                <span className="profile-titlebar-status is-live">Working Now</span>
-              ) : null}
             </div>
           </div>
           <ProfileCloseButton
