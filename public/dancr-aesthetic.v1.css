@@ -5134,3 +5134,30 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
     justify-self: stretch;
   }
 }
+
+/* The persistent test notice owns the topmost viewport band. Full dancer and
+ * venue overlays use the remaining viewport so identity content and dismissal
+ * controls never render underneath the notice on iPhone or Android. */
+body.dancr-button-system #profileBackdrop.modal-backdrop,
+body.dancr-button-system #profileBackdrop.modal-backdrop.show {
+  top: var(--mydancr-preview-banner-offset) !important;
+  bottom: 0 !important;
+  height: calc(100dvh - var(--mydancr-preview-banner-offset)) !important;
+}
+
+body.dancr-button-system #profileBackdrop .profile-modal {
+  max-height: min(94vh, calc(100dvh - var(--mydancr-preview-banner-offset))) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay {
+  top: var(--mydancr-preview-banner-offset) !important;
+  bottom: 0 !important;
+  height: calc(100dvh - var(--mydancr-preview-banner-offset)) !important;
+  padding-top: max(10px, var(--dancr-viewport-top)) !important;
+  scroll-padding-top: max(10px, var(--dancr-viewport-top)) !important;
+}
+
+body.dancr-button-system #profileBackdrop #modalClose,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close {
+  top: calc(var(--mydancr-preview-banner-offset) + 12px) !important;
+}
