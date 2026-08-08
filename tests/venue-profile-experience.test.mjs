@@ -72,6 +72,14 @@ test("venue upcoming-shift rows show the dancer's approved production avatar", (
     liveApp,
     /\.venue-shift-avatar\.has-custom-photo \{[\s\S]*?background-image: var\(--custom-photo\);[\s\S]*?background-position: var\(--custom-photo-position, center\);/,
   );
+  assert.match(
+    liveApp,
+    /\.venue-shift-avatar \{[\s\S]*?width: 58px;[\s\S]*?height: 58px;[\s\S]*?border-radius: 50%;[\s\S]*?border: 0;[\s\S]*?box-shadow: none;/,
+  );
+  assert.match(
+    liveApp,
+    /@media \(max-width: 560px\) \{[\s\S]*?\.venue-shift-avatar \{[\s\S]*?width: 50px;[\s\S]*?height: 50px;/,
+  );
 });
 
 test("venue profiles reserve customer QR language for active Club Deals", () => {
