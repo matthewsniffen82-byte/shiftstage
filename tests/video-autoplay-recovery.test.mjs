@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [feedClient, videoStrip, rootRoute, homeRecovery] = await Promise.all([
+const [feedClient, videoStrip, rootRoute, homeRecovery, homeSource] = await Promise.all([
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/components/TvVideoStrip.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../public/video-autoplay-recovery.js", import.meta.url), "utf8"),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
 
 test("MyDancr TV declares and retries muted autoplay for the active snap-scroll video", () => {
@@ -55,6 +56,19 @@ test("the production home shell loads Safari-safe autoplay recovery for dynamica
   assert.match(homeRecovery, /video\.addEventListener\("loadeddata"/);
   assert.match(homeRecovery, /new MutationObserver\(queueHomeFeedVideoScan\)/);
   assert.match(homeRecovery, /window\.addEventListener\("pageshow", queueHomeFeedVideoScan\)/);
+  assert.match(homeRecovery, /classList\.add\("is-paused", "is-autoplay-blocked"\)/);
+});
+
+test("the homepage TV feed only shows its play overlay for an active manual pause or autoplay failure", () => {
+  assert.match(
+    homeSource,
+    /\.home-tv-feed-slide\.is-active\[data-user-paused="true"\] \.home-tv-feed-playback,[\s\S]*?\.home-tv-feed-slide\.is-active\.is-autoplay-blocked \.home-tv-feed-playback/,
+  );
+  assert.match(
+    homeSource,
+    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
+  );
+  assert.doesNotMatch(homeSource, /\.home-tv-feed-slide\.is-paused \.home-tv-feed-playback/);
 });
 
 test("the immersive TV feed reapplies iPhone inline autoplay requirements before playback", () => {

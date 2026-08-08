@@ -30507,7 +30507,8 @@
           transform: translate(-50%,-50%) scale(.88);
           transition: opacity .18s ease, transform .18s ease;
         }
-        .home-tv-feed-slide.is-paused .home-tv-feed-playback {
+        .home-tv-feed-slide.is-active[data-user-paused="true"] .home-tv-feed-playback,
+        .home-tv-feed-slide.is-active.is-autoplay-blocked .home-tv-feed-playback {
           opacity: 1;
           transform: translate(-50%,-50%) scale(1);
         }
@@ -52772,18 +52773,27 @@
             trackHomeTvFeedEvent(videoId, "impression");
           }
           if (slide.dataset.userPaused === "true") {
+            slide.classList.remove("is-autoplay-blocked");
             video.pause();
             slide.classList.add("is-paused");
             return;
           }
+          slide.classList.remove("is-autoplay-blocked");
           void video.play().then(() => {
-            slide.classList.remove("is-paused");
+            if (video.paused || slide.dataset.userPaused === "true") return;
+            slide.classList.remove("is-paused", "is-autoplay-blocked");
             scheduleHomeTvFeedEngagedView(videoId, video);
-          }).catch(() => {
-            slide.classList.add("is-paused");
+          }).catch((error) => {
+            if (
+              error?.name === "AbortError" ||
+              !slide.classList.contains("is-active") ||
+              slide.dataset.userPaused === "true"
+            ) return;
+            slide.classList.add("is-paused", "is-autoplay-blocked");
           });
         } else {
           slide.removeAttribute("aria-current");
+          slide.classList.remove("is-autoplay-blocked");
           clearHomeTvFeedEngagedTimer(slideVideoId);
           video.autoplay = false;
           video.removeAttribute("autoplay");
@@ -52806,6 +52816,7 @@
       }
       clearHomeTvFeedEngagedTimer(videoId);
       slide.dataset.userPaused = "true";
+      slide.classList.remove("is-autoplay-blocked");
       video.autoplay = false;
       video.removeAttribute("autoplay");
       video.pause();
@@ -53097,7 +53108,7 @@
         showHomeTvFeedFeedback(slide, "Video unavailable");
       });
       video.addEventListener("play", () => {
-        slide.classList.remove("is-paused");
+        slide.classList.remove("is-paused", "is-autoplay-blocked");
         scheduleHomeTvFeedEngagedView(videoId, video);
       });
       video.addEventListener("pause", () => {
@@ -53415,7 +53426,7 @@
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
       delete slide.dataset.userPaused;
-      slide.classList.remove("is-media-unavailable", "is-applauding");
+      slide.classList.remove("is-media-unavailable", "is-applauding", "is-autoplay-blocked");
       slide.classList.add("is-media-loading", "is-paused");
       slide.setAttribute(
         "aria-label",

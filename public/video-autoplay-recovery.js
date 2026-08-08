@@ -39,6 +39,7 @@
     }
     try {
       await video.play();
+      video.closest(".home-tv-feed-slide")?.classList.remove("is-autoplay-blocked");
       return;
     } catch (error) {
       if (error?.name === "AbortError" || !isActiveHomeFeedVideo(video)) return;
@@ -48,12 +49,14 @@
       video.muted = true;
       try {
         await video.play();
+        video.closest(".home-tv-feed-slide")?.classList.remove("is-autoplay-blocked");
+        return;
       } catch (error) {
-        if (error?.name !== "AbortError") {
-          video.closest(".home-tv-feed-slide")?.classList.add("is-paused");
-        }
+        if (error?.name === "AbortError" || !isActiveHomeFeedVideo(video)) return;
       }
     }
+
+    video.closest(".home-tv-feed-slide")?.classList.add("is-paused", "is-autoplay-blocked");
   }
 
   function prepareVideo(video) {
