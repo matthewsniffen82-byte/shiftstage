@@ -213,7 +213,14 @@ test("selected review dancers and venues receive reversible tracked Club QR stat
     scriptSource,
     /async function syncDealsOnly\(\) \{[\s\S]*?prepareReviewQrVenues\(venues\)[\s\S]*?activeReviewVenues:/,
   );
-  assert.match(scriptSource, /const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES\.size/);
+  assert.match(
+    scriptSource,
+    /const FEATURED_WORKING_NOW_VENUE_SLUGS = \[[\s\S]*?"peppermint-hippo-las-vegas"[\s\S]*?"spearmint-rhino-las-vegas"[\s\S]*?"sapphire-las-vegas"[\s\S]*?\];/,
+  );
+  assert.match(
+    scriptSource,
+    /const ACTIVE_REVIEW_VENUE_COUNT = FEATURED_WORKING_NOW_VENUE_SLUGS\.length/,
+  );
   assert.match(scriptSource, /const WORKING_NOW_REMAINING_HOURS = 10/);
   assert.match(
     scriptSource,
@@ -221,7 +228,7 @@ test("selected review dancers and venues receive reversible tracked Club QR stat
   );
   assert.match(
     scriptSource,
-    /async function prepareReviewQrVenues[\s\S]*?realDealVenueIds[\s\S]*?syncMarkedReviewDeals\(fallbackVenues\)/,
+    /async function prepareReviewQrVenues[\s\S]*?featuredVenues[\s\S]*?missingFeaturedSlugs[\s\S]*?syncMarkedReviewDeals\(fallbackVenues\)/,
   );
   assert.match(
     scriptSource,

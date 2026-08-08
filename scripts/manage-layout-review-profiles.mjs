@@ -14,7 +14,12 @@ const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;
 const WORKING_NOW_PROFILE_INDEXES = new Set([5, 6, 7, 8, 9]);
-const ACTIVE_REVIEW_VENUE_COUNT = WORKING_NOW_PROFILE_INDEXES.size;
+const FEATURED_WORKING_NOW_VENUE_SLUGS = [
+  "peppermint-hippo-las-vegas",
+  "spearmint-rhino-las-vegas",
+  "sapphire-las-vegas",
+];
+const ACTIVE_REVIEW_VENUE_COUNT = FEATURED_WORKING_NOW_VENUE_SLUGS.length;
 const WORKING_NOW_REMAINING_HOURS = 10;
 const REVIEW_DEAL_PAYOUT_CENTS = 1;
 const AUTH_BAN_DURATION = "876000h";
@@ -423,9 +428,32 @@ async function prepareReviewQrVenues(venues) {
       .filter((deal) => !isMarkedReviewDeal(deal))
       .map((deal) => String(deal.venue_id)),
   );
+  const featuredVenues = FEATURED_WORKING_NOW_VENUE_SLUGS.map((slug) =>
+    venues.find((venue) => venue.slug === slug),
+  );
+  const missingFeaturedSlugs = FEATURED_WORKING_NOW_VENUE_SLUGS.filter(
+    (_slug, index) => !featuredVenues[index],
+  );
+  if (missingFeaturedSlugs.length) {
+    throw new Error(
+      `Missing required Working Now venues: ${missingFeaturedSlugs.join(", ")}.`,
+    );
+  }
+  const featuredVenueIds = new Set(
+    featuredVenues.map((venue) => String(venue.id)),
+  );
   const selected = [
-    ...venues.filter((venue) => realDealVenueIds.has(String(venue.id))),
-    ...venues.filter((venue) => !realDealVenueIds.has(String(venue.id))),
+    ...featuredVenues,
+    ...venues.filter(
+      (venue) =>
+        !featuredVenueIds.has(String(venue.id)) &&
+        realDealVenueIds.has(String(venue.id)),
+    ),
+    ...venues.filter(
+      (venue) =>
+        !featuredVenueIds.has(String(venue.id)) &&
+        !realDealVenueIds.has(String(venue.id)),
+    ),
   ].slice(0, ACTIVE_REVIEW_VENUE_COUNT);
   const fallbackVenues = selected.filter(
     (venue) => !realDealVenueIds.has(String(venue.id)),
