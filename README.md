@@ -140,4 +140,20 @@ Rollback by reverting the code and disabling the `/api/dancer/photos` route depl
 
 Demo mode does not bypass authentication, dancer-profile eligibility, supported video type, file-size and duration limits, portrait/square dimensions, consent and rights confirmations, storage verification, or MyDancr watermark processing. A watermark failure is logged and recorded but does not send the demo upload to manual review.
 
+### Replacing marked demo profile media
+
+Production demo photos can be replaced without entering the public moderation queue by using the guarded `profiles:replace-demo-media` operation. It accepts only the ten explicitly mapped `layout-review-*` profiles, protects Star, validates every source image, generates the normal face-centered avatar, publishes responsive high-resolution media, watermarks the public profile photo, and rolls database changes back if a replacement fails.
+
+Inspect first:
+
+```powershell
+npm run profiles:replace-demo-media -- --inspect --target=production --input-dir="C:\path\to\media"
+```
+
+Apply only after inspection:
+
+```powershell
+npm run profiles:replace-demo-media -- --apply --target=production --input-dir="C:\path\to\media" --confirm=mydancr-demo-media-v1
+```
+
 Before accepting real-user uploads, set `DANCR_VIDEO_MODERATION_MODE=ai` in every Vercel environment and redeploy. Changing the mode does not retroactively moderate videos published during demo mode; review or remove those videos before launch if they are not approved launch content.
