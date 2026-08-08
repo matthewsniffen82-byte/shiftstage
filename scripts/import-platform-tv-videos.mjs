@@ -134,7 +134,7 @@ function loadEnvironmentFile(filePath) {
     const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
     if (!match) continue;
     const value = match[2].trim().replace(/^(['"])(.*)\1$/, "$2").replace(/\\n/g, "\n");
-    if (!(match[1] in process.env)) process.env[match[1]] = value;
+    if (!String(process.env[match[1]] || "").trim()) process.env[match[1]] = value;
   }
 }
 

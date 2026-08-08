@@ -10,3 +10,5 @@ node_modules
 Thumbs.db
 .platform-tv-import-*.json
 .env.local
+.env*
+!.env.example
