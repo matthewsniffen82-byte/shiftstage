@@ -121,6 +121,17 @@
       display: none !important;
     }
 
+    body.account-creation-overlay-open .app > header,
+    body.account-creation-overlay-open .app > main {
+      display: none !important;
+    }
+
+    #dancerSignupPage.page-panel.show,
+    #stripeCheckoutPage.page-panel.show {
+      z-index: 120 !important;
+      isolation: isolate;
+    }
+
     #customerDashboard.page-panel.show,
     #dancerDashboard.page-panel.show,
     #venueDashboard.page-panel.show,
@@ -47003,6 +47014,9 @@
       const dashboardOverlayOpen = !!document.querySelector(
         "#customerDashboard.show, #dancerDashboard.show, #venueDashboard.show, #adminDashboard.show"
       );
+      const accountCreationOverlayOpen =
+        dancerSignupPage.classList.contains("show") ||
+        stripeCheckoutPage.classList.contains("show");
       const customerAuthOverlayOpen =
         authPage.classList.contains("show") &&
         !authForm.hidden;
@@ -47014,6 +47028,7 @@
         !document.getElementById("venueLoginForm").hidden;
       document.body.classList.toggle("overlay-open", overlayOpen);
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
+      document.body.classList.toggle("account-creation-overlay-open", accountCreationOverlayOpen);
       document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);
       document.body.classList.toggle("dancer-auth-overlay-open", dancerAuthOverlayOpen);
       document.body.classList.toggle("venue-auth-overlay-open", venueAuthOverlayOpen);

@@ -63,3 +63,23 @@ test("account dashboards hide public navigation and keep their X as the exit to 
     /document\.getElementById\("dancerDashboardClose"\)\.addEventListener\("click", closeDancerDashboard\);/,
   );
 });
+
+test("dancer account creation cannot be covered by public discovery content", () => {
+  assert.match(
+    homeSource,
+    /body\.account-creation-overlay-open \.app > header,\s*body\.account-creation-overlay-open \.app > main \{\s*display: none !important;\s*\}/,
+  );
+  const accountCreationLayer = homeSource.match(
+    /#dancerSignupPage\.page-panel\.show,\s*#stripeCheckoutPage\.page-panel\.show \{\s*z-index: (\d+) !important;\s*isolation: isolate;\s*\}/,
+  );
+  const discoveryLayer = homeSource.match(
+    /\.discovery-sticky-head \{[^}]*z-index: (\d+);/s,
+  );
+  assert.ok(accountCreationLayer);
+  assert.ok(discoveryLayer);
+  assert.ok(Number(accountCreationLayer[1]) > Number(discoveryLayer[1]));
+  assert.match(
+    homeSource,
+    /const accountCreationOverlayOpen =\s*dancerSignupPage\.classList\.contains\("show"\) \|\|\s*stripeCheckoutPage\.classList\.contains\("show"\);[\s\S]*?document\.body\.classList\.toggle\("account-creation-overlay-open", accountCreationOverlayOpen\);/,
+  );
+});
