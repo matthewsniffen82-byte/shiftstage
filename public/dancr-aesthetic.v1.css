@@ -3737,8 +3737,15 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"] {
   overflow: visible !important;
   border-radius: 50% !important;
   box-shadow:
-    0 0 0 1px var(--dancr-color-success-strong),
+    0 0 0 1px var(--dancr-color-avatar-ring-live),
     0 0 11px var(--dancr-color-success-medium) !important;
+}
+
+/* A working dancer's identity ring is one solid live teal on every engine.
+ * Styling the real border child avoids the partial/white WebKit composite
+ * seen when only the parent halo communicates live status. */
+body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-dancer-avatar-border] {
+  border-color: var(--dancr-color-avatar-ring-live) !important;
 }
 
 body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-working-now-indicator] {
@@ -3755,7 +3762,7 @@ body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-w
   border: 1px solid #d8fff0 !important;
   border-radius: 999px !important;
   color: #02130d !important;
-  background: #34e3a4 !important;
+  background: var(--dancr-color-avatar-ring-live) !important;
   box-shadow: 0 0 9px rgba(52, 227, 164, 0.58) !important;
   font-size: 7px !important;
   font-weight: 950 !important;
