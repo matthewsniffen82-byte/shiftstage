@@ -33474,19 +33474,15 @@
           touch-action: pan-y !important;
           -webkit-overflow-scrolling: touch;
         }
-        #profileBackdrop .modal-top {
-          z-index: 220 !important;
-          flex: 0 0 auto;
-          pointer-events: none;
-        }
         #profileBackdrop #modalClose {
-          position: fixed !important;
-          top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)) !important;
-          right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)) !important;
+          position: absolute !important;
+          top: 50% !important;
+          right: max(12px, env(safe-area-inset-right, 0px)) !important;
           z-index: 221 !important;
           width: 42px !important;
           height: 42px !important;
           min-height: 42px !important;
+          transform: translateY(-50%) !important;
           pointer-events: auto !important;
           touch-action: manipulation !important;
           -webkit-tap-highlight-color: transparent;
@@ -36630,11 +36626,6 @@
 
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
       <section class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
-        <div class="modal-top">
-          <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
-        </div>
         <div class="profile-modal-summary">
           <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
             <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
@@ -36653,6 +36644,9 @@
             </div>
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
           </div>
+          <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
         </div>
         <section class="profile-modal-media" aria-label="Dancer profile media">
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">

@@ -248,6 +248,15 @@ test("profile polish preserves the existing site color system", () => {
 
 test("profile identity and media controls form a compact balanced top section", () => {
   assert.match(
+    liveApp,
+    /<div class="profile-modal-summary">[\s\S]*?<button class="close-btn" id="modalClose" type="button" aria-label="Close profile">/,
+  );
+  assert.doesNotMatch(liveApp, /<div class="modal-top">\s*<button class="close-btn" id="modalClose"/);
+  assert.match(
+    liveApp,
+    /#profileBackdrop #modalClose \{[\s\S]*?position: absolute !important;[\s\S]*?top: 50% !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
+  );
+  assert.match(
     profilePolishBlock,
     /#profileBackdrop \.profile-modal-summary \{[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\);[\s\S]*?min-height: 64px;/,
   );
