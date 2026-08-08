@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource] = await Promise.all([
+const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource, venueActionsSource, venueFollowsRouteSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/ProfileNavigationActions.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/venues/[slug]/VenueProfileActions.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/customer/venue-follows/route.ts", import.meta.url), "utf8"),
 ]);
 
 function sourceBetween(source, start, end) {
@@ -171,6 +173,47 @@ test("signed-out profile actions open a dismissible account prompt with working 
     homeSource,
     /class="action-btn secondary follow-venue-btn[^"]*"[^>]*data-venue-follow="\$\{venue\.name\}"[^>]*data-account-action="venue-follow"[^>]*aria-pressed="\$\{followsVenue\}"/,
   );
+});
+
+test("venue follows are empty and unavailable until a real customer session is active", () => {
+  assert.match(
+    homeSource,
+    /const followedVenuesByCity = Object\.fromEntries\(\s+Object\.keys\(markets\)\.map\(\(city\) => \[city, \[\]\]\)\s+\);/,
+  );
+  assert.doesNotMatch(
+    homeSource,
+    /"Las Vegas": \["Spearmint Rhino Las Vegas", "Sapphire Las Vegas"\]/,
+  );
+  assert.match(
+    homeSource,
+    /function followedVenues\(city\) \{\s+if \(!isCustomerSession\(\)\) return \[\];/,
+  );
+  assert.match(
+    homeSource,
+    /function isFollowingVenue\(city, venueName\) \{\s+return Boolean\(\s+isCustomerSession\(\) &&\s+\(followedVenuesByCity\[city\] \|\| \[\]\)\.includes\(venueName\)/,
+  );
+  assert.match(
+    homeSource,
+    /function logoutAccount\(\) \{[\s\S]*?saveAuthSession\(null\);\s+clearCustomerSavedCollections\(\);/,
+  );
+
+  assert.match(venueActionsSource, /const \[following, setFollowing\] = useState\(false\)/);
+  assert.match(
+    venueActionsSource,
+    /if \(!accessToken\) \{\s+setFollowing\(false\);\s+setNotificationsEnabled\(false\);\s+return;/,
+  );
+  assert.match(
+    venueActionsSource,
+    /response\.status === 401 \|\| response\.status === 403[\s\S]*?setToken\(""\);\s+setFollowing\(false\);\s+setNotificationsEnabled\(false\);/,
+  );
+  assert.match(venueActionsSource, /if \(!requireCustomer\(\) \|\| isSaving\) return;/);
+  assert.match(venueActionsSource, /session\?\.account\?\.role === "customer"/);
+
+  assert.match(
+    venueFollowsRouteSource,
+    /const \{ client, user \} = await createRequestSupabaseContext\(request\);/,
+  );
+  assert.match(venueFollowsRouteSource, /customer_id: user\.id/);
 });
 
 test("public profiles keep Going visible for the next posted shift and gate only Follow and Notify", () => {

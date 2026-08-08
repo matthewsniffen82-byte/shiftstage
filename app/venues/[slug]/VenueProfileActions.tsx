@@ -29,7 +29,11 @@ export function VenueProfileActions({
     const accessToken = readCustomerToken();
     setToken(accessToken);
     setSessionLoaded(true);
-    if (!accessToken) return;
+    if (!accessToken) {
+      setFollowing(false);
+      setNotificationsEnabled(false);
+      return;
+    }
 
     const controller = new AbortController();
     fetch("/api/customer/saved", {
@@ -40,6 +44,11 @@ export function VenueProfileActions({
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setToken("");
+            setFollowing(false);
+            setNotificationsEnabled(false);
+          }
           throw new Error(data.error || "Unable to load your saved venues.");
         }
         const follow = (data.saved?.venueFollows || []).find(
@@ -133,6 +142,8 @@ export function VenueProfileActions({
       if (!response.ok || !data.ok) {
         if (response.status === 401 || response.status === 403) {
           setToken("");
+          setFollowing(false);
+          setNotificationsEnabled(false);
           setAccountGateOpen(true);
         }
         throw new Error(data.error || "Unable to update this venue.");

@@ -37095,12 +37095,9 @@
     const notifiedByCity = Object.fromEntries(
       Object.entries(followedByCity).map(([city, names]) => [city, [...names]])
     );
-    const followedVenuesByCity = {
-      "Las Vegas": ["Spearmint Rhino Las Vegas", "Sapphire Las Vegas"],
-      Miami: ["Scarlet Door", "Blue Room"],
-      Atlanta: ["Peach Room", "Halo Lounge"],
-      "New York": ["Monarch", "Afterglow"]
-    };
+    const followedVenuesByCity = Object.fromEntries(
+      Object.keys(markets).map((city) => [city, []])
+    );
 
     function clearCustomerSavedCollections() {
       Object.keys(markets).forEach((city) => {
@@ -41969,12 +41966,16 @@
     }
 
     function followedVenues(city) {
+      if (!isCustomerSession()) return [];
       const names = followedVenuesByCity[city] || [];
       return markets[city].venues.filter((venue) => names.includes(venue.name) && !venue.hidden);
     }
 
     function isFollowingVenue(city, venueName) {
-      return (followedVenuesByCity[city] || []).includes(venueName);
+      return Boolean(
+        isCustomerSession() &&
+        (followedVenuesByCity[city] || []).includes(venueName)
+      );
     }
 
     function activeDancerCity() {
@@ -46829,6 +46830,7 @@
       liveAdminRevealedVenueCodes = {};
       liveNotifications = [];
       saveAuthSession(null);
+      clearCustomerSavedCollections();
       closeDashboard();
       closeDancerDashboard();
       closeVenueDashboard();
