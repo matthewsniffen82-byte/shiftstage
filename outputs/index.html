@@ -41936,7 +41936,8 @@
       return `<span class="location-confirmed-badge" title="${title}">${label}</span>`;
     }
 
-    function profileLocationStatusTile(profile) {
+    function profileLocationStatusTile(profile, city = selectedCity()) {
+      if (isWorkingTonight(profile, city)) return "";
       const label = profileLocationStatusLabel(profile);
       if (!label) return "";
       const distance = Number(profile.checkinDistanceFeet);
@@ -46340,7 +46341,7 @@
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           ${socialMarkup}
           ${profileActivityMetricsMarkup(profile, city)}
-          ${profileLocationStatusTile(profile)}
+          ${profileLocationStatusTile(profile, city)}
         </div>
       `;
     }

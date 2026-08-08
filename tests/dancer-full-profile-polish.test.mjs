@@ -285,6 +285,14 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(profilePolishBlock, /#profileBackdrop \.profile-media-tab-icon \{[\s\S]*?width: 18px;[\s\S]*?height: 18px;/);
 });
 
+test("Working Now profiles do not repeat the Club Confirmed check-in card", () => {
+  assert.match(
+    liveApp,
+    /function profileLocationStatusTile\(profile, city = selectedCity\(\)\) \{\s+if \(isWorkingTonight\(profile, city\)\) return "";/,
+  );
+  assert.match(liveApp, /\$\{profileLocationStatusTile\(profile, city\)\}/);
+});
+
 test("unavailable profile QR stays visible in a compact square tile", () => {
   const unavailableDealMarkup = liveApp.match(
     /const unavailableLabel = state\.key === "no-active-offer"[\s\S]*?(?=\n    function profileShareText)/,
