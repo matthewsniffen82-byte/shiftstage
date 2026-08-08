@@ -61,7 +61,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /const openDancerProfile = \(event\) => \{[\s\S]*?markets\[dancerCity\]\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profile\.name\)[\s\S]*?dancer\.addEventListener\("click", openDancerProfile\)/,
+    /const openDancerProfile = \(event\) => \{[\s\S]*?markets\[dancerCity\]\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profileReferenceValue\(profile\)\)[\s\S]*?dancer\.addEventListener\("click", openDancerProfile\)/,
   );
   assert.match(homeSource, /venue\.href = venueExperienceHref\([\s\S]*?\{ slug: venueSlug, name: venueName \}[\s\S]*?item\?\.dancer\?\.city \|\| citySelect\.value/);
   assert.match(homeSource, /"Working Now"[\s\S]*?dateLabel \? `Upcoming · \$\{dateLabel\}` : "Upcoming"/);
@@ -557,7 +557,7 @@ test("Now grid cards keep production actions while Dancers directory cards link 
   );
   assert.match(
     homeSource,
-    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?data-grid-profile-action="\$\{profileValue\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
+    /function homeDancerGridActionsMarkup\(profile, city\)[\s\S]*?const profileReference = escapeOptionValue\(profileReferenceValue\(profile\)\)[\s\S]*?data-grid-profile-action="\$\{profileReference\}"[\s\S]*?homeDancerGridQrMarkup\(profile\)[\s\S]*?data-native-share="\$\{profileValue\}"[\s\S]*?data-feed-action="follow"[\s\S]*?data-feed-action="notify"/,
   );
   const dancerGridActions = homeSource.match(
     /function homeDancerGridActionsMarkup\(profile, city\) \{[\s\S]*?(?=\n    function homeDancerGridCard)/,
@@ -574,7 +574,15 @@ test("Now grid cards keep production actions while Dancers directory cards link 
   );
   assert.match(
     homeSource,
-    /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?handleQrClick\(event\)[\s\S]*?handleShareClick\(event\)[\s\S]*?data-grid-profile-action[\s\S]*?openProfileModal\(gridProfileButton\.dataset\.gridProfileAction\)[\s\S]*?const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?openProfileModal\(card\.dataset\.profile\);/,
+    /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?handleQrClick\(event\)[\s\S]*?handleShareClick\(event\)[\s\S]*?data-grid-profile-action[\s\S]*?openProfileModal\(gridProfileButton\.dataset\.gridProfileAction\)[\s\S]*?const card = event\.target\.closest\("\.dancer-card"\);[\s\S]*?openProfileModal\(card\.dataset\.profileReference \|\| card\.dataset\.profile\);/,
+  );
+  assert.match(
+    homeSource,
+    /function findProfile\(reference, options = \{\}\)[\s\S]*?String\(item\.id \|\| ""\) === normalizedReference[\s\S]*?String\(item\.slug \|\| ""\) === normalizedReference[\s\S]*?item\.name === normalizedReference/,
+  );
+  assert.match(
+    homeSource,
+    /function homeDancerGridCard\(profile, city, compactDirectory = false\)[\s\S]*?data-profile-reference="\$\{profileReference\}"/,
   );
   assert.match(
     homeSource,

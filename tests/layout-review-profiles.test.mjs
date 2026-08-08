@@ -92,6 +92,10 @@ test("synthetic review accounts cannot sign in or impersonate active dancers", (
   );
   assert.match(
     scriptSource,
+    /const NO_SCHEDULE_PROFILE_INDEXES = new Set\(\[0\]\)/,
+  );
+  assert.match(
+    scriptSource,
     /async function removeProfileSocialLinks[\s\S]*?\.from\("social_links"\)[\s\S]*?\.delete\(\)/,
   );
   assert.match(
@@ -122,6 +126,10 @@ test("layout-review schedules and rollback support the deployed production schem
     scheduleFunction,
     /location_status: isWorkingNow \? "club_confirmed" : "self_reported"/,
   );
+  assert.match(
+    scheduleFunction,
+    /NO_SCHEDULE_PROFILE_INDEXES\.has\(definition\.index\)[\s\S]*?hasSchedule: false[\s\S]*?isWorkingNow: false[\s\S]*?venue: null/,
+  );
   assert.doesNotMatch(scheduleFunction, /working_status/);
   assert.match(
     scriptSource,
@@ -142,6 +150,18 @@ test("layout-review schedules and rollback support the deployed production schem
   assert.match(
     scriptSource,
     /Expected \$\{WORKING_NOW_PROFILE_INDEXES\.size\} Working Now shifts/,
+  );
+  assert.match(
+    scriptSource,
+    /expectedScheduledShifts = count - \[\.\.\.NO_SCHEDULE_PROFILE_INDEXES\][\s\S]*?Expected \$\{expectedScheduledShifts\} scheduled profiles/,
+  );
+  assert.match(
+    scriptSource,
+    /mode === "sync-no-schedule"[\s\S]*?syncNoScheduleOnly\(\)/,
+  );
+  assert.match(
+    scriptSource,
+    /async function syncNoScheduleOnly[\s\S]*?assertMarkedDatasetAccount\(target\.profile\)[\s\S]*?clearProfileSchedule\(target\.profile, target\.definition\)[\s\S]*?remainingShifts !== 0/,
   );
 });
 

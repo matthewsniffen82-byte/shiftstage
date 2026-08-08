@@ -54,7 +54,7 @@ test("shared profile-photo links select the exact inline photo without opening a
   assert.doesNotMatch(sharedPhotoHandler, /openPhotoViewerFromElement|syncViewer/);
   assert.match(
     liveApp,
-    /openProfileModal\(profile\.name\);[\s\S]*?openSharedProfileMedia\(params\);/,
+    /openProfileModal\(profileReferenceValue\(profile\)\);[\s\S]*?openSharedProfileMedia\(params\);/,
   );
   assert.match(
     liveApp,

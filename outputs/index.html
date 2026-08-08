@@ -45759,11 +45759,21 @@
       `;
     }
 
-    function findProfile(name, options = {}) {
+    function profileReferenceValue(profile) {
+      return String(profile?.slug || profile?.id || profile?.name || "").trim();
+    }
+
+    function findProfile(reference, options = {}) {
       const includePending = Boolean(options.includePending);
-      const profile = markets[citySelect.value].dancers.find((item) => (
-        item.name === name && (includePending || isApprovedPublicProfile(item))
+      const normalizedReference = String(reference || "").trim();
+      if (!normalizedReference) return null;
+      const availableProfiles = markets[citySelect.value].dancers.filter((item) => (
+        includePending || isApprovedPublicProfile(item)
       ));
+      const profile = availableProfiles.find((item) => (
+        String(item.id || "") === normalizedReference ||
+        String(item.slug || "") === normalizedReference
+      )) || availableProfiles.find((item) => item.name === normalizedReference);
       return profile ? (profile.status === "Pending" ? profile : withTrendingRank(profile, citySelect.value)) : null;
     }
 
@@ -46445,11 +46455,19 @@
       });
     }
 
-    function openProfileModal(profileName, options = {}) {
+    function openProfileModal(profileReference, options = {}) {
       const city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
       profileModalReturnTarget = options.returnTo || "";
-      const baseProfile = markets[city].dancers.find((item) => item.name === profileName && !item.hidden);
+      const profile = findProfile(profileReference, { includePending: isPrivatePreview });
+      if (!profile) return;
+      const profileName = profile.name;
+      const baseProfile = markets[city].dancers.find((item) => (
+        !item.hidden && (
+          (profile.id && item.id === profile.id) ||
+          (profile.slug && item.slug === profile.slug)
+        )
+      )) || profile;
       if (baseProfile?.status === "Verified") {
         recordUniqueTrendEvent("profileViews", city, profileName);
         if (baseProfile.scheduled) recordUniqueTrendEvent("scheduleViews", city, profileName);
@@ -46460,10 +46478,13 @@
           recordLiveEvent("schedule_view", { dancerName: profileName, source: "profile_modal" });
         }
       }
-      const profile = findProfile(profileName, { includePending: isPrivatePreview });
-      if (!profile) return;
-
-      const profileIndex = markets[city].dancers.findIndex((item) => item.name === profile.name);
+      const exactProfileIndex = markets[city].dancers.findIndex((item) => (
+        (profile.id && item.id === profile.id) ||
+        (profile.slug && item.slug === profile.slug)
+      ));
+      const profileIndex = exactProfileIndex >= 0
+        ? exactProfileIndex
+        : markets[city].dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
       const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
@@ -51892,6 +51913,7 @@
     function homeDancerGridActionsMarkup(profile, city) {
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
+      const profileReference = escapeOptionValue(profileReferenceValue(profile));
       const cityValue = escapeOptionValue(city);
       const isFollowed = isFollowingProfile(city, profile.name);
       const isNotified = isNotificationOn(city, profile.name);
@@ -51925,7 +51947,7 @@
       return `
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
-            <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileValue}" aria-label="Open ${safeName}'s full profile">${profileActionVisual}<span>Profile</span></button>
+            <button class="home-dancer-grid-profile-button" type="button" data-grid-profile-action="${profileReference}" aria-label="Open ${safeName}'s full profile">${profileActionVisual}<span>Profile</span></button>
             ${homeDancerGridQrMarkup(profile)}
             <button class="feed-card-action home-dancer-grid-share" type="button" data-native-share="${profileValue}" data-share-city="${cityValue}" aria-label="Share ${safeName}'s profile">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "heart", isFollowed ? "Following" : "Follow")}</button>
@@ -51939,6 +51961,7 @@
     function homeDancerGridCard(profile, city, compactDirectory = false) {
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
+      const profileReference = escapeOptionValue(profileReferenceValue(profile));
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const photoUrl = publicProfilePhotoUrl(profile);
       const photoAttrs = customPhotoAttrs(photoUrl, publicProfilePhotoSrcSet(profile));
@@ -51966,7 +51989,7 @@
           ? "is-upcoming"
           : "is-open";
       return `
-        <article class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
+        <article class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
@@ -52080,6 +52103,7 @@
       const city = citySelect.value;
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
+      const profileReference = escapeOptionValue(profileReferenceValue(profile));
       const venueName = String(profile.venue || "").trim();
       const safeVenueName = escapeHtml(venueName);
       const venueValue = escapeOptionValue(venueName);
@@ -52119,7 +52143,7 @@
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
         : "";
       return `
-        <article class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileValue}" data-profile="${profileValue}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+        <article class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
           ${portraitMarkup}
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>
@@ -53125,7 +53149,7 @@
         ));
         if (!profile) return;
         event.preventDefault();
-        openProfileModal(profile.name);
+        openProfileModal(profileReferenceValue(profile));
       };
 
       const dancer = document.createElement("a");
@@ -53884,7 +53908,7 @@
       const card = event.target.closest(".dancer-card");
       if (!card) return;
       event.preventDefault();
-      openProfileModal(card.dataset.profile);
+      openProfileModal(card.dataset.profileReference || card.dataset.profile);
     });
 
     async function runShareAction(profileName, city) {
@@ -55609,7 +55633,7 @@
       const card = event.target.closest(".dancer-card");
       if (!card) return;
       event.preventDefault();
-      openProfileModal(card.dataset.profile);
+      openProfileModal(card.dataset.profileReference || card.dataset.profile);
     });
 
     async function handleDancerControlAction(action, trigger = null) {
@@ -56976,7 +57000,7 @@
         || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
       if (profile) {
         setTimeout(() => {
-          openProfileModal(profile.name);
+          openProfileModal(profileReferenceValue(profile));
           openSharedProfileMedia(params);
         }, 120);
       }

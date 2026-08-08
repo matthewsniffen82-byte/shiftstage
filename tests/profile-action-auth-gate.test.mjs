@@ -82,7 +82,7 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /function openProfileModal\(profileName, options = \{\}\) \{[\s\S]*?resetProfileModalScroll\(\);\s+profileBackdrop\.classList\.add\("show"\);[\s\S]*?focusProfileModalStart\(\);/,
+    /function openProfileModal\(profileReference, options = \{\}\) \{[\s\S]*?resetProfileModalScroll\(\);\s+profileBackdrop\.classList\.add\("show"\);[\s\S]*?focusProfileModalStart\(\);/,
   );
   assert.match(
     homeSource,

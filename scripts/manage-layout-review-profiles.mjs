@@ -13,6 +13,7 @@ const DEFAULT_COUNT = PROFILE_DEFINITIONS.length;
 const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;
+const NO_SCHEDULE_PROFILE_INDEXES = new Set([0]);
 const WORKING_NOW_PROFILE_INDEXES = new Set([5, 6, 7, 8, 9]);
 const FEATURED_WORKING_NOW_VENUE_SLUGS = [
   "peppermint-hippo-las-vegas",
@@ -55,6 +56,8 @@ if (mode === "inspect") {
   await syncDealsOnly();
 } else if (mode === "sync-schedules") {
   await syncSchedulesOnly();
+} else if (mode === "sync-no-schedule") {
+  await syncNoScheduleOnly();
 } else {
   await cleanupDataset();
 }
@@ -267,7 +270,17 @@ async function syncSchedulesOnly() {
   }
 
   const profileIds = profiles.map((profile) => profile.id);
-  const workingNowShifts = await countWorkingNowShifts(profileIds);
+  const [scheduledShifts, workingNowShifts] = await Promise.all([
+    countRowsForProfiles("shifts", profileIds),
+    countWorkingNowShifts(profileIds),
+  ]);
+  const expectedScheduledShifts = count - [...NO_SCHEDULE_PROFILE_INDEXES]
+    .filter((index) => index < count).length;
+  if (scheduledShifts !== expectedScheduledShifts) {
+    throw new Error(
+      `Expected ${expectedScheduledShifts} scheduled profiles but found ${scheduledShifts}.`,
+    );
+  }
   if (workingNowShifts !== WORKING_NOW_PROFILE_INDEXES.size) {
     throw new Error(
       `Expected ${WORKING_NOW_PROFILE_INDEXES.size} Working Now shifts but found ${workingNowShifts}.`,
@@ -278,8 +291,61 @@ async function syncSchedulesOnly() {
     mode,
     target,
     datasetMarker: DATASET_MARKER,
+    noScheduleProfiles: scheduleTargets
+      .filter(({ definition }) => NO_SCHEDULE_PROFILE_INDEXES.has(definition.index))
+      .map(({ definition }) => definition.stageName),
+    scheduledShifts,
     workingNowAssignments,
     workingNowShifts,
+  });
+}
+
+async function syncNoScheduleOnly() {
+  const profiles = await listDatasetProfiles();
+  const profilesBySlug = new Map(
+    profiles.map((profile) => [String(profile.slug), profile]),
+  );
+  const targets = [...NO_SCHEDULE_PROFILE_INDEXES]
+    .filter((index) => index < count)
+    .map((index) => {
+      const definition = profileDefinition(index);
+      return {
+        definition,
+        profile: profilesBySlug.get(definition.slug),
+      };
+    });
+  const missingProfileSlugs = targets
+    .filter((target) => !target.profile)
+    .map((target) => target.definition.slug);
+  if (missingProfileSlugs.length) {
+    throw new Error(
+      `Missing marked review profiles: ${missingProfileSlugs.join(", ")}.`,
+    );
+  }
+  for (const target of targets) {
+    await assertMarkedDatasetAccount(target.profile);
+    await clearProfileSchedule(target.profile, target.definition);
+  }
+
+  const remainingShifts = await countRowsForProfiles(
+    "shifts",
+    targets.map((target) => target.profile.id),
+  );
+  if (remainingShifts !== 0) {
+    throw new Error(
+      `Expected no posted shifts for the No Shift Posted profiles but found ${remainingShifts}.`,
+    );
+  }
+
+  writeResult({
+    mode,
+    target,
+    datasetMarker: DATASET_MARKER,
+    noScheduleProfiles: targets.map(({ definition }) => ({
+      name: definition.stageName,
+      slug: definition.slug,
+    })),
+    remainingShifts,
   });
 }
 
@@ -442,11 +508,11 @@ async function replaceProfileSchedule(
   venues,
   reviewQrVenues,
 ) {
-  const { error: deleteError } = await admin
-    .from("shifts")
-    .delete()
-    .eq("dancer_id", profile.id);
-  assertSuccess(deleteError, `reset review schedule for ${definition.slug}`);
+  await clearProfileSchedule(profile, definition);
+
+  if (NO_SCHEDULE_PROFILE_INDEXES.has(definition.index)) {
+    return { hasSchedule: false, isWorkingNow: false, venue: null };
+  }
 
   const workingNowIndexes = [...WORKING_NOW_PROFILE_INDEXES];
   const workingNowSlot = workingNowIndexes.indexOf(definition.index);
@@ -479,7 +545,15 @@ async function replaceProfileSchedule(
     venue_id: venue.id,
   });
   assertSuccess(error, `insert review schedule for ${definition.slug}`);
-  return { isWorkingNow, venue };
+  return { hasSchedule: true, isWorkingNow, venue };
+}
+
+async function clearProfileSchedule(profile, definition) {
+  const { error } = await admin
+    .from("shifts")
+    .delete()
+    .eq("dancer_id", profile.id);
+  assertSuccess(error, `reset review schedule for ${definition.slug}`);
 }
 
 async function prepareReviewQrVenues(venues) {
@@ -855,11 +929,12 @@ function readMode(argumentsMap) {
     "--apply",
     "--sync-deals",
     "--sync-schedules",
+    "--sync-no-schedule",
     "--cleanup",
   ].filter((flag) => argumentsMap.has(flag));
   if (selected.length !== 1) {
     throw new Error(
-      "Choose exactly one mode: --inspect, --apply, --sync-deals, --sync-schedules, or --cleanup.",
+      "Choose exactly one mode: --inspect, --apply, --sync-deals, --sync-schedules, --sync-no-schedule, or --cleanup.",
     );
   }
   return selected[0].slice(2);

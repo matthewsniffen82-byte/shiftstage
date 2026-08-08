@@ -17,7 +17,7 @@ test("dancer and venue cards keep QR directly below Profile in the right-side ra
 
   assert.match(
     dancerActions,
-    /data-grid-profile-action="\$\{profileValue\}"[\s\S]*?\$\{homeDancerGridQrMarkup\(profile\)\}[\s\S]*?data-native-share="\$\{profileValue\}"/,
+    /data-grid-profile-action="\$\{profileReference\}"[\s\S]*?\$\{homeDancerGridQrMarkup\(profile\)\}[\s\S]*?data-native-share="\$\{profileValue\}"/,
   );
   assert.match(
     venueSlide,
