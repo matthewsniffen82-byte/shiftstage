@@ -14,7 +14,7 @@ test("account dashboards hide public navigation and keep their X as the exit to 
   );
   assert.match(
     homeSource,
-    /body\.dashboard-overlay-open \.discovery-sticky-head,\s*body\.dancer-auth-overlay-open \.discovery-sticky-head,\s*body\.venue-auth-overlay-open \.discovery-sticky-head \{\s*visibility: hidden !important;\s*pointer-events: none !important;\s*\}/,
+    /body\.dashboard-overlay-open \.discovery-sticky-head,\s*body\.customer-auth-overlay-open \.discovery-sticky-head,\s*body\.dancer-auth-overlay-open \.discovery-sticky-head,\s*body\.venue-auth-overlay-open \.discovery-sticky-head \{\s*visibility: hidden !important;\s*pointer-events: none !important;\s*\}/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -37,6 +37,10 @@ test("account dashboards hide public navigation and keep their X as the exit to 
   assert.match(
     homeSource,
     /const dashboardOverlayOpen = !!document\.querySelector\(\s*"#customerDashboard\.show, #dancerDashboard\.show, #venueDashboard\.show, #adminDashboard\.show"\s*\);[\s\S]*?document\.body\.classList\.toggle\("dashboard-overlay-open", dashboardOverlayOpen\);/,
+  );
+  assert.match(
+    homeSource,
+    /const customerAuthOverlayOpen =\s*authPage\.classList\.contains\("show"\) &&\s*!authForm\.hidden;[\s\S]*?document\.body\.classList\.toggle\("customer-auth-overlay-open", customerAuthOverlayOpen\);/,
   );
   assert.match(
     homeSource,

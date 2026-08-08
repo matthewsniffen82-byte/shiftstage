@@ -8,6 +8,10 @@ import {
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
 import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
+import {
+  AccountRecoveryRateLimitError,
+  enforceAccountRecoveryRateLimit,
+} from "@/src/lib/dancr/account-recovery";
 import { getPublicEnv } from "@/src/lib/env";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
@@ -28,14 +32,28 @@ export async function POST(request: Request) {
     const client = createServerSupabaseClient();
 
     if (mode === "reset_password") {
+      const admin = createAdminSupabaseClient();
+      await enforceAccountRecoveryRateLimit(admin, {
+        eventType: "password_reset",
+        role,
+        request,
+        subject: email,
+      });
       const { error } = await client.auth.resetPasswordForEmail(email, {
         redirectTo: safeEmailRedirectTo(body.emailRedirectTo),
       });
-      if (error) throw error;
+      if (error) {
+        const rateLimitMessage = authRateLimitMessage(error);
+        if (rateLimitMessage) throw error;
+        console.error("ACCOUNT_PASSWORD_RESET_DELIVERY_FAILED", {
+          role,
+          errorCode: typeof (error as { code?: unknown }).code === "string" ? (error as { code: string }).code : "provider_error",
+        });
+      }
 
       return NextResponse.json({
         ok: true,
-        message: "Password reset email sent.",
+        message: "If that email has a MyDancr account, a secure reset link is on the way.",
       });
     }
 
@@ -124,6 +142,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(await authResponse(data.user.id, role, data.session, !data.session));
   } catch (error) {
+    if (error instanceof AccountRecoveryRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
+    }
     const rateLimitMessage = authRateLimitMessage(error);
     if (rateLimitMessage) {
       return NextResponse.json({ ok: false, error: rateLimitMessage }, { status: 429 });

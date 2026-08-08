@@ -28,6 +28,7 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
 
 export async function sendTransactionalEmail(input: {
   to: string;
+  replyTo?: string;
   subject: string;
   text: string;
   html?: string;
@@ -45,6 +46,7 @@ export async function sendTransactionalEmail(input: {
     body: JSON.stringify({
       from,
       to: input.to,
+      ...(input.replyTo ? { reply_to: input.replyTo } : {}),
       subject: input.subject,
       text: input.text,
       ...(input.html ? { html: input.html } : {}),

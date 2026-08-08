@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId, setAccountState } from "@/src/lib/dancr/auth";
+import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import type { AccountState } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -66,8 +67,39 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: error.message || "Unable to update password." }, { status: 400 });
       }
 
+      const { error: signOutError } = await client.auth.signOut({ scope: "others" });
+      if (signOutError) {
+        console.warn(JSON.stringify({
+          event: "account.password_other_sessions_revoke_failed",
+          userId: user.id,
+          message: signOutError.message,
+        }));
+      }
+
+      if (user.email) {
+        const delivery = await sendTransactionalEmail({
+          to: user.email,
+          subject: "Your MyDancr password was changed",
+          text: [
+            "Your MyDancr password was changed successfully.",
+            "",
+            "Other active MyDancr sessions were signed out for your security.",
+            "If you did not make this change, reset your password immediately from the MyDancr sign-in page and contact support@mydancr.com.",
+            "",
+            "MyDancr will never ask you to send your password or reset code by email.",
+          ].join("\n"),
+        });
+        if (!delivery.delivered) {
+          console.warn(JSON.stringify({
+            event: "account.password_change_alert_delivery_failed",
+            userId: user.id,
+            reason: delivery.reason,
+          }));
+        }
+      }
+
       const account = await getAccountByUserId(client, user.id);
-      return NextResponse.json({ ok: true, account, session, message: "Password updated." });
+      return NextResponse.json({ ok: true, account, session, message: "Password updated. Other sessions were signed out." });
     }
 
     const accountState = body?.accountState;

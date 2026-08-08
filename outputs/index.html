@@ -3565,6 +3565,61 @@
       justify-self: auto;
     }
 
+    .login-recovery-card {
+      display: grid;
+      gap: 14px;
+      padding: 15px;
+      border: 1px solid rgba(148,229,255,.24);
+      border-radius: 12px;
+      background: rgba(4,12,20,.78);
+      box-shadow: inset 0 0 24px rgba(53,216,255,.035);
+    }
+
+    .login-recovery-card[hidden] { display: none !important; }
+
+    .login-recovery-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .login-recovery-head h3 { margin: 4px 0 0; font-size: 1.25rem; }
+
+    .login-recovery-close {
+      width: 36px;
+      height: 36px;
+      flex: 0 0 36px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(255,255,255,.06);
+      font-size: 1.35rem;
+      cursor: pointer;
+    }
+
+    .login-recovery-copy,
+    .login-recovery-security { margin: 0; color: #d8cfeb; font-size: .82rem; line-height: 1.45; }
+
+    .login-recovery-security {
+      padding: 10px 11px;
+      border-left: 3px solid #94e5ff;
+      background: rgba(148,229,255,.06);
+    }
+
+    .login-recovery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .login-recovery-card textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+    .login-recovery-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    @media (max-width: 520px) {
+      .login-recovery-grid { grid-template-columns: 1fr; }
+    }
+
     .dashboard-stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -35177,6 +35232,7 @@
         }
 
         body.dashboard-overlay-open .discovery-sticky-head,
+        body.customer-auth-overlay-open .discovery-sticky-head,
         body.dancer-auth-overlay-open .discovery-sticky-head,
         body.venue-auth-overlay-open .discovery-sticky-head {
           visibility: hidden !important;
@@ -35711,11 +35767,48 @@
                 </button>
               </div>
             </div>
-            <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button">Forgot password?</button>
+            <div class="auth-help-row">
+              <button class="forgot-password-link" id="venueForgotPasswordBtn" type="button">Forgot password?</button>
+              <button class="forgot-password-link" id="venueForgotLoginBtn" type="button">Forgot email/login?</button>
+            </div>
             <button class="action-btn" id="venueLoginSubmit" type="submit">Venue login</button>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="button">Create venue account</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite">Existing managers can sign in. New managers need a private venue access code.</div>
           </form>
+          <section class="login-recovery-card" id="loginRecoveryCard" aria-labelledby="loginRecoveryTitle" hidden>
+            <div class="login-recovery-head">
+              <div><span class="eyebrow">Account recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
+              <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close account recovery">×</button>
+            </div>
+            <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
+            <form class="auth-form" id="loginRecoveryForm">
+              <input id="loginRecoveryRole" type="hidden" value="customer">
+              <div class="login-recovery-grid">
+                <div class="field">
+                  <label for="loginRecoveryAccountName" id="loginRecoveryAccountNameLabel">Name used on the account</label>
+                  <input id="loginRecoveryAccountName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
+                </div>
+                <div class="field">
+                  <label for="loginRecoveryCity">Account city</label>
+                  <input id="loginRecoveryCity" type="text" minlength="2" maxlength="80" placeholder="Las Vegas" required>
+                </div>
+              </div>
+              <div class="field">
+                <label for="loginRecoveryContactEmail">Email where support can reach you</label>
+                <input id="loginRecoveryContactEmail" type="email" maxlength="254" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="loginRecoveryDetails">Other details that can help verify the account</label>
+                <textarea id="loginRecoveryDetails" rows="4" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
+              </div>
+              <p class="login-recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+              <div class="login-recovery-actions">
+                <button class="action-btn" id="loginRecoverySubmit" type="submit">Send recovery request</button>
+                <button class="ghost" id="loginRecoveryBack" type="button">Back to sign in</button>
+              </div>
+              <div class="rule-note auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+            </form>
+          </section>
         </div>
       </div>
     </section>
@@ -36963,6 +37056,11 @@
     };
     let userLocation = null;
     const authPage = document.getElementById("authPage");
+    const loginRecoveryCard = document.getElementById("loginRecoveryCard");
+    const loginRecoveryForm = document.getElementById("loginRecoveryForm");
+    const loginRecoveryClose = document.getElementById("loginRecoveryClose");
+    const loginRecoveryBack = document.getElementById("loginRecoveryBack");
+    const loginRecoveryStatus = document.getElementById("loginRecoveryStatus");
     const dancerSignupPage = document.getElementById("dancerSignupPage");
     const stripeCheckoutPage = document.getElementById("stripeCheckoutPage");
     const dancerDashboard = document.getElementById("dancerDashboard");
@@ -38312,7 +38410,7 @@
           email,
           emailRedirectTo: savePasswordResetResume(role, email, returnTo)
         });
-        const message = "Password reset email sent. Open the newest Mydancr email to continue.";
+        const message = "If that email has a MyDancr account, we sent a secure reset link. Check the newest email and your spam folder.";
         if (status) {
           status.textContent = message;
           status.hidden = false;
@@ -38333,63 +38431,65 @@
       }
     }
 
-    function openLoginRecoveryEmail(role) {
-      const roleLabel = role === "dancer" ? "dancer" : "customer";
-      const subject = encodeURIComponent(`Mydancr ${roleLabel} login help`);
-      const body = encodeURIComponent(
-        `Hi Mydancr support,\n\nI need help finding the email/login for my ${roleLabel} account.\n\nAccount details I remember:\n- Name or stage name:\n- City:\n- Phone, if attached:\n\n`
-      );
-      window.location.href = `mailto:support@mydancr.com?subject=${subject}&body=${body}`;
+    function sendLoginRecoveryHelp({ role, emailInputId }) {
+      const accountEmail = document.getElementById(emailInputId)?.value?.trim() || "";
+      const contactInput = document.getElementById("loginRecoveryContactEmail");
+      const roleInput = document.getElementById("loginRecoveryRole");
+      const cityInput = document.getElementById("loginRecoveryCity");
+      const nameLabel = document.getElementById("loginRecoveryAccountNameLabel");
+      const title = document.getElementById("loginRecoveryTitle");
+      if (loginRecoveryForm) loginRecoveryForm.reset();
+      if (roleInput) roleInput.value = role;
+      if (cityInput) cityInput.value = citySelect.value || "Las Vegas";
+      if (contactInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail)) contactInput.value = accountEmail;
+      if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
+      if (title) title.textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
+      if (loginRecoveryStatus) {
+        loginRecoveryStatus.textContent = "";
+        loginRecoveryStatus.hidden = true;
+      }
+      document.getElementById("authForm").hidden = true;
+      document.getElementById("dancerLoginForm").hidden = true;
+      document.getElementById("venueLoginForm").hidden = true;
+      loginRecoveryCard.hidden = false;
+      setTimeout(() => document.getElementById("loginRecoveryAccountName")?.focus(), 0);
     }
 
-    async function sendLoginRecoveryHelp({ role, emailInputId, buttonId, statusId = "" }) {
-      const email = document.getElementById(emailInputId)?.value?.trim() || "";
-      const button = document.getElementById(buttonId);
-      const status = statusId ? document.getElementById(statusId) : null;
-      const previousText = button?.textContent || "Forgot email/login?";
+    function closeLoginRecovery() {
+      const role = document.getElementById("loginRecoveryRole")?.value || "customer";
+      loginRecoveryCard.hidden = true;
+      openAuthRole(role);
+    }
 
-      if (!email) {
-        const message = "If you do not remember the email, contact Mydancr support with your account details.";
-        if (status) {
-          status.textContent = message;
-          status.hidden = false;
-        }
-        showToast("Opening Mydancr support to help find your login.");
-        openLoginRecoveryEmail(role);
-        return;
-      }
-
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Sending login help...";
-      }
-
+    async function submitLoginRecoveryForm(event) {
+      event.preventDefault();
+      const submit = document.getElementById("loginRecoverySubmit");
+      submit.disabled = true;
+      submit.textContent = "Sending securely...";
+      loginRecoveryStatus.textContent = "Submitting your recovery request...";
+      loginRecoveryStatus.hidden = false;
       try {
-        const returnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
-        await requestAuth({
-          mode: "reset_password",
-          role,
-          email,
-          emailRedirectTo: `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(returnTo)}`
+        const response = await fetch("/api/account-recovery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            role: document.getElementById("loginRecoveryRole").value,
+            accountName: document.getElementById("loginRecoveryAccountName").value,
+            city: document.getElementById("loginRecoveryCity").value,
+            contactEmail: document.getElementById("loginRecoveryContactEmail").value,
+            details: document.getElementById("loginRecoveryDetails").value
+          })
         });
-        const message = "If that email has a Mydancr account, we sent login help.";
-        if (status) {
-          status.textContent = message;
-          status.hidden = false;
-        }
-        showToast(message);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) throw new Error(data.error || "Unable to submit account recovery request.");
+        loginRecoveryStatus.textContent = `${data.message} Reference: ${data.reference}.`;
+        document.getElementById("loginRecoveryDetails").value = "";
+        showToast("Account recovery request sent");
       } catch (error) {
-        const message = friendlyAuthErrorMessage(error.message, "Unable to send login help.");
-        if (status) {
-          status.textContent = message;
-          status.hidden = false;
-        }
-        showToast(message);
+        loginRecoveryStatus.textContent = error?.message || "Unable to submit account recovery request.";
       } finally {
-        if (button) {
-          button.disabled = false;
-          button.textContent = previousText;
-        }
+        submit.disabled = false;
+        submit.textContent = "Send recovery request";
       }
     }
 
@@ -46683,6 +46783,9 @@
       const dashboardOverlayOpen = !!document.querySelector(
         "#customerDashboard.show, #dancerDashboard.show, #venueDashboard.show, #adminDashboard.show"
       );
+      const customerAuthOverlayOpen =
+        authPage.classList.contains("show") &&
+        !authForm.hidden;
       const dancerAuthOverlayOpen =
         authPage.classList.contains("show") &&
         !document.getElementById("dancerLoginForm").hidden;
@@ -46691,6 +46794,7 @@
         !document.getElementById("venueLoginForm").hidden;
       document.body.classList.toggle("overlay-open", overlayOpen);
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
+      document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);
       document.body.classList.toggle("dancer-auth-overlay-open", dancerAuthOverlayOpen);
       document.body.classList.toggle("venue-auth-overlay-open", venueAuthOverlayOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
@@ -46768,6 +46872,7 @@
     function openAuthRole(role) {
       const isDancer = role === "dancer";
       const isVenue = role === "venue";
+      if (loginRecoveryCard) loginRecoveryCard.hidden = true;
       clearAuthFields(role);
       document.getElementById("authRoleTitle").textContent = isVenue ? "Venue login or sign up" : isDancer ? "Dancer login" : "Customer login";
       document.getElementById("authRoleSubtitle").textContent = isVenue
@@ -46787,6 +46892,7 @@
 
     function closeAuthPage() {
       clearAuthFields("all");
+      if (loginRecoveryCard) loginRecoveryCard.hidden = true;
       authPage.classList.remove("show");
       authPage.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
@@ -54843,6 +54949,14 @@
         buttonId: "venueForgotPasswordBtn"
       });
     });
+
+    document.getElementById("venueForgotLoginBtn").addEventListener("click", () => {
+      sendLoginRecoveryHelp({ role: "venue", emailInputId: "venueLoginEmail" });
+    });
+
+    loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);
+    loginRecoveryClose?.addEventListener("click", closeLoginRecovery);
+    loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
 
     document.getElementById("adminForgotPasswordBtn").addEventListener("click", () => {
       sendPasswordReset({

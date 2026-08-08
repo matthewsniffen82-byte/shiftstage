@@ -36,11 +36,18 @@ export default function AccountClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isSendingLoginHelp, setIsSendingLoginHelp] = useState(false);
+  const [showLoginRecovery, setShowLoginRecovery] = useState(false);
+  const [recoveryAccountName, setRecoveryAccountName] = useState("");
+  const [recoveryCity, setRecoveryCity] = useState("Las Vegas");
+  const [recoveryContactEmail, setRecoveryContactEmail] = useState("");
+  const [recoveryDetails, setRecoveryDetails] = useState("");
+  const [recoveryStatus, setRecoveryStatus] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [existingSessionRole, setExistingSessionRole] = useState<SessionRole | null>(null);
   const customerBenefitsRef = useRef<HTMLElement | null>(null);
   const customerEmailRef = useRef<HTMLInputElement | null>(null);
+  const recoveryAccountNameRef = useRef<HTMLInputElement | null>(null);
 
   const destination = useMemo(() => (role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer"), [role]);
   const isCustomerSignup = role === "customer" && mode === "signup";
@@ -94,6 +101,12 @@ export default function AccountClient() {
     setStatus("");
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setShowLoginRecovery(false);
+    setRecoveryAccountName("");
+    setRecoveryCity("Las Vegas");
+    setRecoveryContactEmail("");
+    setRecoveryDetails("");
+    setRecoveryStatus("");
   }
 
   function chooseRole(nextRole: AuthRole) {
@@ -109,6 +122,11 @@ export default function AccountClient() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("");
+
+    if (showLoginRecovery) {
+      await submitLoginRecovery();
+      return;
+    }
 
     if (mode === "signup" && role === "customer" && password !== confirmPassword) {
       setStatus("Passwords do not match.");
@@ -194,7 +212,7 @@ export default function AccountClient() {
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to send reset email."));
-      setStatus("Password reset email sent. Open the newest Mydancr email to continue.");
+      setStatus("If that email has a MyDancr account, we sent a secure reset link. Check the newest email and your spam folder.");
     } catch (error) {
       setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to send reset email."));
     } finally {
@@ -202,46 +220,36 @@ export default function AccountClient() {
     }
   }
 
-  function openLoginRecoveryEmail() {
-    const roleLabel = role === "dancer" ? "dancer" : "customer";
-    const subject = encodeURIComponent(`Mydancr ${roleLabel} login help`);
-    const body = encodeURIComponent(
-      `Hi Mydancr support,\n\nI need help finding the email/login for my ${roleLabel} account.\n\nAccount details I remember:\n- Name or stage name:\n- City:\n- Phone, if attached:\n\n`,
-    );
-    window.location.href = `mailto:support@mydancr.com?subject=${subject}&body=${body}`;
+  function sendLoginRecoveryHelp() {
+    setStatus("");
+    setRecoveryStatus("");
+    setRecoveryContactEmail(EMAIL_PATTERN.test(email.trim()) ? email.trim() : "");
+    setRecoveryCity(city || "Las Vegas");
+    setShowLoginRecovery(true);
+    window.setTimeout(() => recoveryAccountNameRef.current?.focus({ preventScroll: true }), 0);
   }
 
-  async function sendLoginRecoveryHelp() {
-    setStatus("");
-
-    if (!email.trim()) {
-      setStatus("If you do not remember the email, contact Mydancr support with your account details.");
-      openLoginRecoveryEmail();
-      return;
-    }
-
+  async function submitLoginRecovery() {
+    setRecoveryStatus("");
     setIsSendingLoginHelp(true);
-
     try {
-      const resetReturnTo = role === "dancer" ? "/dashboard/dancer" : "/dashboard/customer";
-      const response = await fetch("/api/auth", {
+      const response = await fetch("/api/account-recovery", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          mode: "reset_password",
           role,
-          email,
-          emailRedirectTo:
-            typeof window === "undefined"
-              ? undefined
-              : `${window.location.origin}/auth/callback?dancr_reset=1&role=${encodeURIComponent(role)}&return_to=${encodeURIComponent(resetReturnTo)}`,
+          accountName: recoveryAccountName,
+          city: recoveryCity,
+          contactEmail: recoveryContactEmail,
+          details: recoveryDetails,
         }),
       });
       const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to send login help.");
-      setStatus("If that email has a Mydancr account, we sent login help.");
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to submit account recovery request.");
+      setRecoveryStatus(`${data.message} Reference: ${data.reference}.`);
+      setRecoveryDetails("");
     } catch (error) {
-      setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to send login help."));
+      setRecoveryStatus(error instanceof Error ? error.message : "Unable to submit account recovery request.");
     } finally {
       setIsSendingLoginHelp(false);
     }
@@ -402,9 +410,47 @@ export default function AccountClient() {
                 {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
               </button>
               <button className="forgot-password" type="button" onClick={sendLoginRecoveryHelp} disabled={isSendingLoginHelp}>
-                {isSendingLoginHelp ? "Sending login help..." : "Forgot email/login?"}
+                Forgot email/login?
               </button>
             </div>
+          ) : null}
+          {mode === "login" && showLoginRecovery ? (
+            <section className="login-recovery" aria-labelledby="login-recovery-title">
+              <div className="login-recovery-head">
+                <div>
+                  <span className="eyebrow">Account recovery</span>
+                  <h2 id="login-recovery-title">Find your sign-in email</h2>
+                </div>
+                <button className="recovery-close" type="button" aria-label="Close account recovery" onClick={() => setShowLoginRecovery(false)}>×</button>
+              </div>
+              <p>MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
+              <div className="login-recovery-grid">
+                <label>
+                  {role === "dancer" ? "Stage name" : "Name used on the account"}
+                  <input ref={recoveryAccountNameRef} value={recoveryAccountName} onChange={(event) => setRecoveryAccountName(event.target.value)} maxLength={80} required />
+                </label>
+                <label>
+                  Account city
+                  <input value={recoveryCity} onChange={(event) => setRecoveryCity(event.target.value)} maxLength={80} placeholder="Las Vegas" required />
+                </label>
+              </div>
+              <label>
+                Email where support can reach you
+                <input type="email" autoComplete="email" value={recoveryContactEmail} onChange={(event) => setRecoveryContactEmail(event.target.value)} maxLength={254} required />
+              </label>
+              <label>
+                Other details that can help verify the account
+                <textarea value={recoveryDetails} onChange={(event) => setRecoveryDetails(event.target.value)} maxLength={1000} rows={4} placeholder="Approximate signup date, profile details, or venues you remember" />
+              </label>
+              <p className="recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+              <div className="login-recovery-actions">
+                <button className="recovery-submit" type="button" onClick={submitLoginRecovery} disabled={isSendingLoginHelp}>
+                  {isSendingLoginHelp ? "Sending securely..." : "Send recovery request"}
+                </button>
+                <button className="recovery-cancel" type="button" onClick={() => setShowLoginRecovery(false)}>Back to sign in</button>
+              </div>
+              {recoveryStatus ? <p className="recovery-status" role="status" aria-live="polite" aria-atomic="true">{recoveryStatus}</p> : null}
+            </section>
           ) : null}
           {mode === "signup" && role === "customer" ? (
             <label>
@@ -413,9 +459,11 @@ export default function AccountClient() {
             </label>
           ) : null}
 
-          <button className="submit" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (mode === "login" ? "Signing in..." : "Creating account...") : mode === "login" ? "Sign in" : "Create account"}
-          </button>
+          {!showLoginRecovery ? (
+            <button className="submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (mode === "login" ? "Signing in..." : "Creating account...") : mode === "login" ? "Sign in" : "Create account"}
+            </button>
+          ) : null}
           {status ? <p className="status" role="status" aria-live="polite" aria-atomic="true">{status}</p> : null}
         </form>
       </section>
@@ -431,6 +479,8 @@ function friendlyAuthErrorMessage(message: string | undefined, fallback: string)
 
   return text;
 }
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function AccountStyles() {
   return (
@@ -469,6 +519,20 @@ function AccountStyles() {
       .auth-help-row { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap; }
       .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .forgot-password:disabled { opacity: .62; cursor: wait; }
+      .login-recovery { display: grid; gap: 13px; padding: 15px; border: 1px solid rgba(148,229,255,.24); border-radius: 8px; background: rgba(4,12,20,.74); }
+      .login-recovery-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .login-recovery h2 { margin: 3px 0 0; font-size: 21px; }
+      .login-recovery p { color: #d8cfeb; font-size: 13px; line-height: 1.45; }
+      .login-recovery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .login-recovery textarea { width: 100%; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; box-sizing: border-box; }
+      .recovery-close { width: 34px; height: 34px; flex: 0 0 34px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; color: #fff; background: rgba(255,255,255,.06); font-size: 22px; cursor: pointer; }
+      .login-recovery-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .recovery-submit, .recovery-cancel { min-height: 42px; border-radius: 8px; padding: 0 14px; font-weight: 900; cursor: pointer; }
+      .recovery-submit { border: 1px solid rgba(53,216,255,.55); color: #fff; background: linear-gradient(135deg, #061b31, #0a4f88 55%, #1ecfff); }
+      .recovery-cancel { border: 1px solid rgba(255,255,255,.12); color: #fff; background: rgba(255,255,255,.05); }
+      .recovery-submit:disabled { opacity: .62; cursor: wait; }
+      .recovery-security { padding: 10px 11px; border-left: 3px solid #94e5ff; background: rgba(148,229,255,.06); }
+      .recovery-status { color: #94e5ff !important; font-weight: 800; }
       .status { color: #94e5ff; font-size: 14px; }
       .session-notice { padding: 11px 12px; border: 1px solid rgba(148,229,255,.22); border-radius: 8px; color: #dff8ff; background: rgba(34,199,255,.07); font-size: 13px; line-height: 1.45; }
       .signup-benefits { scroll-margin-top: 12px; display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
@@ -485,7 +549,7 @@ function AccountStyles() {
       .dancer-signup-note h2 { margin: 0; font-size: 20px; }
       .dancer-signup-note p { font-size: 14px; line-height: 1.45; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
-      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid { grid-template-columns: 1fr; } }
+      @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-benefit-grid, .login-recovery-grid { grid-template-columns: 1fr; } }
     `}</style>
   );
 }
