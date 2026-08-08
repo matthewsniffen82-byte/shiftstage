@@ -134,11 +134,11 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
 test("live dancer essentials stay compact, scannable, and clear of the mobile dock", () => {
   assert.match(
     liveApp,
-    /#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 6px 12px !important;[\s\S]*?padding: 10px 14px !important;/,
+    /#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 4px 10px !important;[\s\S]*?padding: 9px 12px !important;/,
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?gap: 3px !important;[\s\S]*?padding-top: 5px !important;/,
+    /#profileBackdrop \.working-now-tile > \.meta \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?column-gap: 10px !important;[\s\S]*?row-gap: 4px !important;[\s\S]*?padding-top: 4px !important;/,
   );
   assert.match(
     liveApp,
@@ -146,7 +146,11 @@ test("live dancer essentials stay compact, scannable, and clear of the mobile do
   );
   assert.match(
     liveApp,
-    /#profileBackdrop \.profile-working-directions \{[\s\S]*?grid-column: 1 !important;[\s\S]*?width: 100% !important;[\s\S]*?min-height: 44px !important;[\s\S]*?justify-content: flex-start !important;/,
+    /#profileBackdrop \.profile-working-directions \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 !important;[\s\S]*?width: auto !important;[\s\S]*?min-height: 44px !important;[\s\S]*?justify-content: flex-end !important;/,
+  );
+  assert.match(
+    liveApp,
+    /#profileBackdrop \.working-now-tile \.profile-uber-ride \{[\s\S]*?grid-column: 1 \/ -1 !important;[\s\S]*?grid-row: 2 !important;/,
   );
   assert.match(
     liveApp,

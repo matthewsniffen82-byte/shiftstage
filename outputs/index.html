@@ -35168,19 +35168,22 @@
         }
 
         #profileBackdrop .modal-grid > .working-now-tile {
-          gap: 6px 12px !important;
-          padding: 10px 14px !important;
+          gap: 4px 10px !important;
+          padding: 9px 12px !important;
         }
 
         #profileBackdrop .working-now-tile > .meta {
-          grid-template-columns: minmax(0, 1fr) !important;
-          gap: 3px !important;
-          padding-top: 5px !important;
+          grid-template-columns: minmax(0, 1fr) auto !important;
+          column-gap: 10px !important;
+          row-gap: 4px !important;
+          padding-top: 4px !important;
         }
 
         #profileBackdrop .working-now-tile .detail-line {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
           min-width: 0 !important;
-          min-height: 38px !important;
+          min-height: 44px !important;
         }
 
         #profileBackdrop .working-now-tile .venue-inline-link {
@@ -35192,16 +35195,18 @@
         }
 
         #profileBackdrop .profile-working-directions {
-          grid-column: 1 !important;
-          grid-row: auto !important;
-          width: 100% !important;
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          width: auto !important;
           min-height: 44px !important;
-          justify-content: flex-start !important;
-          justify-self: stretch !important;
+          justify-content: flex-end !important;
+          justify-self: end !important;
           white-space: nowrap !important;
         }
 
         #profileBackdrop .working-now-tile .profile-uber-ride {
+          grid-column: 1 / -1 !important;
+          grid-row: 2 !important;
           margin-top: 0;
         }
 
