@@ -120,12 +120,43 @@ export type MyDancrTvVideo = {
   dealAttributionTokens: Record<string, string>;
 };
 
+export async function getPublicMyDancrTvVenue(
+  admin: AdminClient,
+  venueId: string | undefined,
+): Promise<MyDancrTvVideo["venue"]> {
+  if (!venueId || !UUID_PATTERN.test(venueId)) return null;
+  const { data, error } = await admin
+    .from("venues")
+    .select("id, slug, name, city")
+    .eq("id", venueId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: String(data.id),
+    slug: String(data.slug || ""),
+    name: String(data.name || "Venue"),
+    city: String(data.city || ""),
+  };
+}
+
 export async function getPublicMyDancrTvVideoCount(
   admin: AdminClient,
-  options: Pick<FeedOptions, "city"> = {},
+  options: Pick<FeedOptions, "city" | "venueId"> = {},
 ): Promise<number> {
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
   const city = normalizeTvCity(options.city);
+  const venueId = options.venueId && UUID_PATTERN.test(options.venueId)
+    ? options.venueId
+    : "";
+  const venueScope = venueId
+    ? await getPublicTvVenueScope(admin, venueId, now.getTime())
+    : null;
+  const venueDancerIds = venueScope?.dancerIds || [];
+  if (venueId && !venueDancerIds.length) return 0;
   let query = admin
     .from("mydancr_tv_videos")
     .select("id, dancer_profiles!inner(id)", { count: "exact", head: true })
@@ -139,6 +170,7 @@ export async function getPublicMyDancrTvVideoCount(
     .eq("dancer_profiles.is_public", true);
 
   if (city) query = query.ilike("dancer_profiles.city", city);
+  if (venueDancerIds.length) query = query.in("dancer_id", venueDancerIds);
   const { count, error } = await query;
   if (error) throw error;
   return Math.max(0, Number(count || 0));
@@ -156,15 +188,24 @@ export async function getPublicMyDancrTvFeed(
   const selectedVideoId = options.selectedVideoId && UUID_PATTERN.test(options.selectedVideoId)
     ? options.selectedVideoId
     : "";
+  const venueId = options.venueId && UUID_PATTERN.test(options.venueId)
+    ? options.venueId
+    : "";
+  const venueScope = venueId
+    ? await getPublicTvVenueScope(admin, venueId, now.getTime())
+    : null;
+  const venueDancerIds = venueScope?.dancerIds || [];
+  if (venueId && !venueDancerIds.length) return [];
+  if (venueId && options.dancerId && !venueDancerIds.includes(options.dancerId)) return [];
   const preferredVenueId =
-    !options.venueId && options.preferredVenueId && UUID_PATTERN.test(options.preferredVenueId)
+    !venueId && options.preferredVenueId && UUID_PATTERN.test(options.preferredVenueId)
       ? options.preferredVenueId
       : "";
   const query = publicTvRowsQuery(admin, {
     nowIso,
     city,
     dancerId: options.dancerId,
-    venueId: options.venueId,
+    dancerIds: options.dancerId ? undefined : venueDancerIds,
     limit: queryLimit,
   });
   const preferredVenueQuery = preferredVenueId
@@ -214,11 +255,14 @@ export async function getPublicMyDancrTvFeed(
     admin,
     [...normalizedRows, ...(selectedRowCandidate ? [selectedRowCandidate] : [])].map((row) => row.dancer.id),
     now.getTime(),
+    venueId,
   );
   let rows = normalizedRows
     .map((row) => applyPublicTvShiftContext(row, shiftContexts))
+    .map((row) => applyPublicTvVenueScope(row, venueScope))
     .filter((row) => !city || tvCitiesMatch(row.dancer.city, city))
     .filter((row) => {
+      if (venueId && row.venue?.id !== venueId) return false;
       if (filter === "following") return following.has(row.dancer.id);
       if (filter === "tonight") {
         if (!row.shift || row.shift.status !== "posted") return false;
@@ -232,8 +276,14 @@ export async function getPublicMyDancrTvFeed(
   const selectedRowWithShift = selectedRowCandidate
     ? applyPublicTvShiftContext(selectedRowCandidate, shiftContexts)
     : null;
-  const selectedRow = selectedRowWithShift && (!city || tvCitiesMatch(selectedRowWithShift.dancer.city, city))
-    ? selectedRowWithShift
+  const selectedRowWithVenue = selectedRowWithShift
+    ? applyPublicTvVenueScope(selectedRowWithShift, venueScope)
+    : null;
+  const selectedRow = selectedRowWithVenue &&
+    (!city || tvCitiesMatch(selectedRowWithVenue.dancer.city, city)) &&
+    (!venueId || venueDancerIds.includes(selectedRowWithVenue.dancer.id)) &&
+    (!venueId || selectedRowWithVenue.venue?.id === venueId)
+    ? selectedRowWithVenue
     : null;
   if (selectedRow && !rows.some((row) => row.id === selectedRow.id)) {
     rows.unshift(selectedRow);
@@ -289,6 +339,7 @@ function publicTvRowsQuery(
     nowIso: string;
     city: string;
     dancerId?: string;
+    dancerIds?: string[];
     venueId?: string;
     limit: number;
   },
@@ -308,6 +359,8 @@ function publicTvRowsQuery(
     query = query
       .eq("dancer_id", options.dancerId)
       .eq("distribution_scope", "profile_and_feed");
+  } else if (options.dancerIds?.length) {
+    query = query.in("dancer_id", options.dancerIds);
   }
   if (options.venueId) {
     query = query
@@ -401,15 +454,71 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
 
 type PublicTvShiftContext = Pick<NormalizedFeedRow, "venue" | "shift">;
 
+type PublicTvVenueScope = {
+  venue: NonNullable<MyDancrTvVideo["venue"]> | null;
+  dancerIds: string[];
+  affiliatedDancerIds: Set<string>;
+};
+
+async function getPublicTvVenueScope(
+  admin: AdminClient,
+  venueId: string,
+  now: number,
+): Promise<PublicTvVenueScope> {
+  const [venue, affiliationResult, shiftResult] = await Promise.all([
+    getPublicMyDancrTvVenue(admin, venueId),
+    admin
+      .from("venue_dancer_affiliations")
+      .select("dancer_id")
+      .eq("venue_id", venueId)
+      .eq("status", "active")
+      .limit(240),
+    admin
+      .from("shifts")
+      .select(
+        "dancer_id, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active)",
+      )
+      .eq("venue_id", venueId)
+      .eq("status", "posted")
+      .eq("venues.is_active", true)
+      .is("checked_out_at", null)
+      .gte("ends_at", new Date(now).toISOString())
+      .order("starts_at", { ascending: true })
+      .limit(240),
+  ]);
+
+  if (affiliationResult.error) throw affiliationResult.error;
+  if (shiftResult.error) throw shiftResult.error;
+  if (!venue) return { venue: null, dancerIds: [], affiliatedDancerIds: new Set() };
+
+  const affiliatedDancerIds = new Set(
+    (affiliationResult.data || []).map((row) => String(row.dancer_id || "")).filter(Boolean),
+  );
+  const shiftDancerIds = (shiftResult.data || []).flatMap((shift) => {
+    const start = new Date(shift.starts_at).getTime();
+    const end = new Date(shift.ends_at).getTime();
+    const active = isConfirmedActiveTvShift(shift, now);
+    const upcoming = Number.isFinite(start) && start > now && Number.isFinite(end) && end >= now;
+    return active || upcoming ? [String(shift.dancer_id || "")] : [];
+  }).filter(Boolean);
+
+  return {
+    venue,
+    dancerIds: [...new Set([...affiliatedDancerIds, ...shiftDancerIds])],
+    affiliatedDancerIds,
+  };
+}
+
 async function getPublicTvShiftContexts(
   admin: AdminClient,
   dancerIds: string[],
   now: number,
+  venueId = "",
 ): Promise<Map<string, PublicTvShiftContext>> {
   const uniqueDancerIds = [...new Set(dancerIds.filter(Boolean))];
   if (!uniqueDancerIds.length) return new Map();
 
-  const { data, error } = await admin
+  let query = admin
     .from("shifts")
     .select(
       "id, dancer_id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, slug, name, city, is_active)",
@@ -421,6 +530,9 @@ async function getPublicTvShiftContexts(
     .gte("ends_at", new Date(now).toISOString())
     .order("starts_at", { ascending: true })
     .limit(Math.min(240, uniqueDancerIds.length * 12));
+
+  if (venueId) query = query.eq("venue_id", venueId);
+  const { data, error } = await query;
 
   if (error) throw error;
 
@@ -465,6 +577,19 @@ function applyPublicTvShiftContext(
 ): NormalizedFeedRow {
   const context = contexts.get(row.dancer.id);
   return context ? { ...row, venue: context.venue, shift: context.shift } : row;
+}
+
+function applyPublicTvVenueScope(
+  row: NormalizedFeedRow,
+  scope: PublicTvVenueScope | null,
+): NormalizedFeedRow {
+  if (!scope?.venue || !scope.affiliatedDancerIds.has(row.dancer.id)) return row;
+  const hasScopedShift = row.venue?.id === scope.venue.id && Boolean(row.shift);
+  return {
+    ...row,
+    venue: scope.venue,
+    shift: hasScopedShift ? row.shift : null,
+  };
 }
 
 function isConfirmedActiveTvShift(shift: any, now: number) {

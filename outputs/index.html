@@ -748,6 +748,18 @@
       box-shadow: inset 0 0 12px rgba(255,255,255,.025);
     }
 
+    .count.is-tv-venue-filter {
+      cursor: pointer;
+      color: #f8fafc;
+      border-color: rgba(124,58,237,.58);
+      background: rgba(124,58,237,.16);
+    }
+
+    .count.is-tv-venue-filter:focus-visible {
+      outline: 2px solid #7c3aed;
+      outline-offset: 2px;
+    }
+
     .list {
       display: grid;
       gap: 11px;
@@ -37175,10 +37187,10 @@
     let activeTab = "dancers";
     let dancerDirectoryFilter = "all";
     let homeTvLaunchRequest = 0;
-    let homeTvLaunchCity = "";
+    let homeTvLaunchScope = "";
     let homeTvFeedRequest = 0;
     let homeTvFeedCity = "";
-    let homeTvFeedPreferredVenueId = "";
+    let homeTvFeedVenueId = "";
     let homeTvFeedStatus = "idle";
     let homeTvFeedVideos = [];
     let homeTvFeedObserver = null;
@@ -41758,7 +41770,7 @@
       return venueSelect?.value || "all";
     }
 
-    function selectedHomeTvVenuePreference(city = selectedCity()) {
+    function selectedHomeTvVenueFilter(city = selectedCity()) {
       const venueName = selectedVenueFilter();
       if (venueName === "all") return null;
       const venue = resolveVenueByName(venueName, city);
@@ -52298,11 +52310,13 @@
 
     function render() {
       const city = citySelect.value;
-      if (homeTvLaunchCity !== city) {
-        homeTvLaunchCity = city;
-        void renderHomeTvLaunch(city);
-      }
       populateVenueSelect(city);
+      const tvVenueFilter = selectedHomeTvVenueFilter(city);
+      const tvLaunchScope = `${city}:${tvVenueFilter?.id || ""}`;
+      if (homeTvLaunchScope !== tvLaunchScope) {
+        homeTvLaunchScope = tvLaunchScope;
+        void renderHomeTvLaunch(city, tvVenueFilter);
+      }
       document.querySelectorAll("[data-city-label]").forEach((node) => { node.textContent = city; });
       updateTabCounts(city);
       updateHomeLiveSummary(city);
@@ -52355,11 +52369,11 @@
       const resultCountLabel = activeTab === "venues"
         ? `${allItems.length} venue${allItems.length === 1 ? "" : "s"}`
         : `${allItems.length} total`;
-      tabCount.textContent = loadingLiveProfiles
+      setHomeTvFeedCount(loadingLiveProfiles
         ? "Loading live profiles..."
         : selectedVenue
         ? city
-        : resultCountLabel;
+        : resultCountLabel);
       const usesDiscoveryFeed =
         homeDiscoveryFeedOpen &&
         activeTab === "venues" &&
@@ -52416,7 +52430,7 @@
       results.innerHTML = items.map((item) => venueCard(item)).join("");
     }
 
-    async function renderHomeTvLaunch(city) {
+    async function renderHomeTvLaunch(city, venueFilter = null) {
       const launch = document.getElementById("homeTvLaunch");
       const title = document.getElementById("homeTvLaunchTitle");
       const count = document.getElementById("homeTvLaunchCount");
@@ -52425,34 +52439,43 @@
 
       const requestId = ++homeTvLaunchRequest;
       const tvCityLabel = String(city).trim() || "Las Vegas";
-      launch.href = `/tv?city=${encodeURIComponent(tvCityLabel)}`;
-      launch.setAttribute("aria-label", `Open MyDancr TV ${tvCityLabel} vertical video feed`);
+      const venueId = String(venueFilter?.id || "");
+      const venueName = String(venueFilter?.name || "");
+      const scopeLabel = venueName ? `at ${venueName}` : tvCityLabel;
+      const launchParams = new URLSearchParams({ city: tvCityLabel });
+      if (venueId) {
+        launchParams.set("venue", venueId);
+      }
+      launch.href = `/tv?${launchParams.toString()}`;
+      launch.setAttribute("aria-label", `Open MyDancr TV ${scopeLabel} vertical video feed`);
       if (bottomTv) {
-        bottomTv.setAttribute("aria-label", `Show MyDancr TV ${tvCityLabel} videos in the Home feed`);
+        bottomTv.setAttribute("aria-label", `Show MyDancr TV ${scopeLabel} videos in the Home feed`);
       }
       launch.setAttribute("aria-busy", "true");
-      title.textContent = `MyDancr TV ${tvCityLabel}`;
+      title.textContent = venueName ? `MyDancr TV at ${venueName}` : `MyDancr TV ${tvCityLabel}`;
       count.textContent = "Loading";
       count.removeAttribute("title");
 
       try {
-        const response = await fetch(`/api/public/tv/count?city=${encodeURIComponent(tvCityLabel)}`, { cache: "no-store" });
+        const countParams = new URLSearchParams({ city: tvCityLabel });
+        if (venueId) countParams.set("venue", venueId);
+        const response = await fetch(`/api/public/tv/count?${countParams.toString()}`, { cache: "no-store" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load the MyDancr TV video count.");
-        if (requestId !== homeTvLaunchRequest || citySelect.value !== city) return;
+        if (requestId !== homeTvLaunchRequest || homeTvLaunchScope !== `${city}:${venueId}`) return;
         const approvedVideoCount = Number(payload.approvedVideoCount);
         if (!Number.isSafeInteger(approvedVideoCount) || approvedVideoCount < 0) {
           throw new Error("MyDancr TV returned an invalid video count.");
         }
         count.textContent = `${approvedVideoCount} video${approvedVideoCount === 1 ? "" : "s"}`;
-        count.title = `${approvedVideoCount} approved ${tvCityLabel} MyDancr TV video${approvedVideoCount === 1 ? "" : "s"}`;
+        count.title = `${approvedVideoCount} approved MyDancr TV video${approvedVideoCount === 1 ? "" : "s"} ${scopeLabel}`;
       } catch {
-        if (requestId !== homeTvLaunchRequest || citySelect.value !== city) return;
+        if (requestId !== homeTvLaunchRequest || homeTvLaunchScope !== `${city}:${venueId}`) return;
         count.textContent = "Count unavailable";
         count.title = "The vertical video feed is still available.";
-        homeTvLaunchCity = "";
+        homeTvLaunchScope = "";
       } finally {
-        if (requestId === homeTvLaunchRequest && citySelect.value === city) {
+        if (requestId === homeTvLaunchRequest && homeTvLaunchScope === `${city}:${venueId}`) {
           launch.setAttribute("aria-busy", "false");
         }
       }
@@ -53442,6 +53465,23 @@
     window.addEventListener("orientationchange", queueHomeTvPageScrollIndicatorSync, { passive: true });
     window.visualViewport?.addEventListener("resize", queueHomeTvPageScrollIndicatorSync, { passive: true });
 
+    function setHomeTvFeedCount(text, venueFilter = null) {
+      const isVenueFiltered = Boolean(venueFilter?.id);
+      tabCount.textContent = isVenueFiltered ? `${text} · Clear` : text;
+      tabCount.classList.toggle("is-tv-venue-filter", isVenueFiltered);
+      if (isVenueFiltered) {
+        tabCount.setAttribute("role", "button");
+        tabCount.setAttribute("tabindex", "0");
+        tabCount.setAttribute("aria-label", `Clear ${venueFilter.name} club filter`);
+        tabCount.setAttribute("title", `Show all ${selectedCity()} MyDancr TV videos`);
+        return;
+      }
+      tabCount.removeAttribute("role");
+      tabCount.removeAttribute("tabindex");
+      tabCount.removeAttribute("aria-label");
+      tabCount.removeAttribute("title");
+    }
+
     function renderHomeTvFeedMessage(message, retryCity = "") {
       const state = document.createElement("div");
       state.className = "locked";
@@ -53455,7 +53495,7 @@
       retry.addEventListener("click", () => {
         homeTvFeedStatus = "loading";
         renderHomeTvFeed(retryCity);
-        void loadHomeTvFeed(retryCity, homeTvFeedPreferredVenueId);
+        void loadHomeTvFeed(retryCity, homeTvFeedVenueId);
       });
       results.appendChild(retry);
     }
@@ -53474,23 +53514,23 @@
       bottomTv?.setAttribute("aria-current", "page");
       tabTitle.classList.remove("dancers-city-title");
       tabTitle.closest(".content-head")?.classList.add("discovery-section-head", "tv-section-head");
-      tabTitle.textContent = `MyDancr TV in ${city}`;
       viewAllBtn.hidden = true;
       results.classList.remove("card-grid", "home-dancer-grid", "home-discovery-feed", "home-venue-discovery-feed", "venue-card-grid");
       results.classList.add("home-tv-feed");
       syncHomeTvPageSnapState();
 
-      const venuePreference = selectedHomeTvVenuePreference(city);
-      const preferredVenueId = venuePreference?.id || "";
-      if (homeTvFeedCity !== city || homeTvFeedPreferredVenueId !== preferredVenueId) {
+      const venueFilter = selectedHomeTvVenueFilter(city);
+      const venueId = venueFilter?.id || "";
+      tabTitle.textContent = venueFilter ? `MyDancr TV at ${venueFilter.name}` : `MyDancr TV in ${city}`;
+      if (homeTvFeedCity !== city || homeTvFeedVenueId !== venueId) {
         homeTvFeedCity = city;
-        homeTvFeedPreferredVenueId = preferredVenueId;
+        homeTvFeedVenueId = venueId;
         homeTvFeedStatus = "loading";
         homeTvFeedVideos = [];
-        void loadHomeTvFeed(city, preferredVenueId);
+        void loadHomeTvFeed(city, venueId);
       }
       if (homeTvFeedStatus === "loading") {
-        tabCount.textContent = "Loading videos…";
+        setHomeTvFeedCount("Loading videos…", venueFilter);
         results.removeAttribute("aria-label");
         results.setAttribute("aria-busy", "true");
         renderHomeTvFeedLoading();
@@ -53499,30 +53539,30 @@
       }
       results.removeAttribute("aria-busy");
       if (homeTvFeedStatus === "error") {
-        tabCount.textContent = "Unavailable";
+        setHomeTvFeedCount("Unavailable", venueFilter);
         renderHomeTvFeedMessage("MyDancr TV videos are temporarily unavailable.", city);
         settleHomeTvFeedLanding({ complete: true });
         return;
       }
       if (!homeTvFeedVideos.length) {
-        tabCount.textContent = "0 videos";
-        renderHomeTvFeedMessage(`No approved MyDancr TV videos are available in ${city} yet.`);
+        setHomeTvFeedCount("0 videos", venueFilter);
+        renderHomeTvFeedMessage(venueFilter
+          ? `No approved MyDancr TV videos are available from dancers affiliated with, working now at, or scheduled at ${venueFilter.name}.`
+          : `No approved MyDancr TV videos are available in ${city} yet.`);
         settleHomeTvFeedLanding({ complete: true });
         return;
       }
 
-      const preferredVideoCount = preferredVenueId
-        ? homeTvFeedVideos.filter((item) => item?.venue?.id === preferredVenueId).length
-        : 0;
-      const venuePriorityLabel = venuePreference && preferredVideoCount
-        ? `, with ${venuePreference.name} videos first`
-        : "";
-      tabCount.textContent = `${homeTvFeedVideos.length} citywide`;
+      const feedScope = venueFilter ? `at ${venueFilter.name}` : `in ${city}`;
+      setHomeTvFeedCount(
+        venueFilter ? `${homeTvFeedVideos.length} videos` : `${homeTvFeedVideos.length} citywide`,
+        venueFilter,
+      );
       results.setAttribute(
         "aria-label",
-        `Swipe through ${homeTvFeedVideos.length} citywide MyDancr TV video${homeTvFeedVideos.length === 1 ? "" : "s"} in ${city}${venuePriorityLabel}`
+        `Swipe through ${homeTvFeedVideos.length} MyDancr TV video${homeTvFeedVideos.length === 1 ? "" : "s"} ${feedScope}`
       );
-      const feedKey = `${city}:${preferredVenueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
+      const feedKey = `${city}:${venueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
       if (results.dataset.homeTvFeedKey === feedKey) {
         settleHomeTvFeedLanding({ complete: true });
         return;
@@ -53539,28 +53579,33 @@
       settleHomeTvFeedLanding({ complete: true });
     }
 
-    async function loadHomeTvFeed(city, preferredVenueId = "") {
+    async function loadHomeTvFeed(city, venueId = "") {
       const requestId = ++homeTvFeedRequest;
       try {
         const params = new URLSearchParams({ city, limit: "24" });
-        if (preferredVenueId) params.set("preferredVenue", preferredVenueId);
+        if (venueId) params.set("venue", venueId);
         const response = await fetch(`/api/public/tv?${params.toString()}`, { cache: "no-store" });
         const payload = await response.json();
         if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
           requestId !== homeTvFeedRequest ||
           homeTvFeedCity !== city ||
-          homeTvFeedPreferredVenueId !== preferredVenueId
+          homeTvFeedVenueId !== venueId
         ) return;
         homeTvFeedVideos = Array.isArray(payload.videos)
-          ? payload.videos.filter((item) => item?.id && item?.videoUrl && item?.dancer?.stageName)
+          ? payload.videos.filter((item) => (
+              item?.id &&
+              item?.videoUrl &&
+              item?.dancer?.stageName &&
+              (!venueId || item?.venue?.id === venueId)
+            ))
           : [];
         homeTvFeedStatus = "ready";
       } catch {
         if (
           requestId !== homeTvFeedRequest ||
           homeTvFeedCity !== city ||
-          homeTvFeedPreferredVenueId !== preferredVenueId
+          homeTvFeedVenueId !== venueId
         ) return;
         homeTvFeedVideos = [];
         homeTvFeedStatus = "error";
@@ -56712,6 +56757,25 @@
       if (activeTab === "tonight") tonightExpanded = true;
       if (activeTab === "dancers") dancersExpanded = true;
       render();
+    });
+
+    function clearHomeTvVenueFilter() {
+      if (activeTab !== "tv" || selectedVenueFilter() === "all" || !venueSelect) return;
+      venueSelect.value = "all";
+      syncVenuePickerSelection("all");
+      venueSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    tabCount.addEventListener("click", () => {
+      if (tabCount.classList.contains("is-tv-venue-filter")) clearHomeTvVenueFilter();
+    });
+    tabCount.addEventListener("keydown", (event) => {
+      if (
+        !tabCount.classList.contains("is-tv-venue-filter") ||
+        (event.key !== "Enter" && event.key !== " ")
+      ) return;
+      event.preventDefault();
+      clearHomeTvVenueFilter();
     });
 
     function openVenuePicker() {

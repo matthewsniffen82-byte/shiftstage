@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
+import {
+  getPublicMyDancrTvFeed,
+  getPublicMyDancrTvVenue,
+} from "@/src/lib/dancr/tv";
 import { resolveMyDancrCity } from "@/src/lib/dancr/markets";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import TvFeedClient from "./TvFeedClient";
@@ -13,30 +16,44 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ city?: string; dancer?: string; filter?: string; video?: string }>;
+  searchParams: Promise<{
+    city?: string;
+    dancer?: string;
+    filter?: string;
+    video?: string;
+    venue?: string;
+  }>;
 };
 
 export default async function MyDancrTvPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const city = resolveMyDancrCity(params.city);
   const dancerId = cleanUuid(params.dancer);
+  const venueId = cleanUuid(params.venue);
   const filter = params.filter === "following" || params.filter === "tonight"
     ? params.filter
     : "for-you";
-  const initialVideos = filter === "following"
-    ? []
-    : await getPublicMyDancrTvFeed(createAdminSupabaseClient(), {
-        city,
-        dancerId,
-        filter,
-        selectedVideoId: params.video,
-        limit: 12,
-      });
+  const admin = createAdminSupabaseClient();
+  const [initialVideos, selectedVenue] = await Promise.all([
+    filter === "following"
+      ? Promise.resolve([])
+      : getPublicMyDancrTvFeed(admin, {
+          city,
+          dancerId,
+          venueId,
+          filter,
+          selectedVideoId: params.video,
+          limit: 12,
+        }),
+    getPublicMyDancrTvVenue(admin, venueId),
+  ]);
 
   return (
     <TvFeedClient
       initialCity={city}
       initialDancerId={dancerId || ""}
+      initialVenueId={venueId || ""}
+      initialVenueName={selectedVenue?.name || ""}
       initialFilter={filter}
       initialSelectedVideoId={params.video || ""}
       initialVideos={initialVideos}

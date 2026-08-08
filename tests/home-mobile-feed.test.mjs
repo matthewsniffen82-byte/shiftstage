@@ -28,7 +28,7 @@ test("mobile discovery uses one consolidated Dancers destination beside TV and V
   assert.match(homeSource, /@media \(max-width: 720px\)[\s\S]*?\.home-tv-launch \{\s*display: none !important/);
   assert.match(
     homeSource,
-    /bottomTv\.setAttribute\("aria-label", `Show MyDancr TV \$\{tvCityLabel\} videos in the Home feed`\)/,
+    /bottomTv\.setAttribute\("aria-label", `Show MyDancr TV \$\{scopeLabel\} videos in the Home feed`\)/,
   );
 });
 
@@ -53,7 +53,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive|requestHomeDestinationFullscreen|focusAndLockHomeTvFeed/);
   assert.match(
     homeSource,
-    /const params = new URLSearchParams\(\{ city, limit: "24" \}\);[^]*?fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`[^]*?payload\.videos\.filter\(\(item\) => item\?\.id && item\?\.videoUrl && item\?\.dancer\?\.stageName\)/,
+    /const params = new URLSearchParams\(\{ city, limit: "24" \}\);[^]*?if \(venueId\) params\.set\("venue", venueId\);[^]*?fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`[^]*?payload\.videos\.filter\(\(item\) => \([^]*?item\?\.id[^]*?item\?\.videoUrl[^]*?item\?\.dancer\?\.stageName[^]*?!venueId \|\| item\?\.venue\?\.id === venueId/,
   );
   assert.match(
     homeSource,
@@ -911,7 +911,10 @@ test("the consolidated discovery titles use one typography system and consistent
     homeSource,
     /dancers: venueFilter === "all" \? `Dancers in \$\{city\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Venues in \$\{city\}`/,
   );
-  assert.match(homeSource, /tabTitle\.textContent = `MyDancr TV in \$\{city\}`;/);
+  assert.match(
+    homeSource,
+    /tabTitle\.textContent = venueFilter \? `MyDancr TV at \$\{venueFilter\.name\}` : `MyDancr TV in \$\{city\}`;/,
+  );
   assert.match(
     homeSource,
     /classList\.add\("discovery-section-head", "tv-section-head"\)/,

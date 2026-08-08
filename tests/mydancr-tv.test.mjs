@@ -91,7 +91,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(publicRoute, /const requestedCity = \(url\.searchParams\.get\("city"\) \|\| ""\)\.trim\(\)\.slice\(0, 80\)/);
   assert.match(publicRoute, /const city = requestedCity \|\| "Las Vegas"/);
   assert.match(tvSource, /\.filter\(\(row\) => !city \|\| tvCitiesMatch\(row\.dancer\.city, city\)\)/);
-  assert.match(tvSource, /selectedRowWithShift && \(!city \|\| tvCitiesMatch\(selectedRowWithShift\.dancer\.city, city\)\)/);
+  assert.match(tvSource, /selectedRowWithVenue &&[\s\S]*?\(!city \|\| tvCitiesMatch\(selectedRowWithVenue\.dancer\.city, city\)\)/);
   assert.match(feedClient, /For You/);
   assert.match(feedClient, /Following/);
   assert.match(feedClient, /Tonight/);
@@ -99,7 +99,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /className="tv-city"/);
   assert.doesNotMatch(feedClient, /id="tv-city"/);
   assert.match(feedClient, /const homepageHref = `\/\?city=\$\{encodeURIComponent\(city\)\}&view=dancers`/);
-  assert.match(feedClient, /className="tv-header"[\s\S]*?<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
+  assert.match(feedClient, /className=\{initialVenueId \? "tv-header has-venue-filter" : "tv-header"\}[\s\S]*?<h1>\{initialVenueName \? `MyDancr TV at \$\{initialVenueName\}` : `MyDancr TV \$\{myDancrTvCityLabel\(city\)\}`\}<\/h1>[\s\S]*?className="tv-close"[\s\S]*?href=\{homepageHref\}[\s\S]*?aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(feedClient, /\.tv-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(globalNavigation, /view: "dancers"/);
   assert.match(globalNavigation, /path: "\/tv"/);
@@ -121,7 +121,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(feedClient, /@media \(max-width: 760px\)[\s\S]*?\.tv-header h1 \{ font-size: clamp\(23px, 6\.5vw, 29px\); white-space: nowrap;/);
   assert.match(feedClient, /eventType: "engaged_view"|trackEvent\((?:video\.id|videoId), "engaged_view"\)/);
   assert.doesNotMatch(feedClient, /\/api\/reports/);
-  assert.match(feedClient, /<h1>MyDancr TV \{myDancrTvCityLabel\(city\)\}<\/h1>/);
+  assert.match(feedClient, /initialVenueName \? `MyDancr TV at \$\{initialVenueName\}` : `MyDancr TV \$\{myDancrTvCityLabel\(city\)\}`/);
   assert.match(feedClient, /function myDancrTvCityLabel\(city: string\) \{\s*return city\.trim\(\) \|\| "Las Vegas";\s*\}/);
   assert.doesNotMatch(feedClient, /normalized\.toLowerCase\(\) === "las vegas" \? "Vegas"/);
   assert.match(feedClient, /data\.videos\.filter\([\s\S]*?tvCitiesMatch\(video\.dancer\.city, nextCity\)/);
@@ -132,12 +132,12 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     /id="locationBtn"[\s\S]*?<\/section>\s*<div class="home-live-summary"[\s\S]*?<\/div>\s*<a[\s\S]*?class="home-tv-launch"[\s\S]*?<nav class="tabs"/,
   );
   assert.match(liveApp, /id="homeTvLaunch"[\s\S]*?href="\/tv\?city=Las%20Vegas"[\s\S]*?id="homeTvLaunchTitle"[\s\S]*?id="homeTvLaunchCount"/);
-  assert.match(liveApp, /renderHomeTvLaunch\(city\)/);
-  assert.match(liveApp, /title\.textContent = `MyDancr TV \$\{tvCityLabel\}`/);
+  assert.match(liveApp, /renderHomeTvLaunch\(city, tvVenueFilter\)/);
+  assert.match(liveApp, /title\.textContent = venueName \? `MyDancr TV at \$\{venueName\}` : `MyDancr TV \$\{tvCityLabel\}`/);
   assert.match(liveApp, /const tvCityLabel = String\(city\)\.trim\(\) \|\| "Las Vegas"/);
   assert.doesNotMatch(liveApp, /toLowerCase\(\) === "las vegas" \? "Vegas"/);
-  assert.match(liveApp, /launch\.href = `\/tv\?city=\$\{encodeURIComponent\(tvCityLabel\)\}`/);
-  assert.match(liveApp, /fetch\(`\/api\/public\/tv\/count\?city=\$\{encodeURIComponent\(tvCityLabel\)\}`[\s\S]*?cache: "no-store"/);
+  assert.match(liveApp, /const launchParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?launchParams\.set\("venue", venueId\)[\s\S]*?launch\.href = `\/tv\?\$\{launchParams\.toString\(\)\}`/);
+  assert.match(liveApp, /const countParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`[\s\S]*?cache: "no-store"/);
   assert.match(liveApp, /Number\(payload\.approvedVideoCount\)[\s\S]*?Number\.isSafeInteger\(approvedVideoCount\)[\s\S]*?`\$\{approvedVideoCount\} video\$\{approvedVideoCount === 1 \? "" : "s"\}`/);
   assert.match(liveApp, /\.home-tv-launch \{[^}]*width: 100%[^}]*grid-template-columns: auto minmax\(0, 1fr\) auto auto[^}]*background: #2d106f/);
   assert.doesNotMatch(liveApp, /home-tv-teaser|renderHomeTvTeaser|home-tv-teaser-card/);
