@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const [liveShell, generatedSource, rootRouteSource, generatorSource, packageSource] = await Promise.all([
-  readFile(new URL("../outputs/index.html", import.meta.url)),
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/generated/live-shell-version.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../scripts/generate-live-shell-version.mjs", import.meta.url), "utf8"),
@@ -12,11 +12,12 @@ const [liveShell, generatedSource, rootRouteSource, generatorSource, packageSour
 ]);
 
 test("the deployed root route is content-addressed to the current live HTML", () => {
-  const currentHash = createHash("sha256").update(liveShell).digest("hex");
+  const currentHash = createHash("sha256").update(liveShell.replace(/\r\n?/g, "\n")).digest("hex");
   const generatedHash = generatedSource.match(/LIVE_SHELL_SHA256 = "([a-f0-9]{64})"/)?.[1];
 
   assert.equal(generatedHash, currentHash);
-  assert.match(rootRouteSource, /createHash\("sha256"\)\.update\(html\)\.digest\("hex"\)/);
+  assert.match(rootRouteSource, /html\.replace\(\/\\r\\n\?\/g, "\\n"\)/);
+  assert.match(rootRouteSource, /createHash\("sha256"\)\.update\(normalizedHtml\)\.digest\("hex"\)/);
   assert.match(rootRouteSource, /data-live-shell-version/);
   assert.match(rootRouteSource, /"x-dancr-live-shell-version": liveShellSha256/);
   assert.match(rootRouteSource, /import \{ LIVE_SHELL_SHA256 \} from "\.\.\/src\/generated\/live-shell-version"/);
@@ -33,6 +34,7 @@ test("development, type checking, and production builds refresh the live shell h
   assert.equal(scripts.pretypecheck, "npm run generate:live-shell-version");
   assert.equal(scripts.prebuild, "npm run generate:live-shell-version");
   assert.match(generatorSource, /createHash\("sha256"\)/);
+  assert.match(generatorSource, /liveShell\.replace\(\/\\r\\n\?\/g, "\\n"\)/);
   assert.match(generatorSource, /"outputs", "index\.html"/);
   assert.match(generatorSource, /"src", "generated", "live-shell-version\.ts"/);
 });
