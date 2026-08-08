@@ -71,10 +71,14 @@ test("notification and signed-in account actions share one neutral glass circle"
   assert.match(mobileHeader, /header \.topbar \{[\s\S]*?height: 58px !important;[\s\S]*?padding: 4px 6px !important;/);
 });
 
-test("utility interaction and real unread state use electric violet", () => {
+test("open utility controls use restrained violet while the unread state stays distinct", () => {
   assert.match(
     mobileHeader,
-    /header \.customer-quick-btn:hover,[\s\S]*?header #accountBtn\.account-icon-btn\.active \{[\s\S]*?border-color: rgba\(124, 58, 237, 0\.78\) !important;[\s\S]*?inset 0 0 15px rgba\(109, 40, 217, 0\.22\) !important;[\s\S]*?transform: none !important;/,
+    /header \.customer-quick-btn:hover,[\s\S]*?header #accountBtn\.account-icon-btn\.active \{[\s\S]*?color: #fff !important;[\s\S]*?border-color: rgba\(139, 92, 246, 0\.46\) !important;[\s\S]*?rgba\(13, 12, 18, 0\.94\) !important;[\s\S]*?0 0 14px rgba\(124, 58, 237, 0\.1\) !important;[\s\S]*?transform: none !important;/,
+  );
+  assert.doesNotMatch(
+    mobileHeader,
+    /header \.customer-quick-btn:hover,[\s\S]{0,900}radial-gradient|header #accountBtn\.account-icon-btn\.active \{[\s\S]{0,500}inset 0 0 15px/,
   );
   assert.match(
     mobileHeader,
