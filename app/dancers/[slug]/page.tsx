@@ -171,7 +171,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
             <div className="profile-working-head">
               <div>
                 <span className="profile-live-state">Schedule</span>
-                <h2 id="profile-working-title">Current shift</h2>
+                <h2 id="profile-working-title">Working Now</h2>
                 <p>
                   {activeShift.venueName} · Verified check-in · until {formatShiftTime(activeShift.endsAt, activeShift.timezone)}
                 </p>
