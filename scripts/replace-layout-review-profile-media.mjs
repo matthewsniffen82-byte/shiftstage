@@ -119,7 +119,7 @@ async function prepareSourceMedia(includeAvatar) {
       new Blob([source], { type: "image/jpeg" }),
     );
     const avatar = includeAvatar
-      ? await prepareFaceCenteredAvatar(image)
+      ? await prepareFaceCenteredAvatarWithRetry(image, targetProfile.profile.slug)
       : null;
     preparedMedia.push({
       ...targetProfile,
@@ -139,6 +139,38 @@ async function prepareSourceMedia(includeAvatar) {
     }));
   }
   return preparedMedia;
+}
+
+async function prepareFaceCenteredAvatarWithRetry(image, slug) {
+  const maximumAttempts = 6;
+  for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
+    try {
+      return await prepareFaceCenteredAvatar(image);
+    } catch (error) {
+      if (!isTransientAvatarRateLimit(error) || attempt === maximumAttempts) throw error;
+      const delayMilliseconds = Math.min(30_000, 2_000 * (2 ** (attempt - 1)));
+      console.warn(JSON.stringify({
+        event: "demo_profile_media.avatar_retry_scheduled",
+        slug,
+        attempt,
+        delayMilliseconds,
+      }));
+      await delay(delayMilliseconds);
+    }
+  }
+  throw new Error(`Avatar preparation exhausted every retry for ${slug}.`);
+}
+
+function isTransientAvatarRateLimit(error) {
+  const cause = error?.cause;
+  return (
+    error?.code === "AVATAR_FACE_DETECTION_UNAVAILABLE" &&
+    (cause?.status === 429 || cause?.code === "rate_limit_exceeded")
+  );
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 async function applyReplacements() {

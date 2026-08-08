@@ -24,7 +24,9 @@ test("the guarded demo media operation targets ten marked profiles and excludes 
 
 test("profile media is validated, face-centered, high-resolution, and bypasses moderation", () => {
   assert.match(source, /validateAndPrepareDancrImage/);
-  assert.match(source, /prepareFaceCenteredAvatar/);
+  assert.match(source, /prepareFaceCenteredAvatarWithRetry/);
+  assert.match(source, /maximumAttempts = 6/);
+  assert.match(source, /cause\?\.status === 429/);
   assert.match(
     source,
     /uploadResponsiveImage\([\s\S]*?archiveOriginal: true, watermark: true/,
