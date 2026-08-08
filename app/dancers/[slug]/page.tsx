@@ -560,7 +560,8 @@ function PublicProfileStyles() {
       .profile-report-dialog option { color: #111; }
       .profile-report-error { color: #ffb4c8; }
       @media (max-width: 600px) {
-        .public-profile-shell { padding: 0 12px calc(118px + env(safe-area-inset-bottom, 0px)); }
+        /* GlobalMobileBottomNav already reserves the complete mobile dock footprint. */
+        .public-profile-shell { padding: 0 12px; }
         .profile-titlebar { min-height: 60px; }
         .profile-titlebar-avatar { width: 40px; height: 40px; flex-basis: 40px; }
         .live-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }

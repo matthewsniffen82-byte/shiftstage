@@ -33741,7 +33741,8 @@
         }
         @media (max-width: 720px) {
           #profileBackdrop .profile-modal {
-            --profile-report-clearance: calc(84px + env(safe-area-inset-bottom, 0px));
+            /* The dock is 72px tall and sits 8px above the viewport edge. */
+            --profile-report-clearance: calc(80px + env(safe-area-inset-bottom, 0px));
             overscroll-behavior-y: none;
             scroll-padding-bottom: var(--profile-report-clearance) !important;
           }
@@ -35475,17 +35476,6 @@
           width: 128px !important;
           min-width: 128px !important;
           max-width: 128px !important;
-        }
-
-        @media (max-width: 720px) {
-          #profileBackdrop .profile-modal {
-            --profile-report-clearance: calc(118px + env(safe-area-inset-bottom, 0px));
-            padding-bottom: 0 !important;
-          }
-
-          #profileBackdrop .modal-grid {
-            padding-bottom: var(--profile-report-clearance) !important;
-          }
         }
 
         @media (max-width: 340px) {

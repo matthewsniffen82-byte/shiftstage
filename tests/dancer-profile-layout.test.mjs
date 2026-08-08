@@ -134,7 +134,7 @@ test("active full-profile Club Deals render a real compact QR and use one live-s
   assert.match(liveApp, /qrButton\.dataset\.dealPass = encodeDealPass\(pass\)/);
 });
 
-test("live dancer essentials stay compact, scannable, and clear of the mobile dock", () => {
+test("live dancer essentials stay compact, scannable, and tight against the mobile dock", () => {
   assert.match(
     liveApp,
     /#profileBackdrop \.modal-grid > \.working-now-tile \{[\s\S]*?gap: 4px 10px !important;[\s\S]*?padding: 9px 12px !important;/,
@@ -165,11 +165,11 @@ test("live dancer essentials stay compact, scannable, and clear of the mobile do
   );
   assert.match(
     liveApp,
-    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-modal \{[\s\S]*?--profile-report-clearance: calc\(118px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?#profileBackdrop \.profile-modal \{[\s\S]*?--profile-report-clearance: calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*?#profileBackdrop \.modal-grid \{[\s\S]*?padding-bottom: var\(--profile-report-clearance\) !important;/,
   );
   assert.match(
     profilePage,
-    /\.public-profile-shell \{ padding: 0 12px calc\(118px \+ env\(safe-area-inset-bottom, 0px\)\); \}/,
+    /\.public-profile-shell \{ padding: 0 12px; \}/,
   );
   assert.match(
     profilePage,

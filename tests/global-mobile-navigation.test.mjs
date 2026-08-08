@@ -111,7 +111,7 @@ test("full dancer and venue profiles retain the shared destination navigation", 
   );
   assert.match(
     homeSource,
-    /--profile-report-clearance: calc\(84px \+ env\(safe-area-inset-bottom, 0px\)\)/,
+    /--profile-report-clearance: calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\)/,
   );
   assert.match(
     homeSource,
