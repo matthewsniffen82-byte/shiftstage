@@ -41,6 +41,7 @@ export default function AdminClient() {
   const [state, setState] = useState<AdminState>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
@@ -152,6 +153,22 @@ export default function AdminClient() {
     } finally {
       setIsResettingPassword(false);
     }
+  }
+
+  function signOut() {
+    setIsSigningOut(true);
+    window.localStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem(OPEN_APPROVALS_SESSION_KEY);
+    openApprovalIdsRef.current = {};
+    setOpenApprovalIds({});
+    setUsername("");
+    setPassword("");
+    setAdminCode("");
+    setShowPassword(false);
+    setWorkspace("overview");
+    setActionNotice(null);
+    setState({ authRequired: true, error: "Admin session ended. Sign in to continue." });
+    setIsSigningOut(false);
   }
 
   async function loadAdmin() {
@@ -277,6 +294,11 @@ export default function AdminClient() {
           <Link href={homeDiscoveryHref("trending")}>Trending</Link>
           <Link href="/tv">MyDancr TV</Link>
         </div>
+        {!isLoading && !needsSignIn ? (
+          <button className="admin-logout" type="button" onClick={signOut} disabled={isSigningOut}>
+            {isSigningOut ? "Logging out..." : "Log out"}
+          </button>
+        ) : null}
       </nav>
 
       <section className="admin-head">
@@ -2794,6 +2816,9 @@ function AdminStyles() {
       .brand { color: #fff; text-decoration: none; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
       .nav-links a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); font-weight: 850; }
+      .admin-logout { min-height: 40px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.075); font: inherit; font-weight: 900; cursor: pointer; box-shadow: 0 10px 28px rgba(0,0,0,.24); }
+      .admin-logout:hover, .admin-logout:focus-visible { border-color: rgba(148,229,255,.7); background: rgba(34,199,255,.12); outline: none; }
+      .admin-logout:disabled { opacity: .62; cursor: wait; }
       .admin-head { display: grid; gap: 14px; margin-bottom: 24px; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; font-size: clamp(32px, 8vw, 76px); line-height: .94; letter-spacing: 0; overflow-wrap: anywhere; }

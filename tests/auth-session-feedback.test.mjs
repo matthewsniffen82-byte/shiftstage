@@ -1,0 +1,50 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const [liveShell, accountClient, adminClient] = await Promise.all([
+  readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
+]);
+
+test("dancer login exposes persistent progress, success, and error feedback", () => {
+  assert.match(liveShell, /id="dancerLoginEmail"[^>]*autocomplete="email"[^>]*required/);
+  assert.match(liveShell, /id="dancerLoginPassword"[^>]*autocomplete="current-password"[^>]*required/);
+  assert.match(liveShell, /id="dancerAuthStatus"[^>]*role="status"[^>]*aria-live="polite"/);
+
+  const handler = liveShell.match(
+    /document\.getElementById\("dancerLoginForm"\)\.addEventListener\("submit"[\s\S]*?\n    \}\);/,
+  )?.[0] || "";
+  assert.match(handler, /submit\.textContent = "Signing in…"/);
+  assert.match(handler, /submit\.setAttribute\("aria-busy", "true"\)/);
+  assert.match(handler, /setDancerLoginStatus\("Signing in to your dancer account…"\)/);
+  assert.match(handler, /if \(!result\.session\?\.accessToken\) throw new Error/);
+  assert.match(handler, /setDancerLoginStatus\("Signed in\. Opening your dancer dashboard…"\)/);
+  assert.match(handler, /setDancerLoginStatus\(message\)/);
+  assert.match(handler, /await startRealDancerSession\("Dancer dashboard opened"\)/);
+});
+
+test("an active admin session is explained and safely replaced by dancer login", () => {
+  assert.match(
+    liveShell,
+    /if \(isDancer && isAdminSession\(\)\) \{[\s\S]*?Signing in here will safely switch it to your dancer account/,
+  );
+  assert.match(accountClient, /existingSessionRole === "admin"/);
+  assert.match(accountClient, /Signing in here will safely switch it to your dancer account/);
+  assert.match(accountClient, /window\.localStorage\.setItem\(SESSION_KEY, JSON\.stringify\(session\)\)/);
+  assert.match(accountClient, /Signing in\.\.\./);
+  assert.match(accountClient, /Signed in\. Opening your dancer dashboard\.\.\./);
+});
+
+test("both admin dashboards provide a real session logout", () => {
+  assert.match(liveShell, /id="adminLogoutBtn"[^>]*hidden>Log out<\/button>/);
+  assert.match(liveShell, /function showAdminDashboardPage\(\) \{[\s\S]*?adminLogoutBtn"\)\.hidden = false/);
+  assert.match(liveShell, /function showAdminAuthPage[\s\S]*?adminLogoutBtn"\)\.hidden = true/);
+  assert.match(liveShell, /function logoutAdminAccount\(\) \{[\s\S]*?saveAuthSession\(null\)[\s\S]*?lockAdminDashboard\(\)/);
+  assert.match(liveShell, /adminLogoutBtn"\)\.addEventListener\("click", logoutAdminAccount\)/);
+
+  assert.match(adminClient, /className="admin-logout"[^>]*onClick=\{signOut\}/);
+  assert.match(adminClient, /function signOut\(\) \{[\s\S]*?window\.localStorage\.removeItem\(SESSION_KEY\)/);
+  assert.match(adminClient, /setState\(\{ authRequired: true, error: "Admin session ended\. Sign in to continue\." \}\)/);
+});

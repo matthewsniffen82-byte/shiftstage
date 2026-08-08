@@ -3721,6 +3721,34 @@
       cursor: wait;
     }
 
+    .admin-head-actions {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .admin-session-logout {
+      min-height: 42px;
+      padding: 0 15px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(255,255,255,.075);
+      box-shadow: 0 12px 30px rgba(0,0,0,.28);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .admin-session-logout:hover,
+    .admin-session-logout:focus-visible {
+      border-color: rgba(148,229,255,.74);
+      background: rgba(53,216,255,.12);
+      outline: none;
+    }
+
     .switch {
       width: 48px;
       height: 28px;
@@ -35530,12 +35558,12 @@
           <form class="auth-form" id="dancerLoginForm" data-auth-view="dancer" hidden>
             <div class="field">
               <label for="dancerLoginEmail">Email</label>
-              <input id="dancerLoginEmail" type="email" value="">
+              <input id="dancerLoginEmail" type="email" value="" autocomplete="email" required>
             </div>
             <div class="field">
               <label for="dancerLoginPassword">Password</label>
               <div class="password-wrap">
-                <input id="dancerLoginPassword" type="password" value="">
+                <input id="dancerLoginPassword" type="password" value="" autocomplete="current-password" minlength="6" required>
                 <button class="password-toggle" type="button" data-password-toggle="dancerLoginPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
@@ -35547,6 +35575,7 @@
             </div>
             <button class="action-btn" id="dancerLoginSubmit" type="submit">Dancer login</button>
             <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
+            <div class="rule-note auth-status" id="dancerAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" hidden>
             <div class="auth-form-head">
@@ -36315,9 +36344,12 @@
             <span class="eyebrow">Platform admin</span>
             <h2>Trust operations</h2>
           </div>
-          <button class="close-btn" id="adminClose" aria-label="Close admin dashboard">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
+          <div class="admin-head-actions">
+            <button class="admin-session-logout" id="adminLogoutBtn" type="button" hidden>Log out</button>
+            <button class="close-btn" id="adminClose" aria-label="Close admin dashboard">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+          </div>
         </div>
         <form class="auth-form admin-login-form" id="adminLoginForm">
           <div class="tabs" aria-label="Admin auth mode">
@@ -46598,6 +46630,7 @@
       if (scope === "all" || scope === "dancer") {
         clearValue("dancerLoginEmail");
         clearValue("dancerLoginPassword");
+        setDancerLoginStatus("");
       }
 
       if (scope === "all" || scope === "venue") {
@@ -46639,6 +46672,9 @@
       document.getElementById("dancerLoginForm").hidden = !isDancer;
       document.getElementById("venueLoginForm").hidden = !isVenue;
       if (!isDancer && !isVenue) setCustomerAuthMode("login");
+      if (isDancer && isAdminSession()) {
+        setDancerLoginStatus("An admin session is active in this browser. Signing in here will safely switch it to your dancer account.");
+      }
       openAuthPage();
     }
 
@@ -46827,6 +46863,13 @@
 
     function setCustomerAuthStatus(message) {
       const status = document.getElementById("customerAuthStatus");
+      if (!status) return;
+      status.textContent = message || "";
+      status.hidden = !message;
+    }
+
+    function setDancerLoginStatus(message) {
+      const status = document.getElementById("dancerAuthStatus");
       if (!status) return;
       status.textContent = message || "";
       status.hidden = !message;
@@ -50356,6 +50399,7 @@
 
     function showAdminAuthPage(message = "Sign in or create an admin account to continue.") {
       document.getElementById("adminLoginForm").hidden = false;
+      document.getElementById("adminLogoutBtn").hidden = true;
       const content = document.getElementById("adminDashboardContent");
       if (content) content.hidden = true;
       const status = document.getElementById("adminLiveStatus");
@@ -50365,11 +50409,31 @@
 
     function showAdminDashboardPage() {
       document.getElementById("adminLoginForm").hidden = true;
+      document.getElementById("adminLogoutBtn").hidden = false;
       const content = document.getElementById("adminDashboardContent");
       if (content) content.hidden = false;
       document.querySelectorAll("#adminDashboard .admin-dashboard-collapse, #adminDashboard #adminDancers details.admin-item").forEach((section) => {
         section.open = false;
       });
+    }
+
+    function logoutAdminAccount() {
+      liveAdminMonitoring = null;
+      liveAdminOperations = null;
+      liveAdminImageModeration = [];
+      liveAdminReports = [];
+      liveAdminSupportThreads = [];
+      liveAdminSubscriptions = [];
+      liveAdminVenueClaims = [];
+      liveAdminVenueClaimCodes = [];
+      liveAdminRevealedVenueCodes = {};
+      saveAuthSession(null);
+      document.getElementById("adminEmail").value = "";
+      document.getElementById("adminPassword").value = "";
+      document.getElementById("adminCode").value = "";
+      lockAdminDashboard();
+      updateAccountHeader();
+      showToast("Admin logged out");
     }
 
     function lockAdminDashboard() {
@@ -54479,6 +54543,7 @@
       openDancerProfilePreview();
     });
     document.getElementById("adminClose").addEventListener("click", closeAdminDashboard);
+    document.getElementById("adminLogoutBtn").addEventListener("click", logoutAdminAccount);
     document.querySelectorAll("[data-admin-auth-mode]").forEach((button) => {
       button.addEventListener("click", () => setAdminAuthMode(button.dataset.adminAuthMode));
     });
@@ -54811,7 +54876,11 @@
     document.getElementById("dancerLoginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = document.getElementById("dancerLoginSubmit");
+      const previousText = submit.textContent;
       submit.disabled = true;
+      submit.setAttribute("aria-busy", "true");
+      submit.textContent = "Signing in…";
+      setDancerLoginStatus("Signing in to your dancer account…");
       try {
         const result = await requestAuth({
           mode: "login",
@@ -54820,11 +54889,17 @@
           password: document.getElementById("dancerLoginPassword").value,
           city: citySelect.value
         });
-        startRealDancerSession(result.requiresEmailConfirmation ? "Check your email to confirm. Start with profile setup." : "Dancer dashboard opened. Start with profile setup.");
+        if (!result.session?.accessToken) throw new Error("Dancer sign in did not start a session. Confirm your email, then try again.");
+        setDancerLoginStatus("Signed in. Opening your dancer dashboard…");
+        await startRealDancerSession("Dancer dashboard opened");
       } catch (error) {
-        showToast(error.message || "Dancer login failed");
+        const message = error.message || "Dancer login failed";
+        setDancerLoginStatus(message);
+        showToast(message);
       } finally {
         submit.disabled = false;
+        submit.removeAttribute("aria-busy");
+        submit.textContent = previousText;
       }
     });
 

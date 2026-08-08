@@ -17,6 +17,7 @@ type AuthSession = {
     displayName?: string | null;
   } | null;
 };
+type SessionRole = NonNullable<AuthSession["account"]>["role"];
 
 const SESSION_KEY = "dancrAuthSessionV1";
 
@@ -37,6 +38,7 @@ export default function AccountClient() {
   const [isSendingLoginHelp, setIsSendingLoginHelp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [existingSessionRole, setExistingSessionRole] = useState<SessionRole | null>(null);
   const customerBenefitsRef = useRef<HTMLElement | null>(null);
   const customerEmailRef = useRef<HTMLInputElement | null>(null);
 
@@ -57,6 +59,15 @@ export default function AccountClient() {
     const top = emailField.getBoundingClientRect().top + window.scrollY - 18;
     window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     window.setTimeout(() => emailField.focus({ preventScroll: true }), 260);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "null") as AuthSession | null;
+      setExistingSessionRole(session?.accessToken ? session.account?.role || null : null);
+    } catch {
+      setExistingSessionRole(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -105,6 +116,9 @@ export default function AccountClient() {
     }
 
     setIsSubmitting(true);
+    if (mode === "login") {
+      setStatus(role === "dancer" ? "Signing in to your dancer account..." : "Signing in to your customer account...");
+    }
 
     const payload: Record<string, string> = { mode, role, email, password, city };
     if (mode === "signup" && typeof window !== "undefined") {
@@ -143,6 +157,8 @@ export default function AccountClient() {
         account: data.account,
       };
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      setExistingSessionRole(data.account?.role || role);
+      setStatus(role === "dancer" ? "Signed in. Opening your dancer dashboard..." : "Signed in. Opening your dashboard...");
       router.push(destination);
     } catch (error) {
       setStatus(friendlyAuthErrorMessage(error instanceof Error ? error.message : "", "Unable to sign in."));
@@ -279,6 +295,12 @@ export default function AccountClient() {
             </>
           ) : null}
 
+          {mode === "login" && role === "dancer" && existingSessionRole === "admin" ? (
+            <p className="session-notice" role="status">
+              An admin session is active in this browser. Signing in here will safely switch it to your dancer account.
+            </p>
+          ) : null}
+
           {mode === "signup" && role === "customer" ? (
             <>
               <section ref={customerBenefitsRef} className="signup-benefits" aria-label="Customer signup benefits">
@@ -323,13 +345,14 @@ export default function AccountClient() {
 
           <label>
             Email
-            <input ref={customerEmailRef} type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <input ref={customerEmailRef} type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
           </label>
           <label>
             Password
             <span className="password-control">
               <input
                 type={showPassword ? "text" : "password"}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 minLength={6}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -391,9 +414,9 @@ export default function AccountClient() {
           ) : null}
 
           <button className="submit" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Working..." : mode === "login" ? "Sign in" : "Create account"}
+            {isSubmitting ? (mode === "login" ? "Signing in..." : "Creating account...") : mode === "login" ? "Sign in" : "Create account"}
           </button>
-          {status ? <p className="status">{status}</p> : null}
+          {status ? <p className="status" role="status" aria-live="polite" aria-atomic="true">{status}</p> : null}
         </form>
       </section>
     </main>
@@ -447,6 +470,7 @@ function AccountStyles() {
       .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
       .forgot-password:disabled { opacity: .62; cursor: wait; }
       .status { color: #94e5ff; font-size: 14px; }
+      .session-notice { padding: 11px 12px; border: 1px solid rgba(148,229,255,.22); border-radius: 8px; color: #dff8ff; background: rgba(34,199,255,.07); font-size: 13px; line-height: 1.45; }
       .signup-benefits { scroll-margin-top: 12px; display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(34,199,255,.28); border-radius: 8px; background: linear-gradient(135deg, rgba(34,199,255,.08), rgba(139,92,246,.14)); }
       .signup-benefits h2 { margin: 0; font-size: 20px; }
       .signup-benefits p { font-size: 14px; line-height: 1.45; }
