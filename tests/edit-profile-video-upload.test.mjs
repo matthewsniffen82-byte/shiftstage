@@ -31,7 +31,7 @@ test("Edit Profile video slots use authenticated production storage and moderati
   assert.match(liveApp, /method: "PATCH"[\s\S]*?JSON\.stringify\(\{ action: "submit" \}\)/);
   assert.match(liveApp, /method: "DELETE"/);
   assert.match(liveApp, /consentConfirmed[\s\S]*?rightsConfirmed/);
-  assert.match(liveApp, /Videos must be between 1 and 10 seconds/);
+  assert.match(liveApp, /Videos must be between 1 and 30 seconds/);
   assert.match(liveApp, /Use a vertical or square video at least 240 pixels wide/);
   assert.doesNotMatch(liveApp, /sample profile video|placeholder video|mock video/i);
 });

@@ -43735,7 +43735,7 @@
                   <label>
                     Video file
                     <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm" required>
-                    <small>Vertical or square MP4/WebM · 1–10 seconds · 75 MB maximum</small>
+                    <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline hidden></video>
                   <label>
@@ -43829,8 +43829,8 @@
           video.onerror = () => reject(new Error("This video could not be read. Try a different MP4 or WebM file."));
           video.src = previewUrl;
         });
-        if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 10) {
-          throw new Error("Videos must be between 1 and 10 seconds.");
+        if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 30) {
+          throw new Error("Videos must be between 1 and 30 seconds.");
         }
         if (!Number.isSafeInteger(metadata.width) || metadata.width < 240 || metadata.height < metadata.width) {
           throw new Error("Use a vertical or square video at least 240 pixels wide.");

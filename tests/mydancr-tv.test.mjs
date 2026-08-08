@@ -5,6 +5,7 @@ import test from "node:test";
 const [
   migration,
   tenSecondMigration,
+  thirtySecondMigration,
   tvSource,
   publicRoute,
   publicCountRoute,
@@ -24,6 +25,7 @@ const [
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202607270001_mydancr_tv.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607270002_mydancr_tv_ten_second_limit.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608080001_mydancr_tv_thirty_second_feed_distribution.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/public/tv/count/route.ts", import.meta.url), "utf8"),
@@ -60,19 +62,28 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(dancerApi, /createMyDancrTvUpload/);
   assert.match(tvSource, /createSignedUploadUrl\(storagePath\)/);
   assert.match(tvSource, /MYDANCR_TV_MAX_BYTES = 75 \* 1024 \* 1024/);
-  assert.match(tvSource, /MYDANCR_TV_MAX_DURATION_SECONDS = 10/);
+  assert.match(tvSource, /MYDANCR_TV_MAX_DURATION_SECONDS = 30/);
   assert.match(tvSource, /\.lte\("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS\)/);
-  assert.match(tvSource, /Only videos that are 10 seconds or shorter can be approved/);
-  assert.match(dancerStudio, /1–10 seconds/);
-  assert.match(dancerStudio, /metadata\.duration > 10/);
+  assert.match(tvSource, /Only videos that are 30 seconds or shorter can be approved/);
+  assert.match(dancerStudio, /1–30 seconds/);
+  assert.match(dancerStudio, /metadata\.duration > 30/);
   assert.match(tenSecondMigration, /where duration_seconds > 10[\s\S]*?status not in \('hidden', 'expired'\)/);
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);
+  assert.match(thirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
   assert.match(tvSource, /status: "submitted"/);
   assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, file/);
   assert.match(dancerStudio, /Your video completed automated safety review/);
   assert.match(dancerStudio, /Under review/);
   assert.match(dancerStudio, /Incognito is on/);
   assert.doesNotMatch(dancerStudio, /sample video|placeholder video|mock/i);
+});
+
+test("feed-only platform videos remain public in TV without consuming profile slots", () => {
+  assert.match(thirtySecondMigration, /distribution_scope in \('profile_and_feed', 'feed_only'\)/);
+  assert.match(thirtySecondMigration, /if new\.distribution_scope = 'feed_only' then[\s\S]*?return new/);
+  assert.match(thirtySecondMigration, /distribution_scope = 'profile_and_feed'/);
+  assert.match(tvSource, /\.eq\("distribution_scope", "profile_and_feed"\)/);
+  assert.match(tvSource, /distributionScope: row\.distribution_scope === "feed_only"/);
 });
 
 test("public feed is real, navigable, measurable, and preserves existing discovery sections", () => {

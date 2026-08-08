@@ -22,7 +22,7 @@ import {
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
-export const MYDANCR_TV_MAX_DURATION_SECONDS = 10;
+export const MYDANCR_TV_MAX_DURATION_SECONDS = 30;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
 export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = 5;
 export const MYDANCR_TV_MIME_TYPES = new Set(["video/mp4", "video/webm"]);
@@ -60,7 +60,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 
 const IDENTITY_PROFILE_FIELDS = isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : "";
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -86,6 +86,7 @@ export type MyDancrTvVideo = {
   publishedAt: string;
   expiresAt: string | null;
   venueFeatured: boolean;
+  distributionScope: "profile_and_feed" | "feed_only";
   dancer: {
     id: string;
     slug: string;
@@ -295,7 +296,11 @@ function publicTvRowsQuery(
     .limit(options.limit);
 
   if (options.city) query = query.ilike("dancer_profiles.city", options.city);
-  if (options.dancerId) query = query.eq("dancer_id", options.dancerId);
+  if (options.dancerId) {
+    query = query
+      .eq("dancer_id", options.dancerId)
+      .eq("distribution_scope", "profile_and_feed");
+  }
   if (options.venueId) {
     query = query
       .eq("venue_id", options.venueId)
@@ -346,6 +351,7 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
     publishedAt: row.published_at,
     expiresAt: row.expires_at || null,
     venueFeatured: row.venue_featured === true,
+    distributionScope: row.distribution_scope === "feed_only" ? "feed_only" : "profile_and_feed",
     dancerPhotoPath: null,
     dancer: {
       id: dancer.id,
@@ -578,8 +584,9 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     await Promise.all([
       admin
         .from("mydancr_tv_videos")
-        .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
+        .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, venue_tag_status, venue_featured, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
         .eq("dancer_id", dancer.id)
+        .eq("distribution_scope", "profile_and_feed")
         .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
         .order("created_at", { ascending: false }),
       admin
@@ -648,6 +655,7 @@ export async function createMyDancrTvUpload(
     venueId?: string | null;
     consentConfirmed: boolean;
     rightsConfirmed: boolean;
+    distributionScope?: "profile_and_feed" | "feed_only";
   },
 ) {
   const { data: dancer, error }: any = await admin
@@ -665,7 +673,7 @@ export async function createMyDancrTvUpload(
     throw new Error("Video files must be 75 MB or smaller.");
   }
   if (!Number.isFinite(input.durationSeconds) || input.durationSeconds < 1 || input.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-    throw new Error("Videos must be between 1 and 10 seconds.");
+    throw new Error("Videos must be between 1 and 30 seconds.");
   }
   if (
     !Number.isSafeInteger(input.width) ||
@@ -680,14 +688,18 @@ export async function createMyDancrTvUpload(
     throw new Error("Confirm consent and content rights before uploading.");
   }
 
-  const { count: activeVideoCount, error: countError } = await admin
-    .from("mydancr_tv_videos")
-    .select("id", { count: "exact", head: true })
-    .eq("dancer_id", dancer.id)
-    .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
-  if (countError) throw countError;
-  if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-    throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
+  const distributionScope = input.distributionScope === "feed_only" ? "feed_only" : "profile_and_feed";
+  if (distributionScope === "profile_and_feed") {
+    const { count: activeVideoCount, error: countError } = await admin
+      .from("mydancr_tv_videos")
+      .select("id", { count: "exact", head: true })
+      .eq("dancer_id", dancer.id)
+      .eq("distribution_scope", "profile_and_feed")
+      .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
+    if (countError) throw countError;
+    if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
+      throw new Error("You can upload up to 5 profile videos. Remove one before adding another.");
+    }
   }
 
   const videoId = crypto.randomUUID();
@@ -709,6 +721,7 @@ export async function createMyDancrTvUpload(
       width: input.width,
       height: input.height,
       status: "uploading",
+      distribution_scope: distributionScope,
       consent_confirmed: true,
       rights_confirmed: true,
     })
@@ -730,6 +743,93 @@ export async function createMyDancrTvUpload(
     token: upload.token,
     uploadUrl: upload.signedUrl,
   };
+}
+
+export async function publishPlatformMyDancrTvUpload(
+  admin: AdminClient,
+  adminId: string,
+  videoId: string,
+) {
+  const { data: video, error } = await admin
+    .from("mydancr_tv_videos")
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, shift_id, distribution_scope, review_notes, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .eq("id", videoId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!video) throw new Error("Video upload not found.");
+  if (video.status !== "uploading") throw new Error("This platform video has already been published.");
+  if (!isPublicDancerProfileEligible(one(video.dancer_profiles))) {
+    throw new Error("The dancer profile is not currently eligible for public video.");
+  }
+  if (
+    !Number.isFinite(Number(video.duration_seconds)) ||
+    Number(video.duration_seconds) < 1 ||
+    Number(video.duration_seconds) > MYDANCR_TV_MAX_DURATION_SECONDS
+  ) {
+    throw new Error("Only videos that are 30 seconds or shorter can be published.");
+  }
+
+  const lastSlash = video.storage_path.lastIndexOf("/");
+  const directory = video.storage_path.slice(0, lastSlash);
+  const filename = video.storage_path.slice(lastSlash + 1);
+  const { data: objects, error: listError } = await admin.storage
+    .from(MYDANCR_TV_BUCKET)
+    .list(directory, { search: filename, limit: 10 });
+  if (listError) throw listError;
+  const object = (objects || []).find((item: any) => item.name === filename);
+  if (!object) throw new Error("The video file did not finish uploading. Try again.");
+  const storedSize = Number(object.metadata?.size || 0);
+  const storedMime = String(object.metadata?.mimetype || object.metadata?.contentType || "");
+  if (storedSize && storedSize !== Number(video.file_size_bytes)) {
+    throw new Error("The uploaded video size could not be verified.");
+  }
+  if (storedMime && storedMime !== video.storage_mime) {
+    throw new Error("The uploaded video type could not be verified.");
+  }
+
+  await watermarkStoredVideo(admin, {
+    publicBucket: MYDANCR_TV_BUCKET,
+    storagePath: video.storage_path,
+    storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
+    width: Number(video.width),
+    height: Number(video.height),
+  });
+
+  const publishedAt = new Date().toISOString();
+  const expiresAt = myDancrTvExpiry(one(video.shifts)?.ends_at);
+  const { data: published, error: updateError } = await admin
+    .from("mydancr_tv_videos")
+    .update({
+      status: "approved",
+      submitted_at: publishedAt,
+      reviewed_by: adminId,
+      reviewed_at: publishedAt,
+      published_at: publishedAt,
+      expires_at: expiresAt,
+      moderation_decision: "approved",
+      moderation_reason_codes: ["platform_owner_approved"],
+      moderation_category_scores: {},
+      moderation_provider_flagged: false,
+      moderation_frame_count: 0,
+      moderation_model: "platform_owner_approval",
+      moderation_details: { mode: "platform_owner_approval", bypassedAutomatedModeration: true },
+      moderation_attempt_count: 0,
+      moderation_started_at: publishedAt,
+      moderation_completed_at: publishedAt,
+    })
+    .eq("id", video.id)
+    .eq("status", "uploading")
+    .select("id, status, distribution_scope, submitted_at, reviewed_at, published_at")
+    .single();
+  if (updateError) throw updateError;
+
+  console.info(JSON.stringify({
+    event: "mydancr_tv.platform_video_published",
+    videoId: video.id,
+    adminId,
+    distributionScope: video.distribution_scope,
+  }));
+  return published;
 }
 
 export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
@@ -1092,7 +1192,7 @@ export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "subm
   const normalized = allowedStatuses.has(status) ? status : "submitted";
   let query = admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, duration_seconds, width, height, status, venue_tag_status, venue_featured, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public), venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
+    .select("id, caption, storage_path, duration_seconds, width, height, status, venue_tag_status, venue_featured, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public), venues(id, name, slug), shifts(id, starts_at, ends_at, status)")
     .order("submitted_at", { ascending: true, nullsFirst: false })
     .limit(100);
   if (normalized !== "all") query = query.eq("status", normalized);
@@ -1129,7 +1229,7 @@ export async function reviewMyDancrTvVideo(
     throw new Error("The dancer profile is not currently eligible for public video.");
   }
   if (decision === "approved" && Number(video.duration_seconds) > MYDANCR_TV_MAX_DURATION_SECONDS) {
-    throw new Error("Only videos that are 10 seconds or shorter can be approved.");
+    throw new Error("Only videos that are 30 seconds or shorter can be approved.");
   }
   if (decision === "rejected" && notes.trim().length < 3) {
     throw new Error("Add a clear rejection reason for the dancer.");
@@ -1338,6 +1438,7 @@ function mapManagedVideo(video: any, videoUrl: string, metrics: Record<string, n
     status: video.status,
     venueTagStatus: video.venue_tag_status,
     venueFeatured: video.venue_featured === true,
+    distributionScope: video.distribution_scope === "feed_only" ? "feed_only" : "profile_and_feed",
     reviewNotes: video.review_notes || null,
     moderationDecision: video.moderation_decision || null,
     moderationReasonCodes: Array.isArray(video.moderation_reason_codes) ? video.moderation_reason_codes : [],

@@ -260,7 +260,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               onChange={(event) => chooseFile(event.target.files?.[0] || null)}
               required
             />
-            <small>Vertical or square MP4/WebM · 1–10 seconds · 75 MB maximum</small>
+            <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
           </label>
           {previewUrl ? <video className="tv-upload-preview" controls playsInline src={previewUrl} /> : null}
           <label>
@@ -393,8 +393,8 @@ async function readVideoMetadata(file: File) {
       element.onerror = () => reject(new Error("This video could not be read. Try a different MP4 or WebM file."));
       element.src = url;
     });
-    if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 10) {
-      throw new Error("Videos must be between 1 and 10 seconds.");
+    if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 30) {
+      throw new Error("Videos must be between 1 and 30 seconds.");
     }
     if (metadata.height < metadata.width) {
       throw new Error("Use a vertical or square video for MyDancr TV.");

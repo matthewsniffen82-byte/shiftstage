@@ -10,6 +10,7 @@ import {
   MYDANCR_TV_MIME_TYPES,
   MYDANCR_TV_PROFILE_SLOT_STATUSES,
   MYDANCR_TV_PROFILE_VIDEO_LIMIT,
+  publishPlatformMyDancrTvUpload,
   retryMyDancrTvAutomatedModeration,
   reviewMyDancrTvVideo,
   submitMyDancrTvUpload,
@@ -26,7 +27,7 @@ type ImportVideoInput = {
   width: number;
   height: number;
   mimeType: string;
-  caption: string;
+  distributionScope: "profile_and_feed" | "feed_only";
 };
 
 type PreparedUpload = {
@@ -79,10 +80,14 @@ async function prepareImport(body: any) {
     .from("mydancr_tv_videos")
     .select("id")
     .eq("dancer_id", dancer.id)
+    .eq("distribution_scope", "profile_and_feed")
     .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
   if (activeError) throw activeError;
   const activeCount = activeVideos?.length || 0;
-  if (!replaceExisting && activeCount + videos.length > MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
+  const requestedProfileVideoCount = videos.filter(
+    (video) => video.distributionScope === "profile_and_feed",
+  ).length;
+  if (!replaceExisting && activeCount + requestedProfileVideoCount > MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
     throw new Error(`This profile has ${activeCount} occupied video slots; replace existing videos or reduce this batch.`);
   }
 
@@ -104,11 +109,11 @@ async function prepareImport(body: any) {
         mimeType: video.mimeType,
         consentConfirmed: true,
         rightsConfirmed: true,
+        distributionScope: video.distributionScope,
       });
       const { error: markerError } = await admin
         .from("mydancr_tv_videos")
         .update({
-          caption: video.caption,
           review_notes: `${markerPrefix}${index + 1}`,
         })
         .eq("id", upload.videoId)
@@ -158,7 +163,8 @@ async function finalizeImport(body: any) {
 
   let result: any = row;
   if (row.status === "uploading") {
-    result = await submitMyDancrTvUpload(admin, row.submitted_by, row.id);
+    const adminId = await activeAdminUserId(admin);
+    result = await publishPlatformMyDancrTvUpload(admin, adminId, row.id);
   } else if (row.status === "moderating") {
     result = await retryMyDancrTvAutomatedModeration(admin, row.id);
   }
@@ -200,8 +206,8 @@ async function finalizeImport(body: any) {
 }
 
 function parseVideos(value: unknown): ImportVideoInput[] {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-    throw new Error(`Choose between 1 and ${MYDANCR_TV_PROFILE_VIDEO_LIMIT} videos.`);
+  if (!Array.isArray(value) || value.length < 1 || value.length > PLATFORM_IMPORT_BATCH_LIMIT) {
+    throw new Error(`Choose between 1 and ${PLATFORM_IMPORT_BATCH_LIMIT} videos.`);
   }
   return value.map((raw: any) => {
     const video = {
@@ -210,20 +216,17 @@ function parseVideos(value: unknown): ImportVideoInput[] {
       width: Number(raw?.width),
       height: Number(raw?.height),
       mimeType: typeof raw?.mimeType === "string" ? raw.mimeType.trim() : "",
-      caption: typeof raw?.caption === "string" ? raw.caption.trim() : "",
+      distributionScope: raw?.distributionScope === "feed_only" ? "feed_only" as const : "profile_and_feed" as const,
     };
     if (!MYDANCR_TV_MIME_TYPES.has(video.mimeType)) throw new Error("Upload an MP4 or WebM video.");
     if (!Number.isSafeInteger(video.fileSize) || video.fileSize < 1 || video.fileSize > MYDANCR_TV_MAX_BYTES) {
       throw new Error("Video files must be 75 MB or smaller.");
     }
     if (!Number.isFinite(video.durationSeconds) || video.durationSeconds < 1 || video.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-      throw new Error("Videos must be between 1 and 10 seconds.");
+      throw new Error("Videos must be between 1 and 30 seconds.");
     }
     if (!Number.isSafeInteger(video.width) || !Number.isSafeInteger(video.height) || video.width < 240 || video.height < video.width || video.height > 7680) {
       throw new Error("Upload a vertical or square video at least 240 pixels wide.");
-    }
-    if (video.caption.length < 1 || video.caption.length > 500) {
-      throw new Error("Add a video caption between 1 and 500 characters.");
     }
     return video;
   });
@@ -285,3 +288,4 @@ function importMarker(batchId: string) {
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const PLATFORM_IMPORT_BATCH_LIMIT = 30;
