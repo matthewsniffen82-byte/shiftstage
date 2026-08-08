@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { retryMyDancrTvAutomatedModeration } from "@/src/lib/dancr/tv";
+import {
+  autoApprovePendingMyDancrTvDemoVideo,
+  retryMyDancrTvAutomatedModeration,
+} from "@/src/lib/dancr/tv";
+import { isVideoDemoAutoApproveMode } from "@/src/lib/dancr/video-moderation-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -15,22 +19,31 @@ export async function GET(request: Request) {
 
   const admin = createAdminSupabaseClient();
   const staleBefore = new Date(Date.now() - STALE_AFTER_MS).toISOString();
+  const demoAutoApprove = isVideoDemoAutoApproveMode();
 
   try {
-    const { data: videos, error } = await admin
+    let query = admin
       .from("mydancr_tv_videos")
-      .select("id")
-      .eq("status", "moderating")
-      .lt("moderation_started_at", staleBefore)
+      .select("id, status")
       .lt("moderation_attempt_count", 3)
-      .order("moderation_started_at", { ascending: true })
       .limit(MAX_JOBS_PER_RUN);
+    query = demoAutoApprove
+      ? query
+          .in("status", ["submitted", "moderating"])
+          .order("submitted_at", { ascending: true, nullsFirst: false })
+      : query
+          .eq("status", "moderating")
+          .lt("moderation_started_at", staleBefore)
+          .order("moderation_started_at", { ascending: true });
+    const { data: videos, error } = await query;
     if (error) throw error;
 
     const results = [];
     for (const video of videos || []) {
       try {
-        const result = await retryMyDancrTvAutomatedModeration(admin, video.id);
+        const result = demoAutoApprove && video.status === "submitted"
+          ? await autoApprovePendingMyDancrTvDemoVideo(admin, video.id)
+          : await retryMyDancrTvAutomatedModeration(admin, video.id);
         results.push({
           videoId: video.id,
           ok: Boolean(result),
@@ -39,7 +52,9 @@ export async function GET(request: Request) {
         });
       } catch (error) {
         console.error(JSON.stringify({
-          event: "mydancr_tv.ai_moderation_retry_failed",
+          event: demoAutoApprove
+            ? "mydancr_tv.demo_auto_approval_retry_failed"
+            : "mydancr_tv.ai_moderation_retry_failed",
           videoId: video.id,
           message: error instanceof Error ? error.message.slice(0, 500) : "Unknown retry failure",
         }));
@@ -50,7 +65,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, processed: results.length, results });
   } catch (error) {
     console.error(JSON.stringify({
-      event: "mydancr_tv.ai_moderation_cron_failed",
+      event: demoAutoApprove
+        ? "mydancr_tv.demo_auto_approval_cron_failed"
+        : "mydancr_tv.ai_moderation_cron_failed",
       message: error instanceof Error ? error.message.slice(0, 500) : "Unknown worker failure",
     }));
     return NextResponse.json(

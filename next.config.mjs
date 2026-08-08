@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    DANCR_VIDEO_MODERATION_MODE:
+      process.env.DANCR_VIDEO_MODERATION_MODE || "ai",
+  },
   serverExternalPackages: ["ffmpeg-static"],
   outputFileTracingIncludes: {
     "/api/admin/tv/import": ["./node_modules/ffmpeg-static/ffmpeg*"],

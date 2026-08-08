@@ -139,6 +139,18 @@ test("temporary demo mode auto-approves without removing the AI moderation path"
   );
   assert.match(tvSource, /moderateStoredMyDancrTvVideo/);
   assert.match(tvSource, /finalizeMyDancrTvAutomatedModeration/);
+  assert.match(
+    nextConfig,
+    /env: \{[\s\S]*?DANCR_VIDEO_MODERATION_MODE:[\s\S]*?process\.env\.DANCR_VIDEO_MODERATION_MODE \|\| "ai"/,
+  );
+  assert.match(
+    retryRoute,
+    /isVideoDemoAutoApproveMode[\s\S]*?\.in\("status", \["submitted", "moderating"\]\)[\s\S]*?autoApprovePendingMyDancrTvDemoVideo/,
+  );
+  assert.match(
+    tvSource,
+    /export async function autoApprovePendingMyDancrTvDemoVideo[\s\S]*?\.eq\("status", "submitted"\)[\s\S]*?autoApproveMyDancrTvDemoUpload/,
+  );
 });
 
 test("video moderation decisions are durable, recoverable, and visible to dancers and admins", () => {

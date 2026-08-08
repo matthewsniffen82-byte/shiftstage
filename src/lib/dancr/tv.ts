@@ -832,6 +832,46 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
   return finalizeMyDancrTvAutomatedModeration(admin, claimed);
 }
 
+export async function autoApprovePendingMyDancrTvDemoVideo(
+  admin: AdminClient,
+  videoId: string,
+) {
+  if (!isVideoDemoAutoApproveMode()) return null;
+  const { data: video, error } = await admin
+    .from("mydancr_tv_videos")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .eq("id", videoId)
+    .eq("status", "submitted")
+    .maybeSingle();
+  if (error) throw error;
+  if (!video) return null;
+
+  const claimedAt = new Date().toISOString();
+  const { data: claimed, error: claimError } = await admin
+    .from("mydancr_tv_videos")
+    .update({
+      status: "moderating",
+      moderation_attempt_count: 0,
+      moderation_started_at: null,
+    })
+    .eq("id", video.id)
+    .eq("status", "submitted")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .maybeSingle();
+  if (claimError) throw claimError;
+  if (!claimed) return null;
+  console.info(JSON.stringify({
+    event: "mydancr_tv.demo_pending_video_claimed",
+    videoId: claimed.id,
+  }));
+  return autoApproveMyDancrTvDemoUpload(
+    admin,
+    claimed,
+    claimed.submitted_at || claimedAt,
+    "moderating",
+  );
+}
+
 async function autoApproveMyDancrTvDemoUpload(
   admin: AdminClient,
   video: any,
