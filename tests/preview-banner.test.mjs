@@ -43,8 +43,8 @@ test("full dancer and venue profiles remain entirely below the persistent notice
     aesthetic,
     /#profileBackdrop #modalClose \{[\s\S]*?top: 8px !important;[\s\S]*?transform: none !important;/,
   );
-  assert.match(
+  assert.doesNotMatch(
     aesthetic,
-    /#results\.venue-profile-overlay \.venue-detail \.venue-detail-close \{[\s\S]*?top: calc\(var\(--mydancr-preview-banner-offset\) \+ 6px\) !important;/,
+    /\.venue-detail-close \{[\s\S]*?top: calc\(var\(--mydancr-preview-banner-offset\)/,
   );
 });

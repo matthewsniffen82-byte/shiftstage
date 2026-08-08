@@ -211,7 +211,11 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     aesthetic,
-    /\.venue-detail-close \{[\s\S]*?top: max\([\s\S]*?18px,[\s\S]*?var\(--dancr-viewport-top\)[\s\S]*?\+ 12px\)[\s\S]*?right: max\(12px, calc\(\(100vw - 720px\) \/ 2 \+ 12px\)\) !important;/,
+    /\.venue-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?top: 12px !important;[\s\S]*?right: 12px !important;/,
+  );
+  assert.match(
+    liveApp,
+    /\.venue-detail-modal-top \{[\s\S]*?position: sticky;[\s\S]*?top: 0;[\s\S]*?height: 0;/,
   );
 });
 
