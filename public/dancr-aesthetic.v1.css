@@ -5241,7 +5241,11 @@ body.dancr-button-system #results.venue-profile-overlay {
   scroll-padding-top: max(10px, var(--dancr-viewport-top)) !important;
 }
 
-body.dancr-button-system #profileBackdrop #modalClose,
+body.dancr-button-system #profileBackdrop #modalClose {
+  top: 8px !important;
+  transform: none !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-close {
   top: calc(var(--mydancr-preview-banner-offset) + 12px) !important;
 }

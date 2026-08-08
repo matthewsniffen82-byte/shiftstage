@@ -41,6 +41,10 @@ test("full dancer and venue profiles remain entirely below the persistent notice
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop #modalClose,[\s\S]*?\.venue-detail-close \{[\s\S]*?top: calc\(var\(--mydancr-preview-banner-offset\) \+ 12px\) !important;/,
+    /#profileBackdrop #modalClose \{[\s\S]*?top: 8px !important;[\s\S]*?transform: none !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /#results\.venue-profile-overlay \.venue-detail \.venue-detail-close \{[\s\S]*?top: calc\(var\(--mydancr-preview-banner-offset\) \+ 12px\) !important;/,
   );
 });

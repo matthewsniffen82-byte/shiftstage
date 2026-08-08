@@ -54,7 +54,11 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?gap: 10px;/);
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 42px; height: 42px;/);
   assert.match(profilePage, /\.profile-titlebar-city \{ min-height: 22px;[\s\S]*?border-radius: 999px;/);
-  assert.match(profilePage, /\.public-profile-close \{ width: 40px; min-height: 40px;/);
+  assert.match(
+    profilePage,
+    /\.public-profile-close \{ position: absolute; top: max\(8px, env\(safe-area-inset-top\)\); right: 0; width: 40px; min-height: 40px;/,
+  );
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?padding: max\(8px, env\(safe-area-inset-top\)\) 52px 8px 0;/);
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
   assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);

@@ -254,7 +254,7 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.doesNotMatch(liveApp, /<div class="modal-top">\s*<button class="close-btn" id="modalClose"/);
   assert.match(
     liveApp,
-    /#profileBackdrop #modalClose \{[\s\S]*?position: absolute !important;[\s\S]*?top: 50% !important;[\s\S]*?transform: translateY\(-50%\) !important;/,
+    /#profileBackdrop #modalClose \{[\s\S]*?position: absolute !important;[\s\S]*?top: 8px !important;[\s\S]*?transform: none !important;/,
   );
   assert.match(
     profilePolishBlock,
