@@ -7,7 +7,7 @@ import ffmpegPath from "ffmpeg-static";
 
 export const DANCR_ORIGINAL_MEDIA_BUCKET = "dancr-media-originals";
 export const DANCR_MEDIA_WATERMARK_TEXT = "mydancr";
-export const DANCR_MEDIA_WATERMARK_OPACITY = 0.1;
+export const DANCR_MEDIA_WATERMARK_OPACITY = 0.34;
 
 const VIDEO_WATERMARK_TIMEOUT_MS = 120_000;
 const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
@@ -64,7 +64,7 @@ export async function applyDancrImageWatermark(
   },
 ) {
   const sharp = await loadSharp();
-  const watermarkWidth = Math.max(64, Math.round(input.width * 0.15));
+  const watermarkWidth = Math.max(72, Math.round(input.width * 0.2));
   const watermarkHeight = Math.max(18, Math.round(watermarkWidth * 0.24));
   const position = chooseImageWatermarkPosition(
     input.width,
@@ -195,7 +195,7 @@ export async function watermarkStoredVideo(
     await writeFile(sourcePath, original);
     await writeVideoWatermark(
       overlayPath,
-      Math.max(80, Math.round(input.width * 0.18)),
+      Math.max(96, Math.round(input.width * 0.22)),
     );
     await runVideoWatermarkFfmpeg({
       sourcePath,
@@ -210,7 +210,7 @@ export async function watermarkStoredVideo(
     const { error } = await client.storage
       .from(input.publicBucket)
       .upload(input.storagePath, watermarked, {
-        cacheControl: "3600",
+        cacheControl: "0",
         contentType: input.storageMime,
         upsert: true,
       });
@@ -311,11 +311,14 @@ async function downloadOptionalObject(client: DancrClient, bucket: string, stora
 
 function watermarkSvg(width: number, height: number, opacity: number) {
   const fontSize = Math.max(12, Math.round(height * 0.58));
+  const strokeOpacity = Math.min(0.42, opacity + 0.06);
+  const strokeWidth = Math.max(1.35, height * 0.055);
   return Buffer.from(
     `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">` +
       `<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" ` +
       `font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="700" letter-spacing="-0.4" ` +
-      `fill="#ffffff" fill-opacity="${opacity}" stroke="#000000" stroke-opacity="${Math.min(0.08, opacity)}" stroke-width="1">` +
+      `paint-order="stroke fill" fill="#ffffff" fill-opacity="${opacity}" stroke="#000000" ` +
+      `stroke-opacity="${strokeOpacity}" stroke-width="${strokeWidth}">` +
       `${DANCR_MEDIA_WATERMARK_TEXT}</text></svg>`,
   );
 }

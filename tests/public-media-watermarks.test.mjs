@@ -110,7 +110,7 @@ test("watermarked image uploads archive the untouched original and publish separ
   assert.equal((await sharp(publicMaster.buffer).metadata()).height, 900);
 });
 
-test("the image watermark is subtle, baked into pixels, and placed away from the focal area", async () => {
+test("the image watermark is readable, baked into pixels, and placed away from the focal area", async () => {
   const source = await sharp({
     create: {
       width: 900,
@@ -128,7 +128,7 @@ test("the image watermark is subtle, baked into pixels, and placed away from the
   });
   const stats = await sharp(output).stats();
   assert.ok(stats.channels.some((channel) => channel.max > 0));
-  assert.equal(DANCR_MEDIA_WATERMARK_OPACITY, 0.1);
+  assert.equal(DANCR_MEDIA_WATERMARK_OPACITY, 0.34);
 
   assert.deepEqual(
     chooseImageWatermarkPosition(900, 1200, 20, 20, 135, 32),
@@ -183,6 +183,8 @@ test("the idempotent production backfill covers existing public media without av
   assert.match(backfillScript, /from\("mydancr_tv_videos"\)[\s\S]*?status[\s\S]*?approved/);
   assert.match(backfillScript, /hasArchivedOriginalMedia/);
   assert.doesNotMatch(backfillScript, /avatar_storage_path|qr_code_storage_path/);
+  assert.match(backfillScript, /process\.argv\.includes\("--force"\)/);
+  assert.match(backfillScript, /archivedOriginalStoragePath/);
 });
 
 test("video processing archives the original and publishes a playable watermarked derivative", async () => {

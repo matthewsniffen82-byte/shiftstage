@@ -1,6 +1,7 @@
 import nextEnv from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 import {
+  archivedOriginalStoragePath,
   hasArchivedOriginalMedia,
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
@@ -24,6 +25,7 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 const failures = [];
+const forceRefresh = process.argv.includes("--force");
 const totals = {
   dancerPhotos: 0,
   venueCovers: 0,
@@ -83,7 +85,10 @@ async function backfillDancerPhotos() {
   for (const row of rows) {
     await safely("dancer_photo", row.id, async () => {
       const currentPath = normalizedStoragePath(row.storage_path);
-      if (!currentPath || await hasArchivedOriginalMedia(admin, "dancer-photos", currentPath)) {
+      const hasOriginal = currentPath
+        ? await hasArchivedOriginalMedia(admin, "dancer-photos", currentPath)
+        : false;
+      if (!currentPath || (hasOriginal && !forceRefresh)) {
         totals.skipped += 1;
         return;
       }
@@ -91,6 +96,7 @@ async function backfillDancerPhotos() {
         "dancer-photos",
         `${row.dancer_id}`,
         currentPath,
+        hasOriginal,
       );
       const { data: updated, error } = await admin
         .from("dancer_photos")
@@ -109,6 +115,9 @@ async function backfillDancerPhotos() {
         .eq("image_id", row.id)
         .eq("final_storage_path", currentPath);
       await removeResponsiveImage(admin, "dancer-photos", currentPath);
+      if (hasOriginal) {
+        await removeArchivedOriginalMedia(admin, "dancer-photos", currentPath);
+      }
       totals.dancerPhotos += 1;
     });
   }
@@ -123,7 +132,10 @@ async function backfillVenueCovers() {
   for (const row of rows) {
     await safely("venue_cover", row.id, async () => {
       const currentPath = normalizedStoragePath(row.cover_image_storage_path);
-      if (!currentPath || await hasArchivedOriginalMedia(admin, "venue-cover-images", currentPath)) {
+      const hasOriginal = currentPath
+        ? await hasArchivedOriginalMedia(admin, "venue-cover-images", currentPath)
+        : false;
+      if (!currentPath || (hasOriginal && !forceRefresh)) {
         totals.skipped += 1;
         return;
       }
@@ -131,6 +143,7 @@ async function backfillVenueCovers() {
         "venue-cover-images",
         `${row.id}`,
         currentPath,
+        hasOriginal,
       );
       const { data: updated, error } = await admin
         .from("venues")
@@ -147,6 +160,9 @@ async function backfillVenueCovers() {
         throw error || new Error("The venue cover changed during watermark backfill.");
       }
       await removeResponsiveImage(admin, "venue-cover-images", currentPath);
+      if (hasOriginal) {
+        await removeArchivedOriginalMedia(admin, "venue-cover-images", currentPath);
+      }
       totals.venueCovers += 1;
     });
   }
@@ -161,7 +177,10 @@ async function backfillVideos() {
   for (const row of rows) {
     await safely("mydancr_tv_video", row.id, async () => {
       const storagePath = normalizedStoragePath(row.storage_path);
-      if (!storagePath || await hasArchivedOriginalMedia(admin, "mydancr-tv-videos", storagePath)) {
+      const hasOriginal = storagePath
+        ? await hasArchivedOriginalMedia(admin, "mydancr-tv-videos", storagePath)
+        : false;
+      if (!storagePath || (hasOriginal && !forceRefresh)) {
         totals.skipped += 1;
         return;
       }
@@ -177,8 +196,12 @@ async function backfillVideos() {
   }
 }
 
-async function createWatermarkedImage(bucket, directory, currentPath) {
-  const { data, error } = await admin.storage.from(bucket).download(currentPath);
+async function createWatermarkedImage(bucket, directory, currentPath, useArchivedOriginal) {
+  const sourceBucket = useArchivedOriginal ? "dancr-media-originals" : bucket;
+  const sourcePath = useArchivedOriginal
+    ? archivedOriginalStoragePath(bucket, currentPath)
+    : currentPath;
+  const { data, error } = await admin.storage.from(sourceBucket).download(sourcePath);
   if (error || !data) throw error || new Error("Existing public image is unavailable.");
   const image = await validateAndPrepareDancrImage(data);
   const uploaded = await uploadResponsiveImage(
