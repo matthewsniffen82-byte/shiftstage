@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { myDancrPreviewBannerHtml } from "./components/MyDancrPreviewBanner";
 
 import { LIVE_SHELL_SHA256 } from "../src/generated/live-shell-version";
 
@@ -22,8 +23,12 @@ export async function GET() {
     "</head>",
     '<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><script src="/video-autoplay-recovery.js?v=3" defer></script></head>',
   );
+  const withPreviewBanner = withLiveProfileAssets.replace(
+    '<body class="dancr-button-system">',
+    `<body class="dancr-button-system">${myDancrPreviewBannerHtml}`,
+  );
 
-  return new Response(withLiveProfileAssets, {
+  return new Response(withPreviewBanner, {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
