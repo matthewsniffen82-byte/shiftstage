@@ -142,6 +142,10 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-detail-club-deal-qr-state \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?min-height: 168px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.venue-club-deal-unavailable\.venue-offer-card \{[\s\S]*?width: min\(168px, 100%\) !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(refinement, /\.action-btn\.follow-venue-btn:not\(\.is-following\) \{[\s\S]*?width: 100% !important;[\s\S]*?border-color: var\(--dancr-color-border-subtle\) !important;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(
+    refinement,
+    /\.action-btn\.follow-venue-btn\.is-following \{[\s\S]*?var\(--dancr-color-brand-primary\) 28%,[\s\S]*?var\(--dancr-color-border-subtle\)[\s\S]*?color: var\(--dancr-color-text-primary\) !important;[\s\S]*?var\(--dancr-color-brand-primary\) 6%,[\s\S]*?var\(--dancr-color-surface-raised\) 94%[\s\S]*?var\(--dancr-color-brand-primary\) 8%,[\s\S]*?transparent/,
+  );
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
   assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);

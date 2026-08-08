@@ -4375,16 +4375,32 @@ body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-action-rail
   [data-venue-follow]:is(.is-active, [aria-pressed="true"]) {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
-  color: var(--dancr-color-brand-core) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 26%,
+    var(--dancr-color-border-subtle)
+  ) !important;
+  color: var(--dancr-color-text-primary) !important;
   background: color-mix(
     in srgb,
-    var(--dancr-color-brand-primary) 18%,
-    var(--dancr-color-surface-raised)
+    var(--dancr-color-brand-primary) 6%,
+    var(--dancr-color-surface-raised) 94%
   ) !important;
-  box-shadow: none !important;
+  box-shadow: inset 0 0 0 1px color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 8%,
+    transparent
+  ) !important;
   opacity: 1 !important;
   filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-action-rail
+  [data-venue-follow]:is(.is-active, [aria-pressed="true"])
+  :is(.action-icon, svg, span) {
+  color: var(--dancr-color-text-primary) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack
@@ -4940,14 +4956,27 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .action-btn.follow-venue-btn.is-following {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
-  color: var(--dancr-color-brand-core) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 28%,
+    var(--dancr-color-border-subtle)
+  ) !important;
+  color: var(--dancr-color-text-primary) !important;
   background: color-mix(
     in srgb,
-    var(--dancr-color-brand-primary) 22%,
-    var(--dancr-color-surface-raised)
+    var(--dancr-color-brand-primary) 6%,
+    var(--dancr-color-surface-raised) 94%
   ) !important;
-  box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary-medium) !important;
+  box-shadow: inset 0 0 0 1px color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 8%,
+    transparent
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .action-btn.follow-venue-btn.is-following :is(.action-icon, svg, span) {
+  color: var(--dancr-color-text-primary) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-section {
