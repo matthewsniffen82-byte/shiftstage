@@ -34,7 +34,8 @@ test("layout-review profiles require an explicit marked and reversible database 
   );
   assert.match(scriptSource, /const DATASET_MARKER = "mydancr-layout-review-v1"/);
   assert.match(scriptSource, /const PROFILE_PREFIX = "layout-review-"/);
-  assert.match(scriptSource, /const DEFAULT_COUNT = PROFILE_DEFINITIONS\.length/);
+  assert.match(scriptSource, /const PRODUCTION_PROFILE_COUNT = 10/);
+  assert.match(scriptSource, /const DEFAULT_COUNT = PRODUCTION_PROFILE_COUNT/);
   assert.match(scriptSource, /const MAX_COUNT = PROFILE_DEFINITIONS\.length/);
   assert.match(
     scriptSource,
@@ -77,7 +78,7 @@ test("production builds populate profiles only behind one explicit environment g
   );
   assert.match(
     postbuildSource,
-    /dealSyncFlag \? "--sync-deals" : "--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=11"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
+    /dealSyncFlag \? "--sync-deals" : "--apply"[\s\S]*?"--target=production"[\s\S]*?"--count=10"[\s\S]*?`--confirm=\$\{DATASET_MARKER\}`/,
   );
 });
 

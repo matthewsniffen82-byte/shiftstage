@@ -9,7 +9,8 @@ import {
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const PROFILE_PREFIX = "layout-review-";
 const EMAIL_DOMAIN = "synthetic.mydancr.invalid";
-const DEFAULT_COUNT = PROFILE_DEFINITIONS.length;
+const PRODUCTION_PROFILE_COUNT = 10;
+const DEFAULT_COUNT = PRODUCTION_PROFILE_COUNT;
 const MAX_COUNT = PROFILE_DEFINITIONS.length;
 const REVIEW_CITY = "Las Vegas";
 const REVIEW_PHOTO_COUNT = 5;

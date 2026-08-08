@@ -36,7 +36,7 @@ const result = spawnSync(
     managerPath,
     dealSyncFlag ? "--sync-deals" : "--apply",
     "--target=production",
-    "--count=11",
+    "--count=10",
     `--confirm=${DATASET_MARKER}`,
   ],
   {
