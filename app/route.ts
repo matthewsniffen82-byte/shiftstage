@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { LIVE_SHELL_SHA256 } from "../src/generated/live-shell-version";
+
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
 // request time prevents Vercel's build cache from reusing an older shell while
@@ -25,6 +27,7 @@ export async function GET() {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
       "x-dancr-live-shell-version": liveShellSha256,
+      "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
     },
   });
 }
