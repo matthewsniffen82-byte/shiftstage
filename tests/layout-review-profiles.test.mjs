@@ -137,7 +137,7 @@ test("layout-review schedules and rollback support the deployed production schem
   );
   assert.match(
     scriptSource,
-    /async function syncSchedulesOnly[\s\S]*?assertMarkedDatasetAccount\(profile\)[\s\S]*?replaceProfileSchedule[\s\S]*?workingNowAssignments/,
+    /async function syncSchedulesOnly[\s\S]*?missingProfileSlugs[\s\S]*?assertMarkedDatasetAccount\(target\.profile\)[\s\S]*?prepareReviewQrVenues\(venues\)[\s\S]*?replaceProfileSchedule[\s\S]*?workingNowAssignments/,
   );
   assert.match(
     scriptSource,

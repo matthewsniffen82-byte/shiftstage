@@ -227,16 +227,29 @@ async function syncSchedulesOnly() {
   const profilesBySlug = new Map(
     profiles.map((profile) => [String(profile.slug), profile]),
   );
+  const scheduleTargets = Array.from({ length: count }, (_, index) => {
+    const definition = profileDefinition(index);
+    return {
+      definition,
+      profile: profilesBySlug.get(definition.slug),
+    };
+  });
+  const missingProfileSlugs = scheduleTargets
+    .filter((target) => !target.profile)
+    .map((target) => target.definition.slug);
+  if (missingProfileSlugs.length) {
+    throw new Error(
+      `Missing marked review profiles: ${missingProfileSlugs.join(", ")}.`,
+    );
+  }
+  for (const target of scheduleTargets) {
+    await assertMarkedDatasetAccount(target.profile);
+  }
+
   const selectedVenues = await prepareReviewQrVenues(venues);
   const workingNowAssignments = [];
 
-  for (let index = 0; index < count; index += 1) {
-    const definition = profileDefinition(index);
-    const profile = profilesBySlug.get(definition.slug);
-    if (!profile) {
-      throw new Error(`Missing marked review profile ${definition.slug}.`);
-    }
-    await assertMarkedDatasetAccount(profile);
+  for (const { definition, profile } of scheduleTargets) {
     const assignment = await replaceProfileSchedule(
       profile,
       definition,
