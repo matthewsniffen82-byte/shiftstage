@@ -33753,8 +33753,8 @@
         }
         @media (max-width: 720px) {
           #profileBackdrop .profile-modal {
-            /* The dock is 72px tall and sits 8px above the viewport edge. */
-            --profile-report-clearance: calc(80px + env(safe-area-inset-bottom, 0px));
+            /* Keep a compact safe-area finish; the fixed dock already owns its clearance. */
+            --profile-report-clearance: max(16px, env(safe-area-inset-bottom, 0px));
             overscroll-behavior-y: none;
             scroll-padding-bottom: var(--profile-report-clearance) !important;
           }
