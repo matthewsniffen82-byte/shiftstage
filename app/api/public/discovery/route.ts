@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
-import { getActiveClubDealsForVenues } from "@/src/lib/dancr/deals";
+import { getActiveClubDealListsForVenues } from "@/src/lib/dancr/deals";
 import {
   formatVenueHours,
   getLiveDancerDiscovery,
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     if (venueResult.error) throw venueResult.error;
     const venueIds = (venueResult.data || []).map((venue) => venue.id);
     const [activeDeals, venuePopularityById] = await Promise.all([
-      getActiveClubDealsForVenues(client, venueIds),
+      getActiveClubDealListsForVenues(client, venueIds),
       getPublicVenuePopularity(client, venueIds),
     ]);
 
@@ -76,7 +76,8 @@ export async function GET(request: Request) {
           ? client.storage.from("venue-qr-codes").getPublicUrl(venue.qr_code_storage_path).data.publicUrl
           : null,
         qrCodeLabel: venue.qr_code_label || null,
-        activeDeal: activeDeals.get(venue.id) || null,
+        activeDeals: activeDeals.get(venue.id) || [],
+        activeDeal: activeDeals.get(venue.id)?.[0] || null,
         popularity: venuePopularityById.get(venue.id) || {
           followerCount: 0,
           directionRequests30d: 0,
@@ -85,17 +86,26 @@ export async function GET(request: Request) {
       };
     });
     const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => {
-      const activeDeal = dancer.venueId ? activeDeals.get(dancer.venueId) || null : null;
+      const dancerDeals = dancer.venueId ? activeDeals.get(dancer.venueId) || [] : [];
+      const activeDeal = dancerDeals[0] || null;
+      const dealAttributionTokens = dancer.venueId && dancer.shiftId
+        ? Object.fromEntries(dancerDeals.map((deal) => [
+            deal.id,
+            createDancerDealAttributionToken({
+              dancerId: dancer.id,
+              venueId: dancer.venueId as string,
+              dealId: deal.id,
+              shiftId: dancer.shiftId as string,
+            }),
+          ]))
+        : {};
       return {
         ...dancer,
+        activeDeals: dancerDeals,
         activeDeal,
+        dealAttributionTokens,
         dealAttributionToken: activeDeal && dancer.venueId && dancer.shiftId
-          ? createDancerDealAttributionToken({
-              dancerId: dancer.id,
-              venueId: dancer.venueId,
-              dealId: activeDeal.id,
-              shiftId: dancer.shiftId,
-            })
+          ? dealAttributionTokens[activeDeal.id]
           : null,
       };
     };

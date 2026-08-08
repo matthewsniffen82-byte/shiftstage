@@ -5,7 +5,7 @@ import { verifyDancerDealAttributionToken } from "@/src/lib/dancr/deal-attributi
 import {
   createDealRedemption,
   getVerifiedActiveCheckInAtVenue,
-  getActiveClubDealForVenue,
+  getActiveClubDealByIdForVenue,
 } from "@/src/lib/dancr/deals";
 import type { DealSourceType } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -39,8 +39,8 @@ export async function POST(request: Request) {
     const admin = createAdminSupabaseClient();
     await enforceGenerationRateLimit(admin, request, clubDealId);
 
-    const deal = await getActiveClubDealForVenue(admin, venueId);
-    if (!deal || deal.id !== clubDealId) {
+    const deal = await getActiveClubDealByIdForVenue(admin, venueId, clubDealId);
+    if (!deal) {
       return NextResponse.json({ ok: false, error: "This club deal is not active." }, { status: 404 });
     }
 

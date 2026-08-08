@@ -51,7 +51,7 @@ test("TV keeps the real live-deal QR inside the right-side icon rail only", () =
   );
   assert.match(
     tvActions,
-    /actions\.append\(applause, share, follow\);\s*if \(deal\) actions\.appendChild\(deal\);\s*actions\.append\(report, reportMenu\);/,
+    /actions\.append\(applause\);\s*if \(deal\) actions\.appendChild\(deal\);\s*actions\.append\(share, follow\);\s*actions\.append\(report, reportMenu\);/,
   );
   assert.doesNotMatch(tvActions, /home-tv-feed-action-menu|home-tv-feed-menu-action/);
   assert.doesNotMatch(tvActions, /else\s*\{[\s\S]*?cardActionSlot = "qr"/);

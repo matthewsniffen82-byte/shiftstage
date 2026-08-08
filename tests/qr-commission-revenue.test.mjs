@@ -70,8 +70,9 @@ test("dancer attribution is locked to a verified shift when the unique QR is iss
   assert.match(passPage, /Dancer credit was locked when this QR was issued during a verified check-in/);
   assert.match(dancerPage, /createDancerDealAttributionToken/);
   assert.match(dancerPage, /attributionToken=\{dealAttributionToken\}/);
-  assert.match(discoveryRoute, /dealAttributionToken:[\s\S]*?createDancerDealAttributionToken/);
-  assert.match(tvSource, /dealAttributionToken:[\s\S]*?createDancerDealAttributionToken/);
+  assert.match(dancerPage, /attributionTokens=\{dealAttributionTokens\}/);
+  assert.match(discoveryRoute, /const dealAttributionTokens[\s\S]*?createDancerDealAttributionToken/);
+  assert.match(tvSource, /const dealAttributionTokens[\s\S]*?createDancerDealAttributionToken/);
   assert.match(tvClient, /attributionToken=\{video\.dealAttributionToken\}/);
   assert.match(liveApp, /attributionToken: profile\.dealAttributionToken/);
   assert.match(liveApp, /attributionToken: sourceType === "dancer_profile" \? attributionToken : null/);
@@ -126,7 +127,7 @@ test("venues configure a real referral amount before a tracked QR can be publish
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
   assert.match(venueDashboard, /Referral commission per successful redemption/);
-  assert.match(venueDashboard, /Publish this tracked Club Deal/);
+  assert.match(venueDashboard, /Publish this offer in the Club Deals hub/);
   assert.match(venueDashboard, /Only that authenticated confirmation creates revenue and dancer commission/);
 });
 

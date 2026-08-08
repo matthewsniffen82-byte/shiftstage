@@ -12,7 +12,7 @@ import {
 } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 import {
-  getVenueDealForAccount,
+  getVenueDealsForAccount,
   getVenueDealRevenueMetrics,
 } from "./deals";
 import { isCurrentLocationVerification } from "./geofence";
@@ -329,6 +329,7 @@ export async function getVenueDashboard(
   analytics: VenueDashboardAnalytics;
   workingNow: VenueDashboardDancer[];
   deal: ClubDeal | null;
+  deals: ClubDeal[];
   dealRevenue: Awaited<ReturnType<typeof getVenueDealRevenueMetrics>>;
 }> {
   const profile = await requireVenueForAccount(client, userId);
@@ -362,7 +363,7 @@ export async function getVenueDashboard(
     countUpcomingShifts(client, profile.id, now),
     countVenueGoingSignals(client, profile.id, since),
     getWorkingDancers(client, profile.id, now),
-    getVenueDealForAccount(client, userId),
+    getVenueDealsForAccount(client, userId),
     getVenueDealRevenueMetrics(client, profile.id),
   ]);
 
@@ -381,7 +382,8 @@ export async function getVenueDashboard(
       goingSignals30Days,
     },
     workingNow,
-    deal: venueDeal?.deal || null,
+    deal: venueDeal?.deals[0] || null,
+    deals: venueDeal?.deals || [],
     dealRevenue,
   };
 }

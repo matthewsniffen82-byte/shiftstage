@@ -97,7 +97,7 @@ test("TV cards expose separate right-side action icons with fullscreen anchored 
   )?.[0] || "";
 
   assert.match(actionsFactory, /createHomeTvFeedActionButton\([\s\S]*?"Applaud"[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?"Report"/);
-  assert.match(actionsFactory, /actions\.append\(applause, share, follow\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(report, reportMenu\)/);
+  assert.match(actionsFactory, /actions\.append\(applause\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow\)[\s\S]*?actions\.append\(report, reportMenu\)/);
   assert.doesNotMatch(actionsFactory, /More video actions|home-tv-feed-action-menu|home-tv-feed-menu-action/);
   assert.match(actionsFactory, /event\.key !== "Escape"[\s\S]*?closeHomeTvFeedReportMenus\(\)/);
   assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{\s*if \(!event\.target\.closest\("\.home-tv-feed-actions"\)\) closeHomeTvFeedReportMenus\(\)/);

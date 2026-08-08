@@ -70,7 +70,7 @@ test("venue pages and directory cards promote real active deals", () => {
     )?.[0] || "";
   assert.match(
     venueQrHelper,
-    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Get Deal"\)/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?const offerCount = venue\.activeDeals\?\.length \|\| 1[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? `\$\{offerCount\} Deals` : "Get Deal"\)/,
   );
   assert.match(
     venueQrHelper,
@@ -88,7 +88,7 @@ test("venue pages and directory cards promote real active deals", () => {
   assert.match(venueOffer, /venue-club-deal-unavailable[\s\S]*?Club Deal QR/);
   assert.match(
     venueOffer,
-    /<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?Click for Club Deal[\s\S]*?Unique tracked QR[\s\S]*?<\/button>/,
+    /<button class="venue-detail-club-deal-qr-state is-available"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?clubDealQrSymbolMarkup\("venue-detail-club-deal-symbol"\)[\s\S]*?View Club Deals[\s\S]*?live offers[\s\S]*?<\/button>/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
   assert.doesNotMatch(venueOffer, /clubDealCtaMarkup|venue-club-deal-cta|Opens after you tap Get Club Deal/);
@@ -148,11 +148,12 @@ test("checked-in dancer profiles and MyDancr TV promote attributed deals without
   assert.match(dancerPage, /function isActiveNow[\s\S]*?Boolean\(shift\.checkedInAt\)[\s\S]*?!shift\.checkedOutAt/);
   assert.doesNotMatch(dancerPage, /autoGenerate/);
   assert.match(tvSource, /video\.shift\?\.isActive && video\.venue/);
-  assert.match(tvSource, /const deal = video\.shift\?\.isActive && video\.venue/);
+  assert.match(tvSource, /const venueDeals = video\.shift\?\.isActive && video\.venue[\s\S]*?const deal = venueDeals\[0\] \|\| null/);
   assert.match(tvSource, /createDancerDealAttributionToken/);
   assert.match(tvClient, /video\.shift\?\.isActive && video\.venue && video\.deal/);
   assert.match(tvClient, /sourceType="dancer_profile"/);
   assert.match(tvClient, /attributionToken=\{video\.dealAttributionToken\}/);
+  assert.match(tvClient, /attributionTokens=\{video\.dealAttributionTokens\}/);
   assert.match(tvClient, /presentation="launcher"/);
   assert.match(
     liveApp,
@@ -162,9 +163,9 @@ test("checked-in dancer profiles and MyDancr TV promote attributed deals without
 });
 
 test("homepage live profiles use the server-generated revenue QR only while Working Now", () => {
-  assert.match(discoveryRoute, /activeDeal: activeDeals\.get\(venue\.id\) \|\| null/);
-  assert.match(discoveryRoute, /const activeDeal = dancer\.venueId \? activeDeals\.get\(dancer\.venueId\) \|\| null : null/);
-  assert.match(discoveryRoute, /dealAttributionToken:[\s\S]*?createDancerDealAttributionToken/);
+  assert.match(discoveryRoute, /activeDeals: activeDeals\.get\(venue\.id\) \|\| \[\][\s\S]*?activeDeal: activeDeals\.get\(venue\.id\)\?\.\[0\] \|\| null/);
+  assert.match(discoveryRoute, /const dancerDeals = dancer\.venueId \? activeDeals\.get\(dancer\.venueId\) \|\| \[\] : \[\][\s\S]*?const activeDeal = dancerDeals\[0\] \|\| null/);
+  assert.match(discoveryRoute, /const dealAttributionTokens[\s\S]*?createDancerDealAttributionToken/);
   assert.match(liveApp, /activeDeal: item\.activeDeal \|\| null/);
   assert.match(liveApp, /dealAttributionToken: item\.dealAttributionToken \|\| ""/);
   assert.match(
@@ -190,7 +191,7 @@ test("dancer scroll cards reserve the QR slot while only live Club Deals remain 
   assert.match(gridDealMarkup, /data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?aria-disabled="true"/);
   assert.match(gridDealMarkup, /class="feed-card-action home-card-qr-rail-action is-available"/);
   assert.match(gridDealMarkup, /data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr/);
-  assert.match(gridDealMarkup, /actionButtonLabel\("qr", "QR"\)/);
+  assert.match(gridDealMarkup, /actionButtonLabel\("qr", qr\.offerCount > 1 \? `\$\{qr\.offerCount\} Deals` : "Deal"\)/);
 
   const profileDealMarkup =
     liveApp.match(

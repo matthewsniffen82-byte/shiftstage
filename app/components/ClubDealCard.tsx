@@ -9,11 +9,13 @@ const DEAL_SESSION_KEY = "mydancrDealSessionV1";
 
 type ClubDealCardProps = {
   deal: ClubDeal;
+  deals?: ClubDeal[];
   venueId: string;
   venueName?: string;
   sourceType: DealSourceType;
   dancerId?: string | null;
   attributionToken?: string | null;
+  attributionTokens?: Record<string, string>;
   dancerNote?: boolean;
   compact?: boolean;
   presentation?: "card" | "launcher";
@@ -24,11 +26,13 @@ type ClubDealCardProps = {
 
 export function ClubDealCard({
   deal,
+  deals,
   venueId,
   venueName,
   sourceType,
   dancerId,
   attributionToken,
+  attributionTokens,
   dancerNote,
   compact,
   presentation = "card",
@@ -42,8 +46,11 @@ export function ClubDealCard({
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const offerDeals = deals?.length ? deals : [deal];
+  const [selectedDealId, setSelectedDealId] = useState(deal.id);
+  const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
   const passUrl = redemptionToken ? `/deals/pass/${encodeURIComponent(redemptionToken)}` : "";
-  const actionLabel = ctaLabel || "Get Club Deal";
+  const actionLabel = ctaLabel || (offerDeals.length > 1 ? `Club Deals · ${offerDeals.length}` : "Get Club Deal");
 
   useEffect(() => {
     if (!dialogOpen) return;
@@ -74,11 +81,13 @@ export function ClubDealCard({
         headers,
         credentials: "same-origin",
         body: JSON.stringify({
-          clubDealId: deal.id,
+          clubDealId: activeDeal.id,
           venueId,
           sourceType,
           dancerId: sourceType === "dancer_profile" ? dancerId : null,
-          attributionToken: sourceType === "dancer_profile" ? attributionToken : null,
+          attributionToken: sourceType === "dancer_profile"
+            ? attributionTokens?.[activeDeal.id] || attributionToken
+            : null,
           sessionId: readOrCreateDealSessionId(),
         }),
       });
@@ -108,7 +117,7 @@ export function ClubDealCard({
     if (!qrDataUrl) return;
     const link = document.createElement("a");
     link.href = qrDataUrl;
-    link.download = `mydancr-${slugify(venueName || deal.dealTitle)}-club-deal.png`;
+    link.download = `mydancr-${slugify(venueName || activeDeal.dealTitle)}-club-deal.png`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -122,8 +131,8 @@ export function ClubDealCard({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: deal.dealTitle,
-          text: `${deal.dealTitle}${venueName ? ` at ${venueName}` : ""}`,
+          title: activeDeal.dealTitle,
+          text: `${activeDeal.dealTitle}${venueName ? ` at ${venueName}` : ""}`,
           url: absoluteUrl,
         });
         await recordLifecycleEvent(redemptionToken, "shared");
@@ -142,10 +151,10 @@ export function ClubDealCard({
   const dealContent = (
     <>
       <div className="club-deal-copy">
-        <span className="eyebrow">Club Deal</span>
-        <h2>{deal.dealTitle}</h2>
-        {!compact ? <p>{deal.dealDescription}</p> : null}
-        {deal.dealTerms && !compact ? <small>{deal.dealTerms}</small> : null}
+        <span className="eyebrow">{dealTypeLabel(activeDeal.offerType)} · Club Deal</span>
+        <h2>{activeDeal.dealTitle}</h2>
+        {!compact ? <p>{activeDeal.dealDescription}</p> : null}
+        {activeDeal.dealTerms && !compact ? <small>{activeDeal.dealTerms}</small> : null}
         {!compact ? <small>Scan at the club to redeem. No sign-in is required.</small> : null}
         {dancerNote ? (
           <small>Dancer credit is locked when the QR is issued during a verified check-in and stays attached when saved or shared.</small>
@@ -154,7 +163,7 @@ export function ClubDealCard({
       <div className="club-deal-action">
         {qrDataUrl ? (
           <div className="deal-qr-frame">
-            <img src={qrDataUrl} alt={`${deal.dealTitle} QR code`} />
+            <img src={qrDataUrl} alt={`${activeDeal.dealTitle} QR code`} />
             <span>{expiresAt ? `Expires ${formatExpiry(expiresAt)}` : "Ready for club scan"}</span>
           </div>
         ) : null}
@@ -169,6 +178,11 @@ export function ClubDealCard({
           </div>
         ) : null}
         {status ? <em role="status">{status}</em> : null}
+        {qrDataUrl && activeDeal.offerType === "bottle_service" && activeDeal.bookingUrl ? (
+          <a className="club-deal-booking-link" href={activeDeal.bookingUrl} target="_blank" rel="noreferrer">
+            Continue to venue booking
+          </a>
+        ) : null}
       </div>
     </>
   );
@@ -179,10 +193,13 @@ export function ClubDealCard({
         <button
           className="club-deal-launcher"
           type="button"
-          onClick={() => generateDealQr(true)}
+          onClick={() => {
+            setDialogOpen(true);
+            if (offerDeals.length === 1) void generateDealQr(true);
+          }}
           disabled={isLoading}
         >
-          <span>Club Deal</span>
+          <span>{offerDeals.length > 1 ? `${offerDeals.length} live offers` : "Club Deal"}</span>
           <strong>{isLoading ? "Creating QR…" : actionLabel}</strong>
         </button>
       ) : (
@@ -198,7 +215,10 @@ export function ClubDealCard({
         <button
           className="club-deal-sticky"
           type="button"
-          onClick={() => generateDealQr(true)}
+          onClick={() => {
+            setDialogOpen(true);
+            if (offerDeals.length === 1) void generateDealQr(true);
+          }}
           disabled={isLoading}
         >
           <span>{deal.dealTitle}</span>
@@ -217,7 +237,7 @@ export function ClubDealCard({
             className="club-deal-dialog"
             role="dialog"
             aria-modal="true"
-            aria-label={`${deal.dealTitle} Club Deal`}
+            aria-label={`${venueName || "Venue"} Club Deals`}
           >
             <button
               className="club-deal-dialog-close"
@@ -228,6 +248,29 @@ export function ClubDealCard({
             >
               ×
             </button>
+            {offerDeals.length > 1 && !qrDataUrl ? (
+              <div className="club-deal-offer-picker">
+                <span className="eyebrow">Choose your offer</span>
+                <h2>{venueName ? `Club Deals at ${venueName}` : "Club Deals"}</h2>
+                <div>
+                  {offerDeals.map((offer) => (
+                    <button
+                      className={offer.id === activeDeal.id ? "active" : ""}
+                      key={offer.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDealId(offer.id);
+                        setStatus("");
+                      }}
+                    >
+                      <span>{dealTypeLabel(offer.offerType)}</span>
+                      <strong>{offer.dealTitle}</strong>
+                      <small>{offer.dealDescription}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {dealContent}
           </section>
         </div>
@@ -290,6 +333,13 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "") || "club-deal";
 }
 
+function dealTypeLabel(value: ClubDeal["offerType"]) {
+  if (value === "drink") return "Drink offer";
+  if (value === "bottle_service") return "Bottle service";
+  if (value === "other") return "Venue offer";
+  return "Admission offer";
+}
+
 function formatExpiry(value: string) {
   try {
     return new Intl.DateTimeFormat("en-US", {
@@ -324,6 +374,15 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog .deal-qr-frame { display: grid; justify-items: center; gap: 8px; padding: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(0,0,0,.34); }
       .club-deal-dialog .deal-qr-frame img { width: min(240px, 70vw); aspect-ratio: 1; border-radius: 10px; background: #fff; }
       .club-deal-dialog .deal-qr-frame span { color: #d8f7ff; font-size: 12px; font-weight: 900; }
+      .club-deal-booking-link { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(126,234,255,.36); border-radius: 999px; color: #061015; background: #7eeaff; font-size: 13px; font-weight: 950; text-decoration: none; }
+      .club-deal-offer-picker { display: grid; gap: 10px; }
+      .club-deal-offer-picker h2 { margin: 0; padding-right: 34px; font-size: clamp(22px, 6vw, 30px); }
+      .club-deal-offer-picker > div { display: grid; gap: 8px; }
+      .club-deal-offer-picker button { display: grid; justify-items: start; gap: 4px; padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; color: #fff; background: rgba(255,255,255,.04); font: inherit; text-align: left; cursor: pointer; }
+      .club-deal-offer-picker button.active { border-color: var(--dancr-color-success-medium); background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface)); }
+      .club-deal-offer-picker button span { color: #78ffc0; font-size: 9px; font-weight: 950; letter-spacing: .12em; text-transform: uppercase; }
+      .club-deal-offer-picker button strong { font-size: 15px; }
+      .club-deal-offer-picker button small { color: #b9accd; font-size: 12px; line-height: 1.35; }
       .club-deal-sticky { display: none; }
       @media (max-width: 760px) {
         .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }

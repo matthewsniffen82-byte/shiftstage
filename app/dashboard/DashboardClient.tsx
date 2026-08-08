@@ -102,6 +102,7 @@ type LoadState = {
   rankingEvents?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
   deal?: Record<string, unknown> | null;
+  venueDeals?: Array<Record<string, unknown>>;
   dealRevenue?: Record<string, unknown> | null;
   finance?: Record<string, unknown> | null;
   affiliations?: Array<Record<string, unknown>>;
@@ -168,6 +169,7 @@ export default function DashboardClient({
             rankingEvents: rankingEvents?.events || [],
             workingNow: secondary.workingNow || [],
             deal: secondary.deal || null,
+            venueDeals: Array.isArray(secondary.deals) ? secondary.deals : [],
             dealRevenue: secondary.dealRevenue || null,
             finance: secondary.finance || null,
             affiliations: secondary.affiliations || [],
@@ -300,6 +302,7 @@ export default function DashboardClient({
             <VenuePanel
               analytics={state.analytics}
               deal={state.deal}
+              venueDeals={state.venueDeals || []}
               dealRevenue={state.dealRevenue}
               finance={state.finance}
               profile={state.profile}
@@ -1402,6 +1405,7 @@ function formatNotificationTimestamp(value: unknown) {
 function VenuePanel({
   analytics,
   deal,
+  venueDeals,
   dealRevenue,
   finance,
   profile,
@@ -1411,6 +1415,7 @@ function VenuePanel({
 }: {
   analytics?: LoadState["analytics"];
   deal?: LoadState["deal"];
+  venueDeals: Array<Record<string, unknown>>;
   dealRevenue?: LoadState["dealRevenue"];
   finance?: LoadState["finance"];
   profile?: LoadState["profile"];
@@ -1599,7 +1604,7 @@ function VenuePanel({
         <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
       </InfoPanel>
       <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
-      <VenueClubDealPanel initialDeal={deal} revenue={dealRevenue} finance={finance} />
+      <VenueClubDealPanel initialDeal={deal} initialDeals={venueDeals} revenue={dealRevenue} finance={finance} />
       <article className="info-panel venue-profile-panel">
         <h2>Public venue page</h2>
         <form onSubmit={saveProfile}>
@@ -1708,38 +1713,39 @@ function VenuePanel({
 function VenueClubDealPanel({
   finance,
   initialDeal,
+  initialDeals,
   revenue,
 }: {
   finance?: LoadState["finance"];
   initialDeal?: LoadState["deal"];
+  initialDeals: Array<Record<string, unknown>>;
   revenue?: LoadState["dealRevenue"];
 }) {
-  const [deal, setDeal] = useState(initialDeal || null);
-  const [form, setForm] = useState({
-    dealTitle: "",
-    dealDescription: "",
-    dealTerms: "",
-    referralCommission: "",
-    isActive: false,
-  });
+  const seedDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
+  const [deals, setDeals] = useState<Array<Record<string, unknown>>>(seedDeals);
+  const [editingId, setEditingId] = useState(String(seedDeals[0]?.id || ""));
+  const [form, setForm] = useState(() => venueDealForm(seedDeals[0]));
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setDeal(initialDeal || null);
-    setForm({
-      dealTitle: String(initialDeal?.dealTitle || "Tonight's venue offer"),
-      dealDescription: String(
-        initialDeal?.dealDescription
-          || "Show your unique MyDancr QR to venue staff for the active offer.",
-      ),
-      dealTerms: String(initialDeal?.dealTerms || ""),
-      referralCommission: initialDeal?.payoutAmountCents
-        ? (Number(initialDeal.payoutAmountCents) / 100).toFixed(2)
-        : "",
-      isActive: initialDeal?.isActive === true,
-    });
-  }, [initialDeal]);
+    const nextDeals = initialDeals.length ? initialDeals : initialDeal ? [initialDeal] : [];
+    setDeals(nextDeals);
+    setEditingId(String(nextDeals[0]?.id || ""));
+    setForm(venueDealForm(nextDeals[0]));
+  }, [initialDeal, initialDeals]);
+
+  function editDeal(deal: Record<string, unknown>) {
+    setEditingId(String(deal.id || ""));
+    setForm(venueDealForm(deal));
+    setStatus("");
+  }
+
+  function addDeal() {
+    setEditingId("");
+    setForm(venueDealForm(null, deals.length));
+    setStatus("Create the offer, then publish it when every detail is ready.");
+  }
 
   async function saveDeal(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1765,18 +1771,30 @@ function VenueClubDealPanel({
           "content-type": "application/json",
         },
         body: JSON.stringify({
+          dealId: editingId || null,
           dealTitle: form.dealTitle,
           dealDescription: form.dealDescription,
           dealTerms: form.dealTerms,
           referralCommissionCents,
           isActive: form.isActive,
+          offerType: form.offerType,
+          bookingUrl: form.offerType === "bottle_service" ? form.bookingUrl : null,
+          sortOrder: Number(form.sortOrder),
         }),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
         throw new Error(data.error || "Unable to update the tracked Club Deal.");
       }
-      setDeal(data.deal);
+      setDeals((current) => {
+        const exists = current.some((deal) => String(deal.id) === String(data.deal.id));
+        const next = exists
+          ? current.map((deal) => String(deal.id) === String(data.deal.id) ? data.deal : deal)
+          : [...current, data.deal];
+        return next.sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
+      });
+      setEditingId(String(data.deal.id));
+      setForm(venueDealForm(data.deal));
       setStatus(data.message || "Tracked Club Deal saved.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to update the tracked Club Deal.");
@@ -1785,21 +1803,89 @@ function VenueClubDealPanel({
     }
   }
 
+  async function deleteDeal() {
+    if (!editingId || isSaving) return;
+    const session = readSession();
+    if (!session?.accessToken) return setStatus("Sign in required.");
+    setIsSaving(true);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/venue/deal?dealId=${encodeURIComponent(editingId)}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${session.accessToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to delete this Club Deal.");
+      const nextDeals = deals.filter((deal) => String(deal.id) !== editingId);
+      setDeals(nextDeals);
+      setEditingId(String(nextDeals[0]?.id || ""));
+      setForm(venueDealForm(nextDeals[0], nextDeals.length));
+      setStatus(data.message || "Club Deal deleted.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to delete this Club Deal.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const liveCount = deals.filter((deal) => deal.isActive === true).length;
+
   return (
     <article className="info-panel venue-deal-panel">
       <div className="venue-deal-heading">
         <div>
           <span className="eyebrow">Revenue QR</span>
-          <h2>Tracked Club Deal</h2>
+          <h2>Club Deals hub</h2>
         </div>
-        <strong className={deal?.isActive ? "deal-state active" : "deal-state"}>
-          {deal?.isActive ? "Live" : "Not published"}
+        <strong className={liveCount ? "deal-state active" : "deal-state"}>
+          {liveCount} live
         </strong>
       </div>
       <p>
-        MyDancr generates every venue and dancer QR. Venue-page redemptions credit 100% of the referral commission to MyDancr. Dancer-profile redemptions use the monthly tier below.
+        Publish admission, drink, bottle-service, or other offers behind one Club Deals button. MyDancr issues the selected tracked QR; bottle service continues to your real HTTPS reservation flow after the pass is created.
       </p>
+      <div className="venue-deal-list" aria-label="Venue Club Deals">
+        {deals.map((deal) => (
+          <button
+            className={String(deal.id) === editingId ? "active" : ""}
+            key={String(deal.id)}
+            type="button"
+            onClick={() => editDeal(deal)}
+          >
+            <span>{dealTypeLabel(String(deal.offerType || "admission"))}</span>
+            <strong>{String(deal.dealTitle || "Untitled offer")}</strong>
+            <small>{deal.isActive ? "Published" : "Draft"}</small>
+          </button>
+        ))}
+        <button className="add" type="button" onClick={addDeal}>
+          <span>New offer</span>
+          <strong>+ Add Club Deal</strong>
+          <small>Draft first</small>
+        </button>
+      </div>
       <form onSubmit={saveDeal}>
+        <label>
+          Offer type
+          <select
+            value={form.offerType}
+            onChange={(event) => setForm((current) => ({ ...current, offerType: event.target.value }))}
+          >
+            <option value="admission">Admission</option>
+            <option value="drink">Drink</option>
+            <option value="bottle_service">Bottle service</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>
+          Display order
+          <input
+            min="0"
+            max="1000"
+            type="number"
+            value={form.sortOrder}
+            onChange={(event) => setForm((current) => ({ ...current, sortOrder: event.target.value }))}
+          />
+        </label>
         <label>
           Deal title
           <input
@@ -1809,6 +1895,21 @@ function VenueClubDealPanel({
             onChange={(event) => setForm((current) => ({ ...current, dealTitle: event.target.value }))}
           />
         </label>
+        {form.offerType === "bottle_service" ? (
+          <label className="deal-booking-url">
+            Live venue booking URL
+            <input
+              inputMode="url"
+              maxLength={1000}
+              placeholder="https://yourvenue.com/reservations"
+              required={form.isActive}
+              type="url"
+              value={form.bookingUrl}
+              onChange={(event) => setForm((current) => ({ ...current, bookingUrl: event.target.value }))}
+            />
+            <small>Customers create the tracked MyDancr pass first, then continue here to request the actual reservation.</small>
+          </label>
+        ) : null}
         <label>
           Customer offer
           <textarea
@@ -1847,11 +1948,14 @@ function VenueClubDealPanel({
             type="checkbox"
             onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
           />
-          Publish this tracked Club Deal
+          Publish this offer in the Club Deals hub
         </label>
-        <button disabled={isSaving} type="submit">
-          {isSaving ? "Saving..." : "Save Club Deal"}
-        </button>
+        <div className="venue-deal-form-actions">
+          <button disabled={isSaving} type="submit">
+            {isSaving ? "Saving..." : editingId ? "Save offer" : "Create offer"}
+          </button>
+          {editingId ? <button className="danger" disabled={isSaving} type="button" onClick={deleteDeal}>Delete</button> : null}
+        </div>
       </form>
       <div className="commission-tier-table" aria-label="Dancer monthly QR commission tiers">
         <strong>Monthly successful dancer QR redemptions</strong>
@@ -1877,6 +1981,28 @@ function VenueClubDealPanel({
       {status ? <p role="status">{status}</p> : null}
     </article>
   );
+}
+
+function venueDealForm(deal?: Record<string, unknown> | null, fallbackOrder = 0) {
+  return {
+    dealTitle: String(deal?.dealTitle || ""),
+    dealDescription: String(deal?.dealDescription || ""),
+    dealTerms: String(deal?.dealTerms || ""),
+    referralCommission: deal?.payoutAmountCents
+      ? (Number(deal.payoutAmountCents) / 100).toFixed(2)
+      : "",
+    isActive: deal?.isActive === true,
+    offerType: String(deal?.offerType || "admission"),
+    bookingUrl: String(deal?.bookingUrl || ""),
+    sortOrder: String(deal?.sortOrder ?? fallbackOrder * 10),
+  };
+}
+
+function dealTypeLabel(value: string) {
+  if (value === "drink") return "Drink";
+  if (value === "bottle_service") return "Bottle service";
+  if (value === "other") return "Other";
+  return "Admission";
 }
 
 function dollarsToCents(value: string) {
@@ -4490,13 +4616,24 @@ function DashboardStyles() {
       .deal-state { width: fit-content; padding: 7px 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #b9accd; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
       .deal-state.active { border-color: rgba(50,255,164,.42); color: #78ffc0; background: rgba(50,255,164,.1); }
       .venue-deal-panel > p, .venue-redemption-instructions p { color: #cfc5de; line-height: 1.5; }
+      .venue-deal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+      .venue-deal-list > button { min-height: 92px; display: grid; align-content: center; justify-items: start; gap: 4px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #fff; background: rgba(255,255,255,.04); text-align: left; }
+      .venue-deal-list > button.active { border-color: rgba(50,255,164,.55); background: rgba(50,255,164,.1); box-shadow: 0 0 24px rgba(50,255,164,.08); }
+      .venue-deal-list > button.add { border-style: dashed; color: #78ffc0; }
+      .venue-deal-list span { color: #78ffc0; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
+      .venue-deal-list strong { font-size: 14px; }
+      .venue-deal-list small { color: #a99fba; font-size: 11px; }
       .venue-deal-panel form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .venue-deal-panel label { display: grid; align-content: start; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
-      .venue-deal-panel input, .venue-deal-panel textarea { width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: rgba(255,255,255,.06); padding: 10px 12px; font: inherit; }
-      .venue-deal-panel input { min-height: 42px; }
+      .venue-deal-panel input, .venue-deal-panel textarea, .venue-deal-panel select { width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: #17151d; padding: 10px 12px; font: inherit; }
+      .venue-deal-panel input, .venue-deal-panel select { min-height: 42px; }
       .venue-deal-panel textarea { resize: vertical; }
       .venue-deal-panel button { min-height: 44px; border: 0; border-radius: 8px; color: #061015; background: #78ffc0; font: inherit; font-weight: 950; cursor: pointer; padding: 0 16px; }
       .venue-deal-panel button:disabled { opacity: .62; cursor: wait; }
+      .deal-booking-url { grid-column: 1 / -1; }
+      .deal-booking-url small { color: #94e5ff; font-weight: 650; line-height: 1.45; }
+      .venue-deal-form-actions { display: flex; align-items: center; gap: 10px; }
+      .venue-deal-form-actions .danger { color: #ffccd3; background: rgba(255,86,108,.12); border: 1px solid rgba(255,86,108,.3); }
       .currency-input { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; border: 1px solid rgba(50,255,164,.28); border-radius: 8px; background: rgba(50,255,164,.06); overflow: hidden; }
       .currency-input > span { padding-left: 12px; color: #78ffc0; font-weight: 950; }
       .currency-input input { border: 0; background: transparent; }

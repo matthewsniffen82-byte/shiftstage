@@ -86,9 +86,10 @@ test("Working Now profiles promote the checked-in venue, directions, and Club QR
   assert.match(profilePage, /View venue/);
   assert.match(profilePage, /className=\{`profile-active-deal\$\{activeDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /sourceType="dancer_profile"/);
-  assert.match(profilePage, /ctaLabel="Get Club Deal QR"/);
+  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? `Club Deals · \$\{activeDeals\.length\}` : "Get Club Deal QR"\}/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
+  assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
   assert.match(profilePage, /<VenueQrUnavailable venueName=\{activeShift\.venueName\} \/>/);
   const shiftsFunction = liveApp.match(
     /function shiftsMarkup\(profile, status = shiftStatus\(profile\), options = \{\}\) \{[\s\S]*?function profileActivityMetricsMarkup/,

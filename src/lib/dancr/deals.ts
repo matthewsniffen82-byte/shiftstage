@@ -1,10 +1,13 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ClubDeal, DealSourceType } from "./types";
+import type { ClubDeal, ClubDealOfferType, DealSourceType } from "./types";
 import { isCurrentLocationVerification } from "./geofence";
 import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 
 type DancrClient = SupabaseClient;
+
+const CLUB_DEAL_COLUMNS =
+  "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, currency, offer_type, booking_url, sort_order, created_at";
 
 export type DealRedemptionInput = {
   clubDealId: string;
@@ -27,25 +30,51 @@ export type DealRedemption = {
 export type DealLifecycleEventType = "saved" | "shared" | "scanner_opened";
 
 export type VenueDealInput = {
+  dealId?: string | null;
   dealTitle: string;
   dealDescription: string;
   dealTerms?: string | null;
   referralCommissionCents: number;
   isActive: boolean;
+  offerType: ClubDealOfferType;
+  bookingUrl?: string | null;
+  sortOrder?: number;
 };
 
 export async function getActiveClubDealForVenue(client: DancrClient, venueId: string): Promise<ClubDeal | null> {
+  const deals = await getActiveClubDealsForVenue(client, venueId);
+  return deals[0] || null;
+}
+
+export async function getActiveClubDealsForVenue(client: DancrClient, venueId: string): Promise<ClubDeal[]> {
   const { data, error } = await (client as any)
     .from("club_deals")
-    .select(
-      "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, currency",
-    )
+    .select(CLUB_DEAL_COLUMNS)
     .eq("venue_id", venueId)
     .eq("is_active", true)
     .eq("payout_type", "flat")
     .gt("payout_amount_cents", 0)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(1)
+    .limit(20);
+
+  if (error) throw error;
+  return (data || []).map(toClubDeal);
+}
+
+export async function getActiveClubDealByIdForVenue(
+  client: DancrClient,
+  venueId: string,
+  dealId: string,
+): Promise<ClubDeal | null> {
+  const { data, error } = await (client as any)
+    .from("club_deals")
+    .select(CLUB_DEAL_COLUMNS)
+    .eq("id", dealId)
+    .eq("venue_id", venueId)
+    .eq("is_active", true)
+    .eq("payout_type", "flat")
+    .gt("payout_amount_cents", 0)
     .maybeSingle();
 
   if (error) throw error;
@@ -53,25 +82,38 @@ export async function getActiveClubDealForVenue(client: DancrClient, venueId: st
 }
 
 export async function getActiveClubDealsForVenues(client: DancrClient, venueIds: string[]): Promise<Map<string, ClubDeal>> {
+  const lists = await getActiveClubDealListsForVenues(client, venueIds);
+  const firstDeals = new Map<string, ClubDeal>();
+  for (const [venueId, deals] of lists) {
+    if (deals[0]) firstDeals.set(venueId, deals[0]);
+  }
+  return firstDeals;
+}
+
+export async function getActiveClubDealListsForVenues(
+  client: DancrClient,
+  venueIds: string[],
+): Promise<Map<string, ClubDeal[]>> {
   const uniqueVenueIds = [...new Set(venueIds.filter(Boolean))];
   if (!uniqueVenueIds.length) return new Map();
 
   const { data, error } = await (client as any)
     .from("club_deals")
-    .select(
-      "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, currency, created_at",
-    )
+    .select(CLUB_DEAL_COLUMNS)
     .in("venue_id", uniqueVenueIds)
     .eq("is_active", true)
     .eq("payout_type", "flat")
     .gt("payout_amount_cents", 0)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   if (error) throw error;
 
-  const deals = new Map<string, ClubDeal>();
+  const deals = new Map<string, ClubDeal[]>();
   for (const row of data || []) {
-    if (!deals.has(row.venue_id)) deals.set(row.venue_id, toClubDeal(row));
+    const venueDeals = deals.get(row.venue_id) || [];
+    venueDeals.push(toClubDeal(row));
+    deals.set(row.venue_id, venueDeals);
   }
   return deals;
 }
@@ -392,6 +434,15 @@ export async function getCustomerDealRedemptions(client: DancrClient, customerId
 }
 
 export async function getVenueDealForAccount(client: DancrClient, userId: string) {
+  const owned = await getVenueDealsForAccount(client, userId);
+  if (!owned) return null;
+  return { venueId: owned.venueId, deal: owned.deals[0] || null };
+}
+
+export async function getVenueDealsForAccount(
+  client: DancrClient,
+  userId: string,
+): Promise<{ venueId: string; deals: ClubDeal[] } | null> {
   const db = client as any;
   const { data: venue, error: venueError } = await db
     .from("venues")
@@ -401,20 +452,17 @@ export async function getVenueDealForAccount(client: DancrClient, userId: string
   if (venueError) throw venueError;
   if (!venue) return null;
 
-  const { data: deal, error: dealError } = await db
+  const { data: deals, error: dealError } = await db
     .from("club_deals")
-    .select(
-      "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, currency",
-    )
+    .select(CLUB_DEAL_COLUMNS)
     .eq("venue_id", venue.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
   if (dealError) throw dealError;
 
   return {
     venueId: String(venue.id),
-    deal: deal ? toClubDeal(deal) : null,
+    deals: (deals || []).map(toClubDeal),
   };
 }
 
@@ -424,12 +472,21 @@ export async function updateVenueDealForAccount(
   input: VenueDealInput,
 ) {
   const db = client as any;
-  const owned = await getVenueDealForAccount(client, userId);
+  const owned = await getVenueDealsForAccount(client, userId);
   if (!owned) throw new Error("Venue profile not found.");
 
   const dealTitle = requiredDealText(input.dealTitle, "Deal title", 3, 100);
   const dealDescription = requiredDealText(input.dealDescription, "Deal description", 8, 500);
   const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200);
+  const offerType = normalizeOfferType(input.offerType);
+  const bookingUrl = optionalBookingUrl(input.bookingUrl);
+  if (offerType === "bottle_service" && input.isActive && !bookingUrl) {
+    throw new Error("A live HTTPS booking URL is required before publishing bottle service.");
+  }
+  const sortOrder = Math.trunc(Number(input.sortOrder || 0));
+  if (!Number.isSafeInteger(sortOrder) || sortOrder < 0 || sortOrder > 1000) {
+    throw new Error("Offer order must be between 0 and 1000.");
+  }
   const referralCommissionCents = Math.trunc(Number(input.referralCommissionCents));
   if (!Number.isSafeInteger(referralCommissionCents) || referralCommissionCents < 100 || referralCommissionCents > 100_000) {
     throw new Error("Referral commission must be between $1.00 and $1,000.00 per successful redemption.");
@@ -450,20 +507,43 @@ export async function updateVenueDealForAccount(
     payout_type: "flat",
     payout_amount_cents: referralCommissionCents,
     currency: "usd",
+    offer_type: offerType,
+    booking_url: bookingUrl,
+    sort_order: sortOrder,
     updated_at: new Date().toISOString(),
   };
 
-  const query = owned.deal
-    ? db.from("club_deals").update(row).eq("id", owned.deal.id).eq("venue_id", owned.venueId)
+  const existingDeal = input.dealId
+    ? owned.deals.find((deal) => deal.id === input.dealId)
+    : null;
+  if (input.dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
+  const query = existingDeal
+    ? db.from("club_deals").update(row).eq("id", existingDeal.id).eq("venue_id", owned.venueId)
     : db.from("club_deals").insert(row);
   const { data, error } = await query
-    .select(
-      "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, currency",
-    )
+    .select(CLUB_DEAL_COLUMNS)
     .single();
   if (error) throw error;
 
   return toClubDeal(data);
+}
+
+export async function deleteVenueDealForAccount(
+  client: DancrClient,
+  userId: string,
+  dealId: string,
+) {
+  const owned = await getVenueDealsForAccount(client, userId);
+  if (!owned || !owned.deals.some((deal) => deal.id === dealId)) {
+    throw new Error("Club Deal not found for this venue.");
+  }
+  const { error } = await (client as any)
+    .from("club_deals")
+    .delete()
+    .eq("id", dealId)
+    .eq("venue_id", owned.venueId);
+  if (error) throw error;
+  return { id: dealId };
 }
 
 export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: string) {
@@ -602,7 +682,30 @@ function toClubDeal(row: any): ClubDeal {
     payoutType: row.payout_type || "none",
     payoutAmountCents: row.payout_amount_cents || 0,
     currency: row.currency || "usd",
+    offerType: normalizeOfferType(row.offer_type),
+    bookingUrl: row.booking_url || null,
+    sortOrder: Number(row.sort_order || 0),
   };
+}
+
+function normalizeOfferType(value: unknown): ClubDealOfferType {
+  return value === "drink" || value === "bottle_service" || value === "other"
+    ? value
+    : "admission";
+}
+
+function optionalBookingUrl(value: string | null | undefined) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  if (text.length > 1000) throw new Error("Booking URL must be 1000 characters or fewer.");
+  let parsed: URL;
+  try {
+    parsed = new URL(text);
+  } catch {
+    throw new Error("Booking URL must be a valid HTTPS URL.");
+  }
+  if (parsed.protocol !== "https:") throw new Error("Booking URL must use HTTPS.");
+  return parsed.toString();
 }
 
 function requiredDealText(value: string, label: string, minimum: number, maximum: number) {

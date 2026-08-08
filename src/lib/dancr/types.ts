@@ -15,6 +15,7 @@ export type SocialPlatform = "instagram" | "tiktok" | "snapchat" | "x" | "onlyfa
 export type NotificationChannel = "in_app" | "push" | "email";
 export type LocationStatus = "self_reported" | "location_confirmed" | "club_confirmed";
 export type DealSourceType = "club_page" | "dancer_profile";
+export type ClubDealOfferType = "admission" | "drink" | "bottle_service" | "other";
 export type RedemptionStatus = "generated" | "redeemed" | "expired" | "voided";
 export type CommissionStatus = "pending_club_payment" | "payable" | "paid" | "rejected" | "voided";
 export type NotificationType =
@@ -328,6 +329,9 @@ export type ClubDeal = {
   payoutType: "none" | "flat" | "percent";
   payoutAmountCents: number;
   currency?: string;
+  offerType: ClubDealOfferType;
+  bookingUrl: string | null;
+  sortOrder: number;
 };
 
 export type DancerDashboardAnalytics = {

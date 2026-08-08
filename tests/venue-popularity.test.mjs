@@ -11,7 +11,7 @@ test("public discovery loads real venue popularity through one batched service c
   assert.match(discoveryRoute, /const venueIds = \(venueResult\.data \|\| \[\]\)\.map\(\(venue\) => venue\.id\)/);
   assert.match(
     discoveryRoute,
-    /Promise\.all\(\[[\s\S]*?getActiveClubDealsForVenues\(client, venueIds\)[\s\S]*?getPublicVenuePopularity\(client, venueIds\)/,
+    /Promise\.all\(\[[\s\S]*?getActiveClubDealListsForVenues\(client, venueIds\)[\s\S]*?getPublicVenuePopularity\(client, venueIds\)/,
   );
   assert.match(
     discoveryRoute,

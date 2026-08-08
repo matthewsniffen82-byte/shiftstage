@@ -4,7 +4,7 @@ import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { UberRideButton } from "@/app/components/UberRideButton";
 import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
-import { getActiveClubDealForVenue } from "@/src/lib/dancr/deals";
+import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
@@ -64,10 +64,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
   const upcomingShifts = profile.upcomingShifts.filter(
     (shift) => shift.id !== activeShift?.id,
   );
-  const [activeDeal, tvVideos, activeVenue] = await Promise.all([
+  const [activeDeals, tvVideos, activeVenue] = await Promise.all([
     activeShift?.venueId
-      ? getActiveClubDealForVenue(client, activeShift.venueId)
-      : Promise.resolve(null),
+      ? getActiveClubDealsForVenue(client, activeShift.venueId)
+      : Promise.resolve([]),
     getPublicMyDancrTvFeed(client, {
       city: profile.city,
       dancerId: profile.id,
@@ -77,14 +77,16 @@ export default async function DancerPublicPage({ params }: PageProps) {
       ? getVenueProfile(client, activeShift.venueSlug)
       : Promise.resolve(null),
   ]);
-  const dealAttributionToken = activeShift && activeDeal
-    ? createDancerDealAttributionToken({
+  const activeDeal = activeDeals[0] || null;
+  const dealAttributionTokens = activeShift
+    ? Object.fromEntries(activeDeals.map((deal) => [deal.id, createDancerDealAttributionToken({
         dancerId: profile.id,
         venueId: activeShift.venueId,
-        dealId: activeDeal.id,
+        dealId: deal.id,
         shiftId: activeShift.id,
-      })
-    : null;
+      })]))
+    : {};
+  const dealAttributionToken = activeDeal ? dealAttributionTokens[activeDeal.id] : null;
 
   return (
     <DancerFollowStateProvider
@@ -227,14 +229,16 @@ export default async function DancerPublicPage({ params }: PageProps) {
             {activeDeal ? (
               <ClubDealCard
                 deal={activeDeal}
+                deals={activeDeals}
                 venueId={activeShift.venueId}
                 venueName={activeShift.venueName}
                 sourceType="dancer_profile"
                 dancerId={profile.id}
                 attributionToken={dealAttributionToken}
+                attributionTokens={dealAttributionTokens}
                 dancerNote
                 presentation="launcher"
-                ctaLabel="Get Club Deal QR"
+                ctaLabel={activeDeals.length > 1 ? `Club Deals · ${activeDeals.length}` : "Get Club Deal QR"}
                 sectionId="club-deal"
               />
             ) : (

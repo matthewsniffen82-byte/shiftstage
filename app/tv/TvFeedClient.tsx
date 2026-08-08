@@ -665,12 +665,15 @@ export default function TvFeedClient({
                     {video.shift?.isActive && video.venue && video.deal ? (
                       <ClubDealCard
                         deal={video.deal}
+                        deals={video.deals}
                         venueId={video.venue.id}
                         venueName={video.venue.name}
                         sourceType="dancer_profile"
                         dancerId={video.dancer.id}
                         attributionToken={video.dealAttributionToken}
+                        attributionTokens={video.dealAttributionTokens}
                         presentation="launcher"
+                        ctaLabel={video.deals.length > 1 ? `Club Deals · ${video.deals.length}` : undefined}
                       />
                     ) : null}
                   </div>

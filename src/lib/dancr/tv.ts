@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createDancerDealAttributionToken } from "./deal-attribution";
-import { getActiveClubDealsForVenues } from "./deals";
+import { getActiveClubDealListsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { isVerifyMyIdentityMode } from "./identity-mode";
 import { responsivePublicImage } from "./responsive-image";
@@ -115,7 +115,9 @@ export type MyDancrTvVideo = {
     isStartingSoon: boolean;
   } | null;
   deal: ClubDeal | null;
+  deals: ClubDeal[];
   dealAttributionToken: string | null;
+  dealAttributionTokens: Record<string, string>;
 };
 
 export async function getPublicMyDancrTvVideoCount(
@@ -252,24 +254,30 @@ export async function getPublicMyDancrTvFeed(
     Math.min(24, Math.max(1, options.limit || 12)),
   );
   const signedVideos = await signPublicVideos(admin, deduped);
-  const deals = await getActiveClubDealsForVenues(
+  const deals = await getActiveClubDealListsForVenues(
     admin,
     signedVideos
       .filter((video) => video.shift?.isActive && video.venue)
       .map((video) => video.venue?.id || ""),
   );
   return signedVideos.map((video) => {
-    const deal = video.shift?.isActive && video.venue ? deals.get(video.venue.id) || null : null;
+    const venueDeals = video.shift?.isActive && video.venue ? deals.get(video.venue.id) || [] : [];
+    const deal = venueDeals[0] || null;
+    const dealAttributionTokens = video.shift && video.venue
+      ? Object.fromEntries(venueDeals.map((offer) => [offer.id, createDancerDealAttributionToken({
+          dancerId: video.dancer.id,
+          venueId: video.venue!.id,
+          dealId: offer.id,
+          shiftId: video.shift!.id,
+        })]))
+      : {};
     return {
       ...video,
       deal,
+      deals: venueDeals,
+      dealAttributionTokens,
       dealAttributionToken: deal && video.shift && video.venue
-        ? createDancerDealAttributionToken({
-            dancerId: video.dancer.id,
-            venueId: video.venue.id,
-            dealId: deal.id,
-            shiftId: video.shift.id,
-          })
+        ? dealAttributionTokens[deal.id]
         : null,
     };
   });
@@ -385,7 +393,9 @@ function normalizeFeedRow(row: any, now: number): NormalizedFeedRow | null {
         }
       : null,
     deal: null,
+    deals: [],
     dealAttributionToken: null,
+    dealAttributionTokens: {},
   };
 }
 
