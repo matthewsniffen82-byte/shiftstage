@@ -77,3 +77,16 @@ test("routed pages still classify Android without placing device styles on the w
 test("the Electric White value remains centralized in the Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-core: #ffffff;/);
 });
+
+test("working-now avatars keep the Electric White ring and add a real status layer", () => {
+  assert.match(wrapperRules, /\[data-dancer-avatar\]\[data-working-now="true"\] \{/);
+  assert.match(wrapperRules, /0 0 0 1px var\(--dancr-color-success-strong\)/);
+  assert.match(wrapperRules, /\[data-working-now-indicator\] \{/);
+  assert.match(wrapperRules, /background: #34e3a4 !important;/);
+  assert.doesNotMatch(wrapperRules, /\[data-working-now="true"\][\s\S]*?\[data-dancer-avatar-border\][\s\S]*?border:/);
+  assert.match(publicProfile, /data-working-now=\{activeShift \? "true" : undefined\}/);
+  assert.match(tvFeed, /data-working-now=\{video\.shift\?\.isActive \? "true" : undefined\}/);
+  assert.match(liveShell, /modalProfileAvatar\.dataset\.workingNow = String\(modalIsWorkingNow\)/);
+  assert.match(liveShell, /data-dancer-avatar data-working-now="true" role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}, working now"/);
+  assert.match(liveShell, /dancerIsWorkingNow[\s\S]*?data-working-now[\s\S]*?data-working-now-indicator/);
+});

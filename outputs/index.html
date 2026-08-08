@@ -36606,6 +36606,7 @@
         <div class="profile-modal-summary">
           <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
             <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
+            <span data-working-now-indicator aria-hidden="true">LIVE</span>
           </div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
@@ -44004,6 +44005,7 @@
         profile?.avatarPhotoFocalX ?? profile?.avatar_photo_focal_x ?? profile?.mainPhotoFocalX ?? 50,
         profile?.avatarPhotoFocalY ?? profile?.avatar_photo_focal_y ?? profile?.mainPhotoFocalY ?? 50
       );
+      const avatarIsWorkingNow = isWorkingTonight(profile, activeDancerCity());
       const avatarInitials = String(editableStageName || "D")
         .trim()
         .split(/\s+/)
@@ -44050,8 +44052,9 @@
                 <small>Public name + circular avatar</small>
               </div>
               <div class="approved-profile-identity-row">
-                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar role="img" aria-label="Avatar preview">
+                <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar${avatarIsWorkingNow ? ' data-working-now="true"' : ""} role="img" aria-label="Avatar preview${avatarIsWorkingNow ? ", working now" : ""}">
                   <span data-dancer-avatar-border aria-hidden="true">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
+                  ${avatarIsWorkingNow ? '<span data-working-now-indicator aria-hidden="true">LIVE</span>' : ""}
                 </div>
                 <div class="approved-profile-identity-fields">
                   <div class="approved-stage-name-editor">
@@ -45090,7 +45093,7 @@
           profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
           profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
         );
-        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"><span data-dancer-avatar-border aria-hidden="true"></span></span>`;
+        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true"></span><span data-working-now-indicator aria-hidden="true">LIVE</span></span>`;
       }).join("");
       const remainingMarkup = remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
@@ -46054,6 +46057,8 @@
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
+      const modalIsWorkingNow = isWorkingTonight(profile, city);
+      modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
         modalProfileAvatar.style.backgroundImage = `url('${safeCssUrl(avatarPhotoUrl)}')`;
@@ -46068,7 +46073,7 @@
         modalProfileAvatar.style.removeProperty("background-image");
         modalProfileAvatar.style.removeProperty("--custom-photo-position");
       }
-      modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo`);
+      modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : ""}`);
       modalMediaTvTab.disabled = true;
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
@@ -52640,6 +52645,8 @@
       dancerPhoto.className = "home-tv-feed-dancer-photo";
       dancerPhoto.setAttribute("data-dancer-avatar", "");
       dancerPhoto.setAttribute("aria-hidden", "true");
+      const dancerIsWorkingNow = Boolean(item?.shift?.isActive);
+      if (dancerIsWorkingNow) dancerPhoto.setAttribute("data-working-now", "true");
       const dancerPhotoBorder = document.createElement("span");
       dancerPhotoBorder.setAttribute("data-dancer-avatar-border", "");
       dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();
@@ -52655,6 +52662,12 @@
         dancerPhotoBorder.appendChild(dancerPhotoImage);
       }
       dancerPhoto.appendChild(dancerPhotoBorder);
+      if (dancerIsWorkingNow) {
+        const workingNowIndicator = document.createElement("span");
+        workingNowIndicator.setAttribute("data-working-now-indicator", "");
+        workingNowIndicator.textContent = "LIVE";
+        dancerPhoto.appendChild(workingNowIndicator);
+      }
       const nameRow = document.createElement("span");
       nameRow.className = "home-tv-feed-dancer-name-row";
       const dancerLabel = document.createElement("span");

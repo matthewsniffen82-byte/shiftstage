@@ -3608,6 +3608,60 @@ body.dancr-button-system [data-dancer-avatar-border] > .tv-profile-photo-image {
   mix-blend-mode: normal !important;
 }
 
+/* Working-now status sits outside the permanent Electric White identity ring.
+ * The real child badge and parent halo avoid changing avatar dimensions or
+ * relying on pseudo-elements that can be clipped by Android renderers. */
+body.dancr-button-system [data-dancer-avatar] > [data-working-now-indicator] {
+  display: none !important;
+}
+
+body.dancr-button-system [data-dancer-avatar][data-working-now="true"] {
+  overflow: visible !important;
+  border-radius: 50% !important;
+  box-shadow:
+    0 0 0 1px var(--dancr-color-success-strong),
+    0 0 11px var(--dancr-color-success-medium) !important;
+}
+
+body.dancr-button-system [data-dancer-avatar][data-working-now="true"] > [data-working-now-indicator] {
+  position: absolute !important;
+  z-index: 6 !important;
+  right: -8px !important;
+  bottom: -4px !important;
+  min-width: 27px !important;
+  min-height: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1px 4px !important;
+  border: 1px solid #d8fff0 !important;
+  border-radius: 999px !important;
+  color: #02130d !important;
+  background: #34e3a4 !important;
+  box-shadow: 0 0 9px rgba(52, 227, 164, 0.58) !important;
+  font-size: 7px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+  pointer-events: none !important;
+}
+
+body.dancr-button-system :is(
+    .home-venue-discovery-lineup-avatar,
+    .venue-card-lineup-avatar
+  )[data-working-now="true"] > [data-working-now-indicator] {
+  right: -1px !important;
+  bottom: -1px !important;
+  width: 8px !important;
+  min-width: 8px !important;
+  height: 8px !important;
+  min-height: 8px !important;
+  padding: 0 !important;
+  border-width: 1px !important;
+  font-size: 0 !important;
+}
+
 body.dancr-button-system .home-tv-feed-dancer-photo:not(:has(img)) {
   background-image: none !important;
   color: var(--dancr-color-brand-primary-deep) !important;

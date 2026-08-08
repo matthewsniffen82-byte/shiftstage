@@ -588,6 +588,7 @@ export default function TvFeedClient({
                   <span
                     className={`tv-profile-photo${video.dancer.avatarPhotoUrl ? " has-photo" : ""}`}
                     data-dancer-avatar=""
+                    data-working-now={video.shift?.isActive ? "true" : undefined}
                     aria-hidden="true"
                   >
                     <span data-dancer-avatar-border="">
@@ -604,6 +605,7 @@ export default function TvFeedClient({
                         />
                       ) : dancerInitials(video.dancer.stageName)}
                     </span>
+                    {video.shift?.isActive ? <span data-working-now-indicator="">LIVE</span> : null}
                   </span>
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">

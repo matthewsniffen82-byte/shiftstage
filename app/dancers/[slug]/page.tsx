@@ -102,9 +102,10 @@ export default async function DancerPublicPage({ params }: PageProps) {
 
         <header className="profile-titlebar">
           <div
-            aria-label={`${profile.stageName} profile photo`}
+            aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
             className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
             data-dancer-avatar=""
+            data-working-now={activeShift ? "true" : undefined}
             role="img"
           >
             <span aria-hidden="true" data-dancer-avatar-border="">
@@ -126,6 +127,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
                 />
               ) : initials(profile.stageName)}
             </span>
+            {activeShift ? <span aria-hidden="true" data-working-now-indicator="">LIVE</span> : null}
           </div>
           <div className="profile-titlebar-identity">
             <div>
