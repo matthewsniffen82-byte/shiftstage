@@ -131,6 +131,18 @@ test("layout-review schedules and rollback support the deployed production schem
     scriptSource,
     /async function removeOrphanedDatasetStorageObjects[\s\S]*?listDatasetStoragePaths\(\)[\s\S]*?removeStoragePaths\(orphaned\)/,
   );
+  assert.match(
+    scriptSource,
+    /mode === "sync-schedules"[\s\S]*?syncSchedulesOnly\(\)/,
+  );
+  assert.match(
+    scriptSource,
+    /async function syncSchedulesOnly[\s\S]*?assertMarkedDatasetAccount\(profile\)[\s\S]*?replaceProfileSchedule[\s\S]*?workingNowAssignments/,
+  );
+  assert.match(
+    scriptSource,
+    /Expected \$\{WORKING_NOW_PROFILE_INDEXES\.size\} Working Now shifts/,
+  );
 });
 
 test("the population workflow preserves the original six profiles and adds the supplied five", async () => {

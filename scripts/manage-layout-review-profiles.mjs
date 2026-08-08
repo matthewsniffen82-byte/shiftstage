@@ -53,6 +53,8 @@ if (mode === "inspect") {
   await applyDataset();
 } else if (mode === "sync-deals") {
   await syncDealsOnly();
+} else if (mode === "sync-schedules") {
+  await syncSchedulesOnly();
 } else {
   await cleanupDataset();
 }
@@ -214,6 +216,57 @@ async function syncDealsOnly() {
       name: venue.name,
       slug: venue.slug,
     })),
+  });
+}
+
+async function syncSchedulesOnly() {
+  const [profiles, venues] = await Promise.all([
+    listDatasetProfiles(),
+    listReviewVenues(),
+  ]);
+  const profilesBySlug = new Map(
+    profiles.map((profile) => [String(profile.slug), profile]),
+  );
+  const selectedVenues = await prepareReviewQrVenues(venues);
+  const workingNowAssignments = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const definition = profileDefinition(index);
+    const profile = profilesBySlug.get(definition.slug);
+    if (!profile) {
+      throw new Error(`Missing marked review profile ${definition.slug}.`);
+    }
+    await assertMarkedDatasetAccount(profile);
+    const assignment = await replaceProfileSchedule(
+      profile,
+      definition,
+      venues,
+      selectedVenues,
+    );
+    if (assignment.isWorkingNow) {
+      workingNowAssignments.push({
+        profile: definition.stageName,
+        profileSlug: definition.slug,
+        venue: assignment.venue.name,
+        venueSlug: assignment.venue.slug,
+      });
+    }
+  }
+
+  const profileIds = profiles.map((profile) => profile.id);
+  const workingNowShifts = await countWorkingNowShifts(profileIds);
+  if (workingNowShifts !== WORKING_NOW_PROFILE_INDEXES.size) {
+    throw new Error(
+      `Expected ${WORKING_NOW_PROFILE_INDEXES.size} Working Now shifts but found ${workingNowShifts}.`,
+    );
+  }
+
+  writeResult({
+    mode,
+    target,
+    datasetMarker: DATASET_MARKER,
+    workingNowAssignments,
+    workingNowShifts,
   });
 }
 
@@ -413,6 +466,7 @@ async function replaceProfileSchedule(
     venue_id: venue.id,
   });
   assertSuccess(error, `insert review schedule for ${definition.slug}`);
+  return { isWorkingNow, venue };
 }
 
 async function prepareReviewQrVenues(venues) {
@@ -783,12 +837,16 @@ function parseArguments(argv) {
 }
 
 function readMode(argumentsMap) {
-  const selected = ["--inspect", "--apply", "--sync-deals", "--cleanup"].filter((flag) =>
-    argumentsMap.has(flag),
-  );
+  const selected = [
+    "--inspect",
+    "--apply",
+    "--sync-deals",
+    "--sync-schedules",
+    "--cleanup",
+  ].filter((flag) => argumentsMap.has(flag));
   if (selected.length !== 1) {
     throw new Error(
-      "Choose exactly one mode: --inspect, --apply, --sync-deals, or --cleanup.",
+      "Choose exactly one mode: --inspect, --apply, --sync-deals, --sync-schedules, or --cleanup.",
     );
   }
   return selected[0].slice(2);
