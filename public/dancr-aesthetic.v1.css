@@ -3693,7 +3693,7 @@ body.dancr-button-system [data-dancer-avatar-border] {
   display: grid !important;
   place-items: center !important;
   overflow: hidden !important;
-  border: 2px solid #ffffff !important;
+  border: 2px solid var(--dancr-color-avatar-ring-inactive) !important;
   border-radius: 50% !important;
   color: inherit !important;
   background-color: inherit !important;
@@ -3726,7 +3726,7 @@ body.dancr-button-system [data-dancer-avatar-border] > .tv-profile-photo-image {
   mix-blend-mode: normal !important;
 }
 
-/* Working-now status sits outside the permanent Electric White identity ring.
+/* Working-now status replaces the neutral identity ring with live teal.
  * The real child badge and parent halo avoid changing avatar dimensions or
  * relying on pseudo-elements that can be clipped by Android renderers. */
 body.dancr-button-system [data-dancer-avatar] > [data-working-now-indicator] {

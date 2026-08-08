@@ -15,7 +15,7 @@ const wrapperRules = aesthetic.match(
   /\/\* Every real dancer avatar keeps its existing outer dimensions[\s\S]*?(?=body\.dancr-button-system \.home-tv-feed-dancer-photo:not)/,
 )?.[0] || "";
 
-test("every dancer avatar uses one real electric-white border wrapper", () => {
+test("every dancer avatar uses one real neutral border wrapper", () => {
   assert.ok(wrapperRules);
   assert.match(wrapperRules, /body\.dancr-button-system \[data-dancer-avatar\] \{/);
   assert.match(wrapperRules, /position: relative !important;/);
@@ -27,7 +27,7 @@ test("every dancer avatar uses one real electric-white border wrapper", () => {
   assert.match(wrapperRules, /inset: 0 !important;/);
   assert.match(wrapperRules, /box-sizing: border-box !important;/);
   assert.match(wrapperRules, /overflow: hidden !important;/);
-  assert.match(wrapperRules, /border: 2px solid #ffffff !important;/);
+  assert.match(wrapperRules, /border: 2px solid var\(--dancr-color-avatar-ring-inactive\) !important;/);
   assert.match(wrapperRules, /border-radius: 50% !important;/);
   assert.match(wrapperRules, /background-image: inherit !important;/);
   assert.match(wrapperRules, /pointer-events: none !important;/);
@@ -73,9 +73,10 @@ test("routed pages still classify Android without placing device styles on the w
   assert.doesNotMatch(wrapperRules, /is-android|android-rendering|is-samsung-browser|samsung-rendering/);
 });
 
-test("the Electric White value remains centralized in the Dancr brand palette", () => {
+test("inactive and Working Now avatar rings remain centralized in the Dancr brand palette", () => {
   assert.match(tokens, /--dancr-color-avatar-ring-core: #ffffff;/);
   assert.match(tokens, /--dancr-color-avatar-ring-live: #34e3a4;/);
+  assert.match(tokens, /--dancr-color-avatar-ring-inactive: rgba\(245, 245, 255, 0\.65\);/);
 });
 
 test("working-now avatars use one complete live-teal ring and status layer on every platform", () => {
