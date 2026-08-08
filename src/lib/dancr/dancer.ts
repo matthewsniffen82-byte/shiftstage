@@ -657,7 +657,7 @@ async function countRows(
 ) {
   const { count, error } = await client
     .from(table)
-    .select("id", { count: "exact", head: true })
+    .select("*", { count: "exact", head: true })
     .eq(idColumn, idValue)
     .gte(dateColumn, since.toISOString());
 
@@ -668,7 +668,7 @@ async function countRows(
 async function countRowsAll(client: DancrClient, table: string, idColumn: string, idValue: string) {
   const { count, error } = await client
     .from(table)
-    .select("id", { count: "exact", head: true })
+    .select("*", { count: "exact", head: true })
     .eq(idColumn, idValue);
 
   if (error) throw error;
@@ -690,7 +690,7 @@ async function assertDancerPhotoLimit(client: DancrClient, dancerId: string) {
 async function countNotificationSubscribers(client: DancrClient, dancerId: string) {
   const { count, error } = await client
     .from("follows")
-    .select("id", { count: "exact", head: true })
+    .select("*", { count: "exact", head: true })
     .eq("dancer_id", dancerId)
     .eq("notifications_enabled", true);
 
