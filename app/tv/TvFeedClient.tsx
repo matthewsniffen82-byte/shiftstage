@@ -605,7 +605,7 @@ export default function TvFeedClient({
                         />
                       ) : dancerInitials(video.dancer.stageName)}
                     </span>
-                    {video.shift?.isActive ? <span data-working-now-indicator="">LIVE</span> : null}
+                    {video.shift?.isActive ? <span data-working-now-indicator="">NOW</span> : null}
                   </span>
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">

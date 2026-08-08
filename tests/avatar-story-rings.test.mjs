@@ -89,4 +89,11 @@ test("working-now avatars keep the Electric White ring and add a real status lay
   assert.match(liveShell, /modalProfileAvatar\.dataset\.workingNow = String\(modalIsWorkingNow\)/);
   assert.match(liveShell, /data-dancer-avatar data-working-now="true" role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}, working now"/);
   assert.match(liveShell, /dancerIsWorkingNow[\s\S]*?data-working-now[\s\S]*?data-working-now-indicator/);
+  assert.match(publicProfile, /data-working-now-indicator="">NOW<\/span>/);
+  assert.match(tvFeed, /data-working-now-indicator="">NOW<\/span>/);
+  assert.match(liveShell, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
+  assert.match(liveShell, /workingNowIndicator\.textContent = "NOW"/);
+  assert.doesNotMatch(publicProfile, /data-working-now-indicator="">LIVE<\/span>/);
+  assert.doesNotMatch(tvFeed, /data-working-now-indicator="">LIVE<\/span>/);
+  assert.doesNotMatch(liveShell, /data-working-now-indicator[^>]*>LIVE<\/span>/);
 });

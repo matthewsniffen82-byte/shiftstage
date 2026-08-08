@@ -36635,7 +36635,7 @@
         <div class="profile-modal-summary">
           <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
             <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
-            <span data-working-now-indicator aria-hidden="true">LIVE</span>
+            <span data-working-now-indicator aria-hidden="true">NOW</span>
           </div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
@@ -44095,7 +44095,7 @@
               <div class="approved-profile-identity-row">
                 <div class="approved-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} data-dancer-avatar${avatarIsWorkingNow ? ' data-working-now="true"' : ""} role="img" aria-label="Avatar preview${avatarIsWorkingNow ? ", working now" : ""}">
                   <span data-dancer-avatar-border aria-hidden="true">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
-                  ${avatarIsWorkingNow ? '<span data-working-now-indicator aria-hidden="true">LIVE</span>' : ""}
+                  ${avatarIsWorkingNow ? '<span data-working-now-indicator aria-hidden="true">NOW</span>' : ""}
                 </div>
                 <div class="approved-profile-identity-fields">
                   <div class="approved-stage-name-editor">
@@ -45134,7 +45134,7 @@
           profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
           profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
         );
-        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true"></span><span data-working-now-indicator aria-hidden="true">LIVE</span></span>`;
+        return `<span class="${classPrefix}-lineup-avatar${attrs.className}"${attrs.style} data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true"></span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
       const remainingMarkup = remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
@@ -52738,7 +52738,7 @@
       if (dancerIsWorkingNow) {
         const workingNowIndicator = document.createElement("span");
         workingNowIndicator.setAttribute("data-working-now-indicator", "");
-        workingNowIndicator.textContent = "LIVE";
+        workingNowIndicator.textContent = "NOW";
         dancerPhoto.appendChild(workingNowIndicator);
       }
       const nameRow = document.createElement("span");
