@@ -32942,7 +32942,8 @@
           z-index: 9;
           top: var(--home-card-qr-notice-top, 150px);
           right: var(--home-card-qr-notice-right, 72px);
-          left: 12px;
+          width: min(280px, calc(100% - var(--home-card-qr-notice-right, 72px) - 12px));
+          max-width: calc(100% - var(--home-card-qr-notice-right, 72px) - 12px);
           min-height: 58px;
           display: grid;
           align-content: center;
@@ -32954,7 +32955,7 @@
           background: rgba(5,7,12,.96);
           box-shadow: 0 14px 34px rgba(0,0,0,.48), 0 0 18px rgba(34,199,255,.12), inset 0 1px 0 rgba(255,255,255,.06);
           opacity: 0;
-          transform: translateX(8px) scale(.98);
+          transform: translate(8px, -50%) scale(.98);
           transform-origin: right center;
           transition: opacity .16s ease, transform .16s ease;
           pointer-events: none;
@@ -32964,18 +32965,18 @@
         .home-card-qr-notice::after {
           content: "";
           position: absolute;
-          top: 23px;
+          top: 50%;
           right: -6px;
           width: 10px;
           height: 10px;
           border-top: 1px solid rgba(126,234,255,.42);
           border-right: 1px solid rgba(126,234,255,.42);
           background: rgba(5,7,12,.96);
-          transform: rotate(45deg);
+          transform: translateY(-50%) rotate(45deg);
         }
         .home-card-qr-notice.is-visible {
           opacity: 1;
-          transform: translateX(0) scale(1);
+          transform: translate(0, -50%) scale(1);
         }
         .home-card-qr-notice strong {
           color: #b7f4ff;
@@ -37192,7 +37193,7 @@
     }
 
     function showCardQrNotice(trigger, label, message) {
-      const card = trigger?.closest(".home-dancer-grid-card, .home-venue-discovery-slide");
+      const card = trigger?.closest(".home-dancer-grid-card, .home-venue-discovery-slide, .home-tv-feed-slide");
       if (!card) {
         showToast(message || label || "No Club Deal is available right now.");
         return;
@@ -37210,6 +37211,11 @@
       const detail = document.createElement("span");
       const cardRect = card.getBoundingClientRect();
       const triggerRect = trigger.getBoundingClientRect();
+      const triggerCenter = triggerRect.top - cardRect.top + (triggerRect.height / 2);
+      const noticeCenter = Math.min(
+        Math.max(70, triggerCenter),
+        Math.max(70, cardRect.height - 70)
+      );
       notice.className = "home-card-qr-notice";
       notice.setAttribute("role", "status");
       notice.setAttribute("aria-live", "polite");
@@ -37218,7 +37224,7 @@
       notice.append(heading, detail);
       notice.style.setProperty(
         "--home-card-qr-notice-top",
-        `${Math.max(12, Math.round(triggerRect.top - cardRect.top - 4))}px`
+        `${Math.round(noticeCenter)}px`
       );
       notice.style.setProperty(
         "--home-card-qr-notice-right",
@@ -37232,7 +37238,7 @@
         notice.classList.remove("is-visible");
         trigger.setAttribute("aria-expanded", "false");
         showCardQrNotice.removeTimer = window.setTimeout(() => notice.remove(), 180);
-      }, 3200);
+      }, 4200);
     }
 
     function adminPreviewIsImage(url) {
@@ -42541,7 +42547,11 @@
             });
           }
         } catch (error) {
-          showToast(error.message || "Unable to create the Club Deal QR");
+          showCardQrNotice(
+            revenueTrigger,
+            "Club Deal QR",
+            error.message || "Unable to create the Club Deal QR"
+          );
         } finally {
           revenueTrigger.disabled = false;
           revenueTrigger.classList.remove("is-loading");

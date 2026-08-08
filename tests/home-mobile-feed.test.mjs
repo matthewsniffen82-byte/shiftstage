@@ -696,7 +696,7 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   assert.match(dancerQrMarkup, /aria-disabled="true"[\s\S]*?aria-expanded="false"/);
   assert.match(
     homeSource,
-    /function showCardQrNotice\(trigger, label, message\)[\s\S]*?closest\("\.home-dancer-grid-card, \.home-venue-discovery-slide"\)[\s\S]*?role", "status"[\s\S]*?--home-card-qr-notice-top[\s\S]*?--home-card-qr-notice-right[\s\S]*?aria-expanded", "true"/,
+    /function showCardQrNotice\(trigger, label, message\)[\s\S]*?closest\("\.home-dancer-grid-card, \.home-venue-discovery-slide, \.home-tv-feed-slide"\)[\s\S]*?triggerCenter[\s\S]*?noticeCenter[\s\S]*?role", "status"[\s\S]*?--home-card-qr-notice-top[\s\S]*?--home-card-qr-notice-right[\s\S]*?aria-expanded", "true"/,
   );
   assert.match(
     homeSource,
@@ -704,7 +704,11 @@ test("Working Now dancer grid cards expose a functional production Club QR actio
   );
   assert.match(
     homeSource,
-    /\.home-card-qr-notice \{[\s\S]*?position: absolute[\s\S]*?right: var\(--home-card-qr-notice-right, 72px\)[\s\S]*?pointer-events: none/,
+    /\.home-card-qr-notice \{[\s\S]*?position: absolute[\s\S]*?right: var\(--home-card-qr-notice-right, 72px\)[\s\S]*?width: min\(280px,[\s\S]*?transform: translate\(8px, -50%\) scale\(\.98\)[\s\S]*?pointer-events: none/,
+  );
+  assert.match(
+    homeSource,
+    /catch \(error\) \{[\s\S]*?showCardQrNotice\(\s*revenueTrigger,\s*"Club Deal QR",\s*error\.message \|\| "Unable to create the Club Deal QR"/,
   );
   assert.doesNotMatch(homeSource, /unavailableCardQr\.title/);
   assert.doesNotMatch(homeSource, /\.home-dancer-grid-qr \{[\s\S]*?position: absolute/);
