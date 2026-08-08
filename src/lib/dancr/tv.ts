@@ -12,6 +12,10 @@ import {
   type MyDancrTvModerationResult,
 } from "./video-moderation";
 import {
+  demoVideoAutoApprovalValues,
+  isVideoDemoAutoApproveMode,
+} from "./video-moderation-mode";
+import {
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
 } from "./media-watermark";
@@ -758,6 +762,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
   }
 
   const submittedAt = new Date().toISOString();
+  const demoAutoApprove = isVideoDemoAutoApproveMode();
   const { data: moderating, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({
@@ -771,8 +776,8 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
       moderation_frame_count: 0,
       moderation_model: null,
       moderation_details: {},
-      moderation_attempt_count: 1,
-      moderation_started_at: submittedAt,
+      moderation_attempt_count: demoAutoApprove ? 0 : 1,
+      moderation_started_at: demoAutoApprove ? null : submittedAt,
       moderation_completed_at: null,
     })
     .eq("id", video.id)
@@ -780,7 +785,16 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
     .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
-  console.info(JSON.stringify({ event: "mydancr_tv.video_moderation_started", videoId: video.id, userId }));
+  console.info(JSON.stringify({
+    event: demoAutoApprove
+      ? "mydancr_tv.demo_auto_approval_started"
+      : "mydancr_tv.video_moderation_started",
+    videoId: video.id,
+    userId,
+  }));
+  if (demoAutoApprove) {
+    return autoApproveMyDancrTvDemoUpload(admin, moderating, submittedAt, "moderating");
+  }
   return finalizeMyDancrTvAutomatedModeration(admin, moderating);
 }
 
@@ -806,7 +820,67 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
     .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
-  return claimed ? finalizeMyDancrTvAutomatedModeration(admin, claimed) : null;
+  if (!claimed) return null;
+  if (isVideoDemoAutoApproveMode()) {
+    return autoApproveMyDancrTvDemoUpload(
+      admin,
+      claimed,
+      claimed.submitted_at || startedAt,
+      "moderating",
+    );
+  }
+  return finalizeMyDancrTvAutomatedModeration(admin, claimed);
+}
+
+async function autoApproveMyDancrTvDemoUpload(
+  admin: AdminClient,
+  video: any,
+  submittedAt: string,
+  expectedStatus: "uploading" | "moderating",
+) {
+  if (!isPublicDancerProfileEligible(one(video.dancer_profiles))) {
+    throw new Error("The dancer profile is not currently eligible for public video.");
+  }
+
+  const completedAt = new Date().toISOString();
+  let watermarkApplied = true;
+  try {
+    await watermarkStoredVideo(admin, {
+      publicBucket: MYDANCR_TV_BUCKET,
+      storagePath: video.storage_path,
+      storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
+      width: Number(video.width),
+      height: Number(video.height),
+    });
+  } catch (error) {
+    watermarkApplied = false;
+    console.error(JSON.stringify({
+      event: "mydancr_tv.demo_watermark_failed",
+      videoId: video.id,
+      message: error instanceof Error ? error.message.slice(0, 500) : "Unknown watermark failure",
+    }));
+  }
+
+  const { data, error } = await admin
+    .from("mydancr_tv_videos")
+    .update(demoVideoAutoApprovalValues({
+      submittedAt,
+      completedAt,
+      expiresAt: myDancrTvExpiry(one(video.shifts)?.ends_at),
+      watermarkApplied,
+    }))
+    .eq("id", video.id)
+    .eq("status", expectedStatus)
+    .select("id, status, submitted_at, reviewed_at, published_at, moderation_decision, moderation_reason_codes, moderation_model")
+    .single();
+  if (error) throw error;
+  console.info(JSON.stringify({
+    event: "mydancr_tv.demo_auto_approved",
+    videoId: video.id,
+    userId: video.submitted_by,
+    watermarkApplied,
+  }));
+  return data;
 }
 
 async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {

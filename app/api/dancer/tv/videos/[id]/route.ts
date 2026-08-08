@@ -56,7 +56,7 @@ const UUID_PATTERN =
 
 function moderationMessage(video: any) {
   if (video?.status === "approved") {
-    return "Your video passed automated safety review and is now live on MyDancr TV.";
+    return "Your video is approved and is now live on MyDancr TV.";
   }
   if (video?.status === "rejected") {
     return "Your video did not pass MyDancr TV safety review. Review the status below before uploading another video.";

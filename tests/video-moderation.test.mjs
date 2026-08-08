@@ -123,8 +123,22 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(tvSource, /profile_not_eligible_for_auto_publish/);
   assert.match(tvSource, /video_moderation_provider_error/);
   assert.match(submitRoute, /export const maxDuration = 60/);
-  assert.match(submitRoute, /passed automated safety review and is now live/);
+  assert.match(submitRoute, /Your video is approved and is now live/);
   assert.match(submitRoute, /sent to an administrator for human review/);
+});
+
+test("temporary demo mode auto-approves without removing the AI moderation path", () => {
+  assert.match(tvSource, /isVideoDemoAutoApproveMode/);
+  assert.match(
+    tvSource,
+    /const demoAutoApprove = isVideoDemoAutoApproveMode\(\)[\s\S]*?\.eq\("status", "uploading"\)[\s\S]*?if \(demoAutoApprove\) \{\s*return autoApproveMyDancrTvDemoUpload\(admin, moderating, submittedAt, "moderating"\);/,
+  );
+  assert.match(
+    tvSource,
+    /async function autoApproveMyDancrTvDemoUpload[\s\S]*?demoVideoAutoApprovalValues\(\{[\s\S]*?watermarkApplied/,
+  );
+  assert.match(tvSource, /moderateStoredMyDancrTvVideo/);
+  assert.match(tvSource, /finalizeMyDancrTvAutomatedModeration/);
 });
 
 test("video moderation decisions are durable, recoverable, and visible to dancers and admins", () => {

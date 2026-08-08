@@ -130,3 +130,14 @@ After deploying:
 Create a scheduled Supabase job or Vercel cron to delete abandoned objects from `dancr-image-moderation-temp` after 24 hours. Do not delete unresolved `review` records or their review-bucket images.
 
 Rollback by reverting the code and disabling the `/api/dancer/photos` route deployment. Keep `image_moderation_records` for audit unless legal counsel approves deletion. Do not make pending/review bucket contents public during rollback.
+
+## MyDancr TV Moderation Modes
+
+`DANCR_VIDEO_MODERATION_MODE` is server-only and accepts two values:
+
+- `ai` is the default and runs the complete automated video moderation pipeline, with human review when the automated result is uncertain or unavailable.
+- `demo_auto_approve` is a temporary demo-population mode. It skips AI and manual moderation, records the bypass in the video's moderation audit fields, and immediately publishes a valid upload.
+
+Demo mode does not bypass authentication, dancer-profile eligibility, supported video type, file-size and duration limits, portrait/square dimensions, consent and rights confirmations, storage verification, or MyDancr watermark processing. A watermark failure is logged and recorded but does not send the demo upload to manual review.
+
+Before accepting real-user uploads, set `DANCR_VIDEO_MODERATION_MODE=ai` in every Vercel environment and redeploy. Changing the mode does not retroactively moderate videos published during demo mode; review or remove those videos before launch if they are not approved launch content.
