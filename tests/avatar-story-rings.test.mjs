@@ -79,7 +79,14 @@ test("inactive and Working Now avatar rings remain centralized in the Dancr bran
   assert.match(tokens, /--dancr-color-avatar-ring-inactive: rgba\(245, 245, 255, 0\.65\);/);
 });
 
-test("working-now avatars use one complete live-teal ring and status layer on every platform", () => {
+test("working-now avatars keep one complete live-teal ring while status text stays in card content", () => {
+  const profileSummary = liveShell.match(
+    /<div class="profile-modal-summary">[\s\S]*?(?=<section class="profile-modal-media")/,
+  )?.[0] || "";
+  const homeTvAvatarBuilder = liveShell.match(
+    /const dancerPhoto = document\.createElement\("span"\);[\s\S]*?(?=const nameRow = document\.createElement\("span"\);)/,
+  )?.[0] || "";
+
   assert.match(wrapperRules, /\[data-dancer-avatar\]\[data-working-now="true"\] \{/);
   assert.match(wrapperRules, /0 0 0 1px var\(--dancr-color-avatar-ring-live\)/);
   assert.match(
@@ -92,12 +99,11 @@ test("working-now avatars use one complete live-teal ring and status layer on ev
   assert.match(tvFeed, /data-working-now=\{video\.shift\?\.isActive \? "true" : undefined\}/);
   assert.match(liveShell, /modalProfileAvatar\.dataset\.workingNow = String\(modalIsWorkingNow\)/);
   assert.match(liveShell, /data-dancer-avatar data-working-now="true" role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}, working now"/);
-  assert.match(liveShell, /dancerIsWorkingNow[\s\S]*?data-working-now[\s\S]*?data-working-now-indicator/);
-  assert.match(publicProfile, /data-working-now-indicator="">NOW<\/span>/);
-  assert.match(tvFeed, /data-working-now-indicator="">NOW<\/span>/);
-  assert.match(liveShell, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
-  assert.match(liveShell, /workingNowIndicator\.textContent = "NOW"/);
-  assert.doesNotMatch(publicProfile, /data-working-now-indicator="">LIVE<\/span>/);
-  assert.doesNotMatch(tvFeed, /data-working-now-indicator="">LIVE<\/span>/);
-  assert.doesNotMatch(liveShell, /data-working-now-indicator[^>]*>LIVE<\/span>/);
+  assert.doesNotMatch(publicProfile, /data-working-now-indicator/);
+  assert.doesNotMatch(tvFeed, /data-working-now-indicator/);
+  assert.doesNotMatch(profileSummary, /data-working-now-indicator|>NOW</);
+  assert.doesNotMatch(homeTvAvatarBuilder, /data-working-now-indicator|workingNowIndicator|textContent = "NOW"/);
+  assert.match(publicProfile, /profile-titlebar-status is-live">Working Now/);
+  assert.match(profileSummary, /profile-modal-live-status[^>]*>Working Now<\/span>/);
+  assert.match(liveShell, /modalLiveStatus\.hidden = !modalIsWorkingNow/);
 });

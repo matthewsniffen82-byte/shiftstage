@@ -111,6 +111,11 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
   assert.ok(socialIndex > actionsIndex);
   assert.ok(metricsIndex > socialIndex);
   assert.match(liveApp, /class="profile-modal-context" aria-live="polite">\s*<span class="pill" id="modalCity">Las Vegas<\/span>/);
+  assert.match(
+    liveApp,
+    /<span class="profile-modal-live-status" id="modalLiveStatus" hidden>Working Now<\/span>/,
+  );
+  assert.match(liveApp, /modalLiveStatus\.hidden = !modalIsWorkingNow/);
   assert.doesNotMatch(liveApp, /id="modalShiftStatus"|id="modalShiftVenue"/);
   assert.match(liveApp, /modalCity\.hidden = false/);
   assert.match(

@@ -605,7 +605,6 @@ export default function TvFeedClient({
                         />
                       ) : dancerInitials(video.dancer.stageName)}
                     </span>
-                    {video.shift?.isActive ? <span data-working-now-indicator="">NOW</span> : null}
                   </span>
                   <div className="tv-profile-details">
                     <div className="tv-card-info-stack">
@@ -650,8 +649,8 @@ export default function TvFeedClient({
                         </svg>
                         <span className={video.shift.isActive ? "tv-card-schedule-text tonight" : "tv-card-schedule-text upcoming"}>
                           {video.shift.isActive
-                            ? "Working now"
-                            : `Upcoming ${formatShift(video.shift.startsAt, video.shift.timezone)}`}
+                            ? "Working Now"
+                            : `Upcoming · ${formatShift(video.shift.startsAt, video.shift.timezone)}`}
                         </span>
                       </div>
                     ) : (
@@ -827,10 +826,8 @@ function readViewerSessionId() {
 function formatShift(value: string, timeZone: string) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
-    month: "numeric",
+    month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
     timeZone,
   }).format(new Date(value));
 }

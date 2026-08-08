@@ -33878,6 +33878,27 @@
           line-height: 1.2;
           white-space: nowrap;
         }
+        #profileBackdrop .profile-modal-live-status {
+          min-height: 22px;
+          display: inline-flex;
+          flex: 0 0 auto;
+          align-items: center;
+          padding: 0 8px;
+          border: 1px solid rgba(77,236,157,.5);
+          border-radius: 999px;
+          color: #b7ffd8;
+          background: rgba(23,137,82,.18);
+          box-shadow: 0 0 14px rgba(77,236,157,.12);
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: .035em;
+          line-height: 1;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        #profileBackdrop .profile-modal-live-status[hidden] {
+          display: none !important;
+        }
         #profileBackdrop .profile-modal-verified {
           width: 19px;
           height: 19px;
@@ -36909,7 +36930,6 @@
         <div class="profile-modal-summary">
           <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
             <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
-            <span data-working-now-indicator aria-hidden="true">NOW</span>
           </div>
           <div class="modal-identity-stack">
             <div class="modal-identity">
@@ -36920,6 +36940,7 @@
               </div>
               <div class="profile-modal-context" aria-live="polite">
                 <span class="pill" id="modalCity">Las Vegas</span>
+                <span class="profile-modal-live-status" id="modalLiveStatus" hidden>Working Now</span>
               </div>
             </div>
             <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
@@ -37102,6 +37123,7 @@
     const modalStatus = document.getElementById("modalStatus");
     const modalVerified = document.getElementById("modalVerified");
     const modalCity = document.getElementById("modalCity");
+    const modalLiveStatus = document.getElementById("modalLiveStatus");
     const modalRank = document.getElementById("modalRank");
     const modalGallery = document.getElementById("modalGallery");
     const modalMediaPhotoTab = document.getElementById("modalMediaPhotoTab");
@@ -46260,7 +46282,7 @@
         return `
           <div class="info-tile profile-schedule-card working-now-tile schedule-live">
             <strong>Schedule</strong>
-            <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
+            <div class="profile-schedule-primary modal-schedule-text tonight">Current shift</div>
             <div class="meta profile-working-stack">
               <div class="detail-line">${venueIconMarkup()}<button class="venue-inline-link" type="button" data-open-venue="${profile.venue}">${profile.venue}</button></div>
               <button class="profile-working-directions" type="button" data-open-venue="${profile.venue}">View venue</button>
@@ -46465,6 +46487,7 @@
       const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
+      const modalIsWorkingNow = isWorkingTonight(profile, city);
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
@@ -46477,6 +46500,7 @@
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
       modalCity.hidden = false;
+      modalLiveStatus.hidden = !modalIsWorkingNow;
       modalRank.className = "badge trend modal-rank";
       modalRank.innerHTML = "";
       modalRank.hidden = true;
@@ -46492,7 +46516,6 @@
       modalGallery.innerHTML = galleryMarkup(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.querySelectorAll(".thumb:not([data-profile-tv-index])").length;
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
-      const modalIsWorkingNow = isWorkingTonight(profile, city);
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
       modalProfileAvatarBorder.textContent = avatarPhotoUrl ? "" : profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
       if (avatarPhotoUrl) {
@@ -53140,12 +53163,6 @@
         dancerPhotoBorder.appendChild(dancerPhotoImage);
       }
       dancerPhoto.appendChild(dancerPhotoBorder);
-      if (dancerIsWorkingNow) {
-        const workingNowIndicator = document.createElement("span");
-        workingNowIndicator.setAttribute("data-working-now-indicator", "");
-        workingNowIndicator.textContent = "NOW";
-        dancerPhoto.appendChild(workingNowIndicator);
-      }
       const nameRow = document.createElement("span");
       nameRow.className = "home-tv-feed-dancer-name-row";
       const dancerLabel = document.createElement("span");

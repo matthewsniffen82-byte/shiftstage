@@ -188,7 +188,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /function updateFollow|function updateGoing|function shareVideo|function reportVideo/);
   assert.match(
     feedClient,
-    /video\.shift\.isActive[\s\S]*?\? "Working now"[\s\S]*?: `Upcoming \$\{formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)\}`/,
+    /video\.shift\.isActive[\s\S]*?\? "Working Now"[\s\S]*?: `Upcoming · \$\{formatShift\(video\.shift\.startsAt, video\.shift\.timezone\)\}`/,
   );
   assert.match(tvSource, /async function getPublicTvShiftContexts/);
   assert.match(tvSource, /\.from\("shifts"\)[\s\S]*?\.in\("dancer_id", uniqueDancerIds\)/);
@@ -328,7 +328,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /formatProfileTvShift\(item\.shift\.startsAt, item\.shift\.timezone\)/);
   assert.match(
     liveApp,
-    /class="info-tile profile-schedule-card working-now-tile schedule-live"[\s\S]*?<strong>Schedule<\/strong>[\s\S]*?profile-schedule-primary modal-schedule-text tonight">Working now<\/div>/,
+    /class="info-tile profile-schedule-card working-now-tile schedule-live"[\s\S]*?<strong>Schedule<\/strong>[\s\S]*?profile-schedule-primary modal-schedule-text tonight">Current shift<\/div>/,
   );
   assert.doesNotMatch(liveApp, /Upcoming interest/);
   assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);
