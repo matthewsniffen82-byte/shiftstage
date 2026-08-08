@@ -158,7 +158,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(liveApp, /initialDiscoveryRequest\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
   assert.match(liveApp, /const approvedProfiles = markets\[city\]\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
   assert.match(liveApp, /const venueSlug = params\.get\("venue"\);[\s\S]*?activeTab = venueSlug \? "venues" : "dancers";[\s\S]*?resolveVenueByName\(venueSlug, city\)[\s\S]*?openVenueFromName\(venue\.slug \|\| venue\.name\)/);
-  assert.match(liveApp, /function venueUpcomingShiftRow[\s\S]*?profile\.status === "Verified" \? '<span class="verified-mark" aria-label="Verified">✓<\/span>' : ""/);
+  assert.match(liveApp, /function homeDancerGridCard[\s\S]*?profile\.status === "Verified"[\s\S]*?'<span class="verified-mark" aria-label="Verified">✓<\/span>'/);
   assert.doesNotMatch(liveApp, /verifiedCheckMarkup/);
   assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && markets\[initialProfileCity\]\)[\s\S]*?citySelect\.value = initialProfileCity/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);

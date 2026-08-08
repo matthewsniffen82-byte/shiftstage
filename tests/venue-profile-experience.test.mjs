@@ -39,13 +39,14 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);
-  assert.match(venueDetail, /Working now at \$\{details\.name\}/);
+  assert.match(venueDetail, /Working now at \$\{escapeHtml\(details\.name\)\}/);
   assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming shifts<\/span>/);
-  assert.match(venueDetail, /id="venue-upcoming-shifts"[\s\S]*?<span>Upcoming shifts<\/span><span class="venue-activity-count" aria-hidden="true">\$\{upcoming\.length\}<\/span>/);
+  assert.match(venueDetail, /id="venue-upcoming-shifts"[\s\S]*?<span>Upcoming at \$\{escapeHtml\(details\.name\)\}<\/span><span class="venue-activity-count" aria-hidden="true">\$\{upcoming\.length\}<\/span>/);
   assert.match(venueDetail, /class="venue-status-grid" aria-label="Venue status"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
   assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
-  assert.match(venueDetail, /Trending at \$\{details\.name\}/);
+  assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
+  assert.doesNotMatch(venueDetail, /Trending at|is-trending/);
   assert.doesNotMatch(venueDetail, /verified shifts/i);
   assert.doesNotMatch(
     venueDetail,
@@ -53,33 +54,30 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   );
 });
 
-test("venue upcoming-shift rows show the dancer's approved production avatar", () => {
-  const upcomingShiftRow = liveApp.match(
-    /function venueUpcomingShiftRow\(profile, city\) \{[\s\S]*?(?=\n    function venueDetailPage)/,
+test("venue details reuse the production Dancers grid card for every schedule status", () => {
+  const venueGrid = liveApp.match(
+    /function venueDancerGridMarkup\(profiles, city, label\) \{[\s\S]*?(?=\n    function venueDetailPage)/,
+  )?.[0] || "";
+  const venueDetail = liveApp.match(
+    /function venueDetailPage\(venue\) \{[\s\S]*?(?=\n    function findProfile)/,
+  )?.[0] || "";
+  const sharedCard = liveApp.match(
+    /function homeDancerGridCard\(profile, city, compactDirectory = false\) \{[\s\S]*?(?=\n    function homeDancerGridSectionMarkup)/,
   )?.[0] || "";
 
-  assert.match(
-    upcomingShiftRow,
-    /customAvatarPhotoAttrs\([\s\S]*?publicAvatarPhotoUrl\(profile\)[\s\S]*?publicAvatarPhotoSrcSet\(profile\)[\s\S]*?profile\.avatarPhotoFocalX \?\? profile\.mainPhotoFocalX[\s\S]*?profile\.avatarPhotoFocalY \?\? profile\.mainPhotoFocalY/,
-  );
-  assert.match(
-    upcomingShiftRow,
-    /class="venue-shift-avatar \$\{portraitClass\(Number\(profile\.trend \|\| 1\)\)\}\$\{avatarAttrs\.className\}"\$\{avatarAttrs\.style\} data-dancer-avatar role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}"/,
-  );
-  assert.match(upcomingShiftRow, /type="button"[\s\S]*?aria-label="Open \$\{escapeHtml\(profile\.name\)\}'s profile\. \$\{escapeHtml\(label\)\}"/);
-  assert.match(upcomingShiftRow, /class="venue-shift-chevron" aria-hidden="true"[\s\S]*?<path d="m9 5 7 7-7 7"><\/path>/);
-  assert.match(
-    liveApp,
-    /\.venue-shift-avatar\.has-custom-photo \{[\s\S]*?background-image: var\(--custom-photo\);[\s\S]*?background-position: var\(--custom-photo-position, center\);/,
-  );
-  assert.match(
-    liveApp,
-    /\.venue-shift-avatar \{[\s\S]*?width: 58px;[\s\S]*?height: 58px;[\s\S]*?border-radius: 50%;[\s\S]*?border: 0;[\s\S]*?box-shadow: none;/,
-  );
-  assert.match(
-    liveApp,
-    /@media \(max-width: 560px\) \{[\s\S]*?\.venue-shift-avatar \{[\s\S]*?width: 50px;[\s\S]*?height: 50px;/,
-  );
+  assert.match(venueGrid, /class="venue-dancer-grid home-dancer-grid home-dancer-three-column"/);
+  assert.match(venueGrid, /profiles\.map\(\(profile\) => homeDancerGridCard\(profile, city, true\)\)/);
+  assert.match(venueDetail, /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/);
+  assert.match(venueDetail, /const upcoming = localProfiles[\s\S]*?!isWorkingTonight\(profile, city\) && profile\.scheduled/);
+  assert.match(venueDetail, /const noSchedule = localProfiles[\s\S]*?!isWorkingTonight\(profile, city\) && !profile\.scheduled/);
+  assert.equal((venueDetail.match(/venueDancerGridMarkup\(/g) || []).length, 3);
+  assert.doesNotMatch(venueDetail, /profileCard\(|venueUpcomingShiftRow\(|venue-shift-row|venue-shift-list/);
+  assert.match(sharedCard, /homeDiscoveryFeedStatus\(profile\)[\s\S]*?homeDancerGridScheduleLabel\(profile, city\)/);
+  assert.match(sharedCard, /groupClass = status\.className === "is-now"[\s\S]*?"is-upcoming"[\s\S]*?"is-open"/);
+  assert.match(sharedCard, /class="dancer-card home-dancer-grid-card \$\{groupClass\}/);
+  assert.match(sharedCard, /href="\$\{profileHref\}"[\s\S]*?aria-label="Open \$\{safeName\}'s full profile"/);
+  assert.match(liveApp, /Venue detail uses the exact same compact production profile tiles[\s\S]*?\.venue-dancer-grid \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
+  assert.match(liveApp, /\.venue-dancer-grid > \.home-dancer-grid-card \{[\s\S]*?aspect-ratio: 9 \/ 16 !important;/);
 });
 
 test("venue profiles reserve customer QR language for active Club Deals", () => {
@@ -150,8 +148,9 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
   assert.match(refinement, /\.venue-activity-empty \{[\s\S]*?grid-template-columns: 38px minmax\(0, 1fr\);[\s\S]*?padding: 12px 13px;/);
   assert.match(refinement, /\.venue-activity-count \{[\s\S]*?min-width: 28px;[\s\S]*?color: var\(--dancr-color-info\);/);
-  assert.match(refinement, /\.venue-shift-row \{[\s\S]*?grid-template-columns: 58px minmax\(0, 1fr\) 32px;[\s\S]*?background: var\(--dancr-color-surface-raised\) !important;/);
-  assert.match(refinement, /\.venue-shift-chevron \{[\s\S]*?width: 32px;[\s\S]*?border-radius: 999px;/);
+  assert.match(refinement, /\.venue-activity-section\.is-working \.venue-activity-count \{[\s\S]*?color: var\(--dancr-color-success\);/);
+  assert.match(refinement, /\.venue-activity-section\.is-upcoming \.venue-activity-count \{[\s\S]*?color: var\(--dancr-color-info\);/);
+  assert.match(refinement, /\.venue-activity-section\.is-open \.section-title \{[\s\S]*?border-left-color: var\(--dancr-color-text-muted\) !important;/);
   assert.doesNotMatch(refinement, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });
 
@@ -160,8 +159,8 @@ test("venue profiles replace repeated zero sections with one truthful empty expl
 
   assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?upcoming\.length[\s\S]*?filter\(Boolean\)\.join\(""\)/);
   assert.match(venueDetail, /venue-quick-stat is-working[\s\S]*?venue-quick-stat is-upcoming/);
-  assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-trending/);
-  assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No dancers active or scheduled[\s\S]*?No dancers are checked in and no upcoming shifts have been posted\. Follow \$\{details\.name\} for updates\./);
+  assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-open/);
+  assert.match(venueDetail, /const activityMarkup = activitySections \|\|[\s\S]*?No affiliated dancers yet[\s\S]*?No approved dancer profiles are currently affiliated with \$\{escapeHtml\(details\.name\)\}\. Follow this venue for updates\./);
   assert.doesNotMatch(venueDetail, /No active shifts now|No upcoming shifts posted|No trending profiles here yet/);
 });
 

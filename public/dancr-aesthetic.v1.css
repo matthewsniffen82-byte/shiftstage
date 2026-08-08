@@ -3080,6 +3080,48 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
   box-shadow: none !important;
 }
 
+/* Venue profile grids inherit the same production card color layer as the
+ * main Dancers directory, including verified, venue, and open-shift states. */
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-profile-overlay
+  .venue-dancer-grid > .home-dancer-grid-card {
+  border: 0 !important;
+  border-radius: 2px !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-profile-overlay
+  .venue-dancer-grid .home-dancer-grid-name {
+  color: var(--dancr-color-text-primary) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-profile-overlay
+  .venue-dancer-grid .home-dancer-grid-name .verified-mark {
+  border-color: var(--mydancr-verified-outline) !important;
+  color: var(--mydancr-verified-foreground) !important;
+  background: var(--mydancr-verified-surface) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-profile-overlay
+  .venue-dancer-grid .home-dancer-grid-venue {
+  color: var(--dancr-color-text-secondary) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-profile-overlay
+  .venue-dancer-grid .home-dancer-grid-venue > svg {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack > #results.venue-profile-overlay
+  .venue-dancer-grid .home-dancer-grid-status:not(.is-now):not(.is-upcoming) {
+  border-color: var(--dancr-color-border-subtle) !important;
+  color: var(--dancr-color-text-muted) !important;
+  background: color-mix(in srgb, var(--dancr-color-text-muted) 7%, var(--dancr-color-surface)) !important;
+  box-shadow: none !important;
+}
+
 /* Dancer full profiles keep an 84/10/6 neutral, brand, and semantic color
  * balance across both the live overlay and canonical profile route. The layer
  * is color-only: it intentionally excludes profile media, page geometry,
@@ -4987,18 +5029,14 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-activity-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 !important;
   padding-left: 10px !important;
   border-left: 2px solid var(--dancr-color-brand-primary) !important;
   color: var(--dancr-color-text-primary) !important;
   text-shadow: none !important;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-activity-section.is-upcoming .section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-count {
@@ -5009,7 +5047,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
   padding: 0 8px;
   border: 1px solid var(--dancr-color-border-subtle);
   border-radius: 999px;
-  color: var(--dancr-color-info);
+  color: var(--dancr-color-text-muted);
   background: var(--dancr-color-surface-subtle);
   font-size: 11px;
   font-weight: 900;
@@ -5022,13 +5060,23 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-section.is-working .venue-activity-count {
+  color: var(--dancr-color-success);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-activity-section.is-upcoming .section-title {
   border-left-color: var(--dancr-color-info) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-activity-section.is-trending .section-title {
-  border-left-color: var(--dancr-color-featured) !important;
+  .venue-activity-section.is-upcoming .venue-activity-count {
+  color: var(--dancr-color-info);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-activity-section.is-open .section-title {
+  border-left-color: var(--dancr-color-text-muted) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-shift-row {

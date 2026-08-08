@@ -60,7 +60,6 @@ test("every production circular avatar contains the new border wrapper", () => {
   assert.match(liveShell, /class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar[\s\S]*?id="modalProfileAvatarBorder" data-dancer-avatar-border/);
   assert.match(liveShell, /class="approved-avatar-preview\$\{avatarPreviewAttrs\.className\}"\$\{avatarPreviewAttrs\.style\} data-dancer-avatar[\s\S]*?<span data-dancer-avatar-border/);
   assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar\$\{attrs\.className\}"\$\{attrs\.style\} data-dancer-avatar[^`]+data-dancer-avatar-border/);
-  assert.match(liveShell, /class="venue-shift-avatar [^\n]+data-dancer-avatar[^\n]+data-dancer-avatar-border/);
   assert.match(liveShell, /dancerPhoto\.setAttribute\("data-dancer-avatar", ""\)[\s\S]*?dancerPhotoBorder\.setAttribute\("data-dancer-avatar-border", ""\)/);
   assert.match(liveShell, /modalProfileAvatarBorder\.textContent = avatarPhotoUrl/);
   assert.match(publicProfile, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);

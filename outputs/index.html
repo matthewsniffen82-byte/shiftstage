@@ -33459,6 +33459,115 @@
           }
         }
 
+        /* Venue detail uses the exact same compact production profile tiles as
+           the main Dancers directory while retaining its own status sections. */
+        .venue-dancer-grid {
+          display: grid !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          align-items: start !important;
+          gap: 2px !important;
+        }
+        .venue-dancer-grid > .home-dancer-grid-card {
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: none !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          justify-self: stretch !important;
+          aspect-ratio: 9 / 16 !important;
+          border: 0 !important;
+          border-radius: 2px !important;
+          background: #050507 !important;
+          box-shadow: none !important;
+          filter: none !important;
+          contain: layout paint style;
+        }
+        .venue-dancer-grid .home-dancer-grid-link {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: block;
+          overflow: hidden;
+          border-radius: inherit;
+        }
+        .venue-dancer-grid .home-dancer-grid-photo {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          aspect-ratio: auto;
+          background-position: center top !important;
+        }
+        .venue-dancer-grid .home-dancer-grid-photo::after {
+          background: linear-gradient(180deg,transparent 46%,rgba(5,5,8,.16) 59%,rgba(5,5,8,.96) 100%);
+        }
+        .venue-dancer-grid .home-dancer-grid-copy {
+          position: absolute;
+          z-index: 2;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          gap: 3px;
+          padding: 24px 7px 7px;
+          background: linear-gradient(180deg,transparent,rgba(5,5,8,.94) 48%);
+          text-shadow: 0 2px 7px rgba(0,0,0,.96);
+          pointer-events: none;
+        }
+        .venue-dancer-grid .home-dancer-grid-name {
+          font-family: var(--font-ui);
+          font-size: clamp(11px, 3vw, 15px);
+          font-weight: 950;
+          letter-spacing: -.02em;
+          line-height: 1.05;
+        }
+        .venue-dancer-grid .home-dancer-grid-name .verified-mark {
+          width: 13px;
+          height: 13px;
+          margin-left: 2px;
+          font-size: 7px;
+          vertical-align: 1px;
+        }
+        .venue-dancer-grid .home-dancer-grid-venue {
+          gap: 2px;
+          font-size: clamp(8px, 2.15vw, 10px);
+          font-weight: 800;
+          line-height: 1.1;
+        }
+        .venue-dancer-grid .home-dancer-grid-venue > .venue-dot {
+          width: 10px;
+          height: 10px;
+          flex: 0 0 10px;
+          margin-right: 0;
+        }
+        .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg {
+          width: 10px;
+          height: 10px;
+        }
+        .venue-dancer-grid .home-dancer-grid-venue span {
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .venue-dancer-grid .home-dancer-grid-status {
+          min-height: 18px;
+          max-width: 100%;
+          padding: 0 5px;
+          font-size: clamp(7px, 1.9vw, 9px);
+        }
+        @media (max-width: 420px) {
+          .venue-dancer-grid .home-dancer-grid-copy {
+            padding: 20px 5px 5px;
+          }
+          .venue-dancer-grid .home-dancer-grid-status {
+            min-height: 17px;
+          }
+        }
+
         /* Keep the full profile closable and its final safety action reachable. */
         #profileBackdrop.modal-backdrop.show {
           z-index: 140 !important;
@@ -45217,23 +45326,11 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
-    function venueUpcomingShiftRow(profile, city) {
-      const label = upcomingFullLabel(profile, city);
-      const avatarAttrs = customAvatarPhotoAttrs(
-        publicAvatarPhotoUrl(profile),
-        publicAvatarPhotoSrcSet(profile),
-        profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
-        profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
-      );
+    function venueDancerGridMarkup(profiles, city, label) {
       return `
-        <button class="venue-shift-row" type="button" data-profile="${profile.name}" aria-label="Open ${escapeHtml(profile.name)}'s profile. ${escapeHtml(label)}">
-          <div class="venue-shift-avatar ${portraitClass(Number(profile.trend || 1))}${avatarAttrs.className}"${avatarAttrs.style} data-dancer-avatar role="img" aria-label="${escapeHtml(profile.name)}"><span data-dancer-avatar-border aria-hidden="true"></span></div>
-          <div class="venue-shift-copy">
-            <strong>${profile.name}${profile.status === "Verified" ? '<span class="verified-mark" aria-label="Verified">✓</span>' : ""}</strong>
-            <span>${clockIconMarkup()}${displayPublicShiftTime(profile.time, profile)}</span>
-          </div>
-          <span class="venue-shift-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"></path></svg></span>
-        </button>
+        <div class="venue-dancer-grid home-dancer-grid home-dancer-three-column" aria-label="${escapeHtml(label)}">
+          ${profiles.map((profile) => homeDancerGridCard(profile, city, true)).join("")}
+        </div>
       `;
     }
 
@@ -45250,9 +45347,9 @@
       const upcoming = localProfiles
         .filter((profile) => !isWorkingTonight(profile, city) && profile.scheduled)
         .sort((a, b) => upcomingSortValue(a, city) - upcomingSortValue(b, city));
-      const trending = localProfiles
-        .filter((profile) => profile.trendRank)
-        .sort((a, b) => a.trendRank - b.trendRank);
+      const noSchedule = localProfiles
+        .filter((profile) => !isWorkingTonight(profile, city) && !profile.scheduled)
+        .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const rideMarkup = uberRideLinkMarkup({
         venue,
@@ -45271,29 +45368,29 @@
       const activitySections = [
         tonight.length ? `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
-            <h3 class="section-title" id="venue-working-now">Working now at ${details.name}</h3>
-            <div class="list card-grid">${tonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("")}</div>
+            <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now at ${escapeHtml(details.name)}</span><span class="venue-activity-count" aria-hidden="true">${tonight.length}</span></h3>
+            ${venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)}
           </section>
         ` : "",
         upcoming.length ? `
           <section class="venue-activity-section is-upcoming" aria-labelledby="venue-upcoming-shifts">
-            <h3 class="section-title" id="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"} at ${escapeHtml(details.name)}"><span>Upcoming shifts</span><span class="venue-activity-count" aria-hidden="true">${upcoming.length}</span></h3>
-            <div class="venue-shift-list">${upcoming.map((profile) => venueUpcomingShiftRow(profile, city)).join("")}</div>
+            <h3 class="section-title" id="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"} at ${escapeHtml(details.name)}"><span>Upcoming at ${escapeHtml(details.name)}</span><span class="venue-activity-count" aria-hidden="true">${upcoming.length}</span></h3>
+            ${venueDancerGridMarkup(upcoming, city, `Upcoming at ${details.name}`)}
           </section>
         ` : "",
-        trending.length ? `
-          <section class="venue-activity-section is-trending" aria-labelledby="venue-trending-dancers">
-            <h3 class="section-title" id="venue-trending-dancers">Trending at ${details.name}</h3>
-            <div class="list card-grid">${trending.map((profile, index) => profileCard(profile, index + 4, { trendingContext: true })).join("")}</div>
+        noSchedule.length ? `
+          <section class="venue-activity-section is-open" aria-labelledby="venue-no-shift-posted">
+            <h3 class="section-title" id="venue-no-shift-posted" aria-label="${noSchedule.length} ${noSchedule.length === 1 ? "dancer has" : "dancers have"} no shift posted at ${escapeHtml(details.name)}"><span>No Shift Posted</span><span class="venue-activity-count" aria-hidden="true">${noSchedule.length}</span></h3>
+            ${venueDancerGridMarkup(noSchedule, city, `No shift posted at ${details.name}`)}
           </section>
         ` : ""
       ].filter(Boolean).join("");
       const activityMarkup = activitySections || `
-        <section class="venue-activity-empty" aria-label="No current or upcoming dancer activity at ${details.name}">
+        <section class="venue-activity-empty" aria-label="No approved dancers affiliated with ${escapeHtml(details.name)}">
           <span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span>
           <span>
-            <strong>No dancers active or scheduled</strong>
-            <small>No dancers are checked in and no upcoming shifts have been posted. Follow ${details.name} for updates.</small>
+            <strong>No affiliated dancers yet</strong>
+            <small>No approved dancer profiles are currently affiliated with ${escapeHtml(details.name)}. Follow this venue for updates.</small>
           </span>
         </section>
       `;
