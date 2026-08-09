@@ -436,6 +436,7 @@
 
     .utility-menu-session-end {
       display: grid;
+      gap: 6px;
       margin-top: 2px;
       padding-top: 8px;
       border-top: 1px solid rgba(251,113,133,.18);
@@ -458,6 +459,27 @@
       color: #fff1f2;
       background: rgba(100,18,38,.52);
       box-shadow: inset 0 0 16px rgba(251,113,133,.07);
+    }
+
+    .utility-menu-delete-account {
+      min-height: 42px;
+      border-color: rgba(248,113,113,.56);
+      color: #fff1f2;
+      background: rgba(127,29,29,.48);
+      box-shadow: inset 0 0 16px rgba(248,113,113,.06);
+    }
+
+    .utility-menu-delete-account:hover {
+      border-color: rgba(252,165,165,.82);
+      color: #fff;
+      background: rgba(153,27,27,.66);
+      box-shadow: 0 0 16px rgba(248,113,113,.12), inset 0 0 18px rgba(248,113,113,.08);
+    }
+
+    .utility-menu-delete-account:disabled {
+      opacity: .6;
+      cursor: wait;
+      transform: none;
     }
 
     @keyframes utilityMenuIn {
@@ -29921,6 +29943,7 @@
               </nav>
               <div class="utility-menu-session-end" id="sessionMenuEnd" hidden>
                 <button class="utility-menu-item utility-menu-logout" id="logoutBtn" type="button">Logout</button>
+                <button class="utility-menu-item utility-menu-delete-account danger-button" id="deleteAccountBtn" type="button">Delete account</button>
               </div>
             </div>
             <button class="account-tooltip" id="accountTooltip" type="button" hidden>Manage your account here.</button>
@@ -37265,6 +37288,7 @@
     const accountBtn = document.getElementById("accountBtn");
     const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
+    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
     const sessionMenuEnd = document.getElementById("sessionMenuEnd");
     const adminBtn = document.getElementById("adminBtn");
     const contactAdminBtn = document.getElementById("contactAdminBtn");
@@ -37393,7 +37417,7 @@
       customer: {
         active: "Your private follows, venue alerts, and going signals stay active.",
         disabled: "Your customer account is paused. Alerts are off, but follows and notification settings are saved.",
-        deleted: "This demo customer account was deleted. Sign up again to create a new customer account."
+        deleted: "This customer account was permanently deleted."
       },
       dancer: {
         active: "Your public profile, schedule posting, analytics, and follower alerts stay active.",
@@ -39123,7 +39147,11 @@
 
     async function deleteLiveAccount(role, button) {
       if (!authSession?.accessToken) return false;
-      if (button) button.disabled = true;
+      const buttonLabel = button?.textContent || "Delete account";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Deleting account...";
+      }
       try {
         const data = await deleteAuthenticatedJson("/api/account");
         if (data?.account) applyLiveAccountState(data.account);
@@ -39137,14 +39165,23 @@
         liveDancerRankingEvents = [];
         liveDancerReviews = [];
         saveAuthSession(null);
-        showToast(`${role === "dancer" ? "Dancer account" : "Customer account"} deleted`);
+        showToast(`${accountRoleLabel(role)} deleted`);
         return true;
       } catch (error) {
         showToast(error.message || "Could not delete account");
         return false;
       } finally {
-        if (button) button.disabled = false;
+        if (button) {
+          button.disabled = false;
+          button.textContent = buttonLabel;
+        }
       }
+    }
+
+    function accountRoleLabel(role) {
+      if (role === "dancer") return "Dancer account";
+      if (role === "venue") return "Venue account";
+      return "Customer account";
     }
 
     function closeDeletedAccount(role) {
@@ -39155,6 +39192,11 @@
       if (role === "dancer") {
         isDancerLoggedIn = false;
         closeDancerDashboard();
+      }
+      if (role === "venue") {
+        isVenueLoggedIn = false;
+        liveVenueDashboard = null;
+        closeVenueDashboard();
       }
       activeDashboardType = "customer";
       updateAccountHeader();
@@ -39268,7 +39310,7 @@
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-      const roleLabel = role === "dancer" ? "Dancer account" : "Customer account";
+      const roleLabel = accountRoleLabel(role);
 
       if (action === "update-email") {
         updateAccountEmail(role, button);
@@ -39297,7 +39339,7 @@
       }
 
       if (action === "delete") {
-        const confirmed = window.confirm(`Delete this ${roleLabel.toLowerCase()}? This demo will sign out of the account.`);
+        const confirmed = window.confirm(`Permanently delete this ${roleLabel.toLowerCase()}? Your account and sign-in will be removed. This cannot be undone.`);
         if (!confirmed) return true;
         if (authSession?.accessToken) {
           deleteLiveAccount(role, button);
@@ -47424,9 +47466,12 @@
 
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
+      const sessionRole = authSession?.account?.role;
       const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Customer";
       dashboardBtn.hidden = !loggedIn;
       sessionMenuEnd.hidden = !loggedIn;
+      deleteAccountBtn.hidden = !loggedIn || !["customer", "dancer", "venue"].includes(sessionRole);
+      deleteAccountBtn.dataset.accountRole = sessionRole || "";
       document.getElementById("loginCustomerOption").hidden = loggedIn;
       document.getElementById("loginDancerOption").hidden = loggedIn;
       document.getElementById("loginVenueOption").hidden = loggedIn;
@@ -55146,6 +55191,18 @@
     logoutBtn.addEventListener("click", () => {
       closeUtilityMenu();
       logoutAccount();
+    });
+    deleteAccountBtn.addEventListener("click", async () => {
+      const role = deleteAccountBtn.dataset.accountRole;
+      closeUtilityMenu();
+      if (!authSession?.accessToken || !["customer", "dancer", "venue"].includes(role)) {
+        showToast("Sign in required");
+        updateAccountHeader();
+        return;
+      }
+      const confirmed = window.confirm(`Permanently delete your ${accountRoleLabel(role).toLowerCase()}? Your account and sign-in will be removed. This cannot be undone.`);
+      if (!confirmed) return;
+      await deleteLiveAccount(role, deleteAccountBtn);
     });
     document.getElementById("loginCustomerOption").addEventListener("click", () => {
       closeUtilityMenu();
