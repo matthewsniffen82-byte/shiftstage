@@ -134,7 +134,7 @@ test("venues configure a real referral amount before a tracked QR can be publish
   assert.match(migration, /is_active = false/);
   assert.match(venueDashboard, /MyDancr referral fee per redemption/);
   assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
-  assert.match(venueDashboard, /"Publish Deal"/);
+  assert.match(venueDashboard, /"Publish Deal & Create QR"/);
   assert.match(venueDashboard, /Only that authenticated confirmation creates a verified MyDancr referral fee for venue billing/);
   assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp] = await Promise.all([
+const [migration, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608080001_multi_offer_club_deals.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/deal/route.ts", import.meta.url), "utf8"),
@@ -10,6 +10,7 @@ const [migration, deals, venueDealRoute, dealCard, discoveryRoute, tvSource, liv
   readFile(new URL("../app/api/public/discovery/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("venues can publish a prioritized collection of typed Club Deals", () => {
@@ -26,6 +27,20 @@ test("venues can publish a prioritized collection of typed Club Deals", () => {
   assert.match(venueDealRoute, /ok: true,[\s\S]*?deal,[\s\S]*?deals,/);
   assert.match(deals, /return \{ deal, deals \};/);
   assert.match(venueDealRoute, /export async function DELETE/);
+});
+
+test("venue managers can keep multiple deals live and manage each campaign independently", () => {
+  const updateFunction = deals.match(/export async function updateVenueDealForAccount[\s\S]*?(?=\nexport async function deleteVenueDealForAccount)/)?.[0] || "";
+  assert.match(venueDashboard, /Publish multiple deals at the same time/);
+  assert.match(venueDashboard, /Every deal keeps its own status, display order, tracked QR, and public offer/);
+  assert.match(venueDashboard, /const liveCount = deals\.filter/);
+  assert.match(venueDashboard, /const draftCount = deals\.length - liveCount/);
+  assert.match(venueDashboard, /Does not change live deals/);
+  assert.match(venueDashboard, /Publishing it will not change your other live deals/);
+  assert.match(venueDashboard, /fetchVenueDealQrAsset\(editingId/);
+  assert.match(venueDashboard, />Print sign<\/button>/);
+  assert.doesNotMatch(updateFunction, /\.update\([^)]*is_active[\s\S]*?\.neq\("id"/);
+  assert.doesNotMatch(updateFunction, /is_active:\s*false/);
 });
 
 test("bottle service requires a real HTTPS handoff and appears only after pass creation", () => {

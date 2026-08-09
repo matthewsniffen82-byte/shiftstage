@@ -137,11 +137,11 @@ test("venues can generate a durable tracked QR for each published deal", () => {
   assert.match(venueDealQrRoute, /createVenueDealCampaignToken\(\{ dealId: deal\.id, venueId: deal\.venueId \}\)/);
   assert.match(venueDealQrRoute, /\/deals\/claim\/\$\{encodeURIComponent\(deal\.id\)\}\?campaign=\$\{encodeURIComponent\(campaignToken\)\}/);
   assert.match(venueDealQrRoute, /QRCode\.toDataURL\(claimUrl/);
-  assert.match(customerDashboard, /<h3 id="venue-deal-qr-heading">Deal QR<\/h3>/);
+  assert.match(customerDashboard, /<h3 id="venue-deal-qr-heading">Tracked Deal QR<\/h3>/);
   assert.match(customerDashboard, /fetch\(`\/api\/venue\/deal\/qr\?dealId=/);
-  assert.match(customerDashboard, /"Share QR"/);
-  assert.match(customerDashboard, />Save QR image<\/button>/);
-  assert.match(customerDashboard, />Copy deal link<\/button>/);
+  assert.match(customerDashboard, />Print sign<\/button>/);
+  assert.match(customerDashboard, />Download<\/button>/);
+  assert.match(customerDashboard, />Copy link<\/button>/);
   assert.match(customerDashboard, /Published deals appear on your venue page and on affiliated dancer profiles while those dancers are verified Working Now/);
   assert.match(customerDashboard, /Direct venue attribution · MyDancr tracked/);
 });
