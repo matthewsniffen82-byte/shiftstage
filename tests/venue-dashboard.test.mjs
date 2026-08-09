@@ -74,6 +74,17 @@ test("venue dashboard refreshes a saved session and recovers sign-in without lea
   assert.doesNotMatch(dashboardClient, /href=.*dancr_dashboard=venue/);
 });
 
+test("venue dashboard uses the compact MyDancr header with an X back to venue discovery", () => {
+  assert.match(
+    dashboardClient,
+    /role === "venue"\s*\? "top-nav customer-top-nav venue-top-nav"/,
+  );
+  assert.match(
+    dashboardClient,
+    /role === "customer" \|\| role === "venue" \? \([\s\S]*?className="dashboard-close"[\s\S]*?homeDiscoveryHref\(role === "venue" \? "venues" : "tonight"\)[\s\S]*?Close venue dashboard and return to MyDancr[\s\S]*?\) : \(\s*<div className="nav-links">/,
+  );
+});
+
 test("venue management is consolidated into one descriptive collapsible workspace", () => {
   assert.match(dashboardClient, /function VenueDashboardSection\(/);
   assert.match(dashboardClient, /<details className="venue-dashboard-section"/);

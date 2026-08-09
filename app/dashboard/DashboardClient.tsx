@@ -230,12 +230,29 @@ export default function DashboardClient({
   return (
     <main className="dashboard-shell">
       <DashboardStyles />
-      <nav className={role === "customer" ? "top-nav customer-top-nav" : "top-nav"} aria-label="Primary">
+      <nav
+        className={
+          role === "customer"
+            ? "top-nav customer-top-nav"
+            : role === "venue"
+              ? "top-nav customer-top-nav venue-top-nav"
+              : "top-nav"
+        }
+        aria-label="Dashboard"
+      >
         <Link className="brand" href="/">
           mydancr
         </Link>
-        {role === "customer" ? (
-          <Link className="dashboard-close" href={homeDiscoveryHref("tonight")} aria-label="Close customer dashboard and return to MyDancr">
+        {role === "customer" || role === "venue" ? (
+          <Link
+            className="dashboard-close"
+            href={homeDiscoveryHref(role === "venue" ? "venues" : "tonight")}
+            aria-label={
+              role === "venue"
+                ? "Close venue dashboard and return to MyDancr"
+                : "Close customer dashboard and return to MyDancr"
+            }
+          >
             ×
           </Link>
         ) : (
