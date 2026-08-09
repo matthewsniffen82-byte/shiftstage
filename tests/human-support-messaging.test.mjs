@@ -46,7 +46,14 @@ test("live support interfaces use the production API and the venue dashboard exp
   assert.match(liveAppSource, /Admin Support/);
   assert.match(liveAppSource, /getAuthenticatedJson\("\/api\/support"\)/);
   assert.match(liveAppSource, /postAuthenticatedJson\("\/api\/support"/);
+  assert.match(liveAppSource, /const sent = await sendSupportMessage\(role, subject, message\)/);
+  assert.match(liveAppSource, /submitButton\.classList\.toggle\("is-sent", sent\)/);
+  assert.match(liveAppSource, /submitButton\.textContent = sent \? "\\u2713 Sent to admin" : defaultSubmitLabel/);
+  assert.match(liveAppSource, /if \(status\) status\.textContent = "Message sent to admin\.";[\s\S]*?return true;/);
   assert.match(dashboardSource, /role === "venue"[\s\S]*?<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} \/>/);
+  assert.match(dashboardSource, /const \[sendConfirmation, setSendConfirmation\] = useState\(false\)/);
+  assert.match(dashboardSource, /setStatus\("Message sent to admin\."\);[\s\S]*?setSendConfirmation\(true\)/);
+  assert.match(dashboardSource, /sendConfirmation \? "✓ Sent to admin" : "Send to admin"/);
   assert.doesNotMatch(liveAppSource, /Dancr Support AI|AI answers|AI replied/);
   assert.doesNotMatch(liveAppSource, /supportStorageKey|readStoredSupportThreads|writeStoredSupportThreads|localSupportThread/);
 });

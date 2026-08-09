@@ -583,6 +583,7 @@ function SupportInboxPanel({
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [sendConfirmation, setSendConfirmation] = useState(false);
 
   useEffect(() => {
     setThreads(initialThreads);
@@ -608,6 +609,7 @@ function SupportInboxPanel({
   async function startThread(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSending(true);
+    setSendConfirmation(false);
     setStatus("");
     try {
       const thread = await sendMessage({ subject, message });
@@ -615,6 +617,7 @@ function SupportInboxPanel({
       setSubject("");
       setMessage("");
       setStatus("Message sent to admin.");
+      setSendConfirmation(true);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to send message.");
     } finally {
@@ -646,14 +649,14 @@ function SupportInboxPanel({
       <form onSubmit={startThread}>
         <label>
           Subject
-          <input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="What do you need help with?" required />
+          <input value={subject} onChange={(event) => { setSubject(event.target.value); setSendConfirmation(false); }} placeholder="What do you need help with?" required />
         </label>
         <label>
           Message
-          <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={4} placeholder="Write your message to admin" required />
+          <textarea value={message} onChange={(event) => { setMessage(event.target.value); setSendConfirmation(false); }} rows={4} placeholder="Write your message to admin" required />
         </label>
-        <button type="submit" disabled={isSending}>
-          {isSending ? "Sending..." : "Send to admin"}
+        <button className={sendConfirmation ? "support-send-button is-sent" : "support-send-button"} type="submit" disabled={isSending}>
+          {isSending ? "Sending..." : sendConfirmation ? "✓ Sent to admin" : "Send to admin"}
         </button>
       </form>
       <div className="support-thread-list">
@@ -5415,6 +5418,7 @@ function DashboardStyles() {
       .support-panel textarea { resize: vertical; }
       .support-panel button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; padding: 0 14px; }
       .support-panel button:disabled { opacity: .62; cursor: wait; }
+      .support-panel .support-send-button.is-sent { border: 1px solid var(--dancr-color-success-medium); color: #a7f3d0; background: var(--dancr-color-success-soft); box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft), 0 0 18px var(--dancr-color-success-soft); }
       .support-thread-list { display: grid; gap: 10px; }
       .support-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .support-thread summary { cursor: pointer; color: #fff; font-weight: 900; }

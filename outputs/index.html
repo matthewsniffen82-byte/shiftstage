@@ -14851,6 +14851,13 @@
       font-weight: 800;
     }
 
+    .support-contact-form .support-send-button.is-sent {
+      border: 1px solid var(--dancr-color-success-medium) !important;
+      color: #a7f3d0 !important;
+      background: var(--dancr-color-success-soft) !important;
+      box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft), 0 0 18px var(--dancr-color-success-soft) !important;
+    }
+
     .venue-card:hover,
     .venue:hover {
       border-color: rgba(124, 58, 237, .56);
@@ -36807,7 +36814,7 @@
             <form class="auth-form support-contact-form" data-support-form="dancer">
               <div class="field"><label for="dancerSupportSubject">Subject</label><input id="dancerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
               <div class="field"><label for="dancerSupportMessage">Message</label><textarea id="dancerSupportMessage" rows="4" placeholder="Write your message to the admin team" required></textarea></div>
-              <button class="action-btn" type="submit">Send to admin</button>
+              <button class="action-btn support-send-button" type="submit" data-support-submit>Send to admin</button>
               <div class="rule-note" id="dancerSupportStatus">Your messages and admin replies appear below.</div>
             </form>
             <div class="rank-notification-list support-thread-list" id="dancerSupportThreads">No support conversations yet.</div>
@@ -40782,8 +40789,8 @@
         return true;
       }
       const role = isDancerSession() || dancerDashboard.classList.contains("show") ? "dancer" : "customer";
-      sendSupportMessage(role, "", body, threadId).then(() => {
-        if (textarea) textarea.value = "";
+      sendSupportMessage(role, "", body, threadId).then((sent) => {
+        if (sent && textarea) textarea.value = "";
       });
       return true;
     }
@@ -40863,11 +40870,11 @@
       const status = document.getElementById(`${role}SupportStatus`);
       if (!body.trim()) {
         if (status) status.textContent = "Enter a message before sending.";
-        return;
+        return false;
       }
       if (!authSession?.accessToken) {
         if (status) status.textContent = "Sign in to message the admin team.";
-        return;
+        return false;
       }
       try {
         if (status) status.textContent = "Sending your message to the admin team...";
@@ -40877,8 +40884,10 @@
         }
         if (status) status.textContent = "Message sent to admin.";
         renderSupportInbox(role);
+        return true;
       } catch (error) {
         if (status) status.textContent = error.message || "Could not send message.";
+        return false;
       }
     }
 
@@ -56305,19 +56314,35 @@
     });
 
     document.querySelectorAll("[data-support-form]").forEach((form) => {
-      form.addEventListener("submit", (event) => {
+      const submitButton = form.querySelector("[data-support-submit]") || form.querySelector('button[type="submit"]');
+      const defaultSubmitLabel = submitButton?.textContent?.trim() || "Send to admin";
+      form.addEventListener("input", () => {
+        if (!submitButton?.classList.contains("is-sent")) return;
+        submitButton.classList.remove("is-sent");
+        submitButton.textContent = defaultSubmitLabel;
+      });
+      form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const role = form.dataset.supportForm;
         const subject = document.getElementById(`${role}SupportSubject`)?.value.trim() || "";
         const message = document.getElementById(`${role}SupportMessage`)?.value.trim() || "";
-        sendSupportMessage(role, subject, message).then(() => {
-          if (message) {
-            const subjectInput = document.getElementById(`${role}SupportSubject`);
-            const messageInput = document.getElementById(`${role}SupportMessage`);
-            if (subjectInput) subjectInput.value = "";
-            if (messageInput) messageInput.value = "";
-          }
-        });
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.classList.remove("is-sent");
+          submitButton.textContent = "Sending...";
+        }
+        const sent = await sendSupportMessage(role, subject, message);
+        if (sent) {
+          const subjectInput = document.getElementById(`${role}SupportSubject`);
+          const messageInput = document.getElementById(`${role}SupportMessage`);
+          if (subjectInput) subjectInput.value = "";
+          if (messageInput) messageInput.value = "";
+        }
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.classList.toggle("is-sent", sent);
+          submitButton.textContent = sent ? "\u2713 Sent to admin" : defaultSubmitLabel;
+        }
       });
     });
 
