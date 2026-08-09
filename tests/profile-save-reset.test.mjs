@@ -160,7 +160,7 @@ test("onboarding Step 2 stays locked until every photo is fully approved", () =>
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "rejected"/);
   assert.match(setupSubmit, /dancerProfileMediaModerationComplete\(profile\)/);
   assert.match(setupSubmit, /approvedUploads\.length > 0 && reviewUploads\.length === 0/);
-  assert.match(setupSubmit, /activeSetupStep = dancerSetup\.photos \? \(nextIncompleteStep\(\) \|\| "review"\) : "profile"/);
+  assert.match(setupSubmit, /activeSetupStep = "profile";[\s\S]*?await hydrateDancerApprovalProgress\(\);[\s\S]*?activeSetupStep = "profile";/);
   assert.match(profileHydration, /photos: dancerProfileMediaModerationComplete\(profile\)/);
   assert.doesNotMatch(profileHydration, /photos: statusApproved \|\| photos\.length > 0 \|\| submittedPhotos\.length > 0/);
   assert.match(mobileAppSource, /Pending human review/);

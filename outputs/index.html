@@ -49258,7 +49258,7 @@
       return setupOrder().find((step) => !dancerSetup[step]) || null;
     }
 
-    function completeSetupStep(step) {
+    function completeSetupStep(step, options = {}) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
         showToast("A verified venue manager completes this step by scanning your QR.");
@@ -49269,7 +49269,7 @@
       if (step === "profile") freshDancerVerificationLockedToProfile = false;
       if (step === "profile") ensureActiveDancerProfile("Pending");
       if (step === "approval") ensureActiveDancerProfile("Verified");
-      activeSetupStep = nextIncompleteStep() || step;
+      activeSetupStep = options.keepOpen ? step : (nextIncompleteStep() || step);
       renderDancerSetup();
     }
 
@@ -49694,6 +49694,9 @@
     }
 
     function applyDancerApprovalProfile(profile) {
+      const expandedStepBeforeApply = setupChecklistExpanded && setupOrder().includes(activeSetupStep)
+        ? activeSetupStep
+        : "";
       const approved = dancerCoreApprovalUnlocked(profile);
       const rejected = isRejectedDancerStatus(profile.status);
       const submittedForReview = normalizedReviewStatus(profile.status) === "pending_review";
@@ -49740,8 +49743,8 @@
       });
 
       if (approved) markDancerProfileSetupSaved(true);
-      setupChecklistExpanded = rejected || !approved;
-      activeSetupStep = rejected ? "approval" : (nextIncompleteStep() || (approved ? "approval" : "profile"));
+      setupChecklistExpanded = Boolean(expandedStepBeforeApply) || rejected || !approved;
+      activeSetupStep = expandedStepBeforeApply || (rejected ? "approval" : (nextIncompleteStep() || (approved ? "approval" : "profile")));
       ensureLocalDancerApprovalNotification(profile);
 
       const localProfile = ensureActiveDancerProfile(approved ? "Verified" : rejected ? "Rejected" : "Pending");
@@ -50099,9 +50102,9 @@
         }
         dancerSetup.photos = dancerProfileMediaModerationComplete(profile)
           || (approvedUploads.length > 0 && reviewUploads.length === 0 && rejectedUploads.length === 0 && unresolvedUploads.length === 0);
-        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "review") : "profile";
+        activeSetupStep = "profile";
         await hydrateDancerApprovalProgress();
-        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "review") : "profile";
+        activeSetupStep = "profile";
         const message = setupPhotoModerationResultMessage({
           approvedCount: approvedUploads.length,
           reviewCount: reviewUploads.length,
@@ -57695,7 +57698,7 @@
         } else {
           markDancerProfileSetupSaved(true);
         }
-        completeSetupStep("profile");
+        completeSetupStep("profile", { keepOpen: true });
       } catch (error) {
         showToast(error.message || "Could not save live profile");
       } finally {

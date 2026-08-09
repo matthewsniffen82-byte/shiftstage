@@ -124,10 +124,31 @@ test("real setup steps advance only after their production save succeeds", () =>
     liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
 
   assert.ok(profileSubmitStart >= 0, "profile save handler must exist");
-  assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile")'));
+  assert.ok(profileSubmit.indexOf('await patchAuthenticatedJson("/api/dancer/profile"') < profileSubmit.indexOf('completeSetupStep("profile"'));
   assert.ok(photoSubmit.indexOf("await Promise.allSettled") < photoSubmit.indexOf("dancerSetup.photos = dancerProfileMediaModerationComplete"));
   assert.match(liveAppSource, /return \["profile", "review", "approval"\]/);
   assert.doesNotMatch(liveAppSource, /\/api\/dancer\/identity-verification/);
+});
+
+test("Step 1 remains open after every profile and media action", () => {
+  const profileHydrator =
+    liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
+  const completion =
+    liveAppSource.match(/function completeSetupStep[\s\S]*?\n    function dancerProfileSetupStorageKey/)?.[0] || "";
+  const profileSubmitStart = liveAppSource.indexOf('const form = event.target.closest("[data-setup-form=\'profile\']")');
+  const profileSubmitEnd = liveAppSource.indexOf('document.addEventListener("click"', profileSubmitStart);
+  const profileSubmit = liveAppSource.slice(profileSubmitStart, profileSubmitEnd);
+  const photoSubmit =
+    liveAppSource.match(/async function submitSetupPhotos[\s\S]*?\n    async function submitDancerProfileForReview/)?.[0] || "";
+
+  assert.match(profileHydrator, /expandedStepBeforeApply/);
+  assert.match(profileHydrator, /setupChecklistExpanded && setupOrder\(\)\.includes\(activeSetupStep\)/);
+  assert.match(profileHydrator, /setupChecklistExpanded = Boolean\(expandedStepBeforeApply\) \|\| rejected \|\| !approved/);
+  assert.match(profileHydrator, /activeSetupStep = expandedStepBeforeApply \|\|/);
+  assert.match(completion, /options\.keepOpen \? step : \(nextIncompleteStep\(\) \|\| step\)/);
+  assert.match(profileSubmit, /completeSetupStep\("profile", \{ keepOpen: true \}\)/);
+  assert.doesNotMatch(photoSubmit, /activeSetupStep = dancerSetup\.photos \?/);
+  assert.match(photoSubmit, /activeSetupStep = "profile";[\s\S]*?await hydrateDancerApprovalProgress\(\);[\s\S]*?activeSetupStep = "profile";/);
 });
 
 test("background dashboard refreshes do not replace Step 1 while the dancer is typing", () => {
