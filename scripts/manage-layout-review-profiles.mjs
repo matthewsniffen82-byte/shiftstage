@@ -9,6 +9,8 @@ import {
 const DATASET_MARKER = "mydancr-layout-review-v1";
 const PROFILE_PREFIX = "layout-review-";
 const EMAIL_DOMAIN = "synthetic.mydancr.invalid";
+const PREVIOUSLY_PUBLIC_PROFILE_SLUG = "lvdegen11";
+const PREVIOUSLY_PUBLIC_PROFILE_NAME = "star";
 const PRODUCTION_PROFILE_COUNT = 10;
 const DEFAULT_COUNT = PRODUCTION_PROFILE_COUNT;
 const MAX_COUNT = PROFILE_DEFINITIONS.length;
@@ -59,6 +61,8 @@ if (mode === "inspect") {
   await syncSchedulesOnly();
 } else if (mode === "sync-no-schedule") {
   await syncNoScheduleOnly();
+} else if (mode === "restore-public") {
+  await restorePublicTestContent();
 } else {
   await cleanupDataset();
 }
@@ -348,6 +352,168 @@ async function syncNoScheduleOnly() {
     })),
     remainingShifts,
   });
+}
+
+async function restorePublicTestContent() {
+  const datasetProfiles = await listDatasetProfiles();
+  const expectedDatasetSlugs = new Set(
+    Array.from({ length: count }, (_, index) => profileDefinition(index).slug),
+  );
+  const unexpectedDatasetSlugs = datasetProfiles
+    .map((profile) => String(profile.slug || ""))
+    .filter((slug) => !expectedDatasetSlugs.has(slug));
+  const missingDatasetSlugs = [...expectedDatasetSlugs].filter(
+    (slug) => !datasetProfiles.some((profile) => profile.slug === slug),
+  );
+  if (unexpectedDatasetSlugs.length || missingDatasetSlugs.length) {
+    throw new Error(
+      `Refusing public restore because the marked dataset differs from the requested set (missing: ${missingDatasetSlugs.join(", ") || "none"}; unexpected: ${unexpectedDatasetSlugs.join(", ") || "none"}).`,
+    );
+  }
+  for (const profile of datasetProfiles) {
+    await assertMarkedDatasetAccount(profile);
+  }
+
+  const previouslyPublicProfile = await loadPreviouslyPublicProfile();
+  const targets = [...datasetProfiles, previouslyPublicProfile];
+  const blockedTargets = targets.filter(
+    (profile) => profile.disabled_at || ["disabled", "rejected"].includes(String(profile.status || "").toLowerCase()),
+  );
+  if (blockedTargets.length) {
+    throw new Error(
+      `Refusing to override disabled or rejected profiles: ${blockedTargets.map((profile) => profile.slug).join(", ")}.`,
+    );
+  }
+
+  const snapshots = targets.map((profile) => ({
+    id: profile.id,
+    approved_at: profile.approved_at,
+    disabled_at: profile.disabled_at,
+    is_public: profile.is_public,
+    photo_review_status: profile.photo_review_status,
+    status: profile.status,
+    updated_at: profile.updated_at,
+    verification_status: profile.verification_status,
+  }));
+  const approvedAt = new Date().toISOString();
+
+  try {
+    for (const profile of targets) {
+      const { data, error } = await admin
+        .from("dancer_profiles")
+        .update({
+          approved_at: approvedAt,
+          disabled_at: null,
+          is_public: true,
+          photo_review_status: "approved",
+          status: "approved",
+          updated_at: approvedAt,
+          verification_status: "approved",
+        })
+        .eq("id", profile.id)
+        .eq("user_id", profile.user_id)
+        .select("id")
+        .maybeSingle();
+      assertSuccess(error, `restore public profile ${profile.slug}`);
+      if (!data) throw new Error(`Profile ${profile.slug} changed before it could be restored.`);
+    }
+
+    const verification = await verifyPublicTestContent(targets);
+    writeResult({
+      mode,
+      target,
+      datasetMarker: DATASET_MARKER,
+      restoredProfiles: verification.profiles,
+      approvedPhotos: verification.approvedPhotos,
+      approvedVideos: verification.approvedVideos,
+      preservedHiddenVideos: verification.hiddenVideos,
+    });
+  } catch (error) {
+    await rollbackProfileApprovalSnapshots(snapshots);
+    throw error;
+  }
+}
+
+async function loadPreviouslyPublicProfile() {
+  const { data, error } = await admin
+    .from("dancer_profiles")
+    .select("id, user_id, slug, stage_name, status, verification_status, photo_review_status, approved_at, disabled_at, is_public, updated_at")
+    .eq("slug", PREVIOUSLY_PUBLIC_PROFILE_SLUG)
+    .maybeSingle();
+  assertSuccess(error, `load ${PREVIOUSLY_PUBLIC_PROFILE_SLUG}`);
+  if (
+    !data ||
+    String(data.stage_name || "").trim().toLowerCase() !== PREVIOUSLY_PUBLIC_PROFILE_NAME
+  ) {
+    throw new Error(`The previously public ${PREVIOUSLY_PUBLIC_PROFILE_SLUG} profile is missing or does not match.`);
+  }
+  return data;
+}
+
+async function verifyPublicTestContent(targets) {
+  const targetIds = targets.map((profile) => profile.id);
+  const [{ data: profiles, error: profileError }, { data: photos, error: photoError }, { data: videos, error: videoError }] =
+    await Promise.all([
+      admin
+        .from("dancer_profiles")
+        .select("id, slug, status, verification_status, photo_review_status, approved_at, disabled_at, is_public")
+        .in("id", targetIds),
+      admin
+        .from("dancer_photos")
+        .select("id, dancer_id")
+        .in("dancer_id", targetIds)
+        .eq("review_status", "approved"),
+      admin
+        .from("mydancr_tv_videos")
+        .select("id, dancer_id, status")
+        .in("dancer_id", targetIds)
+        .in("status", ["approved", "hidden"]),
+    ]);
+  assertSuccess(profileError, "verify restored public profiles");
+  assertSuccess(photoError, "verify approved public profile photos");
+  assertSuccess(videoError, "verify preserved public profile videos");
+
+  if ((profiles || []).length !== targets.length) {
+    throw new Error(`Expected ${targets.length} restored profiles but found ${(profiles || []).length}.`);
+  }
+  const ineligible = (profiles || []).filter(
+    (profile) =>
+      profile.status !== "approved" ||
+      profile.verification_status !== "approved" ||
+      profile.photo_review_status !== "approved" ||
+      !profile.approved_at ||
+      profile.disabled_at ||
+      profile.is_public !== true,
+  );
+  if (ineligible.length) {
+    throw new Error(`Public profile verification failed for ${ineligible.map((profile) => profile.slug).join(", ")}.`);
+  }
+  const profilesWithoutPhotos = targetIds.filter(
+    (profileId) => !(photos || []).some((photo) => photo.dancer_id === profileId),
+  );
+  if (profilesWithoutPhotos.length) {
+    throw new Error(`${profilesWithoutPhotos.length} restored profiles have no approved photo.`);
+  }
+
+  return {
+    profiles: (profiles || []).map((profile) => profile.slug).sort(),
+    approvedPhotos: (photos || []).length,
+    approvedVideos: (videos || []).filter((video) => video.status === "approved").length,
+    hiddenVideos: (videos || []).filter((video) => video.status === "hidden").length,
+  };
+}
+
+async function rollbackProfileApprovalSnapshots(snapshots) {
+  for (const snapshot of [...snapshots].reverse()) {
+    const { id, ...values } = snapshot;
+    const { error } = await admin.from("dancer_profiles").update(values).eq("id", id);
+    if (error) {
+      console.error("PUBLIC_TEST_CONTENT_ROLLBACK_FAILED", {
+        id,
+        message: error.message,
+      });
+    }
+  }
 }
 
 async function cleanupDataset() {
@@ -931,11 +1097,12 @@ function readMode(argumentsMap) {
     "--sync-deals",
     "--sync-schedules",
     "--sync-no-schedule",
+    "--restore-public",
     "--cleanup",
   ].filter((flag) => argumentsMap.has(flag));
   if (selected.length !== 1) {
     throw new Error(
-      "Choose exactly one mode: --inspect, --apply, --sync-deals, --sync-schedules, --sync-no-schedule, or --cleanup.",
+      "Choose exactly one mode: --inspect, --apply, --sync-deals, --sync-schedules, --sync-no-schedule, --restore-public, or --cleanup.",
     );
   }
   return selected[0].slice(2);

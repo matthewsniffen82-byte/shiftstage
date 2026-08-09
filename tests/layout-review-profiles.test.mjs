@@ -118,6 +118,36 @@ test("layout-review approval supports the deployed auto-approval schema", () => 
   );
 });
 
+test("the guarded public restore re-enables only the known test profiles and approved media", () => {
+  assert.match(scriptSource, /const PREVIOUSLY_PUBLIC_PROFILE_SLUG = "lvdegen11"/);
+  assert.match(scriptSource, /const PREVIOUSLY_PUBLIC_PROFILE_NAME = "star"/);
+  assert.match(scriptSource, /mode === "restore-public"[\s\S]*?restorePublicTestContent\(\)/);
+  assert.match(
+    scriptSource,
+    /async function restorePublicTestContent[\s\S]*?expectedDatasetSlugs[\s\S]*?assertMarkedDatasetAccount\(profile\)[\s\S]*?loadPreviouslyPublicProfile\(\)/,
+  );
+  assert.match(
+    scriptSource,
+    /blockedTargets[\s\S]*?Refusing to override disabled or rejected profiles/,
+  );
+  assert.match(
+    scriptSource,
+    /status: "approved"[\s\S]*?verification_status: "approved"[\s\S]*?verifyPublicTestContent\(targets\)/,
+  );
+  assert.match(
+    scriptSource,
+    /\.from\("mydancr_tv_videos"\)[\s\S]*?\.in\("status", \["approved", "hidden"\]\)[\s\S]*?approvedVideos[\s\S]*?hiddenVideos/,
+  );
+  assert.match(
+    scriptSource,
+    /catch \(error\) \{[\s\S]*?rollbackProfileApprovalSnapshots\(snapshots\)/,
+  );
+  assert.doesNotMatch(
+    scriptSource.match(/async function restorePublicTestContent[\s\S]*?async function cleanupDataset/)?.[0] || "",
+    /\.from\("mydancr_tv_videos"\)\s*\.update/,
+  );
+});
+
 test("layout-review schedules and rollback support the deployed production schema", () => {
   const scheduleFunction = scriptSource.match(
     /async function replaceProfileSchedule[\s\S]*?\r?\n}\r?\n\r?\nasync function listDatasetProfiles/,
