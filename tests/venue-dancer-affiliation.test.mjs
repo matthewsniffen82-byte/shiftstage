@@ -96,6 +96,13 @@ test("check-ins and dancer-attributed commission require an active venue affilia
 
 test("dancer and venue dashboards expose the complete one-tap verification flow", () => {
   assert.match(dashboard, /Show my verification QR/);
+  assert.match(dashboard, /Scan Dancer QR/);
+  assert.match(dashboard, /import\("@zxing\/browser"\)/);
+  assert.match(dashboard, /facingMode: \{ ideal: "environment" \}/);
+  assert.match(dashboard, /Camera access was blocked/);
+  assert.match(dashboard, /Enter code instead/);
+  assert.match(dashboard, /parseVenueVerificationToken/);
+  assert.match(dashboard, /\^\[A-Za-z0-9_-\]\{43\}\$/);
   assert.match(dashboard, /Confirm she works here/);
   assert.match(liveApp, /Manage where you work/);
   assert.match(liveApp, /Verify your first venue/);

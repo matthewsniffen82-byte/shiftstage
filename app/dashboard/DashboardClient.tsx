@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -3362,8 +3362,14 @@ function VenueDancerVerificationPanel({
   const [affiliations, setAffiliations] = useState(initialAffiliations);
   const [verification, setVerification] = useState<Record<string, any> | null>(null);
   const [token, setToken] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [manualValue, setManualValue] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
   const [status, setStatus] = useState("Scan a dancer's personal MyDancr QR to verify her affiliation.");
   const [isSaving, setIsSaving] = useState(false);
+  const scannerVideoRef = useRef<HTMLVideoElement>(null);
+  const scannerControlsRef = useRef<{ stop: () => void } | null>(null);
 
   const load = useCallback(async (verificationToken = "") => {
     const session = readSession();
@@ -3385,6 +3391,44 @@ function VenueDancerVerificationPanel({
       : "Scan a dancer's personal MyDancr QR to verify her affiliation.");
   }, []);
 
+  const stopScannerHardware = useCallback(() => {
+    scannerControlsRef.current?.stop();
+    scannerControlsRef.current = null;
+    const stream = scannerVideoRef.current?.srcObject as MediaStream | null | undefined;
+    if (stream && typeof stream.getTracks === "function") stream.getTracks().forEach((track) => track.stop());
+    if (scannerVideoRef.current) scannerVideoRef.current.srcObject = null;
+  }, []);
+
+  const closeScanner = useCallback(() => {
+    stopScannerHardware();
+    setScannerOpen(false);
+    setIsScanning(false);
+  }, [stopScannerHardware]);
+
+  const previewVerificationValue = useCallback(async (rawValue: string) => {
+    const verificationToken = parseVenueVerificationToken(rawValue);
+    if (!verificationToken) {
+      setStatus("That is not a current MyDancr dancer verification QR or code.");
+      return false;
+    }
+
+    closeScanner();
+    setManualEntryOpen(false);
+    setManualValue("");
+    setToken(verificationToken);
+    setVerification(null);
+    setStatus("Loading the dancer's verification details...");
+    try {
+      await load(verificationToken);
+      return true;
+    } catch (error) {
+      setToken("");
+      setVerification(null);
+      setStatus(error instanceof Error ? error.message : "Unable to load dancer verification.");
+      return false;
+    }
+  }, [closeScanner, load]);
+
   useEffect(() => setAffiliations(initialAffiliations), [initialAffiliations]);
 
   useEffect(() => {
@@ -3396,6 +3440,77 @@ function VenueDancerVerificationPanel({
       setStatus(error instanceof Error ? error.message : "Unable to load dancer verification.");
     });
   }, [load]);
+
+  useEffect(() => {
+    if (!scannerOpen) return;
+    let cancelled = false;
+
+    async function openCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setScannerOpen(false);
+        setIsScanning(false);
+        setManualEntryOpen(true);
+        setStatus("Camera scanning is not available in this browser. Paste the dancer's verification link or code below.");
+        return;
+      }
+
+      try {
+        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+        const video = scannerVideoRef.current;
+        if (!video || cancelled) return;
+        const { BrowserQRCodeReader } = await import("@zxing/browser");
+        const reader = new BrowserQRCodeReader(undefined, { delayBetweenScanAttempts: 250 });
+        const controls = await reader.decodeFromConstraints(
+          { audio: false, video: { facingMode: { ideal: "environment" } } },
+          video,
+          (result, _error, activeControls) => {
+            if (!result) return;
+            activeControls.stop();
+            scannerControlsRef.current = null;
+            void previewVerificationValue(result.getText());
+          },
+        );
+        if (cancelled) {
+          controls.stop();
+          return;
+        }
+        scannerControlsRef.current = controls;
+        setStatus("Point the camera at the dancer's current MyDancr QR.");
+      } catch (error) {
+        if (cancelled) return;
+        stopScannerHardware();
+        setScannerOpen(false);
+        setIsScanning(false);
+        setManualEntryOpen(true);
+        const denied = error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "SecurityError");
+        setStatus(denied
+          ? "Camera access was blocked. Allow camera access and try again, or paste the dancer's verification link or code below."
+          : "The camera could not start. Use your phone Camera app to scan the QR, or paste the verification link or code below.");
+      }
+    }
+
+    void openCamera();
+    return () => {
+      cancelled = true;
+      stopScannerHardware();
+    };
+  }, [previewVerificationValue, scannerOpen, stopScannerHardware]);
+
+  useEffect(() => () => stopScannerHardware(), [stopScannerHardware]);
+
+  function startScanner() {
+    setVerification(null);
+    setToken("");
+    setManualEntryOpen(false);
+    setScannerOpen(true);
+    setIsScanning(true);
+    setStatus("Starting the secure QR scanner...");
+  }
+
+  function submitManualValue(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void previewVerificationValue(manualValue);
+  }
 
   async function approve() {
     const session = readSession();
@@ -3453,6 +3568,53 @@ function VenueDancerVerificationPanel({
       <span className="eyebrow">Verified roster</span>
       <h2>Confirm dancer affiliations</h2>
       <p>The dancer shows her short-lived personal QR. Scan it, match the profile photo and stage name, then approve once.</p>
+      <div className="venue-verification-actions">
+        <button className="venue-verification-scan-button" type="button" disabled={isSaving || isScanning} onClick={startScanner}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 8h3v3H8zm5 0h3v3h-3zm-5 5h3v3H8zm5 0h3v3h-3z" />
+          </svg>
+          <span><strong>{isScanning ? "Opening camera..." : "Scan Dancer QR"}</strong><small>{"Use this device's camera"}</small></span>
+        </button>
+        <button className="venue-verification-manual-toggle" type="button" disabled={isSaving} onClick={() => {
+          closeScanner();
+          setManualEntryOpen((current) => !current);
+        }}>
+          {manualEntryOpen ? "Hide code entry" : "Enter code instead"}
+        </button>
+      </div>
+      {scannerOpen ? (
+        <section className="venue-verification-scanner" aria-label="Dancer QR scanner">
+          <div className="venue-verification-video-wrap">
+            <video ref={scannerVideoRef} muted playsInline aria-label="Camera preview for scanning dancer QR code" />
+            <span aria-hidden="true" />
+          </div>
+          <div>
+            <strong>{"Scan the dancer's current QR"}</strong>
+            <small>Keep the full code inside the frame. The camera closes automatically after a valid scan.</small>
+            <button type="button" onClick={closeScanner}>Cancel scanner</button>
+          </div>
+        </section>
+      ) : null}
+      {manualEntryOpen ? (
+        <form className="venue-verification-manual" onSubmit={submitManualValue}>
+          <label htmlFor="venue-verification-code">Verification link or code</label>
+          <div>
+            <input
+              id="venue-verification-code"
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={500}
+              value={manualValue}
+              onChange={(event) => setManualValue(event.target.value)}
+              placeholder="Paste the dancer's verification link or code"
+              required
+            />
+            <button type="submit" disabled={isSaving || !manualValue.trim()}>Review dancer</button>
+          </div>
+        </form>
+      ) : null}
       {verification ? (
         <section className="venue-verification-preview" aria-label="Dancer verification confirmation">
           <span className="venue-verification-avatar">
@@ -3491,6 +3653,18 @@ function clearVenueVerificationQuery() {
   url.searchParams.delete("venueVerify");
   url.searchParams.delete("verifyDancer");
   window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+}
+
+function parseVenueVerificationToken(rawValue: string) {
+  const value = rawValue.trim();
+  if (/^[A-Za-z0-9_-]{43}$/.test(value)) return value;
+  try {
+    const url = new URL(value, window.location.origin);
+    const token = (url.searchParams.get("venueVerify") || url.searchParams.get("verifyDancer") || "").trim();
+    return /^[A-Za-z0-9_-]{43}$/.test(token) ? token : "";
+  } catch {
+    return "";
+  }
 }
 
 function formatVerificationExpiry(value: string) {
@@ -5202,6 +5376,27 @@ function DashboardStyles() {
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
       .venue-verification-panel { display: grid; gap: 14px; border-color: rgba(34,211,238,.24); background: radial-gradient(circle at 100% 0%, rgba(34,211,238,.09), transparent 26rem), rgba(12,12,18,.88); }
       .venue-verification-panel > p { margin: 0; color: #cfc5de; line-height: 1.5; }
+      .venue-verification-actions { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(150px, .7fr); gap: 10px; }
+      .venue-verification-scan-button, .venue-verification-manual-toggle, .venue-verification-scanner button, .venue-verification-manual button { min-height: 48px; border: 1px solid var(--dancr-color-brand-primary-strong); border-radius: 8px; color: var(--dancr-color-text-primary); background: linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep)); padding: 0 16px; font: inherit; font-weight: 950; cursor: pointer; box-shadow: var(--dancr-shadow-brand-control); }
+      .venue-verification-scan-button { display: flex; align-items: center; justify-content: center; gap: 12px; text-align: left; }
+      .venue-verification-scan-button svg { width: 28px; height: 28px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .venue-verification-scan-button > span { display: grid; gap: 2px; }
+      .venue-verification-scan-button strong { color: var(--dancr-color-text-primary); }
+      .venue-verification-scan-button small { color: var(--dancr-color-brand-core); font-size: 11px; font-weight: 800; }
+      .venue-verification-manual-toggle, .venue-verification-scanner button { border-color: var(--dancr-color-border-subtle); color: var(--dancr-color-text-secondary); background: var(--dancr-color-surface-soft); box-shadow: none; }
+      .venue-verification-scan-button:disabled, .venue-verification-manual-toggle:disabled, .venue-verification-scanner button:disabled, .venue-verification-manual button:disabled { opacity: .55; cursor: wait; }
+      .venue-verification-scan-button:focus-visible, .venue-verification-manual-toggle:focus-visible, .venue-verification-scanner button:focus-visible, .venue-verification-manual button:focus-visible, .venue-verification-manual input:focus-visible { outline: 2px solid var(--dancr-color-brand-core); outline-offset: 2px; }
+      .venue-verification-scanner { display: grid; grid-template-columns: minmax(180px, 320px) minmax(0, 1fr); align-items: center; gap: 16px; padding: 14px; border: 1px solid var(--dancr-color-brand-primary-medium); border-radius: 12px; background: var(--dancr-color-background); }
+      .venue-verification-video-wrap { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid var(--dancr-color-white-medium); border-radius: 8px; background: var(--dancr-color-background); }
+      .venue-verification-video-wrap video { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .venue-verification-video-wrap > span { position: absolute; inset: 13%; border: 2px solid var(--dancr-color-brand-core); border-radius: 8px; box-shadow: 0 0 0 999px var(--dancr-color-black-medium), var(--dancr-shadow-beam-active); pointer-events: none; }
+      .venue-verification-scanner > div:last-child { display: grid; gap: 9px; }
+      .venue-verification-scanner strong { color: var(--dancr-color-text-primary); font-size: 18px; }
+      .venue-verification-scanner small { color: var(--dancr-color-text-secondary); line-height: 1.45; }
+      .venue-verification-manual { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--dancr-color-border-subtle); border-radius: 10px; background: var(--dancr-color-surface-soft); }
+      .venue-verification-manual label { color: var(--dancr-color-text-secondary); font-size: 13px; font-weight: 900; }
+      .venue-verification-manual > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+      .venue-verification-manual input { min-height: 48px; min-width: 0; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: var(--dancr-color-text-primary); background: var(--dancr-color-surface); padding: 0 12px; font: inherit; }
       .venue-verification-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
       .venue-verification-controls label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .venue-verification-controls select { min-height: 46px; width: 100%; border: 1px solid rgba(34,211,238,.28); border-radius: 8px; color: #fff; background: #11111a; padding: 0 12px; font: inherit; }
@@ -5222,8 +5417,8 @@ function DashboardStyles() {
       .venue-verification-preview { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(50,255,164,.3); border-radius: 12px; background: rgba(50,255,164,.055); }
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
-      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
+      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .customer-top-nav { align-items: center; flex-direction: row; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-dashboard-head h1 { font-size: 34px; } .notification-title-row { align-items: flex-start; } }
     `}</style>
   );
