@@ -16,6 +16,15 @@ import {
   getDistributedVideoFrameSampling,
   parseFfmpegDuration,
 } from "./video-frame-sampling";
+import {
+  fingerprintMusicSamples,
+  getMusicFingerprintSampleOffsets,
+  MAX_MUSIC_FINGERPRINT_SAMPLES,
+  MUSIC_FINGERPRINT_PROVIDER_MODEL,
+  MUSIC_FINGERPRINT_SAMPLE_SECONDS,
+  type MusicFingerprintResult,
+  type MusicFingerprintSample,
+} from "./music-fingerprinting";
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -40,6 +49,7 @@ export type MyDancrTvModerationResult = {
     audioChecked: boolean;
     videoDurationSeconds: number;
     frameSampling: "distributed_across_video";
+    musicFingerprint: MusicFingerprintResult["details"];
   };
 };
 
@@ -91,15 +101,21 @@ export async function moderateStoredMyDancrTvVideo(
     const videoDurationSeconds = await probeVideoDurationSeconds(videoPath);
     const frames = await extractVideoFrames(videoPath, workspace, videoDurationSeconds);
     const audioPath = await extractOptionalAudio(videoPath, workspace);
-    const transcript = audioPath ? await transcribeAudio(openai, audioPath) : "";
-    const frameResults = await moderateFrames(openai, frames);
+    const musicSamples = audioPath
+      ? await extractMusicFingerprintSamples(audioPath, workspace, videoDurationSeconds)
+      : [];
+    const [transcript, frameResults, musicFingerprint] = await Promise.all([
+      audioPath ? transcribeAudio(openai, audioPath) : Promise.resolve(""),
+      moderateFrames(openai, frames),
+      fingerprintMusicSamples(musicSamples),
+    ]);
     const textResult = await moderateText(openai, buildModerationText(input.caption, transcript));
     const policyDecision = await classifyVideoPolicy(openai, frames, input.caption, transcript);
     const frameEvaluations = frameResults.map((result) => evaluateDancrImageModeration(result));
     const textEvaluation = evaluateDancrImageModeration(textResult);
     const evaluations = [...frameEvaluations, textEvaluation];
     const providerDecision = strongestDecision(evaluations.map((evaluation) => evaluation.decision));
-    const decision = combineVideoDecisions(providerDecision, policyDecision);
+    const decision = combineVideoDecisions(providerDecision, policyDecision, musicFingerprint.decision);
     const reasonCodes = uniqueReasonCodes([
       ...evaluations.flatMap((evaluation, index) =>
         evaluation.reasonCodes.map((reason) =>
@@ -107,6 +123,7 @@ export async function moderateStoredMyDancrTvVideo(
         ),
       ),
       ...policyDecision.reasonCodes.map((reason) => `policy_${reason}`),
+      ...musicFingerprint.reasonCodes,
     ]);
 
     const result = {
@@ -115,7 +132,7 @@ export async function moderateStoredMyDancrTvVideo(
       categoryScores: maximumCategoryScores(evaluations.map((evaluation) => evaluation.categoryScores)),
       providerFlagged: evaluations.some((evaluation) => evaluation.providerFlagged),
       frameCount: frames.length,
-      moderationModel: `${DANCR_IMAGE_MODERATION_MODEL}+${VIDEO_POLICY_MODEL}`,
+      moderationModel: `${DANCR_IMAGE_MODERATION_MODEL}+${VIDEO_POLICY_MODEL}+${MUSIC_FINGERPRINT_PROVIDER_MODEL}`,
       details: {
         frameDecisions: frameEvaluations.map((evaluation) => evaluation.decision),
         textDecision: textEvaluation.decision,
@@ -124,6 +141,7 @@ export async function moderateStoredMyDancrTvVideo(
         audioChecked: Boolean(audioPath),
         videoDurationSeconds: Number(videoDurationSeconds.toFixed(3)),
         frameSampling: "distributed_across_video" as const,
+        musicFingerprint: musicFingerprint.details,
       },
     } satisfies MyDancrTvModerationResult;
 
@@ -137,6 +155,8 @@ export async function moderateStoredMyDancrTvVideo(
       audioChecked: result.details.audioChecked,
       videoDurationSeconds: result.details.videoDurationSeconds,
       frameSampling: result.details.frameSampling,
+      musicFingerprintStatus: result.details.musicFingerprint.status,
+      musicMatchFound: result.details.musicFingerprint.matchFound,
       moderationModel: result.moderationModel,
     }));
     return result;
@@ -148,12 +168,17 @@ export async function moderateStoredMyDancrTvVideo(
 function combineVideoDecisions(
   providerDecision: DancrImageModerationDecision,
   policyDecision: VideoPolicyDecision,
+  musicDecision: MusicFingerprintResult["decision"],
 ): DancrImageModerationDecision {
   if (providerDecision === "rejected") return "rejected";
   if (policyDecision.decision === "rejected") {
     return policyDecision.confidence >= VIDEO_POLICY_REJECT_CONFIDENCE ? "rejected" : "review";
   }
-  if (providerDecision === "review" || policyDecision.decision === "review") return "review";
+  if (
+    providerDecision === "review" ||
+    policyDecision.decision === "review" ||
+    musicDecision === "review"
+  ) return "review";
   return policyDecision.confidence >= VIDEO_POLICY_APPROVE_CONFIDENCE ? "approved" : "review";
 }
 
@@ -243,6 +268,47 @@ async function extractOptionalAudio(videoPath: string, workspace: string) {
   ], { allowNoOutput: true });
   const audioStat = await stat(audioPath).catch(() => null);
   return audioStat?.size ? audioPath : null;
+}
+
+async function extractMusicFingerprintSamples(
+  audioPath: string,
+  workspace: string,
+  durationSeconds: number,
+): Promise<MusicFingerprintSample[]> {
+  const offsets = getMusicFingerprintSampleOffsets(
+    durationSeconds,
+    MUSIC_FINGERPRINT_SAMPLE_SECONDS,
+    MAX_MUSIC_FINGERPRINT_SAMPLES,
+  );
+  const samples = await Promise.all(offsets.map(async (offsetSeconds, index) => {
+    const samplePath = path.join(workspace, `music-sample-${index + 1}.mp3`);
+    await runFfmpeg([
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-ss",
+      offsetSeconds.toFixed(3),
+      "-i",
+      audioPath,
+      "-t",
+      String(MUSIC_FINGERPRINT_SAMPLE_SECONDS),
+      "-vn",
+      "-ac",
+      "1",
+      "-ar",
+      "16000",
+      "-b:a",
+      "48k",
+      samplePath,
+    ], { allowNoOutput: true });
+    const sampleStat = await stat(samplePath).catch(() => null);
+    return sampleStat?.size ? { path: samplePath, offsetSeconds } : null;
+  }));
+  const extracted = samples.filter((sample): sample is MusicFingerprintSample => Boolean(sample));
+  if (extracted.length !== offsets.length) {
+    throw new Error("Music fingerprint samples could not be extracted completely.");
+  }
+  return extracted;
 }
 
 async function transcribeAudio(openai: OpenAI, audioPath: string) {
