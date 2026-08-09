@@ -1693,10 +1693,13 @@ function VenuePanel({
   const venueName = String(profile?.name || "Your venue");
   const venueCity = String(profile?.city || "your city");
   const venueSlug = String(profile?.slug || "");
-  const activeDeal =
-    venueDeals.find((venueDeal) => venueDeal.isActive === true) ||
-    (deal?.isActive === true ? deal : null);
-  const activeDealTitle = String(activeDeal?.dealTitle || activeDeal?.title || "Club Deal");
+  const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
+  const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
+  const upcomingShiftCount = Number(analytics?.upcomingShiftCount || 0);
+  const verifiedDancerCount = initialAffiliations.length;
+  const liveDealSummary = activeDealCount
+    ? `${activeDealCount} live Club ${activeDealCount === 1 ? "Deal" : "Deals"}`
+    : "No live Club Deals";
 
   return (
     <>
@@ -1704,21 +1707,29 @@ function VenuePanel({
         <div className="venue-command-status">
           <span className="venue-live-pill">LIVE</span>
           <div>
-            <h2 id="venue-command-heading">{venueName} is live in {venueCity}</h2>
-            <p>Keep your venue page and Club Deal current so customers know what is available tonight.</p>
+            <h2 id="venue-command-heading">Tonight at {venueName}</h2>
+            <p>Run the floor, deals, and dancer roster for {venueCity} from one live workspace.</p>
           </div>
         </div>
         <div className="venue-command-primary">
-          <span className="eyebrow">Club Deal</span>
-          <strong>{activeDeal ? activeDealTitle : "No Club Deal posted"}</strong>
-          <p>{activeDeal ? "Your offer and tracked QR are live on MyDancr." : "Post an offer customers can open from your venue page."}</p>
-          <a className="primary-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
-            {activeDeal ? "Manage Club Deal" : "Post Club Deal"}
+          <span className="eyebrow">Tonight at a glance</span>
+          <strong>{liveDealSummary}</strong>
+          <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
+          <a className="primary-link" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
+            Verify dancer
           </a>
         </div>
       </section>
 
       <nav className="venue-dashboard-shortcuts" aria-label="Venue dashboard shortcuts">
+        <a className="is-primary" href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
+          <VenueDashboardActionIcon name="verify" />
+          <span><strong>Verify dancer</strong><small>Scan or enter code</small></span>
+        </a>
+        <a href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
+          <VenueDashboardActionIcon name="deal" />
+          <span><strong>Club Deals</strong><small>{liveDealSummary}</small></span>
+        </a>
         <a href="#venue-public-profile" onClick={(event) => openVenueSection(event, "venue-public-profile")}>
           <VenueDashboardActionIcon name="edit" />
           <span><strong>Edit venue</strong><small>Details and cover</small></span>
@@ -1734,21 +1745,62 @@ function VenuePanel({
             <span><strong>Complete venue</strong><small>Customer view</small></span>
           </a>
         )}
-        <a href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
-          <VenueDashboardActionIcon name="deal" />
-          <span><strong>Club Deals</strong><small>Offer and QR</small></span>
-        </a>
-        <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>
-          <VenueDashboardActionIcon name="verify" />
-          <span><strong>Verify dancer</strong><small>Venue roster</small></span>
-        </a>
       </nav>
 
-      <section className="venue-dashboard-metrics" aria-label="Venue performance summary">
-        <Metric label="Views today" value={String(analytics?.pageViewsToday || 0)} />
-        <Metric label="Followers" value={String(analytics?.totalFollowers || 0)} />
-        <Metric label="Directions" value={String(analytics?.directions30Days || 0)} />
+      <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance">
+        <Metric label="Working now" value={String(workingNow.length)} />
+        <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
+        <Metric label="Live Club Deals" value={String(activeDealCount)} />
+        <Metric label="Verified roster" value={String(verifiedDancerCount)} />
       </section>
+
+      <VenueDashboardSection
+        description="Scan a dancer QR or enter a verification code, then manage the roster allowed to appear in your venue feed."
+        eyebrow="Primary floor action"
+        id="venue-dancer-roster"
+        title="Verify dancer"
+        badge={`${verifiedDancerCount} verified`}
+      >
+        <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
+        description="Create offers, publish tracked QR codes, and review venue invoices."
+        eyebrow="Revenue"
+        id="venue-club-deals"
+        title="Club Deals & tracked QR"
+      >
+        <VenueClubDealPanel
+          finance={finance}
+          hasWorkingNowDancers={workingNow.length > 0}
+          initialDeal={deal}
+          initialDeals={venueDeals}
+          onDealsChange={onDealsChange}
+          revenue={dealRevenue}
+        />
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        badge={`${workingNow.length} active`}
+        description="Review verified dancers currently checked in at this venue and open their live profiles."
+        eyebrow="Floor status"
+        id="venue-working-now"
+        title="Working now"
+      >
+        <article className="info-panel venue-working-panel">
+          <h2>Verified check-ins</h2>
+          <div className="venue-working-list">
+            {workingNow.map((dancer) => (
+              <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
+                <strong>{String(dancer.stageName || "Dancer")}</strong>
+                <span>{String(dancer.locationStatus || "").replaceAll("_", " ")}</span>
+              </Link>
+            ))}
+            {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
+          </div>
+        </article>
+      </VenueDashboardSection>
 
       <VenueDashboardSection
         description="Customer reach, intent, live activity, and QR visibility."
@@ -1773,42 +1825,6 @@ function VenuePanel({
             <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
           </InfoPanel>
         </div>
-      </VenueDashboardSection>
-
-      <VenueDashboardSection
-        badge={`${venueDeals.length || (deal ? 1 : 0)} ${venueDeals.length === 1 || (!venueDeals.length && deal) ? "deal" : "deals"}`}
-        description="Create offers, publish tracked QR codes, and review venue invoices."
-        eyebrow="Revenue"
-        id="venue-club-deals"
-        title="Club Deals & tracked QR"
-      >
-        <VenueClubDealPanel
-          finance={finance}
-          hasWorkingNowDancers={workingNow.length > 0}
-          initialDeal={deal}
-          initialDeals={venueDeals}
-          onDealsChange={onDealsChange}
-          revenue={dealRevenue}
-        />
-      </VenueDashboardSection>
-
-      <VenueDashboardSection
-        description="Confirm dancer venue affiliations and manage the roster allowed to appear in your venue feed."
-        eyebrow="Affiliations"
-        id="venue-dancer-roster"
-        title="Dancer roster"
-        badge={`${initialAffiliations.length} verified`}
-      >
-        <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
-      </VenueDashboardSection>
-
-      <VenueDashboardSection
-        description="Review engagement for approved videos automatically connected by verified current shifts and posted upcoming shifts."
-        eyebrow="Video"
-        id="venue-tv"
-        title="MyDancr TV"
-      >
-        <VenueTvPanel />
       </VenueDashboardSection>
 
       <VenueDashboardSection
@@ -1884,24 +1900,12 @@ function VenuePanel({
       </VenueDashboardSection>
 
       <VenueDashboardSection
-        badge={`${workingNow.length} active`}
-        description="Review verified dancers currently checked in at this venue and open their live profiles."
-        eyebrow="Floor status"
-        id="venue-working-now"
-        title="Working now"
+        description="Review engagement for approved videos automatically connected by verified current shifts and posted upcoming shifts."
+        eyebrow="Video"
+        id="venue-tv"
+        title="MyDancr TV"
       >
-        <article className="info-panel venue-working-panel">
-          <h2>Verified check-ins</h2>
-          <div className="venue-working-list">
-            {workingNow.map((dancer) => (
-              <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
-                <strong>{String(dancer.stageName || "Dancer")}</strong>
-                <span>{String(dancer.locationStatus || "").replaceAll("_", " ")}</span>
-              </Link>
-            ))}
-            {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
-          </div>
-        </article>
+        <VenueTvPanel />
       </VenueDashboardSection>
 
     </>
@@ -5260,6 +5264,9 @@ function DashboardStyles() {
       .venue-dashboard-shortcuts > a:hover { border-color: rgba(255,255,255,.2); background: #15151d; }
       .venue-dashboard-shortcuts > a:active { transform: scale(.985); }
       .venue-dashboard-shortcuts > a:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+      .venue-dashboard-shortcuts > a.is-primary { border-color: rgba(126,234,255,.4); background: linear-gradient(135deg, rgba(126,234,255,.11), rgba(139,92,246,.11)); box-shadow: inset 3px 0 0 #7eeaff, 0 10px 24px rgba(0,0,0,.2); }
+      .venue-dashboard-shortcuts > a.is-primary svg { stroke: #7eeaff; }
+      .venue-dashboard-shortcuts > a.is-primary small { color: #bfefff; }
       .venue-dashboard-shortcuts svg { flex: 0 0 21px; width: 21px; height: 21px; fill: none; stroke: #d9d4e3; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .venue-dashboard-shortcuts span { min-width: 0; display: grid; gap: 3px; }
       .venue-dashboard-shortcuts strong { overflow: hidden; font-size: 15px; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
@@ -5269,6 +5276,7 @@ function DashboardStyles() {
       .venue-dashboard-metrics .metric:first-child { border-left: 0; }
       .venue-dashboard-metrics .metric strong { font-size: 22px; }
       .venue-dashboard-metrics .metric span { font-size: 10px; }
+      .venue-tonight-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; scroll-margin-top: 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
       .venue-dashboard-section > summary { min-height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 16px 18px; color: #f8fafc; cursor: pointer; list-style: none; }
       .venue-dashboard-section > summary::-webkit-details-marker { display: none; }
@@ -5649,6 +5657,9 @@ function DashboardStyles() {
         .venue-command-status { align-items: center; gap: 11px; }
         .venue-dashboard-shortcuts { gap: 10px; }
         .venue-dashboard-shortcuts > a { min-height: 78px; padding: 13px; }
+        .venue-tonight-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .venue-tonight-metrics .metric:nth-child(odd) { border-left: 0; }
+        .venue-tonight-metrics .metric:nth-child(n + 3) { border-top: 1px solid var(--mydancr-dashboard-border); }
         .venue-dashboard-metrics .metric { min-height: 62px; padding: 12px 10px; text-align: center; }
         .venue-dashboard-section > summary { min-height: 70px; padding: 14px; }
       }

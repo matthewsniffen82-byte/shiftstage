@@ -156,7 +156,7 @@ test("venue management is consolidated into one descriptive collapsible workspac
   assert.match(dashboardClient, /id="venue-account"[\s\S]*?title="Account & support"/);
   assert.match(dashboardClient, /id="venue-overview"[\s\S]*?title="Analytics & performance"/);
   assert.match(dashboardClient, /id="venue-club-deals"[\s\S]*?title="Club Deals & tracked QR"/);
-  assert.match(dashboardClient, /id="venue-dancer-roster"[\s\S]*?title="Dancer roster"/);
+  assert.match(dashboardClient, /id="venue-dancer-roster"[\s\S]*?title="Verify dancer"/);
   assert.match(dashboardClient, /id="venue-tv"[\s\S]*?title="MyDancr TV"/);
   assert.match(dashboardClient, /id="venue-public-profile"[\s\S]*?title="Public venue profile"/);
   assert.match(dashboardClient, /id="venue-working-now"[\s\S]*?title="Working now"/);
@@ -164,6 +164,34 @@ test("venue management is consolidated into one descriptive collapsible workspac
   assert.match(dashboardClient, /<VenueClubDealPanel[\s\S]*?hasWorkingNowDancers=\{workingNow\.length > 0\}[\s\S]*?initialDeal=\{deal\}[\s\S]*?initialDeals=\{venueDeals\}/);
   assert.match(dashboardClient, />Print sign<\/button>/);
   assert.match(dashboardClient, /<VenueTvPanel \/>/);
+});
+
+test("venue dashboard prioritizes tonight operations before management and reporting", () => {
+  const venuePanel = dashboardClient.match(
+    /function VenuePanel[\s\S]*?type VenueDealQrAsset/,
+  )?.[0] || "";
+
+  assert.match(venuePanel, /const dashboardDeals = venueDeals\.length \? venueDeals : deal \? \[deal\] : \[\]/);
+  assert.match(venuePanel, /const activeDealCount = dashboardDeals\.filter\(\(venueDeal\) => venueDeal\.isActive === true\)\.length/);
+  assert.match(venuePanel, /activeDealCount === 1 \? "Deal" : "Deals"/);
+  assert.match(venuePanel, /<h2 id="venue-command-heading">Tonight at \{venueName\}<\/h2>/);
+  assert.match(venuePanel, /className="is-primary" href="#venue-dancer-roster"/);
+  assert.match(venuePanel, /aria-label="Tonight at a glance"[\s\S]*?label="Working now"[\s\S]*?label="Upcoming shifts"[\s\S]*?label="Live Club Deals"[\s\S]*?label="Verified roster"/);
+
+  const rosterIndex = venuePanel.indexOf('id="venue-dancer-roster"');
+  const dealsIndex = venuePanel.indexOf('id="venue-club-deals"');
+  const workingIndex = venuePanel.indexOf('id="venue-working-now"');
+  const analyticsIndex = venuePanel.indexOf('id="venue-overview"');
+  const profileIndex = venuePanel.indexOf('id="venue-public-profile"');
+  const tvIndex = venuePanel.indexOf('id="venue-tv"');
+  assert.ok(rosterIndex > 0);
+  assert.ok(rosterIndex < dealsIndex);
+  assert.ok(dealsIndex < workingIndex);
+  assert.ok(workingIndex < analyticsIndex);
+  assert.ok(analyticsIndex < profileIndex);
+  assert.ok(profileIndex < tvIndex);
+  assert.match(dashboardClient, /\.venue-tonight-metrics \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
+  assert.match(dashboardClient, /\.venue-dashboard-shortcuts > a\.is-primary \{[\s\S]*?inset 3px 0 0 #7eeaff/);
 });
 
 test("venue offer button confirms only a successful database save", () => {
