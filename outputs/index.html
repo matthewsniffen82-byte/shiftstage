@@ -36535,9 +36535,9 @@
           </div>
         </details>
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
-          <span class="eyebrow">Step 3 · Venue affiliation</span>
-          <h3>Confirm where you work</h3>
-          <p>Your venue's verified manager scans your personal QR, matches your avatar and stage name, and confirms only that you are affiliated there. MyDancr handles profile and media moderation separately.</p>
+          <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
+          <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
+          <p id="dancerVenueVerificationDescription">Use a new personal QR whenever you add or switch clubs. Your already-approved profile stays live while affiliations change.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
@@ -37393,6 +37393,7 @@
     let activeVenueName = "Spearmint Rhino Las Vegas";
     let liveVenueDashboard = null;
     let liveDancerVenueVerification = null;
+    let dancerVenueVerificationRequest = null;
     let dancerVenueApprovalPollTimer = 0;
     let activeDancerVenueVerification = null;
     let activeVenueDancerVerification = null;
@@ -47750,7 +47751,6 @@
         }
         const wasApproved = dancerSetup.approval;
         await hydrateDancerApprovalProgress();
-        if (dancerSetup.review && !dancerSetup.approval) await loadDancerVenueVerification();
         if (!wasApproved && dancerSetup.approval) {
           stopDancerVenueApprovalPolling();
           showToast("Venue affiliation confirmed. Your profile is live.");
@@ -47770,10 +47770,16 @@
       const section = document.getElementById("dancerVenueVerificationSection");
       if (!section) return;
       const state = liveDancerVenueVerification || {};
+      const onboardingRequired = state.dancer?.onboardingRequired === true;
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const managerReadyVenues = venues.filter((venue) => venue.managerReady === true);
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Venue verification" : "Venue affiliation";
+      document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
+      document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
+        ? "Your first verified venue manager scan approves your profile, makes it live, and activates that club affiliation."
+        : "Use a new personal QR whenever you add or switch clubs. Your already-approved profile stays live while affiliations change.";
       const select = document.getElementById("dancerVenueVerificationVenue");
       const previousVenueId = select.value;
       select.innerHTML = venues.length
@@ -47821,26 +47827,32 @@
           : `${venue.name} is listed in ${dancerCity}, but its venue manager account must be activated before it can scan your QR.`;
     }
 
-    async function loadDancerVenueVerification({ quiet = false } = {}) {
-      if (!isDancerSession()) return null;
+    function loadDancerVenueVerification({ quiet = false } = {}) {
+      if (!isDancerSession()) return Promise.resolve(null);
+      if (dancerVenueVerificationRequest) return dancerVenueVerificationRequest;
       const status = document.getElementById("dancerVenueVerificationStatus");
       if (status && !quiet) status.textContent = "Loading venue verification…";
-      try {
-        liveDancerVenueVerification = await requestVenueAffiliationJson("/api/dancer/venue-verification");
-        renderDancerVenueVerification();
-        return liveDancerVenueVerification;
-      } catch (error) {
-        if (!quiet) {
-          const select = document.getElementById("dancerVenueVerificationVenue");
-          if (select) {
-            select.innerHTML = '<option value="">Unable to load venues</option>';
-            select.disabled = true;
+      dancerVenueVerificationRequest = (async () => {
+        try {
+          liveDancerVenueVerification = await requestVenueAffiliationJson("/api/dancer/venue-verification");
+          renderDancerVenueVerification();
+          return liveDancerVenueVerification;
+        } catch (error) {
+          if (!quiet) {
+            const select = document.getElementById("dancerVenueVerificationVenue");
+            if (select) {
+              select.innerHTML = '<option value="">Unable to load venues</option>';
+              select.disabled = true;
+            }
+            document.getElementById("dancerVenueVerificationCreate").disabled = true;
+            if (status) status.textContent = error.message || "Unable to load venue verification.";
           }
-          document.getElementById("dancerVenueVerificationCreate").disabled = true;
-          if (status) status.textContent = error.message || "Unable to load venue verification.";
+          return null;
+        } finally {
+          dancerVenueVerificationRequest = null;
         }
-        return null;
-      }
+      })();
+      return dancerVenueVerificationRequest;
     }
 
     function stopDancerVenueVerificationLifecycle() {

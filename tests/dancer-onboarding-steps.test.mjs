@@ -84,8 +84,9 @@ test("Step 3 is venue affiliation and cannot be completed by the dancer", () => 
   assert.match(order, /\["profile", "review", "approval"\]/);
   assert.match(completion, /verified venue manager completes this step by scanning your QR/i);
   assert.match(liveAppSource, /Confirm venue affiliation/);
-  assert.match(liveAppSource, /confirms only that you are affiliated/i);
-  assert.match(liveAppSource, /profile content is moderated separately by MyDancr/i);
+  assert.match(liveAppSource, /Step 3 · Venue verification/);
+  assert.match(liveAppSource, /first verified venue manager scan approves your profile/i);
+  assert.match(liveAppSource, /Manage where you work/);
 });
 
 test("profile setup rows stay readable and use restrained state cues", () => {
@@ -107,12 +108,12 @@ test("profile setup rows stay readable and use restrained state cues", () => {
   );
 });
 
-test("profile submission restores automatic activation after media checks", () => {
+test("profile submission stays private until the first verified venue scan", () => {
   const serverSubmit =
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
-  assert.match(serverSubmit, /automaticDancerApprovalValues\(\)/);
+  assert.match(serverSubmit, /pendingVenueApprovalValues\(\)/);
   assert.match(liveAppSource, /data-submit-review/);
-  assert.match(liveAppSource, /manager scan confirms that you are affiliated/i);
+  assert.match(liveAppSource, /profile remains private until Step 3 venue affiliation is confirmed/i);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {

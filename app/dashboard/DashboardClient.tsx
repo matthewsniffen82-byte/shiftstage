@@ -3086,49 +3086,59 @@ function DancerVenueVerificationPanel() {
   const [status, setStatus] = useState("Loading venue verification...");
   const [isSaving, setIsSaving] = useState(false);
   const [dancerCity, setDancerCity] = useState("your city");
+  const [onboardingRequired, setOnboardingRequired] = useState(false);
+  const loadInFlightRef = useRef<Promise<void> | null>(null);
 
-  const load = useCallback(async ({ quiet = false }: { quiet?: boolean } = {}) => {
-    const session = readSession();
-    if (!session?.accessToken) {
-      if (!quiet) setStatus("Sign in required.");
-      return null;
-    }
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
-    let response: Response;
-    try {
-      response = await fetch("/api/dancer/venue-verification", {
-        headers: { authorization: `Bearer ${session.accessToken}` },
-        cache: "no-store",
-        signal: controller.signal,
-      });
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") {
-        throw new Error("Venue verification took too long to load. Check your connection and try again.");
+  const load = useCallback(({ quiet = false }: { quiet?: boolean } = {}) => {
+    if (loadInFlightRef.current) return loadInFlightRef.current;
+    const request = (async () => {
+      const session = readSession();
+      if (!session?.accessToken) {
+        if (!quiet) setStatus("Sign in required.");
+        return null;
       }
-      throw error;
-    } finally {
-      window.clearTimeout(timeoutId);
-    }
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue verification.");
-    const availableVenues = Array.isArray(data.venues) ? data.venues : [];
-    const savedDancerCity = String(data.dancer?.city || "your city");
-    const readyVenues = availableVenues.filter((venue: Record<string, unknown>) => venue.managerReady === true);
-    setVenues(availableVenues);
-    setAffiliations(data.affiliations || []);
-    setDancerCity(savedDancerCity);
-    setVenueId((current) => availableVenues.some((venue: Record<string, unknown>) => String(venue.id) === current)
-      ? current
-      : String(readyVenues[0]?.id || availableVenues[0]?.id || ""));
-    if (!quiet) {
-      setStatus(readyVenues.length
-        ? `Choose a ${savedDancerCity} club marked Manager ready, then show the personal QR to its verified manager.`
-        : availableVenues.length
-          ? `${availableVenues.length} active ${savedDancerCity} venues found, but none have activated a venue manager account yet.`
-          : `No active venues are available in ${savedDancerCity} yet.`);
-    }
-    return data;
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
+      let response: Response;
+      try {
+        response = await fetch("/api/dancer/venue-verification", {
+          headers: { authorization: `Bearer ${session.accessToken}` },
+          cache: "no-store",
+          signal: controller.signal,
+        });
+      } catch (error) {
+        if ((error as DOMException)?.name === "AbortError") {
+          throw new Error("Venue verification took too long to load. Check your connection and try again.");
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load venue verification.");
+      const availableVenues = Array.isArray(data.venues) ? data.venues : [];
+      const savedDancerCity = String(data.dancer?.city || "your city");
+      const readyVenues = availableVenues.filter((venue: Record<string, unknown>) => venue.managerReady === true);
+      setVenues(availableVenues);
+      setAffiliations(data.affiliations || []);
+      setDancerCity(savedDancerCity);
+      setOnboardingRequired(data.dancer?.onboardingRequired === true);
+      setVenueId((current) => availableVenues.some((venue: Record<string, unknown>) => String(venue.id) === current)
+        ? current
+        : String(readyVenues[0]?.id || availableVenues[0]?.id || ""));
+      if (!quiet) {
+        setStatus(readyVenues.length
+          ? `Choose a ${savedDancerCity} club marked Manager ready, then show the personal QR to its verified manager.`
+          : availableVenues.length
+            ? `${availableVenues.length} active ${savedDancerCity} venues found, but none have activated a venue manager account yet.`
+            : `No active venues are available in ${savedDancerCity} yet.`);
+      }
+      return data;
+    })().finally(() => {
+      loadInFlightRef.current = null;
+    });
+    loadInFlightRef.current = request;
+    return request;
   }, []);
 
   useEffect(() => {
@@ -3272,9 +3282,11 @@ function DancerVenueVerificationPanel() {
 
   return (
     <article className="info-panel venue-verification-panel" id="dancer-venue-verification">
-      <span className="eyebrow">Venue authorization</span>
-      <h2>Verify where you work</h2>
-      <p>Your venue&apos;s verified manager scans this personal QR and approves you in one tap. No shared club code or paperwork.</p>
+      <span className="eyebrow">{onboardingRequired ? "Step 3 · Venue verification" : "Venue affiliation"}</span>
+      <h2>{onboardingRequired ? "Verify your first venue" : "Manage where you work"}</h2>
+      <p>{onboardingRequired
+        ? "Your first verified venue manager scan approves your profile, makes it live, and activates that club affiliation."
+        : "Use a new personal QR whenever you add or switch clubs. Your already-approved profile stays live while affiliations change."}</p>
       <div className="venue-verification-controls">
         <label>
           Venue

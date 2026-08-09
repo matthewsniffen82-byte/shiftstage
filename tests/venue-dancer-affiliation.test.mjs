@@ -97,11 +97,12 @@ test("check-ins and dancer-attributed commission require an active venue affilia
 test("dancer and venue dashboards expose the complete one-tap verification flow", () => {
   assert.match(dashboard, /Show my verification QR/);
   assert.match(dashboard, /Confirm she works here/);
-  assert.match(liveApp, /Confirm where you work/);
+  assert.match(liveApp, /Manage where you work/);
+  assert.match(liveApp, /Verify your first venue/);
   assert.match(liveApp, /Show my verification QR/);
   assert.match(liveApp, /Confirm she works here/);
   assert.match(liveApp, /Approved roster/);
-  assert.match(liveApp, /confirms only that you are affiliated/i);
+  assert.match(liveApp, /first verified venue manager scan approves your profile/i);
   assert.match(liveApp, /dancrPendingVenueDancerVerificationV1/);
   assert.match(liveApp, /handleVenueDancerVerificationDeepLink/);
   assert.match(liveApp, /processPendingVenueDancerVerification/);
@@ -135,6 +136,10 @@ test("dancer verification lists every active signup-city venue and gates QR crea
   assert.match(liveApp, /Loading venues…/);
   assert.match(liveApp, /Manager setup needed/);
   assert.match(liveApp, /Venue verification took too long to load/);
+  assert.match(liveApp, /dancerVenueVerificationRequest/);
+  assert.match(liveApp, /if \(dancerVenueVerificationRequest\) return dancerVenueVerificationRequest/);
+  const approvalPolling = liveApp.match(/function startDancerVenueApprovalPolling[\s\S]*?function formatVenueAffiliationTime/)?.[0] || "";
+  assert.doesNotMatch(approvalPolling, /loadDancerVenueVerification/);
 });
 
 test("revocation is audited and immediately ends matching live shifts", () => {

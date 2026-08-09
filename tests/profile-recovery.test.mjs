@@ -8,10 +8,10 @@ const [recovery, publicProfiles, tv] = await Promise.all([
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
 ]);
 
-test("automatic approval repairs only complete active profiles reset by venue gating", () => {
+test("automatic repair requires durable first-venue approval proof", () => {
   assert.match(recovery, /\.eq\("status", "pending_review"\)/);
   assert.match(recovery, /\.eq\("verification_status", "pending"\)/);
-  assert.match(recovery, /\.is\("venue_approved_at", null\)/);
+  assert.match(recovery, /\.not\("venue_approved_at", "is", null\)/);
   assert.match(recovery, /account\?\.account_state === "active"/);
   assert.match(recovery, /profile\.photo_review_status === "approved"/);
   assert.match(recovery, /photos\.every\(\(photo: any\) => photo\.review_status === "approved"\)/);

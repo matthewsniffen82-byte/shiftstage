@@ -277,7 +277,7 @@ test("the live entry point and visibility query support the production schema", 
   assert.match(approvalSource, /profile\.is_public !== false && profile\.isPublic !== false/);
   assert.match(publicSource, /\.eq\("status", "approved"\)/);
   assert.match(publicSource, /\.eq\("verification_status", "approved"\)/);
-  assert.doesNotMatch(publicSource, /\.not\("venue_approved_at", "is", null\)/);
+  assert.doesNotMatch(publicSource, /venue_onboarding_required/);
   assert.doesNotMatch(publicSource, /identity_provider|identity_verified_at/);
   assert.match(publicSource, /\.eq\("is_public", true\)/);
   assert.match(publicSource, /\.is\("disabled_at", null\)/);

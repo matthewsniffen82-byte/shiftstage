@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
-import { automaticDancerApprovalValues } from "@/src/lib/dancr/profile-approval";
+import { pendingVenueApprovalValues } from "@/src/lib/dancr/profile-approval";
 import {
   PROFILE_AVATAR_CONTEXT,
   profilePhotoSlotFromUploadContext,
@@ -859,7 +859,7 @@ async function submitProfileForReview(
 
   const { error } = await db
     .from("dancer_profiles")
-    .update(automaticDancerApprovalValues())
+    .update(pendingVenueApprovalValues())
     .eq("id", dancerId)
     .neq("status", "rejected")
     .is("disabled_at", null);

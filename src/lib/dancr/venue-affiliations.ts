@@ -78,6 +78,11 @@ export async function getDancerVenueVerificationState(
       id: dancer.id,
       stageName: dancer.stage_name,
       city: dancerCity,
+      onboardingRequired: dancer.status !== "approved" || dancer.verification_status !== "approved",
+      profileLive: dancer.verification_status === "approved"
+        && dancer.status === "approved"
+        && dancer.is_public === true
+        && dancer.disabled_at === null,
     },
     venues: verificationVenues,
     affiliations: (affiliations || []).map((row: any) => mapAffiliation(client, row)),
@@ -289,11 +294,16 @@ export async function approveDancerVenueVerification(
   });
   if (error) throw toVenueAffiliationError(error);
 
+  const profileActivated = data.profileActivated === true;
   const notification = {
     recipient_id: String(data.dancerUserId),
     notification_type: "venue_affiliation_status" as const,
-    title: `${String(data.venueName)} verified you`,
-    body: `Your venue affiliation is active. You can now check in at ${String(data.venueName)} for Working Now and eligible Club Deal commissions.`,
+    title: profileActivated
+      ? `${String(data.venueName)} approved your profile`
+      : `${String(data.venueName)} verified you`,
+    body: profileActivated
+      ? `Your first venue verification is complete. Your profile is live and your affiliation with ${String(data.venueName)} is active.`
+      : `Your venue affiliation is active. You can now check in at ${String(data.venueName)} for Working Now and eligible Club Deal commissions.`,
     payload: {
       affiliationId: data.id,
       venueId: data.venueId,
@@ -482,7 +492,7 @@ async function activeAffiliation(client: DancrClient, venueId: string, dancerId:
 async function requireVenueApprovalCandidate(client: DancrClient, userId: string) {
   const { data, error } = await (client as any)
     .from("dancer_profiles")
-    .select("id, user_id, stage_name, slug, city, status, disabled_at, avatar_storage_path, photo_review_status, venue_approved_at")
+    .select("id, user_id, stage_name, slug, city, status, verification_status, disabled_at, avatar_storage_path, photo_review_status, venue_approved_at, is_public")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;

@@ -17,10 +17,10 @@ async function restoreMediaReadyProfiles(client: SupabaseClient): Promise<number
   const admin = client as any;
   const { data: candidates, error: candidateError } = await admin
     .from("dancer_profiles")
-    .select("id, user_id, stage_name, city, avatar_storage_path, photo_review_status")
+    .select("id, user_id, stage_name, city, avatar_storage_path, photo_review_status, venue_approved_at")
     .eq("status", "pending_review")
     .eq("verification_status", "pending")
-    .is("venue_approved_at", null)
+    .not("venue_approved_at", "is", null)
     .is("disabled_at", null);
   if (candidateError) throw candidateError;
   if (!candidates?.length) return 0;
@@ -61,7 +61,7 @@ async function restoreMediaReadyProfiles(client: SupabaseClient): Promise<number
     .in("id", eligibleIds)
     .eq("status", "pending_review")
     .eq("verification_status", "pending")
-    .is("venue_approved_at", null)
+    .not("venue_approved_at", "is", null)
     .is("disabled_at", null)
     .select("id");
   if (restoreError) throw restoreError;

@@ -40,22 +40,19 @@ const [
   readFile(new URL("../.env.example", import.meta.url), "utf8"),
 ]);
 
-test("new dancers stay private until submission and public visibility is independent of venue affiliation", () => {
+test("new dancers stay private until the first verified venue scan while existing approved profiles remain live", () => {
   assert.match(profileApproval, /function initialDancerApprovalValues/);
   assert.match(profileApproval, /status: "draft"/);
   assert.match(profileApproval, /verification_status: "pending"/);
   assert.match(profileApproval, /is_public: false/);
   assert.match(signupRoute, /initialDancerApprovalValues\(\)/);
   assert.match(callbackRoute, /initialDancerApprovalValues\(\)/);
-  assert.match(profileRoute, /automaticDancerApprovalValues\(\)/);
+  assert.match(profileRoute, /pendingVenueApprovalValues\(\)/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
-  assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_approved_at/);
-  assert.doesNotMatch(profileApproval.match(/function isCoreVerificationApproved[\s\S]*?\n}/)?.[0] || "", /venue_approved_at|venueApprovedAt/);
-  assert.match(accountUi, /Venue affiliation is confirmed separately for check-ins and Working Now/);
-  assert.match(liveApp, /manager scan confirms that you are affiliated/i);
+  assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);
+  assert.match(liveApp, /first verified venue manager scan approves your profile/i);
   assert.match(venueMigration, /venue_approved_at is not null/);
-  assert.match(restoreMigration, /not profile visibility/i);
-  assert.match(restoreMigration, /status = 'approved'/);
+  assert.match(restoreMigration, /'profileDeactivated', false/);
   assert.match(restoreMigration, /is_public = true/);
 });
 
@@ -95,7 +92,7 @@ test("the removal migration deletes provider state without rewriting migration h
   assert.match(legacyIdentityMigration, /alter column real_name drop not null/);
 });
 
-test("automated media moderation remains the approval gate while venue affiliation stays separate", () => {
+test("automated media moderation and the first venue scan both gate initial publication", () => {
   assert.match(profileApproval, /verification_status \|\| profile\.verificationStatus/);
   assert.doesNotMatch(profileApproval, /identityProvider|identityVerifiedAt/);
   assert.match(venueMigration, /photo_review_status = 'approved'/);
@@ -105,11 +102,8 @@ test("automated media moderation remains the approval gate while venue affiliati
   assert.match(venueMigration, /is_public = true/);
   assert.match(liveApp, /Every image is checked automatically/);
   assert.match(liveApp, /Videos that pass safety moderation stay private until your dancer profile is approved/);
+  assert.match(venueMigration, /public reads approved MyDancr TV videos/);
   assert.match(restoreMigration, /public reads approved MyDancr TV videos/);
-  assert.doesNotMatch(
-    restoreMigration.match(/create policy "public reads approved MyDancr TV videos"[\s\S]*?\n\);/)?.[0] || "",
-    /venue_approved_at/,
-  );
 });
 
 test("legal identity data is absent from dancer profiles and admin screens", () => {
