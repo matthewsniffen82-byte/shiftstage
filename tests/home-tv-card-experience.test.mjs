@@ -82,7 +82,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.match(videoFactory, /video\.addEventListener\("error"[\s\S]*?"Video unavailable"/);
   assert.match(
     homeSource,
-    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?Math\.abs\(index - activeIndex\) <= 1[\s\S]*?video\.preload = shouldWarm \? "auto" : "metadata"[\s\S]*?video\.load\(\)/,
+    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?Math\.abs\(index - activeIndex\) <= 1[\s\S]*?video\.preload = shouldWarm \? "auto" : "none"[\s\S]*?video\.load\(\)/,
   );
   assert.match(
     homeSource,
@@ -483,5 +483,13 @@ test("iPhone autoplay flags are applied before a TV card starts loading media", 
   assert.match(
     homeSource,
     /function activateHomeTvFeedVideo\(videoId\)[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.play\(\)/,
+  );
+  assert.match(
+    homeSource,
+    /video\.preload = index === 0 \? "auto" : "none"/,
+  );
+  assert.match(
+    homeSource,
+    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?primeHomeTvFeedNeighbors\(videoId\)/,
   );
 });

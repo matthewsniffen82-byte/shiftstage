@@ -31,14 +31,22 @@ test("MyDancr TV declares and retries muted autoplay for the active snap-scroll 
   assert.doesNotMatch(feedClient, /className="tv-playback-retry"[\s\S]*?Tap to play/);
 });
 
-test("MyDancr TV preloads the active card and its immediate scroll neighbors", () => {
+test("MyDancr TV gives the first card exclusive bandwidth before warming scroll neighbors", () => {
   assert.match(
     feedClient,
-    /Math\.abs\(videoIndex - activeIndex\) <= 1[\s\S]*?element\.preload = shouldWarm \? "auto" : "metadata"[\s\S]*?element\.load\(\)/,
+    /const primeVideoNeighbors[\s\S]*?Math\.abs\(videoIndex - activeIndex\) <= 1[\s\S]*?element\.preload = shouldWarm \? "auto" : "none"[\s\S]*?element\.load\(\)/,
   );
   assert.match(
     feedClient,
-    /preload=\{[\s\S]*?Math\.abs\(videoIndex - activeVideoIndex\) <= 1[\s\S]*?"auto"[\s\S]*?"metadata"/,
+    /element\.preload = isActive \? "auto" : "none"/,
+  );
+  assert.match(
+    feedClient,
+    /preload=\{[\s\S]*?video\.id === activeVideoId \? "auto" : "none"/,
+  );
+  assert.match(
+    feedClient,
+    /onLoadedData=\{[\s\S]*?primeVideoNeighbors\(video\.id\)/,
   );
 });
 

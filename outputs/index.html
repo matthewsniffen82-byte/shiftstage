@@ -53668,7 +53668,6 @@
       if (activeTab !== "tv" || !videoId) return;
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
-      primeHomeTvFeedNeighbors(videoId);
       results.querySelectorAll(".home-tv-feed-slide").forEach((slide) => {
         const slideVideoId = String(slide.dataset.videoId || "");
         const video = slide.querySelector("video");
@@ -53684,6 +53683,13 @@
           video.muted = homeTvFeedMuted;
           video.defaultMuted = homeTvFeedMuted;
           if (homeTvFeedMuted) video.setAttribute("muted", "");
+          video.preload = "auto";
+          if (
+            video.readyState === HTMLMediaElement.HAVE_NOTHING &&
+            video.networkState === HTMLMediaElement.NETWORK_EMPTY
+          ) {
+            video.load();
+          }
           if (!homeTvFeedImpressions.has(videoId)) {
             homeTvFeedImpressions.add(videoId);
             trackHomeTvFeedEvent(videoId, "impression");
@@ -53698,6 +53704,7 @@
           void video.play().then(() => {
             if (video.paused || slide.dataset.userPaused === "true") return;
             slide.classList.remove("is-paused", "is-autoplay-blocked");
+            primeHomeTvFeedNeighbors(videoId);
             scheduleHomeTvFeedEngagedView(videoId, video);
           }).catch((error) => {
             if (
@@ -53728,7 +53735,7 @@
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
         const shouldWarm = Math.abs(index - activeIndex) <= 1;
-        video.preload = shouldWarm ? "auto" : "metadata";
+        video.preload = shouldWarm ? "auto" : "none";
         if (
           shouldWarm &&
           video.readyState === HTMLMediaElement.HAVE_NOTHING &&
@@ -53977,7 +53984,7 @@
       video.setAttribute("webkit-playsinline", "");
       if (homeTvFeedMuted) video.setAttribute("muted", "");
       if (index === 0) video.setAttribute("autoplay", "");
-      video.preload = index === 0 ? "auto" : "metadata";
+      video.preload = index === 0 ? "auto" : "none";
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
       video.tabIndex = 0;
@@ -54036,6 +54043,7 @@
       video.addEventListener("loadeddata", () => {
         slide.classList.remove("is-media-loading", "is-media-unavailable");
         slide.removeAttribute("aria-busy");
+        if (slide.classList.contains("is-active")) primeHomeTvFeedNeighbors(videoId);
         syncHomeTvFeedProgress(video, slide);
       });
       video.addEventListener("error", () => {

@@ -151,6 +151,25 @@ export default function TvFeedClient({
     setAutoplayBlockedVideoId(videoId);
   }, []);
 
+  const primeVideoNeighbors = useCallback((videoId: string) => {
+    const activeIndex = videos.findIndex((video) => video.id === videoId);
+    if (activeIndex < 0) return;
+    videos.forEach((video, videoIndex) => {
+      const element = videoElements.current[video.id];
+      if (!element) return;
+      const shouldWarm = Math.abs(videoIndex - activeIndex) <= 1;
+      element.preload = shouldWarm ? "auto" : "none";
+      if (
+        shouldWarm &&
+        video.id !== videoId &&
+        element.readyState === HTMLMediaElement.HAVE_NOTHING &&
+        element.networkState === HTMLMediaElement.NETWORK_EMPTY
+      ) {
+        element.load();
+      }
+    });
+  }, [videos]);
+
   const loadFeed = useCallback(async (nextFilter: string, nextCity: string, selectedVideoId = "") => {
     setIsLoading(true);
     setStatus("");
@@ -285,22 +304,21 @@ export default function TvFeedClient({
   }, [videos]);
 
   useEffect(() => {
-    const activeIndex = videos.findIndex((video) => video.id === activeVideoId);
-    videos.forEach((video, videoIndex) => {
+    videos.forEach((video) => {
       const videoId = video.id;
       const element = videoElements.current[videoId];
       if (!element) return;
-      const shouldWarm = activeIndex >= 0 && Math.abs(videoIndex - activeIndex) <= 1;
-      element.preload = shouldWarm ? "auto" : "metadata";
+      const isActive = videoId === activeVideoId;
+      element.preload = isActive ? "auto" : "none";
       if (
-        shouldWarm &&
+        isActive &&
         element.readyState === HTMLMediaElement.HAVE_NOTHING &&
         element.networkState === HTMLMediaElement.NETWORK_EMPTY
       ) {
         element.load();
       }
       element.muted = muted;
-      if (videoId === activeVideoId) {
+      if (isActive) {
         void attemptVideoPlayback(videoId, element);
         trackEvent(videoId, "impression");
         window.clearTimeout(engagedTimers.current[videoId]);
@@ -314,7 +332,11 @@ export default function TvFeedClient({
         window.clearTimeout(engagedTimers.current[videoId]);
       }
     });
-  }, [activeVideoId, attemptVideoPlayback, muted, trackEvent, videos]);
+    const activeElement = videoElements.current[activeVideoId];
+    if (activeElement && activeElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      primeVideoNeighbors(activeVideoId);
+    }
+  }, [activeVideoId, attemptVideoPlayback, muted, primeVideoNeighbors, trackEvent, videos]);
 
   useEffect(() => {
     const resumeActiveVideo = () => {
@@ -410,7 +432,6 @@ export default function TvFeedClient({
   const unreadNotificationCount = notifications.filter(
     (notification) => !notification.readAt,
   ).length;
-  const activeVideoIndex = videos.findIndex((video) => video.id === activeVideoId);
   const homepageHref = `/?city=${encodeURIComponent(city)}&view=dancers`;
   const allVenueTvHref = `/tv?city=${encodeURIComponent(city)}&filter=${encodeURIComponent(filter)}`;
 
@@ -548,7 +569,7 @@ export default function TvFeedClient({
       ) : null}
 
       <section ref={feedElement} className="tv-feed" aria-label="MyDancr TV videos">
-        {videos.map((video, videoIndex) => (
+        {videos.map((video) => (
           <article
             className="tv-slide"
             data-tv-slide
@@ -570,9 +591,7 @@ export default function TvFeedClient({
                   muted={muted}
                   playsInline
                   preload={
-                    activeVideoIndex >= 0 && Math.abs(videoIndex - activeVideoIndex) <= 1
-                      ? "auto"
-                      : "metadata"
+                    video.id === activeVideoId ? "auto" : "none"
                   }
                   src={video.videoUrl}
                   onCanPlay={(event) => {
@@ -582,6 +601,13 @@ export default function TvFeedClient({
                   }}
                   onLoadedMetadata={(event) => {
                     if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {
+                      void attemptVideoPlayback(video.id, event.currentTarget);
+                    }
+                  }}
+                  onLoadedData={(event) => {
+                    if (video.id !== activeVideoIdRef.current) return;
+                    primeVideoNeighbors(video.id);
+                    if (event.currentTarget.paused) {
                       void attemptVideoPlayback(video.id, event.currentTarget);
                     }
                   }}
