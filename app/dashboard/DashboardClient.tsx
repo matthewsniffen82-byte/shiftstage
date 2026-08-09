@@ -2517,7 +2517,7 @@ function DancerPanel({
       />
       <DancerTvStudio embedded />
       <DancerVenueVerificationPanel />
-      {isApproved ? <DancerShiftPanel city={String(profile?.city || "Las Vegas")} /> : null}
+      {isApproved ? <DancerShiftPanel /> : null}
       {isApproved ? (
         <>
           <InfoPanel title="Last 30 days">
@@ -3611,7 +3611,7 @@ function DancerBillingPanel() {
   );
 }
 
-function DancerShiftPanel({ city }: { city: string }) {
+function DancerShiftPanel() {
   const [venues, setVenues] = useState<Array<{ id: string; name: string }>>([]);
   const [shifts, setShifts] = useState<Array<Record<string, any>>>([]);
   const [venueId, setVenueId] = useState("");
@@ -3630,7 +3630,16 @@ function DancerShiftPanel({ city }: { city: string }) {
   const loadShifts = useCallback(async (accessToken: string) => {
     const response = await fetch("/api/dancer/shifts", { headers: { authorization: `Bearer ${accessToken}` } });
     const data = await response.json();
-    if (response.ok && data.ok) setShifts(data.shifts || []);
+    if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load posted shifts.");
+    const approvedVenues = Array.isArray(data.venues) ? data.venues : [];
+    setShifts(data.shifts || []);
+    setVenues(approvedVenues);
+    setVenueId((current) => approvedVenues.some((venue: { id: string }) => venue.id === current)
+      ? current
+      : String(approvedVenues[0]?.id || ""));
+    setEditVenueId((current) => !current || approvedVenues.some((venue: { id: string }) => venue.id === current)
+      ? current
+      : "");
   }, []);
 
   const refreshShiftLocation = useCallback(async (shiftId: string, silent = false) => {
@@ -3701,18 +3710,10 @@ function DancerShiftPanel({ city }: { city: string }) {
   useEffect(() => {
     const session = readSession();
     if (!session?.accessToken) return;
-
-    fetch(`/api/public/venues?city=${encodeURIComponent(city)}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (!data.ok) return;
-        setVenues(data.venues || []);
-        setVenueId((current) => current || data.venues?.[0]?.id || "");
-      })
-      .catch(() => undefined);
-
-    loadShifts(session.accessToken);
-  }, [city, loadShifts]);
+    void loadShifts(session.accessToken).catch((error) => {
+      setStatus(error instanceof Error ? error.message : "Unable to load posted shifts.");
+    });
+  }, [loadShifts]);
 
   async function postShift(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -3989,9 +3990,9 @@ function DancerShiftPanel({ city }: { city: string }) {
       </div>
       <form onSubmit={postShift}>
         <label>
-          Venue
-          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} required>
-            <option value="">Choose venue</option>
+          Approved venue
+          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || isSaving} required>
+            <option value="">{venues.length ? "Choose approved venue" : "No approved venue affiliations"}</option>
             {venues.map((venue) => (
               <option key={venue.id} value={venue.id}>
                 {venue.name}
@@ -4007,9 +4008,10 @@ function DancerShiftPanel({ city }: { city: string }) {
           Ends
           <input type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} required />
         </label>
-        <button type="submit" disabled={isSaving}>
+        <button type="submit" disabled={isSaving || !venues.length}>
           {isSaving ? "Posting..." : "Post another shift"}
         </button>
+        {!venues.length ? <p>A venue manager must approve your affiliation before you can post a shift there.</p> : null}
         {status ? <p>{status}</p> : null}
       </form>
       <div className="shift-list-head">
@@ -4022,9 +4024,9 @@ function DancerShiftPanel({ city }: { city: string }) {
             {editingShiftId === String(shift.id) ? (
               <>
                 <label>
-                  Venue
+                  Approved venue
                   <select value={editVenueId} onChange={(event) => setEditVenueId(event.target.value)} required>
-                    <option value="">Choose venue</option>
+                    <option value="">Choose approved venue</option>
                     {venues.map((venue) => (
                       <option key={venue.id} value={venue.id}>
                         {venue.name}

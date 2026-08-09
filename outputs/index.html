@@ -36852,7 +36852,7 @@
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
             <h3>Post or update a verified shift</h3>
-            <p>Choose the club, date, and time. Dancr broadcasts the shift to followers and notify-only customers after posting.</p>
+            <p>Choose one of your manager-approved clubs, then add the date and time. Dancr broadcasts the shift after posting.</p>
           </div>
           <div class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
@@ -36863,8 +36863,8 @@
           <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
           <form class="auth-form" id="shiftPostForm">
             <div class="field">
-              <label for="shiftClub">Club</label>
-              <select id="shiftClub"></select>
+              <label for="shiftClub">Approved club</label>
+              <select id="shiftClub" disabled><option value="">Loading approved clubs…</option></select>
             </div>
             <div class="field">
               <label for="shiftDate">Date</label>
@@ -36897,7 +36897,7 @@
               <label for="shiftNotes">Notes</label>
               <textarea id="shiftNotes" placeholder="Venue-confirmed schedule note"></textarea>
             </div>
-            <button class="action-btn post-shift-submit" type="submit">Post another shift + notify followers</button>
+          <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
           </form>
           <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only customers.</div>
           <div class="schedule-broadcast-note">
@@ -44011,17 +44011,44 @@
       `;
     }
 
+    function approvedDancerShiftVenues() {
+      const affiliations = Array.isArray(liveDancerVenueVerification?.affiliations)
+        ? liveDancerVenueVerification.affiliations
+        : [];
+      const uniqueVenues = new Map();
+      affiliations.forEach((affiliation) => {
+        const venue = affiliation?.venue;
+        if (affiliation?.status !== "active" || affiliation?.revokedAt || !venue?.id || !venue?.name) return;
+        uniqueVenues.set(venue.id, venue);
+      });
+      return [...uniqueVenues.values()];
+    }
+
     function renderShiftPostForm() {
       const clubSelect = document.getElementById("shiftClub");
       const dateInput = document.getElementById("shiftDate");
       if (!clubSelect || !dateInput) return;
       const city = activeDancerCity();
-      clubSelect.innerHTML = markets[city].venues.map((venue) => `<option>${venue.name}</option>`).join("");
+      const approvedVenues = approvedDancerShiftVenues();
+      const previousVenueId = clubSelect.value;
+      const affiliationStateLoaded = Boolean(liveDancerVenueVerification);
+      clubSelect.innerHTML = approvedVenues.length
+        ? approvedVenues.map((venue) => `<option value="${escapeHtml(venue.id)}">${escapeHtml(venue.name)}</option>`).join("")
+        : `<option value="">${affiliationStateLoaded ? "No approved venue affiliations" : "Loading approved clubs…"}</option>`;
+      clubSelect.disabled = !approvedVenues.length;
+      clubSelect.value = approvedVenues.some((venue) => venue.id === previousVenueId)
+        ? previousVenueId
+        : approvedVenues[0]?.id || "";
+      const submitButton = document.querySelector("#shiftPostForm .post-shift-submit");
+      if (submitButton) submitButton.disabled = !approvedVenues.length;
       if (!dateInput.value) dateInput.value = todayValue(city);
       const result = document.getElementById("shiftPostResult");
       if (result && lastPostedShift) {
         result.hidden = false;
         result.textContent = lastPostedShift.noticeText || "Schedule sent to followers and notify-only customers.";
+      } else if (result && affiliationStateLoaded && !approvedVenues.length) {
+        result.hidden = false;
+        result.textContent = "A venue manager must approve your affiliation before you can post a shift there.";
       }
       renderShiftDisplayPreview();
     }
@@ -45941,7 +45968,8 @@
         if (!selectedShift) return;
         editingShiftId = selectedShift.shiftId || null;
         const clubField = document.getElementById("shiftClub");
-        if (clubField && selectedShift.venue) clubField.value = selectedShift.venue;
+        const approvedVenue = approvedDancerShiftVenues().find((venue) => venue.name === selectedShift.venue);
+        if (clubField) clubField.value = approvedVenue?.id || "";
         setFieldValueIfIdle("shiftDate", selectedShift.shiftDate || todayValue(activeDancerCity()));
         setFieldValueIfIdle("shiftStart", selectedShift.shiftStart || "21:30");
         setFieldValueIfIdle("shiftEnd", selectedShift.shiftEnd || "02:00");
@@ -45993,8 +46021,14 @@
       }
       const city = activeDancerCity();
       const market = markets[city];
-      const venueName = document.getElementById("shiftClub").value;
-      const venue = market.venues.find((item) => item.name === venueName);
+      const venueId = document.getElementById("shiftClub").value;
+      const approvedVenue = approvedDancerShiftVenues().find((venue) => venue.id === venueId);
+      if (!approvedVenue) {
+        showToast("A venue manager must approve your affiliation before you can post a shift there.");
+        return;
+      }
+      const venueName = approvedVenue.name;
+      const venue = market.venues.find((item) => item.id === venueId || item.name === venueName) || approvedVenue;
       const dateValue = document.getElementById("shiftDate").value;
       const startValue = document.getElementById("shiftStart").value;
       const endValue = document.getElementById("shiftEnd").value;
@@ -46074,9 +46108,9 @@
       renderDancerManagement();
       if (customerDashboard.classList.contains("show")) renderDashboard();
       showToast(noticeText);
-      if (venue?.id) {
+      if (approvedVenue.id) {
         const payload = {
-          venueId: venue.id,
+          venueId: approvedVenue.id,
           startsAt: range.startsAt,
           endsAt: range.endsAt,
           timezone: timeZoneByCity[city] || "America/Los_Angeles"
@@ -48469,6 +48503,7 @@
       list.querySelectorAll("[data-dancer-affiliation-remove]").forEach((button) => {
         button.onclick = () => removeDancerVenueAffiliation(button.dataset.dancerAffiliationRemove);
       });
+      renderShiftPostForm();
       document.getElementById("dancerVenueVerificationStatus").textContent = managerReadyVenues.length
         ? `Choose a ${dancerCity} club marked Manager ready, then show the personal QR to its verified manager.`
         : venues.length

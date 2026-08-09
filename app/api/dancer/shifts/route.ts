@@ -15,16 +15,19 @@ export async function GET(request: Request) {
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const admin = createAdminSupabaseClient() as any;
     await reconcileExpiredDancerShifts(admin, dancer.id);
-    const { data, error } = await admin
-      .from("shifts")
-      .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
-      .eq("dancer_id", dancer.id)
-      .order("starts_at", { ascending: false })
-      .limit(25);
+    const [{ data, error }, venues] = await Promise.all([
+      admin
+        .from("shifts")
+        .select("id, venue_id, starts_at, ends_at, timezone, status, broadcast_sent_at, broadcast_recipients, location_status, checked_in_at, checked_out_at, checkin_distance_feet, checkin_accuracy_meters, last_location_verified_at, location_verification_expires_at, working_status, commission_tracking_started_at, commission_tracking_stopped_at, ended_at, ended_reason, shift_summary, venues(name, slug, city, latitude, longitude)")
+        .eq("dancer_id", dancer.id)
+        .order("starts_at", { ascending: false })
+        .limit(25),
+      getApprovedShiftVenues(admin, dancer.id),
+    ]);
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true, shifts: data || [] });
+    return noStoreJson({ ok: true, shifts: data || [], venues });
   } catch (error) {
     return apiError(error, "Unable to load dancer shifts.");
   }
@@ -48,7 +51,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Shift end must be after shift start." }, { status: 400 });
     }
 
-    const venue = await getVenueForShift(client as any, body.venueId);
+    const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
+    if (!venue) {
+      return NextResponse.json(
+        { ok: false, error: "This venue must approve your affiliation before you can post a shift there." },
+        { status: 403 },
+      );
+    }
     const timezone = typeof body.timezone === "string" ? body.timezone : venue.timezone;
 
     const { data, error } = await (client as any)
@@ -96,7 +105,13 @@ export async function PATCH(request: Request) {
     const existingShift = await getOwnShift(client as any, dancer.id, body.shiftId);
     const update: Record<string, unknown> = {};
     if (typeof body.venueId === "string") {
-      const venue = await getVenueForShift(client as any, body.venueId);
+      const venue = await getAffiliatedVenueForShift(createAdminSupabaseClient() as any, dancer.id, body.venueId);
+      if (!venue) {
+        return NextResponse.json(
+          { ok: false, error: "This venue must approve your affiliation before you can move a shift there." },
+          { status: 403 },
+        );
+      }
       update.venue_id = body.venueId;
       update.timezone = venue.timezone;
     }
@@ -154,20 +169,57 @@ async function getOwnShift(client: any, dancerId: string, shiftId: string) {
   return data;
 }
 
-async function getVenueForShift(client: any, venueId: string) {
+async function getApprovedShiftVenues(client: any, dancerId: string) {
   const { data, error } = await client
-    .from("venues")
-    .select("id, timezone, is_active")
-    .eq("id", venueId)
+    .from("venue_dancer_affiliations")
+    .select("venue_id, approved_at, venues!inner(id, slug, name, city, timezone, is_active)")
+    .eq("dancer_id", dancerId)
+    .eq("status", "active")
+    .is("revoked_at", null)
+    .eq("venues.is_active", true)
+    .order("approved_at", { ascending: true });
+
+  if (error) throw error;
+
+  return (data || []).flatMap((row: any) => {
+    const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
+    if (!venue?.id || venue.is_active === false) return [];
+    return [{
+      id: venue.id,
+      slug: venue.slug,
+      name: venue.name,
+      city: venue.city,
+      timezone: venue.timezone || "America/Los_Angeles",
+    }];
+  });
+}
+
+async function getAffiliatedVenueForShift(client: any, dancerId: string, venueId: string) {
+  const { data, error } = await client
+    .from("venue_dancer_affiliations")
+    .select("venue_id, venues!inner(id, timezone, is_active)")
+    .eq("dancer_id", dancerId)
+    .eq("venue_id", venueId)
+    .eq("status", "active")
+    .is("revoked_at", null)
+    .eq("venues.is_active", true)
     .maybeSingle();
 
   if (error) throw error;
-  if (!data || !data.is_active) throw new Error("Active venue not found.");
+  const venue = Array.isArray(data?.venues) ? data.venues[0] : data?.venues;
+  if (!data || !venue?.id || venue.is_active === false) return null;
 
   return {
-    id: data.id,
-    timezone: data.timezone || "America/Los_Angeles",
+    id: venue.id,
+    timezone: venue.timezone || "America/Los_Angeles",
   };
+}
+
+function noStoreJson(body: Record<string, unknown>, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: { "cache-control": "private, no-store, max-age=0" },
+  });
 }
 
 async function getOwnDancerProfile(client: any, userId: string) {
