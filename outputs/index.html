@@ -37938,6 +37938,7 @@
     const PENDING_VENUE_DANCER_VERIFICATION_KEY = "dancrPendingVenueDancerVerificationV1";
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
+    let dancerSetupRefreshPending = false;
     let profileModalReturnTarget = "";
     let profileModalReturnContext = null;
     let lastPostedShift = null;
@@ -40952,7 +40953,7 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/analytics");
         liveDancerAnalytics = data.analytics || null;
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerAnalytics = null;
         reportOptionalDancerLoadError(error, "Could not load live analytics", options);
@@ -40965,7 +40966,7 @@
         const data = await getAuthenticatedJson("/api/dancer/dashboard");
         liveDancerDeals = data.deals || null;
         if (data.analytics) liveDancerAnalytics = data.analytics;
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerDeals = null;
         reportOptionalDancerLoadError(error, "Could not load QR commissions", options);
@@ -40977,7 +40978,7 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/weekly-report");
         liveDancerWeeklyReport = data.report || null;
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerWeeklyReport = null;
         reportOptionalDancerLoadError(error, "Could not load weekly report", options);
@@ -40989,7 +40990,7 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/billing");
         liveDancerBilling = data.billing || null;
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerBilling = null;
         reportOptionalDancerLoadError(error, "Could not load billing status", options);
@@ -41001,7 +41002,7 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/ranking-events");
         liveDancerRankingEvents = data.events || [];
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerRankingEvents = [];
         reportOptionalDancerLoadError(error, "Could not load ranking alerts", options);
@@ -41013,7 +41014,7 @@
       try {
         const data = await getAuthenticatedJson("/api/dancer/reviews");
         liveDancerReviews = data.reviews || [];
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerReviews = [];
         reportOptionalDancerLoadError(error, "Could not load review notes", options);
@@ -41412,7 +41413,7 @@
           });
           dancerSignupCitiesState = "ready";
           syncDancerSignupCitySelect(pendingDancerSignupCity);
-          if (dancerDashboard.classList.contains("show") && !dancerSetup.approval) renderDancerSetup();
+          if (dancerDashboard.classList.contains("show") && !dancerSetup.approval) renderDancerSetupWhenEditorIdle();
           return dancerSignupCities;
         })
         .catch((error) => {
@@ -45095,7 +45096,7 @@
       } finally {
         approvedProfileVideoLoading = false;
         renderApprovedProfileVideoManager();
-        if (document.getElementById("setupChecklist")) renderDancerSetup();
+        if (document.getElementById("setupChecklist")) renderDancerSetupWhenEditorIdle();
       }
     }
 
@@ -49677,14 +49678,14 @@
           shift: dancerSetup.shift
         });
         activeSetupStep = "profile";
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
         return null;
       }
       try {
         const data = await getAuthenticatedJson("/api/dancer/profile");
         if (!data?.profile) return null;
         applyDancerApprovalProfile(data.profile);
-        renderDancerSetup();
+        renderDancerSetupWhenEditorIdle();
         return data.profile;
       } catch (error) {
         return null;
@@ -49787,6 +49788,25 @@
       const dashName = document.getElementById("dancerDashName");
       if (!dashName) return;
       dashName.textContent = getDancerDashboardStageName(stageName) || "Dancer dashboard";
+    }
+
+    function dancerSetupEditorHasFocus() {
+      const activeElement = document.activeElement;
+      return Boolean(
+        activeElement &&
+        activeElement !== document.body &&
+        activeElement.closest?.("#setupChecklist [data-setup-form]")
+      );
+    }
+
+    function renderDancerSetupWhenEditorIdle() {
+      if (dancerSetupEditorHasFocus()) {
+        dancerSetupRefreshPending = true;
+        return false;
+      }
+      dancerSetupRefreshPending = false;
+      renderDancerSetup();
+      return true;
     }
 
     function dancerSocialMapFromProfile(profile) {
@@ -50585,6 +50605,7 @@
     }
 
     function renderDancerSetup() {
+      dancerSetupRefreshPending = false;
       const steps = setupOrder();
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
       const nextStep = nextIncompleteStep();
@@ -57529,6 +57550,15 @@
         setDancerSetupField("dancerCity", value);
         saveDancerProfileDraft({ city: value });
       }
+    });
+
+    dancerDashboard.addEventListener("focusout", (event) => {
+      if (!event.target.closest("#setupChecklist [data-setup-form]")) return;
+      window.setTimeout(() => {
+        if (dancerSetupRefreshPending && !dancerSetupEditorHasFocus()) {
+          renderDancerSetupWhenEditorIdle();
+        }
+      }, 0);
     });
 
     dancerDashboard.addEventListener("change", (event) => {

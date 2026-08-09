@@ -130,6 +130,33 @@ test("real setup steps advance only after their production save succeeds", () =>
   assert.doesNotMatch(liveAppSource, /\/api\/dancer\/identity-verification/);
 });
 
+test("background dashboard refreshes do not replace Step 1 while the dancer is typing", () => {
+  const focusGuard =
+    liveAppSource.match(/function dancerSetupEditorHasFocus[\s\S]*?\n    function dancerSocialMapFromProfile/)?.[0] || "";
+  const backgroundLoaders = [
+    "loadLiveDancerAnalytics",
+    "loadLiveDancerDeals",
+    "loadLiveDancerWeeklyReport",
+    "loadLiveDancerBilling",
+    "loadLiveDancerRankingEvents",
+    "loadLiveDancerReviews",
+    "hydrateDancerApprovalProgress",
+  ];
+
+  assert.match(focusGuard, /document\.activeElement/);
+  assert.match(focusGuard, /#setupChecklist \[data-setup-form\]/);
+  assert.match(focusGuard, /dancerSetupRefreshPending = true/);
+  assert.match(focusGuard, /renderDancerSetupWhenEditorIdle/);
+  for (const loader of backgroundLoaders) {
+    const body = liveAppSource.match(new RegExp(`async function ${loader}\\([\\s\\S]*?\\n    }`))?.[0] || "";
+    assert.match(body, /renderDancerSetupWhenEditorIdle\(\)/, `${loader} must preserve the active setup editor`);
+  }
+  assert.match(
+    liveAppSource,
+    /dancerDashboard\.addEventListener\("focusout"[\s\S]*?dancerSetupRefreshPending[\s\S]*?renderDancerSetupWhenEditorIdle\(\)/,
+  );
+});
+
 test("only fully moderated photos complete profile media", () => {
   const profileHydrator =
     liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
