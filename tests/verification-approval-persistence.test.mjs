@@ -16,6 +16,7 @@ const [
   publicProfiles,
   accountUi,
   venueMigration,
+  restoreMigration,
   profileApproval,
   dancerBackend,
   environmentExample,
@@ -33,25 +34,29 @@ const [
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608080002_venue_gated_dancer_profiles.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608090001_restore_public_dancer_media.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/profile-approval.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
   readFile(new URL("../.env.example", import.meta.url), "utf8"),
 ]);
 
-test("every new dancer remains private until a venue manager confirms affiliation", () => {
+test("new dancers stay private until submission and public visibility is independent of venue affiliation", () => {
   assert.match(profileApproval, /function initialDancerApprovalValues/);
   assert.match(profileApproval, /status: "draft"/);
   assert.match(profileApproval, /verification_status: "pending"/);
   assert.match(profileApproval, /is_public: false/);
   assert.match(signupRoute, /initialDancerApprovalValues\(\)/);
   assert.match(callbackRoute, /initialDancerApprovalValues\(\)/);
-  assert.doesNotMatch(profileRoute, /ensureAutomaticDancerApproval|automaticDancerApprovalValues/);
+  assert.match(profileRoute, /automaticDancerApprovalValues\(\)/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
-  assert.match(publicProfiles, /venue_approved_at/);
-  assert.match(profileApproval, /venue_approved_at \|\| profile\.venueApprovedAt/);
-  assert.match(accountUi, /verified venue manager scan your personal QR/);
-  assert.match(liveApp, /successful manager scan publishes your profile/i);
+  assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_approved_at/);
+  assert.doesNotMatch(profileApproval.match(/function isCoreVerificationApproved[\s\S]*?\n}/)?.[0] || "", /venue_approved_at|venueApprovedAt/);
+  assert.match(accountUi, /Venue affiliation is confirmed separately for check-ins and Working Now/);
+  assert.match(liveApp, /manager scan confirms that you are affiliated/i);
   assert.match(venueMigration, /venue_approved_at is not null/);
+  assert.match(restoreMigration, /not profile visibility/i);
+  assert.match(restoreMigration, /status = 'approved'/);
+  assert.match(restoreMigration, /is_public = true/);
 });
 
 test("the hosted identity provider integration is removed from runtime code and configuration", async () => {
@@ -90,7 +95,7 @@ test("the removal migration deletes provider state without rewriting migration h
   assert.match(legacyIdentityMigration, /alter column real_name drop not null/);
 });
 
-test("venue affiliation and automated media moderation remain the approval gates", () => {
+test("automated media moderation remains the approval gate while venue affiliation stays separate", () => {
   assert.match(profileApproval, /verification_status \|\| profile\.verificationStatus/);
   assert.doesNotMatch(profileApproval, /identityProvider|identityVerifiedAt/);
   assert.match(venueMigration, /photo_review_status = 'approved'/);
@@ -99,7 +104,12 @@ test("venue affiliation and automated media moderation remain the approval gates
   assert.match(venueMigration, /status = 'approved'/);
   assert.match(venueMigration, /is_public = true/);
   assert.match(liveApp, /Every image is checked automatically/);
-  assert.match(liveApp, /Videos that pass safety moderation stay private until venue affiliation is approved/);
+  assert.match(liveApp, /Videos that pass safety moderation stay private until your dancer profile is approved/);
+  assert.match(restoreMigration, /public reads approved MyDancr TV videos/);
+  assert.doesNotMatch(
+    restoreMigration.match(/create policy "public reads approved MyDancr TV videos"[\s\S]*?\n\);/)?.[0] || "",
+    /venue_approved_at/,
+  );
 });
 
 test("legal identity data is absent from dancer profiles and admin screens", () => {

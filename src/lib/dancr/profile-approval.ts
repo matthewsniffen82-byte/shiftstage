@@ -16,7 +16,6 @@ function normalizedStatus(value: unknown) {
 
 export function isCoreVerificationApproved(profile: DancerApprovalState | null | undefined) {
   if (!profile) return false;
-  if (!(profile.venue_approved_at || profile.venueApprovedAt)) return false;
   return normalizedStatus(profile.verification_status || profile.verificationStatus) === "approved";
 }
 
@@ -26,6 +25,15 @@ export function initialDancerApprovalValues() {
     verification_status: "pending" as const,
     approved_at: null,
     is_public: false,
+  };
+}
+
+export function automaticDancerApprovalValues(now = new Date().toISOString()) {
+  return {
+    status: "approved" as const,
+    verification_status: "approved" as const,
+    approved_at: now,
+    is_public: true,
   };
 }
 

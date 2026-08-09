@@ -231,8 +231,8 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {isLoading ? <p className="tv-studio-status">Loading your real videos…</p> : null}
       {!isLoading && workspace && !workspace.profileEligible ? (
         <div className="tv-studio-lock">
-          <strong>Videos stay private during setup</strong>
-          <p>Uploads are automatically safety-moderated now and become public only after your venue affiliation is approved.</p>
+          <strong>Profile approval required</strong>
+          <p>Your dancer profile must be approved before its moderated videos can appear publicly.</p>
         </div>
       ) : null}
       {workspace?.profileEligible && !workspace.profileVisible ? (

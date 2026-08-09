@@ -432,7 +432,7 @@ export default function AccountClient() {
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
-                <p>Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. Preview and submit it, then have a verified venue manager scan your personal QR to confirm affiliation and publish the profile.</p>
+                <p>Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. Venue affiliation is confirmed separately for check-ins and Working Now.</p>
               </section>
             </>
           ) : null}

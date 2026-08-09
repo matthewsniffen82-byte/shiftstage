@@ -5,6 +5,7 @@ import test from "node:test";
 const [
   baseMigration,
   approvalMigration,
+  restoreMigration,
   service,
   dancerRoute,
   venueRoute,
@@ -15,6 +16,7 @@ const [
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608050001_dancer_venue_affiliations.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608080002_venue_gated_dancer_profiles.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608090001_restore_public_dancer_media.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-affiliations.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dancer-verifications/route.ts", import.meta.url), "utf8"),
@@ -101,7 +103,8 @@ test("revocation is audited and immediately ends matching live shifts", () => {
   assert.match(service, /DANCER_VENUE_AFFILIATION_REVOKED/);
   assert.match(service, /venue_affiliation_status/);
   assert.match(approvalMigration, /select \* into v_replacement[\s\S]*status = 'active'/);
-  assert.match(approvalMigration, /is_public = false/);
-  assert.match(approvalMigration, /'profileDeactivated', v_profile_deactivated/);
-  assert.match(service, /your profile is private again/i);
+  const restoredRevocation = restoreMigration.match(/create or replace function public\.revoke_dancer_venue_affiliation[\s\S]*?\n\$\$;/)?.[0] || "";
+  assert.doesNotMatch(restoredRevocation, /is_public = false/);
+  assert.match(restoredRevocation, /'profileDeactivated', false/);
+  assert.match(service, /Your profile media remains available/i);
 });

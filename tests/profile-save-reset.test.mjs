@@ -271,13 +271,13 @@ test("the live entry point and visibility query support the production schema", 
   assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
   assert.match(publicSource, /isMissingIsPublicColumnError/);
   assert.match(publicSource, /isPublicDancerProfileEligible\(dancer\)/);
-  assert.match(approvalSource, /venue_approved_at \|\| profile\.venueApprovedAt/);
+  assert.doesNotMatch(approvalSource, /venue_approved_at \|\| profile\.venueApprovedAt/);
   assert.doesNotMatch(approvalSource, /identityProvider|identityVerifiedAt/);
   assert.match(approvalSource, /normalizedAccountState !== "active"/);
   assert.match(approvalSource, /profile\.is_public !== false && profile\.isPublic !== false/);
   assert.match(publicSource, /\.eq\("status", "approved"\)/);
   assert.match(publicSource, /\.eq\("verification_status", "approved"\)/);
-  assert.match(publicSource, /\.not\("venue_approved_at", "is", null\)/);
+  assert.doesNotMatch(publicSource, /\.not\("venue_approved_at", "is", null\)/);
   assert.doesNotMatch(publicSource, /identity_provider|identity_verified_at/);
   assert.match(publicSource, /\.eq\("is_public", true\)/);
   assert.match(publicSource, /\.is\("disabled_at", null\)/);

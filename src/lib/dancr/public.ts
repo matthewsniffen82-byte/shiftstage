@@ -5,6 +5,7 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import { verifiedVenueLogoUrl } from "./venue-branding";
 import { isCurrentLocationVerification } from "./geofence";
+import { ensureAutomaticPublicProfileConsistency } from "./profile-recovery";
 
 type DancrClient = SupabaseClient;
 
@@ -12,7 +13,6 @@ function applyPublicApprovalFilters(query: any) {
   return query
     .eq("status", "approved")
     .eq("verification_status", "approved")
-    .not("venue_approved_at", "is", null)
     .is("disabled_at", null);
 }
 
@@ -61,6 +61,7 @@ export async function getLiveDancerDiscovery(
 }
 
 async function getApprovedDancerRowsByCity(client: DancrClient, city: string): Promise<any[]> {
+  await ensureAutomaticPublicProfileConsistency(client);
   const cityName = city.trim();
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
@@ -134,6 +135,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
+  await ensureAutomaticPublicProfileConsistency(client);
   const cityName = city.trim();
   const timeZone = await getCityTimeZone(client, cityName);
   const window = getTonightWindow(timeZone, now);
@@ -213,6 +215,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
+  await ensureAutomaticPublicProfileConsistency(client);
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
     .select(

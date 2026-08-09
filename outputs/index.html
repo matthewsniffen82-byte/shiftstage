@@ -39570,8 +39570,7 @@
 
     function dancerCoreApprovalUnlocked(profile) {
       const verificationApproved = normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved";
-      const venueApprovedAt = profile?.venue_approved_at || profile?.venueApprovedAt;
-      return Boolean(venueApprovedAt && (isApprovedDancerStatus(profile?.status) || verificationApproved));
+      return Boolean(isApprovedDancerStatus(profile?.status) || verificationApproved);
     }
 
     function applyLiveApprovalQueue(queue) {
@@ -44398,7 +44397,7 @@
       const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
         ? "Loading your profile videos..."
         : workspace?.profileEligible === false
-          ? "Videos that pass safety moderation stay private until venue affiliation is approved."
+          ? "Videos that pass safety moderation stay private until your dancer profile is approved."
           : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
       return `
         <section class="approved-profile-video-manager" id="approvedProfileVideoManager" aria-labelledby="approvedProfileVideoTitle">
@@ -50258,7 +50257,7 @@
       `;
       const approvalBody = `
         <div class="info-tile"><strong>Confirm venue affiliation</strong><div class="meta">Choose the venue where you work and show the short-lived personal QR below to its verified manager. The manager confirms only your affiliation; they do not review your profile content.</div></div>
-        <div class="rule-note">The successful manager scan publishes your profile and unlocks your full dancer dashboard.</div>
+        <div class="rule-note">A successful manager scan confirms that you are affiliated with this venue for check-ins and Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create profile and add media", `${profileBody}${photosBody}`),

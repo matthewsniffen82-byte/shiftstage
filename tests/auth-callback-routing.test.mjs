@@ -76,7 +76,7 @@ test("implicit Supabase email-confirmation tokens are transferred into the live 
   assert.match(confirmationSessionReader, /account: confirmationAccountFromAccessToken\(accessToken\)/);
 });
 
-test("unfinished dancer accounts stay draft and loading a profile cannot approve them", () => {
+test("unfinished dancer accounts stay draft until explicit auto-approved submission", () => {
   const signupProfileInsert =
     signupRouteSource.match(/\.from\("dancer_profiles"\)[\s\S]*?\.insert\(\{[\s\S]*?\n    \}\);/)?.[0] || "";
   const callbackProfileInsert =
@@ -91,10 +91,7 @@ test("unfinished dancer accounts stay draft and loading a profile cannot approve
     assert.doesNotMatch(profileInsert, /automaticDancerApprovalValues/);
   }
   assert.doesNotMatch(profileGet, /automaticDancerApprovalValues|ensureAutomaticDancerApproval/);
-  assert.match(explicitSubmission, /status: "pending_review"/);
-  assert.match(explicitSubmission, /verification_status: "pending"/);
-  assert.match(explicitSubmission, /is_public: false/);
-  assert.doesNotMatch(explicitSubmission, /automaticDancerApprovalValues|getIdentityVerificationMode/);
+  assert.match(explicitSubmission, /automaticDancerApprovalValues\(\)/);
 });
 
 test("email callbacks preserve existing dancer approval and account state", () => {

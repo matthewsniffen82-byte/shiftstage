@@ -107,16 +107,12 @@ test("profile setup rows stay readable and use restrained state cues", () => {
   );
 });
 
-test("profile submission remains private until venue approval", () => {
+test("profile submission restores automatic activation after media checks", () => {
   const serverSubmit =
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
-  assert.match(serverSubmit, /status: "pending_review"/);
-  assert.match(serverSubmit, /verification_status: "pending"/);
-  assert.match(serverSubmit, /approved_at: null/);
-  assert.match(serverSubmit, /is_public: false/);
-  assert.doesNotMatch(serverSubmit, /automaticDancerApprovalValues|getIdentityVerificationMode/);
+  assert.match(serverSubmit, /automaticDancerApprovalValues\(\)/);
   assert.match(liveAppSource, /data-submit-review/);
-  assert.match(liveAppSource, /successful manager scan publishes your profile/i);
+  assert.match(liveAppSource, /manager scan confirms that you are affiliated/i);
 });
 
 test("real setup steps advance only after their production save succeeds", () => {

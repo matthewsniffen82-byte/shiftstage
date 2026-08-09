@@ -18,6 +18,7 @@ import {
   removeArchivedOriginalMedia,
   watermarkStoredVideo,
 } from "./media-watermark";
+import { ensureAutomaticPublicProfileConsistency } from "./profile-recovery";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -145,6 +146,7 @@ export async function getPublicMyDancrTvVideoCount(
   admin: AdminClient,
   options: Pick<FeedOptions, "city" | "venueId"> = {},
 ): Promise<number> {
+  await ensureAutomaticPublicProfileConsistency(admin);
   const now = new Date();
   const nowIso = now.toISOString();
   const city = normalizeTvCity(options.city);
@@ -165,7 +167,6 @@ export async function getPublicMyDancrTvVideoCount(
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
     .eq("dancer_profiles.status", "approved")
     .eq("dancer_profiles.verification_status", "approved")
-    .not("dancer_profiles.venue_approved_at", "is", null)
     .is("dancer_profiles.disabled_at", null)
     .eq("dancer_profiles.is_public", true);
 
@@ -180,6 +181,7 @@ export async function getPublicMyDancrTvFeed(
   admin: AdminClient,
   options: FeedOptions = {},
 ): Promise<MyDancrTvVideo[]> {
+  await ensureAutomaticPublicProfileConsistency(admin);
   const now = new Date();
   const nowIso = now.toISOString();
   const city = normalizeTvCity(options.city);
