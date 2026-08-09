@@ -49,7 +49,7 @@ export async function POST(request: Request, { params }: RouteProps) {
     return NextResponse.json({
       ok: true,
       redemption: result.redemption,
-      ledger: result.ledger,
+      confirmation: result.confirmation,
     });
   } catch (error) {
     return apiError(error, "Unable to redeem QR code.");

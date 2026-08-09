@@ -301,7 +301,7 @@ export async function redeemDealToken(client: DancrClient, token: string, reques
   return {
     ok: true,
     status: 200,
-    ledger: data,
+    confirmation: data,
     redemption: await getRedemptionForScanner(client, token),
   };
 }
@@ -425,15 +425,15 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string) 
     qrShares: (lifecycle || []).filter((item: any) => item.event_type === "shared").length,
     redeemed: (redemptions || []).filter((item: any) => item.status === "redeemed").length,
     expiredOrVoided: (redemptions || []).filter((item: any) => item.status === "expired" || item.status === "voided").length,
-    pendingCommissions: (commissions || []).filter((item: any) => item.status === "pending_club_payment").length,
+    pendingCommissions: 0,
     payableCommissions: (commissions || []).filter((item: any) => item.status === "payable").length,
     paidCommissions: (commissions || []).filter((item: any) => item.status === "paid").length,
     rejectedCommissions: (commissions || []).filter((item: any) => item.status === "rejected" || item.status === "voided").length,
-    pendingCommissionCents: commissionTotal(["pending_club_payment"]),
+    pendingCommissionCents: 0,
     payableCommissionCents: commissionTotal(["payable"]),
     paidCommissionCents: commissionTotal(["paid"]),
     earnedCommissionCents: commissionTotal(["payable", "paid"]),
-    totalCommissionCents: commissionTotal(["pending_club_payment", "payable", "paid"]),
+    totalCommissionCents: commissionTotal(["payable", "paid"]),
     successfulRedemptionsThisMonth,
     currentDancerSharePercent,
     nextTierAt,
@@ -604,7 +604,7 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
     db
       .from("deal_revenue_events")
       .select(
-        "id, source_type, status, gross_commission_cents, dancer_commission_cents, platform_commission_cents, confirmed_at",
+        "id, source_type, status, gross_commission_cents, confirmed_at",
       )
       .eq("venue_id", venueId)
       .gte("confirmed_at", monthStart.toISOString())
@@ -638,9 +638,7 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
     successfulRedemptionsThisMonth: activeRows.length,
     dancerAttributedRedemptionsThisMonth: activeRows.filter((item: any) => item.source_type === "dancer_profile").length,
     directVenueRedemptionsThisMonth: activeRows.filter((item: any) => item.source_type === "club_page").length,
-    grossCommissionCentsThisMonth: sum("gross_commission_cents"),
-    dancerCommissionCentsThisMonth: sum("dancer_commission_cents"),
-    platformCommissionCentsThisMonth: sum("platform_commission_cents"),
+    myDancrFeesCentsThisMonth: sum("gross_commission_cents"),
     pendingVenuePaymentCents: sum(
       "gross_commission_cents",
       rows.filter((item: any) => item.status === "pending_venue_payment"),
@@ -658,12 +656,25 @@ export async function getVenueDealRevenueMetrics(client: DancrClient, venueId: s
 export async function settleDealRevenueEvent(
   client: DancrClient,
   revenueEventId: string,
-  action: "venue_payment_received" | "dancer_paid",
+  action: "venue_payment_received",
   externalReference: string,
 ) {
   const { data, error } = await (client as any).rpc("settle_deal_revenue_event", {
     p_revenue_event_id: revenueEventId,
     p_action: action,
+    p_external_reference: externalReference,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function settleDancerCommissionEvent(
+  client: DancrClient,
+  commissionEventId: string,
+  externalReference: string,
+) {
+  const { data, error } = await (client as any).rpc("settle_dancer_commission_event", {
+    p_commission_event_id: commissionEventId,
     p_external_reference: externalReference,
   });
   if (error) throw error;
@@ -686,8 +697,8 @@ export async function getAdminDealActivity(client: DancrClient, filters: Record<
       venues(id, name),
       dancer_profiles(id, stage_name),
       club_deals(id, deal_title),
-      commission_events(id, status, amount_cents, dancer_share_bps, gross_commission_cents, platform_amount_cents),
-      deal_revenue_events(id, status, gross_commission_cents, dancer_commission_cents, platform_commission_cents)
+      commission_events(id, status, amount_cents, dancer_share_bps, gross_commission_cents, platform_amount_cents, payable_at, paid_at, audit),
+      deal_revenue_events(id, status, gross_commission_cents, venue_payment_reference, venue_payment_received_at)
     `,
     )
     .order("generated_at", { ascending: false })

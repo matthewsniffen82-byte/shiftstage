@@ -645,7 +645,7 @@ function FinanceManager({
           <Metric label="Club payments received" value={formatAdminCents(Number(metrics.paidClubRevenueCents || 0))} />
           <Metric label="Dancer payable" value={formatAdminCents(Number(metrics.dancerPayableCents || 0))} />
           <Metric label="Dancer paid" value={formatAdminCents(Number(metrics.dancerPaidCents || 0))} />
-          <Metric label="MyDancr earned" value={formatAdminCents(Number(metrics.platformEarnedCents || 0))} />
+          <Metric label="MyDancr net revenue" value={formatAdminCents(Number(metrics.myDancrNetRevenueCents || 0))} />
           <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
           <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
         </div>
@@ -1053,8 +1053,8 @@ function DealActivityManager({
     setMessage("Redemption voided.");
   }
 
-  async function settleRevenue(
-    revenueEventId: string,
+  async function settleBalance(
+    eventId: string,
     action: "venue_payment_received" | "dancer_paid",
   ) {
     const token = readToken();
@@ -1062,7 +1062,8 @@ function DealActivityManager({
       setMessage("Admin sign in required.");
       return;
     }
-    const externalReference = String(paymentReferences[revenueEventId] || "").trim();
+    const referenceKey = `${action}:${eventId}`;
+    const externalReference = String(paymentReferences[referenceKey] || "").trim();
     if (externalReference.length < 3) {
       setMessage("Enter the real invoice, payment, or payout reference first.");
       return;
@@ -1072,7 +1073,13 @@ function DealActivityManager({
     const response = await fetch("/api/admin/deals", {
       method: "PATCH",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ action, revenueEventId, externalReference }),
+      body: JSON.stringify({
+        action,
+        externalReference,
+        ...(action === "venue_payment_received"
+          ? { revenueEventId: eventId }
+          : { commissionEventId: eventId }),
+      }),
     });
     const data = await response.json();
     if (!response.ok || !data.ok) {
@@ -1080,7 +1087,7 @@ function DealActivityManager({
       return;
     }
     await loadFiltered();
-    setPaymentReferences((current) => ({ ...current, [revenueEventId]: "" }));
+    setPaymentReferences((current) => ({ ...current, [referenceKey]: "" }));
     setMessage(action === "venue_payment_received" ? "Venue payment recorded." : "Dancer payout recorded.");
   }
 
@@ -1121,7 +1128,6 @@ function DealActivityManager({
           Commission
           <select value={commissionStatus} onChange={(event) => setCommissionStatus(event.target.value)}>
             <option value="">All commissions</option>
-            <option value="pending_club_payment">Pending club payment</option>
             <option value="payable">Payable</option>
             <option value="paid">Paid</option>
             <option value="rejected">Rejected</option>
@@ -1143,44 +1149,66 @@ function DealActivityManager({
       <div className="deal-activity-list">
         {activity.slice(0, 8).map((item) => {
           const revenue = readFirst(item.deal_revenue_events);
+          const commission = readFirst(item.commission_events);
           const revenueEventId = String(revenue?.id || "");
+          const commissionEventId = String(commission?.id || "");
           const revenueStatus = String(revenue?.status || "");
+          const commissionState = String(commission?.status || "");
+          const venueReferenceKey = `venue_payment_received:${revenueEventId}`;
+          const dancerReferenceKey = `dancer_paid:${commissionEventId}`;
           return (
             <div className="deal-activity-row" key={String(item.id)}>
               <strong>{previewDealName(item)}</strong>
               <span>{String(item.source_type || "source")} / {String(item.status || "status")}</span>
               <em>{previewCommission(item)}</em>
               {revenue ? (
-                <>
+                <section className="deal-settlement-ledger" aria-label="Venue receivable">
+                  <strong>Venue → MyDancr</strong>
                   <span>
-                    Revenue: {formatAdminCents(Number(revenue.gross_commission_cents || 0))}
-                    {" · "}Dancer {formatAdminCents(Number(revenue.dancer_commission_cents || 0))}
-                    {" · "}MyDancr {formatAdminCents(Number(revenue.platform_commission_cents || 0))}
+                    Venue owes MyDancr: {formatAdminCents(Number(revenue.gross_commission_cents || 0))}
                   </span>
-                  <span>Settlement: {revenueStatus.replaceAll("_", " ")}</span>
-                  {revenueStatus === "pending_venue_payment" || revenueStatus === "payable" ? (
+                  <span>Venue payment: {revenueStatus === "settled" ? "paid" : revenueStatus.replaceAll("_", " ")}</span>
+                  {revenueStatus === "pending_venue_payment" ? (
                     <div className="deal-settlement-action">
                       <input
-                        aria-label="External payment reference"
-                        placeholder={revenueStatus === "pending_venue_payment" ? "Venue invoice/payment reference" : "Dancer payout reference"}
-                        value={paymentReferences[revenueEventId] || ""}
+                        aria-label="Venue payment reference"
+                        placeholder="Venue invoice/payment reference"
+                        value={paymentReferences[venueReferenceKey] || ""}
                         onChange={(event) => setPaymentReferences((current) => ({
                           ...current,
-                          [revenueEventId]: event.target.value,
+                          [venueReferenceKey]: event.target.value,
                         }))}
                       />
                       <button
                         type="button"
-                        onClick={() => settleRevenue(
-                          revenueEventId,
-                          revenueStatus === "pending_venue_payment" ? "venue_payment_received" : "dancer_paid",
-                        )}
+                        onClick={() => settleBalance(revenueEventId, "venue_payment_received")}
                       >
-                        {revenueStatus === "pending_venue_payment" ? "Record venue payment" : "Record dancer payout"}
+                        Record venue payment
                       </button>
                     </div>
                   ) : null}
-                </>
+                </section>
+              ) : null}
+              {commission ? (
+                <section className="deal-settlement-ledger" aria-label="Dancer payout">
+                  <strong>MyDancr → Dancer</strong>
+                  <span>MyDancr owes dancer: {formatAdminCents(Number(commission.amount_cents || 0))}</span>
+                  <span>Dancer payout: {commissionState.replaceAll("_", " ")}</span>
+                  {commissionState === "payable" ? (
+                    <div className="deal-settlement-action">
+                      <input
+                        aria-label="Dancer payout reference"
+                        placeholder="MyDancr payout reference"
+                        value={paymentReferences[dancerReferenceKey] || ""}
+                        onChange={(event) => setPaymentReferences((current) => ({
+                          ...current,
+                          [dancerReferenceKey]: event.target.value,
+                        }))}
+                      />
+                      <button type="button" onClick={() => settleBalance(commissionEventId, "dancer_paid")}>Record dancer payout</button>
+                    </div>
+                  ) : null}
+                </section>
               ) : null}
               {item.suspicious ? <span>Flagged suspicious</span> : null}
               {item.status === "generated" ? (
@@ -3012,6 +3040,8 @@ function AdminStyles() {
       .deal-activity-row span { color: #b9accd; font-size: 13px; }
       .deal-activity-row em { color: #94e5ff; font-size: 13px; font-style: normal; font-weight: 850; }
       .deal-activity-row button { justify-self: start; min-height: 34px; padding: 0 12px; }
+      .deal-settlement-ledger { display: grid; gap: 5px; margin-top: 6px; padding: 10px; border: 1px solid rgba(148,163,184,.18); border-radius: 8px; background: rgba(5,5,7,.54); }
+      .deal-settlement-ledger > strong { color: #f8fafc; font-size: 13px; }
       .deal-settlement-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
       .deal-settlement-action input { min-height: 38px; border: 1px solid rgba(148,229,255,.22); border-radius: 8px; color: #fff; background: rgba(148,229,255,.06); padding: 0 10px; font: inherit; }
       .admin-grid:empty { display: none; }

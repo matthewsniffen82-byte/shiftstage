@@ -4,6 +4,7 @@ import test from "node:test";
 
 const [
   migration,
+  separationMigration,
   policy,
   deals,
   generationRoute,
@@ -23,6 +24,7 @@ const [
   discoveryRoute,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202607300002_qr_revenue_lifecycle.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608080001_separate_venue_receivables_and_dancer_payouts.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/commission-policy.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/deals/redemptions/route.ts", import.meta.url), "utf8"),
@@ -48,9 +50,9 @@ test("the supplied monthly commission tiers are the single production policy", (
   assert.match(policy, /minimumSuccessfulRedemptions: 75[\s\S]*?maximumSuccessfulRedemptions: null[\s\S]*?dancerShareBps: 5000[\s\S]*?platformShareBps: 5000/);
   assert.match(migration, /when v_success_number >= 75 then 5000[\s\S]*?when v_success_number >= 25 then 4000[\s\S]*?else 3000/);
   assert.match(migration, /v_platform_cents := v_gross_cents - v_dancer_cents/);
-  assert.match(venueDashboard, /1–24[\s\S]*?Dancer 30%[\s\S]*?MyDancr 70%/);
-  assert.match(venueDashboard, /25–74[\s\S]*?Dancer 40%[\s\S]*?MyDancr 60%/);
-  assert.match(venueDashboard, /75\+[\s\S]*?Dancer 50%[\s\S]*?MyDancr 50%/);
+  assert.match(venueDashboard, /1–24 monthly[\s\S]*?30% dancer[\s\S]*?70% MyDancr/);
+  assert.match(venueDashboard, /25–74 monthly[\s\S]*?40% dancer[\s\S]*?60% MyDancr/);
+  assert.match(venueDashboard, /75\+ monthly[\s\S]*?50% dancer[\s\S]*?50% MyDancr/);
 });
 
 test("dancer attribution is locked to a verified shift when the unique QR is issued", () => {
@@ -126,23 +128,34 @@ test("venues configure a real referral amount before a tracked QR can be publish
   assert.match(deals, /between \$1\.00 and \$1,000\.00 per successful redemption/);
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
-  assert.match(venueDashboard, /Commission per redemption/);
+  assert.match(venueDashboard, /MyDancr referral fee per redemption/);
   assert.match(venueDashboard, /name="dealAction"[\s\S]*?value=\{form\.isActive \? "save" : "publish"\}/);
   assert.match(venueDashboard, /"Publish Deal"/);
-  assert.match(venueDashboard, /Only that authenticated confirmation creates revenue and dancer commission/);
+  assert.match(venueDashboard, /Only that authenticated confirmation creates a verified MyDancr referral fee for venue billing/);
+  assert.doesNotMatch(venueDashboard, /Monthly successful dancer QR redemptions/);
 });
 
-test("real settlement references advance venue payment and dancer payout states", () => {
-  assert.match(migration, /create or replace function public\.settle_deal_revenue_event/);
-  assert.match(migration, /p_action = 'venue_payment_received'/);
-  assert.match(migration, /status = case when dancer_commission_cents > 0 then 'payable' else 'settled' end/);
-  assert.match(migration, /p_action = 'dancer_paid'/);
-  assert.match(migration, /status = 'paid'[\s\S]*?paid_at = v_now/);
+test("venue receivables and MyDancr-funded dancer payouts settle independently", () => {
+  assert.match(separationMigration, /commission_funder', 'mydancr'/);
+  assert.match(separationMigration, /venue_payment_dependency', false/);
+  assert.match(separationMigration, /status = 'settled'[\s\S]*?venue_payment_reference/);
+  assert.match(separationMigration, /create or replace function public\.settle_dancer_commission_event/);
+  assert.match(separationMigration, /update public\.commission_events[\s\S]*?status = 'paid'[\s\S]*?paid_at = v_now/);
+  assert.doesNotMatch(
+    separationMigration.match(/create or replace function public\.settle_deal_revenue_event[\s\S]*?(?=create or replace function public\.settle_dancer_commission_event)/)?.[0] || "",
+    /update public\.commission_events/,
+  );
+  assert.match(separationMigration, /drop policy if exists "Venue owners read own commission events"/);
+  assert.match(separationMigration, /drop policy if exists "Venue owners read own deal revenue events"/);
   assert.match(adminRoute, /settleDealRevenueEvent/);
-  assert.match(adminRoute, /external payment reference are required/);
+  assert.match(adminRoute, /settleDancerCommissionEvent/);
+  assert.match(adminRoute, /commissionEventId/);
   assert.match(adminClient, /Record venue payment/);
   assert.match(adminClient, /Record dancer payout/);
   assert.match(adminClient, /Venue invoice\/payment reference/);
+  assert.match(adminClient, /MyDancr → Dancer/);
+  assert.doesNotMatch(venueDashboard, /<Metric label="Dancer share"/);
+  assert.doesNotMatch(venueDashboard, /<Metric label="MyDancr share"/);
 });
 
 test("unused QR invalidation is atomic and cannot rewrite settled financial history", () => {

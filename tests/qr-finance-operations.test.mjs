@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 
 test("QR finance migration creates private receivables and payout ledgers", () => {
   const migration = read("supabase/migrations/202608040001_qr_finance_operations.sql");
+  const separation = read("supabase/migrations/202608080001_separate_venue_receivables_and_dancer_payouts.sql");
   for (const table of [
     "club_finance_accounts",
     "club_invoices",
@@ -27,6 +28,16 @@ test("QR finance migration creates private receivables and payout ledgers", () =
   assert.match(migration, /create or replace function public\.complete_dancer_payout_batch/);
   assert.match(migration, /revoke all on function public\.apply_club_invoice_payment[\s\S]*from public, anon, authenticated/);
   assert.match(migration, /grant execute on function public\.complete_dancer_payout_batch[\s\S]*to service_role/);
+  assert.match(separation, /create trigger commission_events_make_mydancr_funded/);
+  assert.match(separation, /create or replace function public\.apply_club_invoice_payment/);
+  assert.doesNotMatch(
+    separation.match(/create or replace function public\.apply_club_invoice_payment[\s\S]*?(?=create or replace function public\.complete_dancer_payout_batch)/)?.[0] || "",
+    /update public\.commission_events/,
+  );
+  assert.doesNotMatch(
+    separation.match(/create or replace function public\.complete_dancer_payout_batch[\s\S]*?(?=create or replace function public\.release_dancer_payout_batch)/)?.[0] || "",
+    /update public\.deal_revenue_events/,
+  );
 });
 
 test("monthly club invoices, reminders, reconciliation, and dancer transfers use Stripe production APIs", () => {
@@ -95,7 +106,9 @@ test("daily automation and every production finance dashboard are wired", () => 
   assert.match(adminUi, /Run full reconciliation/);
   assert.match(adminUi, /Record bank, ACH, or check payment/);
   assert.match(dashboard, /Club invoices/);
-  assert.match(dashboard, /Connect payout account/);
+  assert.match(dashboard, /MyDancr payouts/);
+  assert.match(dashboard, /Admin managed/);
+  assert.match(dashboard, /Venue billing is separate and never controls whether your reward is eligible for payout/);
   assert.match(dashboard, /Download monthly statement/);
   assert.match(venueDashboard, /getVenueFinance/);
   assert.match(dancerDashboard, /getDancerFinance/);

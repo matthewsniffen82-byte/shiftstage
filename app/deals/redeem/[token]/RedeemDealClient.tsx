@@ -51,12 +51,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to redeem this QR code.");
 
       setRedemption(data.redemption);
-      const dancerCredit = Number(data.ledger?.dancer_commission_cents || 0);
-      setStatus(
-        dancerCredit > 0
-          ? `Redeemed. ${formatMoney(dancerCredit)} was credited to the dancer ledger.`
-          : "Redeemed. The full referral commission was credited to MyDancr.",
-      );
+      setStatus("Redeemed. This verified visit was recorded for MyDancr venue billing.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to redeem this QR code.");
     } finally {

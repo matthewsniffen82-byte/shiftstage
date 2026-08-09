@@ -480,7 +480,7 @@ export async function getAdminFinanceOverview(client: DancrClient) {
       paidClubRevenueCents: sum(paidInvoices, "amount_paid_cents"),
       dancerPayableCents: sum(commissions.filter((row: any) => row.status === "payable"), "amount_cents"),
       dancerPaidCents: sum(paidPayouts, "amount_cents"),
-      platformEarnedCents: sum(revenue.filter((row: any) => ["payable", "settled"].includes(row.status)), "platform_commission_cents"),
+      myDancrNetRevenueCents: sum(revenue.filter((row: any) => row.status === "settled"), "platform_commission_cents"),
       openInvoiceCount: outstanding.length,
       overdueInvoiceCount: overdue.length,
       failedPayoutCount: payouts.filter((row: any) => row.status === "failed").length,
@@ -519,7 +519,7 @@ export async function getDancerFinance(client: DancrClient, userId: string) {
     dancer: { id: dancer.id, stageName: dancer.stage_name },
     payoutAccount: account,
     payableCents: total("payable"),
-    pendingClubPaymentCents: total("pending_club_payment"),
+    pendingClubPaymentCents: 0,
     paidCents: total("paid"),
     payouts: payouts || [],
   };
@@ -530,7 +530,7 @@ export async function getVenueStatementRows(client: DancrClient, userId: string,
   if (venueError) throw venueError;
   if (!venue) throw new Error("Venue profile not found.");
   const { data, error } = await (client as any).from("deal_revenue_events")
-    .select("id, source_type, gross_commission_cents, dancer_commission_cents, platform_commission_cents, status, confirmed_at, venue_payment_received_at, dancer_profiles(stage_name), club_deals(deal_title)")
+    .select("id, source_type, gross_commission_cents, status, confirmed_at, venue_payment_received_at, club_deals(deal_title)")
     .eq("venue_id", venue.id).eq("commission_month", `${month}-01`).order("confirmed_at", { ascending: true }).limit(MAX_FINANCE_ROWS);
   if (error) throw error;
   return { owner: venue.name, month, rows: data || [] };
@@ -539,18 +539,17 @@ export async function getVenueStatementRows(client: DancrClient, userId: string,
 export async function getDancerStatementRows(client: DancrClient, userId: string, month: string) {
   const dancer = await getDancerForUser(client, userId);
   const { data, error } = await (client as any).from("commission_events")
-    .select("id, status, amount_cents, gross_commission_cents, dancer_share_bps, platform_amount_cents, created_at, paid_at, venues(name), club_deals(deal_title)")
+    .select("id, status, amount_cents, gross_commission_cents, dancer_share_bps, created_at, paid_at, venues(name), club_deals(deal_title)")
     .eq("dancer_id", dancer.id).eq("commission_month", `${month}-01`).order("created_at", { ascending: true }).limit(MAX_FINANCE_ROWS);
   if (error) throw error;
   return { owner: dancer.stage_name, month, rows: data || [] };
 }
 
 export function venueStatementCsv(statement: Awaited<ReturnType<typeof getVenueStatementRows>>) {
-  const header = ["Date", "Venue", "Deal", "Source", "Gross commission", "Dancer share", "MyDancr share", "Status", "Club payment received"];
+  const header = ["Date", "Venue", "Deal", "Source", "MyDancr referral fee", "Venue payment status", "Venue payment received"];
   const rows = statement.rows.map((row: any) => [
     row.confirmed_at, statement.owner, joined(row.club_deals)?.deal_title || "Club Deal", row.source_type,
-    cents(row.gross_commission_cents), cents(row.dancer_commission_cents), cents(row.platform_commission_cents),
-    row.status, row.venue_payment_received_at || "",
+    cents(row.gross_commission_cents), row.status, row.venue_payment_received_at || "",
   ]);
   return csv([header, ...rows]);
 }

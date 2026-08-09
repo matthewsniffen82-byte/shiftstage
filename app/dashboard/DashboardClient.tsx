@@ -1714,7 +1714,7 @@ function VenuePanel({
       <VenueDashboardSection
         badge={`${venueDeals.length || (deal ? 1 : 0)} ${venueDeals.length === 1 || (!venueDeals.length && deal) ? "deal" : "deals"}`}
         defaultOpen
-        description="Create and publish a Club Deal, confirm where it is live, and share its active QR from one place."
+        description="Create and publish Club Deals, share tracked QR codes, and reconcile verified MyDancr referral fees and venue invoices."
         eyebrow="Revenue"
         id="venue-club-deals"
         title="Club Deals & tracked QR"
@@ -2213,7 +2213,7 @@ function VenueClubDealPanel({
           />
         </label>
         <label>
-          Commission per redemption
+          MyDancr referral fee per redemption
           <span className="currency-input">
             <span>$</span>
             <input
@@ -2311,17 +2311,11 @@ function VenueClubDealPanel({
             Published deals appear on your venue page and on affiliated dancer profiles while those dancers are verified Working Now.
           </p>
           <p>
-            Each generated QR creates a tracked customer pass. Direct venue scans stay attributed to the venue, while dancer-profile passes preserve dancer attribution for the correct commission split.
+            Each generated QR creates a tracked customer pass. Direct venue passes and dancer-profile passes preserve their source, while the venue is billed the same published MyDancr referral fee after staff confirms redemption.
           </p>
-          <div className="commission-tier-table" aria-label="Dancer monthly QR commission tiers">
-            <strong>Monthly successful dancer QR redemptions</strong>
-            <div><span>1–24</span><b>Dancer 30%</b><b>MyDancr 70%</b></div>
-            <div><span>25–74</span><b>Dancer 40%</b><b>MyDancr 60%</b></div>
-            <div><span>75+</span><b>Dancer 50%</b><b>MyDancr 50%</b></div>
-          </div>
           <aside className="venue-redemption-instructions">
             <strong>Venue staff redemption</strong>
-            <p>Staff scan the customer&apos;s QR, sign in to this venue account, review the offer, and select Redeem Deal. Only that authenticated confirmation creates revenue and dancer commission.</p>
+            <p>Staff scan the customer&apos;s QR, sign in to this venue account, review the offer, and select Redeem Deal. Only that authenticated confirmation creates a verified MyDancr referral fee for venue billing.</p>
           </aside>
         </div>
       </details>
@@ -2329,10 +2323,8 @@ function VenueClubDealPanel({
         <Metric label="Successful this month" value={String(revenue?.successfulRedemptionsThisMonth || 0)} />
         <Metric label="Dancer attributed" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
         <Metric label="Direct venue" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
-        <Metric label="Gross referral commission" value={formatCents(Number(revenue?.grossCommissionCentsThisMonth || 0))} />
-        <Metric label="Dancer share" value={formatCents(Number(revenue?.dancerCommissionCentsThisMonth || 0))} />
-        <Metric label="MyDancr share" value={formatCents(Number(revenue?.platformCommissionCentsThisMonth || 0))} />
-        <Metric label="Pending venue payment" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
+        <Metric label="MyDancr referral fees" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
+        <Metric label="Outstanding to MyDancr" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
         <Metric label="Posted QR scans" value={String(revenue?.postedVenueQrScansThisMonth || 0)} />
         <Metric label="Customer passes issued" value={String(revenue?.passesIssuedThisMonth || 0)} />
         <Metric label="Saves / scanner opens" value={`${String(revenue?.savesThisMonth || 0)} / ${String(revenue?.scannerOpensThisMonth || 0)}`} />
@@ -2715,7 +2707,7 @@ function DancerLockedAnalyticsPanel() {
 
 function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
   const earnedCommissionCents = Number(deals?.earnedCommissionCents || 0);
-  const pendingCommissionCents = Number(deals?.pendingCommissionCents || 0);
+  const payableCommissionCents = Number(deals?.payableCommissionCents || 0);
   const successfulThisMonth = Number(deals?.successfulRedemptionsThisMonth || 0);
   const currentShare = Number(deals?.currentDancerSharePercent || 30);
   const nextTierAt = deals?.nextTierAt === null ? null : Number(deals?.nextTierAt || 25);
@@ -2727,8 +2719,8 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
         Your dancer credit is locked when a QR is created from your profile during a verified check-in. Saves and shares keep that attribution; venue-confirmed successful redemptions earn commission.
       </p>
       <div className="deal-metrics">
-        <Metric label="Earned commissions" value={formatCents(earnedCommissionCents)} />
-        <Metric label="Pending commissions" value={formatCents(pendingCommissionCents)} />
+        <Metric label="MyDancr rewards earned" value={formatCents(earnedCommissionCents)} />
+        <Metric label="Ready for MyDancr payout" value={formatCents(payableCommissionCents)} />
         <Metric label="Successful this month" value={String(successfulThisMonth)} />
         <Metric label="Current dancer share" value={`${currentShare}%`} />
         <Metric label="QR saves / shares" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
@@ -2752,31 +2744,8 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
 
 function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
   const [status, setStatus] = useState("");
-  const [isWorking, setIsWorking] = useState(false);
-  const payoutAccount = finance?.payoutAccount as Record<string, unknown> | null | undefined;
   const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const connected = payoutAccount?.onboarding_complete === true;
-
-  async function startOnboarding() {
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
-    setIsWorking(true);
-    setStatus("Opening secure payout setup...");
-    try {
-      const response = await fetch("/api/dancer/finance", {
-        method: "POST",
-        headers: { authorization: `Bearer ${session.accessToken}`, "content-type": "application/json" },
-        body: JSON.stringify({ action: "connect_onboarding" }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.ok || !data.onboarding?.url) throw new Error(data.error || "Unable to start payout setup.");
-      window.location.assign(data.onboarding.url);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to start payout setup.");
-      setIsWorking(false);
-    }
-  }
 
   async function downloadStatement() {
     setStatus("Preparing statement...");
@@ -2795,22 +2764,16 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
     <article className="info-panel deal-panel" aria-labelledby="dancer-payout-heading">
       <div className="venue-deal-heading">
         <div>
-          <span className="eyebrow">Stripe payouts</span>
-          <h2 id="dancer-payout-heading">Commission settlement</h2>
+          <span className="eyebrow">MyDancr payouts</span>
+          <h2 id="dancer-payout-heading">Dancer rewards</h2>
         </div>
-        <strong className={connected ? "deal-state active" : "deal-state"}>{connected ? "Ready" : "Setup required"}</strong>
+        <strong className="deal-state active">Admin managed</strong>
       </div>
-      <p>Venue-confirmed QR commissions become payable after the club invoice is paid. MyDancr sends payable balances through your verified Stripe payout account.</p>
+      <p>Each venue-confirmed referral creates a MyDancr-funded dancer reward. Venue billing is separate and never controls whether your reward is eligible for payout.</p>
       <div className="deal-metrics">
-        <Metric label="Waiting on club" value={formatCents(Number(finance?.pendingClubPaymentCents || 0))} />
-        <Metric label="Ready for payout" value={formatCents(Number(finance?.payableCents || 0))} />
+        <Metric label="Ready for MyDancr payout" value={formatCents(Number(finance?.payableCents || 0))} />
         <Metric label="Paid" value={formatCents(Number(finance?.paidCents || 0))} />
       </div>
-      {!connected ? (
-        <button disabled={isWorking} type="button" onClick={startOnboarding}>
-          {isWorking ? "Opening Stripe..." : payoutAccount ? "Finish secure payout setup" : "Connect payout account"}
-        </button>
-      ) : null}
       {payouts.length ? (
         <div className="commission-tier-table" aria-label="Recent dancer payouts">
           {payouts.slice(0, 6).map((payout) => (
@@ -2823,7 +2786,6 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         </div>
       ) : <p>No payout batches yet.</p>}
       <button type="button" onClick={downloadStatement}>Download monthly statement</button>
-      {payoutAccount?.last_error ? <p role="alert">{String(payoutAccount.last_error)}</p> : null}
       {status ? <p role="status">{status}</p> : null}
     </article>
   );
