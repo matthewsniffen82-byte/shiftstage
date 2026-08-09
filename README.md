@@ -52,6 +52,10 @@ Required production environment variables:
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_DANCER_MONTHLY_PRICE_ID`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+- `OPENAI_API_KEY`
+- `ACRCLOUD_HOST`
+- `ACRCLOUD_ACCESS_KEY`
+- `ACRCLOUD_ACCESS_SECRET`
 
 ## Dancr Image Moderation
 
@@ -139,6 +143,19 @@ Rollback by reverting the code and disabling the `/api/dancer/photos` route depl
 - `demo_auto_approve` is a temporary demo-population mode. It skips AI and manual moderation, records the bypass in the video's moderation audit fields, and immediately publishes a valid upload.
 
 Demo mode does not bypass authentication, dancer-profile eligibility, supported video type, file-size and duration limits, portrait/square dimensions, consent and rights confirmations, storage verification, or MyDancr watermark processing. A watermark failure is logged and recorded but does not send the demo upload to manual review.
+
+### Music rights fingerprinting
+
+AI moderation mode also runs server-side ACRCloud music recognition before publication. The service extracts up to three evenly distributed ten-second mono audio samples, signs each Identification API request with HMAC-SHA1, and sends only those bounded samples to the configured ACRCloud Music project.
+
+Configure these server-only values in local development and every Vercel environment that accepts uploads:
+
+- `ACRCLOUD_HOST` — the project's ACRCloud identification host, such as `identify-us-west-2.acrcloud.com`
+- `ACRCLOUD_ACCESS_KEY`
+- `ACRCLOUD_ACCESS_SECRET`
+- `DANCR_MUSIC_MATCH_REVIEW_THRESHOLD` — optional match score from 70–100; defaults to `80`
+
+The ACRCloud project must use the ACRCloud Music bucket, Recorded Audio, and ISRC metadata. Catalog matches at or above the threshold never auto-publish or auto-reject: they enter the existing human-review queue so an administrator can confirm authorization. The audit record stores provider, model, ACRID, title, artist, ISRC, score, and sampled offsets without storing credentials or audio. No match permits the normal safety decision to continue. Missing credentials, incomplete sampling, timeouts, invalid provider responses, and provider failures all fail closed to human review.
 
 ### Replacing marked demo profile media
 
