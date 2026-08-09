@@ -285,8 +285,20 @@ export default function TvFeedClient({
   }, [videos]);
 
   useEffect(() => {
-    Object.entries(videoElements.current).forEach(([videoId, element]) => {
+    const activeIndex = videos.findIndex((video) => video.id === activeVideoId);
+    videos.forEach((video, videoIndex) => {
+      const videoId = video.id;
+      const element = videoElements.current[videoId];
       if (!element) return;
+      const shouldWarm = activeIndex >= 0 && Math.abs(videoIndex - activeIndex) <= 1;
+      element.preload = shouldWarm ? "auto" : "metadata";
+      if (
+        shouldWarm &&
+        element.readyState === HTMLMediaElement.HAVE_NOTHING &&
+        element.networkState === HTMLMediaElement.NETWORK_EMPTY
+      ) {
+        element.load();
+      }
       element.muted = muted;
       if (videoId === activeVideoId) {
         void attemptVideoPlayback(videoId, element);
@@ -302,7 +314,7 @@ export default function TvFeedClient({
         window.clearTimeout(engagedTimers.current[videoId]);
       }
     });
-  }, [activeVideoId, attemptVideoPlayback, muted, trackEvent]);
+  }, [activeVideoId, attemptVideoPlayback, muted, trackEvent, videos]);
 
   useEffect(() => {
     const resumeActiveVideo = () => {
@@ -398,6 +410,7 @@ export default function TvFeedClient({
   const unreadNotificationCount = notifications.filter(
     (notification) => !notification.readAt,
   ).length;
+  const activeVideoIndex = videos.findIndex((video) => video.id === activeVideoId);
   const homepageHref = `/?city=${encodeURIComponent(city)}&view=dancers`;
   const allVenueTvHref = `/tv?city=${encodeURIComponent(city)}&filter=${encodeURIComponent(filter)}`;
 
@@ -535,7 +548,7 @@ export default function TvFeedClient({
       ) : null}
 
       <section ref={feedElement} className="tv-feed" aria-label="MyDancr TV videos">
-        {videos.map((video) => (
+        {videos.map((video, videoIndex) => (
           <article
             className="tv-slide"
             data-tv-slide
@@ -556,7 +569,11 @@ export default function TvFeedClient({
                   loop
                   muted={muted}
                   playsInline
-                  preload={video.id === activeVideoId ? "auto" : "metadata"}
+                  preload={
+                    activeVideoIndex >= 0 && Math.abs(videoIndex - activeVideoIndex) <= 1
+                      ? "auto"
+                      : "metadata"
+                  }
                   src={video.videoUrl}
                   onCanPlay={(event) => {
                     if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {

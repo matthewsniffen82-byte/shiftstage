@@ -76,8 +76,14 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   )?.[0] || "";
   assert.doesNotMatch(mediaFallbackFactory, /primaryPhotoUrl|backgroundImage|url\(/);
   assert.doesNotMatch(videoFactory, /primaryPhotoUrl|\.poster\s*=/);
+  assert.match(mediaFallbackFactory, /status\.hidden = true/);
+  assert.doesNotMatch(mediaFallbackFactory, /Loading video/);
   assert.match(videoFactory, /video\.addEventListener\("loadeddata"[\s\S]*?classList\.remove\("is-media-loading", "is-media-unavailable"\)/);
   assert.match(videoFactory, /video\.addEventListener\("error"[\s\S]*?"Video unavailable"/);
+  assert.match(
+    homeSource,
+    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?Math\.abs\(index - activeIndex\) <= 1[\s\S]*?video\.preload = shouldWarm \? "auto" : "metadata"[\s\S]*?video\.load\(\)/,
+  );
   assert.match(
     homeSource,
     /function createHomeTvFeedProgress\(\)[\s\S]*?role", "progressbar"/,

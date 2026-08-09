@@ -52957,6 +52957,7 @@
       if (activeTab !== "tv" || !videoId) return;
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
+      primeHomeTvFeedNeighbors(videoId);
       results.querySelectorAll(".home-tv-feed-slide").forEach((slide) => {
         const slideVideoId = String(slide.dataset.videoId || "");
         const video = slide.querySelector("video");
@@ -53006,6 +53007,25 @@
         }
       });
       syncHomeTvFeedSoundButtons();
+    }
+
+    function primeHomeTvFeedNeighbors(videoId) {
+      const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      const activeIndex = slides.findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
+      if (activeIndex < 0) return;
+      slides.forEach((slide, index) => {
+        const video = slide.querySelector("video.home-tv-feed-video");
+        if (!video) return;
+        const shouldWarm = Math.abs(index - activeIndex) <= 1;
+        video.preload = shouldWarm ? "auto" : "metadata";
+        if (
+          shouldWarm &&
+          video.readyState === HTMLMediaElement.HAVE_NOTHING &&
+          video.networkState === HTMLMediaElement.NETWORK_EMPTY
+        ) {
+          video.load();
+        }
+      });
     }
 
     function toggleHomeTvFeedPlayback(video) {
@@ -53186,7 +53206,7 @@
       fallback.setAttribute("aria-hidden", "true");
       const status = document.createElement("span");
       status.className = "home-tv-feed-media-status";
-      status.textContent = "Loading video";
+      status.hidden = true;
       fallback.appendChild(status);
       return fallback;
     }
@@ -53297,18 +53317,27 @@
       video.addEventListener("loadstart", () => {
         slide.classList.add("is-media-loading");
         slide.classList.remove("is-media-unavailable");
+        slide.setAttribute("aria-busy", "true");
         const mediaStatus = slide.querySelector(".home-tv-feed-media-status");
-        if (mediaStatus) mediaStatus.textContent = "Loading video";
+        if (mediaStatus) {
+          mediaStatus.hidden = true;
+          mediaStatus.textContent = "";
+        }
       });
       video.addEventListener("loadeddata", () => {
         slide.classList.remove("is-media-loading", "is-media-unavailable");
+        slide.removeAttribute("aria-busy");
         syncHomeTvFeedProgress(video, slide);
       });
       video.addEventListener("error", () => {
         slide.classList.remove("is-media-loading");
         slide.classList.add("is-media-unavailable");
+        slide.removeAttribute("aria-busy");
         const mediaStatus = slide.querySelector(".home-tv-feed-media-status");
-        if (mediaStatus) mediaStatus.textContent = "Video unavailable";
+        if (mediaStatus) {
+          mediaStatus.hidden = false;
+          mediaStatus.textContent = "Video unavailable";
+        }
         showHomeTvFeedFeedback(slide, "Video unavailable");
       });
       video.addEventListener("play", () => {

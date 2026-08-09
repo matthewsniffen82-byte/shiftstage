@@ -27,6 +27,17 @@ test("MyDancr TV declares and retries muted autoplay for the active snap-scroll 
   assert.match(feedClient, /className="tv-playback-retry"[\s\S]*?Tap to play/);
 });
 
+test("MyDancr TV preloads the active card and its immediate scroll neighbors", () => {
+  assert.match(
+    feedClient,
+    /Math\.abs\(videoIndex - activeIndex\) <= 1[\s\S]*?element\.preload = shouldWarm \? "auto" : "metadata"[\s\S]*?element\.load\(\)/,
+  );
+  assert.match(
+    feedClient,
+    /preload=\{[\s\S]*?Math\.abs\(videoIndex - activeVideoIndex\) <= 1[\s\S]*?"auto"[\s\S]*?"metadata"/,
+  );
+});
+
 test("profile and venue video strips autoplay only their visible muted preview", () => {
   assert.match(
     videoStrip,
