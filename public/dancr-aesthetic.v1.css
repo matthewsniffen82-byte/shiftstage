@@ -1652,7 +1652,7 @@ body.dancr-button-system #results.venue-profile-overlay :is(
   }
 
   .dashboard-shell-venue .dashboard-head h1 {
-    font-size: clamp(24px, 6.5vw, 32px) !important;
+    font-size: clamp(20px, 5.5vw, 26px) !important;
     font-weight: 850 !important;
     line-height: 0.98 !important;
   }

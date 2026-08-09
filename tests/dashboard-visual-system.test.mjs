@@ -104,7 +104,7 @@ test("venue dashboard uses a tonight-first command, shortcuts, metrics, and comp
   );
   assert.match(
     aesthetic,
-    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(24px, 6\.5vw, 32px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
+    /\.dashboard-shell-venue \.dashboard-head h1 \{[\s\S]*?font-size: clamp\(20px, 5\.5vw, 26px\) !important;[\s\S]*?font-weight: 850 !important;[\s\S]*?line-height: 0\.98 !important;/,
   );
   assert.match(
     aesthetic,
