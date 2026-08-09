@@ -5675,7 +5675,7 @@ function DashboardStyles() {
       .dashboard-shell-venue .venue-deal-how,
       .dashboard-shell-venue .venue-redemption-instructions,
       .dashboard-shell-venue .commission-tier-table { border-color: var(--mydancr-dashboard-border); background: #0d0d12; box-shadow: none; }
-      .dashboard-shell-venue .venue-deal-builder-step legend > span:first-child { color: #f8f7fb; background: rgba(255,255,255,.11); }
+      .dashboard-shell-venue .venue-deal-builder-step legend > span:first-child { border: 1px solid rgba(196,122,255,.8); color: #fff; background: linear-gradient(135deg, #a020f0, #6d19d6); box-shadow: 0 0 0 3px rgba(139,92,246,.12), 0 0 18px rgba(139,92,246,.36); }
       .dashboard-shell-venue .venue-deal-rule-note,
       .dashboard-shell-venue .venue-redemption-instructions { border-color: rgba(255,255,255,.18); color: #c9c7d0; background: rgba(255,255,255,.035); }
       .dashboard-shell-venue .venue-deal-panel label { color: #d7d5dd; }
