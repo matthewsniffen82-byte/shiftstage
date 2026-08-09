@@ -234,6 +234,24 @@ export default function DashboardClient({
   const dashboardCloseHref = homeDiscoveryHref(
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
+  const dashboardEyebrow =
+    role === "customer" ? "Your MyDancr" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+  const dashboardHeading =
+    role === "customer"
+      ? isLoading
+        ? "Your night"
+        : `Welcome back, ${displayName}`
+      : isLoading
+        ? title
+        : displayName;
+  const dashboardDescription =
+    role === "customer"
+      ? isLoading
+        ? "Loading your live account..."
+        : state.error
+          ? state.error
+          : "Your plans, saved profiles, Club Deals, and alerts in one place."
+      : state.error || "";
 
   return (
     <main className="dashboard-shell">
@@ -241,9 +259,9 @@ export default function DashboardClient({
       <section className={`dashboard-head dashboard-head-${role}`}>
         <div className="dashboard-head-row">
           <div className="dashboard-head-copy">
-            <span className="eyebrow">{role === "customer" ? "Your MyDancr" : "Live account"}</span>
-            <h1>{role === "customer" ? (isLoading ? "Your night" : `Welcome back, ${displayName}`) : title}</h1>
-            <p>{isLoading ? "Loading your live account..." : state.error ? state.error : role === "customer" ? "Your plans, saved profiles, Club Deals, and alerts in one place." : `Welcome back, ${displayName}.`}</p>
+            <span className="eyebrow">{dashboardEyebrow}</span>
+            <h1>{dashboardHeading}</h1>
+            {dashboardDescription ? <p>{dashboardDescription}</p> : null}
           </div>
           <Link
             className="dashboard-close"
@@ -4957,6 +4975,11 @@ function DashboardStyles() {
       .dashboard-head-copy { min-width: 0; display: grid; gap: 8px; }
       .dashboard-head h1 { max-width: 900px; font-size: clamp(32px, 5vw, 48px); line-height: 1; }
       .dashboard-head p { font-size: clamp(15px, 2.2vw, 17px); line-height: 1.45; }
+      .dashboard-head-venue, .dashboard-head-dancer { min-height: 72px; box-sizing: border-box; gap: 12px; padding: 10px 12px 14px; border-color: rgba(139,92,246,.16); border-radius: 16px; background: rgba(5,5,8,.98); box-shadow: 0 14px 34px rgba(0,0,0,.38); }
+      .dashboard-head-venue .dashboard-head-row, .dashboard-head-dancer .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: center; gap: 12px; }
+      .dashboard-head-venue .dashboard-head-copy, .dashboard-head-dancer .dashboard-head-copy { gap: 5px; align-content: center; overflow: hidden; }
+      .dashboard-head-venue .eyebrow, .dashboard-head-dancer .eyebrow { color: #f8f7fb; }
+      .dashboard-head-venue h1, .dashboard-head-dancer h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-size: clamp(21px, 5vw, 26px); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); line-height: 1; letter-spacing: -.025em; }
       h2 { margin: 0; font-size: 22px; }
@@ -5304,7 +5327,7 @@ function DashboardStyles() {
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
-      @media (max-width: 520px) { .dashboard-head { padding: 16px; border-radius: 18px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: 34px; } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
+      @media (max-width: 520px) { .dashboard-head { padding: 16px; border-radius: 18px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: 34px; } .dashboard-head-venue, .dashboard-head-dancer { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-venue h1, .dashboard-head-dancer h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
     `}</style>
   );
 }
