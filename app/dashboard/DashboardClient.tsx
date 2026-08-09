@@ -2207,9 +2207,28 @@ function DancerPanel({
         <Metric label="Photo review" value={String(profile?.photo_review_status || "pending")} />
       </InfoPanel>
       {isApproved ? <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /> : null}
-      {isApproved ? <DancerTvStudio embedded /> : null}
-      {isApproved ? <DancerVenueVerificationPanel /> : null}
-      <DancerShiftPanel city={String(profile?.city || "Las Vegas")} />
+      <DancerSetupPanel
+        deletedPhotoIds={deletedPhotoIds}
+        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+        onDeletedPhotoIdsSaved={() => {
+          setDeletedPhotoIds([]);
+          setDeletedPhotoStoragePaths([]);
+        }}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
+      <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
+      <DancerPhotoPanel
+        deletedPhotoIds={deletedPhotoIds}
+        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
+        onDeletedPhotoIdsChange={setDeletedPhotoIds}
+        onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
+      <DancerTvStudio embedded />
+      <DancerVenueVerificationPanel />
+      {isApproved ? <DancerShiftPanel city={String(profile?.city || "Las Vegas")} /> : null}
       {isApproved ? (
         <>
           <InfoPanel title="Last 30 days">
@@ -2224,28 +2243,9 @@ function DancerPanel({
       ) : (
         <DancerLockedAnalyticsPanel />
       )}
-      <DancerSetupPanel
-        deletedPhotoIds={deletedPhotoIds}
-        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-        onDeletedPhotoIdsSaved={() => {
-          setDeletedPhotoIds([]);
-          setDeletedPhotoStoragePaths([]);
-        }}
-        profile={profile}
-        onProfileChange={onProfileChange}
-      />
-      <DancerSocialPanel profile={profile} onProfileChange={onProfileChange} />
-      <DancerSharePanel profile={profile} />
-      <DancerPhotoPanel
-        deletedPhotoIds={deletedPhotoIds}
-        deletedPhotoStoragePaths={deletedPhotoStoragePaths}
-        onDeletedPhotoIdsChange={setDeletedPhotoIds}
-        onDeletedPhotoStoragePathsChange={setDeletedPhotoStoragePaths}
-        profile={profile}
-        onProfileChange={onProfileChange}
-      />
-      <DancerVerificationPanel profile={profile} />
-      <DancerBillingPanel />
+      {isApproved ? <DancerSharePanel profile={profile} /> : null}
+      {isApproved ? <DancerVerificationPanel profile={profile} /> : null}
+      {isApproved ? <DancerBillingPanel /> : null}
     </>
   );
 }
@@ -2988,7 +2988,7 @@ function VenueDancerVerificationPanel({
   return (
     <article className="info-panel venue-verification-panel" id="venue-dancer-verification">
       <span className="eyebrow">Verified roster</span>
-      <h2>Approve dancers</h2>
+      <h2>Confirm dancer affiliations</h2>
       <p>The dancer shows her short-lived personal QR. Scan it, match the profile photo and stage name, then approve once.</p>
       {verification ? (
         <section className="venue-verification-preview" aria-label="Dancer verification confirmation">

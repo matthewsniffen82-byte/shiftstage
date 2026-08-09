@@ -175,7 +175,7 @@ export async function recordDirectionRequest(
 async function getFollowedDancers(client: DancrClient, customerId: string) {
   const current = await client
     .from("follows")
-    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -205,7 +205,7 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
 async function getFavoriteDancers(client: DancrClient, customerId: string) {
   const current = await client
     .from("favorites")
-    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -252,7 +252,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
   const current = await client
     .from("going_signals")
     .select(
-      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
     )
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });

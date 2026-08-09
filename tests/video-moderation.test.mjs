@@ -120,10 +120,12 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(tvSource, /decision === "approved"[\s\S]*?status: "approved"/);
   assert.match(tvSource, /decision === "rejected"[\s\S]*?status: "rejected"/);
   assert.match(tvSource, /status: "submitted"[\s\S]*?Automated safety review requested human review/);
-  assert.match(tvSource, /profile_not_eligible_for_auto_publish/);
+  assert.doesNotMatch(tvSource, /profile_not_eligible_for_auto_publish/);
+  assert.match(tvSource, /isDancerMediaOnboardingEligible/);
+  assert.match(tvSource, /Videos stay private during setup|venue_approved_at/);
   assert.match(tvSource, /video_moderation_provider_error/);
   assert.match(submitRoute, /export const maxDuration = 60/);
-  assert.match(submitRoute, /Your video is approved and is now live/);
+  assert.match(submitRoute, /passed safety review and will appear whenever your dancer profile is live/);
   assert.match(submitRoute, /sent to an administrator for human review/);
 });
 

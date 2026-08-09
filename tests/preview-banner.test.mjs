@@ -29,6 +29,10 @@ test("the preview notice remains compact and responsive on mobile", () => {
 test("full dancer and venue profiles remain entirely below the persistent notice", () => {
   assert.match(
     aesthetic,
+    /\.page-panel\.show \{[\s\S]*?top: var\(--mydancr-preview-banner-offset\) !important;[\s\S]*?height: calc\(100dvh - var\(--mydancr-preview-banner-offset\)\) !important;/,
+  );
+  assert.match(
+    aesthetic,
     /#profileBackdrop\.modal-backdrop,[\s\S]*?#profileBackdrop\.modal-backdrop\.show \{[\s\S]*?top: var\(--mydancr-preview-banner-offset\) !important;[\s\S]*?height: calc\(100dvh - var\(--mydancr-preview-banner-offset\)\) !important;/,
   );
   assert.match(

@@ -56,7 +56,7 @@ test("account dashboards hide public navigation and keep their X as the exit to 
   );
   assert.match(
     homeSource,
-    /function closeDancerDashboard\(\) \{\s*dancerDashboard\.classList\.remove\("show"\);\s*dancerDashboard\.setAttribute\("aria-hidden", "true"\);\s*syncOverlayScrollLock\(\);\s*\}/,
+    /function closeDancerDashboard\(\) \{\s*dancerDashboard\.classList\.remove\("show"\);\s*dancerDashboard\.setAttribute\("aria-hidden", "true"\);\s*stopDancerVenueApprovalPolling\(\);\s*syncOverlayScrollLock\(\);\s*\}/,
   );
   assert.match(
     homeSource,

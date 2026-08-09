@@ -19,6 +19,8 @@ const [
   profileRoute,
   publicProfiles,
   accountUi,
+  venueMigration,
+  profileApproval,
   dancerBackend,
 ] = await Promise.all([
   readFile(new URL("../src/lib/dancr/identity.ts", import.meta.url), "utf8"),
@@ -37,30 +39,26 @@ const [
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/account/AccountClient.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608080002_venue_gated_dancer_profiles.sql", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/profile-approval.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
 ]);
 
-test("automatic dancer approval occurs only after the dancer completes onboarding", () => {
+test("every new dancer remains private until a venue manager confirms affiliation", () => {
   assert.match(identityMode, /\["auto_approve", "verifymy"\]/);
-  assert.match(identityMode, /if \(!configured\) return "auto_approve"/);
-  assert.match(identityMode, /status: "approved"/);
-  assert.match(identityMode, /verification_status: "approved"/);
-  assert.match(identityMode, /is_public: true/);
-  assert.match(signupRoute, /status: "draft"[\s\S]*?verification_status: "pending"[\s\S]*?is_public: false/);
-  assert.match(callbackRoute, /status: "draft"[\s\S]*?verification_status: "pending"[\s\S]*?is_public: false/);
-  assert.doesNotMatch(signupRoute, /automaticDancerApprovalValues/);
-  assert.doesNotMatch(callbackRoute, /automaticDancerApprovalValues/);
-  assert.match(profileRoute, /getIdentityVerificationMode\(\) === "auto_approve"/);
-  assert.doesNotMatch(profileRoute, /ensureAutomaticDancerApproval/);
+  assert.match(identityMode, /function initialDancerApprovalValues/);
+  assert.match(identityMode, /status: "draft"/);
+  assert.match(identityMode, /verification_status: "pending"/);
+  assert.match(identityMode, /is_public: false/);
+  assert.match(signupRoute, /initialDancerApprovalValues\(\)/);
+  assert.match(callbackRoute, /initialDancerApprovalValues\(\)/);
+  assert.doesNotMatch(profileRoute, /ensureAutomaticDancerApproval|automaticDancerApprovalValues/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
-  assert.match(accountUi, /Dancer accounts are approved automatically right now/);
-  assert.match(accountUi, /no ID, selfie, or dance-proof upload required/);
-  assert.match(liveApp, /No identity check or identity-file upload is required right now/);
-  assert.match(liveApp, /Automatic dancer approval/);
-  assert.doesNotMatch(
-    liveApp.match(/const verificationBody = liveIdentityVerificationMode[\s\S]*?const approvalBody/)?.[0] || "",
-    /setupIdDocument|setupSelfieDocument|setupDanceProofDocument/,
-  );
+  assert.match(publicProfiles, /venue_approved_at/);
+  assert.match(profileApproval, /venue_approved_at \|\| profile\.venueApprovedAt/);
+  assert.match(accountUi, /verified venue manager scan your personal QR/);
+  assert.match(liveApp, /successful manager scan publishes your profile/i);
+  assert.match(venueMigration, /venue_approved_at is not null/);
 });
 
 test("identity documents and selfie stay inside VerifyMy hosted verification", () => {
@@ -99,7 +97,7 @@ test("legacy direct identity uploads are disabled and purged", () => {
   assert.doesNotMatch(adminUi, /Open secure file|Approve file|No verification files submitted/);
 });
 
-test("signed VerifyMy approval remains intact behind the provider mode", () => {
+test("signed VerifyMy approval records identity but never bypasses venue affiliation", () => {
   assert.match(webhookRoute, /verifyVerifyMyContentWebhook\(rawBody/);
   assert.match(webhookRoute, /parseVerifyMyContentWebhook\(rawBody\)/);
   assert.match(webhookRoute, /syncVerifyMyContentIdentityVerification/);
@@ -107,25 +105,30 @@ test("signed VerifyMy approval remains intact behind the provider mode", () => {
   assert.match(providerClient, /timingSafeEqual/);
   assert.match(identityBackend, /verification\.status === "approved"/);
   assert.match(identityBackend, /if \(verificationSucceeded\)/);
-  assert.match(identityBackend, /status: "approved"/);
+  assert.match(identityBackend, /status: "pending_review"/);
   assert.match(identityBackend, /verification_status: "approved"/);
   assert.match(identityBackend, /identity_provider: IDENTITY_PROVIDER/);
   assert.match(identityBackend, /identity_verified_at: verifiedAt/);
-  assert.match(identityBackend, /is_public: true/);
-  assert.match(identityBackend, /const canPublish =/);
   assert.match(identityBackend, /is_public: false/);
+  assert.match(identityBackend, /approved_at: null/);
+  assert.doesNotMatch(identityBackend, /is_public: true/);
+  assert.match(identityBackend, /venue affiliation is next/i);
   assert.doesNotMatch(identityBackend, /Verified identity belongs to a disabled dancer account/);
   assert.match(adminBackend, /Identity approval is controlled by VerifyMy and cannot be granted manually/);
   assert.doesNotMatch(adminUi, /Approve dancer|Approve profile/);
 });
 
-test("pending media is independent from the identity live gate", () => {
+test("automated media moderation completes before venue activation", () => {
   const verifiedProfileUpdate =
     identityBackend.match(/if \(verificationSucceeded\)[\s\S]*?\n  } else if/)?.[0] || "";
   assert.doesNotMatch(verifiedProfileUpdate, /photo_review_status|dancer_photos|mydancr_tv_videos/);
-  assert.doesNotMatch(migration, /alter policy[\s\S]*?mydancr_tv_videos|drop policy[\s\S]*?MyDancr TV/);
-  assert.match(migration, /does not change profile visibility or revoke the current automatic approvals/);
-  assert.match(liveApp, /Pending photos and videos remain private until their separate moderation is complete/);
+  assert.match(venueMigration, /photo_review_status = 'approved'/);
+  assert.match(venueMigration, /photo\.review_status <> 'approved'/);
+  assert.match(venueMigration, /video\.status in \('uploading', 'moderating', 'submitted'\)/);
+  assert.match(venueMigration, /status = 'approved'/);
+  assert.match(venueMigration, /is_public = true/);
+  assert.match(liveApp, /Every image is checked automatically/);
+  assert.match(liveApp, /Videos that pass safety moderation stay private until venue affiliation is approved/);
 });
 
 test("legal identity data is removed from dancer profiles and admin screens", () => {

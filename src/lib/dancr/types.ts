@@ -76,6 +76,7 @@ export type DancerAccountProfile = {
   avatarStoragePath: string | null;
   avatarUpdatedAt: string | null;
   isPublic: boolean;
+  venueApprovedAt: string | null;
 };
 
 export type VenueSummary = {
@@ -274,6 +275,7 @@ export type AdminApprovalDancer = {
   status: DancerStatus;
   isPublic?: boolean;
   verificationStatus: ReviewStatus;
+  venueApprovedAt?: string | null;
   identityProvider?: "verifymy_content" | null;
   identityVerifiedAt?: string | null;
   identityMode?: "auto_approve" | "verifymy";

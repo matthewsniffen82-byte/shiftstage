@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json, UserRole } from "./types";
 import { isCoreVerificationApproved } from "./profile-approval";
-import { automaticDancerApprovalValues, isVerifyMyIdentityMode } from "./identity-mode";
+import { initialDancerApprovalValues, isVerifyMyIdentityMode } from "./identity-mode";
 
 type DancrClient = SupabaseClient;
 
@@ -85,9 +85,7 @@ export async function signUpDancer(client: DancrClient, input: DancerSignupInput
     stage_name: input.stageName,
     slug: slugify(input.stageName),
     city: input.city || "Las Vegas",
-    ...(isVerifyMyIdentityMode()
-      ? { status: "draft", verification_status: "pending", is_public: false }
-      : automaticDancerApprovalValues()),
+    ...initialDancerApprovalValues(),
   });
 
   if (profileError) throw profileError;
@@ -202,7 +200,7 @@ export async function setAccountState(client: DancrClient, userId: string, accou
 async function activeDancerProfileState(client: DancrClient, userId: string) {
   const { data, error }: any = await client
     .from("dancer_profiles")
-    .select(`status, verification_status${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}`)
+    .select(`status, verification_status, venue_approved_at${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}`)
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -267,7 +265,7 @@ export async function updateCustomerProfile(
 export async function getDancerAccountProfile(client: DancrClient, userId: string): Promise<DancerAccountProfile | null> {
   const { data, error } = await client
     .from("dancer_profiles")
-    .select("id, user_id, real_name, stage_name, slug, city, bio, status, verification_status, photo_review_status, avatar_storage_path, avatar_updated_at, is_public")
+    .select("id, user_id, real_name, stage_name, slug, city, bio, status, verification_status, photo_review_status, avatar_storage_path, avatar_updated_at, is_public, venue_approved_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -288,6 +286,7 @@ export async function getDancerAccountProfile(client: DancrClient, userId: strin
     avatarStoragePath: data.avatar_storage_path || null,
     avatarUpdatedAt: data.avatar_updated_at || null,
     isPublic: data.is_public !== false,
+    venueApprovedAt: data.venue_approved_at || null,
   };
 }
 

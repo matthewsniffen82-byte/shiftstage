@@ -58,7 +58,9 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
   "shared_link",
 ]);
 
-const IDENTITY_PROFILE_FIELDS = isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : "";
+const IDENTITY_PROFILE_FIELDS = isVerifyMyIdentityMode()
+  ? ", venue_approved_at, identity_provider, identity_verified_at"
+  : ", venue_approved_at";
 const PUBLIC_TV_SELECT =
   `id, storage_path, duration_seconds, width, height, published_at, expires_at, venue_featured, venue_tag_status, distribution_scope, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public), venues(id, slug, name, city, is_active), shifts(id, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at)`;
 const UUID_PATTERN =
@@ -166,6 +168,7 @@ export async function getPublicMyDancrTvVideoCount(
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
     .eq("dancer_profiles.status", "approved")
     .eq("dancer_profiles.verification_status", "approved")
+    .not("dancer_profiles.venue_approved_at", "is", null)
     .is("dancer_profiles.disabled_at", null)
     .eq("dancer_profiles.is_public", true);
 
@@ -795,12 +798,12 @@ export async function createMyDancrTvUpload(
 ) {
   const { data: dancer, error }: any = await admin
     .from("dancer_profiles")
-    .select(`id, user_id, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
+    .select(`id, user_id, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public`)
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
-  if (!dancer || !isPublicDancerProfileEligible(dancer)) {
-    throw new Error("An approved dancer profile is required before posting to MyDancr TV.");
+  if (!isDancerMediaOnboardingEligible(dancer)) {
+    throw new Error("Save your stage name and city before uploading profile videos.");
   }
 
   if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4 or WebM video.");
@@ -887,14 +890,14 @@ export async function publishPlatformMyDancrTvUpload(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, shift_id, distribution_scope, review_notes, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, shift_id, distribution_scope, review_notes, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video upload not found.");
   if (video.status !== "uploading") throw new Error("This platform video has already been published.");
-  if (!isPublicDancerProfileEligible(one(video.dancer_profiles))) {
-    throw new Error("The dancer profile is not currently eligible for public video.");
+  if (!isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
+    throw new Error("The dancer profile is not eligible for media onboarding.");
   }
   if (
     !Number.isFinite(Number(video.duration_seconds)) ||
@@ -970,7 +973,7 @@ export async function publishPlatformMyDancrTvUpload(
 export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, shift_id, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, shift_id, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -1017,7 +1020,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
     })
     .eq("id", video.id)
     .eq("status", "uploading")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
   console.info(JSON.stringify({
@@ -1036,7 +1039,7 @@ export async function submitMyDancrTvUpload(admin: AdminClient, userId: string, 
 export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, moderation_attempt_count, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "moderating")
     .maybeSingle();
@@ -1052,7 +1055,7 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
     })
     .eq("id", video.id)
     .eq("status", "moderating")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
@@ -1074,7 +1077,7 @@ export async function autoApprovePendingMyDancrTvDemoVideo(
   if (!isVideoDemoAutoApproveMode()) return null;
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "submitted")
     .maybeSingle();
@@ -1091,7 +1094,7 @@ export async function autoApprovePendingMyDancrTvDemoVideo(
     })
     .eq("id", video.id)
     .eq("status", "submitted")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, shift_id, submitted_at, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
@@ -1113,8 +1116,8 @@ async function autoApproveMyDancrTvDemoUpload(
   submittedAt: string,
   expectedStatus: "uploading" | "moderating",
 ) {
-  if (!isPublicDancerProfileEligible(one(video.dancer_profiles))) {
-    throw new Error("The dancer profile is not currently eligible for public video.");
+  if (!isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
+    throw new Error("The dancer profile is not eligible for media onboarding.");
   }
 
   const completedAt = new Date().toISOString();
@@ -1195,13 +1198,8 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     return data;
   }
 
-  const profileEligible = isPublicDancerProfileEligible(one(video.dancer_profiles));
-  let decision = moderation.decision === "approved" && !profileEligible
-    ? "review"
-    : moderation.decision;
-  let reasonCodes = moderation.decision === "approved" && !profileEligible
-    ? [...moderation.reasonCodes, "profile_not_eligible_for_auto_publish"]
-    : moderation.reasonCodes;
+  let decision = moderation.decision;
+  let reasonCodes = moderation.reasonCodes;
   if (decision === "approved") {
     try {
       await watermarkStoredVideo(admin, {
@@ -1353,15 +1351,15 @@ export async function reviewMyDancrTvVideo(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, status, shift_id, storage_path, storage_mime, duration_seconds, width, height, shifts(ends_at), dancer_profiles(status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, status, shift_id, storage_path, storage_mime, duration_seconds, width, height, shifts(ends_at), dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
   if (video.status !== "submitted") throw new Error("This video is no longer waiting for review.");
 
-  if (decision === "approved" && !isPublicDancerProfileEligible(one(video.dancer_profiles))) {
-    throw new Error("The dancer profile is not currently eligible for public video.");
+  if (decision === "approved" && !isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
+    throw new Error("The dancer profile is not eligible for media onboarding.");
   }
   if (decision === "approved" && Number(video.duration_seconds) > MYDANCR_TV_MAX_DURATION_SECONDS) {
     throw new Error("Only videos that are 30 seconds or shorter can be approved.");
@@ -1618,4 +1616,11 @@ function emptyMetrics() {
 
 function one<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] || null : value || null;
+}
+
+function isDancerMediaOnboardingEligible(profile: any) {
+  if (!profile || profile.disabled_at) return false;
+  const status = String(profile.status || "").toLowerCase();
+  if (status === "rejected" || status === "disabled") return false;
+  return Boolean(String(profile.stage_name || "").trim() && String(profile.city || "").trim());
 }

@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
-import {
-  automaticDancerApprovalValues,
-  getIdentityVerificationMode,
-  isVerifyMyIdentityMode,
-} from "@/src/lib/dancr/identity-mode";
+import { isVerifyMyIdentityMode } from "@/src/lib/dancr/identity-mode";
 import {
   PROFILE_AVATAR_CONTEXT,
   profilePhotoSlotFromUploadContext,
@@ -824,33 +820,51 @@ async function submitProfileForReview(
     throw new Error("Save stage name and city before publishing your profile.");
   }
 
-  if (getIdentityVerificationMode() === "auto_approve") {
-    const { error } = await db
+  const adminDb = createAdminSupabaseClient() as any;
+  const [setupResult, photosResult, videosResult] = await Promise.all([
+    adminDb
       .from("dancer_profiles")
-      .update(automaticDancerApprovalValues())
+      .select("avatar_storage_path, photo_review_status")
       .eq("id", dancerId)
-      .neq("status", "rejected")
-      .is("disabled_at", null);
-    if (error) throw error;
-    return;
-  }
+      .maybeSingle(),
+    adminDb
+      .from("dancer_photos")
+      .select("id, review_status")
+      .eq("dancer_id", dancerId),
+    adminDb
+      .from("mydancr_tv_videos")
+      .select("id, status")
+      .eq("dancer_id", dancerId),
+  ]);
+  if (setupResult.error) throw setupResult.error;
+  if (photosResult.error) throw photosResult.error;
+  if (videosResult.error) throw videosResult.error;
 
-  const { data: identity, error: identityError } = await db
-    .from("dancer_identity_verifications")
-    .select("status, verified_at")
-    .eq("dancer_id", dancerId)
-    .maybeSingle();
-  if (identityError) throw identityError;
-  if (!identity) {
-    throw new Error("Complete secure VerifyMy identity verification before going live.");
+  if (!String(setupResult.data?.avatar_storage_path || "").trim()) {
+    throw new Error("Upload an avatar that passes moderation before submitting your profile.");
   }
-  if (identity.status === "verified" && identity.verified_at) return;
+  const photos = photosResult.data || [];
+  if (
+    setupResult.data?.photo_review_status !== "approved"
+    || !photos.length
+    || photos.some((photo: any) => photo.review_status !== "approved")
+  ) {
+    throw new Error("Every uploaded profile picture must pass moderation before submitting your profile.");
+  }
+  const unfinishedVideo = (videosResult.data || []).some((video: any) =>
+    ["uploading", "moderating", "submitted"].includes(String(video.status || "").toLowerCase()),
+  );
+  if (unfinishedVideo) {
+    throw new Error("Wait for every uploaded video to finish moderation before submitting your profile.");
+  }
 
   const { error } = await db
     .from("dancer_profiles")
     .update({
       status: "pending_review",
       verification_status: "pending",
+      approved_at: null,
+      is_public: false,
     })
     .eq("id", dancerId);
 

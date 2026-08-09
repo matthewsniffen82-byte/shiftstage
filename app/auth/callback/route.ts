@@ -1,4 +1,5 @@
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { initialDancerApprovalValues } from "@/src/lib/dancr/identity-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -361,9 +362,7 @@ async function ensureCallbackDancerProfile(
     stage_name: stageName,
     slug,
     city,
-    status: "draft",
-    verification_status: "pending",
-    is_public: false,
+    ...initialDancerApprovalValues(),
   });
   if (error) throw error;
 }

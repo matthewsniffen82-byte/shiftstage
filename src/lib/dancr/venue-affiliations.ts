@@ -27,7 +27,7 @@ export async function getDancerVenueVerificationState(
   client: DancrClient,
   userId: string,
 ) {
-  const dancer = await requireApprovedDancer(client, userId);
+  const dancer = await requireVenueApprovalCandidate(client, userId);
   const [{ data: venues, error: venuesError }, { data: affiliations, error: affiliationsError }] = await Promise.all([
     (client as any)
       .from("venues")
@@ -64,7 +64,7 @@ export async function issueDancerVenueVerification(
     requestIpHash: string;
   },
 ) {
-  const dancer = await requireApprovedDancer(client, input.userId);
+  const dancer = await requireVenueApprovalCandidate(client, input.userId);
   const venueId = requiredUuid(input.venueId, "Choose a venue to verify.");
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
@@ -134,8 +134,10 @@ export async function approveDancerVenueVerification(
   const notification = {
     recipient_id: String(data.dancerUserId),
     notification_type: "venue_affiliation_status" as const,
-    title: `${String(data.venueName)} verified you`,
-    body: `Your venue affiliation is approved. You can now check in at ${String(data.venueName)} for Working Now and eligible Club Deal commissions.`,
+    title: `${String(data.venueName)} approved your affiliation`,
+    body: data.profileActivated
+      ? `Your affiliation is confirmed, your profile is now live, and your full dancer dashboard is unlocked.`
+      : `Your venue affiliation is active. You can check in at ${String(data.venueName)} for Working Now and eligible Club Deal commissions.`,
     payload: {
       affiliationId: data.id,
       venueId: data.venueId,
@@ -177,7 +179,9 @@ export async function revokeDancerVenueAffiliation(
       recipient_id: String(data.dancerUserId),
       notification_type: "venue_affiliation_status" as const,
       title: `${String(data.venueName)} verification ended`,
-      body: `Your verified venue affiliation with ${String(data.venueName)} was removed. Active check-ins and commission tracking there have stopped.`,
+      body: data.profileDeactivated
+        ? `Your last verified venue affiliation was removed, so your profile is private again. Confirm an affiliation with a verified venue manager to republish it.`
+        : `Your verified venue affiliation with ${String(data.venueName)} was removed. Active check-ins and commission tracking there have stopped.`,
       payload: {
         affiliationId: data.id,
         venueId: data.venueId,
@@ -265,7 +269,7 @@ async function previewDancerVenueVerification(
       used_at,
       revoked_at,
       venues!inner(id, slug, name, city, state, owner_user_id, is_active),
-      dancer_profiles!inner(id, user_id, stage_name, slug, city, status, is_public, avatar_storage_path)
+      dancer_profiles!inner(id, user_id, stage_name, slug, city, status, disabled_at, avatar_storage_path, photo_review_status)
     `)
     .eq("token_digest", digest)
     .maybeSingle();
@@ -283,8 +287,13 @@ async function previewDancerVenueVerification(
     || venue.owner_user_id !== managerUserId
     || venue.is_active === false
     || !dancer
-    || dancer.status !== "approved"
-    || dancer.is_public === false
+    || dancer.status === "rejected"
+    || dancer.status === "disabled"
+    || dancer.disabled_at
+    || !String(dancer.stage_name || "").trim()
+    || !String(dancer.city || "").trim()
+    || !String(dancer.avatar_storage_path || "").trim()
+    || dancer.photo_review_status !== "approved"
   ) {
     throw new VenueAffiliationUserError("This dancer verification link is invalid or expired.");
   }
@@ -316,15 +325,24 @@ async function activeAffiliation(client: DancrClient, venueId: string, dancerId:
   return data;
 }
 
-async function requireApprovedDancer(client: DancrClient, userId: string) {
+async function requireVenueApprovalCandidate(client: DancrClient, userId: string) {
   const { data, error } = await (client as any)
     .from("dancer_profiles")
-    .select("id, user_id, stage_name, slug, city, status, is_public")
+    .select("id, user_id, stage_name, slug, city, status, disabled_at, avatar_storage_path, photo_review_status, venue_approved_at")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
-  if (!data || data.status !== "approved" || data.is_public === false) {
-    throw new VenueAffiliationUserError("Profile approval is required before venue verification.");
+  if (!data || data.status === "rejected" || data.status === "disabled" || data.disabled_at) {
+    throw new VenueAffiliationUserError("An active dancer account is required for venue affiliation.");
+  }
+  if (!String(data.stage_name || "").trim() || !String(data.city || "").trim()) {
+    throw new VenueAffiliationUserError("Save your stage name and city before venue affiliation.");
+  }
+  if (!String(data.avatar_storage_path || "").trim()) {
+    throw new VenueAffiliationUserError("Upload a profile avatar before venue affiliation.");
+  }
+  if (data.photo_review_status !== "approved") {
+    throw new VenueAffiliationUserError("Your avatar must pass automated moderation before venue affiliation.");
   }
   return data;
 }
@@ -416,8 +434,14 @@ function requiredUuid(value: unknown, message: string) {
 
 function toVenueAffiliationError(error: { message?: string }) {
   const message = String(error?.message || "");
-  if (/approved active dancer|profile approval/i.test(message)) {
-    return new VenueAffiliationUserError("Profile approval is required before venue verification.");
+  if (/automated media moderation|has not completed profile setup/i.test(message)) {
+    return new VenueAffiliationUserError("Finish profile setup and wait for every uploaded picture and video to pass moderation.");
+  }
+  if (/profile setup|stage name|city/i.test(message)) {
+    return new VenueAffiliationUserError("Finish your profile details before venue affiliation.");
+  }
+  if (/avatar|photo moderation|moderation-safe/i.test(message)) {
+    return new VenueAffiliationUserError("Your avatar must pass automated moderation before venue affiliation.");
   }
   if (/verified manager|manager can approve|does not have a verified manager/i.test(message)) {
     return new VenueAffiliationUserError(

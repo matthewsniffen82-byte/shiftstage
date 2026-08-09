@@ -197,22 +197,16 @@ export async function syncVerifyMyContentIdentityVerification(
       .eq("id", userId)
       .maybeSingle();
     if (accountError) throw accountError;
-    const canPublish =
+    const accountActive =
       account?.account_state === "active" && !dancer.disabled_at && dancer.status !== "disabled";
 
     const { error: profileError } = await admin
       .from("dancer_profiles")
       .update({
-        ...(canPublish
-          ? {
-              status: "approved",
-              is_public: true,
-            }
-          : {
-              is_public: false,
-            }),
+        ...(accountActive ? { status: "pending_review" } : {}),
+        is_public: false,
         verification_status: "approved",
-        approved_at: verifiedAt,
+        approved_at: null,
         identity_provider: IDENTITY_PROVIDER,
         identity_verified_at: verifiedAt,
       })
@@ -224,12 +218,12 @@ export async function syncVerifyMyContentIdentityVerification(
         recipient_id: userId,
         notification_type: "approval_status" as const,
         channel: "in_app",
-        title: canPublish
-          ? "Identity verified — your profile is live"
-          : "Identity verified — reactivate to go live",
-        body: canPublish
-          ? `${String(dancer.stage_name || "Your MyDancr profile")} is verified and live. Pending photos or videos stay private until their separate moderation is complete.`
-          : `${String(dancer.stage_name || "Your MyDancr profile")} is verified but remains hidden while your account is disabled. Reactivate it to go live.`,
+        title: accountActive
+          ? "Identity verified — venue affiliation is next"
+          : "Identity verified — reactivate to continue",
+        body: accountActive
+          ? `${String(dancer.stage_name || "Your MyDancr profile")} remains private until a venue manager scans your affiliation QR.`
+          : `${String(dancer.stage_name || "Your MyDancr profile")} remains hidden while your account is disabled. Reactivate it to finish venue affiliation.`,
         payload: {
           dancerId,
           status: "approved",

@@ -252,7 +252,7 @@ export default function AccountClient() {
         setStatus(
           role === "customer"
             ? `Confirmation email sent to ${email}. After confirmation, Mydancr will open the homepage signed in.`
-            : `Confirmation email sent to ${email}. Check your email or spam folder, confirm your email, then use the button on the confirmation page to complete your dancer profile.`,
+            : `Confirmation email sent to ${email}. Check your email or spam folder, then tap Confirm email to open your three-step dancer profile setup.`,
         );
         window.localStorage.removeItem(SESSION_KEY);
         return;
@@ -432,7 +432,7 @@ export default function AccountClient() {
               <section className="dancer-signup-note" aria-label="Dancer verification next steps">
                 <span className="eyebrow">Dancer signup</span>
                 <h2>Create your dancer login first</h2>
-                <p>Choose an available city, confirm your email, then finish your stage name to publish your profile. Dancer accounts are approved automatically right now, with no ID, selfie, or dance-proof upload required. Photos and MyDancr TV videos continue through separate safety moderation.</p>
+                <p>Confirm your email, then create your profile with stage name, city, socials, avatar, photos, and optional videos. Every image and video is safety-moderated. Preview and submit it, then have a verified venue manager scan your personal QR to confirm affiliation and publish the profile.</p>
               </section>
             </>
           ) : null}

@@ -231,25 +231,25 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {isLoading ? <p className="tv-studio-status">Loading your real videos…</p> : null}
       {!isLoading && workspace && !workspace.profileEligible ? (
         <div className="tv-studio-lock">
-          <strong>Profile approval required</strong>
-          <p>Your identity, photos, and dancer profile must be approved before you can submit public videos.</p>
+          <strong>Videos stay private during setup</strong>
+          <p>Uploads are automatically safety-moderated now and become public only after your venue affiliation is approved.</p>
         </div>
       ) : null}
-      {workspace && !workspace.profileVisible ? (
+      {workspace?.profileEligible && !workspace.profileVisible ? (
         <div className="tv-studio-incognito">
           <strong>Incognito is on</strong>
           <p>Your approved videos remain saved but are hidden from customers until you turn your profile back on.</p>
         </div>
       ) : null}
 
-      {workspace?.profileEligible && atVideoLimit ? (
+      {workspace && atVideoLimit ? (
         <div className="tv-studio-limit" role="status">
           <strong>All {maxVideos} profile video slots are filled</strong>
           <p>Remove a video below before uploading another.</p>
         </div>
       ) : null}
 
-      {workspace?.profileEligible && !atVideoLimit ? (
+      {workspace && !atVideoLimit ? (
         <form className="tv-upload-form" onSubmit={submitVideo}>
           <label className="tv-file-picker">
             Video file
@@ -343,7 +343,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
                     <div><dt>Going</dt><dd>{video.metrics.going || 0}</dd></div>
                   </dl>
                 ) : null}
-                {video.status === "approved" ? <Link href={`/tv/${video.id}`}>Open live video</Link> : null}
+                {video.status === "approved" && workspace.profileEligible ? <Link href={`/tv/${video.id}`}>Open live video</Link> : null}
                 <button type="button" disabled={removingId === video.id} onClick={() => removeVideo(video.id)}>
                   {removingId === video.id ? "Removing…" : "Remove video"}
                 </button>
@@ -410,7 +410,7 @@ function statusLabel(status: string) {
     uploading: "Upload incomplete",
     moderating: "Safety check",
     submitted: "Under review",
-    approved: "Live",
+    approved: "Moderation passed",
     rejected: "Not approved",
     hidden: "Removed",
     expired: "Expired",

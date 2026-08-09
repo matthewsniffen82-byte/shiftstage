@@ -30,7 +30,7 @@ async function verifyPublicVisibility(
 ) {
   const { data: profile, error }: any = await db
     .from("dancer_profiles")
-    .select(`id, status, verification_status${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, disabled_at, is_public`)
+    .select(`id, status, verification_status, venue_approved_at${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, disabled_at, is_public`)
     .eq("id", dancerId)
     .maybeSingle();
 
@@ -68,7 +68,7 @@ export async function PATCH(request: Request) {
     const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
-      .select(`id, status, verification_status${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, disabled_at, is_public`)
+      .select(`id, status, verification_status, venue_approved_at${isVerifyMyIdentityMode() ? ", identity_provider, identity_verified_at" : ""}, disabled_at, is_public`)
       .eq("user_id", user.id)
       .maybeSingle();
 

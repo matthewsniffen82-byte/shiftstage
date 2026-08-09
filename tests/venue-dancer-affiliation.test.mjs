@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const [
-  migration,
+  baseMigration,
+  approvalMigration,
   service,
   dancerRoute,
   venueRoute,
@@ -13,6 +14,7 @@ const [
   liveApp,
 ] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608050001_dancer_venue_affiliations.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608080002_venue_gated_dancer_profiles.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/venue-affiliations.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/venue-verification/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/venue/dancer-verifications/route.ts", import.meta.url), "utf8"),
@@ -21,6 +23,7 @@ const [
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
+const migration = `${baseMigration}\n${approvalMigration}`;
 
 test("venue affiliation tokens are private, short-lived, venue-bound, and single-use", () => {
   assert.match(migration, /create table if not exists public\.venue_dancer_verification_tokens/);
@@ -46,8 +49,14 @@ test("only the exact verified venue owner can approve or revoke an affiliation",
   assert.match(venueRoute, /approveDancerVenueVerification/);
   assert.match(venueRoute, /revokeDancerVenueAffiliation/);
   assert.match(service, /\.eq\("owner_user_id", managerUserId\)/);
-  assert.match(service, /dancer\.status !== "approved"/);
-  assert.match(service, /dancer\.is_public === false/);
+  assert.match(service, /requireVenueApprovalCandidate/);
+  assert.match(service, /avatar must pass automated moderation/i);
+  assert.doesNotMatch(service, /requireApprovedDancer/);
+  assert.match(approvalMigration, /status = 'approved'/);
+  assert.match(approvalMigration, /venue_approved_at = coalesce/);
+  assert.match(approvalMigration, /'profileActivated', v_profile_activated/);
+  assert.match(approvalMigration, /where affiliation\.status = 'active'[\s\S]*affiliation\.revoked_at is null/);
+  assert.match(approvalMigration, /not exists \(\s*select 1 from public\.dancer_photos/);
 });
 
 test("check-ins and dancer-attributed commission require an active venue affiliation", () => {
@@ -64,13 +73,13 @@ test("check-ins and dancer-attributed commission require an active venue affilia
 });
 
 test("dancer and venue dashboards expose the complete one-tap verification flow", () => {
-  for (const source of [dashboard, liveApp]) {
-    assert.match(source, /Verify where you work/);
-    assert.match(source, /Show my verification QR/);
-    assert.match(source, /Confirm she works here/);
-    assert.match(source, /Approved roster/);
-    assert.match(source, /No shared club code or paperwork/);
-  }
+  assert.match(dashboard, /Show my verification QR/);
+  assert.match(dashboard, /Confirm she works here/);
+  assert.match(liveApp, /Confirm where you work/);
+  assert.match(liveApp, /Show my verification QR/);
+  assert.match(liveApp, /Confirm she works here/);
+  assert.match(liveApp, /Approved roster/);
+  assert.match(liveApp, /confirms only that you are affiliated/i);
   assert.match(liveApp, /dancrPendingVenueDancerVerificationV1/);
   assert.match(liveApp, /handleVenueDancerVerificationDeepLink/);
   assert.match(liveApp, /processPendingVenueDancerVerification/);
@@ -91,4 +100,8 @@ test("revocation is audited and immediately ends matching live shifts", () => {
   assert.match(service, /DANCER_VENUE_AFFILIATION_APPROVED/);
   assert.match(service, /DANCER_VENUE_AFFILIATION_REVOKED/);
   assert.match(service, /venue_affiliation_status/);
+  assert.match(approvalMigration, /select \* into v_replacement[\s\S]*status = 'active'/);
+  assert.match(approvalMigration, /is_public = false/);
+  assert.match(approvalMigration, /'profileDeactivated', v_profile_deactivated/);
+  assert.match(service, /your profile is private again/i);
 });

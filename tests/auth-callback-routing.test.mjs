@@ -42,7 +42,7 @@ test("the live app consumes the session saved by the server callback", () => {
   assert.match(resumeHandler, /params\.get\("dancr_confirm"\) === "1"/);
   assert.match(resumeHandler, /isAuthCallback && authSession\?\.accessToken \? authSession : null/);
   assert.match(resumeHandler, /openConfirmedSessionDashboard\("dancer", state\)/);
-  assert.match(liveAppSource, /showToast\("Email confirmed\. Complete your 4-step dancer verification\."\)/);
+  assert.match(liveAppSource, /showToast\("Email confirmed\. Complete your 3-step dancer profile setup\."\)/);
 });
 
 test("a confirmed session survives account synchronization errors", () => {
@@ -87,14 +87,14 @@ test("unfinished dancer accounts stay draft and loading a profile cannot approve
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
 
   for (const profileInsert of [signupProfileInsert, callbackProfileInsert]) {
-    assert.match(profileInsert, /status: "draft"/);
-    assert.match(profileInsert, /verification_status: "pending"/);
-    assert.match(profileInsert, /is_public: false/);
+    assert.match(profileInsert, /initialDancerApprovalValues\(\)/);
     assert.doesNotMatch(profileInsert, /automaticDancerApprovalValues/);
   }
   assert.doesNotMatch(profileGet, /automaticDancerApprovalValues|ensureAutomaticDancerApproval/);
-  assert.match(explicitSubmission, /getIdentityVerificationMode\(\) === "auto_approve"/);
-  assert.match(explicitSubmission, /automaticDancerApprovalValues\(\)/);
+  assert.match(explicitSubmission, /status: "pending_review"/);
+  assert.match(explicitSubmission, /verification_status: "pending"/);
+  assert.match(explicitSubmission, /is_public: false/);
+  assert.doesNotMatch(explicitSubmission, /automaticDancerApprovalValues|getIdentityVerificationMode/);
 });
 
 test("email callbacks preserve existing dancer approval and account state", () => {

@@ -7,7 +7,6 @@ import type { AdminApprovalDancer, DancerStatus, ReviewStatus } from "./types";
 import { deliverNotificationRows } from "./notification-delivery";
 import { getStripe } from "../stripe";
 import {
-  automaticDancerApprovalValues,
   getIdentityVerificationMode,
   isVerifyMyIdentityMode,
 } from "./identity-mode";
@@ -33,6 +32,7 @@ const APPROVAL_QUEUE_SELECT = `
   status,
   is_public,
   verification_status,
+  venue_approved_at,
   ${APPROVAL_IDENTITY_SELECT}
   photo_review_status,
   approved_at,
@@ -544,6 +544,7 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
     status: row.status,
     isPublic: row.is_public !== false,
     verificationStatus: row.verification_status,
+    venueApprovedAt: row.venue_approved_at || null,
     identityMode: getIdentityVerificationMode(),
     identityProvider: row.identity_provider || null,
     identityVerifiedAt: row.identity_verified_at || null,
@@ -993,7 +994,12 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
   if (!dancer) throw new Error("Dancer profile not found.");
 
   const statusUpdate = approved
-    ? automaticDancerApprovalValues(reviewedAt)
+    ? {
+        status: "pending_review" as const,
+        verification_status: "pending" as const,
+        approved_at: null,
+        is_public: false,
+      }
     : {
         status: "rejected" as const,
         verification_status: "rejected" as const,
@@ -1050,7 +1056,7 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
 
   return {
     dancerId: input.dancerId,
-    status: approved ? "approved" : "rejected",
+    status: approved ? "pending_review" : "rejected",
     reviewedAt,
     notificationDelivery,
   };
@@ -1196,8 +1202,8 @@ function dancerApprovalNotificationCopy(
   const issueCopy = approvalIssues.length ? ` Items to fix: ${approvalIssues.join("; ")}.` : "";
   if (approved) {
     return {
-      title: "Your Dancr profile is approved",
-      body: `${displayName} is approved and live on Dancr. You can now post shifts, manage your public profile, and share your page.${issueCopy}`,
+      title: "Your Dancr profile content is approved",
+      body: `${displayName} passed profile review and remains private until a verified venue manager confirms your venue affiliation.${issueCopy}`,
     };
   }
 

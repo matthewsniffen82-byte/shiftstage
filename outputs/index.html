@@ -36038,7 +36038,7 @@
                 </button>
               </div>
             </div>
-            <div class="rule-note">Dancer accounts are free while launch access is open. Public profile access still waits for verification and approval.</div>
+            <div class="rule-note">Dancer accounts are free while launch access is open. Your profile stays private until media moderation passes and a verified venue manager confirms your affiliation.</div>
             <button class="action-btn" type="submit" disabled>Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
@@ -36521,9 +36521,9 @@
           </div>
         </details>
         <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
-          <span class="eyebrow">Venue authorization</span>
-          <h3>Verify where you work</h3>
-          <p>Your venue's verified manager scans your personal QR, matches your profile, and approves you once. No shared club code or paperwork.</p>
+          <span class="eyebrow">Step 3 · Venue affiliation</span>
+          <h3>Confirm where you work</h3>
+          <p>Your venue's verified manager scans your personal QR, matches your avatar and stage name, and confirms only that you are affiliated there. MyDancr handles profile and media moderation separately.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
@@ -36660,8 +36660,8 @@
         </div>
         <section class="auth-card venue-affiliation-card" id="venueDancerVerificationPanel">
           <span class="eyebrow">Verified roster</span>
-          <h3>Approve dancers</h3>
-          <p>The dancer shows her short-lived personal MyDancr QR. Scan it, match the profile photo and stage name, then approve once.</p>
+          <h3>Confirm dancer affiliations</h3>
+          <p>The dancer shows her short-lived personal MyDancr QR. Match the avatar and stage name only to confirm identity, then attest that she is affiliated with your venue. Profile content is moderated separately by MyDancr.</p>
           <section class="venue-affiliation-preview" id="venueDancerVerificationPreview" hidden aria-label="Dancer verification confirmation">
             <span class="venue-affiliation-avatar" id="venueDancerVerificationAvatar"></span>
             <div>
@@ -37375,6 +37375,7 @@
     let activeVenueName = "Spearmint Rhino Las Vegas";
     let liveVenueDashboard = null;
     let liveDancerVenueVerification = null;
+    let dancerVenueApprovalPollTimer = 0;
     let activeDancerVenueVerification = null;
     let activeVenueDancerVerification = null;
     const PENDING_VENUE_DANCER_VERIFICATION_KEY = "dancrPendingVenueDancerVerificationV1";
@@ -37387,6 +37388,7 @@
     const dancerSetup = {
       profile: false,
       photos: false,
+      review: false,
       verification: false,
       approval: false,
       shift: false
@@ -38183,6 +38185,7 @@
       Object.assign(dancerSetup, {
         profile: false,
         photos: false,
+        review: false,
         verification: false,
         approval: false,
         shift: false
@@ -38418,7 +38421,7 @@
           closeAuthPage();
           closeDashboard();
           closeVenueDashboard();
-          showToast("Email confirmed. Complete your 4-step dancer verification.");
+          showToast("Email confirmed. Complete your 3-step dancer profile setup.");
           openDancerDashboard();
           setTimeout(() => scrollDancerDashboardToTop("auto"), 180);
           return;
@@ -38430,7 +38433,7 @@
           showToast(isPasswordReset ? "You're signed in. Venue account settings are ready." : "Email confirmed. Venue dashboard opened.");
           return;
         }
-        showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 4-step dancer verification." : "Email confirmed. Welcome back to Mydancr.");
+        showToast(dashboardRole === "dancer" ? "Email confirmed. Complete your 3-step dancer profile setup." : "Email confirmed. Welcome back to Mydancr.");
         openDashboard();
       });
     }
@@ -39564,6 +39567,8 @@
 
     function dancerCoreApprovalUnlocked(profile) {
       const verificationApproved = normalizedReviewStatus(profile?.verification_status || profile?.verificationStatus) === "approved";
+      const venueApprovedAt = profile?.venue_approved_at || profile?.venueApprovedAt;
+      if (!venueApprovedAt) return false;
       const provider = normalizedReviewStatus(profile?.identity_provider || profile?.identityProvider);
       const verifiedAt = profile?.identity_verified_at || profile?.identityVerifiedAt;
       if (!provider && !verifiedAt) return Boolean(isApprovedDancerStatus(profile?.status) || verificationApproved);
@@ -39892,7 +39897,7 @@
       if (!isDancerSession() || profile?.status !== "approved") return;
       const alreadyShown = liveNotifications.some((notification) => (
         notification.type === "approval_status" &&
-        (notification.payload?.status === "approved" || notification.title === "Your Dancr profile is approved")
+        (notification.payload?.status === "approved" || notification.title === "Your Dancr profile is live")
       ));
       if (alreadyShown) return;
 
@@ -39902,8 +39907,8 @@
         id: "",
         localOnly: true,
         type: "approval_status",
-        title: "Your Dancr profile is approved",
-        body: `${stageName} is approved and live on Dancr.`,
+        title: "Your Dancr profile is live",
+        body: `${stageName} is live after verified venue affiliation.`,
         payload: { status: "approved" },
         readAt: null,
         sentAt: createdAt,
@@ -44371,9 +44376,16 @@
         uploading: "Upload incomplete",
         moderating: "Safety check",
         submitted: "Under review",
-        approved: "Live",
+        approved: "Moderation passed",
         rejected: "Not approved"
       })[status] || status || "Saved";
+    }
+
+    function dancerProfileVideoModerationComplete() {
+      if (!isDancerSession()) return true;
+      if (!approvedProfileVideoWorkspace) return false;
+      const videos = Array.isArray(approvedProfileVideoWorkspace.videos) ? approvedProfileVideoWorkspace.videos : [];
+      return videos.every((video) => !["uploading", "moderating", "submitted"].includes(String(video?.status || "").toLowerCase()));
     }
 
     function approvedProfileVideoManagerMarkup() {
@@ -44387,7 +44399,9 @@
       const venues = Array.isArray(workspace?.venues) ? workspace.venues : [];
       const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
         ? "Loading your profile videos..."
-        : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
+        : workspace?.profileEligible === false
+          ? "Videos that pass safety moderation stay private until venue affiliation is approved."
+          : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
       return `
         <section class="approved-profile-video-manager" id="approvedProfileVideoManager" aria-labelledby="approvedProfileVideoTitle">
           <div class="approved-profile-video-head">
@@ -44418,9 +44432,12 @@
               </button>
             `).join("")}
           </div>
-          ${!workspace && approvedProfileVideoLoading ? "" : workspace && workspace.profileEligible === false
-            ? '<p class="approved-profile-video-limit">Your dancer profile must be approved before videos can be submitted.</p>'
-            : atLimit
+          ${workspace && workspace.profileEligible === false
+            ? '<p class="approved-profile-video-limit">Private during setup · every upload receives automated safety moderation.</p>'
+            : ""}
+          ${!workspace ? (approvedProfileVideoLoading
+              ? ""
+              : '<button class="action-btn secondary" type="button" data-approved-profile-video-retry>Retry loading videos</button>') : atLimit
               ? '<p class="approved-profile-video-limit">All five video slots are filled. Remove a video above before uploading another.</p>'
               : `
                 <form class="approved-profile-video-form" id="approvedProfileVideoUploadForm">
@@ -44498,6 +44515,7 @@
       } finally {
         approvedProfileVideoLoading = false;
         renderApprovedProfileVideoManager();
+        if (document.getElementById("setupChecklist")) renderDancerSetup();
       }
     }
 
@@ -47711,14 +47729,39 @@
       loadLiveDancerReviews();
       loadLiveNotifications();
       loadLiveSupportThreads();
-      if (dancerSetup.approval) loadDancerVenueVerification();
+      if (dancerSetup.review || dancerSetup.approval) loadDancerVenueVerification();
+      startDancerVenueApprovalPolling();
       renderSupportInbox("dancer");
     }
 
     function closeDancerDashboard() {
       dancerDashboard.classList.remove("show");
       dancerDashboard.setAttribute("aria-hidden", "true");
+      stopDancerVenueApprovalPolling();
       syncOverlayScrollLock();
+    }
+
+    function stopDancerVenueApprovalPolling() {
+      if (dancerVenueApprovalPollTimer) window.clearInterval(dancerVenueApprovalPollTimer);
+      dancerVenueApprovalPollTimer = 0;
+    }
+
+    function startDancerVenueApprovalPolling() {
+      stopDancerVenueApprovalPolling();
+      if (!isDancerSession() || dancerSetup.approval) return;
+      dancerVenueApprovalPollTimer = window.setInterval(async () => {
+        if (!dancerDashboard.classList.contains("show") || dancerSetup.approval) {
+          stopDancerVenueApprovalPolling();
+          return;
+        }
+        const wasApproved = dancerSetup.approval;
+        await hydrateDancerVerificationProgress();
+        if (dancerSetup.review && !dancerSetup.approval) await loadDancerVenueVerification();
+        if (!wasApproved && dancerSetup.approval) {
+          stopDancerVenueApprovalPolling();
+          showToast("Venue affiliation confirmed. Your profile is live.");
+        }
+      }, 8000);
     }
 
     function formatVenueAffiliationTime(value, includeYear = false) {
@@ -48136,6 +48179,7 @@
       Object.assign(dancerSetup, {
         profile: true,
         photos: true,
+        review: true,
         verification: true,
         approval: true,
         shift: true
@@ -48165,6 +48209,7 @@
       Object.assign(dancerSetup, {
         profile: true,
         photos: true,
+        review: true,
         verification: true,
         approval: false,
         shift: false
@@ -48249,10 +48294,15 @@
     }
 
     function setupOrder() {
-      return ["profile", "photos", "verification", "approval"];
+      return ["profile", "review", "approval"];
     }
 
     function isSavedSetupStepComplete(step) {
+      if (step === "profile") {
+        const profile = activeDancerProfile();
+        const avatarSaved = Boolean(profile?.avatarStoragePath || profile?.avatar_storage_path);
+        return Boolean(dancerSetup.profile && dancerSetup.photos && avatarSaved && dancerProfileVideoModerationComplete());
+      }
       return Boolean(dancerSetup[step]);
     }
 
@@ -48264,10 +48314,9 @@
 
     function setupStepDisplayName(step) {
       const labels = {
-        profile: "profile",
-        photos: "photos",
-        verification: "verification",
-        approval: "approval"
+        profile: "profile and media",
+        review: "preview and submission",
+        approval: "venue affiliation"
       };
       return labels[step] || "previous step";
     }
@@ -48285,7 +48334,7 @@
     function completeSetupStep(step) {
       if (!canOpenStep(step)) return;
       if (step === "approval" && isDancerSession()) {
-        showToast("Approval is handled by platform review.");
+        showToast("A verified venue manager completes this step by scanning your QR.");
         return;
       }
       setupChecklistExpanded = true;
@@ -48819,6 +48868,7 @@
         Object.assign(dancerSetup, {
           profile: false,
           photos: false,
+          review: false,
           verification: false,
           approval: false,
           shift: dancerSetup.shift
@@ -48886,7 +48936,8 @@
       assignSocialMap(dancerSignupSocials, useDraftFields ? { ...liveSocials, ...draftSocials } : liveSocials);
       Object.assign(dancerSetup, {
         profile: savedProfileSetup,
-        photos: dancerProfileHasApprovedOrPendingPhoto(profile),
+        photos: dancerProfileMediaModerationComplete(profile),
+        review: approved || Boolean(profile.reviewSubmitted || normalizedReviewStatus(profile.status) === "pending_review"),
         verification: approved || hasSubmittedVerificationDocuments(),
         approval: approved,
         shift: dancerSetup.shift
@@ -48911,6 +48962,7 @@
           avatarPhotoFocalY: profile.avatarPhotoFocalY ?? profile.avatar_photo_focal_y ?? dancerPhotos[0]?.focalY ?? 50,
           avatarPhotoSrcSet: profile.avatarPhotoSrcSet || profile.avatar_photo_src_set || "",
           avatarStoragePath: profile.avatar_storage_path || profile.avatarStoragePath || "",
+          venueApprovedAt: profile.venue_approved_at || profile.venueApprovedAt || "",
           pendingAvatarReview: profile.pending_avatar_review || profile.pendingAvatarReview || null,
           galleryPhotoUrls: photos.slice(1),
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
@@ -48993,14 +49045,14 @@
       return "";
     }
 
-    function dancerProfileHasApprovedOrPendingPhoto(profile) {
+    function dancerProfileMediaModerationComplete(profile) {
       const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
       const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
       const submittedPhotos = Array.isArray(profile?.submittedPhotos) ? profile.submittedPhotos : [];
-      return [...rows, ...pendingReviews, ...submittedPhotos].some((photo) => {
-        const category = dancerSetupPhotoModerationCategory(photo);
-        return category === "approved" || category === "review";
-      });
+      const categories = [...rows, ...pendingReviews, ...submittedPhotos]
+        .map((photo) => dancerSetupPhotoModerationCategory(photo))
+        .filter(Boolean);
+      return categories.includes("approved") && categories.every((category) => category === "approved");
     }
 
     function dancerSubmittedPhotosFromProfile(profile) {
@@ -49095,28 +49147,29 @@
       if (!acceptedCount) {
         if (rejectedCount) {
           return canContinue
-            ? `${rejectedCount} new photo${rejectedCount === 1 ? " was" : "s were"} fully rejected and did not occupy a slot. Your existing approved or pending-review photo still lets you continue to Step 3.`
-            : `${rejectedCount} photo${rejectedCount === 1 ? " was" : "s were"} fully rejected. Step 3 stays locked. Upload a different photo that meets Dancr's photo guidelines.`;
+            ? `${rejectedCount} new photo${rejectedCount === 1 ? " was" : "s were"} fully rejected and did not occupy a slot. Your existing approved media still lets you continue to Step 2.`
+            : `${rejectedCount} photo${rejectedCount === 1 ? " was" : "s were"} fully rejected. Step 2 stays locked. Upload a different photo that meets Dancr's photo guidelines.`;
         }
         return canContinue
-          ? "The new upload could not be processed. Your existing approved or pending-review photo still lets you continue to Step 3."
-          : "No photos were accepted. Step 3 stays locked. Please try the upload again.";
+          ? "The new upload could not be processed. Your existing approved media still lets you continue to Step 2."
+          : "No photos were accepted. Step 2 stays locked. Please try the upload again.";
       }
       const outcomes = [];
       if (approvedCount) outcomes.push(`${approvedCount} approved automatically`);
       if (reviewCount) outcomes.push(`${reviewCount} pending human review`);
       if (rejectedCount) outcomes.push(`${rejectedCount} fully rejected`);
       if (failedCount) outcomes.push(`${failedCount} could not be processed`);
-      const pendingNotice = reviewCount
-        ? " Pending-review slots stay occupied until a reviewer approves or rejects them."
-        : "";
-      return `${outcomes.join(" · ")}. You can continue to Step 3.${pendingNotice}`;
+      if (!canContinue) {
+        return `${outcomes.join(" · ")}. Step 2 stays locked until every uploaded photo passes moderation.`;
+      }
+      return `${outcomes.join(" · ")}. Media moderation passed. You can continue to Step 2.`;
     }
 
     async function submitSetupPhotos(form) {
-      if (!canOpenStep("photos")) return;
+      if (!canOpenStep("profile")) return;
       if (!isDancerSession()) {
-        completeSetupStep("photos");
+        dancerSetup.photos = true;
+        renderDancerSetup();
         showToast("Demo photos submitted");
         return;
       }
@@ -49232,12 +49285,11 @@
           normalizeLocalDancerPhotos(profile);
           profile.photoStatus = reviewUploads.length ? "Pending" : approvedUploads.length ? "Approved" : profile.photoStatus;
         }
-        const acceptedUploads = [...approvedUploads, ...reviewUploads];
-        dancerSetup.photos = dancerProfileHasApprovedOrPendingPhoto(profile) || acceptedUploads.length > 0;
-        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "verification") : "photos";
+        dancerSetup.photos = dancerProfileMediaModerationComplete(profile)
+          || (approvedUploads.length > 0 && reviewUploads.length === 0 && rejectedUploads.length === 0 && unresolvedUploads.length === 0);
+        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "review") : "profile";
         await hydrateDancerVerificationProgress();
-        if (acceptedUploads.length && !dancerSetup.photos) dancerSetup.photos = true;
-        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "verification") : "photos";
+        activeSetupStep = dancerSetup.photos ? (nextIncompleteStep() || "review") : "profile";
         const message = setupPhotoModerationResultMessage({
           approvedCount: approvedUploads.length,
           reviewCount: reviewUploads.length,
@@ -49308,12 +49360,14 @@
     }
 
     async function submitDancerProfileForReview(button) {
-      if (!dancerSetup.profile || !dancerSetup.photos || !dancerSetup.verification) {
-        activeSetupStep = "approval";
-        verificationSubmitNotice = "Complete and save Steps 1 through 3 before submitting your profile.";
+      const setupProfile = activeDancerProfile();
+      const avatarSaved = Boolean(setupProfile?.avatarStoragePath || setupProfile?.avatar_storage_path);
+      if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved || !dancerProfileVideoModerationComplete()) {
+        activeSetupStep = "profile";
+        verificationSubmitNotice = "Complete your profile and wait for every uploaded picture and video to pass moderation before submitting.";
         verificationSubmitNoticeTone = "error";
         renderDancerSetup();
-        showToast("Complete profile, photos, and verification first");
+        showToast("Complete your profile and media first");
         return;
       }
       const profile = ensureActiveDancerProfile("Pending");
@@ -49342,16 +49396,18 @@
             }
           });
         }
+        dancerSetup.review = true;
         liveDancerReviews = liveDancerReviews.map((review) => (
           review.status === "rejected"
             ? { ...review, status: "pending", notes: "Resubmitted by dancer.", reviewedAt: null }
             : review
         ));
         activeSetupStep = "approval";
-        verificationSubmitNotice = "Submitted for review. Dancr will notify you by email and in your site notifications when your review is complete.";
+        verificationSubmitNotice = "Profile submitted. Choose your affiliated venue and show the personal QR to its verified manager.";
         verificationSubmitNoticeTone = "success";
         renderDancerSetup();
-        showToast("Submitted for review. Watch your email and site notifications.");
+        showToast("Profile saved. Venue affiliation is the final step.");
+        void loadDancerVenueVerification();
       } catch (error) {
         const message = error.message || "Could not submit for review";
         activeSetupStep = "approval";
@@ -49363,7 +49419,7 @@
         if (button?.isConnected) {
           button.disabled = false;
           button.removeAttribute("aria-busy");
-          button.textContent = "Submit for review";
+          button.textContent = "Submit profile";
         }
       }
     }
@@ -49747,10 +49803,9 @@
       const completedSteps = steps.filter((step) => dancerSetup[step]).length;
       const nextStep = nextIncompleteStep();
       const nextLabels = {
-        profile: "Create profile",
-        photos: "Upload photos",
-        verification: "Start verification",
-        approval: "Platform review"
+        profile: "Create profile and add media",
+        review: "Preview and submit",
+        approval: "Venue affiliation"
       };
       const dancerName = activeDancerName();
       const city = activeDancerCity();
@@ -49758,7 +49813,7 @@
       const approved = dancerSetup.approval || dancerCoreApprovalUnlocked(activeProfile) || normalizedReviewStatus(liveDancerBilling?.dancerStatus) === "approved";
       const optionalProfileFixes = approved && hasOptionalProfileFixReviews();
       const rejected = !approved && (isRejectedDancerStatus(activeProfile?.status) || hasRejectedDancerReviews() || hasRejectedCoreVerificationReviews());
-      const readyForReview = dancerSetup.profile && dancerSetup.photos && dancerSetup.verification;
+      const readyForReview = isSavedSetupStepComplete("profile");
       const reviewSubmitted = Boolean(activeProfile?.reviewSubmitted);
       const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
@@ -49795,10 +49850,8 @@
         : approved
           ? "Your profile is live"
         : reviewSubmitted
-          ? "Submitted for Dancr review"
-          : liveIdentityVerificationMode === "auto_approve"
-            ? "Finish profile setup to go live"
-            : "Finish verification to go live";
+          ? "Ready for venue affiliation"
+          : "Finish your profile to continue";
       document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
         : optionalProfileFixes
@@ -49806,12 +49859,8 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the customers Dancr sends you."
         : reviewSubmitted
-          ? liveIdentityVerificationMode === "auto_approve"
-            ? "Dancr is reviewing your profile and submitted media. Dancer approval is automatic; photos and videos keep their separate moderation status."
-            : "Dancr is reviewing your profile, photos, ID/selfie, and proof that you dance. You will be notified by email and in your site notifications when review is complete."
-          : liveIdentityVerificationMode === "auto_approve"
-            ? "Complete each step in order. Dancer approval is automatic; finish your profile and submit photos for their separate review."
-            : "Complete each step in order. Dancr reviews your profile, photos, ID/selfie, and proof that you dance before your public profile and shift posting unlock.";
+          ? "Your profile is private and ready. A verified manager at your selected venue must scan your QR and confirm only that you are affiliated with that venue."
+          : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
           ? "Fix red items"
@@ -49820,7 +49869,7 @@
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? "Waiting for review"
+          ? "Waiting for venue scan"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -49857,19 +49906,17 @@
           approvalStatusPrimary.textContent = "Approved with fixes needed. Social links and/or pictures need fixes only.";
           approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or leave that social/photo blank.";
         } else if (approved) {
-          approvalStatusPrimary.textContent = liveIdentityVerificationMode === "auto_approve"
-            ? "Automatically approved. Your dancer account and public profile tools are unlocked."
-            : "Approved. Your public profile, gallery, and shift posting are unlocked.";
+          approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so customers can find you when you are working.";
         } else if (reviewSubmitted) {
-          approvalStatusPrimary.textContent = "Submitted for review. Dancr is checking your profile details, photos, ID/selfie, and proof that you dance.";
-          approvalStatusSecondary.textContent = "You will be notified by email and in your site notifications when review is complete.";
+          approvalStatusPrimary.textContent = "Profile submitted and private. Show your Step 3 QR to a verified manager at your affiliated venue.";
+          approvalStatusSecondary.textContent = "The manager confirms only your venue affiliation; MyDancr already handles profile and media safety checks.";
         } else if (readyForReview) {
-          approvalStatusPrimary.textContent = "Ready for review. Tap Submit for review in Step 4 when everything looks correct.";
-          approvalStatusSecondary.textContent = "After submission, Dancr will notify you by email and in your site notifications.";
+          approvalStatusPrimary.textContent = "Ready to preview. Review your public profile and submit it in Step 2.";
+          approvalStatusSecondary.textContent = "Your profile remains private until Step 3 venue affiliation is confirmed.";
         } else {
-          approvalStatusPrimary.textContent = "Complete profile, photos, and verification before submitting for Dancr review.";
-          approvalStatusSecondary.textContent = "Public discovery and shift posting unlock after approval.";
+          approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
+          approvalStatusSecondary.textContent = "Public discovery and the full dashboard unlock after venue affiliation.";
         }
       }
       const dancerFollowerStat = document.getElementById("dancerFollowerStat");
@@ -50170,13 +50217,14 @@
           : `${completedSteps}/${steps.length} complete${nextStep ? ` · Next: ${nextLabels[nextStep]}` : ""}`;
       }
       document.getElementById("approvedDancerPanel").hidden = !approved;
-      document.getElementById("dancerVenueVerificationSection").hidden = !approved;
+      document.getElementById("dancerVenueVerificationSection").hidden = !(reviewSubmitted || dancerSetup.review || approved);
       renderShiftPostForm();
       if (approved) {
         renderDancerManagement();
         renderApprovedToolDropdowns();
       }
       if (approved && !rejected) {
+        if (setupList) setupList.innerHTML = "";
         const sharePanel = document.getElementById("dancerSharePanel");
         if (sharePanel) {
           sharePanel.innerHTML = `
@@ -50207,6 +50255,11 @@
           <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="Username or profile URL"></div>
           <div class="field"><label for="setupX">Optional X</label><input id="setupX" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="Username or profile URL"></div>
           <div class="rule-note">Enter a handle or full profile URL. Dancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
+          <div class="field">
+            <label>Profile avatar</label>
+            <button class="action-btn secondary" type="button" data-approved-avatar-upload>Upload clear face photo</button>
+            <div class="field-note">Required. MyDancr automatically checks the image and applies a face-aware crop for avatar circles.</div>
+          </div>
           <button class="action-btn" type="submit">Save profile</button>
         </form>
       `;
@@ -50214,40 +50267,33 @@
         <form class="auth-form" data-setup-form="photos">
           ${dancerSetupPhotoPreviewMarkup()}
           <div class="field">
-            <label for="setupProfilePhotos">Profile photos</label>
+            <label for="setupProfilePhotos">Gallery photos</label>
             <input id="setupProfilePhotos" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple>
             <div class="field-note"><strong>Upload up to ${MAX_DANCER_PROFILE_PHOTOS} photos.</strong> For the sharpest result, choose original camera images—not screenshots or social-media copies—with at least 2,000 pixels on the longest edge. MyDancr keeps the high-resolution master, serves responsive sizes, and never enlarges a small upload. The first photo becomes your main profile photo. Each photo uses the live Dancr auto-moderation rules: it is approved automatically, sent for human review, or fully rejected.</div>
           </div>
-          <div class="rule-note" id="photoUploadResult">Approved and pending-human-review photos unlock Step 3. Pending slots stay occupied. Fully rejected photos do not count and must be replaced.</div>
+          <div class="rule-note" id="photoUploadResult">Every image is checked automatically. A pending or rejected image keeps profile submission locked until it passes or is removed.</div>
           <button class="action-btn" type="submit">Submit photos</button>
         </form>
+        ${approvedProfileVideoManagerMarkup()}
       `;
-      const verificationBody = liveIdentityVerificationMode === "auto_approve" ? `
-        <div class="auth-form">
-          ${verificationSubmissionMarkup()}
-          <div class="rule-note" id="verificationUploadResult">Your dancer account is approved without an ID, selfie, or dance-proof check. You can continue immediately.</div>
-        </div>
-      ` : `
-        <form class="auth-form" data-setup-form="verification">
-          <div class="info-tile setup-verification-card"><strong>Secure VerifyMy identity check</strong><div class="meta">VerifyMy collects and verifies your government ID and selfie on its hosted site. MyDancr never receives or stores those files or your verified identity details.</div></div>
-          ${verificationSubmissionMarkup()}
-          <div class="rule-note" id="verificationUploadResult">Your profile goes live automatically after VerifyMy approves your identity check. Photos and videos use separate moderation.</div>
-          <button class="action-btn" type="submit">${["pending", "started", "failed", "expired"].includes(normalizedReviewStatus(liveIdentityVerification?.status)) ? "Continue secure verification" : "Verify securely with VerifyMy"}</button>
-        </form>
-      `;
-      const approvalBody = `
+      const reviewBody = `
         ${verificationReviewNoticeMarkup(reviewSubmitted)}
         <button class="action-btn secondary" type="button" data-preview-profile>
-          Preview profile
+          Preview public profile
         </button>
-        <div class="rule-note">${liveIdentityVerificationMode === "auto_approve" ? "Your dancer account is automatically approved. Pending photos and videos remain private until their separate moderation is complete and do not hold the profile offline." : "VerifyMy’s signed verification result makes your profile live automatically."}</div>
+        <button class="action-btn" type="button" data-submit-review>Submit profile</button>
+        <div class="rule-note">Confirm the preview is accurate. Only moderation-safe pictures and videos can proceed. Submission keeps the profile private while you complete venue affiliation.</div>
+      `;
+      const approvalBody = `
+        <div class="info-tile"><strong>Confirm venue affiliation</strong><div class="meta">Choose the venue where you work and show the short-lived personal QR below to its verified manager. The manager confirms only your affiliation; they do not review your profile content.</div></div>
+        <div class="rule-note">The successful manager scan publishes your profile and unlocks your full dancer dashboard.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
-        setupStepMarkup("profile", "Create profile", profileBody),
-        setupStepMarkup("photos", "Upload photos for review", photosBody),
-        setupStepMarkup("verification", liveIdentityVerificationMode === "auto_approve" ? "Automatic dancer approval" : "Start dancer verification", verificationBody),
-        setupStepMarkup("approval", "Approval status", approvalBody)
+        setupStepMarkup("profile", "Create profile and add media", `${profileBody}${photosBody}`),
+        setupStepMarkup("review", "Preview and submit", reviewBody),
+        setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
       ].join("");
+      if (!approvedProfileVideoWorkspace && !approvedProfileVideoLoading && approvedProfileVideoStatusTone !== "error") void loadApprovedProfileVideos();
     }
 
     function limitedList(items, expanded) {
@@ -50300,7 +50346,7 @@
             </div>
             <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${visibleStatus}</span>
           </div>
-          <div class="meta">Account: Automatically approved · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
@@ -50334,13 +50380,13 @@
             </div>
             <span class="${badgeClass}">${displayText(statusLabel)}</span>
           </div>
-          <div class="meta">Account: Automatically approved · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
             <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>
             <button class="action-btn secondary" data-admin-action="feature-dancer">${profile.featured ? "Unfeature dancer" : "Feature dancer"}</button>
-            ${statusLabel === "Disapproved" ? '<button class="action-btn" data-admin-action="approve-dancer">Approve dancer</button>' : ""}
+            ${statusLabel === "Disapproved" ? '<button class="action-btn" data-admin-action="approve-dancer">Approve profile content</button>' : ""}
           </div>
         </article>
       `;
@@ -50793,7 +50839,7 @@
             <span class="${submittedChanges ? "badge pending" : "pill"}">${submittedChanges ? "Submitted" : "Pending"}</span>
           </summary>
           <div class="meta">Stage: ${displayText(profile.name || "Not submitted")} · City: ${displayText(city || "Not submitted")}</div>
-          <div class="meta">Account: Automatically approved · Photos: ${displayText(profile.photoStatus)}</div>
+          <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
           ${profile.bio ? `<div class="meta">Bio: ${displayText(profile.bio)}</div>` : ""}
           <button class="admin-profile-open-link" type="button" data-admin-action="view-dancer-profile">Open ${displayText(profile.name || "dancer")}'s full profile</button>
@@ -50817,7 +50863,7 @@
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="view-dancer-profile">View full profile</button>
             <button class="action-btn danger" data-admin-action="delete-dancer-profile">Delete profile</button>
-            <button class="action-btn" data-admin-action="approve-dancer" ${approveDisabled}>Approve dancer</button>
+            <button class="action-btn" data-admin-action="approve-dancer" ${approveDisabled}>Approve profile content</button>
             <button class="action-btn danger" data-admin-action="reject-dancer">Reject dancer</button>
             <button class="action-btn secondary" data-admin-action="remove-content">Remove inappropriate content</button>
           </div>
@@ -51339,21 +51385,14 @@
       showToast(message);
     }
 
-    function unlockApprovedDancerProfile(profile) {
+    function markDancerProfileContentApproved(profile) {
       if (!profile) return;
       Object.assign(profile, {
-        status: "Verified",
-        idStatus: "Passed",
-        selfieStatus: "Matched",
-        danceProofStatus: "Approved",
         photoStatus: "Approved",
         reviewSubmitted: false,
         contentFlagged: false
       });
-      setDancerProfilePublic(profile, true);
-      (profile.verificationDocuments || []).forEach((document) => {
-        document.status = "approved";
-      });
+      if (!profile.venueApprovedAt) setDancerProfilePublic(profile, false);
     }
 
     function saveLiveAdminReview(profile, status) {
@@ -51361,9 +51400,9 @@
       postAuthenticatedJson("/api/admin/approvals", {
         dancerId: profile.id,
         status,
-        notes: status === "approved" ? "Approved in admin dashboard." : "Rejected in admin dashboard."
+        notes: status === "approved" ? "Profile content approved in admin dashboard; venue affiliation remains required." : "Rejected in admin dashboard."
       }).then(() => {
-        showToast(status === "approved" ? "Live approval saved" : "Live rejection saved");
+        showToast(status === "approved" ? "Profile content review saved" : "Live rejection saved");
         loadLiveAdminApprovals();
         refreshPublicDiscoveryAfterAdminReview(profile, status);
       }).catch((error) => showToast(error.message || "Could not save live review"));
@@ -51678,13 +51717,13 @@
           return;
         }
         markAdminReviewButton(button, "approved");
-        unlockApprovedDancerProfile(profileMatch.profile);
+        markDancerProfileContentApproved(profileMatch.profile);
         if (activeDancerProfile(profileMatch.city)?.id === profileMatch.profile.id || activeDancerProfile(profileMatch.city)?.name === profileMatch.profile.name) {
-          Object.assign(dancerSetup, { profile: true, photos: true, verification: true, approval: true });
-          setupChecklistExpanded = false;
-          activeSetupStep = "";
+          Object.assign(dancerSetup, { profile: true, photos: true, review: true, verification: false, approval: false });
+          setupChecklistExpanded = true;
+          activeSetupStep = "approval";
         }
-        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name} approved`), 700);
+        window.setTimeout(() => refreshAfterAdminAction(`${profileMatch.profile.name}'s profile content was approved; venue affiliation is still required`), 700);
         saveLiveAdminReview(profileMatch.profile, "approved");
         return;
       }
@@ -55654,6 +55693,7 @@
       Object.assign(dancerSetup, {
         profile: false,
         photos: false,
+        review: false,
         verification: false,
         approval: false,
         shift: false
@@ -55847,7 +55887,7 @@
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Check your email or spam folder, confirm your email, then use the button on the confirmation page to complete your dancer profile.`);
+          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Check your email or spam folder, then tap Confirm email to open your 3-step profile setup in this browser.`);
           submit.textContent = "Check email or spam folder";
           showToast("Confirmation email sent. Check your email or spam folder to continue.");
           return;
@@ -55857,6 +55897,7 @@
         Object.assign(dancerSetup, {
           profile: false,
           photos: false,
+          review: false,
           verification: false,
           approval: false,
           shift: false
@@ -56172,6 +56213,7 @@
           const decision = normalizedReviewStatus(uploadResult?.decision);
           if (decision === "approved") {
             await hydrateApprovedDancerAvatar(uploadResult);
+            renderDancerSetup();
             if (pendingAvatarObjectUrl) URL.revokeObjectURL(pendingAvatarObjectUrl);
             pendingAvatarObjectUrl = "";
           } else if (["review", "moderation_retry", "moderation_error"].includes(decision)) {
@@ -56286,6 +56328,13 @@
             avatarRemove.removeAttribute("aria-busy");
           }
         }
+        return;
+      }
+      const retryProfileVideos = event.target.closest("[data-approved-profile-video-retry]");
+      if (retryProfileVideos) {
+        event.preventDefault();
+        approvedProfileVideoStatusTone = "";
+        void loadApprovedProfileVideos({ force: true });
         return;
       }
       const addProfileVideo = event.target.closest("[data-approved-profile-video-add]");

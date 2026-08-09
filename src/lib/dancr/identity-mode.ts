@@ -17,11 +17,11 @@ export function isVerifyMyIdentityMode() {
   return getIdentityVerificationMode() === "verifymy";
 }
 
-export function automaticDancerApprovalValues(now = new Date().toISOString()) {
+export function initialDancerApprovalValues() {
   return {
-    status: "approved" as const,
-    verification_status: "approved" as const,
-    approved_at: now,
-    is_public: true,
+    status: "draft" as const,
+    verification_status: "pending" as const,
+    approved_at: null,
+    is_public: false,
   };
 }
