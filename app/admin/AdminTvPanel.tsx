@@ -19,6 +19,24 @@ type AdminTvVideo = {
   moderationDetails?: {
     audioChecked?: boolean;
     policyConfidence?: number;
+    musicFingerprint?: {
+      checked?: boolean;
+      status?: "no_audio" | "no_match" | "matched";
+      sampleCount?: number;
+      reviewThreshold?: number;
+      matchFound?: boolean;
+      reviewRequired?: boolean;
+      matches?: Array<{
+        acrid?: string;
+        title?: string;
+        artists?: string[];
+        album?: string | null;
+        label?: string | null;
+        isrc?: string | null;
+        score?: number;
+        sampleOffsetsSeconds?: number[];
+      }>;
+    };
   };
   submittedAt?: string | null;
   publishedAt?: string | null;
@@ -160,6 +178,25 @@ export default function AdminTvPanel() {
                       ? ` · ${Math.round(video.moderationDetails.policyConfidence * 100)}% policy confidence`
                       : ""}
                   </small>
+                  {video.moderationDetails?.musicFingerprint ? (
+                    <div className="admin-tv-music-rights">
+                      <strong>
+                        Music rights: {musicRightsStatus(video.moderationDetails.musicFingerprint)}
+                      </strong>
+                      {video.moderationDetails.musicFingerprint.matches?.length ? (
+                        <ul>
+                          {video.moderationDetails.musicFingerprint.matches.map((match) => (
+                            <li key={match.acrid || `${match.title}-${match.isrc || "match"}`}>
+                              {match.title || "Recognized track"}
+                              {match.artists?.length ? ` · ${match.artists.join(", ")}` : ""}
+                              {typeof match.score === "number" ? ` · ${Math.round(match.score)}% match` : ""}
+                              {match.isrc ? ` · ISRC ${match.isrc}` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {video.moderationReasonCodes?.length ? (
                     <ul>
                       {video.moderationReasonCodes.map((reason) => (
@@ -214,6 +251,18 @@ export default function AdminTvPanel() {
       </div>
     </div>
   );
+}
+
+function musicRightsStatus(
+  fingerprint: NonNullable<NonNullable<AdminTvVideo["moderationDetails"]>["musicFingerprint"]>,
+) {
+  if (fingerprint.status === "matched") {
+    return fingerprint.reviewRequired
+      ? "catalog match requires authorization review"
+      : "low-confidence catalog match";
+  }
+  if (fingerprint.status === "no_match") return "no catalog match found";
+  return "no audio detected";
 }
 
 function readToken() {
