@@ -217,7 +217,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     tvSource,
     /function shuffleVideos\(rows: NormalizedFeedRow\[\]\) \{[\s\S]*?for \(let index = shuffled\.length - 1; index > 0; index -= 1\)[\s\S]*?Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)[\s\S]*?return shuffled/,
   );
-  assert.match(tvSource, /from\("shifts"\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?is\("checked_out_at", null\)[\s\S]*?const isUpcoming = [\s\S]*?start > now/);
+  assert.match(tvSource, /from\("shifts"\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?is\("checked_out_at", null\)[\s\S]*?const scheduled = Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now/);
   assert.match(liveApp, /class="controls home-discovery-controls"[\s\S]*?class="field home-city-filter"[\s\S]*?id="homeFilterToggle"[\s\S]*?aria-controls="homeAdvancedFilters"/);
   assert.match(liveApp, /class="home-advanced-filters" id="homeAdvancedFilters"[\s\S]*?id="distanceSelect"[\s\S]*?id="venueSelect"[\s\S]*?id="locationBtn"/);
   assert.match(liveApp, /homeFilterToggle\?\.addEventListener\("click"[\s\S]*?aria-expanded[\s\S]*?classList\.toggle\("is-open"/);
@@ -295,7 +295,8 @@ test("video publishing never asks for a venue tag and public venue context comes
   assert.match(dancerStudio, /Venue context is automatic/);
   assert.match(tvSource, /venue_id: null,[\s\S]*?shift_id: null,[\s\S]*?venue_tag_status: "unlinked"/);
   assert.doesNotMatch(tvSource, /eq\("venue_tag_status"/);
-  assert.match(tvSource, /const isActive = isConfirmedActiveTvShift\(row, now\);[\s\S]*?const isUpcoming = [\s\S]*?if \(!current \|\| \(!current\.shift\?\.isActive && candidate\.shift\?\.isActive\)\)/);
+  assert.match(tvSource, /const isActive = isConfirmedActiveTvShift\(row, now\);[\s\S]*?const isScheduled = Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now;[\s\S]*?if \(!current \|\| \(!current\.shift\?\.isActive && candidate\.shift\?\.isActive\)\)/);
+  assert.match(tvSource, /isStartingSoon: start > now && start <= now \+ 2 \* 60 \* 60 \* 1000/);
   assert.match(tvSource, /context[\s\S]*?venue: null, shift: null/);
 });
 

@@ -445,8 +445,8 @@ async function getPublicTvVenueScope(
     const start = new Date(shift.starts_at).getTime();
     const end = new Date(shift.ends_at).getTime();
     const active = isConfirmedActiveTvShift(shift, now);
-    const upcoming = Number.isFinite(start) && start > now && Number.isFinite(end) && end >= now;
-    return active || upcoming ? [String(shift.dancer_id || "")] : [];
+    const scheduled = Number.isFinite(start) && Number.isFinite(end) && end >= now;
+    return active || scheduled ? [String(shift.dancer_id || "")] : [];
   }).filter(Boolean);
   const candidateDancerIds = [...new Set(shiftDancerIds)];
   const resolvedContexts = await getPublicTvShiftContexts(admin, candidateDancerIds, now);
@@ -491,8 +491,8 @@ async function getPublicTvShiftContexts(
     const start = new Date(row.starts_at).getTime();
     const end = new Date(row.ends_at).getTime();
     const isActive = isConfirmedActiveTvShift(row, now);
-    const isUpcoming = Number.isFinite(start) && start > now && Number.isFinite(end) && end >= now;
-    if (!venue || (!isActive && !isUpcoming)) continue;
+    const isScheduled = Number.isFinite(start) && Number.isFinite(end) && end >= now;
+    if (!venue || (!isActive && !isScheduled)) continue;
 
     const candidate: PublicTvShiftContext = {
       venue: {
@@ -508,7 +508,7 @@ async function getPublicTvShiftContexts(
         timezone: row.timezone || "UTC",
         status: row.status,
         isActive,
-        isStartingSoon: isUpcoming && start <= now + 2 * 60 * 60 * 1000,
+        isStartingSoon: start > now && start <= now + 2 * 60 * 60 * 1000,
       },
     };
     const current = contexts.get(row.dancer_id);
