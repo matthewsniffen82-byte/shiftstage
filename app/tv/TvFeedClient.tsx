@@ -393,7 +393,8 @@ export default function TvFeedClient({
 
   const role = session?.account?.role;
   const showNotifications =
-    Boolean(session?.accessToken) && (role === "customer" || role === "dancer");
+    Boolean(session?.accessToken) &&
+    (role === "customer" || role === "dancer" || role === "venue");
   const unreadNotificationCount = notifications.filter(
     (notification) => !notification.readAt,
   ).length;

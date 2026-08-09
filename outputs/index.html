@@ -29910,7 +29910,7 @@
         </button>
         <div class="menu" aria-label="Menu">
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
-            <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open customer notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
+            <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
               <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
               <span data-quick-icon="bell"></span>
             </button>
@@ -40054,7 +40054,11 @@
               <span>${displayText(item.detail)}</span>
             </button>
           `).join("")
-        : `<div class="customer-quick-empty">${isDancerSession() ? "No new alerts yet. Dancer account updates will appear here." : "No new alerts yet. Recent dancer, venue, and deal notifications will appear here."}</div>`;
+        : `<div class="customer-quick-empty">${isDancerSession()
+          ? "No new alerts yet. Dancer account updates will appear here."
+          : isVenueSession()
+            ? "No new alerts yet. Venue account and dancer affiliation updates will appear here."
+            : "No new alerts yet. Recent dancer, venue, and deal notifications will appear here."}</div>`;
     }
 
     function renderCustomerQuickDeals() {
@@ -40074,7 +40078,7 @@
 
     function renderCustomerQuickActions() {
       if (!customerQuickActions) return;
-      const showNotifications = isCustomerSession() || isDancerSession();
+      const showNotifications = isCustomerSession() || isDancerSession() || isVenueSession();
       const showDeals = isCustomerSession();
       const show = showNotifications || showDeals;
       customerQuickActions.hidden = !show;
@@ -40099,7 +40103,7 @@
     }
 
     function toggleCustomerQuickPanel(panelName) {
-      if (panelName === "notifications" && !(isCustomerSession() || isDancerSession())) return;
+      if (panelName === "notifications" && !(isCustomerSession() || isDancerSession() || isVenueSession())) return;
       if (panelName === "deals" && !isCustomerSession()) return;
       const openNotifications = panelName === "notifications" && customerNotificationsQuickPanel.hidden;
       const openDeals = panelName === "deals" && customerDealsQuickPanel.hidden;
@@ -48072,6 +48076,7 @@
       venueDashboard.classList.add("show");
       venueDashboard.setAttribute("aria-hidden", "false");
       syncOverlayScrollLock();
+      loadLiveNotifications();
       await processPendingVenueDancerVerification();
       return dashboard;
     }

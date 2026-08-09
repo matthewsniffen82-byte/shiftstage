@@ -110,7 +110,10 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(feedClient, /className="tv-global-search"|className="tv-site-nav"/);
   assert.match(feedClient, /className="tv-global-account" href="\/account">Login \/ Join<\/Link>/);
   assert.match(feedClient, /className="tv-global-account tv-account-icon"[\s\S]*?href=\{dashboardHref\(role\)\}[\s\S]*?aria-label=\{`Open \$\{role\} dashboard`\}/);
-  assert.match(feedClient, /showNotifications[\s\S]*?role === "customer" \|\| role === "dancer"/);
+  assert.match(
+    feedClient,
+    /showNotifications[\s\S]*?role === "customer" \|\| role === "dancer" \|\| role === "venue"/,
+  );
   assert.match(feedClient, /fetch\("\/api\/notifications"[\s\S]*?authorization: `Bearer \$\{nextSession\.accessToken\}`/);
   assert.match(feedClient, /className=\{notificationsOpen \? "tv-notification-button active" : "tv-notification-button"\}/);
   assert.match(feedClient, /className="tv-notification-panel"[\s\S]*?No notifications yet\.[\s\S]*?Clear notifications/);
