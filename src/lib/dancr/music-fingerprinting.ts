@@ -117,10 +117,9 @@ export async function fingerprintMusicSamples(
   const now = options.now || Date.now;
   const timeoutMs = normalizeTimeout(options.timeoutMs);
 
-  const matches: MusicFingerprintMatch[] = [];
-  for (const sample of usableSamples) {
+  const sampleMatches = await Promise.all(usableSamples.map(async (sample) => {
     const sampleStat = await stat(sample.path).catch(() => null);
-    if (!sampleStat?.size) continue;
+    if (!sampleStat?.size) return [] as MusicFingerprintMatch[];
     if (sampleStat.size > MAX_SAMPLE_BYTES) {
       throw new Error("Music fingerprint sample exceeds the provider size limit.");
     }
@@ -133,10 +132,10 @@ export async function fingerprintMusicSamples(
       now,
       timeoutMs,
     });
-    matches.push(...evaluateAcrCloudMusicResponse(payload, sample.offsetSeconds));
-  }
+    return evaluateAcrCloudMusicResponse(payload, sample.offsetSeconds);
+  }));
 
-  return buildResult(mergeMatches(matches), usableSamples.length, reviewThreshold);
+  return buildResult(mergeMatches(sampleMatches.flat()), usableSamples.length, reviewThreshold);
 }
 
 export function evaluateAcrCloudMusicResponse(payload: unknown, sampleOffsetSeconds: number) {
