@@ -15,6 +15,7 @@ const [
   trackingComponent,
   migration,
   liveApp,
+  dashboardClient,
 ] = await Promise.all([
   readFile(new URL("../app/api/auth/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/auth.ts", import.meta.url), "utf8"),
@@ -28,6 +29,7 @@ const [
   readFile(new URL("../app/components/VenueQrCode.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202607260002_venue_accounts_qr_analytics.sql", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
 test("venue signup redeems a private access code and routes successful authentication to its dashboard", () => {
@@ -49,9 +51,27 @@ test("venue signup redeems a private access code and routes successful authentic
   assert.doesNotMatch(liveApp, /id="venueLoginName"|id="venueLoginCity"/);
   assert.match(liveApp, /await startVenueDashboardSession\("Venue dashboard opened"\)/);
   assert.match(liveApp, /!result\.session\?\.accessToken \|\| result\.account\?\.role !== "venue"/);
-  assert.match(liveApp, /async function loadAndRevealVenueDashboard\(\)[\s\S]*?if \(!isVenueSession\(\)\)[\s\S]*?await loadLiveVenueDashboard\(\)[\s\S]*?venueDashboard\.classList\.add\("show"\)/);
+  assert.match(liveApp, /async function openVenueDashboard\(\)[\s\S]*?if \(!isVenueSession\(\)\)[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
+  assert.match(liveApp, /async function startVenueDashboardSession\(message[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
+  assert.doesNotMatch(liveApp, />Manage MyDancr TV</);
   assert.match(liveApp, /const opened = await openVenueDashboard\(\);\s*if \(opened\) \{/);
   assert.doesNotMatch(liveApp, /venue@example\.com|venue123|demo venue/i);
+});
+
+test("venue management is consolidated into one descriptive collapsible workspace", () => {
+  assert.match(dashboardClient, /function VenueDashboardSection\(/);
+  assert.match(dashboardClient, /<details className="venue-dashboard-section"/);
+  assert.match(dashboardClient, /id="venue-account"[\s\S]*?title="Account & support"/);
+  assert.match(dashboardClient, /id="venue-overview"[\s\S]*?title="Overview"/);
+  assert.match(dashboardClient, /id="venue-club-deals"[\s\S]*?title="Club Deals & tracked QR"/);
+  assert.match(dashboardClient, /id="venue-dancer-roster"[\s\S]*?title="Dancer roster"/);
+  assert.match(dashboardClient, /id="venue-tv"[\s\S]*?title="MyDancr TV"/);
+  assert.match(dashboardClient, /id="venue-public-profile"[\s\S]*?title="Public venue profile"/);
+  assert.match(dashboardClient, /id="venue-working-now"[\s\S]*?title="Working now"/);
+  assert.match(dashboardClient, /id="venue-external-qr"[\s\S]*?title="External marketing QR"/);
+  assert.match(dashboardClient, /<VenueClubDealPanel initialDeal=\{deal\} initialDeals=\{venueDeals\}/);
+  assert.match(dashboardClient, /Generate tracked QR/);
+  assert.match(dashboardClient, /<VenueTvPanel \/>/);
 });
 
 test("venue dashboard APIs require an active venue account and scope writes by owner", () => {

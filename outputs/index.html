@@ -36660,7 +36660,7 @@
           </div>
           <div class="customer-summary-actions">
             <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
-            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Manage MyDancr TV</button>
+            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Open venue workspace</button>
           </div>
         </div>
         <div class="dashboard-stats">
@@ -48138,14 +48138,8 @@
         openAuthRole("venue");
         return false;
       }
-      try {
-        await loadAndRevealVenueDashboard();
-        return true;
-      } catch (error) {
-        closeVenueDashboard();
-        showToast(error.message || "Unable to load venue dashboard");
-        return false;
-      }
+      window.location.href = "/dashboard/venue";
+      return true;
     }
 
     function closeVenueDashboard() {
@@ -55777,10 +55771,13 @@
     });
 
     async function startVenueDashboardSession(message = "Venue dashboard opened") {
-      await loadAndRevealVenueDashboard();
+      if (!isVenueSession()) {
+        throw new Error("A verified venue session is required. Sign in and try again.");
+      }
       closeAuthPage();
       updateAccountHeader();
       showToast(message);
+      window.location.href = "/dashboard/venue";
     }
 
     document.getElementById("dancerVenueVerificationCreate").addEventListener("click", createDancerVenueVerification);

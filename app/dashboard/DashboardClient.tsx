@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -271,7 +271,7 @@ export default function DashboardClient({
                 </div>
               </section>
             </>
-          ) : (
+          ) : role === "dancer" ? (
             <>
               <InfoPanel title="Account">
                 <Metric label="Status" value={String(state.account?.accountState || "active")} />
@@ -280,9 +280,9 @@ export default function DashboardClient({
               </InfoPanel>
               <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
               <NotificationPanel />
-              {role !== "venue" ? <SupportInboxPanel initialThreads={state.supportThreads || []} /> : null}
+              <SupportInboxPanel initialThreads={state.supportThreads || []} />
             </>
-          )}
+          ) : null}
           {role === "dancer" ? (
             <DancerPanel
               accountState={state.account?.accountState}
@@ -296,20 +296,49 @@ export default function DashboardClient({
               weeklyReport={state.weeklyReport}
             />
           ) : null}
-          {role === "venue" && state.claim && !state.profile ? (
-            <VenueClaimStatePanel claim={state.claim} />
-          ) : role === "venue" ? (
-            <VenuePanel
-              analytics={state.analytics}
-              deal={state.deal}
-              venueDeals={state.venueDeals || []}
-              dealRevenue={state.dealRevenue}
-              finance={state.finance}
-              profile={state.profile}
-              workingNow={state.workingNow || []}
-              initialAffiliations={state.affiliations || []}
-              onProfileChange={updateProfile}
-            />
+          {role === "venue" ? (
+            <>
+              <VenueDashboardSection
+                description="Review account access, notifications, support messages, and account controls without leaving the venue workspace."
+                eyebrow="Venue workspace"
+                id="venue-account"
+                title="Account & support"
+              >
+                <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
+                  <InfoPanel title="Account">
+                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
+                    <Metric label="Email" value={String(state.account?.email || "Private")} />
+                    <Metric label="Role" value={String(state.account?.role || role)} />
+                  </InfoPanel>
+                  <NotificationPanel />
+                  <SupportInboxPanel initialThreads={state.supportThreads || []} />
+                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+                </div>
+              </VenueDashboardSection>
+              {state.claim && !state.profile ? (
+                <VenueDashboardSection
+                  defaultOpen
+                  description="Track the ownership review that must finish before venue management tools unlock."
+                  eyebrow="Venue ownership"
+                  id="venue-claim"
+                  title="Claim status"
+                >
+                  <VenueClaimStatePanel claim={state.claim} />
+                </VenueDashboardSection>
+              ) : (
+                <VenuePanel
+                  analytics={state.analytics}
+                  deal={state.deal}
+                  venueDeals={state.venueDeals || []}
+                  dealRevenue={state.dealRevenue}
+                  finance={state.finance}
+                  profile={state.profile}
+                  workingNow={state.workingNow || []}
+                  initialAffiliations={state.affiliations || []}
+                  onProfileChange={updateProfile}
+                />
+              )}
+            </>
           ) : null}
         </section>
       ) : null}
@@ -1402,6 +1431,39 @@ function formatNotificationTimestamp(value: unknown) {
   }).format(date);
 }
 
+function VenueDashboardSection({
+  badge,
+  children,
+  defaultOpen = false,
+  description,
+  eyebrow,
+  id,
+  title,
+}: {
+  badge?: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+  description: string;
+  eyebrow: string;
+  id: string;
+  title: string;
+}) {
+  return (
+    <details className="venue-dashboard-section" id={id} open={defaultOpen}>
+      <summary>
+        <span className="venue-dashboard-section-copy">
+          <span className="eyebrow">{eyebrow}</span>
+          <strong>{title}</strong>
+          <span>{description}</span>
+        </span>
+        {badge ? <span className="venue-dashboard-section-badge">{badge}</span> : null}
+        <span className="venue-dashboard-section-toggle" aria-hidden="true">+</span>
+      </summary>
+      <div className="venue-dashboard-section-body">{children}</div>
+    </details>
+  );
+}
+
 function VenuePanel({
   analytics,
   deal,
@@ -1588,124 +1650,186 @@ function VenuePanel({
 
   return (
     <>
-      <InfoPanel title="Audience">
-        <Metric label="Page views today" value={String(analytics?.pageViewsToday || 0)} />
-        <Metric label="Page views · 30 days" value={String(analytics?.pageViews30Days || 0)} />
-        <Metric label="Venue followers" value={String(analytics?.totalFollowers || 0)} />
-      </InfoPanel>
-      <InfoPanel title="Customer intent">
-        <Metric label="Directions · 30 days" value={String(analytics?.directions30Days || 0)} />
-        <Metric label="Going signals · 30 days" value={String(analytics?.goingSignals30Days || 0)} />
-        <Metric label="New followers · 30 days" value={String(analytics?.followersGained30Days || 0)} />
-      </InfoPanel>
-      <InfoPanel title="Live operations">
-        <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
-        <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
-        <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
-      </InfoPanel>
-      <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
-      <VenueClubDealPanel initialDeal={deal} initialDeals={venueDeals} revenue={dealRevenue} finance={finance} />
-      <article className="info-panel venue-profile-panel">
-        <h2>Public venue page</h2>
-        <form onSubmit={saveProfile}>
-          {Object.entries(form).map(([key, value]) => (
-            <label key={key}>
-              {venueFieldLabel(key)}
+      <VenueDashboardSection
+        defaultOpen
+        description="See customer reach, customer intent, live dancer activity, and QR visibility at a glance."
+        eyebrow="Live performance"
+        id="venue-overview"
+        title="Overview"
+      >
+        <div className="venue-dashboard-inner-grid venue-dashboard-overview-grid">
+          <InfoPanel title="Audience">
+            <Metric label="Page views today" value={String(analytics?.pageViewsToday || 0)} />
+            <Metric label="Page views · 30 days" value={String(analytics?.pageViews30Days || 0)} />
+            <Metric label="Venue followers" value={String(analytics?.totalFollowers || 0)} />
+          </InfoPanel>
+          <InfoPanel title="Customer intent">
+            <Metric label="Directions · 30 days" value={String(analytics?.directions30Days || 0)} />
+            <Metric label="Going signals · 30 days" value={String(analytics?.goingSignals30Days || 0)} />
+            <Metric label="New followers · 30 days" value={String(analytics?.followersGained30Days || 0)} />
+          </InfoPanel>
+          <InfoPanel title="Live operations">
+            <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
+            <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
+            <Metric label="QR impressions · 30 days" value={String(analytics?.qrImpressions30Days || 0)} />
+          </InfoPanel>
+        </div>
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        badge={`${venueDeals.length || (deal ? 1 : 0)} ${venueDeals.length === 1 || (!venueDeals.length && deal) ? "deal" : "deals"}`}
+        defaultOpen
+        description="Create commission-bearing offers, publish them, generate downloadable tracked QR codes, and reconcile scans, redemptions, payouts, and settlements."
+        eyebrow="Revenue"
+        id="venue-club-deals"
+        title="Club Deals & tracked QR"
+      >
+        <VenueClubDealPanel initialDeal={deal} initialDeals={venueDeals} revenue={dealRevenue} finance={finance} />
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        description="Confirm dancer venue affiliations and manage the roster allowed to appear in your venue feed."
+        eyebrow="Affiliations"
+        id="venue-dancer-roster"
+        title="Dancer roster"
+        badge={`${initialAffiliations.length} verified`}
+      >
+        <VenueDancerVerificationPanel initialAffiliations={initialAffiliations} />
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        description="Confirm venue tags, feature approved videos on your venue page, and review TV engagement."
+        eyebrow="Video"
+        id="venue-tv"
+        title="MyDancr TV"
+      >
+        <VenueTvPanel />
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        description="Update the real customer-facing venue details and discovery image used across MyDancr."
+        eyebrow="Customer experience"
+        id="venue-public-profile"
+        title="Public venue profile"
+      >
+        <div className="venue-dashboard-inner-grid venue-dashboard-profile-grid">
+          <article className="info-panel venue-profile-panel">
+            <h2>Venue details</h2>
+            <form onSubmit={saveProfile}>
+              {Object.entries(form).map(([key, value]) => (
+                <label key={key}>
+                  {venueFieldLabel(key)}
+                  <input
+                    required={key === "name" || key === "city"}
+                    type={key === "website" ? "url" : "text"}
+                    value={value}
+                    onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                  />
+                </label>
+              ))}
+              <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button>
+              {profile?.slug ? (
+                <Link href={`/venues/${encodeURIComponent(String(profile.slug))}`}>
+                  Open live venue page
+                </Link>
+              ) : null}
+              {profileStatus ? <p role="status">{profileStatus}</p> : null}
+            </form>
+          </article>
+          <article className="info-panel venue-cover-panel">
+            <div className="venue-cover-copy">
+              <h2>Discovery cover</h2>
+              <p>Publish a high-quality venue or branded nightlife image. MyDancr keeps the high-resolution master and automatically serves optimized sizes after the safety check.</p>
+              <small>For the sharpest result, choose the original camera image—not a screenshot or social-media copy—with at least 2,000 pixels on its longest edge. JPEG, PNG, WebP, HEIC, and HEIF are supported; venue covers must be at least 720 × 720 pixels.</small>
+            </div>
+            {profile?.coverImageUrl ? (
+              <img
+                src={String(profile.coverImageUrl)}
+                srcSet={profile.coverImageSrcSet ? String(profile.coverImageSrcSet) : undefined}
+                sizes="(max-width: 760px) 100vw, 760px"
+                alt={`${String(profile.name || "Venue")} discovery cover`}
+              />
+            ) : null}
+            <form onSubmit={uploadCover}>
+              <label>
+                Venue image
+                <input
+                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                  ref={coverFileInputRef}
+                  type="file"
+                  onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
+                />
+              </label>
+              <button type="submit" disabled={isPublishingCover}>
+                {isPublishingCover
+                  ? "Publishing..."
+                  : profile?.coverImageUrl
+                    ? "Replace venue image"
+                    : "Publish venue image"}
+              </button>
+              {profile?.coverImageUrl ? (
+                <button type="button" disabled={isPublishingCover} onClick={removeCover}>
+                  Remove image
+                </button>
+              ) : null}
+            </form>
+            {coverStatus ? <p role="status">{coverStatus}</p> : null}
+          </article>
+        </div>
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        badge={`${workingNow.length} active`}
+        description="Review verified dancers currently checked in at this venue and open their live profiles."
+        eyebrow="Floor status"
+        id="venue-working-now"
+        title="Working now"
+      >
+        <article className="info-panel venue-working-panel">
+          <h2>Verified check-ins</h2>
+          <div className="venue-working-list">
+            {workingNow.map((dancer) => (
+              <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
+                <strong>{String(dancer.stageName || "Dancer")}</strong>
+                <span>{String(dancer.locationStatus || "").replaceAll("_", " ")}</span>
+              </Link>
+            ))}
+            {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
+          </div>
+        </article>
+      </VenueDashboardSection>
+
+      <VenueDashboardSection
+        description="Store an optional QR image for outside marketing. This area is separate from tracked Club Deals and never creates commission attribution."
+        eyebrow="Optional marketing asset"
+        id="venue-external-qr"
+        title="External marketing QR"
+      >
+        <article className="info-panel venue-qr-panel">
+          <h2>Untracked external QR</h2>
+          <p>This optional uploaded image is stored for venue marketing only. It is never used for tracked Club Deals, dancer attribution, or commissions.</p>
+          {profile?.qrCodeUrl ? <img src={String(profile.qrCodeUrl)} alt={`${String(profile.name || "Venue")} QR code`} /> : null}
+          <form onSubmit={uploadQr}>
+            <label>
+              QR image
               <input
-                required={key === "name" || key === "city"}
-                type={key === "website" ? "url" : "text"}
-                value={value}
-                onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                accept="image/jpeg,image/png,image/webp"
+                ref={qrFileInputRef}
+                type="file"
+                onChange={(event) => setQrFile(event.target.files?.[0] || null)}
               />
             </label>
-          ))}
-          <button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save venue page"}</button>
-          {profile?.slug ? (
-            <Link
-              href={`/venues/${encodeURIComponent(String(profile.slug))}`}
-            >
-              Open live venue page
-            </Link>
-          ) : null}
-          {profileStatus ? <p role="status">{profileStatus}</p> : null}
-        </form>
-      </article>
-      <article className="info-panel venue-cover-panel">
-        <div className="venue-cover-copy">
-          <h2>Discovery cover</h2>
-          <p>Publish a high-quality venue or branded nightlife image. MyDancr keeps the high-resolution master and automatically serves optimized sizes after the safety check.</p>
-          <small>For the sharpest result, choose the original camera image—not a screenshot or social-media copy—with at least 2,000 pixels on its longest edge. JPEG, PNG, WebP, HEIC, and HEIF are supported; venue covers must be at least 720 × 720 pixels.</small>
-        </div>
-        {profile?.coverImageUrl ? (
-          <img
-            src={String(profile.coverImageUrl)}
-            srcSet={profile.coverImageSrcSet ? String(profile.coverImageSrcSet) : undefined}
-            sizes="(max-width: 760px) 100vw, 760px"
-            alt={`${String(profile.name || "Venue")} discovery cover`}
-          />
-        ) : null}
-        <form onSubmit={uploadCover}>
-          <label>
-            Venue image
-            <input
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-              ref={coverFileInputRef}
-              type="file"
-              onChange={(event) => setCoverFile(event.target.files?.[0] || null)}
-            />
-          </label>
-          <button type="submit" disabled={isPublishingCover}>
-            {isPublishingCover
-              ? "Publishing..."
-              : profile?.coverImageUrl
-                ? "Replace venue image"
-                : "Publish venue image"}
-          </button>
-          {profile?.coverImageUrl ? (
-            <button type="button" disabled={isPublishingCover} onClick={removeCover}>
-              Remove image
-            </button>
-          ) : null}
-        </form>
-        {coverStatus ? <p role="status">{coverStatus}</p> : null}
-      </article>
-      <article className="info-panel venue-qr-panel">
-        <h2>External marketing QR</h2>
-        <p>This optional uploaded image is stored for venue marketing only. It is never used for tracked Club Deals, dancer attribution, or commissions.</p>
-        {profile?.qrCodeUrl ? <img src={String(profile.qrCodeUrl)} alt={`${String(profile.name || "Venue")} QR code`} /> : null}
-        <form onSubmit={uploadQr}>
-          <label>
-            QR image
-            <input
-              accept="image/jpeg,image/png,image/webp"
-              ref={qrFileInputRef}
-              type="file"
-              onChange={(event) => setQrFile(event.target.files?.[0] || null)}
-            />
-          </label>
-          <label>
-            QR label
-            <input value={qrLabel} maxLength={100} onChange={(event) => setQrLabel(event.target.value)} />
-          </label>
-          <button type="submit" disabled={isUploading}>{isUploading ? "Uploading..." : profile?.qrCodeUrl ? "Replace marketing QR" : "Upload marketing QR"}</button>
-          {profile?.qrCodeUrl ? <button type="button" disabled={isUploading} onClick={removeQr}>Remove QR code</button> : null}
-        </form>
-        <Metric label="Legacy QR impressions · 30 days" value={String(analytics?.dancerProfileQrImpressions30Days || 0)} />
-        {qrStatus ? <p role="status">{qrStatus}</p> : null}
-      </article>
-      <article className="info-panel venue-working-panel">
-        <h2>Working now</h2>
-        <div className="venue-working-list">
-          {workingNow.map((dancer) => (
-            <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
-              <strong>{String(dancer.stageName || "Dancer")}</strong>
-              <span>{String(dancer.locationStatus || "").replaceAll("_", " ")}</span>
-            </Link>
-          ))}
-          {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
-        </div>
-      </article>
-      <VenueTvPanel />
+            <label>
+              QR label
+              <input value={qrLabel} maxLength={100} onChange={(event) => setQrLabel(event.target.value)} />
+            </label>
+            <button type="submit" disabled={isUploading}>{isUploading ? "Uploading..." : profile?.qrCodeUrl ? "Replace marketing QR" : "Upload marketing QR"}</button>
+            {profile?.qrCodeUrl ? <button type="button" disabled={isUploading} onClick={removeQr}>Remove QR code</button> : null}
+          </form>
+          <Metric label="Legacy QR impressions · 30 days" value={String(analytics?.dancerProfileQrImpressions30Days || 0)} />
+          {qrStatus ? <p role="status">{qrStatus}</p> : null}
+        </article>
+      </VenueDashboardSection>
     </>
   );
 }
@@ -4435,6 +4559,24 @@ function DashboardStyles() {
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; border: 1px solid rgba(148,163,184,.24); border-radius: 14px; background: rgba(5,5,7,.78); box-shadow: inset 0 1px 0 rgba(248,250,252,.035); }
+      .venue-dashboard-section > summary { min-height: 104px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 18px; color: #f8fafc; cursor: pointer; list-style: none; }
+      .venue-dashboard-section > summary::-webkit-details-marker { display: none; }
+      .venue-dashboard-section > summary:focus-visible { outline: 2px solid #7c3aed; outline-offset: -4px; }
+      .venue-dashboard-section[open] > summary { border-bottom: 1px solid rgba(148,163,184,.18); background: linear-gradient(90deg, rgba(124,58,237,.1), transparent 52%); }
+      .venue-dashboard-section-copy { min-width: 0; display: grid; gap: 5px; }
+      .venue-dashboard-section-copy > strong { color: #f8fafc; font-size: clamp(20px, 3vw, 27px); line-height: 1.05; }
+      .venue-dashboard-section-copy > span:last-child { max-width: 72ch; color: #cbd5e1; font-size: 14px; line-height: 1.45; }
+      .venue-dashboard-section-badge { width: fit-content; padding: 7px 10px; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; background: #111118; font-size: 11px; font-weight: 900; white-space: nowrap; }
+      .venue-dashboard-section-toggle { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.44); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.15); font-size: 24px; line-height: 1; transition: transform .18s ease, background .18s ease; }
+      .venue-dashboard-section[open] .venue-dashboard-section-toggle { transform: rotate(45deg); background: rgba(124,58,237,.28); }
+      .venue-dashboard-section-body { display: grid; gap: 14px; padding: 16px; }
+      .venue-dashboard-inner-grid { display: grid; gap: 14px; }
+      .venue-dashboard-overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .venue-dashboard-account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .venue-dashboard-profile-grid { grid-template-columns: 1fr; }
+      .venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel { grid-column: auto; }
+      .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-dashboard-tabs { position: sticky; z-index: 20; top: max(8px, env(safe-area-inset-top)); grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
       .customer-dashboard-tabs a { min-width: 0; min-height: 42px; display: grid; place-items: center; padding: 0 8px; border-radius: 11px; color: #d8cfeb; font-size: 13px; font-weight: 900; text-align: center; text-decoration: none; }
       .customer-dashboard-tabs a:hover { color: #fff; background: rgba(126,234,255,.08); }
@@ -4720,8 +4862,8 @@ function DashboardStyles() {
       .venue-verification-preview { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid rgba(50,255,164,.3); border-radius: 12px; background: rgba(50,255,164,.055); }
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
-      @media (max-width: 860px) { .dashboard-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
+      @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .venue-qr-panel, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-qr-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-qr-panel > h2, .venue-qr-panel > p, .venue-qr-panel > form, .venue-qr-panel > .metric, .venue-qr-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img, .venue-qr-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
       @media (max-width: 520px) { .top-nav { align-items: flex-start; flex-direction: column; } .customer-top-nav { align-items: center; flex-direction: row; } .nav-links { justify-content: flex-start; } h1 { font-size: 40px; } .customer-dashboard-head h1 { font-size: 34px; } .notification-title-row { align-items: flex-start; } }
     `}</style>
   );
