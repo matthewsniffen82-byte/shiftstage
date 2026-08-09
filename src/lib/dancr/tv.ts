@@ -1188,7 +1188,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
         moderation_provider_flagged: false,
         moderation_details: { errorCode },
         moderation_completed_at: completedAt,
-        review_notes: "Automated safety review was unavailable. Human review is required.",
+        review_notes: "Automated video or music-rights review was unavailable. Human review is required.",
       })
       .eq("id", video.id)
       .eq("status", "moderating")
@@ -1287,6 +1287,18 @@ function myDancrTvExpiry(shiftEndsAt?: string | null) {
 
 function videoModerationErrorCode(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
+  if (message.includes("acrcloud_") || message.includes("acrcloud music fingerprint credentials")) {
+    return "video_music_fingerprint_not_configured";
+  }
+  if (message.includes("music fingerprint") && message.includes("timed out")) {
+    return "video_music_fingerprint_timeout";
+  }
+  if (message.includes("music fingerprint samples")) {
+    return "video_music_fingerprint_decode_failed";
+  }
+  if (message.includes("music fingerprint provider")) {
+    return "video_music_fingerprint_provider_error";
+  }
   if (message.includes("openai_api_key")) return "video_moderation_not_configured";
   if (message.includes("timed out")) return "video_moderation_timeout";
   if (message.includes("decode") || message.includes("ffmpeg")) return "video_decode_failed";
