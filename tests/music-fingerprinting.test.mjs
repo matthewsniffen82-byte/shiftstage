@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -184,4 +184,30 @@ test("music fingerprinting rejects untrusted provider hosts", async () => {
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
+});
+
+
+test("music fingerprinting is mandatory, durable, fail-closed, and visible to admins", async () => {
+  const [videoSource, tvSource, adminSource, envExample, readme] = await Promise.all([
+    readFile(new URL("../src/lib/dancr/video-moderation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/AdminTvPanel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../.env.example", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(videoSource, /fingerprintMusicSamples\(musicSamples\)/);
+  assert.match(videoSource, /musicDecision === "review"/);
+  assert.match(videoSource, /musicFingerprint: musicFingerprint\.details/);
+  assert.match(videoSource, /MUSIC_FINGERPRINT_PROVIDER_MODEL/);
+  assert.match(tvSource, /video_music_fingerprint_not_configured/);
+  assert.match(tvSource, /video_music_fingerprint_timeout/);
+  assert.match(tvSource, /video_music_fingerprint_provider_error/);
+  assert.match(tvSource, /Automated video or music-rights review was unavailable/);
+  assert.match(adminSource, /Music rights:/);
+  assert.match(adminSource, /ISRC/);
+  assert.match(envExample, /ACRCLOUD_HOST=/);
+  assert.match(envExample, /ACRCLOUD_ACCESS_KEY=/);
+  assert.match(envExample, /ACRCLOUD_ACCESS_SECRET=/);
+  assert.match(readme, /Catalog matches at or above the threshold never auto-publish or auto-reject/);
 });
