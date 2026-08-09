@@ -123,7 +123,7 @@ export default function DashboardClient({
   const [loadAttempt, setLoadAttempt] = useState(0);
 
   const retryDashboard = useCallback(() => {
-    setState({});
+    setState((current) => ({ account: current.account }));
     setIsLoading(true);
     setLoadAttempt((current) => current + 1);
   }, []);
@@ -140,29 +140,31 @@ export default function DashboardClient({
         return;
       }
 
+      const cachedAccount = storedSessionAccount(session);
+      if (cachedAccount) {
+        setState((current) => ({ ...current, account: cachedAccount }));
+      }
+
       try {
         const account = await readJson("/api/account", initialAuthHeaders);
         const authHeaders = dashboardAuthHeaders(readSession());
         if (!authHeaders) throw new Error("Your sign-in could not be refreshed. Sign in again to continue.");
-        const profile = await readOptionalJson(
-          role === "dancer" ? "/api/dancer/profile" : role === "venue" ? "/api/venue/profile" : "/api/customer/profile",
-          authHeaders,
-          { profile: null },
-        );
-        const secondary = await readOptionalJson(
-          role === "dancer" ? "/api/dancer/dashboard" : role === "venue" ? "/api/venue/dashboard" : "/api/customer/saved",
-          authHeaders,
-          {},
-        );
-        const support = await readOptionalJson("/api/support", authHeaders, { threads: [] });
-        const [reviews, weeklyReport, rankingEvents] =
-          role === "dancer"
-            ? await Promise.all([
-                readOptionalJson("/api/dancer/reviews", authHeaders, { reviews: [] }),
-                readOptionalJson("/api/dancer/weekly-report", authHeaders, { report: null }),
-                readOptionalJson("/api/dancer/ranking-events", authHeaders, { events: [] }),
-              ])
-            : [null, null, null];
+        const [profile, secondary, support, reviews, weeklyReport, rankingEvents] = await Promise.all([
+          readOptionalJson(
+            role === "dancer" ? "/api/dancer/profile" : role === "venue" ? "/api/venue/profile" : "/api/customer/profile",
+            authHeaders,
+            { profile: null },
+          ),
+          readOptionalJson(
+            role === "dancer" ? "/api/dancer/dashboard" : role === "venue" ? "/api/venue/dashboard" : "/api/customer/saved",
+            authHeaders,
+            {},
+          ),
+          readOptionalJson("/api/support", authHeaders, { threads: [] }),
+          role === "dancer" ? readOptionalJson("/api/dancer/reviews", authHeaders, { reviews: [] }) : null,
+          role === "dancer" ? readOptionalJson("/api/dancer/weekly-report", authHeaders, { report: null }) : null,
+          role === "dancer" ? readOptionalJson("/api/dancer/ranking-events", authHeaders, { events: [] }) : null,
+        ]);
 
         if (!cancelled) {
           setState({
@@ -230,19 +232,24 @@ export default function DashboardClient({
     return "Customer dashboard";
   }, [role]);
 
-  const displayName = String(state.account?.displayName || dashboardName(state.profile, role) || "Dancr");
+  const resolvedDisplayName = String(state.account?.displayName || dashboardName(state.profile, role) || "").trim();
+  const displayName = resolvedDisplayName || "Dancr";
   const dashboardCloseHref = homeDiscoveryHref(
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
     role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
-  const dashboardHeading = isLoading ? title : displayName;
+  const dashboardHeading = isLoading
+    ? role === "venue"
+      ? resolvedDisplayName || "\u00a0"
+      : title
+    : displayName;
   const dashboardDescription = state.error || "";
 
   return (
     <main className={`dashboard-shell dashboard-shell-${role}`}>
       <DashboardStyles />
-      <section className={`dashboard-head dashboard-head-${role}`}>
+      <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
@@ -272,7 +279,9 @@ export default function DashboardClient({
         ) : null}
       </section>
 
-      {!isLoading && !state.error ? (
+      {isLoading && role === "venue" && !state.error ? (
+        <VenueDashboardLoadingState />
+      ) : !isLoading && !state.error ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
           {role === "customer" ? (
             <>
@@ -1517,6 +1526,31 @@ function VenueDashboardActionIcon({ name }: { name: "deal" | "edit" | "profile" 
         </>
       )}
     </svg>
+  );
+}
+
+function VenueDashboardLoadingState() {
+  return (
+    <section className="venue-dashboard-loading" aria-busy="true" aria-label="Loading venue dashboard">
+      <span className="dashboard-sr-only">Loading venue dashboard</span>
+      <div className="venue-dashboard-loading-command">
+        <span className="venue-dashboard-loading-pill" />
+        <div className="venue-dashboard-loading-copy">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
+      <div className="venue-dashboard-loading-actions">
+        <span />
+        <span />
+      </div>
+      <div className="venue-dashboard-loading-metrics">
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
   );
 }
 
@@ -5066,6 +5100,7 @@ type StoredSession = {
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
+  account?: LoadState["account"];
   [key: string]: unknown;
 };
 
@@ -5075,6 +5110,24 @@ function readSession(): StoredSession | null {
   } catch {
     return null;
   }
+}
+
+function storedSessionAccount(session: StoredSession | null): NonNullable<LoadState["account"]> | null {
+  const account = session?.account;
+  if (!account || typeof account !== "object") return null;
+
+  const displayName = typeof account.displayName === "string" ? account.displayName.trim() : "";
+  const email = typeof account.email === "string" ? account.email : null;
+  const role = typeof account.role === "string" ? account.role : undefined;
+  const accountState = typeof account.accountState === "string" ? account.accountState : undefined;
+  if (!displayName && !email && !role && !accountState) return null;
+
+  return {
+    displayName: displayName || null,
+    email,
+    role,
+    accountState,
+  };
 }
 
 function persistResponseSession(data: { session?: StoredSession } | null | undefined) {
@@ -5147,7 +5200,7 @@ function DashboardStyles() {
   return (
     <style>{`
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .dashboard-shell { --mydancr-dashboard-gap: 18px; --mydancr-dashboard-panel: #0b0b10; --mydancr-dashboard-panel-raised: #111118; --mydancr-dashboard-border: rgba(255,255,255,.11); --mydancr-dashboard-radius: 16px; --mydancr-dashboard-muted: rgba(218,214,230,.72); min-height: 100vh; padding: max(18px, calc(env(safe-area-inset-top) + 12px)) clamp(12px, 4vw, 56px) 56px; scroll-padding-top: max(18px, calc(env(safe-area-inset-top) + 12px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.1), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.14), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
+      .dashboard-shell { --mydancr-dashboard-gap: 18px; --mydancr-dashboard-panel: #0b0b10; --mydancr-dashboard-panel-raised: #111118; --mydancr-dashboard-border: rgba(255,255,255,.11); --mydancr-dashboard-radius: 16px; --mydancr-dashboard-muted: rgba(218,214,230,.72); min-height: 100vh; padding: max(18px, calc(env(safe-area-inset-top) + 12px)) clamp(12px, 4vw, 56px) 56px; scroll-padding-top: max(18px, calc(env(safe-area-inset-top) + 12px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.1), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.14), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       .dashboard-head, .dashboard-grid { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .dashboard-close { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #f8f7fb; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 10px 24px rgba(0,0,0,.3); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .dashboard-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
@@ -5167,7 +5220,7 @@ function DashboardStyles() {
       .dashboard-head { min-height: 72px; box-sizing: border-box; display: grid; gap: 12px; margin-bottom: var(--mydancr-dashboard-gap); padding: 10px 12px 14px; border: 1px solid rgba(139,92,246,.16); border-radius: var(--mydancr-dashboard-radius); background: rgba(5,5,8,.98); box-shadow: 0 14px 34px rgba(0,0,0,.38); }
       .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: center; gap: 12px; }
       .dashboard-head-copy { min-width: 0; display: grid; gap: 5px; align-content: center; overflow: hidden; }
-      .dashboard-head h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-size: clamp(21px, 5vw, 26px); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+      .dashboard-head h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-family: var(--font-display, "Space Grotesk", "Outfit", sans-serif); font-size: clamp(21px, 5vw, 26px); font-weight: 850; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
       .dashboard-head p { font-size: clamp(15px, 2.2vw, 17px); line-height: 1.45; }
       .dashboard-head .eyebrow { color: #f8f7fb; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
@@ -5176,39 +5229,56 @@ function DashboardStyles() {
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
       .venue-dashboard-grid { grid-template-columns: 1fr; }
+      .dashboard-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+      .venue-dashboard-loading { display: grid; gap: var(--mydancr-dashboard-gap); }
+      .venue-dashboard-loading-command, .venue-dashboard-loading-actions, .venue-dashboard-loading-metrics { border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
+      .venue-dashboard-loading-command { min-height: 226px; display: grid; grid-template-columns: 112px minmax(0,1fr); align-items: start; gap: 18px; padding: 22px; }
+      .venue-dashboard-loading-pill, .venue-dashboard-loading-copy span, .venue-dashboard-loading-actions span, .venue-dashboard-loading-metrics span { display: block; background: linear-gradient(100deg, rgba(255,255,255,.055) 20%, rgba(139,92,246,.13) 45%, rgba(255,255,255,.055) 70%); background-size: 240% 100%; animation: venueDashboardLoadingPulse 1.25s ease-in-out infinite; }
+      .venue-dashboard-loading-pill { width: 86px; height: 42px; border-radius: 999px; }
+      .venue-dashboard-loading-copy { display: grid; gap: 13px; padding-top: 3px; }
+      .venue-dashboard-loading-copy span { height: 18px; border-radius: 7px; }
+      .venue-dashboard-loading-copy span:first-child { width: min(78%, 330px); height: 28px; }
+      .venue-dashboard-loading-copy span:last-child { width: min(62%, 260px); }
+      .venue-dashboard-loading-actions { min-height: 86px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 12px; }
+      .venue-dashboard-loading-actions span { border-radius: 12px; }
+      .venue-dashboard-loading-metrics { min-height: 74px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; }
+      .venue-dashboard-loading-metrics span { border-radius: 0; }
+      @keyframes venueDashboardLoadingPulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+      @media (prefers-reduced-motion: reduce) { .venue-dashboard-loading-pill, .venue-dashboard-loading-copy span, .venue-dashboard-loading-actions span, .venue-dashboard-loading-metrics span { animation: none; } }
       .venue-command-panel, .venue-dashboard-shortcuts, .venue-dashboard-metrics { grid-column: 1 / -1; }
-      .venue-command-panel { display: grid; gap: 16px; padding: 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
-      .venue-command-status { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; }
-      .venue-command-status h2 { color: #f8f7fb; font-size: clamp(22px, 4vw, 30px); line-height: 1.08; }
-      .venue-command-status p, .venue-command-primary p { color: var(--mydancr-dashboard-muted); font-size: 15px; line-height: 1.45; }
-      .venue-live-pill { min-width: 58px; min-height: 42px; display: grid; place-items: center; padding: 0 12px; border: 1px solid rgba(38,210,159,.65); border-radius: 999px; color: #76f0c8; background: rgba(10,74,57,.36); font-size: 13px; font-weight: 950; letter-spacing: .08em; }
-      .venue-command-primary { display: grid; gap: 8px; padding: 18px; border: 1px solid rgba(255,255,255,.13); border-radius: 14px; background: var(--mydancr-dashboard-panel-raised); }
-      .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 28px); line-height: 1.1; }
-      .venue-command-primary .primary-link { width: 100%; min-height: 50px; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 13px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
+      .venue-command-panel { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 18px; background: var(--mydancr-dashboard-panel); }
+      .venue-command-status { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 11px; padding: 0 2px; }
+      .venue-command-status h2 { color: #f8f7fb; font-size: 20px; letter-spacing: -.015em; line-height: 1.15; }
+      .venue-command-status p, .venue-command-primary p { color: var(--mydancr-dashboard-muted); font-size: 12px; font-weight: 760; line-height: 1.35; }
+      .venue-live-pill { display: grid; place-items: center; padding: 7px 10px; border: 1px solid rgba(38,210,159,.65); border-radius: 999px; color: #76f0c8; background: rgba(10,74,57,.36); font-size: 11px; font-weight: 950; letter-spacing: .08em; }
+      .venue-command-primary { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(255,255,255,.13); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel-raised); }
+      .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 27px); line-height: 1.08; }
+      .venue-command-primary .primary-link { width: 100%; min-height: 52px; margin-top: 5px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); }
       .venue-dashboard-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
       .venue-dashboard-shortcuts > a { min-width: 0; min-height: 78px; display: flex; align-items: center; gap: 11px; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; color: #f8f7fb; background: var(--mydancr-dashboard-panel-raised); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .venue-dashboard-shortcuts > a:hover { border-color: rgba(255,255,255,.2); background: #15151d; }
       .venue-dashboard-shortcuts > a:active { transform: scale(.985); }
       .venue-dashboard-shortcuts > a:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
-      .venue-dashboard-shortcuts svg { flex: 0 0 28px; width: 28px; height: 28px; fill: none; stroke: #d9d4e3; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .venue-dashboard-shortcuts svg { flex: 0 0 21px; width: 21px; height: 21px; fill: none; stroke: #d9d4e3; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
       .venue-dashboard-shortcuts span { min-width: 0; display: grid; gap: 3px; }
       .venue-dashboard-shortcuts strong { overflow: hidden; font-size: 15px; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
-      .venue-dashboard-shortcuts small { color: var(--mydancr-dashboard-muted); font-size: 12px; line-height: 1.15; }
+      .venue-dashboard-shortcuts small { color: var(--mydancr-dashboard-muted); font-size: 10px; font-weight: 760; line-height: 1.2; }
       .venue-dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel); }
-      .venue-dashboard-metrics .metric { min-width: 0; padding: 14px 16px; border-left: 1px solid var(--mydancr-dashboard-border); background: transparent; }
+      .venue-dashboard-metrics .metric { min-width: 0; min-height: 66px; padding: 12px 14px; border-left: 1px solid var(--mydancr-dashboard-border); background: transparent; }
       .venue-dashboard-metrics .metric:first-child { border-left: 0; }
-      .venue-dashboard-metrics .metric strong { font-size: clamp(22px, 4vw, 30px); }
+      .venue-dashboard-metrics .metric strong { font-size: 22px; }
+      .venue-dashboard-metrics .metric span { font-size: 10px; }
       .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; scroll-margin-top: 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
-      .venue-dashboard-section > summary { min-height: 88px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 16px 18px; color: #f8fafc; cursor: pointer; list-style: none; }
+      .venue-dashboard-section > summary { min-height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 16px 18px; color: #f8fafc; cursor: pointer; list-style: none; }
       .venue-dashboard-section > summary::-webkit-details-marker { display: none; }
       .venue-dashboard-section > summary:focus-visible { outline: 2px solid #7c3aed; outline-offset: -4px; }
       .venue-dashboard-section > summary:hover { background: rgba(255,255,255,.025); }
       .venue-dashboard-section[open] > summary { border-bottom: 1px solid var(--mydancr-dashboard-border); background: rgba(139,92,246,.035); }
       .venue-dashboard-section-copy { min-width: 0; display: grid; gap: 5px; }
-      .venue-dashboard-section-copy > strong { color: #f8fafc; font-size: clamp(19px, 3vw, 23px); line-height: 1.05; }
-      .venue-dashboard-section-copy > span:last-child { max-width: 72ch; color: #cbd5e1; font-size: 14px; line-height: 1.45; }
+      .venue-dashboard-section-copy > strong { color: #f8fafc; font-size: clamp(17px, 2.8vw, 21px); line-height: 1.05; }
+      .venue-dashboard-section-copy > span:last-child { max-width: 72ch; color: var(--mydancr-dashboard-muted); font-size: 12px; font-weight: 720; line-height: 1.35; }
       .venue-dashboard-section-badge { width: fit-content; padding: 7px 10px; border: 1px solid rgba(139,92,246,.34); border-radius: 999px; color: #e6ddf7; background: rgba(109,40,217,.13); font-size: 11px; font-weight: 900; white-space: nowrap; }
-      .venue-dashboard-section-toggle { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.44); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.15); font-size: 24px; line-height: 1; transition: transform .18s ease, background .18s ease; }
+      .venue-dashboard-section-toggle { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.44); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.15); font-size: 20px; line-height: 1; transition: transform .18s ease, background .18s ease; }
       .venue-dashboard-section[open] .venue-dashboard-section-toggle { transform: rotate(45deg); background: rgba(124,58,237,.28); }
       .venue-dashboard-section-body { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; }
       .venue-dashboard-inner-grid { display: grid; gap: var(--mydancr-dashboard-gap); }
@@ -5574,18 +5644,12 @@ function DashboardStyles() {
       @media (max-width: 860px) { .venue-dashboard-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 620px) {
         .dashboard-shell-venue { padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 104px)); }
-        .venue-command-panel { gap: 13px; padding: 14px; }
-        .venue-command-status { align-items: start; gap: 11px; }
-        .venue-live-pill { min-width: 54px; min-height: 38px; padding: 0 10px; font-size: 12px; }
-        .venue-command-status h2 { font-size: clamp(21px, 6vw, 27px); }
-        .venue-command-status p, .venue-command-primary p { font-size: 14px; }
-        .venue-command-primary { padding: 15px; }
-        .venue-dashboard-shortcuts { gap: 9px; }
-        .venue-dashboard-shortcuts > a { min-height: 82px; padding: 12px; }
-        .venue-dashboard-shortcuts svg { flex-basis: 26px; width: 26px; height: 26px; }
-        .venue-dashboard-metrics .metric { padding: 13px 9px; text-align: center; }
-        .venue-dashboard-metrics .metric span { font-size: 11px; }
-        .venue-dashboard-section > summary { min-height: 88px; }
+        .venue-command-panel { gap: var(--mydancr-dashboard-gap); padding: 16px; }
+        .venue-command-status { align-items: center; gap: 11px; }
+        .venue-dashboard-shortcuts { gap: 10px; }
+        .venue-dashboard-shortcuts > a { min-height: 78px; padding: 13px; }
+        .venue-dashboard-metrics .metric { min-height: 62px; padding: 12px 10px; text-align: center; }
+        .venue-dashboard-section > summary { min-height: 70px; padding: 14px; }
       }
     `}</style>
   );

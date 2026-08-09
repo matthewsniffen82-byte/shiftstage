@@ -88,8 +88,10 @@ test("venue access verifies the assigned venue before account creation and prese
 
 test("venue dashboard refreshes a saved session and recovers sign-in without leaving the page", () => {
   assert.match(dashboardClient, /const initialAuthHeaders = dashboardAuthHeaders\(session\)/);
+  assert.match(dashboardClient, /const cachedAccount = storedSessionAccount\(session\)/);
   assert.match(dashboardClient, /const account = await readJson\("\/api\/account", initialAuthHeaders\)/);
   assert.match(dashboardClient, /const authHeaders = dashboardAuthHeaders\(readSession\(\)\)/);
+  assert.match(dashboardClient, /const \[profile, secondary, support, reviews, weeklyReport, rankingEvents\] = await Promise\.all/);
   assert.match(dashboardClient, /"x-dancr-refresh-token": String\(session\.refreshToken\)/);
   assert.match(dashboardClient, /persistResponseSession\(data\);\s*return data;/);
   assert.match(dashboardClient, /!isLoading && !state\.error/);
@@ -118,7 +120,9 @@ test("customer, dancer, and venue headers share the compact dashboard identity p
     dashboardClient,
     /role === "customer" \? "Customer dashboard" : role === "venue" \? "Venue dashboard" : "Dancer dashboard"/,
   );
-  assert.match(dashboardClient, /const dashboardHeading = isLoading \? title : displayName/);
+  assert.match(dashboardClient, /const dashboardHeading = isLoading[\s\S]*?role === "venue"[\s\S]*?resolvedDisplayName \|\| "\\u00a0"[\s\S]*?: title[\s\S]*?: displayName/);
+  assert.doesNotMatch(dashboardClient, /const dashboardHeading = isLoading \? title : displayName/);
+  assert.match(dashboardClient, /isLoading && role === "venue"[\s\S]*?<VenueDashboardLoadingState \/>/);
   assert.match(dashboardClient, /const dashboardDescription = state\.error \|\| ""/);
   assert.doesNotMatch(dashboardClient, /Welcome back, \$\{displayName\}/);
   assert.match(
@@ -133,6 +137,17 @@ test("customer, dancer, and venue headers share the compact dashboard identity p
     dashboardClient,
     /\.dashboard-head h1 \{[\s\S]*?font-size: clamp\(21px, 5vw, 26px\);[\s\S]*?text-overflow: ellipsis;/,
   );
+});
+
+test("venue sign-in tabs are restrained and the dashboard submit always gives actionable feedback", () => {
+  const activeVenueTabCss = liveApp.match(/\.venue-auth-tab\.active \{[^}]+\}/)?.[0] || "";
+  assert.match(activeVenueTabCss, /border-color: rgba\(139,92,246,\.72\);[\s\S]*?background: rgba\(83,45,153,\.3\);/);
+  assert.doesNotMatch(activeVenueTabCss, /linear-gradient/);
+  assert.match(liveApp, /<form class="auth-form" id="venueLoginForm"[^>]*novalidate/);
+  assert.match(liveApp, /if \(isVenueSession\(\)\) \{[\s\S]*?submit\.textContent = "Opening dashboard…"[\s\S]*?startVenueDashboardSession/);
+  assert.match(liveApp, /if \(!email\) \{[\s\S]*?Enter the email for your verified venue manager account\./);
+  assert.match(liveApp, /if \(!password\) \{[\s\S]*?Enter your venue account password\./);
+  assert.match(liveApp, /submit\.textContent = "Signing in…"/);
 });
 
 test("venue management is consolidated into one descriptive collapsible workspace", () => {

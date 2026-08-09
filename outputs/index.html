@@ -3512,18 +3512,19 @@
 
     .venue-auth-tab {
       min-height: 46px;
-      border: 0;
+      border: 1px solid transparent;
       border-radius: 12px;
       color: #aaa2b9;
-      background: transparent;
+      background: rgba(8,8,13,.72);
       font-weight: 950;
       cursor: pointer;
     }
 
     .venue-auth-tab.active {
       color: #fff;
-      background: linear-gradient(135deg, rgba(98,45,220,.96), rgba(36,157,204,.78));
-      box-shadow: 0 0 20px rgba(124,58,237,.24), inset 0 0 0 1px rgba(255,255,255,.08);
+      border-color: rgba(139,92,246,.72);
+      background: rgba(83,45,153,.3);
+      box-shadow: inset 0 0 0 1px rgba(196,167,255,.08);
     }
 
     .venue-auth-mode-copy {
@@ -3659,10 +3660,6 @@
     }
 
     @media (max-width: 380px) {
-      .venue-auth-tabs {
-        grid-template-columns: 1fr;
-      }
-
       .venue-code-input {
         font-size: 11px;
       }
@@ -36340,7 +36337,7 @@
             <button class="ghost auth-join-now dancer-join-now" id="dancerJoinNowBtn" type="button">Join now</button>
             <div class="rule-note auth-status" id="dancerAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
-          <form class="auth-form" id="venueLoginForm" data-auth-view="venue" hidden>
+          <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
             <div class="venue-auth-tabs" role="tablist" aria-label="Venue account access">
               <button class="venue-auth-tab active" id="venueLoginModeBtn" type="button" role="tab" aria-selected="true">Sign in</button>
               <button class="venue-auth-tab" id="venueSignupModeBtn" type="button" role="tab" aria-selected="false">Create account</button>
@@ -56514,14 +56511,57 @@
         return;
       }
       const submit = document.getElementById("venueLoginSubmit");
+      const emailInput = document.getElementById("venueLoginEmail");
+      const passwordInput = document.getElementById("venueLoginPassword");
+      const previousText = submit.textContent;
+
+      if (isVenueSession()) {
+        submit.disabled = true;
+        submit.setAttribute("aria-busy", "true");
+        submit.textContent = "Opening dashboard…";
+        try {
+          await startVenueDashboardSession("Venue dashboard opened");
+        } finally {
+          submit.disabled = false;
+          submit.removeAttribute("aria-busy");
+          submit.textContent = previousText;
+        }
+        return;
+      }
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email) {
+        setVenueAuthStatus("Enter the email for your verified venue manager account.");
+        emailInput.focus();
+        return;
+      }
+      if (!emailInput.validity.valid) {
+        setVenueAuthStatus("Enter a valid venue manager email address.");
+        emailInput.focus();
+        return;
+      }
+      if (!password) {
+        setVenueAuthStatus("Enter your venue account password.");
+        passwordInput.focus();
+        return;
+      }
+      if (!passwordInput.validity.valid) {
+        setVenueAuthStatus("Your password must be at least 8 characters.");
+        passwordInput.focus();
+        return;
+      }
+
       submit.disabled = true;
+      submit.setAttribute("aria-busy", "true");
+      submit.textContent = "Signing in…";
       setVenueAuthStatus("Signing in…");
       try {
         const result = await requestAuth({
           mode: "login",
           role: "venue",
-          email: document.getElementById("venueLoginEmail").value,
-          password: document.getElementById("venueLoginPassword").value
+          email,
+          password
         });
         if (!result.session?.accessToken || result.account?.role !== "venue") {
           throw new Error("Venue account authorization could not be verified. Sign in and try again.");
@@ -56533,6 +56573,8 @@
         showToast(error.message || "Venue login failed");
       } finally {
         submit.disabled = false;
+        submit.removeAttribute("aria-busy");
+        submit.textContent = previousText;
       }
     });
 

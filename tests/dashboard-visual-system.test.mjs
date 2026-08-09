@@ -76,5 +76,14 @@ test("venue dashboard uses the dancer command, shortcuts, metrics, and compact-m
     routedDashboards,
     /\.dashboard-head h1 \{[\s\S]*?font-size: clamp\(21px, 5vw, 26px\);[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/,
   );
+  assert.match(routedDashboards, /\.dashboard-shell \{[\s\S]*?-webkit-text-size-adjust: 100%; text-size-adjust: 100%;/);
+  assert.match(routedDashboards, /\.venue-dashboard-loading-command[\s\S]*?\.venue-dashboard-loading-actions[\s\S]*?\.venue-dashboard-loading-metrics/);
+  assert.match(liveApp, /#dancerDashboard \.dancer-live-heading strong \{[\s\S]*?font-size: 20px;/);
+  assert.match(routedDashboards, /\.venue-command-status h2 \{[^}]*?font-size: 20px;/);
+  assert.match(routedDashboards, /\.venue-command-status p, \.venue-command-primary p \{[^}]*?font-size: 12px;/);
+  assert.match(routedDashboards, /\.venue-dashboard-shortcuts svg \{[^}]*?width: 21px; height: 21px;/);
+  assert.match(routedDashboards, /\.venue-dashboard-shortcuts small \{[^}]*?font-size: 10px;/);
+  assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
+  assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
   assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
 });
