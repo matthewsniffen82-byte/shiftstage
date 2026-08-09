@@ -189,6 +189,24 @@ test("live venue QR sheet uses concise MyDancr labeling and mobile-safe actions"
   assert.match(liveApp, /\.deal-pass-actions \{[\s\S]*?grid-template-columns: 1fr 1fr;/);
 });
 
+test("club deal picker uses neutral accessible cards with generation feedback", () => {
+  assert.match(
+    liveApp,
+    /\.dancr-button-system \.club-deal-hub-offer \{[\s\S]*?border: 1px solid rgba\(255, 255, 255, \.13\) !important;[\s\S]*?linear-gradient\(145deg, rgba\(31, 32, 38, \.94\), rgba\(20, 21, 26, \.96\)\) !important/,
+  );
+  assert.match(liveApp, /\.dancr-button-system \.club-deal-hub-offer span \{[\s\S]*?color: #35D8FF;/);
+  assert.match(liveApp, /\.dancr-button-system \.club-deal-hub-offer small \{[\s\S]*?rgba\(248, 248, 252, \.78\)/);
+  assert.match(liveApp, /id="clubDealHubStatus" role="status" aria-live="polite" hidden/);
+  assert.match(liveApp, /data-club-deal-offer="\$\{encodeDealPass\(selection\)\}" aria-pressed="false"/);
+  assert.match(
+    liveApp,
+    /offerButton\.classList\.add\("is-loading"\)[\s\S]*?status\.textContent = "Creating your tracked QR…"[\s\S]*?await createRevenueDealPass\(selection\)/,
+  );
+  assert.match(liveApp, /status\.textContent = error\.message \|\| "Unable to create the Club Deal QR\. Please try again\."/);
+  assert.match(liveApp, /class="deal-pass-sheet club-deal-hub-sheet"[\s\S]*?tabindex="-1"/);
+  assert.match(liveApp, /overlay\.querySelector\("\.club-deal-hub-sheet"\)\?\.focus\(\{ preventScroll: true \}\)/);
+});
+
 test("checked-in dancer profiles and MyDancr TV promote attributed deals without exposing future shifts", () => {
   assert.match(dancerPage, /\{activeShift \? \([\s\S]*?\{activeDeal \? \([\s\S]*?sourceType="dancer_profile"/);
   assert.match(dancerPage, /function isActiveNow[\s\S]*?Boolean\(shift\.checkedInAt\)[\s\S]*?!shift\.checkedOutAt/);
