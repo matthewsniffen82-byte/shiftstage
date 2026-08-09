@@ -15,6 +15,10 @@ const lateMobileHeader = homeSource.match(
   /\/\* Keep the late-rendered discovery shell aligned with the canonical mobile utility header\. \*\/[\s\S]*?main\.stack \{[\s\S]*?padding: 8px 0 24px !important;/,
 )?.[0] || "";
 
+const mobileAuthClearance = homeSource.match(
+  /\/\* Keep the mobile login sheet below the canonical utility header\. \*\/[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: calc\(66px \+ env\(safe-area-inset-top\)\);[\s\S]*?\}\s*\}/,
+)?.[0] || "";
+
 test("mobile utility header is rounded, compact, and aligned with the page", () => {
   assert.ok(mobileHeader, "canonical mobile utility header CSS must exist");
   assert.match(
@@ -125,4 +129,13 @@ test("the mobile notification panel opens inside the visible viewport", () => {
     homeSource,
     /customerNotificationQuickBtn\.addEventListener\("click",[\s\S]*?toggleCustomerQuickPanel\("notifications"\)/,
   );
+});
+
+test("the mobile login sheet begins below the utility header", () => {
+  assert.ok(mobileAuthClearance, "mobile login clearance CSS must exist");
+  assert.match(
+    mobileAuthClearance,
+    /#authPage\.show \{\s*top: calc\(66px \+ env\(safe-area-inset-top\)\);\s*\}/,
+  );
+  assert.doesNotMatch(mobileAuthClearance, /\.page-panel\.show/);
 });

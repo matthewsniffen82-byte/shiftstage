@@ -35629,6 +35629,13 @@
           max-height: 58px;
         }
 
+        /* Keep the mobile login sheet below the canonical utility header. */
+        @media (max-width: 720px) {
+          #authPage.show {
+            top: calc(66px + env(safe-area-inset-top));
+          }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .uber-ride-link {
             transition: none;
