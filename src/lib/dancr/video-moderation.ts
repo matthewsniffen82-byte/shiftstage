@@ -49,6 +49,10 @@ const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 const MAX_VIDEO_FRAMES = 10;
 const FFMPEG_TIMEOUT_MS = 25_000;
 const OPENAI_TIMEOUT_MS = 30_000;
+// Keep AI moderation active while favoring publication of lawful adult promotional
+// content. High-risk provider categories below still reject independently.
+const VIDEO_POLICY_APPROVE_CONFIDENCE = 0.75;
+const VIDEO_POLICY_REJECT_CONFIDENCE = 0.95;
 
 const VIDEO_POLICY_REASON_CODES = [
   "explicit_nudity_or_sex_act",
@@ -147,10 +151,10 @@ function combineVideoDecisions(
 ): DancrImageModerationDecision {
   if (providerDecision === "rejected") return "rejected";
   if (policyDecision.decision === "rejected") {
-    return policyDecision.confidence >= 0.9 ? "rejected" : "review";
+    return policyDecision.confidence >= VIDEO_POLICY_REJECT_CONFIDENCE ? "rejected" : "review";
   }
   if (providerDecision === "review" || policyDecision.decision === "review") return "review";
-  return policyDecision.confidence >= 0.86 ? "approved" : "review";
+  return policyDecision.confidence >= VIDEO_POLICY_APPROVE_CONFIDENCE ? "approved" : "review";
 }
 
 function strongestDecision(decisions: DancrImageModerationDecision[]) {
