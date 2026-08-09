@@ -235,23 +235,9 @@ export default function DashboardClient({
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
-    role === "customer" ? "Your MyDancr" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
-  const dashboardHeading =
-    role === "customer"
-      ? isLoading
-        ? "Your night"
-        : `Welcome back, ${displayName}`
-      : isLoading
-        ? title
-        : displayName;
-  const dashboardDescription =
-    role === "customer"
-      ? isLoading
-        ? "Loading your live account..."
-        : state.error
-          ? state.error
-          : "Your plans, saved profiles, Club Deals, and alerts in one place."
-      : state.error || "";
+    role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+  const dashboardHeading = isLoading ? title : displayName;
+  const dashboardDescription = state.error || "";
 
   return (
     <main className="dashboard-shell">
@@ -4953,7 +4939,7 @@ function DashboardStyles() {
   return (
     <style>{`
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .dashboard-shell { min-height: 100vh; padding: max(18px, calc(env(safe-area-inset-top) + 12px)) clamp(12px, 4vw, 56px) 56px; scroll-padding-top: max(18px, calc(env(safe-area-inset-top) + 12px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.16), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.24), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
+      .dashboard-shell { --mydancr-dashboard-gap: 18px; --mydancr-dashboard-panel: #0b0b10; --mydancr-dashboard-panel-raised: #111118; --mydancr-dashboard-border: rgba(255,255,255,.11); --mydancr-dashboard-radius: 16px; --mydancr-dashboard-muted: rgba(218,214,230,.72); min-height: 100vh; padding: max(18px, calc(env(safe-area-inset-top) + 12px)) clamp(12px, 4vw, 56px) 56px; scroll-padding-top: max(18px, calc(env(safe-area-inset-top) + 12px)); background: radial-gradient(circle at 82% 2%, rgba(34,199,255,.1), transparent 24rem), radial-gradient(circle at 12% 12%, rgba(139,92,246,.14), transparent 25rem), linear-gradient(180deg, #090911, #050507 66%); }
       .dashboard-head, .dashboard-grid { max-width: 1120px; margin-left: auto; margin-right: auto; }
       .dashboard-close { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #f8f7fb; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 10px 24px rgba(0,0,0,.3); text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .dashboard-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
@@ -4970,44 +4956,42 @@ function DashboardStyles() {
       .venue-sign-in-recovery input:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
       .venue-sign-in-recovery .primary-link { width: 100%; min-height: 48px; border-color: rgba(139,92,246,.7); background: linear-gradient(135deg, #5b21b6, #3b00b9); }
       .venue-sign-in-recovery .venue-sign-in-status { color: #bfefff; font-size: 14px; font-weight: 750; }
-      .dashboard-head { display: grid; gap: 14px; margin-bottom: 18px; padding: clamp(16px, 3vw, 24px); border: 1px solid rgba(139,92,246,.26); border-radius: 22px; background: linear-gradient(145deg, rgba(10,9,16,.96), rgba(4,4,8,.92)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 18px 48px rgba(0,0,0,.28); }
-      .dashboard-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
-      .dashboard-head-copy { min-width: 0; display: grid; gap: 8px; }
-      .dashboard-head h1 { max-width: 900px; font-size: clamp(32px, 5vw, 48px); line-height: 1; }
+      .dashboard-head { min-height: 72px; box-sizing: border-box; display: grid; gap: 12px; margin-bottom: var(--mydancr-dashboard-gap); padding: 10px 12px 14px; border: 1px solid rgba(139,92,246,.16); border-radius: var(--mydancr-dashboard-radius); background: rgba(5,5,8,.98); box-shadow: 0 14px 34px rgba(0,0,0,.38); }
+      .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: center; gap: 12px; }
+      .dashboard-head-copy { min-width: 0; display: grid; gap: 5px; align-content: center; overflow: hidden; }
+      .dashboard-head h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-size: clamp(21px, 5vw, 26px); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
       .dashboard-head p { font-size: clamp(15px, 2.2vw, 17px); line-height: 1.45; }
-      .dashboard-head-venue, .dashboard-head-dancer { min-height: 72px; box-sizing: border-box; gap: 12px; padding: 10px 12px 14px; border-color: rgba(139,92,246,.16); border-radius: 16px; background: rgba(5,5,8,.98); box-shadow: 0 14px 34px rgba(0,0,0,.38); }
-      .dashboard-head-venue .dashboard-head-row, .dashboard-head-dancer .dashboard-head-row { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: center; gap: 12px; }
-      .dashboard-head-venue .dashboard-head-copy, .dashboard-head-dancer .dashboard-head-copy { gap: 5px; align-content: center; overflow: hidden; }
-      .dashboard-head-venue .eyebrow, .dashboard-head-dancer .eyebrow { color: #f8f7fb; }
-      .dashboard-head-venue h1, .dashboard-head-dancer h1 { max-width: 100%; overflow: hidden; color: #f8f7fb; font-size: clamp(21px, 5vw, 26px); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+      .dashboard-head .eyebrow { color: #f8f7fb; }
       .eyebrow { color: #94e5ff; text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 900; }
       h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); line-height: 1; letter-spacing: -.025em; }
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
-      .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-      .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; border: 1px solid rgba(148,163,184,.24); border-radius: 14px; background: rgba(5,5,7,.78); box-shadow: inset 0 1px 0 rgba(248,250,252,.035); }
+      .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
+      .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
       .venue-dashboard-section > summary { min-height: 104px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding: 18px; color: #f8fafc; cursor: pointer; list-style: none; }
       .venue-dashboard-section > summary::-webkit-details-marker { display: none; }
       .venue-dashboard-section > summary:focus-visible { outline: 2px solid #7c3aed; outline-offset: -4px; }
-      .venue-dashboard-section[open] > summary { border-bottom: 1px solid rgba(148,163,184,.18); background: linear-gradient(90deg, rgba(124,58,237,.1), transparent 52%); }
+      .venue-dashboard-section[open] > summary { border-bottom: 1px solid var(--mydancr-dashboard-border); background: rgba(139,92,246,.055); }
       .venue-dashboard-section-copy { min-width: 0; display: grid; gap: 5px; }
       .venue-dashboard-section-copy > strong { color: #f8fafc; font-size: clamp(20px, 3vw, 27px); line-height: 1.05; }
       .venue-dashboard-section-copy > span:last-child { max-width: 72ch; color: #cbd5e1; font-size: 14px; line-height: 1.45; }
       .venue-dashboard-section-badge { width: fit-content; padding: 7px 10px; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; background: #111118; font-size: 11px; font-weight: 900; white-space: nowrap; }
       .venue-dashboard-section-toggle { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(124,58,237,.44); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.15); font-size: 24px; line-height: 1; transition: transform .18s ease, background .18s ease; }
       .venue-dashboard-section[open] .venue-dashboard-section-toggle { transform: rotate(45deg); background: rgba(124,58,237,.28); }
-      .venue-dashboard-section-body { display: grid; gap: 14px; padding: 16px; }
-      .venue-dashboard-inner-grid { display: grid; gap: 14px; }
+      .venue-dashboard-section-body { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; }
+      .venue-dashboard-inner-grid { display: grid; gap: var(--mydancr-dashboard-gap); }
       .venue-dashboard-overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .venue-dashboard-account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .venue-dashboard-profile-grid { grid-template-columns: 1fr; }
-      .venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel { grid-column: auto; }
+      .venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); box-shadow: none; }
       .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-dashboard-tabs { position: sticky; z-index: 20; top: max(8px, env(safe-area-inset-top)); grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
       .customer-dashboard-tabs a { min-width: 0; min-height: 42px; display: grid; place-items: center; padding: 0 8px; border-radius: 11px; color: #d8cfeb; font-size: 13px; font-weight: 900; text-align: center; text-decoration: none; }
       .customer-dashboard-tabs a:hover { color: #fff; background: rgba(126,234,255,.08); }
       .customer-action-status { grid-column: 1 / -1; max-width: none; padding: 11px 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 10px; color: #aaf2ff; background: rgba(11,87,110,.16); font-size: 14px; }
-      .info-panel { border: 1px solid rgba(139,92,246,.24); background: rgba(12,12,18,.86); border-radius: 8px; padding: 16px; display: grid; gap: 14px; }
+      .info-panel { border: 1px solid var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); border-radius: var(--mydancr-dashboard-radius); padding: 16px; display: grid; gap: 14px; box-shadow: none; }
+      .info-panel h2 { font-size: clamp(20px, 3vw, 24px); line-height: 1.08; }
+      .info-panel > p { color: var(--mydancr-dashboard-muted); font-size: 14px; line-height: 1.45; }
       .info-panel > div { display: grid; gap: 10px; }
       .setup-panel { grid-column: span 3; }
       .setup-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -5187,9 +5171,9 @@ function DashboardStyles() {
       .past-deal-history summary::-webkit-details-marker { display: none; }
       .past-deal-history summary span { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.08); }
       .past-deal-history > div { display: grid; gap: 8px; padding-top: 8px; }
-      .customer-settings-section { display: grid; gap: 14px; padding: 16px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: rgba(7,7,11,.62); }
-      .customer-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .customer-settings-grid > .info-panel { grid-column: auto; }
+      .customer-settings-section { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
+      .customer-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
+      .customer-settings-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .customer-settings-grid > .customer-settings-panel, .customer-settings-grid > .support-panel, .customer-settings-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-settings-panel .city-field { grid-column: span 2; }
       .venue-profile-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
@@ -5277,8 +5261,10 @@ function DashboardStyles() {
       .venue-redemption-instructions { display: grid; gap: 6px; padding: 14px; border: 1px solid rgba(148,229,255,.22); border-radius: 10px; background: rgba(148,229,255,.06); }
       .venue-redemption-instructions strong { color: #94e5ff; }
       .deal-panel { grid-column: span 2; }
-      .deal-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
+      .deal-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 !important; overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel-raised); }
+      .deal-metrics .metric { min-height: 66px; padding: 12px 14px; border-top: 0; border-left: 1px solid var(--mydancr-dashboard-border); }
+      .deal-metrics .metric:first-child { border-left: 0; }
+      .metric { min-height: 58px; display: grid; align-content: center; gap: 4px; border-top: 1px solid var(--mydancr-dashboard-border); }
       .metric:first-child { border-top: 0; }
       .metric span { color: #b9accd; font-size: 13px; font-weight: 850; }
       .metric strong { color: #fff; font-size: 20px; overflow-wrap: anywhere; }
@@ -5326,8 +5312,8 @@ function DashboardStyles() {
       .venue-verification-avatar { width: 68px; height: 68px; display: grid; place-items: center; overflow: hidden; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #171722; font-size: 24px; font-weight: 950; }
       .venue-verification-avatar img { width: 100%; height: 100%; object-fit: cover; }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .venue-profile-panel form, .venue-cover-panel, .venue-cover-panel form, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-profile-panel, .venue-cover-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-cover-panel > img, .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-cover-panel > img { max-width: 340px; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } }
-      @media (max-width: 520px) { .dashboard-head { padding: 16px; border-radius: 18px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: 34px; } .dashboard-head-venue, .dashboard-head-dancer { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-venue h1, .dashboard-head-dancer h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
     `}</style>
   );
 }

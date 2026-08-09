@@ -19,7 +19,9 @@ test("customer dashboard leads with tonight, saved, deals, and alerts before acc
     dashboard,
     /href="#customer-tonight">Tonight[\s\S]*?href="#customer-saved">Saved[\s\S]*?href="#customer-offers">Deals[\s\S]*?href="#customer-alerts">Alerts[\s\S]*?href="#customer-settings">Settings/,
   );
-  assert.match(dashboard, /Your plans, saved profiles, Club Deals, and alerts in one place/);
+  assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
+  assert.match(dashboard, /const dashboardHeading = isLoading \? title : displayName/);
+  assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /className="dashboard-close"[\s\S]*?aria-label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
 });

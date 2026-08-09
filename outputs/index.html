@@ -28633,6 +28633,142 @@
         align-items: flex-start;
       }
     }
+
+    /* Shared MyDancr dashboard visual system: neutral structure, one primary action. */
+    #dancerDashboard {
+      --mydancr-dashboard-gap: 18px;
+      --mydancr-dashboard-panel: #0b0b10;
+      --mydancr-dashboard-panel-raised: #111118;
+      --mydancr-dashboard-border: rgba(255,255,255,.11);
+      --mydancr-dashboard-radius: 16px;
+      --mydancr-dashboard-muted: rgba(218,214,230,.72);
+    }
+
+    #dancerDashboard .page-inner.dashboard-wide,
+    #dancerDashboard .dancer-daily-center {
+      gap: var(--mydancr-dashboard-gap) !important;
+    }
+
+    #dancerDashboard.is-approved #dancerApprovalCommand,
+    #dancerDashboard.is-approved #dancerApprovalCommand:hover {
+      padding: 16px !important;
+      border: 1px solid var(--mydancr-dashboard-border) !important;
+      border-radius: 18px !important;
+      background: var(--mydancr-dashboard-panel) !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    #dancerDashboard .dancer-live-heading {
+      padding: 0 2px;
+    }
+
+    #dancerDashboard .dancer-live-pill {
+      border-color: rgba(50,255,164,.44);
+      color: #8effc6;
+      background: rgba(8,80,48,.34);
+      box-shadow: none;
+    }
+
+    #dancerDashboard .dancer-live-heading strong {
+      font-size: 20px;
+      letter-spacing: -.015em;
+    }
+
+    #dancerDashboard .dancer-live-heading > div > span,
+    #dancerDashboard .dancer-next-shift p,
+    #dancerDashboard .dancer-quick-actions small,
+    #dancerDashboard .dancer-glance-metrics span {
+      color: var(--mydancr-dashboard-muted);
+    }
+
+    #dancerDashboard .dancer-next-shift {
+      padding: 16px;
+      border: 1px solid var(--mydancr-dashboard-border);
+      border-radius: var(--mydancr-dashboard-radius);
+      background: var(--mydancr-dashboard-panel-raised);
+      box-shadow: none;
+    }
+
+    #dancerDashboard .dancer-shift-primary {
+      border-color: rgba(195,169,255,.62);
+      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8);
+      box-shadow: 0 10px 24px rgba(82,35,214,.24), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+
+    #dancerDashboard .dancer-shift-primary:hover,
+    #dancerDashboard .dancer-shift-primary:focus-visible {
+      border-color: rgba(255,255,255,.8);
+      box-shadow: 0 12px 28px rgba(82,35,214,.32), inset 0 1px 0 rgba(255,255,255,.14);
+    }
+
+    #dancerDashboard .dancer-quick-actions {
+      gap: 10px;
+    }
+
+    #dancerDashboard .dancer-quick-actions button,
+    #dancerDashboard .dancer-quick-actions a {
+      min-height: 78px;
+      padding: 13px;
+      border: 1px solid var(--mydancr-dashboard-border);
+      border-radius: 14px;
+      background: var(--mydancr-dashboard-panel-raised);
+      box-shadow: none;
+    }
+
+    #dancerDashboard .dancer-quick-actions button:hover,
+    #dancerDashboard .dancer-quick-actions button:focus-visible,
+    #dancerDashboard .dancer-quick-actions a:hover,
+    #dancerDashboard .dancer-quick-actions a:focus-visible {
+      border-color: rgba(139,92,246,.46);
+      background: #15131d;
+      box-shadow: none;
+    }
+
+    #dancerDashboard .dancer-quick-actions strong {
+      font-size: 15px;
+    }
+
+    #dancerDashboard .dancer-glance-metrics {
+      gap: 0;
+      overflow: hidden;
+      border: 1px solid var(--mydancr-dashboard-border);
+      border-radius: 14px;
+      background: var(--mydancr-dashboard-panel-raised);
+    }
+
+    #dancerDashboard .dancer-glance-metrics > div {
+      min-height: 66px;
+      padding: 12px 14px;
+      border: 0;
+      border-left: 1px solid var(--mydancr-dashboard-border);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    #dancerDashboard .dancer-glance-metrics > div:first-child {
+      border-left: 0;
+    }
+
+    #dancerDashboard .dancer-glance-metrics strong {
+      font-size: 22px;
+    }
+
+    #dancerDashboard .dancer-control-summary,
+    #dancerDashboard .dancer-control-card,
+    #dancerDashboard details.dashboard-collapse > summary {
+      border-color: var(--mydancr-dashboard-border) !important;
+      background: var(--mydancr-dashboard-panel) !important;
+      box-shadow: none !important;
+    }
+
+    @media (max-width: 520px) {
+      #dancerDashboard .dancer-glance-metrics > div {
+        min-height: 62px;
+        padding-inline: 10px;
+      }
+    }
     .fix-count-inline {
       display: inline-flex !important;
       align-items: center !important;

@@ -113,27 +113,25 @@ test("all routed dashboards use one compact profile-style header and close contr
   assert.match(dashboardClient, /\.dashboard-close \{ flex: 0 0 42px; width: 42px; height: 42px;/);
 });
 
-test("venue dashboard header matches the compact dancer dashboard identity pattern", () => {
+test("customer, dancer, and venue headers share the compact dashboard identity pattern", () => {
   assert.match(
     dashboardClient,
-    /role === "customer" \? "Your MyDancr" : role === "venue" \? "Venue dashboard" : "Dancer dashboard"/,
+    /role === "customer" \? "Customer dashboard" : role === "venue" \? "Venue dashboard" : "Dancer dashboard"/,
+  );
+  assert.match(dashboardClient, /const dashboardHeading = isLoading \? title : displayName/);
+  assert.match(dashboardClient, /const dashboardDescription = state\.error \|\| ""/);
+  assert.doesNotMatch(dashboardClient, /Welcome back, \$\{displayName\}/);
+  assert.match(
+    dashboardClient,
+    /\.dashboard-head \{ min-height: 72px;[\s\S]*?padding: 10px 12px 14px;[\s\S]*?border-radius: var\(--mydancr-dashboard-radius\);/,
   );
   assert.match(
     dashboardClient,
-    /role === "customer"[\s\S]*?`Welcome back, \$\{displayName\}`[\s\S]*?: isLoading[\s\S]*?\? title[\s\S]*?: displayName/,
-  );
-  assert.doesNotMatch(dashboardClient, /: `Welcome back, \$\{displayName\}\.`/);
-  assert.match(
-    dashboardClient,
-    /\.dashboard-head-venue, \.dashboard-head-dancer \{ min-height: 72px;[\s\S]*?padding: 10px 12px 14px;[\s\S]*?border-radius: 16px;/,
+    /\.dashboard-head-row \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 42px;/,
   );
   assert.match(
     dashboardClient,
-    /\.dashboard-head-venue \.dashboard-head-row, \.dashboard-head-dancer \.dashboard-head-row \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 42px;/,
-  );
-  assert.match(
-    dashboardClient,
-    /\.dashboard-head-venue h1, \.dashboard-head-dancer h1 \{[\s\S]*?font-size: clamp\(21px, 5vw, 26px\);[\s\S]*?text-overflow: ellipsis;/,
+    /\.dashboard-head h1 \{[\s\S]*?font-size: clamp\(21px, 5vw, 26px\);[\s\S]*?text-overflow: ellipsis;/,
   );
 });
 
