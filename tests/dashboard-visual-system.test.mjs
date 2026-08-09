@@ -85,5 +85,6 @@ test("venue dashboard uses the dancer command, shortcuts, metrics, and compact-m
   assert.match(routedDashboards, /\.venue-dashboard-shortcuts small \{[^}]*?font-size: 10px;/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
-  assert.doesNotMatch(routedDashboards, /\.dashboard-head-venue h1/);
+  assert.match(routedDashboards, /\.dashboard-head-venue h1 \{ font-size: clamp\(18px, 4\.4vw, 22px\); \}/);
+  assert.match(routedDashboards, /@media \(max-width: 520px\)[\s\S]*?\.dashboard-head-venue h1 \{ font-size: clamp\(18px, 5vw, 21px\); \}/);
 });
