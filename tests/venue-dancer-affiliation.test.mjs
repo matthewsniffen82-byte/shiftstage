@@ -43,6 +43,26 @@ test("venue affiliation tokens are private, short-lived, venue-bound, and single
   assert.match(dancerRoute, /errorCorrectionLevel: "H"/);
 });
 
+test("pending dancer verification QRs renew every ten minutes until venue approval", () => {
+  assert.match(service, /export async function rotateDancerVenueVerification/);
+  assert.match(service, /\.eq\("created_by_user_id", input\.userId\)/);
+  assert.match(service, /\.eq\("token_digest", currentDigest\)/);
+  assert.match(service, /\.is\("used_at", null\)/);
+  assert.match(service, /\.is\("revoked_at", null\)/);
+  assert.match(service, /\.update\(\{[\s\S]*?token_digest: tokenDigest,[\s\S]*?created_at: createdAt,[\s\S]*?expires_at: expiresAt/);
+  assert.match(service, /event_type: "token_issued"[\s\S]*?rotated: true/);
+  assert.match(dancerRoute, /tokenId: issued\.tokenId/);
+  assert.match(dancerRoute, /rotationToken: issued\.token/);
+  assert.match(dancerRoute, /rotateDancerVenueVerification/);
+  assert.match(dashboard, /window\.setTimeout\([\s\S]*?createVerification\(verification\)[\s\S]*?renewalDelay/);
+  assert.match(dashboard, /window\.setInterval\([\s\S]*?pollForApproval\(\)[\s\S]*?5_000/);
+  assert.match(dashboard, /refreshes automatically every 10 minutes until the venue approves you/);
+  assert.match(liveApp, /startDancerVenueVerificationLifecycle/);
+  assert.match(liveApp, /createDancerVenueVerification\(\{ rotate: true \}\)/);
+  assert.match(liveApp, /dancerVenueAffiliationIsApproved/);
+  assert.match(liveApp, /refreshes automatically every 10 minutes until the venue approves you/);
+});
+
 test("only the exact verified venue owner can approve or revoke an affiliation", () => {
   assert.match(migration, /v_venue\.owner_user_id is distinct from p_manager_user_id/);
   assert.match(migration, /Only this venue''s verified manager can approve the dancer/);

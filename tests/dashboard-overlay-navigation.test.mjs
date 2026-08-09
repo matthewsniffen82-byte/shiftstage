@@ -56,7 +56,15 @@ test("every account dashboard fully isolates the public shell and keeps its X as
   );
   assert.match(
     homeSource,
-    /function closeDancerDashboard\(\) \{\s*dancerDashboard\.classList\.remove\("show"\);\s*dancerDashboard\.setAttribute\("aria-hidden", "true"\);\s*stopDancerVenueApprovalPolling\(\);\s*syncOverlayScrollLock\(\);\s*\}/,
+    /function closeDancerDashboard\(\) \{[\s\S]*?dancerDashboard\.classList\.remove\("show"\);\s*dancerDashboard\.setAttribute\("aria-hidden", "true"\);[\s\S]*?syncOverlayScrollLock\(\);\s*\}/,
+  );
+  assert.match(
+    homeSource,
+    /function closeDancerDashboard\(\) \{\s*stopDancerVenueVerificationLifecycle\(\);/,
+  );
+  assert.match(
+    homeSource,
+    /function closeDancerDashboard\(\) \{[\s\S]*?stopDancerVenueApprovalPolling\(\);\s*syncOverlayScrollLock\(\);/,
   );
   assert.match(
     homeSource,

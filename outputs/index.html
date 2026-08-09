@@ -36550,6 +36550,7 @@
               <strong id="dancerVenueVerificationQrVenue">Venue</strong>
               <span id="dancerVenueVerificationQrExpiry">Expires soon</span>
               <small>This QR is tied to your profile and this venue. It works once and expires in 10 minutes.</small>
+              <small>It refreshes automatically every 10 minutes until the venue approves you.</small>
               <button class="action-btn secondary" id="dancerVenueVerificationShare" type="button">Share private link</button>
             </div>
           </section>
@@ -37392,6 +37393,8 @@
     let dancerVenueApprovalPollTimer = 0;
     let activeDancerVenueVerification = null;
     let activeVenueDancerVerification = null;
+    let dancerVenueVerificationRenewTimer = 0;
+    let dancerVenueVerificationApprovalPoll = 0;
     const PENDING_VENUE_DANCER_VERIFICATION_KEY = "dancrPendingVenueDancerVerificationV1";
     let activeSetupStep = "profile";
     let setupChecklistExpanded = false;
@@ -47736,6 +47739,10 @@
     }
 
     function closeDancerDashboard() {
+      stopDancerVenueVerificationLifecycle();
+      activeDancerVenueVerification = null;
+      const verificationQr = document.getElementById("dancerVenueVerificationQr");
+      if (verificationQr) verificationQr.hidden = true;
       dancerDashboard.classList.remove("show");
       dancerDashboard.setAttribute("aria-hidden", "true");
       stopDancerVenueApprovalPolling();
@@ -47828,30 +47835,74 @@
           : `${venue.name} is listed in ${dancerCity}, but its venue manager account must be activated before it can scan your QR.`;
     }
 
-    async function loadDancerVenueVerification() {
+    async function loadDancerVenueVerification({ quiet = false } = {}) {
       if (!isDancerSession()) return null;
       const status = document.getElementById("dancerVenueVerificationStatus");
-      if (status) status.textContent = "Loading venue verification…";
+      if (status && !quiet) status.textContent = "Loading venue verification…";
       try {
         liveDancerVenueVerification = await requestVenueAffiliationJson("/api/dancer/venue-verification");
         renderDancerVenueVerification();
         return liveDancerVenueVerification;
       } catch (error) {
-        const select = document.getElementById("dancerVenueVerificationVenue");
-        if (select) {
-          select.innerHTML = '<option value="">Unable to load venues</option>';
-          select.disabled = true;
+        if (!quiet) {
+          const select = document.getElementById("dancerVenueVerificationVenue");
+          if (select) {
+            select.innerHTML = '<option value="">Unable to load venues</option>';
+            select.disabled = true;
+          }
+          document.getElementById("dancerVenueVerificationCreate").disabled = true;
+          if (status) status.textContent = error.message || "Unable to load venue verification.";
         }
-        document.getElementById("dancerVenueVerificationCreate").disabled = true;
-        if (status) status.textContent = error.message || "Unable to load venue verification.";
         return null;
       }
     }
 
-    async function createDancerVenueVerification() {
+    function stopDancerVenueVerificationLifecycle() {
+      window.clearTimeout(dancerVenueVerificationRenewTimer);
+      window.clearInterval(dancerVenueVerificationApprovalPoll);
+      dancerVenueVerificationRenewTimer = 0;
+      dancerVenueVerificationApprovalPoll = 0;
+    }
+
+    function dancerVenueAffiliationIsApproved(state, venueId) {
+      return (Array.isArray(state?.affiliations) ? state.affiliations : []).some(
+        (item) => item.status === "active" && item.venueId === venueId
+      );
+    }
+
+    function completeDancerVenueVerification(venueName) {
+      stopDancerVenueVerificationLifecycle();
+      activeDancerVenueVerification = null;
+      document.getElementById("dancerVenueVerificationQr").hidden = true;
+      document.getElementById("dancerVenueVerificationStatus").textContent = `${venueName || "Venue"} approved your profile.`;
+    }
+
+    function startDancerVenueVerificationLifecycle(verification) {
+      stopDancerVenueVerificationLifecycle();
+      if (!verification?.venue?.id) return;
+      const venueId = verification.venue.id;
+      dancerVenueVerificationApprovalPoll = window.setInterval(async () => {
+        const latest = await loadDancerVenueVerification({ quiet: true });
+        if (dancerVenueAffiliationIsApproved(latest, venueId)) {
+          completeDancerVenueVerification(verification.venue?.name);
+        }
+      }, 5000);
+      const expiresAt = new Date(verification.expiresAt || "").getTime();
+      const renewalDelay = Number.isFinite(expiresAt)
+        ? Math.max(1000, expiresAt - Date.now() + 250)
+        : 10 * 60 * 1000;
+      dancerVenueVerificationRenewTimer = window.setTimeout(() => {
+        if (activeDancerVenueVerification === verification) {
+          void createDancerVenueVerification({ rotate: true });
+        }
+      }, renewalDelay);
+    }
+
+    async function createDancerVenueVerification({ rotate = false } = {}) {
       const button = document.getElementById("dancerVenueVerificationCreate");
       const status = document.getElementById("dancerVenueVerificationStatus");
-      const venueId = document.getElementById("dancerVenueVerificationVenue").value;
+      const currentVerification = rotate ? activeDancerVenueVerification : null;
+      const venueId = currentVerification?.venue?.id || document.getElementById("dancerVenueVerificationVenue").value;
       if (!venueId) {
         status.textContent = "Choose a venue first.";
         return;
@@ -47862,16 +47913,34 @@
         return;
       }
       button.disabled = true;
-      status.textContent = "Creating your private 10-minute QR…";
+      status.textContent = rotate
+        ? "Refreshing your private verification QR…"
+        : "Creating your private 10-minute QR…";
       try {
-        const data = await requestVenueAffiliationJson("/api/dancer/venue-verification", { method: "POST", body: { venueId } });
+        const data = await requestVenueAffiliationJson("/api/dancer/venue-verification", {
+          method: "POST",
+          body: currentVerification
+            ? {
+                venueId,
+                tokenId: currentVerification.tokenId,
+                rotationToken: currentVerification.rotationToken
+              }
+            : { venueId }
+        });
         activeDancerVenueVerification = data.verification;
         document.getElementById("dancerVenueVerificationQrImage").src = data.verification.qrDataUrl;
         document.getElementById("dancerVenueVerificationQrVenue").textContent = data.verification.venue?.name || "Venue";
         document.getElementById("dancerVenueVerificationQrExpiry").textContent = `Expires ${formatVenueAffiliationTime(data.verification.expiresAt)}`;
         document.getElementById("dancerVenueVerificationQr").hidden = false;
         status.textContent = data.message || "Show this QR to the verified venue manager.";
+        startDancerVenueVerificationLifecycle(data.verification);
       } catch (error) {
+        const latest = rotate ? await loadDancerVenueVerification({ quiet: true }) : null;
+        if (rotate && dancerVenueAffiliationIsApproved(latest, venueId)) {
+          completeDancerVenueVerification(currentVerification?.venue?.name);
+          return;
+        }
+        stopDancerVenueVerificationLifecycle();
         activeDancerVenueVerification = null;
         document.getElementById("dancerVenueVerificationQr").hidden = true;
         status.textContent = error.message || "Unable to create verification QR.";
@@ -47907,6 +47976,7 @@
       status.textContent = "Removing venue verification…";
       try {
         const data = await requestVenueAffiliationJson("/api/dancer/venue-verification", { method: "DELETE", body: { affiliationId } });
+        stopDancerVenueVerificationLifecycle();
         activeDancerVenueVerification = null;
         document.getElementById("dancerVenueVerificationQr").hidden = true;
         await loadDancerVenueVerification();
@@ -55605,9 +55675,10 @@
       window.location.href = "/dashboard/venue";
     }
 
-    document.getElementById("dancerVenueVerificationCreate").addEventListener("click", createDancerVenueVerification);
+    document.getElementById("dancerVenueVerificationCreate").addEventListener("click", () => createDancerVenueVerification());
     document.getElementById("dancerVenueVerificationShare").addEventListener("click", shareDancerVenueVerification);
     document.getElementById("dancerVenueVerificationVenue").addEventListener("change", () => {
+      stopDancerVenueVerificationLifecycle();
       activeDancerVenueVerification = null;
       document.getElementById("dancerVenueVerificationQr").hidden = true;
       updateDancerVenueVerificationSelectionStatus();

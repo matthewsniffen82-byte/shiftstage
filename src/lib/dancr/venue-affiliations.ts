@@ -140,6 +140,116 @@ export async function issueDancerVenueVerification(
     expiresAt,
   });
   return {
+    tokenId: String(data.id),
+    token,
+    expiresAt,
+    venue: mapVenue(venue),
+  };
+}
+
+export async function rotateDancerVenueVerification(
+  client: DancrClient,
+  input: {
+    userId: string;
+    venueId: string;
+    tokenId: string;
+    currentToken: string;
+    requestIpHash: string;
+  },
+) {
+  const dancer = await requireVenueApprovalCandidate(client, input.userId);
+  const venueId = requiredUuid(input.venueId, "Choose a venue to verify.");
+  const tokenId = requiredUuid(input.tokenId, "This dancer verification link is invalid or expired.");
+  const currentDigest = hashVenueAffiliationToken(input.currentToken);
+  const { data: current, error: currentError } = await (client as any)
+    .from("venue_dancer_verification_tokens")
+    .select(`
+      id,
+      venue_id,
+      dancer_id,
+      created_by_user_id,
+      token_digest,
+      used_at,
+      revoked_at,
+      venues!inner(id, slug, name, city, state, owner_user_id, is_active)
+    `)
+    .eq("id", tokenId)
+    .eq("venue_id", venueId)
+    .eq("dancer_id", dancer.id)
+    .eq("created_by_user_id", input.userId)
+    .eq("token_digest", currentDigest)
+    .is("used_at", null)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (currentError) throw currentError;
+
+  const venue = Array.isArray(current?.venues) ? current.venues[0] : current?.venues;
+  if (!current || !venue || venue.is_active === false || !venue.owner_user_id) {
+    throw new VenueAffiliationUserError("This dancer verification link is invalid or expired.");
+  }
+  const { data: owner, error: ownerError } = await (client as any)
+    .from("app_users")
+    .select("id, role, account_state")
+    .eq("id", venue.owner_user_id)
+    .maybeSingle();
+  if (ownerError) throw ownerError;
+  if (!owner || owner.role !== "venue" || owner.account_state !== "active") {
+    throw new VenueAffiliationUserError("This venue does not have a verified manager yet.");
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  const tokenDigest = hashVenueAffiliationToken(token);
+  const createdAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
+  const { data: rotated, error: rotateError } = await (client as any)
+    .from("venue_dancer_verification_tokens")
+    .update({
+      token_digest: tokenDigest,
+      request_ip_hash: input.requestIpHash,
+      created_at: createdAt,
+      expires_at: expiresAt,
+    })
+    .eq("id", tokenId)
+    .eq("token_digest", currentDigest)
+    .is("used_at", null)
+    .is("revoked_at", null)
+    .select("id")
+    .maybeSingle();
+  if (rotateError) throw rotateError;
+  if (!rotated) {
+    throw new VenueAffiliationUserError("This dancer verification link is invalid or expired.");
+  }
+
+  const { error: eventError } = await (client as any)
+    .from("venue_dancer_affiliation_events")
+    .insert({
+      venue_id: venueId,
+      dancer_id: dancer.id,
+      actor_user_id: input.userId,
+      event_type: "token_issued",
+      event_payload: {
+        tokenId,
+        expiresAt,
+        rotated: true,
+      },
+    });
+  if (eventError) {
+    console.warn("DANCER_VENUE_VERIFICATION_ROTATION_AUDIT_FAILED", {
+      tokenId,
+      dancerId: dancer.id,
+      venueId,
+      message: eventError.message,
+    });
+  }
+
+  console.info("DANCER_VENUE_VERIFICATION_ROTATED", {
+    tokenId,
+    dancerId: dancer.id,
+    venueId,
+    expiresAt,
+  });
+  return {
+    tokenId,
     token,
     expiresAt,
     venue: mapVenue(venue),
