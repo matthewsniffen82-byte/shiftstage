@@ -54,10 +54,24 @@ test("venue signup redeems a private access code and routes successful authentic
   assert.match(liveApp, /async function openVenueDashboard\(\)[\s\S]*?if \(!isVenueSession\(\)\)[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
   assert.match(liveApp, /async function startVenueDashboardSession\(message[\s\S]*?window\.location\.href = "\/dashboard\/venue"/);
   assert.match(liveApp, /function handleVenueDashboardDeepLink\(\)[\s\S]*?params\.get\("dancr_dashboard"\) !== "venue"[\s\S]*?forceFreshSignIn[\s\S]*?saveAuthSession\(null\)[\s\S]*?openAuthRole\("venue"\)[\s\S]*?void openVenueDashboard\(\)/);
-  assert.match(dashboardClient, /href=\{role === "venue" \? "\/\?dancr_dashboard=venue&dancr_force_sign_in=1" : `\/account\?role=\$\{role\}`\}/);
+  assert.match(dashboardClient, /<VenueDashboardSignInRecovery onSignedIn=\{retryDashboard\} \/>/);
+  assert.doesNotMatch(dashboardClient, /dancr_force_sign_in/);
   assert.doesNotMatch(liveApp, />Manage MyDancr TV</);
   assert.match(liveApp, /const opened = await openVenueDashboard\(\);\s*if \(opened\) \{/);
   assert.doesNotMatch(liveApp, /venue@example\.com|venue123|demo venue/i);
+});
+
+test("venue dashboard refreshes a saved session and recovers sign-in without leaving the page", () => {
+  assert.match(dashboardClient, /const initialAuthHeaders = dashboardAuthHeaders\(session\)/);
+  assert.match(dashboardClient, /const account = await readJson\("\/api\/account", initialAuthHeaders\)/);
+  assert.match(dashboardClient, /const authHeaders = dashboardAuthHeaders\(readSession\(\)\)/);
+  assert.match(dashboardClient, /"x-dancr-refresh-token": String\(session\.refreshToken\)/);
+  assert.match(dashboardClient, /persistResponseSession\(data\);\s*return data;/);
+  assert.match(dashboardClient, /!isLoading && !state\.error/);
+  assert.match(dashboardClient, /function VenueDashboardSignInRecovery/);
+  assert.match(dashboardClient, /fetch\("\/api\/auth", \{[\s\S]*?mode: "login", role: "venue"/);
+  assert.match(dashboardClient, /window\.localStorage\.setItem\([\s\S]*?SESSION_KEY[\s\S]*?data\.session/);
+  assert.doesNotMatch(dashboardClient, /href=.*dancr_dashboard=venue/);
 });
 
 test("venue management is consolidated into one descriptive collapsible workspace", () => {

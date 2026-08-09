@@ -120,21 +120,30 @@ export default function DashboardClient({
 }) {
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  const retryDashboard = useCallback(() => {
+    setState({});
+    setIsLoading(true);
+    setLoadAttempt((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       const session = readSession();
-      if (!session?.accessToken) {
+      const initialAuthHeaders = dashboardAuthHeaders(session);
+      if (!initialAuthHeaders) {
         setState({ error: "Sign in to open this dashboard." });
         setIsLoading(false);
         return;
       }
 
       try {
-        const authHeaders = { authorization: `Bearer ${session.accessToken}` };
-        const account = await readJson("/api/account", authHeaders);
+        const account = await readJson("/api/account", initialAuthHeaders);
+        const authHeaders = dashboardAuthHeaders(readSession());
+        if (!authHeaders) throw new Error("Your sign-in could not be refreshed. Sign in again to continue.");
         const profile = await readOptionalJson(
           role === "dancer" ? "/api/dancer/profile" : role === "venue" ? "/api/venue/profile" : "/api/customer/profile",
           authHeaders,
@@ -178,7 +187,7 @@ export default function DashboardClient({
         }
       } catch (error) {
         if (!cancelled) {
-          setState({ error: error instanceof Error ? error.message : "Unable to load dashboard." });
+          setState({ error: dashboardLoadErrorMessage(error) });
           setIsLoading(false);
         }
       }
@@ -188,7 +197,7 @@ export default function DashboardClient({
     return () => {
       cancelled = true;
     };
-  }, [role]);
+  }, [loadAttempt, role]);
 
   useEffect(() => {
     if (role !== "customer" || !initialSection || isLoading || state.error) return;
@@ -245,17 +254,19 @@ export default function DashboardClient({
         <span className="eyebrow">{role === "customer" ? "Your MyDancr" : "Live account"}</span>
         <h1>{role === "customer" ? (isLoading ? "Your night" : `Welcome back, ${displayName}`) : title}</h1>
         <p>{isLoading ? "Loading your live account..." : state.error ? state.error : role === "customer" ? "Your plans, saved profiles, Club Deals, and alerts in one place." : `Welcome back, ${displayName}.`}</p>
-        {state.error ? (
+        {state.error && role === "venue" ? (
+          <VenueDashboardSignInRecovery onSignedIn={retryDashboard} />
+        ) : state.error ? (
           <Link
             className="primary-link"
-            href={role === "venue" ? "/?dancr_dashboard=venue&dancr_force_sign_in=1" : `/account?role=${role}`}
+            href={`/account?role=${role}`}
           >
             Sign in
           </Link>
         ) : null}
       </section>
 
-      {!state.error ? (
+      {!isLoading && !state.error ? (
         <section className={role === "customer" ? "dashboard-grid customer-dashboard-grid" : "dashboard-grid"}>
           {role === "customer" ? (
             <>
@@ -4688,6 +4699,85 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function VenueDashboardSignInRecovery({ onSignedIn }: { onSignedIn: () => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function signIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatus("");
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode: "login", role: "venue", email: email.trim(), password }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
+      if (data.account?.role !== "venue" || !data.session?.accessToken || !data.session?.refreshToken) {
+        throw new Error("Use a venue account to open this dashboard.");
+      }
+
+      window.localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ ...data.session, account: data.account }),
+      );
+      setStatus("Signed in. Opening your venue dashboard...");
+      onSignedIn();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (!isOpen) {
+    return (
+      <button className="primary-link" type="button" onClick={() => setIsOpen(true)}>
+        Sign in
+      </button>
+    );
+  }
+
+  return (
+    <form className="venue-sign-in-recovery" onSubmit={signIn}>
+      <p>Sign in here to reopen the dashboard without leaving this page.</p>
+      <label>
+        Venue account email
+        <input
+          autoComplete="email"
+          inputMode="email"
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          type="email"
+          value={email}
+        />
+      </label>
+      <label>
+        Password
+        <input
+          autoComplete="current-password"
+          minLength={8}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          type="password"
+          value={password}
+        />
+      </label>
+      <button className="primary-link" disabled={isSubmitting} type="submit">
+        {isSubmitting ? "Signing in..." : "Sign in to venue dashboard"}
+      </button>
+      {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
+    </form>
+  );
+}
+
 type StoredSession = {
   accessToken?: string;
   refreshToken?: string;
@@ -4709,10 +4799,27 @@ function persistResponseSession(data: { session?: StoredSession } | null | undef
   window.localStorage.setItem(SESSION_KEY, JSON.stringify({ ...current, ...data.session }));
 }
 
+function dashboardAuthHeaders(session: StoredSession | null): Record<string, string> | null {
+  if (!session?.accessToken) return null;
+  return {
+    authorization: `Bearer ${session.accessToken}`,
+    ...(session.refreshToken ? { "x-dancr-refresh-token": String(session.refreshToken) } : {}),
+  };
+}
+
+function dashboardLoadErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unable to load dashboard.";
+  if (/sign in required/i.test(message)) {
+    return "Your sign-in expired. Sign in again to continue.";
+  }
+  return message;
+}
+
 async function readJson(path: string, headers: Record<string, string>) {
   const response = await fetch(path, { headers });
   const data = await response.json();
   if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load dashboard.");
+  persistResponseSession(data);
   return data;
 }
 
@@ -4766,6 +4873,15 @@ function DashboardStyles() {
       .dashboard-close:focus-visible, .customer-dashboard-tabs a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
       .nav-links a, .primary-link { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); font-weight: 850; }
+      button.primary-link { width: fit-content; cursor: pointer; font: inherit; }
+      button.primary-link:disabled { cursor: wait; opacity: .68; }
+      .venue-sign-in-recovery { width: min(100%, 460px); display: grid; gap: 12px; padding: 18px; border: 1px solid rgba(139,92,246,.42); border-radius: 18px; background: rgba(5,5,10,.96); box-shadow: 0 18px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.06); }
+      .venue-sign-in-recovery > p { font-size: 15px; line-height: 1.45; }
+      .venue-sign-in-recovery label { display: grid; gap: 7px; color: #f7f2ff; font-size: 13px; font-weight: 850; }
+      .venue-sign-in-recovery input { min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; color: #fff; background: #15141b; font: inherit; }
+      .venue-sign-in-recovery input:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
+      .venue-sign-in-recovery .primary-link { width: 100%; min-height: 48px; border-color: rgba(139,92,246,.7); background: linear-gradient(135deg, #5b21b6, #3b00b9); }
+      .venue-sign-in-recovery .venue-sign-in-status { color: #bfefff; font-size: 14px; font-weight: 750; }
       .dashboard-head { display: grid; gap: 14px; margin-bottom: 24px; }
       .customer-dashboard-head { gap: 9px; margin-bottom: 18px; }
       .customer-dashboard-head h1 { max-width: 900px; font-size: clamp(34px, 6vw, 62px); line-height: 1; }
